@@ -27,9 +27,10 @@ import (
 	"golang.org/x/crypto/ssh"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	utilSSH "sigs.k8s.io/cluster-api-provider-azure/util/ssh"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	utilSSH "sigs.k8s.io/cluster-api-provider-azure/util/ssh"
 )
 
 // ContributorRoleID is the ID of the built-in "Contributor" role.
@@ -46,13 +47,6 @@ func (s *AzureMachineSpec) SetDefaultSSHPublicKey() error {
 		s.SSHPublicKey = base64.StdEncoding.EncodeToString(ssh.MarshalAuthorizedKey(publicRsaKey))
 	}
 	return nil
-}
-
-// SetDefaultCachingType sets the default cache type for an AzureMachine.
-func (s *AzureMachineSpec) SetDefaultCachingType() {
-	if s.OSDisk.CachingType == "" {
-		s.OSDisk.CachingType = "None"
-	}
 }
 
 // SetDataDisksDefaults sets the data disk defaults for an AzureMachine.
@@ -244,7 +238,6 @@ func (m *AzureMachine) SetDefaults(client client.Client) error {
 		errs = append(errs, errors.Wrapf(err, "failed to fetch subscription ID for AzureMachine %s/%s", m.Namespace, m.Name))
 	}
 
-	m.Spec.SetDefaultCachingType()
 	m.Spec.SetDataDisksDefaults()
 	m.Spec.SetIdentityDefaults(subscriptionID)
 	m.Spec.SetSpotEvictionPolicyDefaults()

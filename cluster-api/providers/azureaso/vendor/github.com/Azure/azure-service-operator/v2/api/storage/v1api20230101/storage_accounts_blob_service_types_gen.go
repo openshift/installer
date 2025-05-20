@@ -5,10 +5,14 @@ package v1api20230101
 
 import (
 	"fmt"
-	v20230101s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type StorageAccountsBlobService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              StorageAccounts_BlobService_Spec   `json:"spec,omitempty"`
-	Status            StorageAccounts_BlobService_STATUS `json:"status,omitempty"`
+	Spec              StorageAccountsBlobService_Spec   `json:"spec,omitempty"`
+	Status            StorageAccountsBlobService_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &StorageAccountsBlobService{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &StorageAccountsBlobService{}
 
 // ConvertFrom populates our StorageAccountsBlobService from the provided hub StorageAccountsBlobService
 func (service *StorageAccountsBlobService) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230101s.StorageAccountsBlobService)
+	source, ok := hub.(*storage.StorageAccountsBlobService)
 	if !ok {
 		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccountsBlobService but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (service *StorageAccountsBlobService) ConvertFrom(hub conversion.Hub) error
 
 // ConvertTo populates the provided hub StorageAccountsBlobService from our StorageAccountsBlobService
 func (service *StorageAccountsBlobService) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230101s.StorageAccountsBlobService)
+	destination, ok := hub.(*storage.StorageAccountsBlobService)
 	if !ok {
 		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccountsBlobService but received %T instead", hub)
 	}
@@ -83,15 +87,35 @@ func (service *StorageAccountsBlobService) Default() {
 // defaultImpl applies the code generated defaults to the StorageAccountsBlobService resource
 func (service *StorageAccountsBlobService) defaultImpl() {}
 
+var _ configmaps.Exporter = &StorageAccountsBlobService{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (service *StorageAccountsBlobService) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if service.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return service.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &StorageAccountsBlobService{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (service *StorageAccountsBlobService) SecretDestinationExpressions() []*core.DestinationExpression {
+	if service.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return service.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &StorageAccountsBlobService{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (service *StorageAccountsBlobService) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*StorageAccounts_BlobService_STATUS); ok {
-		return service.Spec.Initialize_From_StorageAccounts_BlobService_STATUS(s)
+	if s, ok := status.(*StorageAccountsBlobService_STATUS); ok {
+		return service.Spec.Initialize_From_StorageAccountsBlobService_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type StorageAccounts_BlobService_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type StorageAccountsBlobService_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &StorageAccountsBlobService{}
@@ -103,7 +127,7 @@ func (service *StorageAccountsBlobService) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-01-01"
 func (service StorageAccountsBlobService) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-01-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -136,7 +160,7 @@ func (service *StorageAccountsBlobService) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (service *StorageAccountsBlobService) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &StorageAccounts_BlobService_STATUS{}
+	return &StorageAccountsBlobService_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -148,13 +172,13 @@ func (service *StorageAccountsBlobService) Owner() *genruntime.ResourceReference
 // SetStatus sets the status of this resource
 func (service *StorageAccountsBlobService) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*StorageAccounts_BlobService_STATUS); ok {
+	if st, ok := status.(*StorageAccountsBlobService_STATUS); ok {
 		service.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st StorageAccounts_BlobService_STATUS
+	var st StorageAccountsBlobService_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -200,7 +224,7 @@ func (service *StorageAccountsBlobService) ValidateUpdate(old runtime.Object) (a
 
 // createValidations validates the creation of the resource
 func (service *StorageAccountsBlobService) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){service.validateResourceReferences, service.validateOwnerReference}
+	return []func() (admission.Warnings, error){service.validateResourceReferences, service.validateOwnerReference, service.validateSecretDestinations, service.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -218,7 +242,21 @@ func (service *StorageAccountsBlobService) updateValidations() []func(old runtim
 		func(old runtime.Object) (admission.Warnings, error) {
 			return service.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return service.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return service.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (service *StorageAccountsBlobService) validateConfigMapDestinations() (admission.Warnings, error) {
+	if service.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(service, nil, service.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -235,6 +273,14 @@ func (service *StorageAccountsBlobService) validateResourceReferences() (admissi
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (service *StorageAccountsBlobService) validateSecretDestinations() (admission.Warnings, error) {
+	if service.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(service, nil, service.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (service *StorageAccountsBlobService) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*StorageAccountsBlobService)
@@ -246,24 +292,24 @@ func (service *StorageAccountsBlobService) validateWriteOnceProperties(old runti
 }
 
 // AssignProperties_From_StorageAccountsBlobService populates our StorageAccountsBlobService from the provided source StorageAccountsBlobService
-func (service *StorageAccountsBlobService) AssignProperties_From_StorageAccountsBlobService(source *v20230101s.StorageAccountsBlobService) error {
+func (service *StorageAccountsBlobService) AssignProperties_From_StorageAccountsBlobService(source *storage.StorageAccountsBlobService) error {
 
 	// ObjectMeta
 	service.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec StorageAccounts_BlobService_Spec
-	err := spec.AssignProperties_From_StorageAccounts_BlobService_Spec(&source.Spec)
+	var spec StorageAccountsBlobService_Spec
+	err := spec.AssignProperties_From_StorageAccountsBlobService_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccounts_BlobService_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsBlobService_Spec() to populate field Spec")
 	}
 	service.Spec = spec
 
 	// Status
-	var status StorageAccounts_BlobService_STATUS
-	err = status.AssignProperties_From_StorageAccounts_BlobService_STATUS(&source.Status)
+	var status StorageAccountsBlobService_STATUS
+	err = status.AssignProperties_From_StorageAccountsBlobService_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccounts_BlobService_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsBlobService_STATUS() to populate field Status")
 	}
 	service.Status = status
 
@@ -272,24 +318,24 @@ func (service *StorageAccountsBlobService) AssignProperties_From_StorageAccounts
 }
 
 // AssignProperties_To_StorageAccountsBlobService populates the provided destination StorageAccountsBlobService from our StorageAccountsBlobService
-func (service *StorageAccountsBlobService) AssignProperties_To_StorageAccountsBlobService(destination *v20230101s.StorageAccountsBlobService) error {
+func (service *StorageAccountsBlobService) AssignProperties_To_StorageAccountsBlobService(destination *storage.StorageAccountsBlobService) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *service.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230101s.StorageAccounts_BlobService_Spec
-	err := service.Spec.AssignProperties_To_StorageAccounts_BlobService_Spec(&spec)
+	var spec storage.StorageAccountsBlobService_Spec
+	err := service.Spec.AssignProperties_To_StorageAccountsBlobService_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccounts_BlobService_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsBlobService_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20230101s.StorageAccounts_BlobService_STATUS
-	err = service.Status.AssignProperties_To_StorageAccounts_BlobService_STATUS(&status)
+	var status storage.StorageAccountsBlobService_STATUS
+	err = service.Status.AssignProperties_To_StorageAccountsBlobService_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccounts_BlobService_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsBlobService_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -316,7 +362,7 @@ type StorageAccountsBlobServiceList struct {
 	Items           []StorageAccountsBlobService `json:"items"`
 }
 
-type StorageAccounts_BlobService_Spec struct {
+type StorageAccountsBlobService_Spec struct {
 	// AutomaticSnapshotPolicyEnabled: Deprecated in favor of isVersioningEnabled property.
 	AutomaticSnapshotPolicyEnabled *bool `json:"automaticSnapshotPolicyEnabled,omitempty"`
 
@@ -344,6 +390,10 @@ type StorageAccounts_BlobService_Spec struct {
 	// LastAccessTimeTrackingPolicy: The blob service property to configure last access time based tracking policy.
 	LastAccessTimeTrackingPolicy *LastAccessTimeTrackingPolicy `json:"lastAccessTimeTrackingPolicy,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *StorageAccountsBlobServiceOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -354,14 +404,14 @@ type StorageAccounts_BlobService_Spec struct {
 	RestorePolicy *RestorePolicyProperties `json:"restorePolicy,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &StorageAccounts_BlobService_Spec{}
+var _ genruntime.ARMTransformer = &StorageAccountsBlobService_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (service *StorageAccounts_BlobService_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (service *StorageAccountsBlobService_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if service == nil {
 		return nil, nil
 	}
-	result := &StorageAccounts_BlobService_Spec_ARM{}
+	result := &arm.StorageAccountsBlobService_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -376,7 +426,7 @@ func (service *StorageAccounts_BlobService_Spec) ConvertToARM(resolved genruntim
 		service.IsVersioningEnabled != nil ||
 		service.LastAccessTimeTrackingPolicy != nil ||
 		service.RestorePolicy != nil {
-		result.Properties = &StorageAccounts_BlobService_Properties_Spec_ARM{}
+		result.Properties = &arm.StorageAccounts_BlobService_Properties_Spec{}
 	}
 	if service.AutomaticSnapshotPolicyEnabled != nil {
 		automaticSnapshotPolicyEnabled := *service.AutomaticSnapshotPolicyEnabled
@@ -387,7 +437,7 @@ func (service *StorageAccounts_BlobService_Spec) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		changeFeed := *changeFeed_ARM.(*ChangeFeed_ARM)
+		changeFeed := *changeFeed_ARM.(*arm.ChangeFeed)
 		result.Properties.ChangeFeed = &changeFeed
 	}
 	if service.ContainerDeleteRetentionPolicy != nil {
@@ -395,7 +445,7 @@ func (service *StorageAccounts_BlobService_Spec) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		containerDeleteRetentionPolicy := *containerDeleteRetentionPolicy_ARM.(*DeleteRetentionPolicy_ARM)
+		containerDeleteRetentionPolicy := *containerDeleteRetentionPolicy_ARM.(*arm.DeleteRetentionPolicy)
 		result.Properties.ContainerDeleteRetentionPolicy = &containerDeleteRetentionPolicy
 	}
 	if service.Cors != nil {
@@ -403,7 +453,7 @@ func (service *StorageAccounts_BlobService_Spec) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		cors := *cors_ARM.(*CorsRules_ARM)
+		cors := *cors_ARM.(*arm.CorsRules)
 		result.Properties.Cors = &cors
 	}
 	if service.DefaultServiceVersion != nil {
@@ -415,7 +465,7 @@ func (service *StorageAccounts_BlobService_Spec) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		deleteRetentionPolicy := *deleteRetentionPolicy_ARM.(*DeleteRetentionPolicy_ARM)
+		deleteRetentionPolicy := *deleteRetentionPolicy_ARM.(*arm.DeleteRetentionPolicy)
 		result.Properties.DeleteRetentionPolicy = &deleteRetentionPolicy
 	}
 	if service.IsVersioningEnabled != nil {
@@ -427,7 +477,7 @@ func (service *StorageAccounts_BlobService_Spec) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		lastAccessTimeTrackingPolicy := *lastAccessTimeTrackingPolicy_ARM.(*LastAccessTimeTrackingPolicy_ARM)
+		lastAccessTimeTrackingPolicy := *lastAccessTimeTrackingPolicy_ARM.(*arm.LastAccessTimeTrackingPolicy)
 		result.Properties.LastAccessTimeTrackingPolicy = &lastAccessTimeTrackingPolicy
 	}
 	if service.RestorePolicy != nil {
@@ -435,22 +485,22 @@ func (service *StorageAccounts_BlobService_Spec) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		restorePolicy := *restorePolicy_ARM.(*RestorePolicyProperties_ARM)
+		restorePolicy := *restorePolicy_ARM.(*arm.RestorePolicyProperties)
 		result.Properties.RestorePolicy = &restorePolicy
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (service *StorageAccounts_BlobService_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StorageAccounts_BlobService_Spec_ARM{}
+func (service *StorageAccountsBlobService_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.StorageAccountsBlobService_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (service *StorageAccounts_BlobService_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StorageAccounts_BlobService_Spec_ARM)
+func (service *StorageAccountsBlobService_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.StorageAccountsBlobService_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StorageAccounts_BlobService_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StorageAccountsBlobService_Spec, got %T", armInput)
 	}
 
 	// Set property "AutomaticSnapshotPolicyEnabled":
@@ -550,6 +600,8 @@ func (service *StorageAccounts_BlobService_Spec) PopulateFromARM(owner genruntim
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	service.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -574,25 +626,25 @@ func (service *StorageAccounts_BlobService_Spec) PopulateFromARM(owner genruntim
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &StorageAccounts_BlobService_Spec{}
+var _ genruntime.ConvertibleSpec = &StorageAccountsBlobService_Spec{}
 
-// ConvertSpecFrom populates our StorageAccounts_BlobService_Spec from the provided source
-func (service *StorageAccounts_BlobService_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230101s.StorageAccounts_BlobService_Spec)
+// ConvertSpecFrom populates our StorageAccountsBlobService_Spec from the provided source
+func (service *StorageAccountsBlobService_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.StorageAccountsBlobService_Spec)
 	if ok {
 		// Populate our instance from source
-		return service.AssignProperties_From_StorageAccounts_BlobService_Spec(src)
+		return service.AssignProperties_From_StorageAccountsBlobService_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230101s.StorageAccounts_BlobService_Spec{}
+	src = &storage.StorageAccountsBlobService_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = service.AssignProperties_From_StorageAccounts_BlobService_Spec(src)
+	err = service.AssignProperties_From_StorageAccountsBlobService_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -600,17 +652,17 @@ func (service *StorageAccounts_BlobService_Spec) ConvertSpecFrom(source genrunti
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our StorageAccounts_BlobService_Spec
-func (service *StorageAccounts_BlobService_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230101s.StorageAccounts_BlobService_Spec)
+// ConvertSpecTo populates the provided destination from our StorageAccountsBlobService_Spec
+func (service *StorageAccountsBlobService_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.StorageAccountsBlobService_Spec)
 	if ok {
 		// Populate destination from our instance
-		return service.AssignProperties_To_StorageAccounts_BlobService_Spec(dst)
+		return service.AssignProperties_To_StorageAccountsBlobService_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230101s.StorageAccounts_BlobService_Spec{}
-	err := service.AssignProperties_To_StorageAccounts_BlobService_Spec(dst)
+	dst = &storage.StorageAccountsBlobService_Spec{}
+	err := service.AssignProperties_To_StorageAccountsBlobService_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -624,8 +676,8 @@ func (service *StorageAccounts_BlobService_Spec) ConvertSpecTo(destination genru
 	return nil
 }
 
-// AssignProperties_From_StorageAccounts_BlobService_Spec populates our StorageAccounts_BlobService_Spec from the provided source StorageAccounts_BlobService_Spec
-func (service *StorageAccounts_BlobService_Spec) AssignProperties_From_StorageAccounts_BlobService_Spec(source *v20230101s.StorageAccounts_BlobService_Spec) error {
+// AssignProperties_From_StorageAccountsBlobService_Spec populates our StorageAccountsBlobService_Spec from the provided source StorageAccountsBlobService_Spec
+func (service *StorageAccountsBlobService_Spec) AssignProperties_From_StorageAccountsBlobService_Spec(source *storage.StorageAccountsBlobService_Spec) error {
 
 	// AutomaticSnapshotPolicyEnabled
 	if source.AutomaticSnapshotPolicyEnabled != nil {
@@ -706,6 +758,18 @@ func (service *StorageAccounts_BlobService_Spec) AssignProperties_From_StorageAc
 		service.LastAccessTimeTrackingPolicy = nil
 	}
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec StorageAccountsBlobServiceOperatorSpec
+		err := operatorSpec.AssignProperties_From_StorageAccountsBlobServiceOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsBlobServiceOperatorSpec() to populate field OperatorSpec")
+		}
+		service.OperatorSpec = &operatorSpec
+	} else {
+		service.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -730,8 +794,8 @@ func (service *StorageAccounts_BlobService_Spec) AssignProperties_From_StorageAc
 	return nil
 }
 
-// AssignProperties_To_StorageAccounts_BlobService_Spec populates the provided destination StorageAccounts_BlobService_Spec from our StorageAccounts_BlobService_Spec
-func (service *StorageAccounts_BlobService_Spec) AssignProperties_To_StorageAccounts_BlobService_Spec(destination *v20230101s.StorageAccounts_BlobService_Spec) error {
+// AssignProperties_To_StorageAccountsBlobService_Spec populates the provided destination StorageAccountsBlobService_Spec from our StorageAccountsBlobService_Spec
+func (service *StorageAccountsBlobService_Spec) AssignProperties_To_StorageAccountsBlobService_Spec(destination *storage.StorageAccountsBlobService_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -745,7 +809,7 @@ func (service *StorageAccounts_BlobService_Spec) AssignProperties_To_StorageAcco
 
 	// ChangeFeed
 	if service.ChangeFeed != nil {
-		var changeFeed v20230101s.ChangeFeed
+		var changeFeed storage.ChangeFeed
 		err := service.ChangeFeed.AssignProperties_To_ChangeFeed(&changeFeed)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ChangeFeed() to populate field ChangeFeed")
@@ -757,7 +821,7 @@ func (service *StorageAccounts_BlobService_Spec) AssignProperties_To_StorageAcco
 
 	// ContainerDeleteRetentionPolicy
 	if service.ContainerDeleteRetentionPolicy != nil {
-		var containerDeleteRetentionPolicy v20230101s.DeleteRetentionPolicy
+		var containerDeleteRetentionPolicy storage.DeleteRetentionPolicy
 		err := service.ContainerDeleteRetentionPolicy.AssignProperties_To_DeleteRetentionPolicy(&containerDeleteRetentionPolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DeleteRetentionPolicy() to populate field ContainerDeleteRetentionPolicy")
@@ -769,7 +833,7 @@ func (service *StorageAccounts_BlobService_Spec) AssignProperties_To_StorageAcco
 
 	// Cors
 	if service.Cors != nil {
-		var cor v20230101s.CorsRules
+		var cor storage.CorsRules
 		err := service.Cors.AssignProperties_To_CorsRules(&cor)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_CorsRules() to populate field Cors")
@@ -784,7 +848,7 @@ func (service *StorageAccounts_BlobService_Spec) AssignProperties_To_StorageAcco
 
 	// DeleteRetentionPolicy
 	if service.DeleteRetentionPolicy != nil {
-		var deleteRetentionPolicy v20230101s.DeleteRetentionPolicy
+		var deleteRetentionPolicy storage.DeleteRetentionPolicy
 		err := service.DeleteRetentionPolicy.AssignProperties_To_DeleteRetentionPolicy(&deleteRetentionPolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DeleteRetentionPolicy() to populate field DeleteRetentionPolicy")
@@ -804,7 +868,7 @@ func (service *StorageAccounts_BlobService_Spec) AssignProperties_To_StorageAcco
 
 	// LastAccessTimeTrackingPolicy
 	if service.LastAccessTimeTrackingPolicy != nil {
-		var lastAccessTimeTrackingPolicy v20230101s.LastAccessTimeTrackingPolicy
+		var lastAccessTimeTrackingPolicy storage.LastAccessTimeTrackingPolicy
 		err := service.LastAccessTimeTrackingPolicy.AssignProperties_To_LastAccessTimeTrackingPolicy(&lastAccessTimeTrackingPolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_LastAccessTimeTrackingPolicy() to populate field LastAccessTimeTrackingPolicy")
@@ -812,6 +876,18 @@ func (service *StorageAccounts_BlobService_Spec) AssignProperties_To_StorageAcco
 		destination.LastAccessTimeTrackingPolicy = &lastAccessTimeTrackingPolicy
 	} else {
 		destination.LastAccessTimeTrackingPolicy = nil
+	}
+
+	// OperatorSpec
+	if service.OperatorSpec != nil {
+		var operatorSpec storage.StorageAccountsBlobServiceOperatorSpec
+		err := service.OperatorSpec.AssignProperties_To_StorageAccountsBlobServiceOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsBlobServiceOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -827,7 +903,7 @@ func (service *StorageAccounts_BlobService_Spec) AssignProperties_To_StorageAcco
 
 	// RestorePolicy
 	if service.RestorePolicy != nil {
-		var restorePolicy v20230101s.RestorePolicyProperties
+		var restorePolicy storage.RestorePolicyProperties
 		err := service.RestorePolicy.AssignProperties_To_RestorePolicyProperties(&restorePolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_RestorePolicyProperties() to populate field RestorePolicy")
@@ -848,8 +924,8 @@ func (service *StorageAccounts_BlobService_Spec) AssignProperties_To_StorageAcco
 	return nil
 }
 
-// Initialize_From_StorageAccounts_BlobService_STATUS populates our StorageAccounts_BlobService_Spec from the provided source StorageAccounts_BlobService_STATUS
-func (service *StorageAccounts_BlobService_Spec) Initialize_From_StorageAccounts_BlobService_STATUS(source *StorageAccounts_BlobService_STATUS) error {
+// Initialize_From_StorageAccountsBlobService_STATUS populates our StorageAccountsBlobService_Spec from the provided source StorageAccountsBlobService_STATUS
+func (service *StorageAccountsBlobService_Spec) Initialize_From_StorageAccountsBlobService_STATUS(source *StorageAccountsBlobService_STATUS) error {
 
 	// AutomaticSnapshotPolicyEnabled
 	if source.AutomaticSnapshotPolicyEnabled != nil {
@@ -947,11 +1023,11 @@ func (service *StorageAccounts_BlobService_Spec) Initialize_From_StorageAccounts
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (service *StorageAccounts_BlobService_Spec) OriginalVersion() string {
+func (service *StorageAccountsBlobService_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
-type StorageAccounts_BlobService_STATUS struct {
+type StorageAccountsBlobService_STATUS struct {
 	// AutomaticSnapshotPolicyEnabled: Deprecated in favor of isVersioningEnabled property.
 	AutomaticSnapshotPolicyEnabled *bool `json:"automaticSnapshotPolicyEnabled,omitempty"`
 
@@ -999,25 +1075,25 @@ type StorageAccounts_BlobService_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &StorageAccounts_BlobService_STATUS{}
+var _ genruntime.ConvertibleStatus = &StorageAccountsBlobService_STATUS{}
 
-// ConvertStatusFrom populates our StorageAccounts_BlobService_STATUS from the provided source
-func (service *StorageAccounts_BlobService_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230101s.StorageAccounts_BlobService_STATUS)
+// ConvertStatusFrom populates our StorageAccountsBlobService_STATUS from the provided source
+func (service *StorageAccountsBlobService_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.StorageAccountsBlobService_STATUS)
 	if ok {
 		// Populate our instance from source
-		return service.AssignProperties_From_StorageAccounts_BlobService_STATUS(src)
+		return service.AssignProperties_From_StorageAccountsBlobService_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230101s.StorageAccounts_BlobService_STATUS{}
+	src = &storage.StorageAccountsBlobService_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = service.AssignProperties_From_StorageAccounts_BlobService_STATUS(src)
+	err = service.AssignProperties_From_StorageAccountsBlobService_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -1025,17 +1101,17 @@ func (service *StorageAccounts_BlobService_STATUS) ConvertStatusFrom(source genr
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our StorageAccounts_BlobService_STATUS
-func (service *StorageAccounts_BlobService_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230101s.StorageAccounts_BlobService_STATUS)
+// ConvertStatusTo populates the provided destination from our StorageAccountsBlobService_STATUS
+func (service *StorageAccountsBlobService_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.StorageAccountsBlobService_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return service.AssignProperties_To_StorageAccounts_BlobService_STATUS(dst)
+		return service.AssignProperties_To_StorageAccountsBlobService_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230101s.StorageAccounts_BlobService_STATUS{}
-	err := service.AssignProperties_To_StorageAccounts_BlobService_STATUS(dst)
+	dst = &storage.StorageAccountsBlobService_STATUS{}
+	err := service.AssignProperties_To_StorageAccountsBlobService_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -1049,18 +1125,18 @@ func (service *StorageAccounts_BlobService_STATUS) ConvertStatusTo(destination g
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &StorageAccounts_BlobService_STATUS{}
+var _ genruntime.FromARMConverter = &StorageAccountsBlobService_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (service *StorageAccounts_BlobService_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StorageAccounts_BlobService_STATUS_ARM{}
+func (service *StorageAccountsBlobService_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.StorageAccountsBlobService_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (service *StorageAccounts_BlobService_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StorageAccounts_BlobService_STATUS_ARM)
+func (service *StorageAccountsBlobService_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.StorageAccountsBlobService_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StorageAccounts_BlobService_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StorageAccountsBlobService_STATUS, got %T", armInput)
 	}
 
 	// Set property "AutomaticSnapshotPolicyEnabled":
@@ -1209,8 +1285,8 @@ func (service *StorageAccounts_BlobService_STATUS) PopulateFromARM(owner genrunt
 	return nil
 }
 
-// AssignProperties_From_StorageAccounts_BlobService_STATUS populates our StorageAccounts_BlobService_STATUS from the provided source StorageAccounts_BlobService_STATUS
-func (service *StorageAccounts_BlobService_STATUS) AssignProperties_From_StorageAccounts_BlobService_STATUS(source *v20230101s.StorageAccounts_BlobService_STATUS) error {
+// AssignProperties_From_StorageAccountsBlobService_STATUS populates our StorageAccountsBlobService_STATUS from the provided source StorageAccountsBlobService_STATUS
+func (service *StorageAccountsBlobService_STATUS) AssignProperties_From_StorageAccountsBlobService_STATUS(source *storage.StorageAccountsBlobService_STATUS) error {
 
 	// AutomaticSnapshotPolicyEnabled
 	if source.AutomaticSnapshotPolicyEnabled != nil {
@@ -1331,8 +1407,8 @@ func (service *StorageAccounts_BlobService_STATUS) AssignProperties_From_Storage
 	return nil
 }
 
-// AssignProperties_To_StorageAccounts_BlobService_STATUS populates the provided destination StorageAccounts_BlobService_STATUS from our StorageAccounts_BlobService_STATUS
-func (service *StorageAccounts_BlobService_STATUS) AssignProperties_To_StorageAccounts_BlobService_STATUS(destination *v20230101s.StorageAccounts_BlobService_STATUS) error {
+// AssignProperties_To_StorageAccountsBlobService_STATUS populates the provided destination StorageAccountsBlobService_STATUS from our StorageAccountsBlobService_STATUS
+func (service *StorageAccountsBlobService_STATUS) AssignProperties_To_StorageAccountsBlobService_STATUS(destination *storage.StorageAccountsBlobService_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1346,7 +1422,7 @@ func (service *StorageAccounts_BlobService_STATUS) AssignProperties_To_StorageAc
 
 	// ChangeFeed
 	if service.ChangeFeed != nil {
-		var changeFeed v20230101s.ChangeFeed_STATUS
+		var changeFeed storage.ChangeFeed_STATUS
 		err := service.ChangeFeed.AssignProperties_To_ChangeFeed_STATUS(&changeFeed)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ChangeFeed_STATUS() to populate field ChangeFeed")
@@ -1361,7 +1437,7 @@ func (service *StorageAccounts_BlobService_STATUS) AssignProperties_To_StorageAc
 
 	// ContainerDeleteRetentionPolicy
 	if service.ContainerDeleteRetentionPolicy != nil {
-		var containerDeleteRetentionPolicy v20230101s.DeleteRetentionPolicy_STATUS
+		var containerDeleteRetentionPolicy storage.DeleteRetentionPolicy_STATUS
 		err := service.ContainerDeleteRetentionPolicy.AssignProperties_To_DeleteRetentionPolicy_STATUS(&containerDeleteRetentionPolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DeleteRetentionPolicy_STATUS() to populate field ContainerDeleteRetentionPolicy")
@@ -1373,7 +1449,7 @@ func (service *StorageAccounts_BlobService_STATUS) AssignProperties_To_StorageAc
 
 	// Cors
 	if service.Cors != nil {
-		var cor v20230101s.CorsRules_STATUS
+		var cor storage.CorsRules_STATUS
 		err := service.Cors.AssignProperties_To_CorsRules_STATUS(&cor)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_CorsRules_STATUS() to populate field Cors")
@@ -1388,7 +1464,7 @@ func (service *StorageAccounts_BlobService_STATUS) AssignProperties_To_StorageAc
 
 	// DeleteRetentionPolicy
 	if service.DeleteRetentionPolicy != nil {
-		var deleteRetentionPolicy v20230101s.DeleteRetentionPolicy_STATUS
+		var deleteRetentionPolicy storage.DeleteRetentionPolicy_STATUS
 		err := service.DeleteRetentionPolicy.AssignProperties_To_DeleteRetentionPolicy_STATUS(&deleteRetentionPolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DeleteRetentionPolicy_STATUS() to populate field DeleteRetentionPolicy")
@@ -1411,7 +1487,7 @@ func (service *StorageAccounts_BlobService_STATUS) AssignProperties_To_StorageAc
 
 	// LastAccessTimeTrackingPolicy
 	if service.LastAccessTimeTrackingPolicy != nil {
-		var lastAccessTimeTrackingPolicy v20230101s.LastAccessTimeTrackingPolicy_STATUS
+		var lastAccessTimeTrackingPolicy storage.LastAccessTimeTrackingPolicy_STATUS
 		err := service.LastAccessTimeTrackingPolicy.AssignProperties_To_LastAccessTimeTrackingPolicy_STATUS(&lastAccessTimeTrackingPolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_LastAccessTimeTrackingPolicy_STATUS() to populate field LastAccessTimeTrackingPolicy")
@@ -1426,7 +1502,7 @@ func (service *StorageAccounts_BlobService_STATUS) AssignProperties_To_StorageAc
 
 	// RestorePolicy
 	if service.RestorePolicy != nil {
-		var restorePolicy v20230101s.RestorePolicyProperties_STATUS
+		var restorePolicy storage.RestorePolicyProperties_STATUS
 		err := service.RestorePolicy.AssignProperties_To_RestorePolicyProperties_STATUS(&restorePolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_RestorePolicyProperties_STATUS() to populate field RestorePolicy")
@@ -1438,7 +1514,7 @@ func (service *StorageAccounts_BlobService_STATUS) AssignProperties_To_StorageAc
 
 	// Sku
 	if service.Sku != nil {
-		var sku v20230101s.Sku_STATUS
+		var sku storage.Sku_STATUS
 		err := service.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
@@ -1481,7 +1557,7 @@ func (feed *ChangeFeed) ConvertToARM(resolved genruntime.ConvertToARMResolvedDet
 	if feed == nil {
 		return nil, nil
 	}
-	result := &ChangeFeed_ARM{}
+	result := &arm.ChangeFeed{}
 
 	// Set property "Enabled":
 	if feed.Enabled != nil {
@@ -1499,14 +1575,14 @@ func (feed *ChangeFeed) ConvertToARM(resolved genruntime.ConvertToARMResolvedDet
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (feed *ChangeFeed) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ChangeFeed_ARM{}
+	return &arm.ChangeFeed{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (feed *ChangeFeed) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ChangeFeed_ARM)
+	typedInput, ok := armInput.(arm.ChangeFeed)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ChangeFeed_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ChangeFeed, got %T", armInput)
 	}
 
 	// Set property "Enabled":
@@ -1526,7 +1602,7 @@ func (feed *ChangeFeed) PopulateFromARM(owner genruntime.ArbitraryOwnerReference
 }
 
 // AssignProperties_From_ChangeFeed populates our ChangeFeed from the provided source ChangeFeed
-func (feed *ChangeFeed) AssignProperties_From_ChangeFeed(source *v20230101s.ChangeFeed) error {
+func (feed *ChangeFeed) AssignProperties_From_ChangeFeed(source *storage.ChangeFeed) error {
 
 	// Enabled
 	if source.Enabled != nil {
@@ -1549,7 +1625,7 @@ func (feed *ChangeFeed) AssignProperties_From_ChangeFeed(source *v20230101s.Chan
 }
 
 // AssignProperties_To_ChangeFeed populates the provided destination ChangeFeed from our ChangeFeed
-func (feed *ChangeFeed) AssignProperties_To_ChangeFeed(destination *v20230101s.ChangeFeed) error {
+func (feed *ChangeFeed) AssignProperties_To_ChangeFeed(destination *storage.ChangeFeed) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1617,14 +1693,14 @@ var _ genruntime.FromARMConverter = &ChangeFeed_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (feed *ChangeFeed_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ChangeFeed_STATUS_ARM{}
+	return &arm.ChangeFeed_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (feed *ChangeFeed_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ChangeFeed_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ChangeFeed_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ChangeFeed_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ChangeFeed_STATUS, got %T", armInput)
 	}
 
 	// Set property "Enabled":
@@ -1644,7 +1720,7 @@ func (feed *ChangeFeed_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_ChangeFeed_STATUS populates our ChangeFeed_STATUS from the provided source ChangeFeed_STATUS
-func (feed *ChangeFeed_STATUS) AssignProperties_From_ChangeFeed_STATUS(source *v20230101s.ChangeFeed_STATUS) error {
+func (feed *ChangeFeed_STATUS) AssignProperties_From_ChangeFeed_STATUS(source *storage.ChangeFeed_STATUS) error {
 
 	// Enabled
 	if source.Enabled != nil {
@@ -1662,7 +1738,7 @@ func (feed *ChangeFeed_STATUS) AssignProperties_From_ChangeFeed_STATUS(source *v
 }
 
 // AssignProperties_To_ChangeFeed_STATUS populates the provided destination ChangeFeed_STATUS from our ChangeFeed_STATUS
-func (feed *ChangeFeed_STATUS) AssignProperties_To_ChangeFeed_STATUS(destination *v20230101s.ChangeFeed_STATUS) error {
+func (feed *ChangeFeed_STATUS) AssignProperties_To_ChangeFeed_STATUS(destination *storage.ChangeFeed_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1701,7 +1777,7 @@ func (rules *CorsRules) ConvertToARM(resolved genruntime.ConvertToARMResolvedDet
 	if rules == nil {
 		return nil, nil
 	}
-	result := &CorsRules_ARM{}
+	result := &arm.CorsRules{}
 
 	// Set property "CorsRules":
 	for _, item := range rules.CorsRules {
@@ -1709,21 +1785,21 @@ func (rules *CorsRules) ConvertToARM(resolved genruntime.ConvertToARMResolvedDet
 		if err != nil {
 			return nil, err
 		}
-		result.CorsRules = append(result.CorsRules, *item_ARM.(*CorsRule_ARM))
+		result.CorsRules = append(result.CorsRules, *item_ARM.(*arm.CorsRule))
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rules *CorsRules) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &CorsRules_ARM{}
+	return &arm.CorsRules{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rules *CorsRules) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(CorsRules_ARM)
+	typedInput, ok := armInput.(arm.CorsRules)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected CorsRules_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.CorsRules, got %T", armInput)
 	}
 
 	// Set property "CorsRules":
@@ -1741,7 +1817,7 @@ func (rules *CorsRules) PopulateFromARM(owner genruntime.ArbitraryOwnerReference
 }
 
 // AssignProperties_From_CorsRules populates our CorsRules from the provided source CorsRules
-func (rules *CorsRules) AssignProperties_From_CorsRules(source *v20230101s.CorsRules) error {
+func (rules *CorsRules) AssignProperties_From_CorsRules(source *storage.CorsRules) error {
 
 	// CorsRules
 	if source.CorsRules != nil {
@@ -1766,17 +1842,17 @@ func (rules *CorsRules) AssignProperties_From_CorsRules(source *v20230101s.CorsR
 }
 
 // AssignProperties_To_CorsRules populates the provided destination CorsRules from our CorsRules
-func (rules *CorsRules) AssignProperties_To_CorsRules(destination *v20230101s.CorsRules) error {
+func (rules *CorsRules) AssignProperties_To_CorsRules(destination *storage.CorsRules) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// CorsRules
 	if rules.CorsRules != nil {
-		corsRuleList := make([]v20230101s.CorsRule, len(rules.CorsRules))
+		corsRuleList := make([]storage.CorsRule, len(rules.CorsRules))
 		for corsRuleIndex, corsRuleItem := range rules.CorsRules {
 			// Shadow the loop variable to avoid aliasing
 			corsRuleItem := corsRuleItem
-			var corsRule v20230101s.CorsRule
+			var corsRule storage.CorsRule
 			err := corsRuleItem.AssignProperties_To_CorsRule(&corsRule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_CorsRule() to populate field CorsRules")
@@ -1834,14 +1910,14 @@ var _ genruntime.FromARMConverter = &CorsRules_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rules *CorsRules_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &CorsRules_STATUS_ARM{}
+	return &arm.CorsRules_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rules *CorsRules_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(CorsRules_STATUS_ARM)
+	typedInput, ok := armInput.(arm.CorsRules_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected CorsRules_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.CorsRules_STATUS, got %T", armInput)
 	}
 
 	// Set property "CorsRules":
@@ -1859,7 +1935,7 @@ func (rules *CorsRules_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_CorsRules_STATUS populates our CorsRules_STATUS from the provided source CorsRules_STATUS
-func (rules *CorsRules_STATUS) AssignProperties_From_CorsRules_STATUS(source *v20230101s.CorsRules_STATUS) error {
+func (rules *CorsRules_STATUS) AssignProperties_From_CorsRules_STATUS(source *storage.CorsRules_STATUS) error {
 
 	// CorsRules
 	if source.CorsRules != nil {
@@ -1884,17 +1960,17 @@ func (rules *CorsRules_STATUS) AssignProperties_From_CorsRules_STATUS(source *v2
 }
 
 // AssignProperties_To_CorsRules_STATUS populates the provided destination CorsRules_STATUS from our CorsRules_STATUS
-func (rules *CorsRules_STATUS) AssignProperties_To_CorsRules_STATUS(destination *v20230101s.CorsRules_STATUS) error {
+func (rules *CorsRules_STATUS) AssignProperties_To_CorsRules_STATUS(destination *storage.CorsRules_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// CorsRules
 	if rules.CorsRules != nil {
-		corsRuleList := make([]v20230101s.CorsRule_STATUS, len(rules.CorsRules))
+		corsRuleList := make([]storage.CorsRule_STATUS, len(rules.CorsRules))
 		for corsRuleIndex, corsRuleItem := range rules.CorsRules {
 			// Shadow the loop variable to avoid aliasing
 			corsRuleItem := corsRuleItem
-			var corsRule v20230101s.CorsRule_STATUS
+			var corsRule storage.CorsRule_STATUS
 			err := corsRuleItem.AssignProperties_To_CorsRule_STATUS(&corsRule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_CorsRule_STATUS() to populate field CorsRules")
@@ -1941,7 +2017,7 @@ func (policy *DeleteRetentionPolicy) ConvertToARM(resolved genruntime.ConvertToA
 	if policy == nil {
 		return nil, nil
 	}
-	result := &DeleteRetentionPolicy_ARM{}
+	result := &arm.DeleteRetentionPolicy{}
 
 	// Set property "AllowPermanentDelete":
 	if policy.AllowPermanentDelete != nil {
@@ -1965,14 +2041,14 @@ func (policy *DeleteRetentionPolicy) ConvertToARM(resolved genruntime.ConvertToA
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (policy *DeleteRetentionPolicy) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DeleteRetentionPolicy_ARM{}
+	return &arm.DeleteRetentionPolicy{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (policy *DeleteRetentionPolicy) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DeleteRetentionPolicy_ARM)
+	typedInput, ok := armInput.(arm.DeleteRetentionPolicy)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DeleteRetentionPolicy_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DeleteRetentionPolicy, got %T", armInput)
 	}
 
 	// Set property "AllowPermanentDelete":
@@ -1998,7 +2074,7 @@ func (policy *DeleteRetentionPolicy) PopulateFromARM(owner genruntime.ArbitraryO
 }
 
 // AssignProperties_From_DeleteRetentionPolicy populates our DeleteRetentionPolicy from the provided source DeleteRetentionPolicy
-func (policy *DeleteRetentionPolicy) AssignProperties_From_DeleteRetentionPolicy(source *v20230101s.DeleteRetentionPolicy) error {
+func (policy *DeleteRetentionPolicy) AssignProperties_From_DeleteRetentionPolicy(source *storage.DeleteRetentionPolicy) error {
 
 	// AllowPermanentDelete
 	if source.AllowPermanentDelete != nil {
@@ -2029,7 +2105,7 @@ func (policy *DeleteRetentionPolicy) AssignProperties_From_DeleteRetentionPolicy
 }
 
 // AssignProperties_To_DeleteRetentionPolicy populates the provided destination DeleteRetentionPolicy from our DeleteRetentionPolicy
-func (policy *DeleteRetentionPolicy) AssignProperties_To_DeleteRetentionPolicy(destination *v20230101s.DeleteRetentionPolicy) error {
+func (policy *DeleteRetentionPolicy) AssignProperties_To_DeleteRetentionPolicy(destination *storage.DeleteRetentionPolicy) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2118,14 +2194,14 @@ var _ genruntime.FromARMConverter = &DeleteRetentionPolicy_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (policy *DeleteRetentionPolicy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DeleteRetentionPolicy_STATUS_ARM{}
+	return &arm.DeleteRetentionPolicy_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (policy *DeleteRetentionPolicy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DeleteRetentionPolicy_STATUS_ARM)
+	typedInput, ok := armInput.(arm.DeleteRetentionPolicy_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DeleteRetentionPolicy_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DeleteRetentionPolicy_STATUS, got %T", armInput)
 	}
 
 	// Set property "AllowPermanentDelete":
@@ -2151,7 +2227,7 @@ func (policy *DeleteRetentionPolicy_STATUS) PopulateFromARM(owner genruntime.Arb
 }
 
 // AssignProperties_From_DeleteRetentionPolicy_STATUS populates our DeleteRetentionPolicy_STATUS from the provided source DeleteRetentionPolicy_STATUS
-func (policy *DeleteRetentionPolicy_STATUS) AssignProperties_From_DeleteRetentionPolicy_STATUS(source *v20230101s.DeleteRetentionPolicy_STATUS) error {
+func (policy *DeleteRetentionPolicy_STATUS) AssignProperties_From_DeleteRetentionPolicy_STATUS(source *storage.DeleteRetentionPolicy_STATUS) error {
 
 	// AllowPermanentDelete
 	if source.AllowPermanentDelete != nil {
@@ -2177,7 +2253,7 @@ func (policy *DeleteRetentionPolicy_STATUS) AssignProperties_From_DeleteRetentio
 }
 
 // AssignProperties_To_DeleteRetentionPolicy_STATUS populates the provided destination DeleteRetentionPolicy_STATUS from our DeleteRetentionPolicy_STATUS
-func (policy *DeleteRetentionPolicy_STATUS) AssignProperties_To_DeleteRetentionPolicy_STATUS(destination *v20230101s.DeleteRetentionPolicy_STATUS) error {
+func (policy *DeleteRetentionPolicy_STATUS) AssignProperties_To_DeleteRetentionPolicy_STATUS(destination *storage.DeleteRetentionPolicy_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2236,7 +2312,7 @@ func (policy *LastAccessTimeTrackingPolicy) ConvertToARM(resolved genruntime.Con
 	if policy == nil {
 		return nil, nil
 	}
-	result := &LastAccessTimeTrackingPolicy_ARM{}
+	result := &arm.LastAccessTimeTrackingPolicy{}
 
 	// Set property "BlobType":
 	for _, item := range policy.BlobType {
@@ -2251,7 +2327,9 @@ func (policy *LastAccessTimeTrackingPolicy) ConvertToARM(resolved genruntime.Con
 
 	// Set property "Name":
 	if policy.Name != nil {
-		name := *policy.Name
+		var temp string
+		temp = string(*policy.Name)
+		name := arm.LastAccessTimeTrackingPolicy_Name(temp)
 		result.Name = &name
 	}
 
@@ -2265,14 +2343,14 @@ func (policy *LastAccessTimeTrackingPolicy) ConvertToARM(resolved genruntime.Con
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (policy *LastAccessTimeTrackingPolicy) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LastAccessTimeTrackingPolicy_ARM{}
+	return &arm.LastAccessTimeTrackingPolicy{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (policy *LastAccessTimeTrackingPolicy) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LastAccessTimeTrackingPolicy_ARM)
+	typedInput, ok := armInput.(arm.LastAccessTimeTrackingPolicy)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LastAccessTimeTrackingPolicy_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LastAccessTimeTrackingPolicy, got %T", armInput)
 	}
 
 	// Set property "BlobType":
@@ -2288,7 +2366,9 @@ func (policy *LastAccessTimeTrackingPolicy) PopulateFromARM(owner genruntime.Arb
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := LastAccessTimeTrackingPolicy_Name(temp)
 		policy.Name = &name
 	}
 
@@ -2303,7 +2383,7 @@ func (policy *LastAccessTimeTrackingPolicy) PopulateFromARM(owner genruntime.Arb
 }
 
 // AssignProperties_From_LastAccessTimeTrackingPolicy populates our LastAccessTimeTrackingPolicy from the provided source LastAccessTimeTrackingPolicy
-func (policy *LastAccessTimeTrackingPolicy) AssignProperties_From_LastAccessTimeTrackingPolicy(source *v20230101s.LastAccessTimeTrackingPolicy) error {
+func (policy *LastAccessTimeTrackingPolicy) AssignProperties_From_LastAccessTimeTrackingPolicy(source *storage.LastAccessTimeTrackingPolicy) error {
 
 	// BlobType
 	policy.BlobType = genruntime.CloneSliceOfString(source.BlobType)
@@ -2318,8 +2398,9 @@ func (policy *LastAccessTimeTrackingPolicy) AssignProperties_From_LastAccessTime
 
 	// Name
 	if source.Name != nil {
-		name := LastAccessTimeTrackingPolicy_Name(*source.Name)
-		policy.Name = &name
+		name := *source.Name
+		nameTemp := genruntime.ToEnum(name, lastAccessTimeTrackingPolicy_Name_Values)
+		policy.Name = &nameTemp
 	} else {
 		policy.Name = nil
 	}
@@ -2332,7 +2413,7 @@ func (policy *LastAccessTimeTrackingPolicy) AssignProperties_From_LastAccessTime
 }
 
 // AssignProperties_To_LastAccessTimeTrackingPolicy populates the provided destination LastAccessTimeTrackingPolicy from our LastAccessTimeTrackingPolicy
-func (policy *LastAccessTimeTrackingPolicy) AssignProperties_To_LastAccessTimeTrackingPolicy(destination *v20230101s.LastAccessTimeTrackingPolicy) error {
+func (policy *LastAccessTimeTrackingPolicy) AssignProperties_To_LastAccessTimeTrackingPolicy(destination *storage.LastAccessTimeTrackingPolicy) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2385,7 +2466,7 @@ func (policy *LastAccessTimeTrackingPolicy) Initialize_From_LastAccessTimeTracki
 
 	// Name
 	if source.Name != nil {
-		name := LastAccessTimeTrackingPolicy_Name(*source.Name)
+		name := genruntime.ToEnum(string(*source.Name), lastAccessTimeTrackingPolicy_Name_Values)
 		policy.Name = &name
 	} else {
 		policy.Name = nil
@@ -2419,14 +2500,14 @@ var _ genruntime.FromARMConverter = &LastAccessTimeTrackingPolicy_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (policy *LastAccessTimeTrackingPolicy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LastAccessTimeTrackingPolicy_STATUS_ARM{}
+	return &arm.LastAccessTimeTrackingPolicy_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (policy *LastAccessTimeTrackingPolicy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LastAccessTimeTrackingPolicy_STATUS_ARM)
+	typedInput, ok := armInput.(arm.LastAccessTimeTrackingPolicy_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LastAccessTimeTrackingPolicy_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LastAccessTimeTrackingPolicy_STATUS, got %T", armInput)
 	}
 
 	// Set property "BlobType":
@@ -2442,7 +2523,9 @@ func (policy *LastAccessTimeTrackingPolicy_STATUS) PopulateFromARM(owner genrunt
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := LastAccessTimeTrackingPolicy_Name_STATUS(temp)
 		policy.Name = &name
 	}
 
@@ -2457,7 +2540,7 @@ func (policy *LastAccessTimeTrackingPolicy_STATUS) PopulateFromARM(owner genrunt
 }
 
 // AssignProperties_From_LastAccessTimeTrackingPolicy_STATUS populates our LastAccessTimeTrackingPolicy_STATUS from the provided source LastAccessTimeTrackingPolicy_STATUS
-func (policy *LastAccessTimeTrackingPolicy_STATUS) AssignProperties_From_LastAccessTimeTrackingPolicy_STATUS(source *v20230101s.LastAccessTimeTrackingPolicy_STATUS) error {
+func (policy *LastAccessTimeTrackingPolicy_STATUS) AssignProperties_From_LastAccessTimeTrackingPolicy_STATUS(source *storage.LastAccessTimeTrackingPolicy_STATUS) error {
 
 	// BlobType
 	policy.BlobType = genruntime.CloneSliceOfString(source.BlobType)
@@ -2472,8 +2555,9 @@ func (policy *LastAccessTimeTrackingPolicy_STATUS) AssignProperties_From_LastAcc
 
 	// Name
 	if source.Name != nil {
-		name := LastAccessTimeTrackingPolicy_Name_STATUS(*source.Name)
-		policy.Name = &name
+		name := *source.Name
+		nameTemp := genruntime.ToEnum(name, lastAccessTimeTrackingPolicy_Name_STATUS_Values)
+		policy.Name = &nameTemp
 	} else {
 		policy.Name = nil
 	}
@@ -2486,7 +2570,7 @@ func (policy *LastAccessTimeTrackingPolicy_STATUS) AssignProperties_From_LastAcc
 }
 
 // AssignProperties_To_LastAccessTimeTrackingPolicy_STATUS populates the provided destination LastAccessTimeTrackingPolicy_STATUS from our LastAccessTimeTrackingPolicy_STATUS
-func (policy *LastAccessTimeTrackingPolicy_STATUS) AssignProperties_To_LastAccessTimeTrackingPolicy_STATUS(destination *v20230101s.LastAccessTimeTrackingPolicy_STATUS) error {
+func (policy *LastAccessTimeTrackingPolicy_STATUS) AssignProperties_To_LastAccessTimeTrackingPolicy_STATUS(destination *storage.LastAccessTimeTrackingPolicy_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2542,7 +2626,7 @@ func (properties *RestorePolicyProperties) ConvertToARM(resolved genruntime.Conv
 	if properties == nil {
 		return nil, nil
 	}
-	result := &RestorePolicyProperties_ARM{}
+	result := &arm.RestorePolicyProperties{}
 
 	// Set property "Days":
 	if properties.Days != nil {
@@ -2560,14 +2644,14 @@ func (properties *RestorePolicyProperties) ConvertToARM(resolved genruntime.Conv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *RestorePolicyProperties) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &RestorePolicyProperties_ARM{}
+	return &arm.RestorePolicyProperties{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *RestorePolicyProperties) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(RestorePolicyProperties_ARM)
+	typedInput, ok := armInput.(arm.RestorePolicyProperties)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected RestorePolicyProperties_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RestorePolicyProperties, got %T", armInput)
 	}
 
 	// Set property "Days":
@@ -2587,7 +2671,7 @@ func (properties *RestorePolicyProperties) PopulateFromARM(owner genruntime.Arbi
 }
 
 // AssignProperties_From_RestorePolicyProperties populates our RestorePolicyProperties from the provided source RestorePolicyProperties
-func (properties *RestorePolicyProperties) AssignProperties_From_RestorePolicyProperties(source *v20230101s.RestorePolicyProperties) error {
+func (properties *RestorePolicyProperties) AssignProperties_From_RestorePolicyProperties(source *storage.RestorePolicyProperties) error {
 
 	// Days
 	if source.Days != nil {
@@ -2610,7 +2694,7 @@ func (properties *RestorePolicyProperties) AssignProperties_From_RestorePolicyPr
 }
 
 // AssignProperties_To_RestorePolicyProperties populates the provided destination RestorePolicyProperties from our RestorePolicyProperties
-func (properties *RestorePolicyProperties) AssignProperties_To_RestorePolicyProperties(destination *v20230101s.RestorePolicyProperties) error {
+func (properties *RestorePolicyProperties) AssignProperties_To_RestorePolicyProperties(destination *storage.RestorePolicyProperties) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2683,14 +2767,14 @@ var _ genruntime.FromARMConverter = &RestorePolicyProperties_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *RestorePolicyProperties_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &RestorePolicyProperties_STATUS_ARM{}
+	return &arm.RestorePolicyProperties_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *RestorePolicyProperties_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(RestorePolicyProperties_STATUS_ARM)
+	typedInput, ok := armInput.(arm.RestorePolicyProperties_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected RestorePolicyProperties_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RestorePolicyProperties_STATUS, got %T", armInput)
 	}
 
 	// Set property "Days":
@@ -2722,7 +2806,7 @@ func (properties *RestorePolicyProperties_STATUS) PopulateFromARM(owner genrunti
 }
 
 // AssignProperties_From_RestorePolicyProperties_STATUS populates our RestorePolicyProperties_STATUS from the provided source RestorePolicyProperties_STATUS
-func (properties *RestorePolicyProperties_STATUS) AssignProperties_From_RestorePolicyProperties_STATUS(source *v20230101s.RestorePolicyProperties_STATUS) error {
+func (properties *RestorePolicyProperties_STATUS) AssignProperties_From_RestorePolicyProperties_STATUS(source *storage.RestorePolicyProperties_STATUS) error {
 
 	// Days
 	properties.Days = genruntime.ClonePointerToInt(source.Days)
@@ -2746,7 +2830,7 @@ func (properties *RestorePolicyProperties_STATUS) AssignProperties_From_RestoreP
 }
 
 // AssignProperties_To_RestorePolicyProperties_STATUS populates the provided destination RestorePolicyProperties_STATUS from our RestorePolicyProperties_STATUS
-func (properties *RestorePolicyProperties_STATUS) AssignProperties_To_RestorePolicyProperties_STATUS(destination *v20230101s.RestorePolicyProperties_STATUS) error {
+func (properties *RestorePolicyProperties_STATUS) AssignProperties_To_RestorePolicyProperties_STATUS(destination *storage.RestorePolicyProperties_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2766,6 +2850,110 @@ func (properties *RestorePolicyProperties_STATUS) AssignProperties_To_RestorePol
 
 	// MinRestoreTime
 	destination.MinRestoreTime = genruntime.ClonePointerToString(properties.MinRestoreTime)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type StorageAccountsBlobServiceOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_StorageAccountsBlobServiceOperatorSpec populates our StorageAccountsBlobServiceOperatorSpec from the provided source StorageAccountsBlobServiceOperatorSpec
+func (operator *StorageAccountsBlobServiceOperatorSpec) AssignProperties_From_StorageAccountsBlobServiceOperatorSpec(source *storage.StorageAccountsBlobServiceOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_StorageAccountsBlobServiceOperatorSpec populates the provided destination StorageAccountsBlobServiceOperatorSpec from our StorageAccountsBlobServiceOperatorSpec
+func (operator *StorageAccountsBlobServiceOperatorSpec) AssignProperties_To_StorageAccountsBlobServiceOperatorSpec(destination *storage.StorageAccountsBlobServiceOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2812,7 +3000,7 @@ func (rule *CorsRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetai
 	if rule == nil {
 		return nil, nil
 	}
-	result := &CorsRule_ARM{}
+	result := &arm.CorsRule{}
 
 	// Set property "AllowedHeaders":
 	for _, item := range rule.AllowedHeaders {
@@ -2821,7 +3009,9 @@ func (rule *CorsRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetai
 
 	// Set property "AllowedMethods":
 	for _, item := range rule.AllowedMethods {
-		result.AllowedMethods = append(result.AllowedMethods, item)
+		var temp string
+		temp = string(item)
+		result.AllowedMethods = append(result.AllowedMethods, arm.CorsRule_AllowedMethods(temp))
 	}
 
 	// Set property "AllowedOrigins":
@@ -2844,14 +3034,14 @@ func (rule *CorsRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetai
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *CorsRule) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &CorsRule_ARM{}
+	return &arm.CorsRule{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *CorsRule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(CorsRule_ARM)
+	typedInput, ok := armInput.(arm.CorsRule)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected CorsRule_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.CorsRule, got %T", armInput)
 	}
 
 	// Set property "AllowedHeaders":
@@ -2861,7 +3051,9 @@ func (rule *CorsRule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, 
 
 	// Set property "AllowedMethods":
 	for _, item := range typedInput.AllowedMethods {
-		rule.AllowedMethods = append(rule.AllowedMethods, item)
+		var temp string
+		temp = string(item)
+		rule.AllowedMethods = append(rule.AllowedMethods, CorsRule_AllowedMethods(temp))
 	}
 
 	// Set property "AllowedOrigins":
@@ -2885,7 +3077,7 @@ func (rule *CorsRule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, 
 }
 
 // AssignProperties_From_CorsRule populates our CorsRule from the provided source CorsRule
-func (rule *CorsRule) AssignProperties_From_CorsRule(source *v20230101s.CorsRule) error {
+func (rule *CorsRule) AssignProperties_From_CorsRule(source *storage.CorsRule) error {
 
 	// AllowedHeaders
 	rule.AllowedHeaders = genruntime.CloneSliceOfString(source.AllowedHeaders)
@@ -2896,7 +3088,7 @@ func (rule *CorsRule) AssignProperties_From_CorsRule(source *v20230101s.CorsRule
 		for allowedMethodIndex, allowedMethodItem := range source.AllowedMethods {
 			// Shadow the loop variable to avoid aliasing
 			allowedMethodItem := allowedMethodItem
-			allowedMethodList[allowedMethodIndex] = CorsRule_AllowedMethods(allowedMethodItem)
+			allowedMethodList[allowedMethodIndex] = genruntime.ToEnum(allowedMethodItem, corsRule_AllowedMethods_Values)
 		}
 		rule.AllowedMethods = allowedMethodList
 	} else {
@@ -2917,7 +3109,7 @@ func (rule *CorsRule) AssignProperties_From_CorsRule(source *v20230101s.CorsRule
 }
 
 // AssignProperties_To_CorsRule populates the provided destination CorsRule from our CorsRule
-func (rule *CorsRule) AssignProperties_To_CorsRule(destination *v20230101s.CorsRule) error {
+func (rule *CorsRule) AssignProperties_To_CorsRule(destination *storage.CorsRule) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2969,7 +3161,7 @@ func (rule *CorsRule) Initialize_From_CorsRule_STATUS(source *CorsRule_STATUS) e
 		for allowedMethodIndex, allowedMethodItem := range source.AllowedMethods {
 			// Shadow the loop variable to avoid aliasing
 			allowedMethodItem := allowedMethodItem
-			allowedMethod := CorsRule_AllowedMethods(allowedMethodItem)
+			allowedMethod := genruntime.ToEnum(string(allowedMethodItem), corsRule_AllowedMethods_Values)
 			allowedMethodList[allowedMethodIndex] = allowedMethod
 		}
 		rule.AllowedMethods = allowedMethodList
@@ -3016,14 +3208,14 @@ var _ genruntime.FromARMConverter = &CorsRule_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *CorsRule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &CorsRule_STATUS_ARM{}
+	return &arm.CorsRule_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *CorsRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(CorsRule_STATUS_ARM)
+	typedInput, ok := armInput.(arm.CorsRule_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected CorsRule_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.CorsRule_STATUS, got %T", armInput)
 	}
 
 	// Set property "AllowedHeaders":
@@ -3033,7 +3225,9 @@ func (rule *CorsRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 
 	// Set property "AllowedMethods":
 	for _, item := range typedInput.AllowedMethods {
-		rule.AllowedMethods = append(rule.AllowedMethods, item)
+		var temp string
+		temp = string(item)
+		rule.AllowedMethods = append(rule.AllowedMethods, CorsRule_AllowedMethods_STATUS(temp))
 	}
 
 	// Set property "AllowedOrigins":
@@ -3057,7 +3251,7 @@ func (rule *CorsRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 }
 
 // AssignProperties_From_CorsRule_STATUS populates our CorsRule_STATUS from the provided source CorsRule_STATUS
-func (rule *CorsRule_STATUS) AssignProperties_From_CorsRule_STATUS(source *v20230101s.CorsRule_STATUS) error {
+func (rule *CorsRule_STATUS) AssignProperties_From_CorsRule_STATUS(source *storage.CorsRule_STATUS) error {
 
 	// AllowedHeaders
 	rule.AllowedHeaders = genruntime.CloneSliceOfString(source.AllowedHeaders)
@@ -3068,7 +3262,7 @@ func (rule *CorsRule_STATUS) AssignProperties_From_CorsRule_STATUS(source *v2023
 		for allowedMethodIndex, allowedMethodItem := range source.AllowedMethods {
 			// Shadow the loop variable to avoid aliasing
 			allowedMethodItem := allowedMethodItem
-			allowedMethodList[allowedMethodIndex] = CorsRule_AllowedMethods_STATUS(allowedMethodItem)
+			allowedMethodList[allowedMethodIndex] = genruntime.ToEnum(allowedMethodItem, corsRule_AllowedMethods_STATUS_Values)
 		}
 		rule.AllowedMethods = allowedMethodList
 	} else {
@@ -3089,7 +3283,7 @@ func (rule *CorsRule_STATUS) AssignProperties_From_CorsRule_STATUS(source *v2023
 }
 
 // AssignProperties_To_CorsRule_STATUS populates the provided destination CorsRule_STATUS from our CorsRule_STATUS
-func (rule *CorsRule_STATUS) AssignProperties_To_CorsRule_STATUS(destination *v20230101s.CorsRule_STATUS) error {
+func (rule *CorsRule_STATUS) AssignProperties_To_CorsRule_STATUS(destination *storage.CorsRule_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3134,9 +3328,19 @@ type LastAccessTimeTrackingPolicy_Name string
 
 const LastAccessTimeTrackingPolicy_Name_AccessTimeTracking = LastAccessTimeTrackingPolicy_Name("AccessTimeTracking")
 
+// Mapping from string to LastAccessTimeTrackingPolicy_Name
+var lastAccessTimeTrackingPolicy_Name_Values = map[string]LastAccessTimeTrackingPolicy_Name{
+	"accesstimetracking": LastAccessTimeTrackingPolicy_Name_AccessTimeTracking,
+}
+
 type LastAccessTimeTrackingPolicy_Name_STATUS string
 
 const LastAccessTimeTrackingPolicy_Name_STATUS_AccessTimeTracking = LastAccessTimeTrackingPolicy_Name_STATUS("AccessTimeTracking")
+
+// Mapping from string to LastAccessTimeTrackingPolicy_Name_STATUS
+var lastAccessTimeTrackingPolicy_Name_STATUS_Values = map[string]LastAccessTimeTrackingPolicy_Name_STATUS{
+	"accesstimetracking": LastAccessTimeTrackingPolicy_Name_STATUS_AccessTimeTracking,
+}
 
 // +kubebuilder:validation:Enum={"CONNECT","DELETE","GET","HEAD","MERGE","OPTIONS","PATCH","POST","PUT","TRACE"}
 type CorsRule_AllowedMethods string
@@ -3154,6 +3358,20 @@ const (
 	CorsRule_AllowedMethods_TRACE   = CorsRule_AllowedMethods("TRACE")
 )
 
+// Mapping from string to CorsRule_AllowedMethods
+var corsRule_AllowedMethods_Values = map[string]CorsRule_AllowedMethods{
+	"connect": CorsRule_AllowedMethods_CONNECT,
+	"delete":  CorsRule_AllowedMethods_DELETE,
+	"get":     CorsRule_AllowedMethods_GET,
+	"head":    CorsRule_AllowedMethods_HEAD,
+	"merge":   CorsRule_AllowedMethods_MERGE,
+	"options": CorsRule_AllowedMethods_OPTIONS,
+	"patch":   CorsRule_AllowedMethods_PATCH,
+	"post":    CorsRule_AllowedMethods_POST,
+	"put":     CorsRule_AllowedMethods_PUT,
+	"trace":   CorsRule_AllowedMethods_TRACE,
+}
+
 type CorsRule_AllowedMethods_STATUS string
 
 const (
@@ -3168,6 +3386,20 @@ const (
 	CorsRule_AllowedMethods_STATUS_PUT     = CorsRule_AllowedMethods_STATUS("PUT")
 	CorsRule_AllowedMethods_STATUS_TRACE   = CorsRule_AllowedMethods_STATUS("TRACE")
 )
+
+// Mapping from string to CorsRule_AllowedMethods_STATUS
+var corsRule_AllowedMethods_STATUS_Values = map[string]CorsRule_AllowedMethods_STATUS{
+	"connect": CorsRule_AllowedMethods_STATUS_CONNECT,
+	"delete":  CorsRule_AllowedMethods_STATUS_DELETE,
+	"get":     CorsRule_AllowedMethods_STATUS_GET,
+	"head":    CorsRule_AllowedMethods_STATUS_HEAD,
+	"merge":   CorsRule_AllowedMethods_STATUS_MERGE,
+	"options": CorsRule_AllowedMethods_STATUS_OPTIONS,
+	"patch":   CorsRule_AllowedMethods_STATUS_PATCH,
+	"post":    CorsRule_AllowedMethods_STATUS_POST,
+	"put":     CorsRule_AllowedMethods_STATUS_PUT,
+	"trace":   CorsRule_AllowedMethods_STATUS_TRACE,
+}
 
 func init() {
 	SchemeBuilder.Register(&StorageAccountsBlobService{}, &StorageAccountsBlobServiceList{})

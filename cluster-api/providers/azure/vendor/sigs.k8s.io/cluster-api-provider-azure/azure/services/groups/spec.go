@@ -22,6 +22,7 @@ import (
 	asoresourcesv1 "github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
@@ -46,7 +47,7 @@ func (s *GroupSpec) ResourceRef() *asoresourcesv1.ResourceGroup {
 }
 
 // Parameters implements aso.ResourceSpecGetter.
-func (s *GroupSpec) Parameters(ctx context.Context, existing *asoresourcesv1.ResourceGroup) (*asoresourcesv1.ResourceGroup, error) {
+func (s *GroupSpec) Parameters(_ context.Context, existing *asoresourcesv1.ResourceGroup) (*asoresourcesv1.ResourceGroup, error) {
 	if existing != nil {
 		return existing, nil
 	}

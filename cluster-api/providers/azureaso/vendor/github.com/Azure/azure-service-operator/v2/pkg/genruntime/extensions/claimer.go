@@ -27,8 +27,8 @@ type ClaimFunc = func(ctx context.Context, log logr.Logger, obj genruntime.ARMOw
 // the provided default ClaimFunc is run by default.
 func CreateClaimer(
 	host genruntime.ResourceExtension,
-	next ClaimFunc) ClaimFunc {
-
+	next ClaimFunc,
+) ClaimFunc {
 	impl, ok := host.(Claimer)
 	if !ok {
 		return next

@@ -23,13 +23,12 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/cluster-api-provider-azure/feature"
-	"sigs.k8s.io/cluster-api-provider-azure/util/versions"
-	webhookutils "sigs.k8s.io/cluster-api-provider-azure/util/webhook"
-	capifeature "sigs.k8s.io/cluster-api/feature"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	"sigs.k8s.io/cluster-api-provider-azure/util/versions"
+	webhookutils "sigs.k8s.io/cluster-api-provider-azure/util/webhook"
 )
 
 // SetupAzureManagedControlPlaneTemplateWebhookWithManager will set up the webhook to be managed by the specified manager.
@@ -50,7 +49,7 @@ type azureManagedControlPlaneTemplateWebhook struct {
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (mcpw *azureManagedControlPlaneTemplateWebhook) Default(ctx context.Context, obj runtime.Object) error {
+func (mcpw *azureManagedControlPlaneTemplateWebhook) Default(_ context.Context, obj runtime.Object) error {
 	mcp, ok := obj.(*AzureManagedControlPlaneTemplate)
 	if !ok {
 		return apierrors.NewBadRequest("expected an AzureManagedControlPlaneTemplate")
@@ -60,25 +59,17 @@ func (mcpw *azureManagedControlPlaneTemplateWebhook) Default(ctx context.Context
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (mcpw *azureManagedControlPlaneTemplateWebhook) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (mcpw *azureManagedControlPlaneTemplateWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	mcp, ok := obj.(*AzureManagedControlPlaneTemplate)
 	if !ok {
 		return nil, apierrors.NewBadRequest("expected an AzureManagedControlPlaneTemplate")
-	}
-	// NOTE: AzureManagedControlPlaneTemplate relies upon MachinePools, which is behind a feature gate flag.
-	// The webhook must prevent creating new objects in case the feature flag is disabled.
-	if !feature.Gates.Enabled(capifeature.MachinePool) {
-		return nil, field.Forbidden(
-			field.NewPath("spec"),
-			"can be set only if the Cluster API 'MachinePool' feature flag is enabled",
-		)
 	}
 
 	return nil, mcp.validateManagedControlPlaneTemplate(mcpw.Client)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (mcpw *azureManagedControlPlaneTemplateWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (mcpw *azureManagedControlPlaneTemplateWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 	old, ok := oldObj.(*AzureManagedControlPlaneTemplate)
 	if !ok {
@@ -234,7 +225,7 @@ func (mcp *AzureManagedControlPlaneTemplate) validateManagedControlPlaneTemplate
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (mcpw *azureManagedControlPlaneTemplateWebhook) ValidateDelete(ctx context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (mcpw *azureManagedControlPlaneTemplateWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 

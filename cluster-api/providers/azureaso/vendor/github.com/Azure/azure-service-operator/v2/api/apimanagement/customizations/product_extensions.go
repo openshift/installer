@@ -28,8 +28,8 @@ func (extension *ProductExtension) Delete(
 	resolver *resolver.Resolver,
 	armClient *genericarmclient.GenericClient,
 	obj genruntime.ARMMetaObject,
-	next extensions.DeleteFunc) (ctrl.Result, error) {
-
+	next extensions.DeleteFunc,
+) (ctrl.Result, error) {
 	typedObj, ok := obj.(*storage.Product)
 	if !ok {
 		return ctrl.Result{}, errors.Errorf("cannot run on unknown resource type %T, expected *apiManagement.Product", obj)

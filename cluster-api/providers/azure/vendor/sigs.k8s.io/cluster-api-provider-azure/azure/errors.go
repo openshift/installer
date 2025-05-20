@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
@@ -61,6 +62,14 @@ const (
 	TransientErrorType ReconcileErrorType = "Transient"
 	// TerminalErrorType cannot be recovered, will not be requeued.
 	TerminalErrorType ReconcileErrorType = "Terminal"
+	// UnsupportedChange is returned when a change is not supported.
+	UnsupportedChange = "UnsupportedChange"
+	// InvalidConfiguration is returned when a configuration is invalid.
+	InvalidConfiguration = "InvalidConfiguration"
+	// CreateError is returned when an error occurs during creation.
+	CreateError = "CreateError"
+	// UpdateError is returned when an error occurs during update.
+	UpdateError = "UpdateError"
 )
 
 // Error returns the error message for a ReconcileError.

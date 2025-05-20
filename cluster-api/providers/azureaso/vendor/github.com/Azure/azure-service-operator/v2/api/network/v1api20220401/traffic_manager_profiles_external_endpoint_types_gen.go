@@ -5,10 +5,14 @@ package v1api20220401
 
 import (
 	"fmt"
-	v20220401s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220401/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20220401/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220401/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type TrafficManagerProfilesExternalEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Trafficmanagerprofiles_ExternalEndpoint_Spec   `json:"spec,omitempty"`
-	Status            Trafficmanagerprofiles_ExternalEndpoint_STATUS `json:"status,omitempty"`
+	Spec              TrafficManagerProfilesExternalEndpoint_Spec   `json:"spec,omitempty"`
+	Status            TrafficManagerProfilesExternalEndpoint_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &TrafficManagerProfilesExternalEndpoint{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &TrafficManagerProfilesExternalEndpoint{}
 
 // ConvertFrom populates our TrafficManagerProfilesExternalEndpoint from the provided hub TrafficManagerProfilesExternalEndpoint
 func (endpoint *TrafficManagerProfilesExternalEndpoint) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220401s.TrafficManagerProfilesExternalEndpoint)
+	source, ok := hub.(*storage.TrafficManagerProfilesExternalEndpoint)
 	if !ok {
 		return fmt.Errorf("expected network/v1api20220401/storage/TrafficManagerProfilesExternalEndpoint but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) ConvertFrom(hub conversi
 
 // ConvertTo populates the provided hub TrafficManagerProfilesExternalEndpoint from our TrafficManagerProfilesExternalEndpoint
 func (endpoint *TrafficManagerProfilesExternalEndpoint) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220401s.TrafficManagerProfilesExternalEndpoint)
+	destination, ok := hub.(*storage.TrafficManagerProfilesExternalEndpoint)
 	if !ok {
 		return fmt.Errorf("expected network/v1api20220401/storage/TrafficManagerProfilesExternalEndpoint but received %T instead", hub)
 	}
@@ -90,15 +94,35 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the TrafficManagerProfilesExternalEndpoint resource
 func (endpoint *TrafficManagerProfilesExternalEndpoint) defaultImpl() { endpoint.defaultAzureName() }
 
+var _ configmaps.Exporter = &TrafficManagerProfilesExternalEndpoint{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (endpoint *TrafficManagerProfilesExternalEndpoint) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if endpoint.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return endpoint.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &TrafficManagerProfilesExternalEndpoint{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (endpoint *TrafficManagerProfilesExternalEndpoint) SecretDestinationExpressions() []*core.DestinationExpression {
+	if endpoint.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return endpoint.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &TrafficManagerProfilesExternalEndpoint{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (endpoint *TrafficManagerProfilesExternalEndpoint) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Trafficmanagerprofiles_ExternalEndpoint_STATUS); ok {
-		return endpoint.Spec.Initialize_From_Trafficmanagerprofiles_ExternalEndpoint_STATUS(s)
+	if s, ok := status.(*TrafficManagerProfilesExternalEndpoint_STATUS); ok {
+		return endpoint.Spec.Initialize_From_TrafficManagerProfilesExternalEndpoint_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Trafficmanagerprofiles_ExternalEndpoint_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type TrafficManagerProfilesExternalEndpoint_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &TrafficManagerProfilesExternalEndpoint{}
@@ -110,7 +134,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-04-01"
 func (endpoint TrafficManagerProfilesExternalEndpoint) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-04-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -144,7 +168,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (endpoint *TrafficManagerProfilesExternalEndpoint) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Trafficmanagerprofiles_ExternalEndpoint_STATUS{}
+	return &TrafficManagerProfilesExternalEndpoint_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -156,13 +180,13 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) Owner() *genruntime.Reso
 // SetStatus sets the status of this resource
 func (endpoint *TrafficManagerProfilesExternalEndpoint) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Trafficmanagerprofiles_ExternalEndpoint_STATUS); ok {
+	if st, ok := status.(*TrafficManagerProfilesExternalEndpoint_STATUS); ok {
 		endpoint.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Trafficmanagerprofiles_ExternalEndpoint_STATUS
+	var st TrafficManagerProfilesExternalEndpoint_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -208,7 +232,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) ValidateUpdate(old runti
 
 // createValidations validates the creation of the resource
 func (endpoint *TrafficManagerProfilesExternalEndpoint) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){endpoint.validateResourceReferences, endpoint.validateOwnerReference}
+	return []func() (admission.Warnings, error){endpoint.validateResourceReferences, endpoint.validateOwnerReference, endpoint.validateSecretDestinations, endpoint.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) updateValidations() []fu
 		func(old runtime.Object) (admission.Warnings, error) {
 			return endpoint.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return endpoint.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return endpoint.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (endpoint *TrafficManagerProfilesExternalEndpoint) validateConfigMapDestinations() (admission.Warnings, error) {
+	if endpoint.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(endpoint, nil, endpoint.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +281,14 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) validateResourceReferenc
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (endpoint *TrafficManagerProfilesExternalEndpoint) validateSecretDestinations() (admission.Warnings, error) {
+	if endpoint.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(endpoint, nil, endpoint.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (endpoint *TrafficManagerProfilesExternalEndpoint) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*TrafficManagerProfilesExternalEndpoint)
@@ -254,24 +300,24 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) validateWriteOncePropert
 }
 
 // AssignProperties_From_TrafficManagerProfilesExternalEndpoint populates our TrafficManagerProfilesExternalEndpoint from the provided source TrafficManagerProfilesExternalEndpoint
-func (endpoint *TrafficManagerProfilesExternalEndpoint) AssignProperties_From_TrafficManagerProfilesExternalEndpoint(source *v20220401s.TrafficManagerProfilesExternalEndpoint) error {
+func (endpoint *TrafficManagerProfilesExternalEndpoint) AssignProperties_From_TrafficManagerProfilesExternalEndpoint(source *storage.TrafficManagerProfilesExternalEndpoint) error {
 
 	// ObjectMeta
 	endpoint.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Trafficmanagerprofiles_ExternalEndpoint_Spec
-	err := spec.AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_Spec(&source.Spec)
+	var spec TrafficManagerProfilesExternalEndpoint_Spec
+	err := spec.AssignProperties_From_TrafficManagerProfilesExternalEndpoint_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_TrafficManagerProfilesExternalEndpoint_Spec() to populate field Spec")
 	}
 	endpoint.Spec = spec
 
 	// Status
-	var status Trafficmanagerprofiles_ExternalEndpoint_STATUS
-	err = status.AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_STATUS(&source.Status)
+	var status TrafficManagerProfilesExternalEndpoint_STATUS
+	err = status.AssignProperties_From_TrafficManagerProfilesExternalEndpoint_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_TrafficManagerProfilesExternalEndpoint_STATUS() to populate field Status")
 	}
 	endpoint.Status = status
 
@@ -280,24 +326,24 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) AssignProperties_From_Tr
 }
 
 // AssignProperties_To_TrafficManagerProfilesExternalEndpoint populates the provided destination TrafficManagerProfilesExternalEndpoint from our TrafficManagerProfilesExternalEndpoint
-func (endpoint *TrafficManagerProfilesExternalEndpoint) AssignProperties_To_TrafficManagerProfilesExternalEndpoint(destination *v20220401s.TrafficManagerProfilesExternalEndpoint) error {
+func (endpoint *TrafficManagerProfilesExternalEndpoint) AssignProperties_To_TrafficManagerProfilesExternalEndpoint(destination *storage.TrafficManagerProfilesExternalEndpoint) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *endpoint.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220401s.Trafficmanagerprofiles_ExternalEndpoint_Spec
-	err := endpoint.Spec.AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_Spec(&spec)
+	var spec storage.TrafficManagerProfilesExternalEndpoint_Spec
+	err := endpoint.Spec.AssignProperties_To_TrafficManagerProfilesExternalEndpoint_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_TrafficManagerProfilesExternalEndpoint_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20220401s.Trafficmanagerprofiles_ExternalEndpoint_STATUS
-	err = endpoint.Status.AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_STATUS(&status)
+	var status storage.TrafficManagerProfilesExternalEndpoint_STATUS
+	err = endpoint.Status.AssignProperties_To_TrafficManagerProfilesExternalEndpoint_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_TrafficManagerProfilesExternalEndpoint_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -324,7 +370,7 @@ type TrafficManagerProfilesExternalEndpointList struct {
 	Items           []TrafficManagerProfilesExternalEndpoint `json:"items"`
 }
 
-type Trafficmanagerprofiles_ExternalEndpoint_Spec struct {
+type TrafficManagerProfilesExternalEndpoint_Spec struct {
 	// AlwaysServe: If Always Serve is enabled, probing for endpoint health will be disabled and endpoints will be included in
 	// the traffic routing method.
 	AlwaysServe *EndpointProperties_AlwaysServe `json:"alwaysServe,omitempty"`
@@ -365,6 +411,10 @@ type Trafficmanagerprofiles_ExternalEndpoint_Spec struct {
 	// 'NestedEndpoints'.
 	MinChildEndpointsIPv6 *int `json:"minChildEndpointsIPv6,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *TrafficManagerProfilesExternalEndpointOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -395,14 +445,14 @@ type Trafficmanagerprofiles_ExternalEndpoint_Spec struct {
 	Weight *int `json:"weight,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Trafficmanagerprofiles_ExternalEndpoint_Spec{}
+var _ genruntime.ARMTransformer = &TrafficManagerProfilesExternalEndpoint_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if endpoint == nil {
 		return nil, nil
 	}
-	result := &Trafficmanagerprofiles_ExternalEndpoint_Spec_ARM{}
+	result := &arm.TrafficManagerProfilesExternalEndpoint_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -422,10 +472,12 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) ConvertToARM(resol
 		endpoint.Target != nil ||
 		endpoint.TargetResourceReference != nil ||
 		endpoint.Weight != nil {
-		result.Properties = &EndpointProperties_ARM{}
+		result.Properties = &arm.EndpointProperties{}
 	}
 	if endpoint.AlwaysServe != nil {
-		alwaysServe := *endpoint.AlwaysServe
+		var temp string
+		temp = string(*endpoint.AlwaysServe)
+		alwaysServe := arm.EndpointProperties_AlwaysServe(temp)
 		result.Properties.AlwaysServe = &alwaysServe
 	}
 	for _, item := range endpoint.CustomHeaders {
@@ -433,18 +485,22 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) ConvertToARM(resol
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.CustomHeaders = append(result.Properties.CustomHeaders, *item_ARM.(*EndpointProperties_CustomHeaders_ARM))
+		result.Properties.CustomHeaders = append(result.Properties.CustomHeaders, *item_ARM.(*arm.EndpointProperties_CustomHeaders))
 	}
 	if endpoint.EndpointLocation != nil {
 		endpointLocation := *endpoint.EndpointLocation
 		result.Properties.EndpointLocation = &endpointLocation
 	}
 	if endpoint.EndpointMonitorStatus != nil {
-		endpointMonitorStatus := *endpoint.EndpointMonitorStatus
+		var temp string
+		temp = string(*endpoint.EndpointMonitorStatus)
+		endpointMonitorStatus := arm.EndpointProperties_EndpointMonitorStatus(temp)
 		result.Properties.EndpointMonitorStatus = &endpointMonitorStatus
 	}
 	if endpoint.EndpointStatus != nil {
-		endpointStatus := *endpoint.EndpointStatus
+		var temp string
+		temp = string(*endpoint.EndpointStatus)
+		endpointStatus := arm.EndpointProperties_EndpointStatus(temp)
 		result.Properties.EndpointStatus = &endpointStatus
 	}
 	for _, item := range endpoint.GeoMapping {
@@ -471,7 +527,7 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) ConvertToARM(resol
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.Subnets = append(result.Properties.Subnets, *item_ARM.(*EndpointProperties_Subnets_ARM))
+		result.Properties.Subnets = append(result.Properties.Subnets, *item_ARM.(*arm.EndpointProperties_Subnets))
 	}
 	if endpoint.Target != nil {
 		target := *endpoint.Target
@@ -499,22 +555,24 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) ConvertToARM(resol
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Trafficmanagerprofiles_ExternalEndpoint_Spec_ARM{}
+func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.TrafficManagerProfilesExternalEndpoint_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Trafficmanagerprofiles_ExternalEndpoint_Spec_ARM)
+func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.TrafficManagerProfilesExternalEndpoint_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Trafficmanagerprofiles_ExternalEndpoint_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.TrafficManagerProfilesExternalEndpoint_Spec, got %T", armInput)
 	}
 
 	// Set property "AlwaysServe":
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.AlwaysServe != nil {
-			alwaysServe := *typedInput.Properties.AlwaysServe
+			var temp string
+			temp = string(*typedInput.Properties.AlwaysServe)
+			alwaysServe := EndpointProperties_AlwaysServe(temp)
 			endpoint.AlwaysServe = &alwaysServe
 		}
 	}
@@ -548,7 +606,9 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) PopulateFromARM(ow
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.EndpointMonitorStatus != nil {
-			endpointMonitorStatus := *typedInput.Properties.EndpointMonitorStatus
+			var temp string
+			temp = string(*typedInput.Properties.EndpointMonitorStatus)
+			endpointMonitorStatus := EndpointProperties_EndpointMonitorStatus(temp)
 			endpoint.EndpointMonitorStatus = &endpointMonitorStatus
 		}
 	}
@@ -557,7 +617,9 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) PopulateFromARM(ow
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.EndpointStatus != nil {
-			endpointStatus := *typedInput.Properties.EndpointStatus
+			var temp string
+			temp = string(*typedInput.Properties.EndpointStatus)
+			endpointStatus := EndpointProperties_EndpointStatus(temp)
 			endpoint.EndpointStatus = &endpointStatus
 		}
 	}
@@ -596,6 +658,8 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) PopulateFromARM(ow
 			endpoint.MinChildEndpointsIPv6 = &minChildEndpointsIPv6
 		}
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	endpoint.Owner = &genruntime.KnownResourceReference{
@@ -655,25 +719,25 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) PopulateFromARM(ow
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Trafficmanagerprofiles_ExternalEndpoint_Spec{}
+var _ genruntime.ConvertibleSpec = &TrafficManagerProfilesExternalEndpoint_Spec{}
 
-// ConvertSpecFrom populates our Trafficmanagerprofiles_ExternalEndpoint_Spec from the provided source
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220401s.Trafficmanagerprofiles_ExternalEndpoint_Spec)
+// ConvertSpecFrom populates our TrafficManagerProfilesExternalEndpoint_Spec from the provided source
+func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.TrafficManagerProfilesExternalEndpoint_Spec)
 	if ok {
 		// Populate our instance from source
-		return endpoint.AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_Spec(src)
+		return endpoint.AssignProperties_From_TrafficManagerProfilesExternalEndpoint_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220401s.Trafficmanagerprofiles_ExternalEndpoint_Spec{}
+	src = &storage.TrafficManagerProfilesExternalEndpoint_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = endpoint.AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_Spec(src)
+	err = endpoint.AssignProperties_From_TrafficManagerProfilesExternalEndpoint_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -681,17 +745,17 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) ConvertSpecFrom(so
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Trafficmanagerprofiles_ExternalEndpoint_Spec
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220401s.Trafficmanagerprofiles_ExternalEndpoint_Spec)
+// ConvertSpecTo populates the provided destination from our TrafficManagerProfilesExternalEndpoint_Spec
+func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.TrafficManagerProfilesExternalEndpoint_Spec)
 	if ok {
 		// Populate destination from our instance
-		return endpoint.AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_Spec(dst)
+		return endpoint.AssignProperties_To_TrafficManagerProfilesExternalEndpoint_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220401s.Trafficmanagerprofiles_ExternalEndpoint_Spec{}
-	err := endpoint.AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_Spec(dst)
+	dst = &storage.TrafficManagerProfilesExternalEndpoint_Spec{}
+	err := endpoint.AssignProperties_To_TrafficManagerProfilesExternalEndpoint_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -705,13 +769,14 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) ConvertSpecTo(dest
 	return nil
 }
 
-// AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_Spec populates our Trafficmanagerprofiles_ExternalEndpoint_Spec from the provided source Trafficmanagerprofiles_ExternalEndpoint_Spec
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_Spec(source *v20220401s.Trafficmanagerprofiles_ExternalEndpoint_Spec) error {
+// AssignProperties_From_TrafficManagerProfilesExternalEndpoint_Spec populates our TrafficManagerProfilesExternalEndpoint_Spec from the provided source TrafficManagerProfilesExternalEndpoint_Spec
+func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) AssignProperties_From_TrafficManagerProfilesExternalEndpoint_Spec(source *storage.TrafficManagerProfilesExternalEndpoint_Spec) error {
 
 	// AlwaysServe
 	if source.AlwaysServe != nil {
-		alwaysServe := EndpointProperties_AlwaysServe(*source.AlwaysServe)
-		endpoint.AlwaysServe = &alwaysServe
+		alwaysServe := *source.AlwaysServe
+		alwaysServeTemp := genruntime.ToEnum(alwaysServe, endpointProperties_AlwaysServe_Values)
+		endpoint.AlwaysServe = &alwaysServeTemp
 	} else {
 		endpoint.AlwaysServe = nil
 	}
@@ -742,16 +807,18 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) AssignProperties_F
 
 	// EndpointMonitorStatus
 	if source.EndpointMonitorStatus != nil {
-		endpointMonitorStatus := EndpointProperties_EndpointMonitorStatus(*source.EndpointMonitorStatus)
-		endpoint.EndpointMonitorStatus = &endpointMonitorStatus
+		endpointMonitorStatus := *source.EndpointMonitorStatus
+		endpointMonitorStatusTemp := genruntime.ToEnum(endpointMonitorStatus, endpointProperties_EndpointMonitorStatus_Values)
+		endpoint.EndpointMonitorStatus = &endpointMonitorStatusTemp
 	} else {
 		endpoint.EndpointMonitorStatus = nil
 	}
 
 	// EndpointStatus
 	if source.EndpointStatus != nil {
-		endpointStatus := EndpointProperties_EndpointStatus(*source.EndpointStatus)
-		endpoint.EndpointStatus = &endpointStatus
+		endpointStatus := *source.EndpointStatus
+		endpointStatusTemp := genruntime.ToEnum(endpointStatus, endpointProperties_EndpointStatus_Values)
+		endpoint.EndpointStatus = &endpointStatusTemp
 	} else {
 		endpoint.EndpointStatus = nil
 	}
@@ -767,6 +834,18 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) AssignProperties_F
 
 	// MinChildEndpointsIPv6
 	endpoint.MinChildEndpointsIPv6 = genruntime.ClonePointerToInt(source.MinChildEndpointsIPv6)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec TrafficManagerProfilesExternalEndpointOperatorSpec
+		err := operatorSpec.AssignProperties_From_TrafficManagerProfilesExternalEndpointOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_TrafficManagerProfilesExternalEndpointOperatorSpec() to populate field OperatorSpec")
+		}
+		endpoint.OperatorSpec = &operatorSpec
+	} else {
+		endpoint.OperatorSpec = nil
+	}
 
 	// Owner
 	if source.Owner != nil {
@@ -818,8 +897,8 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) AssignProperties_F
 	return nil
 }
 
-// AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_Spec populates the provided destination Trafficmanagerprofiles_ExternalEndpoint_Spec from our Trafficmanagerprofiles_ExternalEndpoint_Spec
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_Spec(destination *v20220401s.Trafficmanagerprofiles_ExternalEndpoint_Spec) error {
+// AssignProperties_To_TrafficManagerProfilesExternalEndpoint_Spec populates the provided destination TrafficManagerProfilesExternalEndpoint_Spec from our TrafficManagerProfilesExternalEndpoint_Spec
+func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) AssignProperties_To_TrafficManagerProfilesExternalEndpoint_Spec(destination *storage.TrafficManagerProfilesExternalEndpoint_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -836,11 +915,11 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) AssignProperties_T
 
 	// CustomHeaders
 	if endpoint.CustomHeaders != nil {
-		customHeaderList := make([]v20220401s.EndpointProperties_CustomHeaders, len(endpoint.CustomHeaders))
+		customHeaderList := make([]storage.EndpointProperties_CustomHeaders, len(endpoint.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range endpoint.CustomHeaders {
 			// Shadow the loop variable to avoid aliasing
 			customHeaderItem := customHeaderItem
-			var customHeader v20220401s.EndpointProperties_CustomHeaders
+			var customHeader storage.EndpointProperties_CustomHeaders
 			err := customHeaderItem.AssignProperties_To_EndpointProperties_CustomHeaders(&customHeader)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_EndpointProperties_CustomHeaders() to populate field CustomHeaders")
@@ -883,6 +962,18 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) AssignProperties_T
 	// MinChildEndpointsIPv6
 	destination.MinChildEndpointsIPv6 = genruntime.ClonePointerToInt(endpoint.MinChildEndpointsIPv6)
 
+	// OperatorSpec
+	if endpoint.OperatorSpec != nil {
+		var operatorSpec storage.TrafficManagerProfilesExternalEndpointOperatorSpec
+		err := endpoint.OperatorSpec.AssignProperties_To_TrafficManagerProfilesExternalEndpointOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_TrafficManagerProfilesExternalEndpointOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = endpoint.OriginalVersion()
 
@@ -899,11 +990,11 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) AssignProperties_T
 
 	// Subnets
 	if endpoint.Subnets != nil {
-		subnetList := make([]v20220401s.EndpointProperties_Subnets, len(endpoint.Subnets))
+		subnetList := make([]storage.EndpointProperties_Subnets, len(endpoint.Subnets))
 		for subnetIndex, subnetItem := range endpoint.Subnets {
 			// Shadow the loop variable to avoid aliasing
 			subnetItem := subnetItem
-			var subnet v20220401s.EndpointProperties_Subnets
+			var subnet storage.EndpointProperties_Subnets
 			err := subnetItem.AssignProperties_To_EndpointProperties_Subnets(&subnet)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_EndpointProperties_Subnets() to populate field Subnets")
@@ -943,12 +1034,12 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) AssignProperties_T
 	return nil
 }
 
-// Initialize_From_Trafficmanagerprofiles_ExternalEndpoint_STATUS populates our Trafficmanagerprofiles_ExternalEndpoint_Spec from the provided source Trafficmanagerprofiles_ExternalEndpoint_STATUS
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) Initialize_From_Trafficmanagerprofiles_ExternalEndpoint_STATUS(source *Trafficmanagerprofiles_ExternalEndpoint_STATUS) error {
+// Initialize_From_TrafficManagerProfilesExternalEndpoint_STATUS populates our TrafficManagerProfilesExternalEndpoint_Spec from the provided source TrafficManagerProfilesExternalEndpoint_STATUS
+func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) Initialize_From_TrafficManagerProfilesExternalEndpoint_STATUS(source *TrafficManagerProfilesExternalEndpoint_STATUS) error {
 
 	// AlwaysServe
 	if source.AlwaysServe != nil {
-		alwaysServe := EndpointProperties_AlwaysServe(*source.AlwaysServe)
+		alwaysServe := genruntime.ToEnum(string(*source.AlwaysServe), endpointProperties_AlwaysServe_Values)
 		endpoint.AlwaysServe = &alwaysServe
 	} else {
 		endpoint.AlwaysServe = nil
@@ -977,7 +1068,7 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) Initialize_From_Tr
 
 	// EndpointMonitorStatus
 	if source.EndpointMonitorStatus != nil {
-		endpointMonitorStatus := EndpointProperties_EndpointMonitorStatus(*source.EndpointMonitorStatus)
+		endpointMonitorStatus := genruntime.ToEnum(string(*source.EndpointMonitorStatus), endpointProperties_EndpointMonitorStatus_Values)
 		endpoint.EndpointMonitorStatus = &endpointMonitorStatus
 	} else {
 		endpoint.EndpointMonitorStatus = nil
@@ -985,7 +1076,7 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) Initialize_From_Tr
 
 	// EndpointStatus
 	if source.EndpointStatus != nil {
-		endpointStatus := EndpointProperties_EndpointStatus(*source.EndpointStatus)
+		endpointStatus := genruntime.ToEnum(string(*source.EndpointStatus), endpointProperties_EndpointStatus_Values)
 		endpoint.EndpointStatus = &endpointStatus
 	} else {
 		endpoint.EndpointStatus = nil
@@ -1046,16 +1137,16 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) Initialize_From_Tr
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) OriginalVersion() string {
+func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_Spec) SetAzureName(azureName string) {
+func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) SetAzureName(azureName string) {
 	endpoint.AzureName = azureName
 }
 
-type Trafficmanagerprofiles_ExternalEndpoint_STATUS struct {
+type TrafficManagerProfilesExternalEndpoint_STATUS struct {
 	// AlwaysServe: If Always Serve is enabled, probing for endpoint health will be disabled and endpoints will be included in
 	// the traffic routing method.
 	AlwaysServe *EndpointProperties_AlwaysServe_STATUS `json:"alwaysServe,omitempty"`
@@ -1125,25 +1216,25 @@ type Trafficmanagerprofiles_ExternalEndpoint_STATUS struct {
 	Weight *int `json:"weight,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Trafficmanagerprofiles_ExternalEndpoint_STATUS{}
+var _ genruntime.ConvertibleStatus = &TrafficManagerProfilesExternalEndpoint_STATUS{}
 
-// ConvertStatusFrom populates our Trafficmanagerprofiles_ExternalEndpoint_STATUS from the provided source
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220401s.Trafficmanagerprofiles_ExternalEndpoint_STATUS)
+// ConvertStatusFrom populates our TrafficManagerProfilesExternalEndpoint_STATUS from the provided source
+func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.TrafficManagerProfilesExternalEndpoint_STATUS)
 	if ok {
 		// Populate our instance from source
-		return endpoint.AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_STATUS(src)
+		return endpoint.AssignProperties_From_TrafficManagerProfilesExternalEndpoint_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220401s.Trafficmanagerprofiles_ExternalEndpoint_STATUS{}
+	src = &storage.TrafficManagerProfilesExternalEndpoint_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = endpoint.AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_STATUS(src)
+	err = endpoint.AssignProperties_From_TrafficManagerProfilesExternalEndpoint_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -1151,17 +1242,17 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) ConvertStatusFro
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Trafficmanagerprofiles_ExternalEndpoint_STATUS
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220401s.Trafficmanagerprofiles_ExternalEndpoint_STATUS)
+// ConvertStatusTo populates the provided destination from our TrafficManagerProfilesExternalEndpoint_STATUS
+func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.TrafficManagerProfilesExternalEndpoint_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return endpoint.AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_STATUS(dst)
+		return endpoint.AssignProperties_To_TrafficManagerProfilesExternalEndpoint_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220401s.Trafficmanagerprofiles_ExternalEndpoint_STATUS{}
-	err := endpoint.AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_STATUS(dst)
+	dst = &storage.TrafficManagerProfilesExternalEndpoint_STATUS{}
+	err := endpoint.AssignProperties_To_TrafficManagerProfilesExternalEndpoint_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -1175,25 +1266,27 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) ConvertStatusTo(
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Trafficmanagerprofiles_ExternalEndpoint_STATUS{}
+var _ genruntime.FromARMConverter = &TrafficManagerProfilesExternalEndpoint_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Trafficmanagerprofiles_ExternalEndpoint_STATUS_ARM{}
+func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.TrafficManagerProfilesExternalEndpoint_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Trafficmanagerprofiles_ExternalEndpoint_STATUS_ARM)
+func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.TrafficManagerProfilesExternalEndpoint_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Trafficmanagerprofiles_ExternalEndpoint_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.TrafficManagerProfilesExternalEndpoint_STATUS, got %T", armInput)
 	}
 
 	// Set property "AlwaysServe":
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.AlwaysServe != nil {
-			alwaysServe := *typedInput.Properties.AlwaysServe
+			var temp string
+			temp = string(*typedInput.Properties.AlwaysServe)
+			alwaysServe := EndpointProperties_AlwaysServe_STATUS(temp)
 			endpoint.AlwaysServe = &alwaysServe
 		}
 	}
@@ -1226,7 +1319,9 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) PopulateFromARM(
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.EndpointMonitorStatus != nil {
-			endpointMonitorStatus := *typedInput.Properties.EndpointMonitorStatus
+			var temp string
+			temp = string(*typedInput.Properties.EndpointMonitorStatus)
+			endpointMonitorStatus := EndpointProperties_EndpointMonitorStatus_STATUS(temp)
 			endpoint.EndpointMonitorStatus = &endpointMonitorStatus
 		}
 	}
@@ -1235,7 +1330,9 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) PopulateFromARM(
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.EndpointStatus != nil {
-			endpointStatus := *typedInput.Properties.EndpointStatus
+			var temp string
+			temp = string(*typedInput.Properties.EndpointStatus)
+			endpointStatus := EndpointProperties_EndpointStatus_STATUS(temp)
 			endpoint.EndpointStatus = &endpointStatus
 		}
 	}
@@ -1346,13 +1443,14 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) PopulateFromARM(
 	return nil
 }
 
-// AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_STATUS populates our Trafficmanagerprofiles_ExternalEndpoint_STATUS from the provided source Trafficmanagerprofiles_ExternalEndpoint_STATUS
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) AssignProperties_From_Trafficmanagerprofiles_ExternalEndpoint_STATUS(source *v20220401s.Trafficmanagerprofiles_ExternalEndpoint_STATUS) error {
+// AssignProperties_From_TrafficManagerProfilesExternalEndpoint_STATUS populates our TrafficManagerProfilesExternalEndpoint_STATUS from the provided source TrafficManagerProfilesExternalEndpoint_STATUS
+func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) AssignProperties_From_TrafficManagerProfilesExternalEndpoint_STATUS(source *storage.TrafficManagerProfilesExternalEndpoint_STATUS) error {
 
 	// AlwaysServe
 	if source.AlwaysServe != nil {
-		alwaysServe := EndpointProperties_AlwaysServe_STATUS(*source.AlwaysServe)
-		endpoint.AlwaysServe = &alwaysServe
+		alwaysServe := *source.AlwaysServe
+		alwaysServeTemp := genruntime.ToEnum(alwaysServe, endpointProperties_AlwaysServe_STATUS_Values)
+		endpoint.AlwaysServe = &alwaysServeTemp
 	} else {
 		endpoint.AlwaysServe = nil
 	}
@@ -1383,16 +1481,18 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) AssignProperties
 
 	// EndpointMonitorStatus
 	if source.EndpointMonitorStatus != nil {
-		endpointMonitorStatus := EndpointProperties_EndpointMonitorStatus_STATUS(*source.EndpointMonitorStatus)
-		endpoint.EndpointMonitorStatus = &endpointMonitorStatus
+		endpointMonitorStatus := *source.EndpointMonitorStatus
+		endpointMonitorStatusTemp := genruntime.ToEnum(endpointMonitorStatus, endpointProperties_EndpointMonitorStatus_STATUS_Values)
+		endpoint.EndpointMonitorStatus = &endpointMonitorStatusTemp
 	} else {
 		endpoint.EndpointMonitorStatus = nil
 	}
 
 	// EndpointStatus
 	if source.EndpointStatus != nil {
-		endpointStatus := EndpointProperties_EndpointStatus_STATUS(*source.EndpointStatus)
-		endpoint.EndpointStatus = &endpointStatus
+		endpointStatus := *source.EndpointStatus
+		endpointStatusTemp := genruntime.ToEnum(endpointStatus, endpointProperties_EndpointStatus_STATUS_Values)
+		endpoint.EndpointStatus = &endpointStatusTemp
 	} else {
 		endpoint.EndpointStatus = nil
 	}
@@ -1452,8 +1552,8 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) AssignProperties
 	return nil
 }
 
-// AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_STATUS populates the provided destination Trafficmanagerprofiles_ExternalEndpoint_STATUS from our Trafficmanagerprofiles_ExternalEndpoint_STATUS
-func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) AssignProperties_To_Trafficmanagerprofiles_ExternalEndpoint_STATUS(destination *v20220401s.Trafficmanagerprofiles_ExternalEndpoint_STATUS) error {
+// AssignProperties_To_TrafficManagerProfilesExternalEndpoint_STATUS populates the provided destination TrafficManagerProfilesExternalEndpoint_STATUS from our TrafficManagerProfilesExternalEndpoint_STATUS
+func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) AssignProperties_To_TrafficManagerProfilesExternalEndpoint_STATUS(destination *storage.TrafficManagerProfilesExternalEndpoint_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1470,11 +1570,11 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) AssignProperties
 
 	// CustomHeaders
 	if endpoint.CustomHeaders != nil {
-		customHeaderList := make([]v20220401s.EndpointProperties_CustomHeaders_STATUS, len(endpoint.CustomHeaders))
+		customHeaderList := make([]storage.EndpointProperties_CustomHeaders_STATUS, len(endpoint.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range endpoint.CustomHeaders {
 			// Shadow the loop variable to avoid aliasing
 			customHeaderItem := customHeaderItem
-			var customHeader v20220401s.EndpointProperties_CustomHeaders_STATUS
+			var customHeader storage.EndpointProperties_CustomHeaders_STATUS
 			err := customHeaderItem.AssignProperties_To_EndpointProperties_CustomHeaders_STATUS(&customHeader)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_EndpointProperties_CustomHeaders_STATUS() to populate field CustomHeaders")
@@ -1528,11 +1628,11 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) AssignProperties
 
 	// Subnets
 	if endpoint.Subnets != nil {
-		subnetList := make([]v20220401s.EndpointProperties_Subnets_STATUS, len(endpoint.Subnets))
+		subnetList := make([]storage.EndpointProperties_Subnets_STATUS, len(endpoint.Subnets))
 		for subnetIndex, subnetItem := range endpoint.Subnets {
 			// Shadow the loop variable to avoid aliasing
 			subnetItem := subnetItem
-			var subnet v20220401s.EndpointProperties_Subnets_STATUS
+			var subnet storage.EndpointProperties_Subnets_STATUS
 			err := subnetItem.AssignProperties_To_EndpointProperties_Subnets_STATUS(&subnet)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_EndpointProperties_Subnets_STATUS() to populate field Subnets")
@@ -1555,6 +1655,110 @@ func (endpoint *Trafficmanagerprofiles_ExternalEndpoint_STATUS) AssignProperties
 
 	// Weight
 	destination.Weight = genruntime.ClonePointerToInt(endpoint.Weight)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type TrafficManagerProfilesExternalEndpointOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_TrafficManagerProfilesExternalEndpointOperatorSpec populates our TrafficManagerProfilesExternalEndpointOperatorSpec from the provided source TrafficManagerProfilesExternalEndpointOperatorSpec
+func (operator *TrafficManagerProfilesExternalEndpointOperatorSpec) AssignProperties_From_TrafficManagerProfilesExternalEndpointOperatorSpec(source *storage.TrafficManagerProfilesExternalEndpointOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TrafficManagerProfilesExternalEndpointOperatorSpec populates the provided destination TrafficManagerProfilesExternalEndpointOperatorSpec from our TrafficManagerProfilesExternalEndpointOperatorSpec
+func (operator *TrafficManagerProfilesExternalEndpointOperatorSpec) AssignProperties_To_TrafficManagerProfilesExternalEndpointOperatorSpec(destination *storage.TrafficManagerProfilesExternalEndpointOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {

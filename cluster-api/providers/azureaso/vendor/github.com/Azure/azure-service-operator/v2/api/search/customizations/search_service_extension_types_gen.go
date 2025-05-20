@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20220901 "github.com/Azure/azure-service-operator/v2/api/search/v1api20220901"
-	v20220901s "github.com/Azure/azure-service-operator/v2/api/search/v1api20220901/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/search/v1api20220901/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type SearchServiceExtension struct {
 func (extension *SearchServiceExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20220901.SearchService{},
-		&v20220901s.SearchService{}}
+		&storage.SearchService{}}
 }

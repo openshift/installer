@@ -21,15 +21,19 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net"
+	"sort"
 
 	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
-	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
 	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
+	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/cluster-api/util/secret"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -37,8 +41,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/cluster-api-provider-azure/util/versions"
-	"sigs.k8s.io/cluster-api/util/secret"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 // ManagedClusterSpec contains properties to create a managed cluster.
@@ -715,6 +717,11 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 		}
 	}
 
+	// keep a consistent order to prevent unnecessary updates
+	sort.Slice(prevAgentPoolProfiles, func(i, j int) bool {
+		return ptr.Deref(prevAgentPoolProfiles[i].Name, "") < ptr.Deref(prevAgentPoolProfiles[j].Name, "")
+	})
+
 	managedCluster.Spec.AgentPoolProfiles = prevAgentPoolProfiles
 
 	if s.Preview {
@@ -808,7 +815,7 @@ func userKubeconfigSecretName(clusterName string) string {
 }
 
 // WasManaged implements azure.ASOResourceSpecGetter.
-func (s *ManagedClusterSpec) WasManaged(resource genruntime.MetaObject) bool {
+func (s *ManagedClusterSpec) WasManaged(_ genruntime.MetaObject) bool {
 	// CAPZ has never supported BYO managed clusters.
 	return true
 }

@@ -25,7 +25,6 @@ type SQLRoleOptionDelta struct {
 // because they are only settable with an existing a superuser
 // Azure Flexible server does not offer superuser access for customers
 type RoleOptions struct {
-
 	// WITH LOGIN or NOLOGIN
 	Login bool
 
@@ -95,7 +94,7 @@ func GetUserRoleOptions(ctx context.Context, db *sql.DB, user SQLUser) (*RoleOpt
 		if err != nil {
 			return nil, errors.Wrapf(err, "extracting RoleOption field")
 		}
-		//No error handling required here, as sql returns already defined constants
+		// No error handling required here, as sql returns already defined constants
 	}
 	if rows.Err() != nil {
 		return nil, errors.Wrap(rows.Err(), "iterating RoleOptions")

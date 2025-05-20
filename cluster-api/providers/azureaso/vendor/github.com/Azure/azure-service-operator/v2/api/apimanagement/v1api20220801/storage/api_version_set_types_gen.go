@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type ApiVersionSet struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Service_ApiVersionSet_Spec   `json:"spec,omitempty"`
-	Status            Service_ApiVersionSet_STATUS `json:"status,omitempty"`
+	Spec              ApiVersionSet_Spec   `json:"spec,omitempty"`
+	Status            ApiVersionSet_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ApiVersionSet{}
@@ -44,6 +47,26 @@ func (versionSet *ApiVersionSet) SetConditions(conditions conditions.Conditions)
 	versionSet.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &ApiVersionSet{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (versionSet *ApiVersionSet) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if versionSet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return versionSet.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ApiVersionSet{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (versionSet *ApiVersionSet) SecretDestinationExpressions() []*core.DestinationExpression {
+	if versionSet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return versionSet.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &ApiVersionSet{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (versionSet *ApiVersionSet) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-08-01"
 func (versionSet ApiVersionSet) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-08-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -88,7 +111,7 @@ func (versionSet *ApiVersionSet) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (versionSet *ApiVersionSet) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Service_ApiVersionSet_STATUS{}
+	return &ApiVersionSet_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -100,13 +123,13 @@ func (versionSet *ApiVersionSet) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (versionSet *ApiVersionSet) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Service_ApiVersionSet_STATUS); ok {
+	if st, ok := status.(*ApiVersionSet_STATUS); ok {
 		versionSet.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Service_ApiVersionSet_STATUS
+	var st ApiVersionSet_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -139,14 +162,15 @@ type ApiVersionSetList struct {
 	Items           []ApiVersionSet `json:"items"`
 }
 
-// Storage version of v1api20220801.Service_ApiVersionSet_Spec
-type Service_ApiVersionSet_Spec struct {
+// Storage version of v1api20220801.ApiVersionSet_Spec
+type ApiVersionSet_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string  `json:"azureName,omitempty"`
-	Description     *string `json:"description,omitempty"`
-	DisplayName     *string `json:"displayName,omitempty"`
-	OriginalVersion string  `json:"originalVersion,omitempty"`
+	AzureName       string                     `json:"azureName,omitempty"`
+	Description     *string                    `json:"description,omitempty"`
+	DisplayName     *string                    `json:"displayName,omitempty"`
+	OperatorSpec    *ApiVersionSetOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                     `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -159,10 +183,10 @@ type Service_ApiVersionSet_Spec struct {
 	VersioningScheme  *string                            `json:"versioningScheme,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Service_ApiVersionSet_Spec{}
+var _ genruntime.ConvertibleSpec = &ApiVersionSet_Spec{}
 
-// ConvertSpecFrom populates our Service_ApiVersionSet_Spec from the provided source
-func (versionSet *Service_ApiVersionSet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our ApiVersionSet_Spec from the provided source
+func (versionSet *ApiVersionSet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == versionSet {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -170,8 +194,8 @@ func (versionSet *Service_ApiVersionSet_Spec) ConvertSpecFrom(source genruntime.
 	return source.ConvertSpecTo(versionSet)
 }
 
-// ConvertSpecTo populates the provided destination from our Service_ApiVersionSet_Spec
-func (versionSet *Service_ApiVersionSet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our ApiVersionSet_Spec
+func (versionSet *ApiVersionSet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == versionSet {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -179,8 +203,8 @@ func (versionSet *Service_ApiVersionSet_Spec) ConvertSpecTo(destination genrunti
 	return destination.ConvertSpecFrom(versionSet)
 }
 
-// Storage version of v1api20220801.Service_ApiVersionSet_STATUS
-type Service_ApiVersionSet_STATUS struct {
+// Storage version of v1api20220801.ApiVersionSet_STATUS
+type ApiVersionSet_STATUS struct {
 	Conditions        []conditions.Condition `json:"conditions,omitempty"`
 	Description       *string                `json:"description,omitempty"`
 	DisplayName       *string                `json:"displayName,omitempty"`
@@ -193,10 +217,10 @@ type Service_ApiVersionSet_STATUS struct {
 	VersioningScheme  *string                `json:"versioningScheme,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Service_ApiVersionSet_STATUS{}
+var _ genruntime.ConvertibleStatus = &ApiVersionSet_STATUS{}
 
-// ConvertStatusFrom populates our Service_ApiVersionSet_STATUS from the provided source
-func (versionSet *Service_ApiVersionSet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our ApiVersionSet_STATUS from the provided source
+func (versionSet *ApiVersionSet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == versionSet {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -204,13 +228,21 @@ func (versionSet *Service_ApiVersionSet_STATUS) ConvertStatusFrom(source genrunt
 	return source.ConvertStatusTo(versionSet)
 }
 
-// ConvertStatusTo populates the provided destination from our Service_ApiVersionSet_STATUS
-func (versionSet *Service_ApiVersionSet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our ApiVersionSet_STATUS
+func (versionSet *ApiVersionSet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == versionSet {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(versionSet)
+}
+
+// Storage version of v1api20220801.ApiVersionSetOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ApiVersionSetOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

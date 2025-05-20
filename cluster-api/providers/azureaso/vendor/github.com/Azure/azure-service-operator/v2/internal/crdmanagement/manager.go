@@ -29,10 +29,12 @@ import (
 
 // ServiceOperatorVersionLabelOld is the label the CRDs have on them containing the ASO version. This value must match the value
 // injected by config/crd/labels.yaml
-const ServiceOperatorVersionLabelOld = "serviceoperator.azure.com/version"
-const ServiceOperatorVersionLabel = "app.kubernetes.io/version"
-const ServiceOperatorAppLabel = "app.kubernetes.io/name"
-const ServiceOperatorAppValue = "azure-service-operator"
+const (
+	ServiceOperatorVersionLabelOld = "serviceoperator.azure.com/version"
+	ServiceOperatorVersionLabel    = "app.kubernetes.io/version"
+	ServiceOperatorAppLabel        = "app.kubernetes.io/name"
+	ServiceOperatorAppValue        = "azure-service-operator"
+)
 
 const CRDLocation = "crds"
 
@@ -101,7 +103,6 @@ func (m *Manager) FindMatchingCRDs(
 	goal []apiextensions.CustomResourceDefinition,
 	comparators ...func(a apiextensions.CustomResourceDefinition, b apiextensions.CustomResourceDefinition) bool,
 ) map[string]apiextensions.CustomResourceDefinition {
-
 	matching := make(map[string]apiextensions.CustomResourceDefinition)
 
 	// Build a map so lookup is faster
@@ -124,7 +125,7 @@ func (m *Manager) FindMatchingCRDs(
 
 		equal := true
 		for _, c := range comparators {
-			if c(existingCRD, goalCRD) == false {
+			if c(existingCRD, goalCRD) == false { //nolint: gosimple
 				equal = false
 				break
 			}
@@ -145,7 +146,6 @@ func (m *Manager) FindNonMatchingCRDs(
 	goal []apiextensions.CustomResourceDefinition,
 	comparators ...func(a apiextensions.CustomResourceDefinition, b apiextensions.CustomResourceDefinition) bool,
 ) map[string]apiextensions.CustomResourceDefinition {
-
 	// Just invert the comparators and call FindMatchingCRDs
 	invertedComparators := make([]func(a apiextensions.CustomResourceDefinition, b apiextensions.CustomResourceDefinition) bool, 0, len(comparators))
 	for _, c := range comparators {
@@ -167,7 +167,6 @@ func (m *Manager) DetermineCRDsToInstallOrUpgrade(
 	existingCRDs []apiextensions.CustomResourceDefinition,
 	patterns string,
 ) ([]*CRDInstallationInstruction, error) {
-
 	m.logger.V(Info).Info("Goal CRDs", "count", len(goalCRDs))
 	m.logger.V(Info).Info("Existing CRDs", "count", len(existingCRDs))
 
@@ -322,7 +321,7 @@ func (m *Manager) loadCRDs(path string) ([]apiextensions.CustomResourceDefinitio
 			return nil, errors.Wrapf(err, "failed to unmarshal %s to CRD", filePath)
 		}
 
-		m.logger.V(Verbose).Info("Loaded CRD", "path", filePath, "name", crd.Name)
+		m.logger.V(Verbose).Info("Loaded CRD", "crdPath", filePath, "name", crd.Name)
 		results = append(results, crd)
 	}
 

@@ -114,6 +114,7 @@ type AzureManagedControlPlaneClassSpec struct {
 
 	// NetworkPlugin used for building Kubernetes network.
 	// +kubebuilder:validation:Enum=azure;kubenet;none
+	// +kubebuilder:default:=azure
 	// +optional
 	NetworkPlugin *string `json:"networkPlugin,omitempty"`
 
@@ -248,6 +249,7 @@ type AzureManagedControlPlaneClassSpec struct {
 	ASOManagedClusterPatches []string `json:"asoManagedClusterPatches,omitempty"`
 
 	// EnablePreviewFeatures enables preview features for the cluster.
+	// +kubebuilder:default:=false
 	// +optional
 	EnablePreviewFeatures *bool `json:"enablePreviewFeatures,omitempty"`
 }
@@ -340,6 +342,7 @@ type AzureManagedMachinePoolClassSpec struct {
 	//
 	// [AKS doc]: https://learn.microsoft.com/rest/api/aks/agent-pools/create-or-update?tabs=HTTP#ostype
 	// +kubebuilder:validation:Enum=Linux;Windows
+	// +kubebuilder:default:=Linux
 	// +optional
 	OSType *string `json:"osType,omitempty"`
 
@@ -419,6 +422,7 @@ type AzureManagedMachinePoolClassSpec struct {
 
 // ManagedControlPlaneVirtualNetworkClassSpec defines the ManagedControlPlaneVirtualNetwork properties that may be shared across several managed control plane vnets.
 type ManagedControlPlaneVirtualNetworkClassSpec struct {
+	// +kubebuilder:default:="10.0.0.0/8"
 	CIDRBlock string `json:"cidrBlock"`
 	// +optional
 	Subnet ManagedControlPlaneSubnet `json:"subnet,omitempty"`
@@ -454,6 +458,11 @@ type NetworkClassSpec struct {
 	// PrivateDNSZoneName defines the zone name for the Azure Private DNS.
 	// +optional
 	PrivateDNSZoneName string `json:"privateDNSZoneName,omitempty"`
+
+	// PrivateDNSZoneResourceGroup defines the resource group to be used for Azure Private DNS Zone.
+	// If not specified, the resource group of the cluster will be used to create the Azure Private DNS Zone.
+	// +optional
+	PrivateDNSZoneResourceGroup string `json:"privateDNSZoneResourceGroup,omitempty"`
 }
 
 // VnetClassSpec defines the VnetSpec properties that may be shared across several Azure clusters.
@@ -503,6 +512,7 @@ type LoadBalancerClassSpec struct {
 // FleetsMemberClassSpec defines the FleetsMemberSpec properties that may be shared across several Azure clusters.
 type FleetsMemberClassSpec struct {
 	// Group is the group this member belongs to for multi-cluster update management.
+	// +kubebuilder:default:=default
 	// +optional
 	Group string `json:"group,omitempty"`
 

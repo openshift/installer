@@ -44,7 +44,7 @@ type AllowedNamespaces struct {
 // AzureClusterIdentitySpec defines the parameters that are used to create an AzureIdentity.
 type AzureClusterIdentitySpec struct {
 	// Type is the type of Azure Identity used.
-	// ServicePrincipal, ServicePrincipalCertificate, UserAssignedMSI, ManualServicePrincipal or WorkloadIdentity.
+	// ServicePrincipal, ServicePrincipalCertificate, UserAssignedMSI, ManualServicePrincipal, UserAssignedIdentityCredential, or WorkloadIdentity.
 	Type IdentityType `json:"type"`
 	// ResourceID is the Azure resource ID for the User Assigned MSI resource.
 	// Only applicable when type is UserAssignedMSI.
@@ -59,6 +59,19 @@ type AzureClusterIdentitySpec struct {
 	// ClientSecret is a secret reference which should contain either a Service Principal password or certificate secret.
 	// +optional
 	ClientSecret corev1.SecretReference `json:"clientSecret,omitempty"`
+	// CertPath is the path where certificates exist. When set, it takes precedence over ClientSecret for types that use certs like ServicePrincipalCertificate.
+	// +optional
+	CertPath string `json:"certPath,omitempty"`
+	// UserAssignedIdentityCredentialsPath is the path where an existing JSON file exists containing the JSON format of
+	// a UserAssignedIdentityCredentials struct.
+	// See the msi-dataplane for more details on UserAssignedIdentityCredentials - https://github.com/Azure/msi-dataplane/blob/main/pkg/dataplane/internal/client/models.go#L125
+	// +optional
+	UserAssignedIdentityCredentialsPath string `json:"userAssignedIdentityCredentialsPath,omitempty"`
+	// UserAssignedIdentityCredentialsCloudType is used with UserAssignedIdentityCredentialsPath to specify the Cloud
+	// type. Can only be one of the following values: public, china, or usgovernment
+	// If a value is not specified, defaults to public
+	// +optional
+	UserAssignedIdentityCredentialsCloudType string `json:"userAssignedIdentityCredentialsCloudType,omitempty"`
 	// TenantID is the service principal primary tenant id.
 	TenantID string `json:"tenantID"`
 	// AllowedNamespaces is used to identify the namespaces the clusters are allowed to use the identity from.

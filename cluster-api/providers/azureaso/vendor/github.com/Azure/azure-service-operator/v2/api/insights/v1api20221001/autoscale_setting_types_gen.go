@@ -5,10 +5,14 @@ package v1api20221001
 
 import (
 	"fmt"
-	v20221001s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20221001/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/insights/v1api20221001/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20221001/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,7 +33,7 @@ import (
 type AutoscaleSetting struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Autoscalesetting_Spec   `json:"spec,omitempty"`
+	Spec              AutoscaleSetting_Spec   `json:"spec,omitempty"`
 	Status            Autoscalesetting_STATUS `json:"status,omitempty"`
 }
 
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &AutoscaleSetting{}
 
 // ConvertFrom populates our AutoscaleSetting from the provided hub AutoscaleSetting
 func (setting *AutoscaleSetting) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20221001s.AutoscaleSetting)
+	source, ok := hub.(*storage.AutoscaleSetting)
 	if !ok {
 		return fmt.Errorf("expected insights/v1api20221001/storage/AutoscaleSetting but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (setting *AutoscaleSetting) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub AutoscaleSetting from our AutoscaleSetting
 func (setting *AutoscaleSetting) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20221001s.AutoscaleSetting)
+	destination, ok := hub.(*storage.AutoscaleSetting)
 	if !ok {
 		return fmt.Errorf("expected insights/v1api20221001/storage/AutoscaleSetting but received %T instead", hub)
 	}
@@ -90,6 +94,26 @@ func (setting *AutoscaleSetting) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the AutoscaleSetting resource
 func (setting *AutoscaleSetting) defaultImpl() { setting.defaultAzureName() }
 
+var _ configmaps.Exporter = &AutoscaleSetting{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (setting *AutoscaleSetting) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if setting.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return setting.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &AutoscaleSetting{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (setting *AutoscaleSetting) SecretDestinationExpressions() []*core.DestinationExpression {
+	if setting.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return setting.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &AutoscaleSetting{}
 
 // InitializeSpec initializes the spec for this resource from the given status
@@ -110,7 +134,7 @@ func (setting *AutoscaleSetting) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-10-01"
 func (setting AutoscaleSetting) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-10-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -208,7 +232,7 @@ func (setting *AutoscaleSetting) ValidateUpdate(old runtime.Object) (admission.W
 
 // createValidations validates the creation of the resource
 func (setting *AutoscaleSetting) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){setting.validateResourceReferences, setting.validateOwnerReference}
+	return []func() (admission.Warnings, error){setting.validateResourceReferences, setting.validateOwnerReference, setting.validateSecretDestinations, setting.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (setting *AutoscaleSetting) updateValidations() []func(old runtime.Object) 
 		func(old runtime.Object) (admission.Warnings, error) {
 			return setting.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return setting.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return setting.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (setting *AutoscaleSetting) validateConfigMapDestinations() (admission.Warnings, error) {
+	if setting.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(setting, nil, setting.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +281,14 @@ func (setting *AutoscaleSetting) validateResourceReferences() (admission.Warning
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (setting *AutoscaleSetting) validateSecretDestinations() (admission.Warnings, error) {
+	if setting.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(setting, nil, setting.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (setting *AutoscaleSetting) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*AutoscaleSetting)
@@ -254,16 +300,16 @@ func (setting *AutoscaleSetting) validateWriteOnceProperties(old runtime.Object)
 }
 
 // AssignProperties_From_AutoscaleSetting populates our AutoscaleSetting from the provided source AutoscaleSetting
-func (setting *AutoscaleSetting) AssignProperties_From_AutoscaleSetting(source *v20221001s.AutoscaleSetting) error {
+func (setting *AutoscaleSetting) AssignProperties_From_AutoscaleSetting(source *storage.AutoscaleSetting) error {
 
 	// ObjectMeta
 	setting.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Autoscalesetting_Spec
-	err := spec.AssignProperties_From_Autoscalesetting_Spec(&source.Spec)
+	var spec AutoscaleSetting_Spec
+	err := spec.AssignProperties_From_AutoscaleSetting_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Autoscalesetting_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_AutoscaleSetting_Spec() to populate field Spec")
 	}
 	setting.Spec = spec
 
@@ -280,21 +326,21 @@ func (setting *AutoscaleSetting) AssignProperties_From_AutoscaleSetting(source *
 }
 
 // AssignProperties_To_AutoscaleSetting populates the provided destination AutoscaleSetting from our AutoscaleSetting
-func (setting *AutoscaleSetting) AssignProperties_To_AutoscaleSetting(destination *v20221001s.AutoscaleSetting) error {
+func (setting *AutoscaleSetting) AssignProperties_To_AutoscaleSetting(destination *storage.AutoscaleSetting) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *setting.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20221001s.Autoscalesetting_Spec
-	err := setting.Spec.AssignProperties_To_Autoscalesetting_Spec(&spec)
+	var spec storage.AutoscaleSetting_Spec
+	err := setting.Spec.AssignProperties_To_AutoscaleSetting_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Autoscalesetting_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_AutoscaleSetting_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20221001s.Autoscalesetting_STATUS
+	var status storage.Autoscalesetting_STATUS
 	err = setting.Status.AssignProperties_To_Autoscalesetting_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Autoscalesetting_STATUS() to populate field Status")
@@ -329,7 +375,7 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2022-10-01")
 
-type Autoscalesetting_Spec struct {
+type AutoscaleSetting_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
@@ -346,6 +392,10 @@ type Autoscalesetting_Spec struct {
 
 	// Notifications: the collection of notifications.
 	Notifications []AutoscaleNotification `json:"notifications,omitempty"`
+
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *AutoscaleSettingOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -374,18 +424,18 @@ type Autoscalesetting_Spec struct {
 	TargetResourceUriReference *genruntime.ResourceReference `armReference:"TargetResourceUri" json:"targetResourceUriReference,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Autoscalesetting_Spec{}
+var _ genruntime.ARMTransformer = &AutoscaleSetting_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (autoscalesetting *Autoscalesetting_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if autoscalesetting == nil {
+func (setting *AutoscaleSetting_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+	if setting == nil {
 		return nil, nil
 	}
-	result := &Autoscalesetting_Spec_ARM{}
+	result := &arm.AutoscaleSetting_Spec{}
 
 	// Set property "Location":
-	if autoscalesetting.Location != nil {
-		location := *autoscalesetting.Location
+	if setting.Location != nil {
+		location := *setting.Location
 		result.Location = &location
 	}
 
@@ -393,51 +443,51 @@ func (autoscalesetting *Autoscalesetting_Spec) ConvertToARM(resolved genruntime.
 	result.Name = resolved.Name
 
 	// Set property "Properties":
-	if autoscalesetting.Enabled != nil ||
-		autoscalesetting.Name != nil ||
-		autoscalesetting.Notifications != nil ||
-		autoscalesetting.PredictiveAutoscalePolicy != nil ||
-		autoscalesetting.Profiles != nil ||
-		autoscalesetting.TargetResourceLocation != nil ||
-		autoscalesetting.TargetResourceUriReference != nil {
-		result.Properties = &AutoscaleSettingProperties_ARM{}
+	if setting.Enabled != nil ||
+		setting.Name != nil ||
+		setting.Notifications != nil ||
+		setting.PredictiveAutoscalePolicy != nil ||
+		setting.Profiles != nil ||
+		setting.TargetResourceLocation != nil ||
+		setting.TargetResourceUriReference != nil {
+		result.Properties = &arm.AutoscaleSettingProperties{}
 	}
-	if autoscalesetting.Enabled != nil {
-		enabled := *autoscalesetting.Enabled
+	if setting.Enabled != nil {
+		enabled := *setting.Enabled
 		result.Properties.Enabled = &enabled
 	}
-	if autoscalesetting.Name != nil {
-		name := *autoscalesetting.Name
+	if setting.Name != nil {
+		name := *setting.Name
 		result.Properties.Name = &name
 	}
-	for _, item := range autoscalesetting.Notifications {
+	for _, item := range setting.Notifications {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.Notifications = append(result.Properties.Notifications, *item_ARM.(*AutoscaleNotification_ARM))
+		result.Properties.Notifications = append(result.Properties.Notifications, *item_ARM.(*arm.AutoscaleNotification))
 	}
-	if autoscalesetting.PredictiveAutoscalePolicy != nil {
-		predictiveAutoscalePolicy_ARM, err := (*autoscalesetting.PredictiveAutoscalePolicy).ConvertToARM(resolved)
+	if setting.PredictiveAutoscalePolicy != nil {
+		predictiveAutoscalePolicy_ARM, err := (*setting.PredictiveAutoscalePolicy).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		predictiveAutoscalePolicy := *predictiveAutoscalePolicy_ARM.(*PredictiveAutoscalePolicy_ARM)
+		predictiveAutoscalePolicy := *predictiveAutoscalePolicy_ARM.(*arm.PredictiveAutoscalePolicy)
 		result.Properties.PredictiveAutoscalePolicy = &predictiveAutoscalePolicy
 	}
-	for _, item := range autoscalesetting.Profiles {
+	for _, item := range setting.Profiles {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.Profiles = append(result.Properties.Profiles, *item_ARM.(*AutoscaleProfile_ARM))
+		result.Properties.Profiles = append(result.Properties.Profiles, *item_ARM.(*arm.AutoscaleProfile))
 	}
-	if autoscalesetting.TargetResourceLocation != nil {
-		targetResourceLocation := *autoscalesetting.TargetResourceLocation
+	if setting.TargetResourceLocation != nil {
+		targetResourceLocation := *setting.TargetResourceLocation
 		result.Properties.TargetResourceLocation = &targetResourceLocation
 	}
-	if autoscalesetting.TargetResourceUriReference != nil {
-		targetResourceUriARMID, err := resolved.ResolvedReferences.Lookup(*autoscalesetting.TargetResourceUriReference)
+	if setting.TargetResourceUriReference != nil {
+		targetResourceUriARMID, err := resolved.ResolvedReferences.Lookup(*setting.TargetResourceUriReference)
 		if err != nil {
 			return nil, err
 		}
@@ -446,9 +496,9 @@ func (autoscalesetting *Autoscalesetting_Spec) ConvertToARM(resolved genruntime.
 	}
 
 	// Set property "Tags":
-	if autoscalesetting.Tags != nil {
-		result.Tags = make(map[string]string, len(autoscalesetting.Tags))
-		for key, value := range autoscalesetting.Tags {
+	if setting.Tags != nil {
+		result.Tags = make(map[string]string, len(setting.Tags))
+		for key, value := range setting.Tags {
 			result.Tags[key] = value
 		}
 	}
@@ -456,33 +506,33 @@ func (autoscalesetting *Autoscalesetting_Spec) ConvertToARM(resolved genruntime.
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (autoscalesetting *Autoscalesetting_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Autoscalesetting_Spec_ARM{}
+func (setting *AutoscaleSetting_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.AutoscaleSetting_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (autoscalesetting *Autoscalesetting_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Autoscalesetting_Spec_ARM)
+func (setting *AutoscaleSetting_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.AutoscaleSetting_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Autoscalesetting_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutoscaleSetting_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
-	autoscalesetting.SetAzureName(genruntime.ExtractKubernetesResourceNameFromARMName(typedInput.Name))
+	setting.SetAzureName(genruntime.ExtractKubernetesResourceNameFromARMName(typedInput.Name))
 
 	// Set property "Enabled":
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Enabled != nil {
 			enabled := *typedInput.Properties.Enabled
-			autoscalesetting.Enabled = &enabled
+			setting.Enabled = &enabled
 		}
 	}
 
 	// Set property "Location":
 	if typedInput.Location != nil {
 		location := *typedInput.Location
-		autoscalesetting.Location = &location
+		setting.Location = &location
 	}
 
 	// Set property "Name":
@@ -490,7 +540,7 @@ func (autoscalesetting *Autoscalesetting_Spec) PopulateFromARM(owner genruntime.
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Name != nil {
 			name := *typedInput.Properties.Name
-			autoscalesetting.Name = &name
+			setting.Name = &name
 		}
 	}
 
@@ -503,12 +553,14 @@ func (autoscalesetting *Autoscalesetting_Spec) PopulateFromARM(owner genruntime.
 			if err != nil {
 				return err
 			}
-			autoscalesetting.Notifications = append(autoscalesetting.Notifications, item1)
+			setting.Notifications = append(setting.Notifications, item1)
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
-	autoscalesetting.Owner = &genruntime.KnownResourceReference{
+	setting.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
 		ARMID: owner.ARMID,
 	}
@@ -523,7 +575,7 @@ func (autoscalesetting *Autoscalesetting_Spec) PopulateFromARM(owner genruntime.
 				return err
 			}
 			predictiveAutoscalePolicy := predictiveAutoscalePolicy1
-			autoscalesetting.PredictiveAutoscalePolicy = &predictiveAutoscalePolicy
+			setting.PredictiveAutoscalePolicy = &predictiveAutoscalePolicy
 		}
 	}
 
@@ -536,15 +588,15 @@ func (autoscalesetting *Autoscalesetting_Spec) PopulateFromARM(owner genruntime.
 			if err != nil {
 				return err
 			}
-			autoscalesetting.Profiles = append(autoscalesetting.Profiles, item1)
+			setting.Profiles = append(setting.Profiles, item1)
 		}
 	}
 
 	// Set property "Tags":
 	if typedInput.Tags != nil {
-		autoscalesetting.Tags = make(map[string]string, len(typedInput.Tags))
+		setting.Tags = make(map[string]string, len(typedInput.Tags))
 		for key, value := range typedInput.Tags {
-			autoscalesetting.Tags[key] = value
+			setting.Tags[key] = value
 		}
 	}
 
@@ -553,7 +605,7 @@ func (autoscalesetting *Autoscalesetting_Spec) PopulateFromARM(owner genruntime.
 	if typedInput.Properties != nil {
 		if typedInput.Properties.TargetResourceLocation != nil {
 			targetResourceLocation := *typedInput.Properties.TargetResourceLocation
-			autoscalesetting.TargetResourceLocation = &targetResourceLocation
+			setting.TargetResourceLocation = &targetResourceLocation
 		}
 	}
 
@@ -563,25 +615,25 @@ func (autoscalesetting *Autoscalesetting_Spec) PopulateFromARM(owner genruntime.
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Autoscalesetting_Spec{}
+var _ genruntime.ConvertibleSpec = &AutoscaleSetting_Spec{}
 
-// ConvertSpecFrom populates our Autoscalesetting_Spec from the provided source
-func (autoscalesetting *Autoscalesetting_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20221001s.Autoscalesetting_Spec)
+// ConvertSpecFrom populates our AutoscaleSetting_Spec from the provided source
+func (setting *AutoscaleSetting_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.AutoscaleSetting_Spec)
 	if ok {
 		// Populate our instance from source
-		return autoscalesetting.AssignProperties_From_Autoscalesetting_Spec(src)
+		return setting.AssignProperties_From_AutoscaleSetting_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20221001s.Autoscalesetting_Spec{}
+	src = &storage.AutoscaleSetting_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = autoscalesetting.AssignProperties_From_Autoscalesetting_Spec(src)
+	err = setting.AssignProperties_From_AutoscaleSetting_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -589,17 +641,17 @@ func (autoscalesetting *Autoscalesetting_Spec) ConvertSpecFrom(source genruntime
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Autoscalesetting_Spec
-func (autoscalesetting *Autoscalesetting_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20221001s.Autoscalesetting_Spec)
+// ConvertSpecTo populates the provided destination from our AutoscaleSetting_Spec
+func (setting *AutoscaleSetting_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.AutoscaleSetting_Spec)
 	if ok {
 		// Populate destination from our instance
-		return autoscalesetting.AssignProperties_To_Autoscalesetting_Spec(dst)
+		return setting.AssignProperties_To_AutoscaleSetting_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20221001s.Autoscalesetting_Spec{}
-	err := autoscalesetting.AssignProperties_To_Autoscalesetting_Spec(dst)
+	dst = &storage.AutoscaleSetting_Spec{}
+	err := setting.AssignProperties_To_AutoscaleSetting_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -613,25 +665,25 @@ func (autoscalesetting *Autoscalesetting_Spec) ConvertSpecTo(destination genrunt
 	return nil
 }
 
-// AssignProperties_From_Autoscalesetting_Spec populates our Autoscalesetting_Spec from the provided source Autoscalesetting_Spec
-func (autoscalesetting *Autoscalesetting_Spec) AssignProperties_From_Autoscalesetting_Spec(source *v20221001s.Autoscalesetting_Spec) error {
+// AssignProperties_From_AutoscaleSetting_Spec populates our AutoscaleSetting_Spec from the provided source AutoscaleSetting_Spec
+func (setting *AutoscaleSetting_Spec) AssignProperties_From_AutoscaleSetting_Spec(source *storage.AutoscaleSetting_Spec) error {
 
 	// AzureName
-	autoscalesetting.AzureName = source.AzureName
+	setting.AzureName = source.AzureName
 
 	// Enabled
 	if source.Enabled != nil {
 		enabled := *source.Enabled
-		autoscalesetting.Enabled = &enabled
+		setting.Enabled = &enabled
 	} else {
-		autoscalesetting.Enabled = nil
+		setting.Enabled = nil
 	}
 
 	// Location
-	autoscalesetting.Location = genruntime.ClonePointerToString(source.Location)
+	setting.Location = genruntime.ClonePointerToString(source.Location)
 
 	// Name
-	autoscalesetting.Name = genruntime.ClonePointerToString(source.Name)
+	setting.Name = genruntime.ClonePointerToString(source.Name)
 
 	// Notifications
 	if source.Notifications != nil {
@@ -646,17 +698,29 @@ func (autoscalesetting *Autoscalesetting_Spec) AssignProperties_From_Autoscalese
 			}
 			notificationList[notificationIndex] = notification
 		}
-		autoscalesetting.Notifications = notificationList
+		setting.Notifications = notificationList
 	} else {
-		autoscalesetting.Notifications = nil
+		setting.Notifications = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec AutoscaleSettingOperatorSpec
+		err := operatorSpec.AssignProperties_From_AutoscaleSettingOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AutoscaleSettingOperatorSpec() to populate field OperatorSpec")
+		}
+		setting.OperatorSpec = &operatorSpec
+	} else {
+		setting.OperatorSpec = nil
 	}
 
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
-		autoscalesetting.Owner = &owner
+		setting.Owner = &owner
 	} else {
-		autoscalesetting.Owner = nil
+		setting.Owner = nil
 	}
 
 	// PredictiveAutoscalePolicy
@@ -666,9 +730,9 @@ func (autoscalesetting *Autoscalesetting_Spec) AssignProperties_From_Autoscalese
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_PredictiveAutoscalePolicy() to populate field PredictiveAutoscalePolicy")
 		}
-		autoscalesetting.PredictiveAutoscalePolicy = &predictiveAutoscalePolicy
+		setting.PredictiveAutoscalePolicy = &predictiveAutoscalePolicy
 	} else {
-		autoscalesetting.PredictiveAutoscalePolicy = nil
+		setting.PredictiveAutoscalePolicy = nil
 	}
 
 	// Profiles
@@ -684,58 +748,58 @@ func (autoscalesetting *Autoscalesetting_Spec) AssignProperties_From_Autoscalese
 			}
 			profileList[profileIndex] = profile
 		}
-		autoscalesetting.Profiles = profileList
+		setting.Profiles = profileList
 	} else {
-		autoscalesetting.Profiles = nil
+		setting.Profiles = nil
 	}
 
 	// Tags
-	autoscalesetting.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+	setting.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// TargetResourceLocation
-	autoscalesetting.TargetResourceLocation = genruntime.ClonePointerToString(source.TargetResourceLocation)
+	setting.TargetResourceLocation = genruntime.ClonePointerToString(source.TargetResourceLocation)
 
 	// TargetResourceUriReference
 	if source.TargetResourceUriReference != nil {
 		targetResourceUriReference := source.TargetResourceUriReference.Copy()
-		autoscalesetting.TargetResourceUriReference = &targetResourceUriReference
+		setting.TargetResourceUriReference = &targetResourceUriReference
 	} else {
-		autoscalesetting.TargetResourceUriReference = nil
+		setting.TargetResourceUriReference = nil
 	}
 
 	// No error
 	return nil
 }
 
-// AssignProperties_To_Autoscalesetting_Spec populates the provided destination Autoscalesetting_Spec from our Autoscalesetting_Spec
-func (autoscalesetting *Autoscalesetting_Spec) AssignProperties_To_Autoscalesetting_Spec(destination *v20221001s.Autoscalesetting_Spec) error {
+// AssignProperties_To_AutoscaleSetting_Spec populates the provided destination AutoscaleSetting_Spec from our AutoscaleSetting_Spec
+func (setting *AutoscaleSetting_Spec) AssignProperties_To_AutoscaleSetting_Spec(destination *storage.AutoscaleSetting_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AzureName
-	destination.AzureName = autoscalesetting.AzureName
+	destination.AzureName = setting.AzureName
 
 	// Enabled
-	if autoscalesetting.Enabled != nil {
-		enabled := *autoscalesetting.Enabled
+	if setting.Enabled != nil {
+		enabled := *setting.Enabled
 		destination.Enabled = &enabled
 	} else {
 		destination.Enabled = nil
 	}
 
 	// Location
-	destination.Location = genruntime.ClonePointerToString(autoscalesetting.Location)
+	destination.Location = genruntime.ClonePointerToString(setting.Location)
 
 	// Name
-	destination.Name = genruntime.ClonePointerToString(autoscalesetting.Name)
+	destination.Name = genruntime.ClonePointerToString(setting.Name)
 
 	// Notifications
-	if autoscalesetting.Notifications != nil {
-		notificationList := make([]v20221001s.AutoscaleNotification, len(autoscalesetting.Notifications))
-		for notificationIndex, notificationItem := range autoscalesetting.Notifications {
+	if setting.Notifications != nil {
+		notificationList := make([]storage.AutoscaleNotification, len(setting.Notifications))
+		for notificationIndex, notificationItem := range setting.Notifications {
 			// Shadow the loop variable to avoid aliasing
 			notificationItem := notificationItem
-			var notification v20221001s.AutoscaleNotification
+			var notification storage.AutoscaleNotification
 			err := notificationItem.AssignProperties_To_AutoscaleNotification(&notification)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AutoscaleNotification() to populate field Notifications")
@@ -747,21 +811,33 @@ func (autoscalesetting *Autoscalesetting_Spec) AssignProperties_To_Autoscalesett
 		destination.Notifications = nil
 	}
 
+	// OperatorSpec
+	if setting.OperatorSpec != nil {
+		var operatorSpec storage.AutoscaleSettingOperatorSpec
+		err := setting.OperatorSpec.AssignProperties_To_AutoscaleSettingOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AutoscaleSettingOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
-	destination.OriginalVersion = autoscalesetting.OriginalVersion()
+	destination.OriginalVersion = setting.OriginalVersion()
 
 	// Owner
-	if autoscalesetting.Owner != nil {
-		owner := autoscalesetting.Owner.Copy()
+	if setting.Owner != nil {
+		owner := setting.Owner.Copy()
 		destination.Owner = &owner
 	} else {
 		destination.Owner = nil
 	}
 
 	// PredictiveAutoscalePolicy
-	if autoscalesetting.PredictiveAutoscalePolicy != nil {
-		var predictiveAutoscalePolicy v20221001s.PredictiveAutoscalePolicy
-		err := autoscalesetting.PredictiveAutoscalePolicy.AssignProperties_To_PredictiveAutoscalePolicy(&predictiveAutoscalePolicy)
+	if setting.PredictiveAutoscalePolicy != nil {
+		var predictiveAutoscalePolicy storage.PredictiveAutoscalePolicy
+		err := setting.PredictiveAutoscalePolicy.AssignProperties_To_PredictiveAutoscalePolicy(&predictiveAutoscalePolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PredictiveAutoscalePolicy() to populate field PredictiveAutoscalePolicy")
 		}
@@ -771,12 +847,12 @@ func (autoscalesetting *Autoscalesetting_Spec) AssignProperties_To_Autoscalesett
 	}
 
 	// Profiles
-	if autoscalesetting.Profiles != nil {
-		profileList := make([]v20221001s.AutoscaleProfile, len(autoscalesetting.Profiles))
-		for profileIndex, profileItem := range autoscalesetting.Profiles {
+	if setting.Profiles != nil {
+		profileList := make([]storage.AutoscaleProfile, len(setting.Profiles))
+		for profileIndex, profileItem := range setting.Profiles {
 			// Shadow the loop variable to avoid aliasing
 			profileItem := profileItem
-			var profile v20221001s.AutoscaleProfile
+			var profile storage.AutoscaleProfile
 			err := profileItem.AssignProperties_To_AutoscaleProfile(&profile)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AutoscaleProfile() to populate field Profiles")
@@ -789,14 +865,14 @@ func (autoscalesetting *Autoscalesetting_Spec) AssignProperties_To_Autoscalesett
 	}
 
 	// Tags
-	destination.Tags = genruntime.CloneMapOfStringToString(autoscalesetting.Tags)
+	destination.Tags = genruntime.CloneMapOfStringToString(setting.Tags)
 
 	// TargetResourceLocation
-	destination.TargetResourceLocation = genruntime.ClonePointerToString(autoscalesetting.TargetResourceLocation)
+	destination.TargetResourceLocation = genruntime.ClonePointerToString(setting.TargetResourceLocation)
 
 	// TargetResourceUriReference
-	if autoscalesetting.TargetResourceUriReference != nil {
-		targetResourceUriReference := autoscalesetting.TargetResourceUriReference.Copy()
+	if setting.TargetResourceUriReference != nil {
+		targetResourceUriReference := setting.TargetResourceUriReference.Copy()
 		destination.TargetResourceUriReference = &targetResourceUriReference
 	} else {
 		destination.TargetResourceUriReference = nil
@@ -813,22 +889,22 @@ func (autoscalesetting *Autoscalesetting_Spec) AssignProperties_To_Autoscalesett
 	return nil
 }
 
-// Initialize_From_Autoscalesetting_STATUS populates our Autoscalesetting_Spec from the provided source Autoscalesetting_STATUS
-func (autoscalesetting *Autoscalesetting_Spec) Initialize_From_Autoscalesetting_STATUS(source *Autoscalesetting_STATUS) error {
+// Initialize_From_Autoscalesetting_STATUS populates our AutoscaleSetting_Spec from the provided source Autoscalesetting_STATUS
+func (setting *AutoscaleSetting_Spec) Initialize_From_Autoscalesetting_STATUS(source *Autoscalesetting_STATUS) error {
 
 	// Enabled
 	if source.Enabled != nil {
 		enabled := *source.Enabled
-		autoscalesetting.Enabled = &enabled
+		setting.Enabled = &enabled
 	} else {
-		autoscalesetting.Enabled = nil
+		setting.Enabled = nil
 	}
 
 	// Location
-	autoscalesetting.Location = genruntime.ClonePointerToString(source.Location)
+	setting.Location = genruntime.ClonePointerToString(source.Location)
 
 	// Name
-	autoscalesetting.Name = genruntime.ClonePointerToString(source.Name)
+	setting.Name = genruntime.ClonePointerToString(source.PropertiesName)
 
 	// Notifications
 	if source.Notifications != nil {
@@ -843,9 +919,9 @@ func (autoscalesetting *Autoscalesetting_Spec) Initialize_From_Autoscalesetting_
 			}
 			notificationList[notificationIndex] = notification
 		}
-		autoscalesetting.Notifications = notificationList
+		setting.Notifications = notificationList
 	} else {
-		autoscalesetting.Notifications = nil
+		setting.Notifications = nil
 	}
 
 	// PredictiveAutoscalePolicy
@@ -855,9 +931,9 @@ func (autoscalesetting *Autoscalesetting_Spec) Initialize_From_Autoscalesetting_
 		if err != nil {
 			return errors.Wrap(err, "calling Initialize_From_PredictiveAutoscalePolicy_STATUS() to populate field PredictiveAutoscalePolicy")
 		}
-		autoscalesetting.PredictiveAutoscalePolicy = &predictiveAutoscalePolicy
+		setting.PredictiveAutoscalePolicy = &predictiveAutoscalePolicy
 	} else {
-		autoscalesetting.PredictiveAutoscalePolicy = nil
+		setting.PredictiveAutoscalePolicy = nil
 	}
 
 	// Profiles
@@ -873,30 +949,28 @@ func (autoscalesetting *Autoscalesetting_Spec) Initialize_From_Autoscalesetting_
 			}
 			profileList[profileIndex] = profile
 		}
-		autoscalesetting.Profiles = profileList
+		setting.Profiles = profileList
 	} else {
-		autoscalesetting.Profiles = nil
+		setting.Profiles = nil
 	}
 
 	// Tags
-	autoscalesetting.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+	setting.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// TargetResourceLocation
-	autoscalesetting.TargetResourceLocation = genruntime.ClonePointerToString(source.TargetResourceLocation)
+	setting.TargetResourceLocation = genruntime.ClonePointerToString(source.TargetResourceLocation)
 
 	// No error
 	return nil
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (autoscalesetting *Autoscalesetting_Spec) OriginalVersion() string {
+func (setting *AutoscaleSetting_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (autoscalesetting *Autoscalesetting_Spec) SetAzureName(azureName string) {
-	autoscalesetting.AzureName = azureName
-}
+func (setting *AutoscaleSetting_Spec) SetAzureName(azureName string) { setting.AzureName = azureName }
 
 type Autoscalesetting_STATUS struct {
 	// Conditions: The observed state of the resource
@@ -949,14 +1023,14 @@ var _ genruntime.ConvertibleStatus = &Autoscalesetting_STATUS{}
 
 // ConvertStatusFrom populates our Autoscalesetting_STATUS from the provided source
 func (autoscalesetting *Autoscalesetting_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20221001s.Autoscalesetting_STATUS)
+	src, ok := source.(*storage.Autoscalesetting_STATUS)
 	if ok {
 		// Populate our instance from source
 		return autoscalesetting.AssignProperties_From_Autoscalesetting_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20221001s.Autoscalesetting_STATUS{}
+	src = &storage.Autoscalesetting_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -973,14 +1047,14 @@ func (autoscalesetting *Autoscalesetting_STATUS) ConvertStatusFrom(source genrun
 
 // ConvertStatusTo populates the provided destination from our Autoscalesetting_STATUS
 func (autoscalesetting *Autoscalesetting_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20221001s.Autoscalesetting_STATUS)
+	dst, ok := destination.(*storage.Autoscalesetting_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return autoscalesetting.AssignProperties_To_Autoscalesetting_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20221001s.Autoscalesetting_STATUS{}
+	dst = &storage.Autoscalesetting_STATUS{}
 	err := autoscalesetting.AssignProperties_To_Autoscalesetting_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -999,14 +1073,14 @@ var _ genruntime.FromARMConverter = &Autoscalesetting_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (autoscalesetting *Autoscalesetting_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Autoscalesetting_STATUS_ARM{}
+	return &arm.Autoscalesetting_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (autoscalesetting *Autoscalesetting_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Autoscalesetting_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Autoscalesetting_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Autoscalesetting_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Autoscalesetting_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -1135,7 +1209,7 @@ func (autoscalesetting *Autoscalesetting_STATUS) PopulateFromARM(owner genruntim
 }
 
 // AssignProperties_From_Autoscalesetting_STATUS populates our Autoscalesetting_STATUS from the provided source Autoscalesetting_STATUS
-func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_From_Autoscalesetting_STATUS(source *v20221001s.Autoscalesetting_STATUS) error {
+func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_From_Autoscalesetting_STATUS(source *storage.Autoscalesetting_STATUS) error {
 
 	// Conditions
 	autoscalesetting.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -1237,7 +1311,7 @@ func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_From_Autoscale
 }
 
 // AssignProperties_To_Autoscalesetting_STATUS populates the provided destination Autoscalesetting_STATUS from our Autoscalesetting_STATUS
-func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_To_Autoscalesetting_STATUS(destination *v20221001s.Autoscalesetting_STATUS) error {
+func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_To_Autoscalesetting_STATUS(destination *storage.Autoscalesetting_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1263,11 +1337,11 @@ func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_To_Autoscalese
 
 	// Notifications
 	if autoscalesetting.Notifications != nil {
-		notificationList := make([]v20221001s.AutoscaleNotification_STATUS, len(autoscalesetting.Notifications))
+		notificationList := make([]storage.AutoscaleNotification_STATUS, len(autoscalesetting.Notifications))
 		for notificationIndex, notificationItem := range autoscalesetting.Notifications {
 			// Shadow the loop variable to avoid aliasing
 			notificationItem := notificationItem
-			var notification v20221001s.AutoscaleNotification_STATUS
+			var notification storage.AutoscaleNotification_STATUS
 			err := notificationItem.AssignProperties_To_AutoscaleNotification_STATUS(&notification)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AutoscaleNotification_STATUS() to populate field Notifications")
@@ -1281,7 +1355,7 @@ func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_To_Autoscalese
 
 	// PredictiveAutoscalePolicy
 	if autoscalesetting.PredictiveAutoscalePolicy != nil {
-		var predictiveAutoscalePolicy v20221001s.PredictiveAutoscalePolicy_STATUS
+		var predictiveAutoscalePolicy storage.PredictiveAutoscalePolicy_STATUS
 		err := autoscalesetting.PredictiveAutoscalePolicy.AssignProperties_To_PredictiveAutoscalePolicy_STATUS(&predictiveAutoscalePolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PredictiveAutoscalePolicy_STATUS() to populate field PredictiveAutoscalePolicy")
@@ -1293,11 +1367,11 @@ func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_To_Autoscalese
 
 	// Profiles
 	if autoscalesetting.Profiles != nil {
-		profileList := make([]v20221001s.AutoscaleProfile_STATUS, len(autoscalesetting.Profiles))
+		profileList := make([]storage.AutoscaleProfile_STATUS, len(autoscalesetting.Profiles))
 		for profileIndex, profileItem := range autoscalesetting.Profiles {
 			// Shadow the loop variable to avoid aliasing
 			profileItem := profileItem
-			var profile v20221001s.AutoscaleProfile_STATUS
+			var profile storage.AutoscaleProfile_STATUS
 			err := profileItem.AssignProperties_To_AutoscaleProfile_STATUS(&profile)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AutoscaleProfile_STATUS() to populate field Profiles")
@@ -1314,7 +1388,7 @@ func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_To_Autoscalese
 
 	// SystemData
 	if autoscalesetting.SystemData != nil {
-		var systemDatum v20221001s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := autoscalesetting.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -1367,7 +1441,7 @@ func (notification *AutoscaleNotification) ConvertToARM(resolved genruntime.Conv
 	if notification == nil {
 		return nil, nil
 	}
-	result := &AutoscaleNotification_ARM{}
+	result := &arm.AutoscaleNotification{}
 
 	// Set property "Email":
 	if notification.Email != nil {
@@ -1375,13 +1449,15 @@ func (notification *AutoscaleNotification) ConvertToARM(resolved genruntime.Conv
 		if err != nil {
 			return nil, err
 		}
-		email := *email_ARM.(*EmailNotification_ARM)
+		email := *email_ARM.(*arm.EmailNotification)
 		result.Email = &email
 	}
 
 	// Set property "Operation":
 	if notification.Operation != nil {
-		operation := *notification.Operation
+		var temp string
+		temp = string(*notification.Operation)
+		operation := arm.AutoscaleNotification_Operation(temp)
 		result.Operation = &operation
 	}
 
@@ -1391,21 +1467,21 @@ func (notification *AutoscaleNotification) ConvertToARM(resolved genruntime.Conv
 		if err != nil {
 			return nil, err
 		}
-		result.Webhooks = append(result.Webhooks, *item_ARM.(*WebhookNotification_ARM))
+		result.Webhooks = append(result.Webhooks, *item_ARM.(*arm.WebhookNotification))
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (notification *AutoscaleNotification) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AutoscaleNotification_ARM{}
+	return &arm.AutoscaleNotification{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (notification *AutoscaleNotification) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AutoscaleNotification_ARM)
+	typedInput, ok := armInput.(arm.AutoscaleNotification)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AutoscaleNotification_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutoscaleNotification, got %T", armInput)
 	}
 
 	// Set property "Email":
@@ -1421,7 +1497,9 @@ func (notification *AutoscaleNotification) PopulateFromARM(owner genruntime.Arbi
 
 	// Set property "Operation":
 	if typedInput.Operation != nil {
-		operation := *typedInput.Operation
+		var temp string
+		temp = string(*typedInput.Operation)
+		operation := AutoscaleNotification_Operation(temp)
 		notification.Operation = &operation
 	}
 
@@ -1440,7 +1518,7 @@ func (notification *AutoscaleNotification) PopulateFromARM(owner genruntime.Arbi
 }
 
 // AssignProperties_From_AutoscaleNotification populates our AutoscaleNotification from the provided source AutoscaleNotification
-func (notification *AutoscaleNotification) AssignProperties_From_AutoscaleNotification(source *v20221001s.AutoscaleNotification) error {
+func (notification *AutoscaleNotification) AssignProperties_From_AutoscaleNotification(source *storage.AutoscaleNotification) error {
 
 	// Email
 	if source.Email != nil {
@@ -1456,8 +1534,9 @@ func (notification *AutoscaleNotification) AssignProperties_From_AutoscaleNotifi
 
 	// Operation
 	if source.Operation != nil {
-		operation := AutoscaleNotification_Operation(*source.Operation)
-		notification.Operation = &operation
+		operation := *source.Operation
+		operationTemp := genruntime.ToEnum(operation, autoscaleNotification_Operation_Values)
+		notification.Operation = &operationTemp
 	} else {
 		notification.Operation = nil
 	}
@@ -1485,13 +1564,13 @@ func (notification *AutoscaleNotification) AssignProperties_From_AutoscaleNotifi
 }
 
 // AssignProperties_To_AutoscaleNotification populates the provided destination AutoscaleNotification from our AutoscaleNotification
-func (notification *AutoscaleNotification) AssignProperties_To_AutoscaleNotification(destination *v20221001s.AutoscaleNotification) error {
+func (notification *AutoscaleNotification) AssignProperties_To_AutoscaleNotification(destination *storage.AutoscaleNotification) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Email
 	if notification.Email != nil {
-		var email v20221001s.EmailNotification
+		var email storage.EmailNotification
 		err := notification.Email.AssignProperties_To_EmailNotification(&email)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EmailNotification() to populate field Email")
@@ -1511,11 +1590,11 @@ func (notification *AutoscaleNotification) AssignProperties_To_AutoscaleNotifica
 
 	// Webhooks
 	if notification.Webhooks != nil {
-		webhookList := make([]v20221001s.WebhookNotification, len(notification.Webhooks))
+		webhookList := make([]storage.WebhookNotification, len(notification.Webhooks))
 		for webhookIndex, webhookItem := range notification.Webhooks {
 			// Shadow the loop variable to avoid aliasing
 			webhookItem := webhookItem
-			var webhook v20221001s.WebhookNotification
+			var webhook storage.WebhookNotification
 			err := webhookItem.AssignProperties_To_WebhookNotification(&webhook)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_WebhookNotification() to populate field Webhooks")
@@ -1555,7 +1634,7 @@ func (notification *AutoscaleNotification) Initialize_From_AutoscaleNotification
 
 	// Operation
 	if source.Operation != nil {
-		operation := AutoscaleNotification_Operation(*source.Operation)
+		operation := genruntime.ToEnum(string(*source.Operation), autoscaleNotification_Operation_Values)
 		notification.Operation = &operation
 	} else {
 		notification.Operation = nil
@@ -1599,14 +1678,14 @@ var _ genruntime.FromARMConverter = &AutoscaleNotification_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (notification *AutoscaleNotification_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AutoscaleNotification_STATUS_ARM{}
+	return &arm.AutoscaleNotification_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (notification *AutoscaleNotification_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AutoscaleNotification_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AutoscaleNotification_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AutoscaleNotification_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutoscaleNotification_STATUS, got %T", armInput)
 	}
 
 	// Set property "Email":
@@ -1622,7 +1701,9 @@ func (notification *AutoscaleNotification_STATUS) PopulateFromARM(owner genrunti
 
 	// Set property "Operation":
 	if typedInput.Operation != nil {
-		operation := *typedInput.Operation
+		var temp string
+		temp = string(*typedInput.Operation)
+		operation := AutoscaleNotification_Operation_STATUS(temp)
 		notification.Operation = &operation
 	}
 
@@ -1641,7 +1722,7 @@ func (notification *AutoscaleNotification_STATUS) PopulateFromARM(owner genrunti
 }
 
 // AssignProperties_From_AutoscaleNotification_STATUS populates our AutoscaleNotification_STATUS from the provided source AutoscaleNotification_STATUS
-func (notification *AutoscaleNotification_STATUS) AssignProperties_From_AutoscaleNotification_STATUS(source *v20221001s.AutoscaleNotification_STATUS) error {
+func (notification *AutoscaleNotification_STATUS) AssignProperties_From_AutoscaleNotification_STATUS(source *storage.AutoscaleNotification_STATUS) error {
 
 	// Email
 	if source.Email != nil {
@@ -1657,8 +1738,9 @@ func (notification *AutoscaleNotification_STATUS) AssignProperties_From_Autoscal
 
 	// Operation
 	if source.Operation != nil {
-		operation := AutoscaleNotification_Operation_STATUS(*source.Operation)
-		notification.Operation = &operation
+		operation := *source.Operation
+		operationTemp := genruntime.ToEnum(operation, autoscaleNotification_Operation_STATUS_Values)
+		notification.Operation = &operationTemp
 	} else {
 		notification.Operation = nil
 	}
@@ -1686,13 +1768,13 @@ func (notification *AutoscaleNotification_STATUS) AssignProperties_From_Autoscal
 }
 
 // AssignProperties_To_AutoscaleNotification_STATUS populates the provided destination AutoscaleNotification_STATUS from our AutoscaleNotification_STATUS
-func (notification *AutoscaleNotification_STATUS) AssignProperties_To_AutoscaleNotification_STATUS(destination *v20221001s.AutoscaleNotification_STATUS) error {
+func (notification *AutoscaleNotification_STATUS) AssignProperties_To_AutoscaleNotification_STATUS(destination *storage.AutoscaleNotification_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Email
 	if notification.Email != nil {
-		var email v20221001s.EmailNotification_STATUS
+		var email storage.EmailNotification_STATUS
 		err := notification.Email.AssignProperties_To_EmailNotification_STATUS(&email)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EmailNotification_STATUS() to populate field Email")
@@ -1712,11 +1794,11 @@ func (notification *AutoscaleNotification_STATUS) AssignProperties_To_AutoscaleN
 
 	// Webhooks
 	if notification.Webhooks != nil {
-		webhookList := make([]v20221001s.WebhookNotification_STATUS, len(notification.Webhooks))
+		webhookList := make([]storage.WebhookNotification_STATUS, len(notification.Webhooks))
 		for webhookIndex, webhookItem := range notification.Webhooks {
 			// Shadow the loop variable to avoid aliasing
 			webhookItem := webhookItem
-			var webhook v20221001s.WebhookNotification_STATUS
+			var webhook storage.WebhookNotification_STATUS
 			err := webhookItem.AssignProperties_To_WebhookNotification_STATUS(&webhook)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_WebhookNotification_STATUS() to populate field Webhooks")
@@ -1768,7 +1850,7 @@ func (profile *AutoscaleProfile) ConvertToARM(resolved genruntime.ConvertToARMRe
 	if profile == nil {
 		return nil, nil
 	}
-	result := &AutoscaleProfile_ARM{}
+	result := &arm.AutoscaleProfile{}
 
 	// Set property "Capacity":
 	if profile.Capacity != nil {
@@ -1776,7 +1858,7 @@ func (profile *AutoscaleProfile) ConvertToARM(resolved genruntime.ConvertToARMRe
 		if err != nil {
 			return nil, err
 		}
-		capacity := *capacity_ARM.(*ScaleCapacity_ARM)
+		capacity := *capacity_ARM.(*arm.ScaleCapacity)
 		result.Capacity = &capacity
 	}
 
@@ -1786,7 +1868,7 @@ func (profile *AutoscaleProfile) ConvertToARM(resolved genruntime.ConvertToARMRe
 		if err != nil {
 			return nil, err
 		}
-		fixedDate := *fixedDate_ARM.(*TimeWindow_ARM)
+		fixedDate := *fixedDate_ARM.(*arm.TimeWindow)
 		result.FixedDate = &fixedDate
 	}
 
@@ -1802,7 +1884,7 @@ func (profile *AutoscaleProfile) ConvertToARM(resolved genruntime.ConvertToARMRe
 		if err != nil {
 			return nil, err
 		}
-		recurrence := *recurrence_ARM.(*Recurrence_ARM)
+		recurrence := *recurrence_ARM.(*arm.Recurrence)
 		result.Recurrence = &recurrence
 	}
 
@@ -1812,21 +1894,21 @@ func (profile *AutoscaleProfile) ConvertToARM(resolved genruntime.ConvertToARMRe
 		if err != nil {
 			return nil, err
 		}
-		result.Rules = append(result.Rules, *item_ARM.(*ScaleRule_ARM))
+		result.Rules = append(result.Rules, *item_ARM.(*arm.ScaleRule))
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (profile *AutoscaleProfile) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AutoscaleProfile_ARM{}
+	return &arm.AutoscaleProfile{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (profile *AutoscaleProfile) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AutoscaleProfile_ARM)
+	typedInput, ok := armInput.(arm.AutoscaleProfile)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AutoscaleProfile_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutoscaleProfile, got %T", armInput)
 	}
 
 	// Set property "Capacity":
@@ -1883,7 +1965,7 @@ func (profile *AutoscaleProfile) PopulateFromARM(owner genruntime.ArbitraryOwner
 }
 
 // AssignProperties_From_AutoscaleProfile populates our AutoscaleProfile from the provided source AutoscaleProfile
-func (profile *AutoscaleProfile) AssignProperties_From_AutoscaleProfile(source *v20221001s.AutoscaleProfile) error {
+func (profile *AutoscaleProfile) AssignProperties_From_AutoscaleProfile(source *storage.AutoscaleProfile) error {
 
 	// Capacity
 	if source.Capacity != nil {
@@ -1947,13 +2029,13 @@ func (profile *AutoscaleProfile) AssignProperties_From_AutoscaleProfile(source *
 }
 
 // AssignProperties_To_AutoscaleProfile populates the provided destination AutoscaleProfile from our AutoscaleProfile
-func (profile *AutoscaleProfile) AssignProperties_To_AutoscaleProfile(destination *v20221001s.AutoscaleProfile) error {
+func (profile *AutoscaleProfile) AssignProperties_To_AutoscaleProfile(destination *storage.AutoscaleProfile) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Capacity
 	if profile.Capacity != nil {
-		var capacity v20221001s.ScaleCapacity
+		var capacity storage.ScaleCapacity
 		err := profile.Capacity.AssignProperties_To_ScaleCapacity(&capacity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ScaleCapacity() to populate field Capacity")
@@ -1965,7 +2047,7 @@ func (profile *AutoscaleProfile) AssignProperties_To_AutoscaleProfile(destinatio
 
 	// FixedDate
 	if profile.FixedDate != nil {
-		var fixedDate v20221001s.TimeWindow
+		var fixedDate storage.TimeWindow
 		err := profile.FixedDate.AssignProperties_To_TimeWindow(&fixedDate)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_TimeWindow() to populate field FixedDate")
@@ -1980,7 +2062,7 @@ func (profile *AutoscaleProfile) AssignProperties_To_AutoscaleProfile(destinatio
 
 	// Recurrence
 	if profile.Recurrence != nil {
-		var recurrence v20221001s.Recurrence
+		var recurrence storage.Recurrence
 		err := profile.Recurrence.AssignProperties_To_Recurrence(&recurrence)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Recurrence() to populate field Recurrence")
@@ -1992,11 +2074,11 @@ func (profile *AutoscaleProfile) AssignProperties_To_AutoscaleProfile(destinatio
 
 	// Rules
 	if profile.Rules != nil {
-		ruleList := make([]v20221001s.ScaleRule, len(profile.Rules))
+		ruleList := make([]storage.ScaleRule, len(profile.Rules))
 		for ruleIndex, ruleItem := range profile.Rules {
 			// Shadow the loop variable to avoid aliasing
 			ruleItem := ruleItem
-			var rule v20221001s.ScaleRule
+			var rule storage.ScaleRule
 			err := ruleItem.AssignProperties_To_ScaleRule(&rule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ScaleRule() to populate field Rules")
@@ -2109,14 +2191,14 @@ var _ genruntime.FromARMConverter = &AutoscaleProfile_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (profile *AutoscaleProfile_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AutoscaleProfile_STATUS_ARM{}
+	return &arm.AutoscaleProfile_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (profile *AutoscaleProfile_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AutoscaleProfile_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AutoscaleProfile_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AutoscaleProfile_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutoscaleProfile_STATUS, got %T", armInput)
 	}
 
 	// Set property "Capacity":
@@ -2173,7 +2255,7 @@ func (profile *AutoscaleProfile_STATUS) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_AutoscaleProfile_STATUS populates our AutoscaleProfile_STATUS from the provided source AutoscaleProfile_STATUS
-func (profile *AutoscaleProfile_STATUS) AssignProperties_From_AutoscaleProfile_STATUS(source *v20221001s.AutoscaleProfile_STATUS) error {
+func (profile *AutoscaleProfile_STATUS) AssignProperties_From_AutoscaleProfile_STATUS(source *storage.AutoscaleProfile_STATUS) error {
 
 	// Capacity
 	if source.Capacity != nil {
@@ -2237,13 +2319,13 @@ func (profile *AutoscaleProfile_STATUS) AssignProperties_From_AutoscaleProfile_S
 }
 
 // AssignProperties_To_AutoscaleProfile_STATUS populates the provided destination AutoscaleProfile_STATUS from our AutoscaleProfile_STATUS
-func (profile *AutoscaleProfile_STATUS) AssignProperties_To_AutoscaleProfile_STATUS(destination *v20221001s.AutoscaleProfile_STATUS) error {
+func (profile *AutoscaleProfile_STATUS) AssignProperties_To_AutoscaleProfile_STATUS(destination *storage.AutoscaleProfile_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Capacity
 	if profile.Capacity != nil {
-		var capacity v20221001s.ScaleCapacity_STATUS
+		var capacity storage.ScaleCapacity_STATUS
 		err := profile.Capacity.AssignProperties_To_ScaleCapacity_STATUS(&capacity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ScaleCapacity_STATUS() to populate field Capacity")
@@ -2255,7 +2337,7 @@ func (profile *AutoscaleProfile_STATUS) AssignProperties_To_AutoscaleProfile_STA
 
 	// FixedDate
 	if profile.FixedDate != nil {
-		var fixedDate v20221001s.TimeWindow_STATUS
+		var fixedDate storage.TimeWindow_STATUS
 		err := profile.FixedDate.AssignProperties_To_TimeWindow_STATUS(&fixedDate)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_TimeWindow_STATUS() to populate field FixedDate")
@@ -2270,7 +2352,7 @@ func (profile *AutoscaleProfile_STATUS) AssignProperties_To_AutoscaleProfile_STA
 
 	// Recurrence
 	if profile.Recurrence != nil {
-		var recurrence v20221001s.Recurrence_STATUS
+		var recurrence storage.Recurrence_STATUS
 		err := profile.Recurrence.AssignProperties_To_Recurrence_STATUS(&recurrence)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Recurrence_STATUS() to populate field Recurrence")
@@ -2282,11 +2364,11 @@ func (profile *AutoscaleProfile_STATUS) AssignProperties_To_AutoscaleProfile_STA
 
 	// Rules
 	if profile.Rules != nil {
-		ruleList := make([]v20221001s.ScaleRule_STATUS, len(profile.Rules))
+		ruleList := make([]storage.ScaleRule_STATUS, len(profile.Rules))
 		for ruleIndex, ruleItem := range profile.Rules {
 			// Shadow the loop variable to avoid aliasing
 			ruleItem := ruleItem
-			var rule v20221001s.ScaleRule_STATUS
+			var rule storage.ScaleRule_STATUS
 			err := ruleItem.AssignProperties_To_ScaleRule_STATUS(&rule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ScaleRule_STATUS() to populate field Rules")
@@ -2296,6 +2378,110 @@ func (profile *AutoscaleProfile_STATUS) AssignProperties_To_AutoscaleProfile_STA
 		destination.Rules = ruleList
 	} else {
 		destination.Rules = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type AutoscaleSettingOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_AutoscaleSettingOperatorSpec populates our AutoscaleSettingOperatorSpec from the provided source AutoscaleSettingOperatorSpec
+func (operator *AutoscaleSettingOperatorSpec) AssignProperties_From_AutoscaleSettingOperatorSpec(source *storage.AutoscaleSettingOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AutoscaleSettingOperatorSpec populates the provided destination AutoscaleSettingOperatorSpec from our AutoscaleSettingOperatorSpec
+func (operator *AutoscaleSettingOperatorSpec) AssignProperties_To_AutoscaleSettingOperatorSpec(destination *storage.AutoscaleSettingOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
 	}
 
 	// Update the property bag
@@ -2327,7 +2513,7 @@ func (policy *PredictiveAutoscalePolicy) ConvertToARM(resolved genruntime.Conver
 	if policy == nil {
 		return nil, nil
 	}
-	result := &PredictiveAutoscalePolicy_ARM{}
+	result := &arm.PredictiveAutoscalePolicy{}
 
 	// Set property "ScaleLookAheadTime":
 	if policy.ScaleLookAheadTime != nil {
@@ -2337,7 +2523,9 @@ func (policy *PredictiveAutoscalePolicy) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "ScaleMode":
 	if policy.ScaleMode != nil {
-		scaleMode := *policy.ScaleMode
+		var temp string
+		temp = string(*policy.ScaleMode)
+		scaleMode := arm.PredictiveAutoscalePolicy_ScaleMode(temp)
 		result.ScaleMode = &scaleMode
 	}
 	return result, nil
@@ -2345,14 +2533,14 @@ func (policy *PredictiveAutoscalePolicy) ConvertToARM(resolved genruntime.Conver
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (policy *PredictiveAutoscalePolicy) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PredictiveAutoscalePolicy_ARM{}
+	return &arm.PredictiveAutoscalePolicy{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (policy *PredictiveAutoscalePolicy) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PredictiveAutoscalePolicy_ARM)
+	typedInput, ok := armInput.(arm.PredictiveAutoscalePolicy)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PredictiveAutoscalePolicy_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PredictiveAutoscalePolicy, got %T", armInput)
 	}
 
 	// Set property "ScaleLookAheadTime":
@@ -2363,7 +2551,9 @@ func (policy *PredictiveAutoscalePolicy) PopulateFromARM(owner genruntime.Arbitr
 
 	// Set property "ScaleMode":
 	if typedInput.ScaleMode != nil {
-		scaleMode := *typedInput.ScaleMode
+		var temp string
+		temp = string(*typedInput.ScaleMode)
+		scaleMode := PredictiveAutoscalePolicy_ScaleMode(temp)
 		policy.ScaleMode = &scaleMode
 	}
 
@@ -2372,15 +2562,16 @@ func (policy *PredictiveAutoscalePolicy) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_PredictiveAutoscalePolicy populates our PredictiveAutoscalePolicy from the provided source PredictiveAutoscalePolicy
-func (policy *PredictiveAutoscalePolicy) AssignProperties_From_PredictiveAutoscalePolicy(source *v20221001s.PredictiveAutoscalePolicy) error {
+func (policy *PredictiveAutoscalePolicy) AssignProperties_From_PredictiveAutoscalePolicy(source *storage.PredictiveAutoscalePolicy) error {
 
 	// ScaleLookAheadTime
 	policy.ScaleLookAheadTime = genruntime.ClonePointerToString(source.ScaleLookAheadTime)
 
 	// ScaleMode
 	if source.ScaleMode != nil {
-		scaleMode := PredictiveAutoscalePolicy_ScaleMode(*source.ScaleMode)
-		policy.ScaleMode = &scaleMode
+		scaleMode := *source.ScaleMode
+		scaleModeTemp := genruntime.ToEnum(scaleMode, predictiveAutoscalePolicy_ScaleMode_Values)
+		policy.ScaleMode = &scaleModeTemp
 	} else {
 		policy.ScaleMode = nil
 	}
@@ -2390,7 +2581,7 @@ func (policy *PredictiveAutoscalePolicy) AssignProperties_From_PredictiveAutosca
 }
 
 // AssignProperties_To_PredictiveAutoscalePolicy populates the provided destination PredictiveAutoscalePolicy from our PredictiveAutoscalePolicy
-func (policy *PredictiveAutoscalePolicy) AssignProperties_To_PredictiveAutoscalePolicy(destination *v20221001s.PredictiveAutoscalePolicy) error {
+func (policy *PredictiveAutoscalePolicy) AssignProperties_To_PredictiveAutoscalePolicy(destination *storage.PredictiveAutoscalePolicy) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2424,7 +2615,7 @@ func (policy *PredictiveAutoscalePolicy) Initialize_From_PredictiveAutoscalePoli
 
 	// ScaleMode
 	if source.ScaleMode != nil {
-		scaleMode := PredictiveAutoscalePolicy_ScaleMode(*source.ScaleMode)
+		scaleMode := genruntime.ToEnum(string(*source.ScaleMode), predictiveAutoscalePolicy_ScaleMode_Values)
 		policy.ScaleMode = &scaleMode
 	} else {
 		policy.ScaleMode = nil
@@ -2448,14 +2639,14 @@ var _ genruntime.FromARMConverter = &PredictiveAutoscalePolicy_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (policy *PredictiveAutoscalePolicy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PredictiveAutoscalePolicy_STATUS_ARM{}
+	return &arm.PredictiveAutoscalePolicy_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (policy *PredictiveAutoscalePolicy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PredictiveAutoscalePolicy_STATUS_ARM)
+	typedInput, ok := armInput.(arm.PredictiveAutoscalePolicy_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PredictiveAutoscalePolicy_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PredictiveAutoscalePolicy_STATUS, got %T", armInput)
 	}
 
 	// Set property "ScaleLookAheadTime":
@@ -2466,7 +2657,9 @@ func (policy *PredictiveAutoscalePolicy_STATUS) PopulateFromARM(owner genruntime
 
 	// Set property "ScaleMode":
 	if typedInput.ScaleMode != nil {
-		scaleMode := *typedInput.ScaleMode
+		var temp string
+		temp = string(*typedInput.ScaleMode)
+		scaleMode := PredictiveAutoscalePolicy_ScaleMode_STATUS(temp)
 		policy.ScaleMode = &scaleMode
 	}
 
@@ -2475,15 +2668,16 @@ func (policy *PredictiveAutoscalePolicy_STATUS) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_PredictiveAutoscalePolicy_STATUS populates our PredictiveAutoscalePolicy_STATUS from the provided source PredictiveAutoscalePolicy_STATUS
-func (policy *PredictiveAutoscalePolicy_STATUS) AssignProperties_From_PredictiveAutoscalePolicy_STATUS(source *v20221001s.PredictiveAutoscalePolicy_STATUS) error {
+func (policy *PredictiveAutoscalePolicy_STATUS) AssignProperties_From_PredictiveAutoscalePolicy_STATUS(source *storage.PredictiveAutoscalePolicy_STATUS) error {
 
 	// ScaleLookAheadTime
 	policy.ScaleLookAheadTime = genruntime.ClonePointerToString(source.ScaleLookAheadTime)
 
 	// ScaleMode
 	if source.ScaleMode != nil {
-		scaleMode := PredictiveAutoscalePolicy_ScaleMode_STATUS(*source.ScaleMode)
-		policy.ScaleMode = &scaleMode
+		scaleMode := *source.ScaleMode
+		scaleModeTemp := genruntime.ToEnum(scaleMode, predictiveAutoscalePolicy_ScaleMode_STATUS_Values)
+		policy.ScaleMode = &scaleModeTemp
 	} else {
 		policy.ScaleMode = nil
 	}
@@ -2493,7 +2687,7 @@ func (policy *PredictiveAutoscalePolicy_STATUS) AssignProperties_From_Predictive
 }
 
 // AssignProperties_To_PredictiveAutoscalePolicy_STATUS populates the provided destination PredictiveAutoscalePolicy_STATUS from our PredictiveAutoscalePolicy_STATUS
-func (policy *PredictiveAutoscalePolicy_STATUS) AssignProperties_To_PredictiveAutoscalePolicy_STATUS(destination *v20221001s.PredictiveAutoscalePolicy_STATUS) error {
+func (policy *PredictiveAutoscalePolicy_STATUS) AssignProperties_To_PredictiveAutoscalePolicy_STATUS(destination *storage.PredictiveAutoscalePolicy_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2544,14 +2738,14 @@ var _ genruntime.FromARMConverter = &SystemData_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (data *SystemData_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SystemData_STATUS_ARM{}
+	return &arm.SystemData_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SystemData_STATUS_ARM)
+	typedInput, ok := armInput.(arm.SystemData_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SystemData_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SystemData_STATUS, got %T", armInput)
 	}
 
 	// Set property "CreatedAt":
@@ -2568,7 +2762,9 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 
 	// Set property "CreatedByType":
 	if typedInput.CreatedByType != nil {
-		createdByType := *typedInput.CreatedByType
+		var temp string
+		temp = string(*typedInput.CreatedByType)
+		createdByType := SystemData_CreatedByType_STATUS(temp)
 		data.CreatedByType = &createdByType
 	}
 
@@ -2586,7 +2782,9 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 
 	// Set property "LastModifiedByType":
 	if typedInput.LastModifiedByType != nil {
-		lastModifiedByType := *typedInput.LastModifiedByType
+		var temp string
+		temp = string(*typedInput.LastModifiedByType)
+		lastModifiedByType := SystemData_LastModifiedByType_STATUS(temp)
 		data.LastModifiedByType = &lastModifiedByType
 	}
 
@@ -2595,7 +2793,7 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v20221001s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
 
 	// CreatedAt
 	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
@@ -2605,8 +2803,9 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 
 	// CreatedByType
 	if source.CreatedByType != nil {
-		createdByType := SystemData_CreatedByType_STATUS(*source.CreatedByType)
-		data.CreatedByType = &createdByType
+		createdByType := *source.CreatedByType
+		createdByTypeTemp := genruntime.ToEnum(createdByType, systemData_CreatedByType_STATUS_Values)
+		data.CreatedByType = &createdByTypeTemp
 	} else {
 		data.CreatedByType = nil
 	}
@@ -2619,8 +2818,9 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 
 	// LastModifiedByType
 	if source.LastModifiedByType != nil {
-		lastModifiedByType := SystemData_LastModifiedByType_STATUS(*source.LastModifiedByType)
-		data.LastModifiedByType = &lastModifiedByType
+		lastModifiedByType := *source.LastModifiedByType
+		lastModifiedByTypeTemp := genruntime.ToEnum(lastModifiedByType, systemData_LastModifiedByType_STATUS_Values)
+		data.LastModifiedByType = &lastModifiedByTypeTemp
 	} else {
 		data.LastModifiedByType = nil
 	}
@@ -2630,7 +2830,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 }
 
 // AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *v20221001s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2678,9 +2878,19 @@ type AutoscaleNotification_Operation string
 
 const AutoscaleNotification_Operation_Scale = AutoscaleNotification_Operation("Scale")
 
+// Mapping from string to AutoscaleNotification_Operation
+var autoscaleNotification_Operation_Values = map[string]AutoscaleNotification_Operation{
+	"scale": AutoscaleNotification_Operation_Scale,
+}
+
 type AutoscaleNotification_Operation_STATUS string
 
 const AutoscaleNotification_Operation_STATUS_Scale = AutoscaleNotification_Operation_STATUS("Scale")
+
+// Mapping from string to AutoscaleNotification_Operation_STATUS
+var autoscaleNotification_Operation_STATUS_Values = map[string]AutoscaleNotification_Operation_STATUS{
+	"scale": AutoscaleNotification_Operation_STATUS_Scale,
+}
 
 // Email notification of an autoscale event.
 type EmailNotification struct {
@@ -2701,7 +2911,7 @@ func (notification *EmailNotification) ConvertToARM(resolved genruntime.ConvertT
 	if notification == nil {
 		return nil, nil
 	}
-	result := &EmailNotification_ARM{}
+	result := &arm.EmailNotification{}
 
 	// Set property "CustomEmails":
 	for _, item := range notification.CustomEmails {
@@ -2724,14 +2934,14 @@ func (notification *EmailNotification) ConvertToARM(resolved genruntime.ConvertT
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (notification *EmailNotification) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EmailNotification_ARM{}
+	return &arm.EmailNotification{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (notification *EmailNotification) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EmailNotification_ARM)
+	typedInput, ok := armInput.(arm.EmailNotification)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EmailNotification_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EmailNotification, got %T", armInput)
 	}
 
 	// Set property "CustomEmails":
@@ -2756,7 +2966,7 @@ func (notification *EmailNotification) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_EmailNotification populates our EmailNotification from the provided source EmailNotification
-func (notification *EmailNotification) AssignProperties_From_EmailNotification(source *v20221001s.EmailNotification) error {
+func (notification *EmailNotification) AssignProperties_From_EmailNotification(source *storage.EmailNotification) error {
 
 	// CustomEmails
 	notification.CustomEmails = genruntime.CloneSliceOfString(source.CustomEmails)
@@ -2782,7 +2992,7 @@ func (notification *EmailNotification) AssignProperties_From_EmailNotification(s
 }
 
 // AssignProperties_To_EmailNotification populates the provided destination EmailNotification from our EmailNotification
-func (notification *EmailNotification) AssignProperties_To_EmailNotification(destination *v20221001s.EmailNotification) error {
+func (notification *EmailNotification) AssignProperties_To_EmailNotification(destination *storage.EmailNotification) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2858,14 +3068,14 @@ var _ genruntime.FromARMConverter = &EmailNotification_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (notification *EmailNotification_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EmailNotification_STATUS_ARM{}
+	return &arm.EmailNotification_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (notification *EmailNotification_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EmailNotification_STATUS_ARM)
+	typedInput, ok := armInput.(arm.EmailNotification_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EmailNotification_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EmailNotification_STATUS, got %T", armInput)
 	}
 
 	// Set property "CustomEmails":
@@ -2890,7 +3100,7 @@ func (notification *EmailNotification_STATUS) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_EmailNotification_STATUS populates our EmailNotification_STATUS from the provided source EmailNotification_STATUS
-func (notification *EmailNotification_STATUS) AssignProperties_From_EmailNotification_STATUS(source *v20221001s.EmailNotification_STATUS) error {
+func (notification *EmailNotification_STATUS) AssignProperties_From_EmailNotification_STATUS(source *storage.EmailNotification_STATUS) error {
 
 	// CustomEmails
 	notification.CustomEmails = genruntime.CloneSliceOfString(source.CustomEmails)
@@ -2916,7 +3126,7 @@ func (notification *EmailNotification_STATUS) AssignProperties_From_EmailNotific
 }
 
 // AssignProperties_To_EmailNotification_STATUS populates the provided destination EmailNotification_STATUS from our EmailNotification_STATUS
-func (notification *EmailNotification_STATUS) AssignProperties_To_EmailNotification_STATUS(destination *v20221001s.EmailNotification_STATUS) error {
+func (notification *EmailNotification_STATUS) AssignProperties_To_EmailNotification_STATUS(destination *storage.EmailNotification_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2959,6 +3169,13 @@ const (
 	PredictiveAutoscalePolicy_ScaleMode_ForecastOnly = PredictiveAutoscalePolicy_ScaleMode("ForecastOnly")
 )
 
+// Mapping from string to PredictiveAutoscalePolicy_ScaleMode
+var predictiveAutoscalePolicy_ScaleMode_Values = map[string]PredictiveAutoscalePolicy_ScaleMode{
+	"disabled":     PredictiveAutoscalePolicy_ScaleMode_Disabled,
+	"enabled":      PredictiveAutoscalePolicy_ScaleMode_Enabled,
+	"forecastonly": PredictiveAutoscalePolicy_ScaleMode_ForecastOnly,
+}
+
 type PredictiveAutoscalePolicy_ScaleMode_STATUS string
 
 const (
@@ -2966,6 +3183,13 @@ const (
 	PredictiveAutoscalePolicy_ScaleMode_STATUS_Enabled      = PredictiveAutoscalePolicy_ScaleMode_STATUS("Enabled")
 	PredictiveAutoscalePolicy_ScaleMode_STATUS_ForecastOnly = PredictiveAutoscalePolicy_ScaleMode_STATUS("ForecastOnly")
 )
+
+// Mapping from string to PredictiveAutoscalePolicy_ScaleMode_STATUS
+var predictiveAutoscalePolicy_ScaleMode_STATUS_Values = map[string]PredictiveAutoscalePolicy_ScaleMode_STATUS{
+	"disabled":     PredictiveAutoscalePolicy_ScaleMode_STATUS_Disabled,
+	"enabled":      PredictiveAutoscalePolicy_ScaleMode_STATUS_Enabled,
+	"forecastonly": PredictiveAutoscalePolicy_ScaleMode_STATUS_ForecastOnly,
+}
 
 // The repeating times at which this profile begins. This element is not used if the FixedDate element is used.
 type Recurrence struct {
@@ -2987,11 +3211,13 @@ func (recurrence *Recurrence) ConvertToARM(resolved genruntime.ConvertToARMResol
 	if recurrence == nil {
 		return nil, nil
 	}
-	result := &Recurrence_ARM{}
+	result := &arm.Recurrence{}
 
 	// Set property "Frequency":
 	if recurrence.Frequency != nil {
-		frequency := *recurrence.Frequency
+		var temp string
+		temp = string(*recurrence.Frequency)
+		frequency := arm.Recurrence_Frequency(temp)
 		result.Frequency = &frequency
 	}
 
@@ -3001,7 +3227,7 @@ func (recurrence *Recurrence) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		schedule := *schedule_ARM.(*RecurrentSchedule_ARM)
+		schedule := *schedule_ARM.(*arm.RecurrentSchedule)
 		result.Schedule = &schedule
 	}
 	return result, nil
@@ -3009,19 +3235,21 @@ func (recurrence *Recurrence) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (recurrence *Recurrence) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Recurrence_ARM{}
+	return &arm.Recurrence{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (recurrence *Recurrence) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Recurrence_ARM)
+	typedInput, ok := armInput.(arm.Recurrence)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Recurrence_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Recurrence, got %T", armInput)
 	}
 
 	// Set property "Frequency":
 	if typedInput.Frequency != nil {
-		frequency := *typedInput.Frequency
+		var temp string
+		temp = string(*typedInput.Frequency)
+		frequency := Recurrence_Frequency(temp)
 		recurrence.Frequency = &frequency
 	}
 
@@ -3041,12 +3269,13 @@ func (recurrence *Recurrence) PopulateFromARM(owner genruntime.ArbitraryOwnerRef
 }
 
 // AssignProperties_From_Recurrence populates our Recurrence from the provided source Recurrence
-func (recurrence *Recurrence) AssignProperties_From_Recurrence(source *v20221001s.Recurrence) error {
+func (recurrence *Recurrence) AssignProperties_From_Recurrence(source *storage.Recurrence) error {
 
 	// Frequency
 	if source.Frequency != nil {
-		frequency := Recurrence_Frequency(*source.Frequency)
-		recurrence.Frequency = &frequency
+		frequency := *source.Frequency
+		frequencyTemp := genruntime.ToEnum(frequency, recurrence_Frequency_Values)
+		recurrence.Frequency = &frequencyTemp
 	} else {
 		recurrence.Frequency = nil
 	}
@@ -3068,7 +3297,7 @@ func (recurrence *Recurrence) AssignProperties_From_Recurrence(source *v20221001
 }
 
 // AssignProperties_To_Recurrence populates the provided destination Recurrence from our Recurrence
-func (recurrence *Recurrence) AssignProperties_To_Recurrence(destination *v20221001s.Recurrence) error {
+func (recurrence *Recurrence) AssignProperties_To_Recurrence(destination *storage.Recurrence) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3082,7 +3311,7 @@ func (recurrence *Recurrence) AssignProperties_To_Recurrence(destination *v20221
 
 	// Schedule
 	if recurrence.Schedule != nil {
-		var schedule v20221001s.RecurrentSchedule
+		var schedule storage.RecurrentSchedule
 		err := recurrence.Schedule.AssignProperties_To_RecurrentSchedule(&schedule)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_RecurrentSchedule() to populate field Schedule")
@@ -3108,7 +3337,7 @@ func (recurrence *Recurrence) Initialize_From_Recurrence_STATUS(source *Recurren
 
 	// Frequency
 	if source.Frequency != nil {
-		frequency := Recurrence_Frequency(*source.Frequency)
+		frequency := genruntime.ToEnum(string(*source.Frequency), recurrence_Frequency_Values)
 		recurrence.Frequency = &frequency
 	} else {
 		recurrence.Frequency = nil
@@ -3147,19 +3376,21 @@ var _ genruntime.FromARMConverter = &Recurrence_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (recurrence *Recurrence_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Recurrence_STATUS_ARM{}
+	return &arm.Recurrence_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (recurrence *Recurrence_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Recurrence_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Recurrence_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Recurrence_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Recurrence_STATUS, got %T", armInput)
 	}
 
 	// Set property "Frequency":
 	if typedInput.Frequency != nil {
-		frequency := *typedInput.Frequency
+		var temp string
+		temp = string(*typedInput.Frequency)
+		frequency := Recurrence_Frequency_STATUS(temp)
 		recurrence.Frequency = &frequency
 	}
 
@@ -3179,12 +3410,13 @@ func (recurrence *Recurrence_STATUS) PopulateFromARM(owner genruntime.ArbitraryO
 }
 
 // AssignProperties_From_Recurrence_STATUS populates our Recurrence_STATUS from the provided source Recurrence_STATUS
-func (recurrence *Recurrence_STATUS) AssignProperties_From_Recurrence_STATUS(source *v20221001s.Recurrence_STATUS) error {
+func (recurrence *Recurrence_STATUS) AssignProperties_From_Recurrence_STATUS(source *storage.Recurrence_STATUS) error {
 
 	// Frequency
 	if source.Frequency != nil {
-		frequency := Recurrence_Frequency_STATUS(*source.Frequency)
-		recurrence.Frequency = &frequency
+		frequency := *source.Frequency
+		frequencyTemp := genruntime.ToEnum(frequency, recurrence_Frequency_STATUS_Values)
+		recurrence.Frequency = &frequencyTemp
 	} else {
 		recurrence.Frequency = nil
 	}
@@ -3206,7 +3438,7 @@ func (recurrence *Recurrence_STATUS) AssignProperties_From_Recurrence_STATUS(sou
 }
 
 // AssignProperties_To_Recurrence_STATUS populates the provided destination Recurrence_STATUS from our Recurrence_STATUS
-func (recurrence *Recurrence_STATUS) AssignProperties_To_Recurrence_STATUS(destination *v20221001s.Recurrence_STATUS) error {
+func (recurrence *Recurrence_STATUS) AssignProperties_To_Recurrence_STATUS(destination *storage.Recurrence_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3220,7 +3452,7 @@ func (recurrence *Recurrence_STATUS) AssignProperties_To_Recurrence_STATUS(desti
 
 	// Schedule
 	if recurrence.Schedule != nil {
-		var schedule v20221001s.RecurrentSchedule_STATUS
+		var schedule storage.RecurrentSchedule_STATUS
 		err := recurrence.Schedule.AssignProperties_To_RecurrentSchedule_STATUS(&schedule)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_RecurrentSchedule_STATUS() to populate field Schedule")
@@ -3265,7 +3497,7 @@ func (capacity *ScaleCapacity) ConvertToARM(resolved genruntime.ConvertToARMReso
 	if capacity == nil {
 		return nil, nil
 	}
-	result := &ScaleCapacity_ARM{}
+	result := &arm.ScaleCapacity{}
 
 	// Set property "Default":
 	if capacity.Default != nil {
@@ -3289,14 +3521,14 @@ func (capacity *ScaleCapacity) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (capacity *ScaleCapacity) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ScaleCapacity_ARM{}
+	return &arm.ScaleCapacity{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (capacity *ScaleCapacity) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ScaleCapacity_ARM)
+	typedInput, ok := armInput.(arm.ScaleCapacity)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ScaleCapacity_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ScaleCapacity, got %T", armInput)
 	}
 
 	// Set property "Default":
@@ -3322,7 +3554,7 @@ func (capacity *ScaleCapacity) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_ScaleCapacity populates our ScaleCapacity from the provided source ScaleCapacity
-func (capacity *ScaleCapacity) AssignProperties_From_ScaleCapacity(source *v20221001s.ScaleCapacity) error {
+func (capacity *ScaleCapacity) AssignProperties_From_ScaleCapacity(source *storage.ScaleCapacity) error {
 
 	// Default
 	capacity.Default = genruntime.ClonePointerToString(source.Default)
@@ -3338,7 +3570,7 @@ func (capacity *ScaleCapacity) AssignProperties_From_ScaleCapacity(source *v2022
 }
 
 // AssignProperties_To_ScaleCapacity populates the provided destination ScaleCapacity from our ScaleCapacity
-func (capacity *ScaleCapacity) AssignProperties_To_ScaleCapacity(destination *v20221001s.ScaleCapacity) error {
+func (capacity *ScaleCapacity) AssignProperties_To_ScaleCapacity(destination *storage.ScaleCapacity) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3399,14 +3631,14 @@ var _ genruntime.FromARMConverter = &ScaleCapacity_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (capacity *ScaleCapacity_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ScaleCapacity_STATUS_ARM{}
+	return &arm.ScaleCapacity_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (capacity *ScaleCapacity_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ScaleCapacity_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ScaleCapacity_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ScaleCapacity_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ScaleCapacity_STATUS, got %T", armInput)
 	}
 
 	// Set property "Default":
@@ -3432,7 +3664,7 @@ func (capacity *ScaleCapacity_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_ScaleCapacity_STATUS populates our ScaleCapacity_STATUS from the provided source ScaleCapacity_STATUS
-func (capacity *ScaleCapacity_STATUS) AssignProperties_From_ScaleCapacity_STATUS(source *v20221001s.ScaleCapacity_STATUS) error {
+func (capacity *ScaleCapacity_STATUS) AssignProperties_From_ScaleCapacity_STATUS(source *storage.ScaleCapacity_STATUS) error {
 
 	// Default
 	capacity.Default = genruntime.ClonePointerToString(source.Default)
@@ -3448,7 +3680,7 @@ func (capacity *ScaleCapacity_STATUS) AssignProperties_From_ScaleCapacity_STATUS
 }
 
 // AssignProperties_To_ScaleCapacity_STATUS populates the provided destination ScaleCapacity_STATUS from our ScaleCapacity_STATUS
-func (capacity *ScaleCapacity_STATUS) AssignProperties_To_ScaleCapacity_STATUS(destination *v20221001s.ScaleCapacity_STATUS) error {
+func (capacity *ScaleCapacity_STATUS) AssignProperties_To_ScaleCapacity_STATUS(destination *storage.ScaleCapacity_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3490,7 +3722,7 @@ func (rule *ScaleRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 	if rule == nil {
 		return nil, nil
 	}
-	result := &ScaleRule_ARM{}
+	result := &arm.ScaleRule{}
 
 	// Set property "MetricTrigger":
 	if rule.MetricTrigger != nil {
@@ -3498,7 +3730,7 @@ func (rule *ScaleRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		if err != nil {
 			return nil, err
 		}
-		metricTrigger := *metricTrigger_ARM.(*MetricTrigger_ARM)
+		metricTrigger := *metricTrigger_ARM.(*arm.MetricTrigger)
 		result.MetricTrigger = &metricTrigger
 	}
 
@@ -3508,7 +3740,7 @@ func (rule *ScaleRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		if err != nil {
 			return nil, err
 		}
-		scaleAction := *scaleAction_ARM.(*ScaleAction_ARM)
+		scaleAction := *scaleAction_ARM.(*arm.ScaleAction)
 		result.ScaleAction = &scaleAction
 	}
 	return result, nil
@@ -3516,14 +3748,14 @@ func (rule *ScaleRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *ScaleRule) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ScaleRule_ARM{}
+	return &arm.ScaleRule{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *ScaleRule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ScaleRule_ARM)
+	typedInput, ok := armInput.(arm.ScaleRule)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ScaleRule_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ScaleRule, got %T", armInput)
 	}
 
 	// Set property "MetricTrigger":
@@ -3553,7 +3785,7 @@ func (rule *ScaleRule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference,
 }
 
 // AssignProperties_From_ScaleRule populates our ScaleRule from the provided source ScaleRule
-func (rule *ScaleRule) AssignProperties_From_ScaleRule(source *v20221001s.ScaleRule) error {
+func (rule *ScaleRule) AssignProperties_From_ScaleRule(source *storage.ScaleRule) error {
 
 	// MetricTrigger
 	if source.MetricTrigger != nil {
@@ -3584,13 +3816,13 @@ func (rule *ScaleRule) AssignProperties_From_ScaleRule(source *v20221001s.ScaleR
 }
 
 // AssignProperties_To_ScaleRule populates the provided destination ScaleRule from our ScaleRule
-func (rule *ScaleRule) AssignProperties_To_ScaleRule(destination *v20221001s.ScaleRule) error {
+func (rule *ScaleRule) AssignProperties_To_ScaleRule(destination *storage.ScaleRule) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// MetricTrigger
 	if rule.MetricTrigger != nil {
-		var metricTrigger v20221001s.MetricTrigger
+		var metricTrigger storage.MetricTrigger
 		err := rule.MetricTrigger.AssignProperties_To_MetricTrigger(&metricTrigger)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_MetricTrigger() to populate field MetricTrigger")
@@ -3602,7 +3834,7 @@ func (rule *ScaleRule) AssignProperties_To_ScaleRule(destination *v20221001s.Sca
 
 	// ScaleAction
 	if rule.ScaleAction != nil {
-		var scaleAction v20221001s.ScaleAction
+		var scaleAction storage.ScaleAction
 		err := rule.ScaleAction.AssignProperties_To_ScaleAction(&scaleAction)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ScaleAction() to populate field ScaleAction")
@@ -3669,14 +3901,14 @@ var _ genruntime.FromARMConverter = &ScaleRule_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *ScaleRule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ScaleRule_STATUS_ARM{}
+	return &arm.ScaleRule_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *ScaleRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ScaleRule_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ScaleRule_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ScaleRule_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ScaleRule_STATUS, got %T", armInput)
 	}
 
 	// Set property "MetricTrigger":
@@ -3706,7 +3938,7 @@ func (rule *ScaleRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRef
 }
 
 // AssignProperties_From_ScaleRule_STATUS populates our ScaleRule_STATUS from the provided source ScaleRule_STATUS
-func (rule *ScaleRule_STATUS) AssignProperties_From_ScaleRule_STATUS(source *v20221001s.ScaleRule_STATUS) error {
+func (rule *ScaleRule_STATUS) AssignProperties_From_ScaleRule_STATUS(source *storage.ScaleRule_STATUS) error {
 
 	// MetricTrigger
 	if source.MetricTrigger != nil {
@@ -3737,13 +3969,13 @@ func (rule *ScaleRule_STATUS) AssignProperties_From_ScaleRule_STATUS(source *v20
 }
 
 // AssignProperties_To_ScaleRule_STATUS populates the provided destination ScaleRule_STATUS from our ScaleRule_STATUS
-func (rule *ScaleRule_STATUS) AssignProperties_To_ScaleRule_STATUS(destination *v20221001s.ScaleRule_STATUS) error {
+func (rule *ScaleRule_STATUS) AssignProperties_To_ScaleRule_STATUS(destination *storage.ScaleRule_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// MetricTrigger
 	if rule.MetricTrigger != nil {
-		var metricTrigger v20221001s.MetricTrigger_STATUS
+		var metricTrigger storage.MetricTrigger_STATUS
 		err := rule.MetricTrigger.AssignProperties_To_MetricTrigger_STATUS(&metricTrigger)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_MetricTrigger_STATUS() to populate field MetricTrigger")
@@ -3755,7 +3987,7 @@ func (rule *ScaleRule_STATUS) AssignProperties_To_ScaleRule_STATUS(destination *
 
 	// ScaleAction
 	if rule.ScaleAction != nil {
-		var scaleAction v20221001s.ScaleAction_STATUS
+		var scaleAction storage.ScaleAction_STATUS
 		err := rule.ScaleAction.AssignProperties_To_ScaleAction_STATUS(&scaleAction)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ScaleAction_STATUS() to populate field ScaleAction")
@@ -3774,6 +4006,40 @@ func (rule *ScaleRule_STATUS) AssignProperties_To_ScaleRule_STATUS(destination *
 
 	// No error
 	return nil
+}
+
+type SystemData_CreatedByType_STATUS string
+
+const (
+	SystemData_CreatedByType_STATUS_Application     = SystemData_CreatedByType_STATUS("Application")
+	SystemData_CreatedByType_STATUS_Key             = SystemData_CreatedByType_STATUS("Key")
+	SystemData_CreatedByType_STATUS_ManagedIdentity = SystemData_CreatedByType_STATUS("ManagedIdentity")
+	SystemData_CreatedByType_STATUS_User            = SystemData_CreatedByType_STATUS("User")
+)
+
+// Mapping from string to SystemData_CreatedByType_STATUS
+var systemData_CreatedByType_STATUS_Values = map[string]SystemData_CreatedByType_STATUS{
+	"application":     SystemData_CreatedByType_STATUS_Application,
+	"key":             SystemData_CreatedByType_STATUS_Key,
+	"managedidentity": SystemData_CreatedByType_STATUS_ManagedIdentity,
+	"user":            SystemData_CreatedByType_STATUS_User,
+}
+
+type SystemData_LastModifiedByType_STATUS string
+
+const (
+	SystemData_LastModifiedByType_STATUS_Application     = SystemData_LastModifiedByType_STATUS("Application")
+	SystemData_LastModifiedByType_STATUS_Key             = SystemData_LastModifiedByType_STATUS("Key")
+	SystemData_LastModifiedByType_STATUS_ManagedIdentity = SystemData_LastModifiedByType_STATUS("ManagedIdentity")
+	SystemData_LastModifiedByType_STATUS_User            = SystemData_LastModifiedByType_STATUS("User")
+)
+
+// Mapping from string to SystemData_LastModifiedByType_STATUS
+var systemData_LastModifiedByType_STATUS_Values = map[string]SystemData_LastModifiedByType_STATUS{
+	"application":     SystemData_LastModifiedByType_STATUS_Application,
+	"key":             SystemData_LastModifiedByType_STATUS_Key,
+	"managedidentity": SystemData_LastModifiedByType_STATUS_ManagedIdentity,
+	"user":            SystemData_LastModifiedByType_STATUS_User,
 }
 
 // A specific date-time for the profile.
@@ -3819,7 +4085,7 @@ func (window *TimeWindow) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 	if window == nil {
 		return nil, nil
 	}
-	result := &TimeWindow_ARM{}
+	result := &arm.TimeWindow{}
 
 	// Set property "End":
 	if window.End != nil {
@@ -3843,14 +4109,14 @@ func (window *TimeWindow) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (window *TimeWindow) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &TimeWindow_ARM{}
+	return &arm.TimeWindow{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (window *TimeWindow) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(TimeWindow_ARM)
+	typedInput, ok := armInput.(arm.TimeWindow)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected TimeWindow_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.TimeWindow, got %T", armInput)
 	}
 
 	// Set property "End":
@@ -3876,7 +4142,7 @@ func (window *TimeWindow) PopulateFromARM(owner genruntime.ArbitraryOwnerReferen
 }
 
 // AssignProperties_From_TimeWindow populates our TimeWindow from the provided source TimeWindow
-func (window *TimeWindow) AssignProperties_From_TimeWindow(source *v20221001s.TimeWindow) error {
+func (window *TimeWindow) AssignProperties_From_TimeWindow(source *storage.TimeWindow) error {
 
 	// End
 	window.End = genruntime.ClonePointerToString(source.End)
@@ -3892,7 +4158,7 @@ func (window *TimeWindow) AssignProperties_From_TimeWindow(source *v20221001s.Ti
 }
 
 // AssignProperties_To_TimeWindow populates the provided destination TimeWindow from our TimeWindow
-func (window *TimeWindow) AssignProperties_To_TimeWindow(destination *v20221001s.TimeWindow) error {
+func (window *TimeWindow) AssignProperties_To_TimeWindow(destination *storage.TimeWindow) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3972,14 +4238,14 @@ var _ genruntime.FromARMConverter = &TimeWindow_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (window *TimeWindow_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &TimeWindow_STATUS_ARM{}
+	return &arm.TimeWindow_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (window *TimeWindow_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(TimeWindow_STATUS_ARM)
+	typedInput, ok := armInput.(arm.TimeWindow_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected TimeWindow_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.TimeWindow_STATUS, got %T", armInput)
 	}
 
 	// Set property "End":
@@ -4005,7 +4271,7 @@ func (window *TimeWindow_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 }
 
 // AssignProperties_From_TimeWindow_STATUS populates our TimeWindow_STATUS from the provided source TimeWindow_STATUS
-func (window *TimeWindow_STATUS) AssignProperties_From_TimeWindow_STATUS(source *v20221001s.TimeWindow_STATUS) error {
+func (window *TimeWindow_STATUS) AssignProperties_From_TimeWindow_STATUS(source *storage.TimeWindow_STATUS) error {
 
 	// End
 	window.End = genruntime.ClonePointerToString(source.End)
@@ -4021,7 +4287,7 @@ func (window *TimeWindow_STATUS) AssignProperties_From_TimeWindow_STATUS(source 
 }
 
 // AssignProperties_To_TimeWindow_STATUS populates the provided destination TimeWindow_STATUS from our TimeWindow_STATUS
-func (window *TimeWindow_STATUS) AssignProperties_To_TimeWindow_STATUS(destination *v20221001s.TimeWindow_STATUS) error {
+func (window *TimeWindow_STATUS) AssignProperties_To_TimeWindow_STATUS(destination *storage.TimeWindow_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4061,7 +4327,7 @@ func (notification *WebhookNotification) ConvertToARM(resolved genruntime.Conver
 	if notification == nil {
 		return nil, nil
 	}
-	result := &WebhookNotification_ARM{}
+	result := &arm.WebhookNotification{}
 
 	// Set property "Properties":
 	if notification.Properties != nil {
@@ -4081,14 +4347,14 @@ func (notification *WebhookNotification) ConvertToARM(resolved genruntime.Conver
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (notification *WebhookNotification) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &WebhookNotification_ARM{}
+	return &arm.WebhookNotification{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (notification *WebhookNotification) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(WebhookNotification_ARM)
+	typedInput, ok := armInput.(arm.WebhookNotification)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected WebhookNotification_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.WebhookNotification, got %T", armInput)
 	}
 
 	// Set property "Properties":
@@ -4110,7 +4376,7 @@ func (notification *WebhookNotification) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_WebhookNotification populates our WebhookNotification from the provided source WebhookNotification
-func (notification *WebhookNotification) AssignProperties_From_WebhookNotification(source *v20221001s.WebhookNotification) error {
+func (notification *WebhookNotification) AssignProperties_From_WebhookNotification(source *storage.WebhookNotification) error {
 
 	// Properties
 	notification.Properties = genruntime.CloneMapOfStringToString(source.Properties)
@@ -4123,7 +4389,7 @@ func (notification *WebhookNotification) AssignProperties_From_WebhookNotificati
 }
 
 // AssignProperties_To_WebhookNotification populates the provided destination WebhookNotification from our WebhookNotification
-func (notification *WebhookNotification) AssignProperties_To_WebhookNotification(destination *v20221001s.WebhookNotification) error {
+func (notification *WebhookNotification) AssignProperties_To_WebhookNotification(destination *storage.WebhookNotification) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4170,14 +4436,14 @@ var _ genruntime.FromARMConverter = &WebhookNotification_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (notification *WebhookNotification_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &WebhookNotification_STATUS_ARM{}
+	return &arm.WebhookNotification_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (notification *WebhookNotification_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(WebhookNotification_STATUS_ARM)
+	typedInput, ok := armInput.(arm.WebhookNotification_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected WebhookNotification_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.WebhookNotification_STATUS, got %T", armInput)
 	}
 
 	// Set property "Properties":
@@ -4199,7 +4465,7 @@ func (notification *WebhookNotification_STATUS) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_WebhookNotification_STATUS populates our WebhookNotification_STATUS from the provided source WebhookNotification_STATUS
-func (notification *WebhookNotification_STATUS) AssignProperties_From_WebhookNotification_STATUS(source *v20221001s.WebhookNotification_STATUS) error {
+func (notification *WebhookNotification_STATUS) AssignProperties_From_WebhookNotification_STATUS(source *storage.WebhookNotification_STATUS) error {
 
 	// Properties
 	notification.Properties = genruntime.CloneMapOfStringToString(source.Properties)
@@ -4212,7 +4478,7 @@ func (notification *WebhookNotification_STATUS) AssignProperties_From_WebhookNot
 }
 
 // AssignProperties_To_WebhookNotification_STATUS populates the provided destination WebhookNotification_STATUS from our WebhookNotification_STATUS
-func (notification *WebhookNotification_STATUS) AssignProperties_To_WebhookNotification_STATUS(destination *v20221001s.WebhookNotification_STATUS) error {
+func (notification *WebhookNotification_STATUS) AssignProperties_To_WebhookNotification_STATUS(destination *storage.WebhookNotification_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4291,7 +4557,7 @@ func (trigger *MetricTrigger) ConvertToARM(resolved genruntime.ConvertToARMResol
 	if trigger == nil {
 		return nil, nil
 	}
-	result := &MetricTrigger_ARM{}
+	result := &arm.MetricTrigger{}
 
 	// Set property "Dimensions":
 	for _, item := range trigger.Dimensions {
@@ -4299,7 +4565,7 @@ func (trigger *MetricTrigger) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		result.Dimensions = append(result.Dimensions, *item_ARM.(*ScaleRuleMetricDimension_ARM))
+		result.Dimensions = append(result.Dimensions, *item_ARM.(*arm.ScaleRuleMetricDimension))
 	}
 
 	// Set property "DividePerInstance":
@@ -4338,13 +4604,17 @@ func (trigger *MetricTrigger) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "Operator":
 	if trigger.Operator != nil {
-		operator := *trigger.Operator
+		var temp string
+		temp = string(*trigger.Operator)
+		operator := arm.MetricTrigger_Operator(temp)
 		result.Operator = &operator
 	}
 
 	// Set property "Statistic":
 	if trigger.Statistic != nil {
-		statistic := *trigger.Statistic
+		var temp string
+		temp = string(*trigger.Statistic)
+		statistic := arm.MetricTrigger_Statistic(temp)
 		result.Statistic = &statistic
 	}
 
@@ -4356,7 +4626,9 @@ func (trigger *MetricTrigger) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "TimeAggregation":
 	if trigger.TimeAggregation != nil {
-		timeAggregation := *trigger.TimeAggregation
+		var temp string
+		temp = string(*trigger.TimeAggregation)
+		timeAggregation := arm.MetricTrigger_TimeAggregation(temp)
 		result.TimeAggregation = &timeAggregation
 	}
 
@@ -4376,14 +4648,14 @@ func (trigger *MetricTrigger) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (trigger *MetricTrigger) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &MetricTrigger_ARM{}
+	return &arm.MetricTrigger{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (trigger *MetricTrigger) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(MetricTrigger_ARM)
+	typedInput, ok := armInput.(arm.MetricTrigger)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected MetricTrigger_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MetricTrigger, got %T", armInput)
 	}
 
 	// Set property "Dimensions":
@@ -4424,13 +4696,17 @@ func (trigger *MetricTrigger) PopulateFromARM(owner genruntime.ArbitraryOwnerRef
 
 	// Set property "Operator":
 	if typedInput.Operator != nil {
-		operator := *typedInput.Operator
+		var temp string
+		temp = string(*typedInput.Operator)
+		operator := MetricTrigger_Operator(temp)
 		trigger.Operator = &operator
 	}
 
 	// Set property "Statistic":
 	if typedInput.Statistic != nil {
-		statistic := *typedInput.Statistic
+		var temp string
+		temp = string(*typedInput.Statistic)
+		statistic := MetricTrigger_Statistic(temp)
 		trigger.Statistic = &statistic
 	}
 
@@ -4442,7 +4718,9 @@ func (trigger *MetricTrigger) PopulateFromARM(owner genruntime.ArbitraryOwnerRef
 
 	// Set property "TimeAggregation":
 	if typedInput.TimeAggregation != nil {
-		timeAggregation := *typedInput.TimeAggregation
+		var temp string
+		temp = string(*typedInput.TimeAggregation)
+		timeAggregation := MetricTrigger_TimeAggregation(temp)
 		trigger.TimeAggregation = &timeAggregation
 	}
 
@@ -4463,7 +4741,7 @@ func (trigger *MetricTrigger) PopulateFromARM(owner genruntime.ArbitraryOwnerRef
 }
 
 // AssignProperties_From_MetricTrigger populates our MetricTrigger from the provided source MetricTrigger
-func (trigger *MetricTrigger) AssignProperties_From_MetricTrigger(source *v20221001s.MetricTrigger) error {
+func (trigger *MetricTrigger) AssignProperties_From_MetricTrigger(source *storage.MetricTrigger) error {
 
 	// Dimensions
 	if source.Dimensions != nil {
@@ -4510,16 +4788,18 @@ func (trigger *MetricTrigger) AssignProperties_From_MetricTrigger(source *v20221
 
 	// Operator
 	if source.Operator != nil {
-		operator := MetricTrigger_Operator(*source.Operator)
-		trigger.Operator = &operator
+		operator := *source.Operator
+		operatorTemp := genruntime.ToEnum(operator, metricTrigger_Operator_Values)
+		trigger.Operator = &operatorTemp
 	} else {
 		trigger.Operator = nil
 	}
 
 	// Statistic
 	if source.Statistic != nil {
-		statistic := MetricTrigger_Statistic(*source.Statistic)
-		trigger.Statistic = &statistic
+		statistic := *source.Statistic
+		statisticTemp := genruntime.ToEnum(statistic, metricTrigger_Statistic_Values)
+		trigger.Statistic = &statisticTemp
 	} else {
 		trigger.Statistic = nil
 	}
@@ -4534,8 +4814,9 @@ func (trigger *MetricTrigger) AssignProperties_From_MetricTrigger(source *v20221
 
 	// TimeAggregation
 	if source.TimeAggregation != nil {
-		timeAggregation := MetricTrigger_TimeAggregation(*source.TimeAggregation)
-		trigger.TimeAggregation = &timeAggregation
+		timeAggregation := *source.TimeAggregation
+		timeAggregationTemp := genruntime.ToEnum(timeAggregation, metricTrigger_TimeAggregation_Values)
+		trigger.TimeAggregation = &timeAggregationTemp
 	} else {
 		trigger.TimeAggregation = nil
 	}
@@ -4551,17 +4832,17 @@ func (trigger *MetricTrigger) AssignProperties_From_MetricTrigger(source *v20221
 }
 
 // AssignProperties_To_MetricTrigger populates the provided destination MetricTrigger from our MetricTrigger
-func (trigger *MetricTrigger) AssignProperties_To_MetricTrigger(destination *v20221001s.MetricTrigger) error {
+func (trigger *MetricTrigger) AssignProperties_To_MetricTrigger(destination *storage.MetricTrigger) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Dimensions
 	if trigger.Dimensions != nil {
-		dimensionList := make([]v20221001s.ScaleRuleMetricDimension, len(trigger.Dimensions))
+		dimensionList := make([]storage.ScaleRuleMetricDimension, len(trigger.Dimensions))
 		for dimensionIndex, dimensionItem := range trigger.Dimensions {
 			// Shadow the loop variable to avoid aliasing
 			dimensionItem := dimensionItem
-			var dimension v20221001s.ScaleRuleMetricDimension
+			var dimension storage.ScaleRuleMetricDimension
 			err := dimensionItem.AssignProperties_To_ScaleRuleMetricDimension(&dimension)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ScaleRuleMetricDimension() to populate field Dimensions")
@@ -4687,7 +4968,7 @@ func (trigger *MetricTrigger) Initialize_From_MetricTrigger_STATUS(source *Metri
 
 	// Operator
 	if source.Operator != nil {
-		operator := MetricTrigger_Operator(*source.Operator)
+		operator := genruntime.ToEnum(string(*source.Operator), metricTrigger_Operator_Values)
 		trigger.Operator = &operator
 	} else {
 		trigger.Operator = nil
@@ -4695,7 +4976,7 @@ func (trigger *MetricTrigger) Initialize_From_MetricTrigger_STATUS(source *Metri
 
 	// Statistic
 	if source.Statistic != nil {
-		statistic := MetricTrigger_Statistic(*source.Statistic)
+		statistic := genruntime.ToEnum(string(*source.Statistic), metricTrigger_Statistic_Values)
 		trigger.Statistic = &statistic
 	} else {
 		trigger.Statistic = nil
@@ -4711,7 +4992,7 @@ func (trigger *MetricTrigger) Initialize_From_MetricTrigger_STATUS(source *Metri
 
 	// TimeAggregation
 	if source.TimeAggregation != nil {
-		timeAggregation := MetricTrigger_TimeAggregation(*source.TimeAggregation)
+		timeAggregation := genruntime.ToEnum(string(*source.TimeAggregation), metricTrigger_TimeAggregation_Values)
 		trigger.TimeAggregation = &timeAggregation
 	} else {
 		trigger.TimeAggregation = nil
@@ -4782,14 +5063,14 @@ var _ genruntime.FromARMConverter = &MetricTrigger_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (trigger *MetricTrigger_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &MetricTrigger_STATUS_ARM{}
+	return &arm.MetricTrigger_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (trigger *MetricTrigger_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(MetricTrigger_STATUS_ARM)
+	typedInput, ok := armInput.(arm.MetricTrigger_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected MetricTrigger_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MetricTrigger_STATUS, got %T", armInput)
 	}
 
 	// Set property "Dimensions":
@@ -4834,13 +5115,17 @@ func (trigger *MetricTrigger_STATUS) PopulateFromARM(owner genruntime.ArbitraryO
 
 	// Set property "Operator":
 	if typedInput.Operator != nil {
-		operator := *typedInput.Operator
+		var temp string
+		temp = string(*typedInput.Operator)
+		operator := MetricTrigger_Operator_STATUS(temp)
 		trigger.Operator = &operator
 	}
 
 	// Set property "Statistic":
 	if typedInput.Statistic != nil {
-		statistic := *typedInput.Statistic
+		var temp string
+		temp = string(*typedInput.Statistic)
+		statistic := MetricTrigger_Statistic_STATUS(temp)
 		trigger.Statistic = &statistic
 	}
 
@@ -4852,7 +5137,9 @@ func (trigger *MetricTrigger_STATUS) PopulateFromARM(owner genruntime.ArbitraryO
 
 	// Set property "TimeAggregation":
 	if typedInput.TimeAggregation != nil {
-		timeAggregation := *typedInput.TimeAggregation
+		var temp string
+		temp = string(*typedInput.TimeAggregation)
+		timeAggregation := MetricTrigger_TimeAggregation_STATUS(temp)
 		trigger.TimeAggregation = &timeAggregation
 	}
 
@@ -4873,7 +5160,7 @@ func (trigger *MetricTrigger_STATUS) PopulateFromARM(owner genruntime.ArbitraryO
 }
 
 // AssignProperties_From_MetricTrigger_STATUS populates our MetricTrigger_STATUS from the provided source MetricTrigger_STATUS
-func (trigger *MetricTrigger_STATUS) AssignProperties_From_MetricTrigger_STATUS(source *v20221001s.MetricTrigger_STATUS) error {
+func (trigger *MetricTrigger_STATUS) AssignProperties_From_MetricTrigger_STATUS(source *storage.MetricTrigger_STATUS) error {
 
 	// Dimensions
 	if source.Dimensions != nil {
@@ -4915,16 +5202,18 @@ func (trigger *MetricTrigger_STATUS) AssignProperties_From_MetricTrigger_STATUS(
 
 	// Operator
 	if source.Operator != nil {
-		operator := MetricTrigger_Operator_STATUS(*source.Operator)
-		trigger.Operator = &operator
+		operator := *source.Operator
+		operatorTemp := genruntime.ToEnum(operator, metricTrigger_Operator_STATUS_Values)
+		trigger.Operator = &operatorTemp
 	} else {
 		trigger.Operator = nil
 	}
 
 	// Statistic
 	if source.Statistic != nil {
-		statistic := MetricTrigger_Statistic_STATUS(*source.Statistic)
-		trigger.Statistic = &statistic
+		statistic := *source.Statistic
+		statisticTemp := genruntime.ToEnum(statistic, metricTrigger_Statistic_STATUS_Values)
+		trigger.Statistic = &statisticTemp
 	} else {
 		trigger.Statistic = nil
 	}
@@ -4939,8 +5228,9 @@ func (trigger *MetricTrigger_STATUS) AssignProperties_From_MetricTrigger_STATUS(
 
 	// TimeAggregation
 	if source.TimeAggregation != nil {
-		timeAggregation := MetricTrigger_TimeAggregation_STATUS(*source.TimeAggregation)
-		trigger.TimeAggregation = &timeAggregation
+		timeAggregation := *source.TimeAggregation
+		timeAggregationTemp := genruntime.ToEnum(timeAggregation, metricTrigger_TimeAggregation_STATUS_Values)
+		trigger.TimeAggregation = &timeAggregationTemp
 	} else {
 		trigger.TimeAggregation = nil
 	}
@@ -4956,17 +5246,17 @@ func (trigger *MetricTrigger_STATUS) AssignProperties_From_MetricTrigger_STATUS(
 }
 
 // AssignProperties_To_MetricTrigger_STATUS populates the provided destination MetricTrigger_STATUS from our MetricTrigger_STATUS
-func (trigger *MetricTrigger_STATUS) AssignProperties_To_MetricTrigger_STATUS(destination *v20221001s.MetricTrigger_STATUS) error {
+func (trigger *MetricTrigger_STATUS) AssignProperties_To_MetricTrigger_STATUS(destination *storage.MetricTrigger_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Dimensions
 	if trigger.Dimensions != nil {
-		dimensionList := make([]v20221001s.ScaleRuleMetricDimension_STATUS, len(trigger.Dimensions))
+		dimensionList := make([]storage.ScaleRuleMetricDimension_STATUS, len(trigger.Dimensions))
 		for dimensionIndex, dimensionItem := range trigger.Dimensions {
 			// Shadow the loop variable to avoid aliasing
 			dimensionItem := dimensionItem
-			var dimension v20221001s.ScaleRuleMetricDimension_STATUS
+			var dimension storage.ScaleRuleMetricDimension_STATUS
 			err := dimensionItem.AssignProperties_To_ScaleRuleMetricDimension_STATUS(&dimension)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ScaleRuleMetricDimension_STATUS() to populate field Dimensions")
@@ -5061,6 +5351,18 @@ const (
 	Recurrence_Frequency_Year   = Recurrence_Frequency("Year")
 )
 
+// Mapping from string to Recurrence_Frequency
+var recurrence_Frequency_Values = map[string]Recurrence_Frequency{
+	"day":    Recurrence_Frequency_Day,
+	"hour":   Recurrence_Frequency_Hour,
+	"minute": Recurrence_Frequency_Minute,
+	"month":  Recurrence_Frequency_Month,
+	"none":   Recurrence_Frequency_None,
+	"second": Recurrence_Frequency_Second,
+	"week":   Recurrence_Frequency_Week,
+	"year":   Recurrence_Frequency_Year,
+}
+
 // +kubebuilder:validation:Enum={"Day","Hour","Minute","Month","None","Second","Week","Year"}
 type Recurrence_Frequency_STATUS string
 
@@ -5074,6 +5376,18 @@ const (
 	Recurrence_Frequency_STATUS_Week   = Recurrence_Frequency_STATUS("Week")
 	Recurrence_Frequency_STATUS_Year   = Recurrence_Frequency_STATUS("Year")
 )
+
+// Mapping from string to Recurrence_Frequency_STATUS
+var recurrence_Frequency_STATUS_Values = map[string]Recurrence_Frequency_STATUS{
+	"day":    Recurrence_Frequency_STATUS_Day,
+	"hour":   Recurrence_Frequency_STATUS_Hour,
+	"minute": Recurrence_Frequency_STATUS_Minute,
+	"month":  Recurrence_Frequency_STATUS_Month,
+	"none":   Recurrence_Frequency_STATUS_None,
+	"second": Recurrence_Frequency_STATUS_Second,
+	"week":   Recurrence_Frequency_STATUS_Week,
+	"year":   Recurrence_Frequency_STATUS_Year,
+}
 
 // The scheduling constraints for when the profile begins.
 type RecurrentSchedule struct {
@@ -5124,7 +5438,7 @@ func (schedule *RecurrentSchedule) ConvertToARM(resolved genruntime.ConvertToARM
 	if schedule == nil {
 		return nil, nil
 	}
-	result := &RecurrentSchedule_ARM{}
+	result := &arm.RecurrentSchedule{}
 
 	// Set property "Days":
 	for _, item := range schedule.Days {
@@ -5151,14 +5465,14 @@ func (schedule *RecurrentSchedule) ConvertToARM(resolved genruntime.ConvertToARM
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (schedule *RecurrentSchedule) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &RecurrentSchedule_ARM{}
+	return &arm.RecurrentSchedule{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (schedule *RecurrentSchedule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(RecurrentSchedule_ARM)
+	typedInput, ok := armInput.(arm.RecurrentSchedule)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected RecurrentSchedule_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RecurrentSchedule, got %T", armInput)
 	}
 
 	// Set property "Days":
@@ -5187,7 +5501,7 @@ func (schedule *RecurrentSchedule) PopulateFromARM(owner genruntime.ArbitraryOwn
 }
 
 // AssignProperties_From_RecurrentSchedule populates our RecurrentSchedule from the provided source RecurrentSchedule
-func (schedule *RecurrentSchedule) AssignProperties_From_RecurrentSchedule(source *v20221001s.RecurrentSchedule) error {
+func (schedule *RecurrentSchedule) AssignProperties_From_RecurrentSchedule(source *storage.RecurrentSchedule) error {
 
 	// Days
 	schedule.Days = genruntime.CloneSliceOfString(source.Days)
@@ -5226,7 +5540,7 @@ func (schedule *RecurrentSchedule) AssignProperties_From_RecurrentSchedule(sourc
 }
 
 // AssignProperties_To_RecurrentSchedule populates the provided destination RecurrentSchedule from our RecurrentSchedule
-func (schedule *RecurrentSchedule) AssignProperties_To_RecurrentSchedule(destination *v20221001s.RecurrentSchedule) error {
+func (schedule *RecurrentSchedule) AssignProperties_To_RecurrentSchedule(destination *storage.RecurrentSchedule) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5358,14 +5672,14 @@ var _ genruntime.FromARMConverter = &RecurrentSchedule_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (schedule *RecurrentSchedule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &RecurrentSchedule_STATUS_ARM{}
+	return &arm.RecurrentSchedule_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (schedule *RecurrentSchedule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(RecurrentSchedule_STATUS_ARM)
+	typedInput, ok := armInput.(arm.RecurrentSchedule_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected RecurrentSchedule_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RecurrentSchedule_STATUS, got %T", armInput)
 	}
 
 	// Set property "Days":
@@ -5394,7 +5708,7 @@ func (schedule *RecurrentSchedule_STATUS) PopulateFromARM(owner genruntime.Arbit
 }
 
 // AssignProperties_From_RecurrentSchedule_STATUS populates our RecurrentSchedule_STATUS from the provided source RecurrentSchedule_STATUS
-func (schedule *RecurrentSchedule_STATUS) AssignProperties_From_RecurrentSchedule_STATUS(source *v20221001s.RecurrentSchedule_STATUS) error {
+func (schedule *RecurrentSchedule_STATUS) AssignProperties_From_RecurrentSchedule_STATUS(source *storage.RecurrentSchedule_STATUS) error {
 
 	// Days
 	schedule.Days = genruntime.CloneSliceOfString(source.Days)
@@ -5433,7 +5747,7 @@ func (schedule *RecurrentSchedule_STATUS) AssignProperties_From_RecurrentSchedul
 }
 
 // AssignProperties_To_RecurrentSchedule_STATUS populates the provided destination RecurrentSchedule_STATUS from our RecurrentSchedule_STATUS
-func (schedule *RecurrentSchedule_STATUS) AssignProperties_To_RecurrentSchedule_STATUS(destination *v20221001s.RecurrentSchedule_STATUS) error {
+func (schedule *RecurrentSchedule_STATUS) AssignProperties_To_RecurrentSchedule_STATUS(destination *storage.RecurrentSchedule_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5507,7 +5821,7 @@ func (action *ScaleAction) ConvertToARM(resolved genruntime.ConvertToARMResolved
 	if action == nil {
 		return nil, nil
 	}
-	result := &ScaleAction_ARM{}
+	result := &arm.ScaleAction{}
 
 	// Set property "Cooldown":
 	if action.Cooldown != nil {
@@ -5517,13 +5831,17 @@ func (action *ScaleAction) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 	// Set property "Direction":
 	if action.Direction != nil {
-		direction := *action.Direction
+		var temp string
+		temp = string(*action.Direction)
+		direction := arm.ScaleAction_Direction(temp)
 		result.Direction = &direction
 	}
 
 	// Set property "Type":
 	if action.Type != nil {
-		typeVar := *action.Type
+		var temp string
+		temp = string(*action.Type)
+		typeVar := arm.ScaleAction_Type(temp)
 		result.Type = &typeVar
 	}
 
@@ -5537,14 +5855,14 @@ func (action *ScaleAction) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (action *ScaleAction) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ScaleAction_ARM{}
+	return &arm.ScaleAction{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (action *ScaleAction) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ScaleAction_ARM)
+	typedInput, ok := armInput.(arm.ScaleAction)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ScaleAction_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ScaleAction, got %T", armInput)
 	}
 
 	// Set property "Cooldown":
@@ -5555,13 +5873,17 @@ func (action *ScaleAction) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 
 	// Set property "Direction":
 	if typedInput.Direction != nil {
-		direction := *typedInput.Direction
+		var temp string
+		temp = string(*typedInput.Direction)
+		direction := ScaleAction_Direction(temp)
 		action.Direction = &direction
 	}
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := ScaleAction_Type(temp)
 		action.Type = &typeVar
 	}
 
@@ -5576,23 +5898,25 @@ func (action *ScaleAction) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 }
 
 // AssignProperties_From_ScaleAction populates our ScaleAction from the provided source ScaleAction
-func (action *ScaleAction) AssignProperties_From_ScaleAction(source *v20221001s.ScaleAction) error {
+func (action *ScaleAction) AssignProperties_From_ScaleAction(source *storage.ScaleAction) error {
 
 	// Cooldown
 	action.Cooldown = genruntime.ClonePointerToString(source.Cooldown)
 
 	// Direction
 	if source.Direction != nil {
-		direction := ScaleAction_Direction(*source.Direction)
-		action.Direction = &direction
+		direction := *source.Direction
+		directionTemp := genruntime.ToEnum(direction, scaleAction_Direction_Values)
+		action.Direction = &directionTemp
 	} else {
 		action.Direction = nil
 	}
 
 	// Type
 	if source.Type != nil {
-		typeVar := ScaleAction_Type(*source.Type)
-		action.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, scaleAction_Type_Values)
+		action.Type = &typeTemp
 	} else {
 		action.Type = nil
 	}
@@ -5605,7 +5929,7 @@ func (action *ScaleAction) AssignProperties_From_ScaleAction(source *v20221001s.
 }
 
 // AssignProperties_To_ScaleAction populates the provided destination ScaleAction from our ScaleAction
-func (action *ScaleAction) AssignProperties_To_ScaleAction(destination *v20221001s.ScaleAction) error {
+func (action *ScaleAction) AssignProperties_To_ScaleAction(destination *storage.ScaleAction) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5650,7 +5974,7 @@ func (action *ScaleAction) Initialize_From_ScaleAction_STATUS(source *ScaleActio
 
 	// Direction
 	if source.Direction != nil {
-		direction := ScaleAction_Direction(*source.Direction)
+		direction := genruntime.ToEnum(string(*source.Direction), scaleAction_Direction_Values)
 		action.Direction = &direction
 	} else {
 		action.Direction = nil
@@ -5658,7 +5982,7 @@ func (action *ScaleAction) Initialize_From_ScaleAction_STATUS(source *ScaleActio
 
 	// Type
 	if source.Type != nil {
-		typeVar := ScaleAction_Type(*source.Type)
+		typeVar := genruntime.ToEnum(string(*source.Type), scaleAction_Type_Values)
 		action.Type = &typeVar
 	} else {
 		action.Type = nil
@@ -5695,14 +6019,14 @@ var _ genruntime.FromARMConverter = &ScaleAction_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (action *ScaleAction_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ScaleAction_STATUS_ARM{}
+	return &arm.ScaleAction_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (action *ScaleAction_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ScaleAction_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ScaleAction_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ScaleAction_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ScaleAction_STATUS, got %T", armInput)
 	}
 
 	// Set property "Cooldown":
@@ -5713,13 +6037,17 @@ func (action *ScaleAction_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwne
 
 	// Set property "Direction":
 	if typedInput.Direction != nil {
-		direction := *typedInput.Direction
+		var temp string
+		temp = string(*typedInput.Direction)
+		direction := ScaleAction_Direction_STATUS(temp)
 		action.Direction = &direction
 	}
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := ScaleAction_Type_STATUS(temp)
 		action.Type = &typeVar
 	}
 
@@ -5734,23 +6062,25 @@ func (action *ScaleAction_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwne
 }
 
 // AssignProperties_From_ScaleAction_STATUS populates our ScaleAction_STATUS from the provided source ScaleAction_STATUS
-func (action *ScaleAction_STATUS) AssignProperties_From_ScaleAction_STATUS(source *v20221001s.ScaleAction_STATUS) error {
+func (action *ScaleAction_STATUS) AssignProperties_From_ScaleAction_STATUS(source *storage.ScaleAction_STATUS) error {
 
 	// Cooldown
 	action.Cooldown = genruntime.ClonePointerToString(source.Cooldown)
 
 	// Direction
 	if source.Direction != nil {
-		direction := ScaleAction_Direction_STATUS(*source.Direction)
-		action.Direction = &direction
+		direction := *source.Direction
+		directionTemp := genruntime.ToEnum(direction, scaleAction_Direction_STATUS_Values)
+		action.Direction = &directionTemp
 	} else {
 		action.Direction = nil
 	}
 
 	// Type
 	if source.Type != nil {
-		typeVar := ScaleAction_Type_STATUS(*source.Type)
-		action.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, scaleAction_Type_STATUS_Values)
+		action.Type = &typeTemp
 	} else {
 		action.Type = nil
 	}
@@ -5763,7 +6093,7 @@ func (action *ScaleAction_STATUS) AssignProperties_From_ScaleAction_STATUS(sourc
 }
 
 // AssignProperties_To_ScaleAction_STATUS populates the provided destination ScaleAction_STATUS from our ScaleAction_STATUS
-func (action *ScaleAction_STATUS) AssignProperties_To_ScaleAction_STATUS(destination *v20221001s.ScaleAction_STATUS) error {
+func (action *ScaleAction_STATUS) AssignProperties_To_ScaleAction_STATUS(destination *storage.ScaleAction_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5812,6 +6142,16 @@ const (
 	MetricTrigger_Operator_NotEquals          = MetricTrigger_Operator("NotEquals")
 )
 
+// Mapping from string to MetricTrigger_Operator
+var metricTrigger_Operator_Values = map[string]MetricTrigger_Operator{
+	"equals":             MetricTrigger_Operator_Equals,
+	"greaterthan":        MetricTrigger_Operator_GreaterThan,
+	"greaterthanorequal": MetricTrigger_Operator_GreaterThanOrEqual,
+	"lessthan":           MetricTrigger_Operator_LessThan,
+	"lessthanorequal":    MetricTrigger_Operator_LessThanOrEqual,
+	"notequals":          MetricTrigger_Operator_NotEquals,
+}
+
 // +kubebuilder:validation:Enum={"Equals","GreaterThan","GreaterThanOrEqual","LessThan","LessThanOrEqual","NotEquals"}
 type MetricTrigger_Operator_STATUS string
 
@@ -5824,6 +6164,16 @@ const (
 	MetricTrigger_Operator_STATUS_NotEquals          = MetricTrigger_Operator_STATUS("NotEquals")
 )
 
+// Mapping from string to MetricTrigger_Operator_STATUS
+var metricTrigger_Operator_STATUS_Values = map[string]MetricTrigger_Operator_STATUS{
+	"equals":             MetricTrigger_Operator_STATUS_Equals,
+	"greaterthan":        MetricTrigger_Operator_STATUS_GreaterThan,
+	"greaterthanorequal": MetricTrigger_Operator_STATUS_GreaterThanOrEqual,
+	"lessthan":           MetricTrigger_Operator_STATUS_LessThan,
+	"lessthanorequal":    MetricTrigger_Operator_STATUS_LessThanOrEqual,
+	"notequals":          MetricTrigger_Operator_STATUS_NotEquals,
+}
+
 // +kubebuilder:validation:Enum={"Average","Count","Max","Min","Sum"}
 type MetricTrigger_Statistic string
 
@@ -5835,6 +6185,15 @@ const (
 	MetricTrigger_Statistic_Sum     = MetricTrigger_Statistic("Sum")
 )
 
+// Mapping from string to MetricTrigger_Statistic
+var metricTrigger_Statistic_Values = map[string]MetricTrigger_Statistic{
+	"average": MetricTrigger_Statistic_Average,
+	"count":   MetricTrigger_Statistic_Count,
+	"max":     MetricTrigger_Statistic_Max,
+	"min":     MetricTrigger_Statistic_Min,
+	"sum":     MetricTrigger_Statistic_Sum,
+}
+
 // +kubebuilder:validation:Enum={"Average","Count","Max","Min","Sum"}
 type MetricTrigger_Statistic_STATUS string
 
@@ -5845,6 +6204,15 @@ const (
 	MetricTrigger_Statistic_STATUS_Min     = MetricTrigger_Statistic_STATUS("Min")
 	MetricTrigger_Statistic_STATUS_Sum     = MetricTrigger_Statistic_STATUS("Sum")
 )
+
+// Mapping from string to MetricTrigger_Statistic_STATUS
+var metricTrigger_Statistic_STATUS_Values = map[string]MetricTrigger_Statistic_STATUS{
+	"average": MetricTrigger_Statistic_STATUS_Average,
+	"count":   MetricTrigger_Statistic_STATUS_Count,
+	"max":     MetricTrigger_Statistic_STATUS_Max,
+	"min":     MetricTrigger_Statistic_STATUS_Min,
+	"sum":     MetricTrigger_Statistic_STATUS_Sum,
+}
 
 // +kubebuilder:validation:Enum={"Average","Count","Last","Maximum","Minimum","Total"}
 type MetricTrigger_TimeAggregation string
@@ -5858,6 +6226,16 @@ const (
 	MetricTrigger_TimeAggregation_Total   = MetricTrigger_TimeAggregation("Total")
 )
 
+// Mapping from string to MetricTrigger_TimeAggregation
+var metricTrigger_TimeAggregation_Values = map[string]MetricTrigger_TimeAggregation{
+	"average": MetricTrigger_TimeAggregation_Average,
+	"count":   MetricTrigger_TimeAggregation_Count,
+	"last":    MetricTrigger_TimeAggregation_Last,
+	"maximum": MetricTrigger_TimeAggregation_Maximum,
+	"minimum": MetricTrigger_TimeAggregation_Minimum,
+	"total":   MetricTrigger_TimeAggregation_Total,
+}
+
 // +kubebuilder:validation:Enum={"Average","Count","Last","Maximum","Minimum","Total"}
 type MetricTrigger_TimeAggregation_STATUS string
 
@@ -5870,6 +6248,16 @@ const (
 	MetricTrigger_TimeAggregation_STATUS_Total   = MetricTrigger_TimeAggregation_STATUS("Total")
 )
 
+// Mapping from string to MetricTrigger_TimeAggregation_STATUS
+var metricTrigger_TimeAggregation_STATUS_Values = map[string]MetricTrigger_TimeAggregation_STATUS{
+	"average": MetricTrigger_TimeAggregation_STATUS_Average,
+	"count":   MetricTrigger_TimeAggregation_STATUS_Count,
+	"last":    MetricTrigger_TimeAggregation_STATUS_Last,
+	"maximum": MetricTrigger_TimeAggregation_STATUS_Maximum,
+	"minimum": MetricTrigger_TimeAggregation_STATUS_Minimum,
+	"total":   MetricTrigger_TimeAggregation_STATUS_Total,
+}
+
 // +kubebuilder:validation:Enum={"Decrease","Increase","None"}
 type ScaleAction_Direction string
 
@@ -5879,6 +6267,13 @@ const (
 	ScaleAction_Direction_None     = ScaleAction_Direction("None")
 )
 
+// Mapping from string to ScaleAction_Direction
+var scaleAction_Direction_Values = map[string]ScaleAction_Direction{
+	"decrease": ScaleAction_Direction_Decrease,
+	"increase": ScaleAction_Direction_Increase,
+	"none":     ScaleAction_Direction_None,
+}
+
 // +kubebuilder:validation:Enum={"Decrease","Increase","None"}
 type ScaleAction_Direction_STATUS string
 
@@ -5887,6 +6282,13 @@ const (
 	ScaleAction_Direction_STATUS_Increase = ScaleAction_Direction_STATUS("Increase")
 	ScaleAction_Direction_STATUS_None     = ScaleAction_Direction_STATUS("None")
 )
+
+// Mapping from string to ScaleAction_Direction_STATUS
+var scaleAction_Direction_STATUS_Values = map[string]ScaleAction_Direction_STATUS{
+	"decrease": ScaleAction_Direction_STATUS_Decrease,
+	"increase": ScaleAction_Direction_STATUS_Increase,
+	"none":     ScaleAction_Direction_STATUS_None,
+}
 
 // +kubebuilder:validation:Enum={"ChangeCount","ExactCount","PercentChangeCount","ServiceAllowedNextValue"}
 type ScaleAction_Type string
@@ -5898,6 +6300,14 @@ const (
 	ScaleAction_Type_ServiceAllowedNextValue = ScaleAction_Type("ServiceAllowedNextValue")
 )
 
+// Mapping from string to ScaleAction_Type
+var scaleAction_Type_Values = map[string]ScaleAction_Type{
+	"changecount":             ScaleAction_Type_ChangeCount,
+	"exactcount":              ScaleAction_Type_ExactCount,
+	"percentchangecount":      ScaleAction_Type_PercentChangeCount,
+	"serviceallowednextvalue": ScaleAction_Type_ServiceAllowedNextValue,
+}
+
 // +kubebuilder:validation:Enum={"ChangeCount","ExactCount","PercentChangeCount","ServiceAllowedNextValue"}
 type ScaleAction_Type_STATUS string
 
@@ -5907,6 +6317,14 @@ const (
 	ScaleAction_Type_STATUS_PercentChangeCount      = ScaleAction_Type_STATUS("PercentChangeCount")
 	ScaleAction_Type_STATUS_ServiceAllowedNextValue = ScaleAction_Type_STATUS("ServiceAllowedNextValue")
 )
+
+// Mapping from string to ScaleAction_Type_STATUS
+var scaleAction_Type_STATUS_Values = map[string]ScaleAction_Type_STATUS{
+	"changecount":             ScaleAction_Type_STATUS_ChangeCount,
+	"exactcount":              ScaleAction_Type_STATUS_ExactCount,
+	"percentchangecount":      ScaleAction_Type_STATUS_PercentChangeCount,
+	"serviceallowednextvalue": ScaleAction_Type_STATUS_ServiceAllowedNextValue,
+}
 
 // Specifies an auto scale rule metric dimension.
 type ScaleRuleMetricDimension struct {
@@ -5931,7 +6349,7 @@ func (dimension *ScaleRuleMetricDimension) ConvertToARM(resolved genruntime.Conv
 	if dimension == nil {
 		return nil, nil
 	}
-	result := &ScaleRuleMetricDimension_ARM{}
+	result := &arm.ScaleRuleMetricDimension{}
 
 	// Set property "DimensionName":
 	if dimension.DimensionName != nil {
@@ -5941,7 +6359,9 @@ func (dimension *ScaleRuleMetricDimension) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "Operator":
 	if dimension.Operator != nil {
-		operator := *dimension.Operator
+		var temp string
+		temp = string(*dimension.Operator)
+		operator := arm.ScaleRuleMetricDimension_Operator(temp)
 		result.Operator = &operator
 	}
 
@@ -5954,14 +6374,14 @@ func (dimension *ScaleRuleMetricDimension) ConvertToARM(resolved genruntime.Conv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (dimension *ScaleRuleMetricDimension) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ScaleRuleMetricDimension_ARM{}
+	return &arm.ScaleRuleMetricDimension{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (dimension *ScaleRuleMetricDimension) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ScaleRuleMetricDimension_ARM)
+	typedInput, ok := armInput.(arm.ScaleRuleMetricDimension)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ScaleRuleMetricDimension_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ScaleRuleMetricDimension, got %T", armInput)
 	}
 
 	// Set property "DimensionName":
@@ -5972,7 +6392,9 @@ func (dimension *ScaleRuleMetricDimension) PopulateFromARM(owner genruntime.Arbi
 
 	// Set property "Operator":
 	if typedInput.Operator != nil {
-		operator := *typedInput.Operator
+		var temp string
+		temp = string(*typedInput.Operator)
+		operator := ScaleRuleMetricDimension_Operator(temp)
 		dimension.Operator = &operator
 	}
 
@@ -5986,15 +6408,16 @@ func (dimension *ScaleRuleMetricDimension) PopulateFromARM(owner genruntime.Arbi
 }
 
 // AssignProperties_From_ScaleRuleMetricDimension populates our ScaleRuleMetricDimension from the provided source ScaleRuleMetricDimension
-func (dimension *ScaleRuleMetricDimension) AssignProperties_From_ScaleRuleMetricDimension(source *v20221001s.ScaleRuleMetricDimension) error {
+func (dimension *ScaleRuleMetricDimension) AssignProperties_From_ScaleRuleMetricDimension(source *storage.ScaleRuleMetricDimension) error {
 
 	// DimensionName
 	dimension.DimensionName = genruntime.ClonePointerToString(source.DimensionName)
 
 	// Operator
 	if source.Operator != nil {
-		operator := ScaleRuleMetricDimension_Operator(*source.Operator)
-		dimension.Operator = &operator
+		operator := *source.Operator
+		operatorTemp := genruntime.ToEnum(operator, scaleRuleMetricDimension_Operator_Values)
+		dimension.Operator = &operatorTemp
 	} else {
 		dimension.Operator = nil
 	}
@@ -6007,7 +6430,7 @@ func (dimension *ScaleRuleMetricDimension) AssignProperties_From_ScaleRuleMetric
 }
 
 // AssignProperties_To_ScaleRuleMetricDimension populates the provided destination ScaleRuleMetricDimension from our ScaleRuleMetricDimension
-func (dimension *ScaleRuleMetricDimension) AssignProperties_To_ScaleRuleMetricDimension(destination *v20221001s.ScaleRuleMetricDimension) error {
+func (dimension *ScaleRuleMetricDimension) AssignProperties_To_ScaleRuleMetricDimension(destination *storage.ScaleRuleMetricDimension) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6044,7 +6467,7 @@ func (dimension *ScaleRuleMetricDimension) Initialize_From_ScaleRuleMetricDimens
 
 	// Operator
 	if source.Operator != nil {
-		operator := ScaleRuleMetricDimension_Operator(*source.Operator)
+		operator := genruntime.ToEnum(string(*source.Operator), scaleRuleMetricDimension_Operator_Values)
 		dimension.Operator = &operator
 	} else {
 		dimension.Operator = nil
@@ -6077,14 +6500,14 @@ var _ genruntime.FromARMConverter = &ScaleRuleMetricDimension_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (dimension *ScaleRuleMetricDimension_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ScaleRuleMetricDimension_STATUS_ARM{}
+	return &arm.ScaleRuleMetricDimension_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (dimension *ScaleRuleMetricDimension_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ScaleRuleMetricDimension_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ScaleRuleMetricDimension_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ScaleRuleMetricDimension_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ScaleRuleMetricDimension_STATUS, got %T", armInput)
 	}
 
 	// Set property "DimensionName":
@@ -6095,7 +6518,9 @@ func (dimension *ScaleRuleMetricDimension_STATUS) PopulateFromARM(owner genrunti
 
 	// Set property "Operator":
 	if typedInput.Operator != nil {
-		operator := *typedInput.Operator
+		var temp string
+		temp = string(*typedInput.Operator)
+		operator := ScaleRuleMetricDimension_Operator_STATUS(temp)
 		dimension.Operator = &operator
 	}
 
@@ -6109,15 +6534,16 @@ func (dimension *ScaleRuleMetricDimension_STATUS) PopulateFromARM(owner genrunti
 }
 
 // AssignProperties_From_ScaleRuleMetricDimension_STATUS populates our ScaleRuleMetricDimension_STATUS from the provided source ScaleRuleMetricDimension_STATUS
-func (dimension *ScaleRuleMetricDimension_STATUS) AssignProperties_From_ScaleRuleMetricDimension_STATUS(source *v20221001s.ScaleRuleMetricDimension_STATUS) error {
+func (dimension *ScaleRuleMetricDimension_STATUS) AssignProperties_From_ScaleRuleMetricDimension_STATUS(source *storage.ScaleRuleMetricDimension_STATUS) error {
 
 	// DimensionName
 	dimension.DimensionName = genruntime.ClonePointerToString(source.DimensionName)
 
 	// Operator
 	if source.Operator != nil {
-		operator := ScaleRuleMetricDimension_Operator_STATUS(*source.Operator)
-		dimension.Operator = &operator
+		operator := *source.Operator
+		operatorTemp := genruntime.ToEnum(operator, scaleRuleMetricDimension_Operator_STATUS_Values)
+		dimension.Operator = &operatorTemp
 	} else {
 		dimension.Operator = nil
 	}
@@ -6130,7 +6556,7 @@ func (dimension *ScaleRuleMetricDimension_STATUS) AssignProperties_From_ScaleRul
 }
 
 // AssignProperties_To_ScaleRuleMetricDimension_STATUS populates the provided destination ScaleRuleMetricDimension_STATUS from our ScaleRuleMetricDimension_STATUS
-func (dimension *ScaleRuleMetricDimension_STATUS) AssignProperties_To_ScaleRuleMetricDimension_STATUS(destination *v20221001s.ScaleRuleMetricDimension_STATUS) error {
+func (dimension *ScaleRuleMetricDimension_STATUS) AssignProperties_To_ScaleRuleMetricDimension_STATUS(destination *storage.ScaleRuleMetricDimension_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6167,6 +6593,12 @@ const (
 	ScaleRuleMetricDimension_Operator_NotEquals = ScaleRuleMetricDimension_Operator("NotEquals")
 )
 
+// Mapping from string to ScaleRuleMetricDimension_Operator
+var scaleRuleMetricDimension_Operator_Values = map[string]ScaleRuleMetricDimension_Operator{
+	"equals":    ScaleRuleMetricDimension_Operator_Equals,
+	"notequals": ScaleRuleMetricDimension_Operator_NotEquals,
+}
+
 // +kubebuilder:validation:Enum={"Equals","NotEquals"}
 type ScaleRuleMetricDimension_Operator_STATUS string
 
@@ -6174,6 +6606,12 @@ const (
 	ScaleRuleMetricDimension_Operator_STATUS_Equals    = ScaleRuleMetricDimension_Operator_STATUS("Equals")
 	ScaleRuleMetricDimension_Operator_STATUS_NotEquals = ScaleRuleMetricDimension_Operator_STATUS("NotEquals")
 )
+
+// Mapping from string to ScaleRuleMetricDimension_Operator_STATUS
+var scaleRuleMetricDimension_Operator_STATUS_Values = map[string]ScaleRuleMetricDimension_Operator_STATUS{
+	"equals":    ScaleRuleMetricDimension_Operator_STATUS_Equals,
+	"notequals": ScaleRuleMetricDimension_Operator_STATUS_NotEquals,
+}
 
 func init() {
 	SchemeBuilder.Register(&AutoscaleSetting{}, &AutoscaleSettingList{})

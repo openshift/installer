@@ -5,10 +5,14 @@ package v1api20200601
 
 import (
 	"fmt"
-	v20200601s "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &Domain{}
 
 // ConvertFrom populates our Domain from the provided hub Domain
 func (domain *Domain) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20200601s.Domain)
+	source, ok := hub.(*storage.Domain)
 	if !ok {
 		return fmt.Errorf("expected eventgrid/v1api20200601/storage/Domain but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (domain *Domain) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Domain from our Domain
 func (domain *Domain) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20200601s.Domain)
+	destination, ok := hub.(*storage.Domain)
 	if !ok {
 		return fmt.Errorf("expected eventgrid/v1api20200601/storage/Domain but received %T instead", hub)
 	}
@@ -90,6 +94,26 @@ func (domain *Domain) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the Domain resource
 func (domain *Domain) defaultImpl() { domain.defaultAzureName() }
 
+var _ configmaps.Exporter = &Domain{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (domain *Domain) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if domain.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return domain.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Domain{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (domain *Domain) SecretDestinationExpressions() []*core.DestinationExpression {
+	if domain.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return domain.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &Domain{}
 
 // InitializeSpec initializes the spec for this resource from the given status
@@ -110,7 +134,7 @@ func (domain *Domain) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-06-01"
 func (domain Domain) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -208,7 +232,7 @@ func (domain *Domain) ValidateUpdate(old runtime.Object) (admission.Warnings, er
 
 // createValidations validates the creation of the resource
 func (domain *Domain) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){domain.validateResourceReferences, domain.validateOwnerReference}
+	return []func() (admission.Warnings, error){domain.validateResourceReferences, domain.validateOwnerReference, domain.validateSecretDestinations, domain.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (domain *Domain) updateValidations() []func(old runtime.Object) (admission.
 		func(old runtime.Object) (admission.Warnings, error) {
 			return domain.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return domain.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return domain.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (domain *Domain) validateConfigMapDestinations() (admission.Warnings, error) {
+	if domain.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(domain, nil, domain.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +281,14 @@ func (domain *Domain) validateResourceReferences() (admission.Warnings, error) {
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (domain *Domain) validateSecretDestinations() (admission.Warnings, error) {
+	if domain.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(domain, nil, domain.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (domain *Domain) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*Domain)
@@ -254,7 +300,7 @@ func (domain *Domain) validateWriteOnceProperties(old runtime.Object) (admission
 }
 
 // AssignProperties_From_Domain populates our Domain from the provided source Domain
-func (domain *Domain) AssignProperties_From_Domain(source *v20200601s.Domain) error {
+func (domain *Domain) AssignProperties_From_Domain(source *storage.Domain) error {
 
 	// ObjectMeta
 	domain.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -280,13 +326,13 @@ func (domain *Domain) AssignProperties_From_Domain(source *v20200601s.Domain) er
 }
 
 // AssignProperties_To_Domain populates the provided destination Domain from our Domain
-func (domain *Domain) AssignProperties_To_Domain(destination *v20200601s.Domain) error {
+func (domain *Domain) AssignProperties_To_Domain(destination *storage.Domain) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *domain.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20200601s.Domain_Spec
+	var spec storage.Domain_Spec
 	err := domain.Spec.AssignProperties_To_Domain_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Domain_Spec() to populate field Spec")
@@ -294,7 +340,7 @@ func (domain *Domain) AssignProperties_To_Domain(destination *v20200601s.Domain)
 	destination.Spec = spec
 
 	// Status
-	var status v20200601s.Domain_STATUS
+	var status storage.Domain_STATUS
 	err = domain.Status.AssignProperties_To_Domain_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Domain_STATUS() to populate field Status")
@@ -348,6 +394,10 @@ type Domain_Spec struct {
 	// Location: Location of the resource.
 	Location *string `json:"location,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *DomainOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -370,7 +420,7 @@ func (domain *Domain_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 	if domain == nil {
 		return nil, nil
 	}
-	result := &Domain_Spec_ARM{}
+	result := &arm.Domain_Spec{}
 
 	// Set property "Location":
 	if domain.Location != nil {
@@ -386,17 +436,19 @@ func (domain *Domain_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 		domain.InputSchema != nil ||
 		domain.InputSchemaMapping != nil ||
 		domain.PublicNetworkAccess != nil {
-		result.Properties = &DomainProperties_ARM{}
+		result.Properties = &arm.DomainProperties{}
 	}
 	for _, item := range domain.InboundIpRules {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.InboundIpRules = append(result.Properties.InboundIpRules, *item_ARM.(*InboundIpRule_ARM))
+		result.Properties.InboundIpRules = append(result.Properties.InboundIpRules, *item_ARM.(*arm.InboundIpRule))
 	}
 	if domain.InputSchema != nil {
-		inputSchema := *domain.InputSchema
+		var temp string
+		temp = string(*domain.InputSchema)
+		inputSchema := arm.DomainProperties_InputSchema(temp)
 		result.Properties.InputSchema = &inputSchema
 	}
 	if domain.InputSchemaMapping != nil {
@@ -404,11 +456,13 @@ func (domain *Domain_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 		if err != nil {
 			return nil, err
 		}
-		inputSchemaMapping := *inputSchemaMapping_ARM.(*InputSchemaMapping_ARM)
+		inputSchemaMapping := *inputSchemaMapping_ARM.(*arm.InputSchemaMapping)
 		result.Properties.InputSchemaMapping = &inputSchemaMapping
 	}
 	if domain.PublicNetworkAccess != nil {
-		publicNetworkAccess := *domain.PublicNetworkAccess
+		var temp string
+		temp = string(*domain.PublicNetworkAccess)
+		publicNetworkAccess := arm.DomainProperties_PublicNetworkAccess(temp)
 		result.Properties.PublicNetworkAccess = &publicNetworkAccess
 	}
 
@@ -424,14 +478,14 @@ func (domain *Domain_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (domain *Domain_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Domain_Spec_ARM{}
+	return &arm.Domain_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (domain *Domain_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Domain_Spec_ARM)
+	typedInput, ok := armInput.(arm.Domain_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Domain_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Domain_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -454,7 +508,9 @@ func (domain *Domain_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.InputSchema != nil {
-			inputSchema := *typedInput.Properties.InputSchema
+			var temp string
+			temp = string(*typedInput.Properties.InputSchema)
+			inputSchema := DomainProperties_InputSchema(temp)
 			domain.InputSchema = &inputSchema
 		}
 	}
@@ -479,6 +535,8 @@ func (domain *Domain_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 		domain.Location = &location
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	domain.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -489,7 +547,9 @@ func (domain *Domain_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccess != nil {
-			publicNetworkAccess := *typedInput.Properties.PublicNetworkAccess
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccess)
+			publicNetworkAccess := DomainProperties_PublicNetworkAccess(temp)
 			domain.PublicNetworkAccess = &publicNetworkAccess
 		}
 	}
@@ -510,14 +570,14 @@ var _ genruntime.ConvertibleSpec = &Domain_Spec{}
 
 // ConvertSpecFrom populates our Domain_Spec from the provided source
 func (domain *Domain_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20200601s.Domain_Spec)
+	src, ok := source.(*storage.Domain_Spec)
 	if ok {
 		// Populate our instance from source
 		return domain.AssignProperties_From_Domain_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20200601s.Domain_Spec{}
+	src = &storage.Domain_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -534,14 +594,14 @@ func (domain *Domain_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) er
 
 // ConvertSpecTo populates the provided destination from our Domain_Spec
 func (domain *Domain_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20200601s.Domain_Spec)
+	dst, ok := destination.(*storage.Domain_Spec)
 	if ok {
 		// Populate destination from our instance
 		return domain.AssignProperties_To_Domain_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20200601s.Domain_Spec{}
+	dst = &storage.Domain_Spec{}
 	err := domain.AssignProperties_To_Domain_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -557,7 +617,7 @@ func (domain *Domain_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec)
 }
 
 // AssignProperties_From_Domain_Spec populates our Domain_Spec from the provided source Domain_Spec
-func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *v20200601s.Domain_Spec) error {
+func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *storage.Domain_Spec) error {
 
 	// AzureName
 	domain.AzureName = source.AzureName
@@ -582,8 +642,9 @@ func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *v20200601s.
 
 	// InputSchema
 	if source.InputSchema != nil {
-		inputSchema := DomainProperties_InputSchema(*source.InputSchema)
-		domain.InputSchema = &inputSchema
+		inputSchema := *source.InputSchema
+		inputSchemaTemp := genruntime.ToEnum(inputSchema, domainProperties_InputSchema_Values)
+		domain.InputSchema = &inputSchemaTemp
 	} else {
 		domain.InputSchema = nil
 	}
@@ -603,6 +664,18 @@ func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *v20200601s.
 	// Location
 	domain.Location = genruntime.ClonePointerToString(source.Location)
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec DomainOperatorSpec
+		err := operatorSpec.AssignProperties_From_DomainOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DomainOperatorSpec() to populate field OperatorSpec")
+		}
+		domain.OperatorSpec = &operatorSpec
+	} else {
+		domain.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -613,8 +686,9 @@ func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *v20200601s.
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := DomainProperties_PublicNetworkAccess(*source.PublicNetworkAccess)
-		domain.PublicNetworkAccess = &publicNetworkAccess
+		publicNetworkAccess := *source.PublicNetworkAccess
+		publicNetworkAccessTemp := genruntime.ToEnum(publicNetworkAccess, domainProperties_PublicNetworkAccess_Values)
+		domain.PublicNetworkAccess = &publicNetworkAccessTemp
 	} else {
 		domain.PublicNetworkAccess = nil
 	}
@@ -627,7 +701,7 @@ func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *v20200601s.
 }
 
 // AssignProperties_To_Domain_Spec populates the provided destination Domain_Spec from our Domain_Spec
-func (domain *Domain_Spec) AssignProperties_To_Domain_Spec(destination *v20200601s.Domain_Spec) error {
+func (domain *Domain_Spec) AssignProperties_To_Domain_Spec(destination *storage.Domain_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -636,11 +710,11 @@ func (domain *Domain_Spec) AssignProperties_To_Domain_Spec(destination *v2020060
 
 	// InboundIpRules
 	if domain.InboundIpRules != nil {
-		inboundIpRuleList := make([]v20200601s.InboundIpRule, len(domain.InboundIpRules))
+		inboundIpRuleList := make([]storage.InboundIpRule, len(domain.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range domain.InboundIpRules {
 			// Shadow the loop variable to avoid aliasing
 			inboundIpRuleItem := inboundIpRuleItem
-			var inboundIpRule v20200601s.InboundIpRule
+			var inboundIpRule storage.InboundIpRule
 			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule(&inboundIpRule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_InboundIpRule() to populate field InboundIpRules")
@@ -662,7 +736,7 @@ func (domain *Domain_Spec) AssignProperties_To_Domain_Spec(destination *v2020060
 
 	// InputSchemaMapping
 	if domain.InputSchemaMapping != nil {
-		var inputSchemaMapping v20200601s.InputSchemaMapping
+		var inputSchemaMapping storage.InputSchemaMapping
 		err := domain.InputSchemaMapping.AssignProperties_To_InputSchemaMapping(&inputSchemaMapping)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_InputSchemaMapping() to populate field InputSchemaMapping")
@@ -674,6 +748,18 @@ func (domain *Domain_Spec) AssignProperties_To_Domain_Spec(destination *v2020060
 
 	// Location
 	destination.Location = genruntime.ClonePointerToString(domain.Location)
+
+	// OperatorSpec
+	if domain.OperatorSpec != nil {
+		var operatorSpec storage.DomainOperatorSpec
+		err := domain.OperatorSpec.AssignProperties_To_DomainOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DomainOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = domain.OriginalVersion()
@@ -731,7 +817,7 @@ func (domain *Domain_Spec) Initialize_From_Domain_STATUS(source *Domain_STATUS) 
 
 	// InputSchema
 	if source.InputSchema != nil {
-		inputSchema := DomainProperties_InputSchema(*source.InputSchema)
+		inputSchema := genruntime.ToEnum(string(*source.InputSchema), domainProperties_InputSchema_Values)
 		domain.InputSchema = &inputSchema
 	} else {
 		domain.InputSchema = nil
@@ -754,7 +840,7 @@ func (domain *Domain_Spec) Initialize_From_Domain_STATUS(source *Domain_STATUS) 
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := DomainProperties_PublicNetworkAccess(*source.PublicNetworkAccess)
+		publicNetworkAccess := genruntime.ToEnum(string(*source.PublicNetworkAccess), domainProperties_PublicNetworkAccess_Values)
 		domain.PublicNetworkAccess = &publicNetworkAccess
 	} else {
 		domain.PublicNetworkAccess = nil
@@ -830,14 +916,14 @@ var _ genruntime.ConvertibleStatus = &Domain_STATUS{}
 
 // ConvertStatusFrom populates our Domain_STATUS from the provided source
 func (domain *Domain_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20200601s.Domain_STATUS)
+	src, ok := source.(*storage.Domain_STATUS)
 	if ok {
 		// Populate our instance from source
 		return domain.AssignProperties_From_Domain_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20200601s.Domain_STATUS{}
+	src = &storage.Domain_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -854,14 +940,14 @@ func (domain *Domain_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStat
 
 // ConvertStatusTo populates the provided destination from our Domain_STATUS
 func (domain *Domain_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20200601s.Domain_STATUS)
+	dst, ok := destination.(*storage.Domain_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return domain.AssignProperties_To_Domain_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20200601s.Domain_STATUS{}
+	dst = &storage.Domain_STATUS{}
 	err := domain.AssignProperties_To_Domain_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -880,14 +966,14 @@ var _ genruntime.FromARMConverter = &Domain_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (domain *Domain_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Domain_STATUS_ARM{}
+	return &arm.Domain_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (domain *Domain_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Domain_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Domain_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Domain_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Domain_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -924,7 +1010,9 @@ func (domain *Domain_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.InputSchema != nil {
-			inputSchema := *typedInput.Properties.InputSchema
+			var temp string
+			temp = string(*typedInput.Properties.InputSchema)
+			inputSchema := DomainProperties_InputSchema_STATUS(temp)
 			domain.InputSchema = &inputSchema
 		}
 	}
@@ -981,7 +1069,9 @@ func (domain *Domain_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := DomainProperties_ProvisioningState_STATUS(temp)
 			domain.ProvisioningState = &provisioningState
 		}
 	}
@@ -990,7 +1080,9 @@ func (domain *Domain_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccess != nil {
-			publicNetworkAccess := *typedInput.Properties.PublicNetworkAccess
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccess)
+			publicNetworkAccess := DomainProperties_PublicNetworkAccess_STATUS(temp)
 			domain.PublicNetworkAccess = &publicNetworkAccess
 		}
 	}
@@ -1025,7 +1117,7 @@ func (domain *Domain_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 }
 
 // AssignProperties_From_Domain_STATUS populates our Domain_STATUS from the provided source Domain_STATUS
-func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *v20200601s.Domain_STATUS) error {
+func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *storage.Domain_STATUS) error {
 
 	// Conditions
 	domain.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -1056,8 +1148,9 @@ func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *v202006
 
 	// InputSchema
 	if source.InputSchema != nil {
-		inputSchema := DomainProperties_InputSchema_STATUS(*source.InputSchema)
-		domain.InputSchema = &inputSchema
+		inputSchema := *source.InputSchema
+		inputSchemaTemp := genruntime.ToEnum(inputSchema, domainProperties_InputSchema_STATUS_Values)
+		domain.InputSchema = &inputSchemaTemp
 	} else {
 		domain.InputSchema = nil
 	}
@@ -1103,16 +1196,18 @@ func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *v202006
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := DomainProperties_ProvisioningState_STATUS(*source.ProvisioningState)
-		domain.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, domainProperties_ProvisioningState_STATUS_Values)
+		domain.ProvisioningState = &provisioningStateTemp
 	} else {
 		domain.ProvisioningState = nil
 	}
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := DomainProperties_PublicNetworkAccess_STATUS(*source.PublicNetworkAccess)
-		domain.PublicNetworkAccess = &publicNetworkAccess
+		publicNetworkAccess := *source.PublicNetworkAccess
+		publicNetworkAccessTemp := genruntime.ToEnum(publicNetworkAccess, domainProperties_PublicNetworkAccess_STATUS_Values)
+		domain.PublicNetworkAccess = &publicNetworkAccessTemp
 	} else {
 		domain.PublicNetworkAccess = nil
 	}
@@ -1140,7 +1235,7 @@ func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *v202006
 }
 
 // AssignProperties_To_Domain_STATUS populates the provided destination Domain_STATUS from our Domain_STATUS
-func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *v20200601s.Domain_STATUS) error {
+func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *storage.Domain_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1155,11 +1250,11 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *v202
 
 	// InboundIpRules
 	if domain.InboundIpRules != nil {
-		inboundIpRuleList := make([]v20200601s.InboundIpRule_STATUS, len(domain.InboundIpRules))
+		inboundIpRuleList := make([]storage.InboundIpRule_STATUS, len(domain.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range domain.InboundIpRules {
 			// Shadow the loop variable to avoid aliasing
 			inboundIpRuleItem := inboundIpRuleItem
-			var inboundIpRule v20200601s.InboundIpRule_STATUS
+			var inboundIpRule storage.InboundIpRule_STATUS
 			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule_STATUS(&inboundIpRule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_InboundIpRule_STATUS() to populate field InboundIpRules")
@@ -1181,7 +1276,7 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *v202
 
 	// InputSchemaMapping
 	if domain.InputSchemaMapping != nil {
-		var inputSchemaMapping v20200601s.InputSchemaMapping_STATUS
+		var inputSchemaMapping storage.InputSchemaMapping_STATUS
 		err := domain.InputSchemaMapping.AssignProperties_To_InputSchemaMapping_STATUS(&inputSchemaMapping)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
@@ -1202,11 +1297,11 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *v202
 
 	// PrivateEndpointConnections
 	if domain.PrivateEndpointConnections != nil {
-		privateEndpointConnectionList := make([]v20200601s.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded, len(domain.PrivateEndpointConnections))
+		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded, len(domain.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range domain.PrivateEndpointConnections {
 			// Shadow the loop variable to avoid aliasing
 			privateEndpointConnectionItem := privateEndpointConnectionItem
-			var privateEndpointConnection v20200601s.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
+			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(&privateEndpointConnection)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded() to populate field PrivateEndpointConnections")
@@ -1236,7 +1331,7 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *v202
 
 	// SystemData
 	if domain.SystemData != nil {
-		var systemDatum v20200601s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := domain.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -1263,6 +1358,110 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *v202
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type DomainOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_DomainOperatorSpec populates our DomainOperatorSpec from the provided source DomainOperatorSpec
+func (operator *DomainOperatorSpec) AssignProperties_From_DomainOperatorSpec(source *storage.DomainOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DomainOperatorSpec populates the provided destination DomainOperatorSpec from our DomainOperatorSpec
+func (operator *DomainOperatorSpec) AssignProperties_To_DomainOperatorSpec(destination *storage.DomainOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // +kubebuilder:validation:Enum={"CloudEventSchemaV1_0","CustomEventSchema","EventGridSchema"}
 type DomainProperties_InputSchema string
 
@@ -1272,6 +1471,13 @@ const (
 	DomainProperties_InputSchema_EventGridSchema      = DomainProperties_InputSchema("EventGridSchema")
 )
 
+// Mapping from string to DomainProperties_InputSchema
+var domainProperties_InputSchema_Values = map[string]DomainProperties_InputSchema{
+	"cloudeventschemav1_0": DomainProperties_InputSchema_CloudEventSchemaV1_0,
+	"customeventschema":    DomainProperties_InputSchema_CustomEventSchema,
+	"eventgridschema":      DomainProperties_InputSchema_EventGridSchema,
+}
+
 type DomainProperties_InputSchema_STATUS string
 
 const (
@@ -1279,6 +1485,13 @@ const (
 	DomainProperties_InputSchema_STATUS_CustomEventSchema    = DomainProperties_InputSchema_STATUS("CustomEventSchema")
 	DomainProperties_InputSchema_STATUS_EventGridSchema      = DomainProperties_InputSchema_STATUS("EventGridSchema")
 )
+
+// Mapping from string to DomainProperties_InputSchema_STATUS
+var domainProperties_InputSchema_STATUS_Values = map[string]DomainProperties_InputSchema_STATUS{
+	"cloudeventschemav1_0": DomainProperties_InputSchema_STATUS_CloudEventSchemaV1_0,
+	"customeventschema":    DomainProperties_InputSchema_STATUS_CustomEventSchema,
+	"eventgridschema":      DomainProperties_InputSchema_STATUS_EventGridSchema,
+}
 
 type DomainProperties_ProvisioningState_STATUS string
 
@@ -1291,6 +1504,16 @@ const (
 	DomainProperties_ProvisioningState_STATUS_Updating  = DomainProperties_ProvisioningState_STATUS("Updating")
 )
 
+// Mapping from string to DomainProperties_ProvisioningState_STATUS
+var domainProperties_ProvisioningState_STATUS_Values = map[string]DomainProperties_ProvisioningState_STATUS{
+	"canceled":  DomainProperties_ProvisioningState_STATUS_Canceled,
+	"creating":  DomainProperties_ProvisioningState_STATUS_Creating,
+	"deleting":  DomainProperties_ProvisioningState_STATUS_Deleting,
+	"failed":    DomainProperties_ProvisioningState_STATUS_Failed,
+	"succeeded": DomainProperties_ProvisioningState_STATUS_Succeeded,
+	"updating":  DomainProperties_ProvisioningState_STATUS_Updating,
+}
+
 // +kubebuilder:validation:Enum={"Disabled","Enabled"}
 type DomainProperties_PublicNetworkAccess string
 
@@ -1299,12 +1522,24 @@ const (
 	DomainProperties_PublicNetworkAccess_Enabled  = DomainProperties_PublicNetworkAccess("Enabled")
 )
 
+// Mapping from string to DomainProperties_PublicNetworkAccess
+var domainProperties_PublicNetworkAccess_Values = map[string]DomainProperties_PublicNetworkAccess{
+	"disabled": DomainProperties_PublicNetworkAccess_Disabled,
+	"enabled":  DomainProperties_PublicNetworkAccess_Enabled,
+}
+
 type DomainProperties_PublicNetworkAccess_STATUS string
 
 const (
 	DomainProperties_PublicNetworkAccess_STATUS_Disabled = DomainProperties_PublicNetworkAccess_STATUS("Disabled")
 	DomainProperties_PublicNetworkAccess_STATUS_Enabled  = DomainProperties_PublicNetworkAccess_STATUS("Enabled")
 )
+
+// Mapping from string to DomainProperties_PublicNetworkAccess_STATUS
+var domainProperties_PublicNetworkAccess_STATUS_Values = map[string]DomainProperties_PublicNetworkAccess_STATUS{
+	"disabled": DomainProperties_PublicNetworkAccess_STATUS_Disabled,
+	"enabled":  DomainProperties_PublicNetworkAccess_STATUS_Enabled,
+}
 
 type InboundIpRule struct {
 	// Action: Action to perform based on the match or no match of the IpMask.
@@ -1321,11 +1556,13 @@ func (rule *InboundIpRule) ConvertToARM(resolved genruntime.ConvertToARMResolved
 	if rule == nil {
 		return nil, nil
 	}
-	result := &InboundIpRule_ARM{}
+	result := &arm.InboundIpRule{}
 
 	// Set property "Action":
 	if rule.Action != nil {
-		action := *rule.Action
+		var temp string
+		temp = string(*rule.Action)
+		action := arm.InboundIpRule_Action(temp)
 		result.Action = &action
 	}
 
@@ -1339,19 +1576,21 @@ func (rule *InboundIpRule) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *InboundIpRule) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &InboundIpRule_ARM{}
+	return &arm.InboundIpRule{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *InboundIpRule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(InboundIpRule_ARM)
+	typedInput, ok := armInput.(arm.InboundIpRule)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected InboundIpRule_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.InboundIpRule, got %T", armInput)
 	}
 
 	// Set property "Action":
 	if typedInput.Action != nil {
-		action := *typedInput.Action
+		var temp string
+		temp = string(*typedInput.Action)
+		action := InboundIpRule_Action(temp)
 		rule.Action = &action
 	}
 
@@ -1366,12 +1605,13 @@ func (rule *InboundIpRule) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 }
 
 // AssignProperties_From_InboundIpRule populates our InboundIpRule from the provided source InboundIpRule
-func (rule *InboundIpRule) AssignProperties_From_InboundIpRule(source *v20200601s.InboundIpRule) error {
+func (rule *InboundIpRule) AssignProperties_From_InboundIpRule(source *storage.InboundIpRule) error {
 
 	// Action
 	if source.Action != nil {
-		action := InboundIpRule_Action(*source.Action)
-		rule.Action = &action
+		action := *source.Action
+		actionTemp := genruntime.ToEnum(action, inboundIpRule_Action_Values)
+		rule.Action = &actionTemp
 	} else {
 		rule.Action = nil
 	}
@@ -1384,7 +1624,7 @@ func (rule *InboundIpRule) AssignProperties_From_InboundIpRule(source *v20200601
 }
 
 // AssignProperties_To_InboundIpRule populates the provided destination InboundIpRule from our InboundIpRule
-func (rule *InboundIpRule) AssignProperties_To_InboundIpRule(destination *v20200601s.InboundIpRule) error {
+func (rule *InboundIpRule) AssignProperties_To_InboundIpRule(destination *storage.InboundIpRule) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1415,7 +1655,7 @@ func (rule *InboundIpRule) Initialize_From_InboundIpRule_STATUS(source *InboundI
 
 	// Action
 	if source.Action != nil {
-		action := InboundIpRule_Action(*source.Action)
+		action := genruntime.ToEnum(string(*source.Action), inboundIpRule_Action_Values)
 		rule.Action = &action
 	} else {
 		rule.Action = nil
@@ -1440,19 +1680,21 @@ var _ genruntime.FromARMConverter = &InboundIpRule_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *InboundIpRule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &InboundIpRule_STATUS_ARM{}
+	return &arm.InboundIpRule_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *InboundIpRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(InboundIpRule_STATUS_ARM)
+	typedInput, ok := armInput.(arm.InboundIpRule_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected InboundIpRule_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.InboundIpRule_STATUS, got %T", armInput)
 	}
 
 	// Set property "Action":
 	if typedInput.Action != nil {
-		action := *typedInput.Action
+		var temp string
+		temp = string(*typedInput.Action)
+		action := InboundIpRule_Action_STATUS(temp)
 		rule.Action = &action
 	}
 
@@ -1467,12 +1709,13 @@ func (rule *InboundIpRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwne
 }
 
 // AssignProperties_From_InboundIpRule_STATUS populates our InboundIpRule_STATUS from the provided source InboundIpRule_STATUS
-func (rule *InboundIpRule_STATUS) AssignProperties_From_InboundIpRule_STATUS(source *v20200601s.InboundIpRule_STATUS) error {
+func (rule *InboundIpRule_STATUS) AssignProperties_From_InboundIpRule_STATUS(source *storage.InboundIpRule_STATUS) error {
 
 	// Action
 	if source.Action != nil {
-		action := InboundIpRule_Action_STATUS(*source.Action)
-		rule.Action = &action
+		action := *source.Action
+		actionTemp := genruntime.ToEnum(action, inboundIpRule_Action_STATUS_Values)
+		rule.Action = &actionTemp
 	} else {
 		rule.Action = nil
 	}
@@ -1485,7 +1728,7 @@ func (rule *InboundIpRule_STATUS) AssignProperties_From_InboundIpRule_STATUS(sou
 }
 
 // AssignProperties_To_InboundIpRule_STATUS populates the provided destination InboundIpRule_STATUS from our InboundIpRule_STATUS
-func (rule *InboundIpRule_STATUS) AssignProperties_To_InboundIpRule_STATUS(destination *v20200601s.InboundIpRule_STATUS) error {
+func (rule *InboundIpRule_STATUS) AssignProperties_To_InboundIpRule_STATUS(destination *storage.InboundIpRule_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1523,7 +1766,7 @@ func (mapping *InputSchemaMapping) ConvertToARM(resolved genruntime.ConvertToARM
 	if mapping == nil {
 		return nil, nil
 	}
-	result := &InputSchemaMapping_ARM{}
+	result := &arm.InputSchemaMapping{}
 
 	// Set property "Json":
 	if mapping.Json != nil {
@@ -1531,7 +1774,7 @@ func (mapping *InputSchemaMapping) ConvertToARM(resolved genruntime.ConvertToARM
 		if err != nil {
 			return nil, err
 		}
-		json := *json_ARM.(*JsonInputSchemaMapping_ARM)
+		json := *json_ARM.(*arm.JsonInputSchemaMapping)
 		result.Json = &json
 	}
 	return result, nil
@@ -1539,14 +1782,14 @@ func (mapping *InputSchemaMapping) ConvertToARM(resolved genruntime.ConvertToARM
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (mapping *InputSchemaMapping) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &InputSchemaMapping_ARM{}
+	return &arm.InputSchemaMapping{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (mapping *InputSchemaMapping) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(InputSchemaMapping_ARM)
+	typedInput, ok := armInput.(arm.InputSchemaMapping)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected InputSchemaMapping_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.InputSchemaMapping, got %T", armInput)
 	}
 
 	// Set property "Json":
@@ -1565,7 +1808,7 @@ func (mapping *InputSchemaMapping) PopulateFromARM(owner genruntime.ArbitraryOwn
 }
 
 // AssignProperties_From_InputSchemaMapping populates our InputSchemaMapping from the provided source InputSchemaMapping
-func (mapping *InputSchemaMapping) AssignProperties_From_InputSchemaMapping(source *v20200601s.InputSchemaMapping) error {
+func (mapping *InputSchemaMapping) AssignProperties_From_InputSchemaMapping(source *storage.InputSchemaMapping) error {
 
 	// Json
 	if source.Json != nil {
@@ -1584,13 +1827,13 @@ func (mapping *InputSchemaMapping) AssignProperties_From_InputSchemaMapping(sour
 }
 
 // AssignProperties_To_InputSchemaMapping populates the provided destination InputSchemaMapping from our InputSchemaMapping
-func (mapping *InputSchemaMapping) AssignProperties_To_InputSchemaMapping(destination *v20200601s.InputSchemaMapping) error {
+func (mapping *InputSchemaMapping) AssignProperties_To_InputSchemaMapping(destination *storage.InputSchemaMapping) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Json
 	if mapping.Json != nil {
-		var json v20200601s.JsonInputSchemaMapping
+		var json storage.JsonInputSchemaMapping
 		err := mapping.Json.AssignProperties_To_JsonInputSchemaMapping(&json)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonInputSchemaMapping() to populate field Json")
@@ -1639,14 +1882,14 @@ var _ genruntime.FromARMConverter = &InputSchemaMapping_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (mapping *InputSchemaMapping_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &InputSchemaMapping_STATUS_ARM{}
+	return &arm.InputSchemaMapping_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (mapping *InputSchemaMapping_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(InputSchemaMapping_STATUS_ARM)
+	typedInput, ok := armInput.(arm.InputSchemaMapping_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected InputSchemaMapping_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.InputSchemaMapping_STATUS, got %T", armInput)
 	}
 
 	// Set property "Json":
@@ -1665,7 +1908,7 @@ func (mapping *InputSchemaMapping_STATUS) PopulateFromARM(owner genruntime.Arbit
 }
 
 // AssignProperties_From_InputSchemaMapping_STATUS populates our InputSchemaMapping_STATUS from the provided source InputSchemaMapping_STATUS
-func (mapping *InputSchemaMapping_STATUS) AssignProperties_From_InputSchemaMapping_STATUS(source *v20200601s.InputSchemaMapping_STATUS) error {
+func (mapping *InputSchemaMapping_STATUS) AssignProperties_From_InputSchemaMapping_STATUS(source *storage.InputSchemaMapping_STATUS) error {
 
 	// Json
 	if source.Json != nil {
@@ -1684,13 +1927,13 @@ func (mapping *InputSchemaMapping_STATUS) AssignProperties_From_InputSchemaMappi
 }
 
 // AssignProperties_To_InputSchemaMapping_STATUS populates the provided destination InputSchemaMapping_STATUS from our InputSchemaMapping_STATUS
-func (mapping *InputSchemaMapping_STATUS) AssignProperties_To_InputSchemaMapping_STATUS(destination *v20200601s.InputSchemaMapping_STATUS) error {
+func (mapping *InputSchemaMapping_STATUS) AssignProperties_To_InputSchemaMapping_STATUS(destination *storage.InputSchemaMapping_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Json
 	if mapping.Json != nil {
-		var json v20200601s.JsonInputSchemaMapping_STATUS
+		var json storage.JsonInputSchemaMapping_STATUS
 		err := mapping.Json.AssignProperties_To_JsonInputSchemaMapping_STATUS(&json)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonInputSchemaMapping_STATUS() to populate field Json")
@@ -1720,14 +1963,14 @@ var _ genruntime.FromARMConverter = &PrivateEndpointConnection_STATUS_Domain_Sub
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded_ARM{}
+	return &arm.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -1741,7 +1984,7 @@ func (embedded *PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) Pop
 }
 
 // AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded populates our PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded from the provided source PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
-func (embedded *PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(source *v20200601s.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) error {
+func (embedded *PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(source *storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) error {
 
 	// Id
 	embedded.Id = genruntime.ClonePointerToString(source.Id)
@@ -1751,7 +1994,7 @@ func (embedded *PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) Ass
 }
 
 // AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded populates the provided destination PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded from our PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
-func (embedded *PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(destination *v20200601s.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) error {
+func (embedded *PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(destination *storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1794,14 +2037,14 @@ var _ genruntime.FromARMConverter = &SystemData_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (data *SystemData_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SystemData_STATUS_ARM{}
+	return &arm.SystemData_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SystemData_STATUS_ARM)
+	typedInput, ok := armInput.(arm.SystemData_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SystemData_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SystemData_STATUS, got %T", armInput)
 	}
 
 	// Set property "CreatedAt":
@@ -1818,7 +2061,9 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 
 	// Set property "CreatedByType":
 	if typedInput.CreatedByType != nil {
-		createdByType := *typedInput.CreatedByType
+		var temp string
+		temp = string(*typedInput.CreatedByType)
+		createdByType := SystemData_CreatedByType_STATUS(temp)
 		data.CreatedByType = &createdByType
 	}
 
@@ -1836,7 +2081,9 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 
 	// Set property "LastModifiedByType":
 	if typedInput.LastModifiedByType != nil {
-		lastModifiedByType := *typedInput.LastModifiedByType
+		var temp string
+		temp = string(*typedInput.LastModifiedByType)
+		lastModifiedByType := SystemData_LastModifiedByType_STATUS(temp)
 		data.LastModifiedByType = &lastModifiedByType
 	}
 
@@ -1845,7 +2092,7 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v20200601s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
 
 	// CreatedAt
 	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
@@ -1855,8 +2102,9 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 
 	// CreatedByType
 	if source.CreatedByType != nil {
-		createdByType := SystemData_CreatedByType_STATUS(*source.CreatedByType)
-		data.CreatedByType = &createdByType
+		createdByType := *source.CreatedByType
+		createdByTypeTemp := genruntime.ToEnum(createdByType, systemData_CreatedByType_STATUS_Values)
+		data.CreatedByType = &createdByTypeTemp
 	} else {
 		data.CreatedByType = nil
 	}
@@ -1869,8 +2117,9 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 
 	// LastModifiedByType
 	if source.LastModifiedByType != nil {
-		lastModifiedByType := SystemData_LastModifiedByType_STATUS(*source.LastModifiedByType)
-		data.LastModifiedByType = &lastModifiedByType
+		lastModifiedByType := *source.LastModifiedByType
+		lastModifiedByTypeTemp := genruntime.ToEnum(lastModifiedByType, systemData_LastModifiedByType_STATUS_Values)
+		data.LastModifiedByType = &lastModifiedByTypeTemp
 	} else {
 		data.LastModifiedByType = nil
 	}
@@ -1880,7 +2129,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 }
 
 // AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *v20200601s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1928,9 +2177,19 @@ type InboundIpRule_Action string
 
 const InboundIpRule_Action_Allow = InboundIpRule_Action("Allow")
 
+// Mapping from string to InboundIpRule_Action
+var inboundIpRule_Action_Values = map[string]InboundIpRule_Action{
+	"allow": InboundIpRule_Action_Allow,
+}
+
 type InboundIpRule_Action_STATUS string
 
 const InboundIpRule_Action_STATUS_Allow = InboundIpRule_Action_STATUS("Allow")
+
+// Mapping from string to InboundIpRule_Action_STATUS
+var inboundIpRule_Action_STATUS_Values = map[string]InboundIpRule_Action_STATUS{
+	"allow": InboundIpRule_Action_STATUS_Allow,
+}
 
 type JsonInputSchemaMapping struct {
 	// DataVersion: The mapping information for the DataVersion property of the Event Grid Event.
@@ -1963,11 +2222,15 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 	if mapping == nil {
 		return nil, nil
 	}
-	result := &JsonInputSchemaMapping_ARM{}
+	result := &arm.JsonInputSchemaMapping{}
 
 	// Set property "InputSchemaMappingType":
 	if mapping.InputSchemaMappingType != nil {
-		result.InputSchemaMappingType = *mapping.InputSchemaMappingType
+		var temp arm.JsonInputSchemaMapping_InputSchemaMappingType
+		var temp1 string
+		temp1 = string(*mapping.InputSchemaMappingType)
+		temp = arm.JsonInputSchemaMapping_InputSchemaMappingType(temp1)
+		result.InputSchemaMappingType = temp
 	}
 
 	// Set property "Properties":
@@ -1977,14 +2240,14 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		mapping.Id != nil ||
 		mapping.Subject != nil ||
 		mapping.Topic != nil {
-		result.Properties = &JsonInputSchemaMappingProperties_ARM{}
+		result.Properties = &arm.JsonInputSchemaMappingProperties{}
 	}
 	if mapping.DataVersion != nil {
 		dataVersion_ARM, err := (*mapping.DataVersion).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		dataVersion := *dataVersion_ARM.(*JsonFieldWithDefault_ARM)
+		dataVersion := *dataVersion_ARM.(*arm.JsonFieldWithDefault)
 		result.Properties.DataVersion = &dataVersion
 	}
 	if mapping.EventTime != nil {
@@ -1992,7 +2255,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		if err != nil {
 			return nil, err
 		}
-		eventTime := *eventTime_ARM.(*JsonField_ARM)
+		eventTime := *eventTime_ARM.(*arm.JsonField)
 		result.Properties.EventTime = &eventTime
 	}
 	if mapping.EventType != nil {
@@ -2000,7 +2263,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		if err != nil {
 			return nil, err
 		}
-		eventType := *eventType_ARM.(*JsonFieldWithDefault_ARM)
+		eventType := *eventType_ARM.(*arm.JsonFieldWithDefault)
 		result.Properties.EventType = &eventType
 	}
 	if mapping.Id != nil {
@@ -2008,7 +2271,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		if err != nil {
 			return nil, err
 		}
-		id := *id_ARM.(*JsonField_ARM)
+		id := *id_ARM.(*arm.JsonField)
 		result.Properties.Id = &id
 	}
 	if mapping.Subject != nil {
@@ -2016,7 +2279,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		if err != nil {
 			return nil, err
 		}
-		subject := *subject_ARM.(*JsonFieldWithDefault_ARM)
+		subject := *subject_ARM.(*arm.JsonFieldWithDefault)
 		result.Properties.Subject = &subject
 	}
 	if mapping.Topic != nil {
@@ -2024,7 +2287,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		if err != nil {
 			return nil, err
 		}
-		topic := *topic_ARM.(*JsonField_ARM)
+		topic := *topic_ARM.(*arm.JsonField)
 		result.Properties.Topic = &topic
 	}
 	return result, nil
@@ -2032,14 +2295,14 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (mapping *JsonInputSchemaMapping) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &JsonInputSchemaMapping_ARM{}
+	return &arm.JsonInputSchemaMapping{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (mapping *JsonInputSchemaMapping) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(JsonInputSchemaMapping_ARM)
+	typedInput, ok := armInput.(arm.JsonInputSchemaMapping)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected JsonInputSchemaMapping_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.JsonInputSchemaMapping, got %T", armInput)
 	}
 
 	// Set property "DataVersion":
@@ -2099,7 +2362,11 @@ func (mapping *JsonInputSchemaMapping) PopulateFromARM(owner genruntime.Arbitrar
 	}
 
 	// Set property "InputSchemaMappingType":
-	mapping.InputSchemaMappingType = &typedInput.InputSchemaMappingType
+	var temp JsonInputSchemaMapping_InputSchemaMappingType
+	var temp1 string
+	temp1 = string(typedInput.InputSchemaMappingType)
+	temp = JsonInputSchemaMapping_InputSchemaMappingType(temp1)
+	mapping.InputSchemaMappingType = &temp
 
 	// Set property "Subject":
 	// copying flattened property:
@@ -2134,7 +2401,7 @@ func (mapping *JsonInputSchemaMapping) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_JsonInputSchemaMapping populates our JsonInputSchemaMapping from the provided source JsonInputSchemaMapping
-func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapping(source *v20200601s.JsonInputSchemaMapping) error {
+func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapping(source *storage.JsonInputSchemaMapping) error {
 
 	// DataVersion
 	if source.DataVersion != nil {
@@ -2186,8 +2453,9 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapp
 
 	// InputSchemaMappingType
 	if source.InputSchemaMappingType != nil {
-		inputSchemaMappingType := JsonInputSchemaMapping_InputSchemaMappingType(*source.InputSchemaMappingType)
-		mapping.InputSchemaMappingType = &inputSchemaMappingType
+		inputSchemaMappingType := *source.InputSchemaMappingType
+		inputSchemaMappingTypeTemp := genruntime.ToEnum(inputSchemaMappingType, jsonInputSchemaMapping_InputSchemaMappingType_Values)
+		mapping.InputSchemaMappingType = &inputSchemaMappingTypeTemp
 	} else {
 		mapping.InputSchemaMappingType = nil
 	}
@@ -2221,13 +2489,13 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapp
 }
 
 // AssignProperties_To_JsonInputSchemaMapping populates the provided destination JsonInputSchemaMapping from our JsonInputSchemaMapping
-func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMapping(destination *v20200601s.JsonInputSchemaMapping) error {
+func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMapping(destination *storage.JsonInputSchemaMapping) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// DataVersion
 	if mapping.DataVersion != nil {
-		var dataVersion v20200601s.JsonFieldWithDefault
+		var dataVersion storage.JsonFieldWithDefault
 		err := mapping.DataVersion.AssignProperties_To_JsonFieldWithDefault(&dataVersion)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field DataVersion")
@@ -2239,7 +2507,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 
 	// EventTime
 	if mapping.EventTime != nil {
-		var eventTime v20200601s.JsonField
+		var eventTime storage.JsonField
 		err := mapping.EventTime.AssignProperties_To_JsonField(&eventTime)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonField() to populate field EventTime")
@@ -2251,7 +2519,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 
 	// EventType
 	if mapping.EventType != nil {
-		var eventType v20200601s.JsonFieldWithDefault
+		var eventType storage.JsonFieldWithDefault
 		err := mapping.EventType.AssignProperties_To_JsonFieldWithDefault(&eventType)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field EventType")
@@ -2263,7 +2531,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 
 	// Id
 	if mapping.Id != nil {
-		var id v20200601s.JsonField
+		var id storage.JsonField
 		err := mapping.Id.AssignProperties_To_JsonField(&id)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonField() to populate field Id")
@@ -2283,7 +2551,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 
 	// Subject
 	if mapping.Subject != nil {
-		var subject v20200601s.JsonFieldWithDefault
+		var subject storage.JsonFieldWithDefault
 		err := mapping.Subject.AssignProperties_To_JsonFieldWithDefault(&subject)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field Subject")
@@ -2295,7 +2563,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 
 	// Topic
 	if mapping.Topic != nil {
-		var topic v20200601s.JsonField
+		var topic storage.JsonField
 		err := mapping.Topic.AssignProperties_To_JsonField(&topic)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonField() to populate field Topic")
@@ -2369,7 +2637,7 @@ func (mapping *JsonInputSchemaMapping) Initialize_From_JsonInputSchemaMapping_ST
 
 	// InputSchemaMappingType
 	if source.InputSchemaMappingType != nil {
-		inputSchemaMappingType := JsonInputSchemaMapping_InputSchemaMappingType(*source.InputSchemaMappingType)
+		inputSchemaMappingType := genruntime.ToEnum(string(*source.InputSchemaMappingType), jsonInputSchemaMapping_InputSchemaMappingType_Values)
 		mapping.InputSchemaMappingType = &inputSchemaMappingType
 	} else {
 		mapping.InputSchemaMappingType = nil
@@ -2430,14 +2698,14 @@ var _ genruntime.FromARMConverter = &JsonInputSchemaMapping_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (mapping *JsonInputSchemaMapping_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &JsonInputSchemaMapping_STATUS_ARM{}
+	return &arm.JsonInputSchemaMapping_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (mapping *JsonInputSchemaMapping_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(JsonInputSchemaMapping_STATUS_ARM)
+	typedInput, ok := armInput.(arm.JsonInputSchemaMapping_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected JsonInputSchemaMapping_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.JsonInputSchemaMapping_STATUS, got %T", armInput)
 	}
 
 	// Set property "DataVersion":
@@ -2497,7 +2765,11 @@ func (mapping *JsonInputSchemaMapping_STATUS) PopulateFromARM(owner genruntime.A
 	}
 
 	// Set property "InputSchemaMappingType":
-	mapping.InputSchemaMappingType = &typedInput.InputSchemaMappingType
+	var temp JsonInputSchemaMapping_InputSchemaMappingType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.InputSchemaMappingType)
+	temp = JsonInputSchemaMapping_InputSchemaMappingType_STATUS(temp1)
+	mapping.InputSchemaMappingType = &temp
 
 	// Set property "Subject":
 	// copying flattened property:
@@ -2532,7 +2804,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_JsonInputSchemaMapping_STATUS populates our JsonInputSchemaMapping_STATUS from the provided source JsonInputSchemaMapping_STATUS
-func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSchemaMapping_STATUS(source *v20200601s.JsonInputSchemaMapping_STATUS) error {
+func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSchemaMapping_STATUS(source *storage.JsonInputSchemaMapping_STATUS) error {
 
 	// DataVersion
 	if source.DataVersion != nil {
@@ -2584,8 +2856,9 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSch
 
 	// InputSchemaMappingType
 	if source.InputSchemaMappingType != nil {
-		inputSchemaMappingType := JsonInputSchemaMapping_InputSchemaMappingType_STATUS(*source.InputSchemaMappingType)
-		mapping.InputSchemaMappingType = &inputSchemaMappingType
+		inputSchemaMappingType := *source.InputSchemaMappingType
+		inputSchemaMappingTypeTemp := genruntime.ToEnum(inputSchemaMappingType, jsonInputSchemaMapping_InputSchemaMappingType_STATUS_Values)
+		mapping.InputSchemaMappingType = &inputSchemaMappingTypeTemp
 	} else {
 		mapping.InputSchemaMappingType = nil
 	}
@@ -2619,13 +2892,13 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSch
 }
 
 // AssignProperties_To_JsonInputSchemaMapping_STATUS populates the provided destination JsonInputSchemaMapping_STATUS from our JsonInputSchemaMapping_STATUS
-func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchemaMapping_STATUS(destination *v20200601s.JsonInputSchemaMapping_STATUS) error {
+func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchemaMapping_STATUS(destination *storage.JsonInputSchemaMapping_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// DataVersion
 	if mapping.DataVersion != nil {
-		var dataVersion v20200601s.JsonFieldWithDefault_STATUS
+		var dataVersion storage.JsonFieldWithDefault_STATUS
 		err := mapping.DataVersion.AssignProperties_To_JsonFieldWithDefault_STATUS(&dataVersion)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field DataVersion")
@@ -2637,7 +2910,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 
 	// EventTime
 	if mapping.EventTime != nil {
-		var eventTime v20200601s.JsonField_STATUS
+		var eventTime storage.JsonField_STATUS
 		err := mapping.EventTime.AssignProperties_To_JsonField_STATUS(&eventTime)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field EventTime")
@@ -2649,7 +2922,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 
 	// EventType
 	if mapping.EventType != nil {
-		var eventType v20200601s.JsonFieldWithDefault_STATUS
+		var eventType storage.JsonFieldWithDefault_STATUS
 		err := mapping.EventType.AssignProperties_To_JsonFieldWithDefault_STATUS(&eventType)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field EventType")
@@ -2661,7 +2934,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 
 	// Id
 	if mapping.Id != nil {
-		var id v20200601s.JsonField_STATUS
+		var id storage.JsonField_STATUS
 		err := mapping.Id.AssignProperties_To_JsonField_STATUS(&id)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field Id")
@@ -2681,7 +2954,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 
 	// Subject
 	if mapping.Subject != nil {
-		var subject v20200601s.JsonFieldWithDefault_STATUS
+		var subject storage.JsonFieldWithDefault_STATUS
 		err := mapping.Subject.AssignProperties_To_JsonFieldWithDefault_STATUS(&subject)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field Subject")
@@ -2693,7 +2966,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 
 	// Topic
 	if mapping.Topic != nil {
-		var topic v20200601s.JsonField_STATUS
+		var topic storage.JsonField_STATUS
 		err := mapping.Topic.AssignProperties_To_JsonField_STATUS(&topic)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field Topic")
@@ -2714,6 +2987,40 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 	return nil
 }
 
+type SystemData_CreatedByType_STATUS string
+
+const (
+	SystemData_CreatedByType_STATUS_Application     = SystemData_CreatedByType_STATUS("Application")
+	SystemData_CreatedByType_STATUS_Key             = SystemData_CreatedByType_STATUS("Key")
+	SystemData_CreatedByType_STATUS_ManagedIdentity = SystemData_CreatedByType_STATUS("ManagedIdentity")
+	SystemData_CreatedByType_STATUS_User            = SystemData_CreatedByType_STATUS("User")
+)
+
+// Mapping from string to SystemData_CreatedByType_STATUS
+var systemData_CreatedByType_STATUS_Values = map[string]SystemData_CreatedByType_STATUS{
+	"application":     SystemData_CreatedByType_STATUS_Application,
+	"key":             SystemData_CreatedByType_STATUS_Key,
+	"managedidentity": SystemData_CreatedByType_STATUS_ManagedIdentity,
+	"user":            SystemData_CreatedByType_STATUS_User,
+}
+
+type SystemData_LastModifiedByType_STATUS string
+
+const (
+	SystemData_LastModifiedByType_STATUS_Application     = SystemData_LastModifiedByType_STATUS("Application")
+	SystemData_LastModifiedByType_STATUS_Key             = SystemData_LastModifiedByType_STATUS("Key")
+	SystemData_LastModifiedByType_STATUS_ManagedIdentity = SystemData_LastModifiedByType_STATUS("ManagedIdentity")
+	SystemData_LastModifiedByType_STATUS_User            = SystemData_LastModifiedByType_STATUS("User")
+)
+
+// Mapping from string to SystemData_LastModifiedByType_STATUS
+var systemData_LastModifiedByType_STATUS_Values = map[string]SystemData_LastModifiedByType_STATUS{
+	"application":     SystemData_LastModifiedByType_STATUS_Application,
+	"key":             SystemData_LastModifiedByType_STATUS_Key,
+	"managedidentity": SystemData_LastModifiedByType_STATUS_ManagedIdentity,
+	"user":            SystemData_LastModifiedByType_STATUS_User,
+}
+
 // This is used to express the source of an input schema mapping for a single target field in the Event Grid Event schema.
 // This is currently used in the mappings for the 'id', 'topic' and 'eventtime' properties. This represents a field in the
 // input event schema.
@@ -2729,7 +3036,7 @@ func (field *JsonField) ConvertToARM(resolved genruntime.ConvertToARMResolvedDet
 	if field == nil {
 		return nil, nil
 	}
-	result := &JsonField_ARM{}
+	result := &arm.JsonField{}
 
 	// Set property "SourceField":
 	if field.SourceField != nil {
@@ -2741,14 +3048,14 @@ func (field *JsonField) ConvertToARM(resolved genruntime.ConvertToARMResolvedDet
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (field *JsonField) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &JsonField_ARM{}
+	return &arm.JsonField{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (field *JsonField) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(JsonField_ARM)
+	typedInput, ok := armInput.(arm.JsonField)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected JsonField_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.JsonField, got %T", armInput)
 	}
 
 	// Set property "SourceField":
@@ -2762,7 +3069,7 @@ func (field *JsonField) PopulateFromARM(owner genruntime.ArbitraryOwnerReference
 }
 
 // AssignProperties_From_JsonField populates our JsonField from the provided source JsonField
-func (field *JsonField) AssignProperties_From_JsonField(source *v20200601s.JsonField) error {
+func (field *JsonField) AssignProperties_From_JsonField(source *storage.JsonField) error {
 
 	// SourceField
 	field.SourceField = genruntime.ClonePointerToString(source.SourceField)
@@ -2772,7 +3079,7 @@ func (field *JsonField) AssignProperties_From_JsonField(source *v20200601s.JsonF
 }
 
 // AssignProperties_To_JsonField populates the provided destination JsonField from our JsonField
-func (field *JsonField) AssignProperties_To_JsonField(destination *v20200601s.JsonField) error {
+func (field *JsonField) AssignProperties_To_JsonField(destination *storage.JsonField) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2812,14 +3119,14 @@ var _ genruntime.FromARMConverter = &JsonField_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (field *JsonField_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &JsonField_STATUS_ARM{}
+	return &arm.JsonField_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (field *JsonField_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(JsonField_STATUS_ARM)
+	typedInput, ok := armInput.(arm.JsonField_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected JsonField_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.JsonField_STATUS, got %T", armInput)
 	}
 
 	// Set property "SourceField":
@@ -2833,7 +3140,7 @@ func (field *JsonField_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_JsonField_STATUS populates our JsonField_STATUS from the provided source JsonField_STATUS
-func (field *JsonField_STATUS) AssignProperties_From_JsonField_STATUS(source *v20200601s.JsonField_STATUS) error {
+func (field *JsonField_STATUS) AssignProperties_From_JsonField_STATUS(source *storage.JsonField_STATUS) error {
 
 	// SourceField
 	field.SourceField = genruntime.ClonePointerToString(source.SourceField)
@@ -2843,7 +3150,7 @@ func (field *JsonField_STATUS) AssignProperties_From_JsonField_STATUS(source *v2
 }
 
 // AssignProperties_To_JsonField_STATUS populates the provided destination JsonField_STATUS from our JsonField_STATUS
-func (field *JsonField_STATUS) AssignProperties_To_JsonField_STATUS(destination *v20200601s.JsonField_STATUS) error {
+func (field *JsonField_STATUS) AssignProperties_To_JsonField_STATUS(destination *storage.JsonField_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2884,7 +3191,7 @@ func (withDefault *JsonFieldWithDefault) ConvertToARM(resolved genruntime.Conver
 	if withDefault == nil {
 		return nil, nil
 	}
-	result := &JsonFieldWithDefault_ARM{}
+	result := &arm.JsonFieldWithDefault{}
 
 	// Set property "DefaultValue":
 	if withDefault.DefaultValue != nil {
@@ -2902,14 +3209,14 @@ func (withDefault *JsonFieldWithDefault) ConvertToARM(resolved genruntime.Conver
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (withDefault *JsonFieldWithDefault) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &JsonFieldWithDefault_ARM{}
+	return &arm.JsonFieldWithDefault{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (withDefault *JsonFieldWithDefault) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(JsonFieldWithDefault_ARM)
+	typedInput, ok := armInput.(arm.JsonFieldWithDefault)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected JsonFieldWithDefault_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.JsonFieldWithDefault, got %T", armInput)
 	}
 
 	// Set property "DefaultValue":
@@ -2929,7 +3236,7 @@ func (withDefault *JsonFieldWithDefault) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_JsonFieldWithDefault populates our JsonFieldWithDefault from the provided source JsonFieldWithDefault
-func (withDefault *JsonFieldWithDefault) AssignProperties_From_JsonFieldWithDefault(source *v20200601s.JsonFieldWithDefault) error {
+func (withDefault *JsonFieldWithDefault) AssignProperties_From_JsonFieldWithDefault(source *storage.JsonFieldWithDefault) error {
 
 	// DefaultValue
 	withDefault.DefaultValue = genruntime.ClonePointerToString(source.DefaultValue)
@@ -2942,7 +3249,7 @@ func (withDefault *JsonFieldWithDefault) AssignProperties_From_JsonFieldWithDefa
 }
 
 // AssignProperties_To_JsonFieldWithDefault populates the provided destination JsonFieldWithDefault from our JsonFieldWithDefault
-func (withDefault *JsonFieldWithDefault) AssignProperties_To_JsonFieldWithDefault(destination *v20200601s.JsonFieldWithDefault) error {
+func (withDefault *JsonFieldWithDefault) AssignProperties_To_JsonFieldWithDefault(destination *storage.JsonFieldWithDefault) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2996,14 +3303,14 @@ var _ genruntime.FromARMConverter = &JsonFieldWithDefault_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (withDefault *JsonFieldWithDefault_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &JsonFieldWithDefault_STATUS_ARM{}
+	return &arm.JsonFieldWithDefault_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (withDefault *JsonFieldWithDefault_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(JsonFieldWithDefault_STATUS_ARM)
+	typedInput, ok := armInput.(arm.JsonFieldWithDefault_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected JsonFieldWithDefault_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.JsonFieldWithDefault_STATUS, got %T", armInput)
 	}
 
 	// Set property "DefaultValue":
@@ -3023,7 +3330,7 @@ func (withDefault *JsonFieldWithDefault_STATUS) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_JsonFieldWithDefault_STATUS populates our JsonFieldWithDefault_STATUS from the provided source JsonFieldWithDefault_STATUS
-func (withDefault *JsonFieldWithDefault_STATUS) AssignProperties_From_JsonFieldWithDefault_STATUS(source *v20200601s.JsonFieldWithDefault_STATUS) error {
+func (withDefault *JsonFieldWithDefault_STATUS) AssignProperties_From_JsonFieldWithDefault_STATUS(source *storage.JsonFieldWithDefault_STATUS) error {
 
 	// DefaultValue
 	withDefault.DefaultValue = genruntime.ClonePointerToString(source.DefaultValue)
@@ -3036,7 +3343,7 @@ func (withDefault *JsonFieldWithDefault_STATUS) AssignProperties_From_JsonFieldW
 }
 
 // AssignProperties_To_JsonFieldWithDefault_STATUS populates the provided destination JsonFieldWithDefault_STATUS from our JsonFieldWithDefault_STATUS
-func (withDefault *JsonFieldWithDefault_STATUS) AssignProperties_To_JsonFieldWithDefault_STATUS(destination *v20200601s.JsonFieldWithDefault_STATUS) error {
+func (withDefault *JsonFieldWithDefault_STATUS) AssignProperties_To_JsonFieldWithDefault_STATUS(destination *storage.JsonFieldWithDefault_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3062,9 +3369,19 @@ type JsonInputSchemaMapping_InputSchemaMappingType string
 
 const JsonInputSchemaMapping_InputSchemaMappingType_Json = JsonInputSchemaMapping_InputSchemaMappingType("Json")
 
+// Mapping from string to JsonInputSchemaMapping_InputSchemaMappingType
+var jsonInputSchemaMapping_InputSchemaMappingType_Values = map[string]JsonInputSchemaMapping_InputSchemaMappingType{
+	"json": JsonInputSchemaMapping_InputSchemaMappingType_Json,
+}
+
 type JsonInputSchemaMapping_InputSchemaMappingType_STATUS string
 
 const JsonInputSchemaMapping_InputSchemaMappingType_STATUS_Json = JsonInputSchemaMapping_InputSchemaMappingType_STATUS("Json")
+
+// Mapping from string to JsonInputSchemaMapping_InputSchemaMappingType_STATUS
+var jsonInputSchemaMapping_InputSchemaMappingType_STATUS_Values = map[string]JsonInputSchemaMapping_InputSchemaMappingType_STATUS{
+	"json": JsonInputSchemaMapping_InputSchemaMappingType_STATUS_Json,
+}
 
 func init() {
 	SchemeBuilder.Register(&Domain{}, &DomainList{})

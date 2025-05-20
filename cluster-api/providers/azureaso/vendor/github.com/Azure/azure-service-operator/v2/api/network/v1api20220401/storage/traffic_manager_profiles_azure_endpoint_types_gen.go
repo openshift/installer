@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type TrafficManagerProfilesAzureEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Trafficmanagerprofiles_AzureEndpoint_Spec   `json:"spec,omitempty"`
-	Status            Trafficmanagerprofiles_AzureEndpoint_STATUS `json:"status,omitempty"`
+	Spec              TrafficManagerProfilesAzureEndpoint_Spec   `json:"spec,omitempty"`
+	Status            TrafficManagerProfilesAzureEndpoint_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &TrafficManagerProfilesAzureEndpoint{}
@@ -44,6 +47,26 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint) SetConditions(conditions co
 	endpoint.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &TrafficManagerProfilesAzureEndpoint{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (endpoint *TrafficManagerProfilesAzureEndpoint) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if endpoint.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return endpoint.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &TrafficManagerProfilesAzureEndpoint{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (endpoint *TrafficManagerProfilesAzureEndpoint) SecretDestinationExpressions() []*core.DestinationExpression {
+	if endpoint.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return endpoint.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &TrafficManagerProfilesAzureEndpoint{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-04-01"
 func (endpoint TrafficManagerProfilesAzureEndpoint) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-04-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +110,7 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (endpoint *TrafficManagerProfilesAzureEndpoint) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Trafficmanagerprofiles_AzureEndpoint_STATUS{}
+	return &TrafficManagerProfilesAzureEndpoint_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +122,13 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint) Owner() *genruntime.Resourc
 // SetStatus sets the status of this resource
 func (endpoint *TrafficManagerProfilesAzureEndpoint) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Trafficmanagerprofiles_AzureEndpoint_STATUS); ok {
+	if st, ok := status.(*TrafficManagerProfilesAzureEndpoint_STATUS); ok {
 		endpoint.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Trafficmanagerprofiles_AzureEndpoint_STATUS
+	var st TrafficManagerProfilesAzureEndpoint_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -138,22 +161,23 @@ type TrafficManagerProfilesAzureEndpointList struct {
 	Items           []TrafficManagerProfilesAzureEndpoint `json:"items"`
 }
 
-// Storage version of v1api20220401.Trafficmanagerprofiles_AzureEndpoint_Spec
-type Trafficmanagerprofiles_AzureEndpoint_Spec struct {
+// Storage version of v1api20220401.TrafficManagerProfilesAzureEndpoint_Spec
+type TrafficManagerProfilesAzureEndpoint_Spec struct {
 	AlwaysServe *string `json:"alwaysServe,omitempty"`
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName             string                             `json:"azureName,omitempty"`
-	CustomHeaders         []EndpointProperties_CustomHeaders `json:"customHeaders,omitempty"`
-	EndpointLocation      *string                            `json:"endpointLocation,omitempty"`
-	EndpointMonitorStatus *string                            `json:"endpointMonitorStatus,omitempty"`
-	EndpointStatus        *string                            `json:"endpointStatus,omitempty"`
-	GeoMapping            []string                           `json:"geoMapping,omitempty"`
-	MinChildEndpoints     *int                               `json:"minChildEndpoints,omitempty"`
-	MinChildEndpointsIPv4 *int                               `json:"minChildEndpointsIPv4,omitempty"`
-	MinChildEndpointsIPv6 *int                               `json:"minChildEndpointsIPv6,omitempty"`
-	OriginalVersion       string                             `json:"originalVersion,omitempty"`
+	AzureName             string                                           `json:"azureName,omitempty"`
+	CustomHeaders         []EndpointProperties_CustomHeaders               `json:"customHeaders,omitempty"`
+	EndpointLocation      *string                                          `json:"endpointLocation,omitempty"`
+	EndpointMonitorStatus *string                                          `json:"endpointMonitorStatus,omitempty"`
+	EndpointStatus        *string                                          `json:"endpointStatus,omitempty"`
+	GeoMapping            []string                                         `json:"geoMapping,omitempty"`
+	MinChildEndpoints     *int                                             `json:"minChildEndpoints,omitempty"`
+	MinChildEndpointsIPv4 *int                                             `json:"minChildEndpointsIPv4,omitempty"`
+	MinChildEndpointsIPv6 *int                                             `json:"minChildEndpointsIPv6,omitempty"`
+	OperatorSpec          *TrafficManagerProfilesAzureEndpointOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion       string                                           `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -172,10 +196,10 @@ type Trafficmanagerprofiles_AzureEndpoint_Spec struct {
 	Weight                  *int                          `json:"weight,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Trafficmanagerprofiles_AzureEndpoint_Spec{}
+var _ genruntime.ConvertibleSpec = &TrafficManagerProfilesAzureEndpoint_Spec{}
 
-// ConvertSpecFrom populates our Trafficmanagerprofiles_AzureEndpoint_Spec from the provided source
-func (endpoint *Trafficmanagerprofiles_AzureEndpoint_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our TrafficManagerProfilesAzureEndpoint_Spec from the provided source
+func (endpoint *TrafficManagerProfilesAzureEndpoint_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == endpoint {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -183,8 +207,8 @@ func (endpoint *Trafficmanagerprofiles_AzureEndpoint_Spec) ConvertSpecFrom(sourc
 	return source.ConvertSpecTo(endpoint)
 }
 
-// ConvertSpecTo populates the provided destination from our Trafficmanagerprofiles_AzureEndpoint_Spec
-func (endpoint *Trafficmanagerprofiles_AzureEndpoint_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our TrafficManagerProfilesAzureEndpoint_Spec
+func (endpoint *TrafficManagerProfilesAzureEndpoint_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == endpoint {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -192,8 +216,8 @@ func (endpoint *Trafficmanagerprofiles_AzureEndpoint_Spec) ConvertSpecTo(destina
 	return destination.ConvertSpecFrom(endpoint)
 }
 
-// Storage version of v1api20220401.Trafficmanagerprofiles_AzureEndpoint_STATUS
-type Trafficmanagerprofiles_AzureEndpoint_STATUS struct {
+// Storage version of v1api20220401.TrafficManagerProfilesAzureEndpoint_STATUS
+type TrafficManagerProfilesAzureEndpoint_STATUS struct {
 	AlwaysServe           *string                                   `json:"alwaysServe,omitempty"`
 	Conditions            []conditions.Condition                    `json:"conditions,omitempty"`
 	CustomHeaders         []EndpointProperties_CustomHeaders_STATUS `json:"customHeaders,omitempty"`
@@ -215,10 +239,10 @@ type Trafficmanagerprofiles_AzureEndpoint_STATUS struct {
 	Weight                *int                                      `json:"weight,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Trafficmanagerprofiles_AzureEndpoint_STATUS{}
+var _ genruntime.ConvertibleStatus = &TrafficManagerProfilesAzureEndpoint_STATUS{}
 
-// ConvertStatusFrom populates our Trafficmanagerprofiles_AzureEndpoint_STATUS from the provided source
-func (endpoint *Trafficmanagerprofiles_AzureEndpoint_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our TrafficManagerProfilesAzureEndpoint_STATUS from the provided source
+func (endpoint *TrafficManagerProfilesAzureEndpoint_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == endpoint {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -226,8 +250,8 @@ func (endpoint *Trafficmanagerprofiles_AzureEndpoint_STATUS) ConvertStatusFrom(s
 	return source.ConvertStatusTo(endpoint)
 }
 
-// ConvertStatusTo populates the provided destination from our Trafficmanagerprofiles_AzureEndpoint_STATUS
-func (endpoint *Trafficmanagerprofiles_AzureEndpoint_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our TrafficManagerProfilesAzureEndpoint_STATUS
+func (endpoint *TrafficManagerProfilesAzureEndpoint_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == endpoint {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -263,6 +287,14 @@ type EndpointProperties_Subnets_STATUS struct {
 	Last        *string                `json:"last,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Scope       *int                   `json:"scope,omitempty"`
+}
+
+// Storage version of v1api20220401.TrafficManagerProfilesAzureEndpointOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type TrafficManagerProfilesAzureEndpointOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

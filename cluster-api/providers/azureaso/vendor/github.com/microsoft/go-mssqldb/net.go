@@ -87,7 +87,8 @@ func (c *tlsHandshakeConn) Read(b []byte) (n int, err error) {
 			err = fmt.Errorf("cannot read handshake packet: %s", err.Error())
 			return
 		}
-		if packet != packPrelogin {
+		// Older endpoints send back header type 4 instead of 18
+		if packet != packPrelogin && packet != packReply {
 			err = fmt.Errorf("unexpected packet %d, expecting prelogin", packet)
 			return
 		}

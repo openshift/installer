@@ -147,7 +147,6 @@ func alterRoles(ctx context.Context, db *sql.DB, user string, roles set.Set[stri
 			return errors.Wrap(err, "problem found with role")
 		}
 		_, err := builder.WriteString(fmt.Sprintf("ALTER ROLE %s %s MEMBER %s;\n", role, string(mode), user))
-
 		if err != nil {
 			return errors.Wrapf(err, "failed to build T-SQL ALTER ROLE %s statement", mode)
 		}

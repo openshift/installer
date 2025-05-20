@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 )
@@ -49,7 +50,7 @@ func (s RecordSpec) ResourceGroupName() string {
 }
 
 // Parameters returns the parameters for a record set.
-func (s RecordSpec) Parameters(ctx context.Context, existing interface{}) (params interface{}, err error) {
+func (s RecordSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
 	if existing != nil {
 		if _, ok := existing.(armprivatedns.RecordSet); !ok {
 			return nil, errors.Errorf("%T is not an armprivatedns.RecordSet", existing)

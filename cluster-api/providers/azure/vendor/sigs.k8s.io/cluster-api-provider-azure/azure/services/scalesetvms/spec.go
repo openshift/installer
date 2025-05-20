@@ -47,7 +47,7 @@ func (s *ScaleSetVMSpec) OwnerResourceName() string {
 }
 
 // Parameters is a no-op for VMSS VMs as this spec is only used to Get().
-func (s *ScaleSetVMSpec) Parameters(ctx context.Context, existing interface{}) (params interface{}, err error) {
+func (s *ScaleSetVMSpec) Parameters(_ context.Context, _ interface{}) (params interface{}, err error) {
 	return nil, nil
 }
 
@@ -73,6 +73,6 @@ func (s *VMSSFlexGetter) OwnerResourceName() string {
 }
 
 // Parameters is a no-op for flex VMs as this spec is only used to Get().
-func (s *VMSSFlexGetter) Parameters(ctx context.Context, existing interface{}) (params interface{}, err error) {
+func (s *VMSSFlexGetter) Parameters(_ context.Context, _ interface{}) (params interface{}, err error) {
 	return nil, nil
 }

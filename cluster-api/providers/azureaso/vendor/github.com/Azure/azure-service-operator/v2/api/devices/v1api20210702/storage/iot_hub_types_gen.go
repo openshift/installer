@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +47,26 @@ func (iotHub *IotHub) SetConditions(conditions conditions.Conditions) {
 	iotHub.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &IotHub{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (iotHub *IotHub) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if iotHub.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return iotHub.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &IotHub{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (iotHub *IotHub) SecretDestinationExpressions() []*core.DestinationExpression {
+	if iotHub.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return iotHub.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &IotHub{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (iotHub *IotHub) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-07-02"
 func (iotHub IotHub) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-07-02"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -240,8 +263,10 @@ type ArmIdentity_STATUS struct {
 // Storage version of v1api20210702.IotHubOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type IotHubOperatorSpec struct {
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	Secrets     *IotHubOperatorSecrets `json:"secrets,omitempty"`
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+	Secrets              *IotHubOperatorSecrets        `json:"secrets,omitempty"`
 }
 
 // Storage version of v1api20210702.IotHubProperties

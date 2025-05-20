@@ -6,12 +6,15 @@ package v1api20220701
 import (
 	"context"
 	"fmt"
-	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,22 +57,36 @@ var _ conversion.Convertible = &PrivateLinkService{}
 
 // ConvertFrom populates our PrivateLinkService from the provided hub PrivateLinkService
 func (service *PrivateLinkService) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220701s.PrivateLinkService)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20220701/storage/PrivateLinkService but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.PrivateLinkService
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return service.AssignProperties_From_PrivateLinkService(source)
+	err = service.AssignProperties_From_PrivateLinkService(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to service")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub PrivateLinkService from our PrivateLinkService
 func (service *PrivateLinkService) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220701s.PrivateLinkService)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20220701/storage/PrivateLinkService but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.PrivateLinkService
+	err := service.AssignProperties_To_PrivateLinkService(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from service")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return service.AssignProperties_To_PrivateLinkService(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20220701-privatelinkservice,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=privatelinkservices,verbs=create;update,versions=v1api20220701,name=default.v1api20220701.privatelinkservices.network.azure.com,admissionReviewVersions=v1
@@ -95,21 +112,30 @@ func (service *PrivateLinkService) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the PrivateLinkService resource
 func (service *PrivateLinkService) defaultImpl() { service.defaultAzureName() }
 
-var _ genruntime.ImportableResource = &PrivateLinkService{}
+var _ configmaps.Exporter = &PrivateLinkService{}
 
-// InitializeSpec initializes the spec for this resource from the given status
-func (service *PrivateLinkService) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded); ok {
-		return service.Spec.Initialize_From_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded(s)
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (service *PrivateLinkService) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if service.Spec.OperatorSpec == nil {
+		return nil
 	}
-
-	return fmt.Errorf("expected Status of type PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded but received %T instead", status)
+	return service.Spec.OperatorSpec.ConfigMapExpressions
 }
 
-var _ genruntime.KubernetesExporter = &PrivateLinkService{}
+var _ secrets.Exporter = &PrivateLinkService{}
 
-// ExportKubernetesResources defines a resource which can create other resources in Kubernetes.
-func (service *PrivateLinkService) ExportKubernetesResources(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (service *PrivateLinkService) SecretDestinationExpressions() []*core.DestinationExpression {
+	if service.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return service.Spec.OperatorSpec.SecretExpressions
+}
+
+var _ genruntime.KubernetesConfigExporter = &PrivateLinkService{}
+
+// ExportKubernetesConfigMaps defines a resource which can create ConfigMaps in Kubernetes.
+func (service *PrivateLinkService) ExportKubernetesConfigMaps(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
 	collector := configmaps.NewCollector(service.Namespace)
 	if service.Spec.OperatorSpec != nil && service.Spec.OperatorSpec.ConfigMaps != nil {
 		if service.Status.Alias != nil {
@@ -132,7 +158,7 @@ func (service *PrivateLinkService) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-07-01"
 func (service PrivateLinkService) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-07-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -230,7 +256,7 @@ func (service *PrivateLinkService) ValidateUpdate(old runtime.Object) (admission
 
 // createValidations validates the creation of the resource
 func (service *PrivateLinkService) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){service.validateResourceReferences, service.validateOwnerReference, service.validateConfigMapDestinations}
+	return []func() (admission.Warnings, error){service.validateResourceReferences, service.validateOwnerReference, service.validateSecretDestinations, service.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -249,6 +275,9 @@ func (service *PrivateLinkService) updateValidations() []func(old runtime.Object
 			return service.validateOwnerReference()
 		},
 		func(old runtime.Object) (admission.Warnings, error) {
+			return service.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
 			return service.validateConfigMapDestinations()
 		},
 	}
@@ -259,13 +288,13 @@ func (service *PrivateLinkService) validateConfigMapDestinations() (admission.Wa
 	if service.Spec.OperatorSpec == nil {
 		return nil, nil
 	}
-	if service.Spec.OperatorSpec.ConfigMaps == nil {
-		return nil, nil
+	var toValidate []*genruntime.ConfigMapDestination
+	if service.Spec.OperatorSpec.ConfigMaps != nil {
+		toValidate = []*genruntime.ConfigMapDestination{
+			service.Spec.OperatorSpec.ConfigMaps.Alias,
+		}
 	}
-	toValidate := []*genruntime.ConfigMapDestination{
-		service.Spec.OperatorSpec.ConfigMaps.Alias,
-	}
-	return genruntime.ValidateConfigMapDestinations(toValidate)
+	return configmaps.ValidateDestinations(service, toValidate, service.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -282,6 +311,14 @@ func (service *PrivateLinkService) validateResourceReferences() (admission.Warni
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (service *PrivateLinkService) validateSecretDestinations() (admission.Warnings, error) {
+	if service.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(service, nil, service.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (service *PrivateLinkService) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*PrivateLinkService)
@@ -293,7 +330,7 @@ func (service *PrivateLinkService) validateWriteOnceProperties(old runtime.Objec
 }
 
 // AssignProperties_From_PrivateLinkService populates our PrivateLinkService from the provided source PrivateLinkService
-func (service *PrivateLinkService) AssignProperties_From_PrivateLinkService(source *v20220701s.PrivateLinkService) error {
+func (service *PrivateLinkService) AssignProperties_From_PrivateLinkService(source *storage.PrivateLinkService) error {
 
 	// ObjectMeta
 	service.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -319,13 +356,13 @@ func (service *PrivateLinkService) AssignProperties_From_PrivateLinkService(sour
 }
 
 // AssignProperties_To_PrivateLinkService populates the provided destination PrivateLinkService from our PrivateLinkService
-func (service *PrivateLinkService) AssignProperties_To_PrivateLinkService(destination *v20220701s.PrivateLinkService) error {
+func (service *PrivateLinkService) AssignProperties_To_PrivateLinkService(destination *storage.PrivateLinkService) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *service.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220701s.PrivateLinkService_Spec
+	var spec storage.PrivateLinkService_Spec
 	err := service.Spec.AssignProperties_To_PrivateLinkService_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkService_Spec() to populate field Spec")
@@ -333,7 +370,7 @@ func (service *PrivateLinkService) AssignProperties_To_PrivateLinkService(destin
 	destination.Spec = spec
 
 	// Status
-	var status v20220701s.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
+	var status storage.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 	err = service.Status.AssignProperties_To_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field Status")
@@ -413,7 +450,7 @@ func (service *PrivateLinkService_Spec) ConvertToARM(resolved genruntime.Convert
 	if service == nil {
 		return nil, nil
 	}
-	result := &PrivateLinkService_Spec_ARM{}
+	result := &arm.PrivateLinkService_Spec{}
 
 	// Set property "ExtendedLocation":
 	if service.ExtendedLocation != nil {
@@ -421,7 +458,7 @@ func (service *PrivateLinkService_Spec) ConvertToARM(resolved genruntime.Convert
 		if err != nil {
 			return nil, err
 		}
-		extendedLocation := *extendedLocation_ARM.(*ExtendedLocation_ARM)
+		extendedLocation := *extendedLocation_ARM.(*arm.ExtendedLocation)
 		result.ExtendedLocation = &extendedLocation
 	}
 
@@ -441,14 +478,14 @@ func (service *PrivateLinkService_Spec) ConvertToARM(resolved genruntime.Convert
 		service.IpConfigurations != nil ||
 		service.LoadBalancerFrontendIpConfigurations != nil ||
 		service.Visibility != nil {
-		result.Properties = &PrivateLinkServiceProperties_ARM{}
+		result.Properties = &arm.PrivateLinkServiceProperties{}
 	}
 	if service.AutoApproval != nil {
 		autoApproval_ARM, err := (*service.AutoApproval).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		autoApproval := *autoApproval_ARM.(*ResourceSet_ARM)
+		autoApproval := *autoApproval_ARM.(*arm.ResourceSet)
 		result.Properties.AutoApproval = &autoApproval
 	}
 	if service.EnableProxyProtocol != nil {
@@ -463,21 +500,21 @@ func (service *PrivateLinkService_Spec) ConvertToARM(resolved genruntime.Convert
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*PrivateLinkServiceIpConfiguration_ARM))
+		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*arm.PrivateLinkServiceIpConfiguration))
 	}
 	for _, item := range service.LoadBalancerFrontendIpConfigurations {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.LoadBalancerFrontendIpConfigurations = append(result.Properties.LoadBalancerFrontendIpConfigurations, *item_ARM.(*FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded_ARM))
+		result.Properties.LoadBalancerFrontendIpConfigurations = append(result.Properties.LoadBalancerFrontendIpConfigurations, *item_ARM.(*arm.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded))
 	}
 	if service.Visibility != nil {
 		visibility_ARM, err := (*service.Visibility).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		visibility := *visibility_ARM.(*ResourceSet_ARM)
+		visibility := *visibility_ARM.(*arm.ResourceSet)
 		result.Properties.Visibility = &visibility
 	}
 
@@ -493,14 +530,14 @@ func (service *PrivateLinkService_Spec) ConvertToARM(resolved genruntime.Convert
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (service *PrivateLinkService_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateLinkService_Spec_ARM{}
+	return &arm.PrivateLinkService_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (service *PrivateLinkService_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateLinkService_Spec_ARM)
+	typedInput, ok := armInput.(arm.PrivateLinkService_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateLinkService_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateLinkService_Spec, got %T", armInput)
 	}
 
 	// Set property "AutoApproval":
@@ -618,14 +655,14 @@ var _ genruntime.ConvertibleSpec = &PrivateLinkService_Spec{}
 
 // ConvertSpecFrom populates our PrivateLinkService_Spec from the provided source
 func (service *PrivateLinkService_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220701s.PrivateLinkService_Spec)
+	src, ok := source.(*storage.PrivateLinkService_Spec)
 	if ok {
 		// Populate our instance from source
 		return service.AssignProperties_From_PrivateLinkService_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220701s.PrivateLinkService_Spec{}
+	src = &storage.PrivateLinkService_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -642,14 +679,14 @@ func (service *PrivateLinkService_Spec) ConvertSpecFrom(source genruntime.Conver
 
 // ConvertSpecTo populates the provided destination from our PrivateLinkService_Spec
 func (service *PrivateLinkService_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220701s.PrivateLinkService_Spec)
+	dst, ok := destination.(*storage.PrivateLinkService_Spec)
 	if ok {
 		// Populate destination from our instance
 		return service.AssignProperties_To_PrivateLinkService_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220701s.PrivateLinkService_Spec{}
+	dst = &storage.PrivateLinkService_Spec{}
 	err := service.AssignProperties_To_PrivateLinkService_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -665,7 +702,7 @@ func (service *PrivateLinkService_Spec) ConvertSpecTo(destination genruntime.Con
 }
 
 // AssignProperties_From_PrivateLinkService_Spec populates our PrivateLinkService_Spec from the provided source PrivateLinkService_Spec
-func (service *PrivateLinkService_Spec) AssignProperties_From_PrivateLinkService_Spec(source *v20220701s.PrivateLinkService_Spec) error {
+func (service *PrivateLinkService_Spec) AssignProperties_From_PrivateLinkService_Spec(source *storage.PrivateLinkService_Spec) error {
 
 	// AutoApproval
 	if source.AutoApproval != nil {
@@ -784,13 +821,13 @@ func (service *PrivateLinkService_Spec) AssignProperties_From_PrivateLinkService
 }
 
 // AssignProperties_To_PrivateLinkService_Spec populates the provided destination PrivateLinkService_Spec from our PrivateLinkService_Spec
-func (service *PrivateLinkService_Spec) AssignProperties_To_PrivateLinkService_Spec(destination *v20220701s.PrivateLinkService_Spec) error {
+func (service *PrivateLinkService_Spec) AssignProperties_To_PrivateLinkService_Spec(destination *storage.PrivateLinkService_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AutoApproval
 	if service.AutoApproval != nil {
-		var autoApproval v20220701s.ResourceSet
+		var autoApproval storage.ResourceSet
 		err := service.AutoApproval.AssignProperties_To_ResourceSet(&autoApproval)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ResourceSet() to populate field AutoApproval")
@@ -813,7 +850,7 @@ func (service *PrivateLinkService_Spec) AssignProperties_To_PrivateLinkService_S
 
 	// ExtendedLocation
 	if service.ExtendedLocation != nil {
-		var extendedLocation v20220701s.ExtendedLocation
+		var extendedLocation storage.ExtendedLocation
 		err := service.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
@@ -828,11 +865,11 @@ func (service *PrivateLinkService_Spec) AssignProperties_To_PrivateLinkService_S
 
 	// IpConfigurations
 	if service.IpConfigurations != nil {
-		ipConfigurationList := make([]v20220701s.PrivateLinkServiceIpConfiguration, len(service.IpConfigurations))
+		ipConfigurationList := make([]storage.PrivateLinkServiceIpConfiguration, len(service.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range service.IpConfigurations {
 			// Shadow the loop variable to avoid aliasing
 			ipConfigurationItem := ipConfigurationItem
-			var ipConfiguration v20220701s.PrivateLinkServiceIpConfiguration
+			var ipConfiguration storage.PrivateLinkServiceIpConfiguration
 			err := ipConfigurationItem.AssignProperties_To_PrivateLinkServiceIpConfiguration(&ipConfiguration)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceIpConfiguration() to populate field IpConfigurations")
@@ -846,11 +883,11 @@ func (service *PrivateLinkService_Spec) AssignProperties_To_PrivateLinkService_S
 
 	// LoadBalancerFrontendIpConfigurations
 	if service.LoadBalancerFrontendIpConfigurations != nil {
-		loadBalancerFrontendIpConfigurationList := make([]v20220701s.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded, len(service.LoadBalancerFrontendIpConfigurations))
+		loadBalancerFrontendIpConfigurationList := make([]storage.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded, len(service.LoadBalancerFrontendIpConfigurations))
 		for loadBalancerFrontendIpConfigurationIndex, loadBalancerFrontendIpConfigurationItem := range service.LoadBalancerFrontendIpConfigurations {
 			// Shadow the loop variable to avoid aliasing
 			loadBalancerFrontendIpConfigurationItem := loadBalancerFrontendIpConfigurationItem
-			var loadBalancerFrontendIpConfiguration v20220701s.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded
+			var loadBalancerFrontendIpConfiguration storage.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded
 			err := loadBalancerFrontendIpConfigurationItem.AssignProperties_To_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded(&loadBalancerFrontendIpConfiguration)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded() to populate field LoadBalancerFrontendIpConfigurations")
@@ -867,7 +904,7 @@ func (service *PrivateLinkService_Spec) AssignProperties_To_PrivateLinkService_S
 
 	// OperatorSpec
 	if service.OperatorSpec != nil {
-		var operatorSpec v20220701s.PrivateLinkServiceOperatorSpec
+		var operatorSpec storage.PrivateLinkServiceOperatorSpec
 		err := service.OperatorSpec.AssignProperties_To_PrivateLinkServiceOperatorSpec(&operatorSpec)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceOperatorSpec() to populate field OperatorSpec")
@@ -893,7 +930,7 @@ func (service *PrivateLinkService_Spec) AssignProperties_To_PrivateLinkService_S
 
 	// Visibility
 	if service.Visibility != nil {
-		var visibility v20220701s.ResourceSet
+		var visibility storage.ResourceSet
 		err := service.Visibility.AssignProperties_To_ResourceSet(&visibility)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ResourceSet() to populate field Visibility")
@@ -908,102 +945,6 @@ func (service *PrivateLinkService_Spec) AssignProperties_To_PrivateLinkService_S
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded populates our PrivateLinkService_Spec from the provided source PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
-func (service *PrivateLinkService_Spec) Initialize_From_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded(source *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) error {
-
-	// AutoApproval
-	if source.AutoApproval != nil {
-		var autoApproval ResourceSet
-		err := autoApproval.Initialize_From_ResourceSet_STATUS(source.AutoApproval)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ResourceSet_STATUS() to populate field AutoApproval")
-		}
-		service.AutoApproval = &autoApproval
-	} else {
-		service.AutoApproval = nil
-	}
-
-	// EnableProxyProtocol
-	if source.EnableProxyProtocol != nil {
-		enableProxyProtocol := *source.EnableProxyProtocol
-		service.EnableProxyProtocol = &enableProxyProtocol
-	} else {
-		service.EnableProxyProtocol = nil
-	}
-
-	// ExtendedLocation
-	if source.ExtendedLocation != nil {
-		var extendedLocation ExtendedLocation
-		err := extendedLocation.Initialize_From_ExtendedLocation_STATUS(source.ExtendedLocation)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
-		}
-		service.ExtendedLocation = &extendedLocation
-	} else {
-		service.ExtendedLocation = nil
-	}
-
-	// Fqdns
-	service.Fqdns = genruntime.CloneSliceOfString(source.Fqdns)
-
-	// IpConfigurations
-	if source.IpConfigurations != nil {
-		ipConfigurationList := make([]PrivateLinkServiceIpConfiguration, len(source.IpConfigurations))
-		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
-			var ipConfiguration PrivateLinkServiceIpConfiguration
-			err := ipConfiguration.Initialize_From_PrivateLinkServiceIpConfiguration_STATUS(&ipConfigurationItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_PrivateLinkServiceIpConfiguration_STATUS() to populate field IpConfigurations")
-			}
-			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
-		}
-		service.IpConfigurations = ipConfigurationList
-	} else {
-		service.IpConfigurations = nil
-	}
-
-	// LoadBalancerFrontendIpConfigurations
-	if source.LoadBalancerFrontendIpConfigurations != nil {
-		loadBalancerFrontendIpConfigurationList := make([]FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded, len(source.LoadBalancerFrontendIpConfigurations))
-		for loadBalancerFrontendIpConfigurationIndex, loadBalancerFrontendIpConfigurationItem := range source.LoadBalancerFrontendIpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerFrontendIpConfigurationItem := loadBalancerFrontendIpConfigurationItem
-			var loadBalancerFrontendIpConfiguration FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded
-			err := loadBalancerFrontendIpConfiguration.Initialize_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(&loadBalancerFrontendIpConfigurationItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field LoadBalancerFrontendIpConfigurations")
-			}
-			loadBalancerFrontendIpConfigurationList[loadBalancerFrontendIpConfigurationIndex] = loadBalancerFrontendIpConfiguration
-		}
-		service.LoadBalancerFrontendIpConfigurations = loadBalancerFrontendIpConfigurationList
-	} else {
-		service.LoadBalancerFrontendIpConfigurations = nil
-	}
-
-	// Location
-	service.Location = genruntime.ClonePointerToString(source.Location)
-
-	// Tags
-	service.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// Visibility
-	if source.Visibility != nil {
-		var visibility ResourceSet
-		err := visibility.Initialize_From_ResourceSet_STATUS(source.Visibility)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ResourceSet_STATUS() to populate field Visibility")
-		}
-		service.Visibility = &visibility
-	} else {
-		service.Visibility = nil
 	}
 
 	// No error
@@ -1079,14 +1020,14 @@ var _ genruntime.ConvertibleStatus = &PrivateLinkService_STATUS_PrivateLinkServi
 
 // ConvertStatusFrom populates our PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded from the provided source
 func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220701s.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded)
+	src, ok := source.(*storage.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded)
 	if ok {
 		// Populate our instance from source
 		return embedded.AssignProperties_From_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220701s.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded{}
+	src = &storage.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -1103,14 +1044,14 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 
 // ConvertStatusTo populates the provided destination from our PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220701s.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded)
+	dst, ok := destination.(*storage.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded)
 	if ok {
 		// Populate destination from our instance
 		return embedded.AssignProperties_To_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220701s.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded{}
+	dst = &storage.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded{}
 	err := embedded.AssignProperties_To_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -1129,14 +1070,14 @@ var _ genruntime.FromARMConverter = &PrivateLinkService_STATUS_PrivateLinkServic
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded_ARM{}
+	return &arm.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Alias":
@@ -1272,7 +1213,9 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := ApplicationGatewayProvisioningState_STATUS(temp)
 			embedded.ProvisioningState = &provisioningState
 		}
 	}
@@ -1310,7 +1253,7 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 }
 
 // AssignProperties_From_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded populates our PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded from the provided source PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded(source *v20220701s.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded(source *storage.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) error {
 
 	// Alias
 	embedded.Alias = genruntime.ClonePointerToString(source.Alias)
@@ -1439,8 +1382,9 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := ApplicationGatewayProvisioningState_STATUS(*source.ProvisioningState)
-		embedded.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, applicationGatewayProvisioningState_STATUS_Values)
+		embedded.ProvisioningState = &provisioningStateTemp
 	} else {
 		embedded.ProvisioningState = nil
 	}
@@ -1468,7 +1412,7 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 }
 
 // AssignProperties_To_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded populates the provided destination PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded from our PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded(destination *v20220701s.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded(destination *storage.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1477,7 +1421,7 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 
 	// AutoApproval
 	if embedded.AutoApproval != nil {
-		var autoApproval v20220701s.ResourceSet_STATUS
+		var autoApproval storage.ResourceSet_STATUS
 		err := embedded.AutoApproval.AssignProperties_To_ResourceSet_STATUS(&autoApproval)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ResourceSet_STATUS() to populate field AutoApproval")
@@ -1503,7 +1447,7 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 
 	// ExtendedLocation
 	if embedded.ExtendedLocation != nil {
-		var extendedLocation v20220701s.ExtendedLocation_STATUS
+		var extendedLocation storage.ExtendedLocation_STATUS
 		err := embedded.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
@@ -1521,11 +1465,11 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 
 	// IpConfigurations
 	if embedded.IpConfigurations != nil {
-		ipConfigurationList := make([]v20220701s.PrivateLinkServiceIpConfiguration_STATUS, len(embedded.IpConfigurations))
+		ipConfigurationList := make([]storage.PrivateLinkServiceIpConfiguration_STATUS, len(embedded.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range embedded.IpConfigurations {
 			// Shadow the loop variable to avoid aliasing
 			ipConfigurationItem := ipConfigurationItem
-			var ipConfiguration v20220701s.PrivateLinkServiceIpConfiguration_STATUS
+			var ipConfiguration storage.PrivateLinkServiceIpConfiguration_STATUS
 			err := ipConfigurationItem.AssignProperties_To_PrivateLinkServiceIpConfiguration_STATUS(&ipConfiguration)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceIpConfiguration_STATUS() to populate field IpConfigurations")
@@ -1539,11 +1483,11 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 
 	// LoadBalancerFrontendIpConfigurations
 	if embedded.LoadBalancerFrontendIpConfigurations != nil {
-		loadBalancerFrontendIpConfigurationList := make([]v20220701s.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded, len(embedded.LoadBalancerFrontendIpConfigurations))
+		loadBalancerFrontendIpConfigurationList := make([]storage.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded, len(embedded.LoadBalancerFrontendIpConfigurations))
 		for loadBalancerFrontendIpConfigurationIndex, loadBalancerFrontendIpConfigurationItem := range embedded.LoadBalancerFrontendIpConfigurations {
 			// Shadow the loop variable to avoid aliasing
 			loadBalancerFrontendIpConfigurationItem := loadBalancerFrontendIpConfigurationItem
-			var loadBalancerFrontendIpConfiguration v20220701s.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded
+			var loadBalancerFrontendIpConfiguration storage.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded
 			err := loadBalancerFrontendIpConfigurationItem.AssignProperties_To_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(&loadBalancerFrontendIpConfiguration)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field LoadBalancerFrontendIpConfigurations")
@@ -1563,11 +1507,11 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 
 	// NetworkInterfaces
 	if embedded.NetworkInterfaces != nil {
-		networkInterfaceList := make([]v20220701s.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded, len(embedded.NetworkInterfaces))
+		networkInterfaceList := make([]storage.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded, len(embedded.NetworkInterfaces))
 		for networkInterfaceIndex, networkInterfaceItem := range embedded.NetworkInterfaces {
 			// Shadow the loop variable to avoid aliasing
 			networkInterfaceItem := networkInterfaceItem
-			var networkInterface v20220701s.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded
+			var networkInterface storage.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded
 			err := networkInterfaceItem.AssignProperties_To_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded(&networkInterface)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field NetworkInterfaces")
@@ -1581,11 +1525,11 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 
 	// PrivateEndpointConnections
 	if embedded.PrivateEndpointConnections != nil {
-		privateEndpointConnectionList := make([]v20220701s.PrivateEndpointConnection_STATUS, len(embedded.PrivateEndpointConnections))
+		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(embedded.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range embedded.PrivateEndpointConnections {
 			// Shadow the loop variable to avoid aliasing
 			privateEndpointConnectionItem := privateEndpointConnectionItem
-			var privateEndpointConnection v20220701s.PrivateEndpointConnection_STATUS
+			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
@@ -1613,7 +1557,7 @@ func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
 
 	// Visibility
 	if embedded.Visibility != nil {
-		var visibility v20220701s.ResourceSet_STATUS
+		var visibility storage.ResourceSet_STATUS
 		err := embedded.Visibility.AssignProperties_To_ResourceSet_STATUS(&visibility)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ResourceSet_STATUS() to populate field Visibility")
@@ -1647,7 +1591,7 @@ func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) 
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded_ARM{}
+	result := &arm.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded{}
 
 	// Set property "Id":
 	if embedded.Reference != nil {
@@ -1663,14 +1607,14 @@ func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) 
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded_ARM{}
+	return &arm.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded_ARM)
+	_, ok := armInput.(arm.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -1680,7 +1624,7 @@ func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) 
 }
 
 // AssignProperties_From_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded populates our FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded from the provided source FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded
-func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded(source *v20220701s.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded(source *storage.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) error {
 
 	// Reference
 	if source.Reference != nil {
@@ -1695,7 +1639,7 @@ func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) 
 }
 
 // AssignProperties_To_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded populates the provided destination FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded from our FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded
-func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded(destination *v20220701s.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded(destination *storage.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1718,21 +1662,6 @@ func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) 
 	return nil
 }
 
-// Initialize_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded populates our FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded from the provided source FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) Initialize_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(source *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		embedded.Reference = &reference
-	} else {
-		embedded.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Frontend IP address of the load balancer.
 type FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded struct {
 	// Id: Resource ID.
@@ -1743,14 +1672,14 @@ var _ genruntime.FromARMConverter = &FrontendIPConfiguration_STATUS_PrivateLinkS
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded_ARM{}
+	return &arm.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -1764,7 +1693,7 @@ func (embedded *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmb
 }
 
 // AssignProperties_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded populates our FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded from the provided source FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(source *v20220701s.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(source *storage.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) error {
 
 	// Id
 	embedded.Id = genruntime.ClonePointerToString(source.Id)
@@ -1774,7 +1703,7 @@ func (embedded *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmb
 }
 
 // AssignProperties_To_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded populates the provided destination FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded from our FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(destination *v20220701s.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(destination *storage.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1802,14 +1731,14 @@ var _ genruntime.FromARMConverter = &NetworkInterface_STATUS_PrivateLinkService_
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded_ARM{}
+	return &arm.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -1823,7 +1752,7 @@ func (embedded *NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) 
 }
 
 // AssignProperties_From_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded populates our NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded from the provided source NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded(source *v20220701s.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded(source *storage.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) error {
 
 	// Id
 	embedded.Id = genruntime.ClonePointerToString(source.Id)
@@ -1833,7 +1762,7 @@ func (embedded *NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) 
 }
 
 // AssignProperties_To_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded populates the provided destination NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded from our NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded(destination *v20220701s.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded(destination *storage.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1861,14 +1790,14 @@ var _ genruntime.FromARMConverter = &PrivateEndpointConnection_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (connection *PrivateEndpointConnection_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateEndpointConnection_STATUS_ARM{}
+	return &arm.PrivateEndpointConnection_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (connection *PrivateEndpointConnection_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateEndpointConnection_STATUS_ARM)
+	typedInput, ok := armInput.(arm.PrivateEndpointConnection_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateEndpointConnection_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateEndpointConnection_STATUS, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -1882,7 +1811,7 @@ func (connection *PrivateEndpointConnection_STATUS) PopulateFromARM(owner genrun
 }
 
 // AssignProperties_From_PrivateEndpointConnection_STATUS populates our PrivateEndpointConnection_STATUS from the provided source PrivateEndpointConnection_STATUS
-func (connection *PrivateEndpointConnection_STATUS) AssignProperties_From_PrivateEndpointConnection_STATUS(source *v20220701s.PrivateEndpointConnection_STATUS) error {
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_From_PrivateEndpointConnection_STATUS(source *storage.PrivateEndpointConnection_STATUS) error {
 
 	// Id
 	connection.Id = genruntime.ClonePointerToString(source.Id)
@@ -1892,7 +1821,7 @@ func (connection *PrivateEndpointConnection_STATUS) AssignProperties_From_Privat
 }
 
 // AssignProperties_To_PrivateEndpointConnection_STATUS populates the provided destination PrivateEndpointConnection_STATUS from our PrivateEndpointConnection_STATUS
-func (connection *PrivateEndpointConnection_STATUS) AssignProperties_To_PrivateEndpointConnection_STATUS(destination *v20220701s.PrivateEndpointConnection_STATUS) error {
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_To_PrivateEndpointConnection_STATUS(destination *storage.PrivateEndpointConnection_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1938,7 +1867,7 @@ func (configuration *PrivateLinkServiceIpConfiguration) ConvertToARM(resolved ge
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &PrivateLinkServiceIpConfiguration_ARM{}
+	result := &arm.PrivateLinkServiceIpConfiguration{}
 
 	// Set property "Name":
 	if configuration.Name != nil {
@@ -1952,7 +1881,7 @@ func (configuration *PrivateLinkServiceIpConfiguration) ConvertToARM(resolved ge
 		configuration.PrivateIPAddressVersion != nil ||
 		configuration.PrivateIPAllocationMethod != nil ||
 		configuration.Subnet != nil {
-		result.Properties = &PrivateLinkServiceIpConfigurationProperties_ARM{}
+		result.Properties = &arm.PrivateLinkServiceIpConfigurationProperties{}
 	}
 	if configuration.Primary != nil {
 		primary := *configuration.Primary
@@ -1963,11 +1892,15 @@ func (configuration *PrivateLinkServiceIpConfiguration) ConvertToARM(resolved ge
 		result.Properties.PrivateIPAddress = &privateIPAddress
 	}
 	if configuration.PrivateIPAddressVersion != nil {
-		privateIPAddressVersion := *configuration.PrivateIPAddressVersion
+		var temp string
+		temp = string(*configuration.PrivateIPAddressVersion)
+		privateIPAddressVersion := arm.IPVersion(temp)
 		result.Properties.PrivateIPAddressVersion = &privateIPAddressVersion
 	}
 	if configuration.PrivateIPAllocationMethod != nil {
-		privateIPAllocationMethod := *configuration.PrivateIPAllocationMethod
+		var temp string
+		temp = string(*configuration.PrivateIPAllocationMethod)
+		privateIPAllocationMethod := arm.IPAllocationMethod(temp)
 		result.Properties.PrivateIPAllocationMethod = &privateIPAllocationMethod
 	}
 	if configuration.Subnet != nil {
@@ -1975,7 +1908,7 @@ func (configuration *PrivateLinkServiceIpConfiguration) ConvertToARM(resolved ge
 		if err != nil {
 			return nil, err
 		}
-		subnet := *subnet_ARM.(*Subnet_PrivateLinkService_SubResourceEmbedded_ARM)
+		subnet := *subnet_ARM.(*arm.Subnet_PrivateLinkService_SubResourceEmbedded)
 		result.Properties.Subnet = &subnet
 	}
 	return result, nil
@@ -1983,14 +1916,14 @@ func (configuration *PrivateLinkServiceIpConfiguration) ConvertToARM(resolved ge
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *PrivateLinkServiceIpConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateLinkServiceIpConfiguration_ARM{}
+	return &arm.PrivateLinkServiceIpConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *PrivateLinkServiceIpConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateLinkServiceIpConfiguration_ARM)
+	typedInput, ok := armInput.(arm.PrivateLinkServiceIpConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateLinkServiceIpConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateLinkServiceIpConfiguration, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -2021,7 +1954,9 @@ func (configuration *PrivateLinkServiceIpConfiguration) PopulateFromARM(owner ge
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAddressVersion != nil {
-			privateIPAddressVersion := *typedInput.Properties.PrivateIPAddressVersion
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAddressVersion)
+			privateIPAddressVersion := IPVersion(temp)
 			configuration.PrivateIPAddressVersion = &privateIPAddressVersion
 		}
 	}
@@ -2030,7 +1965,9 @@ func (configuration *PrivateLinkServiceIpConfiguration) PopulateFromARM(owner ge
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAllocationMethod != nil {
-			privateIPAllocationMethod := *typedInput.Properties.PrivateIPAllocationMethod
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAllocationMethod)
+			privateIPAllocationMethod := IPAllocationMethod(temp)
 			configuration.PrivateIPAllocationMethod = &privateIPAllocationMethod
 		}
 	}
@@ -2054,7 +1991,7 @@ func (configuration *PrivateLinkServiceIpConfiguration) PopulateFromARM(owner ge
 }
 
 // AssignProperties_From_PrivateLinkServiceIpConfiguration populates our PrivateLinkServiceIpConfiguration from the provided source PrivateLinkServiceIpConfiguration
-func (configuration *PrivateLinkServiceIpConfiguration) AssignProperties_From_PrivateLinkServiceIpConfiguration(source *v20220701s.PrivateLinkServiceIpConfiguration) error {
+func (configuration *PrivateLinkServiceIpConfiguration) AssignProperties_From_PrivateLinkServiceIpConfiguration(source *storage.PrivateLinkServiceIpConfiguration) error {
 
 	// Name
 	configuration.Name = genruntime.ClonePointerToString(source.Name)
@@ -2072,16 +2009,18 @@ func (configuration *PrivateLinkServiceIpConfiguration) AssignProperties_From_Pr
 
 	// PrivateIPAddressVersion
 	if source.PrivateIPAddressVersion != nil {
-		privateIPAddressVersion := IPVersion(*source.PrivateIPAddressVersion)
-		configuration.PrivateIPAddressVersion = &privateIPAddressVersion
+		privateIPAddressVersion := *source.PrivateIPAddressVersion
+		privateIPAddressVersionTemp := genruntime.ToEnum(privateIPAddressVersion, iPVersion_Values)
+		configuration.PrivateIPAddressVersion = &privateIPAddressVersionTemp
 	} else {
 		configuration.PrivateIPAddressVersion = nil
 	}
 
 	// PrivateIPAllocationMethod
 	if source.PrivateIPAllocationMethod != nil {
-		privateIPAllocationMethod := IPAllocationMethod(*source.PrivateIPAllocationMethod)
-		configuration.PrivateIPAllocationMethod = &privateIPAllocationMethod
+		privateIPAllocationMethod := *source.PrivateIPAllocationMethod
+		privateIPAllocationMethodTemp := genruntime.ToEnum(privateIPAllocationMethod, iPAllocationMethod_Values)
+		configuration.PrivateIPAllocationMethod = &privateIPAllocationMethodTemp
 	} else {
 		configuration.PrivateIPAllocationMethod = nil
 	}
@@ -2103,7 +2042,7 @@ func (configuration *PrivateLinkServiceIpConfiguration) AssignProperties_From_Pr
 }
 
 // AssignProperties_To_PrivateLinkServiceIpConfiguration populates the provided destination PrivateLinkServiceIpConfiguration from our PrivateLinkServiceIpConfiguration
-func (configuration *PrivateLinkServiceIpConfiguration) AssignProperties_To_PrivateLinkServiceIpConfiguration(destination *v20220701s.PrivateLinkServiceIpConfiguration) error {
+func (configuration *PrivateLinkServiceIpConfiguration) AssignProperties_To_PrivateLinkServiceIpConfiguration(destination *storage.PrivateLinkServiceIpConfiguration) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2139,7 +2078,7 @@ func (configuration *PrivateLinkServiceIpConfiguration) AssignProperties_To_Priv
 
 	// Subnet
 	if configuration.Subnet != nil {
-		var subnet v20220701s.Subnet_PrivateLinkService_SubResourceEmbedded
+		var subnet storage.Subnet_PrivateLinkService_SubResourceEmbedded
 		err := configuration.Subnet.AssignProperties_To_Subnet_PrivateLinkService_SubResourceEmbedded(&subnet)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Subnet_PrivateLinkService_SubResourceEmbedded() to populate field Subnet")
@@ -2154,55 +2093,6 @@ func (configuration *PrivateLinkServiceIpConfiguration) AssignProperties_To_Priv
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_PrivateLinkServiceIpConfiguration_STATUS populates our PrivateLinkServiceIpConfiguration from the provided source PrivateLinkServiceIpConfiguration_STATUS
-func (configuration *PrivateLinkServiceIpConfiguration) Initialize_From_PrivateLinkServiceIpConfiguration_STATUS(source *PrivateLinkServiceIpConfiguration_STATUS) error {
-
-	// Name
-	configuration.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Primary
-	if source.Primary != nil {
-		primary := *source.Primary
-		configuration.Primary = &primary
-	} else {
-		configuration.Primary = nil
-	}
-
-	// PrivateIPAddress
-	configuration.PrivateIPAddress = genruntime.ClonePointerToString(source.PrivateIPAddress)
-
-	// PrivateIPAddressVersion
-	if source.PrivateIPAddressVersion != nil {
-		privateIPAddressVersion := IPVersion(*source.PrivateIPAddressVersion)
-		configuration.PrivateIPAddressVersion = &privateIPAddressVersion
-	} else {
-		configuration.PrivateIPAddressVersion = nil
-	}
-
-	// PrivateIPAllocationMethod
-	if source.PrivateIPAllocationMethod != nil {
-		privateIPAllocationMethod := IPAllocationMethod(*source.PrivateIPAllocationMethod)
-		configuration.PrivateIPAllocationMethod = &privateIPAllocationMethod
-	} else {
-		configuration.PrivateIPAllocationMethod = nil
-	}
-
-	// Subnet
-	if source.Subnet != nil {
-		var subnet Subnet_PrivateLinkService_SubResourceEmbedded
-		err := subnet.Initialize_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(source.Subnet)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field Subnet")
-		}
-		configuration.Subnet = &subnet
-	} else {
-		configuration.Subnet = nil
 	}
 
 	// No error
@@ -2246,14 +2136,14 @@ var _ genruntime.FromARMConverter = &PrivateLinkServiceIpConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *PrivateLinkServiceIpConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateLinkServiceIpConfiguration_STATUS_ARM{}
+	return &arm.PrivateLinkServiceIpConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *PrivateLinkServiceIpConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateLinkServiceIpConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.PrivateLinkServiceIpConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateLinkServiceIpConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateLinkServiceIpConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "Etag":
@@ -2296,7 +2186,9 @@ func (configuration *PrivateLinkServiceIpConfiguration_STATUS) PopulateFromARM(o
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAddressVersion != nil {
-			privateIPAddressVersion := *typedInput.Properties.PrivateIPAddressVersion
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAddressVersion)
+			privateIPAddressVersion := IPVersion_STATUS(temp)
 			configuration.PrivateIPAddressVersion = &privateIPAddressVersion
 		}
 	}
@@ -2305,7 +2197,9 @@ func (configuration *PrivateLinkServiceIpConfiguration_STATUS) PopulateFromARM(o
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAllocationMethod != nil {
-			privateIPAllocationMethod := *typedInput.Properties.PrivateIPAllocationMethod
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAllocationMethod)
+			privateIPAllocationMethod := IPAllocationMethod_STATUS(temp)
 			configuration.PrivateIPAllocationMethod = &privateIPAllocationMethod
 		}
 	}
@@ -2314,7 +2208,9 @@ func (configuration *PrivateLinkServiceIpConfiguration_STATUS) PopulateFromARM(o
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := ApplicationGatewayProvisioningState_STATUS(temp)
 			configuration.ProvisioningState = &provisioningState
 		}
 	}
@@ -2344,7 +2240,7 @@ func (configuration *PrivateLinkServiceIpConfiguration_STATUS) PopulateFromARM(o
 }
 
 // AssignProperties_From_PrivateLinkServiceIpConfiguration_STATUS populates our PrivateLinkServiceIpConfiguration_STATUS from the provided source PrivateLinkServiceIpConfiguration_STATUS
-func (configuration *PrivateLinkServiceIpConfiguration_STATUS) AssignProperties_From_PrivateLinkServiceIpConfiguration_STATUS(source *v20220701s.PrivateLinkServiceIpConfiguration_STATUS) error {
+func (configuration *PrivateLinkServiceIpConfiguration_STATUS) AssignProperties_From_PrivateLinkServiceIpConfiguration_STATUS(source *storage.PrivateLinkServiceIpConfiguration_STATUS) error {
 
 	// Etag
 	configuration.Etag = genruntime.ClonePointerToString(source.Etag)
@@ -2368,24 +2264,27 @@ func (configuration *PrivateLinkServiceIpConfiguration_STATUS) AssignProperties_
 
 	// PrivateIPAddressVersion
 	if source.PrivateIPAddressVersion != nil {
-		privateIPAddressVersion := IPVersion_STATUS(*source.PrivateIPAddressVersion)
-		configuration.PrivateIPAddressVersion = &privateIPAddressVersion
+		privateIPAddressVersion := *source.PrivateIPAddressVersion
+		privateIPAddressVersionTemp := genruntime.ToEnum(privateIPAddressVersion, iPVersion_STATUS_Values)
+		configuration.PrivateIPAddressVersion = &privateIPAddressVersionTemp
 	} else {
 		configuration.PrivateIPAddressVersion = nil
 	}
 
 	// PrivateIPAllocationMethod
 	if source.PrivateIPAllocationMethod != nil {
-		privateIPAllocationMethod := IPAllocationMethod_STATUS(*source.PrivateIPAllocationMethod)
-		configuration.PrivateIPAllocationMethod = &privateIPAllocationMethod
+		privateIPAllocationMethod := *source.PrivateIPAllocationMethod
+		privateIPAllocationMethodTemp := genruntime.ToEnum(privateIPAllocationMethod, iPAllocationMethod_STATUS_Values)
+		configuration.PrivateIPAllocationMethod = &privateIPAllocationMethodTemp
 	} else {
 		configuration.PrivateIPAllocationMethod = nil
 	}
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := ApplicationGatewayProvisioningState_STATUS(*source.ProvisioningState)
-		configuration.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, applicationGatewayProvisioningState_STATUS_Values)
+		configuration.ProvisioningState = &provisioningStateTemp
 	} else {
 		configuration.ProvisioningState = nil
 	}
@@ -2410,7 +2309,7 @@ func (configuration *PrivateLinkServiceIpConfiguration_STATUS) AssignProperties_
 }
 
 // AssignProperties_To_PrivateLinkServiceIpConfiguration_STATUS populates the provided destination PrivateLinkServiceIpConfiguration_STATUS from our PrivateLinkServiceIpConfiguration_STATUS
-func (configuration *PrivateLinkServiceIpConfiguration_STATUS) AssignProperties_To_PrivateLinkServiceIpConfiguration_STATUS(destination *v20220701s.PrivateLinkServiceIpConfiguration_STATUS) error {
+func (configuration *PrivateLinkServiceIpConfiguration_STATUS) AssignProperties_To_PrivateLinkServiceIpConfiguration_STATUS(destination *storage.PrivateLinkServiceIpConfiguration_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2460,7 +2359,7 @@ func (configuration *PrivateLinkServiceIpConfiguration_STATUS) AssignProperties_
 
 	// Subnet
 	if configuration.Subnet != nil {
-		var subnet v20220701s.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded
+		var subnet storage.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded
 		err := configuration.Subnet.AssignProperties_To_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(&subnet)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field Subnet")
@@ -2486,12 +2385,36 @@ func (configuration *PrivateLinkServiceIpConfiguration_STATUS) AssignProperties_
 
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type PrivateLinkServiceOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
 	// ConfigMaps: configures where to place operator written ConfigMaps.
 	ConfigMaps *PrivateLinkServiceOperatorConfigMaps `json:"configMaps,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // AssignProperties_From_PrivateLinkServiceOperatorSpec populates our PrivateLinkServiceOperatorSpec from the provided source PrivateLinkServiceOperatorSpec
-func (operator *PrivateLinkServiceOperatorSpec) AssignProperties_From_PrivateLinkServiceOperatorSpec(source *v20220701s.PrivateLinkServiceOperatorSpec) error {
+func (operator *PrivateLinkServiceOperatorSpec) AssignProperties_From_PrivateLinkServiceOperatorSpec(source *storage.PrivateLinkServiceOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
 
 	// ConfigMaps
 	if source.ConfigMaps != nil {
@@ -2505,18 +2428,54 @@ func (operator *PrivateLinkServiceOperatorSpec) AssignProperties_From_PrivateLin
 		operator.ConfigMaps = nil
 	}
 
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
 	// No error
 	return nil
 }
 
 // AssignProperties_To_PrivateLinkServiceOperatorSpec populates the provided destination PrivateLinkServiceOperatorSpec from our PrivateLinkServiceOperatorSpec
-func (operator *PrivateLinkServiceOperatorSpec) AssignProperties_To_PrivateLinkServiceOperatorSpec(destination *v20220701s.PrivateLinkServiceOperatorSpec) error {
+func (operator *PrivateLinkServiceOperatorSpec) AssignProperties_To_PrivateLinkServiceOperatorSpec(destination *storage.PrivateLinkServiceOperatorSpec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
 	// ConfigMaps
 	if operator.ConfigMaps != nil {
-		var configMap v20220701s.PrivateLinkServiceOperatorConfigMaps
+		var configMap storage.PrivateLinkServiceOperatorConfigMaps
 		err := operator.ConfigMaps.AssignProperties_To_PrivateLinkServiceOperatorConfigMaps(&configMap)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceOperatorConfigMaps() to populate field ConfigMaps")
@@ -2524,6 +2483,24 @@ func (operator *PrivateLinkServiceOperatorSpec) AssignProperties_To_PrivateLinkS
 		destination.ConfigMaps = &configMap
 	} else {
 		destination.ConfigMaps = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
 	}
 
 	// Update the property bag
@@ -2550,7 +2527,7 @@ func (resourceSet *ResourceSet) ConvertToARM(resolved genruntime.ConvertToARMRes
 	if resourceSet == nil {
 		return nil, nil
 	}
-	result := &ResourceSet_ARM{}
+	result := &arm.ResourceSet{}
 
 	// Set property "Subscriptions":
 	for _, item := range resourceSet.Subscriptions {
@@ -2561,14 +2538,14 @@ func (resourceSet *ResourceSet) ConvertToARM(resolved genruntime.ConvertToARMRes
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (resourceSet *ResourceSet) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ResourceSet_ARM{}
+	return &arm.ResourceSet{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (resourceSet *ResourceSet) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ResourceSet_ARM)
+	typedInput, ok := armInput.(arm.ResourceSet)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ResourceSet_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ResourceSet, got %T", armInput)
 	}
 
 	// Set property "Subscriptions":
@@ -2581,7 +2558,7 @@ func (resourceSet *ResourceSet) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 }
 
 // AssignProperties_From_ResourceSet populates our ResourceSet from the provided source ResourceSet
-func (resourceSet *ResourceSet) AssignProperties_From_ResourceSet(source *v20220701s.ResourceSet) error {
+func (resourceSet *ResourceSet) AssignProperties_From_ResourceSet(source *storage.ResourceSet) error {
 
 	// Subscriptions
 	resourceSet.Subscriptions = genruntime.CloneSliceOfString(source.Subscriptions)
@@ -2591,7 +2568,7 @@ func (resourceSet *ResourceSet) AssignProperties_From_ResourceSet(source *v20220
 }
 
 // AssignProperties_To_ResourceSet populates the provided destination ResourceSet from our ResourceSet
-func (resourceSet *ResourceSet) AssignProperties_To_ResourceSet(destination *v20220701s.ResourceSet) error {
+func (resourceSet *ResourceSet) AssignProperties_To_ResourceSet(destination *storage.ResourceSet) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2609,16 +2586,6 @@ func (resourceSet *ResourceSet) AssignProperties_To_ResourceSet(destination *v20
 	return nil
 }
 
-// Initialize_From_ResourceSet_STATUS populates our ResourceSet from the provided source ResourceSet_STATUS
-func (resourceSet *ResourceSet) Initialize_From_ResourceSet_STATUS(source *ResourceSet_STATUS) error {
-
-	// Subscriptions
-	resourceSet.Subscriptions = genruntime.CloneSliceOfString(source.Subscriptions)
-
-	// No error
-	return nil
-}
-
 // The base resource set for visibility and auto-approval.
 type ResourceSet_STATUS struct {
 	// Subscriptions: The list of subscriptions.
@@ -2629,14 +2596,14 @@ var _ genruntime.FromARMConverter = &ResourceSet_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (resourceSet *ResourceSet_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ResourceSet_STATUS_ARM{}
+	return &arm.ResourceSet_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (resourceSet *ResourceSet_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ResourceSet_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ResourceSet_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ResourceSet_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ResourceSet_STATUS, got %T", armInput)
 	}
 
 	// Set property "Subscriptions":
@@ -2649,7 +2616,7 @@ func (resourceSet *ResourceSet_STATUS) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_ResourceSet_STATUS populates our ResourceSet_STATUS from the provided source ResourceSet_STATUS
-func (resourceSet *ResourceSet_STATUS) AssignProperties_From_ResourceSet_STATUS(source *v20220701s.ResourceSet_STATUS) error {
+func (resourceSet *ResourceSet_STATUS) AssignProperties_From_ResourceSet_STATUS(source *storage.ResourceSet_STATUS) error {
 
 	// Subscriptions
 	resourceSet.Subscriptions = genruntime.CloneSliceOfString(source.Subscriptions)
@@ -2659,7 +2626,7 @@ func (resourceSet *ResourceSet_STATUS) AssignProperties_From_ResourceSet_STATUS(
 }
 
 // AssignProperties_To_ResourceSet_STATUS populates the provided destination ResourceSet_STATUS from our ResourceSet_STATUS
-func (resourceSet *ResourceSet_STATUS) AssignProperties_To_ResourceSet_STATUS(destination *v20220701s.ResourceSet_STATUS) error {
+func (resourceSet *ResourceSet_STATUS) AssignProperties_To_ResourceSet_STATUS(destination *storage.ResourceSet_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2685,13 +2652,19 @@ const (
 	IPAllocationMethod_STATUS_Static  = IPAllocationMethod_STATUS("Static")
 )
 
+// Mapping from string to IPAllocationMethod_STATUS
+var iPAllocationMethod_STATUS_Values = map[string]IPAllocationMethod_STATUS{
+	"dynamic": IPAllocationMethod_STATUS_Dynamic,
+	"static":  IPAllocationMethod_STATUS_Static,
+}
+
 type PrivateLinkServiceOperatorConfigMaps struct {
 	// Alias: indicates where the Alias config map should be placed. If omitted, no config map will be created.
 	Alias *genruntime.ConfigMapDestination `json:"alias,omitempty"`
 }
 
 // AssignProperties_From_PrivateLinkServiceOperatorConfigMaps populates our PrivateLinkServiceOperatorConfigMaps from the provided source PrivateLinkServiceOperatorConfigMaps
-func (maps *PrivateLinkServiceOperatorConfigMaps) AssignProperties_From_PrivateLinkServiceOperatorConfigMaps(source *v20220701s.PrivateLinkServiceOperatorConfigMaps) error {
+func (maps *PrivateLinkServiceOperatorConfigMaps) AssignProperties_From_PrivateLinkServiceOperatorConfigMaps(source *storage.PrivateLinkServiceOperatorConfigMaps) error {
 
 	// Alias
 	if source.Alias != nil {
@@ -2706,7 +2679,7 @@ func (maps *PrivateLinkServiceOperatorConfigMaps) AssignProperties_From_PrivateL
 }
 
 // AssignProperties_To_PrivateLinkServiceOperatorConfigMaps populates the provided destination PrivateLinkServiceOperatorConfigMaps from our PrivateLinkServiceOperatorConfigMaps
-func (maps *PrivateLinkServiceOperatorConfigMaps) AssignProperties_To_PrivateLinkServiceOperatorConfigMaps(destination *v20220701s.PrivateLinkServiceOperatorConfigMaps) error {
+func (maps *PrivateLinkServiceOperatorConfigMaps) AssignProperties_To_PrivateLinkServiceOperatorConfigMaps(destination *storage.PrivateLinkServiceOperatorConfigMaps) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2742,7 +2715,7 @@ func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) ConvertToARM(reso
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &Subnet_PrivateLinkService_SubResourceEmbedded_ARM{}
+	result := &arm.Subnet_PrivateLinkService_SubResourceEmbedded{}
 
 	// Set property "Id":
 	if embedded.Reference != nil {
@@ -2758,14 +2731,14 @@ func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) ConvertToARM(reso
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Subnet_PrivateLinkService_SubResourceEmbedded_ARM{}
+	return &arm.Subnet_PrivateLinkService_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(Subnet_PrivateLinkService_SubResourceEmbedded_ARM)
+	_, ok := armInput.(arm.Subnet_PrivateLinkService_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Subnet_PrivateLinkService_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Subnet_PrivateLinkService_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -2775,7 +2748,7 @@ func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) PopulateFromARM(o
 }
 
 // AssignProperties_From_Subnet_PrivateLinkService_SubResourceEmbedded populates our Subnet_PrivateLinkService_SubResourceEmbedded from the provided source Subnet_PrivateLinkService_SubResourceEmbedded
-func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_Subnet_PrivateLinkService_SubResourceEmbedded(source *v20220701s.Subnet_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_Subnet_PrivateLinkService_SubResourceEmbedded(source *storage.Subnet_PrivateLinkService_SubResourceEmbedded) error {
 
 	// Reference
 	if source.Reference != nil {
@@ -2790,7 +2763,7 @@ func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) AssignProperties_
 }
 
 // AssignProperties_To_Subnet_PrivateLinkService_SubResourceEmbedded populates the provided destination Subnet_PrivateLinkService_SubResourceEmbedded from our Subnet_PrivateLinkService_SubResourceEmbedded
-func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_Subnet_PrivateLinkService_SubResourceEmbedded(destination *v20220701s.Subnet_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_Subnet_PrivateLinkService_SubResourceEmbedded(destination *storage.Subnet_PrivateLinkService_SubResourceEmbedded) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2813,21 +2786,6 @@ func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) AssignProperties_
 	return nil
 }
 
-// Initialize_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded populates our Subnet_PrivateLinkService_SubResourceEmbedded from the provided source Subnet_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) Initialize_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(source *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		embedded.Reference = &reference
-	} else {
-		embedded.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Subnet in a virtual network resource.
 type Subnet_STATUS_PrivateLinkService_SubResourceEmbedded struct {
 	// Id: Resource ID.
@@ -2838,14 +2796,14 @@ var _ genruntime.FromARMConverter = &Subnet_STATUS_PrivateLinkService_SubResourc
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Subnet_STATUS_PrivateLinkService_SubResourceEmbedded_ARM{}
+	return &arm.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Subnet_STATUS_PrivateLinkService_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Subnet_STATUS_PrivateLinkService_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -2859,7 +2817,7 @@ func (embedded *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) PopulateFr
 }
 
 // AssignProperties_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded populates our Subnet_STATUS_PrivateLinkService_SubResourceEmbedded from the provided source Subnet_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(source *v20220701s.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(source *storage.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) error {
 
 	// Id
 	embedded.Id = genruntime.ClonePointerToString(source.Id)
@@ -2869,7 +2827,7 @@ func (embedded *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProp
 }
 
 // AssignProperties_To_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded populates the provided destination Subnet_STATUS_PrivateLinkService_SubResourceEmbedded from our Subnet_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(destination *v20220701s.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+func (embedded *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(destination *storage.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 

@@ -6,40 +6,45 @@ Licensed under the MIT license.
 package main
 
 import (
+	"flag"
 	"os"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"k8s.io/klog/v2/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/Azure/azure-service-operator/v2/cmd/controller/app"
+	"github.com/Azure/azure-service-operator/v2/cmd/controller/logging"
+	"github.com/Azure/azure-service-operator/v2/internal/version"
 )
 
 func main() {
-	setupLog := ctrl.Log.WithName("setup")
-	ctrl.SetLogger(klogr.New())
+	// Set up to parse command line flags
+	exeName := os.Args[0] + " " + version.BuildVersion
+	flagSet := flag.NewFlagSet(exeName, flag.ExitOnError)
+
+	// Create a temporary logger for while we get set up
+	log := logging.Create(&logging.Config{})
+
 	ctx := ctrl.SetupSignalHandler()
 
-	flgs, err := app.ParseFlags(os.Args)
+	// Add application and logging flags
+	appFlags := app.InitFlags(flagSet)
+	logFlags := logging.InitFlags(flagSet)
+	err := flagSet.Parse(os.Args[1:])
 	if err != nil {
-		setupLog.Error(err, "failed to parse cmdline flags")
+		log.Error(err, "failed to parse cmdline flags")
 		os.Exit(1)
 	}
 
-	setupLog.Info("Launching with flags", "flags", flgs.String())
+	// Replace the logger with a configured one
+	log = logging.Create(logFlags)
+	ctrl.SetLogger(log)
+	log.Info("Launching with flags", "flags", appFlags.String())
 
-	if flgs.PreUpgradeCheck {
-		err = app.SetupPreUpgradeCheck(ctx)
-		if err != nil {
-			setupLog.Error(err, "pre-upgrade check failed")
-			os.Exit(1)
-		}
-	} else {
-		mgr := app.SetupControllerManager(ctx, setupLog, flgs)
-		setupLog.Info("starting manager")
-		if err = mgr.Start(ctx); err != nil {
-			setupLog.Error(err, "failed to start manager")
-			os.Exit(1)
-		}
+	mgr := app.SetupControllerManager(ctx, log, appFlags)
+	log.Info("starting manager")
+	if err = mgr.Start(ctx); err != nil {
+		log.Error(err, "failed to start manager")
+		os.Exit(1)
 	}
 }

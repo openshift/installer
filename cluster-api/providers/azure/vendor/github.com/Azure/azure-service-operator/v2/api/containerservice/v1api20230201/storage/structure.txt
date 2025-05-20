@@ -239,12 +239,14 @@ ManagedCluster: Resource
 │   ├── OidcIssuerProfile: *Object (2 properties)
 │   │   ├── Enabled: *bool
 │   │   └── PropertyBag: genruntime.PropertyBag
-│   ├── OperatorSpec: *Object (3 properties)
+│   ├── OperatorSpec: *Object (5 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
 │   │   ├── ConfigMaps: *Object (3 properties)
 │   │   │   ├── OIDCIssuerProfile: *genruntime.ConfigMapDestination
 │   │   │   ├── PrincipalId: *genruntime.ConfigMapDestination
 │   │   │   └── PropertyBag: genruntime.PropertyBag
 │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   ├── SecretExpressions: *core.DestinationExpression[]
 │   │   └── Secrets: *Object (3 properties)
 │   │       ├── AdminCredentials: *genruntime.SecretDestination
 │   │       ├── PropertyBag: genruntime.PropertyBag
@@ -709,7 +711,7 @@ ManagedCluster: Resource
         └── PropertyBag: genruntime.PropertyBag
 ManagedClustersAgentPool: Resource
 ├── Owner: containerservice/v1api20230201.ManagedCluster
-├── Spec: Object (42 properties)
+├── Spec: Object (43 properties)
 │   ├── AvailabilityZones: string[]
 │   ├── AzureName: string
 │   ├── Count: *int
@@ -779,6 +781,10 @@ ManagedClustersAgentPool: Resource
 │   ├── NodeLabels: map[string]string
 │   ├── NodePublicIPPrefixReference: *genruntime.ResourceReference
 │   ├── NodeTaints: string[]
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OrchestratorVersion: *string
 │   ├── OriginalVersion: string
 │   ├── OsDiskSizeGB: *int
@@ -1007,8 +1013,9 @@ augmentConversionForManagedClusterWorkloadAutoScalerProfile_STATUS: Interface
 augmentConversionForManagedCluster_STATUS: Interface
 augmentConversionForManagedCluster_Spec: Interface
 augmentConversionForManagedClustersAgentPool: Interface
-augmentConversionForManagedClusters_AgentPool_STATUS: Interface
-augmentConversionForManagedClusters_AgentPool_Spec: Interface
+augmentConversionForManagedClustersAgentPoolOperatorSpec: Interface
+augmentConversionForManagedClustersAgentPool_STATUS: Interface
+augmentConversionForManagedClustersAgentPool_Spec: Interface
 augmentConversionForPowerState: Interface
 augmentConversionForPowerState_STATUS: Interface
 augmentConversionForPrivateLinkResource: Interface

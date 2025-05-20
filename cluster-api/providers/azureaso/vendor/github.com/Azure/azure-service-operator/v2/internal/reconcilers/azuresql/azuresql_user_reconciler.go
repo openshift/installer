@@ -50,8 +50,8 @@ func NewAzureSQLUserReconciler(
 	resourceResolver *resolver.Resolver,
 	positiveConditions *conditions.PositiveConditionBuilder,
 	credentialProvider identity.CredentialProvider,
-	cfg config.Values) *AzureSQLUserReconciler {
-
+	cfg config.Values,
+) *AzureSQLUserReconciler {
 	return &AzureSQLUserReconciler{
 		ResourceResolver:   resourceResolver,
 		CredentialProvider: credentialProvider,

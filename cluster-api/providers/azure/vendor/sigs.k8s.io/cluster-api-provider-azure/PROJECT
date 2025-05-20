@@ -1,17 +1,49 @@
 version: "3"
-domain: x-k8s.io
+domain: cluster.x-k8s.io
 repo: sigs.k8s.io/cluster-api-provider-azure
 resources:
-  kind: AzureMachineTemplate
-- group: infrastructure
-  version: v1beta1
-  kind: AzureMachine
-- group: infrastructure
-  version: v1beta1
-  kind: AzureCluster
-- group: infrastructure
-  version: v1beta1
-  kind: AzureMachineTemplate
-- group: infrastructure
-  version: v1beta1
-  kind: AzureClusterTemplate
+# -----------------
+# v1beta1 types
+# -----------------
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureCluster
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureClusterIdentity
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureClusterTemplate
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureMachine
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureMachineTemplate
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureManagedCluster
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureManagedClusterTemplate
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureManagedControlPlane
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureManagedControlPlaneTemplate
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureManagedMachinePool
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureManagedMachinePoolTemplate
+# -----------------
+# experimental v1beta1 types
+# -----------------
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureMachinePool
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureMachinePoolMachine

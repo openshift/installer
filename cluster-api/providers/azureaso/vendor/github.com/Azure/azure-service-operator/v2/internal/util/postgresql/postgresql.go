@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	_ "github.com/jackc/pgx/v5/stdlib" //the pgx lib
+	_ "github.com/jackc/pgx/v5/stdlib" // the pgx lib
 	"github.com/pkg/errors"
 )
 
@@ -26,7 +26,6 @@ const DefaultMaintanenceDatabase = "postgres"
 
 // ConnectToDB connects to the PostgreSQL db using the given credentials
 func ConnectToDB(ctx context.Context, fullservername string, database string, port int, user string, password string) (*sql.DB, error) {
-
 	connString := fmt.Sprintf("host=%s user=%s password=%s port=%d dbname=%s sslmode=require connect_timeout=30", fullservername, user, password, port, database)
 
 	db, err := sql.Open(PDriverName, connString)
@@ -44,7 +43,7 @@ func ConnectToDB(ctx context.Context, fullservername string, database string, po
 
 func CreateUser(ctx context.Context, db *sql.DB, username string, password string) (*SQLUser, error) {
 	// make an effort to prevent sql injection
-	//TODO find better solution to check user and password for SQL Injection
+	// TODO find better solution to check user and password for SQL Injection
 	if err := FindBadChars(username); err != nil {
 		return nil, errors.Wrap(err, "problem found with username")
 	}
@@ -60,7 +59,7 @@ func CreateUser(ctx context.Context, db *sql.DB, username string, password strin
 
 func UpdateUser(ctx context.Context, db *sql.DB, user SQLUser, password string) error {
 	// make an effort to prevent sql injection
-	//TODO find better solution to check password for SQL Injection
+	// TODO find better solution to check password for SQL Injection
 	if err := FindBadChars(password); err != nil {
 		return errors.Wrap(err, "problem found with password")
 	}

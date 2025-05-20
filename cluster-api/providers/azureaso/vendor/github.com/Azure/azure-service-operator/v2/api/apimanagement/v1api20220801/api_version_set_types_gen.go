@@ -5,10 +5,14 @@ package v1api20220801
 
 import (
 	"fmt"
-	v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type ApiVersionSet struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Service_ApiVersionSet_Spec   `json:"spec,omitempty"`
-	Status            Service_ApiVersionSet_STATUS `json:"status,omitempty"`
+	Spec              ApiVersionSet_Spec   `json:"spec,omitempty"`
+	Status            ApiVersionSet_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ApiVersionSet{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &ApiVersionSet{}
 
 // ConvertFrom populates our ApiVersionSet from the provided hub ApiVersionSet
 func (versionSet *ApiVersionSet) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220801s.ApiVersionSet)
+	source, ok := hub.(*storage.ApiVersionSet)
 	if !ok {
 		return fmt.Errorf("expected apimanagement/v1api20220801/storage/ApiVersionSet but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (versionSet *ApiVersionSet) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub ApiVersionSet from our ApiVersionSet
 func (versionSet *ApiVersionSet) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220801s.ApiVersionSet)
+	destination, ok := hub.(*storage.ApiVersionSet)
 	if !ok {
 		return fmt.Errorf("expected apimanagement/v1api20220801/storage/ApiVersionSet but received %T instead", hub)
 	}
@@ -90,15 +94,35 @@ func (versionSet *ApiVersionSet) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the ApiVersionSet resource
 func (versionSet *ApiVersionSet) defaultImpl() { versionSet.defaultAzureName() }
 
+var _ configmaps.Exporter = &ApiVersionSet{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (versionSet *ApiVersionSet) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if versionSet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return versionSet.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ApiVersionSet{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (versionSet *ApiVersionSet) SecretDestinationExpressions() []*core.DestinationExpression {
+	if versionSet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return versionSet.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &ApiVersionSet{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (versionSet *ApiVersionSet) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Service_ApiVersionSet_STATUS); ok {
-		return versionSet.Spec.Initialize_From_Service_ApiVersionSet_STATUS(s)
+	if s, ok := status.(*ApiVersionSet_STATUS); ok {
+		return versionSet.Spec.Initialize_From_ApiVersionSet_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Service_ApiVersionSet_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type ApiVersionSet_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ApiVersionSet{}
@@ -110,7 +134,7 @@ func (versionSet *ApiVersionSet) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-08-01"
 func (versionSet ApiVersionSet) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-08-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -145,7 +169,7 @@ func (versionSet *ApiVersionSet) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (versionSet *ApiVersionSet) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Service_ApiVersionSet_STATUS{}
+	return &ApiVersionSet_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -157,13 +181,13 @@ func (versionSet *ApiVersionSet) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (versionSet *ApiVersionSet) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Service_ApiVersionSet_STATUS); ok {
+	if st, ok := status.(*ApiVersionSet_STATUS); ok {
 		versionSet.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Service_ApiVersionSet_STATUS
+	var st ApiVersionSet_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -209,7 +233,7 @@ func (versionSet *ApiVersionSet) ValidateUpdate(old runtime.Object) (admission.W
 
 // createValidations validates the creation of the resource
 func (versionSet *ApiVersionSet) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){versionSet.validateResourceReferences, versionSet.validateOwnerReference}
+	return []func() (admission.Warnings, error){versionSet.validateResourceReferences, versionSet.validateOwnerReference, versionSet.validateSecretDestinations, versionSet.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -227,7 +251,21 @@ func (versionSet *ApiVersionSet) updateValidations() []func(old runtime.Object) 
 		func(old runtime.Object) (admission.Warnings, error) {
 			return versionSet.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return versionSet.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return versionSet.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (versionSet *ApiVersionSet) validateConfigMapDestinations() (admission.Warnings, error) {
+	if versionSet.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(versionSet, nil, versionSet.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -244,6 +282,14 @@ func (versionSet *ApiVersionSet) validateResourceReferences() (admission.Warning
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (versionSet *ApiVersionSet) validateSecretDestinations() (admission.Warnings, error) {
+	if versionSet.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(versionSet, nil, versionSet.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (versionSet *ApiVersionSet) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*ApiVersionSet)
@@ -255,24 +301,24 @@ func (versionSet *ApiVersionSet) validateWriteOnceProperties(old runtime.Object)
 }
 
 // AssignProperties_From_ApiVersionSet populates our ApiVersionSet from the provided source ApiVersionSet
-func (versionSet *ApiVersionSet) AssignProperties_From_ApiVersionSet(source *v20220801s.ApiVersionSet) error {
+func (versionSet *ApiVersionSet) AssignProperties_From_ApiVersionSet(source *storage.ApiVersionSet) error {
 
 	// ObjectMeta
 	versionSet.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Service_ApiVersionSet_Spec
-	err := spec.AssignProperties_From_Service_ApiVersionSet_Spec(&source.Spec)
+	var spec ApiVersionSet_Spec
+	err := spec.AssignProperties_From_ApiVersionSet_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Service_ApiVersionSet_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_ApiVersionSet_Spec() to populate field Spec")
 	}
 	versionSet.Spec = spec
 
 	// Status
-	var status Service_ApiVersionSet_STATUS
-	err = status.AssignProperties_From_Service_ApiVersionSet_STATUS(&source.Status)
+	var status ApiVersionSet_STATUS
+	err = status.AssignProperties_From_ApiVersionSet_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Service_ApiVersionSet_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_ApiVersionSet_STATUS() to populate field Status")
 	}
 	versionSet.Status = status
 
@@ -281,24 +327,24 @@ func (versionSet *ApiVersionSet) AssignProperties_From_ApiVersionSet(source *v20
 }
 
 // AssignProperties_To_ApiVersionSet populates the provided destination ApiVersionSet from our ApiVersionSet
-func (versionSet *ApiVersionSet) AssignProperties_To_ApiVersionSet(destination *v20220801s.ApiVersionSet) error {
+func (versionSet *ApiVersionSet) AssignProperties_To_ApiVersionSet(destination *storage.ApiVersionSet) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *versionSet.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220801s.Service_ApiVersionSet_Spec
-	err := versionSet.Spec.AssignProperties_To_Service_ApiVersionSet_Spec(&spec)
+	var spec storage.ApiVersionSet_Spec
+	err := versionSet.Spec.AssignProperties_To_ApiVersionSet_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Service_ApiVersionSet_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_ApiVersionSet_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20220801s.Service_ApiVersionSet_STATUS
-	err = versionSet.Status.AssignProperties_To_Service_ApiVersionSet_STATUS(&status)
+	var status storage.ApiVersionSet_STATUS
+	err = versionSet.Status.AssignProperties_To_ApiVersionSet_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Service_ApiVersionSet_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_ApiVersionSet_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -325,7 +371,7 @@ type ApiVersionSetList struct {
 	Items           []ApiVersionSet `json:"items"`
 }
 
-type Service_ApiVersionSet_Spec struct {
+type ApiVersionSet_Spec struct {
 	// +kubebuilder:validation:MaxLength=80
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:Pattern="^[^*#&+:<>?]+$"
@@ -341,6 +387,10 @@ type Service_ApiVersionSet_Spec struct {
 	// +kubebuilder:validation:MinLength=1
 	// DisplayName: Name of API Version Set
 	DisplayName *string `json:"displayName,omitempty"`
+
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ApiVersionSetOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -363,14 +413,14 @@ type Service_ApiVersionSet_Spec struct {
 	VersioningScheme *ApiVersionSetContractProperties_VersioningScheme `json:"versioningScheme,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Service_ApiVersionSet_Spec{}
+var _ genruntime.ARMTransformer = &ApiVersionSet_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (versionSet *Service_ApiVersionSet_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (versionSet *ApiVersionSet_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if versionSet == nil {
 		return nil, nil
 	}
-	result := &Service_ApiVersionSet_Spec_ARM{}
+	result := &arm.ApiVersionSet_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -381,7 +431,7 @@ func (versionSet *Service_ApiVersionSet_Spec) ConvertToARM(resolved genruntime.C
 		versionSet.VersionHeaderName != nil ||
 		versionSet.VersionQueryName != nil ||
 		versionSet.VersioningScheme != nil {
-		result.Properties = &ApiVersionSetContractProperties_ARM{}
+		result.Properties = &arm.ApiVersionSetContractProperties{}
 	}
 	if versionSet.Description != nil {
 		description := *versionSet.Description
@@ -400,22 +450,24 @@ func (versionSet *Service_ApiVersionSet_Spec) ConvertToARM(resolved genruntime.C
 		result.Properties.VersionQueryName = &versionQueryName
 	}
 	if versionSet.VersioningScheme != nil {
-		versioningScheme := *versionSet.VersioningScheme
+		var temp string
+		temp = string(*versionSet.VersioningScheme)
+		versioningScheme := arm.ApiVersionSetContractProperties_VersioningScheme(temp)
 		result.Properties.VersioningScheme = &versioningScheme
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (versionSet *Service_ApiVersionSet_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Service_ApiVersionSet_Spec_ARM{}
+func (versionSet *ApiVersionSet_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ApiVersionSet_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (versionSet *Service_ApiVersionSet_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Service_ApiVersionSet_Spec_ARM)
+func (versionSet *ApiVersionSet_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ApiVersionSet_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Service_ApiVersionSet_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiVersionSet_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -438,6 +490,8 @@ func (versionSet *Service_ApiVersionSet_Spec) PopulateFromARM(owner genruntime.A
 			versionSet.DisplayName = &displayName
 		}
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	versionSet.Owner = &genruntime.KnownResourceReference{
@@ -467,7 +521,9 @@ func (versionSet *Service_ApiVersionSet_Spec) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.VersioningScheme != nil {
-			versioningScheme := *typedInput.Properties.VersioningScheme
+			var temp string
+			temp = string(*typedInput.Properties.VersioningScheme)
+			versioningScheme := ApiVersionSetContractProperties_VersioningScheme(temp)
 			versionSet.VersioningScheme = &versioningScheme
 		}
 	}
@@ -476,25 +532,25 @@ func (versionSet *Service_ApiVersionSet_Spec) PopulateFromARM(owner genruntime.A
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Service_ApiVersionSet_Spec{}
+var _ genruntime.ConvertibleSpec = &ApiVersionSet_Spec{}
 
-// ConvertSpecFrom populates our Service_ApiVersionSet_Spec from the provided source
-func (versionSet *Service_ApiVersionSet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220801s.Service_ApiVersionSet_Spec)
+// ConvertSpecFrom populates our ApiVersionSet_Spec from the provided source
+func (versionSet *ApiVersionSet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.ApiVersionSet_Spec)
 	if ok {
 		// Populate our instance from source
-		return versionSet.AssignProperties_From_Service_ApiVersionSet_Spec(src)
+		return versionSet.AssignProperties_From_ApiVersionSet_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220801s.Service_ApiVersionSet_Spec{}
+	src = &storage.ApiVersionSet_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = versionSet.AssignProperties_From_Service_ApiVersionSet_Spec(src)
+	err = versionSet.AssignProperties_From_ApiVersionSet_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -502,17 +558,17 @@ func (versionSet *Service_ApiVersionSet_Spec) ConvertSpecFrom(source genruntime.
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Service_ApiVersionSet_Spec
-func (versionSet *Service_ApiVersionSet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220801s.Service_ApiVersionSet_Spec)
+// ConvertSpecTo populates the provided destination from our ApiVersionSet_Spec
+func (versionSet *ApiVersionSet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.ApiVersionSet_Spec)
 	if ok {
 		// Populate destination from our instance
-		return versionSet.AssignProperties_To_Service_ApiVersionSet_Spec(dst)
+		return versionSet.AssignProperties_To_ApiVersionSet_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220801s.Service_ApiVersionSet_Spec{}
-	err := versionSet.AssignProperties_To_Service_ApiVersionSet_Spec(dst)
+	dst = &storage.ApiVersionSet_Spec{}
+	err := versionSet.AssignProperties_To_ApiVersionSet_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -526,8 +582,8 @@ func (versionSet *Service_ApiVersionSet_Spec) ConvertSpecTo(destination genrunti
 	return nil
 }
 
-// AssignProperties_From_Service_ApiVersionSet_Spec populates our Service_ApiVersionSet_Spec from the provided source Service_ApiVersionSet_Spec
-func (versionSet *Service_ApiVersionSet_Spec) AssignProperties_From_Service_ApiVersionSet_Spec(source *v20220801s.Service_ApiVersionSet_Spec) error {
+// AssignProperties_From_ApiVersionSet_Spec populates our ApiVersionSet_Spec from the provided source ApiVersionSet_Spec
+func (versionSet *ApiVersionSet_Spec) AssignProperties_From_ApiVersionSet_Spec(source *storage.ApiVersionSet_Spec) error {
 
 	// AzureName
 	versionSet.AzureName = source.AzureName
@@ -541,6 +597,18 @@ func (versionSet *Service_ApiVersionSet_Spec) AssignProperties_From_Service_ApiV
 		versionSet.DisplayName = &displayName
 	} else {
 		versionSet.DisplayName = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ApiVersionSetOperatorSpec
+		err := operatorSpec.AssignProperties_From_ApiVersionSetOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ApiVersionSetOperatorSpec() to populate field OperatorSpec")
+		}
+		versionSet.OperatorSpec = &operatorSpec
+	} else {
+		versionSet.OperatorSpec = nil
 	}
 
 	// Owner
@@ -569,8 +637,9 @@ func (versionSet *Service_ApiVersionSet_Spec) AssignProperties_From_Service_ApiV
 
 	// VersioningScheme
 	if source.VersioningScheme != nil {
-		versioningScheme := ApiVersionSetContractProperties_VersioningScheme(*source.VersioningScheme)
-		versionSet.VersioningScheme = &versioningScheme
+		versioningScheme := *source.VersioningScheme
+		versioningSchemeTemp := genruntime.ToEnum(versioningScheme, apiVersionSetContractProperties_VersioningScheme_Values)
+		versionSet.VersioningScheme = &versioningSchemeTemp
 	} else {
 		versionSet.VersioningScheme = nil
 	}
@@ -579,8 +648,8 @@ func (versionSet *Service_ApiVersionSet_Spec) AssignProperties_From_Service_ApiV
 	return nil
 }
 
-// AssignProperties_To_Service_ApiVersionSet_Spec populates the provided destination Service_ApiVersionSet_Spec from our Service_ApiVersionSet_Spec
-func (versionSet *Service_ApiVersionSet_Spec) AssignProperties_To_Service_ApiVersionSet_Spec(destination *v20220801s.Service_ApiVersionSet_Spec) error {
+// AssignProperties_To_ApiVersionSet_Spec populates the provided destination ApiVersionSet_Spec from our ApiVersionSet_Spec
+func (versionSet *ApiVersionSet_Spec) AssignProperties_To_ApiVersionSet_Spec(destination *storage.ApiVersionSet_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -596,6 +665,18 @@ func (versionSet *Service_ApiVersionSet_Spec) AssignProperties_To_Service_ApiVer
 		destination.DisplayName = &displayName
 	} else {
 		destination.DisplayName = nil
+	}
+
+	// OperatorSpec
+	if versionSet.OperatorSpec != nil {
+		var operatorSpec storage.ApiVersionSetOperatorSpec
+		err := versionSet.OperatorSpec.AssignProperties_To_ApiVersionSetOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ApiVersionSetOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -644,8 +725,8 @@ func (versionSet *Service_ApiVersionSet_Spec) AssignProperties_To_Service_ApiVer
 	return nil
 }
 
-// Initialize_From_Service_ApiVersionSet_STATUS populates our Service_ApiVersionSet_Spec from the provided source Service_ApiVersionSet_STATUS
-func (versionSet *Service_ApiVersionSet_Spec) Initialize_From_Service_ApiVersionSet_STATUS(source *Service_ApiVersionSet_STATUS) error {
+// Initialize_From_ApiVersionSet_STATUS populates our ApiVersionSet_Spec from the provided source ApiVersionSet_STATUS
+func (versionSet *ApiVersionSet_Spec) Initialize_From_ApiVersionSet_STATUS(source *ApiVersionSet_STATUS) error {
 
 	// Description
 	versionSet.Description = genruntime.ClonePointerToString(source.Description)
@@ -676,7 +757,7 @@ func (versionSet *Service_ApiVersionSet_Spec) Initialize_From_Service_ApiVersion
 
 	// VersioningScheme
 	if source.VersioningScheme != nil {
-		versioningScheme := ApiVersionSetContractProperties_VersioningScheme(*source.VersioningScheme)
+		versioningScheme := genruntime.ToEnum(string(*source.VersioningScheme), apiVersionSetContractProperties_VersioningScheme_Values)
 		versionSet.VersioningScheme = &versioningScheme
 	} else {
 		versionSet.VersioningScheme = nil
@@ -687,16 +768,16 @@ func (versionSet *Service_ApiVersionSet_Spec) Initialize_From_Service_ApiVersion
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (versionSet *Service_ApiVersionSet_Spec) OriginalVersion() string {
+func (versionSet *ApiVersionSet_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (versionSet *Service_ApiVersionSet_Spec) SetAzureName(azureName string) {
+func (versionSet *ApiVersionSet_Spec) SetAzureName(azureName string) {
 	versionSet.AzureName = azureName
 }
 
-type Service_ApiVersionSet_STATUS struct {
+type ApiVersionSet_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
@@ -726,25 +807,25 @@ type Service_ApiVersionSet_STATUS struct {
 	VersioningScheme *ApiVersionSetContractProperties_VersioningScheme_STATUS `json:"versioningScheme,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Service_ApiVersionSet_STATUS{}
+var _ genruntime.ConvertibleStatus = &ApiVersionSet_STATUS{}
 
-// ConvertStatusFrom populates our Service_ApiVersionSet_STATUS from the provided source
-func (versionSet *Service_ApiVersionSet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220801s.Service_ApiVersionSet_STATUS)
+// ConvertStatusFrom populates our ApiVersionSet_STATUS from the provided source
+func (versionSet *ApiVersionSet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.ApiVersionSet_STATUS)
 	if ok {
 		// Populate our instance from source
-		return versionSet.AssignProperties_From_Service_ApiVersionSet_STATUS(src)
+		return versionSet.AssignProperties_From_ApiVersionSet_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220801s.Service_ApiVersionSet_STATUS{}
+	src = &storage.ApiVersionSet_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = versionSet.AssignProperties_From_Service_ApiVersionSet_STATUS(src)
+	err = versionSet.AssignProperties_From_ApiVersionSet_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -752,17 +833,17 @@ func (versionSet *Service_ApiVersionSet_STATUS) ConvertStatusFrom(source genrunt
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Service_ApiVersionSet_STATUS
-func (versionSet *Service_ApiVersionSet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220801s.Service_ApiVersionSet_STATUS)
+// ConvertStatusTo populates the provided destination from our ApiVersionSet_STATUS
+func (versionSet *ApiVersionSet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.ApiVersionSet_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return versionSet.AssignProperties_To_Service_ApiVersionSet_STATUS(dst)
+		return versionSet.AssignProperties_To_ApiVersionSet_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220801s.Service_ApiVersionSet_STATUS{}
-	err := versionSet.AssignProperties_To_Service_ApiVersionSet_STATUS(dst)
+	dst = &storage.ApiVersionSet_STATUS{}
+	err := versionSet.AssignProperties_To_ApiVersionSet_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -776,18 +857,18 @@ func (versionSet *Service_ApiVersionSet_STATUS) ConvertStatusTo(destination genr
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Service_ApiVersionSet_STATUS{}
+var _ genruntime.FromARMConverter = &ApiVersionSet_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (versionSet *Service_ApiVersionSet_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Service_ApiVersionSet_STATUS_ARM{}
+func (versionSet *ApiVersionSet_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ApiVersionSet_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (versionSet *Service_ApiVersionSet_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Service_ApiVersionSet_STATUS_ARM)
+func (versionSet *ApiVersionSet_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ApiVersionSet_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Service_ApiVersionSet_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiVersionSet_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -850,7 +931,9 @@ func (versionSet *Service_ApiVersionSet_STATUS) PopulateFromARM(owner genruntime
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.VersioningScheme != nil {
-			versioningScheme := *typedInput.Properties.VersioningScheme
+			var temp string
+			temp = string(*typedInput.Properties.VersioningScheme)
+			versioningScheme := ApiVersionSetContractProperties_VersioningScheme_STATUS(temp)
 			versionSet.VersioningScheme = &versioningScheme
 		}
 	}
@@ -859,8 +942,8 @@ func (versionSet *Service_ApiVersionSet_STATUS) PopulateFromARM(owner genruntime
 	return nil
 }
 
-// AssignProperties_From_Service_ApiVersionSet_STATUS populates our Service_ApiVersionSet_STATUS from the provided source Service_ApiVersionSet_STATUS
-func (versionSet *Service_ApiVersionSet_STATUS) AssignProperties_From_Service_ApiVersionSet_STATUS(source *v20220801s.Service_ApiVersionSet_STATUS) error {
+// AssignProperties_From_ApiVersionSet_STATUS populates our ApiVersionSet_STATUS from the provided source ApiVersionSet_STATUS
+func (versionSet *ApiVersionSet_STATUS) AssignProperties_From_ApiVersionSet_STATUS(source *storage.ApiVersionSet_STATUS) error {
 
 	// Conditions
 	versionSet.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -888,8 +971,9 @@ func (versionSet *Service_ApiVersionSet_STATUS) AssignProperties_From_Service_Ap
 
 	// VersioningScheme
 	if source.VersioningScheme != nil {
-		versioningScheme := ApiVersionSetContractProperties_VersioningScheme_STATUS(*source.VersioningScheme)
-		versionSet.VersioningScheme = &versioningScheme
+		versioningScheme := *source.VersioningScheme
+		versioningSchemeTemp := genruntime.ToEnum(versioningScheme, apiVersionSetContractProperties_VersioningScheme_STATUS_Values)
+		versionSet.VersioningScheme = &versioningSchemeTemp
 	} else {
 		versionSet.VersioningScheme = nil
 	}
@@ -898,8 +982,8 @@ func (versionSet *Service_ApiVersionSet_STATUS) AssignProperties_From_Service_Ap
 	return nil
 }
 
-// AssignProperties_To_Service_ApiVersionSet_STATUS populates the provided destination Service_ApiVersionSet_STATUS from our Service_ApiVersionSet_STATUS
-func (versionSet *Service_ApiVersionSet_STATUS) AssignProperties_To_Service_ApiVersionSet_STATUS(destination *v20220801s.Service_ApiVersionSet_STATUS) error {
+// AssignProperties_To_ApiVersionSet_STATUS populates the provided destination ApiVersionSet_STATUS from our ApiVersionSet_STATUS
+func (versionSet *ApiVersionSet_STATUS) AssignProperties_To_ApiVersionSet_STATUS(destination *storage.ApiVersionSet_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -955,6 +1039,13 @@ const (
 	ApiVersionSetContractProperties_VersioningScheme_Segment = ApiVersionSetContractProperties_VersioningScheme("Segment")
 )
 
+// Mapping from string to ApiVersionSetContractProperties_VersioningScheme
+var apiVersionSetContractProperties_VersioningScheme_Values = map[string]ApiVersionSetContractProperties_VersioningScheme{
+	"header":  ApiVersionSetContractProperties_VersioningScheme_Header,
+	"query":   ApiVersionSetContractProperties_VersioningScheme_Query,
+	"segment": ApiVersionSetContractProperties_VersioningScheme_Segment,
+}
+
 type ApiVersionSetContractProperties_VersioningScheme_STATUS string
 
 const (
@@ -962,6 +1053,117 @@ const (
 	ApiVersionSetContractProperties_VersioningScheme_STATUS_Query   = ApiVersionSetContractProperties_VersioningScheme_STATUS("Query")
 	ApiVersionSetContractProperties_VersioningScheme_STATUS_Segment = ApiVersionSetContractProperties_VersioningScheme_STATUS("Segment")
 )
+
+// Mapping from string to ApiVersionSetContractProperties_VersioningScheme_STATUS
+var apiVersionSetContractProperties_VersioningScheme_STATUS_Values = map[string]ApiVersionSetContractProperties_VersioningScheme_STATUS{
+	"header":  ApiVersionSetContractProperties_VersioningScheme_STATUS_Header,
+	"query":   ApiVersionSetContractProperties_VersioningScheme_STATUS_Query,
+	"segment": ApiVersionSetContractProperties_VersioningScheme_STATUS_Segment,
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ApiVersionSetOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ApiVersionSetOperatorSpec populates our ApiVersionSetOperatorSpec from the provided source ApiVersionSetOperatorSpec
+func (operator *ApiVersionSetOperatorSpec) AssignProperties_From_ApiVersionSetOperatorSpec(source *storage.ApiVersionSetOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiVersionSetOperatorSpec populates the provided destination ApiVersionSetOperatorSpec from our ApiVersionSetOperatorSpec
+func (operator *ApiVersionSetOperatorSpec) AssignProperties_To_ApiVersionSetOperatorSpec(destination *storage.ApiVersionSetOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
 
 func init() {
 	SchemeBuilder.Register(&ApiVersionSet{}, &ApiVersionSetList{})

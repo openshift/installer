@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type WebApplicationFirewallPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              FrontDoorWebApplicationFirewallPolicy_Spec   `json:"spec,omitempty"`
-	Status            FrontDoorWebApplicationFirewallPolicy_STATUS `json:"status,omitempty"`
+	Spec              WebApplicationFirewallPolicy_Spec   `json:"spec,omitempty"`
+	Status            WebApplicationFirewallPolicy_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &WebApplicationFirewallPolicy{}
@@ -44,6 +47,26 @@ func (policy *WebApplicationFirewallPolicy) SetConditions(conditions conditions.
 	policy.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &WebApplicationFirewallPolicy{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (policy *WebApplicationFirewallPolicy) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &WebApplicationFirewallPolicy{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (policy *WebApplicationFirewallPolicy) SecretDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &WebApplicationFirewallPolicy{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (policy *WebApplicationFirewallPolicy) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-05-01"
 func (policy WebApplicationFirewallPolicy) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-05-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +110,7 @@ func (policy *WebApplicationFirewallPolicy) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (policy *WebApplicationFirewallPolicy) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &FrontDoorWebApplicationFirewallPolicy_STATUS{}
+	return &WebApplicationFirewallPolicy_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +122,13 @@ func (policy *WebApplicationFirewallPolicy) Owner() *genruntime.ResourceReferenc
 // SetStatus sets the status of this resource
 func (policy *WebApplicationFirewallPolicy) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*FrontDoorWebApplicationFirewallPolicy_STATUS); ok {
+	if st, ok := status.(*WebApplicationFirewallPolicy_STATUS); ok {
 		policy.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st FrontDoorWebApplicationFirewallPolicy_STATUS
+	var st WebApplicationFirewallPolicy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -144,16 +167,17 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2022-05-01")
 
-// Storage version of v1api20220501.FrontDoorWebApplicationFirewallPolicy_Spec
-type FrontDoorWebApplicationFirewallPolicy_Spec struct {
+// Storage version of v1api20220501.WebApplicationFirewallPolicy_Spec
+type WebApplicationFirewallPolicy_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string              `json:"azureName,omitempty"`
-	CustomRules     *CustomRuleList     `json:"customRules,omitempty"`
-	Etag            *string             `json:"etag,omitempty"`
-	Location        *string             `json:"location,omitempty"`
-	ManagedRules    *ManagedRuleSetList `json:"managedRules,omitempty"`
-	OriginalVersion string              `json:"originalVersion,omitempty"`
+	AzureName       string                                    `json:"azureName,omitempty"`
+	CustomRules     *CustomRuleList                           `json:"customRules,omitempty"`
+	Etag            *string                                   `json:"etag,omitempty"`
+	Location        *string                                   `json:"location,omitempty"`
+	ManagedRules    *ManagedRuleSetList                       `json:"managedRules,omitempty"`
+	OperatorSpec    *WebApplicationFirewallPolicyOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                                    `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -166,10 +190,10 @@ type FrontDoorWebApplicationFirewallPolicy_Spec struct {
 	Tags           map[string]string                  `json:"tags,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &FrontDoorWebApplicationFirewallPolicy_Spec{}
+var _ genruntime.ConvertibleSpec = &WebApplicationFirewallPolicy_Spec{}
 
-// ConvertSpecFrom populates our FrontDoorWebApplicationFirewallPolicy_Spec from the provided source
-func (policy *FrontDoorWebApplicationFirewallPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our WebApplicationFirewallPolicy_Spec from the provided source
+func (policy *WebApplicationFirewallPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -177,8 +201,8 @@ func (policy *FrontDoorWebApplicationFirewallPolicy_Spec) ConvertSpecFrom(source
 	return source.ConvertSpecTo(policy)
 }
 
-// ConvertSpecTo populates the provided destination from our FrontDoorWebApplicationFirewallPolicy_Spec
-func (policy *FrontDoorWebApplicationFirewallPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our WebApplicationFirewallPolicy_Spec
+func (policy *WebApplicationFirewallPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -186,8 +210,8 @@ func (policy *FrontDoorWebApplicationFirewallPolicy_Spec) ConvertSpecTo(destinat
 	return destination.ConvertSpecFrom(policy)
 }
 
-// Storage version of v1api20220501.FrontDoorWebApplicationFirewallPolicy_STATUS
-type FrontDoorWebApplicationFirewallPolicy_STATUS struct {
+// Storage version of v1api20220501.WebApplicationFirewallPolicy_STATUS
+type WebApplicationFirewallPolicy_STATUS struct {
 	Conditions            []conditions.Condition        `json:"conditions,omitempty"`
 	CustomRules           *CustomRuleList_STATUS        `json:"customRules,omitempty"`
 	Etag                  *string                       `json:"etag,omitempty"`
@@ -207,10 +231,10 @@ type FrontDoorWebApplicationFirewallPolicy_STATUS struct {
 	Type                  *string                       `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &FrontDoorWebApplicationFirewallPolicy_STATUS{}
+var _ genruntime.ConvertibleStatus = &WebApplicationFirewallPolicy_STATUS{}
 
-// ConvertStatusFrom populates our FrontDoorWebApplicationFirewallPolicy_STATUS from the provided source
-func (policy *FrontDoorWebApplicationFirewallPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our WebApplicationFirewallPolicy_STATUS from the provided source
+func (policy *WebApplicationFirewallPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -218,8 +242,8 @@ func (policy *FrontDoorWebApplicationFirewallPolicy_STATUS) ConvertStatusFrom(so
 	return source.ConvertStatusTo(policy)
 }
 
-// ConvertStatusTo populates the provided destination from our FrontDoorWebApplicationFirewallPolicy_STATUS
-func (policy *FrontDoorWebApplicationFirewallPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our WebApplicationFirewallPolicy_STATUS
+func (policy *WebApplicationFirewallPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -312,6 +336,14 @@ type Sku struct {
 type Sku_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// Storage version of v1api20220501.WebApplicationFirewallPolicyOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type WebApplicationFirewallPolicyOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20220501.CustomRule

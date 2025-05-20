@@ -22,7 +22,6 @@ type ARMClientMetrics struct {
 var _ Metrics = &ARMClientMetrics{}
 
 func NewARMClientMetrics() *ARMClientMetrics {
-
 	azureSuccessfulRequestsTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "azure_successful_requests_total",
 		Help: "Total number of successful requests to azure",
@@ -61,6 +60,6 @@ func (a *ARMClientMetrics) RecordAzureFailedRequestsTotal(resourceName string, m
 }
 
 // RecordAzureRequestsTime records the round-trip time taken by the request to ARM.
-func (a ARMClientMetrics) RecordAzureRequestsTime(resourceName string, requestTime time.Duration, method string) {
+func (a *ARMClientMetrics) RecordAzureRequestsTime(resourceName string, requestTime time.Duration, method string) {
 	a.azureRequestsTime.WithLabelValues(resourceName, method).Observe(requestTime.Seconds())
 }

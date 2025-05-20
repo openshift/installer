@@ -6,6 +6,8 @@ package customizations
 import (
 	v20220701 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
 	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
+	v20240301 "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301"
+	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type NatGatewayExtension struct {
 func (extension *NatGatewayExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20220701.NatGateway{},
-		&v20220701s.NatGateway{}}
+		&v20220701s.NatGateway{},
+		&v20240301.NatGateway{},
+		&v20240301s.NatGateway{}}
 }

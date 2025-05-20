@@ -17,8 +17,9 @@ limitations under the License.
 package futures
 
 import (
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 // Getter interface defines methods that an object should implement in order to

@@ -5,10 +5,14 @@ package v1api20201101
 
 import (
 	"fmt"
+	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,22 +53,36 @@ var _ conversion.Convertible = &VirtualNetworkGateway{}
 
 // ConvertFrom populates our VirtualNetworkGateway from the provided hub VirtualNetworkGateway
 func (gateway *VirtualNetworkGateway) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.VirtualNetworkGateway)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20201101/storage/VirtualNetworkGateway but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.VirtualNetworkGateway
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return gateway.AssignProperties_From_VirtualNetworkGateway(source)
+	err = gateway.AssignProperties_From_VirtualNetworkGateway(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to gateway")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub VirtualNetworkGateway from our VirtualNetworkGateway
 func (gateway *VirtualNetworkGateway) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.VirtualNetworkGateway)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20201101/storage/VirtualNetworkGateway but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.VirtualNetworkGateway
+	err := gateway.AssignProperties_To_VirtualNetworkGateway(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from gateway")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return gateway.AssignProperties_To_VirtualNetworkGateway(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20201101-virtualnetworkgateway,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=virtualnetworkgateways,verbs=create;update,versions=v1api20201101,name=default.v1api20201101.virtualnetworkgateways.network.azure.com,admissionReviewVersions=v1
@@ -90,15 +108,24 @@ func (gateway *VirtualNetworkGateway) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the VirtualNetworkGateway resource
 func (gateway *VirtualNetworkGateway) defaultImpl() { gateway.defaultAzureName() }
 
-var _ genruntime.ImportableResource = &VirtualNetworkGateway{}
+var _ configmaps.Exporter = &VirtualNetworkGateway{}
 
-// InitializeSpec initializes the spec for this resource from the given status
-func (gateway *VirtualNetworkGateway) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*VirtualNetworkGateway_STATUS); ok {
-		return gateway.Spec.Initialize_From_VirtualNetworkGateway_STATUS(s)
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (gateway *VirtualNetworkGateway) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if gateway.Spec.OperatorSpec == nil {
+		return nil
 	}
+	return gateway.Spec.OperatorSpec.ConfigMapExpressions
+}
 
-	return fmt.Errorf("expected Status of type VirtualNetworkGateway_STATUS but received %T instead", status)
+var _ secrets.Exporter = &VirtualNetworkGateway{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (gateway *VirtualNetworkGateway) SecretDestinationExpressions() []*core.DestinationExpression {
+	if gateway.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return gateway.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &VirtualNetworkGateway{}
@@ -110,7 +137,7 @@ func (gateway *VirtualNetworkGateway) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-11-01"
 func (gateway VirtualNetworkGateway) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -208,7 +235,7 @@ func (gateway *VirtualNetworkGateway) ValidateUpdate(old runtime.Object) (admiss
 
 // createValidations validates the creation of the resource
 func (gateway *VirtualNetworkGateway) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){gateway.validateResourceReferences, gateway.validateOwnerReference}
+	return []func() (admission.Warnings, error){gateway.validateResourceReferences, gateway.validateOwnerReference, gateway.validateSecretDestinations, gateway.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +253,21 @@ func (gateway *VirtualNetworkGateway) updateValidations() []func(old runtime.Obj
 		func(old runtime.Object) (admission.Warnings, error) {
 			return gateway.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return gateway.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return gateway.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (gateway *VirtualNetworkGateway) validateConfigMapDestinations() (admission.Warnings, error) {
+	if gateway.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(gateway, nil, gateway.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -241,6 +282,14 @@ func (gateway *VirtualNetworkGateway) validateResourceReferences() (admission.Wa
 		return nil, err
 	}
 	return genruntime.ValidateResourceReferences(refs)
+}
+
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (gateway *VirtualNetworkGateway) validateSecretDestinations() (admission.Warnings, error) {
+	if gateway.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(gateway, nil, gateway.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties
@@ -364,6 +413,10 @@ type VirtualNetworkGateway_Spec struct {
 	// Location: Resource location.
 	Location *string `json:"location,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *VirtualNetworkGatewayOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -399,7 +452,7 @@ func (gateway *VirtualNetworkGateway_Spec) ConvertToARM(resolved genruntime.Conv
 	if gateway == nil {
 		return nil, nil
 	}
-	result := &VirtualNetworkGateway_Spec_ARM{}
+	result := &arm.VirtualNetworkGateway_Spec{}
 
 	// Set property "ExtendedLocation":
 	if gateway.ExtendedLocation != nil {
@@ -407,7 +460,7 @@ func (gateway *VirtualNetworkGateway_Spec) ConvertToARM(resolved genruntime.Conv
 		if err != nil {
 			return nil, err
 		}
-		extendedLocation := *extendedLocation_ARM.(*ExtendedLocation_ARM)
+		extendedLocation := *extendedLocation_ARM.(*arm.ExtendedLocation)
 		result.ExtendedLocation = &extendedLocation
 	}
 
@@ -435,7 +488,7 @@ func (gateway *VirtualNetworkGateway_Spec) ConvertToARM(resolved genruntime.Conv
 		gateway.VpnClientConfiguration != nil ||
 		gateway.VpnGatewayGeneration != nil ||
 		gateway.VpnType != nil {
-		result.Properties = &VirtualNetworkGatewayPropertiesFormat_ARM{}
+		result.Properties = &arm.VirtualNetworkGatewayPropertiesFormat{}
 	}
 	if gateway.ActiveActive != nil {
 		activeActive := *gateway.ActiveActive
@@ -446,7 +499,7 @@ func (gateway *VirtualNetworkGateway_Spec) ConvertToARM(resolved genruntime.Conv
 		if err != nil {
 			return nil, err
 		}
-		bgpSettings := *bgpSettings_ARM.(*BgpSettings_ARM)
+		bgpSettings := *bgpSettings_ARM.(*arm.BgpSettings)
 		result.Properties.BgpSettings = &bgpSettings
 	}
 	if gateway.CustomRoutes != nil {
@@ -454,7 +507,7 @@ func (gateway *VirtualNetworkGateway_Spec) ConvertToARM(resolved genruntime.Conv
 		if err != nil {
 			return nil, err
 		}
-		customRoutes := *customRoutes_ARM.(*AddressSpace_ARM)
+		customRoutes := *customRoutes_ARM.(*arm.AddressSpace)
 		result.Properties.CustomRoutes = &customRoutes
 	}
 	if gateway.EnableBgp != nil {
@@ -474,11 +527,13 @@ func (gateway *VirtualNetworkGateway_Spec) ConvertToARM(resolved genruntime.Conv
 		if err != nil {
 			return nil, err
 		}
-		gatewayDefaultSite := *gatewayDefaultSite_ARM.(*SubResource_ARM)
+		gatewayDefaultSite := *gatewayDefaultSite_ARM.(*arm.SubResource)
 		result.Properties.GatewayDefaultSite = &gatewayDefaultSite
 	}
 	if gateway.GatewayType != nil {
-		gatewayType := *gateway.GatewayType
+		var temp string
+		temp = string(*gateway.GatewayType)
+		gatewayType := arm.VirtualNetworkGatewayPropertiesFormat_GatewayType(temp)
 		result.Properties.GatewayType = &gatewayType
 	}
 	for _, item := range gateway.IpConfigurations {
@@ -486,14 +541,14 @@ func (gateway *VirtualNetworkGateway_Spec) ConvertToARM(resolved genruntime.Conv
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*VirtualNetworkGatewayIPConfiguration_ARM))
+		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*arm.VirtualNetworkGatewayIPConfiguration))
 	}
 	if gateway.Sku != nil {
 		sku_ARM, err := (*gateway.Sku).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		sku := *sku_ARM.(*VirtualNetworkGatewaySku_ARM)
+		sku := *sku_ARM.(*arm.VirtualNetworkGatewaySku)
 		result.Properties.Sku = &sku
 	}
 	if gateway.VNetExtendedLocationResourceReference != nil {
@@ -509,15 +564,19 @@ func (gateway *VirtualNetworkGateway_Spec) ConvertToARM(resolved genruntime.Conv
 		if err != nil {
 			return nil, err
 		}
-		vpnClientConfiguration := *vpnClientConfiguration_ARM.(*VpnClientConfiguration_ARM)
+		vpnClientConfiguration := *vpnClientConfiguration_ARM.(*arm.VpnClientConfiguration)
 		result.Properties.VpnClientConfiguration = &vpnClientConfiguration
 	}
 	if gateway.VpnGatewayGeneration != nil {
-		vpnGatewayGeneration := *gateway.VpnGatewayGeneration
+		var temp string
+		temp = string(*gateway.VpnGatewayGeneration)
+		vpnGatewayGeneration := arm.VirtualNetworkGatewayPropertiesFormat_VpnGatewayGeneration(temp)
 		result.Properties.VpnGatewayGeneration = &vpnGatewayGeneration
 	}
 	if gateway.VpnType != nil {
-		vpnType := *gateway.VpnType
+		var temp string
+		temp = string(*gateway.VpnType)
+		vpnType := arm.VirtualNetworkGatewayPropertiesFormat_VpnType(temp)
 		result.Properties.VpnType = &vpnType
 	}
 
@@ -533,14 +592,14 @@ func (gateway *VirtualNetworkGateway_Spec) ConvertToARM(resolved genruntime.Conv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (gateway *VirtualNetworkGateway_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkGateway_Spec_ARM{}
+	return &arm.VirtualNetworkGateway_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (gateway *VirtualNetworkGateway_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualNetworkGateway_Spec_ARM)
+	typedInput, ok := armInput.(arm.VirtualNetworkGateway_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkGateway_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkGateway_Spec, got %T", armInput)
 	}
 
 	// Set property "ActiveActive":
@@ -639,7 +698,9 @@ func (gateway *VirtualNetworkGateway_Spec) PopulateFromARM(owner genruntime.Arbi
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.GatewayType != nil {
-			gatewayType := *typedInput.Properties.GatewayType
+			var temp string
+			temp = string(*typedInput.Properties.GatewayType)
+			gatewayType := VirtualNetworkGatewayPropertiesFormat_GatewayType(temp)
 			gateway.GatewayType = &gatewayType
 		}
 	}
@@ -662,6 +723,8 @@ func (gateway *VirtualNetworkGateway_Spec) PopulateFromARM(owner genruntime.Arbi
 		location := *typedInput.Location
 		gateway.Location = &location
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	gateway.Owner = &genruntime.KnownResourceReference{
@@ -711,7 +774,9 @@ func (gateway *VirtualNetworkGateway_Spec) PopulateFromARM(owner genruntime.Arbi
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.VpnGatewayGeneration != nil {
-			vpnGatewayGeneration := *typedInput.Properties.VpnGatewayGeneration
+			var temp string
+			temp = string(*typedInput.Properties.VpnGatewayGeneration)
+			vpnGatewayGeneration := VirtualNetworkGatewayPropertiesFormat_VpnGatewayGeneration(temp)
 			gateway.VpnGatewayGeneration = &vpnGatewayGeneration
 		}
 	}
@@ -720,7 +785,9 @@ func (gateway *VirtualNetworkGateway_Spec) PopulateFromARM(owner genruntime.Arbi
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.VpnType != nil {
-			vpnType := *typedInput.Properties.VpnType
+			var temp string
+			temp = string(*typedInput.Properties.VpnType)
+			vpnType := VirtualNetworkGatewayPropertiesFormat_VpnType(temp)
 			gateway.VpnType = &vpnType
 		}
 	}
@@ -894,6 +961,18 @@ func (gateway *VirtualNetworkGateway_Spec) AssignProperties_From_VirtualNetworkG
 
 	// Location
 	gateway.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec VirtualNetworkGatewayOperatorSpec
+		err := operatorSpec.AssignProperties_From_VirtualNetworkGatewayOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworkGatewayOperatorSpec() to populate field OperatorSpec")
+		}
+		gateway.OperatorSpec = &operatorSpec
+	} else {
+		gateway.OperatorSpec = nil
+	}
 
 	// Owner
 	if source.Owner != nil {
@@ -1077,6 +1156,18 @@ func (gateway *VirtualNetworkGateway_Spec) AssignProperties_To_VirtualNetworkGat
 	// Location
 	destination.Location = genruntime.ClonePointerToString(gateway.Location)
 
+	// OperatorSpec
+	if gateway.OperatorSpec != nil {
+		var operatorSpec storage.VirtualNetworkGatewayOperatorSpec
+		err := gateway.OperatorSpec.AssignProperties_To_VirtualNetworkGatewayOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkGatewayOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = gateway.OriginalVersion()
 
@@ -1144,173 +1235,6 @@ func (gateway *VirtualNetworkGateway_Spec) AssignProperties_To_VirtualNetworkGat
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualNetworkGateway_STATUS populates our VirtualNetworkGateway_Spec from the provided source VirtualNetworkGateway_STATUS
-func (gateway *VirtualNetworkGateway_Spec) Initialize_From_VirtualNetworkGateway_STATUS(source *VirtualNetworkGateway_STATUS) error {
-
-	// ActiveActive
-	if source.ActiveActive != nil {
-		activeActive := *source.ActiveActive
-		gateway.ActiveActive = &activeActive
-	} else {
-		gateway.ActiveActive = nil
-	}
-
-	// BgpSettings
-	if source.BgpSettings != nil {
-		var bgpSetting BgpSettings
-		err := bgpSetting.Initialize_From_BgpSettings_STATUS(source.BgpSettings)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_BgpSettings_STATUS() to populate field BgpSettings")
-		}
-		gateway.BgpSettings = &bgpSetting
-	} else {
-		gateway.BgpSettings = nil
-	}
-
-	// CustomRoutes
-	if source.CustomRoutes != nil {
-		var customRoute AddressSpace
-		err := customRoute.Initialize_From_AddressSpace_STATUS(source.CustomRoutes)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_AddressSpace_STATUS() to populate field CustomRoutes")
-		}
-		gateway.CustomRoutes = &customRoute
-	} else {
-		gateway.CustomRoutes = nil
-	}
-
-	// EnableBgp
-	if source.EnableBgp != nil {
-		enableBgp := *source.EnableBgp
-		gateway.EnableBgp = &enableBgp
-	} else {
-		gateway.EnableBgp = nil
-	}
-
-	// EnableDnsForwarding
-	if source.EnableDnsForwarding != nil {
-		enableDnsForwarding := *source.EnableDnsForwarding
-		gateway.EnableDnsForwarding = &enableDnsForwarding
-	} else {
-		gateway.EnableDnsForwarding = nil
-	}
-
-	// EnablePrivateIpAddress
-	if source.EnablePrivateIpAddress != nil {
-		enablePrivateIpAddress := *source.EnablePrivateIpAddress
-		gateway.EnablePrivateIpAddress = &enablePrivateIpAddress
-	} else {
-		gateway.EnablePrivateIpAddress = nil
-	}
-
-	// ExtendedLocation
-	if source.ExtendedLocation != nil {
-		var extendedLocation ExtendedLocation
-		err := extendedLocation.Initialize_From_ExtendedLocation_STATUS(source.ExtendedLocation)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
-		}
-		gateway.ExtendedLocation = &extendedLocation
-	} else {
-		gateway.ExtendedLocation = nil
-	}
-
-	// GatewayDefaultSite
-	if source.GatewayDefaultSite != nil {
-		var gatewayDefaultSite SubResource
-		err := gatewayDefaultSite.Initialize_From_SubResource_STATUS(source.GatewayDefaultSite)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field GatewayDefaultSite")
-		}
-		gateway.GatewayDefaultSite = &gatewayDefaultSite
-	} else {
-		gateway.GatewayDefaultSite = nil
-	}
-
-	// GatewayType
-	if source.GatewayType != nil {
-		gatewayType := genruntime.ToEnum(string(*source.GatewayType), virtualNetworkGatewayPropertiesFormat_GatewayType_Values)
-		gateway.GatewayType = &gatewayType
-	} else {
-		gateway.GatewayType = nil
-	}
-
-	// IpConfigurations
-	if source.IpConfigurations != nil {
-		ipConfigurationList := make([]VirtualNetworkGatewayIPConfiguration, len(source.IpConfigurations))
-		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
-			var ipConfiguration VirtualNetworkGatewayIPConfiguration
-			err := ipConfiguration.Initialize_From_VirtualNetworkGatewayIPConfiguration_STATUS(&ipConfigurationItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VirtualNetworkGatewayIPConfiguration_STATUS() to populate field IpConfigurations")
-			}
-			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
-		}
-		gateway.IpConfigurations = ipConfigurationList
-	} else {
-		gateway.IpConfigurations = nil
-	}
-
-	// Location
-	gateway.Location = genruntime.ClonePointerToString(source.Location)
-
-	// Sku
-	if source.Sku != nil {
-		var sku VirtualNetworkGatewaySku
-		err := sku.Initialize_From_VirtualNetworkGatewaySku_STATUS(source.Sku)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VirtualNetworkGatewaySku_STATUS() to populate field Sku")
-		}
-		gateway.Sku = &sku
-	} else {
-		gateway.Sku = nil
-	}
-
-	// Tags
-	gateway.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// VNetExtendedLocationResourceReference
-	if source.VNetExtendedLocationResourceId != nil {
-		vNetExtendedLocationResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.VNetExtendedLocationResourceId)
-		gateway.VNetExtendedLocationResourceReference = &vNetExtendedLocationResourceReference
-	} else {
-		gateway.VNetExtendedLocationResourceReference = nil
-	}
-
-	// VpnClientConfiguration
-	if source.VpnClientConfiguration != nil {
-		var vpnClientConfiguration VpnClientConfiguration
-		err := vpnClientConfiguration.Initialize_From_VpnClientConfiguration_STATUS(source.VpnClientConfiguration)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VpnClientConfiguration_STATUS() to populate field VpnClientConfiguration")
-		}
-		gateway.VpnClientConfiguration = &vpnClientConfiguration
-	} else {
-		gateway.VpnClientConfiguration = nil
-	}
-
-	// VpnGatewayGeneration
-	if source.VpnGatewayGeneration != nil {
-		vpnGatewayGeneration := genruntime.ToEnum(string(*source.VpnGatewayGeneration), virtualNetworkGatewayPropertiesFormat_VpnGatewayGeneration_Values)
-		gateway.VpnGatewayGeneration = &vpnGatewayGeneration
-	} else {
-		gateway.VpnGatewayGeneration = nil
-	}
-
-	// VpnType
-	if source.VpnType != nil {
-		vpnType := genruntime.ToEnum(string(*source.VpnType), virtualNetworkGatewayPropertiesFormat_VpnType_Values)
-		gateway.VpnType = &vpnType
-	} else {
-		gateway.VpnType = nil
 	}
 
 	// No error
@@ -1464,14 +1388,14 @@ var _ genruntime.FromARMConverter = &VirtualNetworkGateway_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (gateway *VirtualNetworkGateway_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkGateway_STATUS_ARM{}
+	return &arm.VirtualNetworkGateway_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (gateway *VirtualNetworkGateway_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualNetworkGateway_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VirtualNetworkGateway_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkGateway_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkGateway_STATUS, got %T", armInput)
 	}
 
 	// Set property "ActiveActive":
@@ -1575,7 +1499,9 @@ func (gateway *VirtualNetworkGateway_STATUS) PopulateFromARM(owner genruntime.Ar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.GatewayType != nil {
-			gatewayType := *typedInput.Properties.GatewayType
+			var temp string
+			temp = string(*typedInput.Properties.GatewayType)
+			gatewayType := VirtualNetworkGatewayPropertiesFormat_GatewayType_STATUS(temp)
 			gateway.GatewayType = &gatewayType
 		}
 	}
@@ -1624,7 +1550,9 @@ func (gateway *VirtualNetworkGateway_STATUS) PopulateFromARM(owner genruntime.Ar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := ProvisioningState_STATUS(temp)
 			gateway.ProvisioningState = &provisioningState
 		}
 	}
@@ -1693,7 +1621,9 @@ func (gateway *VirtualNetworkGateway_STATUS) PopulateFromARM(owner genruntime.Ar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.VpnGatewayGeneration != nil {
-			vpnGatewayGeneration := *typedInput.Properties.VpnGatewayGeneration
+			var temp string
+			temp = string(*typedInput.Properties.VpnGatewayGeneration)
+			vpnGatewayGeneration := VirtualNetworkGatewayPropertiesFormat_VpnGatewayGeneration_STATUS(temp)
 			gateway.VpnGatewayGeneration = &vpnGatewayGeneration
 		}
 	}
@@ -1702,7 +1632,9 @@ func (gateway *VirtualNetworkGateway_STATUS) PopulateFromARM(owner genruntime.Ar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.VpnType != nil {
-			vpnType := *typedInput.Properties.VpnType
+			var temp string
+			temp = string(*typedInput.Properties.VpnType)
+			vpnType := VirtualNetworkGatewayPropertiesFormat_VpnType_STATUS(temp)
 			gateway.VpnType = &vpnType
 		}
 	}
@@ -2128,7 +2060,7 @@ func (settings *BgpSettings) ConvertToARM(resolved genruntime.ConvertToARMResolv
 	if settings == nil {
 		return nil, nil
 	}
-	result := &BgpSettings_ARM{}
+	result := &arm.BgpSettings{}
 
 	// Set property "Asn":
 	if settings.Asn != nil {
@@ -2148,7 +2080,7 @@ func (settings *BgpSettings) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		result.BgpPeeringAddresses = append(result.BgpPeeringAddresses, *item_ARM.(*IPConfigurationBgpPeeringAddress_ARM))
+		result.BgpPeeringAddresses = append(result.BgpPeeringAddresses, *item_ARM.(*arm.IPConfigurationBgpPeeringAddress))
 	}
 
 	// Set property "PeerWeight":
@@ -2161,14 +2093,14 @@ func (settings *BgpSettings) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (settings *BgpSettings) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BgpSettings_ARM{}
+	return &arm.BgpSettings{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (settings *BgpSettings) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(BgpSettings_ARM)
+	typedInput, ok := armInput.(arm.BgpSettings)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BgpSettings_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.BgpSettings, got %T", armInput)
 	}
 
 	// Set property "Asn":
@@ -2290,45 +2222,6 @@ func (settings *BgpSettings) AssignProperties_To_BgpSettings(destination *storag
 	return nil
 }
 
-// Initialize_From_BgpSettings_STATUS populates our BgpSettings from the provided source BgpSettings_STATUS
-func (settings *BgpSettings) Initialize_From_BgpSettings_STATUS(source *BgpSettings_STATUS) error {
-
-	// Asn
-	if source.Asn != nil {
-		asn := *source.Asn
-		settings.Asn = &asn
-	} else {
-		settings.Asn = nil
-	}
-
-	// BgpPeeringAddress
-	settings.BgpPeeringAddress = genruntime.ClonePointerToString(source.BgpPeeringAddress)
-
-	// BgpPeeringAddresses
-	if source.BgpPeeringAddresses != nil {
-		bgpPeeringAddressList := make([]IPConfigurationBgpPeeringAddress, len(source.BgpPeeringAddresses))
-		for bgpPeeringAddressIndex, bgpPeeringAddressItem := range source.BgpPeeringAddresses {
-			// Shadow the loop variable to avoid aliasing
-			bgpPeeringAddressItem := bgpPeeringAddressItem
-			var bgpPeeringAddress IPConfigurationBgpPeeringAddress
-			err := bgpPeeringAddress.Initialize_From_IPConfigurationBgpPeeringAddress_STATUS(&bgpPeeringAddressItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_IPConfigurationBgpPeeringAddress_STATUS() to populate field BgpPeeringAddresses")
-			}
-			bgpPeeringAddressList[bgpPeeringAddressIndex] = bgpPeeringAddress
-		}
-		settings.BgpPeeringAddresses = bgpPeeringAddressList
-	} else {
-		settings.BgpPeeringAddresses = nil
-	}
-
-	// PeerWeight
-	settings.PeerWeight = genruntime.ClonePointerToInt(source.PeerWeight)
-
-	// No error
-	return nil
-}
-
 // BGP settings details.
 type BgpSettings_STATUS struct {
 	// Asn: The BGP speaker's ASN.
@@ -2348,14 +2241,14 @@ var _ genruntime.FromARMConverter = &BgpSettings_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (settings *BgpSettings_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BgpSettings_STATUS_ARM{}
+	return &arm.BgpSettings_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (settings *BgpSettings_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(BgpSettings_STATUS_ARM)
+	typedInput, ok := armInput.(arm.BgpSettings_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BgpSettings_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.BgpSettings_STATUS, got %T", armInput)
 	}
 
 	// Set property "Asn":
@@ -2499,7 +2392,7 @@ func (configuration *VirtualNetworkGatewayIPConfiguration) ConvertToARM(resolved
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &VirtualNetworkGatewayIPConfiguration_ARM{}
+	result := &arm.VirtualNetworkGatewayIPConfiguration{}
 
 	// Set property "Name":
 	if configuration.Name != nil {
@@ -2511,10 +2404,12 @@ func (configuration *VirtualNetworkGatewayIPConfiguration) ConvertToARM(resolved
 	if configuration.PrivateIPAllocationMethod != nil ||
 		configuration.PublicIPAddress != nil ||
 		configuration.Subnet != nil {
-		result.Properties = &VirtualNetworkGatewayIPConfigurationPropertiesFormat_ARM{}
+		result.Properties = &arm.VirtualNetworkGatewayIPConfigurationPropertiesFormat{}
 	}
 	if configuration.PrivateIPAllocationMethod != nil {
-		privateIPAllocationMethod := *configuration.PrivateIPAllocationMethod
+		var temp string
+		temp = string(*configuration.PrivateIPAllocationMethod)
+		privateIPAllocationMethod := arm.IPAllocationMethod(temp)
 		result.Properties.PrivateIPAllocationMethod = &privateIPAllocationMethod
 	}
 	if configuration.PublicIPAddress != nil {
@@ -2522,7 +2417,7 @@ func (configuration *VirtualNetworkGatewayIPConfiguration) ConvertToARM(resolved
 		if err != nil {
 			return nil, err
 		}
-		publicIPAddress := *publicIPAddress_ARM.(*SubResource_ARM)
+		publicIPAddress := *publicIPAddress_ARM.(*arm.SubResource)
 		result.Properties.PublicIPAddress = &publicIPAddress
 	}
 	if configuration.Subnet != nil {
@@ -2530,7 +2425,7 @@ func (configuration *VirtualNetworkGatewayIPConfiguration) ConvertToARM(resolved
 		if err != nil {
 			return nil, err
 		}
-		subnet := *subnet_ARM.(*SubResource_ARM)
+		subnet := *subnet_ARM.(*arm.SubResource)
 		result.Properties.Subnet = &subnet
 	}
 	return result, nil
@@ -2538,14 +2433,14 @@ func (configuration *VirtualNetworkGatewayIPConfiguration) ConvertToARM(resolved
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *VirtualNetworkGatewayIPConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkGatewayIPConfiguration_ARM{}
+	return &arm.VirtualNetworkGatewayIPConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *VirtualNetworkGatewayIPConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualNetworkGatewayIPConfiguration_ARM)
+	typedInput, ok := armInput.(arm.VirtualNetworkGatewayIPConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkGatewayIPConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkGatewayIPConfiguration, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -2558,7 +2453,9 @@ func (configuration *VirtualNetworkGatewayIPConfiguration) PopulateFromARM(owner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAllocationMethod != nil {
-			privateIPAllocationMethod := *typedInput.Properties.PrivateIPAllocationMethod
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAllocationMethod)
+			privateIPAllocationMethod := IPAllocationMethod(temp)
 			configuration.PrivateIPAllocationMethod = &privateIPAllocationMethod
 		}
 	}
@@ -2689,48 +2586,6 @@ func (configuration *VirtualNetworkGatewayIPConfiguration) AssignProperties_To_V
 	return nil
 }
 
-// Initialize_From_VirtualNetworkGatewayIPConfiguration_STATUS populates our VirtualNetworkGatewayIPConfiguration from the provided source VirtualNetworkGatewayIPConfiguration_STATUS
-func (configuration *VirtualNetworkGatewayIPConfiguration) Initialize_From_VirtualNetworkGatewayIPConfiguration_STATUS(source *VirtualNetworkGatewayIPConfiguration_STATUS) error {
-
-	// Name
-	configuration.Name = genruntime.ClonePointerToString(source.Name)
-
-	// PrivateIPAllocationMethod
-	if source.PrivateIPAllocationMethod != nil {
-		privateIPAllocationMethod := genruntime.ToEnum(string(*source.PrivateIPAllocationMethod), iPAllocationMethod_Values)
-		configuration.PrivateIPAllocationMethod = &privateIPAllocationMethod
-	} else {
-		configuration.PrivateIPAllocationMethod = nil
-	}
-
-	// PublicIPAddress
-	if source.PublicIPAddress != nil {
-		var publicIPAddress SubResource
-		err := publicIPAddress.Initialize_From_SubResource_STATUS(source.PublicIPAddress)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field PublicIPAddress")
-		}
-		configuration.PublicIPAddress = &publicIPAddress
-	} else {
-		configuration.PublicIPAddress = nil
-	}
-
-	// Subnet
-	if source.Subnet != nil {
-		var subnet SubResource
-		err := subnet.Initialize_From_SubResource_STATUS(source.Subnet)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field Subnet")
-		}
-		configuration.Subnet = &subnet
-	} else {
-		configuration.Subnet = nil
-	}
-
-	// No error
-	return nil
-}
-
 // IP configuration for virtual network gateway.
 type VirtualNetworkGatewayIPConfiguration_STATUS struct {
 	// Etag: A unique read-only string that changes whenever the resource is updated.
@@ -2762,14 +2617,14 @@ var _ genruntime.FromARMConverter = &VirtualNetworkGatewayIPConfiguration_STATUS
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *VirtualNetworkGatewayIPConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkGatewayIPConfiguration_STATUS_ARM{}
+	return &arm.VirtualNetworkGatewayIPConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *VirtualNetworkGatewayIPConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualNetworkGatewayIPConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VirtualNetworkGatewayIPConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkGatewayIPConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkGatewayIPConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "Etag":
@@ -2803,7 +2658,9 @@ func (configuration *VirtualNetworkGatewayIPConfiguration_STATUS) PopulateFromAR
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAllocationMethod != nil {
-			privateIPAllocationMethod := *typedInput.Properties.PrivateIPAllocationMethod
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAllocationMethod)
+			privateIPAllocationMethod := IPAllocationMethod_STATUS(temp)
 			configuration.PrivateIPAllocationMethod = &privateIPAllocationMethod
 		}
 	}
@@ -2812,7 +2669,9 @@ func (configuration *VirtualNetworkGatewayIPConfiguration_STATUS) PopulateFromAR
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := ProvisioningState_STATUS(temp)
 			configuration.ProvisioningState = &provisioningState
 		}
 	}
@@ -2978,6 +2837,110 @@ func (configuration *VirtualNetworkGatewayIPConfiguration_STATUS) AssignProperti
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type VirtualNetworkGatewayOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_VirtualNetworkGatewayOperatorSpec populates our VirtualNetworkGatewayOperatorSpec from the provided source VirtualNetworkGatewayOperatorSpec
+func (operator *VirtualNetworkGatewayOperatorSpec) AssignProperties_From_VirtualNetworkGatewayOperatorSpec(source *storage.VirtualNetworkGatewayOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VirtualNetworkGatewayOperatorSpec populates the provided destination VirtualNetworkGatewayOperatorSpec from our VirtualNetworkGatewayOperatorSpec
+func (operator *VirtualNetworkGatewayOperatorSpec) AssignProperties_To_VirtualNetworkGatewayOperatorSpec(destination *storage.VirtualNetworkGatewayOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // +kubebuilder:validation:Enum={"ExpressRoute","LocalGateway","Vpn"}
 type VirtualNetworkGatewayPropertiesFormat_GatewayType string
 
@@ -3083,17 +3046,21 @@ func (gatewaySku *VirtualNetworkGatewaySku) ConvertToARM(resolved genruntime.Con
 	if gatewaySku == nil {
 		return nil, nil
 	}
-	result := &VirtualNetworkGatewaySku_ARM{}
+	result := &arm.VirtualNetworkGatewaySku{}
 
 	// Set property "Name":
 	if gatewaySku.Name != nil {
-		name := *gatewaySku.Name
+		var temp string
+		temp = string(*gatewaySku.Name)
+		name := arm.VirtualNetworkGatewaySku_Name(temp)
 		result.Name = &name
 	}
 
 	// Set property "Tier":
 	if gatewaySku.Tier != nil {
-		tier := *gatewaySku.Tier
+		var temp string
+		temp = string(*gatewaySku.Tier)
+		tier := arm.VirtualNetworkGatewaySku_Tier(temp)
 		result.Tier = &tier
 	}
 	return result, nil
@@ -3101,25 +3068,29 @@ func (gatewaySku *VirtualNetworkGatewaySku) ConvertToARM(resolved genruntime.Con
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (gatewaySku *VirtualNetworkGatewaySku) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkGatewaySku_ARM{}
+	return &arm.VirtualNetworkGatewaySku{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (gatewaySku *VirtualNetworkGatewaySku) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualNetworkGatewaySku_ARM)
+	typedInput, ok := armInput.(arm.VirtualNetworkGatewaySku)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkGatewaySku_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkGatewaySku, got %T", armInput)
 	}
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := VirtualNetworkGatewaySku_Name(temp)
 		gatewaySku.Name = &name
 	}
 
 	// Set property "Tier":
 	if typedInput.Tier != nil {
-		tier := *typedInput.Tier
+		var temp string
+		temp = string(*typedInput.Tier)
+		tier := VirtualNetworkGatewaySku_Tier(temp)
 		gatewaySku.Tier = &tier
 	}
 
@@ -3184,29 +3155,6 @@ func (gatewaySku *VirtualNetworkGatewaySku) AssignProperties_To_VirtualNetworkGa
 	return nil
 }
 
-// Initialize_From_VirtualNetworkGatewaySku_STATUS populates our VirtualNetworkGatewaySku from the provided source VirtualNetworkGatewaySku_STATUS
-func (gatewaySku *VirtualNetworkGatewaySku) Initialize_From_VirtualNetworkGatewaySku_STATUS(source *VirtualNetworkGatewaySku_STATUS) error {
-
-	// Name
-	if source.Name != nil {
-		name := genruntime.ToEnum(string(*source.Name), virtualNetworkGatewaySku_Name_Values)
-		gatewaySku.Name = &name
-	} else {
-		gatewaySku.Name = nil
-	}
-
-	// Tier
-	if source.Tier != nil {
-		tier := genruntime.ToEnum(string(*source.Tier), virtualNetworkGatewaySku_Tier_Values)
-		gatewaySku.Tier = &tier
-	} else {
-		gatewaySku.Tier = nil
-	}
-
-	// No error
-	return nil
-}
-
 // VirtualNetworkGatewaySku details.
 type VirtualNetworkGatewaySku_STATUS struct {
 	// Capacity: The capacity.
@@ -3223,14 +3171,14 @@ var _ genruntime.FromARMConverter = &VirtualNetworkGatewaySku_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (gatewaySku *VirtualNetworkGatewaySku_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkGatewaySku_STATUS_ARM{}
+	return &arm.VirtualNetworkGatewaySku_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (gatewaySku *VirtualNetworkGatewaySku_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualNetworkGatewaySku_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VirtualNetworkGatewaySku_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkGatewaySku_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkGatewaySku_STATUS, got %T", armInput)
 	}
 
 	// Set property "Capacity":
@@ -3241,13 +3189,17 @@ func (gatewaySku *VirtualNetworkGatewaySku_STATUS) PopulateFromARM(owner genrunt
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := VirtualNetworkGatewaySku_Name_STATUS(temp)
 		gatewaySku.Name = &name
 	}
 
 	// Set property "Tier":
 	if typedInput.Tier != nil {
-		tier := *typedInput.Tier
+		var temp string
+		temp = string(*typedInput.Tier)
+		tier := VirtualNetworkGatewaySku_Tier_STATUS(temp)
 		gatewaySku.Tier = &tier
 	}
 
@@ -3367,7 +3319,7 @@ func (configuration *VpnClientConfiguration) ConvertToARM(resolved genruntime.Co
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &VpnClientConfiguration_ARM{}
+	result := &arm.VpnClientConfiguration{}
 
 	// Set property "AadAudience":
 	if configuration.AadAudience != nil {
@@ -3405,12 +3357,14 @@ func (configuration *VpnClientConfiguration) ConvertToARM(resolved genruntime.Co
 		if err != nil {
 			return nil, err
 		}
-		result.RadiusServers = append(result.RadiusServers, *item_ARM.(*RadiusServer_ARM))
+		result.RadiusServers = append(result.RadiusServers, *item_ARM.(*arm.RadiusServer))
 	}
 
 	// Set property "VpnAuthenticationTypes":
 	for _, item := range configuration.VpnAuthenticationTypes {
-		result.VpnAuthenticationTypes = append(result.VpnAuthenticationTypes, item)
+		var temp string
+		temp = string(item)
+		result.VpnAuthenticationTypes = append(result.VpnAuthenticationTypes, arm.VpnClientConfiguration_VpnAuthenticationTypes(temp))
 	}
 
 	// Set property "VpnClientAddressPool":
@@ -3419,7 +3373,7 @@ func (configuration *VpnClientConfiguration) ConvertToARM(resolved genruntime.Co
 		if err != nil {
 			return nil, err
 		}
-		vpnClientAddressPool := *vpnClientAddressPool_ARM.(*AddressSpace_ARM)
+		vpnClientAddressPool := *vpnClientAddressPool_ARM.(*arm.AddressSpace)
 		result.VpnClientAddressPool = &vpnClientAddressPool
 	}
 
@@ -3429,12 +3383,14 @@ func (configuration *VpnClientConfiguration) ConvertToARM(resolved genruntime.Co
 		if err != nil {
 			return nil, err
 		}
-		result.VpnClientIpsecPolicies = append(result.VpnClientIpsecPolicies, *item_ARM.(*IpsecPolicy_ARM))
+		result.VpnClientIpsecPolicies = append(result.VpnClientIpsecPolicies, *item_ARM.(*arm.IpsecPolicy))
 	}
 
 	// Set property "VpnClientProtocols":
 	for _, item := range configuration.VpnClientProtocols {
-		result.VpnClientProtocols = append(result.VpnClientProtocols, item)
+		var temp string
+		temp = string(item)
+		result.VpnClientProtocols = append(result.VpnClientProtocols, arm.VpnClientConfiguration_VpnClientProtocols(temp))
 	}
 
 	// Set property "VpnClientRevokedCertificates":
@@ -3443,7 +3399,7 @@ func (configuration *VpnClientConfiguration) ConvertToARM(resolved genruntime.Co
 		if err != nil {
 			return nil, err
 		}
-		result.VpnClientRevokedCertificates = append(result.VpnClientRevokedCertificates, *item_ARM.(*VpnClientRevokedCertificate_ARM))
+		result.VpnClientRevokedCertificates = append(result.VpnClientRevokedCertificates, *item_ARM.(*arm.VpnClientRevokedCertificate))
 	}
 
 	// Set property "VpnClientRootCertificates":
@@ -3452,21 +3408,21 @@ func (configuration *VpnClientConfiguration) ConvertToARM(resolved genruntime.Co
 		if err != nil {
 			return nil, err
 		}
-		result.VpnClientRootCertificates = append(result.VpnClientRootCertificates, *item_ARM.(*VpnClientRootCertificate_ARM))
+		result.VpnClientRootCertificates = append(result.VpnClientRootCertificates, *item_ARM.(*arm.VpnClientRootCertificate))
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *VpnClientConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VpnClientConfiguration_ARM{}
+	return &arm.VpnClientConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *VpnClientConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VpnClientConfiguration_ARM)
+	typedInput, ok := armInput.(arm.VpnClientConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VpnClientConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VpnClientConfiguration, got %T", armInput)
 	}
 
 	// Set property "AadAudience":
@@ -3511,7 +3467,9 @@ func (configuration *VpnClientConfiguration) PopulateFromARM(owner genruntime.Ar
 
 	// Set property "VpnAuthenticationTypes":
 	for _, item := range typedInput.VpnAuthenticationTypes {
-		configuration.VpnAuthenticationTypes = append(configuration.VpnAuthenticationTypes, item)
+		var temp string
+		temp = string(item)
+		configuration.VpnAuthenticationTypes = append(configuration.VpnAuthenticationTypes, VpnClientConfiguration_VpnAuthenticationTypes(temp))
 	}
 
 	// Set property "VpnClientAddressPool":
@@ -3537,7 +3495,9 @@ func (configuration *VpnClientConfiguration) PopulateFromARM(owner genruntime.Ar
 
 	// Set property "VpnClientProtocols":
 	for _, item := range typedInput.VpnClientProtocols {
-		configuration.VpnClientProtocols = append(configuration.VpnClientProtocols, item)
+		var temp string
+		temp = string(item)
+		configuration.VpnClientProtocols = append(configuration.VpnClientProtocols, VpnClientConfiguration_VpnClientProtocols(temp))
 	}
 
 	// Set property "VpnClientRevokedCertificates":
@@ -3837,140 +3797,6 @@ func (configuration *VpnClientConfiguration) AssignProperties_To_VpnClientConfig
 	return nil
 }
 
-// Initialize_From_VpnClientConfiguration_STATUS populates our VpnClientConfiguration from the provided source VpnClientConfiguration_STATUS
-func (configuration *VpnClientConfiguration) Initialize_From_VpnClientConfiguration_STATUS(source *VpnClientConfiguration_STATUS) error {
-
-	// AadAudience
-	configuration.AadAudience = genruntime.ClonePointerToString(source.AadAudience)
-
-	// AadIssuer
-	configuration.AadIssuer = genruntime.ClonePointerToString(source.AadIssuer)
-
-	// AadTenant
-	configuration.AadTenant = genruntime.ClonePointerToString(source.AadTenant)
-
-	// RadiusServerAddress
-	configuration.RadiusServerAddress = genruntime.ClonePointerToString(source.RadiusServerAddress)
-
-	// RadiusServerSecret
-	configuration.RadiusServerSecret = genruntime.ClonePointerToString(source.RadiusServerSecret)
-
-	// RadiusServers
-	if source.RadiusServers != nil {
-		radiusServerList := make([]RadiusServer, len(source.RadiusServers))
-		for radiusServerIndex, radiusServerItem := range source.RadiusServers {
-			// Shadow the loop variable to avoid aliasing
-			radiusServerItem := radiusServerItem
-			var radiusServer RadiusServer
-			err := radiusServer.Initialize_From_RadiusServer_STATUS(&radiusServerItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_RadiusServer_STATUS() to populate field RadiusServers")
-			}
-			radiusServerList[radiusServerIndex] = radiusServer
-		}
-		configuration.RadiusServers = radiusServerList
-	} else {
-		configuration.RadiusServers = nil
-	}
-
-	// VpnAuthenticationTypes
-	if source.VpnAuthenticationTypes != nil {
-		vpnAuthenticationTypeList := make([]VpnClientConfiguration_VpnAuthenticationTypes, len(source.VpnAuthenticationTypes))
-		for vpnAuthenticationTypeIndex, vpnAuthenticationTypeItem := range source.VpnAuthenticationTypes {
-			// Shadow the loop variable to avoid aliasing
-			vpnAuthenticationTypeItem := vpnAuthenticationTypeItem
-			vpnAuthenticationType := genruntime.ToEnum(string(vpnAuthenticationTypeItem), vpnClientConfiguration_VpnAuthenticationTypes_Values)
-			vpnAuthenticationTypeList[vpnAuthenticationTypeIndex] = vpnAuthenticationType
-		}
-		configuration.VpnAuthenticationTypes = vpnAuthenticationTypeList
-	} else {
-		configuration.VpnAuthenticationTypes = nil
-	}
-
-	// VpnClientAddressPool
-	if source.VpnClientAddressPool != nil {
-		var vpnClientAddressPool AddressSpace
-		err := vpnClientAddressPool.Initialize_From_AddressSpace_STATUS(source.VpnClientAddressPool)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_AddressSpace_STATUS() to populate field VpnClientAddressPool")
-		}
-		configuration.VpnClientAddressPool = &vpnClientAddressPool
-	} else {
-		configuration.VpnClientAddressPool = nil
-	}
-
-	// VpnClientIpsecPolicies
-	if source.VpnClientIpsecPolicies != nil {
-		vpnClientIpsecPolicyList := make([]IpsecPolicy, len(source.VpnClientIpsecPolicies))
-		for vpnClientIpsecPolicyIndex, vpnClientIpsecPolicyItem := range source.VpnClientIpsecPolicies {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientIpsecPolicyItem := vpnClientIpsecPolicyItem
-			var vpnClientIpsecPolicy IpsecPolicy
-			err := vpnClientIpsecPolicy.Initialize_From_IpsecPolicy_STATUS(&vpnClientIpsecPolicyItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_IpsecPolicy_STATUS() to populate field VpnClientIpsecPolicies")
-			}
-			vpnClientIpsecPolicyList[vpnClientIpsecPolicyIndex] = vpnClientIpsecPolicy
-		}
-		configuration.VpnClientIpsecPolicies = vpnClientIpsecPolicyList
-	} else {
-		configuration.VpnClientIpsecPolicies = nil
-	}
-
-	// VpnClientProtocols
-	if source.VpnClientProtocols != nil {
-		vpnClientProtocolList := make([]VpnClientConfiguration_VpnClientProtocols, len(source.VpnClientProtocols))
-		for vpnClientProtocolIndex, vpnClientProtocolItem := range source.VpnClientProtocols {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientProtocolItem := vpnClientProtocolItem
-			vpnClientProtocol := genruntime.ToEnum(string(vpnClientProtocolItem), vpnClientConfiguration_VpnClientProtocols_Values)
-			vpnClientProtocolList[vpnClientProtocolIndex] = vpnClientProtocol
-		}
-		configuration.VpnClientProtocols = vpnClientProtocolList
-	} else {
-		configuration.VpnClientProtocols = nil
-	}
-
-	// VpnClientRevokedCertificates
-	if source.VpnClientRevokedCertificates != nil {
-		vpnClientRevokedCertificateList := make([]VpnClientRevokedCertificate, len(source.VpnClientRevokedCertificates))
-		for vpnClientRevokedCertificateIndex, vpnClientRevokedCertificateItem := range source.VpnClientRevokedCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientRevokedCertificateItem := vpnClientRevokedCertificateItem
-			var vpnClientRevokedCertificate VpnClientRevokedCertificate
-			err := vpnClientRevokedCertificate.Initialize_From_VpnClientRevokedCertificate_STATUS(&vpnClientRevokedCertificateItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VpnClientRevokedCertificate_STATUS() to populate field VpnClientRevokedCertificates")
-			}
-			vpnClientRevokedCertificateList[vpnClientRevokedCertificateIndex] = vpnClientRevokedCertificate
-		}
-		configuration.VpnClientRevokedCertificates = vpnClientRevokedCertificateList
-	} else {
-		configuration.VpnClientRevokedCertificates = nil
-	}
-
-	// VpnClientRootCertificates
-	if source.VpnClientRootCertificates != nil {
-		vpnClientRootCertificateList := make([]VpnClientRootCertificate, len(source.VpnClientRootCertificates))
-		for vpnClientRootCertificateIndex, vpnClientRootCertificateItem := range source.VpnClientRootCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientRootCertificateItem := vpnClientRootCertificateItem
-			var vpnClientRootCertificate VpnClientRootCertificate
-			err := vpnClientRootCertificate.Initialize_From_VpnClientRootCertificate_STATUS(&vpnClientRootCertificateItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VpnClientRootCertificate_STATUS() to populate field VpnClientRootCertificates")
-			}
-			vpnClientRootCertificateList[vpnClientRootCertificateIndex] = vpnClientRootCertificate
-		}
-		configuration.VpnClientRootCertificates = vpnClientRootCertificateList
-	} else {
-		configuration.VpnClientRootCertificates = nil
-	}
-
-	// No error
-	return nil
-}
-
 // VpnClientConfiguration for P2S client.
 type VpnClientConfiguration_STATUS struct {
 	// AadAudience: The AADAudience property of the VirtualNetworkGateway resource for vpn client connection used for AAD
@@ -4017,14 +3843,14 @@ var _ genruntime.FromARMConverter = &VpnClientConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *VpnClientConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VpnClientConfiguration_STATUS_ARM{}
+	return &arm.VpnClientConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *VpnClientConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VpnClientConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VpnClientConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VpnClientConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VpnClientConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "AadAudience":
@@ -4069,7 +3895,9 @@ func (configuration *VpnClientConfiguration_STATUS) PopulateFromARM(owner genrun
 
 	// Set property "VpnAuthenticationTypes":
 	for _, item := range typedInput.VpnAuthenticationTypes {
-		configuration.VpnAuthenticationTypes = append(configuration.VpnAuthenticationTypes, item)
+		var temp string
+		temp = string(item)
+		configuration.VpnAuthenticationTypes = append(configuration.VpnAuthenticationTypes, VpnClientConfiguration_VpnAuthenticationTypes_STATUS(temp))
 	}
 
 	// Set property "VpnClientAddressPool":
@@ -4095,7 +3923,9 @@ func (configuration *VpnClientConfiguration_STATUS) PopulateFromARM(owner genrun
 
 	// Set property "VpnClientProtocols":
 	for _, item := range typedInput.VpnClientProtocols {
-		configuration.VpnClientProtocols = append(configuration.VpnClientProtocols, item)
+		var temp string
+		temp = string(item)
+		configuration.VpnClientProtocols = append(configuration.VpnClientProtocols, VpnClientConfiguration_VpnClientProtocols_STATUS(temp))
 	}
 
 	// Set property "VpnClientRevokedCertificates":
@@ -4411,7 +4241,7 @@ func (address *IPConfigurationBgpPeeringAddress) ConvertToARM(resolved genruntim
 	if address == nil {
 		return nil, nil
 	}
-	result := &IPConfigurationBgpPeeringAddress_ARM{}
+	result := &arm.IPConfigurationBgpPeeringAddress{}
 
 	// Set property "CustomBgpIpAddresses":
 	for _, item := range address.CustomBgpIpAddresses {
@@ -4428,14 +4258,14 @@ func (address *IPConfigurationBgpPeeringAddress) ConvertToARM(resolved genruntim
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (address *IPConfigurationBgpPeeringAddress) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &IPConfigurationBgpPeeringAddress_ARM{}
+	return &arm.IPConfigurationBgpPeeringAddress{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (address *IPConfigurationBgpPeeringAddress) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(IPConfigurationBgpPeeringAddress_ARM)
+	typedInput, ok := armInput.(arm.IPConfigurationBgpPeeringAddress)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected IPConfigurationBgpPeeringAddress_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.IPConfigurationBgpPeeringAddress, got %T", armInput)
 	}
 
 	// Set property "CustomBgpIpAddresses":
@@ -4488,19 +4318,6 @@ func (address *IPConfigurationBgpPeeringAddress) AssignProperties_To_IPConfigura
 	return nil
 }
 
-// Initialize_From_IPConfigurationBgpPeeringAddress_STATUS populates our IPConfigurationBgpPeeringAddress from the provided source IPConfigurationBgpPeeringAddress_STATUS
-func (address *IPConfigurationBgpPeeringAddress) Initialize_From_IPConfigurationBgpPeeringAddress_STATUS(source *IPConfigurationBgpPeeringAddress_STATUS) error {
-
-	// CustomBgpIpAddresses
-	address.CustomBgpIpAddresses = genruntime.CloneSliceOfString(source.CustomBgpIpAddresses)
-
-	// IpconfigurationId
-	address.IpconfigurationId = genruntime.ClonePointerToString(source.IpconfigurationId)
-
-	// No error
-	return nil
-}
-
 // Properties of IPConfigurationBgpPeeringAddress.
 type IPConfigurationBgpPeeringAddress_STATUS struct {
 	// CustomBgpIpAddresses: The list of custom BGP peering addresses which belong to IP configuration.
@@ -4520,14 +4337,14 @@ var _ genruntime.FromARMConverter = &IPConfigurationBgpPeeringAddress_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (address *IPConfigurationBgpPeeringAddress_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &IPConfigurationBgpPeeringAddress_STATUS_ARM{}
+	return &arm.IPConfigurationBgpPeeringAddress_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (address *IPConfigurationBgpPeeringAddress_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(IPConfigurationBgpPeeringAddress_STATUS_ARM)
+	typedInput, ok := armInput.(arm.IPConfigurationBgpPeeringAddress_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected IPConfigurationBgpPeeringAddress_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.IPConfigurationBgpPeeringAddress_STATUS, got %T", armInput)
 	}
 
 	// Set property "CustomBgpIpAddresses":
@@ -4646,41 +4463,53 @@ func (policy *IpsecPolicy) ConvertToARM(resolved genruntime.ConvertToARMResolved
 	if policy == nil {
 		return nil, nil
 	}
-	result := &IpsecPolicy_ARM{}
+	result := &arm.IpsecPolicy{}
 
 	// Set property "DhGroup":
 	if policy.DhGroup != nil {
-		dhGroup := *policy.DhGroup
+		var temp string
+		temp = string(*policy.DhGroup)
+		dhGroup := arm.DhGroup(temp)
 		result.DhGroup = &dhGroup
 	}
 
 	// Set property "IkeEncryption":
 	if policy.IkeEncryption != nil {
-		ikeEncryption := *policy.IkeEncryption
+		var temp string
+		temp = string(*policy.IkeEncryption)
+		ikeEncryption := arm.IkeEncryption(temp)
 		result.IkeEncryption = &ikeEncryption
 	}
 
 	// Set property "IkeIntegrity":
 	if policy.IkeIntegrity != nil {
-		ikeIntegrity := *policy.IkeIntegrity
+		var temp string
+		temp = string(*policy.IkeIntegrity)
+		ikeIntegrity := arm.IkeIntegrity(temp)
 		result.IkeIntegrity = &ikeIntegrity
 	}
 
 	// Set property "IpsecEncryption":
 	if policy.IpsecEncryption != nil {
-		ipsecEncryption := *policy.IpsecEncryption
+		var temp string
+		temp = string(*policy.IpsecEncryption)
+		ipsecEncryption := arm.IpsecEncryption(temp)
 		result.IpsecEncryption = &ipsecEncryption
 	}
 
 	// Set property "IpsecIntegrity":
 	if policy.IpsecIntegrity != nil {
-		ipsecIntegrity := *policy.IpsecIntegrity
+		var temp string
+		temp = string(*policy.IpsecIntegrity)
+		ipsecIntegrity := arm.IpsecIntegrity(temp)
 		result.IpsecIntegrity = &ipsecIntegrity
 	}
 
 	// Set property "PfsGroup":
 	if policy.PfsGroup != nil {
-		pfsGroup := *policy.PfsGroup
+		var temp string
+		temp = string(*policy.PfsGroup)
+		pfsGroup := arm.PfsGroup(temp)
 		result.PfsGroup = &pfsGroup
 	}
 
@@ -4700,49 +4529,61 @@ func (policy *IpsecPolicy) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (policy *IpsecPolicy) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &IpsecPolicy_ARM{}
+	return &arm.IpsecPolicy{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (policy *IpsecPolicy) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(IpsecPolicy_ARM)
+	typedInput, ok := armInput.(arm.IpsecPolicy)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected IpsecPolicy_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.IpsecPolicy, got %T", armInput)
 	}
 
 	// Set property "DhGroup":
 	if typedInput.DhGroup != nil {
-		dhGroup := *typedInput.DhGroup
+		var temp string
+		temp = string(*typedInput.DhGroup)
+		dhGroup := DhGroup(temp)
 		policy.DhGroup = &dhGroup
 	}
 
 	// Set property "IkeEncryption":
 	if typedInput.IkeEncryption != nil {
-		ikeEncryption := *typedInput.IkeEncryption
+		var temp string
+		temp = string(*typedInput.IkeEncryption)
+		ikeEncryption := IkeEncryption(temp)
 		policy.IkeEncryption = &ikeEncryption
 	}
 
 	// Set property "IkeIntegrity":
 	if typedInput.IkeIntegrity != nil {
-		ikeIntegrity := *typedInput.IkeIntegrity
+		var temp string
+		temp = string(*typedInput.IkeIntegrity)
+		ikeIntegrity := IkeIntegrity(temp)
 		policy.IkeIntegrity = &ikeIntegrity
 	}
 
 	// Set property "IpsecEncryption":
 	if typedInput.IpsecEncryption != nil {
-		ipsecEncryption := *typedInput.IpsecEncryption
+		var temp string
+		temp = string(*typedInput.IpsecEncryption)
+		ipsecEncryption := IpsecEncryption(temp)
 		policy.IpsecEncryption = &ipsecEncryption
 	}
 
 	// Set property "IpsecIntegrity":
 	if typedInput.IpsecIntegrity != nil {
-		ipsecIntegrity := *typedInput.IpsecIntegrity
+		var temp string
+		temp = string(*typedInput.IpsecIntegrity)
+		ipsecIntegrity := IpsecIntegrity(temp)
 		policy.IpsecIntegrity = &ipsecIntegrity
 	}
 
 	// Set property "PfsGroup":
 	if typedInput.PfsGroup != nil {
-		pfsGroup := *typedInput.PfsGroup
+		var temp string
+		temp = string(*typedInput.PfsGroup)
+		pfsGroup := PfsGroup(temp)
 		policy.PfsGroup = &pfsGroup
 	}
 
@@ -4899,67 +4740,6 @@ func (policy *IpsecPolicy) AssignProperties_To_IpsecPolicy(destination *storage.
 	return nil
 }
 
-// Initialize_From_IpsecPolicy_STATUS populates our IpsecPolicy from the provided source IpsecPolicy_STATUS
-func (policy *IpsecPolicy) Initialize_From_IpsecPolicy_STATUS(source *IpsecPolicy_STATUS) error {
-
-	// DhGroup
-	if source.DhGroup != nil {
-		dhGroup := genruntime.ToEnum(string(*source.DhGroup), dhGroup_Values)
-		policy.DhGroup = &dhGroup
-	} else {
-		policy.DhGroup = nil
-	}
-
-	// IkeEncryption
-	if source.IkeEncryption != nil {
-		ikeEncryption := genruntime.ToEnum(string(*source.IkeEncryption), ikeEncryption_Values)
-		policy.IkeEncryption = &ikeEncryption
-	} else {
-		policy.IkeEncryption = nil
-	}
-
-	// IkeIntegrity
-	if source.IkeIntegrity != nil {
-		ikeIntegrity := genruntime.ToEnum(string(*source.IkeIntegrity), ikeIntegrity_Values)
-		policy.IkeIntegrity = &ikeIntegrity
-	} else {
-		policy.IkeIntegrity = nil
-	}
-
-	// IpsecEncryption
-	if source.IpsecEncryption != nil {
-		ipsecEncryption := genruntime.ToEnum(string(*source.IpsecEncryption), ipsecEncryption_Values)
-		policy.IpsecEncryption = &ipsecEncryption
-	} else {
-		policy.IpsecEncryption = nil
-	}
-
-	// IpsecIntegrity
-	if source.IpsecIntegrity != nil {
-		ipsecIntegrity := genruntime.ToEnum(string(*source.IpsecIntegrity), ipsecIntegrity_Values)
-		policy.IpsecIntegrity = &ipsecIntegrity
-	} else {
-		policy.IpsecIntegrity = nil
-	}
-
-	// PfsGroup
-	if source.PfsGroup != nil {
-		pfsGroup := genruntime.ToEnum(string(*source.PfsGroup), pfsGroup_Values)
-		policy.PfsGroup = &pfsGroup
-	} else {
-		policy.PfsGroup = nil
-	}
-
-	// SaDataSizeKilobytes
-	policy.SaDataSizeKilobytes = genruntime.ClonePointerToInt(source.SaDataSizeKilobytes)
-
-	// SaLifeTimeSeconds
-	policy.SaLifeTimeSeconds = genruntime.ClonePointerToInt(source.SaLifeTimeSeconds)
-
-	// No error
-	return nil
-}
-
 // An IPSec Policy configuration for a virtual network gateway connection.
 type IpsecPolicy_STATUS struct {
 	// DhGroup: The DH Group used in IKE Phase 1 for initial SA.
@@ -4993,49 +4773,61 @@ var _ genruntime.FromARMConverter = &IpsecPolicy_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (policy *IpsecPolicy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &IpsecPolicy_STATUS_ARM{}
+	return &arm.IpsecPolicy_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (policy *IpsecPolicy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(IpsecPolicy_STATUS_ARM)
+	typedInput, ok := armInput.(arm.IpsecPolicy_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected IpsecPolicy_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.IpsecPolicy_STATUS, got %T", armInput)
 	}
 
 	// Set property "DhGroup":
 	if typedInput.DhGroup != nil {
-		dhGroup := *typedInput.DhGroup
+		var temp string
+		temp = string(*typedInput.DhGroup)
+		dhGroup := DhGroup_STATUS(temp)
 		policy.DhGroup = &dhGroup
 	}
 
 	// Set property "IkeEncryption":
 	if typedInput.IkeEncryption != nil {
-		ikeEncryption := *typedInput.IkeEncryption
+		var temp string
+		temp = string(*typedInput.IkeEncryption)
+		ikeEncryption := IkeEncryption_STATUS(temp)
 		policy.IkeEncryption = &ikeEncryption
 	}
 
 	// Set property "IkeIntegrity":
 	if typedInput.IkeIntegrity != nil {
-		ikeIntegrity := *typedInput.IkeIntegrity
+		var temp string
+		temp = string(*typedInput.IkeIntegrity)
+		ikeIntegrity := IkeIntegrity_STATUS(temp)
 		policy.IkeIntegrity = &ikeIntegrity
 	}
 
 	// Set property "IpsecEncryption":
 	if typedInput.IpsecEncryption != nil {
-		ipsecEncryption := *typedInput.IpsecEncryption
+		var temp string
+		temp = string(*typedInput.IpsecEncryption)
+		ipsecEncryption := IpsecEncryption_STATUS(temp)
 		policy.IpsecEncryption = &ipsecEncryption
 	}
 
 	// Set property "IpsecIntegrity":
 	if typedInput.IpsecIntegrity != nil {
-		ipsecIntegrity := *typedInput.IpsecIntegrity
+		var temp string
+		temp = string(*typedInput.IpsecIntegrity)
+		ipsecIntegrity := IpsecIntegrity_STATUS(temp)
 		policy.IpsecIntegrity = &ipsecIntegrity
 	}
 
 	// Set property "PfsGroup":
 	if typedInput.PfsGroup != nil {
-		pfsGroup := *typedInput.PfsGroup
+		var temp string
+		temp = string(*typedInput.PfsGroup)
+		pfsGroup := PfsGroup_STATUS(temp)
 		policy.PfsGroup = &pfsGroup
 	}
 
@@ -5212,7 +5004,7 @@ func (server *RadiusServer) ConvertToARM(resolved genruntime.ConvertToARMResolve
 	if server == nil {
 		return nil, nil
 	}
-	result := &RadiusServer_ARM{}
+	result := &arm.RadiusServer{}
 
 	// Set property "RadiusServerAddress":
 	if server.RadiusServerAddress != nil {
@@ -5236,14 +5028,14 @@ func (server *RadiusServer) ConvertToARM(resolved genruntime.ConvertToARMResolve
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (server *RadiusServer) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &RadiusServer_ARM{}
+	return &arm.RadiusServer{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (server *RadiusServer) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(RadiusServer_ARM)
+	typedInput, ok := armInput.(arm.RadiusServer)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected RadiusServer_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RadiusServer, got %T", armInput)
 	}
 
 	// Set property "RadiusServerAddress":
@@ -5309,22 +5101,6 @@ func (server *RadiusServer) AssignProperties_To_RadiusServer(destination *storag
 	return nil
 }
 
-// Initialize_From_RadiusServer_STATUS populates our RadiusServer from the provided source RadiusServer_STATUS
-func (server *RadiusServer) Initialize_From_RadiusServer_STATUS(source *RadiusServer_STATUS) error {
-
-	// RadiusServerAddress
-	server.RadiusServerAddress = genruntime.ClonePointerToString(source.RadiusServerAddress)
-
-	// RadiusServerScore
-	server.RadiusServerScore = genruntime.ClonePointerToInt(source.RadiusServerScore)
-
-	// RadiusServerSecret
-	server.RadiusServerSecret = genruntime.ClonePointerToString(source.RadiusServerSecret)
-
-	// No error
-	return nil
-}
-
 // Radius Server Settings.
 type RadiusServer_STATUS struct {
 	// RadiusServerAddress: The address of this radius server.
@@ -5341,14 +5117,14 @@ var _ genruntime.FromARMConverter = &RadiusServer_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (server *RadiusServer_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &RadiusServer_STATUS_ARM{}
+	return &arm.RadiusServer_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (server *RadiusServer_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(RadiusServer_STATUS_ARM)
+	typedInput, ok := armInput.(arm.RadiusServer_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected RadiusServer_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RadiusServer_STATUS, got %T", armInput)
 	}
 
 	// Set property "RadiusServerAddress":
@@ -5666,7 +5442,7 @@ func (certificate *VpnClientRevokedCertificate) ConvertToARM(resolved genruntime
 	if certificate == nil {
 		return nil, nil
 	}
-	result := &VpnClientRevokedCertificate_ARM{}
+	result := &arm.VpnClientRevokedCertificate{}
 
 	// Set property "Name":
 	if certificate.Name != nil {
@@ -5676,7 +5452,7 @@ func (certificate *VpnClientRevokedCertificate) ConvertToARM(resolved genruntime
 
 	// Set property "Properties":
 	if certificate.Thumbprint != nil {
-		result.Properties = &VpnClientRevokedCertificatePropertiesFormat_ARM{}
+		result.Properties = &arm.VpnClientRevokedCertificatePropertiesFormat{}
 	}
 	if certificate.Thumbprint != nil {
 		thumbprint := *certificate.Thumbprint
@@ -5687,14 +5463,14 @@ func (certificate *VpnClientRevokedCertificate) ConvertToARM(resolved genruntime
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (certificate *VpnClientRevokedCertificate) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VpnClientRevokedCertificate_ARM{}
+	return &arm.VpnClientRevokedCertificate{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (certificate *VpnClientRevokedCertificate) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VpnClientRevokedCertificate_ARM)
+	typedInput, ok := armInput.(arm.VpnClientRevokedCertificate)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VpnClientRevokedCertificate_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VpnClientRevokedCertificate, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -5751,19 +5527,6 @@ func (certificate *VpnClientRevokedCertificate) AssignProperties_To_VpnClientRev
 	return nil
 }
 
-// Initialize_From_VpnClientRevokedCertificate_STATUS populates our VpnClientRevokedCertificate from the provided source VpnClientRevokedCertificate_STATUS
-func (certificate *VpnClientRevokedCertificate) Initialize_From_VpnClientRevokedCertificate_STATUS(source *VpnClientRevokedCertificate_STATUS) error {
-
-	// Name
-	certificate.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Thumbprint
-	certificate.Thumbprint = genruntime.ClonePointerToString(source.Thumbprint)
-
-	// No error
-	return nil
-}
-
 // VPN client revoked certificate of virtual network gateway.
 type VpnClientRevokedCertificate_STATUS struct {
 	// Etag: A unique read-only string that changes whenever the resource is updated.
@@ -5786,14 +5549,14 @@ var _ genruntime.FromARMConverter = &VpnClientRevokedCertificate_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (certificate *VpnClientRevokedCertificate_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VpnClientRevokedCertificate_STATUS_ARM{}
+	return &arm.VpnClientRevokedCertificate_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (certificate *VpnClientRevokedCertificate_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VpnClientRevokedCertificate_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VpnClientRevokedCertificate_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VpnClientRevokedCertificate_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VpnClientRevokedCertificate_STATUS, got %T", armInput)
 	}
 
 	// Set property "Etag":
@@ -5818,7 +5581,9 @@ func (certificate *VpnClientRevokedCertificate_STATUS) PopulateFromARM(owner gen
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := ProvisioningState_STATUS(temp)
 			certificate.ProvisioningState = &provisioningState
 		}
 	}
@@ -5917,7 +5682,7 @@ func (certificate *VpnClientRootCertificate) ConvertToARM(resolved genruntime.Co
 	if certificate == nil {
 		return nil, nil
 	}
-	result := &VpnClientRootCertificate_ARM{}
+	result := &arm.VpnClientRootCertificate{}
 
 	// Set property "Name":
 	if certificate.Name != nil {
@@ -5927,7 +5692,7 @@ func (certificate *VpnClientRootCertificate) ConvertToARM(resolved genruntime.Co
 
 	// Set property "Properties":
 	if certificate.PublicCertData != nil {
-		result.Properties = &VpnClientRootCertificatePropertiesFormat_ARM{}
+		result.Properties = &arm.VpnClientRootCertificatePropertiesFormat{}
 	}
 	if certificate.PublicCertData != nil {
 		publicCertData := *certificate.PublicCertData
@@ -5938,14 +5703,14 @@ func (certificate *VpnClientRootCertificate) ConvertToARM(resolved genruntime.Co
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (certificate *VpnClientRootCertificate) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VpnClientRootCertificate_ARM{}
+	return &arm.VpnClientRootCertificate{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (certificate *VpnClientRootCertificate) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VpnClientRootCertificate_ARM)
+	typedInput, ok := armInput.(arm.VpnClientRootCertificate)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VpnClientRootCertificate_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VpnClientRootCertificate, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -6002,19 +5767,6 @@ func (certificate *VpnClientRootCertificate) AssignProperties_To_VpnClientRootCe
 	return nil
 }
 
-// Initialize_From_VpnClientRootCertificate_STATUS populates our VpnClientRootCertificate from the provided source VpnClientRootCertificate_STATUS
-func (certificate *VpnClientRootCertificate) Initialize_From_VpnClientRootCertificate_STATUS(source *VpnClientRootCertificate_STATUS) error {
-
-	// Name
-	certificate.Name = genruntime.ClonePointerToString(source.Name)
-
-	// PublicCertData
-	certificate.PublicCertData = genruntime.ClonePointerToString(source.PublicCertData)
-
-	// No error
-	return nil
-}
-
 // VPN client root certificate of virtual network gateway.
 type VpnClientRootCertificate_STATUS struct {
 	// Etag: A unique read-only string that changes whenever the resource is updated.
@@ -6037,14 +5789,14 @@ var _ genruntime.FromARMConverter = &VpnClientRootCertificate_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (certificate *VpnClientRootCertificate_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VpnClientRootCertificate_STATUS_ARM{}
+	return &arm.VpnClientRootCertificate_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (certificate *VpnClientRootCertificate_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VpnClientRootCertificate_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VpnClientRootCertificate_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VpnClientRootCertificate_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VpnClientRootCertificate_STATUS, got %T", armInput)
 	}
 
 	// Set property "Etag":
@@ -6069,7 +5821,9 @@ func (certificate *VpnClientRootCertificate_STATUS) PopulateFromARM(owner genrun
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := ProvisioningState_STATUS(temp)
 			certificate.ProvisioningState = &provisioningState
 		}
 	}

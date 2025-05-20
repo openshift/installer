@@ -4,19 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=compute.azure.com,resources=diskencryptionsets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=compute.azure.com,resources={diskencryptionsets/status,diskencryptionsets/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -44,6 +46,48 @@ func (encryptionSet *DiskEncryptionSet) SetConditions(conditions conditions.Cond
 	encryptionSet.Status.Conditions = conditions
 }
 
+var _ conversion.Convertible = &DiskEncryptionSet{}
+
+// ConvertFrom populates our DiskEncryptionSet from the provided hub DiskEncryptionSet
+func (encryptionSet *DiskEncryptionSet) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.DiskEncryptionSet)
+	if !ok {
+		return fmt.Errorf("expected compute/v1api20240302/storage/DiskEncryptionSet but received %T instead", hub)
+	}
+
+	return encryptionSet.AssignProperties_From_DiskEncryptionSet(source)
+}
+
+// ConvertTo populates the provided hub DiskEncryptionSet from our DiskEncryptionSet
+func (encryptionSet *DiskEncryptionSet) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.DiskEncryptionSet)
+	if !ok {
+		return fmt.Errorf("expected compute/v1api20240302/storage/DiskEncryptionSet but received %T instead", hub)
+	}
+
+	return encryptionSet.AssignProperties_To_DiskEncryptionSet(destination)
+}
+
+var _ configmaps.Exporter = &DiskEncryptionSet{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (encryptionSet *DiskEncryptionSet) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if encryptionSet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return encryptionSet.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &DiskEncryptionSet{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (encryptionSet *DiskEncryptionSet) SecretDestinationExpressions() []*core.DestinationExpression {
+	if encryptionSet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return encryptionSet.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &DiskEncryptionSet{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +97,7 @@ func (encryptionSet *DiskEncryptionSet) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-07-02"
 func (encryptionSet DiskEncryptionSet) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-07-02"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -115,8 +159,75 @@ func (encryptionSet *DiskEncryptionSet) SetStatus(status genruntime.ConvertibleS
 	return nil
 }
 
-// Hub marks that this DiskEncryptionSet is the hub type for conversion
-func (encryptionSet *DiskEncryptionSet) Hub() {}
+// AssignProperties_From_DiskEncryptionSet populates our DiskEncryptionSet from the provided source DiskEncryptionSet
+func (encryptionSet *DiskEncryptionSet) AssignProperties_From_DiskEncryptionSet(source *storage.DiskEncryptionSet) error {
+
+	// ObjectMeta
+	encryptionSet.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec DiskEncryptionSet_Spec
+	err := spec.AssignProperties_From_DiskEncryptionSet_Spec(&source.Spec)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_From_DiskEncryptionSet_Spec() to populate field Spec")
+	}
+	encryptionSet.Spec = spec
+
+	// Status
+	var status DiskEncryptionSet_STATUS
+	err = status.AssignProperties_From_DiskEncryptionSet_STATUS(&source.Status)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_From_DiskEncryptionSet_STATUS() to populate field Status")
+	}
+	encryptionSet.Status = status
+
+	// Invoke the augmentConversionForDiskEncryptionSet interface (if implemented) to customize the conversion
+	var encryptionSetAsAny any = encryptionSet
+	if augmentedEncryptionSet, ok := encryptionSetAsAny.(augmentConversionForDiskEncryptionSet); ok {
+		err := augmentedEncryptionSet.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskEncryptionSet populates the provided destination DiskEncryptionSet from our DiskEncryptionSet
+func (encryptionSet *DiskEncryptionSet) AssignProperties_To_DiskEncryptionSet(destination *storage.DiskEncryptionSet) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *encryptionSet.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.DiskEncryptionSet_Spec
+	err := encryptionSet.Spec.AssignProperties_To_DiskEncryptionSet_Spec(&spec)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_To_DiskEncryptionSet_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.DiskEncryptionSet_STATUS
+	err = encryptionSet.Status.AssignProperties_To_DiskEncryptionSet_STATUS(&status)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_To_DiskEncryptionSet_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForDiskEncryptionSet interface (if implemented) to customize the conversion
+	var encryptionSetAsAny any = encryptionSet
+	if augmentedEncryptionSet, ok := encryptionSetAsAny.(augmentConversionForDiskEncryptionSet); ok {
+		err := augmentedEncryptionSet.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (encryptionSet *DiskEncryptionSet) OriginalGVK() *schema.GroupVersionKind {
@@ -144,6 +255,11 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2022-07-02")
 
+type augmentConversionForDiskEncryptionSet interface {
+	AssignPropertiesFrom(src *storage.DiskEncryptionSet) error
+	AssignPropertiesTo(dst *storage.DiskEncryptionSet) error
+}
+
 // Storage version of v1api20220702.DiskEncryptionSet_Spec
 type DiskEncryptionSet_Spec struct {
 	ActiveKey *KeyForDiskEncryptionSet `json:"activeKey,omitempty"`
@@ -156,6 +272,7 @@ type DiskEncryptionSet_Spec struct {
 	FederatedClientIdFromConfig *genruntime.ConfigMapReference `json:"federatedClientIdFromConfig,omitempty" optionalConfigMapPair:"FederatedClientId"`
 	Identity                    *EncryptionSetIdentity         `json:"identity,omitempty"`
 	Location                    *string                        `json:"location,omitempty"`
+	OperatorSpec                *DiskEncryptionSetOperatorSpec `json:"operatorSpec,omitempty"`
 	OriginalVersion             string                         `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
@@ -172,20 +289,256 @@ var _ genruntime.ConvertibleSpec = &DiskEncryptionSet_Spec{}
 
 // ConvertSpecFrom populates our DiskEncryptionSet_Spec from the provided source
 func (encryptionSet *DiskEncryptionSet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == encryptionSet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.DiskEncryptionSet_Spec)
+	if ok {
+		// Populate our instance from source
+		return encryptionSet.AssignProperties_From_DiskEncryptionSet_Spec(src)
 	}
 
-	return source.ConvertSpecTo(encryptionSet)
+	// Convert to an intermediate form
+	src = &storage.DiskEncryptionSet_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = encryptionSet.AssignProperties_From_DiskEncryptionSet_Spec(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our DiskEncryptionSet_Spec
 func (encryptionSet *DiskEncryptionSet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == encryptionSet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.DiskEncryptionSet_Spec)
+	if ok {
+		// Populate destination from our instance
+		return encryptionSet.AssignProperties_To_DiskEncryptionSet_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(encryptionSet)
+	// Convert to an intermediate form
+	dst = &storage.DiskEncryptionSet_Spec{}
+	err := encryptionSet.AssignProperties_To_DiskEncryptionSet_Spec(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_DiskEncryptionSet_Spec populates our DiskEncryptionSet_Spec from the provided source DiskEncryptionSet_Spec
+func (encryptionSet *DiskEncryptionSet_Spec) AssignProperties_From_DiskEncryptionSet_Spec(source *storage.DiskEncryptionSet_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ActiveKey
+	if source.ActiveKey != nil {
+		var activeKey KeyForDiskEncryptionSet
+		err := activeKey.AssignProperties_From_KeyForDiskEncryptionSet(source.ActiveKey)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_KeyForDiskEncryptionSet() to populate field ActiveKey")
+		}
+		encryptionSet.ActiveKey = &activeKey
+	} else {
+		encryptionSet.ActiveKey = nil
+	}
+
+	// AzureName
+	encryptionSet.AzureName = source.AzureName
+
+	// EncryptionType
+	encryptionSet.EncryptionType = genruntime.ClonePointerToString(source.EncryptionType)
+
+	// FederatedClientId
+	encryptionSet.FederatedClientId = genruntime.ClonePointerToString(source.FederatedClientId)
+
+	// FederatedClientIdFromConfig
+	if source.FederatedClientIdFromConfig != nil {
+		federatedClientIdFromConfig := source.FederatedClientIdFromConfig.Copy()
+		encryptionSet.FederatedClientIdFromConfig = &federatedClientIdFromConfig
+	} else {
+		encryptionSet.FederatedClientIdFromConfig = nil
+	}
+
+	// Identity
+	if source.Identity != nil {
+		var identity EncryptionSetIdentity
+		err := identity.AssignProperties_From_EncryptionSetIdentity(source.Identity)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_EncryptionSetIdentity() to populate field Identity")
+		}
+		encryptionSet.Identity = &identity
+	} else {
+		encryptionSet.Identity = nil
+	}
+
+	// Location
+	encryptionSet.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec DiskEncryptionSetOperatorSpec
+		err := operatorSpec.AssignProperties_From_DiskEncryptionSetOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DiskEncryptionSetOperatorSpec() to populate field OperatorSpec")
+		}
+		encryptionSet.OperatorSpec = &operatorSpec
+	} else {
+		encryptionSet.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	encryptionSet.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		encryptionSet.Owner = &owner
+	} else {
+		encryptionSet.Owner = nil
+	}
+
+	// RotationToLatestKeyVersionEnabled
+	if source.RotationToLatestKeyVersionEnabled != nil {
+		rotationToLatestKeyVersionEnabled := *source.RotationToLatestKeyVersionEnabled
+		encryptionSet.RotationToLatestKeyVersionEnabled = &rotationToLatestKeyVersionEnabled
+	} else {
+		encryptionSet.RotationToLatestKeyVersionEnabled = nil
+	}
+
+	// Tags
+	encryptionSet.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		encryptionSet.PropertyBag = propertyBag
+	} else {
+		encryptionSet.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskEncryptionSet_Spec interface (if implemented) to customize the conversion
+	var encryptionSetAsAny any = encryptionSet
+	if augmentedEncryptionSet, ok := encryptionSetAsAny.(augmentConversionForDiskEncryptionSet_Spec); ok {
+		err := augmentedEncryptionSet.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskEncryptionSet_Spec populates the provided destination DiskEncryptionSet_Spec from our DiskEncryptionSet_Spec
+func (encryptionSet *DiskEncryptionSet_Spec) AssignProperties_To_DiskEncryptionSet_Spec(destination *storage.DiskEncryptionSet_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(encryptionSet.PropertyBag)
+
+	// ActiveKey
+	if encryptionSet.ActiveKey != nil {
+		var activeKey storage.KeyForDiskEncryptionSet
+		err := encryptionSet.ActiveKey.AssignProperties_To_KeyForDiskEncryptionSet(&activeKey)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_KeyForDiskEncryptionSet() to populate field ActiveKey")
+		}
+		destination.ActiveKey = &activeKey
+	} else {
+		destination.ActiveKey = nil
+	}
+
+	// AzureName
+	destination.AzureName = encryptionSet.AzureName
+
+	// EncryptionType
+	destination.EncryptionType = genruntime.ClonePointerToString(encryptionSet.EncryptionType)
+
+	// FederatedClientId
+	destination.FederatedClientId = genruntime.ClonePointerToString(encryptionSet.FederatedClientId)
+
+	// FederatedClientIdFromConfig
+	if encryptionSet.FederatedClientIdFromConfig != nil {
+		federatedClientIdFromConfig := encryptionSet.FederatedClientIdFromConfig.Copy()
+		destination.FederatedClientIdFromConfig = &federatedClientIdFromConfig
+	} else {
+		destination.FederatedClientIdFromConfig = nil
+	}
+
+	// Identity
+	if encryptionSet.Identity != nil {
+		var identity storage.EncryptionSetIdentity
+		err := encryptionSet.Identity.AssignProperties_To_EncryptionSetIdentity(&identity)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_EncryptionSetIdentity() to populate field Identity")
+		}
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(encryptionSet.Location)
+
+	// OperatorSpec
+	if encryptionSet.OperatorSpec != nil {
+		var operatorSpec storage.DiskEncryptionSetOperatorSpec
+		err := encryptionSet.OperatorSpec.AssignProperties_To_DiskEncryptionSetOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DiskEncryptionSetOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = encryptionSet.OriginalVersion
+
+	// Owner
+	if encryptionSet.Owner != nil {
+		owner := encryptionSet.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// RotationToLatestKeyVersionEnabled
+	if encryptionSet.RotationToLatestKeyVersionEnabled != nil {
+		rotationToLatestKeyVersionEnabled := *encryptionSet.RotationToLatestKeyVersionEnabled
+		destination.RotationToLatestKeyVersionEnabled = &rotationToLatestKeyVersionEnabled
+	} else {
+		destination.RotationToLatestKeyVersionEnabled = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(encryptionSet.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskEncryptionSet_Spec interface (if implemented) to customize the conversion
+	var encryptionSetAsAny any = encryptionSet
+	if augmentedEncryptionSet, ok := encryptionSetAsAny.(augmentConversionForDiskEncryptionSet_Spec); ok {
+		err := augmentedEncryptionSet.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220702.DiskEncryptionSet_STATUS
@@ -213,20 +566,284 @@ var _ genruntime.ConvertibleStatus = &DiskEncryptionSet_STATUS{}
 
 // ConvertStatusFrom populates our DiskEncryptionSet_STATUS from the provided source
 func (encryptionSet *DiskEncryptionSet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == encryptionSet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.DiskEncryptionSet_STATUS)
+	if ok {
+		// Populate our instance from source
+		return encryptionSet.AssignProperties_From_DiskEncryptionSet_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(encryptionSet)
+	// Convert to an intermediate form
+	src = &storage.DiskEncryptionSet_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = encryptionSet.AssignProperties_From_DiskEncryptionSet_STATUS(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our DiskEncryptionSet_STATUS
 func (encryptionSet *DiskEncryptionSet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == encryptionSet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.DiskEncryptionSet_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return encryptionSet.AssignProperties_To_DiskEncryptionSet_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(encryptionSet)
+	// Convert to an intermediate form
+	dst = &storage.DiskEncryptionSet_STATUS{}
+	err := encryptionSet.AssignProperties_To_DiskEncryptionSet_STATUS(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_DiskEncryptionSet_STATUS populates our DiskEncryptionSet_STATUS from the provided source DiskEncryptionSet_STATUS
+func (encryptionSet *DiskEncryptionSet_STATUS) AssignProperties_From_DiskEncryptionSet_STATUS(source *storage.DiskEncryptionSet_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ActiveKey
+	if source.ActiveKey != nil {
+		var activeKey KeyForDiskEncryptionSet_STATUS
+		err := activeKey.AssignProperties_From_KeyForDiskEncryptionSet_STATUS(source.ActiveKey)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_KeyForDiskEncryptionSet_STATUS() to populate field ActiveKey")
+		}
+		encryptionSet.ActiveKey = &activeKey
+	} else {
+		encryptionSet.ActiveKey = nil
+	}
+
+	// AutoKeyRotationError
+	if source.AutoKeyRotationError != nil {
+		var autoKeyRotationError ApiError_STATUS
+		err := autoKeyRotationError.AssignProperties_From_ApiError_STATUS(source.AutoKeyRotationError)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ApiError_STATUS() to populate field AutoKeyRotationError")
+		}
+		encryptionSet.AutoKeyRotationError = &autoKeyRotationError
+	} else {
+		encryptionSet.AutoKeyRotationError = nil
+	}
+
+	// Conditions
+	encryptionSet.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// EncryptionType
+	encryptionSet.EncryptionType = genruntime.ClonePointerToString(source.EncryptionType)
+
+	// FederatedClientId
+	encryptionSet.FederatedClientId = genruntime.ClonePointerToString(source.FederatedClientId)
+
+	// Id
+	encryptionSet.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Identity
+	if source.Identity != nil {
+		var identity EncryptionSetIdentity_STATUS
+		err := identity.AssignProperties_From_EncryptionSetIdentity_STATUS(source.Identity)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_EncryptionSetIdentity_STATUS() to populate field Identity")
+		}
+		encryptionSet.Identity = &identity
+	} else {
+		encryptionSet.Identity = nil
+	}
+
+	// LastKeyRotationTimestamp
+	encryptionSet.LastKeyRotationTimestamp = genruntime.ClonePointerToString(source.LastKeyRotationTimestamp)
+
+	// Location
+	encryptionSet.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	encryptionSet.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PreviousKeys
+	if source.PreviousKeys != nil {
+		previousKeyList := make([]KeyForDiskEncryptionSet_STATUS, len(source.PreviousKeys))
+		for previousKeyIndex, previousKeyItem := range source.PreviousKeys {
+			// Shadow the loop variable to avoid aliasing
+			previousKeyItem := previousKeyItem
+			var previousKey KeyForDiskEncryptionSet_STATUS
+			err := previousKey.AssignProperties_From_KeyForDiskEncryptionSet_STATUS(&previousKeyItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_KeyForDiskEncryptionSet_STATUS() to populate field PreviousKeys")
+			}
+			previousKeyList[previousKeyIndex] = previousKey
+		}
+		encryptionSet.PreviousKeys = previousKeyList
+	} else {
+		encryptionSet.PreviousKeys = nil
+	}
+
+	// ProvisioningState
+	encryptionSet.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// RotationToLatestKeyVersionEnabled
+	if source.RotationToLatestKeyVersionEnabled != nil {
+		rotationToLatestKeyVersionEnabled := *source.RotationToLatestKeyVersionEnabled
+		encryptionSet.RotationToLatestKeyVersionEnabled = &rotationToLatestKeyVersionEnabled
+	} else {
+		encryptionSet.RotationToLatestKeyVersionEnabled = nil
+	}
+
+	// Tags
+	encryptionSet.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	encryptionSet.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		encryptionSet.PropertyBag = propertyBag
+	} else {
+		encryptionSet.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskEncryptionSet_STATUS interface (if implemented) to customize the conversion
+	var encryptionSetAsAny any = encryptionSet
+	if augmentedEncryptionSet, ok := encryptionSetAsAny.(augmentConversionForDiskEncryptionSet_STATUS); ok {
+		err := augmentedEncryptionSet.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskEncryptionSet_STATUS populates the provided destination DiskEncryptionSet_STATUS from our DiskEncryptionSet_STATUS
+func (encryptionSet *DiskEncryptionSet_STATUS) AssignProperties_To_DiskEncryptionSet_STATUS(destination *storage.DiskEncryptionSet_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(encryptionSet.PropertyBag)
+
+	// ActiveKey
+	if encryptionSet.ActiveKey != nil {
+		var activeKey storage.KeyForDiskEncryptionSet_STATUS
+		err := encryptionSet.ActiveKey.AssignProperties_To_KeyForDiskEncryptionSet_STATUS(&activeKey)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_KeyForDiskEncryptionSet_STATUS() to populate field ActiveKey")
+		}
+		destination.ActiveKey = &activeKey
+	} else {
+		destination.ActiveKey = nil
+	}
+
+	// AutoKeyRotationError
+	if encryptionSet.AutoKeyRotationError != nil {
+		var autoKeyRotationError storage.ApiError_STATUS
+		err := encryptionSet.AutoKeyRotationError.AssignProperties_To_ApiError_STATUS(&autoKeyRotationError)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ApiError_STATUS() to populate field AutoKeyRotationError")
+		}
+		destination.AutoKeyRotationError = &autoKeyRotationError
+	} else {
+		destination.AutoKeyRotationError = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(encryptionSet.Conditions)
+
+	// EncryptionType
+	destination.EncryptionType = genruntime.ClonePointerToString(encryptionSet.EncryptionType)
+
+	// FederatedClientId
+	destination.FederatedClientId = genruntime.ClonePointerToString(encryptionSet.FederatedClientId)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(encryptionSet.Id)
+
+	// Identity
+	if encryptionSet.Identity != nil {
+		var identity storage.EncryptionSetIdentity_STATUS
+		err := encryptionSet.Identity.AssignProperties_To_EncryptionSetIdentity_STATUS(&identity)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_EncryptionSetIdentity_STATUS() to populate field Identity")
+		}
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// LastKeyRotationTimestamp
+	destination.LastKeyRotationTimestamp = genruntime.ClonePointerToString(encryptionSet.LastKeyRotationTimestamp)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(encryptionSet.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(encryptionSet.Name)
+
+	// PreviousKeys
+	if encryptionSet.PreviousKeys != nil {
+		previousKeyList := make([]storage.KeyForDiskEncryptionSet_STATUS, len(encryptionSet.PreviousKeys))
+		for previousKeyIndex, previousKeyItem := range encryptionSet.PreviousKeys {
+			// Shadow the loop variable to avoid aliasing
+			previousKeyItem := previousKeyItem
+			var previousKey storage.KeyForDiskEncryptionSet_STATUS
+			err := previousKeyItem.AssignProperties_To_KeyForDiskEncryptionSet_STATUS(&previousKey)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_KeyForDiskEncryptionSet_STATUS() to populate field PreviousKeys")
+			}
+			previousKeyList[previousKeyIndex] = previousKey
+		}
+		destination.PreviousKeys = previousKeyList
+	} else {
+		destination.PreviousKeys = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(encryptionSet.ProvisioningState)
+
+	// RotationToLatestKeyVersionEnabled
+	if encryptionSet.RotationToLatestKeyVersionEnabled != nil {
+		rotationToLatestKeyVersionEnabled := *encryptionSet.RotationToLatestKeyVersionEnabled
+		destination.RotationToLatestKeyVersionEnabled = &rotationToLatestKeyVersionEnabled
+	} else {
+		destination.RotationToLatestKeyVersionEnabled = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(encryptionSet.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(encryptionSet.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskEncryptionSet_STATUS interface (if implemented) to customize the conversion
+	var encryptionSetAsAny any = encryptionSet
+	if augmentedEncryptionSet, ok := encryptionSetAsAny.(augmentConversionForDiskEncryptionSet_STATUS); ok {
+		err := augmentedEncryptionSet.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220702.ApiError_STATUS
@@ -240,6 +857,274 @@ type ApiError_STATUS struct {
 	Target      *string                `json:"target,omitempty"`
 }
 
+// AssignProperties_From_ApiError_STATUS populates our ApiError_STATUS from the provided source ApiError_STATUS
+func (error *ApiError_STATUS) AssignProperties_From_ApiError_STATUS(source *storage.ApiError_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Code
+	error.Code = genruntime.ClonePointerToString(source.Code)
+
+	// Details
+	if source.Details != nil {
+		detailList := make([]ApiErrorBase_STATUS, len(source.Details))
+		for detailIndex, detailItem := range source.Details {
+			// Shadow the loop variable to avoid aliasing
+			detailItem := detailItem
+			var detail ApiErrorBase_STATUS
+			err := detail.AssignProperties_From_ApiErrorBase_STATUS(&detailItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_ApiErrorBase_STATUS() to populate field Details")
+			}
+			detailList[detailIndex] = detail
+		}
+		error.Details = detailList
+	} else {
+		error.Details = nil
+	}
+
+	// Innererror
+	if source.Innererror != nil {
+		var innererror InnerError_STATUS
+		err := innererror.AssignProperties_From_InnerError_STATUS(source.Innererror)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_InnerError_STATUS() to populate field Innererror")
+		}
+		error.Innererror = &innererror
+	} else {
+		error.Innererror = nil
+	}
+
+	// Message
+	error.Message = genruntime.ClonePointerToString(source.Message)
+
+	// Target
+	error.Target = genruntime.ClonePointerToString(source.Target)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		error.PropertyBag = propertyBag
+	} else {
+		error.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiError_STATUS interface (if implemented) to customize the conversion
+	var errorAsAny any = error
+	if augmentedError, ok := errorAsAny.(augmentConversionForApiError_STATUS); ok {
+		err := augmentedError.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiError_STATUS populates the provided destination ApiError_STATUS from our ApiError_STATUS
+func (error *ApiError_STATUS) AssignProperties_To_ApiError_STATUS(destination *storage.ApiError_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(error.PropertyBag)
+
+	// Code
+	destination.Code = genruntime.ClonePointerToString(error.Code)
+
+	// Details
+	if error.Details != nil {
+		detailList := make([]storage.ApiErrorBase_STATUS, len(error.Details))
+		for detailIndex, detailItem := range error.Details {
+			// Shadow the loop variable to avoid aliasing
+			detailItem := detailItem
+			var detail storage.ApiErrorBase_STATUS
+			err := detailItem.AssignProperties_To_ApiErrorBase_STATUS(&detail)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_ApiErrorBase_STATUS() to populate field Details")
+			}
+			detailList[detailIndex] = detail
+		}
+		destination.Details = detailList
+	} else {
+		destination.Details = nil
+	}
+
+	// Innererror
+	if error.Innererror != nil {
+		var innererror storage.InnerError_STATUS
+		err := error.Innererror.AssignProperties_To_InnerError_STATUS(&innererror)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_InnerError_STATUS() to populate field Innererror")
+		}
+		destination.Innererror = &innererror
+	} else {
+		destination.Innererror = nil
+	}
+
+	// Message
+	destination.Message = genruntime.ClonePointerToString(error.Message)
+
+	// Target
+	destination.Target = genruntime.ClonePointerToString(error.Target)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiError_STATUS interface (if implemented) to customize the conversion
+	var errorAsAny any = error
+	if augmentedError, ok := errorAsAny.(augmentConversionForApiError_STATUS); ok {
+		err := augmentedError.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDiskEncryptionSet_Spec interface {
+	AssignPropertiesFrom(src *storage.DiskEncryptionSet_Spec) error
+	AssignPropertiesTo(dst *storage.DiskEncryptionSet_Spec) error
+}
+
+type augmentConversionForDiskEncryptionSet_STATUS interface {
+	AssignPropertiesFrom(src *storage.DiskEncryptionSet_STATUS) error
+	AssignPropertiesTo(dst *storage.DiskEncryptionSet_STATUS) error
+}
+
+// Storage version of v1api20220702.DiskEncryptionSetOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type DiskEncryptionSetOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_DiskEncryptionSetOperatorSpec populates our DiskEncryptionSetOperatorSpec from the provided source DiskEncryptionSetOperatorSpec
+func (operator *DiskEncryptionSetOperatorSpec) AssignProperties_From_DiskEncryptionSetOperatorSpec(source *storage.DiskEncryptionSetOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskEncryptionSetOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDiskEncryptionSetOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskEncryptionSetOperatorSpec populates the provided destination DiskEncryptionSetOperatorSpec from our DiskEncryptionSetOperatorSpec
+func (operator *DiskEncryptionSetOperatorSpec) AssignProperties_To_DiskEncryptionSetOperatorSpec(destination *storage.DiskEncryptionSetOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskEncryptionSetOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDiskEncryptionSetOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220702.EncryptionSetIdentity
 // The managed identity for the disk encryption set. It should be given permission on the key vault before it can be used
 // to encrypt disks.
@@ -247,6 +1132,98 @@ type EncryptionSetIdentity struct {
 	PropertyBag            genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	Type                   *string                       `json:"type,omitempty"`
 	UserAssignedIdentities []UserAssignedIdentityDetails `json:"userAssignedIdentities,omitempty"`
+}
+
+// AssignProperties_From_EncryptionSetIdentity populates our EncryptionSetIdentity from the provided source EncryptionSetIdentity
+func (identity *EncryptionSetIdentity) AssignProperties_From_EncryptionSetIdentity(source *storage.EncryptionSetIdentity) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Type
+	identity.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UserAssignedIdentities
+	if source.UserAssignedIdentities != nil {
+		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
+		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
+			// Shadow the loop variable to avoid aliasing
+			userAssignedIdentityItem := userAssignedIdentityItem
+			var userAssignedIdentity UserAssignedIdentityDetails
+			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+			}
+			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
+		}
+		identity.UserAssignedIdentities = userAssignedIdentityList
+	} else {
+		identity.UserAssignedIdentities = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		identity.PropertyBag = propertyBag
+	} else {
+		identity.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSetIdentity interface (if implemented) to customize the conversion
+	var identityAsAny any = identity
+	if augmentedIdentity, ok := identityAsAny.(augmentConversionForEncryptionSetIdentity); ok {
+		err := augmentedIdentity.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EncryptionSetIdentity populates the provided destination EncryptionSetIdentity from our EncryptionSetIdentity
+func (identity *EncryptionSetIdentity) AssignProperties_To_EncryptionSetIdentity(destination *storage.EncryptionSetIdentity) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(identity.PropertyBag)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(identity.Type)
+
+	// UserAssignedIdentities
+	if identity.UserAssignedIdentities != nil {
+		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
+		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
+			// Shadow the loop variable to avoid aliasing
+			userAssignedIdentityItem := userAssignedIdentityItem
+			var userAssignedIdentity storage.UserAssignedIdentityDetails
+			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+			}
+			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
+		}
+		destination.UserAssignedIdentities = userAssignedIdentityList
+	} else {
+		destination.UserAssignedIdentities = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSetIdentity interface (if implemented) to customize the conversion
+	var identityAsAny any = identity
+	if augmentedIdentity, ok := identityAsAny.(augmentConversionForEncryptionSetIdentity); ok {
+		err := augmentedIdentity.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220702.EncryptionSetIdentity_STATUS
@@ -260,6 +1237,110 @@ type EncryptionSetIdentity_STATUS struct {
 	UserAssignedIdentities map[string]EncryptionSetIdentity_UserAssignedIdentities_STATUS `json:"userAssignedIdentities,omitempty"`
 }
 
+// AssignProperties_From_EncryptionSetIdentity_STATUS populates our EncryptionSetIdentity_STATUS from the provided source EncryptionSetIdentity_STATUS
+func (identity *EncryptionSetIdentity_STATUS) AssignProperties_From_EncryptionSetIdentity_STATUS(source *storage.EncryptionSetIdentity_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// PrincipalId
+	identity.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
+
+	// TenantId
+	identity.TenantId = genruntime.ClonePointerToString(source.TenantId)
+
+	// Type
+	identity.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UserAssignedIdentities
+	if source.UserAssignedIdentities != nil {
+		userAssignedIdentityMap := make(map[string]EncryptionSetIdentity_UserAssignedIdentities_STATUS, len(source.UserAssignedIdentities))
+		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
+			// Shadow the loop variable to avoid aliasing
+			userAssignedIdentityValue := userAssignedIdentityValue
+			var userAssignedIdentity EncryptionSetIdentity_UserAssignedIdentities_STATUS
+			err := userAssignedIdentity.AssignProperties_From_EncryptionSetIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_EncryptionSetIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
+			}
+			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
+		}
+		identity.UserAssignedIdentities = userAssignedIdentityMap
+	} else {
+		identity.UserAssignedIdentities = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		identity.PropertyBag = propertyBag
+	} else {
+		identity.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSetIdentity_STATUS interface (if implemented) to customize the conversion
+	var identityAsAny any = identity
+	if augmentedIdentity, ok := identityAsAny.(augmentConversionForEncryptionSetIdentity_STATUS); ok {
+		err := augmentedIdentity.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EncryptionSetIdentity_STATUS populates the provided destination EncryptionSetIdentity_STATUS from our EncryptionSetIdentity_STATUS
+func (identity *EncryptionSetIdentity_STATUS) AssignProperties_To_EncryptionSetIdentity_STATUS(destination *storage.EncryptionSetIdentity_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(identity.PropertyBag)
+
+	// PrincipalId
+	destination.PrincipalId = genruntime.ClonePointerToString(identity.PrincipalId)
+
+	// TenantId
+	destination.TenantId = genruntime.ClonePointerToString(identity.TenantId)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(identity.Type)
+
+	// UserAssignedIdentities
+	if identity.UserAssignedIdentities != nil {
+		userAssignedIdentityMap := make(map[string]storage.EncryptionSetIdentity_UserAssignedIdentities_STATUS, len(identity.UserAssignedIdentities))
+		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
+			// Shadow the loop variable to avoid aliasing
+			userAssignedIdentityValue := userAssignedIdentityValue
+			var userAssignedIdentity storage.EncryptionSetIdentity_UserAssignedIdentities_STATUS
+			err := userAssignedIdentityValue.AssignProperties_To_EncryptionSetIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_EncryptionSetIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
+			}
+			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
+		}
+		destination.UserAssignedIdentities = userAssignedIdentityMap
+	} else {
+		destination.UserAssignedIdentities = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSetIdentity_STATUS interface (if implemented) to customize the conversion
+	var identityAsAny any = identity
+	if augmentedIdentity, ok := identityAsAny.(augmentConversionForEncryptionSetIdentity_STATUS); ok {
+		err := augmentedIdentity.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220702.KeyForDiskEncryptionSet
 // Key Vault Key Url to be used for server side encryption of Managed Disks and Snapshots
 type KeyForDiskEncryptionSet struct {
@@ -269,12 +1350,188 @@ type KeyForDiskEncryptionSet struct {
 	SourceVault      *SourceVault                   `json:"sourceVault,omitempty"`
 }
 
+// AssignProperties_From_KeyForDiskEncryptionSet populates our KeyForDiskEncryptionSet from the provided source KeyForDiskEncryptionSet
+func (encryptionSet *KeyForDiskEncryptionSet) AssignProperties_From_KeyForDiskEncryptionSet(source *storage.KeyForDiskEncryptionSet) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// KeyUrl
+	encryptionSet.KeyUrl = genruntime.ClonePointerToString(source.KeyUrl)
+
+	// KeyUrlFromConfig
+	if source.KeyUrlFromConfig != nil {
+		keyUrlFromConfig := source.KeyUrlFromConfig.Copy()
+		encryptionSet.KeyUrlFromConfig = &keyUrlFromConfig
+	} else {
+		encryptionSet.KeyUrlFromConfig = nil
+	}
+
+	// SourceVault
+	if source.SourceVault != nil {
+		var sourceVault SourceVault
+		err := sourceVault.AssignProperties_From_SourceVault(source.SourceVault)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SourceVault() to populate field SourceVault")
+		}
+		encryptionSet.SourceVault = &sourceVault
+	} else {
+		encryptionSet.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		encryptionSet.PropertyBag = propertyBag
+	} else {
+		encryptionSet.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyForDiskEncryptionSet interface (if implemented) to customize the conversion
+	var encryptionSetAsAny any = encryptionSet
+	if augmentedEncryptionSet, ok := encryptionSetAsAny.(augmentConversionForKeyForDiskEncryptionSet); ok {
+		err := augmentedEncryptionSet.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_KeyForDiskEncryptionSet populates the provided destination KeyForDiskEncryptionSet from our KeyForDiskEncryptionSet
+func (encryptionSet *KeyForDiskEncryptionSet) AssignProperties_To_KeyForDiskEncryptionSet(destination *storage.KeyForDiskEncryptionSet) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(encryptionSet.PropertyBag)
+
+	// KeyUrl
+	destination.KeyUrl = genruntime.ClonePointerToString(encryptionSet.KeyUrl)
+
+	// KeyUrlFromConfig
+	if encryptionSet.KeyUrlFromConfig != nil {
+		keyUrlFromConfig := encryptionSet.KeyUrlFromConfig.Copy()
+		destination.KeyUrlFromConfig = &keyUrlFromConfig
+	} else {
+		destination.KeyUrlFromConfig = nil
+	}
+
+	// SourceVault
+	if encryptionSet.SourceVault != nil {
+		var sourceVault storage.SourceVault
+		err := encryptionSet.SourceVault.AssignProperties_To_SourceVault(&sourceVault)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SourceVault() to populate field SourceVault")
+		}
+		destination.SourceVault = &sourceVault
+	} else {
+		destination.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyForDiskEncryptionSet interface (if implemented) to customize the conversion
+	var encryptionSetAsAny any = encryptionSet
+	if augmentedEncryptionSet, ok := encryptionSetAsAny.(augmentConversionForKeyForDiskEncryptionSet); ok {
+		err := augmentedEncryptionSet.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220702.KeyForDiskEncryptionSet_STATUS
 // Key Vault Key Url to be used for server side encryption of Managed Disks and Snapshots
 type KeyForDiskEncryptionSet_STATUS struct {
 	KeyUrl      *string                `json:"keyUrl,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	SourceVault *SourceVault_STATUS    `json:"sourceVault,omitempty"`
+}
+
+// AssignProperties_From_KeyForDiskEncryptionSet_STATUS populates our KeyForDiskEncryptionSet_STATUS from the provided source KeyForDiskEncryptionSet_STATUS
+func (encryptionSet *KeyForDiskEncryptionSet_STATUS) AssignProperties_From_KeyForDiskEncryptionSet_STATUS(source *storage.KeyForDiskEncryptionSet_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// KeyUrl
+	encryptionSet.KeyUrl = genruntime.ClonePointerToString(source.KeyUrl)
+
+	// SourceVault
+	if source.SourceVault != nil {
+		var sourceVault SourceVault_STATUS
+		err := sourceVault.AssignProperties_From_SourceVault_STATUS(source.SourceVault)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SourceVault_STATUS() to populate field SourceVault")
+		}
+		encryptionSet.SourceVault = &sourceVault
+	} else {
+		encryptionSet.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		encryptionSet.PropertyBag = propertyBag
+	} else {
+		encryptionSet.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyForDiskEncryptionSet_STATUS interface (if implemented) to customize the conversion
+	var encryptionSetAsAny any = encryptionSet
+	if augmentedEncryptionSet, ok := encryptionSetAsAny.(augmentConversionForKeyForDiskEncryptionSet_STATUS); ok {
+		err := augmentedEncryptionSet.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_KeyForDiskEncryptionSet_STATUS populates the provided destination KeyForDiskEncryptionSet_STATUS from our KeyForDiskEncryptionSet_STATUS
+func (encryptionSet *KeyForDiskEncryptionSet_STATUS) AssignProperties_To_KeyForDiskEncryptionSet_STATUS(destination *storage.KeyForDiskEncryptionSet_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(encryptionSet.PropertyBag)
+
+	// KeyUrl
+	destination.KeyUrl = genruntime.ClonePointerToString(encryptionSet.KeyUrl)
+
+	// SourceVault
+	if encryptionSet.SourceVault != nil {
+		var sourceVault storage.SourceVault_STATUS
+		err := encryptionSet.SourceVault.AssignProperties_To_SourceVault_STATUS(&sourceVault)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SourceVault_STATUS() to populate field SourceVault")
+		}
+		destination.SourceVault = &sourceVault
+	} else {
+		destination.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyForDiskEncryptionSet_STATUS interface (if implemented) to customize the conversion
+	var encryptionSetAsAny any = encryptionSet
+	if augmentedEncryptionSet, ok := encryptionSetAsAny.(augmentConversionForKeyForDiskEncryptionSet_STATUS); ok {
+		err := augmentedEncryptionSet.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220702.ApiErrorBase_STATUS
@@ -286,11 +1543,171 @@ type ApiErrorBase_STATUS struct {
 	Target      *string                `json:"target,omitempty"`
 }
 
+// AssignProperties_From_ApiErrorBase_STATUS populates our ApiErrorBase_STATUS from the provided source ApiErrorBase_STATUS
+func (base *ApiErrorBase_STATUS) AssignProperties_From_ApiErrorBase_STATUS(source *storage.ApiErrorBase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Code
+	base.Code = genruntime.ClonePointerToString(source.Code)
+
+	// Message
+	base.Message = genruntime.ClonePointerToString(source.Message)
+
+	// Target
+	base.Target = genruntime.ClonePointerToString(source.Target)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		base.PropertyBag = propertyBag
+	} else {
+		base.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiErrorBase_STATUS interface (if implemented) to customize the conversion
+	var baseAsAny any = base
+	if augmentedBase, ok := baseAsAny.(augmentConversionForApiErrorBase_STATUS); ok {
+		err := augmentedBase.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiErrorBase_STATUS populates the provided destination ApiErrorBase_STATUS from our ApiErrorBase_STATUS
+func (base *ApiErrorBase_STATUS) AssignProperties_To_ApiErrorBase_STATUS(destination *storage.ApiErrorBase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(base.PropertyBag)
+
+	// Code
+	destination.Code = genruntime.ClonePointerToString(base.Code)
+
+	// Message
+	destination.Message = genruntime.ClonePointerToString(base.Message)
+
+	// Target
+	destination.Target = genruntime.ClonePointerToString(base.Target)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiErrorBase_STATUS interface (if implemented) to customize the conversion
+	var baseAsAny any = base
+	if augmentedBase, ok := baseAsAny.(augmentConversionForApiErrorBase_STATUS); ok {
+		err := augmentedBase.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForApiError_STATUS interface {
+	AssignPropertiesFrom(src *storage.ApiError_STATUS) error
+	AssignPropertiesTo(dst *storage.ApiError_STATUS) error
+}
+
+type augmentConversionForDiskEncryptionSetOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.DiskEncryptionSetOperatorSpec) error
+	AssignPropertiesTo(dst *storage.DiskEncryptionSetOperatorSpec) error
+}
+
+type augmentConversionForEncryptionSetIdentity interface {
+	AssignPropertiesFrom(src *storage.EncryptionSetIdentity) error
+	AssignPropertiesTo(dst *storage.EncryptionSetIdentity) error
+}
+
+type augmentConversionForEncryptionSetIdentity_STATUS interface {
+	AssignPropertiesFrom(src *storage.EncryptionSetIdentity_STATUS) error
+	AssignPropertiesTo(dst *storage.EncryptionSetIdentity_STATUS) error
+}
+
+type augmentConversionForKeyForDiskEncryptionSet interface {
+	AssignPropertiesFrom(src *storage.KeyForDiskEncryptionSet) error
+	AssignPropertiesTo(dst *storage.KeyForDiskEncryptionSet) error
+}
+
+type augmentConversionForKeyForDiskEncryptionSet_STATUS interface {
+	AssignPropertiesFrom(src *storage.KeyForDiskEncryptionSet_STATUS) error
+	AssignPropertiesTo(dst *storage.KeyForDiskEncryptionSet_STATUS) error
+}
+
 // Storage version of v1api20220702.EncryptionSetIdentity_UserAssignedIdentities_STATUS
 type EncryptionSetIdentity_UserAssignedIdentities_STATUS struct {
 	ClientId    *string                `json:"clientId,omitempty"`
 	PrincipalId *string                `json:"principalId,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_EncryptionSetIdentity_UserAssignedIdentities_STATUS populates our EncryptionSetIdentity_UserAssignedIdentities_STATUS from the provided source EncryptionSetIdentity_UserAssignedIdentities_STATUS
+func (identities *EncryptionSetIdentity_UserAssignedIdentities_STATUS) AssignProperties_From_EncryptionSetIdentity_UserAssignedIdentities_STATUS(source *storage.EncryptionSetIdentity_UserAssignedIdentities_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ClientId
+	identities.ClientId = genruntime.ClonePointerToString(source.ClientId)
+
+	// PrincipalId
+	identities.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		identities.PropertyBag = propertyBag
+	} else {
+		identities.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSetIdentity_UserAssignedIdentities_STATUS interface (if implemented) to customize the conversion
+	var identitiesAsAny any = identities
+	if augmentedIdentities, ok := identitiesAsAny.(augmentConversionForEncryptionSetIdentity_UserAssignedIdentities_STATUS); ok {
+		err := augmentedIdentities.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EncryptionSetIdentity_UserAssignedIdentities_STATUS populates the provided destination EncryptionSetIdentity_UserAssignedIdentities_STATUS from our EncryptionSetIdentity_UserAssignedIdentities_STATUS
+func (identities *EncryptionSetIdentity_UserAssignedIdentities_STATUS) AssignProperties_To_EncryptionSetIdentity_UserAssignedIdentities_STATUS(destination *storage.EncryptionSetIdentity_UserAssignedIdentities_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(identities.PropertyBag)
+
+	// ClientId
+	destination.ClientId = genruntime.ClonePointerToString(identities.ClientId)
+
+	// PrincipalId
+	destination.PrincipalId = genruntime.ClonePointerToString(identities.PrincipalId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSetIdentity_UserAssignedIdentities_STATUS interface (if implemented) to customize the conversion
+	var identitiesAsAny any = identities
+	if augmentedIdentities, ok := identitiesAsAny.(augmentConversionForEncryptionSetIdentity_UserAssignedIdentities_STATUS); ok {
+		err := augmentedIdentities.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220702.InnerError_STATUS
@@ -299,6 +1716,68 @@ type InnerError_STATUS struct {
 	Errordetail   *string                `json:"errordetail,omitempty"`
 	Exceptiontype *string                `json:"exceptiontype,omitempty"`
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_InnerError_STATUS populates our InnerError_STATUS from the provided source InnerError_STATUS
+func (error *InnerError_STATUS) AssignProperties_From_InnerError_STATUS(source *storage.InnerError_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Errordetail
+	error.Errordetail = genruntime.ClonePointerToString(source.Errordetail)
+
+	// Exceptiontype
+	error.Exceptiontype = genruntime.ClonePointerToString(source.Exceptiontype)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		error.PropertyBag = propertyBag
+	} else {
+		error.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInnerError_STATUS interface (if implemented) to customize the conversion
+	var errorAsAny any = error
+	if augmentedError, ok := errorAsAny.(augmentConversionForInnerError_STATUS); ok {
+		err := augmentedError.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_InnerError_STATUS populates the provided destination InnerError_STATUS from our InnerError_STATUS
+func (error *InnerError_STATUS) AssignProperties_To_InnerError_STATUS(destination *storage.InnerError_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(error.PropertyBag)
+
+	// Errordetail
+	destination.Errordetail = genruntime.ClonePointerToString(error.Errordetail)
+
+	// Exceptiontype
+	destination.Exceptiontype = genruntime.ClonePointerToString(error.Exceptiontype)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInnerError_STATUS interface (if implemented) to customize the conversion
+	var errorAsAny any = error
+	if augmentedError, ok := errorAsAny.(augmentConversionForInnerError_STATUS); ok {
+		err := augmentedError.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220702.SourceVault
@@ -311,6 +1790,72 @@ type SourceVault struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_SourceVault populates our SourceVault from the provided source SourceVault
+func (vault *SourceVault) AssignProperties_From_SourceVault(source *storage.SourceVault) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		vault.Reference = &reference
+	} else {
+		vault.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		vault.PropertyBag = propertyBag
+	} else {
+		vault.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSourceVault interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForSourceVault); ok {
+		err := augmentedVault.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SourceVault populates the provided destination SourceVault from our SourceVault
+func (vault *SourceVault) AssignProperties_To_SourceVault(destination *storage.SourceVault) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(vault.PropertyBag)
+
+	// Reference
+	if vault.Reference != nil {
+		reference := vault.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSourceVault interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForSourceVault); ok {
+		err := augmentedVault.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220702.SourceVault_STATUS
 // The vault id is an Azure Resource Manager Resource id in the form
 // /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}
@@ -319,11 +1864,153 @@ type SourceVault_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_SourceVault_STATUS populates our SourceVault_STATUS from the provided source SourceVault_STATUS
+func (vault *SourceVault_STATUS) AssignProperties_From_SourceVault_STATUS(source *storage.SourceVault_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	vault.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		vault.PropertyBag = propertyBag
+	} else {
+		vault.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSourceVault_STATUS interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForSourceVault_STATUS); ok {
+		err := augmentedVault.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SourceVault_STATUS populates the provided destination SourceVault_STATUS from our SourceVault_STATUS
+func (vault *SourceVault_STATUS) AssignProperties_To_SourceVault_STATUS(destination *storage.SourceVault_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(vault.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(vault.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSourceVault_STATUS interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForSourceVault_STATUS); ok {
+		err := augmentedVault.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220702.UserAssignedIdentityDetails
 // Information about the user assigned identity for the resource
 type UserAssignedIdentityDetails struct {
 	PropertyBag genruntime.PropertyBag       `json:"$propertyBag,omitempty"`
 	Reference   genruntime.ResourceReference `armReference:"Reference" json:"reference,omitempty"`
+}
+
+// AssignProperties_From_UserAssignedIdentityDetails populates our UserAssignedIdentityDetails from the provided source UserAssignedIdentityDetails
+func (details *UserAssignedIdentityDetails) AssignProperties_From_UserAssignedIdentityDetails(source *storage.UserAssignedIdentityDetails) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	details.Reference = source.Reference.Copy()
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		details.PropertyBag = propertyBag
+	} else {
+		details.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUserAssignedIdentityDetails interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForUserAssignedIdentityDetails); ok {
+		err := augmentedDetails.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UserAssignedIdentityDetails populates the provided destination UserAssignedIdentityDetails from our UserAssignedIdentityDetails
+func (details *UserAssignedIdentityDetails) AssignProperties_To_UserAssignedIdentityDetails(destination *storage.UserAssignedIdentityDetails) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(details.PropertyBag)
+
+	// Reference
+	destination.Reference = details.Reference.Copy()
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUserAssignedIdentityDetails interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForUserAssignedIdentityDetails); ok {
+		err := augmentedDetails.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForApiErrorBase_STATUS interface {
+	AssignPropertiesFrom(src *storage.ApiErrorBase_STATUS) error
+	AssignPropertiesTo(dst *storage.ApiErrorBase_STATUS) error
+}
+
+type augmentConversionForEncryptionSetIdentity_UserAssignedIdentities_STATUS interface {
+	AssignPropertiesFrom(src *storage.EncryptionSetIdentity_UserAssignedIdentities_STATUS) error
+	AssignPropertiesTo(dst *storage.EncryptionSetIdentity_UserAssignedIdentities_STATUS) error
+}
+
+type augmentConversionForInnerError_STATUS interface {
+	AssignPropertiesFrom(src *storage.InnerError_STATUS) error
+	AssignPropertiesTo(dst *storage.InnerError_STATUS) error
+}
+
+type augmentConversionForSourceVault interface {
+	AssignPropertiesFrom(src *storage.SourceVault) error
+	AssignPropertiesTo(dst *storage.SourceVault) error
+}
+
+type augmentConversionForSourceVault_STATUS interface {
+	AssignPropertiesFrom(src *storage.SourceVault_STATUS) error
+	AssignPropertiesTo(dst *storage.SourceVault_STATUS) error
+}
+
+type augmentConversionForUserAssignedIdentityDetails interface {
+	AssignPropertiesFrom(src *storage.UserAssignedIdentityDetails) error
+	AssignPropertiesTo(dst *storage.UserAssignedIdentityDetails) error
 }
 
 func init() {

@@ -13,26 +13,31 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	redis "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/storage"
-
+	redis "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 )
 
-var _ genruntime.KubernetesExporter = &RedisExtension{}
+const (
+	primaryKey   = "primaryKey"
+	secondaryKey = "secondaryKey"
+)
 
-func (ext *RedisExtension) ExportKubernetesResources(
+var _ genruntime.KubernetesSecretExporter = &RedisExtension{}
+
+func (ext *RedisExtension) ExportKubernetesSecrets(
 	ctx context.Context,
 	obj genruntime.MetaObject,
+	additionalSecrets set.Set[string],
 	armClient *genericarmclient.GenericClient,
-	log logr.Logger) ([]client.Object, error) {
-
+	log logr.Logger,
+) (*genruntime.KubernetesSecretExportResult, error) {
 	// This has to be the current hub storage version. It will need to be updated
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*redis.Redis)
@@ -44,8 +49,9 @@ func (ext *RedisExtension) ExportKubernetesResources(
 	// the hub type has been changed but this extension has not
 	var _ conversion.Hub = typedObj
 
-	hasSecrets, hasEndpoints := secretsSpecified(typedObj)
-	if !hasSecrets && !hasEndpoints {
+	primarySecrets, hasEndpoints := secretsSpecified(typedObj)
+	requestedSecrets := set.Union(primarySecrets, additionalSecrets)
+	if len(requestedSecrets) == 0 && !hasEndpoints {
 		log.V(Debug).Info("No secrets retrieval to perform as operatorSpec is empty")
 		return nil, nil
 	}
@@ -57,7 +63,7 @@ func (ext *RedisExtension) ExportKubernetesResources(
 
 	var accessKeys armredis.AccessKeys
 	// Only bother calling ListKeys if there are secrets to retrieve
-	if hasSecrets {
+	if len(requestedSecrets) > 0 {
 		subscription := id.SubscriptionID
 		// Using armClient.ClientOptions() here ensures we share the same HTTP connection, so this is not opening a new
 		// connection each time through
@@ -79,21 +85,34 @@ func (ext *RedisExtension) ExportKubernetesResources(
 		return nil, err
 	}
 
-	return secrets.SliceToClientObjectSlice(secretSlice), nil
+	resolvedSecrets := map[string]string{}
+	if to.Value(accessKeys.PrimaryKey) != "" {
+		resolvedSecrets[primaryKey] = to.Value(accessKeys.PrimaryKey)
+	}
+	if to.Value(accessKeys.SecondaryKey) != "" {
+		resolvedSecrets[secondaryKey] = to.Value(accessKeys.SecondaryKey)
+	}
+
+	return &genruntime.KubernetesSecretExportResult{
+		Objs:       secrets.SliceToClientObjectSlice(secretSlice),
+		RawSecrets: secrets.SelectSecrets(additionalSecrets, resolvedSecrets),
+	}, nil
 }
 
-func secretsSpecified(obj *redis.Redis) (bool, bool) {
+func secretsSpecified(obj *redis.Redis) (set.Set[string], bool) {
 	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
-		return false, false
+		return nil, false
 	}
 
 	secrets := obj.Spec.OperatorSpec.Secrets
-	hasSecrets := false
+	result := make(set.Set[string])
 	hasEndpoints := false
 
-	if secrets.PrimaryKey != nil ||
-		secrets.SecondaryKey != nil {
-		hasSecrets = true
+	if secrets.PrimaryKey != nil {
+		result.Add(primaryKey)
+	}
+	if secrets.SecondaryKey != nil {
+		result.Add(secondaryKey)
 	}
 
 	if secrets.HostName != nil ||
@@ -102,13 +121,13 @@ func secretsSpecified(obj *redis.Redis) (bool, bool) {
 		hasEndpoints = true
 	}
 
-	return hasSecrets, hasEndpoints
+	return result, hasEndpoints
 }
 
 func secretsToWrite(obj *redis.Redis, accessKeys armredis.AccessKeys) ([]*v1.Secret, error) {
 	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 	if operatorSpecSecrets == nil {
-		return nil, errors.Errorf("unexpected nil operatorspec")
+		return nil, nil
 	}
 
 	collector := secrets.NewCollector(obj.Namespace)

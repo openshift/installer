@@ -7,6 +7,7 @@ package extensions
 
 import (
 	"context"
+
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 
 	"github.com/go-logr/logr"

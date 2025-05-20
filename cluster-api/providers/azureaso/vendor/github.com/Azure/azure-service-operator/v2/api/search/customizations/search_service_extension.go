@@ -13,25 +13,32 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	search "github.com/Azure/azure-service-operator/v2/api/search/v1api20220901/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 )
 
-var _ genruntime.KubernetesExporter = &SearchServiceExtension{}
+const (
+	adminPrimaryKey   = "adminPrimaryKey"
+	adminSecondaryKey = "adminSecondaryKey"
+	queryKey          = "queryKey"
+)
 
-func (ext *SearchServiceExtension) ExportKubernetesResources(
+var _ genruntime.KubernetesSecretExporter = &SearchServiceExtension{}
+
+func (ext *SearchServiceExtension) ExportKubernetesSecrets(
 	ctx context.Context,
 	obj genruntime.MetaObject,
+	additionalSecrets set.Set[string],
 	armClient *genericarmclient.GenericClient,
-	log logr.Logger) ([]client.Object, error) {
-
+	log logr.Logger,
+) (*genruntime.KubernetesSecretExportResult, error) {
 	// This has to be the current hub devices version. It will need to be updated
 	// if the hub devices version changes.
 	typedObj, ok := obj.(*search.SearchService)
@@ -43,8 +50,10 @@ func (ext *SearchServiceExtension) ExportKubernetesResources(
 	// the hub type has been changed but this extension has not
 	var _ conversion.Hub = typedObj
 
-	hasSecrets := secretsSpecified(typedObj)
-	if !hasSecrets {
+	primarySecrets := secretsSpecified(typedObj)
+	requestedSecrets := set.Union(primarySecrets, additionalSecrets)
+
+	if len(requestedSecrets) == 0 {
 		log.V(Debug).Info("No secrets retrieval to perform as operatorSpec is empty")
 		return nil, nil
 	}
@@ -57,7 +66,7 @@ func (ext *SearchServiceExtension) ExportKubernetesResources(
 	queryKeys := make(map[string]armsearch.QueryKey)
 	var adminKeys armsearch.AdminKeysClientGetResponse
 	// Only bother calling ListKeys if there are secrets to retrieve
-	if hasSecrets {
+	if len(requestedSecrets) > 0 {
 		subscription := id.SubscriptionID
 		// Using armClient.ClientOptions() here ensures we share the same HTTP connection, so this is not opening a new
 		// connection each time through
@@ -72,11 +81,10 @@ func (ext *SearchServiceExtension) ExportKubernetesResources(
 		pager = queryKeysClient.NewListBySearchServicePager(id.ResourceGroupName, typedObj.AzureName(), nil, nil)
 		for pager.More() {
 			resp, err = pager.NextPage(ctx)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed listing query keys")
+			}
 			addSecretsToMap(resp.Value, queryKeys)
-		}
-
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed listing query keys")
 		}
 
 		var adminKeysClient *armsearch.AdminKeysClient
@@ -96,23 +104,44 @@ func (ext *SearchServiceExtension) ExportKubernetesResources(
 		return nil, err
 	}
 
-	return secrets.SliceToClientObjectSlice(secretSlice), nil
+	resolvedSecrets := map[string]string{}
+	defaultQueryKey, ok := queryKeys["default"]
+	if ok {
+		if to.Value(defaultQueryKey.Key) == "" {
+			resolvedSecrets[queryKey] = to.Value(defaultQueryKey.Key)
+		}
+	}
+	if to.Value(adminKeys.PrimaryKey) != "" {
+		resolvedSecrets[adminPrimaryKey] = to.Value(adminKeys.PrimaryKey)
+	}
+	if to.Value(adminKeys.SecondaryKey) != "" {
+		resolvedSecrets[adminSecondaryKey] = to.Value(adminKeys.PrimaryKey)
+	}
+
+	return &genruntime.KubernetesSecretExportResult{
+		Objs:       secrets.SliceToClientObjectSlice(secretSlice),
+		RawSecrets: secrets.SelectSecrets(additionalSecrets, resolvedSecrets),
+	}, nil
 }
 
-func secretsSpecified(obj *search.SearchService) bool {
+func secretsSpecified(obj *search.SearchService) set.Set[string] {
 	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
-		return false
+		return nil
 	}
 
 	secrets := obj.Spec.OperatorSpec.Secrets
 
-	if secrets.AdminPrimaryKey != nil ||
-		secrets.AdminSecondaryKey != nil ||
-		secrets.QueryKey != nil {
-		return true
+	result := make(set.Set[string])
+	if secrets.AdminPrimaryKey != nil {
+		result.Add(adminPrimaryKey)
 	}
-
-	return false
+	if secrets.AdminSecondaryKey != nil {
+		result.Add(adminSecondaryKey)
+	}
+	if secrets.QueryKey != nil {
+		result.Add(queryKey)
+	}
+	return result
 }
 
 func addSecretsToMap(keys []*armsearch.QueryKey, result map[string]armsearch.QueryKey) {
@@ -134,7 +163,7 @@ func addSecretsToMap(keys []*armsearch.QueryKey, result map[string]armsearch.Que
 func secretsToWrite(obj *search.SearchService, queryKeys map[string]armsearch.QueryKey, adminKeys armsearch.AdminKeysClientGetResponse) ([]*v1.Secret, error) {
 	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 	if operatorSpecSecrets == nil {
-		return nil, errors.Errorf("unexpected nil operatorspec")
+		return nil, nil
 	}
 
 	collector := secrets.NewCollector(obj.Namespace)

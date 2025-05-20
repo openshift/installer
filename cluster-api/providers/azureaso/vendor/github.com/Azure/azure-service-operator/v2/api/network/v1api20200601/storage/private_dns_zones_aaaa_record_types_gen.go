@@ -4,19 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=network.azure.com,resources=privatednszonesaaaarecords,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources={privatednszonesaaaarecords/status,privatednszonesaaaarecords/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -28,8 +30,8 @@ import (
 type PrivateDnsZonesAAAARecord struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              PrivateDnsZones_AAAA_Spec   `json:"spec,omitempty"`
-	Status            PrivateDnsZones_AAAA_STATUS `json:"status,omitempty"`
+	Spec              PrivateDnsZonesAAAARecord_Spec   `json:"spec,omitempty"`
+	Status            PrivateDnsZonesAAAARecord_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &PrivateDnsZonesAAAARecord{}
@@ -44,6 +46,48 @@ func (record *PrivateDnsZonesAAAARecord) SetConditions(conditions conditions.Con
 	record.Status.Conditions = conditions
 }
 
+var _ conversion.Convertible = &PrivateDnsZonesAAAARecord{}
+
+// ConvertFrom populates our PrivateDnsZonesAAAARecord from the provided hub PrivateDnsZonesAAAARecord
+func (record *PrivateDnsZonesAAAARecord) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.PrivateDnsZonesAAAARecord)
+	if !ok {
+		return fmt.Errorf("expected network/v1api20240601/storage/PrivateDnsZonesAAAARecord but received %T instead", hub)
+	}
+
+	return record.AssignProperties_From_PrivateDnsZonesAAAARecord(source)
+}
+
+// ConvertTo populates the provided hub PrivateDnsZonesAAAARecord from our PrivateDnsZonesAAAARecord
+func (record *PrivateDnsZonesAAAARecord) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.PrivateDnsZonesAAAARecord)
+	if !ok {
+		return fmt.Errorf("expected network/v1api20240601/storage/PrivateDnsZonesAAAARecord but received %T instead", hub)
+	}
+
+	return record.AssignProperties_To_PrivateDnsZonesAAAARecord(destination)
+}
+
+var _ configmaps.Exporter = &PrivateDnsZonesAAAARecord{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (record *PrivateDnsZonesAAAARecord) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if record.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return record.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &PrivateDnsZonesAAAARecord{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (record *PrivateDnsZonesAAAARecord) SecretDestinationExpressions() []*core.DestinationExpression {
+	if record.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return record.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &PrivateDnsZonesAAAARecord{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +97,7 @@ func (record *PrivateDnsZonesAAAARecord) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-06-01"
 func (record PrivateDnsZonesAAAARecord) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +131,7 @@ func (record *PrivateDnsZonesAAAARecord) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (record *PrivateDnsZonesAAAARecord) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &PrivateDnsZones_AAAA_STATUS{}
+	return &PrivateDnsZonesAAAARecord_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +143,13 @@ func (record *PrivateDnsZonesAAAARecord) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (record *PrivateDnsZonesAAAARecord) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*PrivateDnsZones_AAAA_STATUS); ok {
+	if st, ok := status.(*PrivateDnsZonesAAAARecord_STATUS); ok {
 		record.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st PrivateDnsZones_AAAA_STATUS
+	var st PrivateDnsZonesAAAARecord_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -115,8 +159,75 @@ func (record *PrivateDnsZonesAAAARecord) SetStatus(status genruntime.Convertible
 	return nil
 }
 
-// Hub marks that this PrivateDnsZonesAAAARecord is the hub type for conversion
-func (record *PrivateDnsZonesAAAARecord) Hub() {}
+// AssignProperties_From_PrivateDnsZonesAAAARecord populates our PrivateDnsZonesAAAARecord from the provided source PrivateDnsZonesAAAARecord
+func (record *PrivateDnsZonesAAAARecord) AssignProperties_From_PrivateDnsZonesAAAARecord(source *storage.PrivateDnsZonesAAAARecord) error {
+
+	// ObjectMeta
+	record.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec PrivateDnsZonesAAAARecord_Spec
+	err := spec.AssignProperties_From_PrivateDnsZonesAAAARecord_Spec(&source.Spec)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_From_PrivateDnsZonesAAAARecord_Spec() to populate field Spec")
+	}
+	record.Spec = spec
+
+	// Status
+	var status PrivateDnsZonesAAAARecord_STATUS
+	err = status.AssignProperties_From_PrivateDnsZonesAAAARecord_STATUS(&source.Status)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_From_PrivateDnsZonesAAAARecord_STATUS() to populate field Status")
+	}
+	record.Status = status
+
+	// Invoke the augmentConversionForPrivateDnsZonesAAAARecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForPrivateDnsZonesAAAARecord); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateDnsZonesAAAARecord populates the provided destination PrivateDnsZonesAAAARecord from our PrivateDnsZonesAAAARecord
+func (record *PrivateDnsZonesAAAARecord) AssignProperties_To_PrivateDnsZonesAAAARecord(destination *storage.PrivateDnsZonesAAAARecord) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *record.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.PrivateDnsZonesAAAARecord_Spec
+	err := record.Spec.AssignProperties_To_PrivateDnsZonesAAAARecord_Spec(&spec)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZonesAAAARecord_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.PrivateDnsZonesAAAARecord_STATUS
+	err = record.Status.AssignProperties_To_PrivateDnsZonesAAAARecord_STATUS(&status)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZonesAAAARecord_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForPrivateDnsZonesAAAARecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForPrivateDnsZonesAAAARecord); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (record *PrivateDnsZonesAAAARecord) OriginalGVK() *schema.GroupVersionKind {
@@ -144,19 +255,25 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2020-06-01")
 
-// Storage version of v1api20200601.PrivateDnsZones_AAAA_Spec
-type PrivateDnsZones_AAAA_Spec struct {
+type augmentConversionForPrivateDnsZonesAAAARecord interface {
+	AssignPropertiesFrom(src *storage.PrivateDnsZonesAAAARecord) error
+	AssignPropertiesTo(dst *storage.PrivateDnsZonesAAAARecord) error
+}
+
+// Storage version of v1api20200601.PrivateDnsZonesAAAARecord_Spec
+type PrivateDnsZonesAAAARecord_Spec struct {
 	ARecords    []ARecord    `json:"aRecords,omitempty"`
 	AaaaRecords []AaaaRecord `json:"aaaaRecords,omitempty"`
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string            `json:"azureName,omitempty"`
-	CnameRecord     *CnameRecord      `json:"cnameRecord,omitempty"`
-	Etag            *string           `json:"etag,omitempty"`
-	Metadata        map[string]string `json:"metadata,omitempty"`
-	MxRecords       []MxRecord        `json:"mxRecords,omitempty"`
-	OriginalVersion string            `json:"originalVersion,omitempty"`
+	AzureName       string                                 `json:"azureName,omitempty"`
+	CnameRecord     *CnameRecord                           `json:"cnameRecord,omitempty"`
+	Etag            *string                                `json:"etag,omitempty"`
+	Metadata        map[string]string                      `json:"metadata,omitempty"`
+	MxRecords       []MxRecord                             `json:"mxRecords,omitempty"`
+	OperatorSpec    *PrivateDnsZonesAAAARecordOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                                 `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -171,28 +288,442 @@ type PrivateDnsZones_AAAA_Spec struct {
 	TxtRecords  []TxtRecord                        `json:"txtRecords,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &PrivateDnsZones_AAAA_Spec{}
+var _ genruntime.ConvertibleSpec = &PrivateDnsZonesAAAARecord_Spec{}
 
-// ConvertSpecFrom populates our PrivateDnsZones_AAAA_Spec from the provided source
-func (aaaa *PrivateDnsZones_AAAA_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == aaaa {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+// ConvertSpecFrom populates our PrivateDnsZonesAAAARecord_Spec from the provided source
+func (record *PrivateDnsZonesAAAARecord_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.PrivateDnsZonesAAAARecord_Spec)
+	if ok {
+		// Populate our instance from source
+		return record.AssignProperties_From_PrivateDnsZonesAAAARecord_Spec(src)
 	}
 
-	return source.ConvertSpecTo(aaaa)
-}
-
-// ConvertSpecTo populates the provided destination from our PrivateDnsZones_AAAA_Spec
-func (aaaa *PrivateDnsZones_AAAA_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == aaaa {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	// Convert to an intermediate form
+	src = &storage.PrivateDnsZonesAAAARecord_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
-	return destination.ConvertSpecFrom(aaaa)
+	// Update our instance from src
+	err = record.AssignProperties_From_PrivateDnsZonesAAAARecord_Spec(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
-// Storage version of v1api20200601.PrivateDnsZones_AAAA_STATUS
-type PrivateDnsZones_AAAA_STATUS struct {
+// ConvertSpecTo populates the provided destination from our PrivateDnsZonesAAAARecord_Spec
+func (record *PrivateDnsZonesAAAARecord_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.PrivateDnsZonesAAAARecord_Spec)
+	if ok {
+		// Populate destination from our instance
+		return record.AssignProperties_To_PrivateDnsZonesAAAARecord_Spec(dst)
+	}
+
+	// Convert to an intermediate form
+	dst = &storage.PrivateDnsZonesAAAARecord_Spec{}
+	err := record.AssignProperties_To_PrivateDnsZonesAAAARecord_Spec(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_PrivateDnsZonesAAAARecord_Spec populates our PrivateDnsZonesAAAARecord_Spec from the provided source PrivateDnsZonesAAAARecord_Spec
+func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_From_PrivateDnsZonesAAAARecord_Spec(source *storage.PrivateDnsZonesAAAARecord_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ARecords
+	if source.ARecords != nil {
+		aRecordList := make([]ARecord, len(source.ARecords))
+		for aRecordIndex, aRecordItem := range source.ARecords {
+			// Shadow the loop variable to avoid aliasing
+			aRecordItem := aRecordItem
+			var aRecord ARecord
+			err := aRecord.AssignProperties_From_ARecord(&aRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_ARecord() to populate field ARecords")
+			}
+			aRecordList[aRecordIndex] = aRecord
+		}
+		record.ARecords = aRecordList
+	} else {
+		record.ARecords = nil
+	}
+
+	// AaaaRecords
+	if source.AaaaRecords != nil {
+		aaaaRecordList := make([]AaaaRecord, len(source.AaaaRecords))
+		for aaaaRecordIndex, aaaaRecordItem := range source.AaaaRecords {
+			// Shadow the loop variable to avoid aliasing
+			aaaaRecordItem := aaaaRecordItem
+			var aaaaRecord AaaaRecord
+			err := aaaaRecord.AssignProperties_From_AaaaRecord(&aaaaRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_AaaaRecord() to populate field AaaaRecords")
+			}
+			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
+		}
+		record.AaaaRecords = aaaaRecordList
+	} else {
+		record.AaaaRecords = nil
+	}
+
+	// AzureName
+	record.AzureName = source.AzureName
+
+	// CnameRecord
+	if source.CnameRecord != nil {
+		var cnameRecord CnameRecord
+		err := cnameRecord.AssignProperties_From_CnameRecord(source.CnameRecord)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_CnameRecord() to populate field CnameRecord")
+		}
+		record.CnameRecord = &cnameRecord
+	} else {
+		record.CnameRecord = nil
+	}
+
+	// Etag
+	record.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Metadata
+	record.Metadata = genruntime.CloneMapOfStringToString(source.Metadata)
+
+	// MxRecords
+	if source.MxRecords != nil {
+		mxRecordList := make([]MxRecord, len(source.MxRecords))
+		for mxRecordIndex, mxRecordItem := range source.MxRecords {
+			// Shadow the loop variable to avoid aliasing
+			mxRecordItem := mxRecordItem
+			var mxRecord MxRecord
+			err := mxRecord.AssignProperties_From_MxRecord(&mxRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_MxRecord() to populate field MxRecords")
+			}
+			mxRecordList[mxRecordIndex] = mxRecord
+		}
+		record.MxRecords = mxRecordList
+	} else {
+		record.MxRecords = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec PrivateDnsZonesAAAARecordOperatorSpec
+		err := operatorSpec.AssignProperties_From_PrivateDnsZonesAAAARecordOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_PrivateDnsZonesAAAARecordOperatorSpec() to populate field OperatorSpec")
+		}
+		record.OperatorSpec = &operatorSpec
+	} else {
+		record.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	record.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		record.Owner = &owner
+	} else {
+		record.Owner = nil
+	}
+
+	// PtrRecords
+	if source.PtrRecords != nil {
+		ptrRecordList := make([]PtrRecord, len(source.PtrRecords))
+		for ptrRecordIndex, ptrRecordItem := range source.PtrRecords {
+			// Shadow the loop variable to avoid aliasing
+			ptrRecordItem := ptrRecordItem
+			var ptrRecord PtrRecord
+			err := ptrRecord.AssignProperties_From_PtrRecord(&ptrRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_PtrRecord() to populate field PtrRecords")
+			}
+			ptrRecordList[ptrRecordIndex] = ptrRecord
+		}
+		record.PtrRecords = ptrRecordList
+	} else {
+		record.PtrRecords = nil
+	}
+
+	// SoaRecord
+	if source.SoaRecord != nil {
+		var soaRecord SoaRecord
+		err := soaRecord.AssignProperties_From_SoaRecord(source.SoaRecord)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SoaRecord() to populate field SoaRecord")
+		}
+		record.SoaRecord = &soaRecord
+	} else {
+		record.SoaRecord = nil
+	}
+
+	// SrvRecords
+	if source.SrvRecords != nil {
+		srvRecordList := make([]SrvRecord, len(source.SrvRecords))
+		for srvRecordIndex, srvRecordItem := range source.SrvRecords {
+			// Shadow the loop variable to avoid aliasing
+			srvRecordItem := srvRecordItem
+			var srvRecord SrvRecord
+			err := srvRecord.AssignProperties_From_SrvRecord(&srvRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_SrvRecord() to populate field SrvRecords")
+			}
+			srvRecordList[srvRecordIndex] = srvRecord
+		}
+		record.SrvRecords = srvRecordList
+	} else {
+		record.SrvRecords = nil
+	}
+
+	// Ttl
+	record.Ttl = genruntime.ClonePointerToInt(source.Ttl)
+
+	// TxtRecords
+	if source.TxtRecords != nil {
+		txtRecordList := make([]TxtRecord, len(source.TxtRecords))
+		for txtRecordIndex, txtRecordItem := range source.TxtRecords {
+			// Shadow the loop variable to avoid aliasing
+			txtRecordItem := txtRecordItem
+			var txtRecord TxtRecord
+			err := txtRecord.AssignProperties_From_TxtRecord(&txtRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_TxtRecord() to populate field TxtRecords")
+			}
+			txtRecordList[txtRecordIndex] = txtRecord
+		}
+		record.TxtRecords = txtRecordList
+	} else {
+		record.TxtRecords = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateDnsZonesAAAARecord_Spec interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForPrivateDnsZonesAAAARecord_Spec); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateDnsZonesAAAARecord_Spec populates the provided destination PrivateDnsZonesAAAARecord_Spec from our PrivateDnsZonesAAAARecord_Spec
+func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_To_PrivateDnsZonesAAAARecord_Spec(destination *storage.PrivateDnsZonesAAAARecord_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// ARecords
+	if record.ARecords != nil {
+		aRecordList := make([]storage.ARecord, len(record.ARecords))
+		for aRecordIndex, aRecordItem := range record.ARecords {
+			// Shadow the loop variable to avoid aliasing
+			aRecordItem := aRecordItem
+			var aRecord storage.ARecord
+			err := aRecordItem.AssignProperties_To_ARecord(&aRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_ARecord() to populate field ARecords")
+			}
+			aRecordList[aRecordIndex] = aRecord
+		}
+		destination.ARecords = aRecordList
+	} else {
+		destination.ARecords = nil
+	}
+
+	// AaaaRecords
+	if record.AaaaRecords != nil {
+		aaaaRecordList := make([]storage.AaaaRecord, len(record.AaaaRecords))
+		for aaaaRecordIndex, aaaaRecordItem := range record.AaaaRecords {
+			// Shadow the loop variable to avoid aliasing
+			aaaaRecordItem := aaaaRecordItem
+			var aaaaRecord storage.AaaaRecord
+			err := aaaaRecordItem.AssignProperties_To_AaaaRecord(&aaaaRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_AaaaRecord() to populate field AaaaRecords")
+			}
+			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
+		}
+		destination.AaaaRecords = aaaaRecordList
+	} else {
+		destination.AaaaRecords = nil
+	}
+
+	// AzureName
+	destination.AzureName = record.AzureName
+
+	// CnameRecord
+	if record.CnameRecord != nil {
+		var cnameRecord storage.CnameRecord
+		err := record.CnameRecord.AssignProperties_To_CnameRecord(&cnameRecord)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_CnameRecord() to populate field CnameRecord")
+		}
+		destination.CnameRecord = &cnameRecord
+	} else {
+		destination.CnameRecord = nil
+	}
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(record.Etag)
+
+	// Metadata
+	destination.Metadata = genruntime.CloneMapOfStringToString(record.Metadata)
+
+	// MxRecords
+	if record.MxRecords != nil {
+		mxRecordList := make([]storage.MxRecord, len(record.MxRecords))
+		for mxRecordIndex, mxRecordItem := range record.MxRecords {
+			// Shadow the loop variable to avoid aliasing
+			mxRecordItem := mxRecordItem
+			var mxRecord storage.MxRecord
+			err := mxRecordItem.AssignProperties_To_MxRecord(&mxRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_MxRecord() to populate field MxRecords")
+			}
+			mxRecordList[mxRecordIndex] = mxRecord
+		}
+		destination.MxRecords = mxRecordList
+	} else {
+		destination.MxRecords = nil
+	}
+
+	// OperatorSpec
+	if record.OperatorSpec != nil {
+		var operatorSpec storage.PrivateDnsZonesAAAARecordOperatorSpec
+		err := record.OperatorSpec.AssignProperties_To_PrivateDnsZonesAAAARecordOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZonesAAAARecordOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = record.OriginalVersion
+
+	// Owner
+	if record.Owner != nil {
+		owner := record.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// PtrRecords
+	if record.PtrRecords != nil {
+		ptrRecordList := make([]storage.PtrRecord, len(record.PtrRecords))
+		for ptrRecordIndex, ptrRecordItem := range record.PtrRecords {
+			// Shadow the loop variable to avoid aliasing
+			ptrRecordItem := ptrRecordItem
+			var ptrRecord storage.PtrRecord
+			err := ptrRecordItem.AssignProperties_To_PtrRecord(&ptrRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_PtrRecord() to populate field PtrRecords")
+			}
+			ptrRecordList[ptrRecordIndex] = ptrRecord
+		}
+		destination.PtrRecords = ptrRecordList
+	} else {
+		destination.PtrRecords = nil
+	}
+
+	// SoaRecord
+	if record.SoaRecord != nil {
+		var soaRecord storage.SoaRecord
+		err := record.SoaRecord.AssignProperties_To_SoaRecord(&soaRecord)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SoaRecord() to populate field SoaRecord")
+		}
+		destination.SoaRecord = &soaRecord
+	} else {
+		destination.SoaRecord = nil
+	}
+
+	// SrvRecords
+	if record.SrvRecords != nil {
+		srvRecordList := make([]storage.SrvRecord, len(record.SrvRecords))
+		for srvRecordIndex, srvRecordItem := range record.SrvRecords {
+			// Shadow the loop variable to avoid aliasing
+			srvRecordItem := srvRecordItem
+			var srvRecord storage.SrvRecord
+			err := srvRecordItem.AssignProperties_To_SrvRecord(&srvRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_SrvRecord() to populate field SrvRecords")
+			}
+			srvRecordList[srvRecordIndex] = srvRecord
+		}
+		destination.SrvRecords = srvRecordList
+	} else {
+		destination.SrvRecords = nil
+	}
+
+	// Ttl
+	destination.Ttl = genruntime.ClonePointerToInt(record.Ttl)
+
+	// TxtRecords
+	if record.TxtRecords != nil {
+		txtRecordList := make([]storage.TxtRecord, len(record.TxtRecords))
+		for txtRecordIndex, txtRecordItem := range record.TxtRecords {
+			// Shadow the loop variable to avoid aliasing
+			txtRecordItem := txtRecordItem
+			var txtRecord storage.TxtRecord
+			err := txtRecordItem.AssignProperties_To_TxtRecord(&txtRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_TxtRecord() to populate field TxtRecords")
+			}
+			txtRecordList[txtRecordIndex] = txtRecord
+		}
+		destination.TxtRecords = txtRecordList
+	} else {
+		destination.TxtRecords = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateDnsZonesAAAARecord_Spec interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForPrivateDnsZonesAAAARecord_Spec); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20200601.PrivateDnsZonesAAAARecord_STATUS
+type PrivateDnsZonesAAAARecord_STATUS struct {
 	ARecords         []ARecord_STATUS       `json:"aRecords,omitempty"`
 	AaaaRecords      []AaaaRecord_STATUS    `json:"aaaaRecords,omitempty"`
 	CnameRecord      *CnameRecord_STATUS    `json:"cnameRecord,omitempty"`
@@ -213,24 +744,432 @@ type PrivateDnsZones_AAAA_STATUS struct {
 	Type             *string                `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &PrivateDnsZones_AAAA_STATUS{}
+var _ genruntime.ConvertibleStatus = &PrivateDnsZonesAAAARecord_STATUS{}
 
-// ConvertStatusFrom populates our PrivateDnsZones_AAAA_STATUS from the provided source
-func (aaaa *PrivateDnsZones_AAAA_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == aaaa {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusFrom populates our PrivateDnsZonesAAAARecord_STATUS from the provided source
+func (record *PrivateDnsZonesAAAARecord_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.PrivateDnsZonesAAAARecord_STATUS)
+	if ok {
+		// Populate our instance from source
+		return record.AssignProperties_From_PrivateDnsZonesAAAARecord_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(aaaa)
+	// Convert to an intermediate form
+	src = &storage.PrivateDnsZonesAAAARecord_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = record.AssignProperties_From_PrivateDnsZonesAAAARecord_STATUS(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our PrivateDnsZones_AAAA_STATUS
-func (aaaa *PrivateDnsZones_AAAA_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == aaaa {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusTo populates the provided destination from our PrivateDnsZonesAAAARecord_STATUS
+func (record *PrivateDnsZonesAAAARecord_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.PrivateDnsZonesAAAARecord_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return record.AssignProperties_To_PrivateDnsZonesAAAARecord_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(aaaa)
+	// Convert to an intermediate form
+	dst = &storage.PrivateDnsZonesAAAARecord_STATUS{}
+	err := record.AssignProperties_To_PrivateDnsZonesAAAARecord_STATUS(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_PrivateDnsZonesAAAARecord_STATUS populates our PrivateDnsZonesAAAARecord_STATUS from the provided source PrivateDnsZonesAAAARecord_STATUS
+func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_From_PrivateDnsZonesAAAARecord_STATUS(source *storage.PrivateDnsZonesAAAARecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ARecords
+	if source.ARecords != nil {
+		aRecordList := make([]ARecord_STATUS, len(source.ARecords))
+		for aRecordIndex, aRecordItem := range source.ARecords {
+			// Shadow the loop variable to avoid aliasing
+			aRecordItem := aRecordItem
+			var aRecord ARecord_STATUS
+			err := aRecord.AssignProperties_From_ARecord_STATUS(&aRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_ARecord_STATUS() to populate field ARecords")
+			}
+			aRecordList[aRecordIndex] = aRecord
+		}
+		record.ARecords = aRecordList
+	} else {
+		record.ARecords = nil
+	}
+
+	// AaaaRecords
+	if source.AaaaRecords != nil {
+		aaaaRecordList := make([]AaaaRecord_STATUS, len(source.AaaaRecords))
+		for aaaaRecordIndex, aaaaRecordItem := range source.AaaaRecords {
+			// Shadow the loop variable to avoid aliasing
+			aaaaRecordItem := aaaaRecordItem
+			var aaaaRecord AaaaRecord_STATUS
+			err := aaaaRecord.AssignProperties_From_AaaaRecord_STATUS(&aaaaRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_AaaaRecord_STATUS() to populate field AaaaRecords")
+			}
+			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
+		}
+		record.AaaaRecords = aaaaRecordList
+	} else {
+		record.AaaaRecords = nil
+	}
+
+	// CnameRecord
+	if source.CnameRecord != nil {
+		var cnameRecord CnameRecord_STATUS
+		err := cnameRecord.AssignProperties_From_CnameRecord_STATUS(source.CnameRecord)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_CnameRecord_STATUS() to populate field CnameRecord")
+		}
+		record.CnameRecord = &cnameRecord
+	} else {
+		record.CnameRecord = nil
+	}
+
+	// Conditions
+	record.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Etag
+	record.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Fqdn
+	record.Fqdn = genruntime.ClonePointerToString(source.Fqdn)
+
+	// Id
+	record.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IsAutoRegistered
+	if source.IsAutoRegistered != nil {
+		isAutoRegistered := *source.IsAutoRegistered
+		record.IsAutoRegistered = &isAutoRegistered
+	} else {
+		record.IsAutoRegistered = nil
+	}
+
+	// Metadata
+	record.Metadata = genruntime.CloneMapOfStringToString(source.Metadata)
+
+	// MxRecords
+	if source.MxRecords != nil {
+		mxRecordList := make([]MxRecord_STATUS, len(source.MxRecords))
+		for mxRecordIndex, mxRecordItem := range source.MxRecords {
+			// Shadow the loop variable to avoid aliasing
+			mxRecordItem := mxRecordItem
+			var mxRecord MxRecord_STATUS
+			err := mxRecord.AssignProperties_From_MxRecord_STATUS(&mxRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_MxRecord_STATUS() to populate field MxRecords")
+			}
+			mxRecordList[mxRecordIndex] = mxRecord
+		}
+		record.MxRecords = mxRecordList
+	} else {
+		record.MxRecords = nil
+	}
+
+	// Name
+	record.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PtrRecords
+	if source.PtrRecords != nil {
+		ptrRecordList := make([]PtrRecord_STATUS, len(source.PtrRecords))
+		for ptrRecordIndex, ptrRecordItem := range source.PtrRecords {
+			// Shadow the loop variable to avoid aliasing
+			ptrRecordItem := ptrRecordItem
+			var ptrRecord PtrRecord_STATUS
+			err := ptrRecord.AssignProperties_From_PtrRecord_STATUS(&ptrRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_PtrRecord_STATUS() to populate field PtrRecords")
+			}
+			ptrRecordList[ptrRecordIndex] = ptrRecord
+		}
+		record.PtrRecords = ptrRecordList
+	} else {
+		record.PtrRecords = nil
+	}
+
+	// SoaRecord
+	if source.SoaRecord != nil {
+		var soaRecord SoaRecord_STATUS
+		err := soaRecord.AssignProperties_From_SoaRecord_STATUS(source.SoaRecord)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SoaRecord_STATUS() to populate field SoaRecord")
+		}
+		record.SoaRecord = &soaRecord
+	} else {
+		record.SoaRecord = nil
+	}
+
+	// SrvRecords
+	if source.SrvRecords != nil {
+		srvRecordList := make([]SrvRecord_STATUS, len(source.SrvRecords))
+		for srvRecordIndex, srvRecordItem := range source.SrvRecords {
+			// Shadow the loop variable to avoid aliasing
+			srvRecordItem := srvRecordItem
+			var srvRecord SrvRecord_STATUS
+			err := srvRecord.AssignProperties_From_SrvRecord_STATUS(&srvRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_SrvRecord_STATUS() to populate field SrvRecords")
+			}
+			srvRecordList[srvRecordIndex] = srvRecord
+		}
+		record.SrvRecords = srvRecordList
+	} else {
+		record.SrvRecords = nil
+	}
+
+	// Ttl
+	record.Ttl = genruntime.ClonePointerToInt(source.Ttl)
+
+	// TxtRecords
+	if source.TxtRecords != nil {
+		txtRecordList := make([]TxtRecord_STATUS, len(source.TxtRecords))
+		for txtRecordIndex, txtRecordItem := range source.TxtRecords {
+			// Shadow the loop variable to avoid aliasing
+			txtRecordItem := txtRecordItem
+			var txtRecord TxtRecord_STATUS
+			err := txtRecord.AssignProperties_From_TxtRecord_STATUS(&txtRecordItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_TxtRecord_STATUS() to populate field TxtRecords")
+			}
+			txtRecordList[txtRecordIndex] = txtRecord
+		}
+		record.TxtRecords = txtRecordList
+	} else {
+		record.TxtRecords = nil
+	}
+
+	// Type
+	record.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateDnsZonesAAAARecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForPrivateDnsZonesAAAARecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateDnsZonesAAAARecord_STATUS populates the provided destination PrivateDnsZonesAAAARecord_STATUS from our PrivateDnsZonesAAAARecord_STATUS
+func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_To_PrivateDnsZonesAAAARecord_STATUS(destination *storage.PrivateDnsZonesAAAARecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// ARecords
+	if record.ARecords != nil {
+		aRecordList := make([]storage.ARecord_STATUS, len(record.ARecords))
+		for aRecordIndex, aRecordItem := range record.ARecords {
+			// Shadow the loop variable to avoid aliasing
+			aRecordItem := aRecordItem
+			var aRecord storage.ARecord_STATUS
+			err := aRecordItem.AssignProperties_To_ARecord_STATUS(&aRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_ARecord_STATUS() to populate field ARecords")
+			}
+			aRecordList[aRecordIndex] = aRecord
+		}
+		destination.ARecords = aRecordList
+	} else {
+		destination.ARecords = nil
+	}
+
+	// AaaaRecords
+	if record.AaaaRecords != nil {
+		aaaaRecordList := make([]storage.AaaaRecord_STATUS, len(record.AaaaRecords))
+		for aaaaRecordIndex, aaaaRecordItem := range record.AaaaRecords {
+			// Shadow the loop variable to avoid aliasing
+			aaaaRecordItem := aaaaRecordItem
+			var aaaaRecord storage.AaaaRecord_STATUS
+			err := aaaaRecordItem.AssignProperties_To_AaaaRecord_STATUS(&aaaaRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_AaaaRecord_STATUS() to populate field AaaaRecords")
+			}
+			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
+		}
+		destination.AaaaRecords = aaaaRecordList
+	} else {
+		destination.AaaaRecords = nil
+	}
+
+	// CnameRecord
+	if record.CnameRecord != nil {
+		var cnameRecord storage.CnameRecord_STATUS
+		err := record.CnameRecord.AssignProperties_To_CnameRecord_STATUS(&cnameRecord)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_CnameRecord_STATUS() to populate field CnameRecord")
+		}
+		destination.CnameRecord = &cnameRecord
+	} else {
+		destination.CnameRecord = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(record.Conditions)
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(record.Etag)
+
+	// Fqdn
+	destination.Fqdn = genruntime.ClonePointerToString(record.Fqdn)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(record.Id)
+
+	// IsAutoRegistered
+	if record.IsAutoRegistered != nil {
+		isAutoRegistered := *record.IsAutoRegistered
+		destination.IsAutoRegistered = &isAutoRegistered
+	} else {
+		destination.IsAutoRegistered = nil
+	}
+
+	// Metadata
+	destination.Metadata = genruntime.CloneMapOfStringToString(record.Metadata)
+
+	// MxRecords
+	if record.MxRecords != nil {
+		mxRecordList := make([]storage.MxRecord_STATUS, len(record.MxRecords))
+		for mxRecordIndex, mxRecordItem := range record.MxRecords {
+			// Shadow the loop variable to avoid aliasing
+			mxRecordItem := mxRecordItem
+			var mxRecord storage.MxRecord_STATUS
+			err := mxRecordItem.AssignProperties_To_MxRecord_STATUS(&mxRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_MxRecord_STATUS() to populate field MxRecords")
+			}
+			mxRecordList[mxRecordIndex] = mxRecord
+		}
+		destination.MxRecords = mxRecordList
+	} else {
+		destination.MxRecords = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(record.Name)
+
+	// PtrRecords
+	if record.PtrRecords != nil {
+		ptrRecordList := make([]storage.PtrRecord_STATUS, len(record.PtrRecords))
+		for ptrRecordIndex, ptrRecordItem := range record.PtrRecords {
+			// Shadow the loop variable to avoid aliasing
+			ptrRecordItem := ptrRecordItem
+			var ptrRecord storage.PtrRecord_STATUS
+			err := ptrRecordItem.AssignProperties_To_PtrRecord_STATUS(&ptrRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_PtrRecord_STATUS() to populate field PtrRecords")
+			}
+			ptrRecordList[ptrRecordIndex] = ptrRecord
+		}
+		destination.PtrRecords = ptrRecordList
+	} else {
+		destination.PtrRecords = nil
+	}
+
+	// SoaRecord
+	if record.SoaRecord != nil {
+		var soaRecord storage.SoaRecord_STATUS
+		err := record.SoaRecord.AssignProperties_To_SoaRecord_STATUS(&soaRecord)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SoaRecord_STATUS() to populate field SoaRecord")
+		}
+		destination.SoaRecord = &soaRecord
+	} else {
+		destination.SoaRecord = nil
+	}
+
+	// SrvRecords
+	if record.SrvRecords != nil {
+		srvRecordList := make([]storage.SrvRecord_STATUS, len(record.SrvRecords))
+		for srvRecordIndex, srvRecordItem := range record.SrvRecords {
+			// Shadow the loop variable to avoid aliasing
+			srvRecordItem := srvRecordItem
+			var srvRecord storage.SrvRecord_STATUS
+			err := srvRecordItem.AssignProperties_To_SrvRecord_STATUS(&srvRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_SrvRecord_STATUS() to populate field SrvRecords")
+			}
+			srvRecordList[srvRecordIndex] = srvRecord
+		}
+		destination.SrvRecords = srvRecordList
+	} else {
+		destination.SrvRecords = nil
+	}
+
+	// Ttl
+	destination.Ttl = genruntime.ClonePointerToInt(record.Ttl)
+
+	// TxtRecords
+	if record.TxtRecords != nil {
+		txtRecordList := make([]storage.TxtRecord_STATUS, len(record.TxtRecords))
+		for txtRecordIndex, txtRecordItem := range record.TxtRecords {
+			// Shadow the loop variable to avoid aliasing
+			txtRecordItem := txtRecordItem
+			var txtRecord storage.TxtRecord_STATUS
+			err := txtRecordItem.AssignProperties_To_TxtRecord_STATUS(&txtRecord)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_TxtRecord_STATUS() to populate field TxtRecords")
+			}
+			txtRecordList[txtRecordIndex] = txtRecord
+		}
+		destination.TxtRecords = txtRecordList
+	} else {
+		destination.TxtRecords = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(record.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateDnsZonesAAAARecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForPrivateDnsZonesAAAARecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.AaaaRecord
@@ -240,11 +1179,123 @@ type AaaaRecord struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AaaaRecord populates our AaaaRecord from the provided source AaaaRecord
+func (record *AaaaRecord) AssignProperties_From_AaaaRecord(source *storage.AaaaRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Ipv6Address
+	record.Ipv6Address = genruntime.ClonePointerToString(source.Ipv6Address)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAaaaRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForAaaaRecord); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AaaaRecord populates the provided destination AaaaRecord from our AaaaRecord
+func (record *AaaaRecord) AssignProperties_To_AaaaRecord(destination *storage.AaaaRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Ipv6Address
+	destination.Ipv6Address = genruntime.ClonePointerToString(record.Ipv6Address)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAaaaRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForAaaaRecord); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.AaaaRecord_STATUS
 // An AAAA record.
 type AaaaRecord_STATUS struct {
 	Ipv6Address *string                `json:"ipv6Address,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AaaaRecord_STATUS populates our AaaaRecord_STATUS from the provided source AaaaRecord_STATUS
+func (record *AaaaRecord_STATUS) AssignProperties_From_AaaaRecord_STATUS(source *storage.AaaaRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Ipv6Address
+	record.Ipv6Address = genruntime.ClonePointerToString(source.Ipv6Address)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAaaaRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForAaaaRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AaaaRecord_STATUS populates the provided destination AaaaRecord_STATUS from our AaaaRecord_STATUS
+func (record *AaaaRecord_STATUS) AssignProperties_To_AaaaRecord_STATUS(destination *storage.AaaaRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Ipv6Address
+	destination.Ipv6Address = genruntime.ClonePointerToString(record.Ipv6Address)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAaaaRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForAaaaRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.ARecord
@@ -254,11 +1305,133 @@ type ARecord struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_ARecord populates our ARecord from the provided source ARecord
+func (record *ARecord) AssignProperties_From_ARecord(source *storage.ARecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Ipv4Address
+	record.Ipv4Address = genruntime.ClonePointerToString(source.Ipv4Address)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForARecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForARecord); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ARecord populates the provided destination ARecord from our ARecord
+func (record *ARecord) AssignProperties_To_ARecord(destination *storage.ARecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Ipv4Address
+	destination.Ipv4Address = genruntime.ClonePointerToString(record.Ipv4Address)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForARecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForARecord); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.ARecord_STATUS
 // An A record.
 type ARecord_STATUS struct {
 	Ipv4Address *string                `json:"ipv4Address,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_ARecord_STATUS populates our ARecord_STATUS from the provided source ARecord_STATUS
+func (record *ARecord_STATUS) AssignProperties_From_ARecord_STATUS(source *storage.ARecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Ipv4Address
+	record.Ipv4Address = genruntime.ClonePointerToString(source.Ipv4Address)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForARecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForARecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ARecord_STATUS populates the provided destination ARecord_STATUS from our ARecord_STATUS
+func (record *ARecord_STATUS) AssignProperties_To_ARecord_STATUS(destination *storage.ARecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Ipv4Address
+	destination.Ipv4Address = genruntime.ClonePointerToString(record.Ipv4Address)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForARecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForARecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForPrivateDnsZonesAAAARecord_Spec interface {
+	AssignPropertiesFrom(src *storage.PrivateDnsZonesAAAARecord_Spec) error
+	AssignPropertiesTo(dst *storage.PrivateDnsZonesAAAARecord_Spec) error
+}
+
+type augmentConversionForPrivateDnsZonesAAAARecord_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrivateDnsZonesAAAARecord_STATUS) error
+	AssignPropertiesTo(dst *storage.PrivateDnsZonesAAAARecord_STATUS) error
 }
 
 // Storage version of v1api20200601.CnameRecord
@@ -268,11 +1441,123 @@ type CnameRecord struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_CnameRecord populates our CnameRecord from the provided source CnameRecord
+func (record *CnameRecord) AssignProperties_From_CnameRecord(source *storage.CnameRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Cname
+	record.Cname = genruntime.ClonePointerToString(source.Cname)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCnameRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForCnameRecord); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CnameRecord populates the provided destination CnameRecord from our CnameRecord
+func (record *CnameRecord) AssignProperties_To_CnameRecord(destination *storage.CnameRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Cname
+	destination.Cname = genruntime.ClonePointerToString(record.Cname)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCnameRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForCnameRecord); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.CnameRecord_STATUS
 // A CNAME record.
 type CnameRecord_STATUS struct {
 	Cname       *string                `json:"cname,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_CnameRecord_STATUS populates our CnameRecord_STATUS from the provided source CnameRecord_STATUS
+func (record *CnameRecord_STATUS) AssignProperties_From_CnameRecord_STATUS(source *storage.CnameRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Cname
+	record.Cname = genruntime.ClonePointerToString(source.Cname)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCnameRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForCnameRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CnameRecord_STATUS populates the provided destination CnameRecord_STATUS from our CnameRecord_STATUS
+func (record *CnameRecord_STATUS) AssignProperties_To_CnameRecord_STATUS(destination *storage.CnameRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Cname
+	destination.Cname = genruntime.ClonePointerToString(record.Cname)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCnameRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForCnameRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.MxRecord
@@ -283,12 +1568,266 @@ type MxRecord struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_MxRecord populates our MxRecord from the provided source MxRecord
+func (record *MxRecord) AssignProperties_From_MxRecord(source *storage.MxRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Exchange
+	record.Exchange = genruntime.ClonePointerToString(source.Exchange)
+
+	// Preference
+	record.Preference = genruntime.ClonePointerToInt(source.Preference)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMxRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForMxRecord); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MxRecord populates the provided destination MxRecord from our MxRecord
+func (record *MxRecord) AssignProperties_To_MxRecord(destination *storage.MxRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Exchange
+	destination.Exchange = genruntime.ClonePointerToString(record.Exchange)
+
+	// Preference
+	destination.Preference = genruntime.ClonePointerToInt(record.Preference)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMxRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForMxRecord); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.MxRecord_STATUS
 // An MX record.
 type MxRecord_STATUS struct {
 	Exchange    *string                `json:"exchange,omitempty"`
 	Preference  *int                   `json:"preference,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_MxRecord_STATUS populates our MxRecord_STATUS from the provided source MxRecord_STATUS
+func (record *MxRecord_STATUS) AssignProperties_From_MxRecord_STATUS(source *storage.MxRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Exchange
+	record.Exchange = genruntime.ClonePointerToString(source.Exchange)
+
+	// Preference
+	record.Preference = genruntime.ClonePointerToInt(source.Preference)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMxRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForMxRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MxRecord_STATUS populates the provided destination MxRecord_STATUS from our MxRecord_STATUS
+func (record *MxRecord_STATUS) AssignProperties_To_MxRecord_STATUS(destination *storage.MxRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Exchange
+	destination.Exchange = genruntime.ClonePointerToString(record.Exchange)
+
+	// Preference
+	destination.Preference = genruntime.ClonePointerToInt(record.Preference)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMxRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForMxRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20200601.PrivateDnsZonesAAAARecordOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type PrivateDnsZonesAAAARecordOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_PrivateDnsZonesAAAARecordOperatorSpec populates our PrivateDnsZonesAAAARecordOperatorSpec from the provided source PrivateDnsZonesAAAARecordOperatorSpec
+func (operator *PrivateDnsZonesAAAARecordOperatorSpec) AssignProperties_From_PrivateDnsZonesAAAARecordOperatorSpec(source *storage.PrivateDnsZonesAAAARecordOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateDnsZonesAAAARecordOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPrivateDnsZonesAAAARecordOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateDnsZonesAAAARecordOperatorSpec populates the provided destination PrivateDnsZonesAAAARecordOperatorSpec from our PrivateDnsZonesAAAARecordOperatorSpec
+func (operator *PrivateDnsZonesAAAARecordOperatorSpec) AssignProperties_To_PrivateDnsZonesAAAARecordOperatorSpec(destination *storage.PrivateDnsZonesAAAARecordOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateDnsZonesAAAARecordOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPrivateDnsZonesAAAARecordOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.PtrRecord
@@ -298,11 +1837,123 @@ type PtrRecord struct {
 	Ptrdname    *string                `json:"ptrdname,omitempty"`
 }
 
+// AssignProperties_From_PtrRecord populates our PtrRecord from the provided source PtrRecord
+func (record *PtrRecord) AssignProperties_From_PtrRecord(source *storage.PtrRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Ptrdname
+	record.Ptrdname = genruntime.ClonePointerToString(source.Ptrdname)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPtrRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForPtrRecord); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PtrRecord populates the provided destination PtrRecord from our PtrRecord
+func (record *PtrRecord) AssignProperties_To_PtrRecord(destination *storage.PtrRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Ptrdname
+	destination.Ptrdname = genruntime.ClonePointerToString(record.Ptrdname)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPtrRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForPtrRecord); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.PtrRecord_STATUS
 // A PTR record.
 type PtrRecord_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Ptrdname    *string                `json:"ptrdname,omitempty"`
+}
+
+// AssignProperties_From_PtrRecord_STATUS populates our PtrRecord_STATUS from the provided source PtrRecord_STATUS
+func (record *PtrRecord_STATUS) AssignProperties_From_PtrRecord_STATUS(source *storage.PtrRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Ptrdname
+	record.Ptrdname = genruntime.ClonePointerToString(source.Ptrdname)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPtrRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForPtrRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PtrRecord_STATUS populates the provided destination PtrRecord_STATUS from our PtrRecord_STATUS
+func (record *PtrRecord_STATUS) AssignProperties_To_PtrRecord_STATUS(destination *storage.PtrRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Ptrdname
+	destination.Ptrdname = genruntime.ClonePointerToString(record.Ptrdname)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPtrRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForPtrRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.SoaRecord
@@ -318,6 +1969,98 @@ type SoaRecord struct {
 	SerialNumber *int                   `json:"serialNumber,omitempty"`
 }
 
+// AssignProperties_From_SoaRecord populates our SoaRecord from the provided source SoaRecord
+func (record *SoaRecord) AssignProperties_From_SoaRecord(source *storage.SoaRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Email
+	record.Email = genruntime.ClonePointerToString(source.Email)
+
+	// ExpireTime
+	record.ExpireTime = genruntime.ClonePointerToInt(source.ExpireTime)
+
+	// Host
+	record.Host = genruntime.ClonePointerToString(source.Host)
+
+	// MinimumTtl
+	record.MinimumTtl = genruntime.ClonePointerToInt(source.MinimumTtl)
+
+	// RefreshTime
+	record.RefreshTime = genruntime.ClonePointerToInt(source.RefreshTime)
+
+	// RetryTime
+	record.RetryTime = genruntime.ClonePointerToInt(source.RetryTime)
+
+	// SerialNumber
+	record.SerialNumber = genruntime.ClonePointerToInt(source.SerialNumber)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSoaRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForSoaRecord); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SoaRecord populates the provided destination SoaRecord from our SoaRecord
+func (record *SoaRecord) AssignProperties_To_SoaRecord(destination *storage.SoaRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Email
+	destination.Email = genruntime.ClonePointerToString(record.Email)
+
+	// ExpireTime
+	destination.ExpireTime = genruntime.ClonePointerToInt(record.ExpireTime)
+
+	// Host
+	destination.Host = genruntime.ClonePointerToString(record.Host)
+
+	// MinimumTtl
+	destination.MinimumTtl = genruntime.ClonePointerToInt(record.MinimumTtl)
+
+	// RefreshTime
+	destination.RefreshTime = genruntime.ClonePointerToInt(record.RefreshTime)
+
+	// RetryTime
+	destination.RetryTime = genruntime.ClonePointerToInt(record.RetryTime)
+
+	// SerialNumber
+	destination.SerialNumber = genruntime.ClonePointerToInt(record.SerialNumber)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSoaRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForSoaRecord); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.SoaRecord_STATUS
 // An SOA record.
 type SoaRecord_STATUS struct {
@@ -331,6 +2074,98 @@ type SoaRecord_STATUS struct {
 	SerialNumber *int                   `json:"serialNumber,omitempty"`
 }
 
+// AssignProperties_From_SoaRecord_STATUS populates our SoaRecord_STATUS from the provided source SoaRecord_STATUS
+func (record *SoaRecord_STATUS) AssignProperties_From_SoaRecord_STATUS(source *storage.SoaRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Email
+	record.Email = genruntime.ClonePointerToString(source.Email)
+
+	// ExpireTime
+	record.ExpireTime = genruntime.ClonePointerToInt(source.ExpireTime)
+
+	// Host
+	record.Host = genruntime.ClonePointerToString(source.Host)
+
+	// MinimumTtl
+	record.MinimumTtl = genruntime.ClonePointerToInt(source.MinimumTtl)
+
+	// RefreshTime
+	record.RefreshTime = genruntime.ClonePointerToInt(source.RefreshTime)
+
+	// RetryTime
+	record.RetryTime = genruntime.ClonePointerToInt(source.RetryTime)
+
+	// SerialNumber
+	record.SerialNumber = genruntime.ClonePointerToInt(source.SerialNumber)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSoaRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForSoaRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SoaRecord_STATUS populates the provided destination SoaRecord_STATUS from our SoaRecord_STATUS
+func (record *SoaRecord_STATUS) AssignProperties_To_SoaRecord_STATUS(destination *storage.SoaRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Email
+	destination.Email = genruntime.ClonePointerToString(record.Email)
+
+	// ExpireTime
+	destination.ExpireTime = genruntime.ClonePointerToInt(record.ExpireTime)
+
+	// Host
+	destination.Host = genruntime.ClonePointerToString(record.Host)
+
+	// MinimumTtl
+	destination.MinimumTtl = genruntime.ClonePointerToInt(record.MinimumTtl)
+
+	// RefreshTime
+	destination.RefreshTime = genruntime.ClonePointerToInt(record.RefreshTime)
+
+	// RetryTime
+	destination.RetryTime = genruntime.ClonePointerToInt(record.RetryTime)
+
+	// SerialNumber
+	destination.SerialNumber = genruntime.ClonePointerToInt(record.SerialNumber)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSoaRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForSoaRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.SrvRecord
 // An SRV record.
 type SrvRecord struct {
@@ -339,6 +2174,80 @@ type SrvRecord struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Target      *string                `json:"target,omitempty"`
 	Weight      *int                   `json:"weight,omitempty"`
+}
+
+// AssignProperties_From_SrvRecord populates our SrvRecord from the provided source SrvRecord
+func (record *SrvRecord) AssignProperties_From_SrvRecord(source *storage.SrvRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Port
+	record.Port = genruntime.ClonePointerToInt(source.Port)
+
+	// Priority
+	record.Priority = genruntime.ClonePointerToInt(source.Priority)
+
+	// Target
+	record.Target = genruntime.ClonePointerToString(source.Target)
+
+	// Weight
+	record.Weight = genruntime.ClonePointerToInt(source.Weight)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSrvRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForSrvRecord); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SrvRecord populates the provided destination SrvRecord from our SrvRecord
+func (record *SrvRecord) AssignProperties_To_SrvRecord(destination *storage.SrvRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Port
+	destination.Port = genruntime.ClonePointerToInt(record.Port)
+
+	// Priority
+	destination.Priority = genruntime.ClonePointerToInt(record.Priority)
+
+	// Target
+	destination.Target = genruntime.ClonePointerToString(record.Target)
+
+	// Weight
+	destination.Weight = genruntime.ClonePointerToInt(record.Weight)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSrvRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForSrvRecord); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.SrvRecord_STATUS
@@ -351,6 +2260,80 @@ type SrvRecord_STATUS struct {
 	Weight      *int                   `json:"weight,omitempty"`
 }
 
+// AssignProperties_From_SrvRecord_STATUS populates our SrvRecord_STATUS from the provided source SrvRecord_STATUS
+func (record *SrvRecord_STATUS) AssignProperties_From_SrvRecord_STATUS(source *storage.SrvRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Port
+	record.Port = genruntime.ClonePointerToInt(source.Port)
+
+	// Priority
+	record.Priority = genruntime.ClonePointerToInt(source.Priority)
+
+	// Target
+	record.Target = genruntime.ClonePointerToString(source.Target)
+
+	// Weight
+	record.Weight = genruntime.ClonePointerToInt(source.Weight)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSrvRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForSrvRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SrvRecord_STATUS populates the provided destination SrvRecord_STATUS from our SrvRecord_STATUS
+func (record *SrvRecord_STATUS) AssignProperties_To_SrvRecord_STATUS(destination *storage.SrvRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Port
+	destination.Port = genruntime.ClonePointerToInt(record.Port)
+
+	// Priority
+	destination.Priority = genruntime.ClonePointerToInt(record.Priority)
+
+	// Target
+	destination.Target = genruntime.ClonePointerToString(record.Target)
+
+	// Weight
+	destination.Weight = genruntime.ClonePointerToInt(record.Weight)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSrvRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForSrvRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.TxtRecord
 // A TXT record.
 type TxtRecord struct {
@@ -358,11 +2341,208 @@ type TxtRecord struct {
 	Value       []string               `json:"value,omitempty"`
 }
 
+// AssignProperties_From_TxtRecord populates our TxtRecord from the provided source TxtRecord
+func (record *TxtRecord) AssignProperties_From_TxtRecord(source *storage.TxtRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Value
+	record.Value = genruntime.CloneSliceOfString(source.Value)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTxtRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForTxtRecord); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TxtRecord populates the provided destination TxtRecord from our TxtRecord
+func (record *TxtRecord) AssignProperties_To_TxtRecord(destination *storage.TxtRecord) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Value
+	destination.Value = genruntime.CloneSliceOfString(record.Value)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTxtRecord interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForTxtRecord); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.TxtRecord_STATUS
 // A TXT record.
 type TxtRecord_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Value       []string               `json:"value,omitempty"`
+}
+
+// AssignProperties_From_TxtRecord_STATUS populates our TxtRecord_STATUS from the provided source TxtRecord_STATUS
+func (record *TxtRecord_STATUS) AssignProperties_From_TxtRecord_STATUS(source *storage.TxtRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Value
+	record.Value = genruntime.CloneSliceOfString(source.Value)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		record.PropertyBag = propertyBag
+	} else {
+		record.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTxtRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForTxtRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TxtRecord_STATUS populates the provided destination TxtRecord_STATUS from our TxtRecord_STATUS
+func (record *TxtRecord_STATUS) AssignProperties_To_TxtRecord_STATUS(destination *storage.TxtRecord_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
+
+	// Value
+	destination.Value = genruntime.CloneSliceOfString(record.Value)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTxtRecord_STATUS interface (if implemented) to customize the conversion
+	var recordAsAny any = record
+	if augmentedRecord, ok := recordAsAny.(augmentConversionForTxtRecord_STATUS); ok {
+		err := augmentedRecord.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAaaaRecord interface {
+	AssignPropertiesFrom(src *storage.AaaaRecord) error
+	AssignPropertiesTo(dst *storage.AaaaRecord) error
+}
+
+type augmentConversionForAaaaRecord_STATUS interface {
+	AssignPropertiesFrom(src *storage.AaaaRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.AaaaRecord_STATUS) error
+}
+
+type augmentConversionForARecord interface {
+	AssignPropertiesFrom(src *storage.ARecord) error
+	AssignPropertiesTo(dst *storage.ARecord) error
+}
+
+type augmentConversionForARecord_STATUS interface {
+	AssignPropertiesFrom(src *storage.ARecord_STATUS) error
+	AssignPropertiesTo(dst *storage.ARecord_STATUS) error
+}
+
+type augmentConversionForCnameRecord interface {
+	AssignPropertiesFrom(src *storage.CnameRecord) error
+	AssignPropertiesTo(dst *storage.CnameRecord) error
+}
+
+type augmentConversionForCnameRecord_STATUS interface {
+	AssignPropertiesFrom(src *storage.CnameRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.CnameRecord_STATUS) error
+}
+
+type augmentConversionForMxRecord interface {
+	AssignPropertiesFrom(src *storage.MxRecord) error
+	AssignPropertiesTo(dst *storage.MxRecord) error
+}
+
+type augmentConversionForMxRecord_STATUS interface {
+	AssignPropertiesFrom(src *storage.MxRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.MxRecord_STATUS) error
+}
+
+type augmentConversionForPrivateDnsZonesAAAARecordOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.PrivateDnsZonesAAAARecordOperatorSpec) error
+	AssignPropertiesTo(dst *storage.PrivateDnsZonesAAAARecordOperatorSpec) error
+}
+
+type augmentConversionForPtrRecord interface {
+	AssignPropertiesFrom(src *storage.PtrRecord) error
+	AssignPropertiesTo(dst *storage.PtrRecord) error
+}
+
+type augmentConversionForPtrRecord_STATUS interface {
+	AssignPropertiesFrom(src *storage.PtrRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.PtrRecord_STATUS) error
+}
+
+type augmentConversionForSoaRecord interface {
+	AssignPropertiesFrom(src *storage.SoaRecord) error
+	AssignPropertiesTo(dst *storage.SoaRecord) error
+}
+
+type augmentConversionForSoaRecord_STATUS interface {
+	AssignPropertiesFrom(src *storage.SoaRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.SoaRecord_STATUS) error
+}
+
+type augmentConversionForSrvRecord interface {
+	AssignPropertiesFrom(src *storage.SrvRecord) error
+	AssignPropertiesTo(dst *storage.SrvRecord) error
+}
+
+type augmentConversionForSrvRecord_STATUS interface {
+	AssignPropertiesFrom(src *storage.SrvRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.SrvRecord_STATUS) error
+}
+
+type augmentConversionForTxtRecord interface {
+	AssignPropertiesFrom(src *storage.TxtRecord) error
+	AssignPropertiesTo(dst *storage.TxtRecord) error
+}
+
+type augmentConversionForTxtRecord_STATUS interface {
+	AssignPropertiesFrom(src *storage.TxtRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.TxtRecord_STATUS) error
 }
 
 func init() {

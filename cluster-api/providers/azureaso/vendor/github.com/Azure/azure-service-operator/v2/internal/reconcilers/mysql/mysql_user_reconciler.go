@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	_ "github.com/go-sql-driver/mysql" //mysql driver
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/pkg/errors"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -40,8 +40,8 @@ func NewMySQLUserReconciler(
 	resourceResolver *resolver.Resolver,
 	positiveConditions *conditions.PositiveConditionBuilder,
 	credentialProvider identity.CredentialProvider,
-	cfg config.Values) *MySQLUserReconciler {
-
+	cfg config.Values,
+) *MySQLUserReconciler {
 	return &MySQLUserReconciler{
 		ResourceResolver:   resourceResolver,
 		CredentialProvider: credentialProvider,

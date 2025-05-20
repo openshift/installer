@@ -8,9 +8,11 @@ package customizations
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault"
 	"github.com/go-logr/logr"
@@ -24,7 +26,9 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
+	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/extensions"
 )
 
@@ -47,7 +51,6 @@ func (ex *VaultExtension) ModifyARMResource(
 	resolver *resolver.Resolver,
 	log logr.Logger,
 ) (genruntime.ARMResource, error) {
-
 	kv, ok := obj.(*keyvault.Vault)
 	if !ok {
 		return nil, errors.Errorf(
@@ -65,15 +68,9 @@ func (ex *VaultExtension) ModifyARMResource(
 		return armObj, nil
 	}
 
-	// Get the owner of the KeyVault, we need this resource group to determine the subscription
-	owner, ownerErr := ex.getOwner(ctx, kv, resolver, log)
-	if ownerErr != nil {
-		return nil, errors.Wrapf(ownerErr, "unable to find owner of KeyVault %s", kv.Name)
-	}
-
 	// Parse the ID of the owner
 	// (Can't use the KeyVault as we do this before the KV exists)
-	id, err := genruntime.GetAndParseResourceID(owner)
+	id, err := ex.getOwner(ctx, kv, resolver)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get and parse resource ID from KeyVault owner")
 	}
@@ -85,14 +82,14 @@ func (ex *VaultExtension) ModifyARMResource(
 
 	createMode := *kv.Spec.Properties.CreateMode
 	if createMode == CreateMode_CreateOrRecover {
-		createMode, err = ex.handleCreateOrRecover(ctx, kv, vc, resolver, log)
+		createMode, err = ex.handleCreateOrRecover(ctx, kv, vc, id, log)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error checking for existence of soft-deleted KeyVault")
 		}
 	}
 
 	if createMode == CreateMode_PurgeThenCreate {
-		err = ex.handlePurgeThenCreate(ctx, kv, vc, resolver, log)
+		err = ex.handlePurgeThenCreate(ctx, kv, vc, log)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error purging soft-deleted KeyVault")
 		}
@@ -114,23 +111,37 @@ func (ex *VaultExtension) handleCreateOrRecover(
 	ctx context.Context,
 	kv *keyvault.Vault,
 	vc *armkeyvault.VaultsClient,
-	resolver *resolver.Resolver,
+	ownerID *arm.ResourceID,
 	log logr.Logger,
 ) (string, error) {
-	exists, err := ex.checkForExistenceOfDeletedKeyVault(ctx, kv, resolver, vc, log)
+	deletedKeyVault, err := ex.checkForExistenceOfDeletedKeyVault(ctx, kv, vc, log)
 	if err != nil {
 		return "", errors.Wrapf(err, "error checking for existence of soft-deleted KeyVault %s", kv.Name)
 	}
 
 	result := CreateMode_Default
-	if exists {
+	if deletedKeyVault.Exists {
+		// Confirm that the KV is in the same resource group it was before
+		if deletedKeyVault.DeletedVault.Properties != nil {
+			var id *arm.ResourceID
+			id, err = arm.ParseResourceID(to.Value(deletedKeyVault.DeletedVault.Properties.VaultID))
+			if err != nil {
+				return "", errors.Wrapf(err, "error parsing KeyVault ID %s", to.Value(deletedKeyVault.DeletedVault.Properties.VaultID))
+			}
+
+			err = checkResourceGroupsMatch(ownerID, id)
+			if err != nil {
+				return "", err
+			}
+		}
+
 		result = CreateMode_Recover
 	}
 
 	log.Info(
 		"KeyVault reconciliation requested CreateOrRecover",
 		"KeyVault", kv.Name,
-		"softDeletedKeyvaultExists", exists,
+		"softDeletedKeyvaultExists", deletedKeyVault.Exists,
 		"createMode", result)
 
 	return result, err
@@ -140,11 +151,10 @@ func (ex *VaultExtension) handlePurgeThenCreate(
 	ctx context.Context,
 	kv *keyvault.Vault,
 	vc *armkeyvault.VaultsClient,
-	resolver *resolver.Resolver,
 	log logr.Logger,
 ) error {
 	// Find out whether a soft-deleted KeyVault with the same name exists
-	exists, err := ex.checkForExistenceOfDeletedKeyVault(ctx, kv, resolver, vc, log)
+	deletedKeyVault, err := ex.checkForExistenceOfDeletedKeyVault(ctx, kv, vc, log)
 	if err != nil {
 		// Could not determine whether a soft-deleted keyvault exists in the same subscription, assume it doesn't
 
@@ -155,19 +165,11 @@ func (ex *VaultExtension) handlePurgeThenCreate(
 	log.Info(
 		"KeyVault reconciliation requested PurgeThenCreate",
 		"KeyVault", kv.Name,
-		"softDeletedKeyVaultExists", exists)
+		"softDeletedKeyVaultExists", deletedKeyVault.Exists)
 
-	if exists {
-		// Get the owner of the KeyVault, we need this resource group to determine the location
-		owner, ownerErr := ex.getOwner(ctx, kv, resolver, log)
-		if ownerErr != nil {
-			return errors.Wrapf(ownerErr, "unable to find owner of KeyVault %s", kv.Name)
-		}
-
-		// if a soft-deleted KeyVault exists, we need to purge it before we can create a new one
-		// Get the location of the KeyVault
-		location, locationOk := ex.getLocation(kv, owner)
-		if !locationOk {
+	if deletedKeyVault.Exists {
+		location := to.Value(kv.Spec.Location)
+		if location == "" {
 			return errors.Errorf("unable to determine location of KeyVault %s", kv.Name)
 		}
 
@@ -185,25 +187,36 @@ func (ex *VaultExtension) handlePurgeThenCreate(
 	return nil
 }
 
+type deletionDetails struct {
+	Exists       bool
+	DeletedVault *armkeyvault.DeletedVault
+}
+
+func deletedKeyVaultFound(vault armkeyvault.DeletedVault) deletionDetails {
+	return deletionDetails{
+		Exists:       true,
+		DeletedVault: &vault,
+	}
+}
+
+func deletedKeyVaultNotFound() deletionDetails {
+	return deletionDetails{
+		Exists: false,
+	}
+}
+
 // checkForExistenceOfDeletedKeyVault checks to see whether there's a soft deleted KeyVault with the same name.
 // This might be true if another party has deleted the KeyVault, even if we previously created it
 func (ex *VaultExtension) checkForExistenceOfDeletedKeyVault(
 	ctx context.Context,
 	kv *keyvault.Vault,
-	resolver *resolver.Resolver,
 	vaultsClient *armkeyvault.VaultsClient,
 	log logr.Logger,
-) (bool, error) {
-	// Get the owner of the KeyVault, we need this resource group to determine the subscription
-	owner, ownerErr := ex.getOwner(ctx, kv, resolver, log)
-	if ownerErr != nil {
-		return false, errors.Wrapf(ownerErr, "unable to find owner of KeyVault %s", kv.Name)
-	}
-
+) (deletionDetails, error) {
 	// Get the location of the KeyVault
-	location, locationOk := ex.getLocation(kv, owner)
-	if !locationOk {
-		return false, errors.Errorf("unable to determine location of KeyVault %s", kv.Name)
+	location := to.Value(kv.Spec.Location)
+	if location == "" {
+		return deletedKeyVaultNotFound(), errors.Errorf("unable to determine location of KeyVault %s", kv.Name)
 	}
 
 	// Get the name of the KeyVault
@@ -216,12 +229,12 @@ func (ex *VaultExtension) checkForExistenceOfDeletedKeyVault(
 	exists := true
 
 	// Check to see if this is true
-	_, err := vaultsClient.GetDeleted(ctx, vaultName, location, &armkeyvault.VaultsClientGetDeletedOptions{})
+	deletedDetails, err := vaultsClient.GetDeleted(ctx, vaultName, location, &armkeyvault.VaultsClientGetDeletedOptions{})
 	if err != nil {
 		var responseError *azcore.ResponseError
 		if errors.As(err, &responseError) {
 			if responseError.StatusCode != http.StatusNotFound {
-				return false, errors.Wrapf(err, "failed to get deleted KeyVault %s, error %d", kv.Name, responseError.StatusCode)
+				return deletedKeyVaultNotFound(), errors.Wrapf(err, "failed to get deleted KeyVault %s, error %d", kv.Name, responseError.StatusCode)
 			}
 
 			// KeyVault doesn't exist,
@@ -229,61 +242,80 @@ func (ex *VaultExtension) checkForExistenceOfDeletedKeyVault(
 		}
 	}
 
+	originalID := ""
+	if deletedDetails.DeletedVault.Properties != nil {
+		originalID = to.Value(deletedDetails.DeletedVault.Properties.VaultID)
+	}
+
 	log.Info(
 		"Checking for existence of soft-deleted KeyVault",
 		"keyVault", kv.Name,
 		"location", location,
 		"softDeletedKeyvaultExists", exists,
+		"originalID", originalID,
 	)
 
-	return exists, nil
+	if exists {
+		return deletedKeyVaultFound(deletedDetails.DeletedVault), nil
+	}
+	return deletedKeyVaultNotFound(), nil
 }
 
 func (*VaultExtension) getOwner(
 	ctx context.Context,
 	kv *keyvault.Vault,
-	resolver *resolver.Resolver,
-	log logr.Logger,
-) (*resources.ResourceGroup, error) {
-	owner, err := resolver.ResolveOwner(ctx, kv)
+	reslv *resolver.Resolver,
+) (*arm.ResourceID, error) {
+	owner, err := reslv.ResolveOwner(ctx, kv)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to resolve owner of KeyVault %s", kv.Name)
 	}
 
+	var id *arm.ResourceID
+
 	// No need to wait for resources that don't have an owner
-	if !owner.FoundKubernetesOwner() {
-		log.Info(
-			"KeyVault owner is not within the cluster, cannot determine subscription",
-			"keyVault", kv.Name)
-		return nil, errors.Errorf("owner of KeyVault %s is not within the cluster", kv.Name)
+	switch owner.Result { // nolint: exhaustive
+	case resolver.OwnerFoundKubernetes:
+		rg, ok := owner.Owner.(*resources.ResourceGroup)
+		if !ok {
+			return nil, errors.Errorf("expected owner of KeyVault %s to be a ResourceGroup", kv.Name)
+		}
+
+		// Type assert that the ResourceGroup is the hub type. This will fail to compile if
+		// the hub type has been changed but this extension has not been updated to match
+		var _ conversion.Hub = rg
+
+		// Parse the ID of the owner
+		// (Can't use the KeyVault as we do this before the KV exists)
+
+		id, err = genruntime.GetAndParseResourceID(rg)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get and parse resource ID from KeyVault owner")
+		}
+	case resolver.OwnerFoundARM:
+		id, err = arm.ParseResourceID(owner.ARMID)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse resource ID from KeyVault owner")
+		}
+	default:
+		return nil, errors.Errorf("unexpected owner type of KeyVault, type: %s", owner.Result)
 	}
 
-	rg, ok := owner.Owner.(*resources.ResourceGroup)
-	if !ok {
-		return nil, errors.Errorf("expected owner of KeyVault %s to be a ResourceGroup", kv.Name)
-	}
-
-	// Type assert that the ResourceGroup is the hub type. This will fail to compile if
-	// the hub type has been changed but this extension has not been updated to match
-	var _ conversion.Hub = rg
-
-	return rg, nil
+	return id, nil
 }
 
-// findKeyVaultLocation determines which location we're trying to create KeyVault within
-func (*VaultExtension) getLocation(
-	kv *keyvault.Vault,
-	rg *resources.ResourceGroup,
-) (string, bool) {
-	// Prefer location on the KeyVault
-	if kv.Spec.Location != nil && *kv.Spec.Location != "" {
-		return *kv.Spec.Location, true
+func checkResourceGroupsMatch(new *arm.ResourceID, old *arm.ResourceID) error {
+	if !strings.EqualFold(new.ResourceGroupName, old.ResourceGroupName) {
+		// This error is fatal
+		return conditions.NewReadyConditionImpactingError(
+			errors.Errorf(
+				"cannot recover KeyVault: new resourceGroup %s does not match old resource group %s",
+				new.ResourceGroupName,
+				old.ResourceGroupName),
+			conditions.ConditionSeverityError,
+			conditions.ReasonFailed,
+		)
 	}
 
-	// Fallback to location on ResourceGroup
-	if rg.Spec.Location != nil && *rg.Spec.Location != "" {
-		return *rg.Spec.Location, true
-	}
-
-	return "", false
+	return nil
 }

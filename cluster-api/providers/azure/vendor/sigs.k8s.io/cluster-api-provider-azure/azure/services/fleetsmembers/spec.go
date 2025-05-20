@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 )
 
@@ -47,7 +48,7 @@ func (s *AzureFleetsMemberSpec) ResourceRef() *asocontainerservicev1.FleetsMembe
 }
 
 // Parameters implements azure.ASOResourceSpecGetter.
-func (s *AzureFleetsMemberSpec) Parameters(ctx context.Context, existingFleetsMember *asocontainerservicev1.FleetsMember) (parameters *asocontainerservicev1.FleetsMember, err error) {
+func (s *AzureFleetsMemberSpec) Parameters(_ context.Context, existingFleetsMember *asocontainerservicev1.FleetsMember) (parameters *asocontainerservicev1.FleetsMember, err error) {
 	fleetsMember := &asocontainerservicev1.FleetsMember{}
 	if existingFleetsMember != nil {
 		fleetsMember = existingFleetsMember
@@ -66,7 +67,7 @@ func (s *AzureFleetsMemberSpec) Parameters(ctx context.Context, existingFleetsMe
 }
 
 // WasManaged implements azure.ASOResourceSpecGetter.
-func (s *AzureFleetsMemberSpec) WasManaged(resource *asocontainerservicev1.FleetsMember) bool {
+func (s *AzureFleetsMemberSpec) WasManaged(_ *asocontainerservicev1.FleetsMember) bool {
 	// returns false because previous versions of CAPZ did not support Fleets.
 	return false
 }

@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +47,26 @@ func (alias *Alias) SetConditions(conditions conditions.Conditions) {
 	alias.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &Alias{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (alias *Alias) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if alias.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return alias.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Alias{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (alias *Alias) SecretDestinationExpressions() []*core.DestinationExpression {
+	if alias.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return alias.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &Alias{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (alias *Alias) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-10-01"
 func (alias Alias) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-10-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -142,6 +165,7 @@ type Alias_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName       string                     `json:"azureName,omitempty"`
+	OperatorSpec    *AliasOperatorSpec         `json:"operatorSpec,omitempty"`
 	OriginalVersion string                     `json:"originalVersion,omitempty"`
 	Properties      *PutAliasRequestProperties `json:"properties,omitempty"`
 	PropertyBag     genruntime.PropertyBag     `json:"$propertyBag,omitempty"`
@@ -203,6 +227,14 @@ func (alias *Alias_STATUS) ConvertStatusTo(destination genruntime.ConvertibleSta
 type APIVersion string
 
 const APIVersion_Value = APIVersion("2021-10-01")
+
+// Storage version of v1api20211001.AliasOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type AliasOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
 
 // Storage version of v1api20211001.PutAliasRequestProperties
 // Put subscription properties.

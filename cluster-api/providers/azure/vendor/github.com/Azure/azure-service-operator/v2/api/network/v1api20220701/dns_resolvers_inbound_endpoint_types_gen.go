@@ -5,10 +5,14 @@ package v1api20220701
 
 import (
 	"fmt"
+	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type DnsResolversInboundEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              DnsResolvers_InboundEndpoint_Spec   `json:"spec,omitempty"`
-	Status            DnsResolvers_InboundEndpoint_STATUS `json:"status,omitempty"`
+	Spec              DnsResolversInboundEndpoint_Spec   `json:"spec,omitempty"`
+	Status            DnsResolversInboundEndpoint_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &DnsResolversInboundEndpoint{}
@@ -90,15 +94,35 @@ func (endpoint *DnsResolversInboundEndpoint) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the DnsResolversInboundEndpoint resource
 func (endpoint *DnsResolversInboundEndpoint) defaultImpl() { endpoint.defaultAzureName() }
 
+var _ configmaps.Exporter = &DnsResolversInboundEndpoint{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (endpoint *DnsResolversInboundEndpoint) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if endpoint.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return endpoint.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &DnsResolversInboundEndpoint{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (endpoint *DnsResolversInboundEndpoint) SecretDestinationExpressions() []*core.DestinationExpression {
+	if endpoint.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return endpoint.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &DnsResolversInboundEndpoint{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (endpoint *DnsResolversInboundEndpoint) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*DnsResolvers_InboundEndpoint_STATUS); ok {
-		return endpoint.Spec.Initialize_From_DnsResolvers_InboundEndpoint_STATUS(s)
+	if s, ok := status.(*DnsResolversInboundEndpoint_STATUS); ok {
+		return endpoint.Spec.Initialize_From_DnsResolversInboundEndpoint_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type DnsResolvers_InboundEndpoint_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type DnsResolversInboundEndpoint_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &DnsResolversInboundEndpoint{}
@@ -110,7 +134,7 @@ func (endpoint *DnsResolversInboundEndpoint) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-07-01"
 func (endpoint DnsResolversInboundEndpoint) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-07-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -144,7 +168,7 @@ func (endpoint *DnsResolversInboundEndpoint) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (endpoint *DnsResolversInboundEndpoint) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &DnsResolvers_InboundEndpoint_STATUS{}
+	return &DnsResolversInboundEndpoint_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -156,13 +180,13 @@ func (endpoint *DnsResolversInboundEndpoint) Owner() *genruntime.ResourceReferen
 // SetStatus sets the status of this resource
 func (endpoint *DnsResolversInboundEndpoint) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*DnsResolvers_InboundEndpoint_STATUS); ok {
+	if st, ok := status.(*DnsResolversInboundEndpoint_STATUS); ok {
 		endpoint.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st DnsResolvers_InboundEndpoint_STATUS
+	var st DnsResolversInboundEndpoint_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -208,7 +232,7 @@ func (endpoint *DnsResolversInboundEndpoint) ValidateUpdate(old runtime.Object) 
 
 // createValidations validates the creation of the resource
 func (endpoint *DnsResolversInboundEndpoint) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){endpoint.validateResourceReferences, endpoint.validateOwnerReference}
+	return []func() (admission.Warnings, error){endpoint.validateResourceReferences, endpoint.validateOwnerReference, endpoint.validateSecretDestinations, endpoint.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (endpoint *DnsResolversInboundEndpoint) updateValidations() []func(old runt
 		func(old runtime.Object) (admission.Warnings, error) {
 			return endpoint.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return endpoint.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return endpoint.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (endpoint *DnsResolversInboundEndpoint) validateConfigMapDestinations() (admission.Warnings, error) {
+	if endpoint.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(endpoint, nil, endpoint.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -241,6 +279,14 @@ func (endpoint *DnsResolversInboundEndpoint) validateResourceReferences() (admis
 		return nil, err
 	}
 	return genruntime.ValidateResourceReferences(refs)
+}
+
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (endpoint *DnsResolversInboundEndpoint) validateSecretDestinations() (admission.Warnings, error) {
+	if endpoint.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(endpoint, nil, endpoint.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties
@@ -260,18 +306,18 @@ func (endpoint *DnsResolversInboundEndpoint) AssignProperties_From_DnsResolversI
 	endpoint.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec DnsResolvers_InboundEndpoint_Spec
-	err := spec.AssignProperties_From_DnsResolvers_InboundEndpoint_Spec(&source.Spec)
+	var spec DnsResolversInboundEndpoint_Spec
+	err := spec.AssignProperties_From_DnsResolversInboundEndpoint_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DnsResolvers_InboundEndpoint_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_DnsResolversInboundEndpoint_Spec() to populate field Spec")
 	}
 	endpoint.Spec = spec
 
 	// Status
-	var status DnsResolvers_InboundEndpoint_STATUS
-	err = status.AssignProperties_From_DnsResolvers_InboundEndpoint_STATUS(&source.Status)
+	var status DnsResolversInboundEndpoint_STATUS
+	err = status.AssignProperties_From_DnsResolversInboundEndpoint_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DnsResolvers_InboundEndpoint_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_DnsResolversInboundEndpoint_STATUS() to populate field Status")
 	}
 	endpoint.Status = status
 
@@ -286,18 +332,18 @@ func (endpoint *DnsResolversInboundEndpoint) AssignProperties_To_DnsResolversInb
 	destination.ObjectMeta = *endpoint.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec storage.DnsResolvers_InboundEndpoint_Spec
-	err := endpoint.Spec.AssignProperties_To_DnsResolvers_InboundEndpoint_Spec(&spec)
+	var spec storage.DnsResolversInboundEndpoint_Spec
+	err := endpoint.Spec.AssignProperties_To_DnsResolversInboundEndpoint_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DnsResolvers_InboundEndpoint_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_DnsResolversInboundEndpoint_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status storage.DnsResolvers_InboundEndpoint_STATUS
-	err = endpoint.Status.AssignProperties_To_DnsResolvers_InboundEndpoint_STATUS(&status)
+	var status storage.DnsResolversInboundEndpoint_STATUS
+	err = endpoint.Status.AssignProperties_To_DnsResolversInboundEndpoint_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DnsResolvers_InboundEndpoint_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_DnsResolversInboundEndpoint_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -324,7 +370,7 @@ type DnsResolversInboundEndpointList struct {
 	Items           []DnsResolversInboundEndpoint `json:"items"`
 }
 
-type DnsResolvers_InboundEndpoint_Spec struct {
+type DnsResolversInboundEndpoint_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
@@ -337,6 +383,10 @@ type DnsResolvers_InboundEndpoint_Spec struct {
 	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *DnsResolversInboundEndpointOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -347,14 +397,14 @@ type DnsResolvers_InboundEndpoint_Spec struct {
 	Tags map[string]string `json:"tags,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &DnsResolvers_InboundEndpoint_Spec{}
+var _ genruntime.ARMTransformer = &DnsResolversInboundEndpoint_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (endpoint *DnsResolvers_InboundEndpoint_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (endpoint *DnsResolversInboundEndpoint_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if endpoint == nil {
 		return nil, nil
 	}
-	result := &DnsResolvers_InboundEndpoint_Spec_ARM{}
+	result := &arm.DnsResolversInboundEndpoint_Spec{}
 
 	// Set property "Location":
 	if endpoint.Location != nil {
@@ -367,14 +417,14 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) ConvertToARM(resolved genrunt
 
 	// Set property "Properties":
 	if endpoint.IpConfigurations != nil {
-		result.Properties = &InboundEndpointProperties_ARM{}
+		result.Properties = &arm.InboundEndpointProperties{}
 	}
 	for _, item := range endpoint.IpConfigurations {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*IpConfiguration_ARM))
+		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*arm.IpConfiguration))
 	}
 
 	// Set property "Tags":
@@ -388,15 +438,15 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) ConvertToARM(resolved genrunt
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (endpoint *DnsResolvers_InboundEndpoint_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DnsResolvers_InboundEndpoint_Spec_ARM{}
+func (endpoint *DnsResolversInboundEndpoint_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.DnsResolversInboundEndpoint_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (endpoint *DnsResolvers_InboundEndpoint_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DnsResolvers_InboundEndpoint_Spec_ARM)
+func (endpoint *DnsResolversInboundEndpoint_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.DnsResolversInboundEndpoint_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DnsResolvers_InboundEndpoint_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DnsResolversInboundEndpoint_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -421,6 +471,8 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) PopulateFromARM(owner genrunt
 		endpoint.Location = &location
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	endpoint.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -439,25 +491,25 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) PopulateFromARM(owner genrunt
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &DnsResolvers_InboundEndpoint_Spec{}
+var _ genruntime.ConvertibleSpec = &DnsResolversInboundEndpoint_Spec{}
 
-// ConvertSpecFrom populates our DnsResolvers_InboundEndpoint_Spec from the provided source
-func (endpoint *DnsResolvers_InboundEndpoint_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*storage.DnsResolvers_InboundEndpoint_Spec)
+// ConvertSpecFrom populates our DnsResolversInboundEndpoint_Spec from the provided source
+func (endpoint *DnsResolversInboundEndpoint_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.DnsResolversInboundEndpoint_Spec)
 	if ok {
 		// Populate our instance from source
-		return endpoint.AssignProperties_From_DnsResolvers_InboundEndpoint_Spec(src)
+		return endpoint.AssignProperties_From_DnsResolversInboundEndpoint_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &storage.DnsResolvers_InboundEndpoint_Spec{}
+	src = &storage.DnsResolversInboundEndpoint_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = endpoint.AssignProperties_From_DnsResolvers_InboundEndpoint_Spec(src)
+	err = endpoint.AssignProperties_From_DnsResolversInboundEndpoint_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -465,17 +517,17 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) ConvertSpecFrom(source genrun
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our DnsResolvers_InboundEndpoint_Spec
-func (endpoint *DnsResolvers_InboundEndpoint_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*storage.DnsResolvers_InboundEndpoint_Spec)
+// ConvertSpecTo populates the provided destination from our DnsResolversInboundEndpoint_Spec
+func (endpoint *DnsResolversInboundEndpoint_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.DnsResolversInboundEndpoint_Spec)
 	if ok {
 		// Populate destination from our instance
-		return endpoint.AssignProperties_To_DnsResolvers_InboundEndpoint_Spec(dst)
+		return endpoint.AssignProperties_To_DnsResolversInboundEndpoint_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &storage.DnsResolvers_InboundEndpoint_Spec{}
-	err := endpoint.AssignProperties_To_DnsResolvers_InboundEndpoint_Spec(dst)
+	dst = &storage.DnsResolversInboundEndpoint_Spec{}
+	err := endpoint.AssignProperties_To_DnsResolversInboundEndpoint_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -489,8 +541,8 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) ConvertSpecTo(destination gen
 	return nil
 }
 
-// AssignProperties_From_DnsResolvers_InboundEndpoint_Spec populates our DnsResolvers_InboundEndpoint_Spec from the provided source DnsResolvers_InboundEndpoint_Spec
-func (endpoint *DnsResolvers_InboundEndpoint_Spec) AssignProperties_From_DnsResolvers_InboundEndpoint_Spec(source *storage.DnsResolvers_InboundEndpoint_Spec) error {
+// AssignProperties_From_DnsResolversInboundEndpoint_Spec populates our DnsResolversInboundEndpoint_Spec from the provided source DnsResolversInboundEndpoint_Spec
+func (endpoint *DnsResolversInboundEndpoint_Spec) AssignProperties_From_DnsResolversInboundEndpoint_Spec(source *storage.DnsResolversInboundEndpoint_Spec) error {
 
 	// AzureName
 	endpoint.AzureName = source.AzureName
@@ -516,6 +568,18 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) AssignProperties_From_DnsReso
 	// Location
 	endpoint.Location = genruntime.ClonePointerToString(source.Location)
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec DnsResolversInboundEndpointOperatorSpec
+		err := operatorSpec.AssignProperties_From_DnsResolversInboundEndpointOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DnsResolversInboundEndpointOperatorSpec() to populate field OperatorSpec")
+		}
+		endpoint.OperatorSpec = &operatorSpec
+	} else {
+		endpoint.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -531,8 +595,8 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) AssignProperties_From_DnsReso
 	return nil
 }
 
-// AssignProperties_To_DnsResolvers_InboundEndpoint_Spec populates the provided destination DnsResolvers_InboundEndpoint_Spec from our DnsResolvers_InboundEndpoint_Spec
-func (endpoint *DnsResolvers_InboundEndpoint_Spec) AssignProperties_To_DnsResolvers_InboundEndpoint_Spec(destination *storage.DnsResolvers_InboundEndpoint_Spec) error {
+// AssignProperties_To_DnsResolversInboundEndpoint_Spec populates the provided destination DnsResolversInboundEndpoint_Spec from our DnsResolversInboundEndpoint_Spec
+func (endpoint *DnsResolversInboundEndpoint_Spec) AssignProperties_To_DnsResolversInboundEndpoint_Spec(destination *storage.DnsResolversInboundEndpoint_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -560,6 +624,18 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) AssignProperties_To_DnsResolv
 	// Location
 	destination.Location = genruntime.ClonePointerToString(endpoint.Location)
 
+	// OperatorSpec
+	if endpoint.OperatorSpec != nil {
+		var operatorSpec storage.DnsResolversInboundEndpointOperatorSpec
+		err := endpoint.OperatorSpec.AssignProperties_To_DnsResolversInboundEndpointOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DnsResolversInboundEndpointOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = endpoint.OriginalVersion()
 
@@ -585,8 +661,8 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) AssignProperties_To_DnsResolv
 	return nil
 }
 
-// Initialize_From_DnsResolvers_InboundEndpoint_STATUS populates our DnsResolvers_InboundEndpoint_Spec from the provided source DnsResolvers_InboundEndpoint_STATUS
-func (endpoint *DnsResolvers_InboundEndpoint_Spec) Initialize_From_DnsResolvers_InboundEndpoint_STATUS(source *DnsResolvers_InboundEndpoint_STATUS) error {
+// Initialize_From_DnsResolversInboundEndpoint_STATUS populates our DnsResolversInboundEndpoint_Spec from the provided source DnsResolversInboundEndpoint_STATUS
+func (endpoint *DnsResolversInboundEndpoint_Spec) Initialize_From_DnsResolversInboundEndpoint_STATUS(source *DnsResolversInboundEndpoint_STATUS) error {
 
 	// IpConfigurations
 	if source.IpConfigurations != nil {
@@ -617,16 +693,16 @@ func (endpoint *DnsResolvers_InboundEndpoint_Spec) Initialize_From_DnsResolvers_
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (endpoint *DnsResolvers_InboundEndpoint_Spec) OriginalVersion() string {
+func (endpoint *DnsResolversInboundEndpoint_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (endpoint *DnsResolvers_InboundEndpoint_Spec) SetAzureName(azureName string) {
+func (endpoint *DnsResolversInboundEndpoint_Spec) SetAzureName(azureName string) {
 	endpoint.AzureName = azureName
 }
 
-type DnsResolvers_InboundEndpoint_STATUS struct {
+type DnsResolversInboundEndpoint_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
@@ -663,25 +739,25 @@ type DnsResolvers_InboundEndpoint_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &DnsResolvers_InboundEndpoint_STATUS{}
+var _ genruntime.ConvertibleStatus = &DnsResolversInboundEndpoint_STATUS{}
 
-// ConvertStatusFrom populates our DnsResolvers_InboundEndpoint_STATUS from the provided source
-func (endpoint *DnsResolvers_InboundEndpoint_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*storage.DnsResolvers_InboundEndpoint_STATUS)
+// ConvertStatusFrom populates our DnsResolversInboundEndpoint_STATUS from the provided source
+func (endpoint *DnsResolversInboundEndpoint_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.DnsResolversInboundEndpoint_STATUS)
 	if ok {
 		// Populate our instance from source
-		return endpoint.AssignProperties_From_DnsResolvers_InboundEndpoint_STATUS(src)
+		return endpoint.AssignProperties_From_DnsResolversInboundEndpoint_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &storage.DnsResolvers_InboundEndpoint_STATUS{}
+	src = &storage.DnsResolversInboundEndpoint_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = endpoint.AssignProperties_From_DnsResolvers_InboundEndpoint_STATUS(src)
+	err = endpoint.AssignProperties_From_DnsResolversInboundEndpoint_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -689,17 +765,17 @@ func (endpoint *DnsResolvers_InboundEndpoint_STATUS) ConvertStatusFrom(source ge
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our DnsResolvers_InboundEndpoint_STATUS
-func (endpoint *DnsResolvers_InboundEndpoint_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*storage.DnsResolvers_InboundEndpoint_STATUS)
+// ConvertStatusTo populates the provided destination from our DnsResolversInboundEndpoint_STATUS
+func (endpoint *DnsResolversInboundEndpoint_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.DnsResolversInboundEndpoint_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return endpoint.AssignProperties_To_DnsResolvers_InboundEndpoint_STATUS(dst)
+		return endpoint.AssignProperties_To_DnsResolversInboundEndpoint_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &storage.DnsResolvers_InboundEndpoint_STATUS{}
-	err := endpoint.AssignProperties_To_DnsResolvers_InboundEndpoint_STATUS(dst)
+	dst = &storage.DnsResolversInboundEndpoint_STATUS{}
+	err := endpoint.AssignProperties_To_DnsResolversInboundEndpoint_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -713,18 +789,18 @@ func (endpoint *DnsResolvers_InboundEndpoint_STATUS) ConvertStatusTo(destination
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &DnsResolvers_InboundEndpoint_STATUS{}
+var _ genruntime.FromARMConverter = &DnsResolversInboundEndpoint_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (endpoint *DnsResolvers_InboundEndpoint_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DnsResolvers_InboundEndpoint_STATUS_ARM{}
+func (endpoint *DnsResolversInboundEndpoint_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.DnsResolversInboundEndpoint_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (endpoint *DnsResolvers_InboundEndpoint_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DnsResolvers_InboundEndpoint_STATUS_ARM)
+func (endpoint *DnsResolversInboundEndpoint_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.DnsResolversInboundEndpoint_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DnsResolvers_InboundEndpoint_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DnsResolversInboundEndpoint_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -770,7 +846,9 @@ func (endpoint *DnsResolvers_InboundEndpoint_STATUS) PopulateFromARM(owner genru
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := DnsresolverProvisioningState_STATUS(temp)
 			endpoint.ProvisioningState = &provisioningState
 		}
 	}
@@ -813,8 +891,8 @@ func (endpoint *DnsResolvers_InboundEndpoint_STATUS) PopulateFromARM(owner genru
 	return nil
 }
 
-// AssignProperties_From_DnsResolvers_InboundEndpoint_STATUS populates our DnsResolvers_InboundEndpoint_STATUS from the provided source DnsResolvers_InboundEndpoint_STATUS
-func (endpoint *DnsResolvers_InboundEndpoint_STATUS) AssignProperties_From_DnsResolvers_InboundEndpoint_STATUS(source *storage.DnsResolvers_InboundEndpoint_STATUS) error {
+// AssignProperties_From_DnsResolversInboundEndpoint_STATUS populates our DnsResolversInboundEndpoint_STATUS from the provided source DnsResolversInboundEndpoint_STATUS
+func (endpoint *DnsResolversInboundEndpoint_STATUS) AssignProperties_From_DnsResolversInboundEndpoint_STATUS(source *storage.DnsResolversInboundEndpoint_STATUS) error {
 
 	// Conditions
 	endpoint.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -883,8 +961,8 @@ func (endpoint *DnsResolvers_InboundEndpoint_STATUS) AssignProperties_From_DnsRe
 	return nil
 }
 
-// AssignProperties_To_DnsResolvers_InboundEndpoint_STATUS populates the provided destination DnsResolvers_InboundEndpoint_STATUS from our DnsResolvers_InboundEndpoint_STATUS
-func (endpoint *DnsResolvers_InboundEndpoint_STATUS) AssignProperties_To_DnsResolvers_InboundEndpoint_STATUS(destination *storage.DnsResolvers_InboundEndpoint_STATUS) error {
+// AssignProperties_To_DnsResolversInboundEndpoint_STATUS populates the provided destination DnsResolversInboundEndpoint_STATUS from our DnsResolversInboundEndpoint_STATUS
+func (endpoint *DnsResolversInboundEndpoint_STATUS) AssignProperties_To_DnsResolversInboundEndpoint_STATUS(destination *storage.DnsResolversInboundEndpoint_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -961,6 +1039,110 @@ func (endpoint *DnsResolvers_InboundEndpoint_STATUS) AssignProperties_To_DnsReso
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type DnsResolversInboundEndpointOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_DnsResolversInboundEndpointOperatorSpec populates our DnsResolversInboundEndpointOperatorSpec from the provided source DnsResolversInboundEndpointOperatorSpec
+func (operator *DnsResolversInboundEndpointOperatorSpec) AssignProperties_From_DnsResolversInboundEndpointOperatorSpec(source *storage.DnsResolversInboundEndpointOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DnsResolversInboundEndpointOperatorSpec populates the provided destination DnsResolversInboundEndpointOperatorSpec from our DnsResolversInboundEndpointOperatorSpec
+func (operator *DnsResolversInboundEndpointOperatorSpec) AssignProperties_To_DnsResolversInboundEndpointOperatorSpec(destination *storage.DnsResolversInboundEndpointOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // IP configuration.
 type IpConfiguration struct {
 	// PrivateIpAddress: Private IP address of the IP configuration.
@@ -971,7 +1153,7 @@ type IpConfiguration struct {
 
 	// +kubebuilder:validation:Required
 	// Subnet: The reference to the subnet bound to the IP configuration.
-	Subnet *DnsresolverSubResource `json:"subnet,omitempty"`
+	Subnet *SubResource `json:"subnet,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &IpConfiguration{}
@@ -981,7 +1163,7 @@ func (configuration *IpConfiguration) ConvertToARM(resolved genruntime.ConvertTo
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &IpConfiguration_ARM{}
+	result := &arm.IpConfiguration{}
 
 	// Set property "PrivateIpAddress":
 	if configuration.PrivateIpAddress != nil {
@@ -991,7 +1173,9 @@ func (configuration *IpConfiguration) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "PrivateIpAllocationMethod":
 	if configuration.PrivateIpAllocationMethod != nil {
-		privateIpAllocationMethod := *configuration.PrivateIpAllocationMethod
+		var temp string
+		temp = string(*configuration.PrivateIpAllocationMethod)
+		privateIpAllocationMethod := arm.IpConfiguration_PrivateIpAllocationMethod(temp)
 		result.PrivateIpAllocationMethod = &privateIpAllocationMethod
 	}
 
@@ -1001,7 +1185,7 @@ func (configuration *IpConfiguration) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		subnet := *subnet_ARM.(*DnsresolverSubResource_ARM)
+		subnet := *subnet_ARM.(*arm.SubResource)
 		result.Subnet = &subnet
 	}
 	return result, nil
@@ -1009,14 +1193,14 @@ func (configuration *IpConfiguration) ConvertToARM(resolved genruntime.ConvertTo
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *IpConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &IpConfiguration_ARM{}
+	return &arm.IpConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *IpConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(IpConfiguration_ARM)
+	typedInput, ok := armInput.(arm.IpConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected IpConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.IpConfiguration, got %T", armInput)
 	}
 
 	// Set property "PrivateIpAddress":
@@ -1027,13 +1211,15 @@ func (configuration *IpConfiguration) PopulateFromARM(owner genruntime.Arbitrary
 
 	// Set property "PrivateIpAllocationMethod":
 	if typedInput.PrivateIpAllocationMethod != nil {
-		privateIpAllocationMethod := *typedInput.PrivateIpAllocationMethod
+		var temp string
+		temp = string(*typedInput.PrivateIpAllocationMethod)
+		privateIpAllocationMethod := IpConfiguration_PrivateIpAllocationMethod(temp)
 		configuration.PrivateIpAllocationMethod = &privateIpAllocationMethod
 	}
 
 	// Set property "Subnet":
 	if typedInput.Subnet != nil {
-		var subnet1 DnsresolverSubResource
+		var subnet1 SubResource
 		err := subnet1.PopulateFromARM(owner, *typedInput.Subnet)
 		if err != nil {
 			return err
@@ -1063,10 +1249,10 @@ func (configuration *IpConfiguration) AssignProperties_From_IpConfiguration(sour
 
 	// Subnet
 	if source.Subnet != nil {
-		var subnet DnsresolverSubResource
-		err := subnet.AssignProperties_From_DnsresolverSubResource(source.Subnet)
+		var subnet SubResource
+		err := subnet.AssignProperties_From_SubResource(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DnsresolverSubResource() to populate field Subnet")
+			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -1095,10 +1281,10 @@ func (configuration *IpConfiguration) AssignProperties_To_IpConfiguration(destin
 
 	// Subnet
 	if configuration.Subnet != nil {
-		var subnet storage.DnsresolverSubResource
-		err := configuration.Subnet.AssignProperties_To_DnsresolverSubResource(&subnet)
+		var subnet storage.SubResource
+		err := configuration.Subnet.AssignProperties_To_SubResource(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DnsresolverSubResource() to populate field Subnet")
+			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -1132,10 +1318,10 @@ func (configuration *IpConfiguration) Initialize_From_IpConfiguration_STATUS(sou
 
 	// Subnet
 	if source.Subnet != nil {
-		var subnet DnsresolverSubResource
-		err := subnet.Initialize_From_DnsresolverSubResource_STATUS(source.Subnet)
+		var subnet SubResource
+		err := subnet.Initialize_From_SubResource_STATUS(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DnsresolverSubResource_STATUS() to populate field Subnet")
+			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -1155,21 +1341,21 @@ type IpConfiguration_STATUS struct {
 	PrivateIpAllocationMethod *IpConfiguration_PrivateIpAllocationMethod_STATUS `json:"privateIpAllocationMethod,omitempty"`
 
 	// Subnet: The reference to the subnet bound to the IP configuration.
-	Subnet *DnsresolverSubResource_STATUS `json:"subnet,omitempty"`
+	Subnet *SubResource_STATUS `json:"subnet,omitempty"`
 }
 
 var _ genruntime.FromARMConverter = &IpConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *IpConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &IpConfiguration_STATUS_ARM{}
+	return &arm.IpConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *IpConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(IpConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.IpConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected IpConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.IpConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "PrivateIpAddress":
@@ -1180,13 +1366,15 @@ func (configuration *IpConfiguration_STATUS) PopulateFromARM(owner genruntime.Ar
 
 	// Set property "PrivateIpAllocationMethod":
 	if typedInput.PrivateIpAllocationMethod != nil {
-		privateIpAllocationMethod := *typedInput.PrivateIpAllocationMethod
+		var temp string
+		temp = string(*typedInput.PrivateIpAllocationMethod)
+		privateIpAllocationMethod := IpConfiguration_PrivateIpAllocationMethod_STATUS(temp)
 		configuration.PrivateIpAllocationMethod = &privateIpAllocationMethod
 	}
 
 	// Set property "Subnet":
 	if typedInput.Subnet != nil {
-		var subnet1 DnsresolverSubResource_STATUS
+		var subnet1 SubResource_STATUS
 		err := subnet1.PopulateFromARM(owner, *typedInput.Subnet)
 		if err != nil {
 			return err
@@ -1216,10 +1404,10 @@ func (configuration *IpConfiguration_STATUS) AssignProperties_From_IpConfigurati
 
 	// Subnet
 	if source.Subnet != nil {
-		var subnet DnsresolverSubResource_STATUS
-		err := subnet.AssignProperties_From_DnsresolverSubResource_STATUS(source.Subnet)
+		var subnet SubResource_STATUS
+		err := subnet.AssignProperties_From_SubResource_STATUS(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DnsresolverSubResource_STATUS() to populate field Subnet")
+			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -1248,10 +1436,10 @@ func (configuration *IpConfiguration_STATUS) AssignProperties_To_IpConfiguration
 
 	// Subnet
 	if configuration.Subnet != nil {
-		var subnet storage.DnsresolverSubResource_STATUS
-		err := configuration.Subnet.AssignProperties_To_DnsresolverSubResource_STATUS(&subnet)
+		var subnet storage.SubResource_STATUS
+		err := configuration.Subnet.AssignProperties_To_SubResource_STATUS(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DnsresolverSubResource_STATUS() to populate field Subnet")
+			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {

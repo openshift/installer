@@ -212,7 +212,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						},
 					},
 				},
-				APIServerLB:            apiServerLB,
+				APIServerLB:            &apiServerLB,
 				ControlPlaneOutboundLB: controlPlaneOutboundLB,
 				Subnets: capz.Subnets{
 					{

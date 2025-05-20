@@ -5,10 +5,14 @@ package v1api20230501preview
 
 import (
 	"fmt"
-	v20230501ps "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type Api struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Service_Api_Spec   `json:"spec,omitempty"`
-	Status            Service_Api_STATUS `json:"status,omitempty"`
+	Spec              Api_Spec   `json:"spec,omitempty"`
+	Status            Api_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &Api{}
@@ -48,7 +52,7 @@ var _ conversion.Convertible = &Api{}
 // ConvertFrom populates our Api from the provided hub Api
 func (api *Api) ConvertFrom(hub conversion.Hub) error {
 	// intermediate variable for conversion
-	var source v20230501ps.Api
+	var source storage.Api
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
@@ -66,7 +70,7 @@ func (api *Api) ConvertFrom(hub conversion.Hub) error {
 // ConvertTo populates the provided hub Api from our Api
 func (api *Api) ConvertTo(hub conversion.Hub) error {
 	// intermediate variable for conversion
-	var destination v20230501ps.Api
+	var destination storage.Api
 	err := api.AssignProperties_To_Api(&destination)
 	if err != nil {
 		return errors.Wrap(err, "converting to destination from api")
@@ -102,6 +106,26 @@ func (api *Api) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the Api resource
 func (api *Api) defaultImpl() { api.defaultAzureName() }
 
+var _ configmaps.Exporter = &Api{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (api *Api) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if api.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return api.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Api{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (api *Api) SecretDestinationExpressions() []*core.DestinationExpression {
+	if api.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return api.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &Api{}
 
 // AzureName returns the Azure name of the resource
@@ -111,7 +135,7 @@ func (api *Api) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-05-01-preview"
 func (api Api) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-05-01-preview"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -146,7 +170,7 @@ func (api *Api) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (api *Api) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Service_Api_STATUS{}
+	return &Api_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -158,13 +182,13 @@ func (api *Api) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (api *Api) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Service_Api_STATUS); ok {
+	if st, ok := status.(*Api_STATUS); ok {
 		api.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Service_Api_STATUS
+	var st Api_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -210,7 +234,7 @@ func (api *Api) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 
 // createValidations validates the creation of the resource
 func (api *Api) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){api.validateResourceReferences, api.validateOwnerReference}
+	return []func() (admission.Warnings, error){api.validateResourceReferences, api.validateOwnerReference, api.validateSecretDestinations, api.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -228,7 +252,21 @@ func (api *Api) updateValidations() []func(old runtime.Object) (admission.Warnin
 		func(old runtime.Object) (admission.Warnings, error) {
 			return api.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return api.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return api.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (api *Api) validateConfigMapDestinations() (admission.Warnings, error) {
+	if api.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(api, nil, api.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -245,6 +283,14 @@ func (api *Api) validateResourceReferences() (admission.Warnings, error) {
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (api *Api) validateSecretDestinations() (admission.Warnings, error) {
+	if api.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(api, nil, api.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (api *Api) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*Api)
@@ -256,24 +302,24 @@ func (api *Api) validateWriteOnceProperties(old runtime.Object) (admission.Warni
 }
 
 // AssignProperties_From_Api populates our Api from the provided source Api
-func (api *Api) AssignProperties_From_Api(source *v20230501ps.Api) error {
+func (api *Api) AssignProperties_From_Api(source *storage.Api) error {
 
 	// ObjectMeta
 	api.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Service_Api_Spec
-	err := spec.AssignProperties_From_Service_Api_Spec(&source.Spec)
+	var spec Api_Spec
+	err := spec.AssignProperties_From_Api_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Service_Api_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_Api_Spec() to populate field Spec")
 	}
 	api.Spec = spec
 
 	// Status
-	var status Service_Api_STATUS
-	err = status.AssignProperties_From_Service_Api_STATUS(&source.Status)
+	var status Api_STATUS
+	err = status.AssignProperties_From_Api_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Service_Api_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_Api_STATUS() to populate field Status")
 	}
 	api.Status = status
 
@@ -282,24 +328,24 @@ func (api *Api) AssignProperties_From_Api(source *v20230501ps.Api) error {
 }
 
 // AssignProperties_To_Api populates the provided destination Api from our Api
-func (api *Api) AssignProperties_To_Api(destination *v20230501ps.Api) error {
+func (api *Api) AssignProperties_To_Api(destination *storage.Api) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *api.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230501ps.Service_Api_Spec
-	err := api.Spec.AssignProperties_To_Service_Api_Spec(&spec)
+	var spec storage.Api_Spec
+	err := api.Spec.AssignProperties_To_Api_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Service_Api_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_Api_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20230501ps.Service_Api_STATUS
-	err = api.Status.AssignProperties_To_Service_Api_STATUS(&status)
+	var status storage.Api_STATUS
+	err = api.Status.AssignProperties_To_Api_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Service_Api_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_Api_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -326,12 +372,7 @@ type ApiList struct {
 	Items           []Api `json:"items"`
 }
 
-// +kubebuilder:validation:Enum={"2023-05-01-preview"}
-type APIVersion string
-
-const APIVersion_Value = APIVersion("2023-05-01-preview")
-
-type Service_Api_Spec struct {
+type Api_Spec struct {
 	// +kubebuilder:validation:MaxLength=100
 	// APIVersion: Indicates the version identifier of the API if the API is versioned
 	APIVersion *string `json:"apiVersion,omitempty"`
@@ -393,6 +434,10 @@ type Service_Api_Spec struct {
 	// License: License information for the API.
 	License *ApiLicenseInformation `json:"license,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ApiOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -441,190 +486,200 @@ type Service_Api_Spec struct {
 	WsdlSelector *ApiCreateOrUpdateProperties_WsdlSelector `json:"wsdlSelector,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Service_Api_Spec{}
+var _ genruntime.ARMTransformer = &Api_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (serviceApi *Service_Api_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if serviceApi == nil {
+func (api *Api_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+	if api == nil {
 		return nil, nil
 	}
-	result := &Service_Api_Spec_ARM{}
+	result := &arm.Api_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
 
 	// Set property "Properties":
-	if serviceApi.APIVersion != nil ||
-		serviceApi.ApiRevision != nil ||
-		serviceApi.ApiRevisionDescription != nil ||
-		serviceApi.ApiType != nil ||
-		serviceApi.ApiVersionDescription != nil ||
-		serviceApi.ApiVersionSet != nil ||
-		serviceApi.ApiVersionSetReference != nil ||
-		serviceApi.AuthenticationSettings != nil ||
-		serviceApi.Contact != nil ||
-		serviceApi.Description != nil ||
-		serviceApi.DisplayName != nil ||
-		serviceApi.Format != nil ||
-		serviceApi.IsCurrent != nil ||
-		serviceApi.License != nil ||
-		serviceApi.Path != nil ||
-		serviceApi.Protocols != nil ||
-		serviceApi.ServiceUrl != nil ||
-		serviceApi.SourceApiReference != nil ||
-		serviceApi.SubscriptionKeyParameterNames != nil ||
-		serviceApi.SubscriptionRequired != nil ||
-		serviceApi.TermsOfServiceUrl != nil ||
-		serviceApi.TranslateRequiredQueryParameters != nil ||
-		serviceApi.Type != nil ||
-		serviceApi.Value != nil ||
-		serviceApi.WsdlSelector != nil {
-		result.Properties = &ApiCreateOrUpdateProperties_ARM{}
+	if api.APIVersion != nil ||
+		api.ApiRevision != nil ||
+		api.ApiRevisionDescription != nil ||
+		api.ApiType != nil ||
+		api.ApiVersionDescription != nil ||
+		api.ApiVersionSet != nil ||
+		api.ApiVersionSetReference != nil ||
+		api.AuthenticationSettings != nil ||
+		api.Contact != nil ||
+		api.Description != nil ||
+		api.DisplayName != nil ||
+		api.Format != nil ||
+		api.IsCurrent != nil ||
+		api.License != nil ||
+		api.Path != nil ||
+		api.Protocols != nil ||
+		api.ServiceUrl != nil ||
+		api.SourceApiReference != nil ||
+		api.SubscriptionKeyParameterNames != nil ||
+		api.SubscriptionRequired != nil ||
+		api.TermsOfServiceUrl != nil ||
+		api.TranslateRequiredQueryParameters != nil ||
+		api.Type != nil ||
+		api.Value != nil ||
+		api.WsdlSelector != nil {
+		result.Properties = &arm.ApiCreateOrUpdateProperties{}
 	}
-	if serviceApi.APIVersion != nil {
-		apiVersion := *serviceApi.APIVersion
+	if api.APIVersion != nil {
+		apiVersion := *api.APIVersion
 		result.Properties.APIVersion = &apiVersion
 	}
-	if serviceApi.ApiRevision != nil {
-		apiRevision := *serviceApi.ApiRevision
+	if api.ApiRevision != nil {
+		apiRevision := *api.ApiRevision
 		result.Properties.ApiRevision = &apiRevision
 	}
-	if serviceApi.ApiRevisionDescription != nil {
-		apiRevisionDescription := *serviceApi.ApiRevisionDescription
+	if api.ApiRevisionDescription != nil {
+		apiRevisionDescription := *api.ApiRevisionDescription
 		result.Properties.ApiRevisionDescription = &apiRevisionDescription
 	}
-	if serviceApi.ApiType != nil {
-		apiType := *serviceApi.ApiType
+	if api.ApiType != nil {
+		var temp string
+		temp = string(*api.ApiType)
+		apiType := arm.ApiCreateOrUpdateProperties_ApiType(temp)
 		result.Properties.ApiType = &apiType
 	}
-	if serviceApi.ApiVersionDescription != nil {
-		apiVersionDescription := *serviceApi.ApiVersionDescription
+	if api.ApiVersionDescription != nil {
+		apiVersionDescription := *api.ApiVersionDescription
 		result.Properties.ApiVersionDescription = &apiVersionDescription
 	}
-	if serviceApi.ApiVersionSet != nil {
-		apiVersionSet_ARM, err := (*serviceApi.ApiVersionSet).ConvertToARM(resolved)
+	if api.ApiVersionSet != nil {
+		apiVersionSet_ARM, err := (*api.ApiVersionSet).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		apiVersionSet := *apiVersionSet_ARM.(*ApiVersionSetContractDetails_ARM)
+		apiVersionSet := *apiVersionSet_ARM.(*arm.ApiVersionSetContractDetails)
 		result.Properties.ApiVersionSet = &apiVersionSet
 	}
-	if serviceApi.ApiVersionSetReference != nil {
-		apiVersionSetIdARMID, err := resolved.ResolvedReferences.Lookup(*serviceApi.ApiVersionSetReference)
+	if api.ApiVersionSetReference != nil {
+		apiVersionSetIdARMID, err := resolved.ResolvedReferences.Lookup(*api.ApiVersionSetReference)
 		if err != nil {
 			return nil, err
 		}
 		apiVersionSetId := apiVersionSetIdARMID
 		result.Properties.ApiVersionSetId = &apiVersionSetId
 	}
-	if serviceApi.AuthenticationSettings != nil {
-		authenticationSettings_ARM, err := (*serviceApi.AuthenticationSettings).ConvertToARM(resolved)
+	if api.AuthenticationSettings != nil {
+		authenticationSettings_ARM, err := (*api.AuthenticationSettings).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		authenticationSettings := *authenticationSettings_ARM.(*AuthenticationSettingsContract_ARM)
+		authenticationSettings := *authenticationSettings_ARM.(*arm.AuthenticationSettingsContract)
 		result.Properties.AuthenticationSettings = &authenticationSettings
 	}
-	if serviceApi.Contact != nil {
-		contact_ARM, err := (*serviceApi.Contact).ConvertToARM(resolved)
+	if api.Contact != nil {
+		contact_ARM, err := (*api.Contact).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		contact := *contact_ARM.(*ApiContactInformation_ARM)
+		contact := *contact_ARM.(*arm.ApiContactInformation)
 		result.Properties.Contact = &contact
 	}
-	if serviceApi.Description != nil {
-		description := *serviceApi.Description
+	if api.Description != nil {
+		description := *api.Description
 		result.Properties.Description = &description
 	}
-	if serviceApi.DisplayName != nil {
-		displayName := *serviceApi.DisplayName
+	if api.DisplayName != nil {
+		displayName := *api.DisplayName
 		result.Properties.DisplayName = &displayName
 	}
-	if serviceApi.Format != nil {
-		format := *serviceApi.Format
+	if api.Format != nil {
+		var temp string
+		temp = string(*api.Format)
+		format := arm.ApiCreateOrUpdateProperties_Format(temp)
 		result.Properties.Format = &format
 	}
-	if serviceApi.IsCurrent != nil {
-		isCurrent := *serviceApi.IsCurrent
+	if api.IsCurrent != nil {
+		isCurrent := *api.IsCurrent
 		result.Properties.IsCurrent = &isCurrent
 	}
-	if serviceApi.License != nil {
-		license_ARM, err := (*serviceApi.License).ConvertToARM(resolved)
+	if api.License != nil {
+		license_ARM, err := (*api.License).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		license := *license_ARM.(*ApiLicenseInformation_ARM)
+		license := *license_ARM.(*arm.ApiLicenseInformation)
 		result.Properties.License = &license
 	}
-	if serviceApi.Path != nil {
-		path := *serviceApi.Path
+	if api.Path != nil {
+		path := *api.Path
 		result.Properties.Path = &path
 	}
-	for _, item := range serviceApi.Protocols {
-		result.Properties.Protocols = append(result.Properties.Protocols, item)
+	for _, item := range api.Protocols {
+		var temp string
+		temp = string(item)
+		result.Properties.Protocols = append(result.Properties.Protocols, arm.ApiCreateOrUpdateProperties_Protocols(temp))
 	}
-	if serviceApi.ServiceUrl != nil {
-		serviceUrl := *serviceApi.ServiceUrl
+	if api.ServiceUrl != nil {
+		serviceUrl := *api.ServiceUrl
 		result.Properties.ServiceUrl = &serviceUrl
 	}
-	if serviceApi.SourceApiReference != nil {
-		sourceApiIdARMID, err := resolved.ResolvedReferences.Lookup(*serviceApi.SourceApiReference)
+	if api.SourceApiReference != nil {
+		sourceApiIdARMID, err := resolved.ResolvedReferences.Lookup(*api.SourceApiReference)
 		if err != nil {
 			return nil, err
 		}
 		sourceApiId := sourceApiIdARMID
 		result.Properties.SourceApiId = &sourceApiId
 	}
-	if serviceApi.SubscriptionKeyParameterNames != nil {
-		subscriptionKeyParameterNames_ARM, err := (*serviceApi.SubscriptionKeyParameterNames).ConvertToARM(resolved)
+	if api.SubscriptionKeyParameterNames != nil {
+		subscriptionKeyParameterNames_ARM, err := (*api.SubscriptionKeyParameterNames).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		subscriptionKeyParameterNames := *subscriptionKeyParameterNames_ARM.(*SubscriptionKeyParameterNamesContract_ARM)
+		subscriptionKeyParameterNames := *subscriptionKeyParameterNames_ARM.(*arm.SubscriptionKeyParameterNamesContract)
 		result.Properties.SubscriptionKeyParameterNames = &subscriptionKeyParameterNames
 	}
-	if serviceApi.SubscriptionRequired != nil {
-		subscriptionRequired := *serviceApi.SubscriptionRequired
+	if api.SubscriptionRequired != nil {
+		subscriptionRequired := *api.SubscriptionRequired
 		result.Properties.SubscriptionRequired = &subscriptionRequired
 	}
-	if serviceApi.TermsOfServiceUrl != nil {
-		termsOfServiceUrl := *serviceApi.TermsOfServiceUrl
+	if api.TermsOfServiceUrl != nil {
+		termsOfServiceUrl := *api.TermsOfServiceUrl
 		result.Properties.TermsOfServiceUrl = &termsOfServiceUrl
 	}
-	if serviceApi.TranslateRequiredQueryParameters != nil {
-		translateRequiredQueryParameters := *serviceApi.TranslateRequiredQueryParameters
+	if api.TranslateRequiredQueryParameters != nil {
+		var temp string
+		temp = string(*api.TranslateRequiredQueryParameters)
+		translateRequiredQueryParameters := arm.ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters(temp)
 		result.Properties.TranslateRequiredQueryParameters = &translateRequiredQueryParameters
 	}
-	if serviceApi.Type != nil {
-		typeVar := *serviceApi.Type
+	if api.Type != nil {
+		var temp string
+		temp = string(*api.Type)
+		typeVar := arm.ApiCreateOrUpdateProperties_Type(temp)
 		result.Properties.Type = &typeVar
 	}
-	if serviceApi.Value != nil {
-		value := *serviceApi.Value
+	if api.Value != nil {
+		value := *api.Value
 		result.Properties.Value = &value
 	}
-	if serviceApi.WsdlSelector != nil {
-		wsdlSelector_ARM, err := (*serviceApi.WsdlSelector).ConvertToARM(resolved)
+	if api.WsdlSelector != nil {
+		wsdlSelector_ARM, err := (*api.WsdlSelector).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		wsdlSelector := *wsdlSelector_ARM.(*ApiCreateOrUpdateProperties_WsdlSelector_ARM)
+		wsdlSelector := *wsdlSelector_ARM.(*arm.ApiCreateOrUpdateProperties_WsdlSelector)
 		result.Properties.WsdlSelector = &wsdlSelector
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (serviceApi *Service_Api_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Service_Api_Spec_ARM{}
+func (api *Api_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.Api_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Service_Api_Spec_ARM)
+func (api *Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.Api_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Service_Api_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Api_Spec, got %T", armInput)
 	}
 
 	// Set property "APIVersion":
@@ -632,7 +687,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.APIVersion != nil {
 			apiVersion := *typedInput.Properties.APIVersion
-			serviceApi.APIVersion = &apiVersion
+			api.APIVersion = &apiVersion
 		}
 	}
 
@@ -641,7 +696,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ApiRevision != nil {
 			apiRevision := *typedInput.Properties.ApiRevision
-			serviceApi.ApiRevision = &apiRevision
+			api.ApiRevision = &apiRevision
 		}
 	}
 
@@ -650,7 +705,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ApiRevisionDescription != nil {
 			apiRevisionDescription := *typedInput.Properties.ApiRevisionDescription
-			serviceApi.ApiRevisionDescription = &apiRevisionDescription
+			api.ApiRevisionDescription = &apiRevisionDescription
 		}
 	}
 
@@ -658,8 +713,10 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ApiType != nil {
-			apiType := *typedInput.Properties.ApiType
-			serviceApi.ApiType = &apiType
+			var temp string
+			temp = string(*typedInput.Properties.ApiType)
+			apiType := ApiCreateOrUpdateProperties_ApiType(temp)
+			api.ApiType = &apiType
 		}
 	}
 
@@ -668,7 +725,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ApiVersionDescription != nil {
 			apiVersionDescription := *typedInput.Properties.ApiVersionDescription
-			serviceApi.ApiVersionDescription = &apiVersionDescription
+			api.ApiVersionDescription = &apiVersionDescription
 		}
 	}
 
@@ -682,7 +739,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 				return err
 			}
 			apiVersionSet := apiVersionSet1
-			serviceApi.ApiVersionSet = &apiVersionSet
+			api.ApiVersionSet = &apiVersionSet
 		}
 	}
 
@@ -698,12 +755,12 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 				return err
 			}
 			authenticationSettings := authenticationSettings1
-			serviceApi.AuthenticationSettings = &authenticationSettings
+			api.AuthenticationSettings = &authenticationSettings
 		}
 	}
 
 	// Set property "AzureName":
-	serviceApi.SetAzureName(genruntime.ExtractKubernetesResourceNameFromARMName(typedInput.Name))
+	api.SetAzureName(genruntime.ExtractKubernetesResourceNameFromARMName(typedInput.Name))
 
 	// Set property "Contact":
 	// copying flattened property:
@@ -715,7 +772,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 				return err
 			}
 			contact := contact1
-			serviceApi.Contact = &contact
+			api.Contact = &contact
 		}
 	}
 
@@ -724,7 +781,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Description != nil {
 			description := *typedInput.Properties.Description
-			serviceApi.Description = &description
+			api.Description = &description
 		}
 	}
 
@@ -733,7 +790,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.DisplayName != nil {
 			displayName := *typedInput.Properties.DisplayName
-			serviceApi.DisplayName = &displayName
+			api.DisplayName = &displayName
 		}
 	}
 
@@ -741,8 +798,10 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Format != nil {
-			format := *typedInput.Properties.Format
-			serviceApi.Format = &format
+			var temp string
+			temp = string(*typedInput.Properties.Format)
+			format := ApiCreateOrUpdateProperties_Format(temp)
+			api.Format = &format
 		}
 	}
 
@@ -751,7 +810,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.IsCurrent != nil {
 			isCurrent := *typedInput.Properties.IsCurrent
-			serviceApi.IsCurrent = &isCurrent
+			api.IsCurrent = &isCurrent
 		}
 	}
 
@@ -765,12 +824,14 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 				return err
 			}
 			license := license1
-			serviceApi.License = &license
+			api.License = &license
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
-	serviceApi.Owner = &genruntime.KnownResourceReference{
+	api.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
 		ARMID: owner.ARMID,
 	}
@@ -780,7 +841,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Path != nil {
 			path := *typedInput.Properties.Path
-			serviceApi.Path = &path
+			api.Path = &path
 		}
 	}
 
@@ -788,7 +849,9 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		for _, item := range typedInput.Properties.Protocols {
-			serviceApi.Protocols = append(serviceApi.Protocols, item)
+			var temp string
+			temp = string(item)
+			api.Protocols = append(api.Protocols, ApiCreateOrUpdateProperties_Protocols(temp))
 		}
 	}
 
@@ -797,7 +860,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ServiceUrl != nil {
 			serviceUrl := *typedInput.Properties.ServiceUrl
-			serviceApi.ServiceUrl = &serviceUrl
+			api.ServiceUrl = &serviceUrl
 		}
 	}
 
@@ -813,7 +876,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 				return err
 			}
 			subscriptionKeyParameterNames := subscriptionKeyParameterNames1
-			serviceApi.SubscriptionKeyParameterNames = &subscriptionKeyParameterNames
+			api.SubscriptionKeyParameterNames = &subscriptionKeyParameterNames
 		}
 	}
 
@@ -822,7 +885,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.SubscriptionRequired != nil {
 			subscriptionRequired := *typedInput.Properties.SubscriptionRequired
-			serviceApi.SubscriptionRequired = &subscriptionRequired
+			api.SubscriptionRequired = &subscriptionRequired
 		}
 	}
 
@@ -831,7 +894,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.TermsOfServiceUrl != nil {
 			termsOfServiceUrl := *typedInput.Properties.TermsOfServiceUrl
-			serviceApi.TermsOfServiceUrl = &termsOfServiceUrl
+			api.TermsOfServiceUrl = &termsOfServiceUrl
 		}
 	}
 
@@ -839,8 +902,10 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.TranslateRequiredQueryParameters != nil {
-			translateRequiredQueryParameters := *typedInput.Properties.TranslateRequiredQueryParameters
-			serviceApi.TranslateRequiredQueryParameters = &translateRequiredQueryParameters
+			var temp string
+			temp = string(*typedInput.Properties.TranslateRequiredQueryParameters)
+			translateRequiredQueryParameters := ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters(temp)
+			api.TranslateRequiredQueryParameters = &translateRequiredQueryParameters
 		}
 	}
 
@@ -848,8 +913,10 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Type != nil {
-			typeVar := *typedInput.Properties.Type
-			serviceApi.Type = &typeVar
+			var temp string
+			temp = string(*typedInput.Properties.Type)
+			typeVar := ApiCreateOrUpdateProperties_Type(temp)
+			api.Type = &typeVar
 		}
 	}
 
@@ -858,7 +925,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Value != nil {
 			value := *typedInput.Properties.Value
-			serviceApi.Value = &value
+			api.Value = &value
 		}
 	}
 
@@ -872,7 +939,7 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 				return err
 			}
 			wsdlSelector := wsdlSelector1
-			serviceApi.WsdlSelector = &wsdlSelector
+			api.WsdlSelector = &wsdlSelector
 		}
 	}
 
@@ -880,25 +947,25 @@ func (serviceApi *Service_Api_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Service_Api_Spec{}
+var _ genruntime.ConvertibleSpec = &Api_Spec{}
 
-// ConvertSpecFrom populates our Service_Api_Spec from the provided source
-func (serviceApi *Service_Api_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230501ps.Service_Api_Spec)
+// ConvertSpecFrom populates our Api_Spec from the provided source
+func (api *Api_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.Api_Spec)
 	if ok {
 		// Populate our instance from source
-		return serviceApi.AssignProperties_From_Service_Api_Spec(src)
+		return api.AssignProperties_From_Api_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230501ps.Service_Api_Spec{}
+	src = &storage.Api_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = serviceApi.AssignProperties_From_Service_Api_Spec(src)
+	err = api.AssignProperties_From_Api_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -906,17 +973,17 @@ func (serviceApi *Service_Api_Spec) ConvertSpecFrom(source genruntime.Convertibl
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Service_Api_Spec
-func (serviceApi *Service_Api_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230501ps.Service_Api_Spec)
+// ConvertSpecTo populates the provided destination from our Api_Spec
+func (api *Api_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.Api_Spec)
 	if ok {
 		// Populate destination from our instance
-		return serviceApi.AssignProperties_To_Service_Api_Spec(dst)
+		return api.AssignProperties_To_Api_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230501ps.Service_Api_Spec{}
-	err := serviceApi.AssignProperties_To_Service_Api_Spec(dst)
+	dst = &storage.Api_Spec{}
+	err := api.AssignProperties_To_Api_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -930,47 +997,48 @@ func (serviceApi *Service_Api_Spec) ConvertSpecTo(destination genruntime.Convert
 	return nil
 }
 
-// AssignProperties_From_Service_Api_Spec populates our Service_Api_Spec from the provided source Service_Api_Spec
-func (serviceApi *Service_Api_Spec) AssignProperties_From_Service_Api_Spec(source *v20230501ps.Service_Api_Spec) error {
+// AssignProperties_From_Api_Spec populates our Api_Spec from the provided source Api_Spec
+func (api *Api_Spec) AssignProperties_From_Api_Spec(source *storage.Api_Spec) error {
 
 	// APIVersion
 	if source.APIVersion != nil {
 		apiVersion := *source.APIVersion
-		serviceApi.APIVersion = &apiVersion
+		api.APIVersion = &apiVersion
 	} else {
-		serviceApi.APIVersion = nil
+		api.APIVersion = nil
 	}
 
 	// ApiRevision
 	if source.ApiRevision != nil {
 		apiRevision := *source.ApiRevision
-		serviceApi.ApiRevision = &apiRevision
+		api.ApiRevision = &apiRevision
 	} else {
-		serviceApi.ApiRevision = nil
+		api.ApiRevision = nil
 	}
 
 	// ApiRevisionDescription
 	if source.ApiRevisionDescription != nil {
 		apiRevisionDescription := *source.ApiRevisionDescription
-		serviceApi.ApiRevisionDescription = &apiRevisionDescription
+		api.ApiRevisionDescription = &apiRevisionDescription
 	} else {
-		serviceApi.ApiRevisionDescription = nil
+		api.ApiRevisionDescription = nil
 	}
 
 	// ApiType
 	if source.ApiType != nil {
-		apiType := ApiCreateOrUpdateProperties_ApiType(*source.ApiType)
-		serviceApi.ApiType = &apiType
+		apiType := *source.ApiType
+		apiTypeTemp := genruntime.ToEnum(apiType, apiCreateOrUpdateProperties_ApiType_Values)
+		api.ApiType = &apiTypeTemp
 	} else {
-		serviceApi.ApiType = nil
+		api.ApiType = nil
 	}
 
 	// ApiVersionDescription
 	if source.ApiVersionDescription != nil {
 		apiVersionDescription := *source.ApiVersionDescription
-		serviceApi.ApiVersionDescription = &apiVersionDescription
+		api.ApiVersionDescription = &apiVersionDescription
 	} else {
-		serviceApi.ApiVersionDescription = nil
+		api.ApiVersionDescription = nil
 	}
 
 	// ApiVersionSet
@@ -980,17 +1048,17 @@ func (serviceApi *Service_Api_Spec) AssignProperties_From_Service_Api_Spec(sourc
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_ApiVersionSetContractDetails() to populate field ApiVersionSet")
 		}
-		serviceApi.ApiVersionSet = &apiVersionSet
+		api.ApiVersionSet = &apiVersionSet
 	} else {
-		serviceApi.ApiVersionSet = nil
+		api.ApiVersionSet = nil
 	}
 
 	// ApiVersionSetReference
 	if source.ApiVersionSetReference != nil {
 		apiVersionSetReference := source.ApiVersionSetReference.Copy()
-		serviceApi.ApiVersionSetReference = &apiVersionSetReference
+		api.ApiVersionSetReference = &apiVersionSetReference
 	} else {
-		serviceApi.ApiVersionSetReference = nil
+		api.ApiVersionSetReference = nil
 	}
 
 	// AuthenticationSettings
@@ -1000,13 +1068,13 @@ func (serviceApi *Service_Api_Spec) AssignProperties_From_Service_Api_Spec(sourc
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_AuthenticationSettingsContract() to populate field AuthenticationSettings")
 		}
-		serviceApi.AuthenticationSettings = &authenticationSetting
+		api.AuthenticationSettings = &authenticationSetting
 	} else {
-		serviceApi.AuthenticationSettings = nil
+		api.AuthenticationSettings = nil
 	}
 
 	// AzureName
-	serviceApi.AzureName = source.AzureName
+	api.AzureName = source.AzureName
 
 	// Contact
 	if source.Contact != nil {
@@ -1015,36 +1083,37 @@ func (serviceApi *Service_Api_Spec) AssignProperties_From_Service_Api_Spec(sourc
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_ApiContactInformation() to populate field Contact")
 		}
-		serviceApi.Contact = &contact
+		api.Contact = &contact
 	} else {
-		serviceApi.Contact = nil
+		api.Contact = nil
 	}
 
 	// Description
-	serviceApi.Description = genruntime.ClonePointerToString(source.Description)
+	api.Description = genruntime.ClonePointerToString(source.Description)
 
 	// DisplayName
 	if source.DisplayName != nil {
 		displayName := *source.DisplayName
-		serviceApi.DisplayName = &displayName
+		api.DisplayName = &displayName
 	} else {
-		serviceApi.DisplayName = nil
+		api.DisplayName = nil
 	}
 
 	// Format
 	if source.Format != nil {
-		format := ApiCreateOrUpdateProperties_Format(*source.Format)
-		serviceApi.Format = &format
+		format := *source.Format
+		formatTemp := genruntime.ToEnum(format, apiCreateOrUpdateProperties_Format_Values)
+		api.Format = &formatTemp
 	} else {
-		serviceApi.Format = nil
+		api.Format = nil
 	}
 
 	// IsCurrent
 	if source.IsCurrent != nil {
 		isCurrent := *source.IsCurrent
-		serviceApi.IsCurrent = &isCurrent
+		api.IsCurrent = &isCurrent
 	} else {
-		serviceApi.IsCurrent = nil
+		api.IsCurrent = nil
 	}
 
 	// License
@@ -1054,25 +1123,37 @@ func (serviceApi *Service_Api_Spec) AssignProperties_From_Service_Api_Spec(sourc
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_ApiLicenseInformation() to populate field License")
 		}
-		serviceApi.License = &license
+		api.License = &license
 	} else {
-		serviceApi.License = nil
+		api.License = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ApiOperatorSpec
+		err := operatorSpec.AssignProperties_From_ApiOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ApiOperatorSpec() to populate field OperatorSpec")
+		}
+		api.OperatorSpec = &operatorSpec
+	} else {
+		api.OperatorSpec = nil
 	}
 
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
-		serviceApi.Owner = &owner
+		api.Owner = &owner
 	} else {
-		serviceApi.Owner = nil
+		api.Owner = nil
 	}
 
 	// Path
 	if source.Path != nil {
 		path := *source.Path
-		serviceApi.Path = &path
+		api.Path = &path
 	} else {
-		serviceApi.Path = nil
+		api.Path = nil
 	}
 
 	// Protocols
@@ -1081,27 +1162,27 @@ func (serviceApi *Service_Api_Spec) AssignProperties_From_Service_Api_Spec(sourc
 		for protocolIndex, protocolItem := range source.Protocols {
 			// Shadow the loop variable to avoid aliasing
 			protocolItem := protocolItem
-			protocolList[protocolIndex] = ApiCreateOrUpdateProperties_Protocols(protocolItem)
+			protocolList[protocolIndex] = genruntime.ToEnum(protocolItem, apiCreateOrUpdateProperties_Protocols_Values)
 		}
-		serviceApi.Protocols = protocolList
+		api.Protocols = protocolList
 	} else {
-		serviceApi.Protocols = nil
+		api.Protocols = nil
 	}
 
 	// ServiceUrl
 	if source.ServiceUrl != nil {
 		serviceUrl := *source.ServiceUrl
-		serviceApi.ServiceUrl = &serviceUrl
+		api.ServiceUrl = &serviceUrl
 	} else {
-		serviceApi.ServiceUrl = nil
+		api.ServiceUrl = nil
 	}
 
 	// SourceApiReference
 	if source.SourceApiReference != nil {
 		sourceApiReference := source.SourceApiReference.Copy()
-		serviceApi.SourceApiReference = &sourceApiReference
+		api.SourceApiReference = &sourceApiReference
 	} else {
-		serviceApi.SourceApiReference = nil
+		api.SourceApiReference = nil
 	}
 
 	// SubscriptionKeyParameterNames
@@ -1111,40 +1192,42 @@ func (serviceApi *Service_Api_Spec) AssignProperties_From_Service_Api_Spec(sourc
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_SubscriptionKeyParameterNamesContract() to populate field SubscriptionKeyParameterNames")
 		}
-		serviceApi.SubscriptionKeyParameterNames = &subscriptionKeyParameterName
+		api.SubscriptionKeyParameterNames = &subscriptionKeyParameterName
 	} else {
-		serviceApi.SubscriptionKeyParameterNames = nil
+		api.SubscriptionKeyParameterNames = nil
 	}
 
 	// SubscriptionRequired
 	if source.SubscriptionRequired != nil {
 		subscriptionRequired := *source.SubscriptionRequired
-		serviceApi.SubscriptionRequired = &subscriptionRequired
+		api.SubscriptionRequired = &subscriptionRequired
 	} else {
-		serviceApi.SubscriptionRequired = nil
+		api.SubscriptionRequired = nil
 	}
 
 	// TermsOfServiceUrl
-	serviceApi.TermsOfServiceUrl = genruntime.ClonePointerToString(source.TermsOfServiceUrl)
+	api.TermsOfServiceUrl = genruntime.ClonePointerToString(source.TermsOfServiceUrl)
 
 	// TranslateRequiredQueryParameters
 	if source.TranslateRequiredQueryParameters != nil {
-		translateRequiredQueryParameter := ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters(*source.TranslateRequiredQueryParameters)
-		serviceApi.TranslateRequiredQueryParameters = &translateRequiredQueryParameter
+		translateRequiredQueryParameter := *source.TranslateRequiredQueryParameters
+		translateRequiredQueryParameterTemp := genruntime.ToEnum(translateRequiredQueryParameter, apiCreateOrUpdateProperties_TranslateRequiredQueryParameters_Values)
+		api.TranslateRequiredQueryParameters = &translateRequiredQueryParameterTemp
 	} else {
-		serviceApi.TranslateRequiredQueryParameters = nil
+		api.TranslateRequiredQueryParameters = nil
 	}
 
 	// Type
 	if source.Type != nil {
-		typeVar := ApiCreateOrUpdateProperties_Type(*source.Type)
-		serviceApi.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, apiCreateOrUpdateProperties_Type_Values)
+		api.Type = &typeTemp
 	} else {
-		serviceApi.Type = nil
+		api.Type = nil
 	}
 
 	// Value
-	serviceApi.Value = genruntime.ClonePointerToString(source.Value)
+	api.Value = genruntime.ClonePointerToString(source.Value)
 
 	// WsdlSelector
 	if source.WsdlSelector != nil {
@@ -1153,64 +1236,64 @@ func (serviceApi *Service_Api_Spec) AssignProperties_From_Service_Api_Spec(sourc
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_ApiCreateOrUpdateProperties_WsdlSelector() to populate field WsdlSelector")
 		}
-		serviceApi.WsdlSelector = &wsdlSelector
+		api.WsdlSelector = &wsdlSelector
 	} else {
-		serviceApi.WsdlSelector = nil
+		api.WsdlSelector = nil
 	}
 
 	// No error
 	return nil
 }
 
-// AssignProperties_To_Service_Api_Spec populates the provided destination Service_Api_Spec from our Service_Api_Spec
-func (serviceApi *Service_Api_Spec) AssignProperties_To_Service_Api_Spec(destination *v20230501ps.Service_Api_Spec) error {
+// AssignProperties_To_Api_Spec populates the provided destination Api_Spec from our Api_Spec
+func (api *Api_Spec) AssignProperties_To_Api_Spec(destination *storage.Api_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// APIVersion
-	if serviceApi.APIVersion != nil {
-		apiVersion := *serviceApi.APIVersion
+	if api.APIVersion != nil {
+		apiVersion := *api.APIVersion
 		destination.APIVersion = &apiVersion
 	} else {
 		destination.APIVersion = nil
 	}
 
 	// ApiRevision
-	if serviceApi.ApiRevision != nil {
-		apiRevision := *serviceApi.ApiRevision
+	if api.ApiRevision != nil {
+		apiRevision := *api.ApiRevision
 		destination.ApiRevision = &apiRevision
 	} else {
 		destination.ApiRevision = nil
 	}
 
 	// ApiRevisionDescription
-	if serviceApi.ApiRevisionDescription != nil {
-		apiRevisionDescription := *serviceApi.ApiRevisionDescription
+	if api.ApiRevisionDescription != nil {
+		apiRevisionDescription := *api.ApiRevisionDescription
 		destination.ApiRevisionDescription = &apiRevisionDescription
 	} else {
 		destination.ApiRevisionDescription = nil
 	}
 
 	// ApiType
-	if serviceApi.ApiType != nil {
-		apiType := string(*serviceApi.ApiType)
+	if api.ApiType != nil {
+		apiType := string(*api.ApiType)
 		destination.ApiType = &apiType
 	} else {
 		destination.ApiType = nil
 	}
 
 	// ApiVersionDescription
-	if serviceApi.ApiVersionDescription != nil {
-		apiVersionDescription := *serviceApi.ApiVersionDescription
+	if api.ApiVersionDescription != nil {
+		apiVersionDescription := *api.ApiVersionDescription
 		destination.ApiVersionDescription = &apiVersionDescription
 	} else {
 		destination.ApiVersionDescription = nil
 	}
 
 	// ApiVersionSet
-	if serviceApi.ApiVersionSet != nil {
-		var apiVersionSet v20230501ps.ApiVersionSetContractDetails
-		err := serviceApi.ApiVersionSet.AssignProperties_To_ApiVersionSetContractDetails(&apiVersionSet)
+	if api.ApiVersionSet != nil {
+		var apiVersionSet storage.ApiVersionSetContractDetails
+		err := api.ApiVersionSet.AssignProperties_To_ApiVersionSetContractDetails(&apiVersionSet)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiVersionSetContractDetails() to populate field ApiVersionSet")
 		}
@@ -1220,17 +1303,17 @@ func (serviceApi *Service_Api_Spec) AssignProperties_To_Service_Api_Spec(destina
 	}
 
 	// ApiVersionSetReference
-	if serviceApi.ApiVersionSetReference != nil {
-		apiVersionSetReference := serviceApi.ApiVersionSetReference.Copy()
+	if api.ApiVersionSetReference != nil {
+		apiVersionSetReference := api.ApiVersionSetReference.Copy()
 		destination.ApiVersionSetReference = &apiVersionSetReference
 	} else {
 		destination.ApiVersionSetReference = nil
 	}
 
 	// AuthenticationSettings
-	if serviceApi.AuthenticationSettings != nil {
-		var authenticationSetting v20230501ps.AuthenticationSettingsContract
-		err := serviceApi.AuthenticationSettings.AssignProperties_To_AuthenticationSettingsContract(&authenticationSetting)
+	if api.AuthenticationSettings != nil {
+		var authenticationSetting storage.AuthenticationSettingsContract
+		err := api.AuthenticationSettings.AssignProperties_To_AuthenticationSettingsContract(&authenticationSetting)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_AuthenticationSettingsContract() to populate field AuthenticationSettings")
 		}
@@ -1240,12 +1323,12 @@ func (serviceApi *Service_Api_Spec) AssignProperties_To_Service_Api_Spec(destina
 	}
 
 	// AzureName
-	destination.AzureName = serviceApi.AzureName
+	destination.AzureName = api.AzureName
 
 	// Contact
-	if serviceApi.Contact != nil {
-		var contact v20230501ps.ApiContactInformation
-		err := serviceApi.Contact.AssignProperties_To_ApiContactInformation(&contact)
+	if api.Contact != nil {
+		var contact storage.ApiContactInformation
+		err := api.Contact.AssignProperties_To_ApiContactInformation(&contact)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiContactInformation() to populate field Contact")
 		}
@@ -1255,36 +1338,36 @@ func (serviceApi *Service_Api_Spec) AssignProperties_To_Service_Api_Spec(destina
 	}
 
 	// Description
-	destination.Description = genruntime.ClonePointerToString(serviceApi.Description)
+	destination.Description = genruntime.ClonePointerToString(api.Description)
 
 	// DisplayName
-	if serviceApi.DisplayName != nil {
-		displayName := *serviceApi.DisplayName
+	if api.DisplayName != nil {
+		displayName := *api.DisplayName
 		destination.DisplayName = &displayName
 	} else {
 		destination.DisplayName = nil
 	}
 
 	// Format
-	if serviceApi.Format != nil {
-		format := string(*serviceApi.Format)
+	if api.Format != nil {
+		format := string(*api.Format)
 		destination.Format = &format
 	} else {
 		destination.Format = nil
 	}
 
 	// IsCurrent
-	if serviceApi.IsCurrent != nil {
-		isCurrent := *serviceApi.IsCurrent
+	if api.IsCurrent != nil {
+		isCurrent := *api.IsCurrent
 		destination.IsCurrent = &isCurrent
 	} else {
 		destination.IsCurrent = nil
 	}
 
 	// License
-	if serviceApi.License != nil {
-		var license v20230501ps.ApiLicenseInformation
-		err := serviceApi.License.AssignProperties_To_ApiLicenseInformation(&license)
+	if api.License != nil {
+		var license storage.ApiLicenseInformation
+		err := api.License.AssignProperties_To_ApiLicenseInformation(&license)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiLicenseInformation() to populate field License")
 		}
@@ -1293,29 +1376,41 @@ func (serviceApi *Service_Api_Spec) AssignProperties_To_Service_Api_Spec(destina
 		destination.License = nil
 	}
 
+	// OperatorSpec
+	if api.OperatorSpec != nil {
+		var operatorSpec storage.ApiOperatorSpec
+		err := api.OperatorSpec.AssignProperties_To_ApiOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ApiOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
-	destination.OriginalVersion = serviceApi.OriginalVersion()
+	destination.OriginalVersion = api.OriginalVersion()
 
 	// Owner
-	if serviceApi.Owner != nil {
-		owner := serviceApi.Owner.Copy()
+	if api.Owner != nil {
+		owner := api.Owner.Copy()
 		destination.Owner = &owner
 	} else {
 		destination.Owner = nil
 	}
 
 	// Path
-	if serviceApi.Path != nil {
-		path := *serviceApi.Path
+	if api.Path != nil {
+		path := *api.Path
 		destination.Path = &path
 	} else {
 		destination.Path = nil
 	}
 
 	// Protocols
-	if serviceApi.Protocols != nil {
-		protocolList := make([]string, len(serviceApi.Protocols))
-		for protocolIndex, protocolItem := range serviceApi.Protocols {
+	if api.Protocols != nil {
+		protocolList := make([]string, len(api.Protocols))
+		for protocolIndex, protocolItem := range api.Protocols {
 			// Shadow the loop variable to avoid aliasing
 			protocolItem := protocolItem
 			protocolList[protocolIndex] = string(protocolItem)
@@ -1326,25 +1421,25 @@ func (serviceApi *Service_Api_Spec) AssignProperties_To_Service_Api_Spec(destina
 	}
 
 	// ServiceUrl
-	if serviceApi.ServiceUrl != nil {
-		serviceUrl := *serviceApi.ServiceUrl
+	if api.ServiceUrl != nil {
+		serviceUrl := *api.ServiceUrl
 		destination.ServiceUrl = &serviceUrl
 	} else {
 		destination.ServiceUrl = nil
 	}
 
 	// SourceApiReference
-	if serviceApi.SourceApiReference != nil {
-		sourceApiReference := serviceApi.SourceApiReference.Copy()
+	if api.SourceApiReference != nil {
+		sourceApiReference := api.SourceApiReference.Copy()
 		destination.SourceApiReference = &sourceApiReference
 	} else {
 		destination.SourceApiReference = nil
 	}
 
 	// SubscriptionKeyParameterNames
-	if serviceApi.SubscriptionKeyParameterNames != nil {
-		var subscriptionKeyParameterName v20230501ps.SubscriptionKeyParameterNamesContract
-		err := serviceApi.SubscriptionKeyParameterNames.AssignProperties_To_SubscriptionKeyParameterNamesContract(&subscriptionKeyParameterName)
+	if api.SubscriptionKeyParameterNames != nil {
+		var subscriptionKeyParameterName storage.SubscriptionKeyParameterNamesContract
+		err := api.SubscriptionKeyParameterNames.AssignProperties_To_SubscriptionKeyParameterNamesContract(&subscriptionKeyParameterName)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SubscriptionKeyParameterNamesContract() to populate field SubscriptionKeyParameterNames")
 		}
@@ -1354,39 +1449,39 @@ func (serviceApi *Service_Api_Spec) AssignProperties_To_Service_Api_Spec(destina
 	}
 
 	// SubscriptionRequired
-	if serviceApi.SubscriptionRequired != nil {
-		subscriptionRequired := *serviceApi.SubscriptionRequired
+	if api.SubscriptionRequired != nil {
+		subscriptionRequired := *api.SubscriptionRequired
 		destination.SubscriptionRequired = &subscriptionRequired
 	} else {
 		destination.SubscriptionRequired = nil
 	}
 
 	// TermsOfServiceUrl
-	destination.TermsOfServiceUrl = genruntime.ClonePointerToString(serviceApi.TermsOfServiceUrl)
+	destination.TermsOfServiceUrl = genruntime.ClonePointerToString(api.TermsOfServiceUrl)
 
 	// TranslateRequiredQueryParameters
-	if serviceApi.TranslateRequiredQueryParameters != nil {
-		translateRequiredQueryParameter := string(*serviceApi.TranslateRequiredQueryParameters)
+	if api.TranslateRequiredQueryParameters != nil {
+		translateRequiredQueryParameter := string(*api.TranslateRequiredQueryParameters)
 		destination.TranslateRequiredQueryParameters = &translateRequiredQueryParameter
 	} else {
 		destination.TranslateRequiredQueryParameters = nil
 	}
 
 	// Type
-	if serviceApi.Type != nil {
-		typeVar := string(*serviceApi.Type)
+	if api.Type != nil {
+		typeVar := string(*api.Type)
 		destination.Type = &typeVar
 	} else {
 		destination.Type = nil
 	}
 
 	// Value
-	destination.Value = genruntime.ClonePointerToString(serviceApi.Value)
+	destination.Value = genruntime.ClonePointerToString(api.Value)
 
 	// WsdlSelector
-	if serviceApi.WsdlSelector != nil {
-		var wsdlSelector v20230501ps.ApiCreateOrUpdateProperties_WsdlSelector
-		err := serviceApi.WsdlSelector.AssignProperties_To_ApiCreateOrUpdateProperties_WsdlSelector(&wsdlSelector)
+	if api.WsdlSelector != nil {
+		var wsdlSelector storage.ApiCreateOrUpdateProperties_WsdlSelector
+		err := api.WsdlSelector.AssignProperties_To_ApiCreateOrUpdateProperties_WsdlSelector(&wsdlSelector)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiCreateOrUpdateProperties_WsdlSelector() to populate field WsdlSelector")
 		}
@@ -1407,14 +1502,14 @@ func (serviceApi *Service_Api_Spec) AssignProperties_To_Service_Api_Spec(destina
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (serviceApi *Service_Api_Spec) OriginalVersion() string {
+func (api *Api_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (serviceApi *Service_Api_Spec) SetAzureName(azureName string) { serviceApi.AzureName = azureName }
+func (api *Api_Spec) SetAzureName(azureName string) { api.AzureName = azureName }
 
-type Service_Api_STATUS struct {
+type Api_STATUS struct {
 	// APIVersion: Indicates the version identifier of the API if the API is versioned
 	APIVersion *string `json:"apiVersion,omitempty"`
 
@@ -1497,25 +1592,25 @@ type Service_Api_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Service_Api_STATUS{}
+var _ genruntime.ConvertibleStatus = &Api_STATUS{}
 
-// ConvertStatusFrom populates our Service_Api_STATUS from the provided source
-func (serviceApi *Service_Api_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230501ps.Service_Api_STATUS)
+// ConvertStatusFrom populates our Api_STATUS from the provided source
+func (api *Api_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.Api_STATUS)
 	if ok {
 		// Populate our instance from source
-		return serviceApi.AssignProperties_From_Service_Api_STATUS(src)
+		return api.AssignProperties_From_Api_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230501ps.Service_Api_STATUS{}
+	src = &storage.Api_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = serviceApi.AssignProperties_From_Service_Api_STATUS(src)
+	err = api.AssignProperties_From_Api_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -1523,17 +1618,17 @@ func (serviceApi *Service_Api_STATUS) ConvertStatusFrom(source genruntime.Conver
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Service_Api_STATUS
-func (serviceApi *Service_Api_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230501ps.Service_Api_STATUS)
+// ConvertStatusTo populates the provided destination from our Api_STATUS
+func (api *Api_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.Api_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return serviceApi.AssignProperties_To_Service_Api_STATUS(dst)
+		return api.AssignProperties_To_Api_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230501ps.Service_Api_STATUS{}
-	err := serviceApi.AssignProperties_To_Service_Api_STATUS(dst)
+	dst = &storage.Api_STATUS{}
+	err := api.AssignProperties_To_Api_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -1547,18 +1642,18 @@ func (serviceApi *Service_Api_STATUS) ConvertStatusTo(destination genruntime.Con
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Service_Api_STATUS{}
+var _ genruntime.FromARMConverter = &Api_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (serviceApi *Service_Api_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Service_Api_STATUS_ARM{}
+func (api *Api_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.Api_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Service_Api_STATUS_ARM)
+func (api *Api_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.Api_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Service_Api_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Api_STATUS, got %T", armInput)
 	}
 
 	// Set property "APIVersion":
@@ -1566,7 +1661,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.APIVersion != nil {
 			apiVersion := *typedInput.Properties.APIVersion
-			serviceApi.APIVersion = &apiVersion
+			api.APIVersion = &apiVersion
 		}
 	}
 
@@ -1575,7 +1670,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ApiRevision != nil {
 			apiRevision := *typedInput.Properties.ApiRevision
-			serviceApi.ApiRevision = &apiRevision
+			api.ApiRevision = &apiRevision
 		}
 	}
 
@@ -1584,7 +1679,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ApiRevisionDescription != nil {
 			apiRevisionDescription := *typedInput.Properties.ApiRevisionDescription
-			serviceApi.ApiRevisionDescription = &apiRevisionDescription
+			api.ApiRevisionDescription = &apiRevisionDescription
 		}
 	}
 
@@ -1593,7 +1688,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ApiVersionDescription != nil {
 			apiVersionDescription := *typedInput.Properties.ApiVersionDescription
-			serviceApi.ApiVersionDescription = &apiVersionDescription
+			api.ApiVersionDescription = &apiVersionDescription
 		}
 	}
 
@@ -1607,7 +1702,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 				return err
 			}
 			apiVersionSet := apiVersionSet1
-			serviceApi.ApiVersionSet = &apiVersionSet
+			api.ApiVersionSet = &apiVersionSet
 		}
 	}
 
@@ -1616,7 +1711,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ApiVersionSetId != nil {
 			apiVersionSetId := *typedInput.Properties.ApiVersionSetId
-			serviceApi.ApiVersionSetId = &apiVersionSetId
+			api.ApiVersionSetId = &apiVersionSetId
 		}
 	}
 
@@ -1630,7 +1725,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 				return err
 			}
 			authenticationSettings := authenticationSettings1
-			serviceApi.AuthenticationSettings = &authenticationSettings
+			api.AuthenticationSettings = &authenticationSettings
 		}
 	}
 
@@ -1646,7 +1741,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 				return err
 			}
 			contact := contact1
-			serviceApi.Contact = &contact
+			api.Contact = &contact
 		}
 	}
 
@@ -1655,7 +1750,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Description != nil {
 			description := *typedInput.Properties.Description
-			serviceApi.Description = &description
+			api.Description = &description
 		}
 	}
 
@@ -1664,14 +1759,14 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.DisplayName != nil {
 			displayName := *typedInput.Properties.DisplayName
-			serviceApi.DisplayName = &displayName
+			api.DisplayName = &displayName
 		}
 	}
 
 	// Set property "Id":
 	if typedInput.Id != nil {
 		id := *typedInput.Id
-		serviceApi.Id = &id
+		api.Id = &id
 	}
 
 	// Set property "IsCurrent":
@@ -1679,7 +1774,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.IsCurrent != nil {
 			isCurrent := *typedInput.Properties.IsCurrent
-			serviceApi.IsCurrent = &isCurrent
+			api.IsCurrent = &isCurrent
 		}
 	}
 
@@ -1688,7 +1783,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.IsOnline != nil {
 			isOnline := *typedInput.Properties.IsOnline
-			serviceApi.IsOnline = &isOnline
+			api.IsOnline = &isOnline
 		}
 	}
 
@@ -1702,14 +1797,14 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 				return err
 			}
 			license := license1
-			serviceApi.License = &license
+			api.License = &license
 		}
 	}
 
 	// Set property "Name":
 	if typedInput.Name != nil {
 		name := *typedInput.Name
-		serviceApi.Name = &name
+		api.Name = &name
 	}
 
 	// Set property "Path":
@@ -1717,7 +1812,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Path != nil {
 			path := *typedInput.Properties.Path
-			serviceApi.Path = &path
+			api.Path = &path
 		}
 	}
 
@@ -1725,8 +1820,10 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Type != nil {
-			propertiesType := *typedInput.Properties.Type
-			serviceApi.PropertiesType = &propertiesType
+			var temp string
+			temp = string(*typedInput.Properties.Type)
+			propertiesType := ApiContractProperties_Type_STATUS(temp)
+			api.PropertiesType = &propertiesType
 		}
 	}
 
@@ -1734,7 +1831,9 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		for _, item := range typedInput.Properties.Protocols {
-			serviceApi.Protocols = append(serviceApi.Protocols, item)
+			var temp string
+			temp = string(item)
+			api.Protocols = append(api.Protocols, ApiContractProperties_Protocols_STATUS(temp))
 		}
 	}
 
@@ -1743,7 +1842,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
 			provisioningState := *typedInput.Properties.ProvisioningState
-			serviceApi.ProvisioningState = &provisioningState
+			api.ProvisioningState = &provisioningState
 		}
 	}
 
@@ -1752,7 +1851,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ServiceUrl != nil {
 			serviceUrl := *typedInput.Properties.ServiceUrl
-			serviceApi.ServiceUrl = &serviceUrl
+			api.ServiceUrl = &serviceUrl
 		}
 	}
 
@@ -1761,7 +1860,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.SourceApiId != nil {
 			sourceApiId := *typedInput.Properties.SourceApiId
-			serviceApi.SourceApiId = &sourceApiId
+			api.SourceApiId = &sourceApiId
 		}
 	}
 
@@ -1775,7 +1874,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 				return err
 			}
 			subscriptionKeyParameterNames := subscriptionKeyParameterNames1
-			serviceApi.SubscriptionKeyParameterNames = &subscriptionKeyParameterNames
+			api.SubscriptionKeyParameterNames = &subscriptionKeyParameterNames
 		}
 	}
 
@@ -1784,7 +1883,7 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.SubscriptionRequired != nil {
 			subscriptionRequired := *typedInput.Properties.SubscriptionRequired
-			serviceApi.SubscriptionRequired = &subscriptionRequired
+			api.SubscriptionRequired = &subscriptionRequired
 		}
 	}
 
@@ -1793,34 +1892,34 @@ func (serviceApi *Service_Api_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	if typedInput.Properties != nil {
 		if typedInput.Properties.TermsOfServiceUrl != nil {
 			termsOfServiceUrl := *typedInput.Properties.TermsOfServiceUrl
-			serviceApi.TermsOfServiceUrl = &termsOfServiceUrl
+			api.TermsOfServiceUrl = &termsOfServiceUrl
 		}
 	}
 
 	// Set property "Type":
 	if typedInput.Type != nil {
 		typeVar := *typedInput.Type
-		serviceApi.Type = &typeVar
+		api.Type = &typeVar
 	}
 
 	// No error
 	return nil
 }
 
-// AssignProperties_From_Service_Api_STATUS populates our Service_Api_STATUS from the provided source Service_Api_STATUS
-func (serviceApi *Service_Api_STATUS) AssignProperties_From_Service_Api_STATUS(source *v20230501ps.Service_Api_STATUS) error {
+// AssignProperties_From_Api_STATUS populates our Api_STATUS from the provided source Api_STATUS
+func (api *Api_STATUS) AssignProperties_From_Api_STATUS(source *storage.Api_STATUS) error {
 
 	// APIVersion
-	serviceApi.APIVersion = genruntime.ClonePointerToString(source.APIVersion)
+	api.APIVersion = genruntime.ClonePointerToString(source.APIVersion)
 
 	// ApiRevision
-	serviceApi.ApiRevision = genruntime.ClonePointerToString(source.ApiRevision)
+	api.ApiRevision = genruntime.ClonePointerToString(source.ApiRevision)
 
 	// ApiRevisionDescription
-	serviceApi.ApiRevisionDescription = genruntime.ClonePointerToString(source.ApiRevisionDescription)
+	api.ApiRevisionDescription = genruntime.ClonePointerToString(source.ApiRevisionDescription)
 
 	// ApiVersionDescription
-	serviceApi.ApiVersionDescription = genruntime.ClonePointerToString(source.ApiVersionDescription)
+	api.ApiVersionDescription = genruntime.ClonePointerToString(source.ApiVersionDescription)
 
 	// ApiVersionSet
 	if source.ApiVersionSet != nil {
@@ -1829,13 +1928,13 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_From_Service_Api_STATUS(s
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_ApiVersionSetContractDetails_STATUS() to populate field ApiVersionSet")
 		}
-		serviceApi.ApiVersionSet = &apiVersionSet
+		api.ApiVersionSet = &apiVersionSet
 	} else {
-		serviceApi.ApiVersionSet = nil
+		api.ApiVersionSet = nil
 	}
 
 	// ApiVersionSetId
-	serviceApi.ApiVersionSetId = genruntime.ClonePointerToString(source.ApiVersionSetId)
+	api.ApiVersionSetId = genruntime.ClonePointerToString(source.ApiVersionSetId)
 
 	// AuthenticationSettings
 	if source.AuthenticationSettings != nil {
@@ -1844,13 +1943,13 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_From_Service_Api_STATUS(s
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_AuthenticationSettingsContract_STATUS() to populate field AuthenticationSettings")
 		}
-		serviceApi.AuthenticationSettings = &authenticationSetting
+		api.AuthenticationSettings = &authenticationSetting
 	} else {
-		serviceApi.AuthenticationSettings = nil
+		api.AuthenticationSettings = nil
 	}
 
 	// Conditions
-	serviceApi.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+	api.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
 
 	// Contact
 	if source.Contact != nil {
@@ -1859,34 +1958,34 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_From_Service_Api_STATUS(s
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_ApiContactInformation_STATUS() to populate field Contact")
 		}
-		serviceApi.Contact = &contact
+		api.Contact = &contact
 	} else {
-		serviceApi.Contact = nil
+		api.Contact = nil
 	}
 
 	// Description
-	serviceApi.Description = genruntime.ClonePointerToString(source.Description)
+	api.Description = genruntime.ClonePointerToString(source.Description)
 
 	// DisplayName
-	serviceApi.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
+	api.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
 
 	// Id
-	serviceApi.Id = genruntime.ClonePointerToString(source.Id)
+	api.Id = genruntime.ClonePointerToString(source.Id)
 
 	// IsCurrent
 	if source.IsCurrent != nil {
 		isCurrent := *source.IsCurrent
-		serviceApi.IsCurrent = &isCurrent
+		api.IsCurrent = &isCurrent
 	} else {
-		serviceApi.IsCurrent = nil
+		api.IsCurrent = nil
 	}
 
 	// IsOnline
 	if source.IsOnline != nil {
 		isOnline := *source.IsOnline
-		serviceApi.IsOnline = &isOnline
+		api.IsOnline = &isOnline
 	} else {
-		serviceApi.IsOnline = nil
+		api.IsOnline = nil
 	}
 
 	// License
@@ -1896,23 +1995,24 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_From_Service_Api_STATUS(s
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_ApiLicenseInformation_STATUS() to populate field License")
 		}
-		serviceApi.License = &license
+		api.License = &license
 	} else {
-		serviceApi.License = nil
+		api.License = nil
 	}
 
 	// Name
-	serviceApi.Name = genruntime.ClonePointerToString(source.Name)
+	api.Name = genruntime.ClonePointerToString(source.Name)
 
 	// Path
-	serviceApi.Path = genruntime.ClonePointerToString(source.Path)
+	api.Path = genruntime.ClonePointerToString(source.Path)
 
 	// PropertiesType
 	if source.PropertiesType != nil {
-		propertiesType := ApiContractProperties_Type_STATUS(*source.PropertiesType)
-		serviceApi.PropertiesType = &propertiesType
+		propertiesType := *source.PropertiesType
+		propertiesTypeTemp := genruntime.ToEnum(propertiesType, apiContractProperties_Type_STATUS_Values)
+		api.PropertiesType = &propertiesTypeTemp
 	} else {
-		serviceApi.PropertiesType = nil
+		api.PropertiesType = nil
 	}
 
 	// Protocols
@@ -1921,21 +2021,21 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_From_Service_Api_STATUS(s
 		for protocolIndex, protocolItem := range source.Protocols {
 			// Shadow the loop variable to avoid aliasing
 			protocolItem := protocolItem
-			protocolList[protocolIndex] = ApiContractProperties_Protocols_STATUS(protocolItem)
+			protocolList[protocolIndex] = genruntime.ToEnum(protocolItem, apiContractProperties_Protocols_STATUS_Values)
 		}
-		serviceApi.Protocols = protocolList
+		api.Protocols = protocolList
 	} else {
-		serviceApi.Protocols = nil
+		api.Protocols = nil
 	}
 
 	// ProvisioningState
-	serviceApi.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+	api.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
 
 	// ServiceUrl
-	serviceApi.ServiceUrl = genruntime.ClonePointerToString(source.ServiceUrl)
+	api.ServiceUrl = genruntime.ClonePointerToString(source.ServiceUrl)
 
 	// SourceApiId
-	serviceApi.SourceApiId = genruntime.ClonePointerToString(source.SourceApiId)
+	api.SourceApiId = genruntime.ClonePointerToString(source.SourceApiId)
 
 	// SubscriptionKeyParameterNames
 	if source.SubscriptionKeyParameterNames != nil {
@@ -1944,50 +2044,50 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_From_Service_Api_STATUS(s
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_From_SubscriptionKeyParameterNamesContract_STATUS() to populate field SubscriptionKeyParameterNames")
 		}
-		serviceApi.SubscriptionKeyParameterNames = &subscriptionKeyParameterName
+		api.SubscriptionKeyParameterNames = &subscriptionKeyParameterName
 	} else {
-		serviceApi.SubscriptionKeyParameterNames = nil
+		api.SubscriptionKeyParameterNames = nil
 	}
 
 	// SubscriptionRequired
 	if source.SubscriptionRequired != nil {
 		subscriptionRequired := *source.SubscriptionRequired
-		serviceApi.SubscriptionRequired = &subscriptionRequired
+		api.SubscriptionRequired = &subscriptionRequired
 	} else {
-		serviceApi.SubscriptionRequired = nil
+		api.SubscriptionRequired = nil
 	}
 
 	// TermsOfServiceUrl
-	serviceApi.TermsOfServiceUrl = genruntime.ClonePointerToString(source.TermsOfServiceUrl)
+	api.TermsOfServiceUrl = genruntime.ClonePointerToString(source.TermsOfServiceUrl)
 
 	// Type
-	serviceApi.Type = genruntime.ClonePointerToString(source.Type)
+	api.Type = genruntime.ClonePointerToString(source.Type)
 
 	// No error
 	return nil
 }
 
-// AssignProperties_To_Service_Api_STATUS populates the provided destination Service_Api_STATUS from our Service_Api_STATUS
-func (serviceApi *Service_Api_STATUS) AssignProperties_To_Service_Api_STATUS(destination *v20230501ps.Service_Api_STATUS) error {
+// AssignProperties_To_Api_STATUS populates the provided destination Api_STATUS from our Api_STATUS
+func (api *Api_STATUS) AssignProperties_To_Api_STATUS(destination *storage.Api_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// APIVersion
-	destination.APIVersion = genruntime.ClonePointerToString(serviceApi.APIVersion)
+	destination.APIVersion = genruntime.ClonePointerToString(api.APIVersion)
 
 	// ApiRevision
-	destination.ApiRevision = genruntime.ClonePointerToString(serviceApi.ApiRevision)
+	destination.ApiRevision = genruntime.ClonePointerToString(api.ApiRevision)
 
 	// ApiRevisionDescription
-	destination.ApiRevisionDescription = genruntime.ClonePointerToString(serviceApi.ApiRevisionDescription)
+	destination.ApiRevisionDescription = genruntime.ClonePointerToString(api.ApiRevisionDescription)
 
 	// ApiVersionDescription
-	destination.ApiVersionDescription = genruntime.ClonePointerToString(serviceApi.ApiVersionDescription)
+	destination.ApiVersionDescription = genruntime.ClonePointerToString(api.ApiVersionDescription)
 
 	// ApiVersionSet
-	if serviceApi.ApiVersionSet != nil {
-		var apiVersionSet v20230501ps.ApiVersionSetContractDetails_STATUS
-		err := serviceApi.ApiVersionSet.AssignProperties_To_ApiVersionSetContractDetails_STATUS(&apiVersionSet)
+	if api.ApiVersionSet != nil {
+		var apiVersionSet storage.ApiVersionSetContractDetails_STATUS
+		err := api.ApiVersionSet.AssignProperties_To_ApiVersionSetContractDetails_STATUS(&apiVersionSet)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiVersionSetContractDetails_STATUS() to populate field ApiVersionSet")
 		}
@@ -1997,12 +2097,12 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_To_Service_Api_STATUS(des
 	}
 
 	// ApiVersionSetId
-	destination.ApiVersionSetId = genruntime.ClonePointerToString(serviceApi.ApiVersionSetId)
+	destination.ApiVersionSetId = genruntime.ClonePointerToString(api.ApiVersionSetId)
 
 	// AuthenticationSettings
-	if serviceApi.AuthenticationSettings != nil {
-		var authenticationSetting v20230501ps.AuthenticationSettingsContract_STATUS
-		err := serviceApi.AuthenticationSettings.AssignProperties_To_AuthenticationSettingsContract_STATUS(&authenticationSetting)
+	if api.AuthenticationSettings != nil {
+		var authenticationSetting storage.AuthenticationSettingsContract_STATUS
+		err := api.AuthenticationSettings.AssignProperties_To_AuthenticationSettingsContract_STATUS(&authenticationSetting)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_AuthenticationSettingsContract_STATUS() to populate field AuthenticationSettings")
 		}
@@ -2012,12 +2112,12 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_To_Service_Api_STATUS(des
 	}
 
 	// Conditions
-	destination.Conditions = genruntime.CloneSliceOfCondition(serviceApi.Conditions)
+	destination.Conditions = genruntime.CloneSliceOfCondition(api.Conditions)
 
 	// Contact
-	if serviceApi.Contact != nil {
-		var contact v20230501ps.ApiContactInformation_STATUS
-		err := serviceApi.Contact.AssignProperties_To_ApiContactInformation_STATUS(&contact)
+	if api.Contact != nil {
+		var contact storage.ApiContactInformation_STATUS
+		err := api.Contact.AssignProperties_To_ApiContactInformation_STATUS(&contact)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiContactInformation_STATUS() to populate field Contact")
 		}
@@ -2027,34 +2127,34 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_To_Service_Api_STATUS(des
 	}
 
 	// Description
-	destination.Description = genruntime.ClonePointerToString(serviceApi.Description)
+	destination.Description = genruntime.ClonePointerToString(api.Description)
 
 	// DisplayName
-	destination.DisplayName = genruntime.ClonePointerToString(serviceApi.DisplayName)
+	destination.DisplayName = genruntime.ClonePointerToString(api.DisplayName)
 
 	// Id
-	destination.Id = genruntime.ClonePointerToString(serviceApi.Id)
+	destination.Id = genruntime.ClonePointerToString(api.Id)
 
 	// IsCurrent
-	if serviceApi.IsCurrent != nil {
-		isCurrent := *serviceApi.IsCurrent
+	if api.IsCurrent != nil {
+		isCurrent := *api.IsCurrent
 		destination.IsCurrent = &isCurrent
 	} else {
 		destination.IsCurrent = nil
 	}
 
 	// IsOnline
-	if serviceApi.IsOnline != nil {
-		isOnline := *serviceApi.IsOnline
+	if api.IsOnline != nil {
+		isOnline := *api.IsOnline
 		destination.IsOnline = &isOnline
 	} else {
 		destination.IsOnline = nil
 	}
 
 	// License
-	if serviceApi.License != nil {
-		var license v20230501ps.ApiLicenseInformation_STATUS
-		err := serviceApi.License.AssignProperties_To_ApiLicenseInformation_STATUS(&license)
+	if api.License != nil {
+		var license storage.ApiLicenseInformation_STATUS
+		err := api.License.AssignProperties_To_ApiLicenseInformation_STATUS(&license)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiLicenseInformation_STATUS() to populate field License")
 		}
@@ -2064,23 +2164,23 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_To_Service_Api_STATUS(des
 	}
 
 	// Name
-	destination.Name = genruntime.ClonePointerToString(serviceApi.Name)
+	destination.Name = genruntime.ClonePointerToString(api.Name)
 
 	// Path
-	destination.Path = genruntime.ClonePointerToString(serviceApi.Path)
+	destination.Path = genruntime.ClonePointerToString(api.Path)
 
 	// PropertiesType
-	if serviceApi.PropertiesType != nil {
-		propertiesType := string(*serviceApi.PropertiesType)
+	if api.PropertiesType != nil {
+		propertiesType := string(*api.PropertiesType)
 		destination.PropertiesType = &propertiesType
 	} else {
 		destination.PropertiesType = nil
 	}
 
 	// Protocols
-	if serviceApi.Protocols != nil {
-		protocolList := make([]string, len(serviceApi.Protocols))
-		for protocolIndex, protocolItem := range serviceApi.Protocols {
+	if api.Protocols != nil {
+		protocolList := make([]string, len(api.Protocols))
+		for protocolIndex, protocolItem := range api.Protocols {
 			// Shadow the loop variable to avoid aliasing
 			protocolItem := protocolItem
 			protocolList[protocolIndex] = string(protocolItem)
@@ -2091,18 +2191,18 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_To_Service_Api_STATUS(des
 	}
 
 	// ProvisioningState
-	destination.ProvisioningState = genruntime.ClonePointerToString(serviceApi.ProvisioningState)
+	destination.ProvisioningState = genruntime.ClonePointerToString(api.ProvisioningState)
 
 	// ServiceUrl
-	destination.ServiceUrl = genruntime.ClonePointerToString(serviceApi.ServiceUrl)
+	destination.ServiceUrl = genruntime.ClonePointerToString(api.ServiceUrl)
 
 	// SourceApiId
-	destination.SourceApiId = genruntime.ClonePointerToString(serviceApi.SourceApiId)
+	destination.SourceApiId = genruntime.ClonePointerToString(api.SourceApiId)
 
 	// SubscriptionKeyParameterNames
-	if serviceApi.SubscriptionKeyParameterNames != nil {
-		var subscriptionKeyParameterName v20230501ps.SubscriptionKeyParameterNamesContract_STATUS
-		err := serviceApi.SubscriptionKeyParameterNames.AssignProperties_To_SubscriptionKeyParameterNamesContract_STATUS(&subscriptionKeyParameterName)
+	if api.SubscriptionKeyParameterNames != nil {
+		var subscriptionKeyParameterName storage.SubscriptionKeyParameterNamesContract_STATUS
+		err := api.SubscriptionKeyParameterNames.AssignProperties_To_SubscriptionKeyParameterNamesContract_STATUS(&subscriptionKeyParameterName)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SubscriptionKeyParameterNamesContract_STATUS() to populate field SubscriptionKeyParameterNames")
 		}
@@ -2112,18 +2212,18 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_To_Service_Api_STATUS(des
 	}
 
 	// SubscriptionRequired
-	if serviceApi.SubscriptionRequired != nil {
-		subscriptionRequired := *serviceApi.SubscriptionRequired
+	if api.SubscriptionRequired != nil {
+		subscriptionRequired := *api.SubscriptionRequired
 		destination.SubscriptionRequired = &subscriptionRequired
 	} else {
 		destination.SubscriptionRequired = nil
 	}
 
 	// TermsOfServiceUrl
-	destination.TermsOfServiceUrl = genruntime.ClonePointerToString(serviceApi.TermsOfServiceUrl)
+	destination.TermsOfServiceUrl = genruntime.ClonePointerToString(api.TermsOfServiceUrl)
 
 	// Type
-	destination.Type = genruntime.ClonePointerToString(serviceApi.Type)
+	destination.Type = genruntime.ClonePointerToString(api.Type)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2135,6 +2235,11 @@ func (serviceApi *Service_Api_STATUS) AssignProperties_To_Service_Api_STATUS(des
 	// No error
 	return nil
 }
+
+// +kubebuilder:validation:Enum={"2023-05-01-preview"}
+type APIVersion string
+
+const APIVersion_Value = APIVersion("2023-05-01-preview")
 
 // API contact information
 type ApiContactInformation struct {
@@ -2155,7 +2260,7 @@ func (information *ApiContactInformation) ConvertToARM(resolved genruntime.Conve
 	if information == nil {
 		return nil, nil
 	}
-	result := &ApiContactInformation_ARM{}
+	result := &arm.ApiContactInformation{}
 
 	// Set property "Email":
 	if information.Email != nil {
@@ -2179,14 +2284,14 @@ func (information *ApiContactInformation) ConvertToARM(resolved genruntime.Conve
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (information *ApiContactInformation) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiContactInformation_ARM{}
+	return &arm.ApiContactInformation{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (information *ApiContactInformation) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiContactInformation_ARM)
+	typedInput, ok := armInput.(arm.ApiContactInformation)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiContactInformation_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiContactInformation, got %T", armInput)
 	}
 
 	// Set property "Email":
@@ -2212,7 +2317,7 @@ func (information *ApiContactInformation) PopulateFromARM(owner genruntime.Arbit
 }
 
 // AssignProperties_From_ApiContactInformation populates our ApiContactInformation from the provided source ApiContactInformation
-func (information *ApiContactInformation) AssignProperties_From_ApiContactInformation(source *v20230501ps.ApiContactInformation) error {
+func (information *ApiContactInformation) AssignProperties_From_ApiContactInformation(source *storage.ApiContactInformation) error {
 
 	// Email
 	information.Email = genruntime.ClonePointerToString(source.Email)
@@ -2228,7 +2333,7 @@ func (information *ApiContactInformation) AssignProperties_From_ApiContactInform
 }
 
 // AssignProperties_To_ApiContactInformation populates the provided destination ApiContactInformation from our ApiContactInformation
-func (information *ApiContactInformation) AssignProperties_To_ApiContactInformation(destination *v20230501ps.ApiContactInformation) error {
+func (information *ApiContactInformation) AssignProperties_To_ApiContactInformation(destination *storage.ApiContactInformation) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2268,14 +2373,14 @@ var _ genruntime.FromARMConverter = &ApiContactInformation_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (information *ApiContactInformation_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiContactInformation_STATUS_ARM{}
+	return &arm.ApiContactInformation_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (information *ApiContactInformation_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiContactInformation_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ApiContactInformation_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiContactInformation_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiContactInformation_STATUS, got %T", armInput)
 	}
 
 	// Set property "Email":
@@ -2301,7 +2406,7 @@ func (information *ApiContactInformation_STATUS) PopulateFromARM(owner genruntim
 }
 
 // AssignProperties_From_ApiContactInformation_STATUS populates our ApiContactInformation_STATUS from the provided source ApiContactInformation_STATUS
-func (information *ApiContactInformation_STATUS) AssignProperties_From_ApiContactInformation_STATUS(source *v20230501ps.ApiContactInformation_STATUS) error {
+func (information *ApiContactInformation_STATUS) AssignProperties_From_ApiContactInformation_STATUS(source *storage.ApiContactInformation_STATUS) error {
 
 	// Email
 	information.Email = genruntime.ClonePointerToString(source.Email)
@@ -2317,7 +2422,7 @@ func (information *ApiContactInformation_STATUS) AssignProperties_From_ApiContac
 }
 
 // AssignProperties_To_ApiContactInformation_STATUS populates the provided destination ApiContactInformation_STATUS from our ApiContactInformation_STATUS
-func (information *ApiContactInformation_STATUS) AssignProperties_To_ApiContactInformation_STATUS(destination *v20230501ps.ApiContactInformation_STATUS) error {
+func (information *ApiContactInformation_STATUS) AssignProperties_To_ApiContactInformation_STATUS(destination *storage.ApiContactInformation_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2350,6 +2455,14 @@ const (
 	ApiContractProperties_Protocols_STATUS_Wss   = ApiContractProperties_Protocols_STATUS("wss")
 )
 
+// Mapping from string to ApiContractProperties_Protocols_STATUS
+var apiContractProperties_Protocols_STATUS_Values = map[string]ApiContractProperties_Protocols_STATUS{
+	"http":  ApiContractProperties_Protocols_STATUS_Http,
+	"https": ApiContractProperties_Protocols_STATUS_Https,
+	"ws":    ApiContractProperties_Protocols_STATUS_Ws,
+	"wss":   ApiContractProperties_Protocols_STATUS_Wss,
+}
+
 type ApiContractProperties_Type_STATUS string
 
 const (
@@ -2360,6 +2473,16 @@ const (
 	ApiContractProperties_Type_STATUS_Soap      = ApiContractProperties_Type_STATUS("soap")
 	ApiContractProperties_Type_STATUS_Websocket = ApiContractProperties_Type_STATUS("websocket")
 )
+
+// Mapping from string to ApiContractProperties_Type_STATUS
+var apiContractProperties_Type_STATUS_Values = map[string]ApiContractProperties_Type_STATUS{
+	"graphql":   ApiContractProperties_Type_STATUS_Graphql,
+	"grpc":      ApiContractProperties_Type_STATUS_Grpc,
+	"http":      ApiContractProperties_Type_STATUS_Http,
+	"odata":     ApiContractProperties_Type_STATUS_Odata,
+	"soap":      ApiContractProperties_Type_STATUS_Soap,
+	"websocket": ApiContractProperties_Type_STATUS_Websocket,
+}
 
 // +kubebuilder:validation:Enum={"graphql","grpc","http","odata","soap","websocket"}
 type ApiCreateOrUpdateProperties_ApiType string
@@ -2372,6 +2495,16 @@ const (
 	ApiCreateOrUpdateProperties_ApiType_Soap      = ApiCreateOrUpdateProperties_ApiType("soap")
 	ApiCreateOrUpdateProperties_ApiType_Websocket = ApiCreateOrUpdateProperties_ApiType("websocket")
 )
+
+// Mapping from string to ApiCreateOrUpdateProperties_ApiType
+var apiCreateOrUpdateProperties_ApiType_Values = map[string]ApiCreateOrUpdateProperties_ApiType{
+	"graphql":   ApiCreateOrUpdateProperties_ApiType_Graphql,
+	"grpc":      ApiCreateOrUpdateProperties_ApiType_Grpc,
+	"http":      ApiCreateOrUpdateProperties_ApiType_Http,
+	"odata":     ApiCreateOrUpdateProperties_ApiType_Odata,
+	"soap":      ApiCreateOrUpdateProperties_ApiType_Soap,
+	"websocket": ApiCreateOrUpdateProperties_ApiType_Websocket,
+}
 
 // +kubebuilder:validation:Enum={"graphql-link","grpc","grpc-link","odata","odata-link","openapi","openapi+json","openapi+json-link","openapi-link","swagger-json","swagger-link-json","wadl-link-json","wadl-xml","wsdl","wsdl-link"}
 type ApiCreateOrUpdateProperties_Format string
@@ -2394,6 +2527,25 @@ const (
 	ApiCreateOrUpdateProperties_Format_WsdlLink        = ApiCreateOrUpdateProperties_Format("wsdl-link")
 )
 
+// Mapping from string to ApiCreateOrUpdateProperties_Format
+var apiCreateOrUpdateProperties_Format_Values = map[string]ApiCreateOrUpdateProperties_Format{
+	"graphql-link":      ApiCreateOrUpdateProperties_Format_GraphqlLink,
+	"grpc":              ApiCreateOrUpdateProperties_Format_Grpc,
+	"grpc-link":         ApiCreateOrUpdateProperties_Format_GrpcLink,
+	"odata":             ApiCreateOrUpdateProperties_Format_Odata,
+	"odata-link":        ApiCreateOrUpdateProperties_Format_OdataLink,
+	"openapi":           ApiCreateOrUpdateProperties_Format_Openapi,
+	"openapi+json":      ApiCreateOrUpdateProperties_Format_OpenapiJson,
+	"openapi+json-link": ApiCreateOrUpdateProperties_Format_OpenapiJsonLink,
+	"openapi-link":      ApiCreateOrUpdateProperties_Format_OpenapiLink,
+	"swagger-json":      ApiCreateOrUpdateProperties_Format_SwaggerJson,
+	"swagger-link-json": ApiCreateOrUpdateProperties_Format_SwaggerLinkJson,
+	"wadl-link-json":    ApiCreateOrUpdateProperties_Format_WadlLinkJson,
+	"wadl-xml":          ApiCreateOrUpdateProperties_Format_WadlXml,
+	"wsdl":              ApiCreateOrUpdateProperties_Format_Wsdl,
+	"wsdl-link":         ApiCreateOrUpdateProperties_Format_WsdlLink,
+}
+
 // +kubebuilder:validation:Enum={"http","https","ws","wss"}
 type ApiCreateOrUpdateProperties_Protocols string
 
@@ -2404,6 +2556,14 @@ const (
 	ApiCreateOrUpdateProperties_Protocols_Wss   = ApiCreateOrUpdateProperties_Protocols("wss")
 )
 
+// Mapping from string to ApiCreateOrUpdateProperties_Protocols
+var apiCreateOrUpdateProperties_Protocols_Values = map[string]ApiCreateOrUpdateProperties_Protocols{
+	"http":  ApiCreateOrUpdateProperties_Protocols_Http,
+	"https": ApiCreateOrUpdateProperties_Protocols_Https,
+	"ws":    ApiCreateOrUpdateProperties_Protocols_Ws,
+	"wss":   ApiCreateOrUpdateProperties_Protocols_Wss,
+}
+
 // +kubebuilder:validation:Enum={"query","template"}
 type ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters string
 
@@ -2411,6 +2571,12 @@ const (
 	ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters_Query    = ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters("query")
 	ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters_Template = ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters("template")
 )
+
+// Mapping from string to ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters
+var apiCreateOrUpdateProperties_TranslateRequiredQueryParameters_Values = map[string]ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters{
+	"query":    ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters_Query,
+	"template": ApiCreateOrUpdateProperties_TranslateRequiredQueryParameters_Template,
+}
 
 // +kubebuilder:validation:Enum={"graphql","grpc","http","odata","soap","websocket"}
 type ApiCreateOrUpdateProperties_Type string
@@ -2423,6 +2589,16 @@ const (
 	ApiCreateOrUpdateProperties_Type_Soap      = ApiCreateOrUpdateProperties_Type("soap")
 	ApiCreateOrUpdateProperties_Type_Websocket = ApiCreateOrUpdateProperties_Type("websocket")
 )
+
+// Mapping from string to ApiCreateOrUpdateProperties_Type
+var apiCreateOrUpdateProperties_Type_Values = map[string]ApiCreateOrUpdateProperties_Type{
+	"graphql":   ApiCreateOrUpdateProperties_Type_Graphql,
+	"grpc":      ApiCreateOrUpdateProperties_Type_Grpc,
+	"http":      ApiCreateOrUpdateProperties_Type_Http,
+	"odata":     ApiCreateOrUpdateProperties_Type_Odata,
+	"soap":      ApiCreateOrUpdateProperties_Type_Soap,
+	"websocket": ApiCreateOrUpdateProperties_Type_Websocket,
+}
 
 type ApiCreateOrUpdateProperties_WsdlSelector struct {
 	// WsdlEndpointName: Name of endpoint(port) to import from WSDL
@@ -2439,7 +2615,7 @@ func (selector *ApiCreateOrUpdateProperties_WsdlSelector) ConvertToARM(resolved 
 	if selector == nil {
 		return nil, nil
 	}
-	result := &ApiCreateOrUpdateProperties_WsdlSelector_ARM{}
+	result := &arm.ApiCreateOrUpdateProperties_WsdlSelector{}
 
 	// Set property "WsdlEndpointName":
 	if selector.WsdlEndpointName != nil {
@@ -2457,14 +2633,14 @@ func (selector *ApiCreateOrUpdateProperties_WsdlSelector) ConvertToARM(resolved 
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (selector *ApiCreateOrUpdateProperties_WsdlSelector) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiCreateOrUpdateProperties_WsdlSelector_ARM{}
+	return &arm.ApiCreateOrUpdateProperties_WsdlSelector{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (selector *ApiCreateOrUpdateProperties_WsdlSelector) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiCreateOrUpdateProperties_WsdlSelector_ARM)
+	typedInput, ok := armInput.(arm.ApiCreateOrUpdateProperties_WsdlSelector)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiCreateOrUpdateProperties_WsdlSelector_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiCreateOrUpdateProperties_WsdlSelector, got %T", armInput)
 	}
 
 	// Set property "WsdlEndpointName":
@@ -2484,7 +2660,7 @@ func (selector *ApiCreateOrUpdateProperties_WsdlSelector) PopulateFromARM(owner 
 }
 
 // AssignProperties_From_ApiCreateOrUpdateProperties_WsdlSelector populates our ApiCreateOrUpdateProperties_WsdlSelector from the provided source ApiCreateOrUpdateProperties_WsdlSelector
-func (selector *ApiCreateOrUpdateProperties_WsdlSelector) AssignProperties_From_ApiCreateOrUpdateProperties_WsdlSelector(source *v20230501ps.ApiCreateOrUpdateProperties_WsdlSelector) error {
+func (selector *ApiCreateOrUpdateProperties_WsdlSelector) AssignProperties_From_ApiCreateOrUpdateProperties_WsdlSelector(source *storage.ApiCreateOrUpdateProperties_WsdlSelector) error {
 
 	// WsdlEndpointName
 	selector.WsdlEndpointName = genruntime.ClonePointerToString(source.WsdlEndpointName)
@@ -2497,7 +2673,7 @@ func (selector *ApiCreateOrUpdateProperties_WsdlSelector) AssignProperties_From_
 }
 
 // AssignProperties_To_ApiCreateOrUpdateProperties_WsdlSelector populates the provided destination ApiCreateOrUpdateProperties_WsdlSelector from our ApiCreateOrUpdateProperties_WsdlSelector
-func (selector *ApiCreateOrUpdateProperties_WsdlSelector) AssignProperties_To_ApiCreateOrUpdateProperties_WsdlSelector(destination *v20230501ps.ApiCreateOrUpdateProperties_WsdlSelector) error {
+func (selector *ApiCreateOrUpdateProperties_WsdlSelector) AssignProperties_To_ApiCreateOrUpdateProperties_WsdlSelector(destination *storage.ApiCreateOrUpdateProperties_WsdlSelector) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2534,7 +2710,7 @@ func (information *ApiLicenseInformation) ConvertToARM(resolved genruntime.Conve
 	if information == nil {
 		return nil, nil
 	}
-	result := &ApiLicenseInformation_ARM{}
+	result := &arm.ApiLicenseInformation{}
 
 	// Set property "Name":
 	if information.Name != nil {
@@ -2552,14 +2728,14 @@ func (information *ApiLicenseInformation) ConvertToARM(resolved genruntime.Conve
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (information *ApiLicenseInformation) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiLicenseInformation_ARM{}
+	return &arm.ApiLicenseInformation{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (information *ApiLicenseInformation) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiLicenseInformation_ARM)
+	typedInput, ok := armInput.(arm.ApiLicenseInformation)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiLicenseInformation_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiLicenseInformation, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -2579,7 +2755,7 @@ func (information *ApiLicenseInformation) PopulateFromARM(owner genruntime.Arbit
 }
 
 // AssignProperties_From_ApiLicenseInformation populates our ApiLicenseInformation from the provided source ApiLicenseInformation
-func (information *ApiLicenseInformation) AssignProperties_From_ApiLicenseInformation(source *v20230501ps.ApiLicenseInformation) error {
+func (information *ApiLicenseInformation) AssignProperties_From_ApiLicenseInformation(source *storage.ApiLicenseInformation) error {
 
 	// Name
 	information.Name = genruntime.ClonePointerToString(source.Name)
@@ -2592,7 +2768,7 @@ func (information *ApiLicenseInformation) AssignProperties_From_ApiLicenseInform
 }
 
 // AssignProperties_To_ApiLicenseInformation populates the provided destination ApiLicenseInformation from our ApiLicenseInformation
-func (information *ApiLicenseInformation) AssignProperties_To_ApiLicenseInformation(destination *v20230501ps.ApiLicenseInformation) error {
+func (information *ApiLicenseInformation) AssignProperties_To_ApiLicenseInformation(destination *storage.ApiLicenseInformation) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2626,14 +2802,14 @@ var _ genruntime.FromARMConverter = &ApiLicenseInformation_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (information *ApiLicenseInformation_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiLicenseInformation_STATUS_ARM{}
+	return &arm.ApiLicenseInformation_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (information *ApiLicenseInformation_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiLicenseInformation_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ApiLicenseInformation_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiLicenseInformation_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiLicenseInformation_STATUS, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -2653,7 +2829,7 @@ func (information *ApiLicenseInformation_STATUS) PopulateFromARM(owner genruntim
 }
 
 // AssignProperties_From_ApiLicenseInformation_STATUS populates our ApiLicenseInformation_STATUS from the provided source ApiLicenseInformation_STATUS
-func (information *ApiLicenseInformation_STATUS) AssignProperties_From_ApiLicenseInformation_STATUS(source *v20230501ps.ApiLicenseInformation_STATUS) error {
+func (information *ApiLicenseInformation_STATUS) AssignProperties_From_ApiLicenseInformation_STATUS(source *storage.ApiLicenseInformation_STATUS) error {
 
 	// Name
 	information.Name = genruntime.ClonePointerToString(source.Name)
@@ -2666,7 +2842,7 @@ func (information *ApiLicenseInformation_STATUS) AssignProperties_From_ApiLicens
 }
 
 // AssignProperties_To_ApiLicenseInformation_STATUS populates the provided destination ApiLicenseInformation_STATUS from our ApiLicenseInformation_STATUS
-func (information *ApiLicenseInformation_STATUS) AssignProperties_To_ApiLicenseInformation_STATUS(destination *v20230501ps.ApiLicenseInformation_STATUS) error {
+func (information *ApiLicenseInformation_STATUS) AssignProperties_To_ApiLicenseInformation_STATUS(destination *storage.ApiLicenseInformation_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2675,6 +2851,110 @@ func (information *ApiLicenseInformation_STATUS) AssignProperties_To_ApiLicenseI
 
 	// Url
 	destination.Url = genruntime.ClonePointerToString(information.Url)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ApiOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ApiOperatorSpec populates our ApiOperatorSpec from the provided source ApiOperatorSpec
+func (operator *ApiOperatorSpec) AssignProperties_From_ApiOperatorSpec(source *storage.ApiOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiOperatorSpec populates the provided destination ApiOperatorSpec from our ApiOperatorSpec
+func (operator *ApiOperatorSpec) AssignProperties_To_ApiOperatorSpec(destination *storage.ApiOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2715,7 +2995,7 @@ func (details *ApiVersionSetContractDetails) ConvertToARM(resolved genruntime.Co
 	if details == nil {
 		return nil, nil
 	}
-	result := &ApiVersionSetContractDetails_ARM{}
+	result := &arm.ApiVersionSetContractDetails{}
 
 	// Set property "Description":
 	if details.Description != nil {
@@ -2753,7 +3033,9 @@ func (details *ApiVersionSetContractDetails) ConvertToARM(resolved genruntime.Co
 
 	// Set property "VersioningScheme":
 	if details.VersioningScheme != nil {
-		versioningScheme := *details.VersioningScheme
+		var temp string
+		temp = string(*details.VersioningScheme)
+		versioningScheme := arm.ApiVersionSetContractDetails_VersioningScheme(temp)
 		result.VersioningScheme = &versioningScheme
 	}
 	return result, nil
@@ -2761,14 +3043,14 @@ func (details *ApiVersionSetContractDetails) ConvertToARM(resolved genruntime.Co
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (details *ApiVersionSetContractDetails) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiVersionSetContractDetails_ARM{}
+	return &arm.ApiVersionSetContractDetails{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (details *ApiVersionSetContractDetails) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiVersionSetContractDetails_ARM)
+	typedInput, ok := armInput.(arm.ApiVersionSetContractDetails)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiVersionSetContractDetails_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiVersionSetContractDetails, got %T", armInput)
 	}
 
 	// Set property "Description":
@@ -2799,7 +3081,9 @@ func (details *ApiVersionSetContractDetails) PopulateFromARM(owner genruntime.Ar
 
 	// Set property "VersioningScheme":
 	if typedInput.VersioningScheme != nil {
-		versioningScheme := *typedInput.VersioningScheme
+		var temp string
+		temp = string(*typedInput.VersioningScheme)
+		versioningScheme := ApiVersionSetContractDetails_VersioningScheme(temp)
 		details.VersioningScheme = &versioningScheme
 	}
 
@@ -2808,7 +3092,7 @@ func (details *ApiVersionSetContractDetails) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_ApiVersionSetContractDetails populates our ApiVersionSetContractDetails from the provided source ApiVersionSetContractDetails
-func (details *ApiVersionSetContractDetails) AssignProperties_From_ApiVersionSetContractDetails(source *v20230501ps.ApiVersionSetContractDetails) error {
+func (details *ApiVersionSetContractDetails) AssignProperties_From_ApiVersionSetContractDetails(source *storage.ApiVersionSetContractDetails) error {
 
 	// Description
 	details.Description = genruntime.ClonePointerToString(source.Description)
@@ -2832,8 +3116,9 @@ func (details *ApiVersionSetContractDetails) AssignProperties_From_ApiVersionSet
 
 	// VersioningScheme
 	if source.VersioningScheme != nil {
-		versioningScheme := ApiVersionSetContractDetails_VersioningScheme(*source.VersioningScheme)
-		details.VersioningScheme = &versioningScheme
+		versioningScheme := *source.VersioningScheme
+		versioningSchemeTemp := genruntime.ToEnum(versioningScheme, apiVersionSetContractDetails_VersioningScheme_Values)
+		details.VersioningScheme = &versioningSchemeTemp
 	} else {
 		details.VersioningScheme = nil
 	}
@@ -2843,7 +3128,7 @@ func (details *ApiVersionSetContractDetails) AssignProperties_From_ApiVersionSet
 }
 
 // AssignProperties_To_ApiVersionSetContractDetails populates the provided destination ApiVersionSetContractDetails from our ApiVersionSetContractDetails
-func (details *ApiVersionSetContractDetails) AssignProperties_To_ApiVersionSetContractDetails(destination *v20230501ps.ApiVersionSetContractDetails) error {
+func (details *ApiVersionSetContractDetails) AssignProperties_To_ApiVersionSetContractDetails(destination *storage.ApiVersionSetContractDetails) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2911,14 +3196,14 @@ var _ genruntime.FromARMConverter = &ApiVersionSetContractDetails_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (details *ApiVersionSetContractDetails_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiVersionSetContractDetails_STATUS_ARM{}
+	return &arm.ApiVersionSetContractDetails_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (details *ApiVersionSetContractDetails_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiVersionSetContractDetails_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ApiVersionSetContractDetails_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiVersionSetContractDetails_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiVersionSetContractDetails_STATUS, got %T", armInput)
 	}
 
 	// Set property "Description":
@@ -2953,7 +3238,9 @@ func (details *ApiVersionSetContractDetails_STATUS) PopulateFromARM(owner genrun
 
 	// Set property "VersioningScheme":
 	if typedInput.VersioningScheme != nil {
-		versioningScheme := *typedInput.VersioningScheme
+		var temp string
+		temp = string(*typedInput.VersioningScheme)
+		versioningScheme := ApiVersionSetContractDetails_VersioningScheme_STATUS(temp)
 		details.VersioningScheme = &versioningScheme
 	}
 
@@ -2962,7 +3249,7 @@ func (details *ApiVersionSetContractDetails_STATUS) PopulateFromARM(owner genrun
 }
 
 // AssignProperties_From_ApiVersionSetContractDetails_STATUS populates our ApiVersionSetContractDetails_STATUS from the provided source ApiVersionSetContractDetails_STATUS
-func (details *ApiVersionSetContractDetails_STATUS) AssignProperties_From_ApiVersionSetContractDetails_STATUS(source *v20230501ps.ApiVersionSetContractDetails_STATUS) error {
+func (details *ApiVersionSetContractDetails_STATUS) AssignProperties_From_ApiVersionSetContractDetails_STATUS(source *storage.ApiVersionSetContractDetails_STATUS) error {
 
 	// Description
 	details.Description = genruntime.ClonePointerToString(source.Description)
@@ -2981,8 +3268,9 @@ func (details *ApiVersionSetContractDetails_STATUS) AssignProperties_From_ApiVer
 
 	// VersioningScheme
 	if source.VersioningScheme != nil {
-		versioningScheme := ApiVersionSetContractDetails_VersioningScheme_STATUS(*source.VersioningScheme)
-		details.VersioningScheme = &versioningScheme
+		versioningScheme := *source.VersioningScheme
+		versioningSchemeTemp := genruntime.ToEnum(versioningScheme, apiVersionSetContractDetails_VersioningScheme_STATUS_Values)
+		details.VersioningScheme = &versioningSchemeTemp
 	} else {
 		details.VersioningScheme = nil
 	}
@@ -2992,7 +3280,7 @@ func (details *ApiVersionSetContractDetails_STATUS) AssignProperties_From_ApiVer
 }
 
 // AssignProperties_To_ApiVersionSetContractDetails_STATUS populates the provided destination ApiVersionSetContractDetails_STATUS from our ApiVersionSetContractDetails_STATUS
-func (details *ApiVersionSetContractDetails_STATUS) AssignProperties_To_ApiVersionSetContractDetails_STATUS(destination *v20230501ps.ApiVersionSetContractDetails_STATUS) error {
+func (details *ApiVersionSetContractDetails_STATUS) AssignProperties_To_ApiVersionSetContractDetails_STATUS(destination *storage.ApiVersionSetContractDetails_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3052,7 +3340,7 @@ func (contract *AuthenticationSettingsContract) ConvertToARM(resolved genruntime
 	if contract == nil {
 		return nil, nil
 	}
-	result := &AuthenticationSettingsContract_ARM{}
+	result := &arm.AuthenticationSettingsContract{}
 
 	// Set property "OAuth2":
 	if contract.OAuth2 != nil {
@@ -3060,7 +3348,7 @@ func (contract *AuthenticationSettingsContract) ConvertToARM(resolved genruntime
 		if err != nil {
 			return nil, err
 		}
-		oAuth2 := *oAuth2_ARM.(*OAuth2AuthenticationSettingsContract_ARM)
+		oAuth2 := *oAuth2_ARM.(*arm.OAuth2AuthenticationSettingsContract)
 		result.OAuth2 = &oAuth2
 	}
 
@@ -3070,7 +3358,7 @@ func (contract *AuthenticationSettingsContract) ConvertToARM(resolved genruntime
 		if err != nil {
 			return nil, err
 		}
-		result.OAuth2AuthenticationSettings = append(result.OAuth2AuthenticationSettings, *item_ARM.(*OAuth2AuthenticationSettingsContract_ARM))
+		result.OAuth2AuthenticationSettings = append(result.OAuth2AuthenticationSettings, *item_ARM.(*arm.OAuth2AuthenticationSettingsContract))
 	}
 
 	// Set property "Openid":
@@ -3079,7 +3367,7 @@ func (contract *AuthenticationSettingsContract) ConvertToARM(resolved genruntime
 		if err != nil {
 			return nil, err
 		}
-		openid := *openid_ARM.(*OpenIdAuthenticationSettingsContract_ARM)
+		openid := *openid_ARM.(*arm.OpenIdAuthenticationSettingsContract)
 		result.Openid = &openid
 	}
 
@@ -3089,21 +3377,21 @@ func (contract *AuthenticationSettingsContract) ConvertToARM(resolved genruntime
 		if err != nil {
 			return nil, err
 		}
-		result.OpenidAuthenticationSettings = append(result.OpenidAuthenticationSettings, *item_ARM.(*OpenIdAuthenticationSettingsContract_ARM))
+		result.OpenidAuthenticationSettings = append(result.OpenidAuthenticationSettings, *item_ARM.(*arm.OpenIdAuthenticationSettingsContract))
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (contract *AuthenticationSettingsContract) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AuthenticationSettingsContract_ARM{}
+	return &arm.AuthenticationSettingsContract{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (contract *AuthenticationSettingsContract) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AuthenticationSettingsContract_ARM)
+	typedInput, ok := armInput.(arm.AuthenticationSettingsContract)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AuthenticationSettingsContract_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AuthenticationSettingsContract, got %T", armInput)
 	}
 
 	// Set property "OAuth2":
@@ -3153,7 +3441,7 @@ func (contract *AuthenticationSettingsContract) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_AuthenticationSettingsContract populates our AuthenticationSettingsContract from the provided source AuthenticationSettingsContract
-func (contract *AuthenticationSettingsContract) AssignProperties_From_AuthenticationSettingsContract(source *v20230501ps.AuthenticationSettingsContract) error {
+func (contract *AuthenticationSettingsContract) AssignProperties_From_AuthenticationSettingsContract(source *storage.AuthenticationSettingsContract) error {
 
 	// OAuth2
 	if source.OAuth2 != nil {
@@ -3220,13 +3508,13 @@ func (contract *AuthenticationSettingsContract) AssignProperties_From_Authentica
 }
 
 // AssignProperties_To_AuthenticationSettingsContract populates the provided destination AuthenticationSettingsContract from our AuthenticationSettingsContract
-func (contract *AuthenticationSettingsContract) AssignProperties_To_AuthenticationSettingsContract(destination *v20230501ps.AuthenticationSettingsContract) error {
+func (contract *AuthenticationSettingsContract) AssignProperties_To_AuthenticationSettingsContract(destination *storage.AuthenticationSettingsContract) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// OAuth2
 	if contract.OAuth2 != nil {
-		var oAuth2 v20230501ps.OAuth2AuthenticationSettingsContract
+		var oAuth2 storage.OAuth2AuthenticationSettingsContract
 		err := contract.OAuth2.AssignProperties_To_OAuth2AuthenticationSettingsContract(&oAuth2)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_OAuth2AuthenticationSettingsContract() to populate field OAuth2")
@@ -3238,11 +3526,11 @@ func (contract *AuthenticationSettingsContract) AssignProperties_To_Authenticati
 
 	// OAuth2AuthenticationSettings
 	if contract.OAuth2AuthenticationSettings != nil {
-		oAuth2AuthenticationSettingList := make([]v20230501ps.OAuth2AuthenticationSettingsContract, len(contract.OAuth2AuthenticationSettings))
+		oAuth2AuthenticationSettingList := make([]storage.OAuth2AuthenticationSettingsContract, len(contract.OAuth2AuthenticationSettings))
 		for oAuth2AuthenticationSettingIndex, oAuth2AuthenticationSettingItem := range contract.OAuth2AuthenticationSettings {
 			// Shadow the loop variable to avoid aliasing
 			oAuth2AuthenticationSettingItem := oAuth2AuthenticationSettingItem
-			var oAuth2AuthenticationSetting v20230501ps.OAuth2AuthenticationSettingsContract
+			var oAuth2AuthenticationSetting storage.OAuth2AuthenticationSettingsContract
 			err := oAuth2AuthenticationSettingItem.AssignProperties_To_OAuth2AuthenticationSettingsContract(&oAuth2AuthenticationSetting)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_OAuth2AuthenticationSettingsContract() to populate field OAuth2AuthenticationSettings")
@@ -3256,7 +3544,7 @@ func (contract *AuthenticationSettingsContract) AssignProperties_To_Authenticati
 
 	// Openid
 	if contract.Openid != nil {
-		var openid v20230501ps.OpenIdAuthenticationSettingsContract
+		var openid storage.OpenIdAuthenticationSettingsContract
 		err := contract.Openid.AssignProperties_To_OpenIdAuthenticationSettingsContract(&openid)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_OpenIdAuthenticationSettingsContract() to populate field Openid")
@@ -3268,11 +3556,11 @@ func (contract *AuthenticationSettingsContract) AssignProperties_To_Authenticati
 
 	// OpenidAuthenticationSettings
 	if contract.OpenidAuthenticationSettings != nil {
-		openidAuthenticationSettingList := make([]v20230501ps.OpenIdAuthenticationSettingsContract, len(contract.OpenidAuthenticationSettings))
+		openidAuthenticationSettingList := make([]storage.OpenIdAuthenticationSettingsContract, len(contract.OpenidAuthenticationSettings))
 		for openidAuthenticationSettingIndex, openidAuthenticationSettingItem := range contract.OpenidAuthenticationSettings {
 			// Shadow the loop variable to avoid aliasing
 			openidAuthenticationSettingItem := openidAuthenticationSettingItem
-			var openidAuthenticationSetting v20230501ps.OpenIdAuthenticationSettingsContract
+			var openidAuthenticationSetting storage.OpenIdAuthenticationSettingsContract
 			err := openidAuthenticationSettingItem.AssignProperties_To_OpenIdAuthenticationSettingsContract(&openidAuthenticationSetting)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_OpenIdAuthenticationSettingsContract() to populate field OpenidAuthenticationSettings")
@@ -3314,14 +3602,14 @@ var _ genruntime.FromARMConverter = &AuthenticationSettingsContract_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (contract *AuthenticationSettingsContract_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AuthenticationSettingsContract_STATUS_ARM{}
+	return &arm.AuthenticationSettingsContract_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (contract *AuthenticationSettingsContract_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AuthenticationSettingsContract_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AuthenticationSettingsContract_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AuthenticationSettingsContract_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AuthenticationSettingsContract_STATUS, got %T", armInput)
 	}
 
 	// Set property "OAuth2":
@@ -3371,7 +3659,7 @@ func (contract *AuthenticationSettingsContract_STATUS) PopulateFromARM(owner gen
 }
 
 // AssignProperties_From_AuthenticationSettingsContract_STATUS populates our AuthenticationSettingsContract_STATUS from the provided source AuthenticationSettingsContract_STATUS
-func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_From_AuthenticationSettingsContract_STATUS(source *v20230501ps.AuthenticationSettingsContract_STATUS) error {
+func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_From_AuthenticationSettingsContract_STATUS(source *storage.AuthenticationSettingsContract_STATUS) error {
 
 	// OAuth2
 	if source.OAuth2 != nil {
@@ -3438,13 +3726,13 @@ func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_From_Aut
 }
 
 // AssignProperties_To_AuthenticationSettingsContract_STATUS populates the provided destination AuthenticationSettingsContract_STATUS from our AuthenticationSettingsContract_STATUS
-func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_To_AuthenticationSettingsContract_STATUS(destination *v20230501ps.AuthenticationSettingsContract_STATUS) error {
+func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_To_AuthenticationSettingsContract_STATUS(destination *storage.AuthenticationSettingsContract_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// OAuth2
 	if contract.OAuth2 != nil {
-		var oAuth2 v20230501ps.OAuth2AuthenticationSettingsContract_STATUS
+		var oAuth2 storage.OAuth2AuthenticationSettingsContract_STATUS
 		err := contract.OAuth2.AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS(&oAuth2)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS() to populate field OAuth2")
@@ -3456,11 +3744,11 @@ func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_To_Authe
 
 	// OAuth2AuthenticationSettings
 	if contract.OAuth2AuthenticationSettings != nil {
-		oAuth2AuthenticationSettingList := make([]v20230501ps.OAuth2AuthenticationSettingsContract_STATUS, len(contract.OAuth2AuthenticationSettings))
+		oAuth2AuthenticationSettingList := make([]storage.OAuth2AuthenticationSettingsContract_STATUS, len(contract.OAuth2AuthenticationSettings))
 		for oAuth2AuthenticationSettingIndex, oAuth2AuthenticationSettingItem := range contract.OAuth2AuthenticationSettings {
 			// Shadow the loop variable to avoid aliasing
 			oAuth2AuthenticationSettingItem := oAuth2AuthenticationSettingItem
-			var oAuth2AuthenticationSetting v20230501ps.OAuth2AuthenticationSettingsContract_STATUS
+			var oAuth2AuthenticationSetting storage.OAuth2AuthenticationSettingsContract_STATUS
 			err := oAuth2AuthenticationSettingItem.AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS(&oAuth2AuthenticationSetting)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS() to populate field OAuth2AuthenticationSettings")
@@ -3474,7 +3762,7 @@ func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_To_Authe
 
 	// Openid
 	if contract.Openid != nil {
-		var openid v20230501ps.OpenIdAuthenticationSettingsContract_STATUS
+		var openid storage.OpenIdAuthenticationSettingsContract_STATUS
 		err := contract.Openid.AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS(&openid)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS() to populate field Openid")
@@ -3486,11 +3774,11 @@ func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_To_Authe
 
 	// OpenidAuthenticationSettings
 	if contract.OpenidAuthenticationSettings != nil {
-		openidAuthenticationSettingList := make([]v20230501ps.OpenIdAuthenticationSettingsContract_STATUS, len(contract.OpenidAuthenticationSettings))
+		openidAuthenticationSettingList := make([]storage.OpenIdAuthenticationSettingsContract_STATUS, len(contract.OpenidAuthenticationSettings))
 		for openidAuthenticationSettingIndex, openidAuthenticationSettingItem := range contract.OpenidAuthenticationSettings {
 			// Shadow the loop variable to avoid aliasing
 			openidAuthenticationSettingItem := openidAuthenticationSettingItem
-			var openidAuthenticationSetting v20230501ps.OpenIdAuthenticationSettingsContract_STATUS
+			var openidAuthenticationSetting storage.OpenIdAuthenticationSettingsContract_STATUS
 			err := openidAuthenticationSettingItem.AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS(&openidAuthenticationSetting)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS() to populate field OpenidAuthenticationSettings")
@@ -3529,7 +3817,7 @@ func (contract *SubscriptionKeyParameterNamesContract) ConvertToARM(resolved gen
 	if contract == nil {
 		return nil, nil
 	}
-	result := &SubscriptionKeyParameterNamesContract_ARM{}
+	result := &arm.SubscriptionKeyParameterNamesContract{}
 
 	// Set property "Header":
 	if contract.Header != nil {
@@ -3547,14 +3835,14 @@ func (contract *SubscriptionKeyParameterNamesContract) ConvertToARM(resolved gen
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (contract *SubscriptionKeyParameterNamesContract) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SubscriptionKeyParameterNamesContract_ARM{}
+	return &arm.SubscriptionKeyParameterNamesContract{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (contract *SubscriptionKeyParameterNamesContract) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SubscriptionKeyParameterNamesContract_ARM)
+	typedInput, ok := armInput.(arm.SubscriptionKeyParameterNamesContract)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SubscriptionKeyParameterNamesContract_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SubscriptionKeyParameterNamesContract, got %T", armInput)
 	}
 
 	// Set property "Header":
@@ -3574,7 +3862,7 @@ func (contract *SubscriptionKeyParameterNamesContract) PopulateFromARM(owner gen
 }
 
 // AssignProperties_From_SubscriptionKeyParameterNamesContract populates our SubscriptionKeyParameterNamesContract from the provided source SubscriptionKeyParameterNamesContract
-func (contract *SubscriptionKeyParameterNamesContract) AssignProperties_From_SubscriptionKeyParameterNamesContract(source *v20230501ps.SubscriptionKeyParameterNamesContract) error {
+func (contract *SubscriptionKeyParameterNamesContract) AssignProperties_From_SubscriptionKeyParameterNamesContract(source *storage.SubscriptionKeyParameterNamesContract) error {
 
 	// Header
 	contract.Header = genruntime.ClonePointerToString(source.Header)
@@ -3587,7 +3875,7 @@ func (contract *SubscriptionKeyParameterNamesContract) AssignProperties_From_Sub
 }
 
 // AssignProperties_To_SubscriptionKeyParameterNamesContract populates the provided destination SubscriptionKeyParameterNamesContract from our SubscriptionKeyParameterNamesContract
-func (contract *SubscriptionKeyParameterNamesContract) AssignProperties_To_SubscriptionKeyParameterNamesContract(destination *v20230501ps.SubscriptionKeyParameterNamesContract) error {
+func (contract *SubscriptionKeyParameterNamesContract) AssignProperties_To_SubscriptionKeyParameterNamesContract(destination *storage.SubscriptionKeyParameterNamesContract) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3621,14 +3909,14 @@ var _ genruntime.FromARMConverter = &SubscriptionKeyParameterNamesContract_STATU
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (contract *SubscriptionKeyParameterNamesContract_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SubscriptionKeyParameterNamesContract_STATUS_ARM{}
+	return &arm.SubscriptionKeyParameterNamesContract_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (contract *SubscriptionKeyParameterNamesContract_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SubscriptionKeyParameterNamesContract_STATUS_ARM)
+	typedInput, ok := armInput.(arm.SubscriptionKeyParameterNamesContract_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SubscriptionKeyParameterNamesContract_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SubscriptionKeyParameterNamesContract_STATUS, got %T", armInput)
 	}
 
 	// Set property "Header":
@@ -3648,7 +3936,7 @@ func (contract *SubscriptionKeyParameterNamesContract_STATUS) PopulateFromARM(ow
 }
 
 // AssignProperties_From_SubscriptionKeyParameterNamesContract_STATUS populates our SubscriptionKeyParameterNamesContract_STATUS from the provided source SubscriptionKeyParameterNamesContract_STATUS
-func (contract *SubscriptionKeyParameterNamesContract_STATUS) AssignProperties_From_SubscriptionKeyParameterNamesContract_STATUS(source *v20230501ps.SubscriptionKeyParameterNamesContract_STATUS) error {
+func (contract *SubscriptionKeyParameterNamesContract_STATUS) AssignProperties_From_SubscriptionKeyParameterNamesContract_STATUS(source *storage.SubscriptionKeyParameterNamesContract_STATUS) error {
 
 	// Header
 	contract.Header = genruntime.ClonePointerToString(source.Header)
@@ -3661,7 +3949,7 @@ func (contract *SubscriptionKeyParameterNamesContract_STATUS) AssignProperties_F
 }
 
 // AssignProperties_To_SubscriptionKeyParameterNamesContract_STATUS populates the provided destination SubscriptionKeyParameterNamesContract_STATUS from our SubscriptionKeyParameterNamesContract_STATUS
-func (contract *SubscriptionKeyParameterNamesContract_STATUS) AssignProperties_To_SubscriptionKeyParameterNamesContract_STATUS(destination *v20230501ps.SubscriptionKeyParameterNamesContract_STATUS) error {
+func (contract *SubscriptionKeyParameterNamesContract_STATUS) AssignProperties_To_SubscriptionKeyParameterNamesContract_STATUS(destination *storage.SubscriptionKeyParameterNamesContract_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3691,6 +3979,13 @@ const (
 	ApiVersionSetContractDetails_VersioningScheme_Segment = ApiVersionSetContractDetails_VersioningScheme("Segment")
 )
 
+// Mapping from string to ApiVersionSetContractDetails_VersioningScheme
+var apiVersionSetContractDetails_VersioningScheme_Values = map[string]ApiVersionSetContractDetails_VersioningScheme{
+	"header":  ApiVersionSetContractDetails_VersioningScheme_Header,
+	"query":   ApiVersionSetContractDetails_VersioningScheme_Query,
+	"segment": ApiVersionSetContractDetails_VersioningScheme_Segment,
+}
+
 type ApiVersionSetContractDetails_VersioningScheme_STATUS string
 
 const (
@@ -3698,6 +3993,13 @@ const (
 	ApiVersionSetContractDetails_VersioningScheme_STATUS_Query   = ApiVersionSetContractDetails_VersioningScheme_STATUS("Query")
 	ApiVersionSetContractDetails_VersioningScheme_STATUS_Segment = ApiVersionSetContractDetails_VersioningScheme_STATUS("Segment")
 )
+
+// Mapping from string to ApiVersionSetContractDetails_VersioningScheme_STATUS
+var apiVersionSetContractDetails_VersioningScheme_STATUS_Values = map[string]ApiVersionSetContractDetails_VersioningScheme_STATUS{
+	"header":  ApiVersionSetContractDetails_VersioningScheme_STATUS_Header,
+	"query":   ApiVersionSetContractDetails_VersioningScheme_STATUS_Query,
+	"segment": ApiVersionSetContractDetails_VersioningScheme_STATUS_Segment,
+}
 
 // API OAuth2 Authentication settings details.
 type OAuth2AuthenticationSettingsContract struct {
@@ -3715,7 +4017,7 @@ func (contract *OAuth2AuthenticationSettingsContract) ConvertToARM(resolved genr
 	if contract == nil {
 		return nil, nil
 	}
-	result := &OAuth2AuthenticationSettingsContract_ARM{}
+	result := &arm.OAuth2AuthenticationSettingsContract{}
 
 	// Set property "AuthorizationServerId":
 	if contract.AuthorizationServerId != nil {
@@ -3733,14 +4035,14 @@ func (contract *OAuth2AuthenticationSettingsContract) ConvertToARM(resolved genr
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (contract *OAuth2AuthenticationSettingsContract) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &OAuth2AuthenticationSettingsContract_ARM{}
+	return &arm.OAuth2AuthenticationSettingsContract{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (contract *OAuth2AuthenticationSettingsContract) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(OAuth2AuthenticationSettingsContract_ARM)
+	typedInput, ok := armInput.(arm.OAuth2AuthenticationSettingsContract)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected OAuth2AuthenticationSettingsContract_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.OAuth2AuthenticationSettingsContract, got %T", armInput)
 	}
 
 	// Set property "AuthorizationServerId":
@@ -3760,7 +4062,7 @@ func (contract *OAuth2AuthenticationSettingsContract) PopulateFromARM(owner genr
 }
 
 // AssignProperties_From_OAuth2AuthenticationSettingsContract populates our OAuth2AuthenticationSettingsContract from the provided source OAuth2AuthenticationSettingsContract
-func (contract *OAuth2AuthenticationSettingsContract) AssignProperties_From_OAuth2AuthenticationSettingsContract(source *v20230501ps.OAuth2AuthenticationSettingsContract) error {
+func (contract *OAuth2AuthenticationSettingsContract) AssignProperties_From_OAuth2AuthenticationSettingsContract(source *storage.OAuth2AuthenticationSettingsContract) error {
 
 	// AuthorizationServerId
 	contract.AuthorizationServerId = genruntime.ClonePointerToString(source.AuthorizationServerId)
@@ -3773,7 +4075,7 @@ func (contract *OAuth2AuthenticationSettingsContract) AssignProperties_From_OAut
 }
 
 // AssignProperties_To_OAuth2AuthenticationSettingsContract populates the provided destination OAuth2AuthenticationSettingsContract from our OAuth2AuthenticationSettingsContract
-func (contract *OAuth2AuthenticationSettingsContract) AssignProperties_To_OAuth2AuthenticationSettingsContract(destination *v20230501ps.OAuth2AuthenticationSettingsContract) error {
+func (contract *OAuth2AuthenticationSettingsContract) AssignProperties_To_OAuth2AuthenticationSettingsContract(destination *storage.OAuth2AuthenticationSettingsContract) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3807,14 +4109,14 @@ var _ genruntime.FromARMConverter = &OAuth2AuthenticationSettingsContract_STATUS
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (contract *OAuth2AuthenticationSettingsContract_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &OAuth2AuthenticationSettingsContract_STATUS_ARM{}
+	return &arm.OAuth2AuthenticationSettingsContract_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (contract *OAuth2AuthenticationSettingsContract_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(OAuth2AuthenticationSettingsContract_STATUS_ARM)
+	typedInput, ok := armInput.(arm.OAuth2AuthenticationSettingsContract_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected OAuth2AuthenticationSettingsContract_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.OAuth2AuthenticationSettingsContract_STATUS, got %T", armInput)
 	}
 
 	// Set property "AuthorizationServerId":
@@ -3834,7 +4136,7 @@ func (contract *OAuth2AuthenticationSettingsContract_STATUS) PopulateFromARM(own
 }
 
 // AssignProperties_From_OAuth2AuthenticationSettingsContract_STATUS populates our OAuth2AuthenticationSettingsContract_STATUS from the provided source OAuth2AuthenticationSettingsContract_STATUS
-func (contract *OAuth2AuthenticationSettingsContract_STATUS) AssignProperties_From_OAuth2AuthenticationSettingsContract_STATUS(source *v20230501ps.OAuth2AuthenticationSettingsContract_STATUS) error {
+func (contract *OAuth2AuthenticationSettingsContract_STATUS) AssignProperties_From_OAuth2AuthenticationSettingsContract_STATUS(source *storage.OAuth2AuthenticationSettingsContract_STATUS) error {
 
 	// AuthorizationServerId
 	contract.AuthorizationServerId = genruntime.ClonePointerToString(source.AuthorizationServerId)
@@ -3847,7 +4149,7 @@ func (contract *OAuth2AuthenticationSettingsContract_STATUS) AssignProperties_Fr
 }
 
 // AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS populates the provided destination OAuth2AuthenticationSettingsContract_STATUS from our OAuth2AuthenticationSettingsContract_STATUS
-func (contract *OAuth2AuthenticationSettingsContract_STATUS) AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS(destination *v20230501ps.OAuth2AuthenticationSettingsContract_STATUS) error {
+func (contract *OAuth2AuthenticationSettingsContract_STATUS) AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS(destination *storage.OAuth2AuthenticationSettingsContract_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3884,11 +4186,13 @@ func (contract *OpenIdAuthenticationSettingsContract) ConvertToARM(resolved genr
 	if contract == nil {
 		return nil, nil
 	}
-	result := &OpenIdAuthenticationSettingsContract_ARM{}
+	result := &arm.OpenIdAuthenticationSettingsContract{}
 
 	// Set property "BearerTokenSendingMethods":
 	for _, item := range contract.BearerTokenSendingMethods {
-		result.BearerTokenSendingMethods = append(result.BearerTokenSendingMethods, item)
+		var temp string
+		temp = string(item)
+		result.BearerTokenSendingMethods = append(result.BearerTokenSendingMethods, arm.BearerTokenSendingMethodsContract(temp))
 	}
 
 	// Set property "OpenidProviderId":
@@ -3901,19 +4205,21 @@ func (contract *OpenIdAuthenticationSettingsContract) ConvertToARM(resolved genr
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (contract *OpenIdAuthenticationSettingsContract) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &OpenIdAuthenticationSettingsContract_ARM{}
+	return &arm.OpenIdAuthenticationSettingsContract{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (contract *OpenIdAuthenticationSettingsContract) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(OpenIdAuthenticationSettingsContract_ARM)
+	typedInput, ok := armInput.(arm.OpenIdAuthenticationSettingsContract)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected OpenIdAuthenticationSettingsContract_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.OpenIdAuthenticationSettingsContract, got %T", armInput)
 	}
 
 	// Set property "BearerTokenSendingMethods":
 	for _, item := range typedInput.BearerTokenSendingMethods {
-		contract.BearerTokenSendingMethods = append(contract.BearerTokenSendingMethods, item)
+		var temp string
+		temp = string(item)
+		contract.BearerTokenSendingMethods = append(contract.BearerTokenSendingMethods, BearerTokenSendingMethodsContract(temp))
 	}
 
 	// Set property "OpenidProviderId":
@@ -3927,7 +4233,7 @@ func (contract *OpenIdAuthenticationSettingsContract) PopulateFromARM(owner genr
 }
 
 // AssignProperties_From_OpenIdAuthenticationSettingsContract populates our OpenIdAuthenticationSettingsContract from the provided source OpenIdAuthenticationSettingsContract
-func (contract *OpenIdAuthenticationSettingsContract) AssignProperties_From_OpenIdAuthenticationSettingsContract(source *v20230501ps.OpenIdAuthenticationSettingsContract) error {
+func (contract *OpenIdAuthenticationSettingsContract) AssignProperties_From_OpenIdAuthenticationSettingsContract(source *storage.OpenIdAuthenticationSettingsContract) error {
 
 	// BearerTokenSendingMethods
 	if source.BearerTokenSendingMethods != nil {
@@ -3935,7 +4241,7 @@ func (contract *OpenIdAuthenticationSettingsContract) AssignProperties_From_Open
 		for bearerTokenSendingMethodIndex, bearerTokenSendingMethodItem := range source.BearerTokenSendingMethods {
 			// Shadow the loop variable to avoid aliasing
 			bearerTokenSendingMethodItem := bearerTokenSendingMethodItem
-			bearerTokenSendingMethodList[bearerTokenSendingMethodIndex] = BearerTokenSendingMethodsContract(bearerTokenSendingMethodItem)
+			bearerTokenSendingMethodList[bearerTokenSendingMethodIndex] = genruntime.ToEnum(bearerTokenSendingMethodItem, bearerTokenSendingMethodsContract_Values)
 		}
 		contract.BearerTokenSendingMethods = bearerTokenSendingMethodList
 	} else {
@@ -3950,7 +4256,7 @@ func (contract *OpenIdAuthenticationSettingsContract) AssignProperties_From_Open
 }
 
 // AssignProperties_To_OpenIdAuthenticationSettingsContract populates the provided destination OpenIdAuthenticationSettingsContract from our OpenIdAuthenticationSettingsContract
-func (contract *OpenIdAuthenticationSettingsContract) AssignProperties_To_OpenIdAuthenticationSettingsContract(destination *v20230501ps.OpenIdAuthenticationSettingsContract) error {
+func (contract *OpenIdAuthenticationSettingsContract) AssignProperties_To_OpenIdAuthenticationSettingsContract(destination *storage.OpenIdAuthenticationSettingsContract) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3994,19 +4300,21 @@ var _ genruntime.FromARMConverter = &OpenIdAuthenticationSettingsContract_STATUS
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (contract *OpenIdAuthenticationSettingsContract_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &OpenIdAuthenticationSettingsContract_STATUS_ARM{}
+	return &arm.OpenIdAuthenticationSettingsContract_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (contract *OpenIdAuthenticationSettingsContract_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(OpenIdAuthenticationSettingsContract_STATUS_ARM)
+	typedInput, ok := armInput.(arm.OpenIdAuthenticationSettingsContract_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected OpenIdAuthenticationSettingsContract_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.OpenIdAuthenticationSettingsContract_STATUS, got %T", armInput)
 	}
 
 	// Set property "BearerTokenSendingMethods":
 	for _, item := range typedInput.BearerTokenSendingMethods {
-		contract.BearerTokenSendingMethods = append(contract.BearerTokenSendingMethods, item)
+		var temp string
+		temp = string(item)
+		contract.BearerTokenSendingMethods = append(contract.BearerTokenSendingMethods, BearerTokenSendingMethodsContract_STATUS(temp))
 	}
 
 	// Set property "OpenidProviderId":
@@ -4020,7 +4328,7 @@ func (contract *OpenIdAuthenticationSettingsContract_STATUS) PopulateFromARM(own
 }
 
 // AssignProperties_From_OpenIdAuthenticationSettingsContract_STATUS populates our OpenIdAuthenticationSettingsContract_STATUS from the provided source OpenIdAuthenticationSettingsContract_STATUS
-func (contract *OpenIdAuthenticationSettingsContract_STATUS) AssignProperties_From_OpenIdAuthenticationSettingsContract_STATUS(source *v20230501ps.OpenIdAuthenticationSettingsContract_STATUS) error {
+func (contract *OpenIdAuthenticationSettingsContract_STATUS) AssignProperties_From_OpenIdAuthenticationSettingsContract_STATUS(source *storage.OpenIdAuthenticationSettingsContract_STATUS) error {
 
 	// BearerTokenSendingMethods
 	if source.BearerTokenSendingMethods != nil {
@@ -4028,7 +4336,7 @@ func (contract *OpenIdAuthenticationSettingsContract_STATUS) AssignProperties_Fr
 		for bearerTokenSendingMethodIndex, bearerTokenSendingMethodItem := range source.BearerTokenSendingMethods {
 			// Shadow the loop variable to avoid aliasing
 			bearerTokenSendingMethodItem := bearerTokenSendingMethodItem
-			bearerTokenSendingMethodList[bearerTokenSendingMethodIndex] = BearerTokenSendingMethodsContract_STATUS(bearerTokenSendingMethodItem)
+			bearerTokenSendingMethodList[bearerTokenSendingMethodIndex] = genruntime.ToEnum(bearerTokenSendingMethodItem, bearerTokenSendingMethodsContract_STATUS_Values)
 		}
 		contract.BearerTokenSendingMethods = bearerTokenSendingMethodList
 	} else {
@@ -4043,7 +4351,7 @@ func (contract *OpenIdAuthenticationSettingsContract_STATUS) AssignProperties_Fr
 }
 
 // AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS populates the provided destination OpenIdAuthenticationSettingsContract_STATUS from our OpenIdAuthenticationSettingsContract_STATUS
-func (contract *OpenIdAuthenticationSettingsContract_STATUS) AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS(destination *v20230501ps.OpenIdAuthenticationSettingsContract_STATUS) error {
+func (contract *OpenIdAuthenticationSettingsContract_STATUS) AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS(destination *storage.OpenIdAuthenticationSettingsContract_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4083,6 +4391,12 @@ const (
 	BearerTokenSendingMethodsContract_Query               = BearerTokenSendingMethodsContract("query")
 )
 
+// Mapping from string to BearerTokenSendingMethodsContract
+var bearerTokenSendingMethodsContract_Values = map[string]BearerTokenSendingMethodsContract{
+	"authorizationheader": BearerTokenSendingMethodsContract_AuthorizationHeader,
+	"query":               BearerTokenSendingMethodsContract_Query,
+}
+
 // Form of an authorization grant, which the client uses to request the access token.
 type BearerTokenSendingMethodsContract_STATUS string
 
@@ -4090,6 +4404,12 @@ const (
 	BearerTokenSendingMethodsContract_STATUS_AuthorizationHeader = BearerTokenSendingMethodsContract_STATUS("authorizationHeader")
 	BearerTokenSendingMethodsContract_STATUS_Query               = BearerTokenSendingMethodsContract_STATUS("query")
 )
+
+// Mapping from string to BearerTokenSendingMethodsContract_STATUS
+var bearerTokenSendingMethodsContract_STATUS_Values = map[string]BearerTokenSendingMethodsContract_STATUS{
+	"authorizationheader": BearerTokenSendingMethodsContract_STATUS_AuthorizationHeader,
+	"query":               BearerTokenSendingMethodsContract_STATUS_Query,
+}
 
 func init() {
 	SchemeBuilder.Register(&Api{}, &ApiList{})

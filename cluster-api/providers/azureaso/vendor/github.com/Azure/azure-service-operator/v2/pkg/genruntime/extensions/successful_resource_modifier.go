@@ -26,8 +26,8 @@ type SuccessFunc = func(obj genruntime.ARMMetaObject) error
 // If the resource did not implement SuccessfulCreationHandler a default handler that does nothing is returned.
 func CreateSuccessfulCreationHandler(
 	host genruntime.ResourceExtension,
-	log logr.Logger) SuccessFunc {
-
+	log logr.Logger,
+) SuccessFunc {
 	impl, ok := host.(SuccessfulCreationHandler)
 	if !ok {
 		return func(obj genruntime.ARMMetaObject) error {

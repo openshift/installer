@@ -27,9 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/utils/ptr"
-	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/mutators"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
@@ -45,6 +42,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/mutators"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // AzureASOManagedMachinePoolReconciler reconciles a AzureASOManagedMachinePool object.
@@ -77,14 +78,14 @@ func (r *AzureASOManagedMachinePoolReconciler) SetupWithManager(ctx context.Cont
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1alpha.AzureASOManagedMachinePool{}).
-		WithEventFilter(predicates.ResourceHasFilterLabel(log, r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue)).
 		Watches(
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(clusterToAzureASOManagedMachinePools),
 			builder.WithPredicates(
-				predicates.ResourceHasFilterLabel(log, r.WatchFilterValue),
-				predicates.Any(log,
-					predicates.ClusterControlPlaneInitialized(log),
+				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
+				predicates.Any(mgr.GetScheme(), log,
+					predicates.ClusterControlPlaneInitialized(mgr.GetScheme(), log),
 					ClusterUpdatePauseChange(log),
 				),
 			),
@@ -95,7 +96,7 @@ func (r *AzureASOManagedMachinePoolReconciler) SetupWithManager(ctx context.Cont
 				infrav1alpha.GroupVersion.WithKind(infrav1alpha.AzureASOManagedMachinePoolKind)),
 			),
 			builder.WithPredicates(
-				predicates.ResourceHasFilterLabel(log, r.WatchFilterValue),
+				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
 			),
 		).
 		Build(r)
@@ -104,8 +105,10 @@ func (r *AzureASOManagedMachinePoolReconciler) SetupWithManager(ctx context.Cont
 	}
 
 	externalTracker := &external.ObjectTracker{
-		Cache:      mgr.GetCache(),
-		Controller: c,
+		Cache:           mgr.GetCache(),
+		Controller:      c,
+		Scheme:          mgr.GetScheme(),
+		PredicateLogger: &log,
 	}
 
 	r.newResourceReconciler = func(asoManagedCluster *infrav1alpha.AzureASOManagedMachinePool, resources []*unstructured.Unstructured) resourceReconciler {
@@ -300,7 +303,6 @@ func expectedNodeLabels(poolName, nodeRG string) map[string]string {
 	}
 }
 
-//nolint:unparam // an empty ctrl.Result is always returned here, leaving it as-is to avoid churn in refactoring later if that changes.
 func (r *AzureASOManagedMachinePoolReconciler) reconcilePaused(ctx context.Context, asoManagedMachinePool *infrav1alpha.AzureASOManagedMachinePool) (ctrl.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureASOManagedMachinePoolReconciler.reconcilePaused")
 	defer done()
@@ -321,7 +323,6 @@ func (r *AzureASOManagedMachinePoolReconciler) reconcilePaused(ctx context.Conte
 	return ctrl.Result{}, nil
 }
 
-//nolint:unparam // an empty ctrl.Result is always returned here, leaving it as-is to avoid churn in refactoring later if that changes.
 func (r *AzureASOManagedMachinePoolReconciler) reconcileDelete(ctx context.Context, asoManagedMachinePool *infrav1alpha.AzureASOManagedMachinePool, cluster *clusterv1.Cluster) (ctrl.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx,
 		"controllers.AzureASOManagedMachinePoolReconciler.reconcileDelete",

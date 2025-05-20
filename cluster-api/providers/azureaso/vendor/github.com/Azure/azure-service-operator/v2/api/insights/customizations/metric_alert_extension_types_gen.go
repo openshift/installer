@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20180301 "github.com/Azure/azure-service-operator/v2/api/insights/v1api20180301"
-	v20180301s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20180301/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20180301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type MetricAlertExtension struct {
 func (extension *MetricAlertExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20180301.MetricAlert{},
-		&v20180301s.MetricAlert{}}
+		&storage.MetricAlert{}}
 }

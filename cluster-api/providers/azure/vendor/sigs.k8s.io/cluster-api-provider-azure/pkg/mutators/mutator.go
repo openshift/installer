@@ -27,8 +27,9 @@ import (
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // ResourcesMutator mutates in-place a slice of ASO resources to be reconciled. These mutations make only the

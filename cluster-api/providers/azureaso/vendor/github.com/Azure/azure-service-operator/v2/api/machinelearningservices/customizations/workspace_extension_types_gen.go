@@ -6,6 +6,8 @@ package customizations
 import (
 	v20210701 "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20210701"
 	v20210701s "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20210701/storage"
+	v20240401 "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20240401"
+	v20240401s "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20240401/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type WorkspaceExtension struct {
 func (extension *WorkspaceExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20210701.Workspace{},
-		&v20210701s.Workspace{}}
+		&v20210701s.Workspace{},
+		&v20240401.Workspace{},
+		&v20240401s.Workspace{}}
 }

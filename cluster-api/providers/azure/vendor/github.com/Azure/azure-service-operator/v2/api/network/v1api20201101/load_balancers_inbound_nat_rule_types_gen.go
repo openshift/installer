@@ -5,10 +5,14 @@ package v1api20201101
 
 import (
 	"fmt"
+	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type LoadBalancersInboundNatRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              LoadBalancers_InboundNatRule_Spec   `json:"spec,omitempty"`
-	Status            LoadBalancers_InboundNatRule_STATUS `json:"status,omitempty"`
+	Spec              LoadBalancersInboundNatRule_Spec   `json:"spec,omitempty"`
+	Status            LoadBalancersInboundNatRule_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &LoadBalancersInboundNatRule{}
@@ -49,22 +53,36 @@ var _ conversion.Convertible = &LoadBalancersInboundNatRule{}
 
 // ConvertFrom populates our LoadBalancersInboundNatRule from the provided hub LoadBalancersInboundNatRule
 func (rule *LoadBalancersInboundNatRule) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.LoadBalancersInboundNatRule)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20201101/storage/LoadBalancersInboundNatRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.LoadBalancersInboundNatRule
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return rule.AssignProperties_From_LoadBalancersInboundNatRule(source)
+	err = rule.AssignProperties_From_LoadBalancersInboundNatRule(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to rule")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub LoadBalancersInboundNatRule from our LoadBalancersInboundNatRule
 func (rule *LoadBalancersInboundNatRule) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.LoadBalancersInboundNatRule)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20201101/storage/LoadBalancersInboundNatRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.LoadBalancersInboundNatRule
+	err := rule.AssignProperties_To_LoadBalancersInboundNatRule(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from rule")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return rule.AssignProperties_To_LoadBalancersInboundNatRule(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20201101-loadbalancersinboundnatrule,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=loadbalancersinboundnatrules,verbs=create;update,versions=v1api20201101,name=default.v1api20201101.loadbalancersinboundnatrules.network.azure.com,admissionReviewVersions=v1
@@ -90,15 +108,24 @@ func (rule *LoadBalancersInboundNatRule) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the LoadBalancersInboundNatRule resource
 func (rule *LoadBalancersInboundNatRule) defaultImpl() { rule.defaultAzureName() }
 
-var _ genruntime.ImportableResource = &LoadBalancersInboundNatRule{}
+var _ configmaps.Exporter = &LoadBalancersInboundNatRule{}
 
-// InitializeSpec initializes the spec for this resource from the given status
-func (rule *LoadBalancersInboundNatRule) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*LoadBalancers_InboundNatRule_STATUS); ok {
-		return rule.Spec.Initialize_From_LoadBalancers_InboundNatRule_STATUS(s)
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (rule *LoadBalancersInboundNatRule) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if rule.Spec.OperatorSpec == nil {
+		return nil
 	}
+	return rule.Spec.OperatorSpec.ConfigMapExpressions
+}
 
-	return fmt.Errorf("expected Status of type LoadBalancers_InboundNatRule_STATUS but received %T instead", status)
+var _ secrets.Exporter = &LoadBalancersInboundNatRule{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (rule *LoadBalancersInboundNatRule) SecretDestinationExpressions() []*core.DestinationExpression {
+	if rule.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return rule.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &LoadBalancersInboundNatRule{}
@@ -110,7 +137,7 @@ func (rule *LoadBalancersInboundNatRule) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-11-01"
 func (rule LoadBalancersInboundNatRule) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -144,7 +171,7 @@ func (rule *LoadBalancersInboundNatRule) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (rule *LoadBalancersInboundNatRule) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &LoadBalancers_InboundNatRule_STATUS{}
+	return &LoadBalancersInboundNatRule_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -156,13 +183,13 @@ func (rule *LoadBalancersInboundNatRule) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (rule *LoadBalancersInboundNatRule) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*LoadBalancers_InboundNatRule_STATUS); ok {
+	if st, ok := status.(*LoadBalancersInboundNatRule_STATUS); ok {
 		rule.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st LoadBalancers_InboundNatRule_STATUS
+	var st LoadBalancersInboundNatRule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -208,7 +235,7 @@ func (rule *LoadBalancersInboundNatRule) ValidateUpdate(old runtime.Object) (adm
 
 // createValidations validates the creation of the resource
 func (rule *LoadBalancersInboundNatRule) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference}
+	return []func() (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +253,21 @@ func (rule *LoadBalancersInboundNatRule) updateValidations() []func(old runtime.
 		func(old runtime.Object) (admission.Warnings, error) {
 			return rule.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return rule.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return rule.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (rule *LoadBalancersInboundNatRule) validateConfigMapDestinations() (admission.Warnings, error) {
+	if rule.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(rule, nil, rule.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -241,6 +282,14 @@ func (rule *LoadBalancersInboundNatRule) validateResourceReferences() (admission
 		return nil, err
 	}
 	return genruntime.ValidateResourceReferences(refs)
+}
+
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (rule *LoadBalancersInboundNatRule) validateSecretDestinations() (admission.Warnings, error) {
+	if rule.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(rule, nil, rule.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties
@@ -260,18 +309,18 @@ func (rule *LoadBalancersInboundNatRule) AssignProperties_From_LoadBalancersInbo
 	rule.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec LoadBalancers_InboundNatRule_Spec
-	err := spec.AssignProperties_From_LoadBalancers_InboundNatRule_Spec(&source.Spec)
+	var spec LoadBalancersInboundNatRule_Spec
+	err := spec.AssignProperties_From_LoadBalancersInboundNatRule_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_LoadBalancers_InboundNatRule_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRule_Spec() to populate field Spec")
 	}
 	rule.Spec = spec
 
 	// Status
-	var status LoadBalancers_InboundNatRule_STATUS
-	err = status.AssignProperties_From_LoadBalancers_InboundNatRule_STATUS(&source.Status)
+	var status LoadBalancersInboundNatRule_STATUS
+	err = status.AssignProperties_From_LoadBalancersInboundNatRule_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_LoadBalancers_InboundNatRule_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRule_STATUS() to populate field Status")
 	}
 	rule.Status = status
 
@@ -286,18 +335,18 @@ func (rule *LoadBalancersInboundNatRule) AssignProperties_To_LoadBalancersInboun
 	destination.ObjectMeta = *rule.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec storage.LoadBalancers_InboundNatRule_Spec
-	err := rule.Spec.AssignProperties_To_LoadBalancers_InboundNatRule_Spec(&spec)
+	var spec storage.LoadBalancersInboundNatRule_Spec
+	err := rule.Spec.AssignProperties_To_LoadBalancersInboundNatRule_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_LoadBalancers_InboundNatRule_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRule_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status storage.LoadBalancers_InboundNatRule_STATUS
-	err = rule.Status.AssignProperties_To_LoadBalancers_InboundNatRule_STATUS(&status)
+	var status storage.LoadBalancersInboundNatRule_STATUS
+	err = rule.Status.AssignProperties_To_LoadBalancersInboundNatRule_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_LoadBalancers_InboundNatRule_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRule_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -324,7 +373,7 @@ type LoadBalancersInboundNatRuleList struct {
 	Items           []LoadBalancersInboundNatRule `json:"items"`
 }
 
-type LoadBalancers_InboundNatRule_Spec struct {
+type LoadBalancersInboundNatRule_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
@@ -352,6 +401,10 @@ type LoadBalancers_InboundNatRule_Spec struct {
 	// default value is 4 minutes. This element is only used when the protocol is set to TCP.
 	IdleTimeoutInMinutes *int `json:"idleTimeoutInMinutes,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *LoadBalancersInboundNatRuleOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -362,14 +415,14 @@ type LoadBalancers_InboundNatRule_Spec struct {
 	Protocol *TransportProtocol `json:"protocol,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &LoadBalancers_InboundNatRule_Spec{}
+var _ genruntime.ARMTransformer = &LoadBalancersInboundNatRule_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (rule *LoadBalancers_InboundNatRule_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (rule *LoadBalancersInboundNatRule_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if rule == nil {
 		return nil, nil
 	}
-	result := &LoadBalancers_InboundNatRule_Spec_ARM{}
+	result := &arm.LoadBalancersInboundNatRule_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -382,7 +435,7 @@ func (rule *LoadBalancers_InboundNatRule_Spec) ConvertToARM(resolved genruntime.
 		rule.FrontendPort != nil ||
 		rule.IdleTimeoutInMinutes != nil ||
 		rule.Protocol != nil {
-		result.Properties = &InboundNatRulePropertiesFormat_ARM{}
+		result.Properties = &arm.InboundNatRulePropertiesFormat{}
 	}
 	if rule.BackendPort != nil {
 		backendPort := *rule.BackendPort
@@ -401,7 +454,7 @@ func (rule *LoadBalancers_InboundNatRule_Spec) ConvertToARM(resolved genruntime.
 		if err != nil {
 			return nil, err
 		}
-		frontendIPConfiguration := *frontendIPConfiguration_ARM.(*SubResource_ARM)
+		frontendIPConfiguration := *frontendIPConfiguration_ARM.(*arm.SubResource)
 		result.Properties.FrontendIPConfiguration = &frontendIPConfiguration
 	}
 	if rule.FrontendPort != nil {
@@ -413,22 +466,24 @@ func (rule *LoadBalancers_InboundNatRule_Spec) ConvertToARM(resolved genruntime.
 		result.Properties.IdleTimeoutInMinutes = &idleTimeoutInMinutes
 	}
 	if rule.Protocol != nil {
-		protocol := *rule.Protocol
+		var temp string
+		temp = string(*rule.Protocol)
+		protocol := arm.TransportProtocol(temp)
 		result.Properties.Protocol = &protocol
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (rule *LoadBalancers_InboundNatRule_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LoadBalancers_InboundNatRule_Spec_ARM{}
+func (rule *LoadBalancersInboundNatRule_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.LoadBalancersInboundNatRule_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (rule *LoadBalancers_InboundNatRule_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LoadBalancers_InboundNatRule_Spec_ARM)
+func (rule *LoadBalancersInboundNatRule_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.LoadBalancersInboundNatRule_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LoadBalancers_InboundNatRule_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LoadBalancersInboundNatRule_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -493,6 +548,8 @@ func (rule *LoadBalancers_InboundNatRule_Spec) PopulateFromARM(owner genruntime.
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	rule.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -503,7 +560,9 @@ func (rule *LoadBalancers_InboundNatRule_Spec) PopulateFromARM(owner genruntime.
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Protocol != nil {
-			protocol := *typedInput.Properties.Protocol
+			var temp string
+			temp = string(*typedInput.Properties.Protocol)
+			protocol := TransportProtocol(temp)
 			rule.Protocol = &protocol
 		}
 	}
@@ -512,25 +571,25 @@ func (rule *LoadBalancers_InboundNatRule_Spec) PopulateFromARM(owner genruntime.
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &LoadBalancers_InboundNatRule_Spec{}
+var _ genruntime.ConvertibleSpec = &LoadBalancersInboundNatRule_Spec{}
 
-// ConvertSpecFrom populates our LoadBalancers_InboundNatRule_Spec from the provided source
-func (rule *LoadBalancers_InboundNatRule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*storage.LoadBalancers_InboundNatRule_Spec)
+// ConvertSpecFrom populates our LoadBalancersInboundNatRule_Spec from the provided source
+func (rule *LoadBalancersInboundNatRule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.LoadBalancersInboundNatRule_Spec)
 	if ok {
 		// Populate our instance from source
-		return rule.AssignProperties_From_LoadBalancers_InboundNatRule_Spec(src)
+		return rule.AssignProperties_From_LoadBalancersInboundNatRule_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &storage.LoadBalancers_InboundNatRule_Spec{}
+	src = &storage.LoadBalancersInboundNatRule_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = rule.AssignProperties_From_LoadBalancers_InboundNatRule_Spec(src)
+	err = rule.AssignProperties_From_LoadBalancersInboundNatRule_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -538,17 +597,17 @@ func (rule *LoadBalancers_InboundNatRule_Spec) ConvertSpecFrom(source genruntime
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our LoadBalancers_InboundNatRule_Spec
-func (rule *LoadBalancers_InboundNatRule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*storage.LoadBalancers_InboundNatRule_Spec)
+// ConvertSpecTo populates the provided destination from our LoadBalancersInboundNatRule_Spec
+func (rule *LoadBalancersInboundNatRule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.LoadBalancersInboundNatRule_Spec)
 	if ok {
 		// Populate destination from our instance
-		return rule.AssignProperties_To_LoadBalancers_InboundNatRule_Spec(dst)
+		return rule.AssignProperties_To_LoadBalancersInboundNatRule_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &storage.LoadBalancers_InboundNatRule_Spec{}
-	err := rule.AssignProperties_To_LoadBalancers_InboundNatRule_Spec(dst)
+	dst = &storage.LoadBalancersInboundNatRule_Spec{}
+	err := rule.AssignProperties_To_LoadBalancersInboundNatRule_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -562,8 +621,8 @@ func (rule *LoadBalancers_InboundNatRule_Spec) ConvertSpecTo(destination genrunt
 	return nil
 }
 
-// AssignProperties_From_LoadBalancers_InboundNatRule_Spec populates our LoadBalancers_InboundNatRule_Spec from the provided source LoadBalancers_InboundNatRule_Spec
-func (rule *LoadBalancers_InboundNatRule_Spec) AssignProperties_From_LoadBalancers_InboundNatRule_Spec(source *storage.LoadBalancers_InboundNatRule_Spec) error {
+// AssignProperties_From_LoadBalancersInboundNatRule_Spec populates our LoadBalancersInboundNatRule_Spec from the provided source LoadBalancersInboundNatRule_Spec
+func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_From_LoadBalancersInboundNatRule_Spec(source *storage.LoadBalancersInboundNatRule_Spec) error {
 
 	// AzureName
 	rule.AzureName = source.AzureName
@@ -605,6 +664,18 @@ func (rule *LoadBalancers_InboundNatRule_Spec) AssignProperties_From_LoadBalance
 	// IdleTimeoutInMinutes
 	rule.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(source.IdleTimeoutInMinutes)
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec LoadBalancersInboundNatRuleOperatorSpec
+		err := operatorSpec.AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec() to populate field OperatorSpec")
+		}
+		rule.OperatorSpec = &operatorSpec
+	} else {
+		rule.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -626,8 +697,8 @@ func (rule *LoadBalancers_InboundNatRule_Spec) AssignProperties_From_LoadBalance
 	return nil
 }
 
-// AssignProperties_To_LoadBalancers_InboundNatRule_Spec populates the provided destination LoadBalancers_InboundNatRule_Spec from our LoadBalancers_InboundNatRule_Spec
-func (rule *LoadBalancers_InboundNatRule_Spec) AssignProperties_To_LoadBalancers_InboundNatRule_Spec(destination *storage.LoadBalancers_InboundNatRule_Spec) error {
+// AssignProperties_To_LoadBalancersInboundNatRule_Spec populates the provided destination LoadBalancersInboundNatRule_Spec from our LoadBalancersInboundNatRule_Spec
+func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_To_LoadBalancersInboundNatRule_Spec(destination *storage.LoadBalancersInboundNatRule_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -671,6 +742,18 @@ func (rule *LoadBalancers_InboundNatRule_Spec) AssignProperties_To_LoadBalancers
 	// IdleTimeoutInMinutes
 	destination.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(rule.IdleTimeoutInMinutes)
 
+	// OperatorSpec
+	if rule.OperatorSpec != nil {
+		var operatorSpec storage.LoadBalancersInboundNatRuleOperatorSpec
+		err := rule.OperatorSpec.AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = rule.OriginalVersion()
 
@@ -701,69 +784,17 @@ func (rule *LoadBalancers_InboundNatRule_Spec) AssignProperties_To_LoadBalancers
 	return nil
 }
 
-// Initialize_From_LoadBalancers_InboundNatRule_STATUS populates our LoadBalancers_InboundNatRule_Spec from the provided source LoadBalancers_InboundNatRule_STATUS
-func (rule *LoadBalancers_InboundNatRule_Spec) Initialize_From_LoadBalancers_InboundNatRule_STATUS(source *LoadBalancers_InboundNatRule_STATUS) error {
-
-	// BackendPort
-	rule.BackendPort = genruntime.ClonePointerToInt(source.BackendPort)
-
-	// EnableFloatingIP
-	if source.EnableFloatingIP != nil {
-		enableFloatingIP := *source.EnableFloatingIP
-		rule.EnableFloatingIP = &enableFloatingIP
-	} else {
-		rule.EnableFloatingIP = nil
-	}
-
-	// EnableTcpReset
-	if source.EnableTcpReset != nil {
-		enableTcpReset := *source.EnableTcpReset
-		rule.EnableTcpReset = &enableTcpReset
-	} else {
-		rule.EnableTcpReset = nil
-	}
-
-	// FrontendIPConfiguration
-	if source.FrontendIPConfiguration != nil {
-		var frontendIPConfiguration SubResource
-		err := frontendIPConfiguration.Initialize_From_SubResource_STATUS(source.FrontendIPConfiguration)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field FrontendIPConfiguration")
-		}
-		rule.FrontendIPConfiguration = &frontendIPConfiguration
-	} else {
-		rule.FrontendIPConfiguration = nil
-	}
-
-	// FrontendPort
-	rule.FrontendPort = genruntime.ClonePointerToInt(source.FrontendPort)
-
-	// IdleTimeoutInMinutes
-	rule.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(source.IdleTimeoutInMinutes)
-
-	// Protocol
-	if source.Protocol != nil {
-		protocol := genruntime.ToEnum(string(*source.Protocol), transportProtocol_Values)
-		rule.Protocol = &protocol
-	} else {
-		rule.Protocol = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
-func (rule *LoadBalancers_InboundNatRule_Spec) OriginalVersion() string {
+func (rule *LoadBalancersInboundNatRule_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (rule *LoadBalancers_InboundNatRule_Spec) SetAzureName(azureName string) {
+func (rule *LoadBalancersInboundNatRule_Spec) SetAzureName(azureName string) {
 	rule.AzureName = azureName
 }
 
-type LoadBalancers_InboundNatRule_STATUS struct {
+type LoadBalancersInboundNatRule_STATUS struct {
 	// BackendIPConfiguration: A reference to a private IP address defined on a network interface of a VM. Traffic sent to the
 	// frontend port of each of the frontend IP configurations is forwarded to the backend IP.
 	BackendIPConfiguration *NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded `json:"backendIPConfiguration,omitempty"`
@@ -814,25 +845,25 @@ type LoadBalancers_InboundNatRule_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &LoadBalancers_InboundNatRule_STATUS{}
+var _ genruntime.ConvertibleStatus = &LoadBalancersInboundNatRule_STATUS{}
 
-// ConvertStatusFrom populates our LoadBalancers_InboundNatRule_STATUS from the provided source
-func (rule *LoadBalancers_InboundNatRule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*storage.LoadBalancers_InboundNatRule_STATUS)
+// ConvertStatusFrom populates our LoadBalancersInboundNatRule_STATUS from the provided source
+func (rule *LoadBalancersInboundNatRule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.LoadBalancersInboundNatRule_STATUS)
 	if ok {
 		// Populate our instance from source
-		return rule.AssignProperties_From_LoadBalancers_InboundNatRule_STATUS(src)
+		return rule.AssignProperties_From_LoadBalancersInboundNatRule_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &storage.LoadBalancers_InboundNatRule_STATUS{}
+	src = &storage.LoadBalancersInboundNatRule_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = rule.AssignProperties_From_LoadBalancers_InboundNatRule_STATUS(src)
+	err = rule.AssignProperties_From_LoadBalancersInboundNatRule_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -840,17 +871,17 @@ func (rule *LoadBalancers_InboundNatRule_STATUS) ConvertStatusFrom(source genrun
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our LoadBalancers_InboundNatRule_STATUS
-func (rule *LoadBalancers_InboundNatRule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*storage.LoadBalancers_InboundNatRule_STATUS)
+// ConvertStatusTo populates the provided destination from our LoadBalancersInboundNatRule_STATUS
+func (rule *LoadBalancersInboundNatRule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.LoadBalancersInboundNatRule_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return rule.AssignProperties_To_LoadBalancers_InboundNatRule_STATUS(dst)
+		return rule.AssignProperties_To_LoadBalancersInboundNatRule_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &storage.LoadBalancers_InboundNatRule_STATUS{}
-	err := rule.AssignProperties_To_LoadBalancers_InboundNatRule_STATUS(dst)
+	dst = &storage.LoadBalancersInboundNatRule_STATUS{}
+	err := rule.AssignProperties_To_LoadBalancersInboundNatRule_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -864,18 +895,18 @@ func (rule *LoadBalancers_InboundNatRule_STATUS) ConvertStatusTo(destination gen
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &LoadBalancers_InboundNatRule_STATUS{}
+var _ genruntime.FromARMConverter = &LoadBalancersInboundNatRule_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (rule *LoadBalancers_InboundNatRule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LoadBalancers_InboundNatRule_STATUS_ARM{}
+func (rule *LoadBalancersInboundNatRule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.LoadBalancersInboundNatRule_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (rule *LoadBalancers_InboundNatRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LoadBalancers_InboundNatRule_STATUS_ARM)
+func (rule *LoadBalancersInboundNatRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.LoadBalancersInboundNatRule_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LoadBalancers_InboundNatRule_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LoadBalancersInboundNatRule_STATUS, got %T", armInput)
 	}
 
 	// Set property "BackendIPConfiguration":
@@ -975,7 +1006,9 @@ func (rule *LoadBalancers_InboundNatRule_STATUS) PopulateFromARM(owner genruntim
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Protocol != nil {
-			protocol := *typedInput.Properties.Protocol
+			var temp string
+			temp = string(*typedInput.Properties.Protocol)
+			protocol := TransportProtocol_STATUS(temp)
 			rule.Protocol = &protocol
 		}
 	}
@@ -984,7 +1017,9 @@ func (rule *LoadBalancers_InboundNatRule_STATUS) PopulateFromARM(owner genruntim
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := ProvisioningState_STATUS(temp)
 			rule.ProvisioningState = &provisioningState
 		}
 	}
@@ -999,8 +1034,8 @@ func (rule *LoadBalancers_InboundNatRule_STATUS) PopulateFromARM(owner genruntim
 	return nil
 }
 
-// AssignProperties_From_LoadBalancers_InboundNatRule_STATUS populates our LoadBalancers_InboundNatRule_STATUS from the provided source LoadBalancers_InboundNatRule_STATUS
-func (rule *LoadBalancers_InboundNatRule_STATUS) AssignProperties_From_LoadBalancers_InboundNatRule_STATUS(source *storage.LoadBalancers_InboundNatRule_STATUS) error {
+// AssignProperties_From_LoadBalancersInboundNatRule_STATUS populates our LoadBalancersInboundNatRule_STATUS from the provided source LoadBalancersInboundNatRule_STATUS
+func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_From_LoadBalancersInboundNatRule_STATUS(source *storage.LoadBalancersInboundNatRule_STATUS) error {
 
 	// BackendIPConfiguration
 	if source.BackendIPConfiguration != nil {
@@ -1088,8 +1123,8 @@ func (rule *LoadBalancers_InboundNatRule_STATUS) AssignProperties_From_LoadBalan
 	return nil
 }
 
-// AssignProperties_To_LoadBalancers_InboundNatRule_STATUS populates the provided destination LoadBalancers_InboundNatRule_STATUS from our LoadBalancers_InboundNatRule_STATUS
-func (rule *LoadBalancers_InboundNatRule_STATUS) AssignProperties_To_LoadBalancers_InboundNatRule_STATUS(destination *storage.LoadBalancers_InboundNatRule_STATUS) error {
+// AssignProperties_To_LoadBalancersInboundNatRule_STATUS populates the provided destination LoadBalancersInboundNatRule_STATUS from our LoadBalancersInboundNatRule_STATUS
+func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_To_LoadBalancersInboundNatRule_STATUS(destination *storage.LoadBalancersInboundNatRule_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1184,6 +1219,110 @@ func (rule *LoadBalancers_InboundNatRule_STATUS) AssignProperties_To_LoadBalance
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type LoadBalancersInboundNatRuleOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec populates our LoadBalancersInboundNatRuleOperatorSpec from the provided source LoadBalancersInboundNatRuleOperatorSpec
+func (operator *LoadBalancersInboundNatRuleOperatorSpec) AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec(source *storage.LoadBalancersInboundNatRuleOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec populates the provided destination LoadBalancersInboundNatRuleOperatorSpec from our LoadBalancersInboundNatRuleOperatorSpec
+func (operator *LoadBalancersInboundNatRuleOperatorSpec) AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec(destination *storage.LoadBalancersInboundNatRuleOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // IPConfiguration in a network interface.
 type NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded struct {
 	// Id: Resource ID.
@@ -1194,14 +1333,14 @@ var _ genruntime.FromARMConverter = &NetworkInterfaceIPConfiguration_STATUS_Load
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded_ARM{}
+	return &arm.NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -1256,7 +1395,7 @@ func (resource *SubResource) ConvertToARM(resolved genruntime.ConvertToARMResolv
 	if resource == nil {
 		return nil, nil
 	}
-	result := &SubResource_ARM{}
+	result := &arm.SubResource{}
 
 	// Set property "Id":
 	if resource.Reference != nil {
@@ -1272,14 +1411,14 @@ func (resource *SubResource) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (resource *SubResource) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SubResource_ARM{}
+	return &arm.SubResource{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (resource *SubResource) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(SubResource_ARM)
+	_, ok := armInput.(arm.SubResource)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SubResource_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SubResource, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -1327,21 +1466,6 @@ func (resource *SubResource) AssignProperties_To_SubResource(destination *storag
 	return nil
 }
 
-// Initialize_From_SubResource_STATUS populates our SubResource from the provided source SubResource_STATUS
-func (resource *SubResource) Initialize_From_SubResource_STATUS(source *SubResource_STATUS) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		resource.Reference = &reference
-	} else {
-		resource.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Reference to another subresource.
 type SubResource_STATUS struct {
 	// Id: Resource ID.
@@ -1352,14 +1476,14 @@ var _ genruntime.FromARMConverter = &SubResource_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (resource *SubResource_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SubResource_STATUS_ARM{}
+	return &arm.SubResource_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (resource *SubResource_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SubResource_STATUS_ARM)
+	typedInput, ok := armInput.(arm.SubResource_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SubResource_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SubResource_STATUS, got %T", armInput)
 	}
 
 	// Set property "Id":

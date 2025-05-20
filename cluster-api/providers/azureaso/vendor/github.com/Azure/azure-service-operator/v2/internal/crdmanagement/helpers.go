@@ -15,39 +15,31 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
-	"github.com/Azure/azure-service-operator/v2/internal/config"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/registration"
 )
 
-func GetNonReadyCRDs(
-	cfg config.Values,
-	crdManager *Manager,
-	goalCRDs []apiextensions.CustomResourceDefinition,
-	existingCRDs []apiextensions.CustomResourceDefinition) map[string]apiextensions.CustomResourceDefinition {
-
-	equalityCheck := SpecEqual
-	// If we're not the webhooks install, we're in multitenant mode and we expect that the CRD webhook points to a different
-	// namespace than ours. We don't actually know what the right namespace is though so we can't verify it - we just have to trust it's right.
-	if !cfg.OperatorMode.IncludesWebhooks() {
-		equalityCheck = SpecEqualIgnoreConversionWebhook
+func MakeCRDMap(
+	crds []apiextensions.CustomResourceDefinition,
+) map[string]apiextensions.CustomResourceDefinition {
+	// Build a map so lookup is faster
+	result := make(map[string]apiextensions.CustomResourceDefinition, len(crds))
+	for _, crd := range crds {
+		result[crd.Name] = crd
 	}
-
-	nonReadyResources := crdManager.FindNonMatchingCRDs(existingCRDs, goalCRDs, equalityCheck)
-
-	return nonReadyResources
+	return result
 }
 
 func FilterStorageTypesByReadyCRDs(
 	logger logr.Logger,
 	scheme *runtime.Scheme,
-	skip map[string]apiextensions.CustomResourceDefinition,
+	include map[string]apiextensions.CustomResourceDefinition,
 	storageTypes []*registration.StorageType,
 ) ([]*registration.StorageType, error) {
-	// skip map key is by CRD name, but we need it to be by kind
-	skipKinds := set.Make[schema.GroupKind]()
-	for _, crd := range skip {
-		skipKinds.Add(schema.GroupKind{Group: crd.Spec.Group, Kind: crd.Spec.Names.Kind})
+	// include map key is by CRD name, but we need it to be by kind
+	includeKinds := set.Make[schema.GroupKind]()
+	for _, crd := range include {
+		includeKinds.Add(schema.GroupKind{Group: crd.Spec.Group, Kind: crd.Spec.Names.Kind})
 	}
 
 	result := make([]*registration.StorageType, 0, len(storageTypes))
@@ -59,8 +51,10 @@ func FilterStorageTypesByReadyCRDs(
 			return nil, errors.Wrapf(err, "creating GVK for obj %T", storageType.Obj)
 		}
 
-		if skipKinds.Contains(gvk.GroupKind()) {
-			logger.V(0).Info("Skipping reconciliation of resource because CRD was not installed", "groupKind", gvk.GroupKind().String())
+		if !includeKinds.Contains(gvk.GroupKind()) {
+			logger.V(0).Info(
+				"Skipping reconciliation of resource because CRD was not installed or did not match the expected shape",
+				"groupKind", gvk.GroupKind().String())
 			continue
 		}
 
@@ -73,13 +67,13 @@ func FilterStorageTypesByReadyCRDs(
 func FilterKnownTypesByReadyCRDs(
 	logger logr.Logger,
 	scheme *runtime.Scheme,
-	skip map[string]apiextensions.CustomResourceDefinition,
+	include map[string]apiextensions.CustomResourceDefinition,
 	knownTypes []client.Object,
 ) ([]client.Object, error) {
-	// skip map key is by CRD name, but we need it to be by kind
-	skipKinds := set.Make[schema.GroupKind]()
-	for _, crd := range skip {
-		skipKinds.Add(schema.GroupKind{Group: crd.Spec.Group, Kind: crd.Spec.Names.Kind})
+	// include map key is by CRD name, but we need it to be by kind
+	includeKinds := set.Make[schema.GroupKind]()
+	for _, crd := range include {
+		includeKinds.Add(schema.GroupKind{Group: crd.Spec.Group, Kind: crd.Spec.Names.Kind})
 	}
 
 	result := make([]client.Object, 0, len(knownTypes))
@@ -89,8 +83,10 @@ func FilterKnownTypesByReadyCRDs(
 		if err != nil {
 			return nil, errors.Wrapf(err, "creating GVK for obj %T", knownType)
 		}
-		if skipKinds.Contains(gvk.GroupKind()) {
-			logger.V(0).Info("Skipping webhooks of resource because CRD was not installed", "groupKind", gvk.GroupKind().String())
+		if !includeKinds.Contains(gvk.GroupKind()) {
+			logger.V(0).Info(
+				"Skipping webhooks of resource because CRD was not installed or did not match the expected shape",
+				"groupKind", gvk.GroupKind().String())
 			continue
 		}
 

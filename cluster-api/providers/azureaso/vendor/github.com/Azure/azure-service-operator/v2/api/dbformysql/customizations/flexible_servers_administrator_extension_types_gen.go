@@ -6,6 +6,8 @@ package customizations
 import (
 	v20220101 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101"
 	v20220101s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101/storage"
+	v20230630 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630"
+	v20230630s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type FlexibleServersAdministratorExtension struct {
 func (extension *FlexibleServersAdministratorExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20220101.FlexibleServersAdministrator{},
-		&v20220101s.FlexibleServersAdministrator{}}
+		&v20220101s.FlexibleServersAdministrator{},
+		&v20230630.FlexibleServersAdministrator{},
+		&v20230630s.FlexibleServersAdministrator{}}
 }

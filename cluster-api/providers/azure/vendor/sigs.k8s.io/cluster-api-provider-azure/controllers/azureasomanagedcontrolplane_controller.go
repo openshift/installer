@@ -20,15 +20,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/mutators"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/util"
@@ -43,6 +44,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/mutators"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 var errInvalidClusterKind = errors.New("AzureASOManagedControlPlane cannot be used without AzureASOManagedCluster")
@@ -51,6 +56,7 @@ var errInvalidClusterKind = errors.New("AzureASOManagedControlPlane cannot be us
 type AzureASOManagedControlPlaneReconciler struct {
 	client.Client
 	WatchFilterValue string
+	CredentialCache  ASOCredentialCache
 
 	newResourceReconciler func(*infrav1alpha.AzureASOManagedControlPlane, []*unstructured.Unstructured) resourceReconciler
 }
@@ -66,12 +72,12 @@ func (r *AzureASOManagedControlPlaneReconciler) SetupWithManager(ctx context.Con
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1alpha.AzureASOManagedControlPlane{}).
-		WithEventFilter(predicates.ResourceHasFilterLabel(log, r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue)).
 		Watches(&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(clusterToAzureASOManagedControlPlane),
 			builder.WithPredicates(
-				predicates.ResourceHasFilterLabel(log, r.WatchFilterValue),
-				ClusterPauseChangeAndInfrastructureReady(log),
+				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
+				ClusterPauseChangeAndInfrastructureReady(mgr.GetScheme(), log),
 			),
 		).
 		// User errors that CAPZ passes through agentPoolProfiles on create must be fixed in the
@@ -87,8 +93,10 @@ func (r *AzureASOManagedControlPlaneReconciler) SetupWithManager(ctx context.Con
 	}
 
 	externalTracker := &external.ObjectTracker{
-		Cache:      mgr.GetCache(),
-		Controller: c,
+		Cache:           mgr.GetCache(),
+		Controller:      c,
+		Scheme:          mgr.GetScheme(),
+		PredicateLogger: &log,
 	}
 
 	r.newResourceReconciler = func(asoManagedCluster *infrav1alpha.AzureASOManagedControlPlane, resources []*unstructured.Unstructured) resourceReconciler {
@@ -240,21 +248,26 @@ func (r *AzureASOManagedControlPlaneReconciler) reconcileNormal(ctx context.Cont
 		asoManagedControlPlane.Status.Version = "v" + *managedCluster.Status.CurrentKubernetesVersion
 	}
 
-	err = r.reconcileKubeconfig(ctx, asoManagedControlPlane, cluster, managedCluster)
+	tokenExpiresIn, err := r.reconcileKubeconfig(ctx, asoManagedControlPlane, cluster, managedCluster)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to reconcile kubeconfig: %w", err)
 	}
+	if tokenExpiresIn != nil && *tokenExpiresIn <= 0 { // the token has already expired
+		return ctrl.Result{Requeue: true}, nil
+	}
+	// ensure we refresh the token when it expires
+	result := ctrl.Result{RequeueAfter: ptr.Deref(tokenExpiresIn, 0)}
 
 	asoManagedControlPlane.Status.Ready = !asoManagedControlPlane.Status.ControlPlaneEndpoint.IsZero()
 	// The AKS API doesn't allow us to distinguish between CAPI's definitions of "initialized" and "ready" so
 	// we treat them equivalently.
 	asoManagedControlPlane.Status.Initialized = asoManagedControlPlane.Status.Ready
 
-	return ctrl.Result{}, nil
+	return result, nil
 }
 
-func (r *AzureASOManagedControlPlaneReconciler) reconcileKubeconfig(ctx context.Context, asoManagedControlPlane *infrav1alpha.AzureASOManagedControlPlane, cluster *clusterv1.Cluster, managedCluster *asocontainerservicev1.ManagedCluster) error {
-	ctx, _, done := tele.StartSpanWithLogger(ctx,
+func (r *AzureASOManagedControlPlaneReconciler) reconcileKubeconfig(ctx context.Context, asoManagedControlPlane *infrav1alpha.AzureASOManagedControlPlane, cluster *clusterv1.Cluster, managedCluster *asocontainerservicev1.ManagedCluster) (*time.Duration, error) {
+	ctx, log, done := tele.StartSpanWithLogger(ctx,
 		"controllers.AzureASOManagedControlPlaneReconciler.reconcileKubeconfig",
 	)
 	defer done()
@@ -268,12 +281,50 @@ func (r *AzureASOManagedControlPlaneReconciler) reconcileKubeconfig(ctx context.
 		}
 	}
 	if secretRef == nil {
-		return reconcile.TerminalError(fmt.Errorf("ManagedCluster must define at least one of spec.operatorSpec.secrets.{userCredentials,adminCredentials}"))
+		return nil, reconcile.TerminalError(fmt.Errorf("ManagedCluster must define at least one of spec.operatorSpec.secrets.{userCredentials,adminCredentials}"))
 	}
 	asoKubeconfig := &corev1.Secret{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: secretRef.Name}, asoKubeconfig)
 	if err != nil {
-		return fmt.Errorf("failed to fetch secret created by ASO: %w", err)
+		return nil, fmt.Errorf("failed to fetch secret created by ASO: %w", err)
+	}
+
+	kubeconfigData := asoKubeconfig.Data[secretRef.Key]
+	var tokenExpiresIn *time.Duration
+
+	if managedCluster.Status.AadProfile != nil &&
+		ptr.Deref(managedCluster.Status.AadProfile.Managed, false) &&
+		ptr.Deref(managedCluster.Status.DisableLocalAccounts, false) {
+		if secretRef.Name == secret.Name(cluster.Name, secret.Kubeconfig) {
+			return nil, fmt.Errorf("ASO-generated kubeconfig Secret name cannot be %q when local accounts are disabled on the ManagedCluster, CAPZ must be able to create and manage its own Secret with that name in order to augment the kubeconfig without conflicting with ASO", secretRef.Name)
+		}
+
+		// Admin credentials cannot be retrieved when local accounts are disabled. Fetch a Bearer token like
+		// `kubelogin` would and set it in the kubeconfig to remove the need for that binary in CAPI controllers.
+		cred, err := r.CredentialCache.authTokenForASOResource(ctx, managedCluster)
+		if err != nil {
+			return nil, err
+		}
+		// magic string for AKS's managed Entra server ID: https://learn.microsoft.com/azure/aks/kubelogin-authentication#how-to-use-kubelogin-with-aks
+		token, err := cred.GetToken(ctx, policy.TokenRequestOptions{Scopes: []string{"6dae42f8-4368-4678-94ff-3960e28e3630/.default"}})
+		if err != nil {
+			return nil, err
+		}
+		tokenExpiresIn = ptr.To(time.Until(token.ExpiresOn))
+		log.V(4).Info("retrieved access token", "expiresOn", token.ExpiresOn, "expiresIn", tokenExpiresIn)
+
+		kubeconfig, err := clientcmd.Load(kubeconfigData)
+		if err != nil {
+			return nil, err
+		}
+		for _, a := range kubeconfig.AuthInfos {
+			a.Exec = nil
+			a.Token = token.Token
+		}
+		kubeconfigData, err = clientcmd.Write(*kubeconfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	expectedSecret := &corev1.Secret{
@@ -290,14 +341,17 @@ func (r *AzureASOManagedControlPlaneReconciler) reconcileKubeconfig(ctx context.
 			Labels: map[string]string{clusterv1.ClusterNameLabel: cluster.Name},
 		},
 		Data: map[string][]byte{
-			secret.KubeconfigDataName: asoKubeconfig.Data[secretRef.Key],
+			secret.KubeconfigDataName: kubeconfigData,
 		},
 	}
 
-	return r.Patch(ctx, expectedSecret, client.Apply, client.FieldOwner("capz-manager"), client.ForceOwnership)
+	err = r.Patch(ctx, expectedSecret, client.Apply, client.FieldOwner("capz-manager"), client.ForceOwnership)
+	if err != nil {
+		return nil, err
+	}
+	return tokenExpiresIn, nil
 }
 
-//nolint:unparam // an empty ctrl.Result is always returned here, leaving it as-is to avoid churn in refactoring later if that changes.
 func (r *AzureASOManagedControlPlaneReconciler) reconcilePaused(ctx context.Context, asoManagedControlPlane *infrav1alpha.AzureASOManagedControlPlane) (ctrl.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureASOManagedControlPlaneReconciler.reconcilePaused")
 	defer done()
@@ -318,7 +372,6 @@ func (r *AzureASOManagedControlPlaneReconciler) reconcilePaused(ctx context.Cont
 	return ctrl.Result{}, nil
 }
 
-//nolint:unparam // an empty ctrl.Result is always returned here, leaving it as-is to avoid churn in refactoring later if that changes.
 func (r *AzureASOManagedControlPlaneReconciler) reconcileDelete(ctx context.Context, asoManagedControlPlane *infrav1alpha.AzureASOManagedControlPlane) (ctrl.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx,
 		"controllers.AzureASOManagedControlPlaneReconciler.reconcileDelete",

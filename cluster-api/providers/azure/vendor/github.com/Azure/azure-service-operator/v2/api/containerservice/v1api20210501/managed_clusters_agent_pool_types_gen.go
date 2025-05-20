@@ -5,10 +5,14 @@ package v1api20210501
 
 import (
 	"fmt"
+	arm "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type ManagedClustersAgentPool struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              ManagedClusters_AgentPool_Spec   `json:"spec,omitempty"`
-	Status            ManagedClusters_AgentPool_STATUS `json:"status,omitempty"`
+	Spec              ManagedClustersAgentPool_Spec   `json:"spec,omitempty"`
+	Status            ManagedClustersAgentPool_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ManagedClustersAgentPool{}
@@ -104,6 +108,26 @@ func (pool *ManagedClustersAgentPool) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the ManagedClustersAgentPool resource
 func (pool *ManagedClustersAgentPool) defaultImpl() { pool.defaultAzureName() }
 
+var _ configmaps.Exporter = &ManagedClustersAgentPool{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (pool *ManagedClustersAgentPool) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if pool.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return pool.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ManagedClustersAgentPool{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (pool *ManagedClustersAgentPool) SecretDestinationExpressions() []*core.DestinationExpression {
+	if pool.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return pool.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &ManagedClustersAgentPool{}
 
 // AzureName returns the Azure name of the resource
@@ -113,7 +137,7 @@ func (pool *ManagedClustersAgentPool) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-05-01"
 func (pool ManagedClustersAgentPool) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-05-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -147,7 +171,7 @@ func (pool *ManagedClustersAgentPool) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (pool *ManagedClustersAgentPool) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &ManagedClusters_AgentPool_STATUS{}
+	return &ManagedClustersAgentPool_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -159,13 +183,13 @@ func (pool *ManagedClustersAgentPool) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (pool *ManagedClustersAgentPool) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*ManagedClusters_AgentPool_STATUS); ok {
+	if st, ok := status.(*ManagedClustersAgentPool_STATUS); ok {
 		pool.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st ManagedClusters_AgentPool_STATUS
+	var st ManagedClustersAgentPool_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -211,7 +235,7 @@ func (pool *ManagedClustersAgentPool) ValidateUpdate(old runtime.Object) (admiss
 
 // createValidations validates the creation of the resource
 func (pool *ManagedClustersAgentPool) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){pool.validateResourceReferences, pool.validateOwnerReference}
+	return []func() (admission.Warnings, error){pool.validateResourceReferences, pool.validateOwnerReference, pool.validateSecretDestinations, pool.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -229,7 +253,21 @@ func (pool *ManagedClustersAgentPool) updateValidations() []func(old runtime.Obj
 		func(old runtime.Object) (admission.Warnings, error) {
 			return pool.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return pool.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return pool.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (pool *ManagedClustersAgentPool) validateConfigMapDestinations() (admission.Warnings, error) {
+	if pool.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(pool, nil, pool.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -244,6 +282,14 @@ func (pool *ManagedClustersAgentPool) validateResourceReferences() (admission.Wa
 		return nil, err
 	}
 	return genruntime.ValidateResourceReferences(refs)
+}
+
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (pool *ManagedClustersAgentPool) validateSecretDestinations() (admission.Warnings, error) {
+	if pool.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(pool, nil, pool.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties
@@ -263,18 +309,18 @@ func (pool *ManagedClustersAgentPool) AssignProperties_From_ManagedClustersAgent
 	pool.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec ManagedClusters_AgentPool_Spec
-	err := spec.AssignProperties_From_ManagedClusters_AgentPool_Spec(&source.Spec)
+	var spec ManagedClustersAgentPool_Spec
+	err := spec.AssignProperties_From_ManagedClustersAgentPool_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ManagedClusters_AgentPool_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_ManagedClustersAgentPool_Spec() to populate field Spec")
 	}
 	pool.Spec = spec
 
 	// Status
-	var status ManagedClusters_AgentPool_STATUS
-	err = status.AssignProperties_From_ManagedClusters_AgentPool_STATUS(&source.Status)
+	var status ManagedClustersAgentPool_STATUS
+	err = status.AssignProperties_From_ManagedClustersAgentPool_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ManagedClusters_AgentPool_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_ManagedClustersAgentPool_STATUS() to populate field Status")
 	}
 	pool.Status = status
 
@@ -289,18 +335,18 @@ func (pool *ManagedClustersAgentPool) AssignProperties_To_ManagedClustersAgentPo
 	destination.ObjectMeta = *pool.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec storage.ManagedClusters_AgentPool_Spec
-	err := pool.Spec.AssignProperties_To_ManagedClusters_AgentPool_Spec(&spec)
+	var spec storage.ManagedClustersAgentPool_Spec
+	err := pool.Spec.AssignProperties_To_ManagedClustersAgentPool_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ManagedClusters_AgentPool_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_ManagedClustersAgentPool_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status storage.ManagedClusters_AgentPool_STATUS
-	err = pool.Status.AssignProperties_To_ManagedClusters_AgentPool_STATUS(&status)
+	var status storage.ManagedClustersAgentPool_STATUS
+	err = pool.Status.AssignProperties_To_ManagedClustersAgentPool_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ManagedClusters_AgentPool_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_ManagedClustersAgentPool_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -327,7 +373,7 @@ type ManagedClustersAgentPoolList struct {
 	Items           []ManagedClustersAgentPool `json:"items"`
 }
 
-type ManagedClusters_AgentPool_Spec struct {
+type ManagedClustersAgentPool_Spec struct {
 	// AvailabilityZones: The list of Availability zones to use for nodes. This can only be specified if the AgentPoolType
 	// property is 'VirtualMachineScaleSets'.
 	AvailabilityZones []string `json:"availabilityZones,omitempty"`
@@ -398,6 +444,10 @@ type ManagedClusters_AgentPool_Spec struct {
 	// NodeTaints: The taints added to new nodes during node pool create and scale. For example, key=value:NoSchedule.
 	NodeTaints []string `json:"nodeTaints,omitempty" serializationType:"explicitEmptyCollection"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ManagedClustersAgentPoolOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// OrchestratorVersion: As a best practice, you should upgrade all node pools in an AKS cluster to the same Kubernetes
 	// version. The node pool version must have the same major version as the control plane. The node pool minor version must
 	// be within two minor versions of the control plane version. The node pool version cannot be greater than the control
@@ -463,14 +513,14 @@ type ManagedClusters_AgentPool_Spec struct {
 	VnetSubnetIDReference *genruntime.ResourceReference `armReference:"VnetSubnetID" json:"vnetSubnetIDReference,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &ManagedClusters_AgentPool_Spec{}
+var _ genruntime.ARMTransformer = &ManagedClustersAgentPool_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (pool *ManagedClustersAgentPool_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if pool == nil {
 		return nil, nil
 	}
-	result := &ManagedClusters_AgentPool_Spec_ARM{}
+	result := &arm.ManagedClustersAgentPool_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -509,7 +559,7 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		pool.UpgradeSettings != nil ||
 		pool.VmSize != nil ||
 		pool.VnetSubnetIDReference != nil {
-		result.Properties = &ManagedClusterAgentPoolProfileProperties_ARM{}
+		result.Properties = &arm.ManagedClusterAgentPoolProfileProperties{}
 	}
 	for _, item := range pool.AvailabilityZones {
 		result.Properties.AvailabilityZones = append(result.Properties.AvailabilityZones, item)
@@ -539,7 +589,9 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.EnableUltraSSD = &enableUltraSSD
 	}
 	if pool.GpuInstanceProfile != nil {
-		gpuInstanceProfile := *pool.GpuInstanceProfile
+		var temp string
+		temp = string(*pool.GpuInstanceProfile)
+		gpuInstanceProfile := arm.GPUInstanceProfile(temp)
 		result.Properties.GpuInstanceProfile = &gpuInstanceProfile
 	}
 	if pool.KubeletConfig != nil {
@@ -547,11 +599,13 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		if err != nil {
 			return nil, err
 		}
-		kubeletConfig := *kubeletConfig_ARM.(*KubeletConfig_ARM)
+		kubeletConfig := *kubeletConfig_ARM.(*arm.KubeletConfig)
 		result.Properties.KubeletConfig = &kubeletConfig
 	}
 	if pool.KubeletDiskType != nil {
-		kubeletDiskType := *pool.KubeletDiskType
+		var temp string
+		temp = string(*pool.KubeletDiskType)
+		kubeletDiskType := arm.KubeletDiskType(temp)
 		result.Properties.KubeletDiskType = &kubeletDiskType
 	}
 	if pool.LinuxOSConfig != nil {
@@ -559,7 +613,7 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		if err != nil {
 			return nil, err
 		}
-		linuxOSConfig := *linuxOSConfig_ARM.(*LinuxOSConfig_ARM)
+		linuxOSConfig := *linuxOSConfig_ARM.(*arm.LinuxOSConfig)
 		result.Properties.LinuxOSConfig = &linuxOSConfig
 	}
 	if pool.MaxCount != nil {
@@ -575,7 +629,9 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.MinCount = &minCount
 	}
 	if pool.Mode != nil {
-		mode := *pool.Mode
+		var temp string
+		temp = string(*pool.Mode)
+		mode := arm.AgentPoolMode(temp)
 		result.Properties.Mode = &mode
 	}
 	if pool.NodeLabels != nil {
@@ -607,19 +663,25 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.OrchestratorVersion = &orchestratorVersion
 	}
 	if pool.OsDiskSizeGB != nil {
-		osDiskSizeGB := *pool.OsDiskSizeGB
+		osDiskSizeGB := int(*pool.OsDiskSizeGB)
 		result.Properties.OsDiskSizeGB = &osDiskSizeGB
 	}
 	if pool.OsDiskType != nil {
-		osDiskType := *pool.OsDiskType
+		var temp string
+		temp = string(*pool.OsDiskType)
+		osDiskType := arm.OSDiskType(temp)
 		result.Properties.OsDiskType = &osDiskType
 	}
 	if pool.OsSKU != nil {
-		osSKU := *pool.OsSKU
+		var temp string
+		temp = string(*pool.OsSKU)
+		osSKU := arm.OSSKU(temp)
 		result.Properties.OsSKU = &osSKU
 	}
 	if pool.OsType != nil {
-		osType := *pool.OsType
+		var temp string
+		temp = string(*pool.OsType)
+		osType := arm.OSType(temp)
 		result.Properties.OsType = &osType
 	}
 	if pool.PodSubnetIDReference != nil {
@@ -635,11 +697,15 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.ProximityPlacementGroupID = &proximityPlacementGroupID
 	}
 	if pool.ScaleSetEvictionPolicy != nil {
-		scaleSetEvictionPolicy := *pool.ScaleSetEvictionPolicy
+		var temp string
+		temp = string(*pool.ScaleSetEvictionPolicy)
+		scaleSetEvictionPolicy := arm.ScaleSetEvictionPolicy(temp)
 		result.Properties.ScaleSetEvictionPolicy = &scaleSetEvictionPolicy
 	}
 	if pool.ScaleSetPriority != nil {
-		scaleSetPriority := *pool.ScaleSetPriority
+		var temp string
+		temp = string(*pool.ScaleSetPriority)
+		scaleSetPriority := arm.ScaleSetPriority(temp)
 		result.Properties.ScaleSetPriority = &scaleSetPriority
 	}
 	if pool.SpotMaxPrice != nil {
@@ -656,7 +722,9 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.Tags = make(map[string]string)
 	}
 	if pool.Type != nil {
-		typeVar := *pool.Type
+		var temp string
+		temp = string(*pool.Type)
+		typeVar := arm.AgentPoolType(temp)
 		result.Properties.Type = &typeVar
 	}
 	if pool.UpgradeSettings != nil {
@@ -664,7 +732,7 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		if err != nil {
 			return nil, err
 		}
-		upgradeSettings := *upgradeSettings_ARM.(*AgentPoolUpgradeSettings_ARM)
+		upgradeSettings := *upgradeSettings_ARM.(*arm.AgentPoolUpgradeSettings)
 		result.Properties.UpgradeSettings = &upgradeSettings
 	}
 	if pool.VmSize != nil {
@@ -683,15 +751,15 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (pool *ManagedClusters_AgentPool_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagedClusters_AgentPool_Spec_ARM{}
+func (pool *ManagedClustersAgentPool_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ManagedClustersAgentPool_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagedClusters_AgentPool_Spec_ARM)
+func (pool *ManagedClustersAgentPool_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ManagedClustersAgentPool_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagedClusters_AgentPool_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagedClustersAgentPool_Spec, got %T", armInput)
 	}
 
 	// Set property "AvailabilityZones":
@@ -763,7 +831,9 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.GpuInstanceProfile != nil {
-			gpuInstanceProfile := *typedInput.Properties.GpuInstanceProfile
+			var temp string
+			temp = string(*typedInput.Properties.GpuInstanceProfile)
+			gpuInstanceProfile := GPUInstanceProfile(temp)
 			pool.GpuInstanceProfile = &gpuInstanceProfile
 		}
 	}
@@ -786,7 +856,9 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.KubeletDiskType != nil {
-			kubeletDiskType := *typedInput.Properties.KubeletDiskType
+			var temp string
+			temp = string(*typedInput.Properties.KubeletDiskType)
+			kubeletDiskType := KubeletDiskType(temp)
 			pool.KubeletDiskType = &kubeletDiskType
 		}
 	}
@@ -836,7 +908,9 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Mode != nil {
-			mode := *typedInput.Properties.Mode
+			var temp string
+			temp = string(*typedInput.Properties.Mode)
+			mode := AgentPoolMode(temp)
 			pool.Mode = &mode
 		}
 	}
@@ -862,6 +936,8 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "OrchestratorVersion":
 	// copying flattened property:
 	if typedInput.Properties != nil {
@@ -875,7 +951,7 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.OsDiskSizeGB != nil {
-			osDiskSizeGB := *typedInput.Properties.OsDiskSizeGB
+			osDiskSizeGB := ContainerServiceOSDisk(*typedInput.Properties.OsDiskSizeGB)
 			pool.OsDiskSizeGB = &osDiskSizeGB
 		}
 	}
@@ -884,7 +960,9 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.OsDiskType != nil {
-			osDiskType := *typedInput.Properties.OsDiskType
+			var temp string
+			temp = string(*typedInput.Properties.OsDiskType)
+			osDiskType := OSDiskType(temp)
 			pool.OsDiskType = &osDiskType
 		}
 	}
@@ -893,7 +971,9 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.OsSKU != nil {
-			osSKU := *typedInput.Properties.OsSKU
+			var temp string
+			temp = string(*typedInput.Properties.OsSKU)
+			osSKU := OSSKU(temp)
 			pool.OsSKU = &osSKU
 		}
 	}
@@ -902,7 +982,9 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.OsType != nil {
-			osType := *typedInput.Properties.OsType
+			var temp string
+			temp = string(*typedInput.Properties.OsType)
+			osType := OSType(temp)
 			pool.OsType = &osType
 		}
 	}
@@ -928,7 +1010,9 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ScaleSetEvictionPolicy != nil {
-			scaleSetEvictionPolicy := *typedInput.Properties.ScaleSetEvictionPolicy
+			var temp string
+			temp = string(*typedInput.Properties.ScaleSetEvictionPolicy)
+			scaleSetEvictionPolicy := ScaleSetEvictionPolicy(temp)
 			pool.ScaleSetEvictionPolicy = &scaleSetEvictionPolicy
 		}
 	}
@@ -937,7 +1021,9 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ScaleSetPriority != nil {
-			scaleSetPriority := *typedInput.Properties.ScaleSetPriority
+			var temp string
+			temp = string(*typedInput.Properties.ScaleSetPriority)
+			scaleSetPriority := ScaleSetPriority(temp)
 			pool.ScaleSetPriority = &scaleSetPriority
 		}
 	}
@@ -966,7 +1052,9 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Type != nil {
-			typeVar := *typedInput.Properties.Type
+			var temp string
+			temp = string(*typedInput.Properties.Type)
+			typeVar := AgentPoolType(temp)
 			pool.Type = &typeVar
 		}
 	}
@@ -1000,25 +1088,25 @@ func (pool *ManagedClusters_AgentPool_Spec) PopulateFromARM(owner genruntime.Arb
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &ManagedClusters_AgentPool_Spec{}
+var _ genruntime.ConvertibleSpec = &ManagedClustersAgentPool_Spec{}
 
-// ConvertSpecFrom populates our ManagedClusters_AgentPool_Spec from the provided source
-func (pool *ManagedClusters_AgentPool_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*storage.ManagedClusters_AgentPool_Spec)
+// ConvertSpecFrom populates our ManagedClustersAgentPool_Spec from the provided source
+func (pool *ManagedClustersAgentPool_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.ManagedClustersAgentPool_Spec)
 	if ok {
 		// Populate our instance from source
-		return pool.AssignProperties_From_ManagedClusters_AgentPool_Spec(src)
+		return pool.AssignProperties_From_ManagedClustersAgentPool_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &storage.ManagedClusters_AgentPool_Spec{}
+	src = &storage.ManagedClustersAgentPool_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = pool.AssignProperties_From_ManagedClusters_AgentPool_Spec(src)
+	err = pool.AssignProperties_From_ManagedClustersAgentPool_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -1026,17 +1114,17 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertSpecFrom(source genruntime.Co
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our ManagedClusters_AgentPool_Spec
-func (pool *ManagedClusters_AgentPool_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*storage.ManagedClusters_AgentPool_Spec)
+// ConvertSpecTo populates the provided destination from our ManagedClustersAgentPool_Spec
+func (pool *ManagedClustersAgentPool_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.ManagedClustersAgentPool_Spec)
 	if ok {
 		// Populate destination from our instance
-		return pool.AssignProperties_To_ManagedClusters_AgentPool_Spec(dst)
+		return pool.AssignProperties_To_ManagedClustersAgentPool_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &storage.ManagedClusters_AgentPool_Spec{}
-	err := pool.AssignProperties_To_ManagedClusters_AgentPool_Spec(dst)
+	dst = &storage.ManagedClustersAgentPool_Spec{}
+	err := pool.AssignProperties_To_ManagedClustersAgentPool_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -1050,8 +1138,8 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertSpecTo(destination genruntime
 	return nil
 }
 
-// AssignProperties_From_ManagedClusters_AgentPool_Spec populates our ManagedClusters_AgentPool_Spec from the provided source ManagedClusters_AgentPool_Spec
-func (pool *ManagedClusters_AgentPool_Spec) AssignProperties_From_ManagedClusters_AgentPool_Spec(source *storage.ManagedClusters_AgentPool_Spec) error {
+// AssignProperties_From_ManagedClustersAgentPool_Spec populates our ManagedClustersAgentPool_Spec from the provided source ManagedClustersAgentPool_Spec
+func (pool *ManagedClustersAgentPool_Spec) AssignProperties_From_ManagedClustersAgentPool_Spec(source *storage.ManagedClustersAgentPool_Spec) error {
 
 	// AvailabilityZones
 	pool.AvailabilityZones = genruntime.CloneSliceOfString(source.AvailabilityZones)
@@ -1176,6 +1264,18 @@ func (pool *ManagedClusters_AgentPool_Spec) AssignProperties_From_ManagedCluster
 	// NodeTaints
 	pool.NodeTaints = genruntime.CloneSliceOfString(source.NodeTaints)
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ManagedClustersAgentPoolOperatorSpec
+		err := operatorSpec.AssignProperties_From_ManagedClustersAgentPoolOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ManagedClustersAgentPoolOperatorSpec() to populate field OperatorSpec")
+		}
+		pool.OperatorSpec = &operatorSpec
+	} else {
+		pool.OperatorSpec = nil
+	}
+
 	// OrchestratorVersion
 	pool.OrchestratorVersion = genruntime.ClonePointerToString(source.OrchestratorVersion)
 
@@ -1298,8 +1398,8 @@ func (pool *ManagedClusters_AgentPool_Spec) AssignProperties_From_ManagedCluster
 	return nil
 }
 
-// AssignProperties_To_ManagedClusters_AgentPool_Spec populates the provided destination ManagedClusters_AgentPool_Spec from our ManagedClusters_AgentPool_Spec
-func (pool *ManagedClusters_AgentPool_Spec) AssignProperties_To_ManagedClusters_AgentPool_Spec(destination *storage.ManagedClusters_AgentPool_Spec) error {
+// AssignProperties_To_ManagedClustersAgentPool_Spec populates the provided destination ManagedClustersAgentPool_Spec from our ManagedClustersAgentPool_Spec
+func (pool *ManagedClustersAgentPool_Spec) AssignProperties_To_ManagedClustersAgentPool_Spec(destination *storage.ManagedClustersAgentPool_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1422,6 +1522,18 @@ func (pool *ManagedClusters_AgentPool_Spec) AssignProperties_To_ManagedClusters_
 
 	// NodeTaints
 	destination.NodeTaints = genruntime.CloneSliceOfString(pool.NodeTaints)
+
+	// OperatorSpec
+	if pool.OperatorSpec != nil {
+		var operatorSpec storage.ManagedClustersAgentPoolOperatorSpec
+		err := pool.OperatorSpec.AssignProperties_To_ManagedClustersAgentPoolOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ManagedClustersAgentPoolOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OrchestratorVersion
 	destination.OrchestratorVersion = genruntime.ClonePointerToString(pool.OrchestratorVersion)
@@ -1550,16 +1662,14 @@ func (pool *ManagedClusters_AgentPool_Spec) AssignProperties_To_ManagedClusters_
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (pool *ManagedClusters_AgentPool_Spec) OriginalVersion() string {
+func (pool *ManagedClustersAgentPool_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (pool *ManagedClusters_AgentPool_Spec) SetAzureName(azureName string) {
-	pool.AzureName = azureName
-}
+func (pool *ManagedClustersAgentPool_Spec) SetAzureName(azureName string) { pool.AzureName = azureName }
 
-type ManagedClusters_AgentPool_STATUS struct {
+type ManagedClustersAgentPool_STATUS struct {
 	// AvailabilityZones: The list of Availability zones to use for nodes. This can only be specified if the AgentPoolType
 	// property is 'VirtualMachineScaleSets'.
 	AvailabilityZones []string `json:"availabilityZones,omitempty"`
@@ -1706,25 +1816,25 @@ type ManagedClusters_AgentPool_STATUS struct {
 	VnetSubnetID *string `json:"vnetSubnetID,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &ManagedClusters_AgentPool_STATUS{}
+var _ genruntime.ConvertibleStatus = &ManagedClustersAgentPool_STATUS{}
 
-// ConvertStatusFrom populates our ManagedClusters_AgentPool_STATUS from the provided source
-func (pool *ManagedClusters_AgentPool_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*storage.ManagedClusters_AgentPool_STATUS)
+// ConvertStatusFrom populates our ManagedClustersAgentPool_STATUS from the provided source
+func (pool *ManagedClustersAgentPool_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.ManagedClustersAgentPool_STATUS)
 	if ok {
 		// Populate our instance from source
-		return pool.AssignProperties_From_ManagedClusters_AgentPool_STATUS(src)
+		return pool.AssignProperties_From_ManagedClustersAgentPool_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &storage.ManagedClusters_AgentPool_STATUS{}
+	src = &storage.ManagedClustersAgentPool_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = pool.AssignProperties_From_ManagedClusters_AgentPool_STATUS(src)
+	err = pool.AssignProperties_From_ManagedClustersAgentPool_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -1732,17 +1842,17 @@ func (pool *ManagedClusters_AgentPool_STATUS) ConvertStatusFrom(source genruntim
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our ManagedClusters_AgentPool_STATUS
-func (pool *ManagedClusters_AgentPool_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*storage.ManagedClusters_AgentPool_STATUS)
+// ConvertStatusTo populates the provided destination from our ManagedClustersAgentPool_STATUS
+func (pool *ManagedClustersAgentPool_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.ManagedClustersAgentPool_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return pool.AssignProperties_To_ManagedClusters_AgentPool_STATUS(dst)
+		return pool.AssignProperties_To_ManagedClustersAgentPool_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &storage.ManagedClusters_AgentPool_STATUS{}
-	err := pool.AssignProperties_To_ManagedClusters_AgentPool_STATUS(dst)
+	dst = &storage.ManagedClustersAgentPool_STATUS{}
+	err := pool.AssignProperties_To_ManagedClustersAgentPool_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -1756,18 +1866,18 @@ func (pool *ManagedClusters_AgentPool_STATUS) ConvertStatusTo(destination genrun
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &ManagedClusters_AgentPool_STATUS{}
+var _ genruntime.FromARMConverter = &ManagedClustersAgentPool_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (pool *ManagedClusters_AgentPool_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagedClusters_AgentPool_STATUS_ARM{}
+func (pool *ManagedClustersAgentPool_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ManagedClustersAgentPool_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagedClusters_AgentPool_STATUS_ARM)
+func (pool *ManagedClustersAgentPool_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ManagedClustersAgentPool_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagedClusters_AgentPool_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagedClustersAgentPool_STATUS, got %T", armInput)
 	}
 
 	// Set property "AvailabilityZones":
@@ -1838,7 +1948,9 @@ func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.GpuInstanceProfile != nil {
-			gpuInstanceProfile := *typedInput.Properties.GpuInstanceProfile
+			var temp string
+			temp = string(*typedInput.Properties.GpuInstanceProfile)
+			gpuInstanceProfile := GPUInstanceProfile_STATUS(temp)
 			pool.GpuInstanceProfile = &gpuInstanceProfile
 		}
 	}
@@ -1867,7 +1979,9 @@ func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.KubeletDiskType != nil {
-			kubeletDiskType := *typedInput.Properties.KubeletDiskType
+			var temp string
+			temp = string(*typedInput.Properties.KubeletDiskType)
+			kubeletDiskType := KubeletDiskType_STATUS(temp)
 			pool.KubeletDiskType = &kubeletDiskType
 		}
 	}
@@ -1917,7 +2031,9 @@ func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Mode != nil {
-			mode := *typedInput.Properties.Mode
+			var temp string
+			temp = string(*typedInput.Properties.Mode)
+			mode := AgentPoolMode_STATUS(temp)
 			pool.Mode = &mode
 		}
 	}
@@ -1987,7 +2103,9 @@ func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.OsDiskType != nil {
-			osDiskType := *typedInput.Properties.OsDiskType
+			var temp string
+			temp = string(*typedInput.Properties.OsDiskType)
+			osDiskType := OSDiskType_STATUS(temp)
 			pool.OsDiskType = &osDiskType
 		}
 	}
@@ -1996,7 +2114,9 @@ func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.OsSKU != nil {
-			osSKU := *typedInput.Properties.OsSKU
+			var temp string
+			temp = string(*typedInput.Properties.OsSKU)
+			osSKU := OSSKU_STATUS(temp)
 			pool.OsSKU = &osSKU
 		}
 	}
@@ -2005,7 +2125,9 @@ func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.OsType != nil {
-			osType := *typedInput.Properties.OsType
+			var temp string
+			temp = string(*typedInput.Properties.OsType)
+			osType := OSType_STATUS(temp)
 			pool.OsType = &osType
 		}
 	}
@@ -2037,7 +2159,9 @@ func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Type != nil {
-			propertiesType := *typedInput.Properties.Type
+			var temp string
+			temp = string(*typedInput.Properties.Type)
+			propertiesType := AgentPoolType_STATUS(temp)
 			pool.PropertiesType = &propertiesType
 		}
 	}
@@ -2064,7 +2188,9 @@ func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ScaleSetEvictionPolicy != nil {
-			scaleSetEvictionPolicy := *typedInput.Properties.ScaleSetEvictionPolicy
+			var temp string
+			temp = string(*typedInput.Properties.ScaleSetEvictionPolicy)
+			scaleSetEvictionPolicy := ScaleSetEvictionPolicy_STATUS(temp)
 			pool.ScaleSetEvictionPolicy = &scaleSetEvictionPolicy
 		}
 	}
@@ -2073,7 +2199,9 @@ func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ScaleSetPriority != nil {
-			scaleSetPriority := *typedInput.Properties.ScaleSetPriority
+			var temp string
+			temp = string(*typedInput.Properties.ScaleSetPriority)
+			scaleSetPriority := ScaleSetPriority_STATUS(temp)
 			pool.ScaleSetPriority = &scaleSetPriority
 		}
 	}
@@ -2140,8 +2268,8 @@ func (pool *ManagedClusters_AgentPool_STATUS) PopulateFromARM(owner genruntime.A
 	return nil
 }
 
-// AssignProperties_From_ManagedClusters_AgentPool_STATUS populates our ManagedClusters_AgentPool_STATUS from the provided source ManagedClusters_AgentPool_STATUS
-func (pool *ManagedClusters_AgentPool_STATUS) AssignProperties_From_ManagedClusters_AgentPool_STATUS(source *storage.ManagedClusters_AgentPool_STATUS) error {
+// AssignProperties_From_ManagedClustersAgentPool_STATUS populates our ManagedClustersAgentPool_STATUS from the provided source ManagedClustersAgentPool_STATUS
+func (pool *ManagedClustersAgentPool_STATUS) AssignProperties_From_ManagedClustersAgentPool_STATUS(source *storage.ManagedClustersAgentPool_STATUS) error {
 
 	// AvailabilityZones
 	pool.AvailabilityZones = genruntime.CloneSliceOfString(source.AvailabilityZones)
@@ -2387,8 +2515,8 @@ func (pool *ManagedClusters_AgentPool_STATUS) AssignProperties_From_ManagedClust
 	return nil
 }
 
-// AssignProperties_To_ManagedClusters_AgentPool_STATUS populates the provided destination ManagedClusters_AgentPool_STATUS from our ManagedClusters_AgentPool_STATUS
-func (pool *ManagedClusters_AgentPool_STATUS) AssignProperties_To_ManagedClusters_AgentPool_STATUS(destination *storage.ManagedClusters_AgentPool_STATUS) error {
+// AssignProperties_To_ManagedClustersAgentPool_STATUS populates the provided destination ManagedClustersAgentPool_STATUS from our ManagedClustersAgentPool_STATUS
+func (pool *ManagedClustersAgentPool_STATUS) AssignProperties_To_ManagedClustersAgentPool_STATUS(destination *storage.ManagedClustersAgentPool_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2634,8 +2762,6 @@ func (pool *ManagedClusters_AgentPool_STATUS) AssignProperties_To_ManagedCluster
 	return nil
 }
 
-// A cluster must have at least one 'System' Agent Pool at all times. For additional information on agent pool restrictions
-// and best practices, see: https://docs.microsoft.com/azure/aks/use-system-pools
 // +kubebuilder:validation:Enum={"System","User"}
 type AgentPoolMode string
 
@@ -2650,8 +2776,6 @@ var agentPoolMode_Values = map[string]AgentPoolMode{
 	"user":   AgentPoolMode_User,
 }
 
-// A cluster must have at least one 'System' Agent Pool at all times. For additional information on agent pool restrictions
-// and best practices, see: https://docs.microsoft.com/azure/aks/use-system-pools
 type AgentPoolMode_STATUS string
 
 const (
@@ -2665,7 +2789,6 @@ var agentPoolMode_STATUS_Values = map[string]AgentPoolMode_STATUS{
 	"user":   AgentPoolMode_STATUS_User,
 }
 
-// The type of Agent Pool.
 // +kubebuilder:validation:Enum={"AvailabilitySet","VirtualMachineScaleSets"}
 type AgentPoolType string
 
@@ -2680,7 +2803,6 @@ var agentPoolType_Values = map[string]AgentPoolType{
 	"virtualmachinescalesets": AgentPoolType_VirtualMachineScaleSets,
 }
 
-// The type of Agent Pool.
 type AgentPoolType_STATUS string
 
 const (
@@ -2694,12 +2816,7 @@ var agentPoolType_STATUS_Values = map[string]AgentPoolType_STATUS{
 	"virtualmachinescalesets": AgentPoolType_STATUS_VirtualMachineScaleSets,
 }
 
-// Settings for upgrading an agentpool
 type AgentPoolUpgradeSettings struct {
-	// MaxSurge: This can either be set to an integer (e.g. '5') or a percentage (e.g. '50%'). If a percentage is specified, it
-	// is the percentage of the total agent pool size at the time of the upgrade. For percentages, fractional nodes are rounded
-	// up. If not specified, the default is 1. For more information, including best practices, see:
-	// https://docs.microsoft.com/azure/aks/upgrade-cluster#customize-node-surge-upgrade
 	MaxSurge *string `json:"maxSurge,omitempty"`
 }
 
@@ -2710,7 +2827,7 @@ func (settings *AgentPoolUpgradeSettings) ConvertToARM(resolved genruntime.Conve
 	if settings == nil {
 		return nil, nil
 	}
-	result := &AgentPoolUpgradeSettings_ARM{}
+	result := &arm.AgentPoolUpgradeSettings{}
 
 	// Set property "MaxSurge":
 	if settings.MaxSurge != nil {
@@ -2722,14 +2839,14 @@ func (settings *AgentPoolUpgradeSettings) ConvertToARM(resolved genruntime.Conve
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (settings *AgentPoolUpgradeSettings) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AgentPoolUpgradeSettings_ARM{}
+	return &arm.AgentPoolUpgradeSettings{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (settings *AgentPoolUpgradeSettings) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AgentPoolUpgradeSettings_ARM)
+	typedInput, ok := armInput.(arm.AgentPoolUpgradeSettings)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AgentPoolUpgradeSettings_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AgentPoolUpgradeSettings, got %T", armInput)
 	}
 
 	// Set property "MaxSurge":
@@ -2771,12 +2888,7 @@ func (settings *AgentPoolUpgradeSettings) AssignProperties_To_AgentPoolUpgradeSe
 	return nil
 }
 
-// Settings for upgrading an agentpool
 type AgentPoolUpgradeSettings_STATUS struct {
-	// MaxSurge: This can either be set to an integer (e.g. '5') or a percentage (e.g. '50%'). If a percentage is specified, it
-	// is the percentage of the total agent pool size at the time of the upgrade. For percentages, fractional nodes are rounded
-	// up. If not specified, the default is 1. For more information, including best practices, see:
-	// https://docs.microsoft.com/azure/aks/upgrade-cluster#customize-node-surge-upgrade
 	MaxSurge *string `json:"maxSurge,omitempty"`
 }
 
@@ -2784,14 +2896,14 @@ var _ genruntime.FromARMConverter = &AgentPoolUpgradeSettings_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (settings *AgentPoolUpgradeSettings_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AgentPoolUpgradeSettings_STATUS_ARM{}
+	return &arm.AgentPoolUpgradeSettings_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (settings *AgentPoolUpgradeSettings_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AgentPoolUpgradeSettings_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AgentPoolUpgradeSettings_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AgentPoolUpgradeSettings_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AgentPoolUpgradeSettings_STATUS, got %T", armInput)
 	}
 
 	// Set property "MaxSurge":
@@ -2837,7 +2949,6 @@ func (settings *AgentPoolUpgradeSettings_STATUS) AssignProperties_To_AgentPoolUp
 // +kubebuilder:validation:Minimum=0
 type ContainerServiceOSDisk int
 
-// GPUInstanceProfile to be used to specify GPU MIG instance profile for supported GPU VM SKU.
 // +kubebuilder:validation:Enum={"MIG1g","MIG2g","MIG3g","MIG4g","MIG7g"}
 type GPUInstanceProfile string
 
@@ -2858,7 +2969,6 @@ var gPUInstanceProfile_Values = map[string]GPUInstanceProfile{
 	"mig7g": GPUInstanceProfile_MIG7G,
 }
 
-// GPUInstanceProfile to be used to specify GPU MIG instance profile for supported GPU VM SKU.
 type GPUInstanceProfile_STATUS string
 
 const (
@@ -2878,46 +2988,19 @@ var gPUInstanceProfile_STATUS_Values = map[string]GPUInstanceProfile_STATUS{
 	"mig7g": GPUInstanceProfile_STATUS_MIG7G,
 }
 
-// See [AKS custom node configuration](https://docs.microsoft.com/azure/aks/custom-node-configuration) for more details.
 type KubeletConfig struct {
-	// AllowedUnsafeSysctls: Allowed list of unsafe sysctls or unsafe sysctl patterns (ending in `*`).
 	AllowedUnsafeSysctls []string `json:"allowedUnsafeSysctls,omitempty"`
 
 	// +kubebuilder:validation:Minimum=2
-	// ContainerLogMaxFiles: The maximum number of container log files that can be present for a container. The number must be
-	// ≥ 2.
-	ContainerLogMaxFiles *int `json:"containerLogMaxFiles,omitempty"`
-
-	// ContainerLogMaxSizeMB: The maximum size (e.g. 10Mi) of container log file before it is rotated.
-	ContainerLogMaxSizeMB *int `json:"containerLogMaxSizeMB,omitempty"`
-
-	// CpuCfsQuota: The default is true.
-	CpuCfsQuota *bool `json:"cpuCfsQuota,omitempty"`
-
-	// CpuCfsQuotaPeriod: The default is '100ms.' Valid values are a sequence of decimal numbers with an optional fraction and
-	// a unit suffix. For example: '300ms', '2h45m'. Supported units are 'ns', 'us', 'ms', 's', 'm', and 'h'.
-	CpuCfsQuotaPeriod *string `json:"cpuCfsQuotaPeriod,omitempty"`
-
-	// CpuManagerPolicy: The default is 'none'. See [Kubernetes CPU management
-	// policies](https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/#cpu-management-policies) for more
-	// information. Allowed values are 'none' and 'static'.
-	CpuManagerPolicy *string `json:"cpuManagerPolicy,omitempty"`
-
-	// FailSwapOn: If set to true it will make the Kubelet fail to start if swap is enabled on the node.
-	FailSwapOn *bool `json:"failSwapOn,omitempty"`
-
-	// ImageGcHighThreshold: To disable image garbage collection, set to 100. The default is 85%
-	ImageGcHighThreshold *int `json:"imageGcHighThreshold,omitempty"`
-
-	// ImageGcLowThreshold: This cannot be set higher than imageGcHighThreshold. The default is 80%
-	ImageGcLowThreshold *int `json:"imageGcLowThreshold,omitempty"`
-
-	// PodMaxPids: The maximum number of processes per pod.
-	PodMaxPids *int `json:"podMaxPids,omitempty"`
-
-	// TopologyManagerPolicy: For more information see [Kubernetes Topology
-	// Manager](https://kubernetes.io/docs/tasks/administer-cluster/topology-manager). The default is 'none'. Allowed values
-	// are 'none', 'best-effort', 'restricted', and 'single-numa-node'.
+	ContainerLogMaxFiles  *int    `json:"containerLogMaxFiles,omitempty"`
+	ContainerLogMaxSizeMB *int    `json:"containerLogMaxSizeMB,omitempty"`
+	CpuCfsQuota           *bool   `json:"cpuCfsQuota,omitempty"`
+	CpuCfsQuotaPeriod     *string `json:"cpuCfsQuotaPeriod,omitempty"`
+	CpuManagerPolicy      *string `json:"cpuManagerPolicy,omitempty"`
+	FailSwapOn            *bool   `json:"failSwapOn,omitempty"`
+	ImageGcHighThreshold  *int    `json:"imageGcHighThreshold,omitempty"`
+	ImageGcLowThreshold   *int    `json:"imageGcLowThreshold,omitempty"`
+	PodMaxPids            *int    `json:"podMaxPids,omitempty"`
 	TopologyManagerPolicy *string `json:"topologyManagerPolicy,omitempty"`
 }
 
@@ -2928,7 +3011,7 @@ func (config *KubeletConfig) ConvertToARM(resolved genruntime.ConvertToARMResolv
 	if config == nil {
 		return nil, nil
 	}
-	result := &KubeletConfig_ARM{}
+	result := &arm.KubeletConfig{}
 
 	// Set property "AllowedUnsafeSysctls":
 	for _, item := range config.AllowedUnsafeSysctls {
@@ -2999,14 +3082,14 @@ func (config *KubeletConfig) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (config *KubeletConfig) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &KubeletConfig_ARM{}
+	return &arm.KubeletConfig{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (config *KubeletConfig) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(KubeletConfig_ARM)
+	typedInput, ok := armInput.(arm.KubeletConfig)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected KubeletConfig_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.KubeletConfig, got %T", armInput)
 	}
 
 	// Set property "AllowedUnsafeSysctls":
@@ -3197,60 +3280,32 @@ func (config *KubeletConfig) AssignProperties_To_KubeletConfig(destination *stor
 	return nil
 }
 
-// See [AKS custom node configuration](https://docs.microsoft.com/azure/aks/custom-node-configuration) for more details.
 type KubeletConfig_STATUS struct {
-	// AllowedUnsafeSysctls: Allowed list of unsafe sysctls or unsafe sysctl patterns (ending in `*`).
-	AllowedUnsafeSysctls []string `json:"allowedUnsafeSysctls,omitempty"`
-
-	// ContainerLogMaxFiles: The maximum number of container log files that can be present for a container. The number must be
-	// ≥ 2.
-	ContainerLogMaxFiles *int `json:"containerLogMaxFiles,omitempty"`
-
-	// ContainerLogMaxSizeMB: The maximum size (e.g. 10Mi) of container log file before it is rotated.
-	ContainerLogMaxSizeMB *int `json:"containerLogMaxSizeMB,omitempty"`
-
-	// CpuCfsQuota: The default is true.
-	CpuCfsQuota *bool `json:"cpuCfsQuota,omitempty"`
-
-	// CpuCfsQuotaPeriod: The default is '100ms.' Valid values are a sequence of decimal numbers with an optional fraction and
-	// a unit suffix. For example: '300ms', '2h45m'. Supported units are 'ns', 'us', 'ms', 's', 'm', and 'h'.
-	CpuCfsQuotaPeriod *string `json:"cpuCfsQuotaPeriod,omitempty"`
-
-	// CpuManagerPolicy: The default is 'none'. See [Kubernetes CPU management
-	// policies](https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/#cpu-management-policies) for more
-	// information. Allowed values are 'none' and 'static'.
-	CpuManagerPolicy *string `json:"cpuManagerPolicy,omitempty"`
-
-	// FailSwapOn: If set to true it will make the Kubelet fail to start if swap is enabled on the node.
-	FailSwapOn *bool `json:"failSwapOn,omitempty"`
-
-	// ImageGcHighThreshold: To disable image garbage collection, set to 100. The default is 85%
-	ImageGcHighThreshold *int `json:"imageGcHighThreshold,omitempty"`
-
-	// ImageGcLowThreshold: This cannot be set higher than imageGcHighThreshold. The default is 80%
-	ImageGcLowThreshold *int `json:"imageGcLowThreshold,omitempty"`
-
-	// PodMaxPids: The maximum number of processes per pod.
-	PodMaxPids *int `json:"podMaxPids,omitempty"`
-
-	// TopologyManagerPolicy: For more information see [Kubernetes Topology
-	// Manager](https://kubernetes.io/docs/tasks/administer-cluster/topology-manager). The default is 'none'. Allowed values
-	// are 'none', 'best-effort', 'restricted', and 'single-numa-node'.
-	TopologyManagerPolicy *string `json:"topologyManagerPolicy,omitempty"`
+	AllowedUnsafeSysctls  []string `json:"allowedUnsafeSysctls,omitempty"`
+	ContainerLogMaxFiles  *int     `json:"containerLogMaxFiles,omitempty"`
+	ContainerLogMaxSizeMB *int     `json:"containerLogMaxSizeMB,omitempty"`
+	CpuCfsQuota           *bool    `json:"cpuCfsQuota,omitempty"`
+	CpuCfsQuotaPeriod     *string  `json:"cpuCfsQuotaPeriod,omitempty"`
+	CpuManagerPolicy      *string  `json:"cpuManagerPolicy,omitempty"`
+	FailSwapOn            *bool    `json:"failSwapOn,omitempty"`
+	ImageGcHighThreshold  *int     `json:"imageGcHighThreshold,omitempty"`
+	ImageGcLowThreshold   *int     `json:"imageGcLowThreshold,omitempty"`
+	PodMaxPids            *int     `json:"podMaxPids,omitempty"`
+	TopologyManagerPolicy *string  `json:"topologyManagerPolicy,omitempty"`
 }
 
 var _ genruntime.FromARMConverter = &KubeletConfig_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (config *KubeletConfig_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &KubeletConfig_STATUS_ARM{}
+	return &arm.KubeletConfig_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (config *KubeletConfig_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(KubeletConfig_STATUS_ARM)
+	typedInput, ok := armInput.(arm.KubeletConfig_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected KubeletConfig_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.KubeletConfig_STATUS, got %T", armInput)
 	}
 
 	// Set property "AllowedUnsafeSysctls":
@@ -3431,7 +3486,6 @@ func (config *KubeletConfig_STATUS) AssignProperties_To_KubeletConfig_STATUS(des
 	return nil
 }
 
-// Determines the placement of emptyDir volumes, container runtime data root, and Kubelet ephemeral storage.
 // +kubebuilder:validation:Enum={"OS","Temporary"}
 type KubeletDiskType string
 
@@ -3446,7 +3500,6 @@ var kubeletDiskType_Values = map[string]KubeletDiskType{
 	"temporary": KubeletDiskType_Temporary,
 }
 
-// Determines the placement of emptyDir volumes, container runtime data root, and Kubelet ephemeral storage.
 type KubeletDiskType_STATUS string
 
 const (
@@ -3460,23 +3513,11 @@ var kubeletDiskType_STATUS_Values = map[string]KubeletDiskType_STATUS{
 	"temporary": KubeletDiskType_STATUS_Temporary,
 }
 
-// See [AKS custom node configuration](https://docs.microsoft.com/azure/aks/custom-node-configuration) for more details.
 type LinuxOSConfig struct {
-	// SwapFileSizeMB: The size in MB of a swap file that will be created on each node.
-	SwapFileSizeMB *int `json:"swapFileSizeMB,omitempty"`
-
-	// Sysctls: Sysctl settings for Linux agent nodes.
-	Sysctls *SysctlConfig `json:"sysctls,omitempty"`
-
-	// TransparentHugePageDefrag: Valid values are 'always', 'defer', 'defer+madvise', 'madvise' and 'never'. The default is
-	// 'madvise'. For more information see [Transparent
-	// Hugepages](https://www.kernel.org/doc/html/latest/admin-guide/mm/transhuge.html#admin-guide-transhuge).
-	TransparentHugePageDefrag *string `json:"transparentHugePageDefrag,omitempty"`
-
-	// TransparentHugePageEnabled: Valid values are 'always', 'madvise', and 'never'. The default is 'always'. For more
-	// information see [Transparent
-	// Hugepages](https://www.kernel.org/doc/html/latest/admin-guide/mm/transhuge.html#admin-guide-transhuge).
-	TransparentHugePageEnabled *string `json:"transparentHugePageEnabled,omitempty"`
+	SwapFileSizeMB             *int          `json:"swapFileSizeMB,omitempty"`
+	Sysctls                    *SysctlConfig `json:"sysctls,omitempty"`
+	TransparentHugePageDefrag  *string       `json:"transparentHugePageDefrag,omitempty"`
+	TransparentHugePageEnabled *string       `json:"transparentHugePageEnabled,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &LinuxOSConfig{}
@@ -3486,7 +3527,7 @@ func (config *LinuxOSConfig) ConvertToARM(resolved genruntime.ConvertToARMResolv
 	if config == nil {
 		return nil, nil
 	}
-	result := &LinuxOSConfig_ARM{}
+	result := &arm.LinuxOSConfig{}
 
 	// Set property "SwapFileSizeMB":
 	if config.SwapFileSizeMB != nil {
@@ -3500,7 +3541,7 @@ func (config *LinuxOSConfig) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		sysctls := *sysctls_ARM.(*SysctlConfig_ARM)
+		sysctls := *sysctls_ARM.(*arm.SysctlConfig)
 		result.Sysctls = &sysctls
 	}
 
@@ -3520,14 +3561,14 @@ func (config *LinuxOSConfig) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (config *LinuxOSConfig) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LinuxOSConfig_ARM{}
+	return &arm.LinuxOSConfig{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (config *LinuxOSConfig) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LinuxOSConfig_ARM)
+	typedInput, ok := armInput.(arm.LinuxOSConfig)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LinuxOSConfig_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LinuxOSConfig, got %T", armInput)
 	}
 
 	// Set property "SwapFileSizeMB":
@@ -3628,37 +3669,25 @@ func (config *LinuxOSConfig) AssignProperties_To_LinuxOSConfig(destination *stor
 	return nil
 }
 
-// See [AKS custom node configuration](https://docs.microsoft.com/azure/aks/custom-node-configuration) for more details.
 type LinuxOSConfig_STATUS struct {
-	// SwapFileSizeMB: The size in MB of a swap file that will be created on each node.
-	SwapFileSizeMB *int `json:"swapFileSizeMB,omitempty"`
-
-	// Sysctls: Sysctl settings for Linux agent nodes.
-	Sysctls *SysctlConfig_STATUS `json:"sysctls,omitempty"`
-
-	// TransparentHugePageDefrag: Valid values are 'always', 'defer', 'defer+madvise', 'madvise' and 'never'. The default is
-	// 'madvise'. For more information see [Transparent
-	// Hugepages](https://www.kernel.org/doc/html/latest/admin-guide/mm/transhuge.html#admin-guide-transhuge).
-	TransparentHugePageDefrag *string `json:"transparentHugePageDefrag,omitempty"`
-
-	// TransparentHugePageEnabled: Valid values are 'always', 'madvise', and 'never'. The default is 'always'. For more
-	// information see [Transparent
-	// Hugepages](https://www.kernel.org/doc/html/latest/admin-guide/mm/transhuge.html#admin-guide-transhuge).
-	TransparentHugePageEnabled *string `json:"transparentHugePageEnabled,omitempty"`
+	SwapFileSizeMB             *int                 `json:"swapFileSizeMB,omitempty"`
+	Sysctls                    *SysctlConfig_STATUS `json:"sysctls,omitempty"`
+	TransparentHugePageDefrag  *string              `json:"transparentHugePageDefrag,omitempty"`
+	TransparentHugePageEnabled *string              `json:"transparentHugePageEnabled,omitempty"`
 }
 
 var _ genruntime.FromARMConverter = &LinuxOSConfig_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (config *LinuxOSConfig_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LinuxOSConfig_STATUS_ARM{}
+	return &arm.LinuxOSConfig_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (config *LinuxOSConfig_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LinuxOSConfig_STATUS_ARM)
+	typedInput, ok := armInput.(arm.LinuxOSConfig_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LinuxOSConfig_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LinuxOSConfig_STATUS, got %T", armInput)
 	}
 
 	// Set property "SwapFileSizeMB":
@@ -3759,9 +3788,110 @@ func (config *LinuxOSConfig_STATUS) AssignProperties_To_LinuxOSConfig_STATUS(des
 	return nil
 }
 
-// The default is 'Ephemeral' if the VM supports it and has a cache disk larger than the requested OSDiskSizeGB. Otherwise,
-// defaults to 'Managed'. May not be changed after creation. For more information see [Ephemeral
-// OS](https://docs.microsoft.com/azure/aks/cluster-configuration#ephemeral-os).
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ManagedClustersAgentPoolOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ManagedClustersAgentPoolOperatorSpec populates our ManagedClustersAgentPoolOperatorSpec from the provided source ManagedClustersAgentPoolOperatorSpec
+func (operator *ManagedClustersAgentPoolOperatorSpec) AssignProperties_From_ManagedClustersAgentPoolOperatorSpec(source *storage.ManagedClustersAgentPoolOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedClustersAgentPoolOperatorSpec populates the provided destination ManagedClustersAgentPoolOperatorSpec from our ManagedClustersAgentPoolOperatorSpec
+func (operator *ManagedClustersAgentPoolOperatorSpec) AssignProperties_To_ManagedClustersAgentPoolOperatorSpec(destination *storage.ManagedClustersAgentPoolOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // +kubebuilder:validation:Enum={"Ephemeral","Managed"}
 type OSDiskType string
 
@@ -3776,9 +3906,6 @@ var oSDiskType_Values = map[string]OSDiskType{
 	"managed":   OSDiskType_Managed,
 }
 
-// The default is 'Ephemeral' if the VM supports it and has a cache disk larger than the requested OSDiskSizeGB. Otherwise,
-// defaults to 'Managed'. May not be changed after creation. For more information see [Ephemeral
-// OS](https://docs.microsoft.com/azure/aks/cluster-configuration#ephemeral-os).
 type OSDiskType_STATUS string
 
 const (
@@ -3792,7 +3919,6 @@ var oSDiskType_STATUS_Values = map[string]OSDiskType_STATUS{
 	"managed":   OSDiskType_STATUS_Managed,
 }
 
-// Specifies an OS SKU. This value must not be specified if OSType is Windows.
 // +kubebuilder:validation:Enum={"CBLMariner","Ubuntu"}
 type OSSKU string
 
@@ -3807,7 +3933,6 @@ var oSSKU_Values = map[string]OSSKU{
 	"ubuntu":     OSSKU_Ubuntu,
 }
 
-// Specifies an OS SKU. This value must not be specified if OSType is Windows.
 type OSSKU_STATUS string
 
 const (
@@ -3821,7 +3946,6 @@ var oSSKU_STATUS_Values = map[string]OSSKU_STATUS{
 	"ubuntu":     OSSKU_STATUS_Ubuntu,
 }
 
-// The operating system type. The default is Linux.
 // +kubebuilder:validation:Enum={"Linux","Windows"}
 type OSType string
 
@@ -3836,7 +3960,6 @@ var oSType_Values = map[string]OSType{
 	"windows": OSType_Windows,
 }
 
-// The operating system type. The default is Linux.
 type OSType_STATUS string
 
 const (
@@ -3850,8 +3973,6 @@ var oSType_STATUS_Values = map[string]OSType_STATUS{
 	"windows": OSType_STATUS_Windows,
 }
 
-// The eviction policy specifies what to do with the VM when it is evicted. The default is Delete. For more information
-// about eviction see [spot VMs](https://docs.microsoft.com/azure/virtual-machines/spot-vms)
 // +kubebuilder:validation:Enum={"Deallocate","Delete"}
 type ScaleSetEvictionPolicy string
 
@@ -3866,8 +3987,6 @@ var scaleSetEvictionPolicy_Values = map[string]ScaleSetEvictionPolicy{
 	"delete":     ScaleSetEvictionPolicy_Delete,
 }
 
-// The eviction policy specifies what to do with the VM when it is evicted. The default is Delete. For more information
-// about eviction see [spot VMs](https://docs.microsoft.com/azure/virtual-machines/spot-vms)
 type ScaleSetEvictionPolicy_STATUS string
 
 const (
@@ -3881,7 +4000,6 @@ var scaleSetEvictionPolicy_STATUS_Values = map[string]ScaleSetEvictionPolicy_STA
 	"delete":     ScaleSetEvictionPolicy_STATUS_Delete,
 }
 
-// The Virtual Machine Scale Set priority.
 // +kubebuilder:validation:Enum={"Regular","Spot"}
 type ScaleSetPriority string
 
@@ -3896,7 +4014,6 @@ var scaleSetPriority_Values = map[string]ScaleSetPriority{
 	"spot":    ScaleSetPriority_Spot,
 }
 
-// The Virtual Machine Scale Set priority.
 type ScaleSetPriority_STATUS string
 
 const (
@@ -3910,91 +4027,35 @@ var scaleSetPriority_STATUS_Values = map[string]ScaleSetPriority_STATUS{
 	"spot":    ScaleSetPriority_STATUS_Spot,
 }
 
-// Sysctl settings for Linux agent nodes.
 type SysctlConfig struct {
-	// FsAioMaxNr: Sysctl setting fs.aio-max-nr.
-	FsAioMaxNr *int `json:"fsAioMaxNr,omitempty"`
-
-	// FsFileMax: Sysctl setting fs.file-max.
-	FsFileMax *int `json:"fsFileMax,omitempty"`
-
-	// FsInotifyMaxUserWatches: Sysctl setting fs.inotify.max_user_watches.
-	FsInotifyMaxUserWatches *int `json:"fsInotifyMaxUserWatches,omitempty"`
-
-	// FsNrOpen: Sysctl setting fs.nr_open.
-	FsNrOpen *int `json:"fsNrOpen,omitempty"`
-
-	// KernelThreadsMax: Sysctl setting kernel.threads-max.
-	KernelThreadsMax *int `json:"kernelThreadsMax,omitempty"`
-
-	// NetCoreNetdevMaxBacklog: Sysctl setting net.core.netdev_max_backlog.
-	NetCoreNetdevMaxBacklog *int `json:"netCoreNetdevMaxBacklog,omitempty"`
-
-	// NetCoreOptmemMax: Sysctl setting net.core.optmem_max.
-	NetCoreOptmemMax *int `json:"netCoreOptmemMax,omitempty"`
-
-	// NetCoreRmemDefault: Sysctl setting net.core.rmem_default.
-	NetCoreRmemDefault *int `json:"netCoreRmemDefault,omitempty"`
-
-	// NetCoreRmemMax: Sysctl setting net.core.rmem_max.
-	NetCoreRmemMax *int `json:"netCoreRmemMax,omitempty"`
-
-	// NetCoreSomaxconn: Sysctl setting net.core.somaxconn.
-	NetCoreSomaxconn *int `json:"netCoreSomaxconn,omitempty"`
-
-	// NetCoreWmemDefault: Sysctl setting net.core.wmem_default.
-	NetCoreWmemDefault *int `json:"netCoreWmemDefault,omitempty"`
-
-	// NetCoreWmemMax: Sysctl setting net.core.wmem_max.
-	NetCoreWmemMax *int `json:"netCoreWmemMax,omitempty"`
-
-	// NetIpv4IpLocalPortRange: Sysctl setting net.ipv4.ip_local_port_range.
-	NetIpv4IpLocalPortRange *string `json:"netIpv4IpLocalPortRange,omitempty"`
-
-	// NetIpv4NeighDefaultGcThresh1: Sysctl setting net.ipv4.neigh.default.gc_thresh1.
-	NetIpv4NeighDefaultGcThresh1 *int `json:"netIpv4NeighDefaultGcThresh1,omitempty"`
-
-	// NetIpv4NeighDefaultGcThresh2: Sysctl setting net.ipv4.neigh.default.gc_thresh2.
-	NetIpv4NeighDefaultGcThresh2 *int `json:"netIpv4NeighDefaultGcThresh2,omitempty"`
-
-	// NetIpv4NeighDefaultGcThresh3: Sysctl setting net.ipv4.neigh.default.gc_thresh3.
-	NetIpv4NeighDefaultGcThresh3 *int `json:"netIpv4NeighDefaultGcThresh3,omitempty"`
-
-	// NetIpv4TcpFinTimeout: Sysctl setting net.ipv4.tcp_fin_timeout.
-	NetIpv4TcpFinTimeout *int `json:"netIpv4TcpFinTimeout,omitempty"`
-
-	// NetIpv4TcpKeepaliveProbes: Sysctl setting net.ipv4.tcp_keepalive_probes.
-	NetIpv4TcpKeepaliveProbes *int `json:"netIpv4TcpKeepaliveProbes,omitempty"`
-
-	// NetIpv4TcpKeepaliveTime: Sysctl setting net.ipv4.tcp_keepalive_time.
-	NetIpv4TcpKeepaliveTime *int `json:"netIpv4TcpKeepaliveTime,omitempty"`
-
-	// NetIpv4TcpMaxSynBacklog: Sysctl setting net.ipv4.tcp_max_syn_backlog.
-	NetIpv4TcpMaxSynBacklog *int `json:"netIpv4TcpMaxSynBacklog,omitempty"`
-
-	// NetIpv4TcpMaxTwBuckets: Sysctl setting net.ipv4.tcp_max_tw_buckets.
-	NetIpv4TcpMaxTwBuckets *int `json:"netIpv4TcpMaxTwBuckets,omitempty"`
-
-	// NetIpv4TcpTwReuse: Sysctl setting net.ipv4.tcp_tw_reuse.
-	NetIpv4TcpTwReuse *bool `json:"netIpv4TcpTwReuse,omitempty"`
-
-	// NetIpv4TcpkeepaliveIntvl: Sysctl setting net.ipv4.tcp_keepalive_intvl.
-	NetIpv4TcpkeepaliveIntvl *int `json:"netIpv4TcpkeepaliveIntvl,omitempty"`
-
-	// NetNetfilterNfConntrackBuckets: Sysctl setting net.netfilter.nf_conntrack_buckets.
-	NetNetfilterNfConntrackBuckets *int `json:"netNetfilterNfConntrackBuckets,omitempty"`
-
-	// NetNetfilterNfConntrackMax: Sysctl setting net.netfilter.nf_conntrack_max.
-	NetNetfilterNfConntrackMax *int `json:"netNetfilterNfConntrackMax,omitempty"`
-
-	// VmMaxMapCount: Sysctl setting vm.max_map_count.
-	VmMaxMapCount *int `json:"vmMaxMapCount,omitempty"`
-
-	// VmSwappiness: Sysctl setting vm.swappiness.
-	VmSwappiness *int `json:"vmSwappiness,omitempty"`
-
-	// VmVfsCachePressure: Sysctl setting vm.vfs_cache_pressure.
-	VmVfsCachePressure *int `json:"vmVfsCachePressure,omitempty"`
+	FsAioMaxNr                     *int    `json:"fsAioMaxNr,omitempty"`
+	FsFileMax                      *int    `json:"fsFileMax,omitempty"`
+	FsInotifyMaxUserWatches        *int    `json:"fsInotifyMaxUserWatches,omitempty"`
+	FsNrOpen                       *int    `json:"fsNrOpen,omitempty"`
+	KernelThreadsMax               *int    `json:"kernelThreadsMax,omitempty"`
+	NetCoreNetdevMaxBacklog        *int    `json:"netCoreNetdevMaxBacklog,omitempty"`
+	NetCoreOptmemMax               *int    `json:"netCoreOptmemMax,omitempty"`
+	NetCoreRmemDefault             *int    `json:"netCoreRmemDefault,omitempty"`
+	NetCoreRmemMax                 *int    `json:"netCoreRmemMax,omitempty"`
+	NetCoreSomaxconn               *int    `json:"netCoreSomaxconn,omitempty"`
+	NetCoreWmemDefault             *int    `json:"netCoreWmemDefault,omitempty"`
+	NetCoreWmemMax                 *int    `json:"netCoreWmemMax,omitempty"`
+	NetIpv4IpLocalPortRange        *string `json:"netIpv4IpLocalPortRange,omitempty"`
+	NetIpv4NeighDefaultGcThresh1   *int    `json:"netIpv4NeighDefaultGcThresh1,omitempty"`
+	NetIpv4NeighDefaultGcThresh2   *int    `json:"netIpv4NeighDefaultGcThresh2,omitempty"`
+	NetIpv4NeighDefaultGcThresh3   *int    `json:"netIpv4NeighDefaultGcThresh3,omitempty"`
+	NetIpv4TcpFinTimeout           *int    `json:"netIpv4TcpFinTimeout,omitempty"`
+	NetIpv4TcpKeepaliveProbes      *int    `json:"netIpv4TcpKeepaliveProbes,omitempty"`
+	NetIpv4TcpKeepaliveTime        *int    `json:"netIpv4TcpKeepaliveTime,omitempty"`
+	NetIpv4TcpMaxSynBacklog        *int    `json:"netIpv4TcpMaxSynBacklog,omitempty"`
+	NetIpv4TcpMaxTwBuckets         *int    `json:"netIpv4TcpMaxTwBuckets,omitempty"`
+	NetIpv4TcpTwReuse              *bool   `json:"netIpv4TcpTwReuse,omitempty"`
+	NetIpv4TcpkeepaliveIntvl       *int    `json:"netIpv4TcpkeepaliveIntvl,omitempty"`
+	NetNetfilterNfConntrackBuckets *int    `json:"netNetfilterNfConntrackBuckets,omitempty"`
+	NetNetfilterNfConntrackMax     *int    `json:"netNetfilterNfConntrackMax,omitempty"`
+	VmMaxMapCount                  *int    `json:"vmMaxMapCount,omitempty"`
+	VmSwappiness                   *int    `json:"vmSwappiness,omitempty"`
+	VmVfsCachePressure             *int    `json:"vmVfsCachePressure,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &SysctlConfig{}
@@ -4004,7 +4065,7 @@ func (config *SysctlConfig) ConvertToARM(resolved genruntime.ConvertToARMResolve
 	if config == nil {
 		return nil, nil
 	}
-	result := &SysctlConfig_ARM{}
+	result := &arm.SysctlConfig{}
 
 	// Set property "FsAioMaxNr":
 	if config.FsAioMaxNr != nil {
@@ -4178,14 +4239,14 @@ func (config *SysctlConfig) ConvertToARM(resolved genruntime.ConvertToARMResolve
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (config *SysctlConfig) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SysctlConfig_ARM{}
+	return &arm.SysctlConfig{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (config *SysctlConfig) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SysctlConfig_ARM)
+	typedInput, ok := armInput.(arm.SysctlConfig)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SysctlConfig_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SysctlConfig, got %T", armInput)
 	}
 
 	// Set property "FsAioMaxNr":
@@ -4561,105 +4622,49 @@ func (config *SysctlConfig) AssignProperties_To_SysctlConfig(destination *storag
 	return nil
 }
 
-// Sysctl settings for Linux agent nodes.
 type SysctlConfig_STATUS struct {
-	// FsAioMaxNr: Sysctl setting fs.aio-max-nr.
-	FsAioMaxNr *int `json:"fsAioMaxNr,omitempty"`
-
-	// FsFileMax: Sysctl setting fs.file-max.
-	FsFileMax *int `json:"fsFileMax,omitempty"`
-
-	// FsInotifyMaxUserWatches: Sysctl setting fs.inotify.max_user_watches.
-	FsInotifyMaxUserWatches *int `json:"fsInotifyMaxUserWatches,omitempty"`
-
-	// FsNrOpen: Sysctl setting fs.nr_open.
-	FsNrOpen *int `json:"fsNrOpen,omitempty"`
-
-	// KernelThreadsMax: Sysctl setting kernel.threads-max.
-	KernelThreadsMax *int `json:"kernelThreadsMax,omitempty"`
-
-	// NetCoreNetdevMaxBacklog: Sysctl setting net.core.netdev_max_backlog.
-	NetCoreNetdevMaxBacklog *int `json:"netCoreNetdevMaxBacklog,omitempty"`
-
-	// NetCoreOptmemMax: Sysctl setting net.core.optmem_max.
-	NetCoreOptmemMax *int `json:"netCoreOptmemMax,omitempty"`
-
-	// NetCoreRmemDefault: Sysctl setting net.core.rmem_default.
-	NetCoreRmemDefault *int `json:"netCoreRmemDefault,omitempty"`
-
-	// NetCoreRmemMax: Sysctl setting net.core.rmem_max.
-	NetCoreRmemMax *int `json:"netCoreRmemMax,omitempty"`
-
-	// NetCoreSomaxconn: Sysctl setting net.core.somaxconn.
-	NetCoreSomaxconn *int `json:"netCoreSomaxconn,omitempty"`
-
-	// NetCoreWmemDefault: Sysctl setting net.core.wmem_default.
-	NetCoreWmemDefault *int `json:"netCoreWmemDefault,omitempty"`
-
-	// NetCoreWmemMax: Sysctl setting net.core.wmem_max.
-	NetCoreWmemMax *int `json:"netCoreWmemMax,omitempty"`
-
-	// NetIpv4IpLocalPortRange: Sysctl setting net.ipv4.ip_local_port_range.
-	NetIpv4IpLocalPortRange *string `json:"netIpv4IpLocalPortRange,omitempty"`
-
-	// NetIpv4NeighDefaultGcThresh1: Sysctl setting net.ipv4.neigh.default.gc_thresh1.
-	NetIpv4NeighDefaultGcThresh1 *int `json:"netIpv4NeighDefaultGcThresh1,omitempty"`
-
-	// NetIpv4NeighDefaultGcThresh2: Sysctl setting net.ipv4.neigh.default.gc_thresh2.
-	NetIpv4NeighDefaultGcThresh2 *int `json:"netIpv4NeighDefaultGcThresh2,omitempty"`
-
-	// NetIpv4NeighDefaultGcThresh3: Sysctl setting net.ipv4.neigh.default.gc_thresh3.
-	NetIpv4NeighDefaultGcThresh3 *int `json:"netIpv4NeighDefaultGcThresh3,omitempty"`
-
-	// NetIpv4TcpFinTimeout: Sysctl setting net.ipv4.tcp_fin_timeout.
-	NetIpv4TcpFinTimeout *int `json:"netIpv4TcpFinTimeout,omitempty"`
-
-	// NetIpv4TcpKeepaliveProbes: Sysctl setting net.ipv4.tcp_keepalive_probes.
-	NetIpv4TcpKeepaliveProbes *int `json:"netIpv4TcpKeepaliveProbes,omitempty"`
-
-	// NetIpv4TcpKeepaliveTime: Sysctl setting net.ipv4.tcp_keepalive_time.
-	NetIpv4TcpKeepaliveTime *int `json:"netIpv4TcpKeepaliveTime,omitempty"`
-
-	// NetIpv4TcpMaxSynBacklog: Sysctl setting net.ipv4.tcp_max_syn_backlog.
-	NetIpv4TcpMaxSynBacklog *int `json:"netIpv4TcpMaxSynBacklog,omitempty"`
-
-	// NetIpv4TcpMaxTwBuckets: Sysctl setting net.ipv4.tcp_max_tw_buckets.
-	NetIpv4TcpMaxTwBuckets *int `json:"netIpv4TcpMaxTwBuckets,omitempty"`
-
-	// NetIpv4TcpTwReuse: Sysctl setting net.ipv4.tcp_tw_reuse.
-	NetIpv4TcpTwReuse *bool `json:"netIpv4TcpTwReuse,omitempty"`
-
-	// NetIpv4TcpkeepaliveIntvl: Sysctl setting net.ipv4.tcp_keepalive_intvl.
-	NetIpv4TcpkeepaliveIntvl *int `json:"netIpv4TcpkeepaliveIntvl,omitempty"`
-
-	// NetNetfilterNfConntrackBuckets: Sysctl setting net.netfilter.nf_conntrack_buckets.
-	NetNetfilterNfConntrackBuckets *int `json:"netNetfilterNfConntrackBuckets,omitempty"`
-
-	// NetNetfilterNfConntrackMax: Sysctl setting net.netfilter.nf_conntrack_max.
-	NetNetfilterNfConntrackMax *int `json:"netNetfilterNfConntrackMax,omitempty"`
-
-	// VmMaxMapCount: Sysctl setting vm.max_map_count.
-	VmMaxMapCount *int `json:"vmMaxMapCount,omitempty"`
-
-	// VmSwappiness: Sysctl setting vm.swappiness.
-	VmSwappiness *int `json:"vmSwappiness,omitempty"`
-
-	// VmVfsCachePressure: Sysctl setting vm.vfs_cache_pressure.
-	VmVfsCachePressure *int `json:"vmVfsCachePressure,omitempty"`
+	FsAioMaxNr                     *int    `json:"fsAioMaxNr,omitempty"`
+	FsFileMax                      *int    `json:"fsFileMax,omitempty"`
+	FsInotifyMaxUserWatches        *int    `json:"fsInotifyMaxUserWatches,omitempty"`
+	FsNrOpen                       *int    `json:"fsNrOpen,omitempty"`
+	KernelThreadsMax               *int    `json:"kernelThreadsMax,omitempty"`
+	NetCoreNetdevMaxBacklog        *int    `json:"netCoreNetdevMaxBacklog,omitempty"`
+	NetCoreOptmemMax               *int    `json:"netCoreOptmemMax,omitempty"`
+	NetCoreRmemDefault             *int    `json:"netCoreRmemDefault,omitempty"`
+	NetCoreRmemMax                 *int    `json:"netCoreRmemMax,omitempty"`
+	NetCoreSomaxconn               *int    `json:"netCoreSomaxconn,omitempty"`
+	NetCoreWmemDefault             *int    `json:"netCoreWmemDefault,omitempty"`
+	NetCoreWmemMax                 *int    `json:"netCoreWmemMax,omitempty"`
+	NetIpv4IpLocalPortRange        *string `json:"netIpv4IpLocalPortRange,omitempty"`
+	NetIpv4NeighDefaultGcThresh1   *int    `json:"netIpv4NeighDefaultGcThresh1,omitempty"`
+	NetIpv4NeighDefaultGcThresh2   *int    `json:"netIpv4NeighDefaultGcThresh2,omitempty"`
+	NetIpv4NeighDefaultGcThresh3   *int    `json:"netIpv4NeighDefaultGcThresh3,omitempty"`
+	NetIpv4TcpFinTimeout           *int    `json:"netIpv4TcpFinTimeout,omitempty"`
+	NetIpv4TcpKeepaliveProbes      *int    `json:"netIpv4TcpKeepaliveProbes,omitempty"`
+	NetIpv4TcpKeepaliveTime        *int    `json:"netIpv4TcpKeepaliveTime,omitempty"`
+	NetIpv4TcpMaxSynBacklog        *int    `json:"netIpv4TcpMaxSynBacklog,omitempty"`
+	NetIpv4TcpMaxTwBuckets         *int    `json:"netIpv4TcpMaxTwBuckets,omitempty"`
+	NetIpv4TcpTwReuse              *bool   `json:"netIpv4TcpTwReuse,omitempty"`
+	NetIpv4TcpkeepaliveIntvl       *int    `json:"netIpv4TcpkeepaliveIntvl,omitempty"`
+	NetNetfilterNfConntrackBuckets *int    `json:"netNetfilterNfConntrackBuckets,omitempty"`
+	NetNetfilterNfConntrackMax     *int    `json:"netNetfilterNfConntrackMax,omitempty"`
+	VmMaxMapCount                  *int    `json:"vmMaxMapCount,omitempty"`
+	VmSwappiness                   *int    `json:"vmSwappiness,omitempty"`
+	VmVfsCachePressure             *int    `json:"vmVfsCachePressure,omitempty"`
 }
 
 var _ genruntime.FromARMConverter = &SysctlConfig_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (config *SysctlConfig_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SysctlConfig_STATUS_ARM{}
+	return &arm.SysctlConfig_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (config *SysctlConfig_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SysctlConfig_STATUS_ARM)
+	typedInput, ok := armInput.(arm.SysctlConfig_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SysctlConfig_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SysctlConfig_STATUS, got %T", armInput)
 	}
 
 	// Set property "FsAioMaxNr":

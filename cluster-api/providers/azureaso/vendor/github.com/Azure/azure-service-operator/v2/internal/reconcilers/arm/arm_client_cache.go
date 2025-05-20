@@ -36,8 +36,8 @@ func NewARMClientCache(
 	kubeClient kubeclient.Client,
 	configuration cloud.Configuration,
 	httpClient *http.Client,
-	armMetrics *metrics.ARMClientMetrics) *ARMClientCache {
-
+	armMetrics *metrics.ARMClientMetrics,
+) *ARMClientCache {
 	return &ARMClientCache{
 		lock:               sync.Mutex{},
 		clients:            make(map[string]*armClient),

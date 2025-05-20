@@ -46,6 +46,7 @@ type ConvertibleSpec interface {
 
 // GetVersionedSpec returns a versioned spec for the provided resource; the original API version used when the
 // resource was first created is used to identify the version to return
+// TODO: This is currently unused
 func GetVersionedSpec(metaObject ARMMetaObject, scheme *runtime.Scheme) (ConvertibleSpec, error) {
 	return GetVersionedSpecFromGVK(metaObject, scheme, GetOriginalGVK(metaObject))
 }

@@ -6,6 +6,8 @@ package customizations
 import (
 	v20201101 "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101"
 	v20201101s "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/storage"
+	v20240301 "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301"
+	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type NetworkSecurityGroupsSecurityRuleExtension struct {
 func (extension *NetworkSecurityGroupsSecurityRuleExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20201101.NetworkSecurityGroupsSecurityRule{},
-		&v20201101s.NetworkSecurityGroupsSecurityRule{}}
+		&v20201101s.NetworkSecurityGroupsSecurityRule{},
+		&v20240301.NetworkSecurityGroupsSecurityRule{},
+		&v20240301s.NetworkSecurityGroupsSecurityRule{}}
 }

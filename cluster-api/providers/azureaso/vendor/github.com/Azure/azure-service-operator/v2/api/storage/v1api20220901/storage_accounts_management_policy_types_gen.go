@@ -5,10 +5,14 @@ package v1api20220901
 
 import (
 	"fmt"
-	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type StorageAccountsManagementPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              StorageAccounts_ManagementPolicy_Spec   `json:"spec,omitempty"`
-	Status            StorageAccounts_ManagementPolicy_STATUS `json:"status,omitempty"`
+	Spec              StorageAccountsManagementPolicy_Spec   `json:"spec,omitempty"`
+	Status            StorageAccountsManagementPolicy_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &StorageAccountsManagementPolicy{}
@@ -50,7 +54,7 @@ var _ conversion.Convertible = &StorageAccountsManagementPolicy{}
 // ConvertFrom populates our StorageAccountsManagementPolicy from the provided hub StorageAccountsManagementPolicy
 func (policy *StorageAccountsManagementPolicy) ConvertFrom(hub conversion.Hub) error {
 	// intermediate variable for conversion
-	var source v20220901s.StorageAccountsManagementPolicy
+	var source storage.StorageAccountsManagementPolicy
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
@@ -68,7 +72,7 @@ func (policy *StorageAccountsManagementPolicy) ConvertFrom(hub conversion.Hub) e
 // ConvertTo populates the provided hub StorageAccountsManagementPolicy from our StorageAccountsManagementPolicy
 func (policy *StorageAccountsManagementPolicy) ConvertTo(hub conversion.Hub) error {
 	// intermediate variable for conversion
-	var destination v20220901s.StorageAccountsManagementPolicy
+	var destination storage.StorageAccountsManagementPolicy
 	err := policy.AssignProperties_To_StorageAccountsManagementPolicy(&destination)
 	if err != nil {
 		return errors.Wrap(err, "converting to destination from policy")
@@ -97,6 +101,26 @@ func (policy *StorageAccountsManagementPolicy) Default() {
 // defaultImpl applies the code generated defaults to the StorageAccountsManagementPolicy resource
 func (policy *StorageAccountsManagementPolicy) defaultImpl() {}
 
+var _ configmaps.Exporter = &StorageAccountsManagementPolicy{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (policy *StorageAccountsManagementPolicy) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &StorageAccountsManagementPolicy{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (policy *StorageAccountsManagementPolicy) SecretDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &StorageAccountsManagementPolicy{}
 
 // AzureName returns the Azure name of the resource (always "default")
@@ -106,7 +130,7 @@ func (policy *StorageAccountsManagementPolicy) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-09-01"
 func (policy StorageAccountsManagementPolicy) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-09-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -140,7 +164,7 @@ func (policy *StorageAccountsManagementPolicy) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (policy *StorageAccountsManagementPolicy) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &StorageAccounts_ManagementPolicy_STATUS{}
+	return &StorageAccountsManagementPolicy_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -152,13 +176,13 @@ func (policy *StorageAccountsManagementPolicy) Owner() *genruntime.ResourceRefer
 // SetStatus sets the status of this resource
 func (policy *StorageAccountsManagementPolicy) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*StorageAccounts_ManagementPolicy_STATUS); ok {
+	if st, ok := status.(*StorageAccountsManagementPolicy_STATUS); ok {
 		policy.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st StorageAccounts_ManagementPolicy_STATUS
+	var st StorageAccountsManagementPolicy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -204,7 +228,7 @@ func (policy *StorageAccountsManagementPolicy) ValidateUpdate(old runtime.Object
 
 // createValidations validates the creation of the resource
 func (policy *StorageAccountsManagementPolicy) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference}
+	return []func() (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -222,7 +246,21 @@ func (policy *StorageAccountsManagementPolicy) updateValidations() []func(old ru
 		func(old runtime.Object) (admission.Warnings, error) {
 			return policy.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return policy.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return policy.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (policy *StorageAccountsManagementPolicy) validateConfigMapDestinations() (admission.Warnings, error) {
+	if policy.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(policy, nil, policy.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -239,6 +277,14 @@ func (policy *StorageAccountsManagementPolicy) validateResourceReferences() (adm
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (policy *StorageAccountsManagementPolicy) validateSecretDestinations() (admission.Warnings, error) {
+	if policy.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(policy, nil, policy.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (policy *StorageAccountsManagementPolicy) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*StorageAccountsManagementPolicy)
@@ -250,24 +296,24 @@ func (policy *StorageAccountsManagementPolicy) validateWriteOnceProperties(old r
 }
 
 // AssignProperties_From_StorageAccountsManagementPolicy populates our StorageAccountsManagementPolicy from the provided source StorageAccountsManagementPolicy
-func (policy *StorageAccountsManagementPolicy) AssignProperties_From_StorageAccountsManagementPolicy(source *v20220901s.StorageAccountsManagementPolicy) error {
+func (policy *StorageAccountsManagementPolicy) AssignProperties_From_StorageAccountsManagementPolicy(source *storage.StorageAccountsManagementPolicy) error {
 
 	// ObjectMeta
 	policy.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec StorageAccounts_ManagementPolicy_Spec
-	err := spec.AssignProperties_From_StorageAccounts_ManagementPolicy_Spec(&source.Spec)
+	var spec StorageAccountsManagementPolicy_Spec
+	err := spec.AssignProperties_From_StorageAccountsManagementPolicy_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccounts_ManagementPolicy_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsManagementPolicy_Spec() to populate field Spec")
 	}
 	policy.Spec = spec
 
 	// Status
-	var status StorageAccounts_ManagementPolicy_STATUS
-	err = status.AssignProperties_From_StorageAccounts_ManagementPolicy_STATUS(&source.Status)
+	var status StorageAccountsManagementPolicy_STATUS
+	err = status.AssignProperties_From_StorageAccountsManagementPolicy_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccounts_ManagementPolicy_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsManagementPolicy_STATUS() to populate field Status")
 	}
 	policy.Status = status
 
@@ -276,24 +322,24 @@ func (policy *StorageAccountsManagementPolicy) AssignProperties_From_StorageAcco
 }
 
 // AssignProperties_To_StorageAccountsManagementPolicy populates the provided destination StorageAccountsManagementPolicy from our StorageAccountsManagementPolicy
-func (policy *StorageAccountsManagementPolicy) AssignProperties_To_StorageAccountsManagementPolicy(destination *v20220901s.StorageAccountsManagementPolicy) error {
+func (policy *StorageAccountsManagementPolicy) AssignProperties_To_StorageAccountsManagementPolicy(destination *storage.StorageAccountsManagementPolicy) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *policy.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220901s.StorageAccounts_ManagementPolicy_Spec
-	err := policy.Spec.AssignProperties_To_StorageAccounts_ManagementPolicy_Spec(&spec)
+	var spec storage.StorageAccountsManagementPolicy_Spec
+	err := policy.Spec.AssignProperties_To_StorageAccountsManagementPolicy_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccounts_ManagementPolicy_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsManagementPolicy_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20220901s.StorageAccounts_ManagementPolicy_STATUS
-	err = policy.Status.AssignProperties_To_StorageAccounts_ManagementPolicy_STATUS(&status)
+	var status storage.StorageAccountsManagementPolicy_STATUS
+	err = policy.Status.AssignProperties_To_StorageAccountsManagementPolicy_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccounts_ManagementPolicy_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsManagementPolicy_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -320,7 +366,11 @@ type StorageAccountsManagementPolicyList struct {
 	Items           []StorageAccountsManagementPolicy `json:"items"`
 }
 
-type StorageAccounts_ManagementPolicy_Spec struct {
+type StorageAccountsManagementPolicy_Spec struct {
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *StorageAccountsManagementPolicyOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -333,44 +383,46 @@ type StorageAccounts_ManagementPolicy_Spec struct {
 	Policy *ManagementPolicySchema `json:"policy,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &StorageAccounts_ManagementPolicy_Spec{}
+var _ genruntime.ARMTransformer = &StorageAccountsManagementPolicy_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (policy *StorageAccounts_ManagementPolicy_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (policy *StorageAccountsManagementPolicy_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if policy == nil {
 		return nil, nil
 	}
-	result := &StorageAccounts_ManagementPolicy_Spec_ARM{}
+	result := &arm.StorageAccountsManagementPolicy_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
 
 	// Set property "Properties":
 	if policy.Policy != nil {
-		result.Properties = &ManagementPolicyProperties_ARM{}
+		result.Properties = &arm.ManagementPolicyProperties{}
 	}
 	if policy.Policy != nil {
 		policy_ARM, err := (*policy.Policy).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		policy1 := *policy_ARM.(*ManagementPolicySchema_ARM)
+		policy1 := *policy_ARM.(*arm.ManagementPolicySchema)
 		result.Properties.Policy = &policy1
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (policy *StorageAccounts_ManagementPolicy_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StorageAccounts_ManagementPolicy_Spec_ARM{}
+func (policy *StorageAccountsManagementPolicy_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.StorageAccountsManagementPolicy_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (policy *StorageAccounts_ManagementPolicy_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StorageAccounts_ManagementPolicy_Spec_ARM)
+func (policy *StorageAccountsManagementPolicy_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.StorageAccountsManagementPolicy_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StorageAccounts_ManagementPolicy_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StorageAccountsManagementPolicy_Spec, got %T", armInput)
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	policy.Owner = &genruntime.KnownResourceReference{
@@ -396,25 +448,25 @@ func (policy *StorageAccounts_ManagementPolicy_Spec) PopulateFromARM(owner genru
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &StorageAccounts_ManagementPolicy_Spec{}
+var _ genruntime.ConvertibleSpec = &StorageAccountsManagementPolicy_Spec{}
 
-// ConvertSpecFrom populates our StorageAccounts_ManagementPolicy_Spec from the provided source
-func (policy *StorageAccounts_ManagementPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220901s.StorageAccounts_ManagementPolicy_Spec)
+// ConvertSpecFrom populates our StorageAccountsManagementPolicy_Spec from the provided source
+func (policy *StorageAccountsManagementPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.StorageAccountsManagementPolicy_Spec)
 	if ok {
 		// Populate our instance from source
-		return policy.AssignProperties_From_StorageAccounts_ManagementPolicy_Spec(src)
+		return policy.AssignProperties_From_StorageAccountsManagementPolicy_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220901s.StorageAccounts_ManagementPolicy_Spec{}
+	src = &storage.StorageAccountsManagementPolicy_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = policy.AssignProperties_From_StorageAccounts_ManagementPolicy_Spec(src)
+	err = policy.AssignProperties_From_StorageAccountsManagementPolicy_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -422,17 +474,17 @@ func (policy *StorageAccounts_ManagementPolicy_Spec) ConvertSpecFrom(source genr
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our StorageAccounts_ManagementPolicy_Spec
-func (policy *StorageAccounts_ManagementPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220901s.StorageAccounts_ManagementPolicy_Spec)
+// ConvertSpecTo populates the provided destination from our StorageAccountsManagementPolicy_Spec
+func (policy *StorageAccountsManagementPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.StorageAccountsManagementPolicy_Spec)
 	if ok {
 		// Populate destination from our instance
-		return policy.AssignProperties_To_StorageAccounts_ManagementPolicy_Spec(dst)
+		return policy.AssignProperties_To_StorageAccountsManagementPolicy_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220901s.StorageAccounts_ManagementPolicy_Spec{}
-	err := policy.AssignProperties_To_StorageAccounts_ManagementPolicy_Spec(dst)
+	dst = &storage.StorageAccountsManagementPolicy_Spec{}
+	err := policy.AssignProperties_To_StorageAccountsManagementPolicy_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -446,8 +498,20 @@ func (policy *StorageAccounts_ManagementPolicy_Spec) ConvertSpecTo(destination g
 	return nil
 }
 
-// AssignProperties_From_StorageAccounts_ManagementPolicy_Spec populates our StorageAccounts_ManagementPolicy_Spec from the provided source StorageAccounts_ManagementPolicy_Spec
-func (policy *StorageAccounts_ManagementPolicy_Spec) AssignProperties_From_StorageAccounts_ManagementPolicy_Spec(source *v20220901s.StorageAccounts_ManagementPolicy_Spec) error {
+// AssignProperties_From_StorageAccountsManagementPolicy_Spec populates our StorageAccountsManagementPolicy_Spec from the provided source StorageAccountsManagementPolicy_Spec
+func (policy *StorageAccountsManagementPolicy_Spec) AssignProperties_From_StorageAccountsManagementPolicy_Spec(source *storage.StorageAccountsManagementPolicy_Spec) error {
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec StorageAccountsManagementPolicyOperatorSpec
+		err := operatorSpec.AssignProperties_From_StorageAccountsManagementPolicyOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsManagementPolicyOperatorSpec() to populate field OperatorSpec")
+		}
+		policy.OperatorSpec = &operatorSpec
+	} else {
+		policy.OperatorSpec = nil
+	}
 
 	// Owner
 	if source.Owner != nil {
@@ -473,10 +537,22 @@ func (policy *StorageAccounts_ManagementPolicy_Spec) AssignProperties_From_Stora
 	return nil
 }
 
-// AssignProperties_To_StorageAccounts_ManagementPolicy_Spec populates the provided destination StorageAccounts_ManagementPolicy_Spec from our StorageAccounts_ManagementPolicy_Spec
-func (policy *StorageAccounts_ManagementPolicy_Spec) AssignProperties_To_StorageAccounts_ManagementPolicy_Spec(destination *v20220901s.StorageAccounts_ManagementPolicy_Spec) error {
+// AssignProperties_To_StorageAccountsManagementPolicy_Spec populates the provided destination StorageAccountsManagementPolicy_Spec from our StorageAccountsManagementPolicy_Spec
+func (policy *StorageAccountsManagementPolicy_Spec) AssignProperties_To_StorageAccountsManagementPolicy_Spec(destination *storage.StorageAccountsManagementPolicy_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
+
+	// OperatorSpec
+	if policy.OperatorSpec != nil {
+		var operatorSpec storage.StorageAccountsManagementPolicyOperatorSpec
+		err := policy.OperatorSpec.AssignProperties_To_StorageAccountsManagementPolicyOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsManagementPolicyOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = policy.OriginalVersion()
@@ -491,7 +567,7 @@ func (policy *StorageAccounts_ManagementPolicy_Spec) AssignProperties_To_Storage
 
 	// Policy
 	if policy.Policy != nil {
-		var policyLocal v20220901s.ManagementPolicySchema
+		var policyLocal storage.ManagementPolicySchema
 		err := policy.Policy.AssignProperties_To_ManagementPolicySchema(&policyLocal)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicySchema() to populate field Policy")
@@ -513,11 +589,11 @@ func (policy *StorageAccounts_ManagementPolicy_Spec) AssignProperties_To_Storage
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (policy *StorageAccounts_ManagementPolicy_Spec) OriginalVersion() string {
+func (policy *StorageAccountsManagementPolicy_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
-type StorageAccounts_ManagementPolicy_STATUS struct {
+type StorageAccountsManagementPolicy_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
@@ -539,25 +615,25 @@ type StorageAccounts_ManagementPolicy_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &StorageAccounts_ManagementPolicy_STATUS{}
+var _ genruntime.ConvertibleStatus = &StorageAccountsManagementPolicy_STATUS{}
 
-// ConvertStatusFrom populates our StorageAccounts_ManagementPolicy_STATUS from the provided source
-func (policy *StorageAccounts_ManagementPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220901s.StorageAccounts_ManagementPolicy_STATUS)
+// ConvertStatusFrom populates our StorageAccountsManagementPolicy_STATUS from the provided source
+func (policy *StorageAccountsManagementPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.StorageAccountsManagementPolicy_STATUS)
 	if ok {
 		// Populate our instance from source
-		return policy.AssignProperties_From_StorageAccounts_ManagementPolicy_STATUS(src)
+		return policy.AssignProperties_From_StorageAccountsManagementPolicy_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220901s.StorageAccounts_ManagementPolicy_STATUS{}
+	src = &storage.StorageAccountsManagementPolicy_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = policy.AssignProperties_From_StorageAccounts_ManagementPolicy_STATUS(src)
+	err = policy.AssignProperties_From_StorageAccountsManagementPolicy_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -565,17 +641,17 @@ func (policy *StorageAccounts_ManagementPolicy_STATUS) ConvertStatusFrom(source 
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our StorageAccounts_ManagementPolicy_STATUS
-func (policy *StorageAccounts_ManagementPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220901s.StorageAccounts_ManagementPolicy_STATUS)
+// ConvertStatusTo populates the provided destination from our StorageAccountsManagementPolicy_STATUS
+func (policy *StorageAccountsManagementPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.StorageAccountsManagementPolicy_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return policy.AssignProperties_To_StorageAccounts_ManagementPolicy_STATUS(dst)
+		return policy.AssignProperties_To_StorageAccountsManagementPolicy_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220901s.StorageAccounts_ManagementPolicy_STATUS{}
-	err := policy.AssignProperties_To_StorageAccounts_ManagementPolicy_STATUS(dst)
+	dst = &storage.StorageAccountsManagementPolicy_STATUS{}
+	err := policy.AssignProperties_To_StorageAccountsManagementPolicy_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -589,18 +665,18 @@ func (policy *StorageAccounts_ManagementPolicy_STATUS) ConvertStatusTo(destinati
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &StorageAccounts_ManagementPolicy_STATUS{}
+var _ genruntime.FromARMConverter = &StorageAccountsManagementPolicy_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (policy *StorageAccounts_ManagementPolicy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StorageAccounts_ManagementPolicy_STATUS_ARM{}
+func (policy *StorageAccountsManagementPolicy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.StorageAccountsManagementPolicy_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (policy *StorageAccounts_ManagementPolicy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StorageAccounts_ManagementPolicy_STATUS_ARM)
+func (policy *StorageAccountsManagementPolicy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.StorageAccountsManagementPolicy_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StorageAccounts_ManagementPolicy_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StorageAccountsManagementPolicy_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -650,8 +726,8 @@ func (policy *StorageAccounts_ManagementPolicy_STATUS) PopulateFromARM(owner gen
 	return nil
 }
 
-// AssignProperties_From_StorageAccounts_ManagementPolicy_STATUS populates our StorageAccounts_ManagementPolicy_STATUS from the provided source StorageAccounts_ManagementPolicy_STATUS
-func (policy *StorageAccounts_ManagementPolicy_STATUS) AssignProperties_From_StorageAccounts_ManagementPolicy_STATUS(source *v20220901s.StorageAccounts_ManagementPolicy_STATUS) error {
+// AssignProperties_From_StorageAccountsManagementPolicy_STATUS populates our StorageAccountsManagementPolicy_STATUS from the provided source StorageAccountsManagementPolicy_STATUS
+func (policy *StorageAccountsManagementPolicy_STATUS) AssignProperties_From_StorageAccountsManagementPolicy_STATUS(source *storage.StorageAccountsManagementPolicy_STATUS) error {
 
 	// Conditions
 	policy.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -684,8 +760,8 @@ func (policy *StorageAccounts_ManagementPolicy_STATUS) AssignProperties_From_Sto
 	return nil
 }
 
-// AssignProperties_To_StorageAccounts_ManagementPolicy_STATUS populates the provided destination StorageAccounts_ManagementPolicy_STATUS from our StorageAccounts_ManagementPolicy_STATUS
-func (policy *StorageAccounts_ManagementPolicy_STATUS) AssignProperties_To_StorageAccounts_ManagementPolicy_STATUS(destination *v20220901s.StorageAccounts_ManagementPolicy_STATUS) error {
+// AssignProperties_To_StorageAccountsManagementPolicy_STATUS populates the provided destination StorageAccountsManagementPolicy_STATUS from our StorageAccountsManagementPolicy_STATUS
+func (policy *StorageAccountsManagementPolicy_STATUS) AssignProperties_To_StorageAccountsManagementPolicy_STATUS(destination *storage.StorageAccountsManagementPolicy_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -703,7 +779,7 @@ func (policy *StorageAccounts_ManagementPolicy_STATUS) AssignProperties_To_Stora
 
 	// Policy
 	if policy.Policy != nil {
-		var policyLocal v20220901s.ManagementPolicySchema_STATUS
+		var policyLocal storage.ManagementPolicySchema_STATUS
 		err := policy.Policy.AssignProperties_To_ManagementPolicySchema_STATUS(&policyLocal)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicySchema_STATUS() to populate field Policy")
@@ -743,7 +819,7 @@ func (schema *ManagementPolicySchema) ConvertToARM(resolved genruntime.ConvertTo
 	if schema == nil {
 		return nil, nil
 	}
-	result := &ManagementPolicySchema_ARM{}
+	result := &arm.ManagementPolicySchema{}
 
 	// Set property "Rules":
 	for _, item := range schema.Rules {
@@ -751,21 +827,21 @@ func (schema *ManagementPolicySchema) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		result.Rules = append(result.Rules, *item_ARM.(*ManagementPolicyRule_ARM))
+		result.Rules = append(result.Rules, *item_ARM.(*arm.ManagementPolicyRule))
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (schema *ManagementPolicySchema) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicySchema_ARM{}
+	return &arm.ManagementPolicySchema{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (schema *ManagementPolicySchema) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicySchema_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicySchema)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicySchema_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicySchema, got %T", armInput)
 	}
 
 	// Set property "Rules":
@@ -783,7 +859,7 @@ func (schema *ManagementPolicySchema) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_ManagementPolicySchema populates our ManagementPolicySchema from the provided source ManagementPolicySchema
-func (schema *ManagementPolicySchema) AssignProperties_From_ManagementPolicySchema(source *v20220901s.ManagementPolicySchema) error {
+func (schema *ManagementPolicySchema) AssignProperties_From_ManagementPolicySchema(source *storage.ManagementPolicySchema) error {
 
 	// Rules
 	if source.Rules != nil {
@@ -808,17 +884,17 @@ func (schema *ManagementPolicySchema) AssignProperties_From_ManagementPolicySche
 }
 
 // AssignProperties_To_ManagementPolicySchema populates the provided destination ManagementPolicySchema from our ManagementPolicySchema
-func (schema *ManagementPolicySchema) AssignProperties_To_ManagementPolicySchema(destination *v20220901s.ManagementPolicySchema) error {
+func (schema *ManagementPolicySchema) AssignProperties_To_ManagementPolicySchema(destination *storage.ManagementPolicySchema) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Rules
 	if schema.Rules != nil {
-		ruleList := make([]v20220901s.ManagementPolicyRule, len(schema.Rules))
+		ruleList := make([]storage.ManagementPolicyRule, len(schema.Rules))
 		for ruleIndex, ruleItem := range schema.Rules {
 			// Shadow the loop variable to avoid aliasing
 			ruleItem := ruleItem
-			var rule v20220901s.ManagementPolicyRule
+			var rule storage.ManagementPolicyRule
 			err := ruleItem.AssignProperties_To_ManagementPolicyRule(&rule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyRule() to populate field Rules")
@@ -853,14 +929,14 @@ var _ genruntime.FromARMConverter = &ManagementPolicySchema_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (schema *ManagementPolicySchema_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicySchema_STATUS_ARM{}
+	return &arm.ManagementPolicySchema_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (schema *ManagementPolicySchema_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicySchema_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicySchema_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicySchema_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicySchema_STATUS, got %T", armInput)
 	}
 
 	// Set property "Rules":
@@ -878,7 +954,7 @@ func (schema *ManagementPolicySchema_STATUS) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_ManagementPolicySchema_STATUS populates our ManagementPolicySchema_STATUS from the provided source ManagementPolicySchema_STATUS
-func (schema *ManagementPolicySchema_STATUS) AssignProperties_From_ManagementPolicySchema_STATUS(source *v20220901s.ManagementPolicySchema_STATUS) error {
+func (schema *ManagementPolicySchema_STATUS) AssignProperties_From_ManagementPolicySchema_STATUS(source *storage.ManagementPolicySchema_STATUS) error {
 
 	// Rules
 	if source.Rules != nil {
@@ -903,17 +979,17 @@ func (schema *ManagementPolicySchema_STATUS) AssignProperties_From_ManagementPol
 }
 
 // AssignProperties_To_ManagementPolicySchema_STATUS populates the provided destination ManagementPolicySchema_STATUS from our ManagementPolicySchema_STATUS
-func (schema *ManagementPolicySchema_STATUS) AssignProperties_To_ManagementPolicySchema_STATUS(destination *v20220901s.ManagementPolicySchema_STATUS) error {
+func (schema *ManagementPolicySchema_STATUS) AssignProperties_To_ManagementPolicySchema_STATUS(destination *storage.ManagementPolicySchema_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Rules
 	if schema.Rules != nil {
-		ruleList := make([]v20220901s.ManagementPolicyRule_STATUS, len(schema.Rules))
+		ruleList := make([]storage.ManagementPolicyRule_STATUS, len(schema.Rules))
 		for ruleIndex, ruleItem := range schema.Rules {
 			// Shadow the loop variable to avoid aliasing
 			ruleItem := ruleItem
-			var rule v20220901s.ManagementPolicyRule_STATUS
+			var rule storage.ManagementPolicyRule_STATUS
 			err := ruleItem.AssignProperties_To_ManagementPolicyRule_STATUS(&rule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyRule_STATUS() to populate field Rules")
@@ -923,6 +999,110 @@ func (schema *ManagementPolicySchema_STATUS) AssignProperties_To_ManagementPolic
 		destination.Rules = ruleList
 	} else {
 		destination.Rules = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type StorageAccountsManagementPolicyOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_StorageAccountsManagementPolicyOperatorSpec populates our StorageAccountsManagementPolicyOperatorSpec from the provided source StorageAccountsManagementPolicyOperatorSpec
+func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_From_StorageAccountsManagementPolicyOperatorSpec(source *storage.StorageAccountsManagementPolicyOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_StorageAccountsManagementPolicyOperatorSpec populates the provided destination StorageAccountsManagementPolicyOperatorSpec from our StorageAccountsManagementPolicyOperatorSpec
+func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_To_StorageAccountsManagementPolicyOperatorSpec(destination *storage.StorageAccountsManagementPolicyOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
 	}
 
 	// Update the property bag
@@ -962,7 +1142,7 @@ func (rule *ManagementPolicyRule) ConvertToARM(resolved genruntime.ConvertToARMR
 	if rule == nil {
 		return nil, nil
 	}
-	result := &ManagementPolicyRule_ARM{}
+	result := &arm.ManagementPolicyRule{}
 
 	// Set property "Definition":
 	if rule.Definition != nil {
@@ -970,7 +1150,7 @@ func (rule *ManagementPolicyRule) ConvertToARM(resolved genruntime.ConvertToARMR
 		if err != nil {
 			return nil, err
 		}
-		definition := *definition_ARM.(*ManagementPolicyDefinition_ARM)
+		definition := *definition_ARM.(*arm.ManagementPolicyDefinition)
 		result.Definition = &definition
 	}
 
@@ -988,7 +1168,9 @@ func (rule *ManagementPolicyRule) ConvertToARM(resolved genruntime.ConvertToARMR
 
 	// Set property "Type":
 	if rule.Type != nil {
-		typeVar := *rule.Type
+		var temp string
+		temp = string(*rule.Type)
+		typeVar := arm.ManagementPolicyRule_Type(temp)
 		result.Type = &typeVar
 	}
 	return result, nil
@@ -996,14 +1178,14 @@ func (rule *ManagementPolicyRule) ConvertToARM(resolved genruntime.ConvertToARMR
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *ManagementPolicyRule) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyRule_ARM{}
+	return &arm.ManagementPolicyRule{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *ManagementPolicyRule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyRule_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyRule)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyRule_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyRule, got %T", armInput)
 	}
 
 	// Set property "Definition":
@@ -1031,7 +1213,9 @@ func (rule *ManagementPolicyRule) PopulateFromARM(owner genruntime.ArbitraryOwne
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := ManagementPolicyRule_Type(temp)
 		rule.Type = &typeVar
 	}
 
@@ -1040,7 +1224,7 @@ func (rule *ManagementPolicyRule) PopulateFromARM(owner genruntime.ArbitraryOwne
 }
 
 // AssignProperties_From_ManagementPolicyRule populates our ManagementPolicyRule from the provided source ManagementPolicyRule
-func (rule *ManagementPolicyRule) AssignProperties_From_ManagementPolicyRule(source *v20220901s.ManagementPolicyRule) error {
+func (rule *ManagementPolicyRule) AssignProperties_From_ManagementPolicyRule(source *storage.ManagementPolicyRule) error {
 
 	// Definition
 	if source.Definition != nil {
@@ -1067,8 +1251,9 @@ func (rule *ManagementPolicyRule) AssignProperties_From_ManagementPolicyRule(sou
 
 	// Type
 	if source.Type != nil {
-		typeVar := ManagementPolicyRule_Type(*source.Type)
-		rule.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, managementPolicyRule_Type_Values)
+		rule.Type = &typeTemp
 	} else {
 		rule.Type = nil
 	}
@@ -1078,13 +1263,13 @@ func (rule *ManagementPolicyRule) AssignProperties_From_ManagementPolicyRule(sou
 }
 
 // AssignProperties_To_ManagementPolicyRule populates the provided destination ManagementPolicyRule from our ManagementPolicyRule
-func (rule *ManagementPolicyRule) AssignProperties_To_ManagementPolicyRule(destination *v20220901s.ManagementPolicyRule) error {
+func (rule *ManagementPolicyRule) AssignProperties_To_ManagementPolicyRule(destination *storage.ManagementPolicyRule) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Definition
 	if rule.Definition != nil {
-		var definition v20220901s.ManagementPolicyDefinition
+		var definition storage.ManagementPolicyDefinition
 		err := rule.Definition.AssignProperties_To_ManagementPolicyDefinition(&definition)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyDefinition() to populate field Definition")
@@ -1144,14 +1329,14 @@ var _ genruntime.FromARMConverter = &ManagementPolicyRule_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *ManagementPolicyRule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyRule_STATUS_ARM{}
+	return &arm.ManagementPolicyRule_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *ManagementPolicyRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyRule_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyRule_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyRule_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyRule_STATUS, got %T", armInput)
 	}
 
 	// Set property "Definition":
@@ -1179,7 +1364,9 @@ func (rule *ManagementPolicyRule_STATUS) PopulateFromARM(owner genruntime.Arbitr
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := ManagementPolicyRule_Type_STATUS(temp)
 		rule.Type = &typeVar
 	}
 
@@ -1188,7 +1375,7 @@ func (rule *ManagementPolicyRule_STATUS) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_ManagementPolicyRule_STATUS populates our ManagementPolicyRule_STATUS from the provided source ManagementPolicyRule_STATUS
-func (rule *ManagementPolicyRule_STATUS) AssignProperties_From_ManagementPolicyRule_STATUS(source *v20220901s.ManagementPolicyRule_STATUS) error {
+func (rule *ManagementPolicyRule_STATUS) AssignProperties_From_ManagementPolicyRule_STATUS(source *storage.ManagementPolicyRule_STATUS) error {
 
 	// Definition
 	if source.Definition != nil {
@@ -1215,8 +1402,9 @@ func (rule *ManagementPolicyRule_STATUS) AssignProperties_From_ManagementPolicyR
 
 	// Type
 	if source.Type != nil {
-		typeVar := ManagementPolicyRule_Type_STATUS(*source.Type)
-		rule.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, managementPolicyRule_Type_STATUS_Values)
+		rule.Type = &typeTemp
 	} else {
 		rule.Type = nil
 	}
@@ -1226,13 +1414,13 @@ func (rule *ManagementPolicyRule_STATUS) AssignProperties_From_ManagementPolicyR
 }
 
 // AssignProperties_To_ManagementPolicyRule_STATUS populates the provided destination ManagementPolicyRule_STATUS from our ManagementPolicyRule_STATUS
-func (rule *ManagementPolicyRule_STATUS) AssignProperties_To_ManagementPolicyRule_STATUS(destination *v20220901s.ManagementPolicyRule_STATUS) error {
+func (rule *ManagementPolicyRule_STATUS) AssignProperties_To_ManagementPolicyRule_STATUS(destination *storage.ManagementPolicyRule_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Definition
 	if rule.Definition != nil {
-		var definition v20220901s.ManagementPolicyDefinition_STATUS
+		var definition storage.ManagementPolicyDefinition_STATUS
 		err := rule.Definition.AssignProperties_To_ManagementPolicyDefinition_STATUS(&definition)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyDefinition_STATUS() to populate field Definition")
@@ -1289,7 +1477,7 @@ func (definition *ManagementPolicyDefinition) ConvertToARM(resolved genruntime.C
 	if definition == nil {
 		return nil, nil
 	}
-	result := &ManagementPolicyDefinition_ARM{}
+	result := &arm.ManagementPolicyDefinition{}
 
 	// Set property "Actions":
 	if definition.Actions != nil {
@@ -1297,7 +1485,7 @@ func (definition *ManagementPolicyDefinition) ConvertToARM(resolved genruntime.C
 		if err != nil {
 			return nil, err
 		}
-		actions := *actions_ARM.(*ManagementPolicyAction_ARM)
+		actions := *actions_ARM.(*arm.ManagementPolicyAction)
 		result.Actions = &actions
 	}
 
@@ -1307,7 +1495,7 @@ func (definition *ManagementPolicyDefinition) ConvertToARM(resolved genruntime.C
 		if err != nil {
 			return nil, err
 		}
-		filters := *filters_ARM.(*ManagementPolicyFilter_ARM)
+		filters := *filters_ARM.(*arm.ManagementPolicyFilter)
 		result.Filters = &filters
 	}
 	return result, nil
@@ -1315,14 +1503,14 @@ func (definition *ManagementPolicyDefinition) ConvertToARM(resolved genruntime.C
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (definition *ManagementPolicyDefinition) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyDefinition_ARM{}
+	return &arm.ManagementPolicyDefinition{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (definition *ManagementPolicyDefinition) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyDefinition_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyDefinition)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyDefinition_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyDefinition, got %T", armInput)
 	}
 
 	// Set property "Actions":
@@ -1352,7 +1540,7 @@ func (definition *ManagementPolicyDefinition) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_ManagementPolicyDefinition populates our ManagementPolicyDefinition from the provided source ManagementPolicyDefinition
-func (definition *ManagementPolicyDefinition) AssignProperties_From_ManagementPolicyDefinition(source *v20220901s.ManagementPolicyDefinition) error {
+func (definition *ManagementPolicyDefinition) AssignProperties_From_ManagementPolicyDefinition(source *storage.ManagementPolicyDefinition) error {
 
 	// Actions
 	if source.Actions != nil {
@@ -1383,13 +1571,13 @@ func (definition *ManagementPolicyDefinition) AssignProperties_From_ManagementPo
 }
 
 // AssignProperties_To_ManagementPolicyDefinition populates the provided destination ManagementPolicyDefinition from our ManagementPolicyDefinition
-func (definition *ManagementPolicyDefinition) AssignProperties_To_ManagementPolicyDefinition(destination *v20220901s.ManagementPolicyDefinition) error {
+func (definition *ManagementPolicyDefinition) AssignProperties_To_ManagementPolicyDefinition(destination *storage.ManagementPolicyDefinition) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Actions
 	if definition.Actions != nil {
-		var action v20220901s.ManagementPolicyAction
+		var action storage.ManagementPolicyAction
 		err := definition.Actions.AssignProperties_To_ManagementPolicyAction(&action)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyAction() to populate field Actions")
@@ -1401,7 +1589,7 @@ func (definition *ManagementPolicyDefinition) AssignProperties_To_ManagementPoli
 
 	// Filters
 	if definition.Filters != nil {
-		var filter v20220901s.ManagementPolicyFilter
+		var filter storage.ManagementPolicyFilter
 		err := definition.Filters.AssignProperties_To_ManagementPolicyFilter(&filter)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyFilter() to populate field Filters")
@@ -1435,14 +1623,14 @@ var _ genruntime.FromARMConverter = &ManagementPolicyDefinition_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (definition *ManagementPolicyDefinition_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyDefinition_STATUS_ARM{}
+	return &arm.ManagementPolicyDefinition_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (definition *ManagementPolicyDefinition_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyDefinition_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyDefinition_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyDefinition_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyDefinition_STATUS, got %T", armInput)
 	}
 
 	// Set property "Actions":
@@ -1472,7 +1660,7 @@ func (definition *ManagementPolicyDefinition_STATUS) PopulateFromARM(owner genru
 }
 
 // AssignProperties_From_ManagementPolicyDefinition_STATUS populates our ManagementPolicyDefinition_STATUS from the provided source ManagementPolicyDefinition_STATUS
-func (definition *ManagementPolicyDefinition_STATUS) AssignProperties_From_ManagementPolicyDefinition_STATUS(source *v20220901s.ManagementPolicyDefinition_STATUS) error {
+func (definition *ManagementPolicyDefinition_STATUS) AssignProperties_From_ManagementPolicyDefinition_STATUS(source *storage.ManagementPolicyDefinition_STATUS) error {
 
 	// Actions
 	if source.Actions != nil {
@@ -1503,13 +1691,13 @@ func (definition *ManagementPolicyDefinition_STATUS) AssignProperties_From_Manag
 }
 
 // AssignProperties_To_ManagementPolicyDefinition_STATUS populates the provided destination ManagementPolicyDefinition_STATUS from our ManagementPolicyDefinition_STATUS
-func (definition *ManagementPolicyDefinition_STATUS) AssignProperties_To_ManagementPolicyDefinition_STATUS(destination *v20220901s.ManagementPolicyDefinition_STATUS) error {
+func (definition *ManagementPolicyDefinition_STATUS) AssignProperties_To_ManagementPolicyDefinition_STATUS(destination *storage.ManagementPolicyDefinition_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Actions
 	if definition.Actions != nil {
-		var action v20220901s.ManagementPolicyAction_STATUS
+		var action storage.ManagementPolicyAction_STATUS
 		err := definition.Actions.AssignProperties_To_ManagementPolicyAction_STATUS(&action)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyAction_STATUS() to populate field Actions")
@@ -1521,7 +1709,7 @@ func (definition *ManagementPolicyDefinition_STATUS) AssignProperties_To_Managem
 
 	// Filters
 	if definition.Filters != nil {
-		var filter v20220901s.ManagementPolicyFilter_STATUS
+		var filter storage.ManagementPolicyFilter_STATUS
 		err := definition.Filters.AssignProperties_To_ManagementPolicyFilter_STATUS(&filter)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyFilter_STATUS() to populate field Filters")
@@ -1547,9 +1735,19 @@ type ManagementPolicyRule_Type string
 
 const ManagementPolicyRule_Type_Lifecycle = ManagementPolicyRule_Type("Lifecycle")
 
+// Mapping from string to ManagementPolicyRule_Type
+var managementPolicyRule_Type_Values = map[string]ManagementPolicyRule_Type{
+	"lifecycle": ManagementPolicyRule_Type_Lifecycle,
+}
+
 type ManagementPolicyRule_Type_STATUS string
 
 const ManagementPolicyRule_Type_STATUS_Lifecycle = ManagementPolicyRule_Type_STATUS("Lifecycle")
+
+// Mapping from string to ManagementPolicyRule_Type_STATUS
+var managementPolicyRule_Type_STATUS_Values = map[string]ManagementPolicyRule_Type_STATUS{
+	"lifecycle": ManagementPolicyRule_Type_STATUS_Lifecycle,
+}
 
 // Actions are applied to the filtered blobs when the execution condition is met.
 type ManagementPolicyAction struct {
@@ -1570,7 +1768,7 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 	if action == nil {
 		return nil, nil
 	}
-	result := &ManagementPolicyAction_ARM{}
+	result := &arm.ManagementPolicyAction{}
 
 	// Set property "BaseBlob":
 	if action.BaseBlob != nil {
@@ -1578,7 +1776,7 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		baseBlob := *baseBlob_ARM.(*ManagementPolicyBaseBlob_ARM)
+		baseBlob := *baseBlob_ARM.(*arm.ManagementPolicyBaseBlob)
 		result.BaseBlob = &baseBlob
 	}
 
@@ -1588,7 +1786,7 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		snapshot := *snapshot_ARM.(*ManagementPolicySnapShot_ARM)
+		snapshot := *snapshot_ARM.(*arm.ManagementPolicySnapShot)
 		result.Snapshot = &snapshot
 	}
 
@@ -1598,7 +1796,7 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		version := *version_ARM.(*ManagementPolicyVersion_ARM)
+		version := *version_ARM.(*arm.ManagementPolicyVersion)
 		result.Version = &version
 	}
 	return result, nil
@@ -1606,14 +1804,14 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (action *ManagementPolicyAction) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyAction_ARM{}
+	return &arm.ManagementPolicyAction{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (action *ManagementPolicyAction) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyAction_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyAction)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyAction_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyAction, got %T", armInput)
 	}
 
 	// Set property "BaseBlob":
@@ -1654,7 +1852,7 @@ func (action *ManagementPolicyAction) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_ManagementPolicyAction populates our ManagementPolicyAction from the provided source ManagementPolicyAction
-func (action *ManagementPolicyAction) AssignProperties_From_ManagementPolicyAction(source *v20220901s.ManagementPolicyAction) error {
+func (action *ManagementPolicyAction) AssignProperties_From_ManagementPolicyAction(source *storage.ManagementPolicyAction) error {
 
 	// BaseBlob
 	if source.BaseBlob != nil {
@@ -1697,13 +1895,13 @@ func (action *ManagementPolicyAction) AssignProperties_From_ManagementPolicyActi
 }
 
 // AssignProperties_To_ManagementPolicyAction populates the provided destination ManagementPolicyAction from our ManagementPolicyAction
-func (action *ManagementPolicyAction) AssignProperties_To_ManagementPolicyAction(destination *v20220901s.ManagementPolicyAction) error {
+func (action *ManagementPolicyAction) AssignProperties_To_ManagementPolicyAction(destination *storage.ManagementPolicyAction) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// BaseBlob
 	if action.BaseBlob != nil {
-		var baseBlob v20220901s.ManagementPolicyBaseBlob
+		var baseBlob storage.ManagementPolicyBaseBlob
 		err := action.BaseBlob.AssignProperties_To_ManagementPolicyBaseBlob(&baseBlob)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyBaseBlob() to populate field BaseBlob")
@@ -1715,7 +1913,7 @@ func (action *ManagementPolicyAction) AssignProperties_To_ManagementPolicyAction
 
 	// Snapshot
 	if action.Snapshot != nil {
-		var snapshot v20220901s.ManagementPolicySnapShot
+		var snapshot storage.ManagementPolicySnapShot
 		err := action.Snapshot.AssignProperties_To_ManagementPolicySnapShot(&snapshot)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicySnapShot() to populate field Snapshot")
@@ -1727,7 +1925,7 @@ func (action *ManagementPolicyAction) AssignProperties_To_ManagementPolicyAction
 
 	// Version
 	if action.Version != nil {
-		var version v20220901s.ManagementPolicyVersion
+		var version storage.ManagementPolicyVersion
 		err := action.Version.AssignProperties_To_ManagementPolicyVersion(&version)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyVersion() to populate field Version")
@@ -1764,14 +1962,14 @@ var _ genruntime.FromARMConverter = &ManagementPolicyAction_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (action *ManagementPolicyAction_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyAction_STATUS_ARM{}
+	return &arm.ManagementPolicyAction_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (action *ManagementPolicyAction_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyAction_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyAction_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyAction_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyAction_STATUS, got %T", armInput)
 	}
 
 	// Set property "BaseBlob":
@@ -1812,7 +2010,7 @@ func (action *ManagementPolicyAction_STATUS) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_ManagementPolicyAction_STATUS populates our ManagementPolicyAction_STATUS from the provided source ManagementPolicyAction_STATUS
-func (action *ManagementPolicyAction_STATUS) AssignProperties_From_ManagementPolicyAction_STATUS(source *v20220901s.ManagementPolicyAction_STATUS) error {
+func (action *ManagementPolicyAction_STATUS) AssignProperties_From_ManagementPolicyAction_STATUS(source *storage.ManagementPolicyAction_STATUS) error {
 
 	// BaseBlob
 	if source.BaseBlob != nil {
@@ -1855,13 +2053,13 @@ func (action *ManagementPolicyAction_STATUS) AssignProperties_From_ManagementPol
 }
 
 // AssignProperties_To_ManagementPolicyAction_STATUS populates the provided destination ManagementPolicyAction_STATUS from our ManagementPolicyAction_STATUS
-func (action *ManagementPolicyAction_STATUS) AssignProperties_To_ManagementPolicyAction_STATUS(destination *v20220901s.ManagementPolicyAction_STATUS) error {
+func (action *ManagementPolicyAction_STATUS) AssignProperties_To_ManagementPolicyAction_STATUS(destination *storage.ManagementPolicyAction_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// BaseBlob
 	if action.BaseBlob != nil {
-		var baseBlob v20220901s.ManagementPolicyBaseBlob_STATUS
+		var baseBlob storage.ManagementPolicyBaseBlob_STATUS
 		err := action.BaseBlob.AssignProperties_To_ManagementPolicyBaseBlob_STATUS(&baseBlob)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyBaseBlob_STATUS() to populate field BaseBlob")
@@ -1873,7 +2071,7 @@ func (action *ManagementPolicyAction_STATUS) AssignProperties_To_ManagementPolic
 
 	// Snapshot
 	if action.Snapshot != nil {
-		var snapshot v20220901s.ManagementPolicySnapShot_STATUS
+		var snapshot storage.ManagementPolicySnapShot_STATUS
 		err := action.Snapshot.AssignProperties_To_ManagementPolicySnapShot_STATUS(&snapshot)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicySnapShot_STATUS() to populate field Snapshot")
@@ -1885,7 +2083,7 @@ func (action *ManagementPolicyAction_STATUS) AssignProperties_To_ManagementPolic
 
 	// Version
 	if action.Version != nil {
-		var version v20220901s.ManagementPolicyVersion_STATUS
+		var version storage.ManagementPolicyVersion_STATUS
 		err := action.Version.AssignProperties_To_ManagementPolicyVersion_STATUS(&version)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyVersion_STATUS() to populate field Version")
@@ -1928,7 +2126,7 @@ func (filter *ManagementPolicyFilter) ConvertToARM(resolved genruntime.ConvertTo
 	if filter == nil {
 		return nil, nil
 	}
-	result := &ManagementPolicyFilter_ARM{}
+	result := &arm.ManagementPolicyFilter{}
 
 	// Set property "BlobIndexMatch":
 	for _, item := range filter.BlobIndexMatch {
@@ -1936,7 +2134,7 @@ func (filter *ManagementPolicyFilter) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		result.BlobIndexMatch = append(result.BlobIndexMatch, *item_ARM.(*TagFilter_ARM))
+		result.BlobIndexMatch = append(result.BlobIndexMatch, *item_ARM.(*arm.TagFilter))
 	}
 
 	// Set property "BlobTypes":
@@ -1953,14 +2151,14 @@ func (filter *ManagementPolicyFilter) ConvertToARM(resolved genruntime.ConvertTo
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *ManagementPolicyFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyFilter_ARM{}
+	return &arm.ManagementPolicyFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *ManagementPolicyFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyFilter_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyFilter, got %T", armInput)
 	}
 
 	// Set property "BlobIndexMatch":
@@ -1988,7 +2186,7 @@ func (filter *ManagementPolicyFilter) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_ManagementPolicyFilter populates our ManagementPolicyFilter from the provided source ManagementPolicyFilter
-func (filter *ManagementPolicyFilter) AssignProperties_From_ManagementPolicyFilter(source *v20220901s.ManagementPolicyFilter) error {
+func (filter *ManagementPolicyFilter) AssignProperties_From_ManagementPolicyFilter(source *storage.ManagementPolicyFilter) error {
 
 	// BlobIndexMatch
 	if source.BlobIndexMatch != nil {
@@ -2019,17 +2217,17 @@ func (filter *ManagementPolicyFilter) AssignProperties_From_ManagementPolicyFilt
 }
 
 // AssignProperties_To_ManagementPolicyFilter populates the provided destination ManagementPolicyFilter from our ManagementPolicyFilter
-func (filter *ManagementPolicyFilter) AssignProperties_To_ManagementPolicyFilter(destination *v20220901s.ManagementPolicyFilter) error {
+func (filter *ManagementPolicyFilter) AssignProperties_To_ManagementPolicyFilter(destination *storage.ManagementPolicyFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// BlobIndexMatch
 	if filter.BlobIndexMatch != nil {
-		blobIndexMatchList := make([]v20220901s.TagFilter, len(filter.BlobIndexMatch))
+		blobIndexMatchList := make([]storage.TagFilter, len(filter.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range filter.BlobIndexMatch {
 			// Shadow the loop variable to avoid aliasing
 			blobIndexMatchItem := blobIndexMatchItem
-			var blobIndexMatch v20220901s.TagFilter
+			var blobIndexMatch storage.TagFilter
 			err := blobIndexMatchItem.AssignProperties_To_TagFilter(&blobIndexMatch)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_TagFilter() to populate field BlobIndexMatch")
@@ -2076,14 +2274,14 @@ var _ genruntime.FromARMConverter = &ManagementPolicyFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *ManagementPolicyFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyFilter_STATUS_ARM{}
+	return &arm.ManagementPolicyFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *ManagementPolicyFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "BlobIndexMatch":
@@ -2111,7 +2309,7 @@ func (filter *ManagementPolicyFilter_STATUS) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_ManagementPolicyFilter_STATUS populates our ManagementPolicyFilter_STATUS from the provided source ManagementPolicyFilter_STATUS
-func (filter *ManagementPolicyFilter_STATUS) AssignProperties_From_ManagementPolicyFilter_STATUS(source *v20220901s.ManagementPolicyFilter_STATUS) error {
+func (filter *ManagementPolicyFilter_STATUS) AssignProperties_From_ManagementPolicyFilter_STATUS(source *storage.ManagementPolicyFilter_STATUS) error {
 
 	// BlobIndexMatch
 	if source.BlobIndexMatch != nil {
@@ -2142,17 +2340,17 @@ func (filter *ManagementPolicyFilter_STATUS) AssignProperties_From_ManagementPol
 }
 
 // AssignProperties_To_ManagementPolicyFilter_STATUS populates the provided destination ManagementPolicyFilter_STATUS from our ManagementPolicyFilter_STATUS
-func (filter *ManagementPolicyFilter_STATUS) AssignProperties_To_ManagementPolicyFilter_STATUS(destination *v20220901s.ManagementPolicyFilter_STATUS) error {
+func (filter *ManagementPolicyFilter_STATUS) AssignProperties_To_ManagementPolicyFilter_STATUS(destination *storage.ManagementPolicyFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// BlobIndexMatch
 	if filter.BlobIndexMatch != nil {
-		blobIndexMatchList := make([]v20220901s.TagFilter_STATUS, len(filter.BlobIndexMatch))
+		blobIndexMatchList := make([]storage.TagFilter_STATUS, len(filter.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range filter.BlobIndexMatch {
 			// Shadow the loop variable to avoid aliasing
 			blobIndexMatchItem := blobIndexMatchItem
-			var blobIndexMatch v20220901s.TagFilter_STATUS
+			var blobIndexMatch storage.TagFilter_STATUS
 			err := blobIndexMatchItem.AssignProperties_To_TagFilter_STATUS(&blobIndexMatch)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_TagFilter_STATUS() to populate field BlobIndexMatch")
@@ -2211,7 +2409,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 	if blob == nil {
 		return nil, nil
 	}
-	result := &ManagementPolicyBaseBlob_ARM{}
+	result := &arm.ManagementPolicyBaseBlob{}
 
 	// Set property "Delete":
 	if blob.Delete != nil {
@@ -2219,7 +2417,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		delete := *delete_ARM.(*DateAfterModification_ARM)
+		delete := *delete_ARM.(*arm.DateAfterModification)
 		result.Delete = &delete
 	}
 
@@ -2235,7 +2433,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		tierToArchive := *tierToArchive_ARM.(*DateAfterModification_ARM)
+		tierToArchive := *tierToArchive_ARM.(*arm.DateAfterModification)
 		result.TierToArchive = &tierToArchive
 	}
 
@@ -2245,7 +2443,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		tierToCold := *tierToCold_ARM.(*DateAfterModification_ARM)
+		tierToCold := *tierToCold_ARM.(*arm.DateAfterModification)
 		result.TierToCold = &tierToCold
 	}
 
@@ -2255,7 +2453,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		tierToCool := *tierToCool_ARM.(*DateAfterModification_ARM)
+		tierToCool := *tierToCool_ARM.(*arm.DateAfterModification)
 		result.TierToCool = &tierToCool
 	}
 
@@ -2265,7 +2463,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		tierToHot := *tierToHot_ARM.(*DateAfterModification_ARM)
+		tierToHot := *tierToHot_ARM.(*arm.DateAfterModification)
 		result.TierToHot = &tierToHot
 	}
 	return result, nil
@@ -2273,14 +2471,14 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (blob *ManagementPolicyBaseBlob) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyBaseBlob_ARM{}
+	return &arm.ManagementPolicyBaseBlob{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (blob *ManagementPolicyBaseBlob) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyBaseBlob_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyBaseBlob)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyBaseBlob_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyBaseBlob, got %T", armInput)
 	}
 
 	// Set property "Delete":
@@ -2349,7 +2547,7 @@ func (blob *ManagementPolicyBaseBlob) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_ManagementPolicyBaseBlob populates our ManagementPolicyBaseBlob from the provided source ManagementPolicyBaseBlob
-func (blob *ManagementPolicyBaseBlob) AssignProperties_From_ManagementPolicyBaseBlob(source *v20220901s.ManagementPolicyBaseBlob) error {
+func (blob *ManagementPolicyBaseBlob) AssignProperties_From_ManagementPolicyBaseBlob(source *storage.ManagementPolicyBaseBlob) error {
 
 	// Delete
 	if source.Delete != nil {
@@ -2424,13 +2622,13 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_From_ManagementPolicyBase
 }
 
 // AssignProperties_To_ManagementPolicyBaseBlob populates the provided destination ManagementPolicyBaseBlob from our ManagementPolicyBaseBlob
-func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBlob(destination *v20220901s.ManagementPolicyBaseBlob) error {
+func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBlob(destination *storage.ManagementPolicyBaseBlob) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Delete
 	if blob.Delete != nil {
-		var delete v20220901s.DateAfterModification
+		var delete storage.DateAfterModification
 		err := blob.Delete.AssignProperties_To_DateAfterModification(&delete)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field Delete")
@@ -2450,7 +2648,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 
 	// TierToArchive
 	if blob.TierToArchive != nil {
-		var tierToArchive v20220901s.DateAfterModification
+		var tierToArchive storage.DateAfterModification
 		err := blob.TierToArchive.AssignProperties_To_DateAfterModification(&tierToArchive)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToArchive")
@@ -2462,7 +2660,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 
 	// TierToCold
 	if blob.TierToCold != nil {
-		var tierToCold v20220901s.DateAfterModification
+		var tierToCold storage.DateAfterModification
 		err := blob.TierToCold.AssignProperties_To_DateAfterModification(&tierToCold)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToCold")
@@ -2474,7 +2672,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 
 	// TierToCool
 	if blob.TierToCool != nil {
-		var tierToCool v20220901s.DateAfterModification
+		var tierToCool storage.DateAfterModification
 		err := blob.TierToCool.AssignProperties_To_DateAfterModification(&tierToCool)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToCool")
@@ -2486,7 +2684,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 
 	// TierToHot
 	if blob.TierToHot != nil {
-		var tierToHot v20220901s.DateAfterModification
+		var tierToHot storage.DateAfterModification
 		err := blob.TierToHot.AssignProperties_To_DateAfterModification(&tierToHot)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToHot")
@@ -2534,14 +2732,14 @@ var _ genruntime.FromARMConverter = &ManagementPolicyBaseBlob_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (blob *ManagementPolicyBaseBlob_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyBaseBlob_STATUS_ARM{}
+	return &arm.ManagementPolicyBaseBlob_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (blob *ManagementPolicyBaseBlob_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyBaseBlob_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyBaseBlob_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyBaseBlob_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyBaseBlob_STATUS, got %T", armInput)
 	}
 
 	// Set property "Delete":
@@ -2610,7 +2808,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_ManagementPolicyBaseBlob_STATUS populates our ManagementPolicyBaseBlob_STATUS from the provided source ManagementPolicyBaseBlob_STATUS
-func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_From_ManagementPolicyBaseBlob_STATUS(source *v20220901s.ManagementPolicyBaseBlob_STATUS) error {
+func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_From_ManagementPolicyBaseBlob_STATUS(source *storage.ManagementPolicyBaseBlob_STATUS) error {
 
 	// Delete
 	if source.Delete != nil {
@@ -2685,13 +2883,13 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_From_ManagementPol
 }
 
 // AssignProperties_To_ManagementPolicyBaseBlob_STATUS populates the provided destination ManagementPolicyBaseBlob_STATUS from our ManagementPolicyBaseBlob_STATUS
-func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolicyBaseBlob_STATUS(destination *v20220901s.ManagementPolicyBaseBlob_STATUS) error {
+func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolicyBaseBlob_STATUS(destination *storage.ManagementPolicyBaseBlob_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Delete
 	if blob.Delete != nil {
-		var delete v20220901s.DateAfterModification_STATUS
+		var delete storage.DateAfterModification_STATUS
 		err := blob.Delete.AssignProperties_To_DateAfterModification_STATUS(&delete)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field Delete")
@@ -2711,7 +2909,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 
 	// TierToArchive
 	if blob.TierToArchive != nil {
-		var tierToArchive v20220901s.DateAfterModification_STATUS
+		var tierToArchive storage.DateAfterModification_STATUS
 		err := blob.TierToArchive.AssignProperties_To_DateAfterModification_STATUS(&tierToArchive)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToArchive")
@@ -2723,7 +2921,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 
 	// TierToCold
 	if blob.TierToCold != nil {
-		var tierToCold v20220901s.DateAfterModification_STATUS
+		var tierToCold storage.DateAfterModification_STATUS
 		err := blob.TierToCold.AssignProperties_To_DateAfterModification_STATUS(&tierToCold)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToCold")
@@ -2735,7 +2933,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 
 	// TierToCool
 	if blob.TierToCool != nil {
-		var tierToCool v20220901s.DateAfterModification_STATUS
+		var tierToCool storage.DateAfterModification_STATUS
 		err := blob.TierToCool.AssignProperties_To_DateAfterModification_STATUS(&tierToCool)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToCool")
@@ -2747,7 +2945,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 
 	// TierToHot
 	if blob.TierToHot != nil {
-		var tierToHot v20220901s.DateAfterModification_STATUS
+		var tierToHot storage.DateAfterModification_STATUS
 		err := blob.TierToHot.AssignProperties_To_DateAfterModification_STATUS(&tierToHot)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToHot")
@@ -2794,7 +2992,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 	if shot == nil {
 		return nil, nil
 	}
-	result := &ManagementPolicySnapShot_ARM{}
+	result := &arm.ManagementPolicySnapShot{}
 
 	// Set property "Delete":
 	if shot.Delete != nil {
@@ -2802,7 +3000,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		delete := *delete_ARM.(*DateAfterCreation_ARM)
+		delete := *delete_ARM.(*arm.DateAfterCreation)
 		result.Delete = &delete
 	}
 
@@ -2812,7 +3010,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		tierToArchive := *tierToArchive_ARM.(*DateAfterCreation_ARM)
+		tierToArchive := *tierToArchive_ARM.(*arm.DateAfterCreation)
 		result.TierToArchive = &tierToArchive
 	}
 
@@ -2822,7 +3020,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		tierToCold := *tierToCold_ARM.(*DateAfterCreation_ARM)
+		tierToCold := *tierToCold_ARM.(*arm.DateAfterCreation)
 		result.TierToCold = &tierToCold
 	}
 
@@ -2832,7 +3030,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		tierToCool := *tierToCool_ARM.(*DateAfterCreation_ARM)
+		tierToCool := *tierToCool_ARM.(*arm.DateAfterCreation)
 		result.TierToCool = &tierToCool
 	}
 
@@ -2842,7 +3040,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 		if err != nil {
 			return nil, err
 		}
-		tierToHot := *tierToHot_ARM.(*DateAfterCreation_ARM)
+		tierToHot := *tierToHot_ARM.(*arm.DateAfterCreation)
 		result.TierToHot = &tierToHot
 	}
 	return result, nil
@@ -2850,14 +3048,14 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (shot *ManagementPolicySnapShot) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicySnapShot_ARM{}
+	return &arm.ManagementPolicySnapShot{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (shot *ManagementPolicySnapShot) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicySnapShot_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicySnapShot)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicySnapShot_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicySnapShot, got %T", armInput)
 	}
 
 	// Set property "Delete":
@@ -2920,7 +3118,7 @@ func (shot *ManagementPolicySnapShot) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_ManagementPolicySnapShot populates our ManagementPolicySnapShot from the provided source ManagementPolicySnapShot
-func (shot *ManagementPolicySnapShot) AssignProperties_From_ManagementPolicySnapShot(source *v20220901s.ManagementPolicySnapShot) error {
+func (shot *ManagementPolicySnapShot) AssignProperties_From_ManagementPolicySnapShot(source *storage.ManagementPolicySnapShot) error {
 
 	// Delete
 	if source.Delete != nil {
@@ -2987,13 +3185,13 @@ func (shot *ManagementPolicySnapShot) AssignProperties_From_ManagementPolicySnap
 }
 
 // AssignProperties_To_ManagementPolicySnapShot populates the provided destination ManagementPolicySnapShot from our ManagementPolicySnapShot
-func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapShot(destination *v20220901s.ManagementPolicySnapShot) error {
+func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapShot(destination *storage.ManagementPolicySnapShot) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Delete
 	if shot.Delete != nil {
-		var delete v20220901s.DateAfterCreation
+		var delete storage.DateAfterCreation
 		err := shot.Delete.AssignProperties_To_DateAfterCreation(&delete)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field Delete")
@@ -3005,7 +3203,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 
 	// TierToArchive
 	if shot.TierToArchive != nil {
-		var tierToArchive v20220901s.DateAfterCreation
+		var tierToArchive storage.DateAfterCreation
 		err := shot.TierToArchive.AssignProperties_To_DateAfterCreation(&tierToArchive)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToArchive")
@@ -3017,7 +3215,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 
 	// TierToCold
 	if shot.TierToCold != nil {
-		var tierToCold v20220901s.DateAfterCreation
+		var tierToCold storage.DateAfterCreation
 		err := shot.TierToCold.AssignProperties_To_DateAfterCreation(&tierToCold)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCold")
@@ -3029,7 +3227,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 
 	// TierToCool
 	if shot.TierToCool != nil {
-		var tierToCool v20220901s.DateAfterCreation
+		var tierToCool storage.DateAfterCreation
 		err := shot.TierToCool.AssignProperties_To_DateAfterCreation(&tierToCool)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCool")
@@ -3041,7 +3239,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 
 	// TierToHot
 	if shot.TierToHot != nil {
-		var tierToHot v20220901s.DateAfterCreation
+		var tierToHot storage.DateAfterCreation
 		err := shot.TierToHot.AssignProperties_To_DateAfterCreation(&tierToHot)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToHot")
@@ -3085,14 +3283,14 @@ var _ genruntime.FromARMConverter = &ManagementPolicySnapShot_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (shot *ManagementPolicySnapShot_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicySnapShot_STATUS_ARM{}
+	return &arm.ManagementPolicySnapShot_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (shot *ManagementPolicySnapShot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicySnapShot_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicySnapShot_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicySnapShot_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicySnapShot_STATUS, got %T", armInput)
 	}
 
 	// Set property "Delete":
@@ -3155,7 +3353,7 @@ func (shot *ManagementPolicySnapShot_STATUS) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_ManagementPolicySnapShot_STATUS populates our ManagementPolicySnapShot_STATUS from the provided source ManagementPolicySnapShot_STATUS
-func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_From_ManagementPolicySnapShot_STATUS(source *v20220901s.ManagementPolicySnapShot_STATUS) error {
+func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_From_ManagementPolicySnapShot_STATUS(source *storage.ManagementPolicySnapShot_STATUS) error {
 
 	// Delete
 	if source.Delete != nil {
@@ -3222,13 +3420,13 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_From_ManagementPol
 }
 
 // AssignProperties_To_ManagementPolicySnapShot_STATUS populates the provided destination ManagementPolicySnapShot_STATUS from our ManagementPolicySnapShot_STATUS
-func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolicySnapShot_STATUS(destination *v20220901s.ManagementPolicySnapShot_STATUS) error {
+func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolicySnapShot_STATUS(destination *storage.ManagementPolicySnapShot_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Delete
 	if shot.Delete != nil {
-		var delete v20220901s.DateAfterCreation_STATUS
+		var delete storage.DateAfterCreation_STATUS
 		err := shot.Delete.AssignProperties_To_DateAfterCreation_STATUS(&delete)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field Delete")
@@ -3240,7 +3438,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 
 	// TierToArchive
 	if shot.TierToArchive != nil {
-		var tierToArchive v20220901s.DateAfterCreation_STATUS
+		var tierToArchive storage.DateAfterCreation_STATUS
 		err := shot.TierToArchive.AssignProperties_To_DateAfterCreation_STATUS(&tierToArchive)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToArchive")
@@ -3252,7 +3450,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 
 	// TierToCold
 	if shot.TierToCold != nil {
-		var tierToCold v20220901s.DateAfterCreation_STATUS
+		var tierToCold storage.DateAfterCreation_STATUS
 		err := shot.TierToCold.AssignProperties_To_DateAfterCreation_STATUS(&tierToCold)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCold")
@@ -3264,7 +3462,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 
 	// TierToCool
 	if shot.TierToCool != nil {
-		var tierToCool v20220901s.DateAfterCreation_STATUS
+		var tierToCool storage.DateAfterCreation_STATUS
 		err := shot.TierToCool.AssignProperties_To_DateAfterCreation_STATUS(&tierToCool)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCool")
@@ -3276,7 +3474,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 
 	// TierToHot
 	if shot.TierToHot != nil {
-		var tierToHot v20220901s.DateAfterCreation_STATUS
+		var tierToHot storage.DateAfterCreation_STATUS
 		err := shot.TierToHot.AssignProperties_To_DateAfterCreation_STATUS(&tierToHot)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToHot")
@@ -3323,7 +3521,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 	if version == nil {
 		return nil, nil
 	}
-	result := &ManagementPolicyVersion_ARM{}
+	result := &arm.ManagementPolicyVersion{}
 
 	// Set property "Delete":
 	if version.Delete != nil {
@@ -3331,7 +3529,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 		if err != nil {
 			return nil, err
 		}
-		delete := *delete_ARM.(*DateAfterCreation_ARM)
+		delete := *delete_ARM.(*arm.DateAfterCreation)
 		result.Delete = &delete
 	}
 
@@ -3341,7 +3539,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 		if err != nil {
 			return nil, err
 		}
-		tierToArchive := *tierToArchive_ARM.(*DateAfterCreation_ARM)
+		tierToArchive := *tierToArchive_ARM.(*arm.DateAfterCreation)
 		result.TierToArchive = &tierToArchive
 	}
 
@@ -3351,7 +3549,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 		if err != nil {
 			return nil, err
 		}
-		tierToCold := *tierToCold_ARM.(*DateAfterCreation_ARM)
+		tierToCold := *tierToCold_ARM.(*arm.DateAfterCreation)
 		result.TierToCold = &tierToCold
 	}
 
@@ -3361,7 +3559,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 		if err != nil {
 			return nil, err
 		}
-		tierToCool := *tierToCool_ARM.(*DateAfterCreation_ARM)
+		tierToCool := *tierToCool_ARM.(*arm.DateAfterCreation)
 		result.TierToCool = &tierToCool
 	}
 
@@ -3371,7 +3569,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 		if err != nil {
 			return nil, err
 		}
-		tierToHot := *tierToHot_ARM.(*DateAfterCreation_ARM)
+		tierToHot := *tierToHot_ARM.(*arm.DateAfterCreation)
 		result.TierToHot = &tierToHot
 	}
 	return result, nil
@@ -3379,14 +3577,14 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (version *ManagementPolicyVersion) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyVersion_ARM{}
+	return &arm.ManagementPolicyVersion{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (version *ManagementPolicyVersion) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyVersion_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyVersion)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyVersion_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyVersion, got %T", armInput)
 	}
 
 	// Set property "Delete":
@@ -3449,7 +3647,7 @@ func (version *ManagementPolicyVersion) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_ManagementPolicyVersion populates our ManagementPolicyVersion from the provided source ManagementPolicyVersion
-func (version *ManagementPolicyVersion) AssignProperties_From_ManagementPolicyVersion(source *v20220901s.ManagementPolicyVersion) error {
+func (version *ManagementPolicyVersion) AssignProperties_From_ManagementPolicyVersion(source *storage.ManagementPolicyVersion) error {
 
 	// Delete
 	if source.Delete != nil {
@@ -3516,13 +3714,13 @@ func (version *ManagementPolicyVersion) AssignProperties_From_ManagementPolicyVe
 }
 
 // AssignProperties_To_ManagementPolicyVersion populates the provided destination ManagementPolicyVersion from our ManagementPolicyVersion
-func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVersion(destination *v20220901s.ManagementPolicyVersion) error {
+func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVersion(destination *storage.ManagementPolicyVersion) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Delete
 	if version.Delete != nil {
-		var delete v20220901s.DateAfterCreation
+		var delete storage.DateAfterCreation
 		err := version.Delete.AssignProperties_To_DateAfterCreation(&delete)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field Delete")
@@ -3534,7 +3732,7 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 
 	// TierToArchive
 	if version.TierToArchive != nil {
-		var tierToArchive v20220901s.DateAfterCreation
+		var tierToArchive storage.DateAfterCreation
 		err := version.TierToArchive.AssignProperties_To_DateAfterCreation(&tierToArchive)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToArchive")
@@ -3546,7 +3744,7 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 
 	// TierToCold
 	if version.TierToCold != nil {
-		var tierToCold v20220901s.DateAfterCreation
+		var tierToCold storage.DateAfterCreation
 		err := version.TierToCold.AssignProperties_To_DateAfterCreation(&tierToCold)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCold")
@@ -3558,7 +3756,7 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 
 	// TierToCool
 	if version.TierToCool != nil {
-		var tierToCool v20220901s.DateAfterCreation
+		var tierToCool storage.DateAfterCreation
 		err := version.TierToCool.AssignProperties_To_DateAfterCreation(&tierToCool)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCool")
@@ -3570,7 +3768,7 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 
 	// TierToHot
 	if version.TierToHot != nil {
-		var tierToHot v20220901s.DateAfterCreation
+		var tierToHot storage.DateAfterCreation
 		err := version.TierToHot.AssignProperties_To_DateAfterCreation(&tierToHot)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToHot")
@@ -3614,14 +3812,14 @@ var _ genruntime.FromARMConverter = &ManagementPolicyVersion_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (version *ManagementPolicyVersion_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ManagementPolicyVersion_STATUS_ARM{}
+	return &arm.ManagementPolicyVersion_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (version *ManagementPolicyVersion_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ManagementPolicyVersion_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ManagementPolicyVersion_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ManagementPolicyVersion_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ManagementPolicyVersion_STATUS, got %T", armInput)
 	}
 
 	// Set property "Delete":
@@ -3684,7 +3882,7 @@ func (version *ManagementPolicyVersion_STATUS) PopulateFromARM(owner genruntime.
 }
 
 // AssignProperties_From_ManagementPolicyVersion_STATUS populates our ManagementPolicyVersion_STATUS from the provided source ManagementPolicyVersion_STATUS
-func (version *ManagementPolicyVersion_STATUS) AssignProperties_From_ManagementPolicyVersion_STATUS(source *v20220901s.ManagementPolicyVersion_STATUS) error {
+func (version *ManagementPolicyVersion_STATUS) AssignProperties_From_ManagementPolicyVersion_STATUS(source *storage.ManagementPolicyVersion_STATUS) error {
 
 	// Delete
 	if source.Delete != nil {
@@ -3751,13 +3949,13 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_From_ManagementP
 }
 
 // AssignProperties_To_ManagementPolicyVersion_STATUS populates the provided destination ManagementPolicyVersion_STATUS from our ManagementPolicyVersion_STATUS
-func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPolicyVersion_STATUS(destination *v20220901s.ManagementPolicyVersion_STATUS) error {
+func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPolicyVersion_STATUS(destination *storage.ManagementPolicyVersion_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Delete
 	if version.Delete != nil {
-		var delete v20220901s.DateAfterCreation_STATUS
+		var delete storage.DateAfterCreation_STATUS
 		err := version.Delete.AssignProperties_To_DateAfterCreation_STATUS(&delete)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field Delete")
@@ -3769,7 +3967,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 
 	// TierToArchive
 	if version.TierToArchive != nil {
-		var tierToArchive v20220901s.DateAfterCreation_STATUS
+		var tierToArchive storage.DateAfterCreation_STATUS
 		err := version.TierToArchive.AssignProperties_To_DateAfterCreation_STATUS(&tierToArchive)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToArchive")
@@ -3781,7 +3979,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 
 	// TierToCold
 	if version.TierToCold != nil {
-		var tierToCold v20220901s.DateAfterCreation_STATUS
+		var tierToCold storage.DateAfterCreation_STATUS
 		err := version.TierToCold.AssignProperties_To_DateAfterCreation_STATUS(&tierToCold)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCold")
@@ -3793,7 +3991,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 
 	// TierToCool
 	if version.TierToCool != nil {
-		var tierToCool v20220901s.DateAfterCreation_STATUS
+		var tierToCool storage.DateAfterCreation_STATUS
 		err := version.TierToCool.AssignProperties_To_DateAfterCreation_STATUS(&tierToCool)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCool")
@@ -3805,7 +4003,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 
 	// TierToHot
 	if version.TierToHot != nil {
-		var tierToHot v20220901s.DateAfterCreation_STATUS
+		var tierToHot storage.DateAfterCreation_STATUS
 		err := version.TierToHot.AssignProperties_To_DateAfterCreation_STATUS(&tierToHot)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToHot")
@@ -3853,7 +4051,7 @@ func (filter *TagFilter) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 	if filter == nil {
 		return nil, nil
 	}
-	result := &TagFilter_ARM{}
+	result := &arm.TagFilter{}
 
 	// Set property "Name":
 	if filter.Name != nil {
@@ -3877,14 +4075,14 @@ func (filter *TagFilter) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *TagFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &TagFilter_ARM{}
+	return &arm.TagFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *TagFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(TagFilter_ARM)
+	typedInput, ok := armInput.(arm.TagFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected TagFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.TagFilter, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -3910,7 +4108,7 @@ func (filter *TagFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 }
 
 // AssignProperties_From_TagFilter populates our TagFilter from the provided source TagFilter
-func (filter *TagFilter) AssignProperties_From_TagFilter(source *v20220901s.TagFilter) error {
+func (filter *TagFilter) AssignProperties_From_TagFilter(source *storage.TagFilter) error {
 
 	// Name
 	if source.Name != nil {
@@ -3936,7 +4134,7 @@ func (filter *TagFilter) AssignProperties_From_TagFilter(source *v20220901s.TagF
 }
 
 // AssignProperties_To_TagFilter populates the provided destination TagFilter from our TagFilter
-func (filter *TagFilter) AssignProperties_To_TagFilter(destination *v20220901s.TagFilter) error {
+func (filter *TagFilter) AssignProperties_To_TagFilter(destination *storage.TagFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3987,14 +4185,14 @@ var _ genruntime.FromARMConverter = &TagFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *TagFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &TagFilter_STATUS_ARM{}
+	return &arm.TagFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *TagFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(TagFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.TagFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected TagFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.TagFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -4020,7 +4218,7 @@ func (filter *TagFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 }
 
 // AssignProperties_From_TagFilter_STATUS populates our TagFilter_STATUS from the provided source TagFilter_STATUS
-func (filter *TagFilter_STATUS) AssignProperties_From_TagFilter_STATUS(source *v20220901s.TagFilter_STATUS) error {
+func (filter *TagFilter_STATUS) AssignProperties_From_TagFilter_STATUS(source *storage.TagFilter_STATUS) error {
 
 	// Name
 	filter.Name = genruntime.ClonePointerToString(source.Name)
@@ -4036,7 +4234,7 @@ func (filter *TagFilter_STATUS) AssignProperties_From_TagFilter_STATUS(source *v
 }
 
 // AssignProperties_To_TagFilter_STATUS populates the provided destination TagFilter_STATUS from our TagFilter_STATUS
-func (filter *TagFilter_STATUS) AssignProperties_To_TagFilter_STATUS(destination *v20220901s.TagFilter_STATUS) error {
+func (filter *TagFilter_STATUS) AssignProperties_To_TagFilter_STATUS(destination *storage.TagFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4083,7 +4281,7 @@ func (creation *DateAfterCreation) ConvertToARM(resolved genruntime.ConvertToARM
 	if creation == nil {
 		return nil, nil
 	}
-	result := &DateAfterCreation_ARM{}
+	result := &arm.DateAfterCreation{}
 
 	// Set property "DaysAfterCreationGreaterThan":
 	if creation.DaysAfterCreationGreaterThan != nil {
@@ -4101,14 +4299,14 @@ func (creation *DateAfterCreation) ConvertToARM(resolved genruntime.ConvertToARM
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (creation *DateAfterCreation) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DateAfterCreation_ARM{}
+	return &arm.DateAfterCreation{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (creation *DateAfterCreation) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DateAfterCreation_ARM)
+	typedInput, ok := armInput.(arm.DateAfterCreation)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DateAfterCreation_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DateAfterCreation, got %T", armInput)
 	}
 
 	// Set property "DaysAfterCreationGreaterThan":
@@ -4128,7 +4326,7 @@ func (creation *DateAfterCreation) PopulateFromARM(owner genruntime.ArbitraryOwn
 }
 
 // AssignProperties_From_DateAfterCreation populates our DateAfterCreation from the provided source DateAfterCreation
-func (creation *DateAfterCreation) AssignProperties_From_DateAfterCreation(source *v20220901s.DateAfterCreation) error {
+func (creation *DateAfterCreation) AssignProperties_From_DateAfterCreation(source *storage.DateAfterCreation) error {
 
 	// DaysAfterCreationGreaterThan
 	if source.DaysAfterCreationGreaterThan != nil {
@@ -4151,7 +4349,7 @@ func (creation *DateAfterCreation) AssignProperties_From_DateAfterCreation(sourc
 }
 
 // AssignProperties_To_DateAfterCreation populates the provided destination DateAfterCreation from our DateAfterCreation
-func (creation *DateAfterCreation) AssignProperties_To_DateAfterCreation(destination *v20220901s.DateAfterCreation) error {
+func (creation *DateAfterCreation) AssignProperties_To_DateAfterCreation(destination *storage.DateAfterCreation) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4197,14 +4395,14 @@ var _ genruntime.FromARMConverter = &DateAfterCreation_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (creation *DateAfterCreation_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DateAfterCreation_STATUS_ARM{}
+	return &arm.DateAfterCreation_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (creation *DateAfterCreation_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DateAfterCreation_STATUS_ARM)
+	typedInput, ok := armInput.(arm.DateAfterCreation_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DateAfterCreation_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DateAfterCreation_STATUS, got %T", armInput)
 	}
 
 	// Set property "DaysAfterCreationGreaterThan":
@@ -4224,7 +4422,7 @@ func (creation *DateAfterCreation_STATUS) PopulateFromARM(owner genruntime.Arbit
 }
 
 // AssignProperties_From_DateAfterCreation_STATUS populates our DateAfterCreation_STATUS from the provided source DateAfterCreation_STATUS
-func (creation *DateAfterCreation_STATUS) AssignProperties_From_DateAfterCreation_STATUS(source *v20220901s.DateAfterCreation_STATUS) error {
+func (creation *DateAfterCreation_STATUS) AssignProperties_From_DateAfterCreation_STATUS(source *storage.DateAfterCreation_STATUS) error {
 
 	// DaysAfterCreationGreaterThan
 	if source.DaysAfterCreationGreaterThan != nil {
@@ -4247,7 +4445,7 @@ func (creation *DateAfterCreation_STATUS) AssignProperties_From_DateAfterCreatio
 }
 
 // AssignProperties_To_DateAfterCreation_STATUS populates the provided destination DateAfterCreation_STATUS from our DateAfterCreation_STATUS
-func (creation *DateAfterCreation_STATUS) AssignProperties_To_DateAfterCreation_STATUS(destination *v20220901s.DateAfterCreation_STATUS) error {
+func (creation *DateAfterCreation_STATUS) AssignProperties_To_DateAfterCreation_STATUS(destination *storage.DateAfterCreation_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4315,7 +4513,7 @@ func (modification *DateAfterModification) ConvertToARM(resolved genruntime.Conv
 	if modification == nil {
 		return nil, nil
 	}
-	result := &DateAfterModification_ARM{}
+	result := &arm.DateAfterModification{}
 
 	// Set property "DaysAfterCreationGreaterThan":
 	if modification.DaysAfterCreationGreaterThan != nil {
@@ -4345,14 +4543,14 @@ func (modification *DateAfterModification) ConvertToARM(resolved genruntime.Conv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (modification *DateAfterModification) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DateAfterModification_ARM{}
+	return &arm.DateAfterModification{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (modification *DateAfterModification) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DateAfterModification_ARM)
+	typedInput, ok := armInput.(arm.DateAfterModification)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DateAfterModification_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DateAfterModification, got %T", armInput)
 	}
 
 	// Set property "DaysAfterCreationGreaterThan":
@@ -4384,7 +4582,7 @@ func (modification *DateAfterModification) PopulateFromARM(owner genruntime.Arbi
 }
 
 // AssignProperties_From_DateAfterModification populates our DateAfterModification from the provided source DateAfterModification
-func (modification *DateAfterModification) AssignProperties_From_DateAfterModification(source *v20220901s.DateAfterModification) error {
+func (modification *DateAfterModification) AssignProperties_From_DateAfterModification(source *storage.DateAfterModification) error {
 
 	// DaysAfterCreationGreaterThan
 	if source.DaysAfterCreationGreaterThan != nil {
@@ -4423,7 +4621,7 @@ func (modification *DateAfterModification) AssignProperties_From_DateAfterModifi
 }
 
 // AssignProperties_To_DateAfterModification populates the provided destination DateAfterModification from our DateAfterModification
-func (modification *DateAfterModification) AssignProperties_To_DateAfterModification(destination *v20220901s.DateAfterModification) error {
+func (modification *DateAfterModification) AssignProperties_To_DateAfterModification(destination *storage.DateAfterModification) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4496,14 +4694,14 @@ var _ genruntime.FromARMConverter = &DateAfterModification_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (modification *DateAfterModification_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DateAfterModification_STATUS_ARM{}
+	return &arm.DateAfterModification_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (modification *DateAfterModification_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DateAfterModification_STATUS_ARM)
+	typedInput, ok := armInput.(arm.DateAfterModification_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DateAfterModification_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DateAfterModification_STATUS, got %T", armInput)
 	}
 
 	// Set property "DaysAfterCreationGreaterThan":
@@ -4535,7 +4733,7 @@ func (modification *DateAfterModification_STATUS) PopulateFromARM(owner genrunti
 }
 
 // AssignProperties_From_DateAfterModification_STATUS populates our DateAfterModification_STATUS from the provided source DateAfterModification_STATUS
-func (modification *DateAfterModification_STATUS) AssignProperties_From_DateAfterModification_STATUS(source *v20220901s.DateAfterModification_STATUS) error {
+func (modification *DateAfterModification_STATUS) AssignProperties_From_DateAfterModification_STATUS(source *storage.DateAfterModification_STATUS) error {
 
 	// DaysAfterCreationGreaterThan
 	if source.DaysAfterCreationGreaterThan != nil {
@@ -4574,7 +4772,7 @@ func (modification *DateAfterModification_STATUS) AssignProperties_From_DateAfte
 }
 
 // AssignProperties_To_DateAfterModification_STATUS populates the provided destination DateAfterModification_STATUS from our DateAfterModification_STATUS
-func (modification *DateAfterModification_STATUS) AssignProperties_To_DateAfterModification_STATUS(destination *v20220901s.DateAfterModification_STATUS) error {
+func (modification *DateAfterModification_STATUS) AssignProperties_To_DateAfterModification_STATUS(destination *storage.DateAfterModification_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 

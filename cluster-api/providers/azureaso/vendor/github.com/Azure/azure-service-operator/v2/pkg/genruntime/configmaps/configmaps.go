@@ -11,6 +11,10 @@ import (
 )
 
 func SliceToClientObjectSlice(s []*v1.ConfigMap) []client.Object {
+	if s == nil {
+		return nil
+	}
+
 	result := make([]client.Object, 0, len(s))
 	for _, s := range s {
 		result = append(result, s)

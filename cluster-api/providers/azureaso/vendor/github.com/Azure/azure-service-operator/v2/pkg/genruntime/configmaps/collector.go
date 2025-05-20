@@ -53,11 +53,11 @@ func (c *Collector) get(dest *genruntime.ConfigMapDestination) *v1.ConfigMap {
 
 func (c *Collector) errIfKeyExists(val *v1.ConfigMap, key string) error {
 	if _, ok := val.Data[key]; ok {
-		return errors.Errorf("key collision, entry exists for key %s in Data", key)
+		return errors.Errorf("key collision, entry exists for key '%s' in Data", key)
 	}
 
 	if _, ok := val.BinaryData[key]; ok {
-		return errors.Errorf("key collision, entry exists for key %s in BinaryData", key)
+		return errors.Errorf("key collision, entry exists for key '%s' in BinaryData", key)
 	}
 
 	return nil
@@ -67,7 +67,13 @@ func (c *Collector) errIfKeyExists(val *v1.ConfigMap, key string) error {
 // been added going to the same config map (but with a different key) the new key is merged into the
 // existing map.
 func (c *Collector) AddValue(dest *genruntime.ConfigMapDestination, value string) {
-	if dest == nil || value == "" {
+	if dest == nil {
+		return
+	}
+
+	if value == "" {
+		// A dest was provided, but we couldn't find the key to match. This is an error
+		c.errors = append(c.errors, errors.Errorf("could not find value to save to '%s'", dest.String()))
 		return
 	}
 

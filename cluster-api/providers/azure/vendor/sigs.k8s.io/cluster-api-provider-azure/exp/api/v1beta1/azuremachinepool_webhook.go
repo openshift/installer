@@ -29,13 +29,12 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/feature"
-	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
-	capifeature "sigs.k8s.io/cluster-api/feature"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 )
 
 // SetupAzureMachinePoolWebhookWithManager sets up and registers the webhook with the manager.
@@ -56,7 +55,7 @@ type azureMachinePoolWebhook struct {
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (ampw *azureMachinePoolWebhook) Default(ctx context.Context, obj runtime.Object) error {
+func (ampw *azureMachinePoolWebhook) Default(_ context.Context, obj runtime.Object) error {
 	amp, ok := obj.(*AzureMachinePool)
 	if !ok {
 		return apierrors.NewBadRequest("expected an AzureMachinePool")
@@ -67,24 +66,17 @@ func (ampw *azureMachinePoolWebhook) Default(ctx context.Context, obj runtime.Ob
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-azuremachinepool,mutating=false,failurePolicy=fail,groups=infrastructure.cluster.x-k8s.io,resources=azuremachinepools,versions=v1beta1,name=validation.azuremachinepool.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (ampw *azureMachinePoolWebhook) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (ampw *azureMachinePoolWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	amp, ok := obj.(*AzureMachinePool)
 	if !ok {
 		return nil, apierrors.NewBadRequest("expected an AzureMachinePool")
 	}
-	// NOTE: AzureMachinePool is behind MachinePool feature gate flag; the webhook
-	// must prevent creating new objects in case the feature flag is disabled.
-	if !feature.Gates.Enabled(capifeature.MachinePool) {
-		return nil, field.Forbidden(
-			field.NewPath("spec"),
-			"can be set only if the MachinePool feature flag is enabled",
-		)
-	}
+
 	return nil, amp.Validate(nil, ampw.Client)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (ampw *azureMachinePoolWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (ampw *azureMachinePoolWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
 	amp, ok := newObj.(*AzureMachinePool)
 	if !ok {
 		return nil, apierrors.NewBadRequest("expected an AzureMachinePool")
@@ -93,7 +85,7 @@ func (ampw *azureMachinePoolWebhook) ValidateUpdate(ctx context.Context, oldObj,
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (ampw *azureMachinePoolWebhook) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (ampw *azureMachinePoolWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
@@ -320,7 +312,7 @@ func (amp *AzureMachinePool) ValidateOrchestrationMode(c client.Client) func() e
 				return errors.Wrap(err, "failed to parse Kubernetes version")
 			}
 			if k8sVersion.LT(semver.MustParse("1.26.0")) {
-				return errors.New(fmt.Sprintf("specified Kubernetes version %s must be >= 1.26.0 for Flexible orchestration mode", k8sVersion))
+				return fmt.Errorf("specified Kubernetes version %s must be >= 1.26.0 for Flexible orchestration mode", k8sVersion)
 			}
 		}
 

@@ -24,7 +24,8 @@ func (e *ServerExtension) ClassifyError(
 	cloudError *genericarmclient.CloudError,
 	apiVersion string,
 	log logr.Logger,
-	next extensions.ErrorClassifierFunc) (core.CloudErrorDetails, error) {
+	next extensions.ErrorClassifierFunc,
+) (core.CloudErrorDetails, error) {
 	details, err := next(cloudError)
 	if err != nil {
 		return core.CloudErrorDetails{}, err

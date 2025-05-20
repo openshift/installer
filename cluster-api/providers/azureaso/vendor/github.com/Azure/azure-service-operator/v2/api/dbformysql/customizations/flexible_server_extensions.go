@@ -11,25 +11,26 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	mysql "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501/storage"
+	mysql "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 )
 
-var _ genruntime.KubernetesExporter = &FlexibleServerExtension{}
+var _ genruntime.KubernetesSecretExporter = &FlexibleServerExtension{}
 
-func (ext *FlexibleServerExtension) ExportKubernetesResources(
+func (ext *FlexibleServerExtension) ExportKubernetesSecrets(
 	ctx context.Context,
 	obj genruntime.MetaObject,
+	additionalSecrets set.Set[string],
 	armClient *genericarmclient.GenericClient,
-	log logr.Logger) ([]client.Object, error) {
-
+	log logr.Logger,
+) (*genruntime.KubernetesSecretExportResult, error) {
 	// This has to be the current hub storage version. It will need to be updated
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*mysql.FlexibleServer)
@@ -52,7 +53,10 @@ func (ext *FlexibleServerExtension) ExportKubernetesResources(
 		return nil, err
 	}
 
-	return secrets.SliceToClientObjectSlice(secretSlice), nil
+	return &genruntime.KubernetesSecretExportResult{
+		Objs:       secrets.SliceToClientObjectSlice(secretSlice),
+		RawSecrets: nil, // No RawSecrets as all secret values are coming from status (not real secrets)
+	}, nil
 }
 
 func secretsSpecified(obj *mysql.FlexibleServer) bool {
@@ -61,17 +65,13 @@ func secretsSpecified(obj *mysql.FlexibleServer) bool {
 	}
 
 	secrets := obj.Spec.OperatorSpec.Secrets
-	if secrets.FullyQualifiedDomainName != nil {
-		return true
-	}
-
-	return false
+	return secrets.FullyQualifiedDomainName != nil
 }
 
 func secretsToWrite(obj *mysql.FlexibleServer) ([]*v1.Secret, error) {
 	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 	if operatorSpecSecrets == nil {
-		return nil, errors.Errorf("unexpected nil operatorspec")
+		return nil, nil
 	}
 
 	collector := secrets.NewCollector(obj.Namespace)

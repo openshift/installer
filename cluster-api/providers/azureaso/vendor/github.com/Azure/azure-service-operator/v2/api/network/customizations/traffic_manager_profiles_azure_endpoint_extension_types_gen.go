@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20220401 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220401"
-	v20220401s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220401/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220401/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type TrafficManagerProfilesAzureEndpointExtension struct {
 func (extension *TrafficManagerProfilesAzureEndpointExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20220401.TrafficManagerProfilesAzureEndpoint{},
-		&v20220401s.TrafficManagerProfilesAzureEndpoint{}}
+		&storage.TrafficManagerProfilesAzureEndpoint{}}
 }

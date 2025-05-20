@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +47,26 @@ func (resolver *DnsResolver) SetConditions(conditions conditions.Conditions) {
 	resolver.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &DnsResolver{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (resolver *DnsResolver) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if resolver.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return resolver.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &DnsResolver{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (resolver *DnsResolver) SecretDestinationExpressions() []*core.DestinationExpression {
+	if resolver.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return resolver.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &DnsResolver{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (resolver *DnsResolver) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-07-01"
 func (resolver DnsResolver) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-07-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -142,9 +165,10 @@ type DnsResolverList struct {
 type DnsResolver_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string  `json:"azureName,omitempty"`
-	Location        *string `json:"location,omitempty"`
-	OriginalVersion string  `json:"originalVersion,omitempty"`
+	AzureName       string                   `json:"azureName,omitempty"`
+	Location        *string                  `json:"location,omitempty"`
+	OperatorSpec    *DnsResolverOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                   `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -153,7 +177,7 @@ type DnsResolver_Spec struct {
 	Owner          *genruntime.KnownResourceReference `group:"resources.azure.com" json:"owner,omitempty" kind:"ResourceGroup"`
 	PropertyBag    genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
 	Tags           map[string]string                  `json:"tags,omitempty"`
-	VirtualNetwork *DnsresolverSubResource            `json:"virtualNetwork,omitempty"`
+	VirtualNetwork *SubResource                       `json:"virtualNetwork,omitempty"`
 }
 
 var _ genruntime.ConvertibleSpec = &DnsResolver_Spec{}
@@ -179,19 +203,19 @@ func (resolver *DnsResolver_Spec) ConvertSpecTo(destination genruntime.Convertib
 // Storage version of v1api20220701.DnsResolver_STATUS
 // Describes a DNS resolver.
 type DnsResolver_STATUS struct {
-	Conditions        []conditions.Condition         `json:"conditions,omitempty"`
-	DnsResolverState  *string                        `json:"dnsResolverState,omitempty"`
-	Etag              *string                        `json:"etag,omitempty"`
-	Id                *string                        `json:"id,omitempty"`
-	Location          *string                        `json:"location,omitempty"`
-	Name              *string                        `json:"name,omitempty"`
-	PropertyBag       genruntime.PropertyBag         `json:"$propertyBag,omitempty"`
-	ProvisioningState *string                        `json:"provisioningState,omitempty"`
-	ResourceGuid      *string                        `json:"resourceGuid,omitempty"`
-	SystemData        *SystemData_STATUS             `json:"systemData,omitempty"`
-	Tags              map[string]string              `json:"tags,omitempty"`
-	Type              *string                        `json:"type,omitempty"`
-	VirtualNetwork    *DnsresolverSubResource_STATUS `json:"virtualNetwork,omitempty"`
+	Conditions        []conditions.Condition `json:"conditions,omitempty"`
+	DnsResolverState  *string                `json:"dnsResolverState,omitempty"`
+	Etag              *string                `json:"etag,omitempty"`
+	Id                *string                `json:"id,omitempty"`
+	Location          *string                `json:"location,omitempty"`
+	Name              *string                `json:"name,omitempty"`
+	PropertyBag       genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	ProvisioningState *string                `json:"provisioningState,omitempty"`
+	ResourceGuid      *string                `json:"resourceGuid,omitempty"`
+	SystemData        *SystemData_STATUS     `json:"systemData,omitempty"`
+	Tags              map[string]string      `json:"tags,omitempty"`
+	Type              *string                `json:"type,omitempty"`
+	VirtualNetwork    *SubResource_STATUS    `json:"virtualNetwork,omitempty"`
 }
 
 var _ genruntime.ConvertibleStatus = &DnsResolver_STATUS{}
@@ -212,6 +236,14 @@ func (resolver *DnsResolver_STATUS) ConvertStatusTo(destination genruntime.Conve
 	}
 
 	return destination.ConvertStatusFrom(resolver)
+}
+
+// Storage version of v1api20220701.DnsResolverOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type DnsResolverOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

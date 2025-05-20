@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,8 +32,8 @@ import (
 type VirtualMachineScaleSetsExtension struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              VirtualMachineScaleSets_Extension_Spec   `json:"spec,omitempty"`
-	Status            VirtualMachineScaleSets_Extension_STATUS `json:"status,omitempty"`
+	Spec              VirtualMachineScaleSetsExtension_Spec   `json:"spec,omitempty"`
+	Status            VirtualMachineScaleSetsExtension_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &VirtualMachineScaleSetsExtension{}
@@ -45,6 +48,26 @@ func (extension *VirtualMachineScaleSetsExtension) SetConditions(conditions cond
 	extension.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &VirtualMachineScaleSetsExtension{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (extension *VirtualMachineScaleSetsExtension) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if extension.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return extension.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &VirtualMachineScaleSetsExtension{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (extension *VirtualMachineScaleSetsExtension) SecretDestinationExpressions() []*core.DestinationExpression {
+	if extension.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return extension.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &VirtualMachineScaleSetsExtension{}
 
 // AzureName returns the Azure name of the resource
@@ -54,7 +77,7 @@ func (extension *VirtualMachineScaleSetsExtension) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-03-01"
 func (extension VirtualMachineScaleSetsExtension) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-03-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -88,7 +111,7 @@ func (extension *VirtualMachineScaleSetsExtension) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (extension *VirtualMachineScaleSetsExtension) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &VirtualMachineScaleSets_Extension_STATUS{}
+	return &VirtualMachineScaleSetsExtension_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -100,13 +123,13 @@ func (extension *VirtualMachineScaleSetsExtension) Owner() *genruntime.ResourceR
 // SetStatus sets the status of this resource
 func (extension *VirtualMachineScaleSetsExtension) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*VirtualMachineScaleSets_Extension_STATUS); ok {
+	if st, ok := status.(*VirtualMachineScaleSetsExtension_STATUS); ok {
 		extension.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st VirtualMachineScaleSets_Extension_STATUS
+	var st VirtualMachineScaleSetsExtension_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -139,16 +162,17 @@ type VirtualMachineScaleSetsExtensionList struct {
 	Items           []VirtualMachineScaleSetsExtension `json:"items"`
 }
 
-// Storage version of v1api20220301.VirtualMachineScaleSets_Extension_Spec
-type VirtualMachineScaleSets_Extension_Spec struct {
+// Storage version of v1api20220301.VirtualMachineScaleSetsExtension_Spec
+type VirtualMachineScaleSetsExtension_Spec struct {
 	AutoUpgradeMinorVersion *bool `json:"autoUpgradeMinorVersion,omitempty"`
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName              string  `json:"azureName,omitempty"`
-	EnableAutomaticUpgrade *bool   `json:"enableAutomaticUpgrade,omitempty"`
-	ForceUpdateTag         *string `json:"forceUpdateTag,omitempty"`
-	OriginalVersion        string  `json:"originalVersion,omitempty"`
+	AzureName              string                                        `json:"azureName,omitempty"`
+	EnableAutomaticUpgrade *bool                                         `json:"enableAutomaticUpgrade,omitempty"`
+	ForceUpdateTag         *string                                       `json:"forceUpdateTag,omitempty"`
+	OperatorSpec           *VirtualMachineScaleSetsExtensionOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion        string                                        `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -166,10 +190,10 @@ type VirtualMachineScaleSets_Extension_Spec struct {
 	TypeHandlerVersion            *string                            `json:"typeHandlerVersion,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &VirtualMachineScaleSets_Extension_Spec{}
+var _ genruntime.ConvertibleSpec = &VirtualMachineScaleSetsExtension_Spec{}
 
-// ConvertSpecFrom populates our VirtualMachineScaleSets_Extension_Spec from the provided source
-func (extension *VirtualMachineScaleSets_Extension_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our VirtualMachineScaleSetsExtension_Spec from the provided source
+func (extension *VirtualMachineScaleSetsExtension_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == extension {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -177,8 +201,8 @@ func (extension *VirtualMachineScaleSets_Extension_Spec) ConvertSpecFrom(source 
 	return source.ConvertSpecTo(extension)
 }
 
-// ConvertSpecTo populates the provided destination from our VirtualMachineScaleSets_Extension_Spec
-func (extension *VirtualMachineScaleSets_Extension_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our VirtualMachineScaleSetsExtension_Spec
+func (extension *VirtualMachineScaleSetsExtension_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == extension {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -186,8 +210,8 @@ func (extension *VirtualMachineScaleSets_Extension_Spec) ConvertSpecTo(destinati
 	return destination.ConvertSpecFrom(extension)
 }
 
-// Storage version of v1api20220301.VirtualMachineScaleSets_Extension_STATUS
-type VirtualMachineScaleSets_Extension_STATUS struct {
+// Storage version of v1api20220301.VirtualMachineScaleSetsExtension_STATUS
+type VirtualMachineScaleSetsExtension_STATUS struct {
 	AutoUpgradeMinorVersion       *bool                           `json:"autoUpgradeMinorVersion,omitempty"`
 	Conditions                    []conditions.Condition          `json:"conditions,omitempty"`
 	EnableAutomaticUpgrade        *bool                           `json:"enableAutomaticUpgrade,omitempty"`
@@ -206,10 +230,10 @@ type VirtualMachineScaleSets_Extension_STATUS struct {
 	TypeHandlerVersion            *string                         `json:"typeHandlerVersion,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &VirtualMachineScaleSets_Extension_STATUS{}
+var _ genruntime.ConvertibleStatus = &VirtualMachineScaleSetsExtension_STATUS{}
 
-// ConvertStatusFrom populates our VirtualMachineScaleSets_Extension_STATUS from the provided source
-func (extension *VirtualMachineScaleSets_Extension_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our VirtualMachineScaleSetsExtension_STATUS from the provided source
+func (extension *VirtualMachineScaleSetsExtension_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == extension {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -217,8 +241,8 @@ func (extension *VirtualMachineScaleSets_Extension_STATUS) ConvertStatusFrom(sou
 	return source.ConvertStatusTo(extension)
 }
 
-// ConvertStatusTo populates the provided destination from our VirtualMachineScaleSets_Extension_STATUS
-func (extension *VirtualMachineScaleSets_Extension_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our VirtualMachineScaleSetsExtension_STATUS
+func (extension *VirtualMachineScaleSetsExtension_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == extension {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -240,6 +264,14 @@ type KeyVaultSecretReference_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	SecretUrl   *string                `json:"secretUrl,omitempty"`
 	SourceVault *SubResource_STATUS    `json:"sourceVault,omitempty"`
+}
+
+// Storage version of v1api20220301.VirtualMachineScaleSetsExtensionOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type VirtualMachineScaleSetsExtensionOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

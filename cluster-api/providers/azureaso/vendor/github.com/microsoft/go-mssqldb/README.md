@@ -65,6 +65,9 @@ Other supported formats are listed below.
 * `ApplicationIntent` - Can be given the value `ReadOnly` to initiate a read-only connection to an Availability Group listener. The `database` must be specified when connecting with `Application Intent` set to `ReadOnly`.
 * `protocol` - forces use of a protocol. Make sure the corresponding package is imported.
 * `columnencryption` or `column encryption setting` - a boolean value indicating whether Always Encrypted should be enabled on the connection.
+* `multisubnetfailover`
+  * `true` (Default) Client attempt to connect to all IPs simultaneously. 
+  * `false` Client attempts to connect to IPs in serial.
 
 ### Connection parameters for namedpipe package
 * `pipe`  - If set, no Browser query is made and named pipe used will be `\\<host>\pipe\<pipe>`
@@ -124,10 +127,10 @@ The package supports authentication via 3 methods.
 ### Kerberos Parameters
 
 * `authenticator` - set this to `krb5` to enable kerberos authentication. If this is not present, the default provider would be `ntlm` for unix and `winsspi` for windows.
-* `krb5-configfile` (mandatory) - path to kerberos configuration file. 
-* `krb5-realm` (required with keytab and raw credentials) - Domain name for kerberos authentication. 
-* `krb5-keytabfile` - path to Keytab file.
-* `krb5-credcachefile` - path to Credential cache.
+* `krb5-configfile` (optional) - path to kerberos configuration file. Defaults to `/etc/krb5.conf`. Can also be set using `KRB5_CONFIG` environment variable.
+* `krb5-realm` (required with keytab and raw credentials) - Domain name for kerberos authentication. Omit this parameter if the realm is part of the user name like `username@REALM`.
+* `krb5-keytabfile` - path to Keytab file. Can also be set using environment variable `KRB5_KTNAME`. If no parameter or environment variable is set, the `DefaultClientKeytabName` value from the krb5 config file is used.
+* `krb5-credcachefile` - path to Credential cache. Can also be set using environment variable `KRBCCNAME`.
 * `krb5-dnslookupkdc` - Optional parameter in all contexts. Set to lookup KDCs in DNS. Boolean. Default is true. 
 * `krb5-udppreferencelimit` - Optional parameter in all contexts. 1 means to always use tcp. MIT krb5 has a default value of 1465, and it prevents user setting more than 32700. Integer. Default is 1.
   
@@ -201,6 +204,16 @@ For further information on usage:
 
 Azure Active Directory authentication uses temporary authentication tokens to authenticate.
 The `mssql` package does not provide an implementation to obtain tokens: instead, import the `azuread` package and use driver name `azuresql`. This driver uses [azidentity](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#section-readme) to acquire tokens using a variety of credential types.
+
+To reduce friction in local development, `ActiveDirectoryDefault` can authenticate as the user signed into the Azure CLI.
+
+Run the following command to sign into the Azure CLI before running your application using the `ActiveDirectoryDefault` connection string parameter:
+
+```azurecli
+az login
+```
+
+Azure CLI authentication isn't recommended for applications running in Azure. More details are available via the [Azure authentication with the Azure Identity module for Go](https://learn.microsoft.com/en-us/azure/developer/go/azure-sdk-authentication) tutorial.
 
 The credential type is determined by the new `fedauth` connection string parameter.
 
@@ -414,9 +427,8 @@ If the correct key provider is included in your application, decryption of encry
 
 Encryption of parameters passed to `Exec` and `Query` variants requires an extra round trip per query to fetch the encryption metadata. If the error returned by a query attempt indicates a type mismatch between the parameter and the destination table, most likely your input type is not a strict match for the SQL Server data type of the destination. You may be using a Go `string` when you need to use one of the driver-specific aliases like `VarChar` or `NVarCharMax`.
 
-*** NOTE *** - Currently `char` and `varchar` types do not include a collation parameter component so can't be used for inserting encrypted values. Also, using a nullable sql package type like `sql.NullableInt32` to pass a `NULL` value for an encrypted column will not work unless the encrypted column type is `nvarchar`. 
+*** NOTE *** - Currently `char` and `varchar` types do not include a collation parameter component so can't be used for inserting encrypted values. 
 https://github.com/microsoft/go-mssqldb/issues/129
-https://github.com/microsoft/go-mssqldb/issues/130
 
 
 ### Local certificate AE key provider
@@ -464,6 +476,7 @@ Constrain the provider to an allowed list of key vaults by appending vault host 
 * Supports connections to AlwaysOn Availability Group listeners, including re-direction to read-only replicas.
 * Supports query notifications
 * Supports Kerberos Authentication
+* Supports handling the `uniqueidentifier` data type with the `UniqueIdentifier` and `NullUniqueIdentifier` go types
 * Pluggable Dialer implementations through `msdsn.ProtocolParsers` and `msdsn.ProtocolDialers`
 * A `namedpipe` package to support connections using named pipes (np:) on Windows
 * A `sharedmemory` package to support connections using shared memory (lpc:) on Windows

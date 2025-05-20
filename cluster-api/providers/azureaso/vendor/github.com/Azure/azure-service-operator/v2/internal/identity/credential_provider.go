@@ -72,18 +72,33 @@ type CredentialProvider interface {
 	GetCredential(ctx context.Context, obj genruntime.MetaObject) (*Credential, error)
 }
 
+type CredentialProviderOptions struct {
+	TokenProvider TokenCredentialProvider
+}
+
 type credentialProvider struct {
-	globalCredential *Credential
-	kubeClient       kubeclient.Client
+	globalCredential        *Credential
+	kubeClient              kubeclient.Client
+	tokenCredentialProvider TokenCredentialProvider
 }
 
 func NewCredentialProvider(
 	globalCredential *Credential,
 	kubeClient kubeclient.Client,
+	opts *CredentialProviderOptions,
 ) CredentialProvider {
+	if opts == nil {
+		opts = &CredentialProviderOptions{}
+	}
+
+	if opts.TokenProvider == nil {
+		opts.TokenProvider = DefaultTokenCredentialProvider()
+	}
+
 	return &credentialProvider{
-		kubeClient:       kubeClient,
-		globalCredential: globalCredential,
+		kubeClient:              kubeClient,
+		globalCredential:        globalCredential,
+		tokenCredentialProvider: opts.TokenProvider,
 	}
 }
 
@@ -226,7 +241,7 @@ func (c *credentialProvider) newCredentialFromSecret(secret *v1.Secret) (*Creden
 	}
 
 	if clientSecret, hasClientSecret := secret.Data[config.AzureClientSecret]; hasClientSecret {
-		tokenCredential, err := azidentity.NewClientSecretCredential(string(tenantID), string(clientID), string(clientSecret), nil)
+		tokenCredential, err := c.tokenCredentialProvider.NewClientSecretCredential(string(tenantID), string(clientID), string(clientSecret), nil)
 		if err != nil {
 			return nil, errors.Wrap(err, errors.Errorf("invalid Client Secret Credential for %q encountered", nsName).Error())
 		}
@@ -245,7 +260,7 @@ func (c *credentialProvider) newCredentialFromSecret(secret *v1.Secret) (*Creden
 			clientCertPassword = p
 		}
 
-		tokenCredential, err := NewClientCertificateCredential(string(tenantID), string(clientID), clientCert, clientCertPassword)
+		tokenCredential, err := c.tokenCredentialProvider.NewClientCertificateCredential(string(tenantID), string(clientID), clientCert, clientCertPassword)
 		if err != nil {
 			return nil, errors.Wrap(err, errors.Errorf("invalid Client Certificate Credential for %q encountered", nsName).Error())
 		}
@@ -262,15 +277,13 @@ func (c *credentialProvider) newCredentialFromSecret(secret *v1.Secret) (*Creden
 		authMode, err := authModeOrDefault(string(value))
 		if err != nil {
 			return nil, errors.Wrap(err, errors.Errorf("invalid identity auth mode for %q encountered", nsName).Error())
-
 		}
 
 		if authMode == config.PodIdentityAuthMode {
-			tokenCredential, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+			tokenCredential, err := c.tokenCredentialProvider.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
 				ClientOptions: azcore.ClientOptions{},
 				ID:            azidentity.ClientID(clientID),
 			})
-
 			if err != nil {
 				return nil, errors.Wrap(err, errors.Errorf("invalid Managed Identity for %q encountered", nsName).Error())
 			}
@@ -285,7 +298,7 @@ func (c *credentialProvider) newCredentialFromSecret(secret *v1.Secret) (*Creden
 	}
 
 	// Default to Workload Identity
-	tokenCredential, err := azidentity.NewWorkloadIdentityCredential(&azidentity.WorkloadIdentityCredentialOptions{
+	tokenCredential, err := c.tokenCredentialProvider.NewWorkloadIdentityCredential(&azidentity.WorkloadIdentityCredentialOptions{
 		ClientID:      string(clientID),
 		TenantID:      string(tenantID),
 		TokenFilePath: FederatedTokenFilePath,

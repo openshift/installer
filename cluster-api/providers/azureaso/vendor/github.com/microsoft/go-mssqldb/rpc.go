@@ -73,7 +73,7 @@ func sendRpc(buf *tdsBuffer, headers []headerStruct, proc procId, flags uint16, 
 		if err = binary.Write(buf, binary.LittleEndian, param.Flags); err != nil {
 			return
 		}
-		err = writeTypeInfo(buf, &param.ti)
+		err = writeTypeInfo(buf, &param.ti, (param.Flags&fByRevValue) != 0)
 		if err != nil {
 			return
 		}
@@ -82,7 +82,7 @@ func sendRpc(buf *tdsBuffer, headers []headerStruct, proc procId, flags uint16, 
 			return
 		}
 		if (param.Flags & fEncrypted) == fEncrypted {
-			err = writeTypeInfo(buf, &param.tiOriginal)
+			err = writeTypeInfo(buf, &param.tiOriginal, false)
 			if err != nil {
 				return
 			}

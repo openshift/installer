@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type RuleSet struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Profiles_RuleSet_Spec   `json:"spec,omitempty"`
-	Status            Profiles_RuleSet_STATUS `json:"status,omitempty"`
+	Spec              RuleSet_Spec   `json:"spec,omitempty"`
+	Status            RuleSet_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &RuleSet{}
@@ -44,6 +47,26 @@ func (ruleSet *RuleSet) SetConditions(conditions conditions.Conditions) {
 	ruleSet.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &RuleSet{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (ruleSet *RuleSet) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if ruleSet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return ruleSet.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &RuleSet{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (ruleSet *RuleSet) SecretDestinationExpressions() []*core.DestinationExpression {
+	if ruleSet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return ruleSet.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &RuleSet{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (ruleSet *RuleSet) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-05-01"
 func (ruleSet RuleSet) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-05-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +110,7 @@ func (ruleSet *RuleSet) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (ruleSet *RuleSet) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Profiles_RuleSet_STATUS{}
+	return &RuleSet_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +122,13 @@ func (ruleSet *RuleSet) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (ruleSet *RuleSet) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Profiles_RuleSet_STATUS); ok {
+	if st, ok := status.(*RuleSet_STATUS); ok {
 		ruleSet.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Profiles_RuleSet_STATUS
+	var st RuleSet_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -138,12 +161,13 @@ type RuleSetList struct {
 	Items           []RuleSet `json:"items"`
 }
 
-// Storage version of v1api20230501.Profiles_RuleSet_Spec
-type Profiles_RuleSet_Spec struct {
+// Storage version of v1api20230501.RuleSet_Spec
+type RuleSet_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string `json:"azureName,omitempty"`
-	OriginalVersion string `json:"originalVersion,omitempty"`
+	AzureName       string               `json:"azureName,omitempty"`
+	OperatorSpec    *RuleSetOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string               `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -153,10 +177,10 @@ type Profiles_RuleSet_Spec struct {
 	PropertyBag genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Profiles_RuleSet_Spec{}
+var _ genruntime.ConvertibleSpec = &RuleSet_Spec{}
 
-// ConvertSpecFrom populates our Profiles_RuleSet_Spec from the provided source
-func (ruleSet *Profiles_RuleSet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our RuleSet_Spec from the provided source
+func (ruleSet *RuleSet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == ruleSet {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -164,8 +188,8 @@ func (ruleSet *Profiles_RuleSet_Spec) ConvertSpecFrom(source genruntime.Converti
 	return source.ConvertSpecTo(ruleSet)
 }
 
-// ConvertSpecTo populates the provided destination from our Profiles_RuleSet_Spec
-func (ruleSet *Profiles_RuleSet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our RuleSet_Spec
+func (ruleSet *RuleSet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == ruleSet {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -173,8 +197,8 @@ func (ruleSet *Profiles_RuleSet_Spec) ConvertSpecTo(destination genruntime.Conve
 	return destination.ConvertSpecFrom(ruleSet)
 }
 
-// Storage version of v1api20230501.Profiles_RuleSet_STATUS
-type Profiles_RuleSet_STATUS struct {
+// Storage version of v1api20230501.RuleSet_STATUS
+type RuleSet_STATUS struct {
 	Conditions        []conditions.Condition `json:"conditions,omitempty"`
 	DeploymentStatus  *string                `json:"deploymentStatus,omitempty"`
 	Id                *string                `json:"id,omitempty"`
@@ -186,10 +210,10 @@ type Profiles_RuleSet_STATUS struct {
 	Type              *string                `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Profiles_RuleSet_STATUS{}
+var _ genruntime.ConvertibleStatus = &RuleSet_STATUS{}
 
-// ConvertStatusFrom populates our Profiles_RuleSet_STATUS from the provided source
-func (ruleSet *Profiles_RuleSet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our RuleSet_STATUS from the provided source
+func (ruleSet *RuleSet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == ruleSet {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -197,13 +221,21 @@ func (ruleSet *Profiles_RuleSet_STATUS) ConvertStatusFrom(source genruntime.Conv
 	return source.ConvertStatusTo(ruleSet)
 }
 
-// ConvertStatusTo populates the provided destination from our Profiles_RuleSet_STATUS
-func (ruleSet *Profiles_RuleSet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our RuleSet_STATUS
+func (ruleSet *RuleSet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == ruleSet {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(ruleSet)
+}
+
+// Storage version of v1api20230501.RuleSetOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type RuleSetOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {
