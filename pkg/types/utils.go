@@ -62,7 +62,7 @@ func GetClusterProfileName() features.ClusterProfileName {
 // identity should be created by the installer, based on the
 // install config values.
 func (c *InstallConfig) CreateAzureIdentity() bool {
-	if c.Azure == nil {
+	if c.Azure == nil || c.Azure.CloudName == azure.StackCloud {
 		return false
 	}
 
