@@ -13,12 +13,16 @@ import (
 
 // Lists the instance profiles that have the specified path prefix. If there are
 // none, the operation returns an empty list. For more information about instance
-// profiles, see Using instance profiles (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html)
-// in the IAM User Guide. IAM resource-listing operations return a subset of the
-// available attributes for the resource. For example, this operation does not
-// return tags, even though they are an attribute of the returned object. To view
-// all of the information for an instance profile, see GetInstanceProfile . You can
-// paginate the results using the MaxItems and Marker parameters.
+// profiles, see [Using instance profiles]in the IAM User Guide.
+//
+// IAM resource-listing operations return a subset of the available attributes for
+// the resource. For example, this operation does not return tags, even though they
+// are an attribute of the returned object. To view all of the information for an
+// instance profile, see GetInstanceProfile.
+//
+// You can paginate the results using the MaxItems and Marker parameters.
+//
+// [Using instance profiles]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
 func (c *Client) ListInstanceProfiles(ctx context.Context, params *ListInstanceProfilesInput, optFns ...func(*Options)) (*ListInstanceProfilesOutput, error) {
 	if params == nil {
 		params = &ListInstanceProfilesInput{}
@@ -44,22 +48,27 @@ type ListInstanceProfilesInput struct {
 
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true . If you do not include this
-	// parameter, the number of items defaults to 100. Note that IAM might return fewer
-	// results, even when there are more results available. In that case, the
-	// IsTruncated response element returns true , and Marker contains a value to
-	// include in the subsequent call that tells the service where to continue from.
+	// specify, the IsTruncated response element is true .
+	//
+	// If you do not include this parameter, the number of items defaults to 100. Note
+	// that IAM might return fewer results, even when there are more results available.
+	// In that case, the IsTruncated response element returns true , and Marker
+	// contains a value to include in the subsequent call that tells the service where
+	// to continue from.
 	MaxItems *int32
 
-	// The path prefix for filtering the results. For example, the prefix
+	//  The path prefix for filtering the results. For example, the prefix
 	// /application_abc/component_xyz/ gets all instance profiles whose path starts
-	// with /application_abc/component_xyz/ . This parameter is optional. If it is not
-	// included, it defaults to a slash (/), listing all instance profiles. This
-	// parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex) )
-	// a string of characters consisting of either a forward slash (/) by itself or a
-	// string that must begin and end with forward slashes. In addition, it can contain
-	// any ASCII character from the ! ( \u0021 ) through the DEL character ( \u007F ),
-	// including most punctuation characters, digits, and upper and lowercased letters.
+	// with /application_abc/component_xyz/ .
+	//
+	// This parameter is optional. If it is not included, it defaults to a slash (/),
+	// listing all instance profiles. This parameter allows (through its [regex pattern]) a string of
+	// characters consisting of either a forward slash (/) by itself or a string that
+	// must begin and end with forward slashes. In addition, it can contain any ASCII
+	// character from the ! ( \u0021 ) through the DEL character ( \u007F ), including
+	// most punctuation characters, digits, and upper and lowercased letters.
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	PathPrefix *string
 
 	noSmithyDocumentSerde
@@ -134,6 +143,9 @@ func (c *Client) addOperationListInstanceProfilesMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -144,6 +156,15 @@ func (c *Client) addOperationListInstanceProfilesMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListInstanceProfiles(options.Region), middleware.Before); err != nil {
@@ -164,27 +185,33 @@ func (c *Client) addOperationListInstanceProfilesMiddlewares(stack *middleware.S
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListInstanceProfilesAPIClient is a client that implements the
-// ListInstanceProfiles operation.
-type ListInstanceProfilesAPIClient interface {
-	ListInstanceProfiles(context.Context, *ListInstanceProfilesInput, ...func(*Options)) (*ListInstanceProfilesOutput, error)
-}
-
-var _ ListInstanceProfilesAPIClient = (*Client)(nil)
 
 // ListInstanceProfilesPaginatorOptions is the paginator options for
 // ListInstanceProfiles
 type ListInstanceProfilesPaginatorOptions struct {
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true . If you do not include this
-	// parameter, the number of items defaults to 100. Note that IAM might return fewer
-	// results, even when there are more results available. In that case, the
-	// IsTruncated response element returns true , and Marker contains a value to
-	// include in the subsequent call that tells the service where to continue from.
+	// specify, the IsTruncated response element is true .
+	//
+	// If you do not include this parameter, the number of items defaults to 100. Note
+	// that IAM might return fewer results, even when there are more results available.
+	// In that case, the IsTruncated response element returns true , and Marker
+	// contains a value to include in the subsequent call that tells the service where
+	// to continue from.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -245,6 +272,9 @@ func (p *ListInstanceProfilesPaginator) NextPage(ctx context.Context, optFns ...
 	}
 	params.MaxItems = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListInstanceProfiles(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -263,6 +293,14 @@ func (p *ListInstanceProfilesPaginator) NextPage(ctx context.Context, optFns ...
 
 	return result, nil
 }
+
+// ListInstanceProfilesAPIClient is a client that implements the
+// ListInstanceProfiles operation.
+type ListInstanceProfilesAPIClient interface {
+	ListInstanceProfiles(context.Context, *ListInstanceProfilesInput, ...func(*Options)) (*ListInstanceProfilesOutput, error)
+}
+
+var _ ListInstanceProfilesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListInstanceProfiles(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
