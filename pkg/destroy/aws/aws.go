@@ -213,12 +213,12 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 
 	iamClient := iam.New(awsSession)
 	iamRoleSearch := &IamRoleSearch{
-		Client:  iamClient,
+		Client:  o.IAMClient,
 		Filters: o.Filters,
 		Logger:  o.Logger,
 	}
 	iamUserSearch := &IamUserSearch{
-		client:  iamClient,
+		client:  o.IAMClient,
 		filters: o.Filters,
 		logger:  o.Logger,
 	}
@@ -579,7 +579,7 @@ func (o *ClusterUninstaller) deleteARN(ctx context.Context, session *session.Ses
 	case "elasticloadbalancing":
 		return o.deleteElasticLoadBalancing(ctx, session, arn, logger)
 	case "iam":
-		return deleteIAM(ctx, session, arn, logger)
+		return o.deleteIAM(ctx, o.IAMClient, arn, logger)
 	case "route53":
 		return deleteRoute53(ctx, session, arn, logger)
 	case "s3":
