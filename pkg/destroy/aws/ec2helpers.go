@@ -13,7 +13,6 @@ import (
 	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/smithy-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -930,13 +929,4 @@ func deleteEgressOnlyInternetGateway(ctx context.Context, client *ec2v2.Client, 
 
 	logger.Info("Deleted")
 	return nil
-}
-
-// HandleErrorCode takes the error and extracts the error code if it was successfully cast as an API Error.
-func HandleErrorCode(err error) string {
-	var apiErr smithy.APIError
-	if errors.As(err, &apiErr) {
-		return apiErr.ErrorCode()
-	}
-	return ""
 }
