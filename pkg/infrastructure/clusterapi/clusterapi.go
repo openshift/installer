@@ -704,14 +704,14 @@ func warnIfFalsyInfraConditions(ctx context.Context, objRef *corev1.ObjectRefere
 	apiVersion, kind := objRef.GroupVersionKind().ToAPIVersionAndKind()
 	objInfo := fmt.Sprintf("apiVersion=%s, kind=%s, namespace=%s, name=%s", apiVersion, kind, objRef.Namespace, objRef.Name)
 
-	logrus.Debugf("Gathering conditions for %s", objInfo)
+	logrus.Infof("Gathering conditions for %s", objInfo)
 	conditions, err := gatherInfraConditions(ctx, objRef, cl)
 	if err != nil {
 		logrus.Warnf("Failed to gather conditions: %s", err.Error())
 		return
 	}
 
-	logrus.Debugf("Checking conditions for %s", objInfo)
+	logrus.Infof("Checking conditions for %s", objInfo)
 	if len(conditions) > 0 {
 		var falsyConditions clusterv1.Conditions
 		for _, condition := range conditions {
@@ -721,13 +721,13 @@ func warnIfFalsyInfraConditions(ctx context.Context, objRef *corev1.ObjectRefere
 		}
 
 		if len(falsyConditions) == 0 {
-			logrus.Debugf("All conditions are satisfied")
+			logrus.Infof("All conditions are satisfied")
 		}
 		for _, condition := range falsyConditions {
 			logrus.Warnf("Condition %s has status: %q, reason: %q, message: %q", condition.Type, condition.Status, condition.Reason, condition.Message)
 		}
 	} else {
-		logrus.Debugf("No conditions found")
+		logrus.Infof("No conditions found")
 	}
-	logrus.Debugf("Done checking conditions for %s", objInfo)
+	logrus.Infof("Done checking conditions for %s", objInfo)
 }
