@@ -42,7 +42,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.159.0
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.43.11
-	github.com/aws/aws-sdk-go-v2/service/iam v1.32.0
+	github.com/aws/aws-sdk-go-v2/service/iam v1.42.0
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.25.17
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.48.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.1
