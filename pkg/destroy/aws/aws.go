@@ -6,10 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -69,6 +72,11 @@ type ClusterUninstaller struct {
 	Session *session.Session
 
 	EC2Client *ec2v2.Client
+
+	ELBClient   *elb.Client
+	ELBV2Client *elbv2.Client
+
+	IAMClient *iamv2.Client
 }
 
 // New returns an AWS destroyer from ClusterMetadata.
@@ -100,6 +108,33 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		}
 	})
 
+	iamClient := iamv2.NewFromConfig(cfg, func(options *iamv2.Options) {
+		options.Region = region
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "iam") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	elbclient := elb.NewFromConfig(cfg, func(options *elb.Options) {
+		options.Region = region
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "elb") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	elbv2client := elbv2.NewFromConfig(cfg, func(options *elbv2.Options) {
+		options.Region = region
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "elbv2") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
 	return &ClusterUninstaller{
 		Filters:        filters,
 		Region:         region,
@@ -109,6 +144,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Session:        session,
 		HostedZoneRole: metadata.AWS.HostedZoneRole,
 		EC2Client:      ec2Client,
+		IAMClient:      iamClient,
+		ELBClient:      elbclient,
+		ELBV2Client:    elbv2client,
 	}, nil
 }
 
@@ -539,9 +577,9 @@ func findPublicRoute53(ctx context.Context, client *route53.Route53, dnsName str
 func (o *ClusterUninstaller) deleteARN(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
 	switch arn.Service {
 	case "ec2":
-		return o.deleteEC2(ctx, session, arn, logger)
+		return o.deleteEC2(ctx, arn, logger)
 	case "elasticloadbalancing":
-		return deleteElasticLoadBalancing(ctx, session, arn, logger)
+		return o.deleteElasticLoadBalancing(ctx, session, arn, logger)
 	case "iam":
 		return deleteIAM(ctx, session, arn, logger)
 	case "route53":
