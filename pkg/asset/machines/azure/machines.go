@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -216,6 +216,9 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	managedIdentity := ""
 	if len(mpool.Identity.UserAssignedIdentities) > 0 {
 		managedIdentity = mpool.Identity.UserAssignedIdentities[0].ProviderID()
+	} else if mpool.Identity.Type == capz.VMIdentityUserAssigned {
+		// In this case, the installer will create the user-assigned identity.
+		managedIdentity = fmt.Sprintf("%s-identity", clusterID)
 	}
 
 	var diskEncryptionSet *machineapi.DiskEncryptionSetParameters
@@ -299,11 +302,11 @@ func getBootDiagnosticObject(diag *azure.BootDiagnostics, cloudName string, role
 		}
 		return nil
 	}
-	if diag.Type == v1beta1.DisabledDiagnosticsStorage {
+	if diag.Type == capz.DisabledDiagnosticsStorage {
 		return nil
 	}
 	bootDiagnostics := &machineapi.AzureDiagnostics{Boot: &machineapi.AzureBootDiagnostics{}}
-	if diag.Type == v1beta1.ManagedDiagnosticsStorage {
+	if diag.Type == capz.ManagedDiagnosticsStorage {
 		bootDiagnostics.Boot.StorageAccountType = machineapi.AzureManagedAzureDiagnosticsStorage
 	} else {
 		bootDiagnostics.Boot.StorageAccountType = machineapi.CustomerManagedAzureDiagnosticsStorage
