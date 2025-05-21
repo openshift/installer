@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2v2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
+	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/elb"
-	"github.com/aws/aws-sdk-go/service/elbv2"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/smithy-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -119,7 +118,7 @@ func (o *ClusterUninstaller) DeleteEC2Instances(ctx context.Context, awsSession 
 	return err
 }
 
-func (o *ClusterUninstaller) deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+func (o *ClusterUninstaller) deleteEC2(ctx context.Context, arn arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
 		return err
@@ -134,7 +133,7 @@ func (o *ClusterUninstaller) deleteEC2(ctx context.Context, session *session.Ses
 	case "image":
 		return deleteEC2Image(ctx, o.EC2Client, id, logger)
 	case "instance":
-		return terminateEC2Instance(ctx, o.EC2Client, iam.New(session), id, logger)
+		return terminateEC2Instance(ctx, o.EC2Client, o.IAMClient, id, logger)
 	case "internet-gateway":
 		return deleteEC2InternetGateway(ctx, o.EC2Client, id, logger)
 	case "carrier-gateway":
@@ -156,7 +155,7 @@ func (o *ClusterUninstaller) deleteEC2(ctx context.Context, session *session.Ses
 	case "volume":
 		return deleteEC2Volume(ctx, o.EC2Client, id, logger)
 	case "vpc":
-		return deleteEC2VPC(ctx, o.EC2Client, elb.New(session), elbv2.New(session), id, logger)
+		return deleteEC2VPC(ctx, o.EC2Client, o.ELBClient, o.ELBV2Client, id, logger)
 	case "vpc-endpoint":
 		return deleteEC2VPCEndpoint(ctx, o.EC2Client, id, logger)
 	case "vpc-peering-connection":
@@ -242,7 +241,7 @@ func deleteEC2ElasticIP(ctx context.Context, client *ec2v2.Client, id string, lo
 	return nil
 }
 
-func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iam.IAM, id string, logger logrus.FieldLogger) error {
+func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iamv2.Client, id string, logger logrus.FieldLogger) error {
 	response, err := ec2Client.DescribeInstances(ctx, &ec2v2.DescribeInstancesInput{
 		InstanceIds: []string{id},
 	})
@@ -264,7 +263,7 @@ func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClien
 	return nil
 }
 
-func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iam.IAM, instance *ec2v2types.Instance, logger logrus.FieldLogger) error {
+func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iamv2.Client, instance *ec2v2types.Instance, logger logrus.FieldLogger) error {
 	// Ignore instances that are already terminated
 	if instance.State == nil || instance.State.Name == "terminated" {
 		return nil
@@ -776,7 +775,7 @@ func deleteEC2Volume(ctx context.Context, client *ec2v2.Client, id string, logge
 	return nil
 }
 
-func deleteEC2VPC(ctx context.Context, ec2Client *ec2v2.Client, elbClient *elb.ELB, elbv2Client *elbv2.ELBV2, id string, logger logrus.FieldLogger) error {
+func deleteEC2VPC(ctx context.Context, ec2Client *ec2v2.Client, elbClient *elb.Client, elbv2Client *elbv2.Client, id string, logger logrus.FieldLogger) error {
 	// first delete any Load Balancers under this VPC (not all of them are tagged)
 	v1lbError := deleteElasticLoadBalancerClassicByVPC(ctx, elbClient, id, logger)
 	v2lbError := deleteElasticLoadBalancerV2ByVPC(ctx, elbv2Client, id, logger)
@@ -845,7 +844,7 @@ func deleteEC2VPCEndpointsByVPC(ctx context.Context, client *ec2v2.Client, vpc s
 	for _, endpoint := range response.VpcEndpoints {
 		err := deleteEC2VPCEndpoint(ctx, client, *endpoint.VpcEndpointId, logger.WithField("VPC endpoint", *endpoint.VpcEndpointId))
 		if err != nil {
-			if err.(awserr.Error).Code() == "InvalidVpcID.NotFound" {
+			if HandleErrorCode(err) == "InvalidVpcID.NotFound" {
 				return nil
 			}
 			return err
