@@ -199,6 +199,7 @@ type InstallConfig struct {
 	// AzureStack: "Manual"
 	// GCP: "Mint", "Passthrough", "Manual"
 	// IBMCloud: "Manual"
+	// OpenStack: "Passthrough"
 	// PowerVS: "Manual"
 	// Nutanix: "Manual"
 	// +optional
