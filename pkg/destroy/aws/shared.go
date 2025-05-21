@@ -144,7 +144,7 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 
 	iamClient := iam.New(session)
 	iamRoleSearch := &IamRoleSearch{
-		Client:  iamClient,
+		Client:  o.IAMClient,
 		Filters: []Filter{{key: sharedValue}},
 		Logger:  o.Logger,
 	}
