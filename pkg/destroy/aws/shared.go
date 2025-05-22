@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	//"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
-	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -79,7 +80,7 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 							continue
 						}
 						if _, ok := removed[arnString]; !ok {
-							if err := o.cleanSharedARN(ctx, session, parsedARN, logger); err != nil {
+							if err := o.cleanSharedARN(ctx, parsedARN, logger); err != nil {
 								tracker.suppressWarning(arnString, err, logger)
 								if err := ctx.Err(); err != nil {
 									return false
@@ -179,17 +180,17 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 	return nil
 }
 
-func (o *ClusterUninstaller) cleanSharedARN(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+func (o *ClusterUninstaller) cleanSharedARN(ctx context.Context, arn arn.ARN, logger logrus.FieldLogger) error {
 	switch service := arn.Service; service {
 	case "route53":
-		return o.cleanSharedRoute53(ctx, session, arn, logger)
+		return o.cleanSharedRoute53(ctx, arn, logger)
 	default:
 		logger.Debugf("Nothing to clean for shared %s resource", service)
 		return nil
 	}
 }
 
-func (o *ClusterUninstaller) cleanSharedRoute53(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+func (o *ClusterUninstaller) cleanSharedRoute53(ctx context.Context, arn arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
 		return err
@@ -198,96 +199,83 @@ func (o *ClusterUninstaller) cleanSharedRoute53(ctx context.Context, session *se
 
 	switch resourceType {
 	case "hostedzone":
-		return o.cleanSharedHostedZone(ctx, session, id, logger)
+		return o.cleanSharedHostedZone(ctx, id, logger)
 	default:
 		logger.Debugf("Nothing to clean for shared %s resource", resourceType)
 		return nil
 	}
 }
 
-func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, session *session.Session, id string, logger logrus.FieldLogger) error {
-	// The private hosted zone (phz) may belong to a different account,
-	// in which case we need a separate client.
-	publicZoneClient := route53.New(session)
-	privateZoneClient := route53.New(session)
-	if o.HostedZoneRole != "" {
-		creds := stscreds.NewCredentials(session, o.HostedZoneRole)
-		privateZoneClient = route53.New(session, &aws.Config{Credentials: creds})
-		logger.Infof("Assuming role %s to destroy records in private hosted zone", o.HostedZoneRole)
-	}
-
+func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, id string, logger logrus.FieldLogger) error {
 	if o.ClusterDomain == "" {
 		logger.Debug("No cluster domain specified in metadata; cannot clean the shared hosted zone")
 		return nil
 	}
 	dottedClusterDomain := o.ClusterDomain + "."
 
-	publicZoneID, err := findAncestorPublicRoute53(ctx, publicZoneClient, dottedClusterDomain, logger)
+	publicZoneID, err := findAncestorPublicRoute53(ctx, o.Route53Client, dottedClusterDomain, logger)
 	if err != nil {
 		return err
 	}
 
 	var lastError error
-	err = privateZoneClient.ListResourceRecordSetsPagesWithContext(
-		ctx,
-		&route53.ListResourceRecordSetsInput{HostedZoneId: aws.String(id)},
-		func(results *route53.ListResourceRecordSetsOutput, lastPage bool) bool {
-			for _, recordSet := range results.ResourceRecordSets {
-				// skip record sets that are not part of the cluster
-				name := aws.StringValue(recordSet.Name)
-				if !strings.HasSuffix(name, dottedClusterDomain) {
-					continue
-				}
-				if len(name) == len(dottedClusterDomain) {
-					continue
-				}
-				recordsetFields := logrus.Fields{"recordset": fmt.Sprintf("%s (%s)", aws.StringValue(recordSet.Name), aws.StringValue(recordSet.Type))}
-				// delete any matching record sets in the public hosted zone
-				if publicZoneID != "" {
-					publicZoneLogger := logger.WithField("id", publicZoneID)
-					if err := deleteMatchingRecordSetInPublicZone(ctx, publicZoneClient, publicZoneID, recordSet, publicZoneLogger); err != nil {
-						if lastError != nil {
-							publicZoneLogger.Debug(lastError)
-						}
-						lastError = errors.Wrapf(err, "deleting record set matching %#v from public zone %s", recordSet, publicZoneID)
-						// do not delete the record set in the private zone if the delete failed in the public zone;
-						// otherwise the record set in the public zone will get leaked
-						continue
-					}
-					publicZoneLogger.WithFields(recordsetFields).Debug("Deleted from public zone")
-				}
-				// delete the record set
-				if err := deleteRoute53RecordSet(ctx, privateZoneClient, id, recordSet, logger); err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "deleting record set %#v from zone %s", recordSet, id)
-				}
-				logger.WithFields(recordsetFields).Debug("Deleted from public zone")
+	paginator := route53.NewListResourceRecordSetsPaginator(o.Route53Client, &route53.ListResourceRecordSetsInput{HostedZoneId: aws.String(id)})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("error listing shared hosted zone records: %w", err)
+		}
+
+		for _, recordSet := range page.ResourceRecordSets {
+			// skip record sets that are not part of the cluster
+			name := aws.StringValue(recordSet.Name)
+			if !strings.HasSuffix(name, dottedClusterDomain) {
+				continue
 			}
-			return !lastPage
-		},
-	)
+			if len(name) == len(dottedClusterDomain) {
+				continue
+			}
+			recordsetFields := logrus.Fields{"recordset": fmt.Sprintf("%s (%s)", aws.StringValue(recordSet.Name), recordSet.Type)}
+			// delete any matching record sets in the public hosted zone
+			if publicZoneID != "" {
+				publicZoneLogger := logger.WithField("id", publicZoneID)
+				if err := deleteMatchingRecordSetInPublicZone(ctx, o.Route53Client, publicZoneID, &recordSet, publicZoneLogger); err != nil {
+					if lastError != nil {
+						publicZoneLogger.Debug(lastError)
+					}
+					lastError = fmt.Errorf("deleting record set matching %#v from public zone %s: %w", recordSet, publicZoneID, err)
+					// do not delete the record set in the private zone if the delete failed in the public zone;
+					// otherwise the record set in the public zone will get leaked
+					continue
+				}
+				publicZoneLogger.WithFields(recordsetFields).Debug("Deleted from public zone")
+			}
+			// delete the record set
+			if err := deleteRoute53RecordSet(ctx, o.Route53Client, id, &recordSet, logger); err != nil {
+				if lastError != nil {
+					logger.Debug(lastError)
+				}
+				lastError = fmt.Errorf("deleting record set %#v from zone %s: %w", recordSet, id, err)
+			}
+			logger.WithFields(recordsetFields).Debug("Deleted from public zone")
+		}
+	}
 
 	if lastError != nil {
 		return lastError
 	}
-	if err != nil {
-		return err
-	}
-
 	logger.Info("Cleaned record sets from hosted zone")
 	return nil
 }
 
-func deleteMatchingRecordSetInPublicZone(ctx context.Context, client *route53.Route53, zoneID string, recordSet *route53.ResourceRecordSet, logger logrus.FieldLogger) error {
+func deleteMatchingRecordSetInPublicZone(ctx context.Context, client *route53.Client, zoneID string, recordSet *route53types.ResourceRecordSet, logger logrus.FieldLogger) error {
 	in := &route53.ListResourceRecordSetsInput{
 		HostedZoneId:    aws.String(zoneID),
-		MaxItems:        aws.String("1"),
+		MaxItems:        aws.Int32(1),
 		StartRecordName: recordSet.Name,
 		StartRecordType: recordSet.Type,
 	}
-	out, err := client.ListResourceRecordSetsWithContext(ctx, in)
+	out, err := client.ListResourceRecordSets(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -296,8 +284,8 @@ func deleteMatchingRecordSetInPublicZone(ctx context.Context, client *route53.Ro
 	}
 	matchingRecordSet := out.ResourceRecordSets[0]
 	if aws.StringValue(matchingRecordSet.Name) != aws.StringValue(recordSet.Name) ||
-		aws.StringValue(matchingRecordSet.Type) != aws.StringValue(recordSet.Type) {
+		matchingRecordSet.Type != recordSet.Type {
 		return nil
 	}
-	return deleteRoute53RecordSet(ctx, client, zoneID, matchingRecordSet, logger)
+	return deleteRoute53RecordSet(ctx, client, zoneID, &matchingRecordSet, logger)
 }
