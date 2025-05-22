@@ -250,10 +250,6 @@ func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path
 	}
 
 	var errs field.ErrorList
-	if poolName == "worker" && id.Type != capz.VMIdentityUserAssigned {
-		return append(errs, field.Invalid(fldPath.Child("type"), id.Type, "only user-assigned identities are supported for compute nodes"))
-	}
-
 	if id.Type == "" {
 		return append(errs, field.Required(fldPath.Child("type"), "type must be specified if using identity"))
 	}
