@@ -5,18 +5,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	elbapi "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
 	elbapiv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
-func (o *ClusterUninstaller) deleteElasticLoadBalancing(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+func (o *ClusterUninstaller) deleteElasticLoadBalancing(ctx context.Context, arn arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
 		return err
@@ -40,9 +37,9 @@ func (o *ClusterUninstaller) deleteElasticLoadBalancing(ctx context.Context, ses
 			return errors.Errorf("unrecognized elastic load balancing resource subtype %s", subtype)
 		}
 	case "targetgroup":
-		return deleteElasticLoadBalancerTargetGroup(ctx, elbv2.New(session), arn, logger)
+		return deleteElasticLoadBalancerTargetGroup(ctx, o.ELBV2Client, arn, logger)
 	case "listener":
-		return deleteElasticLoadBalancerListener(ctx, elbv2.New(session), arn, logger)
+		return deleteElasticLoadBalancerListener(ctx, o.ELBV2Client, arn, logger)
 	default:
 		return errors.Errorf("unrecognized elastic load balancing resource type %s", resourceType)
 	}
@@ -97,8 +94,8 @@ func deleteElasticLoadBalancerClassicByVPC(ctx context.Context, client *elbapi.C
 	return lastError
 }
 
-func deleteElasticLoadBalancerTargetGroup(ctx context.Context, client *elbv2.ELBV2, arn arn.ARN, logger logrus.FieldLogger) error {
-	_, err := client.DeleteTargetGroupWithContext(ctx, &elbv2.DeleteTargetGroupInput{
+func deleteElasticLoadBalancerTargetGroup(ctx context.Context, client *elbapiv2.Client, arn arn.ARN, logger logrus.FieldLogger) error {
+	_, err := client.DeleteTargetGroup(ctx, &elbapiv2.DeleteTargetGroupInput{
 		TargetGroupArn: aws.String(arn.String()),
 	})
 	if err != nil {
@@ -109,21 +106,12 @@ func deleteElasticLoadBalancerTargetGroup(ctx context.Context, client *elbv2.ELB
 	return nil
 }
 
-func isListenerNotFound(err interface{}) bool {
-	if aerr, ok := err.(awserr.Error); ok {
-		if aerr.Code() == elbv2.ErrCodeListenerNotFoundException {
-			return true
-		}
-	}
-	return false
-}
-
-func deleteElasticLoadBalancerListener(ctx context.Context, client *elbv2.ELBV2, arn arn.ARN, logger logrus.FieldLogger) error {
-	_, err := client.DeleteListenerWithContext(ctx, &elbv2.DeleteListenerInput{
+func deleteElasticLoadBalancerListener(ctx context.Context, client *elbapiv2.Client, arn arn.ARN, logger logrus.FieldLogger) error {
+	_, err := client.DeleteListener(ctx, &elbapiv2.DeleteListenerInput{
 		ListenerArn: aws.String(arn.String()),
 	})
 	if err != nil {
-		if isListenerNotFound(err) {
+		if strings.Contains(HandleErrorCode(err), "ListenerNotFound") {
 			logger.Info("Not found or already deleted")
 			return nil
 		}
