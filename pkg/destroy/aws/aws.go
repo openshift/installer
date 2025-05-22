@@ -18,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/efs"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -213,7 +212,6 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		}
 	}
 
-	iamClient := iam.New(awsSession)
 	iamRoleSearch := &IamRoleSearch{
 		Client:  o.IAMClient,
 		Filters: o.Filters,
@@ -228,7 +226,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	// Get the initial resources to delete, so that they can be returned if the context is canceled while terminating
 	// instances.
 	deleted := sets.New[string]()
-	resourcesToDelete, tagClientsWithResources, err := o.findResourcesToDelete(ctx, tagClients, iamClient, iamRoleSearch, iamUserSearch, deleted)
+	resourcesToDelete, tagClientsWithResources, err := o.findResourcesToDelete(ctx, tagClients, iamRoleSearch, iamUserSearch, deleted)
 	if err != nil {
 		o.Logger.WithError(err).Info("error while finding resources to delete")
 		if err := ctx.Err(); err != nil {
@@ -262,7 +260,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 			}
 			// Store resources to delete in a temporary variable so that, in case the context is cancelled, the current
 			// resources to delete are not lost.
-			nextResourcesToDelete, nextTagClients, err := o.findResourcesToDelete(ctx, tagClientsWithResources, iamClient, iamRoleSearch, iamUserSearch, deleted)
+			nextResourcesToDelete, nextTagClients, err := o.findResourcesToDelete(ctx, tagClientsWithResources, iamRoleSearch, iamUserSearch, deleted)
 			if err != nil {
 				o.Logger.WithError(err).Info("error while finding resources to delete")
 				if err := ctx.Err(); err != nil {
@@ -292,15 +290,14 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 // a shared tag will be ignored.
 //
 //	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, iamClient *iam.IAM, deleted sets.Set[string]) (sets.Set[string], error) {
+func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, deleted sets.Set[string]) (sets.Set[string], error) {
 	resources := sets.New[string]()
 	o.Logger.Debug("search for IAM instance profiles")
 	for _, profileType := range []string{"master", "worker", "bootstrap"} {
 		profile := fmt.Sprintf("%s-%s-profile", o.ClusterID, profileType)
-		response, err := iamClient.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: &profile})
+		response, err := o.IAMClient.GetInstanceProfile(ctx, &iamv2.GetInstanceProfileInput{InstanceProfileName: &profile})
 		if err != nil {
-			var awsErr awserr.Error
-			if errors.As(err, &awsErr) && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
+			if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
 				continue
 			}
 			return resources, fmt.Errorf("failed to get IAM instance profile: %w", err)
@@ -320,7 +317,6 @@ func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, iamCli
 func (o *ClusterUninstaller) findResourcesToDelete(
 	ctx context.Context,
 	tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
-	iamClient *iam.IAM,
 	iamRoleSearch *IamRoleSearch,
 	iamUserSearch *IamUserSearch,
 	deleted sets.Set[string],
@@ -332,7 +328,7 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 	}
 
 	// Find untaggable resources
-	untaggableResources, err := o.findUntaggableResources(ctx, iamClient, deleted)
+	untaggableResources, err := o.findUntaggableResources(ctx, deleted)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -579,7 +575,7 @@ func (o *ClusterUninstaller) deleteARN(ctx context.Context, session *session.Ses
 	case "ec2":
 		return o.deleteEC2(ctx, arn, logger)
 	case "elasticloadbalancing":
-		return o.deleteElasticLoadBalancing(ctx, session, arn, logger)
+		return o.deleteElasticLoadBalancing(ctx, arn, logger)
 	case "iam":
 		return o.deleteIAM(ctx, o.IAMClient, arn, logger)
 	case "route53":
