@@ -147,7 +147,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}); err != nil {
 		errMsg := "error creating user-assigned identity: please ensure your user credentials " +
 			"have the User Access Admin Role or if you are not utilizing an Azure Container Registry " +
-			"you can set installconfig.platform.azure.defaultMachinePlatform.identity: None to skip " +
+			"you can set installconfig.platform.azure.defaultMachinePlatform.identity.type: None to skip " +
 			"the creation of the identity: creation failed with: %w"
 		return fmt.Errorf(errMsg, err)
 	}
