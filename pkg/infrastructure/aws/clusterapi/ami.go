@@ -15,6 +15,7 @@ import (
 
 // copyAMIToRegion copies the AMI to the region configured in the installConfig if needed.
 func copyAMIToRegion(ctx context.Context, installConfig *installconfig.InstallConfig, infraID string, rhcosImage *rhcos.Image) (string, error) {
+	logrus.Infof("Copying AMI to region....")
 	osImage := strings.SplitN(rhcosImage.ControlPlane, ",", 2)
 	amiID, amiRegion := osImage[0], osImage[1]
 
