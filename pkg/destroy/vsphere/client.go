@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/cns"
 	cnstypes "github.com/vmware/govmomi/cns/types"
 	"github.com/vmware/govmomi/find"
@@ -40,21 +41,24 @@ type API interface {
 	DeleteHostZoneObjects(ctx context.Context, infraID string) error
 	DeleteCnsVolumes(ctx context.Context, volume cnstypes.CnsVolume) error
 	GetCnsVolumes(ctx context.Context, infraID string) ([]cnstypes.CnsVolume, error)
+	GetVCenterName() string
 }
 
 // Client makes calls to the Azure API.
 type Client struct {
+	vcenter    string
 	client     *vim25.Client
 	restClient *rest.Client
 	cnsClient  *cns.Client
 	cleanup    vsphere.ClientLogout
+	logger     logrus.FieldLogger
 }
 
 const defaultTimeout = time.Minute * 5
 
 // NewClient initializes a client.
 // Logout() must be called when you are done with the client.
-func NewClient(vCenter, username, password string) (*Client, error) {
+func NewClient(vCenter, username, password string, logger logrus.FieldLogger) (*Client, error) {
 	vim25Client, restClient, cleanup, err := vsphere.CreateVSphereClients(
 		context.TODO(),
 		vCenter,
@@ -70,10 +74,12 @@ func NewClient(vCenter, username, password string) (*Client, error) {
 	}
 
 	return &Client{
+		vcenter:    vCenter,
 		client:     vim25Client,
 		restClient: restClient,
 		cleanup:    cleanup,
 		cnsClient:  cnsClient,
+		logger:     logger,
 	}, nil
 }
 
@@ -92,8 +98,11 @@ func (c *Client) getAttachedObjectsOnTag(ctx context.Context, tag, objType strin
 
 	tagManager := tags.NewManager(c.restClient)
 	attached, err := tagManager.GetAttachedObjectsOnTags(ctx, []string{tag})
-	if err != nil && !isNotFound(err) {
-		return nil, err
+	if err != nil {
+		c.logger.Debugf("Got error when attempting to get attached objects on tags: %s", err)
+		if !isNotFound(err) {
+			return nil, err
+		}
 	}
 
 	// Separate the objects attached to the tag based on type
@@ -116,7 +125,8 @@ func (c *Client) getVirtualMachineManagedObjects(ctx context.Context, moRef []ty
 	var virtualMachineMoList []mo.VirtualMachine
 	if len(moRef) > 0 {
 		pc := property.DefaultCollector(c.client)
-		err := pc.Retrieve(ctx, moRef, []string{"name"}, &virtualMachineMoList)
+		// Passing nil in for property list so that we get all properties.
+		err := pc.Retrieve(ctx, moRef, nil, &virtualMachineMoList)
 		if err != nil {
 			return nil, err
 		}
@@ -139,6 +149,11 @@ func (c *Client) getFolderManagedObjects(ctx context.Context, moRef []types.Mana
 	return folderMoList, nil
 }
 
+// GetVCenterName returns the name of the vcenter being queried.
+func (c *Client) GetVCenterName() string {
+	return c.vcenter
+}
+
 // ListFolders returns all ManagedObjects of type "Folder".
 func (c *Client) ListFolders(ctx context.Context, tagID string) ([]mo.Folder, error) {
 	folderList, err := c.getAttachedObjectsOnTag(ctx, tagID, "Folder")
@@ -152,6 +167,7 @@ func (c *Client) ListFolders(ctx context.Context, tagID string) ([]mo.Folder, er
 // ListVirtualMachines returns ManagedObjects of type "VirtualMachine".
 func (c *Client) ListVirtualMachines(ctx context.Context, tagID string) ([]mo.VirtualMachine, error) {
 	virtualMachineList, err := c.getAttachedObjectsOnTag(ctx, tagID, "VirtualMachine")
+	c.logger.WithField("vCenter", c.GetVCenterName()).WithField("Count", len(virtualMachineList)).Debug("List VirtualMachine")
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +183,7 @@ func isPoweredOff(vmMO mo.VirtualMachine) bool {
 func (c *Client) StopVirtualMachine(ctx context.Context, vmMO mo.VirtualMachine) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
-
+	// The following isPoweredOff() is an extra check to make sure still powered off.  We might be able to remove this.
 	if !isPoweredOff(vmMO) {
 		vm := object.NewVirtualMachine(c.client, vmMO.Reference())
 		task, err := vm.PowerOff(ctx)
@@ -361,6 +377,7 @@ func (c *Client) DeleteHostZoneObjects(ctx context.Context, infraID string) erro
 				if err := task.Wait(ctx); err != nil {
 					return err
 				}
+				c.logger.WithField("VmHostRule", infraID).WithField("vCenter", c.GetVCenterName())
 			}
 		}
 	}
