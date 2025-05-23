@@ -424,6 +424,11 @@ func (s *ManagedControlPlaneScope) DisableVPCCNI() bool {
 	return s.ControlPlane.Spec.VpcCni.Disable
 }
 
+// BootstrapSelfManagedAddons returns whether the AWS EKS networking addons should be disabled.
+func (s *ManagedControlPlaneScope) BootstrapSelfManagedAddons() bool {
+	return s.ControlPlane.Spec.BootstrapSelfManagedAddons
+}
+
 // VpcCni returns a list of environment variables to apply to the `aws-node` DaemonSet.
 func (s *ManagedControlPlaneScope) VpcCni() ekscontrolplanev1.VpcCni {
 	return s.ControlPlane.Spec.VpcCni
@@ -473,6 +478,11 @@ func (s *ManagedControlPlaneScope) Partition() string {
 // AdditionalControlPlaneIngressRules returns the additional ingress rules for the control plane security group.
 func (s *ManagedControlPlaneScope) AdditionalControlPlaneIngressRules() []infrav1.IngressRule {
 	return s.ControlPlane.Spec.NetworkSpec.DeepCopy().AdditionalControlPlaneIngressRules
+}
+
+// AdditionalNodeIngressRules returns the additional ingress rules for the node security group.
+func (s *ManagedControlPlaneScope) AdditionalNodeIngressRules() []infrav1.IngressRule {
+	return s.ControlPlane.Spec.NetworkSpec.DeepCopy().AdditionalNodeIngressRules
 }
 
 // UnstructuredControlPlane returns the unstructured object for the control plane, if any.

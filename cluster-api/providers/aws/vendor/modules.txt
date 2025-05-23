@@ -377,7 +377,7 @@ github.com/godbus/dbus/v5
 ## explicit; go 1.15
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
-# github.com/golang-jwt/jwt/v4 v4.5.1
+# github.com/golang-jwt/jwt/v4 v4.5.2
 ## explicit; go 1.16
 github.com/golang-jwt/jwt/v4
 # github.com/golang/glog v1.2.4
@@ -1456,7 +1456,7 @@ sigs.k8s.io/cluster-api/util/predicates
 sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
 sigs.k8s.io/cluster-api/version
-# sigs.k8s.io/cluster-api-provider-aws/v2 v2.7.1-0.20250314180547-17a09f59176c
+# sigs.k8s.io/cluster-api-provider-aws/v2 v2.7.1-0.20250314180547-17a09f59176c => github.com/benluddy/cluster-api-provider-aws/v2 v2.0.0-20250502210518-f942d819b45f
 ## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-aws/v2
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
@@ -1526,6 +1526,7 @@ sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record
 sigs.k8s.io/cluster-api-provider-aws/v2/pkg/rosa
 sigs.k8s.io/cluster-api-provider-aws/v2/pkg/utils
 sigs.k8s.io/cluster-api-provider-aws/v2/util/conditions
+sigs.k8s.io/cluster-api-provider-aws/v2/util/paused
 sigs.k8s.io/cluster-api-provider-aws/v2/util/system
 sigs.k8s.io/cluster-api-provider-aws/v2/version
 # sigs.k8s.io/controller-runtime v0.19.4
@@ -1588,3 +1589,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
 # k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
+# sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/benluddy/cluster-api-provider-aws/v2 v2.0.0-20250502210518-f942d819b45f

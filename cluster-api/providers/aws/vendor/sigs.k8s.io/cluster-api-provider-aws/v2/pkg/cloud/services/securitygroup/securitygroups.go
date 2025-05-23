@@ -680,6 +680,13 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 				IPv6CidrBlocks: []string{services.AnyIPv6CidrBlock},
 			})
 		}
+
+		additionalIngressRules, err := s.processIngressRulesSGs(s.scope.AdditionalNodeIngressRules())
+		if err != nil {
+			return nil, err
+		}
+		rules = append(rules, additionalIngressRules...)
+
 		return append(cniRules, rules...), nil
 	case infrav1.SecurityGroupEKSNodeAdditional:
 		ingressRules := s.scope.AdditionalControlPlaneIngressRules()
