@@ -152,6 +152,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			VirtualNetworkName:       vnet,
 			SubnetName:               subnet,
 			ResourceManagerEndpoint:  installConfig.Config.Azure.ARMEndpoint,
+			UseManagedIdentity:       installConfig.Config.CreateAzureIdentity(),
 		}.JSON()
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")

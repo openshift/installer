@@ -114,13 +114,18 @@ func defaultAWSMachinePoolPlatform(poolName string) awstypes.MachinePool {
 	}
 }
 
-func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
+func defaultAzureMachinePoolPlatform(env azuretypes.CloudEnvironment) azuretypes.MachinePool {
+	idType := capz.VMIdentityUserAssigned
+	if env == azuretypes.StackCloud {
+		idType = capz.VMIdentityNone
+	}
+
 	return azuretypes.MachinePool{
 		OSDisk: azuretypes.OSDisk{
 			DiskSizeGB: powerOfTwoRootVolumeSize,
 			DiskType:   azuretypes.DefaultDiskType,
 		},
-		Identity: &azuretypes.VMIdentity{Type: capz.VMIdentityNone},
+		Identity: &azuretypes.VMIdentity{Type: idType},
 	}
 }
 
@@ -486,7 +491,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				machineSets = append(machineSets, set)
 			}
 		case azuretypes.Name:
-			mpool := defaultAzureMachinePoolPlatform()
+			mpool := defaultAzureMachinePoolPlatform(installConfig.Config.Platform.Azure.CloudName)
 			mpool.InstanceType = azuredefaults.ComputeInstanceType(
 				installConfig.Config.Platform.Azure.CloudName,
 				installConfig.Config.Platform.Azure.Region,

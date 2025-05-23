@@ -664,21 +664,6 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path.identity.type: Invalid value: "None": userAssignedIdentities may only be used with type: UserAssigned$`,
 		},
-		{
-			name:          "azure VM identity must have user assigned identities when type==UserAssigned",
-			azurePlatform: azure.PublicCloud,
-			pool: &types.MachinePool{
-				Name: "",
-				Platform: types.MachinePoolPlatform{
-					Azure: &azure.MachinePool{
-						Identity: &azure.VMIdentity{
-							Type: capz.VMIdentityUserAssigned,
-						},
-					},
-				},
-			},
-			expected: `^test-path.identity.userAssignedIdentities: Required value: userAssignedIdentities must be specified when using type: UserAssigned$`,
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

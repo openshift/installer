@@ -216,7 +216,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		}
 		c.FileList = append(c.FileList, bootstrapAWSMachine...)
 	case azuretypes.Name:
-		mpool := defaultAzureMachinePoolPlatform()
+		mpool := defaultAzureMachinePoolPlatform(installConfig.Config.Platform.Azure.CloudName)
 		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(
 			installConfig.Config.Platform.Azure.CloudName,
 			installConfig.Config.Platform.Azure.Region,

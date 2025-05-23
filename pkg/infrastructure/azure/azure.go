@@ -135,6 +135,23 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.clientOptions = opts
 	p.computeClientOptions = computeClientOpts
 
+	if err = handleIdentity(ctx, identityInput{
+		installConfig:     installConfig,
+		region:            platform.Region,
+		resourceGroupName: p.ResourceGroupName,
+		subscriptionID:    subscriptionID,
+		tokenCredential:   tokenCredential,
+		infraID:           in.InfraID,
+		clientOpts:        p.clientOptions,
+		tags:              p.Tags,
+	}); err != nil {
+		errMsg := "error creating user-assigned identity: please ensure your user credentials " +
+			"have the User Access Admin Role or if you are not utilizing an Azure Container Registry " +
+			"you can set installconfig.platform.azure.defaultMachinePlatform.identity.type: None to skip " +
+			"the creation of the identity: creation failed with: %w"
+		return fmt.Errorf(errMsg, err)
+	}
+
 	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
 		networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, tokenCredential, p.clientOptions)

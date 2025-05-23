@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -249,10 +250,6 @@ func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path
 	}
 
 	var errs field.ErrorList
-	if poolName == "worker" && id.Type != capz.VMIdentityUserAssigned {
-		return append(errs, field.Invalid(fldPath.Child("type"), id.Type, "only user-assigned identities are supported for compute nodes"))
-	}
-
 	if id.Type == "" {
 		return append(errs, field.Required(fldPath.Child("type"), "type must be specified if using identity"))
 	}
@@ -263,7 +260,7 @@ func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path
 	}
 
 	if id.Type == capz.VMIdentityUserAssigned && len(id.UserAssignedIdentities) == 0 {
-		errs = append(errs, field.Required(fldPath.Child("userAssignedIdentities"), "userAssignedIdentities must be specified when using type: UserAssigned"))
+		logrus.Warn("Identity type is set to UserAssigned but no user-assigned identities are specified. A user-assigned identity will be created, which requires the User Access Admin role.")
 	}
 
 	if id.UserAssignedIdentities != nil && id.Type != capz.VMIdentityUserAssigned {
