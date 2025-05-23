@@ -14,6 +14,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -179,9 +180,17 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			// name, otherwise this would take the last one.
 			switch endpoint.Name {
 			case configv1.GCPServiceEndpointNameCompute:
-				apiEndpoint = endpoint.URL
+				formattedURL, err := gcp.FormatGCPEndpoint(endpoint.Name, endpoint.URL, gcp.FormatGCPEndpointInput{SkipPath: false})
+				if err != nil {
+					return fmt.Errorf("failed format GCP compute endpoint URL %s: %w", endpoint.URL, err)
+				}
+				apiEndpoint = formattedURL
 			case configv1.GCPServiceEndpointNameContainer:
-				containerAPIEndpoint = endpoint.URL
+				formattedURL, err := gcp.FormatGCPEndpoint(endpoint.Name, endpoint.URL, gcp.FormatGCPEndpointInput{SkipPath: false})
+				if err != nil {
+					return fmt.Errorf("failed format GCP container endpoint URL %s: %w", endpoint.URL, err)
+				}
+				containerAPIEndpoint = formattedURL
 			}
 		}
 
