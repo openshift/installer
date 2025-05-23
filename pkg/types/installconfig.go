@@ -625,7 +625,8 @@ func MultiArchFeatureGateEnabled(platform string, fgs featuregates.FeatureGate) 
 	case aws.Name:
 		return fgs.Enabled(features.FeatureGateMultiArchInstallAWS)
 	case gcp.Name:
-		return fgs.Enabled(features.FeatureGateMultiArchInstallGCP)
+		// The MultiArchInstallGCP feature gate is enabled by default
+		return true
 	default:
 		return false
 	}
