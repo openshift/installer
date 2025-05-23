@@ -623,7 +623,7 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 func MultiArchFeatureGateEnabled(platform string, fgs featuregates.FeatureGate) bool {
 	switch platform {
 	case aws.Name:
-		return fgs.Enabled(features.FeatureGateMultiArchInstallAWS)
+		return true
 	case gcp.Name:
 		return fgs.Enabled(features.FeatureGateMultiArchInstallGCP)
 	default:
