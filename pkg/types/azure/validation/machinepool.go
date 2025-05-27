@@ -110,8 +110,10 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
-	if len(p.DataDisks) != 0 && len(pool.DiskSetup) != 0 {
-		allErrs = append(allErrs, validateDataDiskSetup(p, pool, fldPath.Child("dataDisks"))...)
+	if pool != nil {
+		if len(p.DataDisks) != 0 && len(pool.DiskSetup) != 0 {
+			allErrs = append(allErrs, validateDataDiskSetup(p, pool, fldPath.Child("dataDisks"))...)
+		}
 	}
 
 	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
