@@ -133,3 +133,41 @@ RequiredBy=local-fs.target
 `),
 	})
 }
+func AddEtcdDisk(config *igntypes.Config, device string) {
+	config.Storage.Disks = append(config.Storage.Disks, igntypes.Disk{
+		Device: device,
+		Partitions: []igntypes.Partition{{
+			Label:    ptr.To("etcddisk"),
+			StartMiB: ptr.To(0),
+			SizeMiB:  ptr.To(0),
+		}},
+		WipeTable: ptr.To(true),
+	})
+
+	config.Storage.Filesystems = append(config.Storage.Filesystems, igntypes.Filesystem{
+		Device:         "/dev/disk/by-partlabel/etcddisk",
+		Format:         ptr.To("xfs"),
+		Label:          ptr.To("etcdpart"),
+		MountOptions:   []igntypes.MountOption{"defaults", "prjquota"},
+		Path:           ptr.To("/var/lib/etcd"),
+		WipeFilesystem: ptr.To(true),
+	})
+	config.Systemd.Units = append(config.Systemd.Units, igntypes.Unit{
+		Name:    "var-lib-etcd.mount",
+		Enabled: ptr.To(true),
+		Contents: ptr.To(`
+[Unit]
+Requires=systemd-fsck@dev-disk-by\x2dpartlabel-var.service
+After=systemd-fsck@dev-disk-by\x2dpartlabel-var.service
+
+[Mount]
+Where=/var/lib/etcd
+What=/dev/disk/by-partlabel/etcddisk
+Type=xfs
+Options=defaults,prjquota
+
+[Install]
+RequiredBy=local-fs.target
+`),
+	})
+}
