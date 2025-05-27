@@ -6,15 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
+	tagtypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	//"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -22,12 +20,11 @@ import (
 
 func (o *ClusterUninstaller) removeSharedTags(
 	ctx context.Context,
-	session *session.Session,
-	tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
+	tagClients []*resourcegroupstaggingapi.Client,
 	tracker *ErrorTracker,
 ) error {
 	for _, key := range o.clusterOwnedKeys() {
-		if err := o.removeSharedTag(ctx, session, tagClients, key, tracker); err != nil {
+		if err := o.removeSharedTag(ctx, tagClients, key, tracker); err != nil {
 			return err
 		}
 	}
@@ -50,64 +47,67 @@ func (o *ClusterUninstaller) clusterOwnedKeys() []string {
 	return keys
 }
 
-func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *session.Session, tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, key string, tracker *ErrorTracker) error {
+func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, tagClients []*resourcegroupstaggingapi.Client, key string, tracker *ErrorTracker) error {
 	const sharedValue = "shared"
 
 	request := &resourcegroupstaggingapi.UntagResourcesInput{
-		TagKeys: []*string{aws.String(key)},
+		TagKeys: []string{key},
 	}
 
 	removed := map[string]struct{}{}
-	tagClients = append([]*resourcegroupstaggingapi.ResourceGroupsTaggingAPI(nil), tagClients...)
+	tagClients = append([]*resourcegroupstaggingapi.Client(nil), tagClients...)
 	for len(tagClients) > 0 {
 		nextTagClients := tagClients[:0]
 		for _, tagClient := range tagClients {
-			o.Logger.Debugf("Search for and remove tags in %s matching %s: shared", *tagClient.Config.Region, key)
+			var lastErr error
+			o.Logger.Debugf("Search for and remove tags in %s matching %s: shared", tagClient.Options().Region, key)
 			var arns []string
-			err := tagClient.GetResourcesPagesWithContext(
-				ctx,
-				&resourcegroupstaggingapi.GetResourcesInput{TagFilters: []*resourcegroupstaggingapi.TagFilter{{
+			paginator := resourcegroupstaggingapi.NewGetResourcesPaginator(tagClient, &resourcegroupstaggingapi.GetResourcesInput{
+				TagFilters: []tagtypes.TagFilter{{
 					Key:    aws.String(key),
-					Values: []*string{aws.String(sharedValue)},
-				}}},
-				func(results *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
-					for _, resource := range results.ResourceTagMappingList {
-						arnString := aws.StringValue(resource.ResourceARN)
-						logger := o.Logger.WithField("arn", arnString)
-						parsedARN, err := arn.Parse(arnString)
-						if err != nil {
-							logger.WithError(err).Debug("could not parse ARN")
-							continue
-						}
-						if _, ok := removed[arnString]; !ok {
-							if err := o.cleanSharedARN(ctx, parsedARN, logger); err != nil {
-								tracker.suppressWarning(arnString, err, logger)
-								if err := ctx.Err(); err != nil {
-									return false
-								}
-								continue
-							}
-							arns = append(arns, arnString)
-						}
-					}
+					Values: []string{sharedValue},
+				}}})
+			for paginator.HasMorePages() {
+				page, err := paginator.NextPage(ctx)
+				if err != nil {
+					o.Logger.Debugf("failed to get resources: %v", err)
+					lastErr = err
+					break
+				}
 
-					return !lastPage
-				},
-			)
-			if err != nil {
-				err2 := errors.Wrap(err, "get tagged resources")
-				o.Logger.Info(err2)
-				if aerr, ok := err.(awserr.Error); ok {
-					switch aerr.Code() {
-					case resourcegroupstaggingapi.ErrorCodeInvalidParameterException:
+				for _, resource := range page.ResourceTagMappingList {
+					arnString := *resource.ResourceARN
+					logger := o.Logger.WithField("arn", arnString)
+					parsedARN, err := arn.Parse(arnString)
+					if err != nil {
+						logger.WithError(err).Debug("could not parse ARN")
 						continue
 					}
+					if _, ok := removed[arnString]; !ok {
+						if err := o.cleanSharedARN(ctx, parsedARN, logger); err != nil {
+							tracker.suppressWarning(arnString, err, logger)
+							if err := ctx.Err(); err != nil {
+								lastErr = fmt.Errorf("failed to remove tag %q: %w", key, err)
+							}
+							continue
+						}
+						arns = append(arns, arnString)
+					}
+				}
+			}
+
+			if lastErr != nil {
+				o.Logger.Infof("failed to get tagged resources: %v", lastErr)
+				var invalidParameter tagtypes.InvalidParameterException
+				if errors.As(lastErr, &invalidParameter) {
+					continue
 				}
 				nextTagClients = append(nextTagClients, tagClient)
 				continue
 			}
+
 			if len(arns) == 0 {
-				o.Logger.Debugf("No matches in %s for %s: shared, removing client", *tagClient.Config.Region, key)
+				o.Logger.Debugf("No matches in %s for %s: shared, removing client", o.Region, key)
 				continue
 			}
 			// appending the tag client here but it needs to be removed if there is a InvalidParameterException when trying to
@@ -115,15 +115,13 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 			nextTagClients = append(nextTagClients, tagClient)
 
 			for i := 0; i < len(arns); i += 20 {
-				request.ResourceARNList = make([]*string, 0, 20)
+				request.ResourceARNList = make([]string, 0, 20)
 				for j := 0; i+j < len(arns) && j < 20; j++ {
-					request.ResourceARNList = append(request.ResourceARNList, aws.String(arns[i+j]))
+					request.ResourceARNList = append(request.ResourceARNList, arns[i+j])
 				}
-				result, err := tagClient.UntagResourcesWithContext(ctx, request)
+				result, err := tagClient.UntagResources(ctx, request)
 				if err != nil {
-					var awsErr awserr.Error
-					ok := errors.As(err, &awsErr)
-					if ok && awsErr.Code() == resourcegroupstaggingapi.ErrorCodeInvalidParameterException {
+					if strings.Contains(handleErrorCode(err), "InvalidParameter") {
 						nextTagClients = nextTagClients[:len(nextTagClients)-1]
 					}
 					err = errors.Wrap(err, "untag shared resources")
@@ -131,19 +129,18 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 					continue
 				}
 				for _, arn := range request.ResourceARNList {
-					if info, failed := result.FailedResourcesMap[*arn]; failed {
-						o.Logger.WithField("arn", *arn).Infof("Failed to remove tag %s: shared; error=%s", key, *info.ErrorMessage)
+					if info, failed := result.FailedResourcesMap[arn]; failed {
+						o.Logger.WithField("arn", arn).Infof("Failed to remove tag %s: shared; error=%s", key, *info.ErrorMessage)
 						continue
 					}
-					o.Logger.WithField("arn", *arn).Infof("Removed tag %s: shared", key)
-					removed[*arn] = exists
+					o.Logger.WithField("arn", arn).Infof("Removed tag %s: shared", key)
+					removed[arn] = exists
 				}
 			}
 		}
 		tagClients = nextTagClients
 	}
 
-	iamClient := iam.New(session)
 	iamRoleSearch := &IamRoleSearch{
 		Client:  o.IAMClient,
 		Filters: []Filter{{key: sharedValue}},
@@ -163,9 +160,9 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 				o.Logger.Debugf("Removing the shared tag from the %q IAM role", role)
 				input := &iam.UntagRoleInput{
 					RoleName: &role,
-					TagKeys:  []*string{&key},
+					TagKeys:  []string{key},
 				}
-				if _, err := iamClient.UntagRoleWithContext(ctx, input); err != nil {
+				if _, err := o.IAMClient.UntagRole(ctx, input); err != nil {
 					done = false
 					o.Logger.Infof("Could not remove the shared tag from the %q IAM role: %v", role, err)
 				}
@@ -228,14 +225,14 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, id strin
 
 		for _, recordSet := range page.ResourceRecordSets {
 			// skip record sets that are not part of the cluster
-			name := aws.StringValue(recordSet.Name)
+			name := *recordSet.Name
 			if !strings.HasSuffix(name, dottedClusterDomain) {
 				continue
 			}
 			if len(name) == len(dottedClusterDomain) {
 				continue
 			}
-			recordsetFields := logrus.Fields{"recordset": fmt.Sprintf("%s (%s)", aws.StringValue(recordSet.Name), recordSet.Type)}
+			recordsetFields := logrus.Fields{"recordset": fmt.Sprintf("%s (%s)", *recordSet.Name, recordSet.Type)}
 			// delete any matching record sets in the public hosted zone
 			if publicZoneID != "" {
 				publicZoneLogger := logger.WithField("id", publicZoneID)
@@ -283,8 +280,7 @@ func deleteMatchingRecordSetInPublicZone(ctx context.Context, client *route53.Cl
 		return nil
 	}
 	matchingRecordSet := out.ResourceRecordSets[0]
-	if aws.StringValue(matchingRecordSet.Name) != aws.StringValue(recordSet.Name) ||
-		matchingRecordSet.Type != recordSet.Type {
+	if *matchingRecordSet.Name != *recordSet.Name || matchingRecordSet.Type != recordSet.Type {
 		return nil
 	}
 	return deleteRoute53RecordSet(ctx, client, zoneID, &matchingRecordSet, logger)
