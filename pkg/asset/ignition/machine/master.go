@@ -9,7 +9,6 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -17,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 const (
@@ -47,28 +47,25 @@ func (a *Master) Generate(_ context.Context, dependencies asset.Parents) error {
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
 
-	if installConfig.Config.Platform.Name() == azure.Name {
+	switch installConfig.Config.Platform.Name() {
+	case azure.Name:
 		logrus.Debugf("Adding /var partition to skip CoreOS growfs step")
 		// See https://issues.redhat.com/browse/OCPBUGS-43625
 		ignition.AppendVarPartition(a.Config)
-	}
 
-	if installConfig.Config.ControlPlane != nil {
 		for i, d := range installConfig.Config.ControlPlane.DiskSetup {
 			if d.Type == types.Etcd {
-
-				// platform specific...
-				if installConfig.Config.ControlPlane.Platform.Azure != nil {
-					azurePlatform := installConfig.Config.ControlPlane.Platform.Azure
-					if d.Etcd.PlatformDiskID == azurePlatform.DataDisks[i].NameSuffix {
-						device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azurePlatform.DataDisks[i].Lun)
-						AddEtcdDisk(a.Config, device)
-					}
+				azurePlatform := installConfig.Config.ControlPlane.Platform.Azure
+				if d.Etcd.PlatformDiskID == azurePlatform.DataDisks[i].NameSuffix {
+					device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azurePlatform.DataDisks[i].Lun)
+					ignition.AddEtcdDisk(a.Config, device)
 				}
 			}
 		}
-	}
 
+	case vsphere.Name:
+		// todo
+	}
 	data, err := ignition.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal Ignition config")
@@ -111,43 +108,4 @@ func (a *Master) Load(f asset.FileFetcher) (found bool, err error) {
 
 	a.File, a.Config = file, config
 	return true, nil
-}
-
-func AddEtcdDisk(config *igntypes.Config, device string) {
-	config.Storage.Disks = append(config.Storage.Disks, igntypes.Disk{
-		Device: device,
-		Partitions: []igntypes.Partition{{
-			Label:    ptr.To("etcddisk"),
-			StartMiB: ptr.To(0),
-			SizeMiB:  ptr.To(0),
-		}},
-		WipeTable: ptr.To(true),
-	})
-
-	config.Storage.Filesystems = append(config.Storage.Filesystems, igntypes.Filesystem{
-		Device:         "/dev/disk/by-partlabel/etcddisk",
-		Format:         ptr.To("xfs"),
-		Label:          ptr.To("etcdpart"),
-		MountOptions:   []igntypes.MountOption{"defaults", "prjquota"},
-		Path:           ptr.To("/var/lib/etcd"),
-		WipeFilesystem: ptr.To(true),
-	})
-	config.Systemd.Units = append(config.Systemd.Units, igntypes.Unit{
-		Name:    "var-lib-etcd.mount",
-		Enabled: ptr.To(true),
-		Contents: ptr.To(`
-[Unit]
-Requires=systemd-fsck@dev-disk-by\x2dpartlabel-var.service
-After=systemd-fsck@dev-disk-by\x2dpartlabel-var.service
-
-[Mount]
-Where=/var/lib/etcd
-What=/dev/disk/by-partlabel/etcddisk
-Type=xfs
-Options=defaults,prjquota
-
-[Install]
-RequiredBy=local-fs.target
-`),
-	})
 }
