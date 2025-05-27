@@ -12,7 +12,7 @@ import (
 	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
 	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
-	"github.com/aws/aws-sdk-go/aws/session"
+	//"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -83,7 +83,7 @@ func findEC2Instances(ctx context.Context, ec2Client *ec2v2.Client, deleted sets
 }
 
 // DeleteEC2Instances terminates all EC2 instances found.
-func (o *ClusterUninstaller) DeleteEC2Instances(ctx context.Context, awsSession *session.Session, toDelete sets.Set[string], deleted sets.Set[string], tracker *ErrorTracker) error {
+func (o *ClusterUninstaller) DeleteEC2Instances(ctx context.Context, toDelete sets.Set[string], deleted sets.Set[string], tracker *ErrorTracker) error {
 	lastTerminateTime := time.Now()
 	err := wait.PollUntilContextCancel(
 		ctx,
@@ -103,7 +103,7 @@ func (o *ClusterUninstaller) DeleteEC2Instances(ctx context.Context, awsSession 
 				instancesToDelete = instancesNotTerminated
 				lastTerminateTime = time.Now()
 			}
-			newlyDeleted, err := o.DeleteResources(ctx, awsSession, instancesToDelete, tracker)
+			newlyDeleted, err := o.DeleteResources(ctx, instancesToDelete, tracker)
 			// Delete from the resources-to-delete set so that the current state of the resources to delete can be
 			// returned if the context is completed.
 			toDelete = toDelete.Difference(newlyDeleted)
