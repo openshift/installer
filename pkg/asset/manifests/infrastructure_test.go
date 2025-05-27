@@ -164,6 +164,42 @@ func TestGenerateInfrastructure(t *testing.T) {
 			),
 			expectedFilesGenerated: 1,
 		},
+		{
+			name: "vsphere with VIPS already populated in machine network",
+			installConfig: icBuild.build(
+				icBuild.forVSphere(),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
+				icBuild.withMachineNetwork(ipv4APIVIP+"/32"),
+				icBuild.withVSphereAPIVIP(ipv4APIVIP),
+				icBuild.withVSphereIngressVIP(ipv4IngressVIP),
+			),
+			expectedInfrastructure: infraBuild.build(
+				infraBuild.forPlatform(configv1.VSpherePlatformType),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(defaultMachineNetwork)),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv4APIVIP+"/32")),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv4IngressVIP+"/32")),
+				infraBuild.withVSphereAPIVIP(ipv4APIVIP),
+				infraBuild.withVSphereIngressVIP(ipv4IngressVIP),
+			),
+			expectedFilesGenerated: 1,
+		},
+		{
+			name: "vsphere with same API & Ingress VIPS",
+			installConfig: icBuild.build(
+				icBuild.forVSphere(),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
+				icBuild.withVSphereAPIVIP(ipv4APIVIP),
+				icBuild.withVSphereIngressVIP(ipv4APIVIP),
+			),
+			expectedInfrastructure: infraBuild.build(
+				infraBuild.forPlatform(configv1.VSpherePlatformType),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(defaultMachineNetwork)),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv4APIVIP+"/32")),
+				infraBuild.withVSphereAPIVIP(ipv4APIVIP),
+				infraBuild.withVSphereIngressVIP(ipv4APIVIP),
+			),
+			expectedFilesGenerated: 1,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
