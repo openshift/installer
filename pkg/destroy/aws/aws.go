@@ -243,11 +243,6 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Destroyer", version.Raw),
 	})
 
-	//cfg, err := configv2.LoadDefaultConfig(context.TODO(), configv2.WithRegion(o.Region))
-	//if err != nil {
-	//	return nil, fmt.Errorf("failed loading default config: %w", err)
-	//}
-
 	baseTaggingClient, err := createResourceTaggingClientWithConfig(o.Region, o.endpoints)
 	if err != nil {
 		return nil, err
@@ -357,7 +352,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		return resourcesToDelete.UnsortedList(), err
 	}
 
-	err = o.removeSharedTags(ctx, awsSession, tagClients, tracker)
+	err = o.removeSharedTags(ctx, tagClients, tracker)
 	if err != nil {
 		return nil, err
 	}
@@ -376,7 +371,7 @@ func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, delete
 		profile := fmt.Sprintf("%s-%s-profile", o.ClusterID, profileType)
 		response, err := o.IAMClient.GetInstanceProfile(ctx, &iamv2.GetInstanceProfileInput{InstanceProfileName: &profile})
 		if err != nil {
-			if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
+			if strings.Contains(handleErrorCode(err), "NoSuchEntity") {
 				continue
 			}
 			return resources, fmt.Errorf("failed to get IAM instance profile: %w", err)
@@ -679,7 +674,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 	if err != nil {
 		// In some cases AWS may return the zone in the list of tagged resources despite the fact
 		// it no longer exists.
-		if strings.Contains(HandleErrorCode(err), "NoSuchHostedZone") {
+		if strings.Contains(handleErrorCode(err), "NoSuchHostedZone") {
 			return nil
 		}
 		return err
@@ -902,7 +897,7 @@ func deleteFileSystem(ctx context.Context, client *efs.Client, fsid string, logg
 
 	_, err = client.DeleteFileSystem(ctx, &efs.DeleteFileSystemInput{FileSystemId: aws.String(fsid)})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "FileSystemNotFound") {
+		if strings.Contains(handleErrorCode(err), "FileSystemNotFound") {
 			return nil
 		}
 		return err
@@ -961,7 +956,7 @@ func deleteAccessPoint(ctx context.Context, client *efs.Client, id string, logge
 	logger = logger.WithField("AccessPoint ID", id)
 	_, err := client.DeleteAccessPoint(ctx, &efs.DeleteAccessPointInput{AccessPointId: aws.String(id)})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "AccessPointNotFound") {
+		if strings.Contains(handleErrorCode(err), "AccessPointNotFound") {
 			return nil
 		}
 		return err
@@ -975,7 +970,7 @@ func deleteMountTarget(ctx context.Context, client *efs.Client, id string, logge
 	logger = logger.WithField("Mount Target ID", id)
 	_, err := client.DeleteMountTarget(ctx, &efs.DeleteMountTargetInput{MountTargetId: aws.String(id)})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "MountTargetNotFound") {
+		if strings.Contains(handleErrorCode(err), "MountTargetNotFound") {
 			return nil
 		}
 		return err

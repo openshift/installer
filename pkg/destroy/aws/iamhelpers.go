@@ -46,7 +46,7 @@ func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []s
 			response, err := search.Client.GetRole(ctx, &iamv2.GetRoleInput{RoleName: role.RoleName})
 			if err != nil {
 				switch {
-				case strings.Contains(HandleErrorCode(err), "NoSuchEntity"):
+				case strings.Contains(handleErrorCode(err), "NoSuchEntity"):
 					// The role does not exist.
 					// Ignore this IAM Role and donot report this error via
 					// lastError
@@ -115,7 +115,7 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 			response, err := search.client.GetUser(ctx, &iamv2.GetUserInput{UserName: aws.String(*user.UserName)})
 			if err != nil {
 				switch {
-				case strings.Contains(HandleErrorCode(err), "NoSuchEntity"):
+				case strings.Contains(handleErrorCode(err), "NoSuchEntity"):
 					// The role does not exist.
 					// Ignore this IAM Role and do not report this error via lastError.
 					search.unmatched[*user.Arn] = exists
@@ -197,7 +197,7 @@ func deleteIAMInstanceProfileByName(ctx context.Context, client *iamv2.Client, n
 		InstanceProfileName: name,
 	})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
+		if strings.Contains(handleErrorCode(err), "NoSuchEntity") {
 			return nil
 		}
 		return err
@@ -220,7 +220,7 @@ func deleteIAMInstanceProfile(ctx context.Context, client *iamv2.Client, profile
 		InstanceProfileName: &name,
 	})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
+		if strings.Contains(handleErrorCode(err), "NoSuchEntity") {
 			return nil
 		}
 		return err
