@@ -9,22 +9,25 @@ import (
 	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2v2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/efs"
 	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
 	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
+	tagtypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -35,6 +38,7 @@ import (
 	awssession "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/version"
 )
 
@@ -68,6 +72,7 @@ type ClusterUninstaller struct {
 	ClusterID      string
 	ClusterDomain  string
 	HostedZoneRole string
+	endpoints      []awstypes.ServiceEndpoint
 
 	// Session is the AWS session to be used for deletion.  If nil, a
 	// new session will be created based on the usual credential
@@ -176,6 +181,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		ClusterDomain:  metadata.AWS.ClusterDomain,
 		Session:        session,
 		HostedZoneRole: metadata.AWS.HostedZoneRole,
+		endpoints:      metadata.AWS.ServiceEndpoints,
 		EC2Client:      ec2Client,
 		IAMClient:      iamClient,
 		ELBClient:      elbclient,
@@ -269,6 +275,25 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	return nil, err
 }
 
+func createResourceTaggingClientWithConfig(cfg awsv2.Config, region string, endpoints []awstypes.ServiceEndpoint) *resourcegroupstaggingapi.Client {
+	return resourcegroupstaggingapi.NewFromConfig(cfg, func(options *resourcegroupstaggingapi.Options) {
+		options.Region = region
+		for _, endpoint := range endpoints {
+			if strings.EqualFold(endpoint.Name, "resourcegroupstaggingapi") {
+				options.BaseEndpoint = awsv2.String(endpoint.URL)
+			}
+		}
+	})
+}
+
+func createResourceTaggingClient(region string, endpoints []awstypes.ServiceEndpoint) (*resourcegroupstaggingapi.Client, error) {
+	cfg, err := awssession.GetConfigWithOptions(context.Background(), configv2.WithRegion(region))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AWS config for resource tagging client: %w", err)
+	}
+	return createResourceTaggingClientWithConfig(cfg, region, endpoints), nil
+}
+
 // RunWithContext runs the uninstall process with a context.
 // The first return is the list of ARNs for resources that could not be destroyed.
 func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, error) {
@@ -290,16 +315,31 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Destroyer", version.Raw),
 	})
 
-	tagClients := []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI{
-		resourcegroupstaggingapi.New(awsSession),
+	baseTaggingClient, err := createResourceTaggingClient(o.Region, o.endpoints)
+	if err != nil {
+		return nil, err
 	}
+	tagClients := []*resourcegroupstaggingapi.Client{baseTaggingClient}
 
 	if o.HostedZoneRole != "" {
-		cfg := awssession.GetR53ClientCfg(awsSession, o.HostedZoneRole)
+		cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(endpointUSEast1))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create AWS config for resource tagging client: %w", err)
+		}
+		stsSvc, err := awssession.NewSTSClient(ctx, awssession.EndpointOptions{
+			Region:    endpointUSEast1,
+			Endpoints: o.endpoints,
+		}, sts.WithAPIOptions(middleware.AddUserAgentKeyValue("OpenShift/4.x Destroyer", version.Raw)))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create STS client: %w", err)
+		}
+
+		creds := stscreds.NewAssumeRoleProvider(stsSvc, o.HostedZoneRole)
+		cfg.Credentials = awsv2.NewCredentialsCache(creds)
 		// This client is specifically for finding route53 zones,
 		// so it needs to use the global us-east-1 region.
-		cfg.Region = aws.String(endpoints.UsEast1RegionID)
-		tagClients = append(tagClients, resourcegroupstaggingapi.New(awsSession, cfg))
+
+		tagClients = append(tagClients, createResourceTaggingClientWithConfig(cfg, endpointUSEast1, o.endpoints))
 	}
 
 	switch o.Region {
@@ -309,13 +349,19 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		break
 	case endpoints.UsGovEast1RegionID, endpoints.UsGovWest1RegionID:
 		if o.Region != endpoints.UsGovWest1RegionID {
-			tagClients = append(tagClients,
-				resourcegroupstaggingapi.New(awsSession, aws.NewConfig().WithRegion(endpoints.UsGovWest1RegionID)))
+			tagClient, err := createResourceTaggingClient(endpoints.UsGovWest1RegionID, o.endpoints)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create resource tagging client for usgov-west-1: %w", err)
+			}
+			tagClients = append(tagClients, tagClient)
 		}
 	default:
 		if o.Region != endpoints.UsEast1RegionID {
-			tagClients = append(tagClients,
-				resourcegroupstaggingapi.New(awsSession, aws.NewConfig().WithRegion(endpoints.UsEast1RegionID)))
+			tagClient, err := createResourceTaggingClientWithConfig(endpoints.UsEast1RegionID, o.endpoints)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create resource tagging client for default us-east-1: %w", err)
+			}
+			tagClients = append(tagClients, tagClient)
 		}
 	}
 
@@ -346,7 +392,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	// Terminate EC2 instances. The instances need to be terminated first so that we can ensure that there is nothing
 	// running on the cluster creating new resources while we are attempting to delete resources, which could leak
 	// the new resources.
-	err = o.DeleteEC2Instances(ctx, awsSession, resourcesToDelete, deleted, tracker)
+	err = o.DeleteEC2Instances(ctx, resourcesToDelete, deleted, tracker)
 	if err != nil {
 		return resourcesToDelete.UnsortedList(), err
 	}
@@ -355,7 +401,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	err = wait.PollImmediateUntil(
 		time.Second*10,
 		func() (done bool, err error) {
-			newlyDeleted, loopError := o.DeleteResources(ctx, awsSession, resourcesToDelete.UnsortedList(), tracker)
+			newlyDeleted, loopError := o.DeleteResources(ctx, resourcesToDelete.UnsortedList(), tracker)
 			// Delete from the resources-to-delete set so that the current state of the resources to delete can be
 			// returned if the context is completed.
 			resourcesToDelete = resourcesToDelete.Difference(newlyDeleted)
@@ -385,7 +431,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		return resourcesToDelete.UnsortedList(), err
 	}
 
-	err = o.removeSharedTags(ctx, awsSession, tagClients, tracker)
+	err = o.removeSharedTags(ctx, tagClients, tracker)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +450,7 @@ func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, delete
 		profile := fmt.Sprintf("%s-%s-profile", o.ClusterID, profileType)
 		response, err := o.IAMClient.GetInstanceProfile(ctx, &iamv2.GetInstanceProfileInput{InstanceProfileName: &profile})
 		if err != nil {
-			if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
+			if strings.Contains(handleErrorCode(err), "NoSuchEntity") {
 				continue
 			}
 			return resources, fmt.Errorf("failed to get IAM instance profile: %w", err)
@@ -423,11 +469,11 @@ func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, delete
 // deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
 func (o *ClusterUninstaller) findResourcesToDelete(
 	ctx context.Context,
-	tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
+	tagClients []*resourcegroupstaggingapi.Client,
 	iamRoleSearch *IamRoleSearch,
 	iamUserSearch *IamUserSearch,
 	deleted sets.Set[string],
-) (sets.Set[string], []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, error) {
+) (sets.Set[string], []*resourcegroupstaggingapi.Client, error) {
 	var errs []error
 	resources, tagClients, err := FindTaggedResourcesToDelete(ctx, o.Logger, tagClients, o.Filters, iamRoleSearch, iamUserSearch, deleted)
 	if err != nil {
@@ -451,14 +497,14 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 func FindTaggedResourcesToDelete(
 	ctx context.Context,
 	logger logrus.FieldLogger,
-	tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
+	tagClients []*resourcegroupstaggingapi.Client,
 	filters []Filter,
 	iamRoleSearch *IamRoleSearch,
 	iamUserSearch *IamUserSearch,
 	deleted sets.Set[string],
-) (sets.Set[string], []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, error) {
+) (sets.Set[string], []*resourcegroupstaggingapi.Client, error) {
 	resources := sets.New[string]()
-	var tagClientsWithResources []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI
+	var tagClientsWithResources []*resourcegroupstaggingapi.Client
 	var errs []error
 
 	// Find resources by tag
@@ -473,7 +519,7 @@ func FindTaggedResourcesToDelete(
 		if len(resourcesInTagClient) > 0 || err != nil {
 			tagClientsWithResources = append(tagClientsWithResources, tagClient)
 		} else {
-			logger.Debugf("no deletions from %s, removing client", *tagClient.Config.Region)
+			logger.Debugf("no deletions from %s, removing client", tagClient.Options().Region)
 		}
 	}
 
@@ -505,39 +551,37 @@ func FindTaggedResourcesToDelete(
 func findResourcesByTag(
 	ctx context.Context,
 	logger logrus.FieldLogger,
-	tagClient *resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
+	tagClient *resourcegroupstaggingapi.Client,
 	filters []Filter,
 	deleted sets.Set[string],
 ) (sets.Set[string], error) {
 	resources := sets.New[string]()
 	for _, filter := range filters {
-		logger.Debugf("search for matching resources by tag in %s matching %#+v", *tagClient.Config.Region, filter)
-		tagFilters := make([]*resourcegroupstaggingapi.TagFilter, 0, len(filter))
+		logger.Debugf("search for matching resources by tag in %s matching %#+v", tagClient.Options().Region, filter)
+		tagFilters := make([]tagtypes.TagFilter, 0, len(filter))
 		for key, value := range filter {
-			tagFilters = append(tagFilters, &resourcegroupstaggingapi.TagFilter{
+			tagFilters = append(tagFilters, tagtypes.TagFilter{
 				Key:    aws.String(key),
-				Values: []*string{aws.String(value)},
+				Values: []string{value},
 			})
 		}
-		err := tagClient.GetResourcesPagesWithContext(
-			ctx,
-			&resourcegroupstaggingapi.GetResourcesInput{TagFilters: tagFilters},
-			func(results *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
-				for _, resource := range results.ResourceTagMappingList {
-					arnString := *resource.ResourceARN
-					if !deleted.Has(arnString) {
-						resources.Insert(arnString)
-					}
+
+		paginator := resourcegroupstaggingapi.NewGetResourcesPaginator(tagClient, &resourcegroupstaggingapi.GetResourcesInput{TagFilters: tagFilters})
+		for paginator.HasMorePages() {
+			page, err := paginator.NextPage(ctx)
+			if err != nil {
+				return resources, fmt.Errorf("failed to fetch resources by tag: %w", err)
+			}
+
+			for _, resource := range page.ResourceTagMappingList {
+				arnString := *resource.ResourceARN
+				if !deleted.Has(arnString) {
+					resources.Insert(arnString)
 				}
-				return !lastPage
-			},
-		)
-		if err != nil {
-			err = errors.Wrap(err, "get tagged resources")
-			logger.Info(err)
-			return resources, err
+			}
 		}
 	}
+
 	return resources, nil
 }
 
@@ -546,7 +590,7 @@ func findResourcesByTag(
 //	resources - the resources to be deleted.
 //
 // The first return is the ARNs of the resources that were successfully deleted.
-func (o *ClusterUninstaller) DeleteResources(ctx context.Context, awsSession *session.Session, resources []string, tracker *ErrorTracker) (sets.Set[string], error) {
+func (o *ClusterUninstaller) DeleteResources(ctx context.Context, resources []string, tracker *ErrorTracker) (sets.Set[string], error) {
 	deleted := sets.New[string]()
 	for _, arnString := range resources {
 		l := o.Logger.WithField("arn", arnString)
@@ -709,7 +753,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 	if err != nil {
 		// In some cases AWS may return the zone in the list of tagged resources despite the fact
 		// it no longer exists.
-		if strings.Contains(HandleErrorCode(err), "NoSuchHostedZone") {
+		if strings.Contains(handleErrorCode(err), "NoSuchHostedZone") {
 			return nil
 		}
 		return err
@@ -921,7 +965,7 @@ func deleteFileSystem(ctx context.Context, client *efs.Client, fsid string, logg
 
 	_, err = client.DeleteFileSystem(ctx, &efs.DeleteFileSystemInput{FileSystemId: aws.String(fsid)})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "FileSystemNotFound") {
+		if strings.Contains(handleErrorCode(err), "FileSystemNotFound") {
 			return nil
 		}
 		return err
@@ -980,7 +1024,7 @@ func deleteAccessPoint(ctx context.Context, client *efs.Client, id string, logge
 	logger = logger.WithField("AccessPoint ID", id)
 	_, err := client.DeleteAccessPoint(ctx, &efs.DeleteAccessPointInput{AccessPointId: aws.String(id)})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "AccessPointNotFound") {
+		if strings.Contains(handleErrorCode(err), "AccessPointNotFound") {
 			return nil
 		}
 		return err
@@ -994,7 +1038,7 @@ func deleteMountTarget(ctx context.Context, client *efs.Client, id string, logge
 	logger = logger.WithField("Mount Target ID", id)
 	_, err := client.DeleteMountTarget(ctx, &efs.DeleteMountTargetInput{MountTargetId: aws.String(id)})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "MountTargetNotFound") {
+		if strings.Contains(handleErrorCode(err), "MountTargetNotFound") {
 			return nil
 		}
 		return err
