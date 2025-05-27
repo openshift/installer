@@ -6,14 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 	tagtypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -21,12 +20,11 @@ import (
 
 func (o *ClusterUninstaller) removeSharedTags(
 	ctx context.Context,
-	session *session.Session,
 	tagClients []*resourcegroupstaggingapi.Client,
 	tracker *ErrorTracker,
 ) error {
 	for _, key := range o.clusterOwnedKeys() {
-		if err := o.removeSharedTag(ctx, session, tagClients, key, tracker); err != nil {
+		if err := o.removeSharedTag(ctx, tagClients, key, tracker); err != nil {
 			return err
 		}
 	}
@@ -49,7 +47,7 @@ func (o *ClusterUninstaller) clusterOwnedKeys() []string {
 	return keys
 }
 
-func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *session.Session, tagClients []*resourcegroupstaggingapi.Client, key string, tracker *ErrorTracker) error {
+func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, tagClients []*resourcegroupstaggingapi.Client, key string, tracker *ErrorTracker) error {
 	const sharedValue = "shared"
 
 	request := &resourcegroupstaggingapi.UntagResourcesInput{
@@ -78,7 +76,7 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 				}
 
 				for _, resource := range page.ResourceTagMappingList {
-					arnString := aws.StringValue(resource.ResourceARN)
+					arnString := *resource.ResourceARN
 					logger := o.Logger.WithField("arn", arnString)
 					parsedARN, err := arn.Parse(arnString)
 					if err != nil {
@@ -123,7 +121,7 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 				}
 				result, err := tagClient.UntagResources(ctx, request)
 				if err != nil {
-					if strings.Contains(HandleErrorCode(err), "InvalidParameter") {
+					if strings.Contains(handleErrorCode(err), "InvalidParameter") {
 						nextTagClients = nextTagClients[:len(nextTagClients)-1]
 					}
 					err = errors.Wrap(err, "untag shared resources")
@@ -143,7 +141,6 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 		tagClients = nextTagClients
 	}
 
-	iamClient := iam.New(session)
 	iamRoleSearch := &IamRoleSearch{
 		Client:  o.IAMClient,
 		Filters: []Filter{{key: sharedValue}},
@@ -163,9 +160,9 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 				o.Logger.Debugf("Removing the shared tag from the %q IAM role", role)
 				input := &iam.UntagRoleInput{
 					RoleName: &role,
-					TagKeys:  []*string{&key},
+					TagKeys:  []string{key},
 				}
-				if _, err := iamClient.UntagRoleWithContext(ctx, input); err != nil {
+				if _, err := o.IAMClient.UntagRole(ctx, input); err != nil {
 					done = false
 					o.Logger.Infof("Could not remove the shared tag from the %q IAM role: %v", role, err)
 				}
@@ -228,14 +225,14 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, id strin
 
 		for _, recordSet := range page.ResourceRecordSets {
 			// skip record sets that are not part of the cluster
-			name := aws.StringValue(recordSet.Name)
+			name := *recordSet.Name
 			if !strings.HasSuffix(name, dottedClusterDomain) {
 				continue
 			}
 			if len(name) == len(dottedClusterDomain) {
 				continue
 			}
-			recordsetFields := logrus.Fields{"recordset": fmt.Sprintf("%s (%s)", aws.StringValue(recordSet.Name), recordSet.Type)}
+			recordsetFields := logrus.Fields{"recordset": fmt.Sprintf("%s (%s)", *recordSet.Name, recordSet.Type)}
 			// delete any matching record sets in the public hosted zone
 			if publicZoneID != "" {
 				publicZoneLogger := logger.WithField("id", publicZoneID)
@@ -283,8 +280,7 @@ func deleteMatchingRecordSetInPublicZone(ctx context.Context, client *route53.Cl
 		return nil
 	}
 	matchingRecordSet := out.ResourceRecordSets[0]
-	if aws.StringValue(matchingRecordSet.Name) != aws.StringValue(recordSet.Name) ||
-		matchingRecordSet.Type != recordSet.Type {
+	if *matchingRecordSet.Name != *recordSet.Name || matchingRecordSet.Type != recordSet.Type {
 		return nil
 	}
 	return deleteRoute53RecordSet(ctx, client, zoneID, &matchingRecordSet, logger)
