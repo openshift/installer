@@ -46,7 +46,7 @@ func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []s
 			response, err := search.Client.ListRoleTags(ctx, &iamv2.ListRoleTagsInput{RoleName: role.RoleName})
 			if err != nil {
 				switch {
-				case strings.Contains(HandleErrorCode(err), "NoSuchEntity"):
+				case strings.Contains(handleErrorCode(err), "NoSuchEntity"):
 					// The role does not exist.
 					// Ignore this IAM Role and donot report this error via
 					// lastError
@@ -195,7 +195,7 @@ func deleteIAMInstanceProfileByName(ctx context.Context, client *iamv2.Client, n
 		InstanceProfileName: name,
 	})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
+		if strings.Contains(handleErrorCode(err), "NoSuchEntity") {
 			return nil
 		}
 		return err
@@ -218,7 +218,7 @@ func deleteIAMInstanceProfile(ctx context.Context, client *iamv2.Client, profile
 		InstanceProfileName: &name,
 	})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
+		if strings.Contains(handleErrorCode(err), "NoSuchEntity") {
 			return nil
 		}
 		return err
