@@ -2,6 +2,7 @@ package vsphere
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 	utilsnet "k8s.io/utils/net"
@@ -77,8 +78,13 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 	platformSpec.APIServerInternalIPs = types.StringsToIPs(icPlatformSpec.APIVIPs)
 	platformSpec.IngressIPs = types.StringsToIPs(icPlatformSpec.IngressVIPs)
 	platformSpec.MachineNetworks = types.MachineNetworksToCIDRs(ic.Config.MachineNetwork)
-	platformSpec.MachineNetworks = append(platformSpec.MachineNetworks, vipsToCIDRs(ic.Config.VSphere.APIVIPs)...)
-	platformSpec.MachineNetworks = append(platformSpec.MachineNetworks, vipsToCIDRs(ic.Config.VSphere.IngressVIPs)...)
+
+	vips := getInstallConfigVIPs(ic)
+	for _, vipCIDR := range vipsToCIDRs(vips) {
+		if !slices.Contains(platformSpec.MachineNetworks, vipCIDR) {
+			platformSpec.MachineNetworks = append(platformSpec.MachineNetworks, vipCIDR)
+		}
+	}
 
 	if ic.Config.EnabledFeatureGates().Enabled(features.FeatureGateVSphereMultiNetworks) {
 		logrus.Debug("Multi-networks feature gate enabled")
@@ -114,4 +120,12 @@ func vipsToCIDRs(vips []string) []configv1.CIDR {
 		cidrs[i] = configv1.CIDR(vip + mask)
 	}
 	return cidrs
+}
+
+func getInstallConfigVIPs(ic *installconfig.InstallConfig) []string {
+	vips := make([]string, 0, len(ic.Config.VSphere.APIVIPs)+len(ic.Config.VSphere.IngressVIPs))
+	vips = append(vips, ic.Config.VSphere.APIVIPs...)
+	vips = append(vips, ic.Config.VSphere.IngressVIPs...)
+
+	return vips
 }
