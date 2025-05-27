@@ -111,7 +111,7 @@ func deleteElasticLoadBalancerListener(ctx context.Context, client *elbapiv2.Cli
 		ListenerArn: aws.String(arn.String()),
 	})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "ListenerNotFound") {
+		if strings.Contains(handleErrorCode(err), "ListenerNotFound") {
 			logger.Info("Not found or already deleted")
 			return nil
 		}
