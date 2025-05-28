@@ -332,9 +332,8 @@ platform configuration.
 
     outboundType <string>
       Default: "Loadbalancer"
-      Valid Values: "","Loadbalancer","NatGateway","UserDefinedRouting"
+      Valid Values: "","Loadbalancer","NATGatewaySingleZone","UserDefinedRouting"
       OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
-"NatGateway" is only available in TechPreview.
 
     region <string> -required-
       Region specifies the Azure region where the cluster will be created.
