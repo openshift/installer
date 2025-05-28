@@ -11,6 +11,7 @@ import (
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -273,14 +274,14 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 				},
 			},
 			ControlPlane: &types.MachinePool{
-				Replicas: pointer.Int64Ptr(1),
+				Replicas: ptr.To[int64](3),
 				Platform: types.MachinePoolPlatform{
 					BareMetal: &baremetal.MachinePool{},
 				},
 			},
 			Compute: []types.MachinePool{
 				{
-					Replicas: pointer.Int64Ptr(1),
+					Replicas: ptr.To[int64](1),
 					Platform: types.MachinePoolPlatform{},
 				},
 			},
