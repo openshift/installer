@@ -47,6 +47,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		logrus.Debugf("GenerateClusterAssets: cosRegion = %v", cosRegion)
 		logrus.Debugf("GenerateClusterAssets: imageName = %v", imageName)
 		logrus.Debugf("GenerateClusterAssets: bucketName = %v", bucketName)
+		logrus.Debugf("GenerateClusterAssets: storageTier = %v", installConfig.Config.PowerVS.StorageTier)
 		logrus.Debugf("GenerateClusterAssets: powerVSCluster.Spec.ControlPlaneEndpoint.Host = %v", powerVSCluster.Spec.ControlPlaneEndpoint.Host)
 	}()
 
@@ -235,6 +236,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Bucket:          &bucket,
 			Object:          &object,
 			Region:          &cosRegion,
+			StorageType:     installConfig.Config.PowerVS.StorageTier,
 		},
 	}
 
