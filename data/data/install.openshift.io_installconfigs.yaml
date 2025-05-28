@@ -4847,13 +4847,12 @@ spec:
                     type: string
                   outboundType:
                     default: Loadbalancer
-                    description: |-
-                      OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
-                      "NatGateway" is only available in TechPreview.
+                    description: OutboundType is a strategy for how egress from cluster
+                      is achieved. When not specified default is "Loadbalancer".
                     enum:
                     - ""
                     - Loadbalancer
-                    - NatGateway
+                    - NATGatewaySingleZone
                     - UserDefinedRouting
                     type: string
                   region:
