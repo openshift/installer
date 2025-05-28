@@ -275,14 +275,14 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 				},
 			},
 			ControlPlane: &types.MachinePool{
-				Replicas: pointer.Int64Ptr(1),
+				Replicas: ptr.To[int64](3),
 				Platform: types.MachinePoolPlatform{
 					BareMetal: &baremetal.MachinePool{},
 				},
 			},
 			Compute: []types.MachinePool{
 				{
-					Replicas: pointer.Int64Ptr(1),
+					Replicas: ptr.To[int64](1),
 					Platform: types.MachinePoolPlatform{},
 				},
 			},
