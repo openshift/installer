@@ -2993,7 +2993,7 @@ func TestValidateTNF(t *testing.T) {
 			// Build default wrapping installConfig
 			var err error
 			if tc.checkCompute {
-				err = validateCompute(&tc.config.Platform, tc.config.ControlPlane, tc.config.Compute, field.NewPath("compute"), false).ToAggregate()
+				err = validateCompute(&tc.config.Platform, tc.config.ControlPlane, tc.config.Compute, field.NewPath("compute")).ToAggregate()
 			} else {
 				err = validateFencingCredentials(tc.config).ToAggregate()
 			}

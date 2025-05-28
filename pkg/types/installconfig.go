@@ -619,19 +619,6 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 	return fg
 }
 
-// MultiArchFeatureGateEnabled checks whether feature gate enabling multi-arch clusters is enabled.
-func MultiArchFeatureGateEnabled(platform string, fgs featuregates.FeatureGate) bool {
-	switch platform {
-	case aws.Name:
-		return true
-	case gcp.Name:
-		// The MultiArchInstallGCP feature gate is enabled by default
-		return true
-	default:
-		return false
-	}
-}
-
 // PublicAPI indicates whether the API load balancer should be public
 // by inspecting the cluster and operator publishing strategies.
 func (c *InstallConfig) PublicAPI() bool {

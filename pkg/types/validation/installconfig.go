@@ -135,8 +135,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("arbiter"), fmt.Sprintf("%s feature must be enabled in order to use arbiter cluster deployment", features.FeatureGateHighlyAvailableArbiter)))
 		}
 	}
-	multiArchEnabled := types.MultiArchFeatureGateEnabled(c.Platform.Name(), c.EnabledFeatureGates())
-	allErrs = append(allErrs, validateCompute(&c.Platform, c.ControlPlane, c.Compute, field.NewPath("compute"), multiArchEnabled)...)
+	allErrs = append(allErrs, validateCompute(&c.Platform, c.ControlPlane, c.Compute, field.NewPath("compute"))...)
 
 	releaseArch, err := version.ReleaseArchitecture()
 	if err != nil {
@@ -788,8 +787,11 @@ func validateComputeEdge(platform *types.Platform, pName string, fldPath *field.
 	return allErrs
 }
 
-func validateCompute(platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path, isMultiArchEnabled bool) field.ErrorList {
+func validateCompute(platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	// Multi Arch is enabled by default for AWS and GCP, these are also the only
+	// two valid platforms for multi arch installations.
+	isMultiArchEnabled := platform.AWS != nil || platform.GCP != nil
 	poolNames := map[string]bool{}
 	for i, p := range pools {
 		poolFldPath := fldPath.Index(i)
