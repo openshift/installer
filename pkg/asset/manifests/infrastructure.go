@@ -16,6 +16,7 @@ import (
 	externalinfra "github.com/openshift/installer/pkg/asset/manifests/external"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	nutanixinfra "github.com/openshift/installer/pkg/asset/manifests/nutanix"
+	"github.com/openshift/installer/pkg/asset/manifests/topologies"
 	vsphereinfra "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -92,11 +93,11 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		},
 	}
 
-	controlPlaneTopology, infrastructureTopology := determineTopologies(installConfig.Config)
+	controlPlaneTopology, infrastructureTopology := topologies.DetermineTopologies(installConfig.Config)
 
 	config.Status.InfrastructureTopology = infrastructureTopology
 	config.Status.ControlPlaneTopology = controlPlaneTopology
-	config.Status.CPUPartitioning = determineCPUPartitioning(installConfig.Config)
+	config.Status.CPUPartitioning = topologies.DetermineCPUPartitioning(installConfig.Config)
 
 	switch installConfig.Config.Platform.Name() {
 	case aws.Name:

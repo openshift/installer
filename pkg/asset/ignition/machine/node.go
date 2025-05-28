@@ -12,6 +12,7 @@ import (
 
 	mcfgv1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/pkg/asset/ignition"
+	"github.com/openshift/installer/pkg/asset/manifests/topologies"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
@@ -47,7 +48,8 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIPs[0], "22623")
 		}
 	}
-	return &igntypes.Config{
+
+	config := &igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
 			Config: igntypes.IgnitionConfig{
@@ -70,6 +72,12 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			},
 		},
 	}
+
+	controlPlaneTopology, _ := topologies.DetermineTopologies(installConfig)
+	cfgFile := ignition.FileFromBytes("/etc/kubernetes/control-plane-topology", "root", 0644, []byte(controlPlaneTopology))
+	config.Storage.Files = append(config.Storage.Files, cfgFile)
+
+	return config
 }
 
 // generatePointerMachineConfig generates a machineconfig when a user customizes

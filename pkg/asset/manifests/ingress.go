@@ -13,6 +13,7 @@ import (
 	operatorv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/manifests/topologies"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
@@ -79,7 +80,7 @@ func (ing *Ingress) Generate(_ context.Context, dependencies asset.Parents) erro
 }
 
 func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, error) {
-	controlPlaneTopology, _ := determineTopologies(config)
+	controlPlaneTopology, _ := topologies.DetermineTopologies(config)
 
 	isSingleControlPlaneNode := controlPlaneTopology == configv1.SingleReplicaTopologyMode
 
