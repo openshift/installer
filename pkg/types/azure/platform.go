@@ -19,7 +19,7 @@ const (
 
 	// NatGatewayOutboundType uses NAT gateway for egress from the cluster
 	// see https://learn.microsoft.com/en-us/azure/virtual-network/nat-gateway/nat-gateway-resource
-	NatGatewayOutboundType OutboundType = "NatGateway"
+	NatGatewaySingleZoneOutboundType OutboundType = "NatGatewaySingleZone"
 
 	// UserDefinedRoutingOutboundType uses user defined routing for egress from the cluster.
 	// see https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview
