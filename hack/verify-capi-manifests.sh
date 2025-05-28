@@ -27,8 +27,12 @@ generate_capi_manifest() {
 		clone_path="$(mktemp -d)"
 		git clone "${repo_origin}" "${clone_path}"
 		pushd "${clone_path}"
+		git fetch "${repo_origin}" "${revision}"
 		git checkout "${revision}"
 		case "${provider}" in
+		azurestack)
+		    # skip this for now--until unforked
+			;;
 		vsphere)
 			make release-manifests-all
 			;;
@@ -57,6 +61,16 @@ if [ "$IS_CONTAINER" != "" ]; then
 	if ! command -v jq; then
 		curl -L https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 -o /usr/bin/jq
 		chmod u+x /usr/bin/jq
+	fi
+
+
+	# Install `controller-gen` & `kustomize`, which are needed by nutanix, if not present
+	if ! command -v controller-gen; then
+		go install sigs.k8s.io/controller-tools/cmd/controller-gen
+	fi
+
+	if ! command -v kustomize; then
+		go install sigs.k8s.io/kustomize/kustomize/v5@latest
 	fi
 
 	# Silence git hints and advices
