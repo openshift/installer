@@ -8,6 +8,7 @@ import (
 
 	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	"github.com/aws/aws-sdk-go-v2/aws/middleware"
 	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -22,12 +23,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -73,11 +68,6 @@ type ClusterUninstaller struct {
 	HostedZoneRole string
 	endpoints      []awstypes.ServiceEndpoint
 
-	// Session is the AWS session to be used for deletion.  If nil, a
-	// new session will be created based on the usual credential
-	// configuration (AWS_PROFILE, AWS_ACCESS_KEY_ID, etc.).
-	Session *session.Session
-
 	EC2Client   *ec2v2.Client
 	EFSClient   *efs.Client
 	ELBClient   *elb.Client
@@ -88,6 +78,17 @@ type ClusterUninstaller struct {
 	S3Client      *s3.Client
 }
 
+const (
+	endpointUSEast1      = "us-east-1"
+	endpointCNNorth1     = "cn-north-1"
+	endpointCNNorthWest1 = "cn-northwest-1"
+	endpointISOEast1     = "us-iso-east-1"
+	endpointISOWest1     = "us-iso-west-1"
+	endpointISOBEast1    = "us-isob-east-1"
+	endpointUSGovEast1   = "us-gov-east-1"
+	endpointUSGovWest1   = "us-gov-west-1"
+)
+
 // New returns an AWS destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	filters := make([]Filter, 0, len(metadata.ClusterPlatformMetadata.AWS.Identifier))
@@ -95,13 +96,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		filters = append(filters, filter)
 	}
 	region := metadata.ClusterPlatformMetadata.AWS.Region
-	session, err := awssession.GetSessionWithOptions(
-		awssession.WithRegion(region),
-		awssession.WithServiceEndpoints(region, metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints),
-	)
-	if err != nil {
-		return nil, err
-	}
 
 	ctx := context.Background()
 	ec2Client, err := awssession.NewEC2Client(ctx, awssession.EndpointOptions{
@@ -122,44 +116,56 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 
 	// FIXME: remove this code when the elb and elbv2 clients are "fixed" or figured out
 	elbCfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AWS config for elb client: %w", err)
+	}
 	elbclient := elb.NewFromConfig(elbCfg, func(options *elb.Options) {
 		options.Region = region
 		for _, endpoint := range metadata.AWS.ServiceEndpoints {
 			if strings.EqualFold(endpoint.Name, "elb") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
+				options.BaseEndpoint = awsv2.String(endpoint.URL)
 			}
 		}
 	})
 
 	// FIXME: remove this code when the elb and elbv2 clients are "fixed" or figured out
 	elbv2Cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AWS config for elbv2 client: %w", err)
+	}
 	elbv2client := elbv2.NewFromConfig(elbv2Cfg, func(options *elbv2.Options) {
 		options.Region = region
 		for _, endpoint := range metadata.AWS.ServiceEndpoints {
 			if strings.EqualFold(endpoint.Name, "elbv2") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
+				options.BaseEndpoint = awsv2.String(endpoint.URL)
 			}
 		}
 	})
 
 	// FIXME: remove this code when the s3client is made
 	s3Cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AWS config for S3 client: %w", err)
+	}
 	s3Client := s3.NewFromConfig(s3Cfg, func(options *s3.Options) {
 		options.Region = region
 		for _, endpoint := range metadata.AWS.ServiceEndpoints {
 			if strings.EqualFold(endpoint.Name, "s3") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
+				options.BaseEndpoint = awsv2.String(endpoint.URL)
 			}
 		}
 	})
 
 	// FIXME: remove this code when the EFS client is made
 	efsCfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AWS config for EFS client: %w", err)
+	}
 	efsClient := efs.NewFromConfig(efsCfg, func(options *efs.Options) {
 		options.Region = region
 		for _, endpoint := range metadata.AWS.ServiceEndpoints {
 			if strings.EqualFold(endpoint.Name, "efs") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
+				options.BaseEndpoint = awsv2.String(endpoint.URL)
 			}
 		}
 	})
@@ -178,7 +184,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Logger:         logger,
 		ClusterID:      metadata.InfraID,
 		ClusterDomain:  metadata.AWS.ClusterDomain,
-		Session:        session,
 		HostedZoneRole: metadata.AWS.HostedZoneRole,
 		endpoints:      metadata.AWS.ServiceEndpoints,
 		EC2Client:      ec2Client,
@@ -231,19 +236,6 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		return nil, err
 	}
 
-	awsSession := o.Session
-	if awsSession == nil {
-		// Relying on appropriate AWS ENV vars (eg AWS_PROFILE, AWS_ACCESS_KEY_ID, etc)
-		awsSession, err = session.NewSession(aws.NewConfig().WithRegion(o.Region))
-		if err != nil {
-			return nil, err
-		}
-	}
-	awsSession.Handlers.Build.PushBackNamed(request.NamedHandler{
-		Name: "openshiftInstaller.OpenshiftInstallerUserAgentHandler",
-		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Destroyer", version.Raw),
-	})
-
 	baseTaggingClient, err := createResourceTaggingClient(o.Region, o.endpoints)
 	if err != nil {
 		return nil, err
@@ -272,21 +264,21 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	}
 
 	switch o.Region {
-	case endpoints.CnNorth1RegionID, endpoints.CnNorthwest1RegionID:
+	case endpointCNNorth1, endpointCNNorthWest1:
 		break
-	case endpoints.UsIsoEast1RegionID, endpoints.UsIsoWest1RegionID, endpoints.UsIsobEast1RegionID:
+	case endpointISOEast1, endpointISOWest1, endpointISOBEast1:
 		break
-	case endpoints.UsGovEast1RegionID, endpoints.UsGovWest1RegionID:
-		if o.Region != endpoints.UsGovWest1RegionID {
-			tagClient, err := createResourceTaggingClient(endpoints.UsGovWest1RegionID, o.endpoints)
+	case endpointUSGovEast1, endpointUSGovWest1:
+		if o.Region != endpointUSGovWest1 {
+			tagClient, err := createResourceTaggingClient(endpointUSGovWest1, o.endpoints)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create resource tagging client for usgov-west-1: %w", err)
+				return nil, fmt.Errorf("failed to create resource tagging client for us-gov-west-1: %w", err)
 			}
 			tagClients = append(tagClients, tagClient)
 		}
 	default:
-		if o.Region != endpoints.UsEast1RegionID {
-			tagClient, err := createResourceTaggingClientWithConfig(endpoints.UsEast1RegionID, o.endpoints)
+		if o.Region != endpointUSEast1 {
+			tagClient, err := createResourceTaggingClient(endpointUSEast1, o.endpoints)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create resource tagging client for default us-east-1: %w", err)
 			}
@@ -490,7 +482,7 @@ func findResourcesByTag(
 		tagFilters := make([]tagtypes.TagFilter, 0, len(filter))
 		for key, value := range filter {
 			tagFilters = append(tagFilters, tagtypes.TagFilter{
-				Key:    aws.String(key),
+				Key:    awsv2.String(key),
 				Values: []string{value},
 			})
 		}
@@ -573,7 +565,7 @@ func tagMatch(filters []Filter, tags map[string]string) bool {
 // Terraform-managed zone's privateID.
 func getPublicHostedZone(ctx context.Context, client *route53.Client, privateID string, logger logrus.FieldLogger) (string, error) {
 	response, err := client.GetHostedZone(ctx, &route53.GetHostedZoneInput{
-		Id: aws.String(privateID),
+		Id: awsv2.String(privateID),
 	})
 	if err != nil {
 		return "", err
@@ -615,7 +607,7 @@ func findAncestorPublicRoute53(ctx context.Context, client *route53.Client, dnsN
 // It returns "", when no public route53 zone could be found.
 func findPublicRoute53(ctx context.Context, client *route53.Client, dnsName string, logger logrus.FieldLogger) (string, error) {
 	request := &route53.ListHostedZonesByNameInput{
-		DNSName: aws.String(dnsName),
+		DNSName: awsv2.String(dnsName),
 	}
 	for i := 0; true; i++ {
 		logger.Debugf("listing AWS hosted zones %q (page %d)", dnsName, i)
@@ -695,7 +687,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 	publicEntries := map[string]route53types.ResourceRecordSet{}
 	if len(publicZoneID) != 0 {
 
-		paginator := route53.NewListResourceRecordSetsPaginator(client, &route53.ListResourceRecordSetsInput{HostedZoneId: aws.String(publicZoneID)})
+		paginator := route53.NewListResourceRecordSetsPaginator(client, &route53.ListResourceRecordSetsInput{HostedZoneId: awsv2.String(publicZoneID)})
 		for paginator.HasMorePages() {
 			page, err := paginator.NextPage(ctx)
 			if err != nil {
@@ -711,7 +703,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 	}
 
 	var lastError error
-	paginator := route53.NewListResourceRecordSetsPaginator(client, &route53.ListResourceRecordSetsInput{HostedZoneId: aws.String(id)})
+	paginator := route53.NewListResourceRecordSetsPaginator(client, &route53.ListResourceRecordSetsInput{HostedZoneId: awsv2.String(id)})
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
@@ -752,7 +744,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 	}
 
 	_, err = client.DeleteHostedZone(ctx, &route53.DeleteHostedZoneInput{
-		Id: aws.String(id),
+		Id: awsv2.String(id),
 	})
 	if err != nil {
 		if strings.Contains(HandleErrorCode(err), "NoSuchHostedZone") {
@@ -768,7 +760,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 func deleteRoute53RecordSet(ctx context.Context, client *route53.Client, zoneID string, recordSet *route53types.ResourceRecordSet, logger logrus.FieldLogger) error {
 	logger = logger.WithField("record set", fmt.Sprintf("%s %s", recordSet.Type, *recordSet.Name))
 	_, err := client.ChangeResourceRecordSets(ctx, &route53.ChangeResourceRecordSetsInput{
-		HostedZoneId: aws.String(zoneID),
+		HostedZoneId: awsv2.String(zoneID),
 		ChangeBatch: &route53types.ChangeBatch{
 			Changes: []route53types.Change{
 				{
@@ -829,28 +821,6 @@ func deleteS3(ctx context.Context, client *s3.Client, arn arn.ARN, logger logrus
 	return nil
 }
 
-func isBucketNotFound(err interface{}) bool {
-	switch s3Err := err.(type) {
-	case awserr.Error:
-		if s3Err.Code() == "NoSuchBucket" {
-			return true
-		}
-		origErr := s3Err.OrigErr()
-		if origErr != nil {
-			return isBucketNotFound(origErr)
-		}
-	case s3manager.Error:
-		if s3Err.OrigErr != nil {
-			return isBucketNotFound(s3Err.OrigErr)
-		}
-	case s3manager.Errors:
-		if len(s3Err) == 1 {
-			return isBucketNotFound(s3Err[0])
-		}
-	}
-	return false
-}
-
 func deleteElasticFileSystem(ctx context.Context, client *efs.Client, arn arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
@@ -892,7 +862,7 @@ func deleteFileSystem(ctx context.Context, client *efs.Client, fsid string, logg
 		}
 	}
 
-	_, err = client.DeleteFileSystem(ctx, &efs.DeleteFileSystemInput{FileSystemId: aws.String(fsid)})
+	_, err = client.DeleteFileSystem(ctx, &efs.DeleteFileSystemInput{FileSystemId: awsv2.String(fsid)})
 	if err != nil {
 		if strings.Contains(HandleErrorCode(err), "FileSystemNotFound") {
 			return nil
@@ -906,12 +876,12 @@ func deleteFileSystem(ctx context.Context, client *efs.Client, fsid string, logg
 
 func getAccessPoints(ctx context.Context, client *efs.Client, apID string) ([]string, error) {
 	var accessPointIDs []string
-	paginator := efs.NewDescribeAccessPointsPaginator(client, &efs.DescribeAccessPointsInput{FileSystemId: aws.String(apID)})
+	paginator := efs.NewDescribeAccessPointsPaginator(client, &efs.DescribeAccessPointsInput{FileSystemId: awsv2.String(apID)})
 
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("describing access points failed: %w", err)
+			return nil, fmt.Errorf("describing access points: %w", err)
 		}
 
 		for _, ap := range page.AccessPoints {
@@ -932,7 +902,7 @@ func getMountTargets(ctx context.Context, client *efs.Client, fsid string) ([]st
 	// Number of Mount Targets should be equal to nr. of subnets that can access the volume, i.e. relatively small.
 	rsp, err := client.DescribeMountTargets(
 		ctx,
-		&efs.DescribeMountTargetsInput{FileSystemId: aws.String(fsid)},
+		&efs.DescribeMountTargetsInput{FileSystemId: awsv2.String(fsid)},
 	)
 	if err != nil {
 		return nil, err
@@ -951,7 +921,7 @@ func getMountTargets(ctx context.Context, client *efs.Client, fsid string) ([]st
 
 func deleteAccessPoint(ctx context.Context, client *efs.Client, id string, logger logrus.FieldLogger) error {
 	logger = logger.WithField("AccessPoint ID", id)
-	_, err := client.DeleteAccessPoint(ctx, &efs.DeleteAccessPointInput{AccessPointId: aws.String(id)})
+	_, err := client.DeleteAccessPoint(ctx, &efs.DeleteAccessPointInput{AccessPointId: awsv2.String(id)})
 	if err != nil {
 		if strings.Contains(HandleErrorCode(err), "AccessPointNotFound") {
 			return nil
@@ -965,7 +935,7 @@ func deleteAccessPoint(ctx context.Context, client *efs.Client, id string, logge
 
 func deleteMountTarget(ctx context.Context, client *efs.Client, id string, logger logrus.FieldLogger) error {
 	logger = logger.WithField("Mount Target ID", id)
-	_, err := client.DeleteMountTarget(ctx, &efs.DeleteMountTargetInput{MountTargetId: aws.String(id)})
+	_, err := client.DeleteMountTarget(ctx, &efs.DeleteMountTargetInput{MountTargetId: awsv2.String(id)})
 	if err != nil {
 		if strings.Contains(HandleErrorCode(err), "MountTargetNotFound") {
 			return nil
