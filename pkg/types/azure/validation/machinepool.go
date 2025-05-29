@@ -36,7 +36,6 @@ var (
 
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
-
 	allErrs := field.ErrorList{}
 
 	if p.OSDisk.DiskSizeGB < 0 {
