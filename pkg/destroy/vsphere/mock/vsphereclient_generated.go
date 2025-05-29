@@ -155,6 +155,20 @@ func (mr *MockAPIMockRecorder) GetCnsVolumes(ctx, infraID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCnsVolumes", reflect.TypeOf((*MockAPI)(nil).GetCnsVolumes), ctx, infraID)
 }
 
+// GetVCenterName mocks base method.
+func (m *MockAPI) GetVCenterName() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVCenterName")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetVCenterName indicates an expected call of GetVCenterName.
+func (mr *MockAPIMockRecorder) GetVCenterName() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVCenterName", reflect.TypeOf((*MockAPI)(nil).GetVCenterName))
+}
+
 // ListFolders mocks base method.
 func (m *MockAPI) ListFolders(ctx context.Context, tagID string) ([]mo.Folder, error) {
 	m.ctrl.T.Helper()
