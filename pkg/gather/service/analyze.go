@@ -84,6 +84,7 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 		check    func(analysis) bool
 		optional bool
 	}{
+		{name: "node-image-pull", check: checkReleaseImageDownload, optional: false},
 		{name: "release-image", check: checkReleaseImageDownload, optional: false},
 		{name: "bootkube", check: checkBootkubeService, optional: false},
 	}
