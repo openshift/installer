@@ -75,7 +75,37 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 	if platform.AWS != nil {
 		allErrs = append(allErrs, awsvalidation.ValidateMachinePoolArchitecture(p, fldPath.Child("architecture"))...)
 	}
+
+	allErrs = append(allErrs, validateDiskSetup(platform, p, fldPath.Child("diskSetup"))...)
+
 	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, p, fldPath.Child("platform"))...)
+	return allErrs
+}
+
+func validateDiskSetup(platform *types.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// There should be only one etcd or swap disk
+	etcdCount := 0
+	swapCount := 0
+
+	for _, ds := range p.DiskSetup {
+		switch ds.Type {
+		case types.Etcd:
+			etcdCount++
+		case types.Swap:
+			swapCount++
+		}
+	}
+
+	if etcdCount >= 2 {
+		allErrs = append(allErrs, field.TooMany(fldPath.Child("etcd"), etcdCount, 1))
+	}
+
+	if swapCount >= 2 {
+		allErrs = append(allErrs, field.TooMany(fldPath.Child("swap"), swapCount, 1))
+	}
+
 	return allErrs
 }
 

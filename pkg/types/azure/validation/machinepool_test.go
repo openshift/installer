@@ -88,6 +88,81 @@ func TestValidateMachinePool(t *testing.T) {
 			expected: `^test-path\.diskType: Unsupported value: "LRS": supported values: "Premium_LRS", "StandardSSD_LRS", "Standard_LRS"$`,
 		},
 		{
+			name:          "multiple disk and setup missing lun id",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "etcd",
+							DiskSizeGB:  1,
+							ManagedDisk: nil,
+							Lun:         nil,
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.Lun: Required value: etcd must have lun id$`,
+		},
+		{
+			name:          "multiple disk and setup PlatformDiskID does not match",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "foo",
+							DiskSizeGB:  1,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.NameSuffix: Invalid value: "foo": does not match etcd PlatformDiskID etcd$`,
+		},
+		{
+			name:          "multiple disk size must be greater than zero",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "etcd",
+							DiskSizeGB:  0,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.DiskSizeGB: Invalid value: 0: diskSizeGB must be greater than zero$`,
+		},
+		{
 			name:          "unsupported disk master",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
