@@ -50,14 +50,21 @@ const (
 	ArchitectureARM64 = "arm64"
 )
 
+// DiskType is the string representation of the three types disk setups
+// +kubebuilder:validation:Enum=etcd;swap;user-defined
 type DiskType string
 
 const (
-	Etcd        DiskType = "etcd"
-	Swap        DiskType = "swap"
+	// Etcd indicates etcd disk setup
+	Etcd DiskType = "etcd"
+	// Swap indicates swap disk setup
+	Swap DiskType = "swap"
+	// UserDefined indicates user-defined disk setup
 	UserDefined DiskType = "user-defined"
 )
 
+// Disk defines the type of disk (etcd, swap or user-defined) and the configuration
+// of each disk type
 type Disk struct {
 	Type DiskType `json:"type,omitempty"`
 
@@ -66,13 +73,18 @@ type Disk struct {
 	Swap        *DiskSwap        `json:"swap,omitempty"`
 }
 
+// DiskUserDefined defines a disk type of user-defined.
 type DiskUserDefined struct {
 	PlatformDiskID string `json:"platformDiskID,omitempty"`
 	MountPath      string `json:"mountPath,omitempty"`
 }
+
+// DiskSwap defines a disk type of swap
 type DiskSwap struct {
 	PlatformDiskID string `json:"platformDiskID,omitempty"`
 }
+
+// DiskEtcd defines a disk type of etcd
 type DiskEtcd struct {
 	PlatformDiskID string `json:"platformDiskID,omitempty"`
 }

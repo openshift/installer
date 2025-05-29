@@ -245,9 +245,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 
 	ultraSSDCapability := machineapi.AzureUltraSSDCapabilityState(mpool.UltraSSDCapability)
 
-	//dataDisks := make([]machineapi.DataDisk, len(mpool.DataDisks))
-
-	var dataDisks []machineapi.DataDisk
+	dataDisks := make([]machineapi.DataDisk, 0, len(mpool.DataDisks))
 
 	for _, disk := range mpool.DataDisks {
 		dataDisk := machineapi.DataDisk{
