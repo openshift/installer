@@ -141,17 +141,21 @@ func validateDataDiskSetup(azurePool *azure.MachinePool, pool *types.MachinePool
 			allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%s must have lun id", d.NameSuffix)))
 		}
 
+		if d.DiskSizeGB == 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("DiskSizeGB"), d.DiskSizeGB, "diskSizeGB must be greater than zero"))
+		}
+
 		switch setup.Type {
 		case types.Etcd:
-			if setup.Etcd.PlatformDiskID == d.NameSuffix {
+			if setup.Etcd.PlatformDiskID != d.NameSuffix {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match etcd PlatformDiskID %s", setup.Etcd.PlatformDiskID)))
 			}
 		case types.Swap:
-			if setup.Swap.PlatformDiskID == d.NameSuffix {
+			if setup.Swap.PlatformDiskID != d.NameSuffix {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match swap PlatformDiskID %s", setup.Swap.PlatformDiskID)))
 			}
 		case types.UserDefined:
-			if setup.UserDefined.PlatformDiskID == d.NameSuffix {
+			if setup.UserDefined.PlatformDiskID != d.NameSuffix {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match user defined PlatformDiskID %s", setup.UserDefined.PlatformDiskID)))
 			}
 		}
