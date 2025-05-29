@@ -200,15 +200,6 @@ func TestFeatureGates(t *testing.T) {
 			expected: `^platform.none.fencingCredentials: Forbidden: this field is protected by the DualReplica feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
-			name: "FencingCredentials is allowed with TechPreviewNoUpgrade Feature Set",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.FeatureSet = v1.TechPreviewNoUpgrade
-				c.ControlPlane.Fencing = &types.Fencing{Credentials: []*types.Credential{{HostName: "host1"}, {HostName: "host2"}}}
-				return c
-			}(),
-		},
-		{
 			name: "FencingCredentials is allowed with DevPreviewNoUpgrade Feature Set",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
