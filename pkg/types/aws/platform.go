@@ -3,8 +3,6 @@ package aws
 import (
 	"os"
 
-	"github.com/aws/aws-sdk-go/aws/endpoints"
-
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/dns"
 )
@@ -231,19 +229,6 @@ const (
 	// load balancer that serves the Kubernetes API server.
 	ControlPlaneInternalLBSubnetRole SubnetRoleType = "ControlPlaneInternalLB"
 )
-
-// IsSecretRegion returns true if the region is part of either the ISO or ISOB partitions.
-func IsSecretRegion(region string) bool {
-	partition, ok := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region)
-	if !ok {
-		return false
-	}
-	switch partition.ID() {
-	case endpoints.AwsIsoPartitionID, endpoints.AwsIsoBPartitionID:
-		return true
-	}
-	return false
-}
 
 // IsPublicOnlySubnetsEnabled returns whether the public-only subnets feature has been enabled via env var.
 func IsPublicOnlySubnetsEnabled() bool {
