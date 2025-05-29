@@ -89,7 +89,6 @@ var (
 		configv1.GCPServiceEndpointNameIAM,
 		configv1.GCPServiceEndpointNameServiceUsage,
 		configv1.GCPServiceEndpointNameStorage,
-		configv1.GCPServiceEndpointNameTagManager,
 	)
 )
 
