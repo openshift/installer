@@ -668,7 +668,7 @@ func TestValidateMachinePool(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			azurePlatform := &azure.Platform{CloudName: tc.azurePlatform}
-			err := ValidateMachinePool(tc.pool.Platform.Azure, tc.pool.Name, azurePlatform, field.NewPath("test-path")).ToAggregate()
+			err := ValidateMachinePool(tc.pool.Platform.Azure, tc.pool.Name, azurePlatform, tc.pool, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {

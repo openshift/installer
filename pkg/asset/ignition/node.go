@@ -133,6 +133,8 @@ RequiredBy=local-fs.target
 `),
 	})
 }
+
+// AddEtcdDisk creates a partition, filesystem and systemd mount via ignition
 func AddEtcdDisk(config *igntypes.Config, device string) {
 	config.Storage.Disks = append(config.Storage.Disks, igntypes.Disk{
 		Device: device,
