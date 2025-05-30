@@ -30,9 +30,9 @@ This may be accomplished in two ways:
     ``` yaml
     platform:
       openstack:
-         clusterOSImageProperties:
-            - hw_cpu_policy: dedicated
-            - hw_mem_page_size: large
+        clusterOSImageProperties:
+          hw_cpu_policy: dedicated
+          hw_mem_page_size: large
     ```
 
 If using image properties, then the flavor used to deploy the virtual machines must allow the image property values selected.
@@ -71,10 +71,10 @@ This can also be accomplished by using `platform.openstack.clusterOSImagePropert
 platform:
   openstack:
     clusterOSImageProperties:
-      - hw_cpu_policy: dedicated
-      - hw_mem_page_size: 1GB
-      - hw_numa_nodes: '1'
-      - hw_vif_multiqueue_enabled: true
+      hw_cpu_policy: dedicated
+      hw_mem_page_size: 1GB
+      hw_numa_nodes: '1'
+      hw_vif_multiqueue_enabled: true
 ```
 
 ### Create additional network to attach poll mode driver interfaces

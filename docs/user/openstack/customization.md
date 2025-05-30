@@ -30,7 +30,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `region` (deprecated string): The OpenStack region where the cluster will be created. Currently this value is not used by the installer.
 * `trunkSupport` (deprecated string): Whether OpenStack ports can be trunked (`1` for true or `0` for false)
 * `clusterOSImage` (optional string): Either a URL with `http(s)` or `file` scheme to override the default OS image for cluster nodes or an existing Glance image name.
-* `clusterOSImageProperties` (optional list of strings): a list of properties to be added to the installer-uploaded ClusterOSImage in Glance. The default is to not set any properties. `clusterOSImageProperties` is ignored when `clusterOSImage` points to an existing image in Glance.
+* `clusterOSImageProperties` (key-value pairs): a list of properties to be added to the installer-uploaded ClusterOSImage in Glance. The default is to not set any properties. `clusterOSImageProperties` is ignored when `clusterOSImage` points to an existing image in Glance.
 * `apiVIPs` (optional array of strings): IP address on the machineNetwork that will be assigned to the API VIP. If more than one are set, it must be one IPv4 and one IPv6.
 * `ingressVIPs` (optional array of strings): IP address on the machineNetwork that will be assigned to the ingress VIP. If more than one are set, it must be one IPv4 and one IPv6.
 * `controlPlanePort` (optional object): the UUID and/or Name of an OpenStack Network and its Subnets where to install the nodes of the cluster onto. For more information on how to install with a custom subnet, see the [custom subnets](#custom-subnets) section of the docs.
