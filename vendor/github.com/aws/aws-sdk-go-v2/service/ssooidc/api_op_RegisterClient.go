@@ -10,9 +10,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Registers a client with IAM Identity Center. This allows clients to initiate
-// device authorization. The output should be persisted for reuse through many
-// authentication requests.
+// Registers a public client with IAM Identity Center. This allows clients to
+// perform authorization using the authorization code grant with Proof Key for Code
+// Exchange (PKCE) or the device code grant.
 func (c *Client) RegisterClient(ctx context.Context, params *RegisterClientInput, optFns ...func(*Options)) (*RegisterClientOutput, error) {
 	if params == nil {
 		params = &RegisterClientInput{}
@@ -40,6 +40,33 @@ type RegisterClientInput struct {
 	//
 	// This member is required.
 	ClientType *string
+
+	// This IAM Identity Center application ARN is used to define
+	// administrator-managed configuration for public client access to resources. At
+	// authorization, the scopes, grants, and redirect URI available to this client
+	// will be restricted by this application resource.
+	EntitledApplicationArn *string
+
+	// The list of OAuth 2.0 grant types that are defined by the client. This list is
+	// used to restrict the token granting flows available to the client. Supports the
+	// following OAuth 2.0 grant types: Authorization Code, Device Code, and Refresh
+	// Token.
+	//
+	// * Authorization Code - authorization_code
+	//
+	// * Device Code - urn:ietf:params:oauth:grant-type:device_code
+	//
+	// * Refresh Token - refresh_token
+	GrantTypes []string
+
+	// The IAM Identity Center Issuer URL associated with an instance of IAM Identity
+	// Center. This value is needed for user access to resources through the client.
+	IssuerUrl *string
+
+	// The list of redirect URI that are defined by the client. At completion of
+	// authorization, this list is used to restrict what locations the user agent can
+	// be redirected back to.
+	RedirectUris []string
 
 	// The list of scopes that are defined by the client. Upon authorization, this
 	// list is used to restrict permissions when granting an access token.
@@ -116,6 +143,9 @@ func (c *Client) addOperationRegisterClientMiddlewares(stack *middleware.Stack, 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +156,15 @@ func (c *Client) addOperationRegisterClientMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRegisterClientValidationMiddleware(stack); err != nil {
@@ -147,6 +186,18 @@ func (c *Client) addOperationRegisterClientMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
