@@ -15,14 +15,22 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This operation is not supported by directory buckets. Creates or modifies
-// OwnershipControls for an Amazon S3 bucket. To use this operation, you must have
-// the s3:PutBucketOwnershipControls permission. For more information about Amazon
-// S3 permissions, see Specifying permissions in a policy (https://docs.aws.amazon.com/AmazonS3/latest/user-guide/using-with-s3-actions.html)
-// . For information about Amazon S3 Object Ownership, see Using object ownership (https://docs.aws.amazon.com/AmazonS3/latest/user-guide/about-object-ownership.html)
-// . The following operations are related to PutBucketOwnershipControls :
-//   - GetBucketOwnershipControls
-//   - DeleteBucketOwnershipControls
+// This operation is not supported for directory buckets.
+//
+// Creates or modifies OwnershipControls for an Amazon S3 bucket. To use this
+// operation, you must have the s3:PutBucketOwnershipControls permission. For more
+// information about Amazon S3 permissions, see [Specifying permissions in a policy].
+//
+// For information about Amazon S3 Object Ownership, see [Using object ownership].
+//
+// The following operations are related to PutBucketOwnershipControls :
+//
+// # GetBucketOwnershipControls
+//
+// # DeleteBucketOwnershipControls
+//
+// [Specifying permissions in a policy]: https://docs.aws.amazon.com/AmazonS3/latest/user-guide/using-with-s3-actions.html
+// [Using object ownership]: https://docs.aws.amazon.com/AmazonS3/latest/user-guide/about-object-ownership.html
 func (c *Client) PutBucketOwnershipControls(ctx context.Context, params *PutBucketOwnershipControlsInput, optFns ...func(*Options)) (*PutBucketOwnershipControlsOutput, error) {
 	if params == nil {
 		params = &PutBucketOwnershipControlsInput{}
@@ -51,9 +59,23 @@ type PutBucketOwnershipControlsInput struct {
 	// This member is required.
 	OwnershipControls *types.OwnershipControls
 
-	// The MD5 hash of the OwnershipControls request body. For requests made using the
-	// Amazon Web Services Command Line Interface (CLI) or Amazon Web Services SDKs,
-	// this field is calculated automatically.
+	//  Indicates the algorithm used to create the checksum for the object when you
+	// use the SDK. This header will not provide any additional functionality if you
+	// don't use the SDK. When you send this header, there must be a corresponding
+	// x-amz-checksum-algorithm header sent. Otherwise, Amazon S3 fails the request
+	// with the HTTP status code 400 Bad Request . For more information, see [Checking object integrity] in the
+	// Amazon S3 User Guide.
+	//
+	// If you provide an individual checksum, Amazon S3 ignores any provided
+	// ChecksumAlgorithm parameter.
+	//
+	// [Checking object integrity]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html
+	ChecksumAlgorithm types.ChecksumAlgorithm
+
+	// The MD5 hash of the OwnershipControls request body.
+	//
+	// For requests made using the Amazon Web Services Command Line Interface (CLI) or
+	// Amazon Web Services SDKs, this field is calculated automatically.
 	ContentMD5 *string
 
 	// The account ID of the expected bucket owner. If the account ID that you provide
@@ -65,6 +87,7 @@ type PutBucketOwnershipControlsInput struct {
 }
 
 func (in *PutBucketOwnershipControlsInput) bindEndpointParams(p *EndpointParameters) {
+
 	p.Bucket = in.Bucket
 	p.UseS3ExpressControlEndpoint = ptr.Bool(true)
 }
@@ -119,6 +142,9 @@ func (c *Client) addOperationPutBucketOwnershipControlsMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -132,6 +158,21 @@ func (c *Client) addOperationPutBucketOwnershipControlsMiddlewares(stack *middle
 		return err
 	}
 	if err = addPutBucketContextMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addIsExpressUserAgent(stack); err != nil {
+		return err
+	}
+	if err = addRequestChecksumMetricsTracking(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpPutBucketOwnershipControlsValidationMiddleware(stack); err != nil {
@@ -173,6 +214,18 @@ func (c *Client) addOperationPutBucketOwnershipControlsMiddlewares(stack *middle
 	if err = s3cust.AddExpressDefaultChecksumMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -191,10 +244,21 @@ func newServiceMetadataMiddleware_opPutBucketOwnershipControls(region string) *a
 	}
 }
 
+// getPutBucketOwnershipControlsRequestAlgorithmMember gets the request checksum
+// algorithm value provided as input.
+func getPutBucketOwnershipControlsRequestAlgorithmMember(input interface{}) (string, bool) {
+	in := input.(*PutBucketOwnershipControlsInput)
+	if len(in.ChecksumAlgorithm) == 0 {
+		return "", false
+	}
+	return string(in.ChecksumAlgorithm), true
+}
+
 func addPutBucketOwnershipControlsInputChecksumMiddlewares(stack *middleware.Stack, options Options) error {
-	return internalChecksum.AddInputMiddleware(stack, internalChecksum.InputMiddlewareOptions{
-		GetAlgorithm:                     nil,
+	return addInputChecksumMiddleware(stack, internalChecksum.InputMiddlewareOptions{
+		GetAlgorithm:                     getPutBucketOwnershipControlsRequestAlgorithmMember,
 		RequireChecksum:                  true,
+		RequestChecksumCalculation:       options.RequestChecksumCalculation,
 		EnableTrailingChecksum:           false,
 		EnableComputeSHA256PayloadHash:   true,
 		EnableDecodedContentLengthHeader: true,
