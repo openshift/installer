@@ -13,19 +13,34 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This operation is not supported by directory buckets. Returns metadata about
-// all versions of the objects in a bucket. You can also use request parameters as
-// selection criteria to return metadata about a subset of all the object versions.
+// This operation is not supported for directory buckets.
+//
+// Returns metadata about all versions of the objects in a bucket. You can also
+// use request parameters as selection criteria to return metadata about a subset
+// of all the object versions.
+//
 // To use this operation, you must have permission to perform the
-// s3:ListBucketVersions action. Be aware of the name difference. A 200 OK
-// response can contain valid or invalid XML. Make sure to design your application
-// to parse the contents of the response and handle it appropriately. To use this
-// operation, you must have READ access to the bucket. The following operations are
-// related to ListObjectVersions :
-//   - ListObjectsV2 (https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html)
-//   - GetObject (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html)
-//   - PutObject (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html)
-//   - DeleteObject (https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html)
+// s3:ListBucketVersions action. Be aware of the name difference.
+//
+// A 200 OK response can contain valid or invalid XML. Make sure to design your
+// application to parse the contents of the response and handle it appropriately.
+//
+// To use this operation, you must have READ access to the bucket.
+//
+// The following operations are related to ListObjectVersions :
+//
+// [ListObjectsV2]
+//
+// [GetObject]
+//
+// [PutObject]
+//
+// [DeleteObject]
+//
+// [DeleteObject]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
+// [PutObject]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
+// [GetObject]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
+// [ListObjectsV2]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
 func (c *Client) ListObjectVersions(ctx context.Context, params *ListObjectVersionsInput, optFns ...func(*Options)) (*ListObjectVersionsOutput, error) {
 	if params == nil {
 		params = &ListObjectVersionsInput{}
@@ -55,12 +70,20 @@ type ListObjectVersionsInput struct {
 	// are not returned elsewhere in the response.
 	Delimiter *string
 
-	// Requests Amazon S3 to encode the object keys in the response and specifies the
-	// encoding method to use. An object key can contain any Unicode character;
-	// however, the XML 1.0 parser cannot parse some characters, such as characters
-	// with an ASCII value from 0 to 10. For characters that are not supported in XML
-	// 1.0, you can add this parameter to request that Amazon S3 encode the keys in the
-	// response.
+	// Encoding type used by Amazon S3 to encode the [object keys] in the response. Responses are
+	// encoded only in UTF-8. An object key can contain any Unicode character. However,
+	// the XML 1.0 parser can't parse certain characters, such as characters with an
+	// ASCII value from 0 to 10. For characters that aren't supported in XML 1.0, you
+	// can add this parameter to request that Amazon S3 encode the keys in the
+	// response. For more information about characters to avoid in object key names,
+	// see [Object key naming guidelines].
+	//
+	// When using the URL encoding type, non-ASCII characters that are used in an
+	// object's key name will be percent-encoded according to UTF-8 code values. For
+	// example, the object test_file(3).png will appear as test_file%283%29.png .
+	//
+	// [Object key naming guidelines]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-guidelines
+	// [object keys]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
 	EncodingType types.EncodingType
 
 	// The account ID of the expected bucket owner. If the account ID that you provide
@@ -93,10 +116,12 @@ type ListObjectVersionsInput struct {
 	// Bucket owners need not specify this parameter in their requests. If either the
 	// source or destination S3 bucket has Requester Pays enabled, the requester will
 	// pay for corresponding charges to copy the object. For information about
-	// downloading objects from Requester Pays buckets, see Downloading Objects in
-	// Requester Pays Buckets (https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html)
-	// in the Amazon S3 User Guide. This functionality is not supported for directory
-	// buckets.
+	// downloading objects from Requester Pays buckets, see [Downloading Objects in Requester Pays Buckets]in the Amazon S3 User
+	// Guide.
+	//
+	// This functionality is not supported for directory buckets.
+	//
+	// [Downloading Objects in Requester Pays Buckets]: https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html
 	RequestPayer types.RequestPayer
 
 	// Specifies the object version you want to start listing from.
@@ -106,6 +131,7 @@ type ListObjectVersionsInput struct {
 }
 
 func (in *ListObjectVersionsInput) bindEndpointParams(p *EndpointParameters) {
+
 	p.Bucket = in.Bucket
 	p.Prefix = in.Prefix
 
@@ -117,7 +143,10 @@ type ListObjectVersionsOutput struct {
 	// calculating the number of returns.
 	CommonPrefixes []types.CommonPrefix
 
-	// Container for an object that is a delete marker.
+	// Container for an object that is a delete marker. To learn more about delete
+	// markers, see [Working with delete markers].
+	//
+	// [Working with delete markers]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html
 	DeleteMarkers []types.DeleteMarkerEntry
 
 	// The delimiter grouping the included keys. A delimiter is a character that you
@@ -127,10 +156,13 @@ type ListObjectVersionsOutput struct {
 	// max-keys limitation. These keys are not returned elsewhere in the response.
 	Delimiter *string
 
-	// Encoding type used by Amazon S3 to encode object key names in the XML response.
+	//  Encoding type used by Amazon S3 to encode object key names in the XML response.
+	//
 	// If you specify the encoding-type request parameter, Amazon S3 includes this
 	// element in the response, and returns encoded key name values in the following
-	// response elements: KeyMarker, NextKeyMarker, Prefix, Key , and Delimiter .
+	// response elements:
+	//
+	// KeyMarker, NextKeyMarker, Prefix, Key , and Delimiter .
 	EncodingType types.EncodingType
 
 	// A flag that indicates whether Amazon S3 returned all of the results that
@@ -164,7 +196,12 @@ type ListObjectVersionsOutput struct {
 	Prefix *string
 
 	// If present, indicates that the requester was successfully charged for the
-	// request. This functionality is not supported for directory buckets.
+	// request. For more information, see [Using Requester Pays buckets for storage transfers and usage]in the Amazon Simple Storage Service user
+	// guide.
+	//
+	// This functionality is not supported for directory buckets.
+	//
+	// [Using Requester Pays buckets for storage transfers and usage]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/RequesterPaysBuckets.html
 	RequestCharged types.RequestCharged
 
 	// Marks the last version of the key returned in a truncated response.
@@ -222,6 +259,9 @@ func (c *Client) addOperationListObjectVersionsMiddlewares(stack *middleware.Sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -235,6 +275,18 @@ func (c *Client) addOperationListObjectVersionsMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addPutBucketContextMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addIsExpressUserAgent(stack); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListObjectVersionsValidationMiddleware(stack); err != nil {
@@ -268,6 +320,18 @@ func (c *Client) addOperationListObjectVersionsMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addSerializeImmutableHostnameBucketMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
