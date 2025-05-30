@@ -99,13 +99,6 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 			StorageAccountType: mpool.DiskType,
 		},
 		CachingType: "ReadWrite",
-		/*
-			DiffDiskSettings: &capz.DiffDiskSettings{
-				Option:    "Local",
-				Placement: ptr.To(capz.DiffDiskPlacementNvmeDisk),
-			},
-
-		*/
 	}
 	if in.Pool.Platform.Azure.DiskEncryptionSet != nil {
 		osDisk.ManagedDisk.DiskEncryptionSet = &capz.DiskEncryptionSetParameters{

@@ -55,16 +55,16 @@ const (
 type DiskType string
 
 const (
-	// Etcd indicates etcd disk setup
+	// Etcd indicates etcd disk setup.
 	Etcd DiskType = "etcd"
-	// Swap indicates swap disk setup
+	// Swap indicates swap disk setup.
 	Swap DiskType = "swap"
-	// UserDefined indicates user-defined disk setup
+	// UserDefined indicates user-defined disk setup.
 	UserDefined DiskType = "user-defined"
 )
 
 // Disk defines the type of disk (etcd, swap or user-defined) and the configuration
-// of each disk type
+// of each disk type.
 type Disk struct {
 	Type DiskType `json:"type,omitempty"`
 
@@ -79,12 +79,12 @@ type DiskUserDefined struct {
 	MountPath      string `json:"mountPath,omitempty"`
 }
 
-// DiskSwap defines a disk type of swap
+// DiskSwap defines a disk type of swap.
 type DiskSwap struct {
 	PlatformDiskID string `json:"platformDiskID,omitempty"`
 }
 
-// DiskEtcd defines a disk type of etcd
+// DiskEtcd defines a disk type of etcd.
 type DiskEtcd struct {
 	PlatformDiskID string `json:"platformDiskID,omitempty"`
 }
