@@ -1,4 +1,4 @@
-package manifests
+package topologies
 
 import (
 	"k8s.io/utils/ptr"
@@ -7,12 +7,14 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-// determineTopologies determines the Infrastructure CR's
-// infrastructureTopology and controlPlaneTopology given an install config file
-func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopology configv1.TopologyMode, infrastructureTopology configv1.TopologyMode) {
+// DetermineTopologies determines the Infrastructure CR's controlPlaneTopology and infrastructureTopology given an install-config file.
+func DetermineTopologies(installConfig *types.InstallConfig) (controlPlaneTopology configv1.TopologyMode, infrastructureTopology configv1.TopologyMode) {
 	controlPlaneTopology = configv1.HighlyAvailableTopologyMode
 
-	controlPlaneReplicas := ptr.Deref(installConfig.ControlPlane.Replicas, 3)
+	var controlPlaneReplicas int64 = 3
+	if installConfig.ControlPlane != nil {
+		controlPlaneReplicas = ptr.Deref(installConfig.ControlPlane.Replicas, 3)
+	}
 	if controlPlaneReplicas == 2 {
 		controlPlaneTopology = configv1.DualReplicaTopologyMode
 
@@ -47,7 +49,8 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 	return controlPlaneTopology, infrastructureTopology
 }
 
-func determineCPUPartitioning(installConfig *types.InstallConfig) configv1.CPUPartitioningMode {
+// DetermineCPUPartitioning determines the Infrastructure CR's CPUPartitioning given an install-config file.
+func DetermineCPUPartitioning(installConfig *types.InstallConfig) configv1.CPUPartitioningMode {
 	switch installConfig.CPUPartitioning {
 	case types.CPUPartitioningAllNodes:
 		return configv1.CPUPartitioningAllNodes
