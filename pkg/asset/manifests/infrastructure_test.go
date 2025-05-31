@@ -136,6 +136,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv4IngressVIP+"/32")),
 				infraBuild.withVSphereAPIVIP(ipv4APIVIP),
 				infraBuild.withVSphereIngressVIP(ipv4IngressVIP),
+				infraBuild.withVSphereNodeNetworkingEntry(configv1.CIDR(defaultMachineNetwork)),
 			),
 			expectedFilesGenerated: 1,
 		}, {
@@ -161,6 +162,8 @@ func TestGenerateInfrastructure(t *testing.T) {
 				infraBuild.withVSphereIngressVIP(ipv4IngressVIP),
 				infraBuild.withVSphereAPIVIP(ipv6APIVIP),
 				infraBuild.withVSphereIngressVIP(ipv6IngressVIP),
+				infraBuild.withVSphereNodeNetworkingEntry(configv1.CIDR(defaultMachineNetwork)),
+				infraBuild.withVSphereNodeNetworkingEntry(configv1.CIDR(ipv6MachineNetwork)),
 			),
 			expectedFilesGenerated: 1,
 		},
@@ -180,6 +183,8 @@ func TestGenerateInfrastructure(t *testing.T) {
 				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv4IngressVIP+"/32")),
 				infraBuild.withVSphereAPIVIP(ipv4APIVIP),
 				infraBuild.withVSphereIngressVIP(ipv4IngressVIP),
+				infraBuild.withVSphereNodeNetworkingEntry(configv1.CIDR(defaultMachineNetwork)),
+				infraBuild.withVSphereNodeNetworkingEntry(configv1.CIDR(ipv4APIVIP+"/32")),
 			),
 			expectedFilesGenerated: 1,
 		},
@@ -197,6 +202,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv4APIVIP+"/32")),
 				infraBuild.withVSphereAPIVIP(ipv4APIVIP),
 				infraBuild.withVSphereIngressVIP(ipv4APIVIP),
+				infraBuild.withVSphereNodeNetworkingEntry(configv1.CIDR(defaultMachineNetwork)),
 			),
 			expectedFilesGenerated: 1,
 		},
@@ -548,6 +554,15 @@ func (b infraBuildNamespace) withVSphereMachineNetworkEntry(cidr configv1.CIDR) 
 		b.withVSpherePlatformStatus()(infra)
 		infra.Spec.PlatformSpec.VSphere.MachineNetworks = append(infra.Spec.PlatformSpec.VSphere.MachineNetworks, cidr)
 		infra.Status.PlatformStatus.VSphere.MachineNetworks = append(infra.Status.PlatformStatus.VSphere.MachineNetworks, cidr)
+	}
+}
+
+func (b infraBuildNamespace) withVSphereNodeNetworkingEntry(cidr configv1.CIDR) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withVSpherePlatformSpec()(infra)
+		b.withVSpherePlatformStatus()(infra)
+		infra.Spec.PlatformSpec.VSphere.NodeNetworking.External.NetworkSubnetCIDR = append(infra.Spec.PlatformSpec.VSphere.NodeNetworking.External.NetworkSubnetCIDR, string(cidr))
+		infra.Spec.PlatformSpec.VSphere.NodeNetworking.Internal.NetworkSubnetCIDR = append(infra.Spec.PlatformSpec.VSphere.NodeNetworking.Internal.NetworkSubnetCIDR, string(cidr))
 	}
 }
 

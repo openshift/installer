@@ -5416,7 +5416,6 @@ spec:
                           - IAM
                           - ServiceUsage
                           - Storage
-                          - TagManager
                           type: string
                         url:
                           description: |-
