@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,8 +9,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=pinnedimagesets,scope=Cluster
-// +kubebuilder:subresource:status
-// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1713
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/2198
 // +openshift:file-pattern=cvoRunLevel=0000_80,operatorName=machine-config,operatorOrdering=01
 // +openshift:enable:FeatureGate=PinnedImages
 // +kubebuilder:metadata:labels=openshift.io/operator-managed=
@@ -18,28 +17,18 @@ import (
 // PinnedImageSet describes a set of images that should be pinned by CRI-O and
 // pulled to the nodes which are members of the declared MachineConfigPools.
 //
-// Compatibility level 4: No compatibility is provided, the API can change at any point for any reason. These capabilities should not be used by applications needing long term support.
-// +openshift:compatibility-gen:level=4
+// Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
+// +openshift:compatibility-gen:level=1
 type PinnedImageSet struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	
+	// metadata is the standard object metadata.
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec describes the configuration of this pinned image set.
 	// +required
 	Spec PinnedImageSetSpec `json:"spec"`
-
-	// status describes the last observed state of this pinned image set.
-	// +optional
-	Status PinnedImageSetStatus `json:"status"`
-}
-
-// PinnedImageSetStatus describes the current state of a PinnedImageSet.
-type PinnedImageSetStatus struct {
-	// conditions represent the observations of a pinned image set's current state.
-	// +listType=map
-	// +listMapKey=type
-	// +optional
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // PinnedImageSetSpec defines the desired state of a PinnedImageSet.
@@ -56,7 +45,8 @@ type PinnedImageSetSpec struct {
 	//              ...
 	//      ]
 	//
-	// These image references should all be by digest, tags aren't allowed.
+	// Image references must be by digest.
+	// A maximum of 500 images may be specified.
 	// +required
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=500
@@ -65,31 +55,32 @@ type PinnedImageSetSpec struct {
 	PinnedImages []PinnedImageRef `json:"pinnedImages"`
 }
 
+// PinnedImageRef represents a reference to an OCI image
 type PinnedImageRef struct {
 	// name is an OCI Image referenced by digest.
-	//
-	// The format of the image ref is:
-	// host[:port][/namespace]/name@sha256:<digest>
+	// The format of the image pull spec is: host[:port][/namespace]/name@sha256:<digest>,
+	// where the digest must be 64 characters long, and consist only of lowercase hexadecimal characters, a-f and 0-9.
+	// The length of the whole spec must be between 1 to 447 characters.
 	// +required
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=447
-	// +kubebuilder:validation:XValidation:rule=`self.split('@').size() == 2 && self.split('@')[1].matches('^sha256:[a-f0-9]{64}$')`,message="the OCI Image reference must end with a valid '@sha256:<digest>' suffix, where '<digest>' is 64 characters long"
-	// +kubebuilder:validation:XValidation:rule=`self.split('@')[0].matches('^([a-zA-Z0-9-]+\\.)+[a-zA-Z0-9-]+(:[0-9]{2,5})?/([a-zA-Z0-9-_]{0,61}/)?[a-zA-Z0-9-_.]*?$')`,message="the OCI Image name should follow the host[:port][/namespace]/name format, resembling a valid URL without the scheme"
-	Name string `json:"name"`
+	Name ImageDigestFormat `json:"name"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // PinnedImageSetList is a list of PinnedImageSet resources
 //
-// Compatibility level 4: No compatibility is provided, the API can change at any point for any reason. These capabilities should not be used by applications needing long term support.
-// +openshift:compatibility-gen:level=4
+// Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
+// +openshift:compatibility-gen:level=1
 type PinnedImageSetList struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// metadata is the standard list's metadata.
+	// metadata is the standard list metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	metav1.ListMeta `json:"metadata"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// items contains a collection of PinnedImageSet resources.
+	// +kubebuilder:validation:MaxItems=500
+	// +optional
 	Items []PinnedImageSet `json:"items"`
 }
