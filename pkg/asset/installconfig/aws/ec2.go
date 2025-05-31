@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/sirupsen/logrus"
 )
 
 // GetRegions get all regions that are accessible.
@@ -23,6 +24,18 @@ func GetRegions(ctx context.Context) ([]string, error) {
 	}
 
 	client := ec2v2.NewFromConfig(cfg)
+	_, err = client.Options().Credentials.Retrieve(ctx)
+	if err != nil {
+		logrus.Infof("failed to retrieve AWS credentials: %v", err)
+		if err = getUserCredentials(); err != nil {
+			return nil, err
+		}
+		cfg, err = cfgv2.LoadDefaultConfig(ctx, cfgv2.WithRegion("us-east-1"))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create config from platform: %w", err)
+		}
+		client = ec2v2.NewFromConfig(cfg)
+	}
 
 	output, err := client.DescribeRegions(ctx, &ec2v2.DescribeRegionsInput{AllRegions: aws.Bool(true)})
 	if err != nil {
