@@ -17,7 +17,9 @@ import (
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/ownerutil"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
+	asocel "github.com/Azure/azure-service-operator/v2/internal/util/cel"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
+	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
@@ -47,8 +49,8 @@ func LogObj(log logr.Logger, level int, note string, obj genruntime.MetaObject) 
 			"generation", obj.GetGeneration(),
 			"uid", obj.GetUID(),
 			"ownerReferences", obj.GetOwnerReferences(),
-			"creationTimestamp", obj.GetCreationTimestamp(),
-			"deletionTimestamp", obj.GetDeletionTimestamp(),
+			"creationTimestamp", obj.GetCreationTimestamp().String(),
+			"deletionTimestamp", to.Value(obj.GetDeletionTimestamp()).String(),
 			"finalizers", obj.GetFinalizers(),
 			"annotations", ourAnnotations,
 			// Use fmt here to ensure the output uses the String() method, which log.Info doesn't seem to do by default
@@ -56,7 +58,7 @@ func LogObj(log logr.Logger, level int, note string, obj genruntime.MetaObject) 
 		}
 
 		if armObj, ok := obj.(genruntime.ARMMetaObject); ok {
-			keysAndValues = append(keysAndValues, "owner", armObj.Owner())
+			keysAndValues = append(keysAndValues, "owner", to.Value(armObj.Owner()).String())
 		}
 
 		// Log just what we're interested in. We avoid logging the whole obj
@@ -157,8 +159,9 @@ func (r *ARMOwnedResourceReconcilerCommon) ClaimResource(ctx context.Context, lo
 }
 
 type ReconcilerCommon struct {
-	KubeClient         kubeclient.Client
-	PositiveConditions *conditions.PositiveConditionBuilder
+	KubeClient          kubeclient.Client
+	PositiveConditions  *conditions.PositiveConditionBuilder
+	ExpressionEvaluator asocel.ExpressionEvaluator
 }
 
 func ClassifyResolverError(err error) error {

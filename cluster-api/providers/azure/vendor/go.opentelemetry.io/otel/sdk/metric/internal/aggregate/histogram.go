@@ -11,13 +11,12 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/sdk/metric/internal/exemplar"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 )
 
 type buckets[N int64 | float64] struct {
 	attrs attribute.Set
-	res   exemplar.Reservoir
+	res   FilteredExemplarReservoir[N]
 
 	counts   []uint64
 	count    uint64
@@ -48,13 +47,13 @@ type histValues[N int64 | float64] struct {
 	noSum  bool
 	bounds []float64
 
-	newRes   func() exemplar.Reservoir
+	newRes   func(attribute.Set) FilteredExemplarReservoir[N]
 	limit    limiter[*buckets[N]]
 	values   map[attribute.Distinct]*buckets[N]
 	valuesMu sync.Mutex
 }
 
-func newHistValues[N int64 | float64](bounds []float64, noSum bool, limit int, r func() exemplar.Reservoir) *histValues[N] {
+func newHistValues[N int64 | float64](bounds []float64, noSum bool, limit int, r func(attribute.Set) FilteredExemplarReservoir[N]) *histValues[N] {
 	// The responsibility of keeping all buckets correctly associated with the
 	// passed boundaries is ultimately this type's responsibility. Make a copy
 	// here so we can always guarantee this. Or, in the case of failure, have
@@ -80,8 +79,6 @@ func (s *histValues[N]) measure(ctx context.Context, value N, fltrAttr attribute
 	// (s.bounds[len(s.bounds)-1], +∞).
 	idx := sort.SearchFloat64s(s.bounds, float64(value))
 
-	t := now()
-
 	s.valuesMu.Lock()
 	defer s.valuesMu.Unlock()
 
@@ -96,7 +93,7 @@ func (s *histValues[N]) measure(ctx context.Context, value N, fltrAttr attribute
 		//
 		//   buckets = (-∞, 0], (0, 5.0], (5.0, 10.0], (10.0, +∞)
 		b = newBuckets[N](attr, len(s.bounds)+1)
-		b.res = s.newRes()
+		b.res = s.newRes(attr)
 
 		// Ensure min and max are recorded values (not zero), for new buckets.
 		b.min, b.max = value, value
@@ -106,12 +103,12 @@ func (s *histValues[N]) measure(ctx context.Context, value N, fltrAttr attribute
 	if !s.noSum {
 		b.sum(value)
 	}
-	b.res.Offer(ctx, t, exemplar.NewValue(value), droppedAttr)
+	b.res.Offer(ctx, value, droppedAttr)
 }
 
 // newHistogram returns an Aggregator that summarizes a set of measurements as
 // an histogram.
-func newHistogram[N int64 | float64](boundaries []float64, noMinMax, noSum bool, limit int, r func() exemplar.Reservoir) *histogram[N] {
+func newHistogram[N int64 | float64](boundaries []float64, noMinMax, noSum bool, limit int, r func(attribute.Set) FilteredExemplarReservoir[N]) *histogram[N] {
 	return &histogram[N]{
 		histValues: newHistValues[N](boundaries, noSum, limit, r),
 		noMinMax:   noMinMax,

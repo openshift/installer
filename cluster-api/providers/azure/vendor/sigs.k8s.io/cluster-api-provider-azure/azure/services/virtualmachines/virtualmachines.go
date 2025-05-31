@@ -26,6 +26,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 	azprovider "sigs.k8s.io/cloud-provider-azure/pkg/provider"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -35,7 +37,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/publicips"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 const serviceName = "virtualmachine"
@@ -312,6 +313,6 @@ func getResourceNameByID(resourceID string) string {
 }
 
 // IsManaged returns always returns true as CAPZ does not support BYO VM.
-func (s *Service) IsManaged(ctx context.Context) (bool, error) {
+func (s *Service) IsManaged(_ context.Context) (bool, error) {
 	return true, nil
 }

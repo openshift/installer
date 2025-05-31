@@ -21,6 +21,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -166,6 +167,6 @@ func (s *Service) isIPManaged(ctx context.Context, spec azure.ResourceSpecGetter
 }
 
 // IsManaged returns always returns true as public IPs are managed on a one-by-one basis.
-func (s *Service) IsManaged(ctx context.Context) (bool, error) {
+func (s *Service) IsManaged(_ context.Context) (bool, error) {
 	return true, nil
 }

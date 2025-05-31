@@ -21,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/errors"
 )
 
 const (
@@ -44,8 +43,8 @@ type AzureMachineSpec struct {
 	FailureDomain *string `json:"failureDomain,omitempty"`
 
 	// Image is used to provide details of an image to use during VM creation.
-	// If image details are omitted the image will default the Azure Marketplace "capi" offer,
-	// which is based on Ubuntu.
+	// If image details are omitted, the default is to use an Azure Compute Gallery Image
+	// from CAPZ's community gallery.
 	// +kubebuilder:validation:nullable
 	// +optional
 	Image *Image `json:"image,omitempty"`
@@ -219,7 +218,7 @@ type AzureMachineStatus struct {
 	// can be added as events to the Machine object and/or logged in the
 	// controller's output.
 	// +optional
-	FailureReason *errors.MachineStatusError `json:"failureReason,omitempty"`
+	FailureReason *string `json:"failureReason,omitempty"`
 
 	// ErrorMessage will be set in the event that there is a terminal problem
 	// reconciling the Machine and will contain a more verbose string suitable

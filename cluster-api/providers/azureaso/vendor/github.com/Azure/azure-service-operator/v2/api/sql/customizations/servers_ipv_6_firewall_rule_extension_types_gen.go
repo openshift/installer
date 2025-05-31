@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20211101 "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type ServersIPV6FirewallRuleExtension struct {
 func (extension *ServersIPV6FirewallRuleExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20211101.ServersIPV6FirewallRule{},
-		&v20211101s.ServersIPV6FirewallRule{}}
+		&storage.ServersIPV6FirewallRule{}}
 }

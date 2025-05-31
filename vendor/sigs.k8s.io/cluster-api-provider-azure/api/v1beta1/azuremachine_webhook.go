@@ -23,10 +23,11 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	webhookutils "sigs.k8s.io/cluster-api-provider-azure/util/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	webhookutils "sigs.k8s.io/cluster-api-provider-azure/util/webhook"
 )
 
 // SetupAzureMachineWebhookWithManager sets up and registers the webhook with the manager.
@@ -48,7 +49,7 @@ type azureMachineWebhook struct {
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (mw *azureMachineWebhook) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (mw *azureMachineWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	m, ok := obj.(*AzureMachine)
 	if !ok {
 		return nil, apierrors.NewBadRequest("expected an AzureMachine resource")
@@ -74,7 +75,7 @@ func (mw *azureMachineWebhook) ValidateCreate(ctx context.Context, obj runtime.O
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (mw *azureMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (mw *azureMachineWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 	old, ok := oldObj.(*AzureMachine)
 	if !ok {
@@ -227,12 +228,12 @@ func (mw *azureMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newOb
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (mw *azureMachineWebhook) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (mw *azureMachineWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (mw *azureMachineWebhook) Default(ctx context.Context, obj runtime.Object) error {
+func (mw *azureMachineWebhook) Default(_ context.Context, obj runtime.Object) error {
 	m, ok := obj.(*AzureMachine)
 	if !ok {
 		return apierrors.NewBadRequest("expected an AzureMachine resource")

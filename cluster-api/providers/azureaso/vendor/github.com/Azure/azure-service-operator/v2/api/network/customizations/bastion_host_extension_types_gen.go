@@ -6,6 +6,8 @@ package customizations
 import (
 	v20220701 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
 	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
+	v20240301 "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301"
+	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type BastionHostExtension struct {
 func (extension *BastionHostExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20220701.BastionHost{},
-		&v20220701s.BastionHost{}}
+		&v20220701s.BastionHost{},
+		&v20240301.BastionHost{},
+		&v20240301s.BastionHost{}}
 }

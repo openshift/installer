@@ -27,10 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/controllers"
-	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
@@ -41,12 +37,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/controllers"
+	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 )
 
 // AzureClusterToAzureMachinePoolsMapper creates a mapping handler to transform AzureClusters into AzureMachinePools. The transform
 // requires AzureCluster to map to the owning Cluster, then from the Cluster, collect the MachinePools belonging to the cluster,
 // then finally projecting the infrastructure reference to the AzureMachinePool.
-func AzureClusterToAzureMachinePoolsMapper(ctx context.Context, c client.Client, scheme *runtime.Scheme, log logr.Logger) (handler.MapFunc, error) {
+func AzureClusterToAzureMachinePoolsMapper(_ context.Context, c client.Client, scheme *runtime.Scheme, log logr.Logger) (handler.MapFunc, error) {
 	gvk, err := apiutil.GVKForObject(new(infrav1exp.AzureMachinePool), scheme)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to find GVK for AzureMachinePool")
@@ -99,7 +100,7 @@ func AzureClusterToAzureMachinePoolsMapper(ctx context.Context, c client.Client,
 // AzureManagedControlPlaneToAzureMachinePoolsMapper creates a mapping handler to transform AzureManagedControlPlanes into AzureMachinePools. The transform
 // requires AzureManagedControlPlane to map to the owning Cluster, then from the Cluster, collect the MachinePools belonging to the cluster,
 // then finally projecting the infrastructure reference to the AzureMachinePool.
-func AzureManagedControlPlaneToAzureMachinePoolsMapper(ctx context.Context, c client.Client, scheme *runtime.Scheme, log logr.Logger) (handler.MapFunc, error) {
+func AzureManagedControlPlaneToAzureMachinePoolsMapper(_ context.Context, c client.Client, scheme *runtime.Scheme, log logr.Logger) (handler.MapFunc, error) {
 	gvk, err := apiutil.GVKForObject(new(infrav1exp.AzureMachinePool), scheme)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to find GVK for AzureMachinePool")
@@ -151,7 +152,7 @@ func AzureManagedControlPlaneToAzureMachinePoolsMapper(ctx context.Context, c cl
 
 // AzureMachinePoolMachineMapper creates a mapping handler to transform AzureMachinePoolMachine to AzureMachinePools.
 func AzureMachinePoolMachineMapper(scheme *runtime.Scheme, log logr.Logger) handler.MapFunc {
-	return func(ctx context.Context, o client.Object) []ctrl.Request {
+	return func(_ context.Context, o client.Object) []ctrl.Request {
 		gvk, err := apiutil.GVKForObject(new(infrav1exp.AzureMachinePool), scheme)
 		if err != nil {
 			log.Error(errors.WithStack(err), "failed to find GVK for AzureMachinePool")
@@ -195,7 +196,7 @@ func AzureMachinePoolMachineMapper(scheme *runtime.Scheme, log logr.Logger) hand
 // MachinePoolToInfrastructureMapFunc returns a handler.MapFunc that watches for
 // MachinePool events and returns reconciliation requests for an infrastructure provider object.
 func MachinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind, log logr.Logger) handler.MapFunc {
-	return func(ctx context.Context, o client.Object) []reconcile.Request {
+	return func(_ context.Context, o client.Object) []reconcile.Request {
 		m, ok := o.(*expv1.MachinePool)
 		if !ok {
 			log.V(4).Info("attempt to map incorrect type", "type", fmt.Sprintf("%T", o))
@@ -224,7 +225,7 @@ func MachinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind, log logr.Lo
 
 // AzureClusterToAzureMachinePoolsFunc is a handler.MapFunc to be used to enqueue
 // requests for reconciliation of AzureMachinePools.
-func AzureClusterToAzureMachinePoolsFunc(ctx context.Context, c client.Client, log logr.Logger) handler.MapFunc {
+func AzureClusterToAzureMachinePoolsFunc(_ context.Context, c client.Client, log logr.Logger) handler.MapFunc {
 	return func(ctx context.Context, o client.Object) []reconcile.Request {
 		ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultMappingTimeout)
 		defer cancel()
@@ -269,7 +270,7 @@ func AzureClusterToAzureMachinePoolsFunc(ctx context.Context, c client.Client, l
 
 // AzureMachinePoolToAzureMachinePoolMachines maps an AzureMachinePool to its child AzureMachinePoolMachines through
 // Cluster and MachinePool labels.
-func AzureMachinePoolToAzureMachinePoolMachines(ctx context.Context, c client.Client, log logr.Logger) handler.MapFunc {
+func AzureMachinePoolToAzureMachinePoolMachines(_ context.Context, c client.Client, log logr.Logger) handler.MapFunc {
 	return func(ctx context.Context, o client.Object) []reconcile.Request {
 		ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultMappingTimeout)
 		defer cancel()
@@ -332,9 +333,9 @@ func MachinePoolModelHasChanged(logger logr.Logger) predicate.Funcs {
 			//}
 			return shouldUpdate
 		},
-		CreateFunc:  func(e event.CreateEvent) bool { return false },
-		DeleteFunc:  func(e event.DeleteEvent) bool { return false },
-		GenericFunc: func(e event.GenericEvent) bool { return false },
+		CreateFunc:  func(_ event.CreateEvent) bool { return false },
+		DeleteFunc:  func(_ event.DeleteEvent) bool { return false },
+		GenericFunc: func(_ event.GenericEvent) bool { return false },
 	}
 }
 
@@ -365,24 +366,36 @@ func MachinePoolMachineHasStateOrVersionChange(logger logr.Logger) predicate.Fun
 			}
 			return shouldUpdate
 		},
-		CreateFunc:  func(e event.CreateEvent) bool { return false },
-		DeleteFunc:  func(e event.DeleteEvent) bool { return false },
-		GenericFunc: func(e event.GenericEvent) bool { return false },
+		CreateFunc:  func(_ event.CreateEvent) bool { return false },
+		DeleteFunc:  func(_ event.DeleteEvent) bool { return false },
+		GenericFunc: func(_ event.GenericEvent) bool { return false },
 	}
 }
 
 // BootstrapConfigToInfrastructureMapFunc returns a handler.ToRequestsFunc that watches for <Bootstrap>Config events and returns.
-func BootstrapConfigToInfrastructureMapFunc(ctx context.Context, c client.Client, log logr.Logger) handler.MapFunc {
+func BootstrapConfigToInfrastructureMapFunc(c client.Client, log logr.Logger) handler.MapFunc {
 	return func(ctx context.Context, o client.Object) []reconcile.Request {
 		ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultMappingTimeout)
 		defer cancel()
 
-		mpKey := client.ObjectKey{
-			Namespace: o.GetNamespace(),
-			Name:      o.GetName(),
+		// Lookup the first MachinePool owner of this BootstrapConfig, if any
+		mpName := ""
+		for _, owner := range o.GetOwnerReferences() {
+			if owner.Kind == "MachinePool" {
+				mpName = owner.Name
+				break
+			}
+		}
+		if mpName == "" {
+			log.V(4).Info("BootstrapConfig has no MachinePool owner")
+			return []reconcile.Request{}
 		}
 
-		// fetch MachinePool to get reference
+		// Fetch the MachinePool to validate the Bootstrap.ConfigRef
+		mpKey := client.ObjectKey{
+			Namespace: o.GetNamespace(),
+			Name:      mpName,
+		}
 		mp := &expv1.MachinePool{}
 		if err := c.Get(ctx, mpKey, mp); err != nil {
 			if !apierrors.IsNotFound(err) {
@@ -396,7 +409,7 @@ func BootstrapConfigToInfrastructureMapFunc(ctx context.Context, c client.Client
 			log.V(4).Info("fetched MachinePool has no Bootstrap.ConfigRef")
 			return []reconcile.Request{}
 		}
-		sameKind := ref.Kind != o.GetObjectKind().GroupVersionKind().Kind
+		sameKind := ref.Kind == o.GetObjectKind().GroupVersionKind().Kind
 		sameName := ref.Name == o.GetName()
 		sameNamespace := ref.Namespace == o.GetNamespace()
 		if !sameKind || !sameName || !sameNamespace {
@@ -410,12 +423,12 @@ func BootstrapConfigToInfrastructureMapFunc(ctx context.Context, c client.Client
 			return []reconcile.Request{}
 		}
 
-		key := client.ObjectKeyFromObject(o)
-		log.V(4).Info("adding KubeadmConfig to watch", "key", key)
+		// Enqueue a request for an AzureMachinePool with same name of MachinePool
+		log.V(4).Info("Enqueueing AzureMachinePool from Bootstrap Config", "key", client.ObjectKeyFromObject(o), "kind", ref.Kind)
 
 		return []reconcile.Request{
 			{
-				NamespacedName: key,
+				NamespacedName: mpKey,
 			},
 		}
 	}

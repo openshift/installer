@@ -9,6 +9,8 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -18,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -38,22 +39,35 @@ import (
 	postgresqlreconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/postgresql"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
+	asocel "github.com/Azure/azure-service-operator/v2/internal/util/cel"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/registration"
 )
 
+type Schemer interface {
+	GetScheme() *runtime.Scheme
+}
+
 func GetKnownStorageTypes(
-	mgr ctrl.Manager,
+	schemer Schemer,
 	armConnectionFactory arm.ARMConnectionFactory,
 	credentialProvider identity.CredentialProvider,
 	kubeClient kubeclient.Client,
 	positiveConditions *conditions.PositiveConditionBuilder,
-	options generic.Options) ([]*registration.StorageType, error) {
-
+	expressionEvaluator asocel.ExpressionEvaluator,
+	options generic.Options,
+) ([]*registration.StorageType, error) {
 	resourceResolver := resolver.NewResolver(kubeClient)
-	knownStorageTypes, err := getGeneratedStorageTypes(mgr, armConnectionFactory, kubeClient, resourceResolver, positiveConditions, options)
+	knownStorageTypes, err := getGeneratedStorageTypes(
+		schemer,
+		armConnectionFactory,
+		kubeClient,
+		resourceResolver,
+		positiveConditions,
+		expressionEvaluator,
+		options)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +85,7 @@ func GetKnownStorageTypes(
 		knownStorageTypes,
 		&registration.StorageType{
 			Obj:  &mysqlv1.User{},
-			Name: "UserController",
+			Name: "mysql_user",
 			Reconciler: mysqlreconciler.NewMySQLUserReconciler(
 				kubeClient,
 				resourceResolver,
@@ -96,7 +110,7 @@ func GetKnownStorageTypes(
 		knownStorageTypes,
 		&registration.StorageType{
 			Obj:  &postgresqlv1.User{},
-			Name: "UserController",
+			Name: "postgresql_user",
 			Reconciler: postgresqlreconciler.NewPostgreSQLUserReconciler(
 				kubeClient,
 				resourceResolver,
@@ -121,7 +135,7 @@ func GetKnownStorageTypes(
 		knownStorageTypes,
 		&registration.StorageType{
 			Obj:  &azuresqlv1.User{},
-			Name: "UserController",
+			Name: "sql_user",
 			Reconciler: azuresqlreconciler.NewAzureSQLUserReconciler(
 				kubeClient,
 				resourceResolver,
@@ -147,21 +161,23 @@ func GetKnownStorageTypes(
 }
 
 func getGeneratedStorageTypes(
-	mgr ctrl.Manager,
+	schemer Schemer,
 	armConnectionFactory arm.ARMConnectionFactory,
 	kubeClient kubeclient.Client,
 	resourceResolver *resolver.Resolver,
 	positiveConditions *conditions.PositiveConditionBuilder,
-	options generic.Options) ([]*registration.StorageType, error) {
+	expressionEvaluator asocel.ExpressionEvaluator,
+	options generic.Options,
+) ([]*registration.StorageType, error) {
 	knownStorageTypes := getKnownStorageTypes()
 
-	err := resourceResolver.IndexStorageTypes(mgr.GetScheme(), knownStorageTypes)
+	err := resourceResolver.IndexStorageTypes(schemer.GetScheme(), knownStorageTypes)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed add storage types to resource resolver")
 	}
 
 	var extensions map[schema.GroupVersionKind]genruntime.ResourceExtension
-	extensions, err = GetResourceExtensions(mgr.GetScheme())
+	extensions, err = GetResourceExtensions(schemer.GetScheme())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed getting extensions")
 	}
@@ -169,7 +185,7 @@ func getGeneratedStorageTypes(
 	for _, t := range knownStorageTypes {
 		// Use the provided GVK to construct a new runtime object of the desired concrete type.
 		var gvk schema.GroupVersionKind
-		gvk, err = apiutil.GVKForObject(t.Obj, mgr.GetScheme())
+		gvk, err = apiutil.GVKForObject(t.Obj, schemer.GetScheme())
 		if err != nil {
 			return nil, errors.Wrapf(err, "creating GVK for obj %T", t.Obj)
 		}
@@ -180,6 +196,7 @@ func getGeneratedStorageTypes(
 			kubeClient,
 			resourceResolver,
 			positiveConditions,
+			expressionEvaluator,
 			options,
 			extension,
 			t)
@@ -193,20 +210,22 @@ func augmentWithARMReconciler(
 	kubeClient kubeclient.Client,
 	resourceResolver *resolver.Resolver,
 	positiveConditions *conditions.PositiveConditionBuilder,
+	expressionEvaluator asocel.ExpressionEvaluator,
 	options generic.Options,
 	extension genruntime.ResourceExtension,
-	t *registration.StorageType) {
+	t *registration.StorageType,
+) {
 	t.Reconciler = arm.NewAzureDeploymentReconciler(
 		armConnectionFactory,
 		kubeClient,
 		resourceResolver,
 		positiveConditions,
+		expressionEvaluator,
 		options.Config,
 		extension)
 }
 
 func augmentWithPredicate(t *registration.StorageType) {
-
 	t.Predicate = makeStandardPredicate()
 }
 
@@ -230,6 +249,8 @@ func augmentWithControllerName(t *registration.StorageType) error {
 	return nil
 }
 
+var groupRegex = regexp.MustCompile(`.*/v2/api/([a-zA-Z0-9.]+)/`)
+
 func getControllerName(obj client.Object) (string, error) {
 	v, err := conversion.EnforcePtr(obj)
 	if err != nil {
@@ -237,7 +258,14 @@ func getControllerName(obj client.Object) (string, error) {
 	}
 
 	typ := v.Type()
-	return fmt.Sprintf("%sController", typ.Name()), nil
+	pkgPath := typ.PkgPath()
+	matches := groupRegex.FindStringSubmatch(pkgPath)
+	if len(matches) == 0 {
+		return "", errors.Errorf("couldn't parse package path %s", pkgPath)
+	}
+	group := strings.Replace(matches[1], ".", "", -1) // elide . for groups like network.frontdoor
+	name := fmt.Sprintf("%s_%s", group, strings.ToLower(typ.Name()))
+	return name, nil
 }
 
 func GetKnownTypes() []client.Object {
@@ -260,13 +288,11 @@ func CreateScheme() *runtime.Scheme {
 	_ = mysqlv1.AddToScheme(scheme)
 	_ = postgresqlv1.AddToScheme(scheme)
 	_ = azuresqlv1.AddToScheme(scheme)
-	scheme.AllKnownTypes()
 	return scheme
 }
 
 // GetResourceExtensions returns a map between resource and resource extension
 func GetResourceExtensions(scheme *runtime.Scheme) (map[schema.GroupVersionKind]genruntime.ResourceExtension, error) {
-
 	extensionMapping := make(map[schema.GroupVersionKind]genruntime.ResourceExtension)
 
 	for _, extension := range getResourceExtensions() {

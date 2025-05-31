@@ -26,17 +26,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/services/scalesetvms"
-	infracontroller "sigs.k8s.io/cluster-api-provider-azure/controllers"
-	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -47,6 +37,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/services/scalesetvms"
+	infracontroller "sigs.k8s.io/cluster-api-provider-azure/controllers"
+	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 type (
@@ -60,6 +60,7 @@ type (
 		Timeouts          reconciler.Timeouts
 		WatchFilterValue  string
 		reconcilerFactory azureMachinePoolMachineReconcilerFactory
+		CredentialCache   azure.CredentialCache
 	}
 
 	azureMachinePoolMachineReconciler struct {
@@ -69,13 +70,14 @@ type (
 )
 
 // NewAzureMachinePoolMachineController creates a new AzureMachinePoolMachineController to handle updates to Azure Machine Pool Machines.
-func NewAzureMachinePoolMachineController(c client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue string) *AzureMachinePoolMachineController {
+func NewAzureMachinePoolMachineController(c client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue string, credCache azure.CredentialCache) *AzureMachinePoolMachineController {
 	return &AzureMachinePoolMachineController{
 		Client:            c,
 		Recorder:          recorder,
 		Timeouts:          timeouts,
 		WatchFilterValue:  watchFilterValue,
 		reconcilerFactory: newAzureMachinePoolMachineReconciler,
+		CredentialCache:   credCache,
 	}
 }
 
@@ -95,14 +97,14 @@ func (ampmr *AzureMachinePoolMachineController) SetupWithManager(ctx context.Con
 	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
 		For(&infrav1exp.AzureMachinePoolMachine{}).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, ampmr.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, ampmr.WatchFilterValue)).
 		// Add a watch on AzureMachinePool for model changes
 		Watches(
 			&infrav1exp.AzureMachinePool{},
 			handler.EnqueueRequestsFromMapFunc(AzureMachinePoolToAzureMachinePoolMachines(ctx, mgr.GetClient(), log)),
 			builder.WithPredicates(
 				MachinePoolModelHasChanged(log),
-				predicates.ResourceNotPausedAndHasFilterLabel(log, ampmr.WatchFilterValue),
+				predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, ampmr.WatchFilterValue),
 			),
 		).
 		// Add a watch on CAPI Machines for MachinePool Machines
@@ -110,7 +112,7 @@ func (ampmr *AzureMachinePoolMachineController) SetupWithManager(ctx context.Con
 			&clusterv1.Machine{},
 			handler.EnqueueRequestsFromMapFunc(util.MachineToInfrastructureMapFunc(infrav1exp.GroupVersion.WithKind("AzureMachinePoolMachine"))),
 			builder.WithPredicates(
-				predicates.ResourceNotPausedAndHasFilterLabel(log, ampmr.WatchFilterValue),
+				predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, ampmr.WatchFilterValue),
 			),
 		).
 		Complete(r)
@@ -167,7 +169,7 @@ func (ampmr *AzureMachinePoolMachineController) Reconcile(ctx context.Context, r
 		return ctrl.Result{}, nil
 	}
 
-	clusterScope, err := infracontroller.GetClusterScoper(ctx, logger, ampmr.Client, cluster, ampmr.Timeouts)
+	clusterScope, err := infracontroller.GetClusterScoper(ctx, logger, ampmr.Client, cluster, ampmr.Timeouts, ampmr.CredentialCache)
 	if err != nil {
 		return reconcile.Result{}, errors.Wrapf(err, "failed to create cluster scope for cluster %s/%s", cluster.Namespace, cluster.Name)
 	}
@@ -292,7 +294,7 @@ func (ampmr *AzureMachinePoolMachineController) reconcileNormal(ctx context.Cont
 	switch state {
 	case infrav1.Failed:
 		ampmr.Recorder.Eventf(machineScope.AzureMachinePoolMachine, corev1.EventTypeWarning, "FailedVMState", "Azure scale set VM is in failed state")
-		machineScope.SetFailureReason(capierrors.UpdateMachineError)
+		machineScope.SetFailureReason(azure.UpdateError)
 		machineScope.SetFailureMessage(errors.Errorf("Azure VM state is %s", state))
 	case infrav1.Deleting:
 		log.V(4).Info("deleting machine because state is Deleting", "machine", machineScope.Name())

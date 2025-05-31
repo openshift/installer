@@ -1,3 +1,70 @@
+# 5.7.1 (September 10, 2024)
+
+* Fix data race in tracelog.TraceLog
+* Update puddle to v2.2.2. This removes the import of nanotime via linkname.
+* Update golang.org/x/crypto and golang.org/x/text
+
+# 5.7.0 (September 7, 2024)
+
+* Add support for sslrootcert=system (Yann Soubeyrand)
+* Add LoadTypes to load multiple types in a single SQL query (Nick Farrell)
+* Add XMLCodec supports encoding + scanning XML column type like json (nickcruess-soda)
+* Add MultiTrace (Stepan Rabotkin)
+* Add TraceLogConfig with customizable TimeKey (stringintech)
+* pgx.ErrNoRows wraps sql.ErrNoRows to aid in database/sql compatibility with native pgx functions (merlin)
+* Support scanning binary formatted uint32 into string / TextScanner (jennifersp)
+* Fix interval encoding to allow 0s and avoid extra spaces (Carlos Pérez-Aradros Herce)
+* Update pgservicefile - fixes panic when parsing invalid file
+* Better error message when reading past end of batch
+* Don't print url when url.Parse returns an error (Kevin Biju)
+* Fix snake case name normalization collision in RowToStructByName with db tag (nolandseigler)
+* Fix: Scan and encode types with underlying types of arrays
+
+# 5.6.0 (May 25, 2024)
+
+* Add StrictNamedArgs (Tomas Zahradnicek)
+* Add support for macaddr8 type (Carlos Pérez-Aradros Herce)
+* Add SeverityUnlocalized field to PgError / Notice
+* Performance optimization of RowToStructByPos/Name (Zach Olstein)
+* Allow customizing context canceled behavior for pgconn
+* Add ScanLocation to pgtype.Timestamp[tz]Codec
+* Add custom data to pgconn.PgConn
+* Fix ResultReader.Read() to handle nil values
+* Do not encode interval microseconds when they are 0 (Carlos Pérez-Aradros Herce)
+* pgconn.SafeToRetry checks for wrapped errors (tjasko)
+* Failed connection attempts include all errors
+* Optimize LargeObject.Read (Mitar)
+* Add tracing for connection acquire and release from pool (ngavinsir)
+* Fix encode driver.Valuer not called when nil
+* Add support for custom JSON marshal and unmarshal (Mitar)
+* Use Go default keepalive for TCP connections (Hans-Joachim Kliemeck)
+
+# 5.5.5 (March 9, 2024)
+
+Use spaces instead of parentheses for SQL sanitization.
+
+This still solves the problem of negative numbers creating a line comment, but this avoids breaking edge cases such as
+`set foo to $1` where the substitution is taking place in a location where an arbitrary expression is not allowed.
+
+# 5.5.4 (March 4, 2024)
+
+Fix CVE-2024-27304
+
+SQL injection can occur if an attacker can cause a single query or bind message to exceed 4 GB in size. An integer
+overflow in the calculated message size can cause the one large message to be sent as multiple messages under the
+attacker's control.
+
+Thanks to Paul Gerste for reporting this issue.
+
+* Fix behavior of CollectRows to return empty slice if Rows are empty (Felix)
+* Fix simple protocol encoding of json.RawMessage
+* Fix *Pipeline.getResults should close pipeline on error
+* Fix panic in TryFindUnderlyingTypeScanPlan (David Kurman)
+* Fix deallocation of invalidated cached statements in a transaction
+* Handle invalid sslkey file
+* Fix scan float4 into sql.Scanner
+* Fix pgtype.Bits not making copy of data from read buffer. This would cause the data to be corrupted by future reads.
+
 # 5.5.3 (February 3, 2024)
 
 * Fix: prepared statement already exists

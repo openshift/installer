@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +47,26 @@ func (server *Server) SetConditions(conditions conditions.Conditions) {
 	server.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &Server{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (server *Server) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if server.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return server.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Server{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (server *Server) SecretDestinationExpressions() []*core.DestinationExpression {
+	if server.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return server.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &Server{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (server *Server) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2018-06-01"
 func (server Server) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2018-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -227,8 +250,10 @@ func (server *Server_STATUS) ConvertStatusTo(destination genruntime.ConvertibleS
 // Storage version of v1api20180601.ServerOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type ServerOperatorSpec struct {
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	Secrets     *ServerOperatorSecrets `json:"secrets,omitempty"`
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+	Secrets              *ServerOperatorSecrets        `json:"secrets,omitempty"`
 }
 
 // Storage version of v1api20180601.ServerPrivateEndpointConnection_STATUS

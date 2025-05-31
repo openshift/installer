@@ -5,10 +5,14 @@ package v1api20220801
 
 import (
 	"fmt"
-	v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type Subscription struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Service_Subscription_Spec   `json:"spec,omitempty"`
-	Status            Service_Subscription_STATUS `json:"status,omitempty"`
+	Spec              Subscription_Spec   `json:"spec,omitempty"`
+	Status            Subscription_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &Subscription{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &Subscription{}
 
 // ConvertFrom populates our Subscription from the provided hub Subscription
 func (subscription *Subscription) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220801s.Subscription)
+	source, ok := hub.(*storage.Subscription)
 	if !ok {
 		return fmt.Errorf("expected apimanagement/v1api20220801/storage/Subscription but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (subscription *Subscription) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Subscription from our Subscription
 func (subscription *Subscription) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220801s.Subscription)
+	destination, ok := hub.(*storage.Subscription)
 	if !ok {
 		return fmt.Errorf("expected apimanagement/v1api20220801/storage/Subscription but received %T instead", hub)
 	}
@@ -90,15 +94,35 @@ func (subscription *Subscription) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the Subscription resource
 func (subscription *Subscription) defaultImpl() { subscription.defaultAzureName() }
 
+var _ configmaps.Exporter = &Subscription{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (subscription *Subscription) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if subscription.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return subscription.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Subscription{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (subscription *Subscription) SecretDestinationExpressions() []*core.DestinationExpression {
+	if subscription.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return subscription.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &Subscription{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (subscription *Subscription) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Service_Subscription_STATUS); ok {
-		return subscription.Spec.Initialize_From_Service_Subscription_STATUS(s)
+	if s, ok := status.(*Subscription_STATUS); ok {
+		return subscription.Spec.Initialize_From_Subscription_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Service_Subscription_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type Subscription_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &Subscription{}
@@ -110,7 +134,7 @@ func (subscription *Subscription) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-08-01"
 func (subscription Subscription) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-08-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -145,7 +169,7 @@ func (subscription *Subscription) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (subscription *Subscription) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Service_Subscription_STATUS{}
+	return &Subscription_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -157,13 +181,13 @@ func (subscription *Subscription) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (subscription *Subscription) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Service_Subscription_STATUS); ok {
+	if st, ok := status.(*Subscription_STATUS); ok {
 		subscription.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Service_Subscription_STATUS
+	var st Subscription_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -209,7 +233,7 @@ func (subscription *Subscription) ValidateUpdate(old runtime.Object) (admission.
 
 // createValidations validates the creation of the resource
 func (subscription *Subscription) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){subscription.validateResourceReferences, subscription.validateOwnerReference, subscription.validateSecretDestinations}
+	return []func() (admission.Warnings, error){subscription.validateResourceReferences, subscription.validateOwnerReference, subscription.validateSecretDestinations, subscription.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -230,7 +254,18 @@ func (subscription *Subscription) updateValidations() []func(old runtime.Object)
 		func(old runtime.Object) (admission.Warnings, error) {
 			return subscription.validateSecretDestinations()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return subscription.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (subscription *Subscription) validateConfigMapDestinations() (admission.Warnings, error) {
+	if subscription.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(subscription, nil, subscription.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -252,14 +287,14 @@ func (subscription *Subscription) validateSecretDestinations() (admission.Warnin
 	if subscription.Spec.OperatorSpec == nil {
 		return nil, nil
 	}
-	if subscription.Spec.OperatorSpec.Secrets == nil {
-		return nil, nil
+	var toValidate []*genruntime.SecretDestination
+	if subscription.Spec.OperatorSpec.Secrets != nil {
+		toValidate = []*genruntime.SecretDestination{
+			subscription.Spec.OperatorSpec.Secrets.PrimaryKey,
+			subscription.Spec.OperatorSpec.Secrets.SecondaryKey,
+		}
 	}
-	toValidate := []*genruntime.SecretDestination{
-		subscription.Spec.OperatorSpec.Secrets.PrimaryKey,
-		subscription.Spec.OperatorSpec.Secrets.SecondaryKey,
-	}
-	return genruntime.ValidateSecretDestinations(toValidate)
+	return secrets.ValidateDestinations(subscription, toValidate, subscription.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties
@@ -273,24 +308,24 @@ func (subscription *Subscription) validateWriteOnceProperties(old runtime.Object
 }
 
 // AssignProperties_From_Subscription populates our Subscription from the provided source Subscription
-func (subscription *Subscription) AssignProperties_From_Subscription(source *v20220801s.Subscription) error {
+func (subscription *Subscription) AssignProperties_From_Subscription(source *storage.Subscription) error {
 
 	// ObjectMeta
 	subscription.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Service_Subscription_Spec
-	err := spec.AssignProperties_From_Service_Subscription_Spec(&source.Spec)
+	var spec Subscription_Spec
+	err := spec.AssignProperties_From_Subscription_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Service_Subscription_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_Subscription_Spec() to populate field Spec")
 	}
 	subscription.Spec = spec
 
 	// Status
-	var status Service_Subscription_STATUS
-	err = status.AssignProperties_From_Service_Subscription_STATUS(&source.Status)
+	var status Subscription_STATUS
+	err = status.AssignProperties_From_Subscription_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Service_Subscription_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_Subscription_STATUS() to populate field Status")
 	}
 	subscription.Status = status
 
@@ -299,24 +334,24 @@ func (subscription *Subscription) AssignProperties_From_Subscription(source *v20
 }
 
 // AssignProperties_To_Subscription populates the provided destination Subscription from our Subscription
-func (subscription *Subscription) AssignProperties_To_Subscription(destination *v20220801s.Subscription) error {
+func (subscription *Subscription) AssignProperties_To_Subscription(destination *storage.Subscription) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *subscription.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220801s.Service_Subscription_Spec
-	err := subscription.Spec.AssignProperties_To_Service_Subscription_Spec(&spec)
+	var spec storage.Subscription_Spec
+	err := subscription.Spec.AssignProperties_To_Subscription_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Service_Subscription_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_Subscription_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20220801s.Service_Subscription_STATUS
-	err = subscription.Status.AssignProperties_To_Service_Subscription_STATUS(&status)
+	var status storage.Subscription_STATUS
+	err = subscription.Status.AssignProperties_To_Subscription_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Service_Subscription_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_Subscription_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -343,7 +378,7 @@ type SubscriptionList struct {
 	Items           []Subscription `json:"items"`
 }
 
-type Service_Subscription_Spec struct {
+type Subscription_Spec struct {
 	// AllowTracing: Determines whether tracing can be enabled
 	AllowTracing *bool `json:"allowTracing,omitempty"`
 
@@ -391,14 +426,14 @@ type Service_Subscription_Spec struct {
 	State *SubscriptionCreateParameterProperties_State `json:"state,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Service_Subscription_Spec{}
+var _ genruntime.ARMTransformer = &Subscription_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (subscription *Service_Subscription_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (subscription *Subscription_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if subscription == nil {
 		return nil, nil
 	}
-	result := &Service_Subscription_Spec_ARM{}
+	result := &arm.Subscription_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -411,7 +446,7 @@ func (subscription *Service_Subscription_Spec) ConvertToARM(resolved genruntime.
 		subscription.Scope != nil ||
 		subscription.SecondaryKey != nil ||
 		subscription.State != nil {
-		result.Properties = &SubscriptionCreateParameterProperties_ARM{}
+		result.Properties = &arm.SubscriptionCreateParameterProperties{}
 	}
 	if subscription.AllowTracing != nil {
 		allowTracing := *subscription.AllowTracing
@@ -450,22 +485,24 @@ func (subscription *Service_Subscription_Spec) ConvertToARM(resolved genruntime.
 		result.Properties.SecondaryKey = &secondaryKey
 	}
 	if subscription.State != nil {
-		state := *subscription.State
+		var temp string
+		temp = string(*subscription.State)
+		state := arm.SubscriptionCreateParameterProperties_State(temp)
 		result.Properties.State = &state
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (subscription *Service_Subscription_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Service_Subscription_Spec_ARM{}
+func (subscription *Subscription_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.Subscription_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (subscription *Service_Subscription_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Service_Subscription_Spec_ARM)
+func (subscription *Subscription_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.Subscription_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Service_Subscription_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Subscription_Spec, got %T", armInput)
 	}
 
 	// Set property "AllowTracing":
@@ -516,7 +553,9 @@ func (subscription *Service_Subscription_Spec) PopulateFromARM(owner genruntime.
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.State != nil {
-			state := *typedInput.Properties.State
+			var temp string
+			temp = string(*typedInput.Properties.State)
+			state := SubscriptionCreateParameterProperties_State(temp)
 			subscription.State = &state
 		}
 	}
@@ -525,25 +564,25 @@ func (subscription *Service_Subscription_Spec) PopulateFromARM(owner genruntime.
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Service_Subscription_Spec{}
+var _ genruntime.ConvertibleSpec = &Subscription_Spec{}
 
-// ConvertSpecFrom populates our Service_Subscription_Spec from the provided source
-func (subscription *Service_Subscription_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220801s.Service_Subscription_Spec)
+// ConvertSpecFrom populates our Subscription_Spec from the provided source
+func (subscription *Subscription_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.Subscription_Spec)
 	if ok {
 		// Populate our instance from source
-		return subscription.AssignProperties_From_Service_Subscription_Spec(src)
+		return subscription.AssignProperties_From_Subscription_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220801s.Service_Subscription_Spec{}
+	src = &storage.Subscription_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = subscription.AssignProperties_From_Service_Subscription_Spec(src)
+	err = subscription.AssignProperties_From_Subscription_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -551,17 +590,17 @@ func (subscription *Service_Subscription_Spec) ConvertSpecFrom(source genruntime
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Service_Subscription_Spec
-func (subscription *Service_Subscription_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220801s.Service_Subscription_Spec)
+// ConvertSpecTo populates the provided destination from our Subscription_Spec
+func (subscription *Subscription_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.Subscription_Spec)
 	if ok {
 		// Populate destination from our instance
-		return subscription.AssignProperties_To_Service_Subscription_Spec(dst)
+		return subscription.AssignProperties_To_Subscription_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220801s.Service_Subscription_Spec{}
-	err := subscription.AssignProperties_To_Service_Subscription_Spec(dst)
+	dst = &storage.Subscription_Spec{}
+	err := subscription.AssignProperties_To_Subscription_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -575,8 +614,8 @@ func (subscription *Service_Subscription_Spec) ConvertSpecTo(destination genrunt
 	return nil
 }
 
-// AssignProperties_From_Service_Subscription_Spec populates our Service_Subscription_Spec from the provided source Service_Subscription_Spec
-func (subscription *Service_Subscription_Spec) AssignProperties_From_Service_Subscription_Spec(source *v20220801s.Service_Subscription_Spec) error {
+// AssignProperties_From_Subscription_Spec populates our Subscription_Spec from the provided source Subscription_Spec
+func (subscription *Subscription_Spec) AssignProperties_From_Subscription_Spec(source *storage.Subscription_Spec) error {
 
 	// AllowTracing
 	if source.AllowTracing != nil {
@@ -646,8 +685,9 @@ func (subscription *Service_Subscription_Spec) AssignProperties_From_Service_Sub
 
 	// State
 	if source.State != nil {
-		state := SubscriptionCreateParameterProperties_State(*source.State)
-		subscription.State = &state
+		state := *source.State
+		stateTemp := genruntime.ToEnum(state, subscriptionCreateParameterProperties_State_Values)
+		subscription.State = &stateTemp
 	} else {
 		subscription.State = nil
 	}
@@ -656,8 +696,8 @@ func (subscription *Service_Subscription_Spec) AssignProperties_From_Service_Sub
 	return nil
 }
 
-// AssignProperties_To_Service_Subscription_Spec populates the provided destination Service_Subscription_Spec from our Service_Subscription_Spec
-func (subscription *Service_Subscription_Spec) AssignProperties_To_Service_Subscription_Spec(destination *v20220801s.Service_Subscription_Spec) error {
+// AssignProperties_To_Subscription_Spec populates the provided destination Subscription_Spec from our Subscription_Spec
+func (subscription *Subscription_Spec) AssignProperties_To_Subscription_Spec(destination *storage.Subscription_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -682,7 +722,7 @@ func (subscription *Service_Subscription_Spec) AssignProperties_To_Service_Subsc
 
 	// OperatorSpec
 	if subscription.OperatorSpec != nil {
-		var operatorSpec v20220801s.SubscriptionOperatorSpec
+		var operatorSpec storage.SubscriptionOperatorSpec
 		err := subscription.OperatorSpec.AssignProperties_To_SubscriptionOperatorSpec(&operatorSpec)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SubscriptionOperatorSpec() to populate field OperatorSpec")
@@ -749,8 +789,8 @@ func (subscription *Service_Subscription_Spec) AssignProperties_To_Service_Subsc
 	return nil
 }
 
-// Initialize_From_Service_Subscription_STATUS populates our Service_Subscription_Spec from the provided source Service_Subscription_STATUS
-func (subscription *Service_Subscription_Spec) Initialize_From_Service_Subscription_STATUS(source *Service_Subscription_STATUS) error {
+// Initialize_From_Subscription_STATUS populates our Subscription_Spec from the provided source Subscription_STATUS
+func (subscription *Subscription_Spec) Initialize_From_Subscription_STATUS(source *Subscription_STATUS) error {
 
 	// AllowTracing
 	if source.AllowTracing != nil {
@@ -781,7 +821,7 @@ func (subscription *Service_Subscription_Spec) Initialize_From_Service_Subscript
 
 	// State
 	if source.State != nil {
-		state := SubscriptionCreateParameterProperties_State(*source.State)
+		state := genruntime.ToEnum(string(*source.State), subscriptionCreateParameterProperties_State_Values)
 		subscription.State = &state
 	} else {
 		subscription.State = nil
@@ -792,16 +832,16 @@ func (subscription *Service_Subscription_Spec) Initialize_From_Service_Subscript
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (subscription *Service_Subscription_Spec) OriginalVersion() string {
+func (subscription *Subscription_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (subscription *Service_Subscription_Spec) SetAzureName(azureName string) {
+func (subscription *Subscription_Spec) SetAzureName(azureName string) {
 	subscription.AzureName = azureName
 }
 
-type Service_Subscription_STATUS struct {
+type Subscription_STATUS struct {
 	// AllowTracing: Determines whether tracing is enabled
 	AllowTracing *bool `json:"allowTracing,omitempty"`
 
@@ -862,25 +902,25 @@ type Service_Subscription_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Service_Subscription_STATUS{}
+var _ genruntime.ConvertibleStatus = &Subscription_STATUS{}
 
-// ConvertStatusFrom populates our Service_Subscription_STATUS from the provided source
-func (subscription *Service_Subscription_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220801s.Service_Subscription_STATUS)
+// ConvertStatusFrom populates our Subscription_STATUS from the provided source
+func (subscription *Subscription_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.Subscription_STATUS)
 	if ok {
 		// Populate our instance from source
-		return subscription.AssignProperties_From_Service_Subscription_STATUS(src)
+		return subscription.AssignProperties_From_Subscription_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220801s.Service_Subscription_STATUS{}
+	src = &storage.Subscription_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = subscription.AssignProperties_From_Service_Subscription_STATUS(src)
+	err = subscription.AssignProperties_From_Subscription_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -888,17 +928,17 @@ func (subscription *Service_Subscription_STATUS) ConvertStatusFrom(source genrun
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Service_Subscription_STATUS
-func (subscription *Service_Subscription_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220801s.Service_Subscription_STATUS)
+// ConvertStatusTo populates the provided destination from our Subscription_STATUS
+func (subscription *Subscription_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.Subscription_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return subscription.AssignProperties_To_Service_Subscription_STATUS(dst)
+		return subscription.AssignProperties_To_Subscription_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220801s.Service_Subscription_STATUS{}
-	err := subscription.AssignProperties_To_Service_Subscription_STATUS(dst)
+	dst = &storage.Subscription_STATUS{}
+	err := subscription.AssignProperties_To_Subscription_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -912,18 +952,18 @@ func (subscription *Service_Subscription_STATUS) ConvertStatusTo(destination gen
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Service_Subscription_STATUS{}
+var _ genruntime.FromARMConverter = &Subscription_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (subscription *Service_Subscription_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Service_Subscription_STATUS_ARM{}
+func (subscription *Subscription_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.Subscription_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (subscription *Service_Subscription_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Service_Subscription_STATUS_ARM)
+func (subscription *Subscription_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.Subscription_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Service_Subscription_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Subscription_STATUS, got %T", armInput)
 	}
 
 	// Set property "AllowTracing":
@@ -1025,7 +1065,9 @@ func (subscription *Service_Subscription_STATUS) PopulateFromARM(owner genruntim
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.State != nil {
-			state := *typedInput.Properties.State
+			var temp string
+			temp = string(*typedInput.Properties.State)
+			state := SubscriptionContractProperties_State_STATUS(temp)
 			subscription.State = &state
 		}
 	}
@@ -1049,8 +1091,8 @@ func (subscription *Service_Subscription_STATUS) PopulateFromARM(owner genruntim
 	return nil
 }
 
-// AssignProperties_From_Service_Subscription_STATUS populates our Service_Subscription_STATUS from the provided source Service_Subscription_STATUS
-func (subscription *Service_Subscription_STATUS) AssignProperties_From_Service_Subscription_STATUS(source *v20220801s.Service_Subscription_STATUS) error {
+// AssignProperties_From_Subscription_STATUS populates our Subscription_STATUS from the provided source Subscription_STATUS
+func (subscription *Subscription_STATUS) AssignProperties_From_Subscription_STATUS(source *storage.Subscription_STATUS) error {
 
 	// AllowTracing
 	if source.AllowTracing != nil {
@@ -1095,8 +1137,9 @@ func (subscription *Service_Subscription_STATUS) AssignProperties_From_Service_S
 
 	// State
 	if source.State != nil {
-		state := SubscriptionContractProperties_State_STATUS(*source.State)
-		subscription.State = &state
+		state := *source.State
+		stateTemp := genruntime.ToEnum(state, subscriptionContractProperties_State_STATUS_Values)
+		subscription.State = &stateTemp
 	} else {
 		subscription.State = nil
 	}
@@ -1111,8 +1154,8 @@ func (subscription *Service_Subscription_STATUS) AssignProperties_From_Service_S
 	return nil
 }
 
-// AssignProperties_To_Service_Subscription_STATUS populates the provided destination Service_Subscription_STATUS from our Service_Subscription_STATUS
-func (subscription *Service_Subscription_STATUS) AssignProperties_To_Service_Subscription_STATUS(destination *v20220801s.Service_Subscription_STATUS) error {
+// AssignProperties_To_Subscription_STATUS populates the provided destination Subscription_STATUS from our Subscription_STATUS
+func (subscription *Subscription_STATUS) AssignProperties_To_Subscription_STATUS(destination *storage.Subscription_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1182,14 +1225,99 @@ func (subscription *Service_Subscription_STATUS) AssignProperties_To_Service_Sub
 	return nil
 }
 
+type SubscriptionContractProperties_State_STATUS string
+
+const (
+	SubscriptionContractProperties_State_STATUS_Active    = SubscriptionContractProperties_State_STATUS("active")
+	SubscriptionContractProperties_State_STATUS_Cancelled = SubscriptionContractProperties_State_STATUS("cancelled")
+	SubscriptionContractProperties_State_STATUS_Expired   = SubscriptionContractProperties_State_STATUS("expired")
+	SubscriptionContractProperties_State_STATUS_Rejected  = SubscriptionContractProperties_State_STATUS("rejected")
+	SubscriptionContractProperties_State_STATUS_Submitted = SubscriptionContractProperties_State_STATUS("submitted")
+	SubscriptionContractProperties_State_STATUS_Suspended = SubscriptionContractProperties_State_STATUS("suspended")
+)
+
+// Mapping from string to SubscriptionContractProperties_State_STATUS
+var subscriptionContractProperties_State_STATUS_Values = map[string]SubscriptionContractProperties_State_STATUS{
+	"active":    SubscriptionContractProperties_State_STATUS_Active,
+	"cancelled": SubscriptionContractProperties_State_STATUS_Cancelled,
+	"expired":   SubscriptionContractProperties_State_STATUS_Expired,
+	"rejected":  SubscriptionContractProperties_State_STATUS_Rejected,
+	"submitted": SubscriptionContractProperties_State_STATUS_Submitted,
+	"suspended": SubscriptionContractProperties_State_STATUS_Suspended,
+}
+
+// +kubebuilder:validation:Enum={"active","cancelled","expired","rejected","submitted","suspended"}
+type SubscriptionCreateParameterProperties_State string
+
+const (
+	SubscriptionCreateParameterProperties_State_Active    = SubscriptionCreateParameterProperties_State("active")
+	SubscriptionCreateParameterProperties_State_Cancelled = SubscriptionCreateParameterProperties_State("cancelled")
+	SubscriptionCreateParameterProperties_State_Expired   = SubscriptionCreateParameterProperties_State("expired")
+	SubscriptionCreateParameterProperties_State_Rejected  = SubscriptionCreateParameterProperties_State("rejected")
+	SubscriptionCreateParameterProperties_State_Submitted = SubscriptionCreateParameterProperties_State("submitted")
+	SubscriptionCreateParameterProperties_State_Suspended = SubscriptionCreateParameterProperties_State("suspended")
+)
+
+// Mapping from string to SubscriptionCreateParameterProperties_State
+var subscriptionCreateParameterProperties_State_Values = map[string]SubscriptionCreateParameterProperties_State{
+	"active":    SubscriptionCreateParameterProperties_State_Active,
+	"cancelled": SubscriptionCreateParameterProperties_State_Cancelled,
+	"expired":   SubscriptionCreateParameterProperties_State_Expired,
+	"rejected":  SubscriptionCreateParameterProperties_State_Rejected,
+	"submitted": SubscriptionCreateParameterProperties_State_Submitted,
+	"suspended": SubscriptionCreateParameterProperties_State_Suspended,
+}
+
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type SubscriptionOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+
 	// Secrets: configures where to place Azure generated secrets.
 	Secrets *SubscriptionOperatorSecrets `json:"secrets,omitempty"`
 }
 
 // AssignProperties_From_SubscriptionOperatorSpec populates our SubscriptionOperatorSpec from the provided source SubscriptionOperatorSpec
-func (operator *SubscriptionOperatorSpec) AssignProperties_From_SubscriptionOperatorSpec(source *v20220801s.SubscriptionOperatorSpec) error {
+func (operator *SubscriptionOperatorSpec) AssignProperties_From_SubscriptionOperatorSpec(source *storage.SubscriptionOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
 
 	// Secrets
 	if source.Secrets != nil {
@@ -1208,13 +1336,49 @@ func (operator *SubscriptionOperatorSpec) AssignProperties_From_SubscriptionOper
 }
 
 // AssignProperties_To_SubscriptionOperatorSpec populates the provided destination SubscriptionOperatorSpec from our SubscriptionOperatorSpec
-func (operator *SubscriptionOperatorSpec) AssignProperties_To_SubscriptionOperatorSpec(destination *v20220801s.SubscriptionOperatorSpec) error {
+func (operator *SubscriptionOperatorSpec) AssignProperties_To_SubscriptionOperatorSpec(destination *storage.SubscriptionOperatorSpec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
 	// Secrets
 	if operator.Secrets != nil {
-		var secret v20220801s.SubscriptionOperatorSecrets
+		var secret storage.SubscriptionOperatorSecrets
 		err := operator.Secrets.AssignProperties_To_SubscriptionOperatorSecrets(&secret)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SubscriptionOperatorSecrets() to populate field Secrets")
@@ -1246,7 +1410,7 @@ type SubscriptionOperatorSecrets struct {
 }
 
 // AssignProperties_From_SubscriptionOperatorSecrets populates our SubscriptionOperatorSecrets from the provided source SubscriptionOperatorSecrets
-func (secrets *SubscriptionOperatorSecrets) AssignProperties_From_SubscriptionOperatorSecrets(source *v20220801s.SubscriptionOperatorSecrets) error {
+func (secrets *SubscriptionOperatorSecrets) AssignProperties_From_SubscriptionOperatorSecrets(source *storage.SubscriptionOperatorSecrets) error {
 
 	// PrimaryKey
 	if source.PrimaryKey != nil {
@@ -1269,7 +1433,7 @@ func (secrets *SubscriptionOperatorSecrets) AssignProperties_From_SubscriptionOp
 }
 
 // AssignProperties_To_SubscriptionOperatorSecrets populates the provided destination SubscriptionOperatorSecrets from our SubscriptionOperatorSecrets
-func (secrets *SubscriptionOperatorSecrets) AssignProperties_To_SubscriptionOperatorSecrets(destination *v20220801s.SubscriptionOperatorSecrets) error {
+func (secrets *SubscriptionOperatorSecrets) AssignProperties_To_SubscriptionOperatorSecrets(destination *storage.SubscriptionOperatorSecrets) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 

@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20230101 "github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101"
-	v20230101s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type ActionGroupExtension struct {
 func (extension *ActionGroupExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20230101.ActionGroup{},
-		&v20230101s.ActionGroup{}}
+		&storage.ActionGroup{}}
 }

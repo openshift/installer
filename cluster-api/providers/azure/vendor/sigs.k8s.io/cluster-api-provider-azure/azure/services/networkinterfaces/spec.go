@@ -23,10 +23,12 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/resourceskus"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // NICSpec defines the specification for a Network Interface.
@@ -80,12 +82,25 @@ func (s *NICSpec) OwnerResourceName() string {
 
 // Parameters returns the parameters for the network interface.
 func (s *NICSpec) Parameters(ctx context.Context, existing interface{}) (parameters interface{}, err error) {
+	_, log, done := tele.StartSpanWithLogger(ctx, "networkinterfaces.NICSpec.Parameters")
+	defer done()
+
 	if existing != nil {
-		if _, ok := existing.(armnetwork.Interface); !ok {
+		existingNIC, ok := existing.(armnetwork.Interface)
+		if !ok {
 			return nil, errors.Errorf("%T is not an armnetwork.Interface", existing)
 		}
-		// network interface already exists
-		return nil, nil
+
+		// If the NIC already exists, return a nil parameters and nil errors to skip the create or update of the already existing NIC.
+		// If the NIC is in ProvisioningFailed state, we will try to build the parameters of the existing NIC as the provisioning failed does not necessarily mean the NIC is in a bad state.
+		// Reference: https://learn.microsoft.com/en-us/azure/networking/troubleshoot-failed-state#provisioning-states and
+		// https://github.com/kubernetes-sigs/cluster-api-provider-azure/issues/5515
+		if existingNIC.Properties != nil && existingNIC.Properties.ProvisioningState != nil && *existingNIC.Properties.ProvisioningState != armnetwork.ProvisioningStateFailed {
+			// Return nil for both parameters and error as no changes are needed for the existing resource
+			// otherwise rebuild the parameters of the existing NIC so that we can patch the ProvisioningState
+			log.V(4).Info("existing NIC is not in ProvisioningFailed state, returning nil parameters and nil error", "ProvisioningState", *existingNIC.Properties.ProvisioningState)
+			return nil, nil
+		}
 	}
 
 	primaryIPConfig := &armnetwork.InterfaceIPConfigurationPropertiesFormat{

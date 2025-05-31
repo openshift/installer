@@ -25,14 +25,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 const (
@@ -46,7 +47,7 @@ type ManagedClusterAdoptReconciler struct {
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ManagedClusterAdoptReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (r *ManagedClusterAdoptReconciler) SetupWithManager(_ context.Context, mgr ctrl.Manager, options controller.Options) error {
 	_, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&asocontainerservicev1.ManagedCluster{}).

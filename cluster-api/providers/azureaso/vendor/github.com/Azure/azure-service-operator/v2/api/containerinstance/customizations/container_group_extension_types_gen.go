@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20211001 "github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001"
-	v20211001s "github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type ContainerGroupExtension struct {
 func (extension *ContainerGroupExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20211001.ContainerGroup{},
-		&v20211001s.ContainerGroup{}}
+		&storage.ContainerGroup{}}
 }

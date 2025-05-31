@@ -35,14 +35,14 @@ type spanLogSink struct {
 	vals []interface{}
 }
 
-func (*spanLogSink) Init(info logr.RuntimeInfo) {
+func (*spanLogSink) Init(_ logr.RuntimeInfo) {
 }
 
 func (s *spanLogSink) End(opts ...trace.SpanEndOption) {
 	s.Span.End(opts...)
 }
 
-func (*spanLogSink) Enabled(v int) bool {
+func (*spanLogSink) Enabled(_ int) bool {
 	return true
 }
 
@@ -70,7 +70,7 @@ func (s *spanLogSink) evtStr(evtType, msg string) string {
 	)
 }
 
-func (s *spanLogSink) Info(level int, msg string, keysAndValues ...interface{}) {
+func (s *spanLogSink) Info(_ int, msg string, keysAndValues ...interface{}) {
 	attrs := s.kvsToAttrs(keysAndValues...)
 	s.AddEvent(
 		s.evtStr("INFO", msg),

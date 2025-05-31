@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type FlexibleServersConfiguration struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              FlexibleServers_Configuration_Spec   `json:"spec,omitempty"`
-	Status            FlexibleServers_Configuration_STATUS `json:"status,omitempty"`
+	Spec              FlexibleServersConfiguration_Spec   `json:"spec,omitempty"`
+	Status            FlexibleServersConfiguration_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &FlexibleServersConfiguration{}
@@ -44,6 +47,26 @@ func (configuration *FlexibleServersConfiguration) SetConditions(conditions cond
 	configuration.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &FlexibleServersConfiguration{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (configuration *FlexibleServersConfiguration) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if configuration.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return configuration.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &FlexibleServersConfiguration{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (configuration *FlexibleServersConfiguration) SecretDestinationExpressions() []*core.DestinationExpression {
+	if configuration.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return configuration.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &FlexibleServersConfiguration{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (configuration *FlexibleServersConfiguration) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-12-01"
 func (configuration FlexibleServersConfiguration) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-12-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -86,7 +109,7 @@ func (configuration *FlexibleServersConfiguration) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (configuration *FlexibleServersConfiguration) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &FlexibleServers_Configuration_STATUS{}
+	return &FlexibleServersConfiguration_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -98,13 +121,13 @@ func (configuration *FlexibleServersConfiguration) Owner() *genruntime.ResourceR
 // SetStatus sets the status of this resource
 func (configuration *FlexibleServersConfiguration) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*FlexibleServers_Configuration_STATUS); ok {
+	if st, ok := status.(*FlexibleServersConfiguration_STATUS); ok {
 		configuration.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st FlexibleServers_Configuration_STATUS
+	var st FlexibleServersConfiguration_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -137,12 +160,13 @@ type FlexibleServersConfigurationList struct {
 	Items           []FlexibleServersConfiguration `json:"items"`
 }
 
-// Storage version of v1api20221201.FlexibleServers_Configuration_Spec
-type FlexibleServers_Configuration_Spec struct {
+// Storage version of v1api20221201.FlexibleServersConfiguration_Spec
+type FlexibleServersConfiguration_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string `json:"azureName,omitempty"`
-	OriginalVersion string `json:"originalVersion,omitempty"`
+	AzureName       string                                    `json:"azureName,omitempty"`
+	OperatorSpec    *FlexibleServersConfigurationOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                                    `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -154,10 +178,10 @@ type FlexibleServers_Configuration_Spec struct {
 	Value       *string                            `json:"value,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &FlexibleServers_Configuration_Spec{}
+var _ genruntime.ConvertibleSpec = &FlexibleServersConfiguration_Spec{}
 
-// ConvertSpecFrom populates our FlexibleServers_Configuration_Spec from the provided source
-func (configuration *FlexibleServers_Configuration_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our FlexibleServersConfiguration_Spec from the provided source
+func (configuration *FlexibleServersConfiguration_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == configuration {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -165,8 +189,8 @@ func (configuration *FlexibleServers_Configuration_Spec) ConvertSpecFrom(source 
 	return source.ConvertSpecTo(configuration)
 }
 
-// ConvertSpecTo populates the provided destination from our FlexibleServers_Configuration_Spec
-func (configuration *FlexibleServers_Configuration_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our FlexibleServersConfiguration_Spec
+func (configuration *FlexibleServersConfiguration_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == configuration {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -174,8 +198,8 @@ func (configuration *FlexibleServers_Configuration_Spec) ConvertSpecTo(destinati
 	return destination.ConvertSpecFrom(configuration)
 }
 
-// Storage version of v1api20221201.FlexibleServers_Configuration_STATUS
-type FlexibleServers_Configuration_STATUS struct {
+// Storage version of v1api20221201.FlexibleServersConfiguration_STATUS
+type FlexibleServersConfiguration_STATUS struct {
 	AllowedValues          *string                `json:"allowedValues,omitempty"`
 	Conditions             []conditions.Condition `json:"conditions,omitempty"`
 	DataType               *string                `json:"dataType,omitempty"`
@@ -195,10 +219,10 @@ type FlexibleServers_Configuration_STATUS struct {
 	Value                  *string                `json:"value,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &FlexibleServers_Configuration_STATUS{}
+var _ genruntime.ConvertibleStatus = &FlexibleServersConfiguration_STATUS{}
 
-// ConvertStatusFrom populates our FlexibleServers_Configuration_STATUS from the provided source
-func (configuration *FlexibleServers_Configuration_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our FlexibleServersConfiguration_STATUS from the provided source
+func (configuration *FlexibleServersConfiguration_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == configuration {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -206,13 +230,21 @@ func (configuration *FlexibleServers_Configuration_STATUS) ConvertStatusFrom(sou
 	return source.ConvertStatusTo(configuration)
 }
 
-// ConvertStatusTo populates the provided destination from our FlexibleServers_Configuration_STATUS
-func (configuration *FlexibleServers_Configuration_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our FlexibleServersConfiguration_STATUS
+func (configuration *FlexibleServersConfiguration_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == configuration {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(configuration)
+}
+
+// Storage version of v1api20221201.FlexibleServersConfigurationOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type FlexibleServersConfigurationOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

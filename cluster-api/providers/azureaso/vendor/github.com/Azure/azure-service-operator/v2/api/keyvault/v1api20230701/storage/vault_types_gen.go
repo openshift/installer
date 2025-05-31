@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +47,26 @@ func (vault *Vault) SetConditions(conditions conditions.Conditions) {
 	vault.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &Vault{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (vault *Vault) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if vault.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return vault.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Vault{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (vault *Vault) SecretDestinationExpressions() []*core.DestinationExpression {
+	if vault.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return vault.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &Vault{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (vault *Vault) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-07-01"
 func (vault Vault) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-07-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -148,9 +171,10 @@ const APIVersion_Value = APIVersion("2023-07-01")
 type Vault_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string  `json:"azureName,omitempty"`
-	Location        *string `json:"location,omitempty"`
-	OriginalVersion string  `json:"originalVersion,omitempty"`
+	AzureName       string             `json:"azureName,omitempty"`
+	Location        *string            `json:"location,omitempty"`
+	OperatorSpec    *VaultOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string             `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -226,6 +250,14 @@ type SystemData_STATUS struct {
 	LastModifiedBy     *string                `json:"lastModifiedBy,omitempty"`
 	LastModifiedByType *string                `json:"lastModifiedByType,omitempty"`
 	PropertyBag        genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// Storage version of v1api20230701.VaultOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type VaultOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20230701.VaultProperties

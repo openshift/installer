@@ -9,6 +9,9 @@ import (
 	v20220301s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,6 +70,26 @@ func (scaleSet *VirtualMachineScaleSet) ConvertTo(hub conversion.Hub) error {
 	return scaleSet.AssignProperties_To_VirtualMachineScaleSet(destination)
 }
 
+var _ configmaps.Exporter = &VirtualMachineScaleSet{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (scaleSet *VirtualMachineScaleSet) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if scaleSet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return scaleSet.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &VirtualMachineScaleSet{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (scaleSet *VirtualMachineScaleSet) SecretDestinationExpressions() []*core.DestinationExpression {
+	if scaleSet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return scaleSet.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &VirtualMachineScaleSet{}
 
 // AzureName returns the Azure name of the resource
@@ -76,7 +99,7 @@ func (scaleSet *VirtualMachineScaleSet) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-12-01"
 func (scaleSet VirtualMachineScaleSet) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-12-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -240,15 +263,16 @@ type VirtualMachineScaleSet_Spec struct {
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                              string                          `json:"azureName,omitempty"`
-	DoNotRunExtensionsOnOverprovisionedVMs *bool                           `json:"doNotRunExtensionsOnOverprovisionedVMs,omitempty"`
-	ExtendedLocation                       *ExtendedLocation               `json:"extendedLocation,omitempty"`
-	HostGroup                              *SubResource                    `json:"hostGroup,omitempty"`
-	Identity                               *VirtualMachineScaleSetIdentity `json:"identity,omitempty"`
-	Location                               *string                         `json:"location,omitempty"`
-	OrchestrationMode                      *string                         `json:"orchestrationMode,omitempty"`
-	OriginalVersion                        string                          `json:"originalVersion,omitempty"`
-	Overprovision                          *bool                           `json:"overprovision,omitempty"`
+	AzureName                              string                              `json:"azureName,omitempty"`
+	DoNotRunExtensionsOnOverprovisionedVMs *bool                               `json:"doNotRunExtensionsOnOverprovisionedVMs,omitempty"`
+	ExtendedLocation                       *ExtendedLocation                   `json:"extendedLocation,omitempty"`
+	HostGroup                              *SubResource                        `json:"hostGroup,omitempty"`
+	Identity                               *VirtualMachineScaleSetIdentity     `json:"identity,omitempty"`
+	Location                               *string                             `json:"location,omitempty"`
+	OperatorSpec                           *VirtualMachineScaleSetOperatorSpec `json:"operatorSpec,omitempty"`
+	OrchestrationMode                      *string                             `json:"orchestrationMode,omitempty"`
+	OriginalVersion                        string                              `json:"originalVersion,omitempty"`
+	Overprovision                          *bool                               `json:"overprovision,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -407,6 +431,18 @@ func (scaleSet *VirtualMachineScaleSet_Spec) AssignProperties_From_VirtualMachin
 
 	// Location
 	scaleSet.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec VirtualMachineScaleSetOperatorSpec
+		err := operatorSpec.AssignProperties_From_VirtualMachineScaleSetOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineScaleSetOperatorSpec() to populate field OperatorSpec")
+		}
+		scaleSet.OperatorSpec = &operatorSpec
+	} else {
+		scaleSet.OperatorSpec = nil
+	}
 
 	// OrchestrationMode
 	scaleSet.OrchestrationMode = genruntime.ClonePointerToString(source.OrchestrationMode)
@@ -647,6 +683,18 @@ func (scaleSet *VirtualMachineScaleSet_Spec) AssignProperties_To_VirtualMachineS
 
 	// Location
 	destination.Location = genruntime.ClonePointerToString(scaleSet.Location)
+
+	// OperatorSpec
+	if scaleSet.OperatorSpec != nil {
+		var operatorSpec v20220301s.VirtualMachineScaleSetOperatorSpec
+		err := scaleSet.OperatorSpec.AssignProperties_To_VirtualMachineScaleSetOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineScaleSetOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OrchestrationMode
 	destination.OrchestrationMode = genruntime.ClonePointerToString(scaleSet.OrchestrationMode)
@@ -2373,6 +2421,136 @@ func (identity *VirtualMachineScaleSetIdentity_STATUS) AssignProperties_To_Virtu
 	return nil
 }
 
+// Storage version of v1api20201201.VirtualMachineScaleSetOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type VirtualMachineScaleSetOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_VirtualMachineScaleSetOperatorSpec populates our VirtualMachineScaleSetOperatorSpec from the provided source VirtualMachineScaleSetOperatorSpec
+func (operator *VirtualMachineScaleSetOperatorSpec) AssignProperties_From_VirtualMachineScaleSetOperatorSpec(source *v20220301s.VirtualMachineScaleSetOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualMachineScaleSetOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForVirtualMachineScaleSetOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VirtualMachineScaleSetOperatorSpec populates the provided destination VirtualMachineScaleSetOperatorSpec from our VirtualMachineScaleSetOperatorSpec
+func (operator *VirtualMachineScaleSetOperatorSpec) AssignProperties_To_VirtualMachineScaleSetOperatorSpec(destination *v20220301s.VirtualMachineScaleSetOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualMachineScaleSetOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForVirtualMachineScaleSetOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20201201.VirtualMachineScaleSetVMProfile
 // Describes a virtual machine scale set virtual machine profile.
 type VirtualMachineScaleSetVMProfile struct {
@@ -3135,6 +3313,11 @@ type augmentConversionForVirtualMachineScaleSetIdentity interface {
 type augmentConversionForVirtualMachineScaleSetIdentity_STATUS interface {
 	AssignPropertiesFrom(src *v20220301s.VirtualMachineScaleSetIdentity_STATUS) error
 	AssignPropertiesTo(dst *v20220301s.VirtualMachineScaleSetIdentity_STATUS) error
+}
+
+type augmentConversionForVirtualMachineScaleSetOperatorSpec interface {
+	AssignPropertiesFrom(src *v20220301s.VirtualMachineScaleSetOperatorSpec) error
+	AssignPropertiesTo(dst *v20220301s.VirtualMachineScaleSetOperatorSpec) error
 }
 
 type augmentConversionForVirtualMachineScaleSetVMProfile interface {

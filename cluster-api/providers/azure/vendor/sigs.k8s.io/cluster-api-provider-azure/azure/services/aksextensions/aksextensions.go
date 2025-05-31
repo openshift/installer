@@ -17,10 +17,15 @@ limitations under the License.
 package aksextensions
 
 import (
+	"context"
+
 	asokubernetesconfigurationv1 "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20230501"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
+	"sigs.k8s.io/cluster-api-provider-azure/util/slice"
 )
 
 const serviceName = "extension"
@@ -41,10 +46,17 @@ type Service struct {
 // New creates a new service.
 func New(scope AKSExtensionScope) *Service {
 	svc := aso.NewService[*asokubernetesconfigurationv1.Extension, AKSExtensionScope](serviceName, scope)
+	svc.ListFunc = list
 	svc.Specs = scope.AKSExtensionSpecs()
 	svc.ConditionType = infrav1.AKSExtensionsReadyCondition
 	return &Service{
 		Scope:   scope,
 		Service: svc,
 	}
+}
+
+func list(ctx context.Context, client client.Client, opts ...client.ListOption) ([]*asokubernetesconfigurationv1.Extension, error) {
+	list := &asokubernetesconfigurationv1.ExtensionList{}
+	err := client.List(ctx, list, opts...)
+	return slice.ToPtrs(list.Items), err
 }

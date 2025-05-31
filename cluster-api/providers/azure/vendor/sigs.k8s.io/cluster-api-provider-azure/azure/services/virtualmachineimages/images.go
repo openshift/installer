@@ -18,191 +18,180 @@ package virtualmachineimages
 
 import (
 	"context"
-	"fmt"
-	"sort"
+	"regexp"
 	"strings"
 
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
+/* Reference images live in an Azure community gallery with this structure:
+. Gallery: "ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019"
+├── Image Definition: "capi-ubun2-2404"
+│   ├── Version: "1.30.4"
+│   ├── Version: "1.30.5"
+│   └── Version: "1.31.1"
+└── Image Definition: "capi-win-2022-containerd"
+    ├── Version: "1.30.4"
+    ├── Version: "1.30.5"
+    └── Version: "1.31.1"
+*/
+
 // Service provides operations on Azure VM Images.
 type Service struct {
-	Client
-	azure.Authorizer
 }
 
 // New creates a VM Images service.
-func New(auth azure.Authorizer) (*Service, error) {
-	client, err := NewClient(auth)
+func New(_ azure.Authorizer) (*Service, error) {
+	return &Service{}, nil
+}
+
+// GetDefaultLinuxImage returns the default image spec for Ubuntu.
+func (s *Service) GetDefaultLinuxImage(ctx context.Context, _, k8sVersion string) (*infrav1.Image, error) {
+	_, _, done := tele.StartSpanWithLogger(ctx, "azure.services.virtualmachineimages.GetDefaultLinuxImage")
+	defer done()
+
+	v, err := semver.ParseTolerant(k8sVersion)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "unable to parse Kubernetes version \"%s\"", k8sVersion)
 	}
-	return &Service{
-		Client:     client,
-		Authorizer: auth,
+
+	// Use the Azure Marketplace for specific older versions, to keep "clusterctl upgrade" from rolling new machines.
+	marketplaceVersionRange := semver.MustParseRange("<=1.28.12 || >=1.29.1 <=1.29.7 || >=1.30.0 <=1.30.3")
+	if marketplaceVersionRange(v) {
+		if version, ok := oldUbuntu2204Versions[v.String()]; ok {
+			return &infrav1.Image{
+				Marketplace: &infrav1.AzureMarketplaceImage{
+					ImagePlan: infrav1.ImagePlan{
+						Publisher: "cncf-upstream",
+						Offer:     "capi",
+						SKU:       "ubuntu-2204-gen1",
+					},
+					Version: version,
+				},
+			}, nil
+		}
+	}
+	return &infrav1.Image{
+		ComputeGallery: &infrav1.AzureComputeGalleryImage{
+			Gallery: azure.DefaultPublicGalleryName,
+			Name:    azure.DefaultLinuxGalleryImageName,
+			Version: v.String(),
+		},
 	}, nil
 }
 
-// GetDefaultUbuntuImage returns the default image spec for Ubuntu.
-func (s *Service) GetDefaultUbuntuImage(ctx context.Context, location, k8sVersion string) (*infrav1.Image, error) {
-	v, err := semver.ParseTolerant(k8sVersion)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to parse Kubernetes version \"%s\"", k8sVersion)
-	}
-
-	osVersion := getUbuntuOSVersion(v.Major, v.Minor, v.Patch)
-	publisher, offer := azure.DefaultImagePublisherID, azure.DefaultImageOfferID
-	skuID, version, err := s.getSKUAndVersion(
-		ctx, location, publisher, offer, k8sVersion, fmt.Sprintf("ubuntu-%s", osVersion))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get default image")
-	}
-
-	defaultImage := &infrav1.Image{
-		Marketplace: &infrav1.AzureMarketplaceImage{
-			ImagePlan: infrav1.ImagePlan{
-				Publisher: publisher,
-				Offer:     offer,
-				SKU:       skuID,
-			},
-			Version: version,
-		},
-	}
-
-	return defaultImage, nil
-}
-
 // GetDefaultWindowsImage returns the default image spec for Windows.
-func (s *Service) GetDefaultWindowsImage(ctx context.Context, location, k8sVersion, runtime, osAndVersion string) (*infrav1.Image, error) {
-	v122 := semver.MustParse("1.22.0")
-	v, err := semver.ParseTolerant(k8sVersion)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to parse Kubernetes version \"%s\"", k8sVersion)
-	}
-
-	// If containerd is specified we don't currently support less than 1.22
-	if v.LE(v122) && runtime == "containerd" {
-		return nil, errors.New("containerd image only supported in 1.22+")
-	}
-
-	if osAndVersion == "" {
-		osAndVersion = azure.DefaultWindowsOsAndVersion
-	}
-
-	// Starting with 1.22 we default to containerd for Windows unless the runtime flag is set.
-	if v.GE(v122) && runtime != "dockershim" && !strings.HasSuffix(osAndVersion, "-containerd") {
-		osAndVersion += "-containerd"
-	}
-
-	publisher, offer := azure.DefaultImagePublisherID, azure.DefaultWindowsImageOfferID
-	skuID, version, err := s.getSKUAndVersion(
-		ctx, location, publisher, offer, k8sVersion, osAndVersion)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get default image")
-	}
-
-	defaultImage := &infrav1.Image{
-		Marketplace: &infrav1.AzureMarketplaceImage{
-			ImagePlan: infrav1.ImagePlan{
-				Publisher: publisher,
-				Offer:     offer,
-				SKU:       skuID,
-			},
-			Version: version,
-		},
-	}
-
-	return defaultImage, nil
-}
-
-// getSKUAndVersion gets the SKU ID and version of the image to use for the provided version of Kubernetes.
-// note: osAndVersion is expected to be in the format of {os}-{version} (ex: ubuntu-2004 or windows-2022)
-func (s *Service) getSKUAndVersion(ctx context.Context, location, publisher, offer, k8sVersion, osAndVersion string) (skuID string, imageVersion string, err error) {
-	ctx, log, done := tele.StartSpanWithLogger(ctx, "virtualmachineimages.Service.getSKUAndVersion")
+func (s *Service) GetDefaultWindowsImage(ctx context.Context, _, k8sVersion, runtime, osAndVersion string) (*infrav1.Image, error) {
+	_, _, done := tele.StartSpanWithLogger(ctx, "azure.services.virtualmachineimages.GetDefaultWindowsImage")
 	defer done()
 
-	log.V(4).Info("Getting VM image SKU and version", "location", location, "publisher", publisher, "offer", offer, "k8sVersion", k8sVersion, "osAndVersion", osAndVersion)
-
 	v, err := semver.ParseTolerant(k8sVersion)
 	if err != nil {
-		return "", "", errors.Wrapf(err, "unable to parse Kubernetes version \"%s\" in spec, expected valid SemVer string", k8sVersion)
+		return nil, errors.Wrapf(err, "unable to parse Kubernetes version \"%s\"", k8sVersion)
 	}
 
-	// Old SKUs before 1.21.12, 1.22.9, or 1.23.6 are named like "k8s-1dot21dot2-ubuntu-2004".
-	if k8sVersionInSKUName(v.Major, v.Minor, v.Patch) {
-		return fmt.Sprintf("k8s-%ddot%ddot%d-%s", v.Major, v.Minor, v.Patch, osAndVersion), azure.LatestVersion, nil
+	if runtime != "" && runtime != "containerd" {
+		return nil, errors.Errorf("unsupported runtime %s", runtime)
 	}
 
-	// New SKUs don't contain the Kubernetes version and are named like "ubuntu-2004-gen1".
-	sku := fmt.Sprintf("%s-gen1", osAndVersion)
-
-	imageCache, err := GetCache(s.Authorizer)
-	if err != nil {
-		return "", "", errors.Wrap(err, "failed to get image cache")
-	}
-	imageCache.client = s.Client
-
-	listImagesResponse, err := imageCache.Get(ctx, location, publisher, offer, sku)
-	if err != nil {
-		return "", "", errors.Wrapf(err, "unable to list VM images for publisher \"%s\" offer \"%s\" sku \"%s\"", publisher, offer, sku)
+	// Use the Windows edition from the osAndVersion if provided.
+	imageName := azure.DefaultWindowsGalleryImageName
+	if osAndVersion != "" {
+		match := regexp.MustCompile(`^windows-(\d{4})$`).FindStringSubmatch(osAndVersion)
+		if len(match) != 2 {
+			return nil, errors.Errorf("unsupported osAndVersion %s", osAndVersion)
+		}
+		imageName = strings.Replace(imageName, "2019", match[1], 1)
 	}
 
-	vmImages := listImagesResponse.VirtualMachineImageResourceArray
-	if len(vmImages) == 0 {
-		return "", "", errors.Errorf("no VM images found for publisher \"%s\" offer \"%s\" sku \"%s\"", publisher, offer, sku)
-	}
-
-	// Sort the VM image names descending, so more recent dates sort first.
-	// (The date is encoded into the end of the name, for example "124.0.20220512").
-	names := []string{}
-	for _, vmImage := range vmImages {
-		names = append(names, *vmImage.Name)
-	}
-	sort.Sort(sort.Reverse(sort.StringSlice(names)))
-
-	// Pick the first (most recent) one whose k8s version matches.
-	var version string
-	id := fmt.Sprintf("%d%d.%d", v.Major, v.Minor, v.Patch)
-	for _, name := range names {
-		if strings.HasPrefix(name, id) {
-			version = name
-			break
+	// Use the Azure Marketplace for specific older versions, to keep "clusterctl upgrade" from rolling new machines.
+	marketplaceVersionRange := semver.MustParseRange("<=1.28.12 || >=1.29.1 <=1.29.7 || >=1.30.0 <=1.30.3")
+	if marketplaceVersionRange(v) {
+		if version, ok := oldWindows2019Versions[v.String()]; ok {
+			return &infrav1.Image{
+				Marketplace: &infrav1.AzureMarketplaceImage{
+					ImagePlan: infrav1.ImagePlan{
+						Publisher: "cncf-upstream",
+						Offer:     "capi-windows",
+						SKU:       "windows-2019-containerd-gen1",
+					},
+					Version: version,
+				},
+			}, nil
 		}
 	}
-	if version == "" {
-		return "", "", errors.Errorf("no VM image found for publisher \"%s\" offer \"%s\" sku \"%s\" with Kubernetes version \"%s\"", publisher, offer, sku, k8sVersion)
-	}
-
-	log.V(4).Info("Found VM image SKU and version", "location", location, "publisher", publisher, "offer", offer, "sku", sku, "version", version)
-
-	return sku, version, nil
+	return &infrav1.Image{
+		ComputeGallery: &infrav1.AzureComputeGalleryImage{
+			Gallery: azure.DefaultPublicGalleryName,
+			Name:    imageName,
+			Version: v.String(),
+		},
+	}, nil
 }
 
-// getUbuntuOSVersion returns the default Ubuntu OS version for the given Kubernetes version.
-func getUbuntuOSVersion(major, minor, patch uint64) string {
-	// Default to Ubuntu 22.04 LTS for Kubernetes v1.25.3 and later.
-	osVersion := "2204"
-	if major == 1 && minor == 21 && patch < 2 ||
-		major == 1 && minor == 20 && patch < 8 ||
-		major == 1 && minor == 19 && patch < 12 ||
-		major == 1 && minor == 18 && patch < 20 ||
-		major == 1 && minor < 18 {
-		osVersion = "1804"
-	} else if major == 1 && minor == 25 && patch < 3 ||
-		major == 1 && minor < 25 {
-		osVersion = "2004"
-	}
-	return osVersion
+// oldUbuntu2204Versions maps Kubernetes versions to Azure Marketplace image versions.
+// The Marketplace offer is deprecated and won't be updated, so these values are
+// hard-coded here to simplify lookup.
+var oldUbuntu2204Versions = map[string]string{
+	"1.27.14": "127.14.20240517",
+	"1.27.15": "127.15.20240612",
+	"1.27.16": "127.16.20240717",
+	"1.28.1":  "128.1.20230829",
+	"1.28.2":  "128.2.20230918",
+	"1.28.3":  "128.3.20231023",
+	"1.28.4":  "128.4.20231130",
+	"1.28.5":  "128.5.20240102",
+	"1.28.6":  "128.6.20240201",
+	"1.28.7":  "128.7.20240223",
+	"1.28.8":  "128.8.20240327",
+	"1.28.9":  "128.9.20240418",
+	"1.28.10": "128.10.20240517",
+	"1.28.11": "128.11.20240612",
+	"1.28.12": "128.12.20240717",
+	"1.29.1":  "129.1.20240206",
+	"1.29.2":  "129.2.20240223",
+	"1.29.3":  "129.3.20240327",
+	"1.29.4":  "129.4.20240418",
+	"1.29.5":  "129.5.20240517",
+	"1.29.6":  "129.6.20240612",
+	"1.29.7":  "129.7.20240717",
+	"1.30.0":  "130.0.20240506",
+	"1.30.1":  "130.1.20240517",
+	"1.30.2":  "130.2.20240612",
+	"1.30.3":  "130.3.20240717",
 }
 
-// k8sVersionInSKUName returns true if the k8s version is in the SKU name (the older style of naming).
-func k8sVersionInSKUName(major, minor, patch uint64) bool {
-	return (major == 1 && minor < 21) ||
-		(major == 1 && minor == 21 && patch <= 12) ||
-		(major == 1 && minor == 22 && patch <= 9) ||
-		(major == 1 && minor == 23 && patch <= 6)
+// oldWindows2019Versions maps Kubernetes versions to Azure Marketplace image versions.
+// The Marketplace offer is deprecated and won't be updated, so these values are
+// hard-coded here to simplify lookup.
+var oldWindows2019Versions = map[string]string{
+	"1.27.14": "127.14.20240515",
+	"1.28.1":  "128.1.20230830",
+	"1.28.2":  "128.2.20230918",
+	"1.28.3":  "128.3.20231023",
+	"1.28.4":  "128.4.20231122",
+	"1.28.5":  "128.5.20240102",
+	"1.28.6":  "128.6.20240201",
+	"1.28.7":  "128.7.20240223",
+	"1.28.8":  "128.8.20240327",
+	"1.28.9":  "128.9.20240418",
+	"1.28.10": "128.10.20240515",
+	"1.28.11": "128.11.20240612",
+	"1.28.12": "128.12.20240717",
+	"1.29.1":  "129.1.20240201",
+	"1.29.2":  "129.2.20240223",
+	"1.29.3":  "129.3.20240327",
+	"1.29.4":  "129.4.20240418",
+	"1.29.5":  "129.5.20240515",
+	"1.29.6":  "129.6.20240612",
+	"1.29.7":  "129.7.20240717",
+	"1.30.0":  "130.0.20240418",
+	"1.30.1":  "130.1.20240515",
+	"1.30.2":  "130.2.20240612",
+	"1.30.3":  "130.3.20240717",
 }

@@ -4,19 +4,23 @@
 package storage
 
 import (
+	"fmt"
+	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
+	v20240101s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240101/storage"
+	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=network.azure.com,resources=loadbalancersinboundnatrules,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources={loadbalancersinboundnatrules/status,loadbalancersinboundnatrules/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -28,8 +32,8 @@ import (
 type LoadBalancersInboundNatRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              LoadBalancers_InboundNatRule_Spec   `json:"spec,omitempty"`
-	Status            LoadBalancers_InboundNatRule_STATUS `json:"status,omitempty"`
+	Spec              LoadBalancersInboundNatRule_Spec   `json:"spec,omitempty"`
+	Status            LoadBalancersInboundNatRule_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &LoadBalancersInboundNatRule{}
@@ -44,6 +48,48 @@ func (rule *LoadBalancersInboundNatRule) SetConditions(conditions conditions.Con
 	rule.Status.Conditions = conditions
 }
 
+var _ conversion.Convertible = &LoadBalancersInboundNatRule{}
+
+// ConvertFrom populates our LoadBalancersInboundNatRule from the provided hub LoadBalancersInboundNatRule
+func (rule *LoadBalancersInboundNatRule) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*v20240301s.LoadBalancersInboundNatRule)
+	if !ok {
+		return fmt.Errorf("expected network/v1api20240301/storage/LoadBalancersInboundNatRule but received %T instead", hub)
+	}
+
+	return rule.AssignProperties_From_LoadBalancersInboundNatRule(source)
+}
+
+// ConvertTo populates the provided hub LoadBalancersInboundNatRule from our LoadBalancersInboundNatRule
+func (rule *LoadBalancersInboundNatRule) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*v20240301s.LoadBalancersInboundNatRule)
+	if !ok {
+		return fmt.Errorf("expected network/v1api20240301/storage/LoadBalancersInboundNatRule but received %T instead", hub)
+	}
+
+	return rule.AssignProperties_To_LoadBalancersInboundNatRule(destination)
+}
+
+var _ configmaps.Exporter = &LoadBalancersInboundNatRule{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (rule *LoadBalancersInboundNatRule) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if rule.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return rule.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &LoadBalancersInboundNatRule{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (rule *LoadBalancersInboundNatRule) SecretDestinationExpressions() []*core.DestinationExpression {
+	if rule.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return rule.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &LoadBalancersInboundNatRule{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +99,7 @@ func (rule *LoadBalancersInboundNatRule) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-11-01"
 func (rule LoadBalancersInboundNatRule) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +133,7 @@ func (rule *LoadBalancersInboundNatRule) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (rule *LoadBalancersInboundNatRule) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &LoadBalancers_InboundNatRule_STATUS{}
+	return &LoadBalancersInboundNatRule_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +145,13 @@ func (rule *LoadBalancersInboundNatRule) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (rule *LoadBalancersInboundNatRule) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*LoadBalancers_InboundNatRule_STATUS); ok {
+	if st, ok := status.(*LoadBalancersInboundNatRule_STATUS); ok {
 		rule.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st LoadBalancers_InboundNatRule_STATUS
+	var st LoadBalancersInboundNatRule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -115,8 +161,75 @@ func (rule *LoadBalancersInboundNatRule) SetStatus(status genruntime.Convertible
 	return nil
 }
 
-// Hub marks that this LoadBalancersInboundNatRule is the hub type for conversion
-func (rule *LoadBalancersInboundNatRule) Hub() {}
+// AssignProperties_From_LoadBalancersInboundNatRule populates our LoadBalancersInboundNatRule from the provided source LoadBalancersInboundNatRule
+func (rule *LoadBalancersInboundNatRule) AssignProperties_From_LoadBalancersInboundNatRule(source *v20240301s.LoadBalancersInboundNatRule) error {
+
+	// ObjectMeta
+	rule.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec LoadBalancersInboundNatRule_Spec
+	err := spec.AssignProperties_From_LoadBalancersInboundNatRule_Spec(&source.Spec)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRule_Spec() to populate field Spec")
+	}
+	rule.Spec = spec
+
+	// Status
+	var status LoadBalancersInboundNatRule_STATUS
+	err = status.AssignProperties_From_LoadBalancersInboundNatRule_STATUS(&source.Status)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRule_STATUS() to populate field Status")
+	}
+	rule.Status = status
+
+	// Invoke the augmentConversionForLoadBalancersInboundNatRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LoadBalancersInboundNatRule populates the provided destination LoadBalancersInboundNatRule from our LoadBalancersInboundNatRule
+func (rule *LoadBalancersInboundNatRule) AssignProperties_To_LoadBalancersInboundNatRule(destination *v20240301s.LoadBalancersInboundNatRule) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *rule.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec v20240301s.LoadBalancersInboundNatRule_Spec
+	err := rule.Spec.AssignProperties_To_LoadBalancersInboundNatRule_Spec(&spec)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRule_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status v20240301s.LoadBalancersInboundNatRule_STATUS
+	err = rule.Status.AssignProperties_To_LoadBalancersInboundNatRule_STATUS(&status)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRule_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForLoadBalancersInboundNatRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (rule *LoadBalancersInboundNatRule) OriginalGVK() *schema.GroupVersionKind {
@@ -138,18 +251,24 @@ type LoadBalancersInboundNatRuleList struct {
 	Items           []LoadBalancersInboundNatRule `json:"items"`
 }
 
-// Storage version of v1api20201101.LoadBalancers_InboundNatRule_Spec
-type LoadBalancers_InboundNatRule_Spec struct {
+type augmentConversionForLoadBalancersInboundNatRule interface {
+	AssignPropertiesFrom(src *v20240301s.LoadBalancersInboundNatRule) error
+	AssignPropertiesTo(dst *v20240301s.LoadBalancersInboundNatRule) error
+}
+
+// Storage version of v1api20201101.LoadBalancersInboundNatRule_Spec
+type LoadBalancersInboundNatRule_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName               string       `json:"azureName,omitempty"`
-	BackendPort             *int         `json:"backendPort,omitempty"`
-	EnableFloatingIP        *bool        `json:"enableFloatingIP,omitempty"`
-	EnableTcpReset          *bool        `json:"enableTcpReset,omitempty"`
-	FrontendIPConfiguration *SubResource `json:"frontendIPConfiguration,omitempty"`
-	FrontendPort            *int         `json:"frontendPort,omitempty"`
-	IdleTimeoutInMinutes    *int         `json:"idleTimeoutInMinutes,omitempty"`
-	OriginalVersion         string       `json:"originalVersion,omitempty"`
+	AzureName               string                                   `json:"azureName,omitempty"`
+	BackendPort             *int                                     `json:"backendPort,omitempty"`
+	EnableFloatingIP        *bool                                    `json:"enableFloatingIP,omitempty"`
+	EnableTcpReset          *bool                                    `json:"enableTcpReset,omitempty"`
+	FrontendIPConfiguration *SubResource                             `json:"frontendIPConfiguration,omitempty"`
+	FrontendPort            *int                                     `json:"frontendPort,omitempty"`
+	IdleTimeoutInMinutes    *int                                     `json:"idleTimeoutInMinutes,omitempty"`
+	OperatorSpec            *LoadBalancersInboundNatRuleOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion         string                                   `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -160,28 +279,310 @@ type LoadBalancers_InboundNatRule_Spec struct {
 	Protocol    *string                            `json:"protocol,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &LoadBalancers_InboundNatRule_Spec{}
+var _ genruntime.ConvertibleSpec = &LoadBalancersInboundNatRule_Spec{}
 
-// ConvertSpecFrom populates our LoadBalancers_InboundNatRule_Spec from the provided source
-func (rule *LoadBalancers_InboundNatRule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == rule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+// ConvertSpecFrom populates our LoadBalancersInboundNatRule_Spec from the provided source
+func (rule *LoadBalancersInboundNatRule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*v20240301s.LoadBalancersInboundNatRule_Spec)
+	if ok {
+		// Populate our instance from source
+		return rule.AssignProperties_From_LoadBalancersInboundNatRule_Spec(src)
 	}
 
-	return source.ConvertSpecTo(rule)
-}
-
-// ConvertSpecTo populates the provided destination from our LoadBalancers_InboundNatRule_Spec
-func (rule *LoadBalancers_InboundNatRule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == rule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	// Convert to an intermediate form
+	src = &v20240301s.LoadBalancersInboundNatRule_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
-	return destination.ConvertSpecFrom(rule)
+	// Update our instance from src
+	err = rule.AssignProperties_From_LoadBalancersInboundNatRule_Spec(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
-// Storage version of v1api20201101.LoadBalancers_InboundNatRule_STATUS
-type LoadBalancers_InboundNatRule_STATUS struct {
+// ConvertSpecTo populates the provided destination from our LoadBalancersInboundNatRule_Spec
+func (rule *LoadBalancersInboundNatRule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*v20240301s.LoadBalancersInboundNatRule_Spec)
+	if ok {
+		// Populate destination from our instance
+		return rule.AssignProperties_To_LoadBalancersInboundNatRule_Spec(dst)
+	}
+
+	// Convert to an intermediate form
+	dst = &v20240301s.LoadBalancersInboundNatRule_Spec{}
+	err := rule.AssignProperties_To_LoadBalancersInboundNatRule_Spec(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_LoadBalancersInboundNatRule_Spec populates our LoadBalancersInboundNatRule_Spec from the provided source LoadBalancersInboundNatRule_Spec
+func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_From_LoadBalancersInboundNatRule_Spec(source *v20240301s.LoadBalancersInboundNatRule_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	rule.AzureName = source.AzureName
+
+	// BackendAddressPool
+	if source.BackendAddressPool != nil {
+		propertyBag.Add("BackendAddressPool", *source.BackendAddressPool)
+	} else {
+		propertyBag.Remove("BackendAddressPool")
+	}
+
+	// BackendPort
+	rule.BackendPort = genruntime.ClonePointerToInt(source.BackendPort)
+
+	// EnableFloatingIP
+	if source.EnableFloatingIP != nil {
+		enableFloatingIP := *source.EnableFloatingIP
+		rule.EnableFloatingIP = &enableFloatingIP
+	} else {
+		rule.EnableFloatingIP = nil
+	}
+
+	// EnableTcpReset
+	if source.EnableTcpReset != nil {
+		enableTcpReset := *source.EnableTcpReset
+		rule.EnableTcpReset = &enableTcpReset
+	} else {
+		rule.EnableTcpReset = nil
+	}
+
+	// FrontendIPConfiguration
+	if source.FrontendIPConfiguration != nil {
+		var subResourceStash v20220701s.SubResource
+		err := subResourceStash.AssignProperties_From_SubResource(source.FrontendIPConfiguration)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from FrontendIPConfiguration")
+		}
+		var frontendIPConfiguration SubResource
+		err = frontendIPConfiguration.AssignProperties_From_SubResource(&subResourceStash)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendIPConfiguration from SubResourceStash")
+		}
+		rule.FrontendIPConfiguration = &frontendIPConfiguration
+	} else {
+		rule.FrontendIPConfiguration = nil
+	}
+
+	// FrontendPort
+	rule.FrontendPort = genruntime.ClonePointerToInt(source.FrontendPort)
+
+	// FrontendPortRangeEnd
+	if source.FrontendPortRangeEnd != nil {
+		propertyBag.Add("FrontendPortRangeEnd", *source.FrontendPortRangeEnd)
+	} else {
+		propertyBag.Remove("FrontendPortRangeEnd")
+	}
+
+	// FrontendPortRangeStart
+	if source.FrontendPortRangeStart != nil {
+		propertyBag.Add("FrontendPortRangeStart", *source.FrontendPortRangeStart)
+	} else {
+		propertyBag.Remove("FrontendPortRangeStart")
+	}
+
+	// IdleTimeoutInMinutes
+	rule.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(source.IdleTimeoutInMinutes)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec LoadBalancersInboundNatRuleOperatorSpec
+		err := operatorSpec.AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec() to populate field OperatorSpec")
+		}
+		rule.OperatorSpec = &operatorSpec
+	} else {
+		rule.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	rule.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		rule.Owner = &owner
+	} else {
+		rule.Owner = nil
+	}
+
+	// Protocol
+	rule.Protocol = genruntime.ClonePointerToString(source.Protocol)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLoadBalancersInboundNatRule_Spec interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule_Spec); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LoadBalancersInboundNatRule_Spec populates the provided destination LoadBalancersInboundNatRule_Spec from our LoadBalancersInboundNatRule_Spec
+func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_To_LoadBalancersInboundNatRule_Spec(destination *v20240301s.LoadBalancersInboundNatRule_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// AzureName
+	destination.AzureName = rule.AzureName
+
+	// BackendAddressPool
+	if propertyBag.Contains("BackendAddressPool") {
+		var backendAddressPool v20240301s.SubResource
+		err := propertyBag.Pull("BackendAddressPool", &backendAddressPool)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'BackendAddressPool' from propertyBag")
+		}
+
+		destination.BackendAddressPool = &backendAddressPool
+	} else {
+		destination.BackendAddressPool = nil
+	}
+
+	// BackendPort
+	destination.BackendPort = genruntime.ClonePointerToInt(rule.BackendPort)
+
+	// EnableFloatingIP
+	if rule.EnableFloatingIP != nil {
+		enableFloatingIP := *rule.EnableFloatingIP
+		destination.EnableFloatingIP = &enableFloatingIP
+	} else {
+		destination.EnableFloatingIP = nil
+	}
+
+	// EnableTcpReset
+	if rule.EnableTcpReset != nil {
+		enableTcpReset := *rule.EnableTcpReset
+		destination.EnableTcpReset = &enableTcpReset
+	} else {
+		destination.EnableTcpReset = nil
+	}
+
+	// FrontendIPConfiguration
+	if rule.FrontendIPConfiguration != nil {
+		var subResourceStash v20220701s.SubResource
+		err := rule.FrontendIPConfiguration.AssignProperties_To_SubResource(&subResourceStash)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from FrontendIPConfiguration")
+		}
+		var frontendIPConfiguration v20240301s.SubResource
+		err = subResourceStash.AssignProperties_To_SubResource(&frontendIPConfiguration)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendIPConfiguration from SubResourceStash")
+		}
+		destination.FrontendIPConfiguration = &frontendIPConfiguration
+	} else {
+		destination.FrontendIPConfiguration = nil
+	}
+
+	// FrontendPort
+	destination.FrontendPort = genruntime.ClonePointerToInt(rule.FrontendPort)
+
+	// FrontendPortRangeEnd
+	if propertyBag.Contains("FrontendPortRangeEnd") {
+		var frontendPortRangeEnd int
+		err := propertyBag.Pull("FrontendPortRangeEnd", &frontendPortRangeEnd)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'FrontendPortRangeEnd' from propertyBag")
+		}
+
+		destination.FrontendPortRangeEnd = &frontendPortRangeEnd
+	} else {
+		destination.FrontendPortRangeEnd = nil
+	}
+
+	// FrontendPortRangeStart
+	if propertyBag.Contains("FrontendPortRangeStart") {
+		var frontendPortRangeStart int
+		err := propertyBag.Pull("FrontendPortRangeStart", &frontendPortRangeStart)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'FrontendPortRangeStart' from propertyBag")
+		}
+
+		destination.FrontendPortRangeStart = &frontendPortRangeStart
+	} else {
+		destination.FrontendPortRangeStart = nil
+	}
+
+	// IdleTimeoutInMinutes
+	destination.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(rule.IdleTimeoutInMinutes)
+
+	// OperatorSpec
+	if rule.OperatorSpec != nil {
+		var operatorSpec v20240301s.LoadBalancersInboundNatRuleOperatorSpec
+		err := rule.OperatorSpec.AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = rule.OriginalVersion
+
+	// Owner
+	if rule.Owner != nil {
+		owner := rule.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Protocol
+	destination.Protocol = genruntime.ClonePointerToString(rule.Protocol)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLoadBalancersInboundNatRule_Spec interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule_Spec); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20201101.LoadBalancersInboundNatRule_STATUS
+type LoadBalancersInboundNatRule_STATUS struct {
 	BackendIPConfiguration  *NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded `json:"backendIPConfiguration,omitempty"`
 	BackendPort             *int                                                                                     `json:"backendPort,omitempty"`
 	Conditions              []conditions.Condition                                                                   `json:"conditions,omitempty"`
@@ -199,24 +600,464 @@ type LoadBalancers_InboundNatRule_STATUS struct {
 	Type                    *string                                                                                  `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &LoadBalancers_InboundNatRule_STATUS{}
+var _ genruntime.ConvertibleStatus = &LoadBalancersInboundNatRule_STATUS{}
 
-// ConvertStatusFrom populates our LoadBalancers_InboundNatRule_STATUS from the provided source
-func (rule *LoadBalancers_InboundNatRule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == rule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusFrom populates our LoadBalancersInboundNatRule_STATUS from the provided source
+func (rule *LoadBalancersInboundNatRule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*v20240301s.LoadBalancersInboundNatRule_STATUS)
+	if ok {
+		// Populate our instance from source
+		return rule.AssignProperties_From_LoadBalancersInboundNatRule_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(rule)
+	// Convert to an intermediate form
+	src = &v20240301s.LoadBalancersInboundNatRule_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = rule.AssignProperties_From_LoadBalancersInboundNatRule_STATUS(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our LoadBalancers_InboundNatRule_STATUS
-func (rule *LoadBalancers_InboundNatRule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == rule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusTo populates the provided destination from our LoadBalancersInboundNatRule_STATUS
+func (rule *LoadBalancersInboundNatRule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*v20240301s.LoadBalancersInboundNatRule_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return rule.AssignProperties_To_LoadBalancersInboundNatRule_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(rule)
+	// Convert to an intermediate form
+	dst = &v20240301s.LoadBalancersInboundNatRule_STATUS{}
+	err := rule.AssignProperties_To_LoadBalancersInboundNatRule_STATUS(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_LoadBalancersInboundNatRule_STATUS populates our LoadBalancersInboundNatRule_STATUS from the provided source LoadBalancersInboundNatRule_STATUS
+func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_From_LoadBalancersInboundNatRule_STATUS(source *v20240301s.LoadBalancersInboundNatRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BackendAddressPool
+	if source.BackendAddressPool != nil {
+		propertyBag.Add("BackendAddressPool", *source.BackendAddressPool)
+	} else {
+		propertyBag.Remove("BackendAddressPool")
+	}
+
+	// BackendIPConfiguration
+	if source.BackendIPConfiguration != nil {
+		var backendIPConfiguration NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded
+		err := backendIPConfiguration.AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded(source.BackendIPConfiguration)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded() to populate field BackendIPConfiguration")
+		}
+		rule.BackendIPConfiguration = &backendIPConfiguration
+	} else {
+		rule.BackendIPConfiguration = nil
+	}
+
+	// BackendPort
+	rule.BackendPort = genruntime.ClonePointerToInt(source.BackendPort)
+
+	// Conditions
+	rule.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// EnableFloatingIP
+	if source.EnableFloatingIP != nil {
+		enableFloatingIP := *source.EnableFloatingIP
+		rule.EnableFloatingIP = &enableFloatingIP
+	} else {
+		rule.EnableFloatingIP = nil
+	}
+
+	// EnableTcpReset
+	if source.EnableTcpReset != nil {
+		enableTcpReset := *source.EnableTcpReset
+		rule.EnableTcpReset = &enableTcpReset
+	} else {
+		rule.EnableTcpReset = nil
+	}
+
+	// Etag
+	rule.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// FrontendIPConfiguration
+	if source.FrontendIPConfiguration != nil {
+		var subResourceSTATUSStash v20240101s.SubResource_STATUS
+		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.FrontendIPConfiguration)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from FrontendIPConfiguration")
+		}
+		var subResourceSTATUSStashLocal v20220701s.SubResource_STATUS
+		err = subResourceSTATUSStashLocal.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash")
+		}
+		var frontendIPConfiguration SubResource_STATUS
+		err = frontendIPConfiguration.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStashLocal)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field FrontendIPConfiguration from SubResource_STATUSStash")
+		}
+		rule.FrontendIPConfiguration = &frontendIPConfiguration
+	} else {
+		rule.FrontendIPConfiguration = nil
+	}
+
+	// FrontendPort
+	rule.FrontendPort = genruntime.ClonePointerToInt(source.FrontendPort)
+
+	// FrontendPortRangeEnd
+	if source.FrontendPortRangeEnd != nil {
+		propertyBag.Add("FrontendPortRangeEnd", *source.FrontendPortRangeEnd)
+	} else {
+		propertyBag.Remove("FrontendPortRangeEnd")
+	}
+
+	// FrontendPortRangeStart
+	if source.FrontendPortRangeStart != nil {
+		propertyBag.Add("FrontendPortRangeStart", *source.FrontendPortRangeStart)
+	} else {
+		propertyBag.Remove("FrontendPortRangeStart")
+	}
+
+	// Id
+	rule.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IdleTimeoutInMinutes
+	rule.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(source.IdleTimeoutInMinutes)
+
+	// Name
+	rule.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Protocol
+	rule.Protocol = genruntime.ClonePointerToString(source.Protocol)
+
+	// ProvisioningState
+	rule.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// Type
+	rule.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLoadBalancersInboundNatRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LoadBalancersInboundNatRule_STATUS populates the provided destination LoadBalancersInboundNatRule_STATUS from our LoadBalancersInboundNatRule_STATUS
+func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_To_LoadBalancersInboundNatRule_STATUS(destination *v20240301s.LoadBalancersInboundNatRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// BackendAddressPool
+	if propertyBag.Contains("BackendAddressPool") {
+		var backendAddressPool v20240301s.SubResource_STATUS
+		err := propertyBag.Pull("BackendAddressPool", &backendAddressPool)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'BackendAddressPool' from propertyBag")
+		}
+
+		destination.BackendAddressPool = &backendAddressPool
+	} else {
+		destination.BackendAddressPool = nil
+	}
+
+	// BackendIPConfiguration
+	if rule.BackendIPConfiguration != nil {
+		var backendIPConfiguration v20240301s.NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded
+		err := rule.BackendIPConfiguration.AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded(&backendIPConfiguration)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded() to populate field BackendIPConfiguration")
+		}
+		destination.BackendIPConfiguration = &backendIPConfiguration
+	} else {
+		destination.BackendIPConfiguration = nil
+	}
+
+	// BackendPort
+	destination.BackendPort = genruntime.ClonePointerToInt(rule.BackendPort)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(rule.Conditions)
+
+	// EnableFloatingIP
+	if rule.EnableFloatingIP != nil {
+		enableFloatingIP := *rule.EnableFloatingIP
+		destination.EnableFloatingIP = &enableFloatingIP
+	} else {
+		destination.EnableFloatingIP = nil
+	}
+
+	// EnableTcpReset
+	if rule.EnableTcpReset != nil {
+		enableTcpReset := *rule.EnableTcpReset
+		destination.EnableTcpReset = &enableTcpReset
+	} else {
+		destination.EnableTcpReset = nil
+	}
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(rule.Etag)
+
+	// FrontendIPConfiguration
+	if rule.FrontendIPConfiguration != nil {
+		var subResourceSTATUSStash v20220701s.SubResource_STATUS
+		err := rule.FrontendIPConfiguration.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from FrontendIPConfiguration")
+		}
+		var subResourceSTATUSStashLocal v20240101s.SubResource_STATUS
+		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStashLocal)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash")
+		}
+		var frontendIPConfiguration v20240301s.SubResource_STATUS
+		err = subResourceSTATUSStashLocal.AssignProperties_To_SubResource_STATUS(&frontendIPConfiguration)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field FrontendIPConfiguration from SubResource_STATUSStash")
+		}
+		destination.FrontendIPConfiguration = &frontendIPConfiguration
+	} else {
+		destination.FrontendIPConfiguration = nil
+	}
+
+	// FrontendPort
+	destination.FrontendPort = genruntime.ClonePointerToInt(rule.FrontendPort)
+
+	// FrontendPortRangeEnd
+	if propertyBag.Contains("FrontendPortRangeEnd") {
+		var frontendPortRangeEnd int
+		err := propertyBag.Pull("FrontendPortRangeEnd", &frontendPortRangeEnd)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'FrontendPortRangeEnd' from propertyBag")
+		}
+
+		destination.FrontendPortRangeEnd = &frontendPortRangeEnd
+	} else {
+		destination.FrontendPortRangeEnd = nil
+	}
+
+	// FrontendPortRangeStart
+	if propertyBag.Contains("FrontendPortRangeStart") {
+		var frontendPortRangeStart int
+		err := propertyBag.Pull("FrontendPortRangeStart", &frontendPortRangeStart)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'FrontendPortRangeStart' from propertyBag")
+		}
+
+		destination.FrontendPortRangeStart = &frontendPortRangeStart
+	} else {
+		destination.FrontendPortRangeStart = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(rule.Id)
+
+	// IdleTimeoutInMinutes
+	destination.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(rule.IdleTimeoutInMinutes)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(rule.Name)
+
+	// Protocol
+	destination.Protocol = genruntime.ClonePointerToString(rule.Protocol)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(rule.ProvisioningState)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(rule.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLoadBalancersInboundNatRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForLoadBalancersInboundNatRule_Spec interface {
+	AssignPropertiesFrom(src *v20240301s.LoadBalancersInboundNatRule_Spec) error
+	AssignPropertiesTo(dst *v20240301s.LoadBalancersInboundNatRule_Spec) error
+}
+
+type augmentConversionForLoadBalancersInboundNatRule_STATUS interface {
+	AssignPropertiesFrom(src *v20240301s.LoadBalancersInboundNatRule_STATUS) error
+	AssignPropertiesTo(dst *v20240301s.LoadBalancersInboundNatRule_STATUS) error
+}
+
+// Storage version of v1api20201101.LoadBalancersInboundNatRuleOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type LoadBalancersInboundNatRuleOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec populates our LoadBalancersInboundNatRuleOperatorSpec from the provided source LoadBalancersInboundNatRuleOperatorSpec
+func (operator *LoadBalancersInboundNatRuleOperatorSpec) AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec(source *v20240301s.LoadBalancersInboundNatRuleOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLoadBalancersInboundNatRuleOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForLoadBalancersInboundNatRuleOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec populates the provided destination LoadBalancersInboundNatRuleOperatorSpec from our LoadBalancersInboundNatRuleOperatorSpec
+func (operator *LoadBalancersInboundNatRuleOperatorSpec) AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec(destination *v20240301s.LoadBalancersInboundNatRuleOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLoadBalancersInboundNatRuleOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForLoadBalancersInboundNatRuleOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20201101.NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded
@@ -224,6 +1065,62 @@ func (rule *LoadBalancers_InboundNatRule_STATUS) ConvertStatusTo(destination gen
 type NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded populates our NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded from the provided source NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded
+func (embedded *NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded) AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded(source *v20240301s.NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded populates the provided destination NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded from our NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded
+func (embedded *NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded) AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded(destination *v20240301s.NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20201101.SubResource
@@ -235,11 +1132,153 @@ type SubResource struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_SubResource populates our SubResource from the provided source SubResource
+func (resource *SubResource) AssignProperties_From_SubResource(source *v20220701s.SubResource) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		resource.Reference = &reference
+	} else {
+		resource.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubResource interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SubResource populates the provided destination SubResource from our SubResource
+func (resource *SubResource) AssignProperties_To_SubResource(destination *v20220701s.SubResource) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// Reference
+	if resource.Reference != nil {
+		reference := resource.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubResource interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20201101.SubResource_STATUS
 // Reference to another subresource.
 type SubResource_STATUS struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_SubResource_STATUS populates our SubResource_STATUS from the provided source SubResource_STATUS
+func (resource *SubResource_STATUS) AssignProperties_From_SubResource_STATUS(source *v20220701s.SubResource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	resource.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubResource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SubResource_STATUS populates the provided destination SubResource_STATUS from our SubResource_STATUS
+func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(destination *v20220701s.SubResource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(resource.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubResource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForLoadBalancersInboundNatRuleOperatorSpec interface {
+	AssignPropertiesFrom(src *v20240301s.LoadBalancersInboundNatRuleOperatorSpec) error
+	AssignPropertiesTo(dst *v20240301s.LoadBalancersInboundNatRuleOperatorSpec) error
+}
+
+type augmentConversionForNetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20240301s.NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20240301s.NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded) error
+}
+
+type augmentConversionForSubResource interface {
+	AssignPropertiesFrom(src *v20220701s.SubResource) error
+	AssignPropertiesTo(dst *v20220701s.SubResource) error
+}
+
+type augmentConversionForSubResource_STATUS interface {
+	AssignPropertiesFrom(src *v20220701s.SubResource_STATUS) error
+	AssignPropertiesTo(dst *v20220701s.SubResource_STATUS) error
 }
 
 func init() {

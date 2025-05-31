@@ -8,6 +8,8 @@ import (
 	v20201201s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20201201/storage"
 	v20230401 "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401"
 	v20230401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/storage"
+	v20230801 "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801"
+	v20230801s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -20,5 +22,7 @@ func (extension *RedisPatchScheduleExtension) GetExtendedResources() []genruntim
 		&v20201201.RedisPatchSchedule{},
 		&v20201201s.RedisPatchSchedule{},
 		&v20230401.RedisPatchSchedule{},
-		&v20230401s.RedisPatchSchedule{}}
+		&v20230401s.RedisPatchSchedule{},
+		&v20230801.RedisPatchSchedule{},
+		&v20230801s.RedisPatchSchedule{}}
 }

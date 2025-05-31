@@ -12,6 +12,7 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -268,7 +269,7 @@ func (in *ApplicationGatewayBackendHttpSettings) DeepCopyInto(out *ApplicationGa
 	}
 	if in.AuthenticationCertificates != nil {
 		in, out := &in.AuthenticationCertificates, &out.AuthenticationCertificates
-		*out = make([]ApplicationGatewaySubResource, len(*in))
+		*out = make([]SubResource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -310,7 +311,7 @@ func (in *ApplicationGatewayBackendHttpSettings) DeepCopyInto(out *ApplicationGa
 	}
 	if in.Probe != nil {
 		in, out := &in.Probe, &out.Probe
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.ProbeEnabled != nil {
@@ -337,7 +338,7 @@ func (in *ApplicationGatewayBackendHttpSettings) DeepCopyInto(out *ApplicationGa
 	}
 	if in.TrustedRootCertificates != nil {
 		in, out := &in.TrustedRootCertificates, &out.TrustedRootCertificates
-		*out = make([]ApplicationGatewaySubResource, len(*in))
+		*out = make([]SubResource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -406,7 +407,7 @@ func (in *ApplicationGatewayBackendSettings) DeepCopyInto(out *ApplicationGatewa
 	}
 	if in.Probe != nil {
 		in, out := &in.Probe, &out.Probe
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.PropertyBag != nil {
@@ -428,7 +429,7 @@ func (in *ApplicationGatewayBackendSettings) DeepCopyInto(out *ApplicationGatewa
 	}
 	if in.TrustedRootCertificates != nil {
 		in, out := &in.TrustedRootCertificates, &out.TrustedRootCertificates
-		*out = make([]ApplicationGatewaySubResource, len(*in))
+		*out = make([]SubResource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -758,7 +759,7 @@ func (in *ApplicationGatewayFrontendIPConfiguration) DeepCopyInto(out *Applicati
 	}
 	if in.PrivateLinkConfiguration != nil {
 		in, out := &in.PrivateLinkConfiguration, &out.PrivateLinkConfiguration
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.PropertyBag != nil {
@@ -770,12 +771,12 @@ func (in *ApplicationGatewayFrontendIPConfiguration) DeepCopyInto(out *Applicati
 	}
 	if in.PublicIPAddress != nil {
 		in, out := &in.PublicIPAddress, &out.PublicIPAddress
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Subnet != nil {
 		in, out := &in.Subnet, &out.Subnet
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -984,17 +985,17 @@ func (in *ApplicationGatewayHttpListener) DeepCopyInto(out *ApplicationGatewayHt
 	}
 	if in.FirewallPolicy != nil {
 		in, out := &in.FirewallPolicy, &out.FirewallPolicy
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.FrontendIPConfiguration != nil {
 		in, out := &in.FrontendIPConfiguration, &out.FrontendIPConfiguration
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.FrontendPort != nil {
 		in, out := &in.FrontendPort, &out.FrontendPort
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.HostName != nil {
@@ -1031,12 +1032,12 @@ func (in *ApplicationGatewayHttpListener) DeepCopyInto(out *ApplicationGatewayHt
 	}
 	if in.SslCertificate != nil {
 		in, out := &in.SslCertificate, &out.SslCertificate
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.SslProfile != nil {
 		in, out := &in.SslProfile, &out.SslProfile
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -1095,7 +1096,7 @@ func (in *ApplicationGatewayIPConfiguration_ApplicationGateway_SubResourceEmbedd
 	}
 	if in.Subnet != nil {
 		in, out := &in.Subnet, &out.Subnet
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -1174,12 +1175,12 @@ func (in *ApplicationGatewayListener) DeepCopyInto(out *ApplicationGatewayListen
 	*out = *in
 	if in.FrontendIPConfiguration != nil {
 		in, out := &in.FrontendIPConfiguration, &out.FrontendIPConfiguration
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.FrontendPort != nil {
 		in, out := &in.FrontendPort, &out.FrontendPort
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Name != nil {
@@ -1201,12 +1202,12 @@ func (in *ApplicationGatewayListener) DeepCopyInto(out *ApplicationGatewayListen
 	}
 	if in.SslCertificate != nil {
 		in, out := &in.SslCertificate, &out.SslCertificate
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.SslProfile != nil {
 		in, out := &in.SslProfile, &out.SslProfile
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -1337,6 +1338,50 @@ func (in *ApplicationGatewayLoadDistributionTarget) DeepCopy() *ApplicationGatew
 		return nil
 	}
 	out := new(ApplicationGatewayLoadDistributionTarget)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *ApplicationGatewayOperatorSpec) DeepCopyInto(out *ApplicationGatewayOperatorSpec) {
+	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new ApplicationGatewayOperatorSpec.
+func (in *ApplicationGatewayOperatorSpec) DeepCopy() *ApplicationGatewayOperatorSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(ApplicationGatewayOperatorSpec)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -1644,7 +1689,7 @@ func (in *ApplicationGatewayRedirectConfiguration) DeepCopyInto(out *Application
 	}
 	if in.PathRules != nil {
 		in, out := &in.PathRules, &out.PathRules
-		*out = make([]ApplicationGatewaySubResource, len(*in))
+		*out = make([]SubResource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -1663,14 +1708,14 @@ func (in *ApplicationGatewayRedirectConfiguration) DeepCopyInto(out *Application
 	}
 	if in.RequestRoutingRules != nil {
 		in, out := &in.RequestRoutingRules, &out.RequestRoutingRules
-		*out = make([]ApplicationGatewaySubResource, len(*in))
+		*out = make([]SubResource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.TargetListener != nil {
 		in, out := &in.TargetListener, &out.TargetListener
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.TargetUrl != nil {
@@ -1680,7 +1725,7 @@ func (in *ApplicationGatewayRedirectConfiguration) DeepCopyInto(out *Application
 	}
 	if in.UrlPathMaps != nil {
 		in, out := &in.UrlPathMaps, &out.UrlPathMaps
-		*out = make([]ApplicationGatewaySubResource, len(*in))
+		*out = make([]SubResource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -1729,22 +1774,22 @@ func (in *ApplicationGatewayRequestRoutingRule) DeepCopyInto(out *ApplicationGat
 	*out = *in
 	if in.BackendAddressPool != nil {
 		in, out := &in.BackendAddressPool, &out.BackendAddressPool
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.BackendHttpSettings != nil {
 		in, out := &in.BackendHttpSettings, &out.BackendHttpSettings
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.HttpListener != nil {
 		in, out := &in.HttpListener, &out.HttpListener
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.LoadDistributionPolicy != nil {
 		in, out := &in.LoadDistributionPolicy, &out.LoadDistributionPolicy
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Name != nil {
@@ -1766,12 +1811,12 @@ func (in *ApplicationGatewayRequestRoutingRule) DeepCopyInto(out *ApplicationGat
 	}
 	if in.RedirectConfiguration != nil {
 		in, out := &in.RedirectConfiguration, &out.RedirectConfiguration
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.RewriteRuleSet != nil {
 		in, out := &in.RewriteRuleSet, &out.RewriteRuleSet
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.RuleType != nil {
@@ -1781,7 +1826,7 @@ func (in *ApplicationGatewayRequestRoutingRule) DeepCopyInto(out *ApplicationGat
 	}
 	if in.UrlPathMap != nil {
 		in, out := &in.UrlPathMap, &out.UrlPathMap
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -2016,17 +2061,17 @@ func (in *ApplicationGatewayRoutingRule) DeepCopyInto(out *ApplicationGatewayRou
 	*out = *in
 	if in.BackendAddressPool != nil {
 		in, out := &in.BackendAddressPool, &out.BackendAddressPool
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.BackendSettings != nil {
 		in, out := &in.BackendSettings, &out.BackendSettings
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Listener != nil {
 		in, out := &in.Listener, &out.Listener
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Name != nil {
@@ -2354,7 +2399,7 @@ func (in *ApplicationGatewaySslProfile) DeepCopyInto(out *ApplicationGatewaySslP
 	}
 	if in.TrustedClientCertificates != nil {
 		in, out := &in.TrustedClientCertificates, &out.TrustedClientCertificates
-		*out = make([]ApplicationGatewaySubResource, len(*in))
+		*out = make([]SubResource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -2394,60 +2439,6 @@ func (in *ApplicationGatewaySslProfile_STATUS) DeepCopy() *ApplicationGatewaySsl
 		return nil
 	}
 	out := new(ApplicationGatewaySslProfile_STATUS)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *ApplicationGatewaySubResource) DeepCopyInto(out *ApplicationGatewaySubResource) {
-	*out = *in
-	if in.PropertyBag != nil {
-		in, out := &in.PropertyBag, &out.PropertyBag
-		*out = make(genruntime.PropertyBag, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-	if in.Reference != nil {
-		in, out := &in.Reference, &out.Reference
-		*out = new(genruntime.ResourceReference)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new ApplicationGatewaySubResource.
-func (in *ApplicationGatewaySubResource) DeepCopy() *ApplicationGatewaySubResource {
-	if in == nil {
-		return nil
-	}
-	out := new(ApplicationGatewaySubResource)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *ApplicationGatewaySubResource_STATUS) DeepCopyInto(out *ApplicationGatewaySubResource_STATUS) {
-	*out = *in
-	if in.Id != nil {
-		in, out := &in.Id, &out.Id
-		*out = new(string)
-		**out = **in
-	}
-	if in.PropertyBag != nil {
-		in, out := &in.PropertyBag, &out.PropertyBag
-		*out = make(genruntime.PropertyBag, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new ApplicationGatewaySubResource_STATUS.
-func (in *ApplicationGatewaySubResource_STATUS) DeepCopy() *ApplicationGatewaySubResource_STATUS {
-	if in == nil {
-		return nil
-	}
-	out := new(ApplicationGatewaySubResource_STATUS)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -2617,27 +2608,27 @@ func (in *ApplicationGatewayUrlPathMap) DeepCopyInto(out *ApplicationGatewayUrlP
 	*out = *in
 	if in.DefaultBackendAddressPool != nil {
 		in, out := &in.DefaultBackendAddressPool, &out.DefaultBackendAddressPool
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.DefaultBackendHttpSettings != nil {
 		in, out := &in.DefaultBackendHttpSettings, &out.DefaultBackendHttpSettings
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.DefaultLoadDistributionPolicy != nil {
 		in, out := &in.DefaultLoadDistributionPolicy, &out.DefaultLoadDistributionPolicy
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.DefaultRedirectConfiguration != nil {
 		in, out := &in.DefaultRedirectConfiguration, &out.DefaultRedirectConfiguration
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.DefaultRewriteRuleSet != nil {
 		in, out := &in.DefaultRewriteRuleSet, &out.DefaultRewriteRuleSet
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Name != nil {
@@ -2917,7 +2908,7 @@ func (in *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded) Deep
 	}
 	if in.FirewallPolicy != nil {
 		in, out := &in.FirewallPolicy, &out.FirewallPolicy
-		*out = new(ApplicationGatewaySubResource_STATUS)
+		*out = new(SubResource_STATUS)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.ForceFirewallPolicyAssociation != nil {
@@ -3197,7 +3188,7 @@ func (in *ApplicationGateway_Spec) DeepCopyInto(out *ApplicationGateway_Spec) {
 	}
 	if in.FirewallPolicy != nil {
 		in, out := &in.FirewallPolicy, &out.FirewallPolicy
-		*out = new(ApplicationGatewaySubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.ForceFirewallPolicyAssociation != nil {
@@ -3261,6 +3252,11 @@ func (in *ApplicationGateway_Spec) DeepCopyInto(out *ApplicationGateway_Spec) {
 		in, out := &in.Location, &out.Location
 		*out = new(string)
 		**out = **in
+	}
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(ApplicationGatewayOperatorSpec)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Owner != nil {
 		in, out := &in.Owner, &out.Owner
@@ -3493,12 +3489,12 @@ func (in *BastionHostIPConfiguration) DeepCopyInto(out *BastionHostIPConfigurati
 	}
 	if in.PublicIPAddress != nil {
 		in, out := &in.PublicIPAddress, &out.PublicIPAddress
-		*out = new(BastionHostSubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Subnet != nil {
 		in, out := &in.Subnet, &out.Subnet
-		*out = new(BastionHostSubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -3573,8 +3569,19 @@ func (in *BastionHostList) DeepCopyObject() runtime.Object {
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *BastionHostSubResource) DeepCopyInto(out *BastionHostSubResource) {
+func (in *BastionHostOperatorSpec) DeepCopyInto(out *BastionHostOperatorSpec) {
 	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
 		*out = make(genruntime.PropertyBag, len(*in))
@@ -3582,19 +3589,25 @@ func (in *BastionHostSubResource) DeepCopyInto(out *BastionHostSubResource) {
 			(*out)[key] = val
 		}
 	}
-	if in.Reference != nil {
-		in, out := &in.Reference, &out.Reference
-		*out = new(genruntime.ResourceReference)
-		**out = **in
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
 	}
 }
 
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new BastionHostSubResource.
-func (in *BastionHostSubResource) DeepCopy() *BastionHostSubResource {
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new BastionHostOperatorSpec.
+func (in *BastionHostOperatorSpec) DeepCopy() *BastionHostOperatorSpec {
 	if in == nil {
 		return nil
 	}
-	out := new(BastionHostSubResource)
+	out := new(BastionHostOperatorSpec)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -3757,6 +3770,11 @@ func (in *BastionHost_Spec) DeepCopyInto(out *BastionHost_Spec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(BastionHostOperatorSpec)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Owner != nil {
 		in, out := &in.Owner, &out.Owner
 		*out = new(genruntime.KnownResourceReference)
@@ -3890,6 +3908,407 @@ func (in *DnsForwardingRuleSetsForwardingRuleList) DeepCopyObject() runtime.Obje
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsForwardingRuleSetsForwardingRuleOperatorSpec) DeepCopyInto(out *DnsForwardingRuleSetsForwardingRuleOperatorSpec) {
+	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRuleSetsForwardingRuleOperatorSpec.
+func (in *DnsForwardingRuleSetsForwardingRuleOperatorSpec) DeepCopy() *DnsForwardingRuleSetsForwardingRuleOperatorSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsForwardingRuleSetsForwardingRuleOperatorSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsForwardingRuleSetsForwardingRule_STATUS) DeepCopyInto(out *DnsForwardingRuleSetsForwardingRule_STATUS) {
+	*out = *in
+	if in.Conditions != nil {
+		in, out := &in.Conditions, &out.Conditions
+		*out = make([]conditions.Condition, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.DomainName != nil {
+		in, out := &in.DomainName, &out.DomainName
+		*out = new(string)
+		**out = **in
+	}
+	if in.Etag != nil {
+		in, out := &in.Etag, &out.Etag
+		*out = new(string)
+		**out = **in
+	}
+	if in.ForwardingRuleState != nil {
+		in, out := &in.ForwardingRuleState, &out.ForwardingRuleState
+		*out = new(string)
+		**out = **in
+	}
+	if in.Id != nil {
+		in, out := &in.Id, &out.Id
+		*out = new(string)
+		**out = **in
+	}
+	if in.Metadata != nil {
+		in, out := &in.Metadata, &out.Metadata
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.Name != nil {
+		in, out := &in.Name, &out.Name
+		*out = new(string)
+		**out = **in
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.ProvisioningState != nil {
+		in, out := &in.ProvisioningState, &out.ProvisioningState
+		*out = new(string)
+		**out = **in
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.TargetDnsServers != nil {
+		in, out := &in.TargetDnsServers, &out.TargetDnsServers
+		*out = make([]TargetDnsServer_STATUS, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Type != nil {
+		in, out := &in.Type, &out.Type
+		*out = new(string)
+		**out = **in
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRuleSetsForwardingRule_STATUS.
+func (in *DnsForwardingRuleSetsForwardingRule_STATUS) DeepCopy() *DnsForwardingRuleSetsForwardingRule_STATUS {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsForwardingRuleSetsForwardingRule_STATUS)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsForwardingRuleSetsForwardingRule_Spec) DeepCopyInto(out *DnsForwardingRuleSetsForwardingRule_Spec) {
+	*out = *in
+	if in.DomainName != nil {
+		in, out := &in.DomainName, &out.DomainName
+		*out = new(string)
+		**out = **in
+	}
+	if in.ForwardingRuleState != nil {
+		in, out := &in.ForwardingRuleState, &out.ForwardingRuleState
+		*out = new(string)
+		**out = **in
+	}
+	if in.Metadata != nil {
+		in, out := &in.Metadata, &out.Metadata
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(DnsForwardingRuleSetsForwardingRuleOperatorSpec)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Owner != nil {
+		in, out := &in.Owner, &out.Owner
+		*out = new(genruntime.KnownResourceReference)
+		**out = **in
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.TargetDnsServers != nil {
+		in, out := &in.TargetDnsServers, &out.TargetDnsServers
+		*out = make([]TargetDnsServer, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRuleSetsForwardingRule_Spec.
+func (in *DnsForwardingRuleSetsForwardingRule_Spec) DeepCopy() *DnsForwardingRuleSetsForwardingRule_Spec {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsForwardingRuleSetsForwardingRule_Spec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsForwardingRuleSetsVirtualNetworkLink) DeepCopyInto(out *DnsForwardingRuleSetsVirtualNetworkLink) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRuleSetsVirtualNetworkLink.
+func (in *DnsForwardingRuleSetsVirtualNetworkLink) DeepCopy() *DnsForwardingRuleSetsVirtualNetworkLink {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsForwardingRuleSetsVirtualNetworkLink)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
+func (in *DnsForwardingRuleSetsVirtualNetworkLink) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsForwardingRuleSetsVirtualNetworkLinkList) DeepCopyInto(out *DnsForwardingRuleSetsVirtualNetworkLinkList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]DnsForwardingRuleSetsVirtualNetworkLink, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRuleSetsVirtualNetworkLinkList.
+func (in *DnsForwardingRuleSetsVirtualNetworkLinkList) DeepCopy() *DnsForwardingRuleSetsVirtualNetworkLinkList {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsForwardingRuleSetsVirtualNetworkLinkList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
+func (in *DnsForwardingRuleSetsVirtualNetworkLinkList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsForwardingRuleSetsVirtualNetworkLinkOperatorSpec) DeepCopyInto(out *DnsForwardingRuleSetsVirtualNetworkLinkOperatorSpec) {
+	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRuleSetsVirtualNetworkLinkOperatorSpec.
+func (in *DnsForwardingRuleSetsVirtualNetworkLinkOperatorSpec) DeepCopy() *DnsForwardingRuleSetsVirtualNetworkLinkOperatorSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsForwardingRuleSetsVirtualNetworkLinkOperatorSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsForwardingRuleSetsVirtualNetworkLink_STATUS) DeepCopyInto(out *DnsForwardingRuleSetsVirtualNetworkLink_STATUS) {
+	*out = *in
+	if in.Conditions != nil {
+		in, out := &in.Conditions, &out.Conditions
+		*out = make([]conditions.Condition, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Etag != nil {
+		in, out := &in.Etag, &out.Etag
+		*out = new(string)
+		**out = **in
+	}
+	if in.Id != nil {
+		in, out := &in.Id, &out.Id
+		*out = new(string)
+		**out = **in
+	}
+	if in.Metadata != nil {
+		in, out := &in.Metadata, &out.Metadata
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.Name != nil {
+		in, out := &in.Name, &out.Name
+		*out = new(string)
+		**out = **in
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.ProvisioningState != nil {
+		in, out := &in.ProvisioningState, &out.ProvisioningState
+		*out = new(string)
+		**out = **in
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Type != nil {
+		in, out := &in.Type, &out.Type
+		*out = new(string)
+		**out = **in
+	}
+	if in.VirtualNetwork != nil {
+		in, out := &in.VirtualNetwork, &out.VirtualNetwork
+		*out = new(SubResource_STATUS)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRuleSetsVirtualNetworkLink_STATUS.
+func (in *DnsForwardingRuleSetsVirtualNetworkLink_STATUS) DeepCopy() *DnsForwardingRuleSetsVirtualNetworkLink_STATUS {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsForwardingRuleSetsVirtualNetworkLink_STATUS)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsForwardingRuleSetsVirtualNetworkLink_Spec) DeepCopyInto(out *DnsForwardingRuleSetsVirtualNetworkLink_Spec) {
+	*out = *in
+	if in.Metadata != nil {
+		in, out := &in.Metadata, &out.Metadata
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(DnsForwardingRuleSetsVirtualNetworkLinkOperatorSpec)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Owner != nil {
+		in, out := &in.Owner, &out.Owner
+		*out = new(genruntime.KnownResourceReference)
+		**out = **in
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.VirtualNetwork != nil {
+		in, out := &in.VirtualNetwork, &out.VirtualNetwork
+		*out = new(SubResource)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRuleSetsVirtualNetworkLink_Spec.
+func (in *DnsForwardingRuleSetsVirtualNetworkLink_Spec) DeepCopy() *DnsForwardingRuleSetsVirtualNetworkLink_Spec {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsForwardingRuleSetsVirtualNetworkLink_Spec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (in *DnsForwardingRuleset) DeepCopyInto(out *DnsForwardingRuleset) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
@@ -3949,6 +4368,50 @@ func (in *DnsForwardingRulesetList) DeepCopyObject() runtime.Object {
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsForwardingRulesetOperatorSpec) DeepCopyInto(out *DnsForwardingRulesetOperatorSpec) {
+	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRulesetOperatorSpec.
+func (in *DnsForwardingRulesetOperatorSpec) DeepCopy() *DnsForwardingRulesetOperatorSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsForwardingRulesetOperatorSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (in *DnsForwardingRuleset_STATUS) DeepCopyInto(out *DnsForwardingRuleset_STATUS) {
 	*out = *in
 	if in.Conditions != nil {
@@ -3960,7 +4423,7 @@ func (in *DnsForwardingRuleset_STATUS) DeepCopyInto(out *DnsForwardingRuleset_ST
 	}
 	if in.DnsResolverOutboundEndpoints != nil {
 		in, out := &in.DnsResolverOutboundEndpoints, &out.DnsResolverOutboundEndpoints
-		*out = make([]DnsresolverSubResource_STATUS, len(*in))
+		*out = make([]SubResource_STATUS, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -4036,7 +4499,7 @@ func (in *DnsForwardingRuleset_Spec) DeepCopyInto(out *DnsForwardingRuleset_Spec
 	*out = *in
 	if in.DnsResolverOutboundEndpoints != nil {
 		in, out := &in.DnsResolverOutboundEndpoints, &out.DnsResolverOutboundEndpoints
-		*out = make([]DnsresolverSubResource, len(*in))
+		*out = make([]SubResource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -4045,6 +4508,11 @@ func (in *DnsForwardingRuleset_Spec) DeepCopyInto(out *DnsForwardingRuleset_Spec
 		in, out := &in.Location, &out.Location
 		*out = new(string)
 		**out = **in
+	}
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(DnsForwardingRulesetOperatorSpec)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Owner != nil {
 		in, out := &in.Owner, &out.Owner
@@ -4073,140 +4541,6 @@ func (in *DnsForwardingRuleset_Spec) DeepCopy() *DnsForwardingRuleset_Spec {
 		return nil
 	}
 	out := new(DnsForwardingRuleset_Spec)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *DnsForwardingRulesets_ForwardingRule_STATUS) DeepCopyInto(out *DnsForwardingRulesets_ForwardingRule_STATUS) {
-	*out = *in
-	if in.Conditions != nil {
-		in, out := &in.Conditions, &out.Conditions
-		*out = make([]conditions.Condition, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
-	}
-	if in.DomainName != nil {
-		in, out := &in.DomainName, &out.DomainName
-		*out = new(string)
-		**out = **in
-	}
-	if in.Etag != nil {
-		in, out := &in.Etag, &out.Etag
-		*out = new(string)
-		**out = **in
-	}
-	if in.ForwardingRuleState != nil {
-		in, out := &in.ForwardingRuleState, &out.ForwardingRuleState
-		*out = new(string)
-		**out = **in
-	}
-	if in.Id != nil {
-		in, out := &in.Id, &out.Id
-		*out = new(string)
-		**out = **in
-	}
-	if in.Metadata != nil {
-		in, out := &in.Metadata, &out.Metadata
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-	if in.Name != nil {
-		in, out := &in.Name, &out.Name
-		*out = new(string)
-		**out = **in
-	}
-	if in.PropertyBag != nil {
-		in, out := &in.PropertyBag, &out.PropertyBag
-		*out = make(genruntime.PropertyBag, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-	if in.ProvisioningState != nil {
-		in, out := &in.ProvisioningState, &out.ProvisioningState
-		*out = new(string)
-		**out = **in
-	}
-	if in.SystemData != nil {
-		in, out := &in.SystemData, &out.SystemData
-		*out = new(SystemData_STATUS)
-		(*in).DeepCopyInto(*out)
-	}
-	if in.TargetDnsServers != nil {
-		in, out := &in.TargetDnsServers, &out.TargetDnsServers
-		*out = make([]TargetDnsServer_STATUS, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
-	}
-	if in.Type != nil {
-		in, out := &in.Type, &out.Type
-		*out = new(string)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRulesets_ForwardingRule_STATUS.
-func (in *DnsForwardingRulesets_ForwardingRule_STATUS) DeepCopy() *DnsForwardingRulesets_ForwardingRule_STATUS {
-	if in == nil {
-		return nil
-	}
-	out := new(DnsForwardingRulesets_ForwardingRule_STATUS)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *DnsForwardingRulesets_ForwardingRule_Spec) DeepCopyInto(out *DnsForwardingRulesets_ForwardingRule_Spec) {
-	*out = *in
-	if in.DomainName != nil {
-		in, out := &in.DomainName, &out.DomainName
-		*out = new(string)
-		**out = **in
-	}
-	if in.ForwardingRuleState != nil {
-		in, out := &in.ForwardingRuleState, &out.ForwardingRuleState
-		*out = new(string)
-		**out = **in
-	}
-	if in.Metadata != nil {
-		in, out := &in.Metadata, &out.Metadata
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-	if in.Owner != nil {
-		in, out := &in.Owner, &out.Owner
-		*out = new(genruntime.KnownResourceReference)
-		**out = **in
-	}
-	if in.PropertyBag != nil {
-		in, out := &in.PropertyBag, &out.PropertyBag
-		*out = make(genruntime.PropertyBag, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-	if in.TargetDnsServers != nil {
-		in, out := &in.TargetDnsServers, &out.TargetDnsServers
-		*out = make([]TargetDnsServer, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsForwardingRulesets_ForwardingRule_Spec.
-func (in *DnsForwardingRulesets_ForwardingRule_Spec) DeepCopy() *DnsForwardingRulesets_ForwardingRule_Spec {
-	if in == nil {
-		return nil
-	}
-	out := new(DnsForwardingRulesets_ForwardingRule_Spec)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -4268,6 +4602,50 @@ func (in *DnsResolverList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsResolverOperatorSpec) DeepCopyInto(out *DnsResolverOperatorSpec) {
+	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolverOperatorSpec.
+func (in *DnsResolverOperatorSpec) DeepCopy() *DnsResolverOperatorSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsResolverOperatorSpec)
+	in.DeepCopyInto(out)
+	return out
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
@@ -4341,7 +4719,7 @@ func (in *DnsResolver_STATUS) DeepCopyInto(out *DnsResolver_STATUS) {
 	}
 	if in.VirtualNetwork != nil {
 		in, out := &in.VirtualNetwork, &out.VirtualNetwork
-		*out = new(DnsresolverSubResource_STATUS)
+		*out = new(SubResource_STATUS)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -4364,6 +4742,11 @@ func (in *DnsResolver_Spec) DeepCopyInto(out *DnsResolver_Spec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(DnsResolverOperatorSpec)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Owner != nil {
 		in, out := &in.Owner, &out.Owner
 		*out = new(genruntime.KnownResourceReference)
@@ -4385,7 +4768,7 @@ func (in *DnsResolver_Spec) DeepCopyInto(out *DnsResolver_Spec) {
 	}
 	if in.VirtualNetwork != nil {
 		in, out := &in.VirtualNetwork, &out.VirtualNetwork
-		*out = new(DnsresolverSubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -4460,66 +4843,51 @@ func (in *DnsResolversInboundEndpointList) DeepCopyObject() runtime.Object {
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *DnsResolversOutboundEndpoint) DeepCopyInto(out *DnsResolversOutboundEndpoint) {
+func (in *DnsResolversInboundEndpointOperatorSpec) DeepCopyInto(out *DnsResolversInboundEndpointOperatorSpec) {
 	*out = *in
-	out.TypeMeta = in.TypeMeta
-	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	in.Spec.DeepCopyInto(&out.Spec)
-	in.Status.DeepCopyInto(&out.Status)
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolversOutboundEndpoint.
-func (in *DnsResolversOutboundEndpoint) DeepCopy() *DnsResolversOutboundEndpoint {
-	if in == nil {
-		return nil
-	}
-	out := new(DnsResolversOutboundEndpoint)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
-func (in *DnsResolversOutboundEndpoint) DeepCopyObject() runtime.Object {
-	if c := in.DeepCopy(); c != nil {
-		return c
-	}
-	return nil
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *DnsResolversOutboundEndpointList) DeepCopyInto(out *DnsResolversOutboundEndpointList) {
-	*out = *in
-	out.TypeMeta = in.TypeMeta
-	in.ListMeta.DeepCopyInto(&out.ListMeta)
-	if in.Items != nil {
-		in, out := &in.Items, &out.Items
-		*out = make([]DnsResolversOutboundEndpoint, len(*in))
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
 		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
 		}
 	}
 }
 
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolversOutboundEndpointList.
-func (in *DnsResolversOutboundEndpointList) DeepCopy() *DnsResolversOutboundEndpointList {
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolversInboundEndpointOperatorSpec.
+func (in *DnsResolversInboundEndpointOperatorSpec) DeepCopy() *DnsResolversInboundEndpointOperatorSpec {
 	if in == nil {
 		return nil
 	}
-	out := new(DnsResolversOutboundEndpointList)
+	out := new(DnsResolversInboundEndpointOperatorSpec)
 	in.DeepCopyInto(out)
 	return out
 }
 
-// DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
-func (in *DnsResolversOutboundEndpointList) DeepCopyObject() runtime.Object {
-	if c := in.DeepCopy(); c != nil {
-		return c
-	}
-	return nil
-}
-
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *DnsResolvers_InboundEndpoint_STATUS) DeepCopyInto(out *DnsResolvers_InboundEndpoint_STATUS) {
+func (in *DnsResolversInboundEndpoint_STATUS) DeepCopyInto(out *DnsResolversInboundEndpoint_STATUS) {
 	*out = *in
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
@@ -4591,18 +4959,18 @@ func (in *DnsResolvers_InboundEndpoint_STATUS) DeepCopyInto(out *DnsResolvers_In
 	}
 }
 
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolvers_InboundEndpoint_STATUS.
-func (in *DnsResolvers_InboundEndpoint_STATUS) DeepCopy() *DnsResolvers_InboundEndpoint_STATUS {
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolversInboundEndpoint_STATUS.
+func (in *DnsResolversInboundEndpoint_STATUS) DeepCopy() *DnsResolversInboundEndpoint_STATUS {
 	if in == nil {
 		return nil
 	}
-	out := new(DnsResolvers_InboundEndpoint_STATUS)
+	out := new(DnsResolversInboundEndpoint_STATUS)
 	in.DeepCopyInto(out)
 	return out
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *DnsResolvers_InboundEndpoint_Spec) DeepCopyInto(out *DnsResolvers_InboundEndpoint_Spec) {
+func (in *DnsResolversInboundEndpoint_Spec) DeepCopyInto(out *DnsResolversInboundEndpoint_Spec) {
 	*out = *in
 	if in.IpConfigurations != nil {
 		in, out := &in.IpConfigurations, &out.IpConfigurations
@@ -4615,6 +4983,11 @@ func (in *DnsResolvers_InboundEndpoint_Spec) DeepCopyInto(out *DnsResolvers_Inbo
 		in, out := &in.Location, &out.Location
 		*out = new(string)
 		**out = **in
+	}
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(DnsResolversInboundEndpointOperatorSpec)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Owner != nil {
 		in, out := &in.Owner, &out.Owner
@@ -4637,18 +5010,121 @@ func (in *DnsResolvers_InboundEndpoint_Spec) DeepCopyInto(out *DnsResolvers_Inbo
 	}
 }
 
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolvers_InboundEndpoint_Spec.
-func (in *DnsResolvers_InboundEndpoint_Spec) DeepCopy() *DnsResolvers_InboundEndpoint_Spec {
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolversInboundEndpoint_Spec.
+func (in *DnsResolversInboundEndpoint_Spec) DeepCopy() *DnsResolversInboundEndpoint_Spec {
 	if in == nil {
 		return nil
 	}
-	out := new(DnsResolvers_InboundEndpoint_Spec)
+	out := new(DnsResolversInboundEndpoint_Spec)
 	in.DeepCopyInto(out)
 	return out
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *DnsResolvers_OutboundEndpoint_STATUS) DeepCopyInto(out *DnsResolvers_OutboundEndpoint_STATUS) {
+func (in *DnsResolversOutboundEndpoint) DeepCopyInto(out *DnsResolversOutboundEndpoint) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolversOutboundEndpoint.
+func (in *DnsResolversOutboundEndpoint) DeepCopy() *DnsResolversOutboundEndpoint {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsResolversOutboundEndpoint)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
+func (in *DnsResolversOutboundEndpoint) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsResolversOutboundEndpointList) DeepCopyInto(out *DnsResolversOutboundEndpointList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]DnsResolversOutboundEndpoint, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolversOutboundEndpointList.
+func (in *DnsResolversOutboundEndpointList) DeepCopy() *DnsResolversOutboundEndpointList {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsResolversOutboundEndpointList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
+func (in *DnsResolversOutboundEndpointList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsResolversOutboundEndpointOperatorSpec) DeepCopyInto(out *DnsResolversOutboundEndpointOperatorSpec) {
+	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolversOutboundEndpointOperatorSpec.
+func (in *DnsResolversOutboundEndpointOperatorSpec) DeepCopy() *DnsResolversOutboundEndpointOperatorSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(DnsResolversOutboundEndpointOperatorSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *DnsResolversOutboundEndpoint_STATUS) DeepCopyInto(out *DnsResolversOutboundEndpoint_STATUS) {
 	*out = *in
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
@@ -4696,7 +5172,7 @@ func (in *DnsResolvers_OutboundEndpoint_STATUS) DeepCopyInto(out *DnsResolvers_O
 	}
 	if in.Subnet != nil {
 		in, out := &in.Subnet, &out.Subnet
-		*out = new(DnsresolverSubResource_STATUS)
+		*out = new(SubResource_STATUS)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.SystemData != nil {
@@ -4718,23 +5194,28 @@ func (in *DnsResolvers_OutboundEndpoint_STATUS) DeepCopyInto(out *DnsResolvers_O
 	}
 }
 
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolvers_OutboundEndpoint_STATUS.
-func (in *DnsResolvers_OutboundEndpoint_STATUS) DeepCopy() *DnsResolvers_OutboundEndpoint_STATUS {
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolversOutboundEndpoint_STATUS.
+func (in *DnsResolversOutboundEndpoint_STATUS) DeepCopy() *DnsResolversOutboundEndpoint_STATUS {
 	if in == nil {
 		return nil
 	}
-	out := new(DnsResolvers_OutboundEndpoint_STATUS)
+	out := new(DnsResolversOutboundEndpoint_STATUS)
 	in.DeepCopyInto(out)
 	return out
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *DnsResolvers_OutboundEndpoint_Spec) DeepCopyInto(out *DnsResolvers_OutboundEndpoint_Spec) {
+func (in *DnsResolversOutboundEndpoint_Spec) DeepCopyInto(out *DnsResolversOutboundEndpoint_Spec) {
 	*out = *in
 	if in.Location != nil {
 		in, out := &in.Location, &out.Location
 		*out = new(string)
 		**out = **in
+	}
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(DnsResolversOutboundEndpointOperatorSpec)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Owner != nil {
 		in, out := &in.Owner, &out.Owner
@@ -4750,7 +5231,7 @@ func (in *DnsResolvers_OutboundEndpoint_Spec) DeepCopyInto(out *DnsResolvers_Out
 	}
 	if in.Subnet != nil {
 		in, out := &in.Subnet, &out.Subnet
-		*out = new(DnsresolverSubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Tags != nil {
@@ -4762,66 +5243,12 @@ func (in *DnsResolvers_OutboundEndpoint_Spec) DeepCopyInto(out *DnsResolvers_Out
 	}
 }
 
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolvers_OutboundEndpoint_Spec.
-func (in *DnsResolvers_OutboundEndpoint_Spec) DeepCopy() *DnsResolvers_OutboundEndpoint_Spec {
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsResolversOutboundEndpoint_Spec.
+func (in *DnsResolversOutboundEndpoint_Spec) DeepCopy() *DnsResolversOutboundEndpoint_Spec {
 	if in == nil {
 		return nil
 	}
-	out := new(DnsResolvers_OutboundEndpoint_Spec)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *DnsresolverSubResource) DeepCopyInto(out *DnsresolverSubResource) {
-	*out = *in
-	if in.PropertyBag != nil {
-		in, out := &in.PropertyBag, &out.PropertyBag
-		*out = make(genruntime.PropertyBag, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-	if in.Reference != nil {
-		in, out := &in.Reference, &out.Reference
-		*out = new(genruntime.ResourceReference)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsresolverSubResource.
-func (in *DnsresolverSubResource) DeepCopy() *DnsresolverSubResource {
-	if in == nil {
-		return nil
-	}
-	out := new(DnsresolverSubResource)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *DnsresolverSubResource_STATUS) DeepCopyInto(out *DnsresolverSubResource_STATUS) {
-	*out = *in
-	if in.Id != nil {
-		in, out := &in.Id, &out.Id
-		*out = new(string)
-		**out = **in
-	}
-	if in.PropertyBag != nil {
-		in, out := &in.PropertyBag, &out.PropertyBag
-		*out = make(genruntime.PropertyBag, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new DnsresolverSubResource_STATUS.
-func (in *DnsresolverSubResource_STATUS) DeepCopy() *DnsresolverSubResource_STATUS {
-	if in == nil {
-		return nil
-	}
-	out := new(DnsresolverSubResource_STATUS)
+	out := new(DnsResolversOutboundEndpoint_Spec)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -4966,7 +5393,7 @@ func (in *IpConfiguration) DeepCopyInto(out *IpConfiguration) {
 	}
 	if in.Subnet != nil {
 		in, out := &in.Subnet, &out.Subnet
-		*out = new(DnsresolverSubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -5003,7 +5430,7 @@ func (in *IpConfiguration_STATUS) DeepCopyInto(out *IpConfiguration_STATUS) {
 	}
 	if in.Subnet != nil {
 		in, out := &in.Subnet, &out.Subnet
-		*out = new(DnsresolverSubResource_STATUS)
+		*out = new(SubResource_STATUS)
 		(*in).DeepCopyInto(*out)
 	}
 }
@@ -5252,6 +5679,50 @@ func (in *NatGatewayList) DeepCopyObject() runtime.Object {
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *NatGatewayOperatorSpec) DeepCopyInto(out *NatGatewayOperatorSpec) {
+	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new NatGatewayOperatorSpec.
+func (in *NatGatewayOperatorSpec) DeepCopy() *NatGatewayOperatorSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(NatGatewayOperatorSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (in *NatGatewaySku) DeepCopyInto(out *NatGatewaySku) {
 	*out = *in
 	if in.Name != nil {
@@ -5381,14 +5852,14 @@ func (in *NatGateway_STATUS) DeepCopyInto(out *NatGateway_STATUS) {
 	}
 	if in.PublicIpAddresses != nil {
 		in, out := &in.PublicIpAddresses, &out.PublicIpAddresses
-		*out = make([]ApplicationGatewaySubResource_STATUS, len(*in))
+		*out = make([]SubResource_STATUS, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.PublicIpPrefixes != nil {
 		in, out := &in.PublicIpPrefixes, &out.PublicIpPrefixes
-		*out = make([]ApplicationGatewaySubResource_STATUS, len(*in))
+		*out = make([]SubResource_STATUS, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -5405,7 +5876,7 @@ func (in *NatGateway_STATUS) DeepCopyInto(out *NatGateway_STATUS) {
 	}
 	if in.Subnets != nil {
 		in, out := &in.Subnets, &out.Subnets
-		*out = make([]ApplicationGatewaySubResource_STATUS, len(*in))
+		*out = make([]SubResource_STATUS, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -5479,6 +5950,11 @@ func (in *NatGateway_Spec) DeepCopyInto(out *NatGateway_Spec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(NatGatewayOperatorSpec)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Owner != nil {
 		in, out := &in.Owner, &out.Owner
 		*out = new(genruntime.KnownResourceReference)
@@ -5493,14 +5969,14 @@ func (in *NatGateway_Spec) DeepCopyInto(out *NatGateway_Spec) {
 	}
 	if in.PublicIpAddresses != nil {
 		in, out := &in.PublicIpAddresses, &out.PublicIpAddresses
-		*out = make([]ApplicationGatewaySubResource, len(*in))
+		*out = make([]SubResource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.PublicIpPrefixes != nil {
 		in, out := &in.PublicIpPrefixes, &out.PublicIpPrefixes
-		*out = make([]ApplicationGatewaySubResource, len(*in))
+		*out = make([]SubResource, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -5869,6 +6345,17 @@ func (in *PrivateEndpointOperatorConfigMaps) DeepCopy() *PrivateEndpointOperator
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (in *PrivateEndpointOperatorSpec) DeepCopyInto(out *PrivateEndpointOperatorSpec) {
 	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
 	if in.ConfigMaps != nil {
 		in, out := &in.ConfigMaps, &out.ConfigMaps
 		*out = new(PrivateEndpointOperatorConfigMaps)
@@ -5879,6 +6366,17 @@ func (in *PrivateEndpointOperatorSpec) DeepCopyInto(out *PrivateEndpointOperator
 		*out = make(genruntime.PropertyBag, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
 		}
 	}
 }
@@ -6163,7 +6661,51 @@ func (in *PrivateEndpointsPrivateDnsZoneGroupList) DeepCopyObject() runtime.Obje
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) DeepCopyInto(out *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) {
+func (in *PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) DeepCopyInto(out *PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) {
+	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PrivateEndpointsPrivateDnsZoneGroupOperatorSpec.
+func (in *PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) DeepCopy() *PrivateEndpointsPrivateDnsZoneGroupOperatorSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(PrivateEndpointsPrivateDnsZoneGroupOperatorSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *PrivateEndpointsPrivateDnsZoneGroup_STATUS) DeepCopyInto(out *PrivateEndpointsPrivateDnsZoneGroup_STATUS) {
 	*out = *in
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
@@ -6208,19 +6750,24 @@ func (in *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) DeepCopyInto(out *Private
 	}
 }
 
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PrivateEndpoints_PrivateDnsZoneGroup_STATUS.
-func (in *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) DeepCopy() *PrivateEndpoints_PrivateDnsZoneGroup_STATUS {
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PrivateEndpointsPrivateDnsZoneGroup_STATUS.
+func (in *PrivateEndpointsPrivateDnsZoneGroup_STATUS) DeepCopy() *PrivateEndpointsPrivateDnsZoneGroup_STATUS {
 	if in == nil {
 		return nil
 	}
-	out := new(PrivateEndpoints_PrivateDnsZoneGroup_STATUS)
+	out := new(PrivateEndpointsPrivateDnsZoneGroup_STATUS)
 	in.DeepCopyInto(out)
 	return out
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *PrivateEndpoints_PrivateDnsZoneGroup_Spec) DeepCopyInto(out *PrivateEndpoints_PrivateDnsZoneGroup_Spec) {
+func (in *PrivateEndpointsPrivateDnsZoneGroup_Spec) DeepCopyInto(out *PrivateEndpointsPrivateDnsZoneGroup_Spec) {
 	*out = *in
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(PrivateEndpointsPrivateDnsZoneGroupOperatorSpec)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Owner != nil {
 		in, out := &in.Owner, &out.Owner
 		*out = new(genruntime.KnownResourceReference)
@@ -6242,12 +6789,12 @@ func (in *PrivateEndpoints_PrivateDnsZoneGroup_Spec) DeepCopyInto(out *PrivateEn
 	}
 }
 
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PrivateEndpoints_PrivateDnsZoneGroup_Spec.
-func (in *PrivateEndpoints_PrivateDnsZoneGroup_Spec) DeepCopy() *PrivateEndpoints_PrivateDnsZoneGroup_Spec {
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PrivateEndpointsPrivateDnsZoneGroup_Spec.
+func (in *PrivateEndpointsPrivateDnsZoneGroup_Spec) DeepCopy() *PrivateEndpointsPrivateDnsZoneGroup_Spec {
 	if in == nil {
 		return nil
 	}
-	out := new(PrivateEndpoints_PrivateDnsZoneGroup_Spec)
+	out := new(PrivateEndpointsPrivateDnsZoneGroup_Spec)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -6653,6 +7200,17 @@ func (in *PrivateLinkServiceOperatorConfigMaps) DeepCopy() *PrivateLinkServiceOp
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (in *PrivateLinkServiceOperatorSpec) DeepCopyInto(out *PrivateLinkServiceOperatorSpec) {
 	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
 	if in.ConfigMaps != nil {
 		in, out := &in.ConfigMaps, &out.ConfigMaps
 		*out = new(PrivateLinkServiceOperatorConfigMaps)
@@ -6663,6 +7221,17 @@ func (in *PrivateLinkServiceOperatorSpec) DeepCopyInto(out *PrivateLinkServiceOp
 		*out = make(genruntime.PropertyBag, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
 		}
 	}
 }
@@ -6944,6 +7513,50 @@ func (in *PublicIPPrefixList) DeepCopyObject() runtime.Object {
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *PublicIPPrefixOperatorSpec) DeepCopyInto(out *PublicIPPrefixOperatorSpec) {
+	*out = *in
+	if in.ConfigMapExpressions != nil {
+		in, out := &in.ConfigMapExpressions, &out.ConfigMapExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.SecretExpressions != nil {
+		in, out := &in.SecretExpressions, &out.SecretExpressions
+		*out = make([]*core.DestinationExpression, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(core.DestinationExpression)
+				**out = **in
+			}
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PublicIPPrefixOperatorSpec.
+func (in *PublicIPPrefixOperatorSpec) DeepCopy() *PublicIPPrefixOperatorSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(PublicIPPrefixOperatorSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (in *PublicIPPrefixSku) DeepCopyInto(out *PublicIPPrefixSku) {
 	*out = *in
 	if in.Name != nil {
@@ -7019,7 +7632,7 @@ func (in *PublicIPPrefix_STATUS) DeepCopyInto(out *PublicIPPrefix_STATUS) {
 	}
 	if in.CustomIPPrefix != nil {
 		in, out := &in.CustomIPPrefix, &out.CustomIPPrefix
-		*out = new(PublicIpPrefixSubResource_STATUS)
+		*out = new(SubResource_STATUS)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Etag != nil {
@@ -7051,7 +7664,7 @@ func (in *PublicIPPrefix_STATUS) DeepCopyInto(out *PublicIPPrefix_STATUS) {
 	}
 	if in.LoadBalancerFrontendIpConfiguration != nil {
 		in, out := &in.LoadBalancerFrontendIpConfiguration, &out.LoadBalancerFrontendIpConfiguration
-		*out = new(PublicIpPrefixSubResource_STATUS)
+		*out = new(SubResource_STATUS)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Location != nil {
@@ -7142,7 +7755,7 @@ func (in *PublicIPPrefix_Spec) DeepCopyInto(out *PublicIPPrefix_Spec) {
 	*out = *in
 	if in.CustomIPPrefix != nil {
 		in, out := &in.CustomIPPrefix, &out.CustomIPPrefix
-		*out = new(PublicIpPrefixSubResource)
+		*out = new(SubResource)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.ExtendedLocation != nil {
@@ -7165,6 +7778,11 @@ func (in *PublicIPPrefix_Spec) DeepCopyInto(out *PublicIPPrefix_Spec) {
 	if in.NatGateway != nil {
 		in, out := &in.NatGateway, &out.NatGateway
 		*out = new(NatGatewaySpec_PublicIPPrefix_SubResourceEmbedded)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.OperatorSpec != nil {
+		in, out := &in.OperatorSpec, &out.OperatorSpec
+		*out = new(PublicIPPrefixOperatorSpec)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Owner != nil {
@@ -7214,60 +7832,6 @@ func (in *PublicIPPrefix_Spec) DeepCopy() *PublicIPPrefix_Spec {
 		return nil
 	}
 	out := new(PublicIPPrefix_Spec)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *PublicIpPrefixSubResource) DeepCopyInto(out *PublicIpPrefixSubResource) {
-	*out = *in
-	if in.PropertyBag != nil {
-		in, out := &in.PropertyBag, &out.PropertyBag
-		*out = make(genruntime.PropertyBag, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-	if in.Reference != nil {
-		in, out := &in.Reference, &out.Reference
-		*out = new(genruntime.ResourceReference)
-		**out = **in
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PublicIpPrefixSubResource.
-func (in *PublicIpPrefixSubResource) DeepCopy() *PublicIpPrefixSubResource {
-	if in == nil {
-		return nil
-	}
-	out := new(PublicIpPrefixSubResource)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *PublicIpPrefixSubResource_STATUS) DeepCopyInto(out *PublicIpPrefixSubResource_STATUS) {
-	*out = *in
-	if in.Id != nil {
-		in, out := &in.Id, &out.Id
-		*out = new(string)
-		**out = **in
-	}
-	if in.PropertyBag != nil {
-		in, out := &in.PropertyBag, &out.PropertyBag
-		*out = make(genruntime.PropertyBag, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PublicIpPrefixSubResource_STATUS.
-func (in *PublicIpPrefixSubResource_STATUS) DeepCopy() *PublicIpPrefixSubResource_STATUS {
-	if in == nil {
-		return nil
-	}
-	out := new(PublicIpPrefixSubResource_STATUS)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -7455,6 +8019,60 @@ func (in *Sku_STATUS) DeepCopy() *Sku_STATUS {
 		return nil
 	}
 	out := new(Sku_STATUS)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *SubResource) DeepCopyInto(out *SubResource) {
+	*out = *in
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.Reference != nil {
+		in, out := &in.Reference, &out.Reference
+		*out = new(genruntime.ResourceReference)
+		**out = **in
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SubResource.
+func (in *SubResource) DeepCopy() *SubResource {
+	if in == nil {
+		return nil
+	}
+	out := new(SubResource)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *SubResource_STATUS) DeepCopyInto(out *SubResource_STATUS) {
+	*out = *in
+	if in.Id != nil {
+		in, out := &in.Id, &out.Id
+		*out = new(string)
+		**out = **in
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SubResource_STATUS.
+func (in *SubResource_STATUS) DeepCopy() *SubResource_STATUS {
+	if in == nil {
+		return nil
+	}
+	out := new(SubResource_STATUS)
 	in.DeepCopyInto(out)
 	return out
 }

@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type Backend struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Service_Backend_Spec   `json:"spec,omitempty"`
-	Status            Service_Backend_STATUS `json:"status,omitempty"`
+	Spec              Backend_Spec   `json:"spec,omitempty"`
+	Status            Backend_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &Backend{}
@@ -44,6 +47,26 @@ func (backend *Backend) SetConditions(conditions conditions.Conditions) {
 	backend.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &Backend{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (backend *Backend) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if backend.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return backend.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Backend{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (backend *Backend) SecretDestinationExpressions() []*core.DestinationExpression {
+	if backend.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return backend.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &Backend{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (backend *Backend) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-08-01"
 func (backend Backend) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-08-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -88,7 +111,7 @@ func (backend *Backend) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (backend *Backend) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Service_Backend_STATUS{}
+	return &Backend_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -100,13 +123,13 @@ func (backend *Backend) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (backend *Backend) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Service_Backend_STATUS); ok {
+	if st, ok := status.(*Backend_STATUS); ok {
 		backend.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Service_Backend_STATUS
+	var st Backend_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -139,13 +162,14 @@ type BackendList struct {
 	Items           []Backend `json:"items"`
 }
 
-// Storage version of v1api20220801.Service_Backend_Spec
-type Service_Backend_Spec struct {
+// Storage version of v1api20220801.Backend_Spec
+type Backend_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName       string                      `json:"azureName,omitempty"`
 	Credentials     *BackendCredentialsContract `json:"credentials,omitempty"`
 	Description     *string                     `json:"description,omitempty"`
+	OperatorSpec    *BackendOperatorSpec        `json:"operatorSpec,omitempty"`
 	OriginalVersion string                      `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
@@ -166,10 +190,10 @@ type Service_Backend_Spec struct {
 	Url               *string                       `json:"url,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Service_Backend_Spec{}
+var _ genruntime.ConvertibleSpec = &Backend_Spec{}
 
-// ConvertSpecFrom populates our Service_Backend_Spec from the provided source
-func (backend *Service_Backend_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our Backend_Spec from the provided source
+func (backend *Backend_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == backend {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -177,8 +201,8 @@ func (backend *Service_Backend_Spec) ConvertSpecFrom(source genruntime.Convertib
 	return source.ConvertSpecTo(backend)
 }
 
-// ConvertSpecTo populates the provided destination from our Service_Backend_Spec
-func (backend *Service_Backend_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our Backend_Spec
+func (backend *Backend_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == backend {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -186,8 +210,8 @@ func (backend *Service_Backend_Spec) ConvertSpecTo(destination genruntime.Conver
 	return destination.ConvertSpecFrom(backend)
 }
 
-// Storage version of v1api20220801.Service_Backend_STATUS
-type Service_Backend_STATUS struct {
+// Storage version of v1api20220801.Backend_STATUS
+type Backend_STATUS struct {
 	Conditions  []conditions.Condition             `json:"conditions,omitempty"`
 	Credentials *BackendCredentialsContract_STATUS `json:"credentials,omitempty"`
 	Description *string                            `json:"description,omitempty"`
@@ -204,10 +228,10 @@ type Service_Backend_STATUS struct {
 	Url         *string                            `json:"url,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Service_Backend_STATUS{}
+var _ genruntime.ConvertibleStatus = &Backend_STATUS{}
 
-// ConvertStatusFrom populates our Service_Backend_STATUS from the provided source
-func (backend *Service_Backend_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our Backend_STATUS from the provided source
+func (backend *Backend_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == backend {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -215,8 +239,8 @@ func (backend *Service_Backend_STATUS) ConvertStatusFrom(source genruntime.Conve
 	return source.ConvertStatusTo(backend)
 }
 
-// ConvertStatusTo populates the provided destination from our Service_Backend_STATUS
-func (backend *Service_Backend_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our Backend_STATUS
+func (backend *Backend_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == backend {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -244,6 +268,14 @@ type BackendCredentialsContract_STATUS struct {
 	Header         map[string][]string                           `json:"header,omitempty"`
 	PropertyBag    genruntime.PropertyBag                        `json:"$propertyBag,omitempty"`
 	Query          map[string][]string                           `json:"query,omitempty"`
+}
+
+// Storage version of v1api20220801.BackendOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type BackendOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20220801.BackendProperties

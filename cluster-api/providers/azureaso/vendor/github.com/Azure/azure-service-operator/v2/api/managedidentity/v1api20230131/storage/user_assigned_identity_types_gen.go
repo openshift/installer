@@ -9,6 +9,8 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,10 +51,30 @@ func (identity *UserAssignedIdentity) SetConditions(conditions conditions.Condit
 	identity.Status.Conditions = conditions
 }
 
-var _ genruntime.KubernetesExporter = &UserAssignedIdentity{}
+var _ configmaps.Exporter = &UserAssignedIdentity{}
 
-// ExportKubernetesResources defines a resource which can create other resources in Kubernetes.
-func (identity *UserAssignedIdentity) ExportKubernetesResources(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (identity *UserAssignedIdentity) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if identity.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return identity.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &UserAssignedIdentity{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (identity *UserAssignedIdentity) SecretDestinationExpressions() []*core.DestinationExpression {
+	if identity.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return identity.Spec.OperatorSpec.SecretExpressions
+}
+
+var _ genruntime.KubernetesConfigExporter = &UserAssignedIdentity{}
+
+// ExportKubernetesConfigMaps defines a resource which can create ConfigMaps in Kubernetes.
+func (identity *UserAssignedIdentity) ExportKubernetesConfigMaps(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
 	collector := configmaps.NewCollector(identity.Namespace)
 	if identity.Spec.OperatorSpec != nil && identity.Spec.OperatorSpec.ConfigMaps != nil {
 		if identity.Status.ClientId != nil {
@@ -85,7 +107,7 @@ func (identity *UserAssignedIdentity) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-01-31"
 func (identity UserAssignedIdentity) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-01-31"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -246,8 +268,11 @@ func (identity *UserAssignedIdentity_STATUS) ConvertStatusTo(destination genrunt
 // Storage version of v1api20230131.UserAssignedIdentityOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type UserAssignedIdentityOperatorSpec struct {
-	ConfigMaps  *UserAssignedIdentityOperatorConfigMaps `json:"configMaps,omitempty"`
-	PropertyBag genruntime.PropertyBag                  `json:"$propertyBag,omitempty"`
+	ConfigMapExpressions []*core.DestinationExpression           `json:"configMapExpressions,omitempty"`
+	ConfigMaps           *UserAssignedIdentityOperatorConfigMaps `json:"configMaps,omitempty"`
+	PropertyBag          genruntime.PropertyBag                  `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression           `json:"secretExpressions,omitempty"`
+	Secrets              *UserAssignedIdentityOperatorSecrets    `json:"secrets,omitempty"`
 }
 
 // Storage version of v1api20230131.UserAssignedIdentityOperatorConfigMaps
@@ -256,6 +281,14 @@ type UserAssignedIdentityOperatorConfigMaps struct {
 	PrincipalId *genruntime.ConfigMapDestination `json:"principalId,omitempty"`
 	PropertyBag genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
 	TenantId    *genruntime.ConfigMapDestination `json:"tenantId,omitempty"`
+}
+
+// Storage version of v1api20230131.UserAssignedIdentityOperatorSecrets
+type UserAssignedIdentityOperatorSecrets struct {
+	ClientId    *genruntime.SecretDestination `json:"clientId,omitempty"`
+	PrincipalId *genruntime.SecretDestination `json:"principalId,omitempty"`
+	PropertyBag genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	TenantId    *genruntime.SecretDestination `json:"tenantId,omitempty"`
 }
 
 func init() {

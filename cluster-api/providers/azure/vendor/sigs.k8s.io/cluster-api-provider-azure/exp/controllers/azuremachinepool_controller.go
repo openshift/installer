@@ -19,28 +19,17 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/tools/record"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
-	infracontroller "sigs.k8s.io/cluster-api-provider-azure/controllers"
-	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
+	"sigs.k8s.io/cluster-api/controllers/external"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -50,8 +39,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
+	infracontroller "sigs.k8s.io/cluster-api-provider-azure/controllers"
+	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 type (
@@ -63,7 +60,8 @@ type (
 		Timeouts                      reconciler.Timeouts
 		WatchFilterValue              string
 		createAzureMachinePoolService azureMachinePoolServiceCreator
-		BootstrapConfigGVK            schema.GroupVersionKind
+		externalTracker               external.ObjectTracker
+		CredentialCache               azure.CredentialCache
 	}
 
 	// annotationReaderWriter provides an interface to read and write annotations.
@@ -76,20 +74,13 @@ type (
 type azureMachinePoolServiceCreator func(machinePoolScope *scope.MachinePoolScope) (*azureMachinePoolService, error)
 
 // NewAzureMachinePoolReconciler returns a new AzureMachinePoolReconciler instance.
-func NewAzureMachinePoolReconciler(client client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue, bootstrapConfigGVK string) *AzureMachinePoolReconciler {
-	gvk := schema.FromAPIVersionAndKind(kubeadmv1.GroupVersion.String(), reflect.TypeOf((*kubeadmv1.KubeadmConfig)(nil)).Elem().Name())
-	userGVK, _ := schema.ParseKindArg(bootstrapConfigGVK)
-
-	if userGVK != nil {
-		gvk = *userGVK
-	}
-
+func NewAzureMachinePoolReconciler(client client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue string, credCache azure.CredentialCache) *AzureMachinePoolReconciler {
 	ampr := &AzureMachinePoolReconciler{
-		Client:             client,
-		Recorder:           recorder,
-		Timeouts:           timeouts,
-		WatchFilterValue:   watchFilterValue,
-		BootstrapConfigGVK: gvk,
+		Client:           client,
+		Recorder:         recorder,
+		Timeouts:         timeouts,
+		WatchFilterValue: watchFilterValue,
+		CredentialCache:  credCache,
 	}
 
 	ampr.createAzureMachinePoolService = newAzureMachinePoolService
@@ -125,12 +116,10 @@ func (ampr *AzureMachinePoolReconciler) SetupWithManager(ctx context.Context, mg
 		return errors.Wrap(err, "failed to create mapper for Cluster to AzureMachines")
 	}
 
-	config := &metav1.PartialObjectMetadata{}
-	config.SetGroupVersionKind(ampr.BootstrapConfigGVK)
-	return ctrl.NewControllerManagedBy(mgr).
+	controller, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
 		For(&infrav1exp.AzureMachinePool{}).
-		WithEventFilter(predicates.ResourceHasFilterLabel(log, ampr.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, ampr.WatchFilterValue)).
 		// watch for changes in CAPI MachinePool resources
 		Watches(
 			&expv1.MachinePool{},
@@ -146,18 +135,12 @@ func (ampr *AzureMachinePoolReconciler) SetupWithManager(ctx context.Context, mg
 			&infrav1.AzureManagedControlPlane{},
 			handler.EnqueueRequestsFromMapFunc(azureManagedControlPlaneMapper),
 		).
-		// watch for changes in KubeadmConfig (or any BootstrapConfig) to sync bootstrap token
-		Watches(
-			config,
-			handler.EnqueueRequestsFromMapFunc(BootstrapConfigToInfrastructureMapFunc(ctx, ampr.Client, log)),
-			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
-		).
 		Watches(
 			&infrav1exp.AzureMachinePoolMachine{},
 			handler.EnqueueRequestsFromMapFunc(AzureMachinePoolMachineMapper(mgr.GetScheme(), log)),
 			builder.WithPredicates(
 				MachinePoolMachineHasStateOrVersionChange(log),
-				predicates.ResourceHasFilterLabel(log, ampr.WatchFilterValue),
+				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, ampr.WatchFilterValue),
 			),
 		).
 		// Add a watch on clusterv1.Cluster object for unpause & ready notifications.
@@ -165,16 +148,28 @@ func (ampr *AzureMachinePoolReconciler) SetupWithManager(ctx context.Context, mg
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(azureMachinePoolMapper),
 			builder.WithPredicates(
-				infracontroller.ClusterPauseChangeAndInfrastructureReady(log),
-				predicates.ResourceHasFilterLabel(log, ampr.WatchFilterValue),
+				infracontroller.ClusterPauseChangeAndInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, ampr.WatchFilterValue),
 			),
-		).
-		Complete(r)
+		).Build(r)
+	if err != nil {
+		return fmt.Errorf("creating new controller manager: %w", err)
+	}
+
+	predicateLog := ptr.To(ctrl.LoggerFrom(ctx).WithValues("controller", "azuremachinepool"))
+	ampr.externalTracker = external.ObjectTracker{
+		Controller:      controller,
+		Cache:           mgr.GetCache(),
+		Scheme:          mgr.GetScheme(),
+		PredicateLogger: predicateLog,
+	}
+
+	return nil
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=azuremachinepools,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=azuremachinepools/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigs;kubeadmconfigs/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=*,verbs=get;list;watch
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=azuremachinepoolmachines,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=azuremachinepoolmachines/status,verbs=get
 // +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machinepools;machinepools/status,verbs=get;list;watch;update;patch
@@ -227,7 +222,7 @@ func (ampr *AzureMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	logger = logger.WithValues("cluster", cluster.Name)
 
-	clusterScope, err := infracontroller.GetClusterScoper(ctx, logger, ampr.Client, cluster, ampr.Timeouts)
+	clusterScope, err := infracontroller.GetClusterScoper(ctx, logger, ampr.Client, cluster, ampr.Timeouts, ampr.CredentialCache)
 	if err != nil {
 		return reconcile.Result{}, errors.Wrapf(err, "failed to create cluster scope for cluster %s/%s", cluster.Namespace, cluster.Name)
 	}
@@ -293,6 +288,27 @@ func (ampr *AzureMachinePoolReconciler) reconcileNormal(ctx context.Context, mac
 		return reconcile.Result{}, nil
 	}
 
+	// Add a Watch to the referenced Bootstrap Config
+	if machinePoolScope.MachinePool.Spec.Template.Spec.Bootstrap.ConfigRef != nil {
+		ref := machinePoolScope.MachinePool.Spec.Template.Spec.Bootstrap.ConfigRef
+		obj, err := external.Get(ctx, ampr.Client, ref)
+		if err != nil {
+			if apierrors.IsNotFound(errors.Cause(err)) {
+				return reconcile.Result{}, errors.Wrapf(err, "could not find %v %q for MachinePool %q in namespace %q, requeuing while searching for bootstrap ConfigRef",
+					ref.GroupVersionKind(), ref.Name, machinePoolScope.MachinePool.Name, ref.Namespace)
+			}
+			return reconcile.Result{}, err
+		}
+
+		// Ensure we add a watch to the external object, if there isn't one already.
+		if err := ampr.externalTracker.Watch(log, obj,
+			handler.EnqueueRequestsFromMapFunc(BootstrapConfigToInfrastructureMapFunc(ampr.Client, *ampr.externalTracker.PredicateLogger)),
+			predicates.ResourceIsChanged(ampr.Client.Scheme(), *ampr.externalTracker.PredicateLogger)); err != nil {
+			return reconcile.Result{}, errors.Wrapf(err, "could not add a watcher to the object %v %q for MachinePool %q in namespace %q, requeuing",
+				ref.GroupVersionKind(), ref.Name, machinePoolScope.MachinePool.Name, ref.Namespace)
+		}
+	}
+
 	// Make sure bootstrap data is available and populated.
 	if machinePoolScope.MachinePool.Spec.Template.Spec.Bootstrap.DataSecretName == nil {
 		log.Info("Bootstrap data secret reference is not yet available")
@@ -307,7 +323,7 @@ func (ampr *AzureMachinePoolReconciler) reconcileNormal(ctx context.Context, mac
 		if errors.As(err, &reconcileError) && reconcileError.IsTerminal() {
 			ampr.Recorder.Eventf(machinePoolScope.AzureMachinePool, corev1.EventTypeWarning, "SKUNotFound", errors.Wrap(err, "failed to initialize machinepool cache").Error())
 			log.Error(err, "Failed to initialize machinepool cache")
-			machinePoolScope.SetFailureReason(capierrors.InvalidConfigurationMachineError)
+			machinePoolScope.SetFailureReason(azure.InvalidConfiguration)
 			machinePoolScope.SetFailureMessage(err)
 			machinePoolScope.SetNotReady()
 			return reconcile.Result{}, nil
@@ -365,7 +381,6 @@ func (ampr *AzureMachinePoolReconciler) reconcileNormal(ctx context.Context, mac
 	return reconcile.Result{}, nil
 }
 
-//nolint:unparam // Always returns an empty struct for reconcile.Result
 func (ampr *AzureMachinePoolReconciler) reconcilePause(ctx context.Context, machinePoolScope *scope.MachinePoolScope) (reconcile.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureMachinePoolReconciler.reconcilePause")
 	defer done()
@@ -385,7 +400,6 @@ func (ampr *AzureMachinePoolReconciler) reconcilePause(ctx context.Context, mach
 	return reconcile.Result{}, nil
 }
 
-//nolint:unparam // Always returns an empty struct for reconcile.Result
 func (ampr *AzureMachinePoolReconciler) reconcileDelete(ctx context.Context, machinePoolScope *scope.MachinePoolScope, clusterScope infracontroller.ClusterScoper) (reconcile.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureMachinePoolReconciler.reconcileDelete")
 	defer done()

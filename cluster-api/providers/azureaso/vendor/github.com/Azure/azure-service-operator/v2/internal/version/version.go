@@ -14,10 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	// This is populated from the build (see Taskfile.yml)
-	BuildVersion string = ""
-)
+// This is populated from the build (see Taskfile.yml)
+var BuildVersion string = ""
 
 // NewCommand creates a new reusable cobra command to display the current version of the tool
 func NewCommand() (*cobra.Command, error) {

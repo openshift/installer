@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20221001 "github.com/Azure/azure-service-operator/v2/api/insights/v1api20221001"
-	v20221001s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20221001/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20221001/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type AutoscaleSettingExtension struct {
 func (extension *AutoscaleSettingExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20221001.AutoscaleSetting{},
-		&v20221001s.AutoscaleSetting{}}
+		&storage.AutoscaleSetting{}}
 }

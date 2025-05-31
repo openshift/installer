@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type NamespacesTopicsSubscription struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Namespaces_Topics_Subscription_Spec   `json:"spec,omitempty"`
-	Status            Namespaces_Topics_Subscription_STATUS `json:"status,omitempty"`
+	Spec              NamespacesTopicsSubscription_Spec   `json:"spec,omitempty"`
+	Status            NamespacesTopicsSubscription_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &NamespacesTopicsSubscription{}
@@ -44,6 +47,26 @@ func (subscription *NamespacesTopicsSubscription) SetConditions(conditions condi
 	subscription.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &NamespacesTopicsSubscription{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (subscription *NamespacesTopicsSubscription) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if subscription.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return subscription.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &NamespacesTopicsSubscription{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (subscription *NamespacesTopicsSubscription) SecretDestinationExpressions() []*core.DestinationExpression {
+	if subscription.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return subscription.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &NamespacesTopicsSubscription{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (subscription *NamespacesTopicsSubscription) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (subscription NamespacesTopicsSubscription) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +110,7 @@ func (subscription *NamespacesTopicsSubscription) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (subscription *NamespacesTopicsSubscription) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Namespaces_Topics_Subscription_STATUS{}
+	return &NamespacesTopicsSubscription_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +122,13 @@ func (subscription *NamespacesTopicsSubscription) Owner() *genruntime.ResourceRe
 // SetStatus sets the status of this resource
 func (subscription *NamespacesTopicsSubscription) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Namespaces_Topics_Subscription_STATUS); ok {
+	if st, ok := status.(*NamespacesTopicsSubscription_STATUS); ok {
 		subscription.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Namespaces_Topics_Subscription_STATUS
+	var st NamespacesTopicsSubscription_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -138,25 +161,26 @@ type NamespacesTopicsSubscriptionList struct {
 	Items           []NamespacesTopicsSubscription `json:"items"`
 }
 
-// Storage version of v1api20211101.Namespaces_Topics_Subscription_Spec
-type Namespaces_Topics_Subscription_Spec struct {
+// Storage version of v1api20211101.NamespacesTopicsSubscription_Spec
+type NamespacesTopicsSubscription_Spec struct {
 	AutoDeleteOnIdle *string `json:"autoDeleteOnIdle,omitempty"`
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                                 string                    `json:"azureName,omitempty"`
-	ClientAffineProperties                    *SBClientAffineProperties `json:"clientAffineProperties,omitempty"`
-	DeadLetteringOnFilterEvaluationExceptions *bool                     `json:"deadLetteringOnFilterEvaluationExceptions,omitempty"`
-	DeadLetteringOnMessageExpiration          *bool                     `json:"deadLetteringOnMessageExpiration,omitempty"`
-	DefaultMessageTimeToLive                  *string                   `json:"defaultMessageTimeToLive,omitempty"`
-	DuplicateDetectionHistoryTimeWindow       *string                   `json:"duplicateDetectionHistoryTimeWindow,omitempty"`
-	EnableBatchedOperations                   *bool                     `json:"enableBatchedOperations,omitempty"`
-	ForwardDeadLetteredMessagesTo             *string                   `json:"forwardDeadLetteredMessagesTo,omitempty"`
-	ForwardTo                                 *string                   `json:"forwardTo,omitempty"`
-	IsClientAffine                            *bool                     `json:"isClientAffine,omitempty"`
-	LockDuration                              *string                   `json:"lockDuration,omitempty"`
-	MaxDeliveryCount                          *int                      `json:"maxDeliveryCount,omitempty"`
-	OriginalVersion                           string                    `json:"originalVersion,omitempty"`
+	AzureName                                 string                                    `json:"azureName,omitempty"`
+	ClientAffineProperties                    *SBClientAffineProperties                 `json:"clientAffineProperties,omitempty"`
+	DeadLetteringOnFilterEvaluationExceptions *bool                                     `json:"deadLetteringOnFilterEvaluationExceptions,omitempty"`
+	DeadLetteringOnMessageExpiration          *bool                                     `json:"deadLetteringOnMessageExpiration,omitempty"`
+	DefaultMessageTimeToLive                  *string                                   `json:"defaultMessageTimeToLive,omitempty"`
+	DuplicateDetectionHistoryTimeWindow       *string                                   `json:"duplicateDetectionHistoryTimeWindow,omitempty"`
+	EnableBatchedOperations                   *bool                                     `json:"enableBatchedOperations,omitempty"`
+	ForwardDeadLetteredMessagesTo             *string                                   `json:"forwardDeadLetteredMessagesTo,omitempty"`
+	ForwardTo                                 *string                                   `json:"forwardTo,omitempty"`
+	IsClientAffine                            *bool                                     `json:"isClientAffine,omitempty"`
+	LockDuration                              *string                                   `json:"lockDuration,omitempty"`
+	MaxDeliveryCount                          *int                                      `json:"maxDeliveryCount,omitempty"`
+	OperatorSpec                              *NamespacesTopicsSubscriptionOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion                           string                                    `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -167,10 +191,10 @@ type Namespaces_Topics_Subscription_Spec struct {
 	RequiresSession *bool                              `json:"requiresSession,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Namespaces_Topics_Subscription_Spec{}
+var _ genruntime.ConvertibleSpec = &NamespacesTopicsSubscription_Spec{}
 
-// ConvertSpecFrom populates our Namespaces_Topics_Subscription_Spec from the provided source
-func (subscription *Namespaces_Topics_Subscription_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our NamespacesTopicsSubscription_Spec from the provided source
+func (subscription *NamespacesTopicsSubscription_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == subscription {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -178,8 +202,8 @@ func (subscription *Namespaces_Topics_Subscription_Spec) ConvertSpecFrom(source 
 	return source.ConvertSpecTo(subscription)
 }
 
-// ConvertSpecTo populates the provided destination from our Namespaces_Topics_Subscription_Spec
-func (subscription *Namespaces_Topics_Subscription_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our NamespacesTopicsSubscription_Spec
+func (subscription *NamespacesTopicsSubscription_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == subscription {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -187,8 +211,8 @@ func (subscription *Namespaces_Topics_Subscription_Spec) ConvertSpecTo(destinati
 	return destination.ConvertSpecFrom(subscription)
 }
 
-// Storage version of v1api20211101.Namespaces_Topics_Subscription_STATUS
-type Namespaces_Topics_Subscription_STATUS struct {
+// Storage version of v1api20211101.NamespacesTopicsSubscription_STATUS
+type NamespacesTopicsSubscription_STATUS struct {
 	AccessedAt                                *string                          `json:"accessedAt,omitempty"`
 	AutoDeleteOnIdle                          *string                          `json:"autoDeleteOnIdle,omitempty"`
 	ClientAffineProperties                    *SBClientAffineProperties_STATUS `json:"clientAffineProperties,omitempty"`
@@ -217,10 +241,10 @@ type Namespaces_Topics_Subscription_STATUS struct {
 	UpdatedAt                                 *string                          `json:"updatedAt,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Namespaces_Topics_Subscription_STATUS{}
+var _ genruntime.ConvertibleStatus = &NamespacesTopicsSubscription_STATUS{}
 
-// ConvertStatusFrom populates our Namespaces_Topics_Subscription_STATUS from the provided source
-func (subscription *Namespaces_Topics_Subscription_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our NamespacesTopicsSubscription_STATUS from the provided source
+func (subscription *NamespacesTopicsSubscription_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == subscription {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -228,13 +252,21 @@ func (subscription *Namespaces_Topics_Subscription_STATUS) ConvertStatusFrom(sou
 	return source.ConvertStatusTo(subscription)
 }
 
-// ConvertStatusTo populates the provided destination from our Namespaces_Topics_Subscription_STATUS
-func (subscription *Namespaces_Topics_Subscription_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our NamespacesTopicsSubscription_STATUS
+func (subscription *NamespacesTopicsSubscription_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == subscription {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(subscription)
+}
+
+// Storage version of v1api20211101.NamespacesTopicsSubscriptionOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type NamespacesTopicsSubscriptionOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20211101.SBClientAffineProperties

@@ -92,8 +92,10 @@ func NewReferenceNotFoundError(name types.NamespacedName, cause error) *Referenc
 	}
 }
 
-var _ error = &ReferenceNotFound{}
-var _ causer = &ReferenceNotFound{}
+var (
+	_ error  = &ReferenceNotFound{}
+	_ causer = &ReferenceNotFound{}
+)
 
 func (e *ReferenceNotFound) Error() string {
 	return fmt.Sprintf("%s does not exist (%s)", e.NamespacedName, e.cause)
@@ -128,8 +130,10 @@ func NewSecretNotFoundError(name types.NamespacedName, cause error) *SecretNotFo
 	}
 }
 
-var _ error = &SecretNotFound{}
-var _ causer = &SecretNotFound{}
+var (
+	_ error  = &SecretNotFound{}
+	_ causer = &SecretNotFound{}
+)
 
 func (e *SecretNotFound) Error() string {
 	return fmt.Sprintf("%s does not exist (%s)", e.NamespacedName, e.cause)
@@ -164,8 +168,10 @@ func NewConfigMapNotFoundError(name types.NamespacedName, cause error) *ConfigMa
 	}
 }
 
-var _ error = &ConfigMapNotFound{}
-var _ causer = &ConfigMapNotFound{}
+var (
+	_ error  = &ConfigMapNotFound{}
+	_ causer = &ConfigMapNotFound{}
+)
 
 func (e *ConfigMapNotFound) Error() string {
 	return fmt.Sprintf("%s does not exist (%s)", e.NamespacedName, e.cause)
@@ -207,8 +213,10 @@ func NewSubscriptionMismatchError(expectedSub string, actualSub string) *Subscri
 	}
 }
 
-var _ error = &SubscriptionMismatch{}
-var _ causer = &SubscriptionMismatch{}
+var (
+	_ error  = &SubscriptionMismatch{}
+	_ causer = &SubscriptionMismatch{}
+)
 
 func (e *SubscriptionMismatch) Error() string {
 	return e.inner.Error()
@@ -216,10 +224,7 @@ func (e *SubscriptionMismatch) Error() string {
 
 func (e *SubscriptionMismatch) Is(err error) bool {
 	var typedErr *SubscriptionMismatch
-	if errors.As(err, &typedErr) {
-		return true
-	}
-	return false
+	return errors.As(err, &typedErr)
 }
 
 func (e *SubscriptionMismatch) Cause() error {

@@ -6,6 +6,8 @@ package customizations
 import (
 	v20200930 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930"
 	v20200930s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930/storage"
+	v20240302 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302"
+	v20240302s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type DiskExtension struct {
 func (extension *DiskExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20200930.Disk{},
-		&v20200930s.Disk{}}
+		&v20200930s.Disk{},
+		&v20240302.Disk{},
+		&v20240302s.Disk{}}
 }

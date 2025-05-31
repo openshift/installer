@@ -19,14 +19,15 @@ package agentpools
 import (
 	"context"
 
-	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"k8s.io/utils/ptr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 const serviceName = "agentpools"
@@ -57,7 +58,7 @@ func New(scope AgentPoolScope) *aso.Service[genruntime.MetaObject, AgentPoolScop
 	return svc
 }
 
-func postCreateOrUpdateResourceHook(ctx context.Context, scope AgentPoolScope, obj genruntime.MetaObject, err error) error {
+func postCreateOrUpdateResourceHook(_ context.Context, scope AgentPoolScope, obj genruntime.MetaObject, err error) error {
 	if err != nil {
 		return err
 	}

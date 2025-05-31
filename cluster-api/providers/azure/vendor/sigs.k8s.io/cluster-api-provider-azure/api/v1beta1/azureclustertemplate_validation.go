@@ -62,6 +62,8 @@ func (c *AzureClusterTemplate) validateClusterTemplateSpec() field.ErrorList {
 
 	allErrs = append(allErrs, c.validatePrivateDNSZoneName()...)
 
+	allErrs = append(allErrs, c.validatePrivateDNSZoneResourceGroup()...)
+
 	return allErrs
 }
 
@@ -162,7 +164,23 @@ func (c *AzureClusterTemplate) validatePrivateDNSZoneName() field.ErrorList {
 
 	allErrs = append(allErrs, validatePrivateDNSZoneName(
 		networkSpec.PrivateDNSZoneName,
+		true,
 		networkSpec.APIServerLB.Type,
+		fldPath,
+	)...)
+
+	return allErrs
+}
+
+func (c *AzureClusterTemplate) validatePrivateDNSZoneResourceGroup() field.ErrorList {
+	var allErrs field.ErrorList
+
+	fldPath := field.NewPath("spec").Child("template").Child("spec").Child("networkSpec").Child("privateDNSZoneResourceGroup")
+	networkSpec := c.Spec.Template.Spec.NetworkSpec
+
+	allErrs = append(allErrs, validatePrivateDNSZoneResourceGroup(
+		networkSpec.PrivateDNSZoneName,
+		networkSpec.PrivateDNSZoneResourceGroup,
 		fldPath,
 	)...)
 

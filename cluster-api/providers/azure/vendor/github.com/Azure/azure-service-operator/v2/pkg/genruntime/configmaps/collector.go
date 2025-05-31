@@ -53,11 +53,11 @@ func (c *Collector) get(dest *genruntime.ConfigMapDestination) *v1.ConfigMap {
 
 func (c *Collector) errIfKeyExists(val *v1.ConfigMap, key string) error {
 	if _, ok := val.Data[key]; ok {
-		return errors.Errorf("key collision, entry exists for key %s in Data", key)
+		return errors.Errorf("key collision, entry exists for key '%s' in Data", key)
 	}
 
 	if _, ok := val.BinaryData[key]; ok {
-		return errors.Errorf("key collision, entry exists for key %s in BinaryData", key)
+		return errors.Errorf("key collision, entry exists for key '%s' in BinaryData", key)
 	}
 
 	return nil

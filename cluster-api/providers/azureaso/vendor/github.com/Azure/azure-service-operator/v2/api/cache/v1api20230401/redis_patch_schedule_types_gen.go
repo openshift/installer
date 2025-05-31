@@ -5,10 +5,14 @@ package v1api20230401
 
 import (
 	"fmt"
-	v20230401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type RedisPatchSchedule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Redis_PatchSchedule_Spec   `json:"spec,omitempty"`
-	Status            Redis_PatchSchedule_STATUS `json:"status,omitempty"`
+	Spec              RedisPatchSchedule_Spec   `json:"spec,omitempty"`
+	Status            RedisPatchSchedule_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &RedisPatchSchedule{}
@@ -49,22 +53,36 @@ var _ conversion.Convertible = &RedisPatchSchedule{}
 
 // ConvertFrom populates our RedisPatchSchedule from the provided hub RedisPatchSchedule
 func (schedule *RedisPatchSchedule) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230401s.RedisPatchSchedule)
-	if !ok {
-		return fmt.Errorf("expected cache/v1api20230401/storage/RedisPatchSchedule but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.RedisPatchSchedule
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return schedule.AssignProperties_From_RedisPatchSchedule(source)
+	err = schedule.AssignProperties_From_RedisPatchSchedule(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to schedule")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub RedisPatchSchedule from our RedisPatchSchedule
 func (schedule *RedisPatchSchedule) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230401s.RedisPatchSchedule)
-	if !ok {
-		return fmt.Errorf("expected cache/v1api20230401/storage/RedisPatchSchedule but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.RedisPatchSchedule
+	err := schedule.AssignProperties_To_RedisPatchSchedule(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from schedule")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return schedule.AssignProperties_To_RedisPatchSchedule(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-cache-azure-com-v1api20230401-redispatchschedule,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cache.azure.com,resources=redispatchschedules,verbs=create;update,versions=v1api20230401,name=default.v1api20230401.redispatchschedules.cache.azure.com,admissionReviewVersions=v1
@@ -83,15 +101,24 @@ func (schedule *RedisPatchSchedule) Default() {
 // defaultImpl applies the code generated defaults to the RedisPatchSchedule resource
 func (schedule *RedisPatchSchedule) defaultImpl() {}
 
-var _ genruntime.ImportableResource = &RedisPatchSchedule{}
+var _ configmaps.Exporter = &RedisPatchSchedule{}
 
-// InitializeSpec initializes the spec for this resource from the given status
-func (schedule *RedisPatchSchedule) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Redis_PatchSchedule_STATUS); ok {
-		return schedule.Spec.Initialize_From_Redis_PatchSchedule_STATUS(s)
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (schedule *RedisPatchSchedule) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if schedule.Spec.OperatorSpec == nil {
+		return nil
 	}
+	return schedule.Spec.OperatorSpec.ConfigMapExpressions
+}
 
-	return fmt.Errorf("expected Status of type Redis_PatchSchedule_STATUS but received %T instead", status)
+var _ secrets.Exporter = &RedisPatchSchedule{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (schedule *RedisPatchSchedule) SecretDestinationExpressions() []*core.DestinationExpression {
+	if schedule.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return schedule.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &RedisPatchSchedule{}
@@ -103,7 +130,7 @@ func (schedule *RedisPatchSchedule) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-04-01"
 func (schedule RedisPatchSchedule) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-04-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -137,7 +164,7 @@ func (schedule *RedisPatchSchedule) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (schedule *RedisPatchSchedule) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Redis_PatchSchedule_STATUS{}
+	return &RedisPatchSchedule_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -149,13 +176,13 @@ func (schedule *RedisPatchSchedule) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (schedule *RedisPatchSchedule) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Redis_PatchSchedule_STATUS); ok {
+	if st, ok := status.(*RedisPatchSchedule_STATUS); ok {
 		schedule.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Redis_PatchSchedule_STATUS
+	var st RedisPatchSchedule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -201,7 +228,7 @@ func (schedule *RedisPatchSchedule) ValidateUpdate(old runtime.Object) (admissio
 
 // createValidations validates the creation of the resource
 func (schedule *RedisPatchSchedule) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){schedule.validateResourceReferences, schedule.validateOwnerReference}
+	return []func() (admission.Warnings, error){schedule.validateResourceReferences, schedule.validateOwnerReference, schedule.validateSecretDestinations, schedule.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -219,7 +246,21 @@ func (schedule *RedisPatchSchedule) updateValidations() []func(old runtime.Objec
 		func(old runtime.Object) (admission.Warnings, error) {
 			return schedule.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return schedule.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return schedule.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (schedule *RedisPatchSchedule) validateConfigMapDestinations() (admission.Warnings, error) {
+	if schedule.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(schedule, nil, schedule.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -236,6 +277,14 @@ func (schedule *RedisPatchSchedule) validateResourceReferences() (admission.Warn
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (schedule *RedisPatchSchedule) validateSecretDestinations() (admission.Warnings, error) {
+	if schedule.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(schedule, nil, schedule.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (schedule *RedisPatchSchedule) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*RedisPatchSchedule)
@@ -247,24 +296,24 @@ func (schedule *RedisPatchSchedule) validateWriteOnceProperties(old runtime.Obje
 }
 
 // AssignProperties_From_RedisPatchSchedule populates our RedisPatchSchedule from the provided source RedisPatchSchedule
-func (schedule *RedisPatchSchedule) AssignProperties_From_RedisPatchSchedule(source *v20230401s.RedisPatchSchedule) error {
+func (schedule *RedisPatchSchedule) AssignProperties_From_RedisPatchSchedule(source *storage.RedisPatchSchedule) error {
 
 	// ObjectMeta
 	schedule.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Redis_PatchSchedule_Spec
-	err := spec.AssignProperties_From_Redis_PatchSchedule_Spec(&source.Spec)
+	var spec RedisPatchSchedule_Spec
+	err := spec.AssignProperties_From_RedisPatchSchedule_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Redis_PatchSchedule_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_RedisPatchSchedule_Spec() to populate field Spec")
 	}
 	schedule.Spec = spec
 
 	// Status
-	var status Redis_PatchSchedule_STATUS
-	err = status.AssignProperties_From_Redis_PatchSchedule_STATUS(&source.Status)
+	var status RedisPatchSchedule_STATUS
+	err = status.AssignProperties_From_RedisPatchSchedule_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Redis_PatchSchedule_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_RedisPatchSchedule_STATUS() to populate field Status")
 	}
 	schedule.Status = status
 
@@ -273,24 +322,24 @@ func (schedule *RedisPatchSchedule) AssignProperties_From_RedisPatchSchedule(sou
 }
 
 // AssignProperties_To_RedisPatchSchedule populates the provided destination RedisPatchSchedule from our RedisPatchSchedule
-func (schedule *RedisPatchSchedule) AssignProperties_To_RedisPatchSchedule(destination *v20230401s.RedisPatchSchedule) error {
+func (schedule *RedisPatchSchedule) AssignProperties_To_RedisPatchSchedule(destination *storage.RedisPatchSchedule) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *schedule.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230401s.Redis_PatchSchedule_Spec
-	err := schedule.Spec.AssignProperties_To_Redis_PatchSchedule_Spec(&spec)
+	var spec storage.RedisPatchSchedule_Spec
+	err := schedule.Spec.AssignProperties_To_RedisPatchSchedule_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Redis_PatchSchedule_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_RedisPatchSchedule_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20230401s.Redis_PatchSchedule_STATUS
-	err = schedule.Status.AssignProperties_To_Redis_PatchSchedule_STATUS(&status)
+	var status storage.RedisPatchSchedule_STATUS
+	err = schedule.Status.AssignProperties_To_RedisPatchSchedule_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Redis_PatchSchedule_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_RedisPatchSchedule_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -317,7 +366,11 @@ type RedisPatchScheduleList struct {
 	Items           []RedisPatchSchedule `json:"items"`
 }
 
-type Redis_PatchSchedule_Spec struct {
+type RedisPatchSchedule_Spec struct {
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *RedisPatchScheduleOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -329,43 +382,45 @@ type Redis_PatchSchedule_Spec struct {
 	ScheduleEntries []ScheduleEntry `json:"scheduleEntries,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Redis_PatchSchedule_Spec{}
+var _ genruntime.ARMTransformer = &RedisPatchSchedule_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (schedule *Redis_PatchSchedule_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (schedule *RedisPatchSchedule_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if schedule == nil {
 		return nil, nil
 	}
-	result := &Redis_PatchSchedule_Spec_ARM{}
+	result := &arm.RedisPatchSchedule_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
 
 	// Set property "Properties":
 	if schedule.ScheduleEntries != nil {
-		result.Properties = &ScheduleEntries_ARM{}
+		result.Properties = &arm.ScheduleEntries{}
 	}
 	for _, item := range schedule.ScheduleEntries {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.ScheduleEntries = append(result.Properties.ScheduleEntries, *item_ARM.(*ScheduleEntry_ARM))
+		result.Properties.ScheduleEntries = append(result.Properties.ScheduleEntries, *item_ARM.(*arm.ScheduleEntry))
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (schedule *Redis_PatchSchedule_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Redis_PatchSchedule_Spec_ARM{}
+func (schedule *RedisPatchSchedule_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.RedisPatchSchedule_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (schedule *Redis_PatchSchedule_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Redis_PatchSchedule_Spec_ARM)
+func (schedule *RedisPatchSchedule_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.RedisPatchSchedule_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Redis_PatchSchedule_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RedisPatchSchedule_Spec, got %T", armInput)
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	schedule.Owner = &genruntime.KnownResourceReference{
@@ -390,25 +445,25 @@ func (schedule *Redis_PatchSchedule_Spec) PopulateFromARM(owner genruntime.Arbit
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Redis_PatchSchedule_Spec{}
+var _ genruntime.ConvertibleSpec = &RedisPatchSchedule_Spec{}
 
-// ConvertSpecFrom populates our Redis_PatchSchedule_Spec from the provided source
-func (schedule *Redis_PatchSchedule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230401s.Redis_PatchSchedule_Spec)
+// ConvertSpecFrom populates our RedisPatchSchedule_Spec from the provided source
+func (schedule *RedisPatchSchedule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.RedisPatchSchedule_Spec)
 	if ok {
 		// Populate our instance from source
-		return schedule.AssignProperties_From_Redis_PatchSchedule_Spec(src)
+		return schedule.AssignProperties_From_RedisPatchSchedule_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230401s.Redis_PatchSchedule_Spec{}
+	src = &storage.RedisPatchSchedule_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = schedule.AssignProperties_From_Redis_PatchSchedule_Spec(src)
+	err = schedule.AssignProperties_From_RedisPatchSchedule_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -416,17 +471,17 @@ func (schedule *Redis_PatchSchedule_Spec) ConvertSpecFrom(source genruntime.Conv
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Redis_PatchSchedule_Spec
-func (schedule *Redis_PatchSchedule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230401s.Redis_PatchSchedule_Spec)
+// ConvertSpecTo populates the provided destination from our RedisPatchSchedule_Spec
+func (schedule *RedisPatchSchedule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.RedisPatchSchedule_Spec)
 	if ok {
 		// Populate destination from our instance
-		return schedule.AssignProperties_To_Redis_PatchSchedule_Spec(dst)
+		return schedule.AssignProperties_To_RedisPatchSchedule_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230401s.Redis_PatchSchedule_Spec{}
-	err := schedule.AssignProperties_To_Redis_PatchSchedule_Spec(dst)
+	dst = &storage.RedisPatchSchedule_Spec{}
+	err := schedule.AssignProperties_To_RedisPatchSchedule_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -440,8 +495,20 @@ func (schedule *Redis_PatchSchedule_Spec) ConvertSpecTo(destination genruntime.C
 	return nil
 }
 
-// AssignProperties_From_Redis_PatchSchedule_Spec populates our Redis_PatchSchedule_Spec from the provided source Redis_PatchSchedule_Spec
-func (schedule *Redis_PatchSchedule_Spec) AssignProperties_From_Redis_PatchSchedule_Spec(source *v20230401s.Redis_PatchSchedule_Spec) error {
+// AssignProperties_From_RedisPatchSchedule_Spec populates our RedisPatchSchedule_Spec from the provided source RedisPatchSchedule_Spec
+func (schedule *RedisPatchSchedule_Spec) AssignProperties_From_RedisPatchSchedule_Spec(source *storage.RedisPatchSchedule_Spec) error {
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec RedisPatchScheduleOperatorSpec
+		err := operatorSpec.AssignProperties_From_RedisPatchScheduleOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_RedisPatchScheduleOperatorSpec() to populate field OperatorSpec")
+		}
+		schedule.OperatorSpec = &operatorSpec
+	} else {
+		schedule.OperatorSpec = nil
+	}
 
 	// Owner
 	if source.Owner != nil {
@@ -473,10 +540,22 @@ func (schedule *Redis_PatchSchedule_Spec) AssignProperties_From_Redis_PatchSched
 	return nil
 }
 
-// AssignProperties_To_Redis_PatchSchedule_Spec populates the provided destination Redis_PatchSchedule_Spec from our Redis_PatchSchedule_Spec
-func (schedule *Redis_PatchSchedule_Spec) AssignProperties_To_Redis_PatchSchedule_Spec(destination *v20230401s.Redis_PatchSchedule_Spec) error {
+// AssignProperties_To_RedisPatchSchedule_Spec populates the provided destination RedisPatchSchedule_Spec from our RedisPatchSchedule_Spec
+func (schedule *RedisPatchSchedule_Spec) AssignProperties_To_RedisPatchSchedule_Spec(destination *storage.RedisPatchSchedule_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
+
+	// OperatorSpec
+	if schedule.OperatorSpec != nil {
+		var operatorSpec storage.RedisPatchScheduleOperatorSpec
+		err := schedule.OperatorSpec.AssignProperties_To_RedisPatchScheduleOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_RedisPatchScheduleOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = schedule.OriginalVersion()
@@ -491,11 +570,11 @@ func (schedule *Redis_PatchSchedule_Spec) AssignProperties_To_Redis_PatchSchedul
 
 	// ScheduleEntries
 	if schedule.ScheduleEntries != nil {
-		scheduleEntryList := make([]v20230401s.ScheduleEntry, len(schedule.ScheduleEntries))
+		scheduleEntryList := make([]storage.ScheduleEntry, len(schedule.ScheduleEntries))
 		for scheduleEntryIndex, scheduleEntryItem := range schedule.ScheduleEntries {
 			// Shadow the loop variable to avoid aliasing
 			scheduleEntryItem := scheduleEntryItem
-			var scheduleEntry v20230401s.ScheduleEntry
+			var scheduleEntry storage.ScheduleEntry
 			err := scheduleEntryItem.AssignProperties_To_ScheduleEntry(&scheduleEntry)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ScheduleEntry() to populate field ScheduleEntries")
@@ -518,37 +597,12 @@ func (schedule *Redis_PatchSchedule_Spec) AssignProperties_To_Redis_PatchSchedul
 	return nil
 }
 
-// Initialize_From_Redis_PatchSchedule_STATUS populates our Redis_PatchSchedule_Spec from the provided source Redis_PatchSchedule_STATUS
-func (schedule *Redis_PatchSchedule_Spec) Initialize_From_Redis_PatchSchedule_STATUS(source *Redis_PatchSchedule_STATUS) error {
-
-	// ScheduleEntries
-	if source.ScheduleEntries != nil {
-		scheduleEntryList := make([]ScheduleEntry, len(source.ScheduleEntries))
-		for scheduleEntryIndex, scheduleEntryItem := range source.ScheduleEntries {
-			// Shadow the loop variable to avoid aliasing
-			scheduleEntryItem := scheduleEntryItem
-			var scheduleEntry ScheduleEntry
-			err := scheduleEntry.Initialize_From_ScheduleEntry_STATUS(&scheduleEntryItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ScheduleEntry_STATUS() to populate field ScheduleEntries")
-			}
-			scheduleEntryList[scheduleEntryIndex] = scheduleEntry
-		}
-		schedule.ScheduleEntries = scheduleEntryList
-	} else {
-		schedule.ScheduleEntries = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
-func (schedule *Redis_PatchSchedule_Spec) OriginalVersion() string {
+func (schedule *RedisPatchSchedule_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
-type Redis_PatchSchedule_STATUS struct {
+type RedisPatchSchedule_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
@@ -569,25 +623,25 @@ type Redis_PatchSchedule_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Redis_PatchSchedule_STATUS{}
+var _ genruntime.ConvertibleStatus = &RedisPatchSchedule_STATUS{}
 
-// ConvertStatusFrom populates our Redis_PatchSchedule_STATUS from the provided source
-func (schedule *Redis_PatchSchedule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230401s.Redis_PatchSchedule_STATUS)
+// ConvertStatusFrom populates our RedisPatchSchedule_STATUS from the provided source
+func (schedule *RedisPatchSchedule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.RedisPatchSchedule_STATUS)
 	if ok {
 		// Populate our instance from source
-		return schedule.AssignProperties_From_Redis_PatchSchedule_STATUS(src)
+		return schedule.AssignProperties_From_RedisPatchSchedule_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230401s.Redis_PatchSchedule_STATUS{}
+	src = &storage.RedisPatchSchedule_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = schedule.AssignProperties_From_Redis_PatchSchedule_STATUS(src)
+	err = schedule.AssignProperties_From_RedisPatchSchedule_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -595,17 +649,17 @@ func (schedule *Redis_PatchSchedule_STATUS) ConvertStatusFrom(source genruntime.
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Redis_PatchSchedule_STATUS
-func (schedule *Redis_PatchSchedule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230401s.Redis_PatchSchedule_STATUS)
+// ConvertStatusTo populates the provided destination from our RedisPatchSchedule_STATUS
+func (schedule *RedisPatchSchedule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.RedisPatchSchedule_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return schedule.AssignProperties_To_Redis_PatchSchedule_STATUS(dst)
+		return schedule.AssignProperties_To_RedisPatchSchedule_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230401s.Redis_PatchSchedule_STATUS{}
-	err := schedule.AssignProperties_To_Redis_PatchSchedule_STATUS(dst)
+	dst = &storage.RedisPatchSchedule_STATUS{}
+	err := schedule.AssignProperties_To_RedisPatchSchedule_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -619,18 +673,18 @@ func (schedule *Redis_PatchSchedule_STATUS) ConvertStatusTo(destination genrunti
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Redis_PatchSchedule_STATUS{}
+var _ genruntime.FromARMConverter = &RedisPatchSchedule_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (schedule *Redis_PatchSchedule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Redis_PatchSchedule_STATUS_ARM{}
+func (schedule *RedisPatchSchedule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.RedisPatchSchedule_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (schedule *Redis_PatchSchedule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Redis_PatchSchedule_STATUS_ARM)
+func (schedule *RedisPatchSchedule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.RedisPatchSchedule_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Redis_PatchSchedule_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RedisPatchSchedule_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -676,8 +730,8 @@ func (schedule *Redis_PatchSchedule_STATUS) PopulateFromARM(owner genruntime.Arb
 	return nil
 }
 
-// AssignProperties_From_Redis_PatchSchedule_STATUS populates our Redis_PatchSchedule_STATUS from the provided source Redis_PatchSchedule_STATUS
-func (schedule *Redis_PatchSchedule_STATUS) AssignProperties_From_Redis_PatchSchedule_STATUS(source *v20230401s.Redis_PatchSchedule_STATUS) error {
+// AssignProperties_From_RedisPatchSchedule_STATUS populates our RedisPatchSchedule_STATUS from the provided source RedisPatchSchedule_STATUS
+func (schedule *RedisPatchSchedule_STATUS) AssignProperties_From_RedisPatchSchedule_STATUS(source *storage.RedisPatchSchedule_STATUS) error {
 
 	// Conditions
 	schedule.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -716,8 +770,8 @@ func (schedule *Redis_PatchSchedule_STATUS) AssignProperties_From_Redis_PatchSch
 	return nil
 }
 
-// AssignProperties_To_Redis_PatchSchedule_STATUS populates the provided destination Redis_PatchSchedule_STATUS from our Redis_PatchSchedule_STATUS
-func (schedule *Redis_PatchSchedule_STATUS) AssignProperties_To_Redis_PatchSchedule_STATUS(destination *v20230401s.Redis_PatchSchedule_STATUS) error {
+// AssignProperties_To_RedisPatchSchedule_STATUS populates the provided destination RedisPatchSchedule_STATUS from our RedisPatchSchedule_STATUS
+func (schedule *RedisPatchSchedule_STATUS) AssignProperties_To_RedisPatchSchedule_STATUS(destination *storage.RedisPatchSchedule_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -735,11 +789,11 @@ func (schedule *Redis_PatchSchedule_STATUS) AssignProperties_To_Redis_PatchSched
 
 	// ScheduleEntries
 	if schedule.ScheduleEntries != nil {
-		scheduleEntryList := make([]v20230401s.ScheduleEntry_STATUS, len(schedule.ScheduleEntries))
+		scheduleEntryList := make([]storage.ScheduleEntry_STATUS, len(schedule.ScheduleEntries))
 		for scheduleEntryIndex, scheduleEntryItem := range schedule.ScheduleEntries {
 			// Shadow the loop variable to avoid aliasing
 			scheduleEntryItem := scheduleEntryItem
-			var scheduleEntry v20230401s.ScheduleEntry_STATUS
+			var scheduleEntry storage.ScheduleEntry_STATUS
 			err := scheduleEntryItem.AssignProperties_To_ScheduleEntry_STATUS(&scheduleEntry)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ScheduleEntry_STATUS() to populate field ScheduleEntries")
@@ -753,6 +807,110 @@ func (schedule *Redis_PatchSchedule_STATUS) AssignProperties_To_Redis_PatchSched
 
 	// Type
 	destination.Type = genruntime.ClonePointerToString(schedule.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type RedisPatchScheduleOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_RedisPatchScheduleOperatorSpec populates our RedisPatchScheduleOperatorSpec from the provided source RedisPatchScheduleOperatorSpec
+func (operator *RedisPatchScheduleOperatorSpec) AssignProperties_From_RedisPatchScheduleOperatorSpec(source *storage.RedisPatchScheduleOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisPatchScheduleOperatorSpec populates the provided destination RedisPatchScheduleOperatorSpec from our RedisPatchScheduleOperatorSpec
+func (operator *RedisPatchScheduleOperatorSpec) AssignProperties_To_RedisPatchScheduleOperatorSpec(destination *storage.RedisPatchScheduleOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -786,11 +944,13 @@ func (entry *ScheduleEntry) ConvertToARM(resolved genruntime.ConvertToARMResolve
 	if entry == nil {
 		return nil, nil
 	}
-	result := &ScheduleEntry_ARM{}
+	result := &arm.ScheduleEntry{}
 
 	// Set property "DayOfWeek":
 	if entry.DayOfWeek != nil {
-		dayOfWeek := *entry.DayOfWeek
+		var temp string
+		temp = string(*entry.DayOfWeek)
+		dayOfWeek := arm.ScheduleEntry_DayOfWeek(temp)
 		result.DayOfWeek = &dayOfWeek
 	}
 
@@ -810,19 +970,21 @@ func (entry *ScheduleEntry) ConvertToARM(resolved genruntime.ConvertToARMResolve
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (entry *ScheduleEntry) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ScheduleEntry_ARM{}
+	return &arm.ScheduleEntry{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (entry *ScheduleEntry) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ScheduleEntry_ARM)
+	typedInput, ok := armInput.(arm.ScheduleEntry)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ScheduleEntry_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ScheduleEntry, got %T", armInput)
 	}
 
 	// Set property "DayOfWeek":
 	if typedInput.DayOfWeek != nil {
-		dayOfWeek := *typedInput.DayOfWeek
+		var temp string
+		temp = string(*typedInput.DayOfWeek)
+		dayOfWeek := ScheduleEntry_DayOfWeek(temp)
 		entry.DayOfWeek = &dayOfWeek
 	}
 
@@ -843,12 +1005,13 @@ func (entry *ScheduleEntry) PopulateFromARM(owner genruntime.ArbitraryOwnerRefer
 }
 
 // AssignProperties_From_ScheduleEntry populates our ScheduleEntry from the provided source ScheduleEntry
-func (entry *ScheduleEntry) AssignProperties_From_ScheduleEntry(source *v20230401s.ScheduleEntry) error {
+func (entry *ScheduleEntry) AssignProperties_From_ScheduleEntry(source *storage.ScheduleEntry) error {
 
 	// DayOfWeek
 	if source.DayOfWeek != nil {
-		dayOfWeek := ScheduleEntry_DayOfWeek(*source.DayOfWeek)
-		entry.DayOfWeek = &dayOfWeek
+		dayOfWeek := *source.DayOfWeek
+		dayOfWeekTemp := genruntime.ToEnum(dayOfWeek, scheduleEntry_DayOfWeek_Values)
+		entry.DayOfWeek = &dayOfWeekTemp
 	} else {
 		entry.DayOfWeek = nil
 	}
@@ -864,7 +1027,7 @@ func (entry *ScheduleEntry) AssignProperties_From_ScheduleEntry(source *v2023040
 }
 
 // AssignProperties_To_ScheduleEntry populates the provided destination ScheduleEntry from our ScheduleEntry
-func (entry *ScheduleEntry) AssignProperties_To_ScheduleEntry(destination *v20230401s.ScheduleEntry) error {
+func (entry *ScheduleEntry) AssignProperties_To_ScheduleEntry(destination *storage.ScheduleEntry) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -893,27 +1056,6 @@ func (entry *ScheduleEntry) AssignProperties_To_ScheduleEntry(destination *v2023
 	return nil
 }
 
-// Initialize_From_ScheduleEntry_STATUS populates our ScheduleEntry from the provided source ScheduleEntry_STATUS
-func (entry *ScheduleEntry) Initialize_From_ScheduleEntry_STATUS(source *ScheduleEntry_STATUS) error {
-
-	// DayOfWeek
-	if source.DayOfWeek != nil {
-		dayOfWeek := ScheduleEntry_DayOfWeek(*source.DayOfWeek)
-		entry.DayOfWeek = &dayOfWeek
-	} else {
-		entry.DayOfWeek = nil
-	}
-
-	// MaintenanceWindow
-	entry.MaintenanceWindow = genruntime.ClonePointerToString(source.MaintenanceWindow)
-
-	// StartHourUtc
-	entry.StartHourUtc = genruntime.ClonePointerToInt(source.StartHourUtc)
-
-	// No error
-	return nil
-}
-
 // Patch schedule entry for a Premium Redis Cache.
 type ScheduleEntry_STATUS struct {
 	// DayOfWeek: Day of the week when a cache can be patched.
@@ -930,19 +1072,21 @@ var _ genruntime.FromARMConverter = &ScheduleEntry_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (entry *ScheduleEntry_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ScheduleEntry_STATUS_ARM{}
+	return &arm.ScheduleEntry_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (entry *ScheduleEntry_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ScheduleEntry_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ScheduleEntry_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ScheduleEntry_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ScheduleEntry_STATUS, got %T", armInput)
 	}
 
 	// Set property "DayOfWeek":
 	if typedInput.DayOfWeek != nil {
-		dayOfWeek := *typedInput.DayOfWeek
+		var temp string
+		temp = string(*typedInput.DayOfWeek)
+		dayOfWeek := ScheduleEntry_DayOfWeek_STATUS(temp)
 		entry.DayOfWeek = &dayOfWeek
 	}
 
@@ -963,12 +1107,13 @@ func (entry *ScheduleEntry_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 }
 
 // AssignProperties_From_ScheduleEntry_STATUS populates our ScheduleEntry_STATUS from the provided source ScheduleEntry_STATUS
-func (entry *ScheduleEntry_STATUS) AssignProperties_From_ScheduleEntry_STATUS(source *v20230401s.ScheduleEntry_STATUS) error {
+func (entry *ScheduleEntry_STATUS) AssignProperties_From_ScheduleEntry_STATUS(source *storage.ScheduleEntry_STATUS) error {
 
 	// DayOfWeek
 	if source.DayOfWeek != nil {
-		dayOfWeek := ScheduleEntry_DayOfWeek_STATUS(*source.DayOfWeek)
-		entry.DayOfWeek = &dayOfWeek
+		dayOfWeek := *source.DayOfWeek
+		dayOfWeekTemp := genruntime.ToEnum(dayOfWeek, scheduleEntry_DayOfWeek_STATUS_Values)
+		entry.DayOfWeek = &dayOfWeekTemp
 	} else {
 		entry.DayOfWeek = nil
 	}
@@ -984,7 +1129,7 @@ func (entry *ScheduleEntry_STATUS) AssignProperties_From_ScheduleEntry_STATUS(so
 }
 
 // AssignProperties_To_ScheduleEntry_STATUS populates the provided destination ScheduleEntry_STATUS from our ScheduleEntry_STATUS
-func (entry *ScheduleEntry_STATUS) AssignProperties_To_ScheduleEntry_STATUS(destination *v20230401s.ScheduleEntry_STATUS) error {
+func (entry *ScheduleEntry_STATUS) AssignProperties_To_ScheduleEntry_STATUS(destination *storage.ScheduleEntry_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1028,6 +1173,19 @@ const (
 	ScheduleEntry_DayOfWeek_Weekend   = ScheduleEntry_DayOfWeek("Weekend")
 )
 
+// Mapping from string to ScheduleEntry_DayOfWeek
+var scheduleEntry_DayOfWeek_Values = map[string]ScheduleEntry_DayOfWeek{
+	"everyday":  ScheduleEntry_DayOfWeek_Everyday,
+	"friday":    ScheduleEntry_DayOfWeek_Friday,
+	"monday":    ScheduleEntry_DayOfWeek_Monday,
+	"saturday":  ScheduleEntry_DayOfWeek_Saturday,
+	"sunday":    ScheduleEntry_DayOfWeek_Sunday,
+	"thursday":  ScheduleEntry_DayOfWeek_Thursday,
+	"tuesday":   ScheduleEntry_DayOfWeek_Tuesday,
+	"wednesday": ScheduleEntry_DayOfWeek_Wednesday,
+	"weekend":   ScheduleEntry_DayOfWeek_Weekend,
+}
+
 type ScheduleEntry_DayOfWeek_STATUS string
 
 const (
@@ -1041,6 +1199,19 @@ const (
 	ScheduleEntry_DayOfWeek_STATUS_Wednesday = ScheduleEntry_DayOfWeek_STATUS("Wednesday")
 	ScheduleEntry_DayOfWeek_STATUS_Weekend   = ScheduleEntry_DayOfWeek_STATUS("Weekend")
 )
+
+// Mapping from string to ScheduleEntry_DayOfWeek_STATUS
+var scheduleEntry_DayOfWeek_STATUS_Values = map[string]ScheduleEntry_DayOfWeek_STATUS{
+	"everyday":  ScheduleEntry_DayOfWeek_STATUS_Everyday,
+	"friday":    ScheduleEntry_DayOfWeek_STATUS_Friday,
+	"monday":    ScheduleEntry_DayOfWeek_STATUS_Monday,
+	"saturday":  ScheduleEntry_DayOfWeek_STATUS_Saturday,
+	"sunday":    ScheduleEntry_DayOfWeek_STATUS_Sunday,
+	"thursday":  ScheduleEntry_DayOfWeek_STATUS_Thursday,
+	"tuesday":   ScheduleEntry_DayOfWeek_STATUS_Tuesday,
+	"wednesday": ScheduleEntry_DayOfWeek_STATUS_Wednesday,
+	"weekend":   ScheduleEntry_DayOfWeek_STATUS_Weekend,
+}
 
 func init() {
 	SchemeBuilder.Register(&RedisPatchSchedule{}, &RedisPatchScheduleList{})

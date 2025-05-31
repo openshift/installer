@@ -4,9 +4,12 @@
 package storage
 
 import (
-	v20230202ps "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -45,6 +48,26 @@ func (fleet *Fleet) SetConditions(conditions conditions.Conditions) {
 	fleet.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &Fleet{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (fleet *Fleet) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if fleet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return fleet.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Fleet{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (fleet *Fleet) SecretDestinationExpressions() []*core.DestinationExpression {
+	if fleet.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return fleet.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &Fleet{}
 
 // AzureName returns the Azure name of the resource
@@ -54,7 +77,7 @@ func (fleet *Fleet) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-03-15-preview"
 func (fleet Fleet) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-03-15-preview"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -239,8 +262,10 @@ type FleetHubProfile_STATUS struct {
 // Storage version of v1api20230315preview.FleetOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type FleetOperatorSpec struct {
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	Secrets     *FleetOperatorSecrets  `json:"secrets,omitempty"`
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+	Secrets              *FleetOperatorSecrets         `json:"secrets,omitempty"`
 }
 
 // Storage version of v1api20230315preview.SystemData_STATUS
@@ -256,7 +281,7 @@ type SystemData_STATUS struct {
 }
 
 // AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v20230202ps.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -299,7 +324,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 }
 
 // AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *v20230202ps.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
 
@@ -342,8 +367,8 @@ func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination
 }
 
 type augmentConversionForSystemData_STATUS interface {
-	AssignPropertiesFrom(src *v20230202ps.SystemData_STATUS) error
-	AssignPropertiesTo(dst *v20230202ps.SystemData_STATUS) error
+	AssignPropertiesFrom(src *storage.SystemData_STATUS) error
+	AssignPropertiesTo(dst *storage.SystemData_STATUS) error
 }
 
 // Storage version of v1api20230315preview.FleetOperatorSecrets

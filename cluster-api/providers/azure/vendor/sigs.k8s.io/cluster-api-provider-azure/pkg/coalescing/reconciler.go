@@ -22,9 +22,10 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
 	"sigs.k8s.io/cluster-api-provider-azure/util/cache/ttllru"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type (

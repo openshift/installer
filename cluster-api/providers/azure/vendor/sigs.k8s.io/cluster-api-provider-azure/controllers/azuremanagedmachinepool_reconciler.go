@@ -26,6 +26,7 @@ import (
 	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
 	"github.com/pkg/errors"
 	azprovider "sigs.k8s.io/cloud-provider-azure/pkg/provider"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/agentpools"
@@ -133,7 +134,6 @@ func (s *azureManagedMachinePoolService) Reconcile(ctx context.Context) error {
 
 	var match *armcompute.VirtualMachineScaleSet
 	for _, ss := range vmss {
-		ss := ss
 		if ss.Tags["poolName"] != nil && *ss.Tags["poolName"] == agentPoolName {
 			match = &ss
 			break

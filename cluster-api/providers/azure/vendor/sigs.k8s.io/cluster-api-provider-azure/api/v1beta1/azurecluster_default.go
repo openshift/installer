@@ -20,6 +20,8 @@ import (
 	"fmt"
 
 	"k8s.io/utils/ptr"
+
+	"sigs.k8s.io/cluster-api-provider-azure/feature"
 )
 
 const (
@@ -58,9 +60,16 @@ func (c *AzureCluster) setNetworkSpecDefaults() {
 	c.setBastionDefaults()
 	c.setSubnetDefaults()
 	c.setVnetPeeringDefaults()
-	c.setAPIServerLBDefaults()
+	if c.Spec.ControlPlaneEnabled {
+		c.setAPIServerLBDefaults()
+	}
 	c.SetNodeOutboundLBDefaults()
-	c.SetControlPlaneOutboundLBDefaults()
+	if c.Spec.ControlPlaneEnabled {
+		c.SetControlPlaneOutboundLBDefaults()
+	}
+	if !c.Spec.ControlPlaneEnabled {
+		c.Spec.NetworkSpec.APIServerLB = nil
+	}
 }
 
 func (c *AzureCluster) setResourceGroupDefault() {
@@ -93,16 +102,18 @@ func (c *AzureCluster) setSubnetDefaults() {
 		c.Spec.NetworkSpec.UpdateSubnet(clusterSubnet, SubnetCluster)
 	}
 
-	/* if there is a cp subnet set defaults
-	   if no cp subnet and cluster subnet create a default cp subnet */
-	cpSubnet, errcp := c.Spec.NetworkSpec.GetSubnet(SubnetControlPlane)
-	if errcp == nil {
-		cpSubnet.setControlPlaneSubnetDefaults(c.ObjectMeta.Name)
-		c.Spec.NetworkSpec.UpdateSubnet(cpSubnet, SubnetControlPlane)
-	} else if !clusterSubnetExists {
-		cpSubnet = SubnetSpec{SubnetClassSpec: SubnetClassSpec{Role: SubnetControlPlane}}
-		cpSubnet.setControlPlaneSubnetDefaults(c.ObjectMeta.Name)
-		c.Spec.NetworkSpec.Subnets = append(c.Spec.NetworkSpec.Subnets, cpSubnet)
+	if c.Spec.ControlPlaneEnabled {
+		/* if there is a cp subnet set defaults
+		   if no cp subnet and cluster subnet create a default cp subnet */
+		cpSubnet, errcp := c.Spec.NetworkSpec.GetSubnet(SubnetControlPlane)
+		if errcp == nil {
+			cpSubnet.setControlPlaneSubnetDefaults(c.ObjectMeta.Name)
+			c.Spec.NetworkSpec.UpdateSubnet(cpSubnet, SubnetControlPlane)
+		} else if !clusterSubnetExists {
+			cpSubnet = SubnetSpec{SubnetClassSpec: SubnetClassSpec{Role: SubnetControlPlane}}
+			cpSubnet.setControlPlaneSubnetDefaults(c.ObjectMeta.Name)
+			c.Spec.NetworkSpec.Subnets = append(c.Spec.NetworkSpec.Subnets, cpSubnet)
+		}
 	}
 
 	var nodeSubnetFound bool
@@ -210,7 +221,15 @@ func (c *AzureCluster) setVnetPeeringDefaults() {
 }
 
 func (c *AzureCluster) setAPIServerLBDefaults() {
-	lb := &c.Spec.NetworkSpec.APIServerLB
+	if c.Spec.NetworkSpec.APIServerLB == nil {
+		lbSpec := LoadBalancerSpec{
+			LoadBalancerClassSpec: LoadBalancerClassSpec{
+				Type: "Public",
+			},
+		}
+		c.Spec.NetworkSpec.APIServerLB = &lbSpec
+	}
+	lb := c.Spec.NetworkSpec.APIServerLB
 
 	lb.LoadBalancerClassSpec.setAPIServerLBDefaults()
 
@@ -226,6 +245,29 @@ func (c *AzureCluster) setAPIServerLBDefaults() {
 						Name: generatePublicIPName(c.ObjectMeta.Name),
 					},
 				},
+			}
+		}
+		// If the API Server ILB feature is enabled, create a default internal LB IP or use the specified one
+		if feature.Gates.Enabled(feature.APIServerILB) {
+			privateIPFound := false
+			for i := range lb.FrontendIPs {
+				if lb.FrontendIPs[i].FrontendIPClass.PrivateIPAddress != "" {
+					if lb.FrontendIPs[i].Name == "" {
+						lb.FrontendIPs[i].Name = generatePrivateIPConfigName(lb.Name)
+					}
+					privateIPFound = true
+					break
+				}
+			}
+			// if no private IP is found, we should create a default internal LB IP
+			if !privateIPFound {
+				privateIP := FrontendIP{
+					Name: generatePrivateIPConfigName(lb.Name),
+					FrontendIPClass: FrontendIPClass{
+						PrivateIPAddress: DefaultInternalLBIPAddress,
+					},
+				}
+				lb.FrontendIPs = append(lb.FrontendIPs, privateIP)
 			}
 		}
 	} else if lb.Type == Internal {
@@ -249,7 +291,7 @@ func (c *AzureCluster) setAPIServerLBDefaults() {
 // SetNodeOutboundLBDefaults sets the default values for the NodeOutboundLB.
 func (c *AzureCluster) SetNodeOutboundLBDefaults() {
 	if c.Spec.NetworkSpec.NodeOutboundLB == nil {
-		if c.Spec.NetworkSpec.APIServerLB.Type == Internal {
+		if !c.Spec.ControlPlaneEnabled || c.Spec.NetworkSpec.APIServerLB.Type == Internal {
 			return
 		}
 
@@ -314,7 +356,7 @@ func (c *AzureCluster) SetBackendPoolNameDefault() {
 
 // SetAPIServerLBBackendPoolNameDefault defaults the name of the backend pool for apiserver LB.
 func (c *AzureCluster) SetAPIServerLBBackendPoolNameDefault() {
-	apiServerLB := &c.Spec.NetworkSpec.APIServerLB
+	apiServerLB := c.Spec.NetworkSpec.APIServerLB
 	if apiServerLB.BackendPool.Name == "" {
 		apiServerLB.BackendPool.Name = generateBackendAddressPoolName(apiServerLB.Name)
 	}
@@ -511,6 +553,11 @@ func generatePublicIPName(clusterName string) string {
 // generateFrontendIPConfigName generates a load balancer frontend IP config name.
 func generateFrontendIPConfigName(lbName string) string {
 	return fmt.Sprintf("%s-%s", lbName, "frontEnd")
+}
+
+// generateFrontendIPConfigName generates a load balancer frontend IP config name.
+func generatePrivateIPConfigName(lbName string) string {
+	return fmt.Sprintf("%s-%s", lbName, "frontEnd-internal-ip")
 }
 
 // generateNodeOutboundIPName generates a public IP name, based on the cluster name.

@@ -247,7 +247,7 @@ func ValidateResourceReferences(refs set.Set[ResourceReference]) (admission.Warn
 		}
 	}
 
-	return nil, kerrors.NewAggregate(errs)
+	return warnings, kerrors.NewAggregate(errs)
 }
 
 func VerifyResourceOwnerARMID(resource ARMMetaObject) error {
@@ -272,7 +272,7 @@ func VerifyResourceOwnerARMID(resource ARMMetaObject) error {
 
 	// Ensure that the ARM ID actually has a suffix containing the resource types we expect
 	if len(expectedResourceTypesIncludedInARMID) > 0 {
-		if strings.ToLower(armID.ResourceType.Namespace) != strings.ToLower(provider) {
+		if !strings.EqualFold(armID.ResourceType.Namespace, provider) {
 			return errors.Errorf(
 				"expected owner ARM ID to be from provider %q, but was %q",
 				provider,

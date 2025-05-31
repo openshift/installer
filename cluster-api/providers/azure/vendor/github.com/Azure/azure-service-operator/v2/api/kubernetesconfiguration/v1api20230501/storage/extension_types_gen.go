@@ -9,6 +9,8 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -50,10 +52,30 @@ func (extension *Extension) SetConditions(conditions conditions.Conditions) {
 	extension.Status.Conditions = conditions
 }
 
-var _ genruntime.KubernetesExporter = &Extension{}
+var _ configmaps.Exporter = &Extension{}
 
-// ExportKubernetesResources defines a resource which can create other resources in Kubernetes.
-func (extension *Extension) ExportKubernetesResources(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (extension *Extension) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if extension.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return extension.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Extension{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (extension *Extension) SecretDestinationExpressions() []*core.DestinationExpression {
+	if extension.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return extension.Spec.OperatorSpec.SecretExpressions
+}
+
+var _ genruntime.KubernetesConfigExporter = &Extension{}
+
+// ExportKubernetesConfigMaps defines a resource which can create ConfigMaps in Kubernetes.
+func (extension *Extension) ExportKubernetesConfigMaps(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
 	collector := configmaps.NewCollector(extension.Namespace)
 	if extension.Spec.OperatorSpec != nil && extension.Spec.OperatorSpec.ConfigMaps != nil {
 		if extension.Status.AksAssignedIdentity != nil {
@@ -78,7 +100,7 @@ func (extension *Extension) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-05-01"
 func (extension Extension) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-05-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -292,8 +314,10 @@ type Extension_Properties_AksAssignedIdentity_STATUS struct {
 // Storage version of v1api20230501.ExtensionOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type ExtensionOperatorSpec struct {
-	ConfigMaps  *ExtensionOperatorConfigMaps `json:"configMaps,omitempty"`
-	PropertyBag genruntime.PropertyBag       `json:"$propertyBag,omitempty"`
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	ConfigMaps           *ExtensionOperatorConfigMaps  `json:"configMaps,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20230501.ExtensionStatus_STATUS

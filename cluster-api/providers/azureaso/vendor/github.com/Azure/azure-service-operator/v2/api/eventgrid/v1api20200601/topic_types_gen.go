@@ -6,12 +6,15 @@ package v1api20200601
 import (
 	"context"
 	"fmt"
-	v20200601s "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +57,7 @@ var _ conversion.Convertible = &Topic{}
 
 // ConvertFrom populates our Topic from the provided hub Topic
 func (topic *Topic) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20200601s.Topic)
+	source, ok := hub.(*storage.Topic)
 	if !ok {
 		return fmt.Errorf("expected eventgrid/v1api20200601/storage/Topic but received %T instead", hub)
 	}
@@ -64,7 +67,7 @@ func (topic *Topic) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Topic from our Topic
 func (topic *Topic) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20200601s.Topic)
+	destination, ok := hub.(*storage.Topic)
 	if !ok {
 		return fmt.Errorf("expected eventgrid/v1api20200601/storage/Topic but received %T instead", hub)
 	}
@@ -95,6 +98,26 @@ func (topic *Topic) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the Topic resource
 func (topic *Topic) defaultImpl() { topic.defaultAzureName() }
 
+var _ configmaps.Exporter = &Topic{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (topic *Topic) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if topic.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return topic.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Topic{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (topic *Topic) SecretDestinationExpressions() []*core.DestinationExpression {
+	if topic.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return topic.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &Topic{}
 
 // InitializeSpec initializes the spec for this resource from the given status
@@ -106,10 +129,10 @@ func (topic *Topic) InitializeSpec(status genruntime.ConvertibleStatus) error {
 	return fmt.Errorf("expected Status of type Topic_STATUS but received %T instead", status)
 }
 
-var _ genruntime.KubernetesExporter = &Topic{}
+var _ genruntime.KubernetesConfigExporter = &Topic{}
 
-// ExportKubernetesResources defines a resource which can create other resources in Kubernetes.
-func (topic *Topic) ExportKubernetesResources(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+// ExportKubernetesConfigMaps defines a resource which can create ConfigMaps in Kubernetes.
+func (topic *Topic) ExportKubernetesConfigMaps(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
 	collector := configmaps.NewCollector(topic.Namespace)
 	if topic.Spec.OperatorSpec != nil && topic.Spec.OperatorSpec.ConfigMaps != nil {
 		if topic.Status.Endpoint != nil {
@@ -132,7 +155,7 @@ func (topic *Topic) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-06-01"
 func (topic Topic) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -262,13 +285,13 @@ func (topic *Topic) validateConfigMapDestinations() (admission.Warnings, error) 
 	if topic.Spec.OperatorSpec == nil {
 		return nil, nil
 	}
-	if topic.Spec.OperatorSpec.ConfigMaps == nil {
-		return nil, nil
+	var toValidate []*genruntime.ConfigMapDestination
+	if topic.Spec.OperatorSpec.ConfigMaps != nil {
+		toValidate = []*genruntime.ConfigMapDestination{
+			topic.Spec.OperatorSpec.ConfigMaps.Endpoint,
+		}
 	}
-	toValidate := []*genruntime.ConfigMapDestination{
-		topic.Spec.OperatorSpec.ConfigMaps.Endpoint,
-	}
-	return genruntime.ValidateConfigMapDestinations(toValidate)
+	return configmaps.ValidateDestinations(topic, toValidate, topic.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -290,14 +313,14 @@ func (topic *Topic) validateSecretDestinations() (admission.Warnings, error) {
 	if topic.Spec.OperatorSpec == nil {
 		return nil, nil
 	}
-	if topic.Spec.OperatorSpec.Secrets == nil {
-		return nil, nil
+	var toValidate []*genruntime.SecretDestination
+	if topic.Spec.OperatorSpec.Secrets != nil {
+		toValidate = []*genruntime.SecretDestination{
+			topic.Spec.OperatorSpec.Secrets.Key1,
+			topic.Spec.OperatorSpec.Secrets.Key2,
+		}
 	}
-	toValidate := []*genruntime.SecretDestination{
-		topic.Spec.OperatorSpec.Secrets.Key1,
-		topic.Spec.OperatorSpec.Secrets.Key2,
-	}
-	return genruntime.ValidateSecretDestinations(toValidate)
+	return secrets.ValidateDestinations(topic, toValidate, topic.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties
@@ -311,7 +334,7 @@ func (topic *Topic) validateWriteOnceProperties(old runtime.Object) (admission.W
 }
 
 // AssignProperties_From_Topic populates our Topic from the provided source Topic
-func (topic *Topic) AssignProperties_From_Topic(source *v20200601s.Topic) error {
+func (topic *Topic) AssignProperties_From_Topic(source *storage.Topic) error {
 
 	// ObjectMeta
 	topic.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -337,13 +360,13 @@ func (topic *Topic) AssignProperties_From_Topic(source *v20200601s.Topic) error 
 }
 
 // AssignProperties_To_Topic populates the provided destination Topic from our Topic
-func (topic *Topic) AssignProperties_To_Topic(destination *v20200601s.Topic) error {
+func (topic *Topic) AssignProperties_To_Topic(destination *storage.Topic) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *topic.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20200601s.Topic_Spec
+	var spec storage.Topic_Spec
 	err := topic.Spec.AssignProperties_To_Topic_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Topic_Spec() to populate field Spec")
@@ -351,7 +374,7 @@ func (topic *Topic) AssignProperties_To_Topic(destination *v20200601s.Topic) err
 	destination.Spec = spec
 
 	// Status
-	var status v20200601s.Topic_STATUS
+	var status storage.Topic_STATUS
 	err = topic.Status.AssignProperties_To_Topic_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Topic_STATUS() to populate field Status")
@@ -427,7 +450,7 @@ func (topic *Topic_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 	if topic == nil {
 		return nil, nil
 	}
-	result := &Topic_Spec_ARM{}
+	result := &arm.Topic_Spec{}
 
 	// Set property "Location":
 	if topic.Location != nil {
@@ -443,17 +466,19 @@ func (topic *Topic_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 		topic.InputSchema != nil ||
 		topic.InputSchemaMapping != nil ||
 		topic.PublicNetworkAccess != nil {
-		result.Properties = &TopicProperties_ARM{}
+		result.Properties = &arm.TopicProperties{}
 	}
 	for _, item := range topic.InboundIpRules {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.InboundIpRules = append(result.Properties.InboundIpRules, *item_ARM.(*InboundIpRule_ARM))
+		result.Properties.InboundIpRules = append(result.Properties.InboundIpRules, *item_ARM.(*arm.InboundIpRule))
 	}
 	if topic.InputSchema != nil {
-		inputSchema := *topic.InputSchema
+		var temp string
+		temp = string(*topic.InputSchema)
+		inputSchema := arm.TopicProperties_InputSchema(temp)
 		result.Properties.InputSchema = &inputSchema
 	}
 	if topic.InputSchemaMapping != nil {
@@ -461,11 +486,13 @@ func (topic *Topic_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 		if err != nil {
 			return nil, err
 		}
-		inputSchemaMapping := *inputSchemaMapping_ARM.(*InputSchemaMapping_ARM)
+		inputSchemaMapping := *inputSchemaMapping_ARM.(*arm.InputSchemaMapping)
 		result.Properties.InputSchemaMapping = &inputSchemaMapping
 	}
 	if topic.PublicNetworkAccess != nil {
-		publicNetworkAccess := *topic.PublicNetworkAccess
+		var temp string
+		temp = string(*topic.PublicNetworkAccess)
+		publicNetworkAccess := arm.TopicProperties_PublicNetworkAccess(temp)
 		result.Properties.PublicNetworkAccess = &publicNetworkAccess
 	}
 
@@ -481,14 +508,14 @@ func (topic *Topic_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (topic *Topic_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Topic_Spec_ARM{}
+	return &arm.Topic_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (topic *Topic_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Topic_Spec_ARM)
+	typedInput, ok := armInput.(arm.Topic_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Topic_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Topic_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -511,7 +538,9 @@ func (topic *Topic_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.InputSchema != nil {
-			inputSchema := *typedInput.Properties.InputSchema
+			var temp string
+			temp = string(*typedInput.Properties.InputSchema)
+			inputSchema := TopicProperties_InputSchema(temp)
 			topic.InputSchema = &inputSchema
 		}
 	}
@@ -548,7 +577,9 @@ func (topic *Topic_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccess != nil {
-			publicNetworkAccess := *typedInput.Properties.PublicNetworkAccess
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccess)
+			publicNetworkAccess := TopicProperties_PublicNetworkAccess(temp)
 			topic.PublicNetworkAccess = &publicNetworkAccess
 		}
 	}
@@ -569,14 +600,14 @@ var _ genruntime.ConvertibleSpec = &Topic_Spec{}
 
 // ConvertSpecFrom populates our Topic_Spec from the provided source
 func (topic *Topic_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20200601s.Topic_Spec)
+	src, ok := source.(*storage.Topic_Spec)
 	if ok {
 		// Populate our instance from source
 		return topic.AssignProperties_From_Topic_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20200601s.Topic_Spec{}
+	src = &storage.Topic_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -593,14 +624,14 @@ func (topic *Topic_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) erro
 
 // ConvertSpecTo populates the provided destination from our Topic_Spec
 func (topic *Topic_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20200601s.Topic_Spec)
+	dst, ok := destination.(*storage.Topic_Spec)
 	if ok {
 		// Populate destination from our instance
 		return topic.AssignProperties_To_Topic_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20200601s.Topic_Spec{}
+	dst = &storage.Topic_Spec{}
 	err := topic.AssignProperties_To_Topic_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -616,7 +647,7 @@ func (topic *Topic_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) e
 }
 
 // AssignProperties_From_Topic_Spec populates our Topic_Spec from the provided source Topic_Spec
-func (topic *Topic_Spec) AssignProperties_From_Topic_Spec(source *v20200601s.Topic_Spec) error {
+func (topic *Topic_Spec) AssignProperties_From_Topic_Spec(source *storage.Topic_Spec) error {
 
 	// AzureName
 	topic.AzureName = source.AzureName
@@ -641,8 +672,9 @@ func (topic *Topic_Spec) AssignProperties_From_Topic_Spec(source *v20200601s.Top
 
 	// InputSchema
 	if source.InputSchema != nil {
-		inputSchema := TopicProperties_InputSchema(*source.InputSchema)
-		topic.InputSchema = &inputSchema
+		inputSchema := *source.InputSchema
+		inputSchemaTemp := genruntime.ToEnum(inputSchema, topicProperties_InputSchema_Values)
+		topic.InputSchema = &inputSchemaTemp
 	} else {
 		topic.InputSchema = nil
 	}
@@ -684,8 +716,9 @@ func (topic *Topic_Spec) AssignProperties_From_Topic_Spec(source *v20200601s.Top
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := TopicProperties_PublicNetworkAccess(*source.PublicNetworkAccess)
-		topic.PublicNetworkAccess = &publicNetworkAccess
+		publicNetworkAccess := *source.PublicNetworkAccess
+		publicNetworkAccessTemp := genruntime.ToEnum(publicNetworkAccess, topicProperties_PublicNetworkAccess_Values)
+		topic.PublicNetworkAccess = &publicNetworkAccessTemp
 	} else {
 		topic.PublicNetworkAccess = nil
 	}
@@ -698,7 +731,7 @@ func (topic *Topic_Spec) AssignProperties_From_Topic_Spec(source *v20200601s.Top
 }
 
 // AssignProperties_To_Topic_Spec populates the provided destination Topic_Spec from our Topic_Spec
-func (topic *Topic_Spec) AssignProperties_To_Topic_Spec(destination *v20200601s.Topic_Spec) error {
+func (topic *Topic_Spec) AssignProperties_To_Topic_Spec(destination *storage.Topic_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -707,11 +740,11 @@ func (topic *Topic_Spec) AssignProperties_To_Topic_Spec(destination *v20200601s.
 
 	// InboundIpRules
 	if topic.InboundIpRules != nil {
-		inboundIpRuleList := make([]v20200601s.InboundIpRule, len(topic.InboundIpRules))
+		inboundIpRuleList := make([]storage.InboundIpRule, len(topic.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range topic.InboundIpRules {
 			// Shadow the loop variable to avoid aliasing
 			inboundIpRuleItem := inboundIpRuleItem
-			var inboundIpRule v20200601s.InboundIpRule
+			var inboundIpRule storage.InboundIpRule
 			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule(&inboundIpRule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_InboundIpRule() to populate field InboundIpRules")
@@ -733,7 +766,7 @@ func (topic *Topic_Spec) AssignProperties_To_Topic_Spec(destination *v20200601s.
 
 	// InputSchemaMapping
 	if topic.InputSchemaMapping != nil {
-		var inputSchemaMapping v20200601s.InputSchemaMapping
+		var inputSchemaMapping storage.InputSchemaMapping
 		err := topic.InputSchemaMapping.AssignProperties_To_InputSchemaMapping(&inputSchemaMapping)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_InputSchemaMapping() to populate field InputSchemaMapping")
@@ -748,7 +781,7 @@ func (topic *Topic_Spec) AssignProperties_To_Topic_Spec(destination *v20200601s.
 
 	// OperatorSpec
 	if topic.OperatorSpec != nil {
-		var operatorSpec v20200601s.TopicOperatorSpec
+		var operatorSpec storage.TopicOperatorSpec
 		err := topic.OperatorSpec.AssignProperties_To_TopicOperatorSpec(&operatorSpec)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_TopicOperatorSpec() to populate field OperatorSpec")
@@ -814,7 +847,7 @@ func (topic *Topic_Spec) Initialize_From_Topic_STATUS(source *Topic_STATUS) erro
 
 	// InputSchema
 	if source.InputSchema != nil {
-		inputSchema := TopicProperties_InputSchema(*source.InputSchema)
+		inputSchema := genruntime.ToEnum(string(*source.InputSchema), topicProperties_InputSchema_Values)
 		topic.InputSchema = &inputSchema
 	} else {
 		topic.InputSchema = nil
@@ -837,7 +870,7 @@ func (topic *Topic_Spec) Initialize_From_Topic_STATUS(source *Topic_STATUS) erro
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := TopicProperties_PublicNetworkAccess(*source.PublicNetworkAccess)
+		publicNetworkAccess := genruntime.ToEnum(string(*source.PublicNetworkAccess), topicProperties_PublicNetworkAccess_Values)
 		topic.PublicNetworkAccess = &publicNetworkAccess
 	} else {
 		topic.PublicNetworkAccess = nil
@@ -912,14 +945,14 @@ var _ genruntime.ConvertibleStatus = &Topic_STATUS{}
 
 // ConvertStatusFrom populates our Topic_STATUS from the provided source
 func (topic *Topic_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20200601s.Topic_STATUS)
+	src, ok := source.(*storage.Topic_STATUS)
 	if ok {
 		// Populate our instance from source
 		return topic.AssignProperties_From_Topic_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20200601s.Topic_STATUS{}
+	src = &storage.Topic_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -936,14 +969,14 @@ func (topic *Topic_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus
 
 // ConvertStatusTo populates the provided destination from our Topic_STATUS
 func (topic *Topic_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20200601s.Topic_STATUS)
+	dst, ok := destination.(*storage.Topic_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return topic.AssignProperties_To_Topic_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20200601s.Topic_STATUS{}
+	dst = &storage.Topic_STATUS{}
 	err := topic.AssignProperties_To_Topic_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -962,14 +995,14 @@ var _ genruntime.FromARMConverter = &Topic_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (topic *Topic_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Topic_STATUS_ARM{}
+	return &arm.Topic_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (topic *Topic_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Topic_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Topic_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Topic_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Topic_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -1006,7 +1039,9 @@ func (topic *Topic_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.InputSchema != nil {
-			inputSchema := *typedInput.Properties.InputSchema
+			var temp string
+			temp = string(*typedInput.Properties.InputSchema)
+			inputSchema := TopicProperties_InputSchema_STATUS(temp)
 			topic.InputSchema = &inputSchema
 		}
 	}
@@ -1063,7 +1098,9 @@ func (topic *Topic_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := TopicProperties_ProvisioningState_STATUS(temp)
 			topic.ProvisioningState = &provisioningState
 		}
 	}
@@ -1072,7 +1109,9 @@ func (topic *Topic_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccess != nil {
-			publicNetworkAccess := *typedInput.Properties.PublicNetworkAccess
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccess)
+			publicNetworkAccess := TopicProperties_PublicNetworkAccess_STATUS(temp)
 			topic.PublicNetworkAccess = &publicNetworkAccess
 		}
 	}
@@ -1107,7 +1146,7 @@ func (topic *Topic_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 }
 
 // AssignProperties_From_Topic_STATUS populates our Topic_STATUS from the provided source Topic_STATUS
-func (topic *Topic_STATUS) AssignProperties_From_Topic_STATUS(source *v20200601s.Topic_STATUS) error {
+func (topic *Topic_STATUS) AssignProperties_From_Topic_STATUS(source *storage.Topic_STATUS) error {
 
 	// Conditions
 	topic.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -1138,8 +1177,9 @@ func (topic *Topic_STATUS) AssignProperties_From_Topic_STATUS(source *v20200601s
 
 	// InputSchema
 	if source.InputSchema != nil {
-		inputSchema := TopicProperties_InputSchema_STATUS(*source.InputSchema)
-		topic.InputSchema = &inputSchema
+		inputSchema := *source.InputSchema
+		inputSchemaTemp := genruntime.ToEnum(inputSchema, topicProperties_InputSchema_STATUS_Values)
+		topic.InputSchema = &inputSchemaTemp
 	} else {
 		topic.InputSchema = nil
 	}
@@ -1185,16 +1225,18 @@ func (topic *Topic_STATUS) AssignProperties_From_Topic_STATUS(source *v20200601s
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := TopicProperties_ProvisioningState_STATUS(*source.ProvisioningState)
-		topic.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, topicProperties_ProvisioningState_STATUS_Values)
+		topic.ProvisioningState = &provisioningStateTemp
 	} else {
 		topic.ProvisioningState = nil
 	}
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := TopicProperties_PublicNetworkAccess_STATUS(*source.PublicNetworkAccess)
-		topic.PublicNetworkAccess = &publicNetworkAccess
+		publicNetworkAccess := *source.PublicNetworkAccess
+		publicNetworkAccessTemp := genruntime.ToEnum(publicNetworkAccess, topicProperties_PublicNetworkAccess_STATUS_Values)
+		topic.PublicNetworkAccess = &publicNetworkAccessTemp
 	} else {
 		topic.PublicNetworkAccess = nil
 	}
@@ -1222,7 +1264,7 @@ func (topic *Topic_STATUS) AssignProperties_From_Topic_STATUS(source *v20200601s
 }
 
 // AssignProperties_To_Topic_STATUS populates the provided destination Topic_STATUS from our Topic_STATUS
-func (topic *Topic_STATUS) AssignProperties_To_Topic_STATUS(destination *v20200601s.Topic_STATUS) error {
+func (topic *Topic_STATUS) AssignProperties_To_Topic_STATUS(destination *storage.Topic_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1237,11 +1279,11 @@ func (topic *Topic_STATUS) AssignProperties_To_Topic_STATUS(destination *v202006
 
 	// InboundIpRules
 	if topic.InboundIpRules != nil {
-		inboundIpRuleList := make([]v20200601s.InboundIpRule_STATUS, len(topic.InboundIpRules))
+		inboundIpRuleList := make([]storage.InboundIpRule_STATUS, len(topic.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range topic.InboundIpRules {
 			// Shadow the loop variable to avoid aliasing
 			inboundIpRuleItem := inboundIpRuleItem
-			var inboundIpRule v20200601s.InboundIpRule_STATUS
+			var inboundIpRule storage.InboundIpRule_STATUS
 			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule_STATUS(&inboundIpRule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_InboundIpRule_STATUS() to populate field InboundIpRules")
@@ -1263,7 +1305,7 @@ func (topic *Topic_STATUS) AssignProperties_To_Topic_STATUS(destination *v202006
 
 	// InputSchemaMapping
 	if topic.InputSchemaMapping != nil {
-		var inputSchemaMapping v20200601s.InputSchemaMapping_STATUS
+		var inputSchemaMapping storage.InputSchemaMapping_STATUS
 		err := topic.InputSchemaMapping.AssignProperties_To_InputSchemaMapping_STATUS(&inputSchemaMapping)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
@@ -1284,11 +1326,11 @@ func (topic *Topic_STATUS) AssignProperties_To_Topic_STATUS(destination *v202006
 
 	// PrivateEndpointConnections
 	if topic.PrivateEndpointConnections != nil {
-		privateEndpointConnectionList := make([]v20200601s.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded, len(topic.PrivateEndpointConnections))
+		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded, len(topic.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range topic.PrivateEndpointConnections {
 			// Shadow the loop variable to avoid aliasing
 			privateEndpointConnectionItem := privateEndpointConnectionItem
-			var privateEndpointConnection v20200601s.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded
+			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded(&privateEndpointConnection)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded() to populate field PrivateEndpointConnections")
@@ -1318,7 +1360,7 @@ func (topic *Topic_STATUS) AssignProperties_To_Topic_STATUS(destination *v202006
 
 	// SystemData
 	if topic.SystemData != nil {
-		var systemDatum v20200601s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := topic.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -1354,14 +1396,14 @@ var _ genruntime.FromARMConverter = &PrivateEndpointConnection_STATUS_Topic_SubR
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded_ARM{}
+	return &arm.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -1375,7 +1417,7 @@ func (embedded *PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) Popu
 }
 
 // AssignProperties_From_PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded populates our PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded from the provided source PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded
-func (embedded *PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) AssignProperties_From_PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded(source *v20200601s.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) error {
+func (embedded *PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) AssignProperties_From_PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded(source *storage.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) error {
 
 	// Id
 	embedded.Id = genruntime.ClonePointerToString(source.Id)
@@ -1385,7 +1427,7 @@ func (embedded *PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) Assi
 }
 
 // AssignProperties_To_PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded populates the provided destination PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded from our PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded
-func (embedded *PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) AssignProperties_To_PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded(destination *v20200601s.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) error {
+func (embedded *PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) AssignProperties_To_PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded(destination *storage.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1405,15 +1447,39 @@ func (embedded *PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded) Assi
 
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type TopicOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
 	// ConfigMaps: configures where to place operator written ConfigMaps.
 	ConfigMaps *TopicOperatorConfigMaps `json:"configMaps,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 
 	// Secrets: configures where to place Azure generated secrets.
 	Secrets *TopicOperatorSecrets `json:"secrets,omitempty"`
 }
 
 // AssignProperties_From_TopicOperatorSpec populates our TopicOperatorSpec from the provided source TopicOperatorSpec
-func (operator *TopicOperatorSpec) AssignProperties_From_TopicOperatorSpec(source *v20200601s.TopicOperatorSpec) error {
+func (operator *TopicOperatorSpec) AssignProperties_From_TopicOperatorSpec(source *storage.TopicOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
 
 	// ConfigMaps
 	if source.ConfigMaps != nil {
@@ -1425,6 +1491,24 @@ func (operator *TopicOperatorSpec) AssignProperties_From_TopicOperatorSpec(sourc
 		operator.ConfigMaps = &configMap
 	} else {
 		operator.ConfigMaps = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
 	}
 
 	// Secrets
@@ -1444,13 +1528,31 @@ func (operator *TopicOperatorSpec) AssignProperties_From_TopicOperatorSpec(sourc
 }
 
 // AssignProperties_To_TopicOperatorSpec populates the provided destination TopicOperatorSpec from our TopicOperatorSpec
-func (operator *TopicOperatorSpec) AssignProperties_To_TopicOperatorSpec(destination *v20200601s.TopicOperatorSpec) error {
+func (operator *TopicOperatorSpec) AssignProperties_To_TopicOperatorSpec(destination *storage.TopicOperatorSpec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
 	// ConfigMaps
 	if operator.ConfigMaps != nil {
-		var configMap v20200601s.TopicOperatorConfigMaps
+		var configMap storage.TopicOperatorConfigMaps
 		err := operator.ConfigMaps.AssignProperties_To_TopicOperatorConfigMaps(&configMap)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_TopicOperatorConfigMaps() to populate field ConfigMaps")
@@ -1460,9 +1562,27 @@ func (operator *TopicOperatorSpec) AssignProperties_To_TopicOperatorSpec(destina
 		destination.ConfigMaps = nil
 	}
 
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
 	// Secrets
 	if operator.Secrets != nil {
-		var secret v20200601s.TopicOperatorSecrets
+		var secret storage.TopicOperatorSecrets
 		err := operator.Secrets.AssignProperties_To_TopicOperatorSecrets(&secret)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_TopicOperatorSecrets() to populate field Secrets")
@@ -1492,6 +1612,13 @@ const (
 	TopicProperties_InputSchema_EventGridSchema      = TopicProperties_InputSchema("EventGridSchema")
 )
 
+// Mapping from string to TopicProperties_InputSchema
+var topicProperties_InputSchema_Values = map[string]TopicProperties_InputSchema{
+	"cloudeventschemav1_0": TopicProperties_InputSchema_CloudEventSchemaV1_0,
+	"customeventschema":    TopicProperties_InputSchema_CustomEventSchema,
+	"eventgridschema":      TopicProperties_InputSchema_EventGridSchema,
+}
+
 type TopicProperties_InputSchema_STATUS string
 
 const (
@@ -1499,6 +1626,13 @@ const (
 	TopicProperties_InputSchema_STATUS_CustomEventSchema    = TopicProperties_InputSchema_STATUS("CustomEventSchema")
 	TopicProperties_InputSchema_STATUS_EventGridSchema      = TopicProperties_InputSchema_STATUS("EventGridSchema")
 )
+
+// Mapping from string to TopicProperties_InputSchema_STATUS
+var topicProperties_InputSchema_STATUS_Values = map[string]TopicProperties_InputSchema_STATUS{
+	"cloudeventschemav1_0": TopicProperties_InputSchema_STATUS_CloudEventSchemaV1_0,
+	"customeventschema":    TopicProperties_InputSchema_STATUS_CustomEventSchema,
+	"eventgridschema":      TopicProperties_InputSchema_STATUS_EventGridSchema,
+}
 
 type TopicProperties_ProvisioningState_STATUS string
 
@@ -1511,6 +1645,16 @@ const (
 	TopicProperties_ProvisioningState_STATUS_Updating  = TopicProperties_ProvisioningState_STATUS("Updating")
 )
 
+// Mapping from string to TopicProperties_ProvisioningState_STATUS
+var topicProperties_ProvisioningState_STATUS_Values = map[string]TopicProperties_ProvisioningState_STATUS{
+	"canceled":  TopicProperties_ProvisioningState_STATUS_Canceled,
+	"creating":  TopicProperties_ProvisioningState_STATUS_Creating,
+	"deleting":  TopicProperties_ProvisioningState_STATUS_Deleting,
+	"failed":    TopicProperties_ProvisioningState_STATUS_Failed,
+	"succeeded": TopicProperties_ProvisioningState_STATUS_Succeeded,
+	"updating":  TopicProperties_ProvisioningState_STATUS_Updating,
+}
+
 // +kubebuilder:validation:Enum={"Disabled","Enabled"}
 type TopicProperties_PublicNetworkAccess string
 
@@ -1519,6 +1663,12 @@ const (
 	TopicProperties_PublicNetworkAccess_Enabled  = TopicProperties_PublicNetworkAccess("Enabled")
 )
 
+// Mapping from string to TopicProperties_PublicNetworkAccess
+var topicProperties_PublicNetworkAccess_Values = map[string]TopicProperties_PublicNetworkAccess{
+	"disabled": TopicProperties_PublicNetworkAccess_Disabled,
+	"enabled":  TopicProperties_PublicNetworkAccess_Enabled,
+}
+
 type TopicProperties_PublicNetworkAccess_STATUS string
 
 const (
@@ -1526,13 +1676,19 @@ const (
 	TopicProperties_PublicNetworkAccess_STATUS_Enabled  = TopicProperties_PublicNetworkAccess_STATUS("Enabled")
 )
 
+// Mapping from string to TopicProperties_PublicNetworkAccess_STATUS
+var topicProperties_PublicNetworkAccess_STATUS_Values = map[string]TopicProperties_PublicNetworkAccess_STATUS{
+	"disabled": TopicProperties_PublicNetworkAccess_STATUS_Disabled,
+	"enabled":  TopicProperties_PublicNetworkAccess_STATUS_Enabled,
+}
+
 type TopicOperatorConfigMaps struct {
 	// Endpoint: indicates where the Endpoint config map should be placed. If omitted, no config map will be created.
 	Endpoint *genruntime.ConfigMapDestination `json:"endpoint,omitempty"`
 }
 
 // AssignProperties_From_TopicOperatorConfigMaps populates our TopicOperatorConfigMaps from the provided source TopicOperatorConfigMaps
-func (maps *TopicOperatorConfigMaps) AssignProperties_From_TopicOperatorConfigMaps(source *v20200601s.TopicOperatorConfigMaps) error {
+func (maps *TopicOperatorConfigMaps) AssignProperties_From_TopicOperatorConfigMaps(source *storage.TopicOperatorConfigMaps) error {
 
 	// Endpoint
 	if source.Endpoint != nil {
@@ -1547,7 +1703,7 @@ func (maps *TopicOperatorConfigMaps) AssignProperties_From_TopicOperatorConfigMa
 }
 
 // AssignProperties_To_TopicOperatorConfigMaps populates the provided destination TopicOperatorConfigMaps from our TopicOperatorConfigMaps
-func (maps *TopicOperatorConfigMaps) AssignProperties_To_TopicOperatorConfigMaps(destination *v20200601s.TopicOperatorConfigMaps) error {
+func (maps *TopicOperatorConfigMaps) AssignProperties_To_TopicOperatorConfigMaps(destination *storage.TopicOperatorConfigMaps) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1579,7 +1735,7 @@ type TopicOperatorSecrets struct {
 }
 
 // AssignProperties_From_TopicOperatorSecrets populates our TopicOperatorSecrets from the provided source TopicOperatorSecrets
-func (secrets *TopicOperatorSecrets) AssignProperties_From_TopicOperatorSecrets(source *v20200601s.TopicOperatorSecrets) error {
+func (secrets *TopicOperatorSecrets) AssignProperties_From_TopicOperatorSecrets(source *storage.TopicOperatorSecrets) error {
 
 	// Key1
 	if source.Key1 != nil {
@@ -1602,7 +1758,7 @@ func (secrets *TopicOperatorSecrets) AssignProperties_From_TopicOperatorSecrets(
 }
 
 // AssignProperties_To_TopicOperatorSecrets populates the provided destination TopicOperatorSecrets from our TopicOperatorSecrets
-func (secrets *TopicOperatorSecrets) AssignProperties_To_TopicOperatorSecrets(destination *v20200601s.TopicOperatorSecrets) error {
+func (secrets *TopicOperatorSecrets) AssignProperties_To_TopicOperatorSecrets(destination *storage.TopicOperatorSecrets) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 

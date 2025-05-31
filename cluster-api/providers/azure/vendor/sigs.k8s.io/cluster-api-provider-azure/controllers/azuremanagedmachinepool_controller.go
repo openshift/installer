@@ -24,12 +24,6 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
@@ -42,6 +36,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // AzureManagedMachinePoolReconciler reconciles an AzureManagedMachinePool object.
@@ -50,18 +51,20 @@ type AzureManagedMachinePoolReconciler struct {
 	Recorder                             record.EventRecorder
 	Timeouts                             reconciler.Timeouts
 	WatchFilterValue                     string
+	CredentialCache                      azure.CredentialCache
 	createAzureManagedMachinePoolService azureManagedMachinePoolServiceCreator
 }
 
 type azureManagedMachinePoolServiceCreator func(managedMachinePoolScope *scope.ManagedMachinePoolScope, apiCallTimeout time.Duration) (*azureManagedMachinePoolService, error)
 
 // NewAzureManagedMachinePoolReconciler returns a new AzureManagedMachinePoolReconciler instance.
-func NewAzureManagedMachinePoolReconciler(client client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue string) *AzureManagedMachinePoolReconciler {
+func NewAzureManagedMachinePoolReconciler(client client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue string, credCache azure.CredentialCache) *AzureManagedMachinePoolReconciler {
 	ampr := &AzureManagedMachinePoolReconciler{
 		Client:           client,
 		Recorder:         recorder,
 		Timeouts:         timeouts,
 		WatchFilterValue: watchFilterValue,
+		CredentialCache:  credCache,
 	}
 
 	ampr.createAzureManagedMachinePoolService = newAzureManagedMachinePoolService
@@ -97,7 +100,7 @@ func (ammpr *AzureManagedMachinePoolReconciler) SetupWithManager(ctx context.Con
 	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
 		For(azManagedMachinePool).
-		WithEventFilter(predicates.ResourceHasFilterLabel(log, ammpr.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, ammpr.WatchFilterValue)).
 		// watch for changes in CAPI MachinePool resources
 		Watches(
 			&expv1.MachinePool{},
@@ -113,8 +116,8 @@ func (ammpr *AzureManagedMachinePoolReconciler) SetupWithManager(ctx context.Con
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(azureManagedMachinePoolMapper),
 			builder.WithPredicates(
-				ClusterPauseChangeAndInfrastructureReady(log),
-				predicates.ResourceHasFilterLabel(log, ammpr.WatchFilterValue),
+				ClusterPauseChangeAndInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, ammpr.WatchFilterValue),
 			),
 		).
 		Complete(r)
@@ -191,10 +194,11 @@ func (ammpr *AzureManagedMachinePoolReconciler) Reconcile(ctx context.Context, r
 
 	// create the managed control plane scope
 	managedControlPlaneScope, err := scope.NewManagedControlPlaneScope(ctx, scope.ManagedControlPlaneScopeParams{
-		Client:       ammpr.Client,
-		ControlPlane: controlPlane,
-		Cluster:      ownerCluster,
-		Timeouts:     ammpr.Timeouts,
+		Client:          ammpr.Client,
+		ControlPlane:    controlPlane,
+		Cluster:         ownerCluster,
+		Timeouts:        ammpr.Timeouts,
+		CredentialCache: ammpr.CredentialCache,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to create ManagedControlPlane scope")
@@ -294,7 +298,6 @@ func (ammpr *AzureManagedMachinePoolReconciler) reconcileNormal(ctx context.Cont
 	return reconcile.Result{}, nil
 }
 
-//nolint:unparam // Always returns an empty struct for reconcile.Result
 func (ammpr *AzureManagedMachinePoolReconciler) reconcilePause(ctx context.Context, scope *scope.ManagedMachinePoolScope) (reconcile.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureManagedMachinePool.reconcilePause")
 	defer done()

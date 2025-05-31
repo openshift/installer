@@ -22,10 +22,11 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	webhookutils "sigs.k8s.io/cluster-api-provider-azure/util/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	webhookutils "sigs.k8s.io/cluster-api-provider-azure/util/webhook"
 )
 
 // SetupWebhookWithManager sets up and registers the webhook with the manager.
@@ -112,6 +113,13 @@ func (c *AzureCluster) ValidateUpdate(oldRaw runtime.Object) (admission.Warnings
 		field.NewPath("spec", "networkSpec", "privateDNSZoneName"),
 		old.Spec.NetworkSpec.PrivateDNSZoneName,
 		c.Spec.NetworkSpec.PrivateDNSZoneName); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "networkSpec", "privateDNSZoneResourceGroup"),
+		old.Spec.NetworkSpec.PrivateDNSZoneResourceGroup,
+		c.Spec.NetworkSpec.PrivateDNSZoneResourceGroup); err != nil {
 		allErrs = append(allErrs, err)
 	}
 

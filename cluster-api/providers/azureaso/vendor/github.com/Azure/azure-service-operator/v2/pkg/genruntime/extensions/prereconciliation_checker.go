@@ -7,6 +7,7 @@ package extensions
 
 import (
 	"context"
+
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
@@ -65,7 +66,7 @@ func ProceedWithReconcile() PreReconcileCheckResult {
 }
 
 // BlockReconcile indicates reconciliation of a resource is currently blocked by returning a PreReconcileCheckResult
-// with action `Block`.
+// with action `Block`. The reconciliation will automatically be retried after a short delay.
 // reason is an explanatory reason to show to the user via a warning condition on the resource.
 func BlockReconcile(reason string) PreReconcileCheckResult {
 	return PreReconcileCheckResult{
@@ -77,7 +78,7 @@ func BlockReconcile(reason string) PreReconcileCheckResult {
 }
 
 // PostponeReconcile indicates reconciliation of a resource is not currently required by returning a
-// PreReconcileCheckResult with action `Postpone`.
+// PreReconcileCheckResult with action `Postpone`. Reconciliation will not be retried until the usual scheduled check.
 func PostponeReconcile() PreReconcileCheckResult {
 	return PreReconcileCheckResult{
 		action:   preReconcileCheckResultTypePostpone,

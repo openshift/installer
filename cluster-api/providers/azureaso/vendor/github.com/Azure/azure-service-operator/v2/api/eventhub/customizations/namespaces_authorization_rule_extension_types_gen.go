@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20211101 "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type NamespacesAuthorizationRuleExtension struct {
 func (extension *NamespacesAuthorizationRuleExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20211101.NamespacesAuthorizationRule{},
-		&v20211101s.NamespacesAuthorizationRule{}}
+		&storage.NamespacesAuthorizationRule{}}
 }

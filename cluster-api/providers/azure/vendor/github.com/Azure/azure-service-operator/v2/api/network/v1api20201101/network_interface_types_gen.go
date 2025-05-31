@@ -5,10 +5,14 @@ package v1api20201101
 
 import (
 	"fmt"
+	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,22 +53,36 @@ var _ conversion.Convertible = &NetworkInterface{}
 
 // ConvertFrom populates our NetworkInterface from the provided hub NetworkInterface
 func (networkInterface *NetworkInterface) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.NetworkInterface)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20201101/storage/NetworkInterface but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.NetworkInterface
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return networkInterface.AssignProperties_From_NetworkInterface(source)
+	err = networkInterface.AssignProperties_From_NetworkInterface(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to networkInterface")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub NetworkInterface from our NetworkInterface
 func (networkInterface *NetworkInterface) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.NetworkInterface)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20201101/storage/NetworkInterface but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.NetworkInterface
+	err := networkInterface.AssignProperties_To_NetworkInterface(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from networkInterface")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return networkInterface.AssignProperties_To_NetworkInterface(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20201101-networkinterface,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=networkinterfaces,verbs=create;update,versions=v1api20201101,name=default.v1api20201101.networkinterfaces.network.azure.com,admissionReviewVersions=v1
@@ -90,15 +108,24 @@ func (networkInterface *NetworkInterface) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the NetworkInterface resource
 func (networkInterface *NetworkInterface) defaultImpl() { networkInterface.defaultAzureName() }
 
-var _ genruntime.ImportableResource = &NetworkInterface{}
+var _ configmaps.Exporter = &NetworkInterface{}
 
-// InitializeSpec initializes the spec for this resource from the given status
-func (networkInterface *NetworkInterface) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded); ok {
-		return networkInterface.Spec.Initialize_From_NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded(s)
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (networkInterface *NetworkInterface) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if networkInterface.Spec.OperatorSpec == nil {
+		return nil
 	}
+	return networkInterface.Spec.OperatorSpec.ConfigMapExpressions
+}
 
-	return fmt.Errorf("expected Status of type NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded but received %T instead", status)
+var _ secrets.Exporter = &NetworkInterface{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (networkInterface *NetworkInterface) SecretDestinationExpressions() []*core.DestinationExpression {
+	if networkInterface.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return networkInterface.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &NetworkInterface{}
@@ -110,7 +137,7 @@ func (networkInterface *NetworkInterface) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-11-01"
 func (networkInterface NetworkInterface) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -208,7 +235,7 @@ func (networkInterface *NetworkInterface) ValidateUpdate(old runtime.Object) (ad
 
 // createValidations validates the creation of the resource
 func (networkInterface *NetworkInterface) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){networkInterface.validateResourceReferences, networkInterface.validateOwnerReference}
+	return []func() (admission.Warnings, error){networkInterface.validateResourceReferences, networkInterface.validateOwnerReference, networkInterface.validateSecretDestinations, networkInterface.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +253,21 @@ func (networkInterface *NetworkInterface) updateValidations() []func(old runtime
 		func(old runtime.Object) (admission.Warnings, error) {
 			return networkInterface.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return networkInterface.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return networkInterface.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (networkInterface *NetworkInterface) validateConfigMapDestinations() (admission.Warnings, error) {
+	if networkInterface.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(networkInterface, nil, networkInterface.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -241,6 +282,14 @@ func (networkInterface *NetworkInterface) validateResourceReferences() (admissio
 		return nil, err
 	}
 	return genruntime.ValidateResourceReferences(refs)
+}
+
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (networkInterface *NetworkInterface) validateSecretDestinations() (admission.Warnings, error) {
+	if networkInterface.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(networkInterface, nil, networkInterface.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties
@@ -353,6 +402,10 @@ type NetworkInterface_Spec struct {
 	// NicType: Type of Network Interface resource.
 	NicType *NetworkInterfacePropertiesFormat_NicType `json:"nicType,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *NetworkInterfaceOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -373,7 +426,7 @@ func (networkInterface *NetworkInterface_Spec) ConvertToARM(resolved genruntime.
 	if networkInterface == nil {
 		return nil, nil
 	}
-	result := &NetworkInterface_Spec_ARM{}
+	result := &arm.NetworkInterface_Spec{}
 
 	// Set property "ExtendedLocation":
 	if networkInterface.ExtendedLocation != nil {
@@ -381,7 +434,7 @@ func (networkInterface *NetworkInterface_Spec) ConvertToARM(resolved genruntime.
 		if err != nil {
 			return nil, err
 		}
-		extendedLocation := *extendedLocation_ARM.(*ExtendedLocation_ARM)
+		extendedLocation := *extendedLocation_ARM.(*arm.ExtendedLocation)
 		result.ExtendedLocation = &extendedLocation
 	}
 
@@ -402,14 +455,14 @@ func (networkInterface *NetworkInterface_Spec) ConvertToARM(resolved genruntime.
 		networkInterface.NetworkSecurityGroup != nil ||
 		networkInterface.NicType != nil ||
 		networkInterface.PrivateLinkService != nil {
-		result.Properties = &NetworkInterfacePropertiesFormat_ARM{}
+		result.Properties = &arm.NetworkInterfacePropertiesFormat{}
 	}
 	if networkInterface.DnsSettings != nil {
 		dnsSettings_ARM, err := (*networkInterface.DnsSettings).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		dnsSettings := *dnsSettings_ARM.(*NetworkInterfaceDnsSettings_ARM)
+		dnsSettings := *dnsSettings_ARM.(*arm.NetworkInterfaceDnsSettings)
 		result.Properties.DnsSettings = &dnsSettings
 	}
 	if networkInterface.EnableAcceleratedNetworking != nil {
@@ -425,18 +478,20 @@ func (networkInterface *NetworkInterface_Spec) ConvertToARM(resolved genruntime.
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded_ARM))
+		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*arm.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded))
 	}
 	if networkInterface.NetworkSecurityGroup != nil {
 		networkSecurityGroup_ARM, err := (*networkInterface.NetworkSecurityGroup).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		networkSecurityGroup := *networkSecurityGroup_ARM.(*NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded_ARM)
+		networkSecurityGroup := *networkSecurityGroup_ARM.(*arm.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded)
 		result.Properties.NetworkSecurityGroup = &networkSecurityGroup
 	}
 	if networkInterface.NicType != nil {
-		nicType := *networkInterface.NicType
+		var temp string
+		temp = string(*networkInterface.NicType)
+		nicType := arm.NetworkInterfacePropertiesFormat_NicType(temp)
 		result.Properties.NicType = &nicType
 	}
 	if networkInterface.PrivateLinkService != nil {
@@ -444,7 +499,7 @@ func (networkInterface *NetworkInterface_Spec) ConvertToARM(resolved genruntime.
 		if err != nil {
 			return nil, err
 		}
-		privateLinkService := *privateLinkService_ARM.(*PrivateLinkServiceSpec_ARM)
+		privateLinkService := *privateLinkService_ARM.(*arm.PrivateLinkServiceSpec)
 		result.Properties.PrivateLinkService = &privateLinkService
 	}
 
@@ -460,14 +515,14 @@ func (networkInterface *NetworkInterface_Spec) ConvertToARM(resolved genruntime.
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (networkInterface *NetworkInterface_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkInterface_Spec_ARM{}
+	return &arm.NetworkInterface_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (networkInterface *NetworkInterface_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkInterface_Spec_ARM)
+	typedInput, ok := armInput.(arm.NetworkInterface_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkInterface_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkInterface_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -553,10 +608,14 @@ func (networkInterface *NetworkInterface_Spec) PopulateFromARM(owner genruntime.
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.NicType != nil {
-			nicType := *typedInput.Properties.NicType
+			var temp string
+			temp = string(*typedInput.Properties.NicType)
+			nicType := NetworkInterfacePropertiesFormat_NicType(temp)
 			networkInterface.NicType = &nicType
 		}
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	networkInterface.Owner = &genruntime.KnownResourceReference{
@@ -728,6 +787,18 @@ func (networkInterface *NetworkInterface_Spec) AssignProperties_From_NetworkInte
 		networkInterface.NicType = nil
 	}
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec NetworkInterfaceOperatorSpec
+		err := operatorSpec.AssignProperties_From_NetworkInterfaceOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_NetworkInterfaceOperatorSpec() to populate field OperatorSpec")
+		}
+		networkInterface.OperatorSpec = &operatorSpec
+	} else {
+		networkInterface.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -844,6 +915,18 @@ func (networkInterface *NetworkInterface_Spec) AssignProperties_To_NetworkInterf
 		destination.NicType = nil
 	}
 
+	// OperatorSpec
+	if networkInterface.OperatorSpec != nil {
+		var operatorSpec storage.NetworkInterfaceOperatorSpec
+		err := networkInterface.OperatorSpec.AssignProperties_To_NetworkInterfaceOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_NetworkInterfaceOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = networkInterface.OriginalVersion()
 
@@ -876,109 +959,6 @@ func (networkInterface *NetworkInterface_Spec) AssignProperties_To_NetworkInterf
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded populates our NetworkInterface_Spec from the provided source NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded
-func (networkInterface *NetworkInterface_Spec) Initialize_From_NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded(source *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// DnsSettings
-	if source.DnsSettings != nil {
-		var dnsSetting NetworkInterfaceDnsSettings
-		err := dnsSetting.Initialize_From_NetworkInterfaceDnsSettings_STATUS(source.DnsSettings)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_NetworkInterfaceDnsSettings_STATUS() to populate field DnsSettings")
-		}
-		networkInterface.DnsSettings = &dnsSetting
-	} else {
-		networkInterface.DnsSettings = nil
-	}
-
-	// EnableAcceleratedNetworking
-	if source.EnableAcceleratedNetworking != nil {
-		enableAcceleratedNetworking := *source.EnableAcceleratedNetworking
-		networkInterface.EnableAcceleratedNetworking = &enableAcceleratedNetworking
-	} else {
-		networkInterface.EnableAcceleratedNetworking = nil
-	}
-
-	// EnableIPForwarding
-	if source.EnableIPForwarding != nil {
-		enableIPForwarding := *source.EnableIPForwarding
-		networkInterface.EnableIPForwarding = &enableIPForwarding
-	} else {
-		networkInterface.EnableIPForwarding = nil
-	}
-
-	// ExtendedLocation
-	if source.ExtendedLocation != nil {
-		var extendedLocation ExtendedLocation
-		err := extendedLocation.Initialize_From_ExtendedLocation_STATUS(source.ExtendedLocation)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
-		}
-		networkInterface.ExtendedLocation = &extendedLocation
-	} else {
-		networkInterface.ExtendedLocation = nil
-	}
-
-	// IpConfigurations
-	if source.IpConfigurations != nil {
-		ipConfigurationList := make([]NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded, len(source.IpConfigurations))
-		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
-			var ipConfiguration NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded
-			err := ipConfiguration.Initialize_From_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded(&ipConfigurationItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded() to populate field IpConfigurations")
-			}
-			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
-		}
-		networkInterface.IpConfigurations = ipConfigurationList
-	} else {
-		networkInterface.IpConfigurations = nil
-	}
-
-	// Location
-	networkInterface.Location = genruntime.ClonePointerToString(source.Location)
-
-	// NetworkSecurityGroup
-	if source.NetworkSecurityGroup != nil {
-		var networkSecurityGroup NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
-		err := networkSecurityGroup.Initialize_From_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(source.NetworkSecurityGroup)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded() to populate field NetworkSecurityGroup")
-		}
-		networkInterface.NetworkSecurityGroup = &networkSecurityGroup
-	} else {
-		networkInterface.NetworkSecurityGroup = nil
-	}
-
-	// NicType
-	if source.NicType != nil {
-		nicType := genruntime.ToEnum(string(*source.NicType), networkInterfacePropertiesFormat_NicType_Values)
-		networkInterface.NicType = &nicType
-	} else {
-		networkInterface.NicType = nil
-	}
-
-	// PrivateLinkService
-	if source.PrivateLinkService != nil {
-		var privateLinkService PrivateLinkServiceSpec
-		err := privateLinkService.Initialize_From_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded(source.PrivateLinkService)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded() to populate field PrivateLinkService")
-		}
-		networkInterface.PrivateLinkService = &privateLinkService
-	} else {
-		networkInterface.PrivateLinkService = nil
-	}
-
-	// Tags
-	networkInterface.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -1126,14 +1106,14 @@ var _ genruntime.FromARMConverter = &NetworkInterface_STATUS_NetworkInterface_Su
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -1247,7 +1227,9 @@ func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) Po
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.MigrationPhase != nil {
-			migrationPhase := *typedInput.Properties.MigrationPhase
+			var temp string
+			temp = string(*typedInput.Properties.MigrationPhase)
+			migrationPhase := NetworkInterfacePropertiesFormat_MigrationPhase_STATUS(temp)
 			embedded.MigrationPhase = &migrationPhase
 		}
 	}
@@ -1276,7 +1258,9 @@ func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) Po
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.NicType != nil {
-			nicType := *typedInput.Properties.NicType
+			var temp string
+			temp = string(*typedInput.Properties.NicType)
+			nicType := NetworkInterfacePropertiesFormat_NicType_STATUS(temp)
 			embedded.NicType = &nicType
 		}
 	}
@@ -1322,7 +1306,9 @@ func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) Po
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := ProvisioningState_STATUS(temp)
 			embedded.ProvisioningState = &provisioningState
 		}
 	}
@@ -1821,7 +1807,7 @@ func (settings *NetworkInterfaceDnsSettings) ConvertToARM(resolved genruntime.Co
 	if settings == nil {
 		return nil, nil
 	}
-	result := &NetworkInterfaceDnsSettings_ARM{}
+	result := &arm.NetworkInterfaceDnsSettings{}
 
 	// Set property "DnsServers":
 	for _, item := range settings.DnsServers {
@@ -1838,14 +1824,14 @@ func (settings *NetworkInterfaceDnsSettings) ConvertToARM(resolved genruntime.Co
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (settings *NetworkInterfaceDnsSettings) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkInterfaceDnsSettings_ARM{}
+	return &arm.NetworkInterfaceDnsSettings{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (settings *NetworkInterfaceDnsSettings) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkInterfaceDnsSettings_ARM)
+	typedInput, ok := armInput.(arm.NetworkInterfaceDnsSettings)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkInterfaceDnsSettings_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkInterfaceDnsSettings, got %T", armInput)
 	}
 
 	// Set property "DnsServers":
@@ -1898,19 +1884,6 @@ func (settings *NetworkInterfaceDnsSettings) AssignProperties_To_NetworkInterfac
 	return nil
 }
 
-// Initialize_From_NetworkInterfaceDnsSettings_STATUS populates our NetworkInterfaceDnsSettings from the provided source NetworkInterfaceDnsSettings_STATUS
-func (settings *NetworkInterfaceDnsSettings) Initialize_From_NetworkInterfaceDnsSettings_STATUS(source *NetworkInterfaceDnsSettings_STATUS) error {
-
-	// DnsServers
-	settings.DnsServers = genruntime.CloneSliceOfString(source.DnsServers)
-
-	// InternalDnsNameLabel
-	settings.InternalDnsNameLabel = genruntime.ClonePointerToString(source.InternalDnsNameLabel)
-
-	// No error
-	return nil
-}
-
 // DNS settings of a network interface.
 type NetworkInterfaceDnsSettings_STATUS struct {
 	// AppliedDnsServers: If the VM that uses this NIC is part of an Availability Set, then this list will have the union of
@@ -1938,14 +1911,14 @@ var _ genruntime.FromARMConverter = &NetworkInterfaceDnsSettings_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (settings *NetworkInterfaceDnsSettings_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkInterfaceDnsSettings_STATUS_ARM{}
+	return &arm.NetworkInterfaceDnsSettings_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (settings *NetworkInterfaceDnsSettings_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkInterfaceDnsSettings_STATUS_ARM)
+	typedInput, ok := armInput.(arm.NetworkInterfaceDnsSettings_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkInterfaceDnsSettings_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkInterfaceDnsSettings_STATUS, got %T", armInput)
 	}
 
 	// Set property "AppliedDnsServers":
@@ -2079,7 +2052,7 @@ func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbe
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded_ARM{}
+	result := &arm.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded{}
 
 	// Set property "Name":
 	if embedded.Name != nil {
@@ -2099,35 +2072,35 @@ func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbe
 		embedded.PublicIPAddress != nil ||
 		embedded.Subnet != nil ||
 		embedded.VirtualNetworkTaps != nil {
-		result.Properties = &NetworkInterfaceIPConfigurationPropertiesFormat_ARM{}
+		result.Properties = &arm.NetworkInterfaceIPConfigurationPropertiesFormat{}
 	}
 	for _, item := range embedded.ApplicationGatewayBackendAddressPools {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.ApplicationGatewayBackendAddressPools = append(result.Properties.ApplicationGatewayBackendAddressPools, *item_ARM.(*ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded_ARM))
+		result.Properties.ApplicationGatewayBackendAddressPools = append(result.Properties.ApplicationGatewayBackendAddressPools, *item_ARM.(*arm.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded))
 	}
 	for _, item := range embedded.ApplicationSecurityGroups {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.ApplicationSecurityGroups = append(result.Properties.ApplicationSecurityGroups, *item_ARM.(*ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded_ARM))
+		result.Properties.ApplicationSecurityGroups = append(result.Properties.ApplicationSecurityGroups, *item_ARM.(*arm.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded))
 	}
 	for _, item := range embedded.LoadBalancerBackendAddressPools {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.LoadBalancerBackendAddressPools = append(result.Properties.LoadBalancerBackendAddressPools, *item_ARM.(*BackendAddressPool_NetworkInterface_SubResourceEmbedded_ARM))
+		result.Properties.LoadBalancerBackendAddressPools = append(result.Properties.LoadBalancerBackendAddressPools, *item_ARM.(*arm.BackendAddressPool_NetworkInterface_SubResourceEmbedded))
 	}
 	for _, item := range embedded.LoadBalancerInboundNatRules {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.LoadBalancerInboundNatRules = append(result.Properties.LoadBalancerInboundNatRules, *item_ARM.(*InboundNatRule_NetworkInterface_SubResourceEmbedded_ARM))
+		result.Properties.LoadBalancerInboundNatRules = append(result.Properties.LoadBalancerInboundNatRules, *item_ARM.(*arm.InboundNatRule_NetworkInterface_SubResourceEmbedded))
 	}
 	if embedded.Primary != nil {
 		primary := *embedded.Primary
@@ -2138,11 +2111,15 @@ func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbe
 		result.Properties.PrivateIPAddress = &privateIPAddress
 	}
 	if embedded.PrivateIPAddressVersion != nil {
-		privateIPAddressVersion := *embedded.PrivateIPAddressVersion
+		var temp string
+		temp = string(*embedded.PrivateIPAddressVersion)
+		privateIPAddressVersion := arm.IPVersion(temp)
 		result.Properties.PrivateIPAddressVersion = &privateIPAddressVersion
 	}
 	if embedded.PrivateIPAllocationMethod != nil {
-		privateIPAllocationMethod := *embedded.PrivateIPAllocationMethod
+		var temp string
+		temp = string(*embedded.PrivateIPAllocationMethod)
+		privateIPAllocationMethod := arm.IPAllocationMethod(temp)
 		result.Properties.PrivateIPAllocationMethod = &privateIPAllocationMethod
 	}
 	if embedded.PublicIPAddress != nil {
@@ -2150,7 +2127,7 @@ func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbe
 		if err != nil {
 			return nil, err
 		}
-		publicIPAddress := *publicIPAddress_ARM.(*PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded_ARM)
+		publicIPAddress := *publicIPAddress_ARM.(*arm.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded)
 		result.Properties.PublicIPAddress = &publicIPAddress
 	}
 	if embedded.Subnet != nil {
@@ -2158,7 +2135,7 @@ func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbe
 		if err != nil {
 			return nil, err
 		}
-		subnet := *subnet_ARM.(*Subnet_NetworkInterface_SubResourceEmbedded_ARM)
+		subnet := *subnet_ARM.(*arm.Subnet_NetworkInterface_SubResourceEmbedded)
 		result.Properties.Subnet = &subnet
 	}
 	for _, item := range embedded.VirtualNetworkTaps {
@@ -2166,21 +2143,21 @@ func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbe
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.VirtualNetworkTaps = append(result.Properties.VirtualNetworkTaps, *item_ARM.(*VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded_ARM))
+		result.Properties.VirtualNetworkTaps = append(result.Properties.VirtualNetworkTaps, *item_ARM.(*arm.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded))
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "ApplicationGatewayBackendAddressPools":
@@ -2263,7 +2240,9 @@ func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAddressVersion != nil {
-			privateIPAddressVersion := *typedInput.Properties.PrivateIPAddressVersion
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAddressVersion)
+			privateIPAddressVersion := IPVersion(temp)
 			embedded.PrivateIPAddressVersion = &privateIPAddressVersion
 		}
 	}
@@ -2272,7 +2251,9 @@ func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAllocationMethod != nil {
-			privateIPAllocationMethod := *typedInput.Properties.PrivateIPAllocationMethod
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAllocationMethod)
+			privateIPAllocationMethod := IPAllocationMethod(temp)
 			embedded.PrivateIPAllocationMethod = &privateIPAllocationMethod
 		}
 	}
@@ -2635,157 +2616,6 @@ func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbe
 	return nil
 }
 
-// Initialize_From_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded populates our NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded from the provided source NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded) Initialize_From_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded(source *NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// ApplicationGatewayBackendAddressPools
-	if source.ApplicationGatewayBackendAddressPools != nil {
-		applicationGatewayBackendAddressPoolList := make([]ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded, len(source.ApplicationGatewayBackendAddressPools))
-		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range source.ApplicationGatewayBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			applicationGatewayBackendAddressPoolItem := applicationGatewayBackendAddressPoolItem
-			var applicationGatewayBackendAddressPool ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded
-			err := applicationGatewayBackendAddressPool.Initialize_From_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(&applicationGatewayBackendAddressPoolItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded() to populate field ApplicationGatewayBackendAddressPools")
-			}
-			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
-		}
-		embedded.ApplicationGatewayBackendAddressPools = applicationGatewayBackendAddressPoolList
-	} else {
-		embedded.ApplicationGatewayBackendAddressPools = nil
-	}
-
-	// ApplicationSecurityGroups
-	if source.ApplicationSecurityGroups != nil {
-		applicationSecurityGroupList := make([]ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded, len(source.ApplicationSecurityGroups))
-		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range source.ApplicationSecurityGroups {
-			// Shadow the loop variable to avoid aliasing
-			applicationSecurityGroupItem := applicationSecurityGroupItem
-			var applicationSecurityGroup ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
-			err := applicationSecurityGroup.Initialize_From_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(&applicationSecurityGroupItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded() to populate field ApplicationSecurityGroups")
-			}
-			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
-		}
-		embedded.ApplicationSecurityGroups = applicationSecurityGroupList
-	} else {
-		embedded.ApplicationSecurityGroups = nil
-	}
-
-	// LoadBalancerBackendAddressPools
-	if source.LoadBalancerBackendAddressPools != nil {
-		loadBalancerBackendAddressPoolList := make([]BackendAddressPool_NetworkInterface_SubResourceEmbedded, len(source.LoadBalancerBackendAddressPools))
-		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range source.LoadBalancerBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerBackendAddressPoolItem := loadBalancerBackendAddressPoolItem
-			var loadBalancerBackendAddressPool BackendAddressPool_NetworkInterface_SubResourceEmbedded
-			err := loadBalancerBackendAddressPool.Initialize_From_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(&loadBalancerBackendAddressPoolItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded() to populate field LoadBalancerBackendAddressPools")
-			}
-			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
-		}
-		embedded.LoadBalancerBackendAddressPools = loadBalancerBackendAddressPoolList
-	} else {
-		embedded.LoadBalancerBackendAddressPools = nil
-	}
-
-	// LoadBalancerInboundNatRules
-	if source.LoadBalancerInboundNatRules != nil {
-		loadBalancerInboundNatRuleList := make([]InboundNatRule_NetworkInterface_SubResourceEmbedded, len(source.LoadBalancerInboundNatRules))
-		for loadBalancerInboundNatRuleIndex, loadBalancerInboundNatRuleItem := range source.LoadBalancerInboundNatRules {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerInboundNatRuleItem := loadBalancerInboundNatRuleItem
-			var loadBalancerInboundNatRule InboundNatRule_NetworkInterface_SubResourceEmbedded
-			err := loadBalancerInboundNatRule.Initialize_From_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded(&loadBalancerInboundNatRuleItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded() to populate field LoadBalancerInboundNatRules")
-			}
-			loadBalancerInboundNatRuleList[loadBalancerInboundNatRuleIndex] = loadBalancerInboundNatRule
-		}
-		embedded.LoadBalancerInboundNatRules = loadBalancerInboundNatRuleList
-	} else {
-		embedded.LoadBalancerInboundNatRules = nil
-	}
-
-	// Name
-	embedded.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Primary
-	if source.Primary != nil {
-		primary := *source.Primary
-		embedded.Primary = &primary
-	} else {
-		embedded.Primary = nil
-	}
-
-	// PrivateIPAddress
-	embedded.PrivateIPAddress = genruntime.ClonePointerToString(source.PrivateIPAddress)
-
-	// PrivateIPAddressVersion
-	if source.PrivateIPAddressVersion != nil {
-		privateIPAddressVersion := genruntime.ToEnum(string(*source.PrivateIPAddressVersion), iPVersion_Values)
-		embedded.PrivateIPAddressVersion = &privateIPAddressVersion
-	} else {
-		embedded.PrivateIPAddressVersion = nil
-	}
-
-	// PrivateIPAllocationMethod
-	if source.PrivateIPAllocationMethod != nil {
-		privateIPAllocationMethod := genruntime.ToEnum(string(*source.PrivateIPAllocationMethod), iPAllocationMethod_Values)
-		embedded.PrivateIPAllocationMethod = &privateIPAllocationMethod
-	} else {
-		embedded.PrivateIPAllocationMethod = nil
-	}
-
-	// PublicIPAddress
-	if source.PublicIPAddress != nil {
-		var publicIPAddress PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded
-		err := publicIPAddress.Initialize_From_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded(source.PublicIPAddress)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded() to populate field PublicIPAddress")
-		}
-		embedded.PublicIPAddress = &publicIPAddress
-	} else {
-		embedded.PublicIPAddress = nil
-	}
-
-	// Subnet
-	if source.Subnet != nil {
-		var subnet Subnet_NetworkInterface_SubResourceEmbedded
-		err := subnet.Initialize_From_Subnet_STATUS_NetworkInterface_SubResourceEmbedded(source.Subnet)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Subnet_STATUS_NetworkInterface_SubResourceEmbedded() to populate field Subnet")
-		}
-		embedded.Subnet = &subnet
-	} else {
-		embedded.Subnet = nil
-	}
-
-	// VirtualNetworkTaps
-	if source.VirtualNetworkTaps != nil {
-		virtualNetworkTapList := make([]VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded, len(source.VirtualNetworkTaps))
-		for virtualNetworkTapIndex, virtualNetworkTapItem := range source.VirtualNetworkTaps {
-			// Shadow the loop variable to avoid aliasing
-			virtualNetworkTapItem := virtualNetworkTapItem
-			var virtualNetworkTap VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded
-			err := virtualNetworkTap.Initialize_From_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded(&virtualNetworkTapItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded() to populate field VirtualNetworkTaps")
-			}
-			virtualNetworkTapList[virtualNetworkTapIndex] = virtualNetworkTap
-		}
-		embedded.VirtualNetworkTaps = virtualNetworkTapList
-	} else {
-		embedded.VirtualNetworkTaps = nil
-	}
-
-	// No error
-	return nil
-}
-
 // IPConfiguration in a network interface.
 type NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	// ApplicationGatewayBackendAddressPools: The reference to ApplicationGatewayBackendAddressPool resource.
@@ -2844,14 +2674,14 @@ var _ genruntime.FromARMConverter = &NetworkInterfaceIPConfiguration_STATUS_Netw
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "ApplicationGatewayBackendAddressPools":
@@ -2946,7 +2776,9 @@ func (embedded *NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResou
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAddressVersion != nil {
-			privateIPAddressVersion := *typedInput.Properties.PrivateIPAddressVersion
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAddressVersion)
+			privateIPAddressVersion := IPVersion_STATUS(temp)
 			embedded.PrivateIPAddressVersion = &privateIPAddressVersion
 		}
 	}
@@ -2955,7 +2787,9 @@ func (embedded *NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResou
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAllocationMethod != nil {
-			privateIPAllocationMethod := *typedInput.Properties.PrivateIPAllocationMethod
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAllocationMethod)
+			privateIPAllocationMethod := IPAllocationMethod_STATUS(temp)
 			embedded.PrivateIPAllocationMethod = &privateIPAllocationMethod
 		}
 	}
@@ -2978,7 +2812,9 @@ func (embedded *NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResou
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := ProvisioningState_STATUS(temp)
 			embedded.ProvisioningState = &provisioningState
 		}
 	}
@@ -3406,6 +3242,110 @@ func (embedded *NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResou
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type NetworkInterfaceOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_NetworkInterfaceOperatorSpec populates our NetworkInterfaceOperatorSpec from the provided source NetworkInterfaceOperatorSpec
+func (operator *NetworkInterfaceOperatorSpec) AssignProperties_From_NetworkInterfaceOperatorSpec(source *storage.NetworkInterfaceOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterfaceOperatorSpec populates the provided destination NetworkInterfaceOperatorSpec from our NetworkInterfaceOperatorSpec
+func (operator *NetworkInterfaceOperatorSpec) AssignProperties_To_NetworkInterfaceOperatorSpec(destination *storage.NetworkInterfaceOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 type NetworkInterfacePropertiesFormat_MigrationPhase_STATUS string
 
 const (
@@ -3462,14 +3402,14 @@ var _ genruntime.FromARMConverter = &NetworkInterfaceTapConfiguration_STATUS_Net
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -3521,14 +3461,14 @@ var _ genruntime.FromARMConverter = &NetworkSecurityGroup_STATUS_NetworkInterfac
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -3583,7 +3523,7 @@ func (embedded *NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) C
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded_ARM{}
+	result := &arm.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded{}
 
 	// Set property "Id":
 	if embedded.Reference != nil {
@@ -3599,14 +3539,14 @@ func (embedded *NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) C
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded_ARM)
+	_, ok := armInput.(arm.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -3654,21 +3594,6 @@ func (embedded *NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) A
 	return nil
 }
 
-// Initialize_From_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded populates our NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded from the provided source NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) Initialize_From_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(source *NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		embedded.Reference = &reference
-	} else {
-		embedded.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Private endpoint resource.
 type PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	// Id: Resource ID.
@@ -3679,14 +3604,14 @@ var _ genruntime.FromARMConverter = &PrivateEndpoint_STATUS_NetworkInterface_Sub
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -3738,14 +3663,14 @@ var _ genruntime.FromARMConverter = &PrivateLinkService_STATUS_NetworkInterface_
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -3800,7 +3725,7 @@ func (service *PrivateLinkServiceSpec) ConvertToARM(resolved genruntime.ConvertT
 	if service == nil {
 		return nil, nil
 	}
-	result := &PrivateLinkServiceSpec_ARM{}
+	result := &arm.PrivateLinkServiceSpec{}
 
 	// Set property "Id":
 	if service.Reference != nil {
@@ -3816,14 +3741,14 @@ func (service *PrivateLinkServiceSpec) ConvertToARM(resolved genruntime.ConvertT
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (service *PrivateLinkServiceSpec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateLinkServiceSpec_ARM{}
+	return &arm.PrivateLinkServiceSpec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (service *PrivateLinkServiceSpec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(PrivateLinkServiceSpec_ARM)
+	_, ok := armInput.(arm.PrivateLinkServiceSpec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateLinkServiceSpec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateLinkServiceSpec, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -3871,21 +3796,6 @@ func (service *PrivateLinkServiceSpec) AssignProperties_To_PrivateLinkServiceSpe
 	return nil
 }
 
-// Initialize_From_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded populates our PrivateLinkServiceSpec from the provided source PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded
-func (service *PrivateLinkServiceSpec) Initialize_From_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded(source *PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		service.Reference = &reference
-	} else {
-		service.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Backend Address Pool of an application gateway.
 type ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded struct {
 	// Reference: Resource ID.
@@ -3899,7 +3809,7 @@ func (embedded *ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourc
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded_ARM{}
+	result := &arm.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded{}
 
 	// Set property "Id":
 	if embedded.Reference != nil {
@@ -3915,14 +3825,14 @@ func (embedded *ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourc
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded_ARM)
+	_, ok := armInput.(arm.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -3970,21 +3880,6 @@ func (embedded *ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourc
 	return nil
 }
 
-// Initialize_From_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded populates our ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded from the provided source ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded) Initialize_From_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(source *ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		embedded.Reference = &reference
-	} else {
-		embedded.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Backend Address Pool of an application gateway.
 type ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	// Id: Resource ID.
@@ -3995,14 +3890,14 @@ var _ genruntime.FromARMConverter = &ApplicationGatewayBackendAddressPool_STATUS
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -4054,14 +3949,14 @@ var _ genruntime.FromARMConverter = &ApplicationSecurityGroup_STATUS_NetworkInte
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -4116,7 +4011,7 @@ func (embedded *ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedde
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded_ARM{}
+	result := &arm.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded{}
 
 	// Set property "Id":
 	if embedded.Reference != nil {
@@ -4132,14 +4027,14 @@ func (embedded *ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedde
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded_ARM)
+	_, ok := armInput.(arm.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -4187,21 +4082,6 @@ func (embedded *ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedde
 	return nil
 }
 
-// Initialize_From_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded populates our ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded from the provided source ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) Initialize_From_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(source *ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		embedded.Reference = &reference
-	} else {
-		embedded.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Pool of backend IP addresses.
 type BackendAddressPool_NetworkInterface_SubResourceEmbedded struct {
 	// Reference: Resource ID.
@@ -4215,7 +4095,7 @@ func (embedded *BackendAddressPool_NetworkInterface_SubResourceEmbedded) Convert
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &BackendAddressPool_NetworkInterface_SubResourceEmbedded_ARM{}
+	result := &arm.BackendAddressPool_NetworkInterface_SubResourceEmbedded{}
 
 	// Set property "Id":
 	if embedded.Reference != nil {
@@ -4231,14 +4111,14 @@ func (embedded *BackendAddressPool_NetworkInterface_SubResourceEmbedded) Convert
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *BackendAddressPool_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BackendAddressPool_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.BackendAddressPool_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *BackendAddressPool_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(BackendAddressPool_NetworkInterface_SubResourceEmbedded_ARM)
+	_, ok := armInput.(arm.BackendAddressPool_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BackendAddressPool_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.BackendAddressPool_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -4286,21 +4166,6 @@ func (embedded *BackendAddressPool_NetworkInterface_SubResourceEmbedded) AssignP
 	return nil
 }
 
-// Initialize_From_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded populates our BackendAddressPool_NetworkInterface_SubResourceEmbedded from the provided source BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *BackendAddressPool_NetworkInterface_SubResourceEmbedded) Initialize_From_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(source *BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		embedded.Reference = &reference
-	} else {
-		embedded.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Pool of backend IP addresses.
 type BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	// Id: Resource ID.
@@ -4311,14 +4176,14 @@ var _ genruntime.FromARMConverter = &BackendAddressPool_STATUS_NetworkInterface_
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -4373,7 +4238,7 @@ func (embedded *InboundNatRule_NetworkInterface_SubResourceEmbedded) ConvertToAR
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &InboundNatRule_NetworkInterface_SubResourceEmbedded_ARM{}
+	result := &arm.InboundNatRule_NetworkInterface_SubResourceEmbedded{}
 
 	// Set property "Id":
 	if embedded.Reference != nil {
@@ -4389,14 +4254,14 @@ func (embedded *InboundNatRule_NetworkInterface_SubResourceEmbedded) ConvertToAR
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *InboundNatRule_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &InboundNatRule_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.InboundNatRule_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *InboundNatRule_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(InboundNatRule_NetworkInterface_SubResourceEmbedded_ARM)
+	_, ok := armInput.(arm.InboundNatRule_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected InboundNatRule_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.InboundNatRule_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -4444,21 +4309,6 @@ func (embedded *InboundNatRule_NetworkInterface_SubResourceEmbedded) AssignPrope
 	return nil
 }
 
-// Initialize_From_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded populates our InboundNatRule_NetworkInterface_SubResourceEmbedded from the provided source InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *InboundNatRule_NetworkInterface_SubResourceEmbedded) Initialize_From_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded(source *InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		embedded.Reference = &reference
-	} else {
-		embedded.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Inbound NAT rule of the load balancer.
 type InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	// Id: Resource ID.
@@ -4469,14 +4319,14 @@ var _ genruntime.FromARMConverter = &InboundNatRule_STATUS_NetworkInterface_SubR
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -4534,14 +4384,14 @@ var _ genruntime.FromARMConverter = &NetworkInterfaceIPConfigurationPrivateLinkC
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS_ARM{}
+	return &arm.NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS_ARM)
+	typedInput, ok := armInput.(arm.NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS, got %T", armInput)
 	}
 
 	// Set property "Fqdns":
@@ -4616,14 +4466,14 @@ var _ genruntime.FromARMConverter = &PublicIPAddress_STATUS_NetworkInterface_Sub
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -4678,7 +4528,7 @@ func (embedded *PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) Conver
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded_ARM{}
+	result := &arm.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded{}
 
 	// Set property "Id":
 	if embedded.Reference != nil {
@@ -4694,14 +4544,14 @@ func (embedded *PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) Conver
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded_ARM)
+	_, ok := armInput.(arm.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -4749,21 +4599,6 @@ func (embedded *PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) Assign
 	return nil
 }
 
-// Initialize_From_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded populates our PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded from the provided source PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) Initialize_From_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded(source *PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		embedded.Reference = &reference
-	} else {
-		embedded.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Subnet in a virtual network resource.
 type Subnet_NetworkInterface_SubResourceEmbedded struct {
 	// Reference: Resource ID.
@@ -4777,7 +4612,7 @@ func (embedded *Subnet_NetworkInterface_SubResourceEmbedded) ConvertToARM(resolv
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &Subnet_NetworkInterface_SubResourceEmbedded_ARM{}
+	result := &arm.Subnet_NetworkInterface_SubResourceEmbedded{}
 
 	// Set property "Id":
 	if embedded.Reference != nil {
@@ -4793,14 +4628,14 @@ func (embedded *Subnet_NetworkInterface_SubResourceEmbedded) ConvertToARM(resolv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *Subnet_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Subnet_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.Subnet_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *Subnet_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(Subnet_NetworkInterface_SubResourceEmbedded_ARM)
+	_, ok := armInput.(arm.Subnet_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Subnet_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Subnet_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -4848,21 +4683,6 @@ func (embedded *Subnet_NetworkInterface_SubResourceEmbedded) AssignProperties_To
 	return nil
 }
 
-// Initialize_From_Subnet_STATUS_NetworkInterface_SubResourceEmbedded populates our Subnet_NetworkInterface_SubResourceEmbedded from the provided source Subnet_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *Subnet_NetworkInterface_SubResourceEmbedded) Initialize_From_Subnet_STATUS_NetworkInterface_SubResourceEmbedded(source *Subnet_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		embedded.Reference = &reference
-	} else {
-		embedded.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Subnet in a virtual network resource.
 type Subnet_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	// Id: Resource ID.
@@ -4873,14 +4693,14 @@ var _ genruntime.FromARMConverter = &Subnet_STATUS_NetworkInterface_SubResourceE
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *Subnet_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Subnet_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.Subnet_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *Subnet_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Subnet_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.Subnet_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Subnet_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Subnet_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -4932,14 +4752,14 @@ var _ genruntime.FromARMConverter = &VirtualNetworkTap_STATUS_NetworkInterface_S
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded_ARM)
+	typedInput, ok := armInput.(arm.VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -4994,7 +4814,7 @@ func (embedded *VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) Conv
 	if embedded == nil {
 		return nil, nil
 	}
-	result := &VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded_ARM{}
+	result := &arm.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded{}
 
 	// Set property "Id":
 	if embedded.Reference != nil {
@@ -5010,14 +4830,14 @@ func (embedded *VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) Conv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (embedded *VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded_ARM{}
+	return &arm.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (embedded *VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded_ARM)
+	_, ok := armInput.(arm.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -5059,21 +4879,6 @@ func (embedded *VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) Assi
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded populates our VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded from the provided source VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) Initialize_From_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded(source *VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		embedded.Reference = &reference
-	} else {
-		embedded.Reference = nil
 	}
 
 	// No error

@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 )
 
@@ -55,7 +56,7 @@ func (s *VnetPeeringSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the virtual network peering.
-func (s *VnetPeeringSpec) Parameters(ctx context.Context, existing interface{}) (params interface{}, err error) {
+func (s *VnetPeeringSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
 	if existing != nil {
 		if _, ok := existing.(armnetwork.VirtualNetworkPeering); !ok {
 			return nil, errors.Errorf("%T is not an armnetwork.VnetPeering", existing)

@@ -6,6 +6,8 @@ package customizations
 import (
 	v20180501p "github.com/Azure/azure-service-operator/v2/api/insights/v1api20180501preview"
 	v20180501ps "github.com/Azure/azure-service-operator/v2/api/insights/v1api20180501preview/storage"
+	v20220615 "github.com/Azure/azure-service-operator/v2/api/insights/v1api20220615"
+	v20220615s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20220615/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type WebtestExtension struct {
 func (extension *WebtestExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20180501p.Webtest{},
-		&v20180501ps.Webtest{}}
+		&v20180501ps.Webtest{},
+		&v20220615.Webtest{},
+		&v20220615s.Webtest{}}
 }

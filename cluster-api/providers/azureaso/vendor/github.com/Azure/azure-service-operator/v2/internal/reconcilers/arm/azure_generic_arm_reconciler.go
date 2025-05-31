@@ -17,6 +17,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/config"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
+	asocel "github.com/Azure/azure-service-operator/v2/internal/util/cel"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -63,9 +64,10 @@ func NewAzureDeploymentReconciler(
 	kubeClient kubeclient.Client,
 	resourceResolver *resolver.Resolver,
 	positiveConditions *conditions.PositiveConditionBuilder,
+	expressionEvaluator asocel.ExpressionEvaluator,
 	cfg config.Values,
-	extension genruntime.ResourceExtension) *AzureDeploymentReconciler {
-
+	extension genruntime.ResourceExtension,
+) *AzureDeploymentReconciler {
 	return &AzureDeploymentReconciler{
 		ARMConnectionFactory: armConnectionFactory,
 		KubeClient:           kubeClient,
@@ -76,8 +78,9 @@ func NewAzureDeploymentReconciler(
 		ARMOwnedResourceReconcilerCommon: reconcilers.ARMOwnedResourceReconcilerCommon{
 			ResourceResolver: resourceResolver,
 			ReconcilerCommon: reconcilers.ReconcilerCommon{
-				KubeClient:         kubeClient,
-				PositiveConditions: positiveConditions,
+				KubeClient:          kubeClient,
+				PositiveConditions:  positiveConditions,
+				ExpressionEvaluator: expressionEvaluator,
 			},
 		},
 	}

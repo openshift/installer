@@ -4,12 +4,15 @@ github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601
 APIVersion: Enum (1 value)
 └── "2020-06-01"
 ResourceGroup: Resource
-├── Spec: Object (4 properties)
+├── Spec: Object (5 properties)
 │   ├── AzureName: Validated<string> (2 rules)
 │   │   ├── Rule 0: MaxLength: 90
 │   │   └── Rule 1: MinLength: 1
 │   ├── Location: *string
 │   ├── ManagedBy: *string
+│   ├── OperatorSpec: *Object (2 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   └── Tags: map[string]string
 └── Status: Object (8 properties)
     ├── Conditions: conditions.Condition[]
@@ -21,17 +24,3 @@ ResourceGroup: Resource
     │   └── ProvisioningState: *string
     ├── Tags: map[string]string
     └── Type: *string
-ResourceGroup_STATUS_ARM: Object (7 properties)
-├── Id: *string
-├── Location: *string
-├── ManagedBy: *string
-├── Name: *string
-├── Properties: *Object (1 property)
-│   └── ProvisioningState: *string
-├── Tags: map[string]string
-└── Type: *string
-ResourceGroup_Spec_ARM: Object (4 properties)
-├── Location: *string
-├── ManagedBy: *string
-├── Name: string
-└── Tags: map[string]string

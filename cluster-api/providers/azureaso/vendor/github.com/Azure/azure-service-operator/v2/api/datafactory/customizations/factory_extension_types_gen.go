@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20180601 "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601"
-	v20180601s "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type FactoryExtension struct {
 func (extension *FactoryExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20180601.Factory{},
-		&v20180601s.Factory{}}
+		&storage.Factory{}}
 }

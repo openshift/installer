@@ -5,10 +5,14 @@ package v1api20180601
 
 import (
 	"fmt"
-	v20180601s "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type Configuration struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Servers_Configuration_Spec   `json:"spec,omitempty"`
-	Status            Servers_Configuration_STATUS `json:"status,omitempty"`
+	Spec              Configuration_Spec   `json:"spec,omitempty"`
+	Status            Configuration_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &Configuration{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &Configuration{}
 
 // ConvertFrom populates our Configuration from the provided hub Configuration
 func (configuration *Configuration) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20180601s.Configuration)
+	source, ok := hub.(*storage.Configuration)
 	if !ok {
 		return fmt.Errorf("expected dbformariadb/v1api20180601/storage/Configuration but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (configuration *Configuration) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Configuration from our Configuration
 func (configuration *Configuration) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20180601s.Configuration)
+	destination, ok := hub.(*storage.Configuration)
 	if !ok {
 		return fmt.Errorf("expected dbformariadb/v1api20180601/storage/Configuration but received %T instead", hub)
 	}
@@ -90,15 +94,35 @@ func (configuration *Configuration) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the Configuration resource
 func (configuration *Configuration) defaultImpl() { configuration.defaultAzureName() }
 
+var _ configmaps.Exporter = &Configuration{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (configuration *Configuration) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if configuration.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return configuration.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Configuration{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (configuration *Configuration) SecretDestinationExpressions() []*core.DestinationExpression {
+	if configuration.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return configuration.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &Configuration{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (configuration *Configuration) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Servers_Configuration_STATUS); ok {
-		return configuration.Spec.Initialize_From_Servers_Configuration_STATUS(s)
+	if s, ok := status.(*Configuration_STATUS); ok {
+		return configuration.Spec.Initialize_From_Configuration_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Servers_Configuration_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type Configuration_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &Configuration{}
@@ -110,7 +134,7 @@ func (configuration *Configuration) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2018-06-01"
 func (configuration Configuration) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2018-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -143,7 +167,7 @@ func (configuration *Configuration) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (configuration *Configuration) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Servers_Configuration_STATUS{}
+	return &Configuration_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -155,13 +179,13 @@ func (configuration *Configuration) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (configuration *Configuration) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Servers_Configuration_STATUS); ok {
+	if st, ok := status.(*Configuration_STATUS); ok {
 		configuration.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Servers_Configuration_STATUS
+	var st Configuration_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -207,7 +231,7 @@ func (configuration *Configuration) ValidateUpdate(old runtime.Object) (admissio
 
 // createValidations validates the creation of the resource
 func (configuration *Configuration) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){configuration.validateResourceReferences, configuration.validateOwnerReference}
+	return []func() (admission.Warnings, error){configuration.validateResourceReferences, configuration.validateOwnerReference, configuration.validateSecretDestinations, configuration.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -225,7 +249,21 @@ func (configuration *Configuration) updateValidations() []func(old runtime.Objec
 		func(old runtime.Object) (admission.Warnings, error) {
 			return configuration.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return configuration.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return configuration.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (configuration *Configuration) validateConfigMapDestinations() (admission.Warnings, error) {
+	if configuration.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(configuration, nil, configuration.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -242,6 +280,14 @@ func (configuration *Configuration) validateResourceReferences() (admission.Warn
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (configuration *Configuration) validateSecretDestinations() (admission.Warnings, error) {
+	if configuration.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(configuration, nil, configuration.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (configuration *Configuration) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*Configuration)
@@ -253,24 +299,24 @@ func (configuration *Configuration) validateWriteOnceProperties(old runtime.Obje
 }
 
 // AssignProperties_From_Configuration populates our Configuration from the provided source Configuration
-func (configuration *Configuration) AssignProperties_From_Configuration(source *v20180601s.Configuration) error {
+func (configuration *Configuration) AssignProperties_From_Configuration(source *storage.Configuration) error {
 
 	// ObjectMeta
 	configuration.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Servers_Configuration_Spec
-	err := spec.AssignProperties_From_Servers_Configuration_Spec(&source.Spec)
+	var spec Configuration_Spec
+	err := spec.AssignProperties_From_Configuration_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_Configuration_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_Configuration_Spec() to populate field Spec")
 	}
 	configuration.Spec = spec
 
 	// Status
-	var status Servers_Configuration_STATUS
-	err = status.AssignProperties_From_Servers_Configuration_STATUS(&source.Status)
+	var status Configuration_STATUS
+	err = status.AssignProperties_From_Configuration_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_Configuration_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_Configuration_STATUS() to populate field Status")
 	}
 	configuration.Status = status
 
@@ -279,24 +325,24 @@ func (configuration *Configuration) AssignProperties_From_Configuration(source *
 }
 
 // AssignProperties_To_Configuration populates the provided destination Configuration from our Configuration
-func (configuration *Configuration) AssignProperties_To_Configuration(destination *v20180601s.Configuration) error {
+func (configuration *Configuration) AssignProperties_To_Configuration(destination *storage.Configuration) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *configuration.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20180601s.Servers_Configuration_Spec
-	err := configuration.Spec.AssignProperties_To_Servers_Configuration_Spec(&spec)
+	var spec storage.Configuration_Spec
+	err := configuration.Spec.AssignProperties_To_Configuration_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_Configuration_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_Configuration_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20180601s.Servers_Configuration_STATUS
-	err = configuration.Status.AssignProperties_To_Servers_Configuration_STATUS(&status)
+	var status storage.Configuration_STATUS
+	err = configuration.Status.AssignProperties_To_Configuration_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_Configuration_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_Configuration_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -328,10 +374,14 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2018-06-01")
 
-type Servers_Configuration_Spec struct {
+type Configuration_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
+
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ConfigurationOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -346,21 +396,21 @@ type Servers_Configuration_Spec struct {
 	Value *string `json:"value,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Servers_Configuration_Spec{}
+var _ genruntime.ARMTransformer = &Configuration_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (configuration *Servers_Configuration_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (configuration *Configuration_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &Servers_Configuration_Spec_ARM{}
+	result := &arm.Configuration_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
 
 	// Set property "Properties":
 	if configuration.Source != nil || configuration.Value != nil {
-		result.Properties = &ConfigurationProperties_ARM{}
+		result.Properties = &arm.ConfigurationProperties{}
 	}
 	if configuration.Source != nil {
 		source := *configuration.Source
@@ -374,19 +424,21 @@ func (configuration *Servers_Configuration_Spec) ConvertToARM(resolved genruntim
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (configuration *Servers_Configuration_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_Configuration_Spec_ARM{}
+func (configuration *Configuration_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.Configuration_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (configuration *Servers_Configuration_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_Configuration_Spec_ARM)
+func (configuration *Configuration_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.Configuration_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_Configuration_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Configuration_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
 	configuration.SetAzureName(genruntime.ExtractKubernetesResourceNameFromARMName(typedInput.Name))
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	configuration.Owner = &genruntime.KnownResourceReference{
@@ -416,25 +468,25 @@ func (configuration *Servers_Configuration_Spec) PopulateFromARM(owner genruntim
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Servers_Configuration_Spec{}
+var _ genruntime.ConvertibleSpec = &Configuration_Spec{}
 
-// ConvertSpecFrom populates our Servers_Configuration_Spec from the provided source
-func (configuration *Servers_Configuration_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20180601s.Servers_Configuration_Spec)
+// ConvertSpecFrom populates our Configuration_Spec from the provided source
+func (configuration *Configuration_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.Configuration_Spec)
 	if ok {
 		// Populate our instance from source
-		return configuration.AssignProperties_From_Servers_Configuration_Spec(src)
+		return configuration.AssignProperties_From_Configuration_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20180601s.Servers_Configuration_Spec{}
+	src = &storage.Configuration_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = configuration.AssignProperties_From_Servers_Configuration_Spec(src)
+	err = configuration.AssignProperties_From_Configuration_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -442,17 +494,17 @@ func (configuration *Servers_Configuration_Spec) ConvertSpecFrom(source genrunti
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Servers_Configuration_Spec
-func (configuration *Servers_Configuration_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20180601s.Servers_Configuration_Spec)
+// ConvertSpecTo populates the provided destination from our Configuration_Spec
+func (configuration *Configuration_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.Configuration_Spec)
 	if ok {
 		// Populate destination from our instance
-		return configuration.AssignProperties_To_Servers_Configuration_Spec(dst)
+		return configuration.AssignProperties_To_Configuration_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20180601s.Servers_Configuration_Spec{}
-	err := configuration.AssignProperties_To_Servers_Configuration_Spec(dst)
+	dst = &storage.Configuration_Spec{}
+	err := configuration.AssignProperties_To_Configuration_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -466,11 +518,23 @@ func (configuration *Servers_Configuration_Spec) ConvertSpecTo(destination genru
 	return nil
 }
 
-// AssignProperties_From_Servers_Configuration_Spec populates our Servers_Configuration_Spec from the provided source Servers_Configuration_Spec
-func (configuration *Servers_Configuration_Spec) AssignProperties_From_Servers_Configuration_Spec(source *v20180601s.Servers_Configuration_Spec) error {
+// AssignProperties_From_Configuration_Spec populates our Configuration_Spec from the provided source Configuration_Spec
+func (configuration *Configuration_Spec) AssignProperties_From_Configuration_Spec(source *storage.Configuration_Spec) error {
 
 	// AzureName
 	configuration.AzureName = source.AzureName
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ConfigurationOperatorSpec
+		err := operatorSpec.AssignProperties_From_ConfigurationOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ConfigurationOperatorSpec() to populate field OperatorSpec")
+		}
+		configuration.OperatorSpec = &operatorSpec
+	} else {
+		configuration.OperatorSpec = nil
+	}
 
 	// Owner
 	if source.Owner != nil {
@@ -490,13 +554,25 @@ func (configuration *Servers_Configuration_Spec) AssignProperties_From_Servers_C
 	return nil
 }
 
-// AssignProperties_To_Servers_Configuration_Spec populates the provided destination Servers_Configuration_Spec from our Servers_Configuration_Spec
-func (configuration *Servers_Configuration_Spec) AssignProperties_To_Servers_Configuration_Spec(destination *v20180601s.Servers_Configuration_Spec) error {
+// AssignProperties_To_Configuration_Spec populates the provided destination Configuration_Spec from our Configuration_Spec
+func (configuration *Configuration_Spec) AssignProperties_To_Configuration_Spec(destination *storage.Configuration_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AzureName
 	destination.AzureName = configuration.AzureName
+
+	// OperatorSpec
+	if configuration.OperatorSpec != nil {
+		var operatorSpec storage.ConfigurationOperatorSpec
+		err := configuration.OperatorSpec.AssignProperties_To_ConfigurationOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ConfigurationOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = configuration.OriginalVersion()
@@ -526,8 +602,8 @@ func (configuration *Servers_Configuration_Spec) AssignProperties_To_Servers_Con
 	return nil
 }
 
-// Initialize_From_Servers_Configuration_STATUS populates our Servers_Configuration_Spec from the provided source Servers_Configuration_STATUS
-func (configuration *Servers_Configuration_Spec) Initialize_From_Servers_Configuration_STATUS(source *Servers_Configuration_STATUS) error {
+// Initialize_From_Configuration_STATUS populates our Configuration_Spec from the provided source Configuration_STATUS
+func (configuration *Configuration_Spec) Initialize_From_Configuration_STATUS(source *Configuration_STATUS) error {
 
 	// Source
 	configuration.Source = genruntime.ClonePointerToString(source.Source)
@@ -540,16 +616,16 @@ func (configuration *Servers_Configuration_Spec) Initialize_From_Servers_Configu
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (configuration *Servers_Configuration_Spec) OriginalVersion() string {
+func (configuration *Configuration_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (configuration *Servers_Configuration_Spec) SetAzureName(azureName string) {
+func (configuration *Configuration_Spec) SetAzureName(azureName string) {
 	configuration.AzureName = azureName
 }
 
-type Servers_Configuration_STATUS struct {
+type Configuration_STATUS struct {
 	// AllowedValues: Allowed values of the configuration.
 	AllowedValues *string `json:"allowedValues,omitempty"`
 
@@ -582,25 +658,25 @@ type Servers_Configuration_STATUS struct {
 	Value *string `json:"value,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Servers_Configuration_STATUS{}
+var _ genruntime.ConvertibleStatus = &Configuration_STATUS{}
 
-// ConvertStatusFrom populates our Servers_Configuration_STATUS from the provided source
-func (configuration *Servers_Configuration_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20180601s.Servers_Configuration_STATUS)
+// ConvertStatusFrom populates our Configuration_STATUS from the provided source
+func (configuration *Configuration_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.Configuration_STATUS)
 	if ok {
 		// Populate our instance from source
-		return configuration.AssignProperties_From_Servers_Configuration_STATUS(src)
+		return configuration.AssignProperties_From_Configuration_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20180601s.Servers_Configuration_STATUS{}
+	src = &storage.Configuration_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = configuration.AssignProperties_From_Servers_Configuration_STATUS(src)
+	err = configuration.AssignProperties_From_Configuration_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -608,17 +684,17 @@ func (configuration *Servers_Configuration_STATUS) ConvertStatusFrom(source genr
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Servers_Configuration_STATUS
-func (configuration *Servers_Configuration_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20180601s.Servers_Configuration_STATUS)
+// ConvertStatusTo populates the provided destination from our Configuration_STATUS
+func (configuration *Configuration_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.Configuration_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return configuration.AssignProperties_To_Servers_Configuration_STATUS(dst)
+		return configuration.AssignProperties_To_Configuration_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20180601s.Servers_Configuration_STATUS{}
-	err := configuration.AssignProperties_To_Servers_Configuration_STATUS(dst)
+	dst = &storage.Configuration_STATUS{}
+	err := configuration.AssignProperties_To_Configuration_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -632,18 +708,18 @@ func (configuration *Servers_Configuration_STATUS) ConvertStatusTo(destination g
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Servers_Configuration_STATUS{}
+var _ genruntime.FromARMConverter = &Configuration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (configuration *Servers_Configuration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_Configuration_STATUS_ARM{}
+func (configuration *Configuration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.Configuration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (configuration *Servers_Configuration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_Configuration_STATUS_ARM)
+func (configuration *Configuration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.Configuration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_Configuration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Configuration_STATUS, got %T", armInput)
 	}
 
 	// Set property "AllowedValues":
@@ -724,8 +800,8 @@ func (configuration *Servers_Configuration_STATUS) PopulateFromARM(owner genrunt
 	return nil
 }
 
-// AssignProperties_From_Servers_Configuration_STATUS populates our Servers_Configuration_STATUS from the provided source Servers_Configuration_STATUS
-func (configuration *Servers_Configuration_STATUS) AssignProperties_From_Servers_Configuration_STATUS(source *v20180601s.Servers_Configuration_STATUS) error {
+// AssignProperties_From_Configuration_STATUS populates our Configuration_STATUS from the provided source Configuration_STATUS
+func (configuration *Configuration_STATUS) AssignProperties_From_Configuration_STATUS(source *storage.Configuration_STATUS) error {
 
 	// AllowedValues
 	configuration.AllowedValues = genruntime.ClonePointerToString(source.AllowedValues)
@@ -761,8 +837,8 @@ func (configuration *Servers_Configuration_STATUS) AssignProperties_From_Servers
 	return nil
 }
 
-// AssignProperties_To_Servers_Configuration_STATUS populates the provided destination Servers_Configuration_STATUS from our Servers_Configuration_STATUS
-func (configuration *Servers_Configuration_STATUS) AssignProperties_To_Servers_Configuration_STATUS(destination *v20180601s.Servers_Configuration_STATUS) error {
+// AssignProperties_To_Configuration_STATUS populates the provided destination Configuration_STATUS from our Configuration_STATUS
+func (configuration *Configuration_STATUS) AssignProperties_To_Configuration_STATUS(destination *storage.Configuration_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -795,6 +871,110 @@ func (configuration *Servers_Configuration_STATUS) AssignProperties_To_Servers_C
 
 	// Value
 	destination.Value = genruntime.ClonePointerToString(configuration.Value)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ConfigurationOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ConfigurationOperatorSpec populates our ConfigurationOperatorSpec from the provided source ConfigurationOperatorSpec
+func (operator *ConfigurationOperatorSpec) AssignProperties_From_ConfigurationOperatorSpec(source *storage.ConfigurationOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ConfigurationOperatorSpec populates the provided destination ConfigurationOperatorSpec from our ConfigurationOperatorSpec
+func (operator *ConfigurationOperatorSpec) AssignProperties_To_ConfigurationOperatorSpec(destination *storage.ConfigurationOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {

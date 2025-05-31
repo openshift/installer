@@ -5,10 +5,14 @@ package v1api20200601
 
 import (
 	"fmt"
-	v20200601s "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &EventSubscription{}
 
 // ConvertFrom populates our EventSubscription from the provided hub EventSubscription
 func (subscription *EventSubscription) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20200601s.EventSubscription)
+	source, ok := hub.(*storage.EventSubscription)
 	if !ok {
 		return fmt.Errorf("expected eventgrid/v1api20200601/storage/EventSubscription but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (subscription *EventSubscription) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub EventSubscription from our EventSubscription
 func (subscription *EventSubscription) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20200601s.EventSubscription)
+	destination, ok := hub.(*storage.EventSubscription)
 	if !ok {
 		return fmt.Errorf("expected eventgrid/v1api20200601/storage/EventSubscription but received %T instead", hub)
 	}
@@ -90,6 +94,26 @@ func (subscription *EventSubscription) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the EventSubscription resource
 func (subscription *EventSubscription) defaultImpl() { subscription.defaultAzureName() }
 
+var _ configmaps.Exporter = &EventSubscription{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (subscription *EventSubscription) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if subscription.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return subscription.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &EventSubscription{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (subscription *EventSubscription) SecretDestinationExpressions() []*core.DestinationExpression {
+	if subscription.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return subscription.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &EventSubscription{}
 
 // InitializeSpec initializes the spec for this resource from the given status
@@ -110,7 +134,7 @@ func (subscription *EventSubscription) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-06-01"
 func (subscription EventSubscription) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -207,7 +231,7 @@ func (subscription *EventSubscription) ValidateUpdate(old runtime.Object) (admis
 
 // createValidations validates the creation of the resource
 func (subscription *EventSubscription) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){subscription.validateResourceReferences}
+	return []func() (admission.Warnings, error){subscription.validateResourceReferences, subscription.validateSecretDestinations, subscription.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -221,7 +245,22 @@ func (subscription *EventSubscription) updateValidations() []func(old runtime.Ob
 		func(old runtime.Object) (admission.Warnings, error) {
 			return subscription.validateResourceReferences()
 		},
-		subscription.validateWriteOnceProperties}
+		subscription.validateWriteOnceProperties,
+		func(old runtime.Object) (admission.Warnings, error) {
+			return subscription.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return subscription.validateConfigMapDestinations()
+		},
+	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (subscription *EventSubscription) validateConfigMapDestinations() (admission.Warnings, error) {
+	if subscription.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(subscription, nil, subscription.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateResourceReferences validates all resource references
@@ -231,6 +270,14 @@ func (subscription *EventSubscription) validateResourceReferences() (admission.W
 		return nil, err
 	}
 	return genruntime.ValidateResourceReferences(refs)
+}
+
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (subscription *EventSubscription) validateSecretDestinations() (admission.Warnings, error) {
+	if subscription.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(subscription, nil, subscription.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties
@@ -244,7 +291,7 @@ func (subscription *EventSubscription) validateWriteOnceProperties(old runtime.O
 }
 
 // AssignProperties_From_EventSubscription populates our EventSubscription from the provided source EventSubscription
-func (subscription *EventSubscription) AssignProperties_From_EventSubscription(source *v20200601s.EventSubscription) error {
+func (subscription *EventSubscription) AssignProperties_From_EventSubscription(source *storage.EventSubscription) error {
 
 	// ObjectMeta
 	subscription.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -270,13 +317,13 @@ func (subscription *EventSubscription) AssignProperties_From_EventSubscription(s
 }
 
 // AssignProperties_To_EventSubscription populates the provided destination EventSubscription from our EventSubscription
-func (subscription *EventSubscription) AssignProperties_To_EventSubscription(destination *v20200601s.EventSubscription) error {
+func (subscription *EventSubscription) AssignProperties_To_EventSubscription(destination *storage.EventSubscription) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *subscription.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20200601s.EventSubscription_Spec
+	var spec storage.EventSubscription_Spec
 	err := subscription.Spec.AssignProperties_To_EventSubscription_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_EventSubscription_Spec() to populate field Spec")
@@ -284,7 +331,7 @@ func (subscription *EventSubscription) AssignProperties_To_EventSubscription(des
 	destination.Spec = spec
 
 	// Status
-	var status v20200601s.EventSubscription_STATUS
+	var status storage.EventSubscription_STATUS
 	err = subscription.Status.AssignProperties_To_EventSubscription_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_EventSubscription_STATUS() to populate field Status")
@@ -337,6 +384,10 @@ type EventSubscription_Spec struct {
 	// Labels: List of user defined labels.
 	Labels []string `json:"labels,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *EventSubscriptionOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. This resource is an
@@ -355,7 +406,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 	if subscription == nil {
 		return nil, nil
 	}
-	result := &EventSubscription_Spec_ARM{}
+	result := &arm.EventSubscription_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -368,14 +419,14 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		subscription.Filter != nil ||
 		subscription.Labels != nil ||
 		subscription.RetryPolicy != nil {
-		result.Properties = &EventSubscriptionProperties_ARM{}
+		result.Properties = &arm.EventSubscriptionProperties{}
 	}
 	if subscription.DeadLetterDestination != nil {
 		deadLetterDestination_ARM, err := (*subscription.DeadLetterDestination).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		deadLetterDestination := *deadLetterDestination_ARM.(*DeadLetterDestination_ARM)
+		deadLetterDestination := *deadLetterDestination_ARM.(*arm.DeadLetterDestination)
 		result.Properties.DeadLetterDestination = &deadLetterDestination
 	}
 	if subscription.Destination != nil {
@@ -383,11 +434,13 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		if err != nil {
 			return nil, err
 		}
-		destination := *destination_ARM.(*EventSubscriptionDestination_ARM)
+		destination := *destination_ARM.(*arm.EventSubscriptionDestination)
 		result.Properties.Destination = &destination
 	}
 	if subscription.EventDeliverySchema != nil {
-		eventDeliverySchema := *subscription.EventDeliverySchema
+		var temp string
+		temp = string(*subscription.EventDeliverySchema)
+		eventDeliverySchema := arm.EventSubscriptionProperties_EventDeliverySchema(temp)
 		result.Properties.EventDeliverySchema = &eventDeliverySchema
 	}
 	if subscription.ExpirationTimeUtc != nil {
@@ -399,7 +452,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		if err != nil {
 			return nil, err
 		}
-		filter := *filter_ARM.(*EventSubscriptionFilter_ARM)
+		filter := *filter_ARM.(*arm.EventSubscriptionFilter)
 		result.Properties.Filter = &filter
 	}
 	for _, item := range subscription.Labels {
@@ -410,7 +463,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		if err != nil {
 			return nil, err
 		}
-		retryPolicy := *retryPolicy_ARM.(*RetryPolicy_ARM)
+		retryPolicy := *retryPolicy_ARM.(*arm.RetryPolicy)
 		result.Properties.RetryPolicy = &retryPolicy
 	}
 	return result, nil
@@ -418,14 +471,14 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (subscription *EventSubscription_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EventSubscription_Spec_ARM{}
+	return &arm.EventSubscription_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (subscription *EventSubscription_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EventSubscription_Spec_ARM)
+	typedInput, ok := armInput.(arm.EventSubscription_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EventSubscription_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EventSubscription_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -463,7 +516,9 @@ func (subscription *EventSubscription_Spec) PopulateFromARM(owner genruntime.Arb
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.EventDeliverySchema != nil {
-			eventDeliverySchema := *typedInput.Properties.EventDeliverySchema
+			var temp string
+			temp = string(*typedInput.Properties.EventDeliverySchema)
+			eventDeliverySchema := EventSubscriptionProperties_EventDeliverySchema(temp)
 			subscription.EventDeliverySchema = &eventDeliverySchema
 		}
 	}
@@ -499,6 +554,8 @@ func (subscription *EventSubscription_Spec) PopulateFromARM(owner genruntime.Arb
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	subscription.Owner = &owner
 
@@ -524,14 +581,14 @@ var _ genruntime.ConvertibleSpec = &EventSubscription_Spec{}
 
 // ConvertSpecFrom populates our EventSubscription_Spec from the provided source
 func (subscription *EventSubscription_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20200601s.EventSubscription_Spec)
+	src, ok := source.(*storage.EventSubscription_Spec)
 	if ok {
 		// Populate our instance from source
 		return subscription.AssignProperties_From_EventSubscription_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20200601s.EventSubscription_Spec{}
+	src = &storage.EventSubscription_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -548,14 +605,14 @@ func (subscription *EventSubscription_Spec) ConvertSpecFrom(source genruntime.Co
 
 // ConvertSpecTo populates the provided destination from our EventSubscription_Spec
 func (subscription *EventSubscription_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20200601s.EventSubscription_Spec)
+	dst, ok := destination.(*storage.EventSubscription_Spec)
 	if ok {
 		// Populate destination from our instance
 		return subscription.AssignProperties_To_EventSubscription_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20200601s.EventSubscription_Spec{}
+	dst = &storage.EventSubscription_Spec{}
 	err := subscription.AssignProperties_To_EventSubscription_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -571,7 +628,7 @@ func (subscription *EventSubscription_Spec) ConvertSpecTo(destination genruntime
 }
 
 // AssignProperties_From_EventSubscription_Spec populates our EventSubscription_Spec from the provided source EventSubscription_Spec
-func (subscription *EventSubscription_Spec) AssignProperties_From_EventSubscription_Spec(source *v20200601s.EventSubscription_Spec) error {
+func (subscription *EventSubscription_Spec) AssignProperties_From_EventSubscription_Spec(source *storage.EventSubscription_Spec) error {
 
 	// AzureName
 	subscription.AzureName = source.AzureName
@@ -602,8 +659,9 @@ func (subscription *EventSubscription_Spec) AssignProperties_From_EventSubscript
 
 	// EventDeliverySchema
 	if source.EventDeliverySchema != nil {
-		eventDeliverySchema := EventSubscriptionProperties_EventDeliverySchema(*source.EventDeliverySchema)
-		subscription.EventDeliverySchema = &eventDeliverySchema
+		eventDeliverySchema := *source.EventDeliverySchema
+		eventDeliverySchemaTemp := genruntime.ToEnum(eventDeliverySchema, eventSubscriptionProperties_EventDeliverySchema_Values)
+		subscription.EventDeliverySchema = &eventDeliverySchemaTemp
 	} else {
 		subscription.EventDeliverySchema = nil
 	}
@@ -625,6 +683,18 @@ func (subscription *EventSubscription_Spec) AssignProperties_From_EventSubscript
 
 	// Labels
 	subscription.Labels = genruntime.CloneSliceOfString(source.Labels)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec EventSubscriptionOperatorSpec
+		err := operatorSpec.AssignProperties_From_EventSubscriptionOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_EventSubscriptionOperatorSpec() to populate field OperatorSpec")
+		}
+		subscription.OperatorSpec = &operatorSpec
+	} else {
+		subscription.OperatorSpec = nil
+	}
 
 	// Owner
 	if source.Owner != nil {
@@ -651,7 +721,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_From_EventSubscript
 }
 
 // AssignProperties_To_EventSubscription_Spec populates the provided destination EventSubscription_Spec from our EventSubscription_Spec
-func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscription_Spec(destination *v20200601s.EventSubscription_Spec) error {
+func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscription_Spec(destination *storage.EventSubscription_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -660,7 +730,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 
 	// DeadLetterDestination
 	if subscription.DeadLetterDestination != nil {
-		var deadLetterDestination v20200601s.DeadLetterDestination
+		var deadLetterDestination storage.DeadLetterDestination
 		err := subscription.DeadLetterDestination.AssignProperties_To_DeadLetterDestination(&deadLetterDestination)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DeadLetterDestination() to populate field DeadLetterDestination")
@@ -672,7 +742,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 
 	// Destination
 	if subscription.Destination != nil {
-		var destinationLocal v20200601s.EventSubscriptionDestination
+		var destinationLocal storage.EventSubscriptionDestination
 		err := subscription.Destination.AssignProperties_To_EventSubscriptionDestination(&destinationLocal)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EventSubscriptionDestination() to populate field Destination")
@@ -695,7 +765,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 
 	// Filter
 	if subscription.Filter != nil {
-		var filter v20200601s.EventSubscriptionFilter
+		var filter storage.EventSubscriptionFilter
 		err := subscription.Filter.AssignProperties_To_EventSubscriptionFilter(&filter)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EventSubscriptionFilter() to populate field Filter")
@@ -707,6 +777,18 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 
 	// Labels
 	destination.Labels = genruntime.CloneSliceOfString(subscription.Labels)
+
+	// OperatorSpec
+	if subscription.OperatorSpec != nil {
+		var operatorSpec storage.EventSubscriptionOperatorSpec
+		err := subscription.OperatorSpec.AssignProperties_To_EventSubscriptionOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_EventSubscriptionOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = subscription.OriginalVersion()
@@ -721,7 +803,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 
 	// RetryPolicy
 	if subscription.RetryPolicy != nil {
-		var retryPolicy v20200601s.RetryPolicy
+		var retryPolicy storage.RetryPolicy
 		err := subscription.RetryPolicy.AssignProperties_To_RetryPolicy(&retryPolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_RetryPolicy() to populate field RetryPolicy")
@@ -771,7 +853,7 @@ func (subscription *EventSubscription_Spec) Initialize_From_EventSubscription_ST
 
 	// EventDeliverySchema
 	if source.EventDeliverySchema != nil {
-		eventDeliverySchema := EventSubscriptionProperties_EventDeliverySchema(*source.EventDeliverySchema)
+		eventDeliverySchema := genruntime.ToEnum(string(*source.EventDeliverySchema), eventSubscriptionProperties_EventDeliverySchema_Values)
 		subscription.EventDeliverySchema = &eventDeliverySchema
 	} else {
 		subscription.EventDeliverySchema = nil
@@ -871,14 +953,14 @@ var _ genruntime.ConvertibleStatus = &EventSubscription_STATUS{}
 
 // ConvertStatusFrom populates our EventSubscription_STATUS from the provided source
 func (subscription *EventSubscription_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20200601s.EventSubscription_STATUS)
+	src, ok := source.(*storage.EventSubscription_STATUS)
 	if ok {
 		// Populate our instance from source
 		return subscription.AssignProperties_From_EventSubscription_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20200601s.EventSubscription_STATUS{}
+	src = &storage.EventSubscription_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -895,14 +977,14 @@ func (subscription *EventSubscription_STATUS) ConvertStatusFrom(source genruntim
 
 // ConvertStatusTo populates the provided destination from our EventSubscription_STATUS
 func (subscription *EventSubscription_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20200601s.EventSubscription_STATUS)
+	dst, ok := destination.(*storage.EventSubscription_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return subscription.AssignProperties_To_EventSubscription_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20200601s.EventSubscription_STATUS{}
+	dst = &storage.EventSubscription_STATUS{}
 	err := subscription.AssignProperties_To_EventSubscription_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -921,14 +1003,14 @@ var _ genruntime.FromARMConverter = &EventSubscription_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (subscription *EventSubscription_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EventSubscription_STATUS_ARM{}
+	return &arm.EventSubscription_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (subscription *EventSubscription_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EventSubscription_STATUS_ARM)
+	typedInput, ok := armInput.(arm.EventSubscription_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EventSubscription_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EventSubscription_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -965,7 +1047,9 @@ func (subscription *EventSubscription_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.EventDeliverySchema != nil {
-			eventDeliverySchema := *typedInput.Properties.EventDeliverySchema
+			var temp string
+			temp = string(*typedInput.Properties.EventDeliverySchema)
+			eventDeliverySchema := EventSubscriptionProperties_EventDeliverySchema_STATUS(temp)
 			subscription.EventDeliverySchema = &eventDeliverySchema
 		}
 	}
@@ -1017,7 +1101,9 @@ func (subscription *EventSubscription_STATUS) PopulateFromARM(owner genruntime.A
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := EventSubscriptionProperties_ProvisioningState_STATUS(temp)
 			subscription.ProvisioningState = &provisioningState
 		}
 	}
@@ -1067,7 +1153,7 @@ func (subscription *EventSubscription_STATUS) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_EventSubscription_STATUS populates our EventSubscription_STATUS from the provided source EventSubscription_STATUS
-func (subscription *EventSubscription_STATUS) AssignProperties_From_EventSubscription_STATUS(source *v20200601s.EventSubscription_STATUS) error {
+func (subscription *EventSubscription_STATUS) AssignProperties_From_EventSubscription_STATUS(source *storage.EventSubscription_STATUS) error {
 
 	// Conditions
 	subscription.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -1098,8 +1184,9 @@ func (subscription *EventSubscription_STATUS) AssignProperties_From_EventSubscri
 
 	// EventDeliverySchema
 	if source.EventDeliverySchema != nil {
-		eventDeliverySchema := EventSubscriptionProperties_EventDeliverySchema_STATUS(*source.EventDeliverySchema)
-		subscription.EventDeliverySchema = &eventDeliverySchema
+		eventDeliverySchema := *source.EventDeliverySchema
+		eventDeliverySchemaTemp := genruntime.ToEnum(eventDeliverySchema, eventSubscriptionProperties_EventDeliverySchema_STATUS_Values)
+		subscription.EventDeliverySchema = &eventDeliverySchemaTemp
 	} else {
 		subscription.EventDeliverySchema = nil
 	}
@@ -1130,8 +1217,9 @@ func (subscription *EventSubscription_STATUS) AssignProperties_From_EventSubscri
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := EventSubscriptionProperties_ProvisioningState_STATUS(*source.ProvisioningState)
-		subscription.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, eventSubscriptionProperties_ProvisioningState_STATUS_Values)
+		subscription.ProvisioningState = &provisioningStateTemp
 	} else {
 		subscription.ProvisioningState = nil
 	}
@@ -1171,7 +1259,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_From_EventSubscri
 }
 
 // AssignProperties_To_EventSubscription_STATUS populates the provided destination EventSubscription_STATUS from our EventSubscription_STATUS
-func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscription_STATUS(destination *v20200601s.EventSubscription_STATUS) error {
+func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscription_STATUS(destination *storage.EventSubscription_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1180,7 +1268,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscript
 
 	// DeadLetterDestination
 	if subscription.DeadLetterDestination != nil {
-		var deadLetterDestination v20200601s.DeadLetterDestination_STATUS
+		var deadLetterDestination storage.DeadLetterDestination_STATUS
 		err := subscription.DeadLetterDestination.AssignProperties_To_DeadLetterDestination_STATUS(&deadLetterDestination)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DeadLetterDestination_STATUS() to populate field DeadLetterDestination")
@@ -1192,7 +1280,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscript
 
 	// Destination
 	if subscription.Destination != nil {
-		var destinationLocal v20200601s.EventSubscriptionDestination_STATUS
+		var destinationLocal storage.EventSubscriptionDestination_STATUS
 		err := subscription.Destination.AssignProperties_To_EventSubscriptionDestination_STATUS(&destinationLocal)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EventSubscriptionDestination_STATUS() to populate field Destination")
@@ -1215,7 +1303,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscript
 
 	// Filter
 	if subscription.Filter != nil {
-		var filter v20200601s.EventSubscriptionFilter_STATUS
+		var filter storage.EventSubscriptionFilter_STATUS
 		err := subscription.Filter.AssignProperties_To_EventSubscriptionFilter_STATUS(&filter)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EventSubscriptionFilter_STATUS() to populate field Filter")
@@ -1244,7 +1332,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscript
 
 	// RetryPolicy
 	if subscription.RetryPolicy != nil {
-		var retryPolicy v20200601s.RetryPolicy_STATUS
+		var retryPolicy storage.RetryPolicy_STATUS
 		err := subscription.RetryPolicy.AssignProperties_To_RetryPolicy_STATUS(&retryPolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_RetryPolicy_STATUS() to populate field RetryPolicy")
@@ -1256,7 +1344,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscript
 
 	// SystemData
 	if subscription.SystemData != nil {
-		var systemDatum v20200601s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := subscription.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -1295,7 +1383,7 @@ func (destination *DeadLetterDestination) ConvertToARM(resolved genruntime.Conve
 	if destination == nil {
 		return nil, nil
 	}
-	result := &DeadLetterDestination_ARM{}
+	result := &arm.DeadLetterDestination{}
 
 	// Set property "StorageBlob":
 	if destination.StorageBlob != nil {
@@ -1303,7 +1391,7 @@ func (destination *DeadLetterDestination) ConvertToARM(resolved genruntime.Conve
 		if err != nil {
 			return nil, err
 		}
-		storageBlob := *storageBlob_ARM.(*StorageBlobDeadLetterDestination_ARM)
+		storageBlob := *storageBlob_ARM.(*arm.StorageBlobDeadLetterDestination)
 		result.StorageBlob = &storageBlob
 	}
 	return result, nil
@@ -1311,14 +1399,14 @@ func (destination *DeadLetterDestination) ConvertToARM(resolved genruntime.Conve
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *DeadLetterDestination) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DeadLetterDestination_ARM{}
+	return &arm.DeadLetterDestination{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *DeadLetterDestination) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DeadLetterDestination_ARM)
+	typedInput, ok := armInput.(arm.DeadLetterDestination)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DeadLetterDestination_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DeadLetterDestination, got %T", armInput)
 	}
 
 	// Set property "StorageBlob":
@@ -1337,7 +1425,7 @@ func (destination *DeadLetterDestination) PopulateFromARM(owner genruntime.Arbit
 }
 
 // AssignProperties_From_DeadLetterDestination populates our DeadLetterDestination from the provided source DeadLetterDestination
-func (destination *DeadLetterDestination) AssignProperties_From_DeadLetterDestination(source *v20200601s.DeadLetterDestination) error {
+func (destination *DeadLetterDestination) AssignProperties_From_DeadLetterDestination(source *storage.DeadLetterDestination) error {
 
 	// StorageBlob
 	if source.StorageBlob != nil {
@@ -1356,13 +1444,13 @@ func (destination *DeadLetterDestination) AssignProperties_From_DeadLetterDestin
 }
 
 // AssignProperties_To_DeadLetterDestination populates the provided destination DeadLetterDestination from our DeadLetterDestination
-func (destination *DeadLetterDestination) AssignProperties_To_DeadLetterDestination(target *v20200601s.DeadLetterDestination) error {
+func (destination *DeadLetterDestination) AssignProperties_To_DeadLetterDestination(target *storage.DeadLetterDestination) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// StorageBlob
 	if destination.StorageBlob != nil {
-		var storageBlob v20200601s.StorageBlobDeadLetterDestination
+		var storageBlob storage.StorageBlobDeadLetterDestination
 		err := destination.StorageBlob.AssignProperties_To_StorageBlobDeadLetterDestination(&storageBlob)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StorageBlobDeadLetterDestination() to populate field StorageBlob")
@@ -1411,14 +1499,14 @@ var _ genruntime.FromARMConverter = &DeadLetterDestination_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *DeadLetterDestination_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DeadLetterDestination_STATUS_ARM{}
+	return &arm.DeadLetterDestination_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *DeadLetterDestination_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DeadLetterDestination_STATUS_ARM)
+	typedInput, ok := armInput.(arm.DeadLetterDestination_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DeadLetterDestination_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DeadLetterDestination_STATUS, got %T", armInput)
 	}
 
 	// Set property "StorageBlob":
@@ -1437,7 +1525,7 @@ func (destination *DeadLetterDestination_STATUS) PopulateFromARM(owner genruntim
 }
 
 // AssignProperties_From_DeadLetterDestination_STATUS populates our DeadLetterDestination_STATUS from the provided source DeadLetterDestination_STATUS
-func (destination *DeadLetterDestination_STATUS) AssignProperties_From_DeadLetterDestination_STATUS(source *v20200601s.DeadLetterDestination_STATUS) error {
+func (destination *DeadLetterDestination_STATUS) AssignProperties_From_DeadLetterDestination_STATUS(source *storage.DeadLetterDestination_STATUS) error {
 
 	// StorageBlob
 	if source.StorageBlob != nil {
@@ -1456,13 +1544,13 @@ func (destination *DeadLetterDestination_STATUS) AssignProperties_From_DeadLette
 }
 
 // AssignProperties_To_DeadLetterDestination_STATUS populates the provided destination DeadLetterDestination_STATUS from our DeadLetterDestination_STATUS
-func (destination *DeadLetterDestination_STATUS) AssignProperties_To_DeadLetterDestination_STATUS(target *v20200601s.DeadLetterDestination_STATUS) error {
+func (destination *DeadLetterDestination_STATUS) AssignProperties_To_DeadLetterDestination_STATUS(target *storage.DeadLetterDestination_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// StorageBlob
 	if destination.StorageBlob != nil {
-		var storageBlob v20200601s.StorageBlobDeadLetterDestination_STATUS
+		var storageBlob storage.StorageBlobDeadLetterDestination_STATUS
 		err := destination.StorageBlob.AssignProperties_To_StorageBlobDeadLetterDestination_STATUS(&storageBlob)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StorageBlobDeadLetterDestination_STATUS() to populate field StorageBlob")
@@ -1513,7 +1601,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 	if destination == nil {
 		return nil, nil
 	}
-	result := &EventSubscriptionDestination_ARM{}
+	result := &arm.EventSubscriptionDestination{}
 
 	// Set property "AzureFunction":
 	if destination.AzureFunction != nil {
@@ -1521,7 +1609,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		azureFunction := *azureFunction_ARM.(*AzureFunctionEventSubscriptionDestination_ARM)
+		azureFunction := *azureFunction_ARM.(*arm.AzureFunctionEventSubscriptionDestination)
 		result.AzureFunction = &azureFunction
 	}
 
@@ -1531,7 +1619,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		eventHub := *eventHub_ARM.(*EventHubEventSubscriptionDestination_ARM)
+		eventHub := *eventHub_ARM.(*arm.EventHubEventSubscriptionDestination)
 		result.EventHub = &eventHub
 	}
 
@@ -1541,7 +1629,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		hybridConnection := *hybridConnection_ARM.(*HybridConnectionEventSubscriptionDestination_ARM)
+		hybridConnection := *hybridConnection_ARM.(*arm.HybridConnectionEventSubscriptionDestination)
 		result.HybridConnection = &hybridConnection
 	}
 
@@ -1551,7 +1639,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		serviceBusQueue := *serviceBusQueue_ARM.(*ServiceBusQueueEventSubscriptionDestination_ARM)
+		serviceBusQueue := *serviceBusQueue_ARM.(*arm.ServiceBusQueueEventSubscriptionDestination)
 		result.ServiceBusQueue = &serviceBusQueue
 	}
 
@@ -1561,7 +1649,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		serviceBusTopic := *serviceBusTopic_ARM.(*ServiceBusTopicEventSubscriptionDestination_ARM)
+		serviceBusTopic := *serviceBusTopic_ARM.(*arm.ServiceBusTopicEventSubscriptionDestination)
 		result.ServiceBusTopic = &serviceBusTopic
 	}
 
@@ -1571,7 +1659,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		storageQueue := *storageQueue_ARM.(*StorageQueueEventSubscriptionDestination_ARM)
+		storageQueue := *storageQueue_ARM.(*arm.StorageQueueEventSubscriptionDestination)
 		result.StorageQueue = &storageQueue
 	}
 
@@ -1581,7 +1669,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		webHook := *webHook_ARM.(*WebHookEventSubscriptionDestination_ARM)
+		webHook := *webHook_ARM.(*arm.WebHookEventSubscriptionDestination)
 		result.WebHook = &webHook
 	}
 	return result, nil
@@ -1589,14 +1677,14 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *EventSubscriptionDestination) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EventSubscriptionDestination_ARM{}
+	return &arm.EventSubscriptionDestination{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *EventSubscriptionDestination) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EventSubscriptionDestination_ARM)
+	typedInput, ok := armInput.(arm.EventSubscriptionDestination)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EventSubscriptionDestination_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EventSubscriptionDestination, got %T", armInput)
 	}
 
 	// Set property "AzureFunction":
@@ -1681,7 +1769,7 @@ func (destination *EventSubscriptionDestination) PopulateFromARM(owner genruntim
 }
 
 // AssignProperties_From_EventSubscriptionDestination populates our EventSubscriptionDestination from the provided source EventSubscriptionDestination
-func (destination *EventSubscriptionDestination) AssignProperties_From_EventSubscriptionDestination(source *v20200601s.EventSubscriptionDestination) error {
+func (destination *EventSubscriptionDestination) AssignProperties_From_EventSubscriptionDestination(source *storage.EventSubscriptionDestination) error {
 
 	// AzureFunction
 	if source.AzureFunction != nil {
@@ -1772,13 +1860,13 @@ func (destination *EventSubscriptionDestination) AssignProperties_From_EventSubs
 }
 
 // AssignProperties_To_EventSubscriptionDestination populates the provided destination EventSubscriptionDestination from our EventSubscriptionDestination
-func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscriptionDestination(target *v20200601s.EventSubscriptionDestination) error {
+func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscriptionDestination(target *storage.EventSubscriptionDestination) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AzureFunction
 	if destination.AzureFunction != nil {
-		var azureFunction v20200601s.AzureFunctionEventSubscriptionDestination
+		var azureFunction storage.AzureFunctionEventSubscriptionDestination
 		err := destination.AzureFunction.AssignProperties_To_AzureFunctionEventSubscriptionDestination(&azureFunction)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_AzureFunctionEventSubscriptionDestination() to populate field AzureFunction")
@@ -1790,7 +1878,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 
 	// EventHub
 	if destination.EventHub != nil {
-		var eventHub v20200601s.EventHubEventSubscriptionDestination
+		var eventHub storage.EventHubEventSubscriptionDestination
 		err := destination.EventHub.AssignProperties_To_EventHubEventSubscriptionDestination(&eventHub)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EventHubEventSubscriptionDestination() to populate field EventHub")
@@ -1802,7 +1890,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 
 	// HybridConnection
 	if destination.HybridConnection != nil {
-		var hybridConnection v20200601s.HybridConnectionEventSubscriptionDestination
+		var hybridConnection storage.HybridConnectionEventSubscriptionDestination
 		err := destination.HybridConnection.AssignProperties_To_HybridConnectionEventSubscriptionDestination(&hybridConnection)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_HybridConnectionEventSubscriptionDestination() to populate field HybridConnection")
@@ -1814,7 +1902,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 
 	// ServiceBusQueue
 	if destination.ServiceBusQueue != nil {
-		var serviceBusQueue v20200601s.ServiceBusQueueEventSubscriptionDestination
+		var serviceBusQueue storage.ServiceBusQueueEventSubscriptionDestination
 		err := destination.ServiceBusQueue.AssignProperties_To_ServiceBusQueueEventSubscriptionDestination(&serviceBusQueue)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ServiceBusQueueEventSubscriptionDestination() to populate field ServiceBusQueue")
@@ -1826,7 +1914,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 
 	// ServiceBusTopic
 	if destination.ServiceBusTopic != nil {
-		var serviceBusTopic v20200601s.ServiceBusTopicEventSubscriptionDestination
+		var serviceBusTopic storage.ServiceBusTopicEventSubscriptionDestination
 		err := destination.ServiceBusTopic.AssignProperties_To_ServiceBusTopicEventSubscriptionDestination(&serviceBusTopic)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ServiceBusTopicEventSubscriptionDestination() to populate field ServiceBusTopic")
@@ -1838,7 +1926,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 
 	// StorageQueue
 	if destination.StorageQueue != nil {
-		var storageQueue v20200601s.StorageQueueEventSubscriptionDestination
+		var storageQueue storage.StorageQueueEventSubscriptionDestination
 		err := destination.StorageQueue.AssignProperties_To_StorageQueueEventSubscriptionDestination(&storageQueue)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StorageQueueEventSubscriptionDestination() to populate field StorageQueue")
@@ -1850,7 +1938,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 
 	// WebHook
 	if destination.WebHook != nil {
-		var webHook v20200601s.WebHookEventSubscriptionDestination
+		var webHook storage.WebHookEventSubscriptionDestination
 		err := destination.WebHook.AssignProperties_To_WebHookEventSubscriptionDestination(&webHook)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_WebHookEventSubscriptionDestination() to populate field WebHook")
@@ -1989,14 +2077,14 @@ var _ genruntime.FromARMConverter = &EventSubscriptionDestination_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *EventSubscriptionDestination_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EventSubscriptionDestination_STATUS_ARM{}
+	return &arm.EventSubscriptionDestination_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *EventSubscriptionDestination_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EventSubscriptionDestination_STATUS_ARM)
+	typedInput, ok := armInput.(arm.EventSubscriptionDestination_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EventSubscriptionDestination_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EventSubscriptionDestination_STATUS, got %T", armInput)
 	}
 
 	// Set property "AzureFunction":
@@ -2081,7 +2169,7 @@ func (destination *EventSubscriptionDestination_STATUS) PopulateFromARM(owner ge
 }
 
 // AssignProperties_From_EventSubscriptionDestination_STATUS populates our EventSubscriptionDestination_STATUS from the provided source EventSubscriptionDestination_STATUS
-func (destination *EventSubscriptionDestination_STATUS) AssignProperties_From_EventSubscriptionDestination_STATUS(source *v20200601s.EventSubscriptionDestination_STATUS) error {
+func (destination *EventSubscriptionDestination_STATUS) AssignProperties_From_EventSubscriptionDestination_STATUS(source *storage.EventSubscriptionDestination_STATUS) error {
 
 	// AzureFunction
 	if source.AzureFunction != nil {
@@ -2172,13 +2260,13 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_From_Ev
 }
 
 // AssignProperties_To_EventSubscriptionDestination_STATUS populates the provided destination EventSubscriptionDestination_STATUS from our EventSubscriptionDestination_STATUS
-func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_EventSubscriptionDestination_STATUS(target *v20200601s.EventSubscriptionDestination_STATUS) error {
+func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_EventSubscriptionDestination_STATUS(target *storage.EventSubscriptionDestination_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AzureFunction
 	if destination.AzureFunction != nil {
-		var azureFunction v20200601s.AzureFunctionEventSubscriptionDestination_STATUS
+		var azureFunction storage.AzureFunctionEventSubscriptionDestination_STATUS
 		err := destination.AzureFunction.AssignProperties_To_AzureFunctionEventSubscriptionDestination_STATUS(&azureFunction)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_AzureFunctionEventSubscriptionDestination_STATUS() to populate field AzureFunction")
@@ -2190,7 +2278,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 
 	// EventHub
 	if destination.EventHub != nil {
-		var eventHub v20200601s.EventHubEventSubscriptionDestination_STATUS
+		var eventHub storage.EventHubEventSubscriptionDestination_STATUS
 		err := destination.EventHub.AssignProperties_To_EventHubEventSubscriptionDestination_STATUS(&eventHub)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EventHubEventSubscriptionDestination_STATUS() to populate field EventHub")
@@ -2202,7 +2290,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 
 	// HybridConnection
 	if destination.HybridConnection != nil {
-		var hybridConnection v20200601s.HybridConnectionEventSubscriptionDestination_STATUS
+		var hybridConnection storage.HybridConnectionEventSubscriptionDestination_STATUS
 		err := destination.HybridConnection.AssignProperties_To_HybridConnectionEventSubscriptionDestination_STATUS(&hybridConnection)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_HybridConnectionEventSubscriptionDestination_STATUS() to populate field HybridConnection")
@@ -2214,7 +2302,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 
 	// ServiceBusQueue
 	if destination.ServiceBusQueue != nil {
-		var serviceBusQueue v20200601s.ServiceBusQueueEventSubscriptionDestination_STATUS
+		var serviceBusQueue storage.ServiceBusQueueEventSubscriptionDestination_STATUS
 		err := destination.ServiceBusQueue.AssignProperties_To_ServiceBusQueueEventSubscriptionDestination_STATUS(&serviceBusQueue)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ServiceBusQueueEventSubscriptionDestination_STATUS() to populate field ServiceBusQueue")
@@ -2226,7 +2314,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 
 	// ServiceBusTopic
 	if destination.ServiceBusTopic != nil {
-		var serviceBusTopic v20200601s.ServiceBusTopicEventSubscriptionDestination_STATUS
+		var serviceBusTopic storage.ServiceBusTopicEventSubscriptionDestination_STATUS
 		err := destination.ServiceBusTopic.AssignProperties_To_ServiceBusTopicEventSubscriptionDestination_STATUS(&serviceBusTopic)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ServiceBusTopicEventSubscriptionDestination_STATUS() to populate field ServiceBusTopic")
@@ -2238,7 +2326,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 
 	// StorageQueue
 	if destination.StorageQueue != nil {
-		var storageQueue v20200601s.StorageQueueEventSubscriptionDestination_STATUS
+		var storageQueue storage.StorageQueueEventSubscriptionDestination_STATUS
 		err := destination.StorageQueue.AssignProperties_To_StorageQueueEventSubscriptionDestination_STATUS(&storageQueue)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StorageQueueEventSubscriptionDestination_STATUS() to populate field StorageQueue")
@@ -2250,7 +2338,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 
 	// WebHook
 	if destination.WebHook != nil {
-		var webHook v20200601s.WebHookEventSubscriptionDestination_STATUS
+		var webHook storage.WebHookEventSubscriptionDestination_STATUS
 		err := destination.WebHook.AssignProperties_To_WebHookEventSubscriptionDestination_STATUS(&webHook)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_WebHookEventSubscriptionDestination_STATUS() to populate field WebHook")
@@ -2301,7 +2389,7 @@ func (filter *EventSubscriptionFilter) ConvertToARM(resolved genruntime.ConvertT
 	if filter == nil {
 		return nil, nil
 	}
-	result := &EventSubscriptionFilter_ARM{}
+	result := &arm.EventSubscriptionFilter{}
 
 	// Set property "AdvancedFilters":
 	for _, item := range filter.AdvancedFilters {
@@ -2309,7 +2397,7 @@ func (filter *EventSubscriptionFilter) ConvertToARM(resolved genruntime.ConvertT
 		if err != nil {
 			return nil, err
 		}
-		result.AdvancedFilters = append(result.AdvancedFilters, *item_ARM.(*AdvancedFilter_ARM))
+		result.AdvancedFilters = append(result.AdvancedFilters, *item_ARM.(*arm.AdvancedFilter))
 	}
 
 	// Set property "IncludedEventTypes":
@@ -2339,14 +2427,14 @@ func (filter *EventSubscriptionFilter) ConvertToARM(resolved genruntime.ConvertT
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *EventSubscriptionFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EventSubscriptionFilter_ARM{}
+	return &arm.EventSubscriptionFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *EventSubscriptionFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EventSubscriptionFilter_ARM)
+	typedInput, ok := armInput.(arm.EventSubscriptionFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EventSubscriptionFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EventSubscriptionFilter, got %T", armInput)
 	}
 
 	// Set property "AdvancedFilters":
@@ -2387,7 +2475,7 @@ func (filter *EventSubscriptionFilter) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_EventSubscriptionFilter populates our EventSubscriptionFilter from the provided source EventSubscriptionFilter
-func (filter *EventSubscriptionFilter) AssignProperties_From_EventSubscriptionFilter(source *v20200601s.EventSubscriptionFilter) error {
+func (filter *EventSubscriptionFilter) AssignProperties_From_EventSubscriptionFilter(source *storage.EventSubscriptionFilter) error {
 
 	// AdvancedFilters
 	if source.AdvancedFilters != nil {
@@ -2429,17 +2517,17 @@ func (filter *EventSubscriptionFilter) AssignProperties_From_EventSubscriptionFi
 }
 
 // AssignProperties_To_EventSubscriptionFilter populates the provided destination EventSubscriptionFilter from our EventSubscriptionFilter
-func (filter *EventSubscriptionFilter) AssignProperties_To_EventSubscriptionFilter(destination *v20200601s.EventSubscriptionFilter) error {
+func (filter *EventSubscriptionFilter) AssignProperties_To_EventSubscriptionFilter(destination *storage.EventSubscriptionFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AdvancedFilters
 	if filter.AdvancedFilters != nil {
-		advancedFilterList := make([]v20200601s.AdvancedFilter, len(filter.AdvancedFilters))
+		advancedFilterList := make([]storage.AdvancedFilter, len(filter.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range filter.AdvancedFilters {
 			// Shadow the loop variable to avoid aliasing
 			advancedFilterItem := advancedFilterItem
-			var advancedFilter v20200601s.AdvancedFilter
+			var advancedFilter storage.AdvancedFilter
 			err := advancedFilterItem.AssignProperties_To_AdvancedFilter(&advancedFilter)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AdvancedFilter() to populate field AdvancedFilters")
@@ -2548,14 +2636,14 @@ var _ genruntime.FromARMConverter = &EventSubscriptionFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *EventSubscriptionFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EventSubscriptionFilter_STATUS_ARM{}
+	return &arm.EventSubscriptionFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *EventSubscriptionFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EventSubscriptionFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.EventSubscriptionFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EventSubscriptionFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EventSubscriptionFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "AdvancedFilters":
@@ -2596,7 +2684,7 @@ func (filter *EventSubscriptionFilter_STATUS) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_EventSubscriptionFilter_STATUS populates our EventSubscriptionFilter_STATUS from the provided source EventSubscriptionFilter_STATUS
-func (filter *EventSubscriptionFilter_STATUS) AssignProperties_From_EventSubscriptionFilter_STATUS(source *v20200601s.EventSubscriptionFilter_STATUS) error {
+func (filter *EventSubscriptionFilter_STATUS) AssignProperties_From_EventSubscriptionFilter_STATUS(source *storage.EventSubscriptionFilter_STATUS) error {
 
 	// AdvancedFilters
 	if source.AdvancedFilters != nil {
@@ -2638,17 +2726,17 @@ func (filter *EventSubscriptionFilter_STATUS) AssignProperties_From_EventSubscri
 }
 
 // AssignProperties_To_EventSubscriptionFilter_STATUS populates the provided destination EventSubscriptionFilter_STATUS from our EventSubscriptionFilter_STATUS
-func (filter *EventSubscriptionFilter_STATUS) AssignProperties_To_EventSubscriptionFilter_STATUS(destination *v20200601s.EventSubscriptionFilter_STATUS) error {
+func (filter *EventSubscriptionFilter_STATUS) AssignProperties_To_EventSubscriptionFilter_STATUS(destination *storage.EventSubscriptionFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AdvancedFilters
 	if filter.AdvancedFilters != nil {
-		advancedFilterList := make([]v20200601s.AdvancedFilter_STATUS, len(filter.AdvancedFilters))
+		advancedFilterList := make([]storage.AdvancedFilter_STATUS, len(filter.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range filter.AdvancedFilters {
 			// Shadow the loop variable to avoid aliasing
 			advancedFilterItem := advancedFilterItem
-			var advancedFilter v20200601s.AdvancedFilter_STATUS
+			var advancedFilter storage.AdvancedFilter_STATUS
 			err := advancedFilterItem.AssignProperties_To_AdvancedFilter_STATUS(&advancedFilter)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AdvancedFilter_STATUS() to populate field AdvancedFilters")
@@ -2688,6 +2776,110 @@ func (filter *EventSubscriptionFilter_STATUS) AssignProperties_To_EventSubscript
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type EventSubscriptionOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_EventSubscriptionOperatorSpec populates our EventSubscriptionOperatorSpec from the provided source EventSubscriptionOperatorSpec
+func (operator *EventSubscriptionOperatorSpec) AssignProperties_From_EventSubscriptionOperatorSpec(source *storage.EventSubscriptionOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EventSubscriptionOperatorSpec populates the provided destination EventSubscriptionOperatorSpec from our EventSubscriptionOperatorSpec
+func (operator *EventSubscriptionOperatorSpec) AssignProperties_To_EventSubscriptionOperatorSpec(destination *storage.EventSubscriptionOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // +kubebuilder:validation:Enum={"CloudEventSchemaV1_0","CustomInputSchema","EventGridSchema"}
 type EventSubscriptionProperties_EventDeliverySchema string
 
@@ -2697,6 +2889,13 @@ const (
 	EventSubscriptionProperties_EventDeliverySchema_EventGridSchema      = EventSubscriptionProperties_EventDeliverySchema("EventGridSchema")
 )
 
+// Mapping from string to EventSubscriptionProperties_EventDeliverySchema
+var eventSubscriptionProperties_EventDeliverySchema_Values = map[string]EventSubscriptionProperties_EventDeliverySchema{
+	"cloudeventschemav1_0": EventSubscriptionProperties_EventDeliverySchema_CloudEventSchemaV1_0,
+	"custominputschema":    EventSubscriptionProperties_EventDeliverySchema_CustomInputSchema,
+	"eventgridschema":      EventSubscriptionProperties_EventDeliverySchema_EventGridSchema,
+}
+
 type EventSubscriptionProperties_EventDeliverySchema_STATUS string
 
 const (
@@ -2704,6 +2903,13 @@ const (
 	EventSubscriptionProperties_EventDeliverySchema_STATUS_CustomInputSchema    = EventSubscriptionProperties_EventDeliverySchema_STATUS("CustomInputSchema")
 	EventSubscriptionProperties_EventDeliverySchema_STATUS_EventGridSchema      = EventSubscriptionProperties_EventDeliverySchema_STATUS("EventGridSchema")
 )
+
+// Mapping from string to EventSubscriptionProperties_EventDeliverySchema_STATUS
+var eventSubscriptionProperties_EventDeliverySchema_STATUS_Values = map[string]EventSubscriptionProperties_EventDeliverySchema_STATUS{
+	"cloudeventschemav1_0": EventSubscriptionProperties_EventDeliverySchema_STATUS_CloudEventSchemaV1_0,
+	"custominputschema":    EventSubscriptionProperties_EventDeliverySchema_STATUS_CustomInputSchema,
+	"eventgridschema":      EventSubscriptionProperties_EventDeliverySchema_STATUS_EventGridSchema,
+}
 
 type EventSubscriptionProperties_ProvisioningState_STATUS string
 
@@ -2716,6 +2922,17 @@ const (
 	EventSubscriptionProperties_ProvisioningState_STATUS_Succeeded            = EventSubscriptionProperties_ProvisioningState_STATUS("Succeeded")
 	EventSubscriptionProperties_ProvisioningState_STATUS_Updating             = EventSubscriptionProperties_ProvisioningState_STATUS("Updating")
 )
+
+// Mapping from string to EventSubscriptionProperties_ProvisioningState_STATUS
+var eventSubscriptionProperties_ProvisioningState_STATUS_Values = map[string]EventSubscriptionProperties_ProvisioningState_STATUS{
+	"awaitingmanualaction": EventSubscriptionProperties_ProvisioningState_STATUS_AwaitingManualAction,
+	"canceled":             EventSubscriptionProperties_ProvisioningState_STATUS_Canceled,
+	"creating":             EventSubscriptionProperties_ProvisioningState_STATUS_Creating,
+	"deleting":             EventSubscriptionProperties_ProvisioningState_STATUS_Deleting,
+	"failed":               EventSubscriptionProperties_ProvisioningState_STATUS_Failed,
+	"succeeded":            EventSubscriptionProperties_ProvisioningState_STATUS_Succeeded,
+	"updating":             EventSubscriptionProperties_ProvisioningState_STATUS_Updating,
+}
 
 // Information about the retry policy for an event subscription.
 type RetryPolicy struct {
@@ -2733,7 +2950,7 @@ func (policy *RetryPolicy) ConvertToARM(resolved genruntime.ConvertToARMResolved
 	if policy == nil {
 		return nil, nil
 	}
-	result := &RetryPolicy_ARM{}
+	result := &arm.RetryPolicy{}
 
 	// Set property "EventTimeToLiveInMinutes":
 	if policy.EventTimeToLiveInMinutes != nil {
@@ -2751,14 +2968,14 @@ func (policy *RetryPolicy) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (policy *RetryPolicy) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &RetryPolicy_ARM{}
+	return &arm.RetryPolicy{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (policy *RetryPolicy) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(RetryPolicy_ARM)
+	typedInput, ok := armInput.(arm.RetryPolicy)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected RetryPolicy_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RetryPolicy, got %T", armInput)
 	}
 
 	// Set property "EventTimeToLiveInMinutes":
@@ -2778,7 +2995,7 @@ func (policy *RetryPolicy) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 }
 
 // AssignProperties_From_RetryPolicy populates our RetryPolicy from the provided source RetryPolicy
-func (policy *RetryPolicy) AssignProperties_From_RetryPolicy(source *v20200601s.RetryPolicy) error {
+func (policy *RetryPolicy) AssignProperties_From_RetryPolicy(source *storage.RetryPolicy) error {
 
 	// EventTimeToLiveInMinutes
 	policy.EventTimeToLiveInMinutes = genruntime.ClonePointerToInt(source.EventTimeToLiveInMinutes)
@@ -2791,7 +3008,7 @@ func (policy *RetryPolicy) AssignProperties_From_RetryPolicy(source *v20200601s.
 }
 
 // AssignProperties_To_RetryPolicy populates the provided destination RetryPolicy from our RetryPolicy
-func (policy *RetryPolicy) AssignProperties_To_RetryPolicy(destination *v20200601s.RetryPolicy) error {
+func (policy *RetryPolicy) AssignProperties_To_RetryPolicy(destination *storage.RetryPolicy) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2838,14 +3055,14 @@ var _ genruntime.FromARMConverter = &RetryPolicy_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (policy *RetryPolicy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &RetryPolicy_STATUS_ARM{}
+	return &arm.RetryPolicy_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (policy *RetryPolicy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(RetryPolicy_STATUS_ARM)
+	typedInput, ok := armInput.(arm.RetryPolicy_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected RetryPolicy_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RetryPolicy_STATUS, got %T", armInput)
 	}
 
 	// Set property "EventTimeToLiveInMinutes":
@@ -2865,7 +3082,7 @@ func (policy *RetryPolicy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwne
 }
 
 // AssignProperties_From_RetryPolicy_STATUS populates our RetryPolicy_STATUS from the provided source RetryPolicy_STATUS
-func (policy *RetryPolicy_STATUS) AssignProperties_From_RetryPolicy_STATUS(source *v20200601s.RetryPolicy_STATUS) error {
+func (policy *RetryPolicy_STATUS) AssignProperties_From_RetryPolicy_STATUS(source *storage.RetryPolicy_STATUS) error {
 
 	// EventTimeToLiveInMinutes
 	policy.EventTimeToLiveInMinutes = genruntime.ClonePointerToInt(source.EventTimeToLiveInMinutes)
@@ -2878,7 +3095,7 @@ func (policy *RetryPolicy_STATUS) AssignProperties_From_RetryPolicy_STATUS(sourc
 }
 
 // AssignProperties_To_RetryPolicy_STATUS populates the provided destination RetryPolicy_STATUS from our RetryPolicy_STATUS
-func (policy *RetryPolicy_STATUS) AssignProperties_To_RetryPolicy_STATUS(destination *v20200601s.RetryPolicy_STATUS) error {
+func (policy *RetryPolicy_STATUS) AssignProperties_To_RetryPolicy_STATUS(destination *storage.RetryPolicy_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2944,7 +3161,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 	if filter == nil {
 		return nil, nil
 	}
-	result := &AdvancedFilter_ARM{}
+	result := &arm.AdvancedFilter{}
 
 	// Set property "BoolEquals":
 	if filter.BoolEquals != nil {
@@ -2952,7 +3169,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		boolEquals := *boolEquals_ARM.(*BoolEqualsAdvancedFilter_ARM)
+		boolEquals := *boolEquals_ARM.(*arm.BoolEqualsAdvancedFilter)
 		result.BoolEquals = &boolEquals
 	}
 
@@ -2962,7 +3179,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		numberGreaterThan := *numberGreaterThan_ARM.(*NumberGreaterThanAdvancedFilter_ARM)
+		numberGreaterThan := *numberGreaterThan_ARM.(*arm.NumberGreaterThanAdvancedFilter)
 		result.NumberGreaterThan = &numberGreaterThan
 	}
 
@@ -2972,7 +3189,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		numberGreaterThanOrEquals := *numberGreaterThanOrEquals_ARM.(*NumberGreaterThanOrEqualsAdvancedFilter_ARM)
+		numberGreaterThanOrEquals := *numberGreaterThanOrEquals_ARM.(*arm.NumberGreaterThanOrEqualsAdvancedFilter)
 		result.NumberGreaterThanOrEquals = &numberGreaterThanOrEquals
 	}
 
@@ -2982,7 +3199,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		numberIn := *numberIn_ARM.(*NumberInAdvancedFilter_ARM)
+		numberIn := *numberIn_ARM.(*arm.NumberInAdvancedFilter)
 		result.NumberIn = &numberIn
 	}
 
@@ -2992,7 +3209,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		numberLessThan := *numberLessThan_ARM.(*NumberLessThanAdvancedFilter_ARM)
+		numberLessThan := *numberLessThan_ARM.(*arm.NumberLessThanAdvancedFilter)
 		result.NumberLessThan = &numberLessThan
 	}
 
@@ -3002,7 +3219,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		numberLessThanOrEquals := *numberLessThanOrEquals_ARM.(*NumberLessThanOrEqualsAdvancedFilter_ARM)
+		numberLessThanOrEquals := *numberLessThanOrEquals_ARM.(*arm.NumberLessThanOrEqualsAdvancedFilter)
 		result.NumberLessThanOrEquals = &numberLessThanOrEquals
 	}
 
@@ -3012,7 +3229,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		numberNotIn := *numberNotIn_ARM.(*NumberNotInAdvancedFilter_ARM)
+		numberNotIn := *numberNotIn_ARM.(*arm.NumberNotInAdvancedFilter)
 		result.NumberNotIn = &numberNotIn
 	}
 
@@ -3022,7 +3239,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		stringBeginsWith := *stringBeginsWith_ARM.(*StringBeginsWithAdvancedFilter_ARM)
+		stringBeginsWith := *stringBeginsWith_ARM.(*arm.StringBeginsWithAdvancedFilter)
 		result.StringBeginsWith = &stringBeginsWith
 	}
 
@@ -3032,7 +3249,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		stringContains := *stringContains_ARM.(*StringContainsAdvancedFilter_ARM)
+		stringContains := *stringContains_ARM.(*arm.StringContainsAdvancedFilter)
 		result.StringContains = &stringContains
 	}
 
@@ -3042,7 +3259,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		stringEndsWith := *stringEndsWith_ARM.(*StringEndsWithAdvancedFilter_ARM)
+		stringEndsWith := *stringEndsWith_ARM.(*arm.StringEndsWithAdvancedFilter)
 		result.StringEndsWith = &stringEndsWith
 	}
 
@@ -3052,7 +3269,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		stringIn := *stringIn_ARM.(*StringInAdvancedFilter_ARM)
+		stringIn := *stringIn_ARM.(*arm.StringInAdvancedFilter)
 		result.StringIn = &stringIn
 	}
 
@@ -3062,7 +3279,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		stringNotIn := *stringNotIn_ARM.(*StringNotInAdvancedFilter_ARM)
+		stringNotIn := *stringNotIn_ARM.(*arm.StringNotInAdvancedFilter)
 		result.StringNotIn = &stringNotIn
 	}
 	return result, nil
@@ -3070,14 +3287,14 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *AdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AdvancedFilter_ARM{}
+	return &arm.AdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *AdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.AdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "BoolEquals":
@@ -3217,7 +3434,7 @@ func (filter *AdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerRef
 }
 
 // AssignProperties_From_AdvancedFilter populates our AdvancedFilter from the provided source AdvancedFilter
-func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *v20200601s.AdvancedFilter) error {
+func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *storage.AdvancedFilter) error {
 
 	// BoolEquals
 	if source.BoolEquals != nil {
@@ -3368,13 +3585,13 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *v2020
 }
 
 // AssignProperties_To_AdvancedFilter populates the provided destination AdvancedFilter from our AdvancedFilter
-func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v20200601s.AdvancedFilter) error {
+func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *storage.AdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// BoolEquals
 	if filter.BoolEquals != nil {
-		var boolEqual v20200601s.BoolEqualsAdvancedFilter
+		var boolEqual storage.BoolEqualsAdvancedFilter
 		err := filter.BoolEquals.AssignProperties_To_BoolEqualsAdvancedFilter(&boolEqual)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_BoolEqualsAdvancedFilter() to populate field BoolEquals")
@@ -3386,7 +3603,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// NumberGreaterThan
 	if filter.NumberGreaterThan != nil {
-		var numberGreaterThan v20200601s.NumberGreaterThanAdvancedFilter
+		var numberGreaterThan storage.NumberGreaterThanAdvancedFilter
 		err := filter.NumberGreaterThan.AssignProperties_To_NumberGreaterThanAdvancedFilter(&numberGreaterThan)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberGreaterThanAdvancedFilter() to populate field NumberGreaterThan")
@@ -3398,7 +3615,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// NumberGreaterThanOrEquals
 	if filter.NumberGreaterThanOrEquals != nil {
-		var numberGreaterThanOrEqual v20200601s.NumberGreaterThanOrEqualsAdvancedFilter
+		var numberGreaterThanOrEqual storage.NumberGreaterThanOrEqualsAdvancedFilter
 		err := filter.NumberGreaterThanOrEquals.AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter(&numberGreaterThanOrEqual)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter() to populate field NumberGreaterThanOrEquals")
@@ -3410,7 +3627,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// NumberIn
 	if filter.NumberIn != nil {
-		var numberIn v20200601s.NumberInAdvancedFilter
+		var numberIn storage.NumberInAdvancedFilter
 		err := filter.NumberIn.AssignProperties_To_NumberInAdvancedFilter(&numberIn)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberInAdvancedFilter() to populate field NumberIn")
@@ -3422,7 +3639,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// NumberLessThan
 	if filter.NumberLessThan != nil {
-		var numberLessThan v20200601s.NumberLessThanAdvancedFilter
+		var numberLessThan storage.NumberLessThanAdvancedFilter
 		err := filter.NumberLessThan.AssignProperties_To_NumberLessThanAdvancedFilter(&numberLessThan)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberLessThanAdvancedFilter() to populate field NumberLessThan")
@@ -3434,7 +3651,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// NumberLessThanOrEquals
 	if filter.NumberLessThanOrEquals != nil {
-		var numberLessThanOrEqual v20200601s.NumberLessThanOrEqualsAdvancedFilter
+		var numberLessThanOrEqual storage.NumberLessThanOrEqualsAdvancedFilter
 		err := filter.NumberLessThanOrEquals.AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter(&numberLessThanOrEqual)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter() to populate field NumberLessThanOrEquals")
@@ -3446,7 +3663,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// NumberNotIn
 	if filter.NumberNotIn != nil {
-		var numberNotIn v20200601s.NumberNotInAdvancedFilter
+		var numberNotIn storage.NumberNotInAdvancedFilter
 		err := filter.NumberNotIn.AssignProperties_To_NumberNotInAdvancedFilter(&numberNotIn)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberNotInAdvancedFilter() to populate field NumberNotIn")
@@ -3458,7 +3675,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// StringBeginsWith
 	if filter.StringBeginsWith != nil {
-		var stringBeginsWith v20200601s.StringBeginsWithAdvancedFilter
+		var stringBeginsWith storage.StringBeginsWithAdvancedFilter
 		err := filter.StringBeginsWith.AssignProperties_To_StringBeginsWithAdvancedFilter(&stringBeginsWith)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StringBeginsWithAdvancedFilter() to populate field StringBeginsWith")
@@ -3470,7 +3687,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// StringContains
 	if filter.StringContains != nil {
-		var stringContain v20200601s.StringContainsAdvancedFilter
+		var stringContain storage.StringContainsAdvancedFilter
 		err := filter.StringContains.AssignProperties_To_StringContainsAdvancedFilter(&stringContain)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StringContainsAdvancedFilter() to populate field StringContains")
@@ -3482,7 +3699,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// StringEndsWith
 	if filter.StringEndsWith != nil {
-		var stringEndsWith v20200601s.StringEndsWithAdvancedFilter
+		var stringEndsWith storage.StringEndsWithAdvancedFilter
 		err := filter.StringEndsWith.AssignProperties_To_StringEndsWithAdvancedFilter(&stringEndsWith)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StringEndsWithAdvancedFilter() to populate field StringEndsWith")
@@ -3494,7 +3711,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// StringIn
 	if filter.StringIn != nil {
-		var stringIn v20200601s.StringInAdvancedFilter
+		var stringIn storage.StringInAdvancedFilter
 		err := filter.StringIn.AssignProperties_To_StringInAdvancedFilter(&stringIn)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StringInAdvancedFilter() to populate field StringIn")
@@ -3506,7 +3723,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *v2
 
 	// StringNotIn
 	if filter.StringNotIn != nil {
-		var stringNotIn v20200601s.StringNotInAdvancedFilter
+		var stringNotIn storage.StringNotInAdvancedFilter
 		err := filter.StringNotIn.AssignProperties_To_StringNotInAdvancedFilter(&stringNotIn)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StringNotInAdvancedFilter() to populate field StringNotIn")
@@ -3720,14 +3937,14 @@ var _ genruntime.FromARMConverter = &AdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *AdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AdvancedFilter_STATUS_ARM{}
+	return &arm.AdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *AdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "BoolEquals":
@@ -3867,7 +4084,7 @@ func (filter *AdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryO
 }
 
 // AssignProperties_From_AdvancedFilter_STATUS populates our AdvancedFilter_STATUS from the provided source AdvancedFilter_STATUS
-func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS(source *v20200601s.AdvancedFilter_STATUS) error {
+func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS(source *storage.AdvancedFilter_STATUS) error {
 
 	// BoolEquals
 	if source.BoolEquals != nil {
@@ -4018,13 +4235,13 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 }
 
 // AssignProperties_To_AdvancedFilter_STATUS populates the provided destination AdvancedFilter_STATUS from our AdvancedFilter_STATUS
-func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(destination *v20200601s.AdvancedFilter_STATUS) error {
+func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(destination *storage.AdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// BoolEquals
 	if filter.BoolEquals != nil {
-		var boolEqual v20200601s.BoolEqualsAdvancedFilter_STATUS
+		var boolEqual storage.BoolEqualsAdvancedFilter_STATUS
 		err := filter.BoolEquals.AssignProperties_To_BoolEqualsAdvancedFilter_STATUS(&boolEqual)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_BoolEqualsAdvancedFilter_STATUS() to populate field BoolEquals")
@@ -4036,7 +4253,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// NumberGreaterThan
 	if filter.NumberGreaterThan != nil {
-		var numberGreaterThan v20200601s.NumberGreaterThanAdvancedFilter_STATUS
+		var numberGreaterThan storage.NumberGreaterThanAdvancedFilter_STATUS
 		err := filter.NumberGreaterThan.AssignProperties_To_NumberGreaterThanAdvancedFilter_STATUS(&numberGreaterThan)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberGreaterThanAdvancedFilter_STATUS() to populate field NumberGreaterThan")
@@ -4048,7 +4265,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// NumberGreaterThanOrEquals
 	if filter.NumberGreaterThanOrEquals != nil {
-		var numberGreaterThanOrEqual v20200601s.NumberGreaterThanOrEqualsAdvancedFilter_STATUS
+		var numberGreaterThanOrEqual storage.NumberGreaterThanOrEqualsAdvancedFilter_STATUS
 		err := filter.NumberGreaterThanOrEquals.AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter_STATUS(&numberGreaterThanOrEqual)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter_STATUS() to populate field NumberGreaterThanOrEquals")
@@ -4060,7 +4277,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// NumberIn
 	if filter.NumberIn != nil {
-		var numberIn v20200601s.NumberInAdvancedFilter_STATUS
+		var numberIn storage.NumberInAdvancedFilter_STATUS
 		err := filter.NumberIn.AssignProperties_To_NumberInAdvancedFilter_STATUS(&numberIn)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberInAdvancedFilter_STATUS() to populate field NumberIn")
@@ -4072,7 +4289,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// NumberLessThan
 	if filter.NumberLessThan != nil {
-		var numberLessThan v20200601s.NumberLessThanAdvancedFilter_STATUS
+		var numberLessThan storage.NumberLessThanAdvancedFilter_STATUS
 		err := filter.NumberLessThan.AssignProperties_To_NumberLessThanAdvancedFilter_STATUS(&numberLessThan)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberLessThanAdvancedFilter_STATUS() to populate field NumberLessThan")
@@ -4084,7 +4301,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// NumberLessThanOrEquals
 	if filter.NumberLessThanOrEquals != nil {
-		var numberLessThanOrEqual v20200601s.NumberLessThanOrEqualsAdvancedFilter_STATUS
+		var numberLessThanOrEqual storage.NumberLessThanOrEqualsAdvancedFilter_STATUS
 		err := filter.NumberLessThanOrEquals.AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter_STATUS(&numberLessThanOrEqual)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter_STATUS() to populate field NumberLessThanOrEquals")
@@ -4096,7 +4313,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// NumberNotIn
 	if filter.NumberNotIn != nil {
-		var numberNotIn v20200601s.NumberNotInAdvancedFilter_STATUS
+		var numberNotIn storage.NumberNotInAdvancedFilter_STATUS
 		err := filter.NumberNotIn.AssignProperties_To_NumberNotInAdvancedFilter_STATUS(&numberNotIn)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NumberNotInAdvancedFilter_STATUS() to populate field NumberNotIn")
@@ -4108,7 +4325,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// StringBeginsWith
 	if filter.StringBeginsWith != nil {
-		var stringBeginsWith v20200601s.StringBeginsWithAdvancedFilter_STATUS
+		var stringBeginsWith storage.StringBeginsWithAdvancedFilter_STATUS
 		err := filter.StringBeginsWith.AssignProperties_To_StringBeginsWithAdvancedFilter_STATUS(&stringBeginsWith)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StringBeginsWithAdvancedFilter_STATUS() to populate field StringBeginsWith")
@@ -4120,7 +4337,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// StringContains
 	if filter.StringContains != nil {
-		var stringContain v20200601s.StringContainsAdvancedFilter_STATUS
+		var stringContain storage.StringContainsAdvancedFilter_STATUS
 		err := filter.StringContains.AssignProperties_To_StringContainsAdvancedFilter_STATUS(&stringContain)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StringContainsAdvancedFilter_STATUS() to populate field StringContains")
@@ -4132,7 +4349,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// StringEndsWith
 	if filter.StringEndsWith != nil {
-		var stringEndsWith v20200601s.StringEndsWithAdvancedFilter_STATUS
+		var stringEndsWith storage.StringEndsWithAdvancedFilter_STATUS
 		err := filter.StringEndsWith.AssignProperties_To_StringEndsWithAdvancedFilter_STATUS(&stringEndsWith)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StringEndsWithAdvancedFilter_STATUS() to populate field StringEndsWith")
@@ -4144,7 +4361,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// StringIn
 	if filter.StringIn != nil {
-		var stringIn v20200601s.StringInAdvancedFilter_STATUS
+		var stringIn storage.StringInAdvancedFilter_STATUS
 		err := filter.StringIn.AssignProperties_To_StringInAdvancedFilter_STATUS(&stringIn)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StringInAdvancedFilter_STATUS() to populate field StringIn")
@@ -4156,7 +4373,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 
 	// StringNotIn
 	if filter.StringNotIn != nil {
-		var stringNotIn v20200601s.StringNotInAdvancedFilter_STATUS
+		var stringNotIn storage.StringNotInAdvancedFilter_STATUS
 		err := filter.StringNotIn.AssignProperties_To_StringNotInAdvancedFilter_STATUS(&stringNotIn)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_StringNotInAdvancedFilter_STATUS() to populate field StringNotIn")
@@ -4200,18 +4417,22 @@ func (destination *AzureFunctionEventSubscriptionDestination) ConvertToARM(resol
 	if destination == nil {
 		return nil, nil
 	}
-	result := &AzureFunctionEventSubscriptionDestination_ARM{}
+	result := &arm.AzureFunctionEventSubscriptionDestination{}
 
 	// Set property "EndpointType":
 	if destination.EndpointType != nil {
-		result.EndpointType = *destination.EndpointType
+		var temp arm.AzureFunctionEventSubscriptionDestination_EndpointType
+		var temp1 string
+		temp1 = string(*destination.EndpointType)
+		temp = arm.AzureFunctionEventSubscriptionDestination_EndpointType(temp1)
+		result.EndpointType = temp
 	}
 
 	// Set property "Properties":
 	if destination.MaxEventsPerBatch != nil ||
 		destination.PreferredBatchSizeInKilobytes != nil ||
 		destination.ResourceReference != nil {
-		result.Properties = &AzureFunctionEventSubscriptionDestinationProperties_ARM{}
+		result.Properties = &arm.AzureFunctionEventSubscriptionDestinationProperties{}
 	}
 	if destination.MaxEventsPerBatch != nil {
 		maxEventsPerBatch := *destination.MaxEventsPerBatch
@@ -4234,18 +4455,22 @@ func (destination *AzureFunctionEventSubscriptionDestination) ConvertToARM(resol
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *AzureFunctionEventSubscriptionDestination) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AzureFunctionEventSubscriptionDestination_ARM{}
+	return &arm.AzureFunctionEventSubscriptionDestination{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *AzureFunctionEventSubscriptionDestination) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AzureFunctionEventSubscriptionDestination_ARM)
+	typedInput, ok := armInput.(arm.AzureFunctionEventSubscriptionDestination)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AzureFunctionEventSubscriptionDestination_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AzureFunctionEventSubscriptionDestination, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp AzureFunctionEventSubscriptionDestination_EndpointType
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = AzureFunctionEventSubscriptionDestination_EndpointType(temp1)
+	destination.EndpointType = &temp
 
 	// Set property "MaxEventsPerBatch":
 	// copying flattened property:
@@ -4272,12 +4497,13 @@ func (destination *AzureFunctionEventSubscriptionDestination) PopulateFromARM(ow
 }
 
 // AssignProperties_From_AzureFunctionEventSubscriptionDestination populates our AzureFunctionEventSubscriptionDestination from the provided source AzureFunctionEventSubscriptionDestination
-func (destination *AzureFunctionEventSubscriptionDestination) AssignProperties_From_AzureFunctionEventSubscriptionDestination(source *v20200601s.AzureFunctionEventSubscriptionDestination) error {
+func (destination *AzureFunctionEventSubscriptionDestination) AssignProperties_From_AzureFunctionEventSubscriptionDestination(source *storage.AzureFunctionEventSubscriptionDestination) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := AzureFunctionEventSubscriptionDestination_EndpointType(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, azureFunctionEventSubscriptionDestination_EndpointType_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -4301,7 +4527,7 @@ func (destination *AzureFunctionEventSubscriptionDestination) AssignProperties_F
 }
 
 // AssignProperties_To_AzureFunctionEventSubscriptionDestination populates the provided destination AzureFunctionEventSubscriptionDestination from our AzureFunctionEventSubscriptionDestination
-func (destination *AzureFunctionEventSubscriptionDestination) AssignProperties_To_AzureFunctionEventSubscriptionDestination(target *v20200601s.AzureFunctionEventSubscriptionDestination) error {
+func (destination *AzureFunctionEventSubscriptionDestination) AssignProperties_To_AzureFunctionEventSubscriptionDestination(target *storage.AzureFunctionEventSubscriptionDestination) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4343,7 +4569,7 @@ func (destination *AzureFunctionEventSubscriptionDestination) Initialize_From_Az
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := AzureFunctionEventSubscriptionDestination_EndpointType(*source.EndpointType)
+		endpointType := genruntime.ToEnum(string(*source.EndpointType), azureFunctionEventSubscriptionDestination_EndpointType_Values)
 		destination.EndpointType = &endpointType
 	} else {
 		destination.EndpointType = nil
@@ -4386,18 +4612,22 @@ var _ genruntime.FromARMConverter = &AzureFunctionEventSubscriptionDestination_S
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *AzureFunctionEventSubscriptionDestination_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AzureFunctionEventSubscriptionDestination_STATUS_ARM{}
+	return &arm.AzureFunctionEventSubscriptionDestination_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *AzureFunctionEventSubscriptionDestination_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AzureFunctionEventSubscriptionDestination_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AzureFunctionEventSubscriptionDestination_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AzureFunctionEventSubscriptionDestination_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AzureFunctionEventSubscriptionDestination_STATUS, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp AzureFunctionEventSubscriptionDestination_EndpointType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = AzureFunctionEventSubscriptionDestination_EndpointType_STATUS(temp1)
+	destination.EndpointType = &temp
 
 	// Set property "MaxEventsPerBatch":
 	// copying flattened property:
@@ -4431,12 +4661,13 @@ func (destination *AzureFunctionEventSubscriptionDestination_STATUS) PopulateFro
 }
 
 // AssignProperties_From_AzureFunctionEventSubscriptionDestination_STATUS populates our AzureFunctionEventSubscriptionDestination_STATUS from the provided source AzureFunctionEventSubscriptionDestination_STATUS
-func (destination *AzureFunctionEventSubscriptionDestination_STATUS) AssignProperties_From_AzureFunctionEventSubscriptionDestination_STATUS(source *v20200601s.AzureFunctionEventSubscriptionDestination_STATUS) error {
+func (destination *AzureFunctionEventSubscriptionDestination_STATUS) AssignProperties_From_AzureFunctionEventSubscriptionDestination_STATUS(source *storage.AzureFunctionEventSubscriptionDestination_STATUS) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := AzureFunctionEventSubscriptionDestination_EndpointType_STATUS(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, azureFunctionEventSubscriptionDestination_EndpointType_STATUS_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -4455,7 +4686,7 @@ func (destination *AzureFunctionEventSubscriptionDestination_STATUS) AssignPrope
 }
 
 // AssignProperties_To_AzureFunctionEventSubscriptionDestination_STATUS populates the provided destination AzureFunctionEventSubscriptionDestination_STATUS from our AzureFunctionEventSubscriptionDestination_STATUS
-func (destination *AzureFunctionEventSubscriptionDestination_STATUS) AssignProperties_To_AzureFunctionEventSubscriptionDestination_STATUS(target *v20200601s.AzureFunctionEventSubscriptionDestination_STATUS) error {
+func (destination *AzureFunctionEventSubscriptionDestination_STATUS) AssignProperties_To_AzureFunctionEventSubscriptionDestination_STATUS(target *storage.AzureFunctionEventSubscriptionDestination_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4504,16 +4735,20 @@ func (destination *EventHubEventSubscriptionDestination) ConvertToARM(resolved g
 	if destination == nil {
 		return nil, nil
 	}
-	result := &EventHubEventSubscriptionDestination_ARM{}
+	result := &arm.EventHubEventSubscriptionDestination{}
 
 	// Set property "EndpointType":
 	if destination.EndpointType != nil {
-		result.EndpointType = *destination.EndpointType
+		var temp arm.EventHubEventSubscriptionDestination_EndpointType
+		var temp1 string
+		temp1 = string(*destination.EndpointType)
+		temp = arm.EventHubEventSubscriptionDestination_EndpointType(temp1)
+		result.EndpointType = temp
 	}
 
 	// Set property "Properties":
 	if destination.ResourceReference != nil {
-		result.Properties = &EventHubEventSubscriptionDestinationProperties_ARM{}
+		result.Properties = &arm.EventHubEventSubscriptionDestinationProperties{}
 	}
 	if destination.ResourceReference != nil {
 		resourceIdARMID, err := resolved.ResolvedReferences.Lookup(*destination.ResourceReference)
@@ -4528,18 +4763,22 @@ func (destination *EventHubEventSubscriptionDestination) ConvertToARM(resolved g
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *EventHubEventSubscriptionDestination) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EventHubEventSubscriptionDestination_ARM{}
+	return &arm.EventHubEventSubscriptionDestination{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *EventHubEventSubscriptionDestination) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EventHubEventSubscriptionDestination_ARM)
+	typedInput, ok := armInput.(arm.EventHubEventSubscriptionDestination)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EventHubEventSubscriptionDestination_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EventHubEventSubscriptionDestination, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp EventHubEventSubscriptionDestination_EndpointType
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = EventHubEventSubscriptionDestination_EndpointType(temp1)
+	destination.EndpointType = &temp
 
 	// no assignment for property "ResourceReference"
 
@@ -4548,12 +4787,13 @@ func (destination *EventHubEventSubscriptionDestination) PopulateFromARM(owner g
 }
 
 // AssignProperties_From_EventHubEventSubscriptionDestination populates our EventHubEventSubscriptionDestination from the provided source EventHubEventSubscriptionDestination
-func (destination *EventHubEventSubscriptionDestination) AssignProperties_From_EventHubEventSubscriptionDestination(source *v20200601s.EventHubEventSubscriptionDestination) error {
+func (destination *EventHubEventSubscriptionDestination) AssignProperties_From_EventHubEventSubscriptionDestination(source *storage.EventHubEventSubscriptionDestination) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := EventHubEventSubscriptionDestination_EndpointType(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, eventHubEventSubscriptionDestination_EndpointType_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -4571,7 +4811,7 @@ func (destination *EventHubEventSubscriptionDestination) AssignProperties_From_E
 }
 
 // AssignProperties_To_EventHubEventSubscriptionDestination populates the provided destination EventHubEventSubscriptionDestination from our EventHubEventSubscriptionDestination
-func (destination *EventHubEventSubscriptionDestination) AssignProperties_To_EventHubEventSubscriptionDestination(target *v20200601s.EventHubEventSubscriptionDestination) error {
+func (destination *EventHubEventSubscriptionDestination) AssignProperties_To_EventHubEventSubscriptionDestination(target *storage.EventHubEventSubscriptionDestination) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4607,7 +4847,7 @@ func (destination *EventHubEventSubscriptionDestination) Initialize_From_EventHu
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := EventHubEventSubscriptionDestination_EndpointType(*source.EndpointType)
+		endpointType := genruntime.ToEnum(string(*source.EndpointType), eventHubEventSubscriptionDestination_EndpointType_Values)
 		destination.EndpointType = &endpointType
 	} else {
 		destination.EndpointType = nil
@@ -4637,18 +4877,22 @@ var _ genruntime.FromARMConverter = &EventHubEventSubscriptionDestination_STATUS
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *EventHubEventSubscriptionDestination_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EventHubEventSubscriptionDestination_STATUS_ARM{}
+	return &arm.EventHubEventSubscriptionDestination_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *EventHubEventSubscriptionDestination_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EventHubEventSubscriptionDestination_STATUS_ARM)
+	typedInput, ok := armInput.(arm.EventHubEventSubscriptionDestination_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EventHubEventSubscriptionDestination_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EventHubEventSubscriptionDestination_STATUS, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp EventHubEventSubscriptionDestination_EndpointType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = EventHubEventSubscriptionDestination_EndpointType_STATUS(temp1)
+	destination.EndpointType = &temp
 
 	// Set property "ResourceId":
 	// copying flattened property:
@@ -4664,12 +4908,13 @@ func (destination *EventHubEventSubscriptionDestination_STATUS) PopulateFromARM(
 }
 
 // AssignProperties_From_EventHubEventSubscriptionDestination_STATUS populates our EventHubEventSubscriptionDestination_STATUS from the provided source EventHubEventSubscriptionDestination_STATUS
-func (destination *EventHubEventSubscriptionDestination_STATUS) AssignProperties_From_EventHubEventSubscriptionDestination_STATUS(source *v20200601s.EventHubEventSubscriptionDestination_STATUS) error {
+func (destination *EventHubEventSubscriptionDestination_STATUS) AssignProperties_From_EventHubEventSubscriptionDestination_STATUS(source *storage.EventHubEventSubscriptionDestination_STATUS) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := EventHubEventSubscriptionDestination_EndpointType_STATUS(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, eventHubEventSubscriptionDestination_EndpointType_STATUS_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -4682,7 +4927,7 @@ func (destination *EventHubEventSubscriptionDestination_STATUS) AssignProperties
 }
 
 // AssignProperties_To_EventHubEventSubscriptionDestination_STATUS populates the provided destination EventHubEventSubscriptionDestination_STATUS from our EventHubEventSubscriptionDestination_STATUS
-func (destination *EventHubEventSubscriptionDestination_STATUS) AssignProperties_To_EventHubEventSubscriptionDestination_STATUS(target *v20200601s.EventHubEventSubscriptionDestination_STATUS) error {
+func (destination *EventHubEventSubscriptionDestination_STATUS) AssignProperties_To_EventHubEventSubscriptionDestination_STATUS(target *storage.EventHubEventSubscriptionDestination_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4724,16 +4969,20 @@ func (destination *HybridConnectionEventSubscriptionDestination) ConvertToARM(re
 	if destination == nil {
 		return nil, nil
 	}
-	result := &HybridConnectionEventSubscriptionDestination_ARM{}
+	result := &arm.HybridConnectionEventSubscriptionDestination{}
 
 	// Set property "EndpointType":
 	if destination.EndpointType != nil {
-		result.EndpointType = *destination.EndpointType
+		var temp arm.HybridConnectionEventSubscriptionDestination_EndpointType
+		var temp1 string
+		temp1 = string(*destination.EndpointType)
+		temp = arm.HybridConnectionEventSubscriptionDestination_EndpointType(temp1)
+		result.EndpointType = temp
 	}
 
 	// Set property "Properties":
 	if destination.ResourceReference != nil {
-		result.Properties = &HybridConnectionEventSubscriptionDestinationProperties_ARM{}
+		result.Properties = &arm.HybridConnectionEventSubscriptionDestinationProperties{}
 	}
 	if destination.ResourceReference != nil {
 		resourceIdARMID, err := resolved.ResolvedReferences.Lookup(*destination.ResourceReference)
@@ -4748,18 +4997,22 @@ func (destination *HybridConnectionEventSubscriptionDestination) ConvertToARM(re
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *HybridConnectionEventSubscriptionDestination) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &HybridConnectionEventSubscriptionDestination_ARM{}
+	return &arm.HybridConnectionEventSubscriptionDestination{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *HybridConnectionEventSubscriptionDestination) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(HybridConnectionEventSubscriptionDestination_ARM)
+	typedInput, ok := armInput.(arm.HybridConnectionEventSubscriptionDestination)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected HybridConnectionEventSubscriptionDestination_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.HybridConnectionEventSubscriptionDestination, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp HybridConnectionEventSubscriptionDestination_EndpointType
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = HybridConnectionEventSubscriptionDestination_EndpointType(temp1)
+	destination.EndpointType = &temp
 
 	// no assignment for property "ResourceReference"
 
@@ -4768,12 +5021,13 @@ func (destination *HybridConnectionEventSubscriptionDestination) PopulateFromARM
 }
 
 // AssignProperties_From_HybridConnectionEventSubscriptionDestination populates our HybridConnectionEventSubscriptionDestination from the provided source HybridConnectionEventSubscriptionDestination
-func (destination *HybridConnectionEventSubscriptionDestination) AssignProperties_From_HybridConnectionEventSubscriptionDestination(source *v20200601s.HybridConnectionEventSubscriptionDestination) error {
+func (destination *HybridConnectionEventSubscriptionDestination) AssignProperties_From_HybridConnectionEventSubscriptionDestination(source *storage.HybridConnectionEventSubscriptionDestination) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := HybridConnectionEventSubscriptionDestination_EndpointType(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, hybridConnectionEventSubscriptionDestination_EndpointType_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -4791,7 +5045,7 @@ func (destination *HybridConnectionEventSubscriptionDestination) AssignPropertie
 }
 
 // AssignProperties_To_HybridConnectionEventSubscriptionDestination populates the provided destination HybridConnectionEventSubscriptionDestination from our HybridConnectionEventSubscriptionDestination
-func (destination *HybridConnectionEventSubscriptionDestination) AssignProperties_To_HybridConnectionEventSubscriptionDestination(target *v20200601s.HybridConnectionEventSubscriptionDestination) error {
+func (destination *HybridConnectionEventSubscriptionDestination) AssignProperties_To_HybridConnectionEventSubscriptionDestination(target *storage.HybridConnectionEventSubscriptionDestination) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4827,7 +5081,7 @@ func (destination *HybridConnectionEventSubscriptionDestination) Initialize_From
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := HybridConnectionEventSubscriptionDestination_EndpointType(*source.EndpointType)
+		endpointType := genruntime.ToEnum(string(*source.EndpointType), hybridConnectionEventSubscriptionDestination_EndpointType_Values)
 		destination.EndpointType = &endpointType
 	} else {
 		destination.EndpointType = nil
@@ -4857,18 +5111,22 @@ var _ genruntime.FromARMConverter = &HybridConnectionEventSubscriptionDestinatio
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *HybridConnectionEventSubscriptionDestination_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &HybridConnectionEventSubscriptionDestination_STATUS_ARM{}
+	return &arm.HybridConnectionEventSubscriptionDestination_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *HybridConnectionEventSubscriptionDestination_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(HybridConnectionEventSubscriptionDestination_STATUS_ARM)
+	typedInput, ok := armInput.(arm.HybridConnectionEventSubscriptionDestination_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected HybridConnectionEventSubscriptionDestination_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.HybridConnectionEventSubscriptionDestination_STATUS, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp HybridConnectionEventSubscriptionDestination_EndpointType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = HybridConnectionEventSubscriptionDestination_EndpointType_STATUS(temp1)
+	destination.EndpointType = &temp
 
 	// Set property "ResourceId":
 	// copying flattened property:
@@ -4884,12 +5142,13 @@ func (destination *HybridConnectionEventSubscriptionDestination_STATUS) Populate
 }
 
 // AssignProperties_From_HybridConnectionEventSubscriptionDestination_STATUS populates our HybridConnectionEventSubscriptionDestination_STATUS from the provided source HybridConnectionEventSubscriptionDestination_STATUS
-func (destination *HybridConnectionEventSubscriptionDestination_STATUS) AssignProperties_From_HybridConnectionEventSubscriptionDestination_STATUS(source *v20200601s.HybridConnectionEventSubscriptionDestination_STATUS) error {
+func (destination *HybridConnectionEventSubscriptionDestination_STATUS) AssignProperties_From_HybridConnectionEventSubscriptionDestination_STATUS(source *storage.HybridConnectionEventSubscriptionDestination_STATUS) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := HybridConnectionEventSubscriptionDestination_EndpointType_STATUS(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, hybridConnectionEventSubscriptionDestination_EndpointType_STATUS_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -4902,7 +5161,7 @@ func (destination *HybridConnectionEventSubscriptionDestination_STATUS) AssignPr
 }
 
 // AssignProperties_To_HybridConnectionEventSubscriptionDestination_STATUS populates the provided destination HybridConnectionEventSubscriptionDestination_STATUS from our HybridConnectionEventSubscriptionDestination_STATUS
-func (destination *HybridConnectionEventSubscriptionDestination_STATUS) AssignProperties_To_HybridConnectionEventSubscriptionDestination_STATUS(target *v20200601s.HybridConnectionEventSubscriptionDestination_STATUS) error {
+func (destination *HybridConnectionEventSubscriptionDestination_STATUS) AssignProperties_To_HybridConnectionEventSubscriptionDestination_STATUS(target *storage.HybridConnectionEventSubscriptionDestination_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4945,16 +5204,20 @@ func (destination *ServiceBusQueueEventSubscriptionDestination) ConvertToARM(res
 	if destination == nil {
 		return nil, nil
 	}
-	result := &ServiceBusQueueEventSubscriptionDestination_ARM{}
+	result := &arm.ServiceBusQueueEventSubscriptionDestination{}
 
 	// Set property "EndpointType":
 	if destination.EndpointType != nil {
-		result.EndpointType = *destination.EndpointType
+		var temp arm.ServiceBusQueueEventSubscriptionDestination_EndpointType
+		var temp1 string
+		temp1 = string(*destination.EndpointType)
+		temp = arm.ServiceBusQueueEventSubscriptionDestination_EndpointType(temp1)
+		result.EndpointType = temp
 	}
 
 	// Set property "Properties":
 	if destination.ResourceReference != nil {
-		result.Properties = &ServiceBusQueueEventSubscriptionDestinationProperties_ARM{}
+		result.Properties = &arm.ServiceBusQueueEventSubscriptionDestinationProperties{}
 	}
 	if destination.ResourceReference != nil {
 		resourceIdARMID, err := resolved.ResolvedReferences.Lookup(*destination.ResourceReference)
@@ -4969,18 +5232,22 @@ func (destination *ServiceBusQueueEventSubscriptionDestination) ConvertToARM(res
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *ServiceBusQueueEventSubscriptionDestination) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ServiceBusQueueEventSubscriptionDestination_ARM{}
+	return &arm.ServiceBusQueueEventSubscriptionDestination{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *ServiceBusQueueEventSubscriptionDestination) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ServiceBusQueueEventSubscriptionDestination_ARM)
+	typedInput, ok := armInput.(arm.ServiceBusQueueEventSubscriptionDestination)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ServiceBusQueueEventSubscriptionDestination_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServiceBusQueueEventSubscriptionDestination, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp ServiceBusQueueEventSubscriptionDestination_EndpointType
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = ServiceBusQueueEventSubscriptionDestination_EndpointType(temp1)
+	destination.EndpointType = &temp
 
 	// no assignment for property "ResourceReference"
 
@@ -4989,12 +5256,13 @@ func (destination *ServiceBusQueueEventSubscriptionDestination) PopulateFromARM(
 }
 
 // AssignProperties_From_ServiceBusQueueEventSubscriptionDestination populates our ServiceBusQueueEventSubscriptionDestination from the provided source ServiceBusQueueEventSubscriptionDestination
-func (destination *ServiceBusQueueEventSubscriptionDestination) AssignProperties_From_ServiceBusQueueEventSubscriptionDestination(source *v20200601s.ServiceBusQueueEventSubscriptionDestination) error {
+func (destination *ServiceBusQueueEventSubscriptionDestination) AssignProperties_From_ServiceBusQueueEventSubscriptionDestination(source *storage.ServiceBusQueueEventSubscriptionDestination) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := ServiceBusQueueEventSubscriptionDestination_EndpointType(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, serviceBusQueueEventSubscriptionDestination_EndpointType_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -5012,7 +5280,7 @@ func (destination *ServiceBusQueueEventSubscriptionDestination) AssignProperties
 }
 
 // AssignProperties_To_ServiceBusQueueEventSubscriptionDestination populates the provided destination ServiceBusQueueEventSubscriptionDestination from our ServiceBusQueueEventSubscriptionDestination
-func (destination *ServiceBusQueueEventSubscriptionDestination) AssignProperties_To_ServiceBusQueueEventSubscriptionDestination(target *v20200601s.ServiceBusQueueEventSubscriptionDestination) error {
+func (destination *ServiceBusQueueEventSubscriptionDestination) AssignProperties_To_ServiceBusQueueEventSubscriptionDestination(target *storage.ServiceBusQueueEventSubscriptionDestination) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5048,7 +5316,7 @@ func (destination *ServiceBusQueueEventSubscriptionDestination) Initialize_From_
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := ServiceBusQueueEventSubscriptionDestination_EndpointType(*source.EndpointType)
+		endpointType := genruntime.ToEnum(string(*source.EndpointType), serviceBusQueueEventSubscriptionDestination_EndpointType_Values)
 		destination.EndpointType = &endpointType
 	} else {
 		destination.EndpointType = nil
@@ -5078,18 +5346,22 @@ var _ genruntime.FromARMConverter = &ServiceBusQueueEventSubscriptionDestination
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *ServiceBusQueueEventSubscriptionDestination_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ServiceBusQueueEventSubscriptionDestination_STATUS_ARM{}
+	return &arm.ServiceBusQueueEventSubscriptionDestination_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *ServiceBusQueueEventSubscriptionDestination_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ServiceBusQueueEventSubscriptionDestination_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ServiceBusQueueEventSubscriptionDestination_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ServiceBusQueueEventSubscriptionDestination_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServiceBusQueueEventSubscriptionDestination_STATUS, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp ServiceBusQueueEventSubscriptionDestination_EndpointType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = ServiceBusQueueEventSubscriptionDestination_EndpointType_STATUS(temp1)
+	destination.EndpointType = &temp
 
 	// Set property "ResourceId":
 	// copying flattened property:
@@ -5105,12 +5377,13 @@ func (destination *ServiceBusQueueEventSubscriptionDestination_STATUS) PopulateF
 }
 
 // AssignProperties_From_ServiceBusQueueEventSubscriptionDestination_STATUS populates our ServiceBusQueueEventSubscriptionDestination_STATUS from the provided source ServiceBusQueueEventSubscriptionDestination_STATUS
-func (destination *ServiceBusQueueEventSubscriptionDestination_STATUS) AssignProperties_From_ServiceBusQueueEventSubscriptionDestination_STATUS(source *v20200601s.ServiceBusQueueEventSubscriptionDestination_STATUS) error {
+func (destination *ServiceBusQueueEventSubscriptionDestination_STATUS) AssignProperties_From_ServiceBusQueueEventSubscriptionDestination_STATUS(source *storage.ServiceBusQueueEventSubscriptionDestination_STATUS) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := ServiceBusQueueEventSubscriptionDestination_EndpointType_STATUS(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, serviceBusQueueEventSubscriptionDestination_EndpointType_STATUS_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -5123,7 +5396,7 @@ func (destination *ServiceBusQueueEventSubscriptionDestination_STATUS) AssignPro
 }
 
 // AssignProperties_To_ServiceBusQueueEventSubscriptionDestination_STATUS populates the provided destination ServiceBusQueueEventSubscriptionDestination_STATUS from our ServiceBusQueueEventSubscriptionDestination_STATUS
-func (destination *ServiceBusQueueEventSubscriptionDestination_STATUS) AssignProperties_To_ServiceBusQueueEventSubscriptionDestination_STATUS(target *v20200601s.ServiceBusQueueEventSubscriptionDestination_STATUS) error {
+func (destination *ServiceBusQueueEventSubscriptionDestination_STATUS) AssignProperties_To_ServiceBusQueueEventSubscriptionDestination_STATUS(target *storage.ServiceBusQueueEventSubscriptionDestination_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5166,16 +5439,20 @@ func (destination *ServiceBusTopicEventSubscriptionDestination) ConvertToARM(res
 	if destination == nil {
 		return nil, nil
 	}
-	result := &ServiceBusTopicEventSubscriptionDestination_ARM{}
+	result := &arm.ServiceBusTopicEventSubscriptionDestination{}
 
 	// Set property "EndpointType":
 	if destination.EndpointType != nil {
-		result.EndpointType = *destination.EndpointType
+		var temp arm.ServiceBusTopicEventSubscriptionDestination_EndpointType
+		var temp1 string
+		temp1 = string(*destination.EndpointType)
+		temp = arm.ServiceBusTopicEventSubscriptionDestination_EndpointType(temp1)
+		result.EndpointType = temp
 	}
 
 	// Set property "Properties":
 	if destination.ResourceReference != nil {
-		result.Properties = &ServiceBusTopicEventSubscriptionDestinationProperties_ARM{}
+		result.Properties = &arm.ServiceBusTopicEventSubscriptionDestinationProperties{}
 	}
 	if destination.ResourceReference != nil {
 		resourceIdARMID, err := resolved.ResolvedReferences.Lookup(*destination.ResourceReference)
@@ -5190,18 +5467,22 @@ func (destination *ServiceBusTopicEventSubscriptionDestination) ConvertToARM(res
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *ServiceBusTopicEventSubscriptionDestination) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ServiceBusTopicEventSubscriptionDestination_ARM{}
+	return &arm.ServiceBusTopicEventSubscriptionDestination{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *ServiceBusTopicEventSubscriptionDestination) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ServiceBusTopicEventSubscriptionDestination_ARM)
+	typedInput, ok := armInput.(arm.ServiceBusTopicEventSubscriptionDestination)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ServiceBusTopicEventSubscriptionDestination_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServiceBusTopicEventSubscriptionDestination, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp ServiceBusTopicEventSubscriptionDestination_EndpointType
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = ServiceBusTopicEventSubscriptionDestination_EndpointType(temp1)
+	destination.EndpointType = &temp
 
 	// no assignment for property "ResourceReference"
 
@@ -5210,12 +5491,13 @@ func (destination *ServiceBusTopicEventSubscriptionDestination) PopulateFromARM(
 }
 
 // AssignProperties_From_ServiceBusTopicEventSubscriptionDestination populates our ServiceBusTopicEventSubscriptionDestination from the provided source ServiceBusTopicEventSubscriptionDestination
-func (destination *ServiceBusTopicEventSubscriptionDestination) AssignProperties_From_ServiceBusTopicEventSubscriptionDestination(source *v20200601s.ServiceBusTopicEventSubscriptionDestination) error {
+func (destination *ServiceBusTopicEventSubscriptionDestination) AssignProperties_From_ServiceBusTopicEventSubscriptionDestination(source *storage.ServiceBusTopicEventSubscriptionDestination) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := ServiceBusTopicEventSubscriptionDestination_EndpointType(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, serviceBusTopicEventSubscriptionDestination_EndpointType_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -5233,7 +5515,7 @@ func (destination *ServiceBusTopicEventSubscriptionDestination) AssignProperties
 }
 
 // AssignProperties_To_ServiceBusTopicEventSubscriptionDestination populates the provided destination ServiceBusTopicEventSubscriptionDestination from our ServiceBusTopicEventSubscriptionDestination
-func (destination *ServiceBusTopicEventSubscriptionDestination) AssignProperties_To_ServiceBusTopicEventSubscriptionDestination(target *v20200601s.ServiceBusTopicEventSubscriptionDestination) error {
+func (destination *ServiceBusTopicEventSubscriptionDestination) AssignProperties_To_ServiceBusTopicEventSubscriptionDestination(target *storage.ServiceBusTopicEventSubscriptionDestination) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5269,7 +5551,7 @@ func (destination *ServiceBusTopicEventSubscriptionDestination) Initialize_From_
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := ServiceBusTopicEventSubscriptionDestination_EndpointType(*source.EndpointType)
+		endpointType := genruntime.ToEnum(string(*source.EndpointType), serviceBusTopicEventSubscriptionDestination_EndpointType_Values)
 		destination.EndpointType = &endpointType
 	} else {
 		destination.EndpointType = nil
@@ -5300,18 +5582,22 @@ var _ genruntime.FromARMConverter = &ServiceBusTopicEventSubscriptionDestination
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *ServiceBusTopicEventSubscriptionDestination_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ServiceBusTopicEventSubscriptionDestination_STATUS_ARM{}
+	return &arm.ServiceBusTopicEventSubscriptionDestination_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *ServiceBusTopicEventSubscriptionDestination_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ServiceBusTopicEventSubscriptionDestination_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ServiceBusTopicEventSubscriptionDestination_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ServiceBusTopicEventSubscriptionDestination_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServiceBusTopicEventSubscriptionDestination_STATUS, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp ServiceBusTopicEventSubscriptionDestination_EndpointType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = ServiceBusTopicEventSubscriptionDestination_EndpointType_STATUS(temp1)
+	destination.EndpointType = &temp
 
 	// Set property "ResourceId":
 	// copying flattened property:
@@ -5327,12 +5613,13 @@ func (destination *ServiceBusTopicEventSubscriptionDestination_STATUS) PopulateF
 }
 
 // AssignProperties_From_ServiceBusTopicEventSubscriptionDestination_STATUS populates our ServiceBusTopicEventSubscriptionDestination_STATUS from the provided source ServiceBusTopicEventSubscriptionDestination_STATUS
-func (destination *ServiceBusTopicEventSubscriptionDestination_STATUS) AssignProperties_From_ServiceBusTopicEventSubscriptionDestination_STATUS(source *v20200601s.ServiceBusTopicEventSubscriptionDestination_STATUS) error {
+func (destination *ServiceBusTopicEventSubscriptionDestination_STATUS) AssignProperties_From_ServiceBusTopicEventSubscriptionDestination_STATUS(source *storage.ServiceBusTopicEventSubscriptionDestination_STATUS) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := ServiceBusTopicEventSubscriptionDestination_EndpointType_STATUS(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, serviceBusTopicEventSubscriptionDestination_EndpointType_STATUS_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -5345,7 +5632,7 @@ func (destination *ServiceBusTopicEventSubscriptionDestination_STATUS) AssignPro
 }
 
 // AssignProperties_To_ServiceBusTopicEventSubscriptionDestination_STATUS populates the provided destination ServiceBusTopicEventSubscriptionDestination_STATUS from our ServiceBusTopicEventSubscriptionDestination_STATUS
-func (destination *ServiceBusTopicEventSubscriptionDestination_STATUS) AssignProperties_To_ServiceBusTopicEventSubscriptionDestination_STATUS(target *v20200601s.ServiceBusTopicEventSubscriptionDestination_STATUS) error {
+func (destination *ServiceBusTopicEventSubscriptionDestination_STATUS) AssignProperties_To_ServiceBusTopicEventSubscriptionDestination_STATUS(target *storage.ServiceBusTopicEventSubscriptionDestination_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5390,16 +5677,20 @@ func (destination *StorageBlobDeadLetterDestination) ConvertToARM(resolved genru
 	if destination == nil {
 		return nil, nil
 	}
-	result := &StorageBlobDeadLetterDestination_ARM{}
+	result := &arm.StorageBlobDeadLetterDestination{}
 
 	// Set property "EndpointType":
 	if destination.EndpointType != nil {
-		result.EndpointType = *destination.EndpointType
+		var temp arm.StorageBlobDeadLetterDestination_EndpointType
+		var temp1 string
+		temp1 = string(*destination.EndpointType)
+		temp = arm.StorageBlobDeadLetterDestination_EndpointType(temp1)
+		result.EndpointType = temp
 	}
 
 	// Set property "Properties":
 	if destination.BlobContainerName != nil || destination.ResourceReference != nil {
-		result.Properties = &StorageBlobDeadLetterDestinationProperties_ARM{}
+		result.Properties = &arm.StorageBlobDeadLetterDestinationProperties{}
 	}
 	if destination.BlobContainerName != nil {
 		blobContainerName := *destination.BlobContainerName
@@ -5418,14 +5709,14 @@ func (destination *StorageBlobDeadLetterDestination) ConvertToARM(resolved genru
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *StorageBlobDeadLetterDestination) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StorageBlobDeadLetterDestination_ARM{}
+	return &arm.StorageBlobDeadLetterDestination{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *StorageBlobDeadLetterDestination) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StorageBlobDeadLetterDestination_ARM)
+	typedInput, ok := armInput.(arm.StorageBlobDeadLetterDestination)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StorageBlobDeadLetterDestination_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StorageBlobDeadLetterDestination, got %T", armInput)
 	}
 
 	// Set property "BlobContainerName":
@@ -5438,7 +5729,11 @@ func (destination *StorageBlobDeadLetterDestination) PopulateFromARM(owner genru
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp StorageBlobDeadLetterDestination_EndpointType
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = StorageBlobDeadLetterDestination_EndpointType(temp1)
+	destination.EndpointType = &temp
 
 	// no assignment for property "ResourceReference"
 
@@ -5447,15 +5742,16 @@ func (destination *StorageBlobDeadLetterDestination) PopulateFromARM(owner genru
 }
 
 // AssignProperties_From_StorageBlobDeadLetterDestination populates our StorageBlobDeadLetterDestination from the provided source StorageBlobDeadLetterDestination
-func (destination *StorageBlobDeadLetterDestination) AssignProperties_From_StorageBlobDeadLetterDestination(source *v20200601s.StorageBlobDeadLetterDestination) error {
+func (destination *StorageBlobDeadLetterDestination) AssignProperties_From_StorageBlobDeadLetterDestination(source *storage.StorageBlobDeadLetterDestination) error {
 
 	// BlobContainerName
 	destination.BlobContainerName = genruntime.ClonePointerToString(source.BlobContainerName)
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := StorageBlobDeadLetterDestination_EndpointType(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, storageBlobDeadLetterDestination_EndpointType_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -5473,7 +5769,7 @@ func (destination *StorageBlobDeadLetterDestination) AssignProperties_From_Stora
 }
 
 // AssignProperties_To_StorageBlobDeadLetterDestination populates the provided destination StorageBlobDeadLetterDestination from our StorageBlobDeadLetterDestination
-func (destination *StorageBlobDeadLetterDestination) AssignProperties_To_StorageBlobDeadLetterDestination(target *v20200601s.StorageBlobDeadLetterDestination) error {
+func (destination *StorageBlobDeadLetterDestination) AssignProperties_To_StorageBlobDeadLetterDestination(target *storage.StorageBlobDeadLetterDestination) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5515,7 +5811,7 @@ func (destination *StorageBlobDeadLetterDestination) Initialize_From_StorageBlob
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := StorageBlobDeadLetterDestination_EndpointType(*source.EndpointType)
+		endpointType := genruntime.ToEnum(string(*source.EndpointType), storageBlobDeadLetterDestination_EndpointType_Values)
 		destination.EndpointType = &endpointType
 	} else {
 		destination.EndpointType = nil
@@ -5548,14 +5844,14 @@ var _ genruntime.FromARMConverter = &StorageBlobDeadLetterDestination_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *StorageBlobDeadLetterDestination_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StorageBlobDeadLetterDestination_STATUS_ARM{}
+	return &arm.StorageBlobDeadLetterDestination_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *StorageBlobDeadLetterDestination_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StorageBlobDeadLetterDestination_STATUS_ARM)
+	typedInput, ok := armInput.(arm.StorageBlobDeadLetterDestination_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StorageBlobDeadLetterDestination_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StorageBlobDeadLetterDestination_STATUS, got %T", armInput)
 	}
 
 	// Set property "BlobContainerName":
@@ -5568,7 +5864,11 @@ func (destination *StorageBlobDeadLetterDestination_STATUS) PopulateFromARM(owne
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp StorageBlobDeadLetterDestination_EndpointType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = StorageBlobDeadLetterDestination_EndpointType_STATUS(temp1)
+	destination.EndpointType = &temp
 
 	// Set property "ResourceId":
 	// copying flattened property:
@@ -5584,15 +5884,16 @@ func (destination *StorageBlobDeadLetterDestination_STATUS) PopulateFromARM(owne
 }
 
 // AssignProperties_From_StorageBlobDeadLetterDestination_STATUS populates our StorageBlobDeadLetterDestination_STATUS from the provided source StorageBlobDeadLetterDestination_STATUS
-func (destination *StorageBlobDeadLetterDestination_STATUS) AssignProperties_From_StorageBlobDeadLetterDestination_STATUS(source *v20200601s.StorageBlobDeadLetterDestination_STATUS) error {
+func (destination *StorageBlobDeadLetterDestination_STATUS) AssignProperties_From_StorageBlobDeadLetterDestination_STATUS(source *storage.StorageBlobDeadLetterDestination_STATUS) error {
 
 	// BlobContainerName
 	destination.BlobContainerName = genruntime.ClonePointerToString(source.BlobContainerName)
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := StorageBlobDeadLetterDestination_EndpointType_STATUS(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, storageBlobDeadLetterDestination_EndpointType_STATUS_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -5605,7 +5906,7 @@ func (destination *StorageBlobDeadLetterDestination_STATUS) AssignProperties_Fro
 }
 
 // AssignProperties_To_StorageBlobDeadLetterDestination_STATUS populates the provided destination StorageBlobDeadLetterDestination_STATUS from our StorageBlobDeadLetterDestination_STATUS
-func (destination *StorageBlobDeadLetterDestination_STATUS) AssignProperties_To_StorageBlobDeadLetterDestination_STATUS(target *v20200601s.StorageBlobDeadLetterDestination_STATUS) error {
+func (destination *StorageBlobDeadLetterDestination_STATUS) AssignProperties_To_StorageBlobDeadLetterDestination_STATUS(target *storage.StorageBlobDeadLetterDestination_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5654,16 +5955,20 @@ func (destination *StorageQueueEventSubscriptionDestination) ConvertToARM(resolv
 	if destination == nil {
 		return nil, nil
 	}
-	result := &StorageQueueEventSubscriptionDestination_ARM{}
+	result := &arm.StorageQueueEventSubscriptionDestination{}
 
 	// Set property "EndpointType":
 	if destination.EndpointType != nil {
-		result.EndpointType = *destination.EndpointType
+		var temp arm.StorageQueueEventSubscriptionDestination_EndpointType
+		var temp1 string
+		temp1 = string(*destination.EndpointType)
+		temp = arm.StorageQueueEventSubscriptionDestination_EndpointType(temp1)
+		result.EndpointType = temp
 	}
 
 	// Set property "Properties":
 	if destination.QueueName != nil || destination.ResourceReference != nil {
-		result.Properties = &StorageQueueEventSubscriptionDestinationProperties_ARM{}
+		result.Properties = &arm.StorageQueueEventSubscriptionDestinationProperties{}
 	}
 	if destination.QueueName != nil {
 		queueName := *destination.QueueName
@@ -5682,18 +5987,22 @@ func (destination *StorageQueueEventSubscriptionDestination) ConvertToARM(resolv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *StorageQueueEventSubscriptionDestination) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StorageQueueEventSubscriptionDestination_ARM{}
+	return &arm.StorageQueueEventSubscriptionDestination{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *StorageQueueEventSubscriptionDestination) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StorageQueueEventSubscriptionDestination_ARM)
+	typedInput, ok := armInput.(arm.StorageQueueEventSubscriptionDestination)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StorageQueueEventSubscriptionDestination_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StorageQueueEventSubscriptionDestination, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp StorageQueueEventSubscriptionDestination_EndpointType
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = StorageQueueEventSubscriptionDestination_EndpointType(temp1)
+	destination.EndpointType = &temp
 
 	// Set property "QueueName":
 	// copying flattened property:
@@ -5711,12 +6020,13 @@ func (destination *StorageQueueEventSubscriptionDestination) PopulateFromARM(own
 }
 
 // AssignProperties_From_StorageQueueEventSubscriptionDestination populates our StorageQueueEventSubscriptionDestination from the provided source StorageQueueEventSubscriptionDestination
-func (destination *StorageQueueEventSubscriptionDestination) AssignProperties_From_StorageQueueEventSubscriptionDestination(source *v20200601s.StorageQueueEventSubscriptionDestination) error {
+func (destination *StorageQueueEventSubscriptionDestination) AssignProperties_From_StorageQueueEventSubscriptionDestination(source *storage.StorageQueueEventSubscriptionDestination) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := StorageQueueEventSubscriptionDestination_EndpointType(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, storageQueueEventSubscriptionDestination_EndpointType_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -5737,7 +6047,7 @@ func (destination *StorageQueueEventSubscriptionDestination) AssignProperties_Fr
 }
 
 // AssignProperties_To_StorageQueueEventSubscriptionDestination populates the provided destination StorageQueueEventSubscriptionDestination from our StorageQueueEventSubscriptionDestination
-func (destination *StorageQueueEventSubscriptionDestination) AssignProperties_To_StorageQueueEventSubscriptionDestination(target *v20200601s.StorageQueueEventSubscriptionDestination) error {
+func (destination *StorageQueueEventSubscriptionDestination) AssignProperties_To_StorageQueueEventSubscriptionDestination(target *storage.StorageQueueEventSubscriptionDestination) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5776,7 +6086,7 @@ func (destination *StorageQueueEventSubscriptionDestination) Initialize_From_Sto
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := StorageQueueEventSubscriptionDestination_EndpointType(*source.EndpointType)
+		endpointType := genruntime.ToEnum(string(*source.EndpointType), storageQueueEventSubscriptionDestination_EndpointType_Values)
 		destination.EndpointType = &endpointType
 	} else {
 		destination.EndpointType = nil
@@ -5813,18 +6123,22 @@ var _ genruntime.FromARMConverter = &StorageQueueEventSubscriptionDestination_ST
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *StorageQueueEventSubscriptionDestination_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StorageQueueEventSubscriptionDestination_STATUS_ARM{}
+	return &arm.StorageQueueEventSubscriptionDestination_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *StorageQueueEventSubscriptionDestination_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StorageQueueEventSubscriptionDestination_STATUS_ARM)
+	typedInput, ok := armInput.(arm.StorageQueueEventSubscriptionDestination_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StorageQueueEventSubscriptionDestination_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StorageQueueEventSubscriptionDestination_STATUS, got %T", armInput)
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp StorageQueueEventSubscriptionDestination_EndpointType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = StorageQueueEventSubscriptionDestination_EndpointType_STATUS(temp1)
+	destination.EndpointType = &temp
 
 	// Set property "QueueName":
 	// copying flattened property:
@@ -5849,12 +6163,13 @@ func (destination *StorageQueueEventSubscriptionDestination_STATUS) PopulateFrom
 }
 
 // AssignProperties_From_StorageQueueEventSubscriptionDestination_STATUS populates our StorageQueueEventSubscriptionDestination_STATUS from the provided source StorageQueueEventSubscriptionDestination_STATUS
-func (destination *StorageQueueEventSubscriptionDestination_STATUS) AssignProperties_From_StorageQueueEventSubscriptionDestination_STATUS(source *v20200601s.StorageQueueEventSubscriptionDestination_STATUS) error {
+func (destination *StorageQueueEventSubscriptionDestination_STATUS) AssignProperties_From_StorageQueueEventSubscriptionDestination_STATUS(source *storage.StorageQueueEventSubscriptionDestination_STATUS) error {
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := StorageQueueEventSubscriptionDestination_EndpointType_STATUS(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, storageQueueEventSubscriptionDestination_EndpointType_STATUS_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -5870,7 +6185,7 @@ func (destination *StorageQueueEventSubscriptionDestination_STATUS) AssignProper
 }
 
 // AssignProperties_To_StorageQueueEventSubscriptionDestination_STATUS populates the provided destination StorageQueueEventSubscriptionDestination_STATUS from our StorageQueueEventSubscriptionDestination_STATUS
-func (destination *StorageQueueEventSubscriptionDestination_STATUS) AssignProperties_To_StorageQueueEventSubscriptionDestination_STATUS(target *v20200601s.StorageQueueEventSubscriptionDestination_STATUS) error {
+func (destination *StorageQueueEventSubscriptionDestination_STATUS) AssignProperties_To_StorageQueueEventSubscriptionDestination_STATUS(target *storage.StorageQueueEventSubscriptionDestination_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5929,11 +6244,15 @@ func (destination *WebHookEventSubscriptionDestination) ConvertToARM(resolved ge
 	if destination == nil {
 		return nil, nil
 	}
-	result := &WebHookEventSubscriptionDestination_ARM{}
+	result := &arm.WebHookEventSubscriptionDestination{}
 
 	// Set property "EndpointType":
 	if destination.EndpointType != nil {
-		result.EndpointType = *destination.EndpointType
+		var temp arm.WebHookEventSubscriptionDestination_EndpointType
+		var temp1 string
+		temp1 = string(*destination.EndpointType)
+		temp = arm.WebHookEventSubscriptionDestination_EndpointType(temp1)
+		result.EndpointType = temp
 	}
 
 	// Set property "Properties":
@@ -5942,7 +6261,7 @@ func (destination *WebHookEventSubscriptionDestination) ConvertToARM(resolved ge
 		destination.EndpointUrl != nil ||
 		destination.MaxEventsPerBatch != nil ||
 		destination.PreferredBatchSizeInKilobytes != nil {
-		result.Properties = &WebHookEventSubscriptionDestinationProperties_ARM{}
+		result.Properties = &arm.WebHookEventSubscriptionDestinationProperties{}
 	}
 	if destination.AzureActiveDirectoryApplicationIdOrUri != nil {
 		azureActiveDirectoryApplicationIdOrUri := *destination.AzureActiveDirectoryApplicationIdOrUri
@@ -5973,14 +6292,14 @@ func (destination *WebHookEventSubscriptionDestination) ConvertToARM(resolved ge
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *WebHookEventSubscriptionDestination) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &WebHookEventSubscriptionDestination_ARM{}
+	return &arm.WebHookEventSubscriptionDestination{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *WebHookEventSubscriptionDestination) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(WebHookEventSubscriptionDestination_ARM)
+	typedInput, ok := armInput.(arm.WebHookEventSubscriptionDestination)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected WebHookEventSubscriptionDestination_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.WebHookEventSubscriptionDestination, got %T", armInput)
 	}
 
 	// Set property "AzureActiveDirectoryApplicationIdOrUri":
@@ -6002,7 +6321,11 @@ func (destination *WebHookEventSubscriptionDestination) PopulateFromARM(owner ge
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp WebHookEventSubscriptionDestination_EndpointType
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = WebHookEventSubscriptionDestination_EndpointType(temp1)
+	destination.EndpointType = &temp
 
 	// no assignment for property "EndpointUrl"
 
@@ -6029,7 +6352,7 @@ func (destination *WebHookEventSubscriptionDestination) PopulateFromARM(owner ge
 }
 
 // AssignProperties_From_WebHookEventSubscriptionDestination populates our WebHookEventSubscriptionDestination from the provided source WebHookEventSubscriptionDestination
-func (destination *WebHookEventSubscriptionDestination) AssignProperties_From_WebHookEventSubscriptionDestination(source *v20200601s.WebHookEventSubscriptionDestination) error {
+func (destination *WebHookEventSubscriptionDestination) AssignProperties_From_WebHookEventSubscriptionDestination(source *storage.WebHookEventSubscriptionDestination) error {
 
 	// AzureActiveDirectoryApplicationIdOrUri
 	destination.AzureActiveDirectoryApplicationIdOrUri = genruntime.ClonePointerToString(source.AzureActiveDirectoryApplicationIdOrUri)
@@ -6039,8 +6362,9 @@ func (destination *WebHookEventSubscriptionDestination) AssignProperties_From_We
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := WebHookEventSubscriptionDestination_EndpointType(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, webHookEventSubscriptionDestination_EndpointType_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -6064,7 +6388,7 @@ func (destination *WebHookEventSubscriptionDestination) AssignProperties_From_We
 }
 
 // AssignProperties_To_WebHookEventSubscriptionDestination populates the provided destination WebHookEventSubscriptionDestination from our WebHookEventSubscriptionDestination
-func (destination *WebHookEventSubscriptionDestination) AssignProperties_To_WebHookEventSubscriptionDestination(target *v20200601s.WebHookEventSubscriptionDestination) error {
+func (destination *WebHookEventSubscriptionDestination) AssignProperties_To_WebHookEventSubscriptionDestination(target *storage.WebHookEventSubscriptionDestination) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6118,7 +6442,7 @@ func (destination *WebHookEventSubscriptionDestination) Initialize_From_WebHookE
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := WebHookEventSubscriptionDestination_EndpointType(*source.EndpointType)
+		endpointType := genruntime.ToEnum(string(*source.EndpointType), webHookEventSubscriptionDestination_EndpointType_Values)
 		destination.EndpointType = &endpointType
 	} else {
 		destination.EndpointType = nil
@@ -6160,14 +6484,14 @@ var _ genruntime.FromARMConverter = &WebHookEventSubscriptionDestination_STATUS{
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (destination *WebHookEventSubscriptionDestination_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &WebHookEventSubscriptionDestination_STATUS_ARM{}
+	return &arm.WebHookEventSubscriptionDestination_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (destination *WebHookEventSubscriptionDestination_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(WebHookEventSubscriptionDestination_STATUS_ARM)
+	typedInput, ok := armInput.(arm.WebHookEventSubscriptionDestination_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected WebHookEventSubscriptionDestination_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.WebHookEventSubscriptionDestination_STATUS, got %T", armInput)
 	}
 
 	// Set property "AzureActiveDirectoryApplicationIdOrUri":
@@ -6198,7 +6522,11 @@ func (destination *WebHookEventSubscriptionDestination_STATUS) PopulateFromARM(o
 	}
 
 	// Set property "EndpointType":
-	destination.EndpointType = &typedInput.EndpointType
+	var temp WebHookEventSubscriptionDestination_EndpointType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.EndpointType)
+	temp = WebHookEventSubscriptionDestination_EndpointType_STATUS(temp1)
+	destination.EndpointType = &temp
 
 	// Set property "MaxEventsPerBatch":
 	// copying flattened property:
@@ -6223,7 +6551,7 @@ func (destination *WebHookEventSubscriptionDestination_STATUS) PopulateFromARM(o
 }
 
 // AssignProperties_From_WebHookEventSubscriptionDestination_STATUS populates our WebHookEventSubscriptionDestination_STATUS from the provided source WebHookEventSubscriptionDestination_STATUS
-func (destination *WebHookEventSubscriptionDestination_STATUS) AssignProperties_From_WebHookEventSubscriptionDestination_STATUS(source *v20200601s.WebHookEventSubscriptionDestination_STATUS) error {
+func (destination *WebHookEventSubscriptionDestination_STATUS) AssignProperties_From_WebHookEventSubscriptionDestination_STATUS(source *storage.WebHookEventSubscriptionDestination_STATUS) error {
 
 	// AzureActiveDirectoryApplicationIdOrUri
 	destination.AzureActiveDirectoryApplicationIdOrUri = genruntime.ClonePointerToString(source.AzureActiveDirectoryApplicationIdOrUri)
@@ -6236,8 +6564,9 @@ func (destination *WebHookEventSubscriptionDestination_STATUS) AssignProperties_
 
 	// EndpointType
 	if source.EndpointType != nil {
-		endpointType := WebHookEventSubscriptionDestination_EndpointType_STATUS(*source.EndpointType)
-		destination.EndpointType = &endpointType
+		endpointType := *source.EndpointType
+		endpointTypeTemp := genruntime.ToEnum(endpointType, webHookEventSubscriptionDestination_EndpointType_STATUS_Values)
+		destination.EndpointType = &endpointTypeTemp
 	} else {
 		destination.EndpointType = nil
 	}
@@ -6253,7 +6582,7 @@ func (destination *WebHookEventSubscriptionDestination_STATUS) AssignProperties_
 }
 
 // AssignProperties_To_WebHookEventSubscriptionDestination_STATUS populates the provided destination WebHookEventSubscriptionDestination_STATUS from our WebHookEventSubscriptionDestination_STATUS
-func (destination *WebHookEventSubscriptionDestination_STATUS) AssignProperties_To_WebHookEventSubscriptionDestination_STATUS(target *v20200601s.WebHookEventSubscriptionDestination_STATUS) error {
+func (destination *WebHookEventSubscriptionDestination_STATUS) AssignProperties_To_WebHookEventSubscriptionDestination_STATUS(target *storage.WebHookEventSubscriptionDestination_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6296,9 +6625,19 @@ type AzureFunctionEventSubscriptionDestination_EndpointType string
 
 const AzureFunctionEventSubscriptionDestination_EndpointType_AzureFunction = AzureFunctionEventSubscriptionDestination_EndpointType("AzureFunction")
 
+// Mapping from string to AzureFunctionEventSubscriptionDestination_EndpointType
+var azureFunctionEventSubscriptionDestination_EndpointType_Values = map[string]AzureFunctionEventSubscriptionDestination_EndpointType{
+	"azurefunction": AzureFunctionEventSubscriptionDestination_EndpointType_AzureFunction,
+}
+
 type AzureFunctionEventSubscriptionDestination_EndpointType_STATUS string
 
 const AzureFunctionEventSubscriptionDestination_EndpointType_STATUS_AzureFunction = AzureFunctionEventSubscriptionDestination_EndpointType_STATUS("AzureFunction")
+
+// Mapping from string to AzureFunctionEventSubscriptionDestination_EndpointType_STATUS
+var azureFunctionEventSubscriptionDestination_EndpointType_STATUS_Values = map[string]AzureFunctionEventSubscriptionDestination_EndpointType_STATUS{
+	"azurefunction": AzureFunctionEventSubscriptionDestination_EndpointType_STATUS_AzureFunction,
+}
 
 type BoolEqualsAdvancedFilter struct {
 	// Key: The field/property in the event based on which you want to filter.
@@ -6319,7 +6658,7 @@ func (filter *BoolEqualsAdvancedFilter) ConvertToARM(resolved genruntime.Convert
 	if filter == nil {
 		return nil, nil
 	}
-	result := &BoolEqualsAdvancedFilter_ARM{}
+	result := &arm.BoolEqualsAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -6329,7 +6668,11 @@ func (filter *BoolEqualsAdvancedFilter) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.BoolEqualsAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.BoolEqualsAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Value":
@@ -6342,14 +6685,14 @@ func (filter *BoolEqualsAdvancedFilter) ConvertToARM(resolved genruntime.Convert
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *BoolEqualsAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BoolEqualsAdvancedFilter_ARM{}
+	return &arm.BoolEqualsAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *BoolEqualsAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(BoolEqualsAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.BoolEqualsAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BoolEqualsAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.BoolEqualsAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -6359,7 +6702,11 @@ func (filter *BoolEqualsAdvancedFilter) PopulateFromARM(owner genruntime.Arbitra
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp BoolEqualsAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = BoolEqualsAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Value":
 	if typedInput.Value != nil {
@@ -6372,15 +6719,16 @@ func (filter *BoolEqualsAdvancedFilter) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_BoolEqualsAdvancedFilter populates our BoolEqualsAdvancedFilter from the provided source BoolEqualsAdvancedFilter
-func (filter *BoolEqualsAdvancedFilter) AssignProperties_From_BoolEqualsAdvancedFilter(source *v20200601s.BoolEqualsAdvancedFilter) error {
+func (filter *BoolEqualsAdvancedFilter) AssignProperties_From_BoolEqualsAdvancedFilter(source *storage.BoolEqualsAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := BoolEqualsAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, boolEqualsAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -6398,7 +6746,7 @@ func (filter *BoolEqualsAdvancedFilter) AssignProperties_From_BoolEqualsAdvanced
 }
 
 // AssignProperties_To_BoolEqualsAdvancedFilter populates the provided destination BoolEqualsAdvancedFilter from our BoolEqualsAdvancedFilter
-func (filter *BoolEqualsAdvancedFilter) AssignProperties_To_BoolEqualsAdvancedFilter(destination *v20200601s.BoolEqualsAdvancedFilter) error {
+func (filter *BoolEqualsAdvancedFilter) AssignProperties_To_BoolEqualsAdvancedFilter(destination *storage.BoolEqualsAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6440,7 +6788,7 @@ func (filter *BoolEqualsAdvancedFilter) Initialize_From_BoolEqualsAdvancedFilter
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := BoolEqualsAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), boolEqualsAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -6473,14 +6821,14 @@ var _ genruntime.FromARMConverter = &BoolEqualsAdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *BoolEqualsAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BoolEqualsAdvancedFilter_STATUS_ARM{}
+	return &arm.BoolEqualsAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *BoolEqualsAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(BoolEqualsAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.BoolEqualsAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BoolEqualsAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.BoolEqualsAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -6490,7 +6838,11 @@ func (filter *BoolEqualsAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp BoolEqualsAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = BoolEqualsAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Value":
 	if typedInput.Value != nil {
@@ -6503,15 +6855,16 @@ func (filter *BoolEqualsAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.
 }
 
 // AssignProperties_From_BoolEqualsAdvancedFilter_STATUS populates our BoolEqualsAdvancedFilter_STATUS from the provided source BoolEqualsAdvancedFilter_STATUS
-func (filter *BoolEqualsAdvancedFilter_STATUS) AssignProperties_From_BoolEqualsAdvancedFilter_STATUS(source *v20200601s.BoolEqualsAdvancedFilter_STATUS) error {
+func (filter *BoolEqualsAdvancedFilter_STATUS) AssignProperties_From_BoolEqualsAdvancedFilter_STATUS(source *storage.BoolEqualsAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := BoolEqualsAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, boolEqualsAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -6529,7 +6882,7 @@ func (filter *BoolEqualsAdvancedFilter_STATUS) AssignProperties_From_BoolEqualsA
 }
 
 // AssignProperties_To_BoolEqualsAdvancedFilter_STATUS populates the provided destination BoolEqualsAdvancedFilter_STATUS from our BoolEqualsAdvancedFilter_STATUS
-func (filter *BoolEqualsAdvancedFilter_STATUS) AssignProperties_To_BoolEqualsAdvancedFilter_STATUS(destination *v20200601s.BoolEqualsAdvancedFilter_STATUS) error {
+func (filter *BoolEqualsAdvancedFilter_STATUS) AssignProperties_To_BoolEqualsAdvancedFilter_STATUS(destination *storage.BoolEqualsAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6568,18 +6921,38 @@ type EventHubEventSubscriptionDestination_EndpointType string
 
 const EventHubEventSubscriptionDestination_EndpointType_EventHub = EventHubEventSubscriptionDestination_EndpointType("EventHub")
 
+// Mapping from string to EventHubEventSubscriptionDestination_EndpointType
+var eventHubEventSubscriptionDestination_EndpointType_Values = map[string]EventHubEventSubscriptionDestination_EndpointType{
+	"eventhub": EventHubEventSubscriptionDestination_EndpointType_EventHub,
+}
+
 type EventHubEventSubscriptionDestination_EndpointType_STATUS string
 
 const EventHubEventSubscriptionDestination_EndpointType_STATUS_EventHub = EventHubEventSubscriptionDestination_EndpointType_STATUS("EventHub")
+
+// Mapping from string to EventHubEventSubscriptionDestination_EndpointType_STATUS
+var eventHubEventSubscriptionDestination_EndpointType_STATUS_Values = map[string]EventHubEventSubscriptionDestination_EndpointType_STATUS{
+	"eventhub": EventHubEventSubscriptionDestination_EndpointType_STATUS_EventHub,
+}
 
 // +kubebuilder:validation:Enum={"HybridConnection"}
 type HybridConnectionEventSubscriptionDestination_EndpointType string
 
 const HybridConnectionEventSubscriptionDestination_EndpointType_HybridConnection = HybridConnectionEventSubscriptionDestination_EndpointType("HybridConnection")
 
+// Mapping from string to HybridConnectionEventSubscriptionDestination_EndpointType
+var hybridConnectionEventSubscriptionDestination_EndpointType_Values = map[string]HybridConnectionEventSubscriptionDestination_EndpointType{
+	"hybridconnection": HybridConnectionEventSubscriptionDestination_EndpointType_HybridConnection,
+}
+
 type HybridConnectionEventSubscriptionDestination_EndpointType_STATUS string
 
 const HybridConnectionEventSubscriptionDestination_EndpointType_STATUS_HybridConnection = HybridConnectionEventSubscriptionDestination_EndpointType_STATUS("HybridConnection")
+
+// Mapping from string to HybridConnectionEventSubscriptionDestination_EndpointType_STATUS
+var hybridConnectionEventSubscriptionDestination_EndpointType_STATUS_Values = map[string]HybridConnectionEventSubscriptionDestination_EndpointType_STATUS{
+	"hybridconnection": HybridConnectionEventSubscriptionDestination_EndpointType_STATUS_HybridConnection,
+}
 
 type NumberGreaterThanAdvancedFilter struct {
 	// Key: The field/property in the event based on which you want to filter.
@@ -6600,7 +6973,7 @@ func (filter *NumberGreaterThanAdvancedFilter) ConvertToARM(resolved genruntime.
 	if filter == nil {
 		return nil, nil
 	}
-	result := &NumberGreaterThanAdvancedFilter_ARM{}
+	result := &arm.NumberGreaterThanAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -6610,7 +6983,11 @@ func (filter *NumberGreaterThanAdvancedFilter) ConvertToARM(resolved genruntime.
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.NumberGreaterThanAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.NumberGreaterThanAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Value":
@@ -6623,14 +7000,14 @@ func (filter *NumberGreaterThanAdvancedFilter) ConvertToARM(resolved genruntime.
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberGreaterThanAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberGreaterThanAdvancedFilter_ARM{}
+	return &arm.NumberGreaterThanAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberGreaterThanAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberGreaterThanAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.NumberGreaterThanAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberGreaterThanAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberGreaterThanAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -6640,7 +7017,11 @@ func (filter *NumberGreaterThanAdvancedFilter) PopulateFromARM(owner genruntime.
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberGreaterThanAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberGreaterThanAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Value":
 	if typedInput.Value != nil {
@@ -6653,15 +7034,16 @@ func (filter *NumberGreaterThanAdvancedFilter) PopulateFromARM(owner genruntime.
 }
 
 // AssignProperties_From_NumberGreaterThanAdvancedFilter populates our NumberGreaterThanAdvancedFilter from the provided source NumberGreaterThanAdvancedFilter
-func (filter *NumberGreaterThanAdvancedFilter) AssignProperties_From_NumberGreaterThanAdvancedFilter(source *v20200601s.NumberGreaterThanAdvancedFilter) error {
+func (filter *NumberGreaterThanAdvancedFilter) AssignProperties_From_NumberGreaterThanAdvancedFilter(source *storage.NumberGreaterThanAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberGreaterThanAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberGreaterThanAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -6679,7 +7061,7 @@ func (filter *NumberGreaterThanAdvancedFilter) AssignProperties_From_NumberGreat
 }
 
 // AssignProperties_To_NumberGreaterThanAdvancedFilter populates the provided destination NumberGreaterThanAdvancedFilter from our NumberGreaterThanAdvancedFilter
-func (filter *NumberGreaterThanAdvancedFilter) AssignProperties_To_NumberGreaterThanAdvancedFilter(destination *v20200601s.NumberGreaterThanAdvancedFilter) error {
+func (filter *NumberGreaterThanAdvancedFilter) AssignProperties_To_NumberGreaterThanAdvancedFilter(destination *storage.NumberGreaterThanAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6721,7 +7103,7 @@ func (filter *NumberGreaterThanAdvancedFilter) Initialize_From_NumberGreaterThan
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberGreaterThanAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberGreaterThanAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -6754,14 +7136,14 @@ var _ genruntime.FromARMConverter = &NumberGreaterThanAdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberGreaterThanAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberGreaterThanAdvancedFilter_STATUS_ARM{}
+	return &arm.NumberGreaterThanAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberGreaterThanAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberGreaterThanAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.NumberGreaterThanAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberGreaterThanAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberGreaterThanAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -6771,7 +7153,11 @@ func (filter *NumberGreaterThanAdvancedFilter_STATUS) PopulateFromARM(owner genr
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberGreaterThanAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberGreaterThanAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Value":
 	if typedInput.Value != nil {
@@ -6784,15 +7170,16 @@ func (filter *NumberGreaterThanAdvancedFilter_STATUS) PopulateFromARM(owner genr
 }
 
 // AssignProperties_From_NumberGreaterThanAdvancedFilter_STATUS populates our NumberGreaterThanAdvancedFilter_STATUS from the provided source NumberGreaterThanAdvancedFilter_STATUS
-func (filter *NumberGreaterThanAdvancedFilter_STATUS) AssignProperties_From_NumberGreaterThanAdvancedFilter_STATUS(source *v20200601s.NumberGreaterThanAdvancedFilter_STATUS) error {
+func (filter *NumberGreaterThanAdvancedFilter_STATUS) AssignProperties_From_NumberGreaterThanAdvancedFilter_STATUS(source *storage.NumberGreaterThanAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberGreaterThanAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberGreaterThanAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -6810,7 +7197,7 @@ func (filter *NumberGreaterThanAdvancedFilter_STATUS) AssignProperties_From_Numb
 }
 
 // AssignProperties_To_NumberGreaterThanAdvancedFilter_STATUS populates the provided destination NumberGreaterThanAdvancedFilter_STATUS from our NumberGreaterThanAdvancedFilter_STATUS
-func (filter *NumberGreaterThanAdvancedFilter_STATUS) AssignProperties_To_NumberGreaterThanAdvancedFilter_STATUS(destination *v20200601s.NumberGreaterThanAdvancedFilter_STATUS) error {
+func (filter *NumberGreaterThanAdvancedFilter_STATUS) AssignProperties_To_NumberGreaterThanAdvancedFilter_STATUS(destination *storage.NumberGreaterThanAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6863,7 +7250,7 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter) ConvertToARM(resolved gen
 	if filter == nil {
 		return nil, nil
 	}
-	result := &NumberGreaterThanOrEqualsAdvancedFilter_ARM{}
+	result := &arm.NumberGreaterThanOrEqualsAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -6873,7 +7260,11 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter) ConvertToARM(resolved gen
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.NumberGreaterThanOrEqualsAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.NumberGreaterThanOrEqualsAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Value":
@@ -6886,14 +7277,14 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter) ConvertToARM(resolved gen
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberGreaterThanOrEqualsAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberGreaterThanOrEqualsAdvancedFilter_ARM{}
+	return &arm.NumberGreaterThanOrEqualsAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberGreaterThanOrEqualsAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberGreaterThanOrEqualsAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.NumberGreaterThanOrEqualsAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberGreaterThanOrEqualsAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberGreaterThanOrEqualsAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -6903,7 +7294,11 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter) PopulateFromARM(owner gen
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberGreaterThanOrEqualsAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberGreaterThanOrEqualsAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Value":
 	if typedInput.Value != nil {
@@ -6916,15 +7311,16 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter) PopulateFromARM(owner gen
 }
 
 // AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter populates our NumberGreaterThanOrEqualsAdvancedFilter from the provided source NumberGreaterThanOrEqualsAdvancedFilter
-func (filter *NumberGreaterThanOrEqualsAdvancedFilter) AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter(source *v20200601s.NumberGreaterThanOrEqualsAdvancedFilter) error {
+func (filter *NumberGreaterThanOrEqualsAdvancedFilter) AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter(source *storage.NumberGreaterThanOrEqualsAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberGreaterThanOrEqualsAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberGreaterThanOrEqualsAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -6942,7 +7338,7 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter) AssignProperties_From_Num
 }
 
 // AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter populates the provided destination NumberGreaterThanOrEqualsAdvancedFilter from our NumberGreaterThanOrEqualsAdvancedFilter
-func (filter *NumberGreaterThanOrEqualsAdvancedFilter) AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter(destination *v20200601s.NumberGreaterThanOrEqualsAdvancedFilter) error {
+func (filter *NumberGreaterThanOrEqualsAdvancedFilter) AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter(destination *storage.NumberGreaterThanOrEqualsAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6984,7 +7380,7 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter) Initialize_From_NumberGre
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberGreaterThanOrEqualsAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberGreaterThanOrEqualsAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -7017,14 +7413,14 @@ var _ genruntime.FromARMConverter = &NumberGreaterThanOrEqualsAdvancedFilter_STA
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberGreaterThanOrEqualsAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberGreaterThanOrEqualsAdvancedFilter_STATUS_ARM{}
+	return &arm.NumberGreaterThanOrEqualsAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberGreaterThanOrEqualsAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberGreaterThanOrEqualsAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.NumberGreaterThanOrEqualsAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberGreaterThanOrEqualsAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberGreaterThanOrEqualsAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -7034,7 +7430,11 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter_STATUS) PopulateFromARM(ow
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Value":
 	if typedInput.Value != nil {
@@ -7047,15 +7447,16 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter_STATUS) PopulateFromARM(ow
 }
 
 // AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS populates our NumberGreaterThanOrEqualsAdvancedFilter_STATUS from the provided source NumberGreaterThanOrEqualsAdvancedFilter_STATUS
-func (filter *NumberGreaterThanOrEqualsAdvancedFilter_STATUS) AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS(source *v20200601s.NumberGreaterThanOrEqualsAdvancedFilter_STATUS) error {
+func (filter *NumberGreaterThanOrEqualsAdvancedFilter_STATUS) AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS(source *storage.NumberGreaterThanOrEqualsAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -7073,7 +7474,7 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter_STATUS) AssignProperties_F
 }
 
 // AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter_STATUS populates the provided destination NumberGreaterThanOrEqualsAdvancedFilter_STATUS from our NumberGreaterThanOrEqualsAdvancedFilter_STATUS
-func (filter *NumberGreaterThanOrEqualsAdvancedFilter_STATUS) AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter_STATUS(destination *v20200601s.NumberGreaterThanOrEqualsAdvancedFilter_STATUS) error {
+func (filter *NumberGreaterThanOrEqualsAdvancedFilter_STATUS) AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter_STATUS(destination *storage.NumberGreaterThanOrEqualsAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -7126,7 +7527,7 @@ func (filter *NumberInAdvancedFilter) ConvertToARM(resolved genruntime.ConvertTo
 	if filter == nil {
 		return nil, nil
 	}
-	result := &NumberInAdvancedFilter_ARM{}
+	result := &arm.NumberInAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -7136,7 +7537,11 @@ func (filter *NumberInAdvancedFilter) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.NumberInAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.NumberInAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Values":
@@ -7148,14 +7553,14 @@ func (filter *NumberInAdvancedFilter) ConvertToARM(resolved genruntime.ConvertTo
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberInAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberInAdvancedFilter_ARM{}
+	return &arm.NumberInAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberInAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberInAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.NumberInAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberInAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberInAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -7165,7 +7570,11 @@ func (filter *NumberInAdvancedFilter) PopulateFromARM(owner genruntime.Arbitrary
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberInAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberInAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -7177,15 +7586,16 @@ func (filter *NumberInAdvancedFilter) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_NumberInAdvancedFilter populates our NumberInAdvancedFilter from the provided source NumberInAdvancedFilter
-func (filter *NumberInAdvancedFilter) AssignProperties_From_NumberInAdvancedFilter(source *v20200601s.NumberInAdvancedFilter) error {
+func (filter *NumberInAdvancedFilter) AssignProperties_From_NumberInAdvancedFilter(source *storage.NumberInAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberInAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberInAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -7208,7 +7618,7 @@ func (filter *NumberInAdvancedFilter) AssignProperties_From_NumberInAdvancedFilt
 }
 
 // AssignProperties_To_NumberInAdvancedFilter populates the provided destination NumberInAdvancedFilter from our NumberInAdvancedFilter
-func (filter *NumberInAdvancedFilter) AssignProperties_To_NumberInAdvancedFilter(destination *v20200601s.NumberInAdvancedFilter) error {
+func (filter *NumberInAdvancedFilter) AssignProperties_To_NumberInAdvancedFilter(destination *storage.NumberInAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -7255,7 +7665,7 @@ func (filter *NumberInAdvancedFilter) Initialize_From_NumberInAdvancedFilter_STA
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberInAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberInAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -7293,14 +7703,14 @@ var _ genruntime.FromARMConverter = &NumberInAdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberInAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberInAdvancedFilter_STATUS_ARM{}
+	return &arm.NumberInAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberInAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.NumberInAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberInAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberInAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -7310,7 +7720,11 @@ func (filter *NumberInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.Ar
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberInAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberInAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -7322,15 +7736,16 @@ func (filter *NumberInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_NumberInAdvancedFilter_STATUS populates our NumberInAdvancedFilter_STATUS from the provided source NumberInAdvancedFilter_STATUS
-func (filter *NumberInAdvancedFilter_STATUS) AssignProperties_From_NumberInAdvancedFilter_STATUS(source *v20200601s.NumberInAdvancedFilter_STATUS) error {
+func (filter *NumberInAdvancedFilter_STATUS) AssignProperties_From_NumberInAdvancedFilter_STATUS(source *storage.NumberInAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberInAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberInAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -7353,7 +7768,7 @@ func (filter *NumberInAdvancedFilter_STATUS) AssignProperties_From_NumberInAdvan
 }
 
 // AssignProperties_To_NumberInAdvancedFilter_STATUS populates the provided destination NumberInAdvancedFilter_STATUS from our NumberInAdvancedFilter_STATUS
-func (filter *NumberInAdvancedFilter_STATUS) AssignProperties_To_NumberInAdvancedFilter_STATUS(destination *v20200601s.NumberInAdvancedFilter_STATUS) error {
+func (filter *NumberInAdvancedFilter_STATUS) AssignProperties_To_NumberInAdvancedFilter_STATUS(destination *storage.NumberInAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -7411,7 +7826,7 @@ func (filter *NumberLessThanAdvancedFilter) ConvertToARM(resolved genruntime.Con
 	if filter == nil {
 		return nil, nil
 	}
-	result := &NumberLessThanAdvancedFilter_ARM{}
+	result := &arm.NumberLessThanAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -7421,7 +7836,11 @@ func (filter *NumberLessThanAdvancedFilter) ConvertToARM(resolved genruntime.Con
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.NumberLessThanAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.NumberLessThanAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Value":
@@ -7434,14 +7853,14 @@ func (filter *NumberLessThanAdvancedFilter) ConvertToARM(resolved genruntime.Con
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberLessThanAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberLessThanAdvancedFilter_ARM{}
+	return &arm.NumberLessThanAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberLessThanAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberLessThanAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.NumberLessThanAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberLessThanAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberLessThanAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -7451,7 +7870,11 @@ func (filter *NumberLessThanAdvancedFilter) PopulateFromARM(owner genruntime.Arb
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberLessThanAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberLessThanAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Value":
 	if typedInput.Value != nil {
@@ -7464,15 +7887,16 @@ func (filter *NumberLessThanAdvancedFilter) PopulateFromARM(owner genruntime.Arb
 }
 
 // AssignProperties_From_NumberLessThanAdvancedFilter populates our NumberLessThanAdvancedFilter from the provided source NumberLessThanAdvancedFilter
-func (filter *NumberLessThanAdvancedFilter) AssignProperties_From_NumberLessThanAdvancedFilter(source *v20200601s.NumberLessThanAdvancedFilter) error {
+func (filter *NumberLessThanAdvancedFilter) AssignProperties_From_NumberLessThanAdvancedFilter(source *storage.NumberLessThanAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberLessThanAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberLessThanAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -7490,7 +7914,7 @@ func (filter *NumberLessThanAdvancedFilter) AssignProperties_From_NumberLessThan
 }
 
 // AssignProperties_To_NumberLessThanAdvancedFilter populates the provided destination NumberLessThanAdvancedFilter from our NumberLessThanAdvancedFilter
-func (filter *NumberLessThanAdvancedFilter) AssignProperties_To_NumberLessThanAdvancedFilter(destination *v20200601s.NumberLessThanAdvancedFilter) error {
+func (filter *NumberLessThanAdvancedFilter) AssignProperties_To_NumberLessThanAdvancedFilter(destination *storage.NumberLessThanAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -7532,7 +7956,7 @@ func (filter *NumberLessThanAdvancedFilter) Initialize_From_NumberLessThanAdvanc
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberLessThanAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberLessThanAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -7565,14 +7989,14 @@ var _ genruntime.FromARMConverter = &NumberLessThanAdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberLessThanAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberLessThanAdvancedFilter_STATUS_ARM{}
+	return &arm.NumberLessThanAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberLessThanAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberLessThanAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.NumberLessThanAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberLessThanAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberLessThanAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -7582,7 +8006,11 @@ func (filter *NumberLessThanAdvancedFilter_STATUS) PopulateFromARM(owner genrunt
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberLessThanAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberLessThanAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Value":
 	if typedInput.Value != nil {
@@ -7595,15 +8023,16 @@ func (filter *NumberLessThanAdvancedFilter_STATUS) PopulateFromARM(owner genrunt
 }
 
 // AssignProperties_From_NumberLessThanAdvancedFilter_STATUS populates our NumberLessThanAdvancedFilter_STATUS from the provided source NumberLessThanAdvancedFilter_STATUS
-func (filter *NumberLessThanAdvancedFilter_STATUS) AssignProperties_From_NumberLessThanAdvancedFilter_STATUS(source *v20200601s.NumberLessThanAdvancedFilter_STATUS) error {
+func (filter *NumberLessThanAdvancedFilter_STATUS) AssignProperties_From_NumberLessThanAdvancedFilter_STATUS(source *storage.NumberLessThanAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberLessThanAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberLessThanAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -7621,7 +8050,7 @@ func (filter *NumberLessThanAdvancedFilter_STATUS) AssignProperties_From_NumberL
 }
 
 // AssignProperties_To_NumberLessThanAdvancedFilter_STATUS populates the provided destination NumberLessThanAdvancedFilter_STATUS from our NumberLessThanAdvancedFilter_STATUS
-func (filter *NumberLessThanAdvancedFilter_STATUS) AssignProperties_To_NumberLessThanAdvancedFilter_STATUS(destination *v20200601s.NumberLessThanAdvancedFilter_STATUS) error {
+func (filter *NumberLessThanAdvancedFilter_STATUS) AssignProperties_To_NumberLessThanAdvancedFilter_STATUS(destination *storage.NumberLessThanAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -7674,7 +8103,7 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter) ConvertToARM(resolved genrun
 	if filter == nil {
 		return nil, nil
 	}
-	result := &NumberLessThanOrEqualsAdvancedFilter_ARM{}
+	result := &arm.NumberLessThanOrEqualsAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -7684,7 +8113,11 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter) ConvertToARM(resolved genrun
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.NumberLessThanOrEqualsAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.NumberLessThanOrEqualsAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Value":
@@ -7697,14 +8130,14 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter) ConvertToARM(resolved genrun
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberLessThanOrEqualsAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberLessThanOrEqualsAdvancedFilter_ARM{}
+	return &arm.NumberLessThanOrEqualsAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberLessThanOrEqualsAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberLessThanOrEqualsAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.NumberLessThanOrEqualsAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberLessThanOrEqualsAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberLessThanOrEqualsAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -7714,7 +8147,11 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter) PopulateFromARM(owner genrun
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberLessThanOrEqualsAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberLessThanOrEqualsAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Value":
 	if typedInput.Value != nil {
@@ -7727,15 +8164,16 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter) PopulateFromARM(owner genrun
 }
 
 // AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter populates our NumberLessThanOrEqualsAdvancedFilter from the provided source NumberLessThanOrEqualsAdvancedFilter
-func (filter *NumberLessThanOrEqualsAdvancedFilter) AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter(source *v20200601s.NumberLessThanOrEqualsAdvancedFilter) error {
+func (filter *NumberLessThanOrEqualsAdvancedFilter) AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter(source *storage.NumberLessThanOrEqualsAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberLessThanOrEqualsAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberLessThanOrEqualsAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -7753,7 +8191,7 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter) AssignProperties_From_Number
 }
 
 // AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter populates the provided destination NumberLessThanOrEqualsAdvancedFilter from our NumberLessThanOrEqualsAdvancedFilter
-func (filter *NumberLessThanOrEqualsAdvancedFilter) AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter(destination *v20200601s.NumberLessThanOrEqualsAdvancedFilter) error {
+func (filter *NumberLessThanOrEqualsAdvancedFilter) AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter(destination *storage.NumberLessThanOrEqualsAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -7795,7 +8233,7 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter) Initialize_From_NumberLessTh
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberLessThanOrEqualsAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberLessThanOrEqualsAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -7828,14 +8266,14 @@ var _ genruntime.FromARMConverter = &NumberLessThanOrEqualsAdvancedFilter_STATUS
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberLessThanOrEqualsAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberLessThanOrEqualsAdvancedFilter_STATUS_ARM{}
+	return &arm.NumberLessThanOrEqualsAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberLessThanOrEqualsAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberLessThanOrEqualsAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.NumberLessThanOrEqualsAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberLessThanOrEqualsAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberLessThanOrEqualsAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -7845,7 +8283,11 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter_STATUS) PopulateFromARM(owner
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Value":
 	if typedInput.Value != nil {
@@ -7858,15 +8300,16 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter_STATUS) PopulateFromARM(owner
 }
 
 // AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter_STATUS populates our NumberLessThanOrEqualsAdvancedFilter_STATUS from the provided source NumberLessThanOrEqualsAdvancedFilter_STATUS
-func (filter *NumberLessThanOrEqualsAdvancedFilter_STATUS) AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter_STATUS(source *v20200601s.NumberLessThanOrEqualsAdvancedFilter_STATUS) error {
+func (filter *NumberLessThanOrEqualsAdvancedFilter_STATUS) AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter_STATUS(source *storage.NumberLessThanOrEqualsAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -7884,7 +8327,7 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter_STATUS) AssignProperties_From
 }
 
 // AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter_STATUS populates the provided destination NumberLessThanOrEqualsAdvancedFilter_STATUS from our NumberLessThanOrEqualsAdvancedFilter_STATUS
-func (filter *NumberLessThanOrEqualsAdvancedFilter_STATUS) AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter_STATUS(destination *v20200601s.NumberLessThanOrEqualsAdvancedFilter_STATUS) error {
+func (filter *NumberLessThanOrEqualsAdvancedFilter_STATUS) AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter_STATUS(destination *storage.NumberLessThanOrEqualsAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -7937,7 +8380,7 @@ func (filter *NumberNotInAdvancedFilter) ConvertToARM(resolved genruntime.Conver
 	if filter == nil {
 		return nil, nil
 	}
-	result := &NumberNotInAdvancedFilter_ARM{}
+	result := &arm.NumberNotInAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -7947,7 +8390,11 @@ func (filter *NumberNotInAdvancedFilter) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.NumberNotInAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.NumberNotInAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Values":
@@ -7959,14 +8406,14 @@ func (filter *NumberNotInAdvancedFilter) ConvertToARM(resolved genruntime.Conver
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberNotInAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberNotInAdvancedFilter_ARM{}
+	return &arm.NumberNotInAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberNotInAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberNotInAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.NumberNotInAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberNotInAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberNotInAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -7976,7 +8423,11 @@ func (filter *NumberNotInAdvancedFilter) PopulateFromARM(owner genruntime.Arbitr
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberNotInAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberNotInAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -7988,15 +8439,16 @@ func (filter *NumberNotInAdvancedFilter) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_NumberNotInAdvancedFilter populates our NumberNotInAdvancedFilter from the provided source NumberNotInAdvancedFilter
-func (filter *NumberNotInAdvancedFilter) AssignProperties_From_NumberNotInAdvancedFilter(source *v20200601s.NumberNotInAdvancedFilter) error {
+func (filter *NumberNotInAdvancedFilter) AssignProperties_From_NumberNotInAdvancedFilter(source *storage.NumberNotInAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberNotInAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberNotInAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -8019,7 +8471,7 @@ func (filter *NumberNotInAdvancedFilter) AssignProperties_From_NumberNotInAdvanc
 }
 
 // AssignProperties_To_NumberNotInAdvancedFilter populates the provided destination NumberNotInAdvancedFilter from our NumberNotInAdvancedFilter
-func (filter *NumberNotInAdvancedFilter) AssignProperties_To_NumberNotInAdvancedFilter(destination *v20200601s.NumberNotInAdvancedFilter) error {
+func (filter *NumberNotInAdvancedFilter) AssignProperties_To_NumberNotInAdvancedFilter(destination *storage.NumberNotInAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -8066,7 +8518,7 @@ func (filter *NumberNotInAdvancedFilter) Initialize_From_NumberNotInAdvancedFilt
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberNotInAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberNotInAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -8104,14 +8556,14 @@ var _ genruntime.FromARMConverter = &NumberNotInAdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *NumberNotInAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NumberNotInAdvancedFilter_STATUS_ARM{}
+	return &arm.NumberNotInAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *NumberNotInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NumberNotInAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.NumberNotInAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NumberNotInAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NumberNotInAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -8121,7 +8573,11 @@ func (filter *NumberNotInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp NumberNotInAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = NumberNotInAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -8133,15 +8589,16 @@ func (filter *NumberNotInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_NumberNotInAdvancedFilter_STATUS populates our NumberNotInAdvancedFilter_STATUS from the provided source NumberNotInAdvancedFilter_STATUS
-func (filter *NumberNotInAdvancedFilter_STATUS) AssignProperties_From_NumberNotInAdvancedFilter_STATUS(source *v20200601s.NumberNotInAdvancedFilter_STATUS) error {
+func (filter *NumberNotInAdvancedFilter_STATUS) AssignProperties_From_NumberNotInAdvancedFilter_STATUS(source *storage.NumberNotInAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := NumberNotInAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, numberNotInAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -8164,7 +8621,7 @@ func (filter *NumberNotInAdvancedFilter_STATUS) AssignProperties_From_NumberNotI
 }
 
 // AssignProperties_To_NumberNotInAdvancedFilter_STATUS populates the provided destination NumberNotInAdvancedFilter_STATUS from our NumberNotInAdvancedFilter_STATUS
-func (filter *NumberNotInAdvancedFilter_STATUS) AssignProperties_To_NumberNotInAdvancedFilter_STATUS(destination *v20200601s.NumberNotInAdvancedFilter_STATUS) error {
+func (filter *NumberNotInAdvancedFilter_STATUS) AssignProperties_To_NumberNotInAdvancedFilter_STATUS(destination *storage.NumberNotInAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -8208,36 +8665,76 @@ type ServiceBusQueueEventSubscriptionDestination_EndpointType string
 
 const ServiceBusQueueEventSubscriptionDestination_EndpointType_ServiceBusQueue = ServiceBusQueueEventSubscriptionDestination_EndpointType("ServiceBusQueue")
 
+// Mapping from string to ServiceBusQueueEventSubscriptionDestination_EndpointType
+var serviceBusQueueEventSubscriptionDestination_EndpointType_Values = map[string]ServiceBusQueueEventSubscriptionDestination_EndpointType{
+	"servicebusqueue": ServiceBusQueueEventSubscriptionDestination_EndpointType_ServiceBusQueue,
+}
+
 type ServiceBusQueueEventSubscriptionDestination_EndpointType_STATUS string
 
 const ServiceBusQueueEventSubscriptionDestination_EndpointType_STATUS_ServiceBusQueue = ServiceBusQueueEventSubscriptionDestination_EndpointType_STATUS("ServiceBusQueue")
+
+// Mapping from string to ServiceBusQueueEventSubscriptionDestination_EndpointType_STATUS
+var serviceBusQueueEventSubscriptionDestination_EndpointType_STATUS_Values = map[string]ServiceBusQueueEventSubscriptionDestination_EndpointType_STATUS{
+	"servicebusqueue": ServiceBusQueueEventSubscriptionDestination_EndpointType_STATUS_ServiceBusQueue,
+}
 
 // +kubebuilder:validation:Enum={"ServiceBusTopic"}
 type ServiceBusTopicEventSubscriptionDestination_EndpointType string
 
 const ServiceBusTopicEventSubscriptionDestination_EndpointType_ServiceBusTopic = ServiceBusTopicEventSubscriptionDestination_EndpointType("ServiceBusTopic")
 
+// Mapping from string to ServiceBusTopicEventSubscriptionDestination_EndpointType
+var serviceBusTopicEventSubscriptionDestination_EndpointType_Values = map[string]ServiceBusTopicEventSubscriptionDestination_EndpointType{
+	"servicebustopic": ServiceBusTopicEventSubscriptionDestination_EndpointType_ServiceBusTopic,
+}
+
 type ServiceBusTopicEventSubscriptionDestination_EndpointType_STATUS string
 
 const ServiceBusTopicEventSubscriptionDestination_EndpointType_STATUS_ServiceBusTopic = ServiceBusTopicEventSubscriptionDestination_EndpointType_STATUS("ServiceBusTopic")
+
+// Mapping from string to ServiceBusTopicEventSubscriptionDestination_EndpointType_STATUS
+var serviceBusTopicEventSubscriptionDestination_EndpointType_STATUS_Values = map[string]ServiceBusTopicEventSubscriptionDestination_EndpointType_STATUS{
+	"servicebustopic": ServiceBusTopicEventSubscriptionDestination_EndpointType_STATUS_ServiceBusTopic,
+}
 
 // +kubebuilder:validation:Enum={"StorageBlob"}
 type StorageBlobDeadLetterDestination_EndpointType string
 
 const StorageBlobDeadLetterDestination_EndpointType_StorageBlob = StorageBlobDeadLetterDestination_EndpointType("StorageBlob")
 
+// Mapping from string to StorageBlobDeadLetterDestination_EndpointType
+var storageBlobDeadLetterDestination_EndpointType_Values = map[string]StorageBlobDeadLetterDestination_EndpointType{
+	"storageblob": StorageBlobDeadLetterDestination_EndpointType_StorageBlob,
+}
+
 type StorageBlobDeadLetterDestination_EndpointType_STATUS string
 
 const StorageBlobDeadLetterDestination_EndpointType_STATUS_StorageBlob = StorageBlobDeadLetterDestination_EndpointType_STATUS("StorageBlob")
+
+// Mapping from string to StorageBlobDeadLetterDestination_EndpointType_STATUS
+var storageBlobDeadLetterDestination_EndpointType_STATUS_Values = map[string]StorageBlobDeadLetterDestination_EndpointType_STATUS{
+	"storageblob": StorageBlobDeadLetterDestination_EndpointType_STATUS_StorageBlob,
+}
 
 // +kubebuilder:validation:Enum={"StorageQueue"}
 type StorageQueueEventSubscriptionDestination_EndpointType string
 
 const StorageQueueEventSubscriptionDestination_EndpointType_StorageQueue = StorageQueueEventSubscriptionDestination_EndpointType("StorageQueue")
 
+// Mapping from string to StorageQueueEventSubscriptionDestination_EndpointType
+var storageQueueEventSubscriptionDestination_EndpointType_Values = map[string]StorageQueueEventSubscriptionDestination_EndpointType{
+	"storagequeue": StorageQueueEventSubscriptionDestination_EndpointType_StorageQueue,
+}
+
 type StorageQueueEventSubscriptionDestination_EndpointType_STATUS string
 
 const StorageQueueEventSubscriptionDestination_EndpointType_STATUS_StorageQueue = StorageQueueEventSubscriptionDestination_EndpointType_STATUS("StorageQueue")
+
+// Mapping from string to StorageQueueEventSubscriptionDestination_EndpointType_STATUS
+var storageQueueEventSubscriptionDestination_EndpointType_STATUS_Values = map[string]StorageQueueEventSubscriptionDestination_EndpointType_STATUS{
+	"storagequeue": StorageQueueEventSubscriptionDestination_EndpointType_STATUS_StorageQueue,
+}
 
 type StringBeginsWithAdvancedFilter struct {
 	// Key: The field/property in the event based on which you want to filter.
@@ -8258,7 +8755,7 @@ func (filter *StringBeginsWithAdvancedFilter) ConvertToARM(resolved genruntime.C
 	if filter == nil {
 		return nil, nil
 	}
-	result := &StringBeginsWithAdvancedFilter_ARM{}
+	result := &arm.StringBeginsWithAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -8268,7 +8765,11 @@ func (filter *StringBeginsWithAdvancedFilter) ConvertToARM(resolved genruntime.C
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.StringBeginsWithAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.StringBeginsWithAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Values":
@@ -8280,14 +8781,14 @@ func (filter *StringBeginsWithAdvancedFilter) ConvertToARM(resolved genruntime.C
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *StringBeginsWithAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StringBeginsWithAdvancedFilter_ARM{}
+	return &arm.StringBeginsWithAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *StringBeginsWithAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StringBeginsWithAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.StringBeginsWithAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StringBeginsWithAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StringBeginsWithAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -8297,7 +8798,11 @@ func (filter *StringBeginsWithAdvancedFilter) PopulateFromARM(owner genruntime.A
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp StringBeginsWithAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = StringBeginsWithAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -8309,15 +8814,16 @@ func (filter *StringBeginsWithAdvancedFilter) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_StringBeginsWithAdvancedFilter populates our StringBeginsWithAdvancedFilter from the provided source StringBeginsWithAdvancedFilter
-func (filter *StringBeginsWithAdvancedFilter) AssignProperties_From_StringBeginsWithAdvancedFilter(source *v20200601s.StringBeginsWithAdvancedFilter) error {
+func (filter *StringBeginsWithAdvancedFilter) AssignProperties_From_StringBeginsWithAdvancedFilter(source *storage.StringBeginsWithAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringBeginsWithAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, stringBeginsWithAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -8330,7 +8836,7 @@ func (filter *StringBeginsWithAdvancedFilter) AssignProperties_From_StringBegins
 }
 
 // AssignProperties_To_StringBeginsWithAdvancedFilter populates the provided destination StringBeginsWithAdvancedFilter from our StringBeginsWithAdvancedFilter
-func (filter *StringBeginsWithAdvancedFilter) AssignProperties_To_StringBeginsWithAdvancedFilter(destination *v20200601s.StringBeginsWithAdvancedFilter) error {
+func (filter *StringBeginsWithAdvancedFilter) AssignProperties_To_StringBeginsWithAdvancedFilter(destination *storage.StringBeginsWithAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -8367,7 +8873,7 @@ func (filter *StringBeginsWithAdvancedFilter) Initialize_From_StringBeginsWithAd
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringBeginsWithAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), stringBeginsWithAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -8395,14 +8901,14 @@ var _ genruntime.FromARMConverter = &StringBeginsWithAdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *StringBeginsWithAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StringBeginsWithAdvancedFilter_STATUS_ARM{}
+	return &arm.StringBeginsWithAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *StringBeginsWithAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StringBeginsWithAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.StringBeginsWithAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StringBeginsWithAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StringBeginsWithAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -8412,7 +8918,11 @@ func (filter *StringBeginsWithAdvancedFilter_STATUS) PopulateFromARM(owner genru
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp StringBeginsWithAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = StringBeginsWithAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -8424,15 +8934,16 @@ func (filter *StringBeginsWithAdvancedFilter_STATUS) PopulateFromARM(owner genru
 }
 
 // AssignProperties_From_StringBeginsWithAdvancedFilter_STATUS populates our StringBeginsWithAdvancedFilter_STATUS from the provided source StringBeginsWithAdvancedFilter_STATUS
-func (filter *StringBeginsWithAdvancedFilter_STATUS) AssignProperties_From_StringBeginsWithAdvancedFilter_STATUS(source *v20200601s.StringBeginsWithAdvancedFilter_STATUS) error {
+func (filter *StringBeginsWithAdvancedFilter_STATUS) AssignProperties_From_StringBeginsWithAdvancedFilter_STATUS(source *storage.StringBeginsWithAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringBeginsWithAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, stringBeginsWithAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -8445,7 +8956,7 @@ func (filter *StringBeginsWithAdvancedFilter_STATUS) AssignProperties_From_Strin
 }
 
 // AssignProperties_To_StringBeginsWithAdvancedFilter_STATUS populates the provided destination StringBeginsWithAdvancedFilter_STATUS from our StringBeginsWithAdvancedFilter_STATUS
-func (filter *StringBeginsWithAdvancedFilter_STATUS) AssignProperties_To_StringBeginsWithAdvancedFilter_STATUS(destination *v20200601s.StringBeginsWithAdvancedFilter_STATUS) error {
+func (filter *StringBeginsWithAdvancedFilter_STATUS) AssignProperties_To_StringBeginsWithAdvancedFilter_STATUS(destination *storage.StringBeginsWithAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -8493,7 +9004,7 @@ func (filter *StringContainsAdvancedFilter) ConvertToARM(resolved genruntime.Con
 	if filter == nil {
 		return nil, nil
 	}
-	result := &StringContainsAdvancedFilter_ARM{}
+	result := &arm.StringContainsAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -8503,7 +9014,11 @@ func (filter *StringContainsAdvancedFilter) ConvertToARM(resolved genruntime.Con
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.StringContainsAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.StringContainsAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Values":
@@ -8515,14 +9030,14 @@ func (filter *StringContainsAdvancedFilter) ConvertToARM(resolved genruntime.Con
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *StringContainsAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StringContainsAdvancedFilter_ARM{}
+	return &arm.StringContainsAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *StringContainsAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StringContainsAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.StringContainsAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StringContainsAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StringContainsAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -8532,7 +9047,11 @@ func (filter *StringContainsAdvancedFilter) PopulateFromARM(owner genruntime.Arb
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp StringContainsAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = StringContainsAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -8544,15 +9063,16 @@ func (filter *StringContainsAdvancedFilter) PopulateFromARM(owner genruntime.Arb
 }
 
 // AssignProperties_From_StringContainsAdvancedFilter populates our StringContainsAdvancedFilter from the provided source StringContainsAdvancedFilter
-func (filter *StringContainsAdvancedFilter) AssignProperties_From_StringContainsAdvancedFilter(source *v20200601s.StringContainsAdvancedFilter) error {
+func (filter *StringContainsAdvancedFilter) AssignProperties_From_StringContainsAdvancedFilter(source *storage.StringContainsAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringContainsAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, stringContainsAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -8565,7 +9085,7 @@ func (filter *StringContainsAdvancedFilter) AssignProperties_From_StringContains
 }
 
 // AssignProperties_To_StringContainsAdvancedFilter populates the provided destination StringContainsAdvancedFilter from our StringContainsAdvancedFilter
-func (filter *StringContainsAdvancedFilter) AssignProperties_To_StringContainsAdvancedFilter(destination *v20200601s.StringContainsAdvancedFilter) error {
+func (filter *StringContainsAdvancedFilter) AssignProperties_To_StringContainsAdvancedFilter(destination *storage.StringContainsAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -8602,7 +9122,7 @@ func (filter *StringContainsAdvancedFilter) Initialize_From_StringContainsAdvanc
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringContainsAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), stringContainsAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -8630,14 +9150,14 @@ var _ genruntime.FromARMConverter = &StringContainsAdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *StringContainsAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StringContainsAdvancedFilter_STATUS_ARM{}
+	return &arm.StringContainsAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *StringContainsAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StringContainsAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.StringContainsAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StringContainsAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StringContainsAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -8647,7 +9167,11 @@ func (filter *StringContainsAdvancedFilter_STATUS) PopulateFromARM(owner genrunt
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp StringContainsAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = StringContainsAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -8659,15 +9183,16 @@ func (filter *StringContainsAdvancedFilter_STATUS) PopulateFromARM(owner genrunt
 }
 
 // AssignProperties_From_StringContainsAdvancedFilter_STATUS populates our StringContainsAdvancedFilter_STATUS from the provided source StringContainsAdvancedFilter_STATUS
-func (filter *StringContainsAdvancedFilter_STATUS) AssignProperties_From_StringContainsAdvancedFilter_STATUS(source *v20200601s.StringContainsAdvancedFilter_STATUS) error {
+func (filter *StringContainsAdvancedFilter_STATUS) AssignProperties_From_StringContainsAdvancedFilter_STATUS(source *storage.StringContainsAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringContainsAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, stringContainsAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -8680,7 +9205,7 @@ func (filter *StringContainsAdvancedFilter_STATUS) AssignProperties_From_StringC
 }
 
 // AssignProperties_To_StringContainsAdvancedFilter_STATUS populates the provided destination StringContainsAdvancedFilter_STATUS from our StringContainsAdvancedFilter_STATUS
-func (filter *StringContainsAdvancedFilter_STATUS) AssignProperties_To_StringContainsAdvancedFilter_STATUS(destination *v20200601s.StringContainsAdvancedFilter_STATUS) error {
+func (filter *StringContainsAdvancedFilter_STATUS) AssignProperties_To_StringContainsAdvancedFilter_STATUS(destination *storage.StringContainsAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -8728,7 +9253,7 @@ func (filter *StringEndsWithAdvancedFilter) ConvertToARM(resolved genruntime.Con
 	if filter == nil {
 		return nil, nil
 	}
-	result := &StringEndsWithAdvancedFilter_ARM{}
+	result := &arm.StringEndsWithAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -8738,7 +9263,11 @@ func (filter *StringEndsWithAdvancedFilter) ConvertToARM(resolved genruntime.Con
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.StringEndsWithAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.StringEndsWithAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Values":
@@ -8750,14 +9279,14 @@ func (filter *StringEndsWithAdvancedFilter) ConvertToARM(resolved genruntime.Con
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *StringEndsWithAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StringEndsWithAdvancedFilter_ARM{}
+	return &arm.StringEndsWithAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *StringEndsWithAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StringEndsWithAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.StringEndsWithAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StringEndsWithAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StringEndsWithAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -8767,7 +9296,11 @@ func (filter *StringEndsWithAdvancedFilter) PopulateFromARM(owner genruntime.Arb
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp StringEndsWithAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = StringEndsWithAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -8779,15 +9312,16 @@ func (filter *StringEndsWithAdvancedFilter) PopulateFromARM(owner genruntime.Arb
 }
 
 // AssignProperties_From_StringEndsWithAdvancedFilter populates our StringEndsWithAdvancedFilter from the provided source StringEndsWithAdvancedFilter
-func (filter *StringEndsWithAdvancedFilter) AssignProperties_From_StringEndsWithAdvancedFilter(source *v20200601s.StringEndsWithAdvancedFilter) error {
+func (filter *StringEndsWithAdvancedFilter) AssignProperties_From_StringEndsWithAdvancedFilter(source *storage.StringEndsWithAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringEndsWithAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, stringEndsWithAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -8800,7 +9334,7 @@ func (filter *StringEndsWithAdvancedFilter) AssignProperties_From_StringEndsWith
 }
 
 // AssignProperties_To_StringEndsWithAdvancedFilter populates the provided destination StringEndsWithAdvancedFilter from our StringEndsWithAdvancedFilter
-func (filter *StringEndsWithAdvancedFilter) AssignProperties_To_StringEndsWithAdvancedFilter(destination *v20200601s.StringEndsWithAdvancedFilter) error {
+func (filter *StringEndsWithAdvancedFilter) AssignProperties_To_StringEndsWithAdvancedFilter(destination *storage.StringEndsWithAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -8837,7 +9371,7 @@ func (filter *StringEndsWithAdvancedFilter) Initialize_From_StringEndsWithAdvanc
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringEndsWithAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), stringEndsWithAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -8865,14 +9399,14 @@ var _ genruntime.FromARMConverter = &StringEndsWithAdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *StringEndsWithAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StringEndsWithAdvancedFilter_STATUS_ARM{}
+	return &arm.StringEndsWithAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *StringEndsWithAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StringEndsWithAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.StringEndsWithAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StringEndsWithAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StringEndsWithAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -8882,7 +9416,11 @@ func (filter *StringEndsWithAdvancedFilter_STATUS) PopulateFromARM(owner genrunt
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp StringEndsWithAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = StringEndsWithAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -8894,15 +9432,16 @@ func (filter *StringEndsWithAdvancedFilter_STATUS) PopulateFromARM(owner genrunt
 }
 
 // AssignProperties_From_StringEndsWithAdvancedFilter_STATUS populates our StringEndsWithAdvancedFilter_STATUS from the provided source StringEndsWithAdvancedFilter_STATUS
-func (filter *StringEndsWithAdvancedFilter_STATUS) AssignProperties_From_StringEndsWithAdvancedFilter_STATUS(source *v20200601s.StringEndsWithAdvancedFilter_STATUS) error {
+func (filter *StringEndsWithAdvancedFilter_STATUS) AssignProperties_From_StringEndsWithAdvancedFilter_STATUS(source *storage.StringEndsWithAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringEndsWithAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, stringEndsWithAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -8915,7 +9454,7 @@ func (filter *StringEndsWithAdvancedFilter_STATUS) AssignProperties_From_StringE
 }
 
 // AssignProperties_To_StringEndsWithAdvancedFilter_STATUS populates the provided destination StringEndsWithAdvancedFilter_STATUS from our StringEndsWithAdvancedFilter_STATUS
-func (filter *StringEndsWithAdvancedFilter_STATUS) AssignProperties_To_StringEndsWithAdvancedFilter_STATUS(destination *v20200601s.StringEndsWithAdvancedFilter_STATUS) error {
+func (filter *StringEndsWithAdvancedFilter_STATUS) AssignProperties_To_StringEndsWithAdvancedFilter_STATUS(destination *storage.StringEndsWithAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -8963,7 +9502,7 @@ func (filter *StringInAdvancedFilter) ConvertToARM(resolved genruntime.ConvertTo
 	if filter == nil {
 		return nil, nil
 	}
-	result := &StringInAdvancedFilter_ARM{}
+	result := &arm.StringInAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -8973,7 +9512,11 @@ func (filter *StringInAdvancedFilter) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.StringInAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.StringInAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Values":
@@ -8985,14 +9528,14 @@ func (filter *StringInAdvancedFilter) ConvertToARM(resolved genruntime.ConvertTo
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *StringInAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StringInAdvancedFilter_ARM{}
+	return &arm.StringInAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *StringInAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StringInAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.StringInAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StringInAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StringInAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -9002,7 +9545,11 @@ func (filter *StringInAdvancedFilter) PopulateFromARM(owner genruntime.Arbitrary
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp StringInAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = StringInAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -9014,15 +9561,16 @@ func (filter *StringInAdvancedFilter) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_StringInAdvancedFilter populates our StringInAdvancedFilter from the provided source StringInAdvancedFilter
-func (filter *StringInAdvancedFilter) AssignProperties_From_StringInAdvancedFilter(source *v20200601s.StringInAdvancedFilter) error {
+func (filter *StringInAdvancedFilter) AssignProperties_From_StringInAdvancedFilter(source *storage.StringInAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringInAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, stringInAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -9035,7 +9583,7 @@ func (filter *StringInAdvancedFilter) AssignProperties_From_StringInAdvancedFilt
 }
 
 // AssignProperties_To_StringInAdvancedFilter populates the provided destination StringInAdvancedFilter from our StringInAdvancedFilter
-func (filter *StringInAdvancedFilter) AssignProperties_To_StringInAdvancedFilter(destination *v20200601s.StringInAdvancedFilter) error {
+func (filter *StringInAdvancedFilter) AssignProperties_To_StringInAdvancedFilter(destination *storage.StringInAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -9072,7 +9620,7 @@ func (filter *StringInAdvancedFilter) Initialize_From_StringInAdvancedFilter_STA
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringInAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), stringInAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -9100,14 +9648,14 @@ var _ genruntime.FromARMConverter = &StringInAdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *StringInAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StringInAdvancedFilter_STATUS_ARM{}
+	return &arm.StringInAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *StringInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StringInAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.StringInAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StringInAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StringInAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -9117,7 +9665,11 @@ func (filter *StringInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.Ar
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp StringInAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = StringInAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -9129,15 +9681,16 @@ func (filter *StringInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_StringInAdvancedFilter_STATUS populates our StringInAdvancedFilter_STATUS from the provided source StringInAdvancedFilter_STATUS
-func (filter *StringInAdvancedFilter_STATUS) AssignProperties_From_StringInAdvancedFilter_STATUS(source *v20200601s.StringInAdvancedFilter_STATUS) error {
+func (filter *StringInAdvancedFilter_STATUS) AssignProperties_From_StringInAdvancedFilter_STATUS(source *storage.StringInAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringInAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, stringInAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -9150,7 +9703,7 @@ func (filter *StringInAdvancedFilter_STATUS) AssignProperties_From_StringInAdvan
 }
 
 // AssignProperties_To_StringInAdvancedFilter_STATUS populates the provided destination StringInAdvancedFilter_STATUS from our StringInAdvancedFilter_STATUS
-func (filter *StringInAdvancedFilter_STATUS) AssignProperties_To_StringInAdvancedFilter_STATUS(destination *v20200601s.StringInAdvancedFilter_STATUS) error {
+func (filter *StringInAdvancedFilter_STATUS) AssignProperties_To_StringInAdvancedFilter_STATUS(destination *storage.StringInAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -9198,7 +9751,7 @@ func (filter *StringNotInAdvancedFilter) ConvertToARM(resolved genruntime.Conver
 	if filter == nil {
 		return nil, nil
 	}
-	result := &StringNotInAdvancedFilter_ARM{}
+	result := &arm.StringNotInAdvancedFilter{}
 
 	// Set property "Key":
 	if filter.Key != nil {
@@ -9208,7 +9761,11 @@ func (filter *StringNotInAdvancedFilter) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "OperatorType":
 	if filter.OperatorType != nil {
-		result.OperatorType = *filter.OperatorType
+		var temp arm.StringNotInAdvancedFilter_OperatorType
+		var temp1 string
+		temp1 = string(*filter.OperatorType)
+		temp = arm.StringNotInAdvancedFilter_OperatorType(temp1)
+		result.OperatorType = temp
 	}
 
 	// Set property "Values":
@@ -9220,14 +9777,14 @@ func (filter *StringNotInAdvancedFilter) ConvertToARM(resolved genruntime.Conver
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *StringNotInAdvancedFilter) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StringNotInAdvancedFilter_ARM{}
+	return &arm.StringNotInAdvancedFilter{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *StringNotInAdvancedFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StringNotInAdvancedFilter_ARM)
+	typedInput, ok := armInput.(arm.StringNotInAdvancedFilter)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StringNotInAdvancedFilter_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StringNotInAdvancedFilter, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -9237,7 +9794,11 @@ func (filter *StringNotInAdvancedFilter) PopulateFromARM(owner genruntime.Arbitr
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp StringNotInAdvancedFilter_OperatorType
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = StringNotInAdvancedFilter_OperatorType(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -9249,15 +9810,16 @@ func (filter *StringNotInAdvancedFilter) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_StringNotInAdvancedFilter populates our StringNotInAdvancedFilter from the provided source StringNotInAdvancedFilter
-func (filter *StringNotInAdvancedFilter) AssignProperties_From_StringNotInAdvancedFilter(source *v20200601s.StringNotInAdvancedFilter) error {
+func (filter *StringNotInAdvancedFilter) AssignProperties_From_StringNotInAdvancedFilter(source *storage.StringNotInAdvancedFilter) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringNotInAdvancedFilter_OperatorType(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, stringNotInAdvancedFilter_OperatorType_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -9270,7 +9832,7 @@ func (filter *StringNotInAdvancedFilter) AssignProperties_From_StringNotInAdvanc
 }
 
 // AssignProperties_To_StringNotInAdvancedFilter populates the provided destination StringNotInAdvancedFilter from our StringNotInAdvancedFilter
-func (filter *StringNotInAdvancedFilter) AssignProperties_To_StringNotInAdvancedFilter(destination *v20200601s.StringNotInAdvancedFilter) error {
+func (filter *StringNotInAdvancedFilter) AssignProperties_To_StringNotInAdvancedFilter(destination *storage.StringNotInAdvancedFilter) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -9307,7 +9869,7 @@ func (filter *StringNotInAdvancedFilter) Initialize_From_StringNotInAdvancedFilt
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringNotInAdvancedFilter_OperatorType(*source.OperatorType)
+		operatorType := genruntime.ToEnum(string(*source.OperatorType), stringNotInAdvancedFilter_OperatorType_Values)
 		filter.OperatorType = &operatorType
 	} else {
 		filter.OperatorType = nil
@@ -9335,14 +9897,14 @@ var _ genruntime.FromARMConverter = &StringNotInAdvancedFilter_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (filter *StringNotInAdvancedFilter_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &StringNotInAdvancedFilter_STATUS_ARM{}
+	return &arm.StringNotInAdvancedFilter_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (filter *StringNotInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(StringNotInAdvancedFilter_STATUS_ARM)
+	typedInput, ok := armInput.(arm.StringNotInAdvancedFilter_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected StringNotInAdvancedFilter_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.StringNotInAdvancedFilter_STATUS, got %T", armInput)
 	}
 
 	// Set property "Key":
@@ -9352,7 +9914,11 @@ func (filter *StringNotInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime
 	}
 
 	// Set property "OperatorType":
-	filter.OperatorType = &typedInput.OperatorType
+	var temp StringNotInAdvancedFilter_OperatorType_STATUS
+	var temp1 string
+	temp1 = string(typedInput.OperatorType)
+	temp = StringNotInAdvancedFilter_OperatorType_STATUS(temp1)
+	filter.OperatorType = &temp
 
 	// Set property "Values":
 	for _, item := range typedInput.Values {
@@ -9364,15 +9930,16 @@ func (filter *StringNotInAdvancedFilter_STATUS) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_StringNotInAdvancedFilter_STATUS populates our StringNotInAdvancedFilter_STATUS from the provided source StringNotInAdvancedFilter_STATUS
-func (filter *StringNotInAdvancedFilter_STATUS) AssignProperties_From_StringNotInAdvancedFilter_STATUS(source *v20200601s.StringNotInAdvancedFilter_STATUS) error {
+func (filter *StringNotInAdvancedFilter_STATUS) AssignProperties_From_StringNotInAdvancedFilter_STATUS(source *storage.StringNotInAdvancedFilter_STATUS) error {
 
 	// Key
 	filter.Key = genruntime.ClonePointerToString(source.Key)
 
 	// OperatorType
 	if source.OperatorType != nil {
-		operatorType := StringNotInAdvancedFilter_OperatorType_STATUS(*source.OperatorType)
-		filter.OperatorType = &operatorType
+		operatorType := *source.OperatorType
+		operatorTypeTemp := genruntime.ToEnum(operatorType, stringNotInAdvancedFilter_OperatorType_STATUS_Values)
+		filter.OperatorType = &operatorTypeTemp
 	} else {
 		filter.OperatorType = nil
 	}
@@ -9385,7 +9952,7 @@ func (filter *StringNotInAdvancedFilter_STATUS) AssignProperties_From_StringNotI
 }
 
 // AssignProperties_To_StringNotInAdvancedFilter_STATUS populates the provided destination StringNotInAdvancedFilter_STATUS from our StringNotInAdvancedFilter_STATUS
-func (filter *StringNotInAdvancedFilter_STATUS) AssignProperties_To_StringNotInAdvancedFilter_STATUS(destination *v20200601s.StringNotInAdvancedFilter_STATUS) error {
+func (filter *StringNotInAdvancedFilter_STATUS) AssignProperties_To_StringNotInAdvancedFilter_STATUS(destination *storage.StringNotInAdvancedFilter_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -9419,117 +9986,247 @@ type WebHookEventSubscriptionDestination_EndpointType string
 
 const WebHookEventSubscriptionDestination_EndpointType_WebHook = WebHookEventSubscriptionDestination_EndpointType("WebHook")
 
+// Mapping from string to WebHookEventSubscriptionDestination_EndpointType
+var webHookEventSubscriptionDestination_EndpointType_Values = map[string]WebHookEventSubscriptionDestination_EndpointType{
+	"webhook": WebHookEventSubscriptionDestination_EndpointType_WebHook,
+}
+
 type WebHookEventSubscriptionDestination_EndpointType_STATUS string
 
 const WebHookEventSubscriptionDestination_EndpointType_STATUS_WebHook = WebHookEventSubscriptionDestination_EndpointType_STATUS("WebHook")
+
+// Mapping from string to WebHookEventSubscriptionDestination_EndpointType_STATUS
+var webHookEventSubscriptionDestination_EndpointType_STATUS_Values = map[string]WebHookEventSubscriptionDestination_EndpointType_STATUS{
+	"webhook": WebHookEventSubscriptionDestination_EndpointType_STATUS_WebHook,
+}
 
 // +kubebuilder:validation:Enum={"BoolEquals"}
 type BoolEqualsAdvancedFilter_OperatorType string
 
 const BoolEqualsAdvancedFilter_OperatorType_BoolEquals = BoolEqualsAdvancedFilter_OperatorType("BoolEquals")
 
+// Mapping from string to BoolEqualsAdvancedFilter_OperatorType
+var boolEqualsAdvancedFilter_OperatorType_Values = map[string]BoolEqualsAdvancedFilter_OperatorType{
+	"boolequals": BoolEqualsAdvancedFilter_OperatorType_BoolEquals,
+}
+
 type BoolEqualsAdvancedFilter_OperatorType_STATUS string
 
 const BoolEqualsAdvancedFilter_OperatorType_STATUS_BoolEquals = BoolEqualsAdvancedFilter_OperatorType_STATUS("BoolEquals")
+
+// Mapping from string to BoolEqualsAdvancedFilter_OperatorType_STATUS
+var boolEqualsAdvancedFilter_OperatorType_STATUS_Values = map[string]BoolEqualsAdvancedFilter_OperatorType_STATUS{
+	"boolequals": BoolEqualsAdvancedFilter_OperatorType_STATUS_BoolEquals,
+}
 
 // +kubebuilder:validation:Enum={"NumberGreaterThan"}
 type NumberGreaterThanAdvancedFilter_OperatorType string
 
 const NumberGreaterThanAdvancedFilter_OperatorType_NumberGreaterThan = NumberGreaterThanAdvancedFilter_OperatorType("NumberGreaterThan")
 
+// Mapping from string to NumberGreaterThanAdvancedFilter_OperatorType
+var numberGreaterThanAdvancedFilter_OperatorType_Values = map[string]NumberGreaterThanAdvancedFilter_OperatorType{
+	"numbergreaterthan": NumberGreaterThanAdvancedFilter_OperatorType_NumberGreaterThan,
+}
+
 type NumberGreaterThanAdvancedFilter_OperatorType_STATUS string
 
 const NumberGreaterThanAdvancedFilter_OperatorType_STATUS_NumberGreaterThan = NumberGreaterThanAdvancedFilter_OperatorType_STATUS("NumberGreaterThan")
+
+// Mapping from string to NumberGreaterThanAdvancedFilter_OperatorType_STATUS
+var numberGreaterThanAdvancedFilter_OperatorType_STATUS_Values = map[string]NumberGreaterThanAdvancedFilter_OperatorType_STATUS{
+	"numbergreaterthan": NumberGreaterThanAdvancedFilter_OperatorType_STATUS_NumberGreaterThan,
+}
 
 // +kubebuilder:validation:Enum={"NumberGreaterThanOrEquals"}
 type NumberGreaterThanOrEqualsAdvancedFilter_OperatorType string
 
 const NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_NumberGreaterThanOrEquals = NumberGreaterThanOrEqualsAdvancedFilter_OperatorType("NumberGreaterThanOrEquals")
 
+// Mapping from string to NumberGreaterThanOrEqualsAdvancedFilter_OperatorType
+var numberGreaterThanOrEqualsAdvancedFilter_OperatorType_Values = map[string]NumberGreaterThanOrEqualsAdvancedFilter_OperatorType{
+	"numbergreaterthanorequals": NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_NumberGreaterThanOrEquals,
+}
+
 type NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS string
 
 const NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS_NumberGreaterThanOrEquals = NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS("NumberGreaterThanOrEquals")
+
+// Mapping from string to NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS
+var numberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS_Values = map[string]NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS{
+	"numbergreaterthanorequals": NumberGreaterThanOrEqualsAdvancedFilter_OperatorType_STATUS_NumberGreaterThanOrEquals,
+}
 
 // +kubebuilder:validation:Enum={"NumberIn"}
 type NumberInAdvancedFilter_OperatorType string
 
 const NumberInAdvancedFilter_OperatorType_NumberIn = NumberInAdvancedFilter_OperatorType("NumberIn")
 
+// Mapping from string to NumberInAdvancedFilter_OperatorType
+var numberInAdvancedFilter_OperatorType_Values = map[string]NumberInAdvancedFilter_OperatorType{
+	"numberin": NumberInAdvancedFilter_OperatorType_NumberIn,
+}
+
 type NumberInAdvancedFilter_OperatorType_STATUS string
 
 const NumberInAdvancedFilter_OperatorType_STATUS_NumberIn = NumberInAdvancedFilter_OperatorType_STATUS("NumberIn")
+
+// Mapping from string to NumberInAdvancedFilter_OperatorType_STATUS
+var numberInAdvancedFilter_OperatorType_STATUS_Values = map[string]NumberInAdvancedFilter_OperatorType_STATUS{
+	"numberin": NumberInAdvancedFilter_OperatorType_STATUS_NumberIn,
+}
 
 // +kubebuilder:validation:Enum={"NumberLessThan"}
 type NumberLessThanAdvancedFilter_OperatorType string
 
 const NumberLessThanAdvancedFilter_OperatorType_NumberLessThan = NumberLessThanAdvancedFilter_OperatorType("NumberLessThan")
 
+// Mapping from string to NumberLessThanAdvancedFilter_OperatorType
+var numberLessThanAdvancedFilter_OperatorType_Values = map[string]NumberLessThanAdvancedFilter_OperatorType{
+	"numberlessthan": NumberLessThanAdvancedFilter_OperatorType_NumberLessThan,
+}
+
 type NumberLessThanAdvancedFilter_OperatorType_STATUS string
 
 const NumberLessThanAdvancedFilter_OperatorType_STATUS_NumberLessThan = NumberLessThanAdvancedFilter_OperatorType_STATUS("NumberLessThan")
+
+// Mapping from string to NumberLessThanAdvancedFilter_OperatorType_STATUS
+var numberLessThanAdvancedFilter_OperatorType_STATUS_Values = map[string]NumberLessThanAdvancedFilter_OperatorType_STATUS{
+	"numberlessthan": NumberLessThanAdvancedFilter_OperatorType_STATUS_NumberLessThan,
+}
 
 // +kubebuilder:validation:Enum={"NumberLessThanOrEquals"}
 type NumberLessThanOrEqualsAdvancedFilter_OperatorType string
 
 const NumberLessThanOrEqualsAdvancedFilter_OperatorType_NumberLessThanOrEquals = NumberLessThanOrEqualsAdvancedFilter_OperatorType("NumberLessThanOrEquals")
 
+// Mapping from string to NumberLessThanOrEqualsAdvancedFilter_OperatorType
+var numberLessThanOrEqualsAdvancedFilter_OperatorType_Values = map[string]NumberLessThanOrEqualsAdvancedFilter_OperatorType{
+	"numberlessthanorequals": NumberLessThanOrEqualsAdvancedFilter_OperatorType_NumberLessThanOrEquals,
+}
+
 type NumberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS string
 
 const NumberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS_NumberLessThanOrEquals = NumberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS("NumberLessThanOrEquals")
+
+// Mapping from string to NumberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS
+var numberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS_Values = map[string]NumberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS{
+	"numberlessthanorequals": NumberLessThanOrEqualsAdvancedFilter_OperatorType_STATUS_NumberLessThanOrEquals,
+}
 
 // +kubebuilder:validation:Enum={"NumberNotIn"}
 type NumberNotInAdvancedFilter_OperatorType string
 
 const NumberNotInAdvancedFilter_OperatorType_NumberNotIn = NumberNotInAdvancedFilter_OperatorType("NumberNotIn")
 
+// Mapping from string to NumberNotInAdvancedFilter_OperatorType
+var numberNotInAdvancedFilter_OperatorType_Values = map[string]NumberNotInAdvancedFilter_OperatorType{
+	"numbernotin": NumberNotInAdvancedFilter_OperatorType_NumberNotIn,
+}
+
 type NumberNotInAdvancedFilter_OperatorType_STATUS string
 
 const NumberNotInAdvancedFilter_OperatorType_STATUS_NumberNotIn = NumberNotInAdvancedFilter_OperatorType_STATUS("NumberNotIn")
+
+// Mapping from string to NumberNotInAdvancedFilter_OperatorType_STATUS
+var numberNotInAdvancedFilter_OperatorType_STATUS_Values = map[string]NumberNotInAdvancedFilter_OperatorType_STATUS{
+	"numbernotin": NumberNotInAdvancedFilter_OperatorType_STATUS_NumberNotIn,
+}
 
 // +kubebuilder:validation:Enum={"StringBeginsWith"}
 type StringBeginsWithAdvancedFilter_OperatorType string
 
 const StringBeginsWithAdvancedFilter_OperatorType_StringBeginsWith = StringBeginsWithAdvancedFilter_OperatorType("StringBeginsWith")
 
+// Mapping from string to StringBeginsWithAdvancedFilter_OperatorType
+var stringBeginsWithAdvancedFilter_OperatorType_Values = map[string]StringBeginsWithAdvancedFilter_OperatorType{
+	"stringbeginswith": StringBeginsWithAdvancedFilter_OperatorType_StringBeginsWith,
+}
+
 type StringBeginsWithAdvancedFilter_OperatorType_STATUS string
 
 const StringBeginsWithAdvancedFilter_OperatorType_STATUS_StringBeginsWith = StringBeginsWithAdvancedFilter_OperatorType_STATUS("StringBeginsWith")
+
+// Mapping from string to StringBeginsWithAdvancedFilter_OperatorType_STATUS
+var stringBeginsWithAdvancedFilter_OperatorType_STATUS_Values = map[string]StringBeginsWithAdvancedFilter_OperatorType_STATUS{
+	"stringbeginswith": StringBeginsWithAdvancedFilter_OperatorType_STATUS_StringBeginsWith,
+}
 
 // +kubebuilder:validation:Enum={"StringContains"}
 type StringContainsAdvancedFilter_OperatorType string
 
 const StringContainsAdvancedFilter_OperatorType_StringContains = StringContainsAdvancedFilter_OperatorType("StringContains")
 
+// Mapping from string to StringContainsAdvancedFilter_OperatorType
+var stringContainsAdvancedFilter_OperatorType_Values = map[string]StringContainsAdvancedFilter_OperatorType{
+	"stringcontains": StringContainsAdvancedFilter_OperatorType_StringContains,
+}
+
 type StringContainsAdvancedFilter_OperatorType_STATUS string
 
 const StringContainsAdvancedFilter_OperatorType_STATUS_StringContains = StringContainsAdvancedFilter_OperatorType_STATUS("StringContains")
+
+// Mapping from string to StringContainsAdvancedFilter_OperatorType_STATUS
+var stringContainsAdvancedFilter_OperatorType_STATUS_Values = map[string]StringContainsAdvancedFilter_OperatorType_STATUS{
+	"stringcontains": StringContainsAdvancedFilter_OperatorType_STATUS_StringContains,
+}
 
 // +kubebuilder:validation:Enum={"StringEndsWith"}
 type StringEndsWithAdvancedFilter_OperatorType string
 
 const StringEndsWithAdvancedFilter_OperatorType_StringEndsWith = StringEndsWithAdvancedFilter_OperatorType("StringEndsWith")
 
+// Mapping from string to StringEndsWithAdvancedFilter_OperatorType
+var stringEndsWithAdvancedFilter_OperatorType_Values = map[string]StringEndsWithAdvancedFilter_OperatorType{
+	"stringendswith": StringEndsWithAdvancedFilter_OperatorType_StringEndsWith,
+}
+
 type StringEndsWithAdvancedFilter_OperatorType_STATUS string
 
 const StringEndsWithAdvancedFilter_OperatorType_STATUS_StringEndsWith = StringEndsWithAdvancedFilter_OperatorType_STATUS("StringEndsWith")
+
+// Mapping from string to StringEndsWithAdvancedFilter_OperatorType_STATUS
+var stringEndsWithAdvancedFilter_OperatorType_STATUS_Values = map[string]StringEndsWithAdvancedFilter_OperatorType_STATUS{
+	"stringendswith": StringEndsWithAdvancedFilter_OperatorType_STATUS_StringEndsWith,
+}
 
 // +kubebuilder:validation:Enum={"StringIn"}
 type StringInAdvancedFilter_OperatorType string
 
 const StringInAdvancedFilter_OperatorType_StringIn = StringInAdvancedFilter_OperatorType("StringIn")
 
+// Mapping from string to StringInAdvancedFilter_OperatorType
+var stringInAdvancedFilter_OperatorType_Values = map[string]StringInAdvancedFilter_OperatorType{
+	"stringin": StringInAdvancedFilter_OperatorType_StringIn,
+}
+
 type StringInAdvancedFilter_OperatorType_STATUS string
 
 const StringInAdvancedFilter_OperatorType_STATUS_StringIn = StringInAdvancedFilter_OperatorType_STATUS("StringIn")
+
+// Mapping from string to StringInAdvancedFilter_OperatorType_STATUS
+var stringInAdvancedFilter_OperatorType_STATUS_Values = map[string]StringInAdvancedFilter_OperatorType_STATUS{
+	"stringin": StringInAdvancedFilter_OperatorType_STATUS_StringIn,
+}
 
 // +kubebuilder:validation:Enum={"StringNotIn"}
 type StringNotInAdvancedFilter_OperatorType string
 
 const StringNotInAdvancedFilter_OperatorType_StringNotIn = StringNotInAdvancedFilter_OperatorType("StringNotIn")
 
+// Mapping from string to StringNotInAdvancedFilter_OperatorType
+var stringNotInAdvancedFilter_OperatorType_Values = map[string]StringNotInAdvancedFilter_OperatorType{
+	"stringnotin": StringNotInAdvancedFilter_OperatorType_StringNotIn,
+}
+
 type StringNotInAdvancedFilter_OperatorType_STATUS string
 
 const StringNotInAdvancedFilter_OperatorType_STATUS_StringNotIn = StringNotInAdvancedFilter_OperatorType_STATUS("StringNotIn")
+
+// Mapping from string to StringNotInAdvancedFilter_OperatorType_STATUS
+var stringNotInAdvancedFilter_OperatorType_STATUS_Values = map[string]StringNotInAdvancedFilter_OperatorType_STATUS{
+	"stringnotin": StringNotInAdvancedFilter_OperatorType_STATUS_StringNotIn,
+}
 
 func init() {
 	SchemeBuilder.Register(&EventSubscription{}, &EventSubscriptionList{})

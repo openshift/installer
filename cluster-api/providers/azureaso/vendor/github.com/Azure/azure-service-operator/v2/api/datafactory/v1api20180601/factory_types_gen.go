@@ -5,10 +5,14 @@ package v1api20180601
 
 import (
 	"fmt"
-	v20180601s "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,7 +54,7 @@ var _ conversion.Convertible = &Factory{}
 
 // ConvertFrom populates our Factory from the provided hub Factory
 func (factory *Factory) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20180601s.Factory)
+	source, ok := hub.(*storage.Factory)
 	if !ok {
 		return fmt.Errorf("expected datafactory/v1api20180601/storage/Factory but received %T instead", hub)
 	}
@@ -60,7 +64,7 @@ func (factory *Factory) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Factory from our Factory
 func (factory *Factory) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20180601s.Factory)
+	destination, ok := hub.(*storage.Factory)
 	if !ok {
 		return fmt.Errorf("expected datafactory/v1api20180601/storage/Factory but received %T instead", hub)
 	}
@@ -91,6 +95,26 @@ func (factory *Factory) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the Factory resource
 func (factory *Factory) defaultImpl() { factory.defaultAzureName() }
 
+var _ configmaps.Exporter = &Factory{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (factory *Factory) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if factory.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return factory.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Factory{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (factory *Factory) SecretDestinationExpressions() []*core.DestinationExpression {
+	if factory.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return factory.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &Factory{}
 
 // InitializeSpec initializes the spec for this resource from the given status
@@ -111,7 +135,7 @@ func (factory *Factory) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2018-06-01"
 func (factory Factory) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2018-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -209,7 +233,7 @@ func (factory *Factory) ValidateUpdate(old runtime.Object) (admission.Warnings, 
 
 // createValidations validates the creation of the resource
 func (factory *Factory) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){factory.validateResourceReferences, factory.validateOwnerReference}
+	return []func() (admission.Warnings, error){factory.validateResourceReferences, factory.validateOwnerReference, factory.validateSecretDestinations, factory.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -227,7 +251,21 @@ func (factory *Factory) updateValidations() []func(old runtime.Object) (admissio
 		func(old runtime.Object) (admission.Warnings, error) {
 			return factory.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return factory.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return factory.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (factory *Factory) validateConfigMapDestinations() (admission.Warnings, error) {
+	if factory.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(factory, nil, factory.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -244,6 +282,14 @@ func (factory *Factory) validateResourceReferences() (admission.Warnings, error)
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (factory *Factory) validateSecretDestinations() (admission.Warnings, error) {
+	if factory.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(factory, nil, factory.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (factory *Factory) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*Factory)
@@ -255,7 +301,7 @@ func (factory *Factory) validateWriteOnceProperties(old runtime.Object) (admissi
 }
 
 // AssignProperties_From_Factory populates our Factory from the provided source Factory
-func (factory *Factory) AssignProperties_From_Factory(source *v20180601s.Factory) error {
+func (factory *Factory) AssignProperties_From_Factory(source *storage.Factory) error {
 
 	// ObjectMeta
 	factory.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -281,13 +327,13 @@ func (factory *Factory) AssignProperties_From_Factory(source *v20180601s.Factory
 }
 
 // AssignProperties_To_Factory populates the provided destination Factory from our Factory
-func (factory *Factory) AssignProperties_To_Factory(destination *v20180601s.Factory) error {
+func (factory *Factory) AssignProperties_To_Factory(destination *storage.Factory) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *factory.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20180601s.Factory_Spec
+	var spec storage.Factory_Spec
 	err := factory.Spec.AssignProperties_To_Factory_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Factory_Spec() to populate field Spec")
@@ -295,7 +341,7 @@ func (factory *Factory) AssignProperties_To_Factory(destination *v20180601s.Fact
 	destination.Spec = spec
 
 	// Status
-	var status v20180601s.Factory_STATUS
+	var status storage.Factory_STATUS
 	err = factory.Status.AssignProperties_To_Factory_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Factory_STATUS() to populate field Status")
@@ -352,6 +398,10 @@ type Factory_Spec struct {
 	// Location: The resource location.
 	Location *string `json:"location,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *FactoryOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -378,7 +428,7 @@ func (factory *Factory_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 	if factory == nil {
 		return nil, nil
 	}
-	result := &Factory_Spec_ARM{}
+	result := &arm.Factory_Spec{}
 
 	// Set property "AdditionalProperties":
 	if factory.AdditionalProperties != nil {
@@ -394,7 +444,7 @@ func (factory *Factory_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		identity := *identity_ARM.(*FactoryIdentity_ARM)
+		identity := *identity_ARM.(*arm.FactoryIdentity)
 		result.Identity = &identity
 	}
 
@@ -413,28 +463,30 @@ func (factory *Factory_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		factory.PublicNetworkAccess != nil ||
 		factory.PurviewConfiguration != nil ||
 		factory.RepoConfiguration != nil {
-		result.Properties = &FactoryProperties_ARM{}
+		result.Properties = &arm.FactoryProperties{}
 	}
 	if factory.Encryption != nil {
 		encryption_ARM, err := (*factory.Encryption).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		encryption := *encryption_ARM.(*EncryptionConfiguration_ARM)
+		encryption := *encryption_ARM.(*arm.EncryptionConfiguration)
 		result.Properties.Encryption = &encryption
 	}
 	if factory.GlobalParameters != nil {
-		result.Properties.GlobalParameters = make(map[string]GlobalParameterSpecification_ARM, len(factory.GlobalParameters))
+		result.Properties.GlobalParameters = make(map[string]arm.GlobalParameterSpecification, len(factory.GlobalParameters))
 		for key, value := range factory.GlobalParameters {
 			value_ARM, err := value.ConvertToARM(resolved)
 			if err != nil {
 				return nil, err
 			}
-			result.Properties.GlobalParameters[key] = *value_ARM.(*GlobalParameterSpecification_ARM)
+			result.Properties.GlobalParameters[key] = *value_ARM.(*arm.GlobalParameterSpecification)
 		}
 	}
 	if factory.PublicNetworkAccess != nil {
-		publicNetworkAccess := *factory.PublicNetworkAccess
+		var temp string
+		temp = string(*factory.PublicNetworkAccess)
+		publicNetworkAccess := arm.FactoryProperties_PublicNetworkAccess(temp)
 		result.Properties.PublicNetworkAccess = &publicNetworkAccess
 	}
 	if factory.PurviewConfiguration != nil {
@@ -442,7 +494,7 @@ func (factory *Factory_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		purviewConfiguration := *purviewConfiguration_ARM.(*PurviewConfiguration_ARM)
+		purviewConfiguration := *purviewConfiguration_ARM.(*arm.PurviewConfiguration)
 		result.Properties.PurviewConfiguration = &purviewConfiguration
 	}
 	if factory.RepoConfiguration != nil {
@@ -450,7 +502,7 @@ func (factory *Factory_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		repoConfiguration := *repoConfiguration_ARM.(*FactoryRepoConfiguration_ARM)
+		repoConfiguration := *repoConfiguration_ARM.(*arm.FactoryRepoConfiguration)
 		result.Properties.RepoConfiguration = &repoConfiguration
 	}
 
@@ -466,14 +518,14 @@ func (factory *Factory_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (factory *Factory_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Factory_Spec_ARM{}
+	return &arm.Factory_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (factory *Factory_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Factory_Spec_ARM)
+	typedInput, ok := armInput.(arm.Factory_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Factory_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Factory_Spec, got %T", armInput)
 	}
 
 	// Set property "AdditionalProperties":
@@ -534,6 +586,8 @@ func (factory *Factory_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 		factory.Location = &location
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	factory.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -544,7 +598,9 @@ func (factory *Factory_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccess != nil {
-			publicNetworkAccess := *typedInput.Properties.PublicNetworkAccess
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccess)
+			publicNetworkAccess := FactoryProperties_PublicNetworkAccess(temp)
 			factory.PublicNetworkAccess = &publicNetworkAccess
 		}
 	}
@@ -593,14 +649,14 @@ var _ genruntime.ConvertibleSpec = &Factory_Spec{}
 
 // ConvertSpecFrom populates our Factory_Spec from the provided source
 func (factory *Factory_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20180601s.Factory_Spec)
+	src, ok := source.(*storage.Factory_Spec)
 	if ok {
 		// Populate our instance from source
 		return factory.AssignProperties_From_Factory_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20180601s.Factory_Spec{}
+	src = &storage.Factory_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -617,14 +673,14 @@ func (factory *Factory_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 
 // ConvertSpecTo populates the provided destination from our Factory_Spec
 func (factory *Factory_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20180601s.Factory_Spec)
+	dst, ok := destination.(*storage.Factory_Spec)
 	if ok {
 		// Populate destination from our instance
 		return factory.AssignProperties_To_Factory_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20180601s.Factory_Spec{}
+	dst = &storage.Factory_Spec{}
 	err := factory.AssignProperties_To_Factory_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -640,7 +696,7 @@ func (factory *Factory_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 }
 
 // AssignProperties_From_Factory_Spec populates our Factory_Spec from the provided source Factory_Spec
-func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *v20180601s.Factory_Spec) error {
+func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *storage.Factory_Spec) error {
 
 	// AdditionalProperties
 	if source.AdditionalProperties != nil {
@@ -703,6 +759,18 @@ func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *v2018060
 	// Location
 	factory.Location = genruntime.ClonePointerToString(source.Location)
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec FactoryOperatorSpec
+		err := operatorSpec.AssignProperties_From_FactoryOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_FactoryOperatorSpec() to populate field OperatorSpec")
+		}
+		factory.OperatorSpec = &operatorSpec
+	} else {
+		factory.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -713,8 +781,9 @@ func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *v2018060
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := FactoryProperties_PublicNetworkAccess(*source.PublicNetworkAccess)
-		factory.PublicNetworkAccess = &publicNetworkAccess
+		publicNetworkAccess := *source.PublicNetworkAccess
+		publicNetworkAccessTemp := genruntime.ToEnum(publicNetworkAccess, factoryProperties_PublicNetworkAccess_Values)
+		factory.PublicNetworkAccess = &publicNetworkAccessTemp
 	} else {
 		factory.PublicNetworkAccess = nil
 	}
@@ -751,7 +820,7 @@ func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *v2018060
 }
 
 // AssignProperties_To_Factory_Spec populates the provided destination Factory_Spec from our Factory_Spec
-func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *v20180601s.Factory_Spec) error {
+func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *storage.Factory_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -773,7 +842,7 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *v2018
 
 	// Encryption
 	if factory.Encryption != nil {
-		var encryption v20180601s.EncryptionConfiguration
+		var encryption storage.EncryptionConfiguration
 		err := factory.Encryption.AssignProperties_To_EncryptionConfiguration(&encryption)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EncryptionConfiguration() to populate field Encryption")
@@ -785,11 +854,11 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *v2018
 
 	// GlobalParameters
 	if factory.GlobalParameters != nil {
-		globalParameterMap := make(map[string]v20180601s.GlobalParameterSpecification, len(factory.GlobalParameters))
+		globalParameterMap := make(map[string]storage.GlobalParameterSpecification, len(factory.GlobalParameters))
 		for globalParameterKey, globalParameterValue := range factory.GlobalParameters {
 			// Shadow the loop variable to avoid aliasing
 			globalParameterValue := globalParameterValue
-			var globalParameter v20180601s.GlobalParameterSpecification
+			var globalParameter storage.GlobalParameterSpecification
 			err := globalParameterValue.AssignProperties_To_GlobalParameterSpecification(&globalParameter)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_GlobalParameterSpecification() to populate field GlobalParameters")
@@ -803,7 +872,7 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *v2018
 
 	// Identity
 	if factory.Identity != nil {
-		var identity v20180601s.FactoryIdentity
+		var identity storage.FactoryIdentity
 		err := factory.Identity.AssignProperties_To_FactoryIdentity(&identity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FactoryIdentity() to populate field Identity")
@@ -815,6 +884,18 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *v2018
 
 	// Location
 	destination.Location = genruntime.ClonePointerToString(factory.Location)
+
+	// OperatorSpec
+	if factory.OperatorSpec != nil {
+		var operatorSpec storage.FactoryOperatorSpec
+		err := factory.OperatorSpec.AssignProperties_To_FactoryOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_FactoryOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = factory.OriginalVersion()
@@ -837,7 +918,7 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *v2018
 
 	// PurviewConfiguration
 	if factory.PurviewConfiguration != nil {
-		var purviewConfiguration v20180601s.PurviewConfiguration
+		var purviewConfiguration storage.PurviewConfiguration
 		err := factory.PurviewConfiguration.AssignProperties_To_PurviewConfiguration(&purviewConfiguration)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PurviewConfiguration() to populate field PurviewConfiguration")
@@ -849,7 +930,7 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *v2018
 
 	// RepoConfiguration
 	if factory.RepoConfiguration != nil {
-		var repoConfiguration v20180601s.FactoryRepoConfiguration
+		var repoConfiguration storage.FactoryRepoConfiguration
 		err := factory.RepoConfiguration.AssignProperties_To_FactoryRepoConfiguration(&repoConfiguration)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FactoryRepoConfiguration() to populate field RepoConfiguration")
@@ -936,7 +1017,7 @@ func (factory *Factory_Spec) Initialize_From_Factory_STATUS(source *Factory_STAT
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := FactoryProperties_PublicNetworkAccess(*source.PublicNetworkAccess)
+		publicNetworkAccess := genruntime.ToEnum(string(*source.PublicNetworkAccess), factoryProperties_PublicNetworkAccess_Values)
 		factory.PublicNetworkAccess = &publicNetworkAccess
 	} else {
 		factory.PublicNetworkAccess = nil
@@ -1038,14 +1119,14 @@ var _ genruntime.ConvertibleStatus = &Factory_STATUS{}
 
 // ConvertStatusFrom populates our Factory_STATUS from the provided source
 func (factory *Factory_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20180601s.Factory_STATUS)
+	src, ok := source.(*storage.Factory_STATUS)
 	if ok {
 		// Populate our instance from source
 		return factory.AssignProperties_From_Factory_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20180601s.Factory_STATUS{}
+	src = &storage.Factory_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -1062,14 +1143,14 @@ func (factory *Factory_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 
 // ConvertStatusTo populates the provided destination from our Factory_STATUS
 func (factory *Factory_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20180601s.Factory_STATUS)
+	dst, ok := destination.(*storage.Factory_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return factory.AssignProperties_To_Factory_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20180601s.Factory_STATUS{}
+	dst = &storage.Factory_STATUS{}
 	err := factory.AssignProperties_To_Factory_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -1088,14 +1169,14 @@ var _ genruntime.FromARMConverter = &Factory_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (factory *Factory_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Factory_STATUS_ARM{}
+	return &arm.Factory_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (factory *Factory_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Factory_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Factory_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Factory_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Factory_STATUS, got %T", armInput)
 	}
 
 	// Set property "AdditionalProperties":
@@ -1195,7 +1276,9 @@ func (factory *Factory_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccess != nil {
-			publicNetworkAccess := *typedInput.Properties.PublicNetworkAccess
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccess)
+			publicNetworkAccess := FactoryProperties_PublicNetworkAccess_STATUS(temp)
 			factory.PublicNetworkAccess = &publicNetworkAccess
 		}
 	}
@@ -1256,7 +1339,7 @@ func (factory *Factory_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_Factory_STATUS populates our Factory_STATUS from the provided source Factory_STATUS
-func (factory *Factory_STATUS) AssignProperties_From_Factory_STATUS(source *v20180601s.Factory_STATUS) error {
+func (factory *Factory_STATUS) AssignProperties_From_Factory_STATUS(source *storage.Factory_STATUS) error {
 
 	// AdditionalProperties
 	if source.AdditionalProperties != nil {
@@ -1336,8 +1419,9 @@ func (factory *Factory_STATUS) AssignProperties_From_Factory_STATUS(source *v201
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := FactoryProperties_PublicNetworkAccess_STATUS(*source.PublicNetworkAccess)
-		factory.PublicNetworkAccess = &publicNetworkAccess
+		publicNetworkAccess := *source.PublicNetworkAccess
+		publicNetworkAccessTemp := genruntime.ToEnum(publicNetworkAccess, factoryProperties_PublicNetworkAccess_STATUS_Values)
+		factory.PublicNetworkAccess = &publicNetworkAccessTemp
 	} else {
 		factory.PublicNetworkAccess = nil
 	}
@@ -1380,7 +1464,7 @@ func (factory *Factory_STATUS) AssignProperties_From_Factory_STATUS(source *v201
 }
 
 // AssignProperties_To_Factory_STATUS populates the provided destination Factory_STATUS from our Factory_STATUS
-func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *v20180601s.Factory_STATUS) error {
+func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *storage.Factory_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1408,7 +1492,7 @@ func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *v
 
 	// Encryption
 	if factory.Encryption != nil {
-		var encryption v20180601s.EncryptionConfiguration_STATUS
+		var encryption storage.EncryptionConfiguration_STATUS
 		err := factory.Encryption.AssignProperties_To_EncryptionConfiguration_STATUS(&encryption)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EncryptionConfiguration_STATUS() to populate field Encryption")
@@ -1420,11 +1504,11 @@ func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *v
 
 	// GlobalParameters
 	if factory.GlobalParameters != nil {
-		globalParameterMap := make(map[string]v20180601s.GlobalParameterSpecification_STATUS, len(factory.GlobalParameters))
+		globalParameterMap := make(map[string]storage.GlobalParameterSpecification_STATUS, len(factory.GlobalParameters))
 		for globalParameterKey, globalParameterValue := range factory.GlobalParameters {
 			// Shadow the loop variable to avoid aliasing
 			globalParameterValue := globalParameterValue
-			var globalParameter v20180601s.GlobalParameterSpecification_STATUS
+			var globalParameter storage.GlobalParameterSpecification_STATUS
 			err := globalParameterValue.AssignProperties_To_GlobalParameterSpecification_STATUS(&globalParameter)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_GlobalParameterSpecification_STATUS() to populate field GlobalParameters")
@@ -1441,7 +1525,7 @@ func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *v
 
 	// Identity
 	if factory.Identity != nil {
-		var identity v20180601s.FactoryIdentity_STATUS
+		var identity storage.FactoryIdentity_STATUS
 		err := factory.Identity.AssignProperties_To_FactoryIdentity_STATUS(&identity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FactoryIdentity_STATUS() to populate field Identity")
@@ -1470,7 +1554,7 @@ func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *v
 
 	// PurviewConfiguration
 	if factory.PurviewConfiguration != nil {
-		var purviewConfiguration v20180601s.PurviewConfiguration_STATUS
+		var purviewConfiguration storage.PurviewConfiguration_STATUS
 		err := factory.PurviewConfiguration.AssignProperties_To_PurviewConfiguration_STATUS(&purviewConfiguration)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PurviewConfiguration_STATUS() to populate field PurviewConfiguration")
@@ -1482,7 +1566,7 @@ func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *v
 
 	// RepoConfiguration
 	if factory.RepoConfiguration != nil {
-		var repoConfiguration v20180601s.FactoryRepoConfiguration_STATUS
+		var repoConfiguration storage.FactoryRepoConfiguration_STATUS
 		err := factory.RepoConfiguration.AssignProperties_To_FactoryRepoConfiguration_STATUS(&repoConfiguration)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FactoryRepoConfiguration_STATUS() to populate field RepoConfiguration")
@@ -1537,7 +1621,7 @@ func (configuration *EncryptionConfiguration) ConvertToARM(resolved genruntime.C
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &EncryptionConfiguration_ARM{}
+	result := &arm.EncryptionConfiguration{}
 
 	// Set property "Identity":
 	if configuration.Identity != nil {
@@ -1545,7 +1629,7 @@ func (configuration *EncryptionConfiguration) ConvertToARM(resolved genruntime.C
 		if err != nil {
 			return nil, err
 		}
-		identity := *identity_ARM.(*CMKIdentityDefinition_ARM)
+		identity := *identity_ARM.(*arm.CMKIdentityDefinition)
 		result.Identity = &identity
 	}
 
@@ -1571,14 +1655,14 @@ func (configuration *EncryptionConfiguration) ConvertToARM(resolved genruntime.C
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *EncryptionConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EncryptionConfiguration_ARM{}
+	return &arm.EncryptionConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *EncryptionConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EncryptionConfiguration_ARM)
+	typedInput, ok := armInput.(arm.EncryptionConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EncryptionConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EncryptionConfiguration, got %T", armInput)
 	}
 
 	// Set property "Identity":
@@ -1615,7 +1699,7 @@ func (configuration *EncryptionConfiguration) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_EncryptionConfiguration populates our EncryptionConfiguration from the provided source EncryptionConfiguration
-func (configuration *EncryptionConfiguration) AssignProperties_From_EncryptionConfiguration(source *v20180601s.EncryptionConfiguration) error {
+func (configuration *EncryptionConfiguration) AssignProperties_From_EncryptionConfiguration(source *storage.EncryptionConfiguration) error {
 
 	// Identity
 	if source.Identity != nil {
@@ -1643,13 +1727,13 @@ func (configuration *EncryptionConfiguration) AssignProperties_From_EncryptionCo
 }
 
 // AssignProperties_To_EncryptionConfiguration populates the provided destination EncryptionConfiguration from our EncryptionConfiguration
-func (configuration *EncryptionConfiguration) AssignProperties_To_EncryptionConfiguration(destination *v20180601s.EncryptionConfiguration) error {
+func (configuration *EncryptionConfiguration) AssignProperties_To_EncryptionConfiguration(destination *storage.EncryptionConfiguration) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Identity
 	if configuration.Identity != nil {
-		var identity v20180601s.CMKIdentityDefinition
+		var identity storage.CMKIdentityDefinition
 		err := configuration.Identity.AssignProperties_To_CMKIdentityDefinition(&identity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_CMKIdentityDefinition() to populate field Identity")
@@ -1727,14 +1811,14 @@ var _ genruntime.FromARMConverter = &EncryptionConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *EncryptionConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EncryptionConfiguration_STATUS_ARM{}
+	return &arm.EncryptionConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *EncryptionConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EncryptionConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.EncryptionConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EncryptionConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EncryptionConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "Identity":
@@ -1771,7 +1855,7 @@ func (configuration *EncryptionConfiguration_STATUS) PopulateFromARM(owner genru
 }
 
 // AssignProperties_From_EncryptionConfiguration_STATUS populates our EncryptionConfiguration_STATUS from the provided source EncryptionConfiguration_STATUS
-func (configuration *EncryptionConfiguration_STATUS) AssignProperties_From_EncryptionConfiguration_STATUS(source *v20180601s.EncryptionConfiguration_STATUS) error {
+func (configuration *EncryptionConfiguration_STATUS) AssignProperties_From_EncryptionConfiguration_STATUS(source *storage.EncryptionConfiguration_STATUS) error {
 
 	// Identity
 	if source.Identity != nil {
@@ -1799,13 +1883,13 @@ func (configuration *EncryptionConfiguration_STATUS) AssignProperties_From_Encry
 }
 
 // AssignProperties_To_EncryptionConfiguration_STATUS populates the provided destination EncryptionConfiguration_STATUS from our EncryptionConfiguration_STATUS
-func (configuration *EncryptionConfiguration_STATUS) AssignProperties_To_EncryptionConfiguration_STATUS(destination *v20180601s.EncryptionConfiguration_STATUS) error {
+func (configuration *EncryptionConfiguration_STATUS) AssignProperties_To_EncryptionConfiguration_STATUS(destination *storage.EncryptionConfiguration_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Identity
 	if configuration.Identity != nil {
-		var identity v20180601s.CMKIdentityDefinition_STATUS
+		var identity storage.CMKIdentityDefinition_STATUS
 		err := configuration.Identity.AssignProperties_To_CMKIdentityDefinition_STATUS(&identity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_CMKIdentityDefinition_STATUS() to populate field Identity")
@@ -1852,42 +1936,46 @@ func (identity *FactoryIdentity) ConvertToARM(resolved genruntime.ConvertToARMRe
 	if identity == nil {
 		return nil, nil
 	}
-	result := &FactoryIdentity_ARM{}
+	result := &arm.FactoryIdentity{}
 
 	// Set property "Type":
 	if identity.Type != nil {
-		typeVar := *identity.Type
+		var temp string
+		temp = string(*identity.Type)
+		typeVar := arm.FactoryIdentity_Type(temp)
 		result.Type = &typeVar
 	}
 
 	// Set property "UserAssignedIdentities":
-	result.UserAssignedIdentities = make(map[string]UserAssignedIdentityDetails_ARM, len(identity.UserAssignedIdentities))
+	result.UserAssignedIdentities = make(map[string]arm.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 	for _, ident := range identity.UserAssignedIdentities {
 		identARMID, err := resolved.ResolvedReferences.Lookup(ident.Reference)
 		if err != nil {
 			return nil, err
 		}
 		key := identARMID
-		result.UserAssignedIdentities[key] = UserAssignedIdentityDetails_ARM{}
+		result.UserAssignedIdentities[key] = arm.UserAssignedIdentityDetails{}
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (identity *FactoryIdentity) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FactoryIdentity_ARM{}
+	return &arm.FactoryIdentity{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (identity *FactoryIdentity) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FactoryIdentity_ARM)
+	typedInput, ok := armInput.(arm.FactoryIdentity)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FactoryIdentity_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FactoryIdentity, got %T", armInput)
 	}
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := FactoryIdentity_Type(temp)
 		identity.Type = &typeVar
 	}
 
@@ -1898,12 +1986,13 @@ func (identity *FactoryIdentity) PopulateFromARM(owner genruntime.ArbitraryOwner
 }
 
 // AssignProperties_From_FactoryIdentity populates our FactoryIdentity from the provided source FactoryIdentity
-func (identity *FactoryIdentity) AssignProperties_From_FactoryIdentity(source *v20180601s.FactoryIdentity) error {
+func (identity *FactoryIdentity) AssignProperties_From_FactoryIdentity(source *storage.FactoryIdentity) error {
 
 	// Type
 	if source.Type != nil {
-		typeVar := FactoryIdentity_Type(*source.Type)
-		identity.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, factoryIdentity_Type_Values)
+		identity.Type = &typeTemp
 	} else {
 		identity.Type = nil
 	}
@@ -1931,7 +2020,7 @@ func (identity *FactoryIdentity) AssignProperties_From_FactoryIdentity(source *v
 }
 
 // AssignProperties_To_FactoryIdentity populates the provided destination FactoryIdentity from our FactoryIdentity
-func (identity *FactoryIdentity) AssignProperties_To_FactoryIdentity(destination *v20180601s.FactoryIdentity) error {
+func (identity *FactoryIdentity) AssignProperties_To_FactoryIdentity(destination *storage.FactoryIdentity) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1945,11 +2034,11 @@ func (identity *FactoryIdentity) AssignProperties_To_FactoryIdentity(destination
 
 	// UserAssignedIdentities
 	if identity.UserAssignedIdentities != nil {
-		userAssignedIdentityList := make([]v20180601s.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
+		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
 			// Shadow the loop variable to avoid aliasing
 			userAssignedIdentityItem := userAssignedIdentityItem
-			var userAssignedIdentity v20180601s.UserAssignedIdentityDetails
+			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
@@ -1977,7 +2066,7 @@ func (identity *FactoryIdentity) Initialize_From_FactoryIdentity_STATUS(source *
 
 	// Type
 	if source.Type != nil {
-		typeVar := FactoryIdentity_Type(*source.Type)
+		typeVar := genruntime.ToEnum(string(*source.Type), factoryIdentity_Type_Values)
 		identity.Type = &typeVar
 	} else {
 		identity.Type = nil
@@ -2018,14 +2107,14 @@ var _ genruntime.FromARMConverter = &FactoryIdentity_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (identity *FactoryIdentity_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FactoryIdentity_STATUS_ARM{}
+	return &arm.FactoryIdentity_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (identity *FactoryIdentity_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FactoryIdentity_STATUS_ARM)
+	typedInput, ok := armInput.(arm.FactoryIdentity_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FactoryIdentity_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FactoryIdentity_STATUS, got %T", armInput)
 	}
 
 	// Set property "PrincipalId":
@@ -2042,7 +2131,9 @@ func (identity *FactoryIdentity_STATUS) PopulateFromARM(owner genruntime.Arbitra
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := FactoryIdentity_Type_STATUS(temp)
 		identity.Type = &typeVar
 	}
 
@@ -2059,7 +2150,7 @@ func (identity *FactoryIdentity_STATUS) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_FactoryIdentity_STATUS populates our FactoryIdentity_STATUS from the provided source FactoryIdentity_STATUS
-func (identity *FactoryIdentity_STATUS) AssignProperties_From_FactoryIdentity_STATUS(source *v20180601s.FactoryIdentity_STATUS) error {
+func (identity *FactoryIdentity_STATUS) AssignProperties_From_FactoryIdentity_STATUS(source *storage.FactoryIdentity_STATUS) error {
 
 	// PrincipalId
 	identity.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
@@ -2069,8 +2160,9 @@ func (identity *FactoryIdentity_STATUS) AssignProperties_From_FactoryIdentity_ST
 
 	// Type
 	if source.Type != nil {
-		typeVar := FactoryIdentity_Type_STATUS(*source.Type)
-		identity.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, factoryIdentity_Type_STATUS_Values)
+		identity.Type = &typeTemp
 	} else {
 		identity.Type = nil
 	}
@@ -2093,7 +2185,7 @@ func (identity *FactoryIdentity_STATUS) AssignProperties_From_FactoryIdentity_ST
 }
 
 // AssignProperties_To_FactoryIdentity_STATUS populates the provided destination FactoryIdentity_STATUS from our FactoryIdentity_STATUS
-func (identity *FactoryIdentity_STATUS) AssignProperties_To_FactoryIdentity_STATUS(destination *v20180601s.FactoryIdentity_STATUS) error {
+func (identity *FactoryIdentity_STATUS) AssignProperties_To_FactoryIdentity_STATUS(destination *storage.FactoryIdentity_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2135,6 +2227,110 @@ func (identity *FactoryIdentity_STATUS) AssignProperties_To_FactoryIdentity_STAT
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type FactoryOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_FactoryOperatorSpec populates our FactoryOperatorSpec from the provided source FactoryOperatorSpec
+func (operator *FactoryOperatorSpec) AssignProperties_From_FactoryOperatorSpec(source *storage.FactoryOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FactoryOperatorSpec populates the provided destination FactoryOperatorSpec from our FactoryOperatorSpec
+func (operator *FactoryOperatorSpec) AssignProperties_To_FactoryOperatorSpec(destination *storage.FactoryOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // +kubebuilder:validation:Enum={"Disabled","Enabled"}
 type FactoryProperties_PublicNetworkAccess string
 
@@ -2143,12 +2339,24 @@ const (
 	FactoryProperties_PublicNetworkAccess_Enabled  = FactoryProperties_PublicNetworkAccess("Enabled")
 )
 
+// Mapping from string to FactoryProperties_PublicNetworkAccess
+var factoryProperties_PublicNetworkAccess_Values = map[string]FactoryProperties_PublicNetworkAccess{
+	"disabled": FactoryProperties_PublicNetworkAccess_Disabled,
+	"enabled":  FactoryProperties_PublicNetworkAccess_Enabled,
+}
+
 type FactoryProperties_PublicNetworkAccess_STATUS string
 
 const (
 	FactoryProperties_PublicNetworkAccess_STATUS_Disabled = FactoryProperties_PublicNetworkAccess_STATUS("Disabled")
 	FactoryProperties_PublicNetworkAccess_STATUS_Enabled  = FactoryProperties_PublicNetworkAccess_STATUS("Enabled")
 )
+
+// Mapping from string to FactoryProperties_PublicNetworkAccess_STATUS
+var factoryProperties_PublicNetworkAccess_STATUS_Values = map[string]FactoryProperties_PublicNetworkAccess_STATUS{
+	"disabled": FactoryProperties_PublicNetworkAccess_STATUS_Disabled,
+	"enabled":  FactoryProperties_PublicNetworkAccess_STATUS_Enabled,
+}
 
 type FactoryRepoConfiguration struct {
 	// FactoryGitHub: Mutually exclusive with all other properties
@@ -2165,7 +2373,7 @@ func (configuration *FactoryRepoConfiguration) ConvertToARM(resolved genruntime.
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &FactoryRepoConfiguration_ARM{}
+	result := &arm.FactoryRepoConfiguration{}
 
 	// Set property "FactoryGitHub":
 	if configuration.FactoryGitHub != nil {
@@ -2173,7 +2381,7 @@ func (configuration *FactoryRepoConfiguration) ConvertToARM(resolved genruntime.
 		if err != nil {
 			return nil, err
 		}
-		factoryGitHub := *factoryGitHub_ARM.(*FactoryGitHubConfiguration_ARM)
+		factoryGitHub := *factoryGitHub_ARM.(*arm.FactoryGitHubConfiguration)
 		result.FactoryGitHub = &factoryGitHub
 	}
 
@@ -2183,7 +2391,7 @@ func (configuration *FactoryRepoConfiguration) ConvertToARM(resolved genruntime.
 		if err != nil {
 			return nil, err
 		}
-		factoryVSTS := *factoryVSTS_ARM.(*FactoryVSTSConfiguration_ARM)
+		factoryVSTS := *factoryVSTS_ARM.(*arm.FactoryVSTSConfiguration)
 		result.FactoryVSTS = &factoryVSTS
 	}
 	return result, nil
@@ -2191,14 +2399,14 @@ func (configuration *FactoryRepoConfiguration) ConvertToARM(resolved genruntime.
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *FactoryRepoConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FactoryRepoConfiguration_ARM{}
+	return &arm.FactoryRepoConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *FactoryRepoConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FactoryRepoConfiguration_ARM)
+	typedInput, ok := armInput.(arm.FactoryRepoConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FactoryRepoConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FactoryRepoConfiguration, got %T", armInput)
 	}
 
 	// Set property "FactoryGitHub":
@@ -2228,7 +2436,7 @@ func (configuration *FactoryRepoConfiguration) PopulateFromARM(owner genruntime.
 }
 
 // AssignProperties_From_FactoryRepoConfiguration populates our FactoryRepoConfiguration from the provided source FactoryRepoConfiguration
-func (configuration *FactoryRepoConfiguration) AssignProperties_From_FactoryRepoConfiguration(source *v20180601s.FactoryRepoConfiguration) error {
+func (configuration *FactoryRepoConfiguration) AssignProperties_From_FactoryRepoConfiguration(source *storage.FactoryRepoConfiguration) error {
 
 	// FactoryGitHub
 	if source.FactoryGitHub != nil {
@@ -2259,13 +2467,13 @@ func (configuration *FactoryRepoConfiguration) AssignProperties_From_FactoryRepo
 }
 
 // AssignProperties_To_FactoryRepoConfiguration populates the provided destination FactoryRepoConfiguration from our FactoryRepoConfiguration
-func (configuration *FactoryRepoConfiguration) AssignProperties_To_FactoryRepoConfiguration(destination *v20180601s.FactoryRepoConfiguration) error {
+func (configuration *FactoryRepoConfiguration) AssignProperties_To_FactoryRepoConfiguration(destination *storage.FactoryRepoConfiguration) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// FactoryGitHub
 	if configuration.FactoryGitHub != nil {
-		var factoryGitHub v20180601s.FactoryGitHubConfiguration
+		var factoryGitHub storage.FactoryGitHubConfiguration
 		err := configuration.FactoryGitHub.AssignProperties_To_FactoryGitHubConfiguration(&factoryGitHub)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FactoryGitHubConfiguration() to populate field FactoryGitHub")
@@ -2277,7 +2485,7 @@ func (configuration *FactoryRepoConfiguration) AssignProperties_To_FactoryRepoCo
 
 	// FactoryVSTS
 	if configuration.FactoryVSTS != nil {
-		var factoryVSTS v20180601s.FactoryVSTSConfiguration
+		var factoryVSTS storage.FactoryVSTSConfiguration
 		err := configuration.FactoryVSTS.AssignProperties_To_FactoryVSTSConfiguration(&factoryVSTS)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FactoryVSTSConfiguration() to populate field FactoryVSTS")
@@ -2341,14 +2549,14 @@ var _ genruntime.FromARMConverter = &FactoryRepoConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *FactoryRepoConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FactoryRepoConfiguration_STATUS_ARM{}
+	return &arm.FactoryRepoConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *FactoryRepoConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FactoryRepoConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.FactoryRepoConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FactoryRepoConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FactoryRepoConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "FactoryGitHub":
@@ -2378,7 +2586,7 @@ func (configuration *FactoryRepoConfiguration_STATUS) PopulateFromARM(owner genr
 }
 
 // AssignProperties_From_FactoryRepoConfiguration_STATUS populates our FactoryRepoConfiguration_STATUS from the provided source FactoryRepoConfiguration_STATUS
-func (configuration *FactoryRepoConfiguration_STATUS) AssignProperties_From_FactoryRepoConfiguration_STATUS(source *v20180601s.FactoryRepoConfiguration_STATUS) error {
+func (configuration *FactoryRepoConfiguration_STATUS) AssignProperties_From_FactoryRepoConfiguration_STATUS(source *storage.FactoryRepoConfiguration_STATUS) error {
 
 	// FactoryGitHub
 	if source.FactoryGitHub != nil {
@@ -2409,13 +2617,13 @@ func (configuration *FactoryRepoConfiguration_STATUS) AssignProperties_From_Fact
 }
 
 // AssignProperties_To_FactoryRepoConfiguration_STATUS populates the provided destination FactoryRepoConfiguration_STATUS from our FactoryRepoConfiguration_STATUS
-func (configuration *FactoryRepoConfiguration_STATUS) AssignProperties_To_FactoryRepoConfiguration_STATUS(destination *v20180601s.FactoryRepoConfiguration_STATUS) error {
+func (configuration *FactoryRepoConfiguration_STATUS) AssignProperties_To_FactoryRepoConfiguration_STATUS(destination *storage.FactoryRepoConfiguration_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// FactoryGitHub
 	if configuration.FactoryGitHub != nil {
-		var factoryGitHub v20180601s.FactoryGitHubConfiguration_STATUS
+		var factoryGitHub storage.FactoryGitHubConfiguration_STATUS
 		err := configuration.FactoryGitHub.AssignProperties_To_FactoryGitHubConfiguration_STATUS(&factoryGitHub)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FactoryGitHubConfiguration_STATUS() to populate field FactoryGitHub")
@@ -2427,7 +2635,7 @@ func (configuration *FactoryRepoConfiguration_STATUS) AssignProperties_To_Factor
 
 	// FactoryVSTS
 	if configuration.FactoryVSTS != nil {
-		var factoryVSTS v20180601s.FactoryVSTSConfiguration_STATUS
+		var factoryVSTS storage.FactoryVSTSConfiguration_STATUS
 		err := configuration.FactoryVSTS.AssignProperties_To_FactoryVSTSConfiguration_STATUS(&factoryVSTS)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FactoryVSTSConfiguration_STATUS() to populate field FactoryVSTS")
@@ -2466,11 +2674,13 @@ func (specification *GlobalParameterSpecification) ConvertToARM(resolved genrunt
 	if specification == nil {
 		return nil, nil
 	}
-	result := &GlobalParameterSpecification_ARM{}
+	result := &arm.GlobalParameterSpecification{}
 
 	// Set property "Type":
 	if specification.Type != nil {
-		typeVar := *specification.Type
+		var temp string
+		temp = string(*specification.Type)
+		typeVar := arm.GlobalParameterSpecification_Type(temp)
 		result.Type = &typeVar
 	}
 
@@ -2486,19 +2696,21 @@ func (specification *GlobalParameterSpecification) ConvertToARM(resolved genrunt
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (specification *GlobalParameterSpecification) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &GlobalParameterSpecification_ARM{}
+	return &arm.GlobalParameterSpecification{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (specification *GlobalParameterSpecification) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(GlobalParameterSpecification_ARM)
+	typedInput, ok := armInput.(arm.GlobalParameterSpecification)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected GlobalParameterSpecification_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.GlobalParameterSpecification, got %T", armInput)
 	}
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := GlobalParameterSpecification_Type(temp)
 		specification.Type = &typeVar
 	}
 
@@ -2515,12 +2727,13 @@ func (specification *GlobalParameterSpecification) PopulateFromARM(owner genrunt
 }
 
 // AssignProperties_From_GlobalParameterSpecification populates our GlobalParameterSpecification from the provided source GlobalParameterSpecification
-func (specification *GlobalParameterSpecification) AssignProperties_From_GlobalParameterSpecification(source *v20180601s.GlobalParameterSpecification) error {
+func (specification *GlobalParameterSpecification) AssignProperties_From_GlobalParameterSpecification(source *storage.GlobalParameterSpecification) error {
 
 	// Type
 	if source.Type != nil {
-		typeVar := GlobalParameterSpecification_Type(*source.Type)
-		specification.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, globalParameterSpecification_Type_Values)
+		specification.Type = &typeTemp
 	} else {
 		specification.Type = nil
 	}
@@ -2543,7 +2756,7 @@ func (specification *GlobalParameterSpecification) AssignProperties_From_GlobalP
 }
 
 // AssignProperties_To_GlobalParameterSpecification populates the provided destination GlobalParameterSpecification from our GlobalParameterSpecification
-func (specification *GlobalParameterSpecification) AssignProperties_To_GlobalParameterSpecification(destination *v20180601s.GlobalParameterSpecification) error {
+func (specification *GlobalParameterSpecification) AssignProperties_To_GlobalParameterSpecification(destination *storage.GlobalParameterSpecification) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2584,7 +2797,7 @@ func (specification *GlobalParameterSpecification) Initialize_From_GlobalParamet
 
 	// Type
 	if source.Type != nil {
-		typeVar := GlobalParameterSpecification_Type(*source.Type)
+		typeVar := genruntime.ToEnum(string(*source.Type), globalParameterSpecification_Type_Values)
 		specification.Type = &typeVar
 	} else {
 		specification.Type = nil
@@ -2620,19 +2833,21 @@ var _ genruntime.FromARMConverter = &GlobalParameterSpecification_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (specification *GlobalParameterSpecification_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &GlobalParameterSpecification_STATUS_ARM{}
+	return &arm.GlobalParameterSpecification_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (specification *GlobalParameterSpecification_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(GlobalParameterSpecification_STATUS_ARM)
+	typedInput, ok := armInput.(arm.GlobalParameterSpecification_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected GlobalParameterSpecification_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.GlobalParameterSpecification_STATUS, got %T", armInput)
 	}
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := GlobalParameterSpecification_Type_STATUS(temp)
 		specification.Type = &typeVar
 	}
 
@@ -2649,12 +2864,13 @@ func (specification *GlobalParameterSpecification_STATUS) PopulateFromARM(owner 
 }
 
 // AssignProperties_From_GlobalParameterSpecification_STATUS populates our GlobalParameterSpecification_STATUS from the provided source GlobalParameterSpecification_STATUS
-func (specification *GlobalParameterSpecification_STATUS) AssignProperties_From_GlobalParameterSpecification_STATUS(source *v20180601s.GlobalParameterSpecification_STATUS) error {
+func (specification *GlobalParameterSpecification_STATUS) AssignProperties_From_GlobalParameterSpecification_STATUS(source *storage.GlobalParameterSpecification_STATUS) error {
 
 	// Type
 	if source.Type != nil {
-		typeVar := GlobalParameterSpecification_Type_STATUS(*source.Type)
-		specification.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, globalParameterSpecification_Type_STATUS_Values)
+		specification.Type = &typeTemp
 	} else {
 		specification.Type = nil
 	}
@@ -2677,7 +2893,7 @@ func (specification *GlobalParameterSpecification_STATUS) AssignProperties_From_
 }
 
 // AssignProperties_To_GlobalParameterSpecification_STATUS populates the provided destination GlobalParameterSpecification_STATUS from our GlobalParameterSpecification_STATUS
-func (specification *GlobalParameterSpecification_STATUS) AssignProperties_To_GlobalParameterSpecification_STATUS(destination *v20180601s.GlobalParameterSpecification_STATUS) error {
+func (specification *GlobalParameterSpecification_STATUS) AssignProperties_To_GlobalParameterSpecification_STATUS(destination *storage.GlobalParameterSpecification_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2726,7 +2942,7 @@ func (configuration *PurviewConfiguration) ConvertToARM(resolved genruntime.Conv
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &PurviewConfiguration_ARM{}
+	result := &arm.PurviewConfiguration{}
 
 	// Set property "PurviewResourceId":
 	if configuration.PurviewResourceReference != nil {
@@ -2742,14 +2958,14 @@ func (configuration *PurviewConfiguration) ConvertToARM(resolved genruntime.Conv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *PurviewConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PurviewConfiguration_ARM{}
+	return &arm.PurviewConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *PurviewConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(PurviewConfiguration_ARM)
+	_, ok := armInput.(arm.PurviewConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PurviewConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PurviewConfiguration, got %T", armInput)
 	}
 
 	// no assignment for property "PurviewResourceReference"
@@ -2759,7 +2975,7 @@ func (configuration *PurviewConfiguration) PopulateFromARM(owner genruntime.Arbi
 }
 
 // AssignProperties_From_PurviewConfiguration populates our PurviewConfiguration from the provided source PurviewConfiguration
-func (configuration *PurviewConfiguration) AssignProperties_From_PurviewConfiguration(source *v20180601s.PurviewConfiguration) error {
+func (configuration *PurviewConfiguration) AssignProperties_From_PurviewConfiguration(source *storage.PurviewConfiguration) error {
 
 	// PurviewResourceReference
 	if source.PurviewResourceReference != nil {
@@ -2774,7 +2990,7 @@ func (configuration *PurviewConfiguration) AssignProperties_From_PurviewConfigur
 }
 
 // AssignProperties_To_PurviewConfiguration populates the provided destination PurviewConfiguration from our PurviewConfiguration
-func (configuration *PurviewConfiguration) AssignProperties_To_PurviewConfiguration(destination *v20180601s.PurviewConfiguration) error {
+func (configuration *PurviewConfiguration) AssignProperties_To_PurviewConfiguration(destination *storage.PurviewConfiguration) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2822,14 +3038,14 @@ var _ genruntime.FromARMConverter = &PurviewConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *PurviewConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PurviewConfiguration_STATUS_ARM{}
+	return &arm.PurviewConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *PurviewConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PurviewConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.PurviewConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PurviewConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PurviewConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "PurviewResourceId":
@@ -2843,7 +3059,7 @@ func (configuration *PurviewConfiguration_STATUS) PopulateFromARM(owner genrunti
 }
 
 // AssignProperties_From_PurviewConfiguration_STATUS populates our PurviewConfiguration_STATUS from the provided source PurviewConfiguration_STATUS
-func (configuration *PurviewConfiguration_STATUS) AssignProperties_From_PurviewConfiguration_STATUS(source *v20180601s.PurviewConfiguration_STATUS) error {
+func (configuration *PurviewConfiguration_STATUS) AssignProperties_From_PurviewConfiguration_STATUS(source *storage.PurviewConfiguration_STATUS) error {
 
 	// PurviewResourceId
 	configuration.PurviewResourceId = genruntime.ClonePointerToString(source.PurviewResourceId)
@@ -2853,7 +3069,7 @@ func (configuration *PurviewConfiguration_STATUS) AssignProperties_From_PurviewC
 }
 
 // AssignProperties_To_PurviewConfiguration_STATUS populates the provided destination PurviewConfiguration_STATUS from our PurviewConfiguration_STATUS
-func (configuration *PurviewConfiguration_STATUS) AssignProperties_To_PurviewConfiguration_STATUS(destination *v20180601s.PurviewConfiguration_STATUS) error {
+func (configuration *PurviewConfiguration_STATUS) AssignProperties_To_PurviewConfiguration_STATUS(destination *storage.PurviewConfiguration_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2884,7 +3100,7 @@ func (definition *CMKIdentityDefinition) ConvertToARM(resolved genruntime.Conver
 	if definition == nil {
 		return nil, nil
 	}
-	result := &CMKIdentityDefinition_ARM{}
+	result := &arm.CMKIdentityDefinition{}
 
 	// Set property "UserAssignedIdentity":
 	if definition.UserAssignedIdentityReference != nil {
@@ -2900,14 +3116,14 @@ func (definition *CMKIdentityDefinition) ConvertToARM(resolved genruntime.Conver
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (definition *CMKIdentityDefinition) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &CMKIdentityDefinition_ARM{}
+	return &arm.CMKIdentityDefinition{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (definition *CMKIdentityDefinition) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(CMKIdentityDefinition_ARM)
+	_, ok := armInput.(arm.CMKIdentityDefinition)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected CMKIdentityDefinition_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.CMKIdentityDefinition, got %T", armInput)
 	}
 
 	// no assignment for property "UserAssignedIdentityReference"
@@ -2917,7 +3133,7 @@ func (definition *CMKIdentityDefinition) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_CMKIdentityDefinition populates our CMKIdentityDefinition from the provided source CMKIdentityDefinition
-func (definition *CMKIdentityDefinition) AssignProperties_From_CMKIdentityDefinition(source *v20180601s.CMKIdentityDefinition) error {
+func (definition *CMKIdentityDefinition) AssignProperties_From_CMKIdentityDefinition(source *storage.CMKIdentityDefinition) error {
 
 	// UserAssignedIdentityReference
 	if source.UserAssignedIdentityReference != nil {
@@ -2932,7 +3148,7 @@ func (definition *CMKIdentityDefinition) AssignProperties_From_CMKIdentityDefini
 }
 
 // AssignProperties_To_CMKIdentityDefinition populates the provided destination CMKIdentityDefinition from our CMKIdentityDefinition
-func (definition *CMKIdentityDefinition) AssignProperties_To_CMKIdentityDefinition(destination *v20180601s.CMKIdentityDefinition) error {
+func (definition *CMKIdentityDefinition) AssignProperties_To_CMKIdentityDefinition(destination *storage.CMKIdentityDefinition) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2972,14 +3188,14 @@ var _ genruntime.FromARMConverter = &CMKIdentityDefinition_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (definition *CMKIdentityDefinition_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &CMKIdentityDefinition_STATUS_ARM{}
+	return &arm.CMKIdentityDefinition_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (definition *CMKIdentityDefinition_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(CMKIdentityDefinition_STATUS_ARM)
+	typedInput, ok := armInput.(arm.CMKIdentityDefinition_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected CMKIdentityDefinition_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.CMKIdentityDefinition_STATUS, got %T", armInput)
 	}
 
 	// Set property "UserAssignedIdentity":
@@ -2993,7 +3209,7 @@ func (definition *CMKIdentityDefinition_STATUS) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_CMKIdentityDefinition_STATUS populates our CMKIdentityDefinition_STATUS from the provided source CMKIdentityDefinition_STATUS
-func (definition *CMKIdentityDefinition_STATUS) AssignProperties_From_CMKIdentityDefinition_STATUS(source *v20180601s.CMKIdentityDefinition_STATUS) error {
+func (definition *CMKIdentityDefinition_STATUS) AssignProperties_From_CMKIdentityDefinition_STATUS(source *storage.CMKIdentityDefinition_STATUS) error {
 
 	// UserAssignedIdentity
 	definition.UserAssignedIdentity = genruntime.ClonePointerToString(source.UserAssignedIdentity)
@@ -3003,7 +3219,7 @@ func (definition *CMKIdentityDefinition_STATUS) AssignProperties_From_CMKIdentit
 }
 
 // AssignProperties_To_CMKIdentityDefinition_STATUS populates the provided destination CMKIdentityDefinition_STATUS from our CMKIdentityDefinition_STATUS
-func (definition *CMKIdentityDefinition_STATUS) AssignProperties_To_CMKIdentityDefinition_STATUS(destination *v20180601s.CMKIdentityDefinition_STATUS) error {
+func (definition *CMKIdentityDefinition_STATUS) AssignProperties_To_CMKIdentityDefinition_STATUS(destination *storage.CMKIdentityDefinition_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3065,7 +3281,7 @@ func (configuration *FactoryGitHubConfiguration) ConvertToARM(resolved genruntim
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &FactoryGitHubConfiguration_ARM{}
+	result := &arm.FactoryGitHubConfiguration{}
 
 	// Set property "AccountName":
 	if configuration.AccountName != nil {
@@ -3085,7 +3301,7 @@ func (configuration *FactoryGitHubConfiguration) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		clientSecret := *clientSecret_ARM.(*GitHubClientSecret_ARM)
+		clientSecret := *clientSecret_ARM.(*arm.GitHubClientSecret)
 		result.ClientSecret = &clientSecret
 	}
 
@@ -3127,21 +3343,25 @@ func (configuration *FactoryGitHubConfiguration) ConvertToARM(resolved genruntim
 
 	// Set property "Type":
 	if configuration.Type != nil {
-		result.Type = *configuration.Type
+		var temp arm.FactoryGitHubConfiguration_Type
+		var temp1 string
+		temp1 = string(*configuration.Type)
+		temp = arm.FactoryGitHubConfiguration_Type(temp1)
+		result.Type = temp
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *FactoryGitHubConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FactoryGitHubConfiguration_ARM{}
+	return &arm.FactoryGitHubConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *FactoryGitHubConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FactoryGitHubConfiguration_ARM)
+	typedInput, ok := armInput.(arm.FactoryGitHubConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FactoryGitHubConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FactoryGitHubConfiguration, got %T", armInput)
 	}
 
 	// Set property "AccountName":
@@ -3204,14 +3424,18 @@ func (configuration *FactoryGitHubConfiguration) PopulateFromARM(owner genruntim
 	}
 
 	// Set property "Type":
-	configuration.Type = &typedInput.Type
+	var temp FactoryGitHubConfiguration_Type
+	var temp1 string
+	temp1 = string(typedInput.Type)
+	temp = FactoryGitHubConfiguration_Type(temp1)
+	configuration.Type = &temp
 
 	// No error
 	return nil
 }
 
 // AssignProperties_From_FactoryGitHubConfiguration populates our FactoryGitHubConfiguration from the provided source FactoryGitHubConfiguration
-func (configuration *FactoryGitHubConfiguration) AssignProperties_From_FactoryGitHubConfiguration(source *v20180601s.FactoryGitHubConfiguration) error {
+func (configuration *FactoryGitHubConfiguration) AssignProperties_From_FactoryGitHubConfiguration(source *storage.FactoryGitHubConfiguration) error {
 
 	// AccountName
 	configuration.AccountName = genruntime.ClonePointerToString(source.AccountName)
@@ -3256,8 +3480,9 @@ func (configuration *FactoryGitHubConfiguration) AssignProperties_From_FactoryGi
 
 	// Type
 	if source.Type != nil {
-		typeVar := FactoryGitHubConfiguration_Type(*source.Type)
-		configuration.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, factoryGitHubConfiguration_Type_Values)
+		configuration.Type = &typeTemp
 	} else {
 		configuration.Type = nil
 	}
@@ -3267,7 +3492,7 @@ func (configuration *FactoryGitHubConfiguration) AssignProperties_From_FactoryGi
 }
 
 // AssignProperties_To_FactoryGitHubConfiguration populates the provided destination FactoryGitHubConfiguration from our FactoryGitHubConfiguration
-func (configuration *FactoryGitHubConfiguration) AssignProperties_To_FactoryGitHubConfiguration(destination *v20180601s.FactoryGitHubConfiguration) error {
+func (configuration *FactoryGitHubConfiguration) AssignProperties_To_FactoryGitHubConfiguration(destination *storage.FactoryGitHubConfiguration) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3279,7 +3504,7 @@ func (configuration *FactoryGitHubConfiguration) AssignProperties_To_FactoryGitH
 
 	// ClientSecret
 	if configuration.ClientSecret != nil {
-		var clientSecret v20180601s.GitHubClientSecret
+		var clientSecret storage.GitHubClientSecret
 		err := configuration.ClientSecret.AssignProperties_To_GitHubClientSecret(&clientSecret)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_GitHubClientSecret() to populate field ClientSecret")
@@ -3377,7 +3602,7 @@ func (configuration *FactoryGitHubConfiguration) Initialize_From_FactoryGitHubCo
 
 	// Type
 	if source.Type != nil {
-		typeVar := FactoryGitHubConfiguration_Type(*source.Type)
+		typeVar := genruntime.ToEnum(string(*source.Type), factoryGitHubConfiguration_Type_Values)
 		configuration.Type = &typeVar
 	} else {
 		configuration.Type = nil
@@ -3423,14 +3648,14 @@ var _ genruntime.FromARMConverter = &FactoryGitHubConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *FactoryGitHubConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FactoryGitHubConfiguration_STATUS_ARM{}
+	return &arm.FactoryGitHubConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *FactoryGitHubConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FactoryGitHubConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.FactoryGitHubConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FactoryGitHubConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FactoryGitHubConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "AccountName":
@@ -3493,14 +3718,18 @@ func (configuration *FactoryGitHubConfiguration_STATUS) PopulateFromARM(owner ge
 	}
 
 	// Set property "Type":
-	configuration.Type = &typedInput.Type
+	var temp FactoryGitHubConfiguration_Type_STATUS
+	var temp1 string
+	temp1 = string(typedInput.Type)
+	temp = FactoryGitHubConfiguration_Type_STATUS(temp1)
+	configuration.Type = &temp
 
 	// No error
 	return nil
 }
 
 // AssignProperties_From_FactoryGitHubConfiguration_STATUS populates our FactoryGitHubConfiguration_STATUS from the provided source FactoryGitHubConfiguration_STATUS
-func (configuration *FactoryGitHubConfiguration_STATUS) AssignProperties_From_FactoryGitHubConfiguration_STATUS(source *v20180601s.FactoryGitHubConfiguration_STATUS) error {
+func (configuration *FactoryGitHubConfiguration_STATUS) AssignProperties_From_FactoryGitHubConfiguration_STATUS(source *storage.FactoryGitHubConfiguration_STATUS) error {
 
 	// AccountName
 	configuration.AccountName = genruntime.ClonePointerToString(source.AccountName)
@@ -3545,8 +3774,9 @@ func (configuration *FactoryGitHubConfiguration_STATUS) AssignProperties_From_Fa
 
 	// Type
 	if source.Type != nil {
-		typeVar := FactoryGitHubConfiguration_Type_STATUS(*source.Type)
-		configuration.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, factoryGitHubConfiguration_Type_STATUS_Values)
+		configuration.Type = &typeTemp
 	} else {
 		configuration.Type = nil
 	}
@@ -3556,7 +3786,7 @@ func (configuration *FactoryGitHubConfiguration_STATUS) AssignProperties_From_Fa
 }
 
 // AssignProperties_To_FactoryGitHubConfiguration_STATUS populates the provided destination FactoryGitHubConfiguration_STATUS from our FactoryGitHubConfiguration_STATUS
-func (configuration *FactoryGitHubConfiguration_STATUS) AssignProperties_To_FactoryGitHubConfiguration_STATUS(destination *v20180601s.FactoryGitHubConfiguration_STATUS) error {
+func (configuration *FactoryGitHubConfiguration_STATUS) AssignProperties_To_FactoryGitHubConfiguration_STATUS(destination *storage.FactoryGitHubConfiguration_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3568,7 +3798,7 @@ func (configuration *FactoryGitHubConfiguration_STATUS) AssignProperties_To_Fact
 
 	// ClientSecret
 	if configuration.ClientSecret != nil {
-		var clientSecret v20180601s.GitHubClientSecret_STATUS
+		var clientSecret storage.GitHubClientSecret_STATUS
 		err := configuration.ClientSecret.AssignProperties_To_GitHubClientSecret_STATUS(&clientSecret)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_GitHubClientSecret_STATUS() to populate field ClientSecret")
@@ -3620,6 +3850,37 @@ func (configuration *FactoryGitHubConfiguration_STATUS) AssignProperties_To_Fact
 	return nil
 }
 
+// +kubebuilder:validation:Enum={"SystemAssigned","SystemAssigned,UserAssigned","UserAssigned"}
+type FactoryIdentity_Type string
+
+const (
+	FactoryIdentity_Type_SystemAssigned             = FactoryIdentity_Type("SystemAssigned")
+	FactoryIdentity_Type_SystemAssignedUserAssigned = FactoryIdentity_Type("SystemAssigned,UserAssigned")
+	FactoryIdentity_Type_UserAssigned               = FactoryIdentity_Type("UserAssigned")
+)
+
+// Mapping from string to FactoryIdentity_Type
+var factoryIdentity_Type_Values = map[string]FactoryIdentity_Type{
+	"systemassigned":              FactoryIdentity_Type_SystemAssigned,
+	"systemassigned,userassigned": FactoryIdentity_Type_SystemAssignedUserAssigned,
+	"userassigned":                FactoryIdentity_Type_UserAssigned,
+}
+
+type FactoryIdentity_Type_STATUS string
+
+const (
+	FactoryIdentity_Type_STATUS_SystemAssigned             = FactoryIdentity_Type_STATUS("SystemAssigned")
+	FactoryIdentity_Type_STATUS_SystemAssignedUserAssigned = FactoryIdentity_Type_STATUS("SystemAssigned,UserAssigned")
+	FactoryIdentity_Type_STATUS_UserAssigned               = FactoryIdentity_Type_STATUS("UserAssigned")
+)
+
+// Mapping from string to FactoryIdentity_Type_STATUS
+var factoryIdentity_Type_STATUS_Values = map[string]FactoryIdentity_Type_STATUS{
+	"systemassigned":              FactoryIdentity_Type_STATUS_SystemAssigned,
+	"systemassigned,userassigned": FactoryIdentity_Type_STATUS_SystemAssignedUserAssigned,
+	"userassigned":                FactoryIdentity_Type_STATUS_UserAssigned,
+}
+
 type FactoryVSTSConfiguration struct {
 	// +kubebuilder:validation:Required
 	// AccountName: Account name.
@@ -3662,7 +3923,7 @@ func (configuration *FactoryVSTSConfiguration) ConvertToARM(resolved genruntime.
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &FactoryVSTSConfiguration_ARM{}
+	result := &arm.FactoryVSTSConfiguration{}
 
 	// Set property "AccountName":
 	if configuration.AccountName != nil {
@@ -3714,21 +3975,25 @@ func (configuration *FactoryVSTSConfiguration) ConvertToARM(resolved genruntime.
 
 	// Set property "Type":
 	if configuration.Type != nil {
-		result.Type = *configuration.Type
+		var temp arm.FactoryVSTSConfiguration_Type
+		var temp1 string
+		temp1 = string(*configuration.Type)
+		temp = arm.FactoryVSTSConfiguration_Type(temp1)
+		result.Type = temp
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *FactoryVSTSConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FactoryVSTSConfiguration_ARM{}
+	return &arm.FactoryVSTSConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *FactoryVSTSConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FactoryVSTSConfiguration_ARM)
+	typedInput, ok := armInput.(arm.FactoryVSTSConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FactoryVSTSConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FactoryVSTSConfiguration, got %T", armInput)
 	}
 
 	// Set property "AccountName":
@@ -3780,14 +4045,18 @@ func (configuration *FactoryVSTSConfiguration) PopulateFromARM(owner genruntime.
 	}
 
 	// Set property "Type":
-	configuration.Type = &typedInput.Type
+	var temp FactoryVSTSConfiguration_Type
+	var temp1 string
+	temp1 = string(typedInput.Type)
+	temp = FactoryVSTSConfiguration_Type(temp1)
+	configuration.Type = &temp
 
 	// No error
 	return nil
 }
 
 // AssignProperties_From_FactoryVSTSConfiguration populates our FactoryVSTSConfiguration from the provided source FactoryVSTSConfiguration
-func (configuration *FactoryVSTSConfiguration) AssignProperties_From_FactoryVSTSConfiguration(source *v20180601s.FactoryVSTSConfiguration) error {
+func (configuration *FactoryVSTSConfiguration) AssignProperties_From_FactoryVSTSConfiguration(source *storage.FactoryVSTSConfiguration) error {
 
 	// AccountName
 	configuration.AccountName = genruntime.ClonePointerToString(source.AccountName)
@@ -3820,8 +4089,9 @@ func (configuration *FactoryVSTSConfiguration) AssignProperties_From_FactoryVSTS
 
 	// Type
 	if source.Type != nil {
-		typeVar := FactoryVSTSConfiguration_Type(*source.Type)
-		configuration.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, factoryVSTSConfiguration_Type_Values)
+		configuration.Type = &typeTemp
 	} else {
 		configuration.Type = nil
 	}
@@ -3831,7 +4101,7 @@ func (configuration *FactoryVSTSConfiguration) AssignProperties_From_FactoryVSTS
 }
 
 // AssignProperties_To_FactoryVSTSConfiguration populates the provided destination FactoryVSTSConfiguration from our FactoryVSTSConfiguration
-func (configuration *FactoryVSTSConfiguration) AssignProperties_To_FactoryVSTSConfiguration(destination *v20180601s.FactoryVSTSConfiguration) error {
+func (configuration *FactoryVSTSConfiguration) AssignProperties_To_FactoryVSTSConfiguration(destination *storage.FactoryVSTSConfiguration) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3917,7 +4187,7 @@ func (configuration *FactoryVSTSConfiguration) Initialize_From_FactoryVSTSConfig
 
 	// Type
 	if source.Type != nil {
-		typeVar := FactoryVSTSConfiguration_Type(*source.Type)
+		typeVar := genruntime.ToEnum(string(*source.Type), factoryVSTSConfiguration_Type_Values)
 		configuration.Type = &typeVar
 	} else {
 		configuration.Type = nil
@@ -3960,14 +4230,14 @@ var _ genruntime.FromARMConverter = &FactoryVSTSConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *FactoryVSTSConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FactoryVSTSConfiguration_STATUS_ARM{}
+	return &arm.FactoryVSTSConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *FactoryVSTSConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FactoryVSTSConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.FactoryVSTSConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FactoryVSTSConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FactoryVSTSConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "AccountName":
@@ -4019,14 +4289,18 @@ func (configuration *FactoryVSTSConfiguration_STATUS) PopulateFromARM(owner genr
 	}
 
 	// Set property "Type":
-	configuration.Type = &typedInput.Type
+	var temp FactoryVSTSConfiguration_Type_STATUS
+	var temp1 string
+	temp1 = string(typedInput.Type)
+	temp = FactoryVSTSConfiguration_Type_STATUS(temp1)
+	configuration.Type = &temp
 
 	// No error
 	return nil
 }
 
 // AssignProperties_From_FactoryVSTSConfiguration_STATUS populates our FactoryVSTSConfiguration_STATUS from the provided source FactoryVSTSConfiguration_STATUS
-func (configuration *FactoryVSTSConfiguration_STATUS) AssignProperties_From_FactoryVSTSConfiguration_STATUS(source *v20180601s.FactoryVSTSConfiguration_STATUS) error {
+func (configuration *FactoryVSTSConfiguration_STATUS) AssignProperties_From_FactoryVSTSConfiguration_STATUS(source *storage.FactoryVSTSConfiguration_STATUS) error {
 
 	// AccountName
 	configuration.AccountName = genruntime.ClonePointerToString(source.AccountName)
@@ -4059,8 +4333,9 @@ func (configuration *FactoryVSTSConfiguration_STATUS) AssignProperties_From_Fact
 
 	// Type
 	if source.Type != nil {
-		typeVar := FactoryVSTSConfiguration_Type_STATUS(*source.Type)
-		configuration.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, factoryVSTSConfiguration_Type_STATUS_Values)
+		configuration.Type = &typeTemp
 	} else {
 		configuration.Type = nil
 	}
@@ -4070,7 +4345,7 @@ func (configuration *FactoryVSTSConfiguration_STATUS) AssignProperties_From_Fact
 }
 
 // AssignProperties_To_FactoryVSTSConfiguration_STATUS populates the provided destination FactoryVSTSConfiguration_STATUS from our FactoryVSTSConfiguration_STATUS
-func (configuration *FactoryVSTSConfiguration_STATUS) AssignProperties_To_FactoryVSTSConfiguration_STATUS(destination *v20180601s.FactoryVSTSConfiguration_STATUS) error {
+func (configuration *FactoryVSTSConfiguration_STATUS) AssignProperties_To_FactoryVSTSConfiguration_STATUS(destination *storage.FactoryVSTSConfiguration_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4134,6 +4409,16 @@ const (
 	GlobalParameterSpecification_Type_String = GlobalParameterSpecification_Type("String")
 )
 
+// Mapping from string to GlobalParameterSpecification_Type
+var globalParameterSpecification_Type_Values = map[string]GlobalParameterSpecification_Type{
+	"array":  GlobalParameterSpecification_Type_Array,
+	"bool":   GlobalParameterSpecification_Type_Bool,
+	"float":  GlobalParameterSpecification_Type_Float,
+	"int":    GlobalParameterSpecification_Type_Int,
+	"object": GlobalParameterSpecification_Type_Object,
+	"string": GlobalParameterSpecification_Type_String,
+}
+
 type GlobalParameterSpecification_Type_STATUS string
 
 const (
@@ -4145,13 +4430,23 @@ const (
 	GlobalParameterSpecification_Type_STATUS_String = GlobalParameterSpecification_Type_STATUS("String")
 )
 
+// Mapping from string to GlobalParameterSpecification_Type_STATUS
+var globalParameterSpecification_Type_STATUS_Values = map[string]GlobalParameterSpecification_Type_STATUS{
+	"array":  GlobalParameterSpecification_Type_STATUS_Array,
+	"bool":   GlobalParameterSpecification_Type_STATUS_Bool,
+	"float":  GlobalParameterSpecification_Type_STATUS_Float,
+	"int":    GlobalParameterSpecification_Type_STATUS_Int,
+	"object": GlobalParameterSpecification_Type_STATUS_Object,
+	"string": GlobalParameterSpecification_Type_STATUS_String,
+}
+
 // Information about the user assigned identity for the resource
 type UserAssignedIdentityDetails struct {
 	Reference genruntime.ResourceReference `armReference:"Reference" json:"reference,omitempty"`
 }
 
 // AssignProperties_From_UserAssignedIdentityDetails populates our UserAssignedIdentityDetails from the provided source UserAssignedIdentityDetails
-func (details *UserAssignedIdentityDetails) AssignProperties_From_UserAssignedIdentityDetails(source *v20180601s.UserAssignedIdentityDetails) error {
+func (details *UserAssignedIdentityDetails) AssignProperties_From_UserAssignedIdentityDetails(source *storage.UserAssignedIdentityDetails) error {
 
 	// Reference
 	details.Reference = source.Reference.Copy()
@@ -4161,7 +4456,7 @@ func (details *UserAssignedIdentityDetails) AssignProperties_From_UserAssignedId
 }
 
 // AssignProperties_To_UserAssignedIdentityDetails populates the provided destination UserAssignedIdentityDetails from our UserAssignedIdentityDetails
-func (details *UserAssignedIdentityDetails) AssignProperties_To_UserAssignedIdentityDetails(destination *v20180601s.UserAssignedIdentityDetails) error {
+func (details *UserAssignedIdentityDetails) AssignProperties_To_UserAssignedIdentityDetails(destination *storage.UserAssignedIdentityDetails) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4184,18 +4479,38 @@ type FactoryGitHubConfiguration_Type string
 
 const FactoryGitHubConfiguration_Type_FactoryGitHubConfiguration = FactoryGitHubConfiguration_Type("FactoryGitHubConfiguration")
 
+// Mapping from string to FactoryGitHubConfiguration_Type
+var factoryGitHubConfiguration_Type_Values = map[string]FactoryGitHubConfiguration_Type{
+	"factorygithubconfiguration": FactoryGitHubConfiguration_Type_FactoryGitHubConfiguration,
+}
+
 type FactoryGitHubConfiguration_Type_STATUS string
 
 const FactoryGitHubConfiguration_Type_STATUS_FactoryGitHubConfiguration = FactoryGitHubConfiguration_Type_STATUS("FactoryGitHubConfiguration")
+
+// Mapping from string to FactoryGitHubConfiguration_Type_STATUS
+var factoryGitHubConfiguration_Type_STATUS_Values = map[string]FactoryGitHubConfiguration_Type_STATUS{
+	"factorygithubconfiguration": FactoryGitHubConfiguration_Type_STATUS_FactoryGitHubConfiguration,
+}
 
 // +kubebuilder:validation:Enum={"FactoryVSTSConfiguration"}
 type FactoryVSTSConfiguration_Type string
 
 const FactoryVSTSConfiguration_Type_FactoryVSTSConfiguration = FactoryVSTSConfiguration_Type("FactoryVSTSConfiguration")
 
+// Mapping from string to FactoryVSTSConfiguration_Type
+var factoryVSTSConfiguration_Type_Values = map[string]FactoryVSTSConfiguration_Type{
+	"factoryvstsconfiguration": FactoryVSTSConfiguration_Type_FactoryVSTSConfiguration,
+}
+
 type FactoryVSTSConfiguration_Type_STATUS string
 
 const FactoryVSTSConfiguration_Type_STATUS_FactoryVSTSConfiguration = FactoryVSTSConfiguration_Type_STATUS("FactoryVSTSConfiguration")
+
+// Mapping from string to FactoryVSTSConfiguration_Type_STATUS
+var factoryVSTSConfiguration_Type_STATUS_Values = map[string]FactoryVSTSConfiguration_Type_STATUS{
+	"factoryvstsconfiguration": FactoryVSTSConfiguration_Type_STATUS_FactoryVSTSConfiguration,
+}
 
 // Client secret information for factory's bring your own app repository configuration.
 type GitHubClientSecret struct {
@@ -4213,7 +4528,7 @@ func (secret *GitHubClientSecret) ConvertToARM(resolved genruntime.ConvertToARMR
 	if secret == nil {
 		return nil, nil
 	}
-	result := &GitHubClientSecret_ARM{}
+	result := &arm.GitHubClientSecret{}
 
 	// Set property "ByoaSecretAkvUrl":
 	if secret.ByoaSecretAkvUrl != nil {
@@ -4231,14 +4546,14 @@ func (secret *GitHubClientSecret) ConvertToARM(resolved genruntime.ConvertToARMR
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (secret *GitHubClientSecret) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &GitHubClientSecret_ARM{}
+	return &arm.GitHubClientSecret{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (secret *GitHubClientSecret) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(GitHubClientSecret_ARM)
+	typedInput, ok := armInput.(arm.GitHubClientSecret)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected GitHubClientSecret_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.GitHubClientSecret, got %T", armInput)
 	}
 
 	// Set property "ByoaSecretAkvUrl":
@@ -4258,7 +4573,7 @@ func (secret *GitHubClientSecret) PopulateFromARM(owner genruntime.ArbitraryOwne
 }
 
 // AssignProperties_From_GitHubClientSecret populates our GitHubClientSecret from the provided source GitHubClientSecret
-func (secret *GitHubClientSecret) AssignProperties_From_GitHubClientSecret(source *v20180601s.GitHubClientSecret) error {
+func (secret *GitHubClientSecret) AssignProperties_From_GitHubClientSecret(source *storage.GitHubClientSecret) error {
 
 	// ByoaSecretAkvUrl
 	secret.ByoaSecretAkvUrl = genruntime.ClonePointerToString(source.ByoaSecretAkvUrl)
@@ -4271,7 +4586,7 @@ func (secret *GitHubClientSecret) AssignProperties_From_GitHubClientSecret(sourc
 }
 
 // AssignProperties_To_GitHubClientSecret populates the provided destination GitHubClientSecret from our GitHubClientSecret
-func (secret *GitHubClientSecret) AssignProperties_To_GitHubClientSecret(destination *v20180601s.GitHubClientSecret) error {
+func (secret *GitHubClientSecret) AssignProperties_To_GitHubClientSecret(destination *storage.GitHubClientSecret) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4318,14 +4633,14 @@ var _ genruntime.FromARMConverter = &GitHubClientSecret_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (secret *GitHubClientSecret_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &GitHubClientSecret_STATUS_ARM{}
+	return &arm.GitHubClientSecret_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (secret *GitHubClientSecret_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(GitHubClientSecret_STATUS_ARM)
+	typedInput, ok := armInput.(arm.GitHubClientSecret_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected GitHubClientSecret_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.GitHubClientSecret_STATUS, got %T", armInput)
 	}
 
 	// Set property "ByoaSecretAkvUrl":
@@ -4345,7 +4660,7 @@ func (secret *GitHubClientSecret_STATUS) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_GitHubClientSecret_STATUS populates our GitHubClientSecret_STATUS from the provided source GitHubClientSecret_STATUS
-func (secret *GitHubClientSecret_STATUS) AssignProperties_From_GitHubClientSecret_STATUS(source *v20180601s.GitHubClientSecret_STATUS) error {
+func (secret *GitHubClientSecret_STATUS) AssignProperties_From_GitHubClientSecret_STATUS(source *storage.GitHubClientSecret_STATUS) error {
 
 	// ByoaSecretAkvUrl
 	secret.ByoaSecretAkvUrl = genruntime.ClonePointerToString(source.ByoaSecretAkvUrl)
@@ -4358,7 +4673,7 @@ func (secret *GitHubClientSecret_STATUS) AssignProperties_From_GitHubClientSecre
 }
 
 // AssignProperties_To_GitHubClientSecret_STATUS populates the provided destination GitHubClientSecret_STATUS from our GitHubClientSecret_STATUS
-func (secret *GitHubClientSecret_STATUS) AssignProperties_To_GitHubClientSecret_STATUS(destination *v20180601s.GitHubClientSecret_STATUS) error {
+func (secret *GitHubClientSecret_STATUS) AssignProperties_To_GitHubClientSecret_STATUS(destination *storage.GitHubClientSecret_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 

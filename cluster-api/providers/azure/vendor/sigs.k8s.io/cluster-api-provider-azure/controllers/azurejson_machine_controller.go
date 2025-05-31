@@ -28,12 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/ptr"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/services/identities"
-	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -46,6 +40,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/services/identities"
+	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // AzureJSONMachineReconciler reconciles Azure json secrets for AzureMachine objects.
@@ -54,6 +56,7 @@ type AzureJSONMachineReconciler struct {
 	Recorder         record.EventRecorder
 	Timeouts         reconciler.Timeouts
 	WatchFilterValue string
+	CredentialCache  azure.CredentialCache
 }
 
 // SetupWithManager initializes this controller with a manager.
@@ -72,7 +75,7 @@ func (r *AzureJSONMachineReconciler) SetupWithManager(ctx context.Context, mgr c
 		WithOptions(options).
 		For(&infrav1.AzureMachine{}).
 		WithEventFilter(filterUnclonedMachinesPredicate{log: log}).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue)).
 		Owns(&corev1.Secret{}).
 		// Add a watch on Clusters to requeue when the infraRef is set. This is needed because the infraRef is not initially
 		// set in Clusters created from a ClusterClass.
@@ -80,8 +83,8 @@ func (r *AzureJSONMachineReconciler) SetupWithManager(ctx context.Context, mgr c
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(azureMachineMapper),
 			builder.WithPredicates(
-				predicates.ClusterUnpausedAndInfrastructureReady(log),
-				predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue),
+				predicates.ClusterPausedTransitionsOrInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
 			),
 		).
 		Complete(r)
@@ -188,10 +191,11 @@ func (r *AzureJSONMachineReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// Create the scope.
 	clusterScope, err := scope.NewClusterScope(ctx, scope.ClusterScopeParams{
-		Client:       r.Client,
-		Cluster:      cluster,
-		AzureCluster: azureCluster,
-		Timeouts:     r.Timeouts,
+		Client:          r.Client,
+		Cluster:         cluster,
+		AzureCluster:    azureCluster,
+		Timeouts:        r.Timeouts,
+		CredentialCache: r.CredentialCache,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to create scope")
