@@ -14,6 +14,7 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 	cp := c.ControlPlane.Platform
 	defMp := c.Platform.Azure.DefaultMachinePlatform
 	return []featuregates.GatedInstallConfigFeature{
+		// todo: jcallen: add multi disk feature gate
 		{
 			FeatureGateName: features.FeatureGateMachineAPIMigration,
 			Condition:       cp.Azure != nil && cp.Azure.Identity != nil && cp.Azure.Identity.UserAssignedIdentities != nil && len(cp.Azure.Identity.UserAssignedIdentities) > 1,

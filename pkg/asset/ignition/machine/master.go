@@ -3,6 +3,7 @@ package machine
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
@@ -13,7 +14,9 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 const (
@@ -44,12 +47,25 @@ func (a *Master) Generate(_ context.Context, dependencies asset.Parents) error {
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
 
-	if installConfig.Config.Platform.Name() == azure.Name {
+	switch installConfig.Config.Platform.Name() {
+	case azure.Name:
 		logrus.Debugf("Adding /var partition to skip CoreOS growfs step")
 		// See https://issues.redhat.com/browse/OCPBUGS-43625
 		ignition.AppendVarPartition(a.Config)
-	}
 
+		for i, d := range installConfig.Config.ControlPlane.DiskSetup {
+			if d.Type == types.Etcd {
+				azurePlatform := installConfig.Config.ControlPlane.Platform.Azure
+				if d.Etcd.PlatformDiskID == azurePlatform.DataDisks[i].NameSuffix {
+					device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azurePlatform.DataDisks[i].Lun)
+					ignition.AddEtcdDisk(a.Config, device)
+				}
+			}
+		}
+
+	case vsphere.Name:
+		// todo
+	}
 	data, err := ignition.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal Ignition config")
