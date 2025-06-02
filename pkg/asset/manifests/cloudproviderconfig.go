@@ -110,6 +110,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		// https://bugzilla.redhat.com/show_bug.cgi?id=1926975.
 		// Note that the newline is required in order to be valid yaml.
 		cm.Data[cloudProviderConfigDataKey] = `[Global]
+nlbSecurityGroupEnabled=true
 `
 	case openstacktypes.Name:
 		cloudProviderConfigData, cloudProviderConfigCABundleData, err := openstackmanifests.GenerateCloudProviderConfig(ctx, *installConfig.Config)
