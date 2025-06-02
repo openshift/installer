@@ -104,21 +104,36 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	return ignSecrets, nil
 }
 
-// InfraReady creates private hosted zone and DNS records.
-func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
-	awsCluster := &capa.AWSCluster{}
-	key := k8sClient.ObjectKey{
-		Name:      in.InfraID,
-		Namespace: capiutils.Namespace,
-	}
-	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
-		return fmt.Errorf("failed to get AWSCluster: %w", err)
-	}
-
-	awsSession, err := in.InstallConfig.AWS.Session(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get aws session: %w", err)
-	}
+// infraReadyHookDNS is a hook function that ensures the DNS infrastructure is properly set up
+// for an AWS-based cluster. It performs the following tasks:
+//
+// 1. Retrieves the VPC ID associated with the subnets if not explicitly provided.
+// 2. Skips DNS record creation if the user has opted for a user-provisioned DNS solution.
+// 3. Creates a private hosted zone in Route53 if it does not already exist.
+// 4. Creates DNS records for the control plane load balancer in both public and private zones.
+//
+// Parameters:
+// - ctx: The context for managing request-scoped values, cancellation, and deadlines.
+// - in: An input structure containing infrastructure-related configuration and metadata.
+// - awsSession: An AWS session used to interact with AWS services.
+// - awsCluster: The AWSCluster object containing cluster-specific configuration and status.
+//
+// Returns:
+// - An error if any step in the DNS setup process fails, or nil if successful.
+//
+// Notes:
+//   - If the user has enabled user-provisioned DNS, the function skips DNS record creation.
+//   - The function handles potential conflicts when creating a private hosted zone, such as
+//     the "ConflictingDomainExists" error, by logging a warning and proceeding.
+//   - The function creates or updates DNS records for both the public API endpoint and the
+//     internal API endpoint (api-int) in the appropriate hosted zones.
+func (p *Provider) infraReadyHookDNS(
+	ctx context.Context,
+	in clusterapi.InfraReadyInput,
+	awsSession *session.Session,
+	awsCluster *capa.AWSCluster,
+) (err error) {
+	client := awsconfig.NewClient(awsSession)
 
 	subnetIDs := make([]string, 0, len(awsCluster.Spec.NetworkSpec.Subnets))
 	for _, s := range awsCluster.Spec.NetworkSpec.Subnets {
@@ -134,8 +149,6 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		}
 	}
 
-	client := awsconfig.NewClient(awsSession)
-
 	// The user has selected to provision their own DNS solution. Skip the creation of the
 	// Hosted Zone(s) and the records for those zones.
 	if in.InstallConfig.Config.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
@@ -147,8 +160,10 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 
 	phzID := in.InstallConfig.Config.AWS.HostedZone
 	if len(phzID) == 0 {
+		// TODO(mtulio): file a bug when REENTRANT=true: need to check if PHZ has been already created before creating
+		// or handle error/exception ConflictingDomainExists. Full error:
+		//  ERROR failed to fetch Cluster: failed to generate asset "Cluster": failed to create cluster: failed provisioning resources after infrastructure ready: failed to create private hosted zone: error creating private hosted zone: ConflictingDomainExists: The VPC vpc-006ef9b0ada34e881 in region us-east-1 has already been associated with the hosted zone Z04314343JJ3BIPAD8WRA with the same domain name.
 		logrus.Debugln("Creating private Hosted Zone")
-
 		res, err := client.CreateHostedZone(ctx, &awsconfig.HostedZoneInput{
 			InfraID:  in.InfraID,
 			VpcID:    vpcID,
@@ -158,7 +173,12 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			UserTags: awsCluster.Spec.AdditionalTags,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create private hosted zone: %w", err)
+			var awsErr awserr.Error
+			if errors.As(err, &awsErr) && awsErr.Code() == "ConflictingDomainExists" {
+				logrus.Warnf("Private hosted zone already exists: %v", err)
+			} else {
+				return fmt.Errorf("failed to create private hosted zone: %w", err)
+			}
 		}
 		phzID = aws.StringValue(res.Id)
 		logrus.Infoln("Created private Hosted Zone")
@@ -223,6 +243,32 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		return fmt.Errorf("failed to create records for api-int in private zone: %w", err)
 	}
 	logrus.Debugln("Created private API record in private zone")
+	return nil
+}
+
+// InfraReady creates additional infrastructure resources not covered by Cluster API,
+// such as private hosted zone and DNS records, extra ingress security groups, etc.
+func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
+	awsCluster := &capa.AWSCluster{}
+	key := k8sClient.ObjectKey{
+		Name:      in.InfraID,
+		Namespace: capiutils.Namespace,
+	}
+	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
+		return fmt.Errorf("failed to get AWSCluster: %w", err)
+	}
+
+	awsSession, err := in.InstallConfig.AWS.Session(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get aws session: %w", err)
+	}
+
+	// InfraReady for feature-specific
+
+	// Provision DNS
+	if err := p.infraReadyHookDNS(ctx, in, awsSession, awsCluster); err != nil {
+		return err
+	}
 
 	return nil
 }

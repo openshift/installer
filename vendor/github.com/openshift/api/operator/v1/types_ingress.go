@@ -842,7 +842,14 @@ type AWSNetworkLoadBalancerParameters struct {
 	// +listType=atomic
 	// +kubebuilder:validation:XValidation:rule=`self.all(x, self.exists_one(y, x == y))`,message="eipAllocations cannot contain duplicates"
 	// +kubebuilder:validation:MaxItems=10
-	EIPAllocations []EIPAllocation `json:"eipAllocations"`
+	EIPAllocations []EIPAllocation `json:"eipAllocations,omitempty"`
+
+	// managedSecurityGroup specifies whether the service load balancer should create
+	// and manage security group for the Network Load Balancer.
+	//
+	// +optional
+	// +openshift:enable:FeatureGate=IngressNLBSecurityGroup
+	ManagedSecurityGroup bool `json:"managedSecurityGroup,omitempty"`
 }
 
 // EIPAllocation is an ID for an Elastic IP (EIP) address that can be allocated to an ELB in the AWS environment.

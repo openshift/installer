@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,7 +10,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=machineconfignodes,scope=Cluster
 // +kubebuilder:subresource:status
-// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/2256
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/2255
 // +openshift:file-pattern=cvoRunLevel=0000_80,operatorName=machine-config,operatorOrdering=01
 // +openshift:enable:FeatureGate=MachineConfigNodes
 // +kubebuilder:printcolumn:name="PoolName",type="string",JSONPath=.spec.pool.name,priority=0
@@ -30,8 +30,8 @@ import (
 // +kubebuilder:metadata:labels=openshift.io/operator-managed=
 
 // MachineConfigNode describes the health of the Machines on the system
-// Compatibility level 4: No compatibility is provided, the API can change at any point for any reason. These capabilities should not be used by applications needing long term support.
-// +openshift:compatibility-gen:level=4
+// Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
+// +openshift:compatibility-gen:level=1
 // +kubebuilder:validation:XValidation:rule="self.metadata.name == self.spec.node.name",message="spec.node.name should match metadata.name"
 type MachineConfigNode struct {
 	metav1.TypeMeta `json:",inline"`
@@ -53,8 +53,8 @@ type MachineConfigNode struct {
 
 // MachineConfigNodeList describes all of the MachinesStates on the system
 //
-// Compatibility level 4: No compatibility is provided, the API can change at any point for any reason. These capabilities should not be used by applications needing long term support.
-// +openshift:compatibility-gen:level=4
+// Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
+// +openshift:compatibility-gen:level=1
 type MachineConfigNodeList struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -98,21 +98,14 @@ type MachineConfigNodeSpec struct {
 	// the new machine config against the current machine config.
 	// +required
 	ConfigVersion MachineConfigNodeSpecMachineConfigVersion `json:"configVersion"`
-
-	// pinnedImageSets is a user defined value that holds the names of the desired image sets that the node should pull and pin.
-	// +listType=map
-	// +listMapKey=name
-	// +kubebuilder:validation:MaxItems=100
-	// +optional
-	// Tombstone: Functionality to correctly and consistely populate this field was not implemented in the MCO, so
-	// when applying a PIS, this field is not being updated. Since this field is not being used, it is being removed
-	// before this API is GAed.
-	// PinnedImageSets []MachineConfigNodeSpecPinnedImageSet `json:"pinnedImageSets,omitempty"`
 }
 
 // MachineConfigNodeStatus holds the reported information on a particular machine config node.
 type MachineConfigNodeStatus struct {
-	// conditions represent the observations of a machine config node's current state.
+	// conditions represent the observations of a machine config node's current state. Valid types are:
+	// UpdatePrepared, UpdateExecuted, UpdatePostActionComplete, UpdateComplete, Updated, Resumed,
+	// Drained, AppliedFilesAndOS, Cordoned, Uncordoned, RebootedNode, NodeDegraded, PinnedImageSetsProgressing,
+	// and PinnedImageSetsDegraded.
 	// +listType=map
 	// +listMapKey=type
 	// +kubebuilder:validation:MaxItems=20
@@ -121,12 +114,12 @@ type MachineConfigNodeStatus struct {
 	// observedGeneration represents the generation of the MachineConfigNode object observed by the Machine Config Operator's controller.
 	// This field is updated when the controller observes a change to the desiredConfig in the configVersion of the machine config node spec.
 	// +kubebuilder:validation:XValidation:rule="self >= oldSelf", message="observedGeneration must not decrease"
-	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Minimum=1
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 	// configVersion describes the current and desired machine config version for this node.
-	// +required
-	ConfigVersion MachineConfigNodeStatusMachineConfigVersion `json:"configVersion"`
+	// +optional
+	ConfigVersion *MachineConfigNodeStatusMachineConfigVersion `json:"configVersion,omitempty"`
 	// pinnedImageSets describes the current and desired pinned image sets for this node.
 	// +listType=map
 	// +listMapKey=name
@@ -150,17 +143,17 @@ type MachineConfigNodeStatusPinnedImageSet struct {
 	Name string `json:"name"`
 	// currentGeneration is the generation of the pinned image set that has most recently been successfully pulled and pinned on this node.
 	// +kubebuilder:validation:XValidation:rule="self >= oldSelf", message="currentGeneration must not decrease"
-	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Minimum=1
 	// +optional
 	CurrentGeneration int32 `json:"currentGeneration,omitempty"`
 	// desiredGeneration is the generation of the pinned image set that is targeted to be pulled and pinned on this node.
 	// +kubebuilder:validation:XValidation:rule="self >= oldSelf", message="desiredGeneration must not decrease"
-	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Minimum=1
 	// +optional
 	DesiredGeneration int32 `json:"desiredGeneration,omitempty"`
 	// lastFailedGeneration is the generation of the most recent pinned image set that failed to be pulled and pinned on this node.
 	// +kubebuilder:validation:XValidation:rule="self >= oldSelf", message="lastFailedGeneration must not decrease"
-	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Minimum=1
 	// +optional
 	LastFailedGeneration int32 `json:"lastFailedGeneration,omitempty"`
 	// lastFailedGenerationError is the error explaining why the desired images failed to be pulled and pinned.
@@ -168,11 +161,6 @@ type MachineConfigNodeStatusPinnedImageSet struct {
 	// +kubebuilder:validation:MaxLength=32768
 	// +optional
 	LastFailedGenerationError string `json:"lastFailedGenerationError,omitempty"`
-	// Previously, failures associated with pinning and pulling images where shared in a list of strings under `LastFailedGenerationErrors`.
-	// This field is being removed and a `LastFailedGenerationError` field of type string is being added in its place as this field will
-	// contain a single error and there is no need for a list anymore.
-	// Tombstone: legacy field no longer needed
-	// LastFailedGenerationErrors []string `json:"lastFailedGenerationErrors,omitempty"`
 }
 
 // MachineConfigNodeStatusMachineConfigVersion holds the current and desired config versions as last updated in the MCN status.
@@ -221,23 +209,7 @@ type MachineConfigNodeSpecMachineConfigVersion struct {
 	Desired string `json:"desired"`
 }
 
-// Tombstone: This struct defines the type of `Spec.PinnedImageSets`, which is being removed. Therefore, this field
-// is also being tombstoned.
-// MachineConfigNodeSpecPinnedImageSet holds information on the desired pinned image sets that the current observed machine config node
-// should pin and pull.
-// type MachineConfigNodeSpecPinnedImageSet struct {
-// 	// name is the name of the pinned image set.
-// 	// Must be a lowercase RFC-1123 subdomain name (https://tools.ietf.org/html/rfc1123) consisting
-// 	// of only lowercase alphanumeric characters, hyphens (-), and periods (.), and must start and end
-// 	// with an alphanumeric character, and be at most 253 characters in length.
-// 	// +kubebuilder:validation:MaxLength:=253
-// 	// +kubebuilder:validation:XValidation:rule="!format.dns1123Subdomain().validate(self).hasValue()",message="a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
-// 	// +required
-// 	Name string `json:"name"`
-// }
-
 // StateProgress is each possible state for each possible MachineConfigNodeType
-// Please note: These conditions are subject to change. Both additions and deletions may be made.
 // +enum
 type StateProgress string
 
