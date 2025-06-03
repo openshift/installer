@@ -437,6 +437,43 @@ func deleteRecordsFromBaseDomain(ctx context.Context, o *ClusterUninstaller) err
 	appsURL := fmt.Sprintf("*.apps.%s", o.ClusterName)
 	errs = append(errs, deleteRecordsets(ctx, o, apiURL, dns.CNAME))
 	errs = append(errs, deleteRecordsets(ctx, o, appsURL, dns.A))
+	errs = append(errs, deleteCustomDNSRecords(ctx, o))
+	return utilerrors.NewAggregate(errs)
+}
+
+func deleteCustomDNSRecords(ctx context.Context, o *ClusterUninstaller) error {
+	var errs []error
+	tag := fmt.Sprintf("kubernetes.io_cluster.%s", o.InfraID)
+	suffix := fmt.Sprintf("%s.%s", o.ClusterName, o.ZoneName)
+	records, err := o.recordsClient.ListAllByDNSZone(ctx, o.BaseDomainResourceGroupName, o.ZoneName, to.Int32Ptr(100), suffix)
+	if err != nil {
+		logrus.Debugf("unable to find records with suffix %s: already deleted or insufficient permissions", suffix)
+		if isAuthError(err) {
+			return err
+		}
+		return nil
+	}
+
+	for _, result := range records.Values() {
+		if value, ok := result.Metadata[tag]; ok && *value == "owned" {
+			deleteResult, err := o.recordsClient.Delete(ctx, o.BaseDomainResourceGroupName, o.ZoneName, *result.Name, dns.A, "")
+			if err != nil {
+				if deleteResult.IsHTTPStatus(http.StatusNotFound) {
+					o.Logger.Debug("already deleted")
+					return utilerrors.NewAggregate(errs)
+				}
+				errs = append(errs, fmt.Errorf("failed to delete base domain dns zone: %w", err))
+				if isAuthError(err) {
+					return err
+				}
+			} else {
+				o.Logger.WithField("record", *result.Name).Info("deleted")
+			}
+		} else {
+			o.Logger.WithField("record", *result.Name).Debugf("metadata mismatch")
+		}
+	}
+
 	return utilerrors.NewAggregate(errs)
 }
 
