@@ -14,6 +14,9 @@ storage:
       path: /etc/kubernetes/static-pod-resources/etcd-member
     - local: etcd-data
       path: /var/lib/etcd
+  directories:
+    - path: /var/lib/etcd/member
+      mode: 0700
   files:
     - path: /etc/kubernetes/bootstrap-secrets/kubeconfig
       contents:
