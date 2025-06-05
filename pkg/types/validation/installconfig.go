@@ -77,8 +77,13 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	if c.FIPS {
 		allErrs = append(allErrs, validateFIPSconfig(c)...)
 	} else if c.SSHKey != "" {
-		if err := validate.SSHPublicKey(c.SSHKey); err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, err.Error()))
+		sshKeys := strings.Split(c.SSHKey, "\n")
+		for _, sshKey := range sshKeys {
+			if sshKey != "" {
+				if err := validate.SSHPublicKey(sshKey); err != nil {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), sshKey, err.Error()))
+				}
+			}
 		}
 	}
 
