@@ -80,6 +80,7 @@
     "masterLoadBalancerName" : "[parameters('baseName')]",
     "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal-lb')]",
     "sshKeyPath" : "/home/core/.ssh/authorized_keys",
+    "identityName" : "[concat(parameters('baseName'), '-identity')]",
     "galleryName": "[concat('gallery_', replace(parameters('baseName'), '-', '_'))]",
     "imageName" : "[concat(parameters('baseName'), if(equals(parameters('hyperVGen'), 'V2'), '-gen2', ''))]",
     "copy" : [
@@ -131,6 +132,12 @@
       },
       "name" : "[variables('vmNames')[copyIndex()]]",
       "location" : "[variables('location')]",
+      "identity" : {
+        "type" : "userAssigned",
+        "userAssignedIdentities" : {
+          "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/', variables('identityName'))]" : {}
+        }
+      },
       "dependsOn" : [
         "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmNames')[copyIndex()], '-nic'))]"
       ],
