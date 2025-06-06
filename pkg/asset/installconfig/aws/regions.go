@@ -4,10 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+)
+
+const (
+	isoPartition  = "aws-iso"
+	isobPartition = "aws-iso-b"
 )
 
 // knownPublicRegions is the subset of public AWS regions where RHEL CoreOS images are published.
@@ -38,4 +44,19 @@ func IsKnownPublicRegion(region string, architecture types.Architecture) (bool, 
 		return false, err
 	}
 	return sets.New(publicRegions...).Has(region), nil
+}
+
+// IsSecretRegion determines if the region is part of a secret partition.
+func IsSecretRegion(region string) (bool, error) {
+	endpoint, err := ec2.NewDefaultEndpointResolver().ResolveEndpoint(region, ec2.EndpointResolverOptions{})
+	if err != nil {
+		return false, fmt.Errorf("failed to resolve AWS ec2 endpoint: %w", err)
+	}
+
+	switch endpoint.PartitionID {
+	case isoPartition, isobPartition:
+		return true, nil
+	}
+
+	return false, nil
 }
