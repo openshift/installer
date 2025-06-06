@@ -11,11 +11,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Retrieves the status of your service-linked role deletion. After you use
-// DeleteServiceLinkedRole to submit a service-linked role for deletion, you can
-// use the DeletionTaskId parameter in GetServiceLinkedRoleDeletionStatus to check
-// the status of the deletion. If the deletion fails, this operation returns the
-// reason that it failed, if that information is returned by the service.
+// Retrieves the status of your service-linked role deletion. After you use DeleteServiceLinkedRole to
+// submit a service-linked role for deletion, you can use the DeletionTaskId
+// parameter in GetServiceLinkedRoleDeletionStatus to check the status of the
+// deletion. If the deletion fails, this operation returns the reason that it
+// failed, if that information is returned by the service.
 func (c *Client) GetServiceLinkedRoleDeletionStatus(ctx context.Context, params *GetServiceLinkedRoleDeletionStatusInput, optFns ...func(*Options)) (*GetServiceLinkedRoleDeletionStatusOutput, error) {
 	if params == nil {
 		params = &GetServiceLinkedRoleDeletionStatusInput{}
@@ -33,8 +33,8 @@ func (c *Client) GetServiceLinkedRoleDeletionStatus(ctx context.Context, params 
 
 type GetServiceLinkedRoleDeletionStatusInput struct {
 
-	// The deletion task identifier. This identifier is returned by the
-	// DeleteServiceLinkedRole operation in the format task/aws-service-role/// .
+	// The deletion task identifier. This identifier is returned by the DeleteServiceLinkedRole operation in
+	// the format task/aws-service-role/// .
 	//
 	// This member is required.
 	DeletionTaskId *string
@@ -101,6 +101,9 @@ func (c *Client) addOperationGetServiceLinkedRoleDeletionStatusMiddlewares(stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -111,6 +114,15 @@ func (c *Client) addOperationGetServiceLinkedRoleDeletionStatusMiddlewares(stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetServiceLinkedRoleDeletionStatusValidationMiddleware(stack); err != nil {
@@ -132,6 +144,18 @@ func (c *Client) addOperationGetServiceLinkedRoleDeletionStatusMiddlewares(stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

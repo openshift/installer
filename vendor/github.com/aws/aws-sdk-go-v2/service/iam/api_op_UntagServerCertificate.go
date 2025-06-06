@@ -11,12 +11,15 @@ import (
 )
 
 // Removes the specified tags from the IAM server certificate. For more
-// information about tagging, see Tagging IAM resources (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
-// in the IAM User Guide. For certificates in a Region supported by Certificate
-// Manager (ACM), we recommend that you don't use IAM server certificates. Instead,
-// use ACM to provision, manage, and deploy your server certificates. For more
-// information about IAM server certificates, Working with server certificates (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html)
-// in the IAM User Guide.
+// information about tagging, see [Tagging IAM resources]in the IAM User Guide.
+//
+// For certificates in a Region supported by Certificate Manager (ACM), we
+// recommend that you don't use IAM server certificates. Instead, use ACM to
+// provision, manage, and deploy your server certificates. For more information
+// about IAM server certificates, [Working with server certificates]in the IAM User Guide.
+//
+// [Working with server certificates]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html
+// [Tagging IAM resources]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html
 func (c *Client) UntagServerCertificate(ctx context.Context, params *UntagServerCertificateInput, optFns ...func(*Options)) (*UntagServerCertificateOutput, error) {
 	if params == nil {
 		params = &UntagServerCertificateInput{}
@@ -34,10 +37,13 @@ func (c *Client) UntagServerCertificate(ctx context.Context, params *UntagServer
 
 type UntagServerCertificateInput struct {
 
-	// The name of the IAM server certificate from which you want to remove tags. This
-	// parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex) )
-	// a string of characters consisting of upper and lowercase alphanumeric characters
-	// with no spaces. You can also include any of the following characters: _+=,.@-
+	// The name of the IAM server certificate from which you want to remove tags.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	ServerCertificateName *string
@@ -101,6 +107,9 @@ func (c *Client) addOperationUntagServerCertificateMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -111,6 +120,15 @@ func (c *Client) addOperationUntagServerCertificateMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUntagServerCertificateValidationMiddleware(stack); err != nil {
@@ -132,6 +150,18 @@ func (c *Client) addOperationUntagServerCertificateMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
