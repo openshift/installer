@@ -1,5 +1,6 @@
 # OpenShift Installer
 
+
 ## Supported Platforms
 
 * [AWS](docs/user/aws/) ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_aws/preparing-to-install-on-aws.html))
