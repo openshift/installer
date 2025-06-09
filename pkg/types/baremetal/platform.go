@@ -2,6 +2,7 @@ package baremetal
 
 import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -44,6 +45,7 @@ type Host struct {
 	RootDeviceHints *RootDeviceHints `json:"rootDeviceHints,omitempty"`
 	BootMode        BootMode         `json:"bootMode,omitempty"`
 	NetworkConfig   *apiextv1.JSON   `json:"networkConfig,omitempty"`
+	ObjectMeta      v1.ObjectMeta    `json:"metadata,omitempty"`
 }
 
 // IsMaster checks if the current host is a master
