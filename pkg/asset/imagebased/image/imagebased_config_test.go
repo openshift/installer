@@ -55,6 +55,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 seedImage: quay.io/openshift-kni/seed-image:4.16.0
 seedVersion: 4.16.0
 installationDisk: /dev/vda
+releaseRegistry: mirror.quay.io
 networkConfig:
   interfaces:
     - name: eth0
@@ -395,6 +396,7 @@ func ibiConfig() *ImageBasedInstallationConfigBuilder {
 			ExtraPartitionStart:  "-40G",
 			ExtraPartitionLabel:  defaultExtraPartitionLabel,
 			ExtraPartitionNumber: 5,
+			ReleaseRegistry:      "mirror.quay.io",
 			Shutdown:             false,
 			SSHKey:               "",
 			PullSecret:           "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}",
