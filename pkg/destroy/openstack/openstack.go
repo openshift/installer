@@ -15,7 +15,6 @@ import (
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servergroups"
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
 	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
-	"github.com/gophercloud/gophercloud/v2/openstack/loadbalancer/v2/apiversions"
 	"github.com/gophercloud/gophercloud/v2/openstack/loadbalancer/v2/loadbalancers"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/floatingips"
@@ -42,10 +41,9 @@ import (
 )
 
 const (
-	cinderCSIClusterIDKey           = "cinder.csi.openstack.org/cluster"
-	manilaCSIClusterIDKey           = "manila.csi.openstack.org/cluster"
-	minOctaviaVersionWithTagSupport = "v2.5"
-	cloudProviderSGNamePattern      = `^lb-sg-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`
+	cinderCSIClusterIDKey      = "cinder.csi.openstack.org/cluster"
+	manilaCSIClusterIDKey      = "manila.csi.openstack.org/cluster"
+	cloudProviderSGNamePattern = `^lb-sg-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`
 )
 
 // Filter holds the key/value pairs for the tags we will be matching
@@ -1301,48 +1299,15 @@ func deleteLoadBalancers(ctx context.Context, opts *clientconfig.ClientOpts, fil
 		return false, nil
 	}
 
-	newallPages, err := apiversions.List(conn).AllPages(ctx)
-	if err != nil {
-		logger.Errorf("Unable to list api versions: %v", err)
-		return false, nil
-	}
-
-	allAPIVersions, err := apiversions.ExtractAPIVersions(newallPages)
-	if err != nil {
-		logger.Errorf("Unable to extract api versions: %v", err)
-		return false, nil
-	}
-
-	var octaviaTagSupport bool
-	octaviaTagSupport = false
-	for _, apiVersion := range allAPIVersions {
-		if apiVersion.ID >= minOctaviaVersionWithTagSupport {
-			octaviaTagSupport = true
-		}
-	}
-
-	tags := filterTags(filter)
-	var allLoadBalancers []loadbalancers.LoadBalancer
-	if octaviaTagSupport {
-		listOpts := loadbalancers.ListOpts{
-			TagsAny: tags,
-		}
-		allPages, err := loadbalancers.List(conn, listOpts).AllPages(ctx)
-		if err != nil {
-			logger.Error(err)
-			return false, nil
-		}
-
-		allLoadBalancers, err = loadbalancers.ExtractLoadBalancers(allPages)
-		if err != nil {
-			logger.Error(err)
-			return false, nil
-		}
-	}
-
-	listOpts := loadbalancers.ListOpts{
-		Description: strings.Join(tags, ","),
-	}
+	// Don't use tags for checking loadbalancers, as tags are useless here -
+	// the only one which was created is:
+	// kube_service_CLUSTERID_NAMESPACE_SERVICENAME
+	// which basically is the same as the loadbalancer name. More reliable
+	// approach would be to check either description or name of the OpenStack
+	// LB resource and check whether it contain clusterID string.
+	clusterID := filter["openshiftClusterID"]
+	var allLoadBalancersToRemove []loadbalancers.LoadBalancer
+	listOpts := loadbalancers.ListOpts{}
 
 	allPages, err := loadbalancers.List(conn, listOpts).AllPages(ctx)
 	if err != nil {
@@ -1350,19 +1315,24 @@ func deleteLoadBalancers(ctx context.Context, opts *clientconfig.ClientOpts, fil
 		return false, nil
 	}
 
-	allLoadBalancersWithTaggedDescription, err := loadbalancers.ExtractLoadBalancers(allPages)
+	allLoadBalancers, err := loadbalancers.ExtractLoadBalancers(allPages)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
 	}
 
-	allLoadBalancers = append(allLoadBalancers, allLoadBalancersWithTaggedDescription...)
+	for _, lb := range allLoadBalancers {
+		if strings.Contains(lb.Description, clusterID) {
+			allLoadBalancersToRemove = append(allLoadBalancersToRemove, lb)
+		}
+	}
+
 	deleteOpts := loadbalancers.DeleteOpts{
 		Cascade: true,
 	}
-	numberToDelete := len(allLoadBalancers)
+	numberToDelete := len(allLoadBalancersToRemove)
 	numberDeleted := 0
-	for _, loadbalancer := range allLoadBalancers {
+	for _, loadbalancer := range allLoadBalancersToRemove {
 		logger.Debugf("Deleting LoadBalancer %q", loadbalancer.ID)
 		err = loadbalancers.Delete(ctx, conn, loadbalancer.ID, deleteOpts).ExtractErr()
 		if err != nil {
