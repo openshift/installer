@@ -213,11 +213,6 @@ deleted. Enable this functionality when there are known reasons disallowing thei
 installing on AWS for machine pools which do not define their own
 platform configuration.
 
-    experimentalPropagateUserTags <boolean>
-      The field is deprecated. ExperimentalPropagateUserTags is an experimental
-flag that directs in-cluster operators to include the specified
-user tags in the tags of the AWS resources that the operators create.
-
     hostedZone <string>
       HostedZone is the ID of an existing hosted zone into which to add DNS
 records for the cluster's internal API. An existing hosted zone can
