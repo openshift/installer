@@ -63,6 +63,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&Ingress{},
 		&DNS{},
 		&Infrastructure{},
+		&MCO{},
 		&Networking{},
 		&Proxy{},
 		&Scheduler{},
@@ -86,6 +87,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) error {
 	ingress := &Ingress{}
 	dns := &DNS{}
+	mco := &MCO{}
 	network := &Networking{}
 	infra := &Infrastructure{}
 	installConfig := &installconfig.InstallConfig{}
@@ -95,7 +97,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	clusterCSIDriverConfig := &ClusterCSIDriverConfig{}
 	imageDigestMirrorSet := &ImageDigestMirrorSet{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig)
+	dependencies.Get(installConfig, ingress, dns, mco, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -125,6 +127,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 
 	m.FileList = append(m.FileList, ingress.Files()...)
 	m.FileList = append(m.FileList, dns.Files()...)
+	m.FileList = append(m.FileList, mco.Files()...)
 	m.FileList = append(m.FileList, network.Files()...)
 	m.FileList = append(m.FileList, infra.Files()...)
 	m.FileList = append(m.FileList, proxy.Files()...)
