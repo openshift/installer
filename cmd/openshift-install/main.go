@@ -60,6 +60,7 @@ func installerMain() {
 		newAgentCmd(ctx),
 		newListFeaturesCmd(),
 		newImageBasedCmd(ctx),
+		newRunCmd(ctx),
 	} {
 		rootCmd.AddCommand(subCmd)
 	}

@@ -33,6 +33,39 @@ func newGraphCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVar(&graphOpts.outputFile, "output-file", "", "file where the graph is written, if empty prints the graph to Stdout.")
 	return cmd
 }
+func RunGraph() (string, error) {
+	logrus.Info("Getting Installer execution Graph")
+	g := gographviz.NewGraph()
+	g.SetName("G")
+	g.SetDir(true)
+	g.SetStrict(true)
+
+	tNodeAttr := map[string]string{
+		string(gographviz.Shape): "box",
+		string(gographviz.Style): "filled",
+	}
+	for _, t := range targets {
+		name := fmt.Sprintf("%q", fmt.Sprintf("Target %s", t.name))
+		g.AddNode("G", name, tNodeAttr)
+		for _, dep := range t.assets {
+			addEdge(g, name, dep)
+		}
+	}
+
+	g.AddAttr("G", "rankdir", "LR")
+	r := regexp.MustCompile(`[. ]`)
+	for _, node := range g.Nodes.Nodes {
+		cluster := r.Split(node.Name, -1)[0][1:]
+		subgraphName := "cluster_" + cluster
+		_, ok := g.SubGraphs.SubGraphs[subgraphName]
+		if !ok {
+			g.AddSubGraph("G", subgraphName, map[string]string{"label": cluster})
+		}
+		g.AddNode(subgraphName, node.Name, nil)
+	}
+
+	return g.String(), nil
+}
 
 func runGraphCmd(cmd *cobra.Command, args []string, cmdTargets []target) error {
 	g := gographviz.NewGraph()

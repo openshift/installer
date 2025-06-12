@@ -78,6 +78,7 @@ require (
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/jongio/azidext/go/azidext v0.5.0
 	github.com/kdomanski/iso9660 v0.2.1
+	github.com/mark3labs/mcp-go v0.30.0
 	github.com/metal3-io/baremetal-operator/apis v0.4.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.4.0
 	github.com/microsoft/kiota-authentication-azure-go v0.6.0
@@ -290,6 +291,7 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
