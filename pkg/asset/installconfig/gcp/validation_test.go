@@ -501,8 +501,8 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	validKeyRingRet := &kmspb.KeyRing{
 		Name: "validKeyRingName",
 	}
-	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &validKeyRing).Return(validKeyRingRet, nil).AnyTimes()
-	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &invalidKeyRing).Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), validProjectName, validRegion, &validKeyRing).Return(validKeyRingRet, nil).AnyTimes()
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), validProjectName, validRegion, &invalidKeyRing).Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
