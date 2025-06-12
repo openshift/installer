@@ -11,12 +11,13 @@ import (
 	operatorv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/manifests/topologies"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 // installConfigFromTopologies generates an install config that would yield the
-// given topologies when determineTopologies is called on it
+// given topologies when DetermineTopologies is called on it
 func installConfigFromTopologies(t *testing.T, options []icOption,
 	controlPlaneTopology configv1.TopologyMode, infrastructureTopology configv1.TopologyMode) *types.InstallConfig {
 	installConfig := icBuild.build(options...)
@@ -47,7 +48,7 @@ func installConfigFromTopologies(t *testing.T, options []icOption,
 	}
 
 	// Assert that this function actually works
-	generatedControlPlaneTopology, generatedInfrastructureTopology := determineTopologies(installConfig)
+	generatedControlPlaneTopology, generatedInfrastructureTopology := topologies.DetermineTopologies(installConfig)
 	assert.Equal(t, generatedControlPlaneTopology, controlPlaneTopology)
 	assert.Equal(t, generatedInfrastructureTopology, infrastructureTopology)
 
