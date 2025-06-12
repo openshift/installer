@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
 )
@@ -34,7 +35,7 @@ var (
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.Platform, fldPath *field.Path) field.ErrorList {
+func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if p.OSDisk.DiskSizeGB < 0 {
@@ -108,8 +109,57 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
+	if pool != nil {
+		if len(p.DataDisks) != 0 && len(pool.DiskSetup) != 0 {
+			allErrs = append(allErrs, validateDataDiskSetup(p, pool, fldPath.Child("dataDisks"))...)
+		}
+	}
+
 	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
 	allErrs = append(allErrs, validateIdentity(poolName, p, fldPath.Child("identity"))...)
+
+	return allErrs
+}
+
+func validateDataDiskSetup(azurePool *azure.MachinePool, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if len(azurePool.DataDisks) > len(pool.DiskSetup) {
+		allErrs = append(allErrs, field.TooLong(fldPath, azurePool.DataDisks, len(pool.DiskSetup)))
+	} else if len(azurePool.DataDisks) < len(pool.DiskSetup) {
+		allErrs = append(allErrs, field.TooLong(fldPath, pool.DiskSetup, len(azurePool.DataDisks)))
+	}
+
+	// return early if disksetp and datadisks don't match lengths
+	if allErrs != nil {
+		return allErrs
+	}
+
+	for i, d := range azurePool.DataDisks {
+		setup := pool.DiskSetup[i]
+		if d.Lun == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%s must have lun id", d.NameSuffix)))
+		}
+
+		if d.DiskSizeGB == 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("DiskSizeGB"), d.DiskSizeGB, "diskSizeGB must be greater than zero"))
+		}
+
+		switch setup.Type {
+		case types.Etcd:
+			if setup.Etcd.PlatformDiskID != d.NameSuffix {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match etcd PlatformDiskID %s", setup.Etcd.PlatformDiskID)))
+			}
+		case types.Swap:
+			if setup.Swap.PlatformDiskID != d.NameSuffix {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match swap PlatformDiskID %s", setup.Swap.PlatformDiskID)))
+			}
+		case types.UserDefined:
+			if setup.UserDefined.PlatformDiskID != d.NameSuffix {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match user defined PlatformDiskID %s", setup.UserDefined.PlatformDiskID)))
+			}
+		}
+	}
 
 	return allErrs
 }
