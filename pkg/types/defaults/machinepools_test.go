@@ -31,41 +31,48 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 	cases := []struct {
 		name     string
 		pool     *types.MachinePool
-		platform string
+		platform *types.Platform
 		expected *types.MachinePool
 	}{
 		{
 			name:     "empty",
 			pool:     &types.MachinePool{},
+			platform: &types.Platform{},
 			expected: defaultMachinePool(""),
 		},
 		{
 			name:     "empty",
 			pool:     &types.MachinePool{Replicas: &defaultEdgeReplicaCount},
+			platform: &types.Platform{},
 			expected: defaultEdgeMachinePool(""),
 		},
 		{
 			name:     "edge",
 			pool:     &types.MachinePool{Name: "edge"},
+			platform: &types.Platform{},
 			expected: defaultEdgeMachinePool("edge"),
 		},
 		{
 			name:     "arbiter",
 			pool:     &types.MachinePool{Name: "arbiter"},
+			platform: &types.Platform{},
 			expected: defaultMachinePoolWithReplicaCount("arbiter", 0),
 		},
 		{
 			name:     "default",
 			pool:     defaultMachinePool("test-name"),
+			platform: &types.Platform{},
 			expected: defaultMachinePool("test-name"),
 		},
 		{
 			name:     "default",
 			pool:     defaultEdgeMachinePool("test-name"),
+			platform: &types.Platform{},
 			expected: defaultEdgeMachinePool("test-name"),
 		},
 		{
-			name: "non-default replicas",
+			name:     "non-default replicas",
+			platform: &types.Platform{},
 			pool: func() *types.MachinePool {
 				p := defaultMachinePool("test-name")
 				repCount := int64(5)
@@ -80,7 +87,8 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 			}(),
 		},
 		{
-			name: "non-default replicas",
+			name:     "non-default replicas",
+			platform: &types.Platform{},
 			pool: func() *types.MachinePool {
 				p := defaultEdgeMachinePool("test-name")
 				repCount := int64(5)
@@ -95,7 +103,8 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 			}(),
 		},
 		{
-			name: "non-default hyperthreading",
+			name:     "non-default hyperthreading",
+			platform: &types.Platform{},
 			pool: func() *types.MachinePool {
 				p := defaultMachinePool("test-name")
 				p.Hyperthreading = types.HyperthreadingMode("test-hyperthreading")
@@ -108,7 +117,8 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 			}(),
 		},
 		{
-			name: "non-default hyperthreading",
+			name:     "non-default hyperthreading",
+			platform: &types.Platform{},
 			pool: func() *types.MachinePool {
 				p := defaultEdgeMachinePool("test-name")
 				p.Hyperthreading = types.HyperthreadingMode("test-hyperthreading")

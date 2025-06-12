@@ -122,18 +122,18 @@ func (mr *MockAPIMockRecorder) GetImage(ctx, name, project any) *gomock.Call {
 }
 
 // GetKeyRing mocks base method.
-func (m *MockAPI) GetKeyRing(ctx context.Context, kmsKeyRef *gcp.KMSKeyReference) (*kmspb.KeyRing, error) {
+func (m *MockAPI) GetKeyRing(ctx context.Context, project, region string, kmsKeyRef *gcp.KMSKeyReference) (*kmspb.KeyRing, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetKeyRing", ctx, kmsKeyRef)
+	ret := m.ctrl.Call(m, "GetKeyRing", ctx, project, region, kmsKeyRef)
 	ret0, _ := ret[0].(*kmspb.KeyRing)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetKeyRing indicates an expected call of GetKeyRing.
-func (mr *MockAPIMockRecorder) GetKeyRing(ctx, kmsKeyRef any) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetKeyRing(ctx, project, region, kmsKeyRef any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKeyRing", reflect.TypeOf((*MockAPI)(nil).GetKeyRing), ctx, kmsKeyRef)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKeyRing", reflect.TypeOf((*MockAPI)(nil).GetKeyRing), ctx, project, region, kmsKeyRef)
 }
 
 // GetMachineType mocks base method.
