@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -53,12 +54,14 @@ func (a *Master) Generate(_ context.Context, dependencies asset.Parents) error {
 		// See https://issues.redhat.com/browse/OCPBUGS-43625
 		ignition.AppendVarPartition(a.Config)
 
-		for i, d := range installConfig.Config.ControlPlane.DiskSetup {
-			if d.Type == types.Etcd {
-				azurePlatform := installConfig.Config.ControlPlane.Platform.Azure
-				if d.Etcd.PlatformDiskID == azurePlatform.DataDisks[i].NameSuffix {
-					device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azurePlatform.DataDisks[i].Lun)
-					ignition.AddEtcdDisk(a.Config, device)
+		if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateAzureMultiDisk) {
+			for i, d := range installConfig.Config.ControlPlane.DiskSetup {
+				if d.Type == types.Etcd {
+					azurePlatform := installConfig.Config.ControlPlane.Platform.Azure
+					if d.Etcd.PlatformDiskID == azurePlatform.DataDisks[i].NameSuffix {
+						device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azurePlatform.DataDisks[i].Lun)
+						ignition.AddEtcdDisk(a.Config, device)
+					}
 				}
 			}
 		}
