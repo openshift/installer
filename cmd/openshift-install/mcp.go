@@ -49,6 +49,8 @@ func newRunMcpSseCmd() *cobra.Command {
 }
 
 func newRunMcpStdioCmd() *cobra.Command {
+
+	// this wouldn't work as-is since logging is sent to stdout
 	return &cobra.Command{
 		Use:   "mcp-server-stdio",
 		Short: "Run MCP Server Stdio",
@@ -78,23 +80,113 @@ func tools() []server.ServerTool {
 			Tool: mcp.NewTool("create_cluster",
 				mcp.WithDescription("Create OpenShift cluster"),
 			),
-			Handler: func(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-				return mcpserver.ProcessResults(runCreateCluster()), nil
+			Handler: func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+				return mcpserver.ProcessResults(runCreateCluster(ctx, req)), nil
 			},
 		},
 	}
 }
 
-func runCreateCluster() (string, error) {
-	ctx := context.Background()
+type McpLogrusHook struct {
+	// LogLevels specifies which log levels should trigger this hook.
+	LogLevels []logrus.Level
+
+	MCPServer *server.MCPServer
+
+	ProgressToken mcp.ProgressToken
+	ClientContext context.Context
+}
+
+func (hook *McpLogrusHook) Fire(entry *logrus.Entry) error {
+	line, err := entry.String()
+	if err != nil {
+		// If formatting fails, we return an error.
+		return fmt.Errorf("failed to format log entry: %w", err)
+	}
+	//logMsgNotify := mcp.NewLoggingMessageNotification(mcp.LoggingLevel(entry.Level.String()), "logrus", line)
+
+	err = hook.MCPServer.SendNotificationToClient(hook.ClientContext,
+		"notifications/message",
+		map[string]any{
+			"level":  entry.Level.String(),
+			"data":   line,
+			"logger": "logrus",
+		},
+	)
+	if err != nil {
+		logrus.Warnf("Failed to send notification to MCP server: %v", err)
+	}
+
+	return err
+}
+func (hook *McpLogrusHook) Levels() []logrus.Level {
+	return hook.LogLevels
+}
+
+func runCreateCluster(ctx context.Context, req mcp.CallToolRequest) (string, error) {
+	logrus.Info("MCP Server Creating OpenShift cluster")
+	srv := server.ServerFromContext(ctx)
+	hook := &McpLogrusHook{
+		LogLevels: []logrus.Level{
+			logrus.InfoLevel,
+			logrus.WarnLevel,
+			logrus.ErrorLevel,
+			logrus.FatalLevel,
+			logrus.PanicLevel,
+		},
+		MCPServer: srv,
+	}
+
+	hook.ClientContext = ctx
+	progressToken := req.Params.Meta.ProgressToken
+	if progressToken != nil {
+		hook.ProgressToken = progressToken
+	}
+
+	logrus.AddHook(hook)
 
 	// how do I create install config????
 	// or how could use the tui to my advantage ?
 
-	runCommand := runTargetCmd(ctx, targetassets.Cluster...)
+	i := 0
+	steps := 2
 
+	if progressToken != nil {
+		err := srv.SendNotificationToClient(
+			ctx,
+			"notifications/progress",
+			map[string]any{
+				"progress":      i,
+				"total":         steps,
+				"progressToken": progressToken,
+				"message":       fmt.Sprintf("Server progress %d", i/steps),
+			},
+		)
+		if err != nil {
+			logrus.Warn(err)
+		}
+	}
+
+	runCommand := runTargetCmd(ctx, targetassets.Cluster...)
 	runCommand(clusterTarget.command, []string{})
 
+	i = 1
+
+	if progressToken != nil {
+		err := srv.SendNotificationToClient(
+			ctx,
+			"notifications/progress",
+			map[string]any{
+				"progress":      i,
+				"total":         steps,
+				"progressToken": progressToken,
+				"message":       fmt.Sprintf("Server progress %d", i/steps),
+			},
+		)
+		if err != nil {
+			logrus.Warn(err)
+		}
+	}
 	exitCode, err := clusterCreatePostRun(ctx)
 	if err != nil {
 		return "", err

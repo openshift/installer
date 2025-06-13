@@ -19,17 +19,24 @@ type InstallerMcpServer struct {
 // using design examples from https://github.com/Prashanth684/releasecontroller-mcp-server/tree/main
 
 func NewInstallerMcpServer(serverTools []server.ServerTool) *InstallerMcpServer {
+
 	installerMcpServer := &InstallerMcpServer{}
 
 	// todo: yeah I know...
 
 	versionString, _ := version.Version()
 
+	hooks := &server.Hooks{}
+
+	hooks.AddOnRegisterSession(func(ctx context.Context, session server.ClientSession) {
+		logrus.Info(session.SessionID())
+	})
 	s := server.NewMCPServer(
 		"OpenShift Installer",
 		versionString,
 		server.WithToolCapabilities(true),
 		server.WithLogging(),
+		server.WithHooks(hooks),
 	)
 
 	installerMcpServer.Server = s
@@ -72,7 +79,8 @@ func (i *InstallerMcpServer) RunServeStdio() error {
 }
 
 func (i *InstallerMcpServer) RunSSEServer() error {
-	sseServer := server.NewSSEServer(i.Server)
+	sseServer := server.NewSSEServer(i.Server,
+		server.WithKeepAlive(true))
 	logrus.Info("Starting MCP SSE Server")
 	return sseServer.Start(":8080")
 }
