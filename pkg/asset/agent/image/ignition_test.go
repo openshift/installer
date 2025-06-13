@@ -379,6 +379,7 @@ func commonFiles() []string {
 		"/root/.docker/config.json",
 		"/root/assisted.te",
 		"/usr/local/bin/agent-config-image-wait.sh",
+		"/usr/local/bin/agent-extract-tui.sh",
 		"/usr/local/bin/agent-gather",
 		"/usr/local/bin/extract-agent.sh",
 		"/usr/local/bin/get-container-images.sh",
