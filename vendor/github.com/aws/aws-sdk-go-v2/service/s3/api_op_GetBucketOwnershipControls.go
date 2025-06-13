@@ -14,14 +14,22 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This operation is not supported by directory buckets. Retrieves
-// OwnershipControls for an Amazon S3 bucket. To use this operation, you must have
-// the s3:GetBucketOwnershipControls permission. For more information about Amazon
-// S3 permissions, see Specifying permissions in a policy (https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-with-s3-actions.html)
-// . For information about Amazon S3 Object Ownership, see Using Object Ownership (https://docs.aws.amazon.com/AmazonS3/latest/userguide/about-object-ownership.html)
-// . The following operations are related to GetBucketOwnershipControls :
-//   - PutBucketOwnershipControls
-//   - DeleteBucketOwnershipControls
+// This operation is not supported for directory buckets.
+//
+// Retrieves OwnershipControls for an Amazon S3 bucket. To use this operation, you
+// must have the s3:GetBucketOwnershipControls permission. For more information
+// about Amazon S3 permissions, see [Specifying permissions in a policy].
+//
+// For information about Amazon S3 Object Ownership, see [Using Object Ownership].
+//
+// The following operations are related to GetBucketOwnershipControls :
+//
+// # PutBucketOwnershipControls
+//
+// # DeleteBucketOwnershipControls
+//
+// [Using Object Ownership]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/about-object-ownership.html
+// [Specifying permissions in a policy]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-with-s3-actions.html
 func (c *Client) GetBucketOwnershipControls(ctx context.Context, params *GetBucketOwnershipControlsInput, optFns ...func(*Options)) (*GetBucketOwnershipControlsOutput, error) {
 	if params == nil {
 		params = &GetBucketOwnershipControlsInput{}
@@ -53,6 +61,7 @@ type GetBucketOwnershipControlsInput struct {
 }
 
 func (in *GetBucketOwnershipControlsInput) bindEndpointParams(p *EndpointParameters) {
+
 	p.Bucket = in.Bucket
 	p.UseS3ExpressControlEndpoint = ptr.Bool(true)
 }
@@ -112,6 +121,9 @@ func (c *Client) addOperationGetBucketOwnershipControlsMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,6 +137,18 @@ func (c *Client) addOperationGetBucketOwnershipControlsMiddlewares(stack *middle
 		return err
 	}
 	if err = addPutBucketContextMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addIsExpressUserAgent(stack); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetBucketOwnershipControlsValidationMiddleware(stack); err != nil {
@@ -158,6 +182,18 @@ func (c *Client) addOperationGetBucketOwnershipControlsMiddlewares(stack *middle
 		return err
 	}
 	if err = addSerializeImmutableHostnameBucketMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

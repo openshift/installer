@@ -13,18 +13,32 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This operation is not supported by directory buckets. Deletes an inventory
-// configuration (identified by the inventory ID) from the bucket. To use this
-// operation, you must have permissions to perform the s3:PutInventoryConfiguration
-// action. The bucket owner has this permission by default. The bucket owner can
-// grant this permission to others. For more information about permissions, see
-// Permissions Related to Bucket Subresource Operations (https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-with-s3-actions.html#using-with-s3-actions-related-to-bucket-subresources)
-// and Managing Access Permissions to Your Amazon S3 Resources (https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-access-control.html)
-// . For information about the Amazon S3 inventory feature, see Amazon S3 Inventory (https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-inventory.html)
-// . Operations related to DeleteBucketInventoryConfiguration include:
-//   - GetBucketInventoryConfiguration (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketInventoryConfiguration.html)
-//   - PutBucketInventoryConfiguration (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketInventoryConfiguration.html)
-//   - ListBucketInventoryConfigurations (https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBucketInventoryConfigurations.html)
+// This operation is not supported for directory buckets.
+//
+// Deletes an inventory configuration (identified by the inventory ID) from the
+// bucket.
+//
+// To use this operation, you must have permissions to perform the
+// s3:PutInventoryConfiguration action. The bucket owner has this permission by
+// default. The bucket owner can grant this permission to others. For more
+// information about permissions, see [Permissions Related to Bucket Subresource Operations]and [Managing Access Permissions to Your Amazon S3 Resources].
+//
+// For information about the Amazon S3 inventory feature, see [Amazon S3 Inventory].
+//
+// Operations related to DeleteBucketInventoryConfiguration include:
+//
+// [GetBucketInventoryConfiguration]
+//
+// [PutBucketInventoryConfiguration]
+//
+// [ListBucketInventoryConfigurations]
+//
+// [Amazon S3 Inventory]: https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-inventory.html
+// [ListBucketInventoryConfigurations]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBucketInventoryConfigurations.html
+// [Permissions Related to Bucket Subresource Operations]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-with-s3-actions.html#using-with-s3-actions-related-to-bucket-subresources
+// [Managing Access Permissions to Your Amazon S3 Resources]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-access-control.html
+// [PutBucketInventoryConfiguration]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketInventoryConfiguration.html
+// [GetBucketInventoryConfiguration]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketInventoryConfiguration.html
 func (c *Client) DeleteBucketInventoryConfiguration(ctx context.Context, params *DeleteBucketInventoryConfigurationInput, optFns ...func(*Options)) (*DeleteBucketInventoryConfigurationOutput, error) {
 	if params == nil {
 		params = &DeleteBucketInventoryConfigurationInput{}
@@ -61,6 +75,7 @@ type DeleteBucketInventoryConfigurationInput struct {
 }
 
 func (in *DeleteBucketInventoryConfigurationInput) bindEndpointParams(p *EndpointParameters) {
+
 	p.Bucket = in.Bucket
 	p.UseS3ExpressControlEndpoint = ptr.Bool(true)
 }
@@ -115,6 +130,9 @@ func (c *Client) addOperationDeleteBucketInventoryConfigurationMiddlewares(stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -128,6 +146,18 @@ func (c *Client) addOperationDeleteBucketInventoryConfigurationMiddlewares(stack
 		return err
 	}
 	if err = addPutBucketContextMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addIsExpressUserAgent(stack); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteBucketInventoryConfigurationValidationMiddleware(stack); err != nil {
@@ -161,6 +191,18 @@ func (c *Client) addOperationDeleteBucketInventoryConfigurationMiddlewares(stack
 		return err
 	}
 	if err = addSerializeImmutableHostnameBucketMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
