@@ -209,6 +209,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 		networkSpec.NodePortIngressRuleCidrBlocks = []string{capiutils.CIDRFromInstallConfig(ic).String()}
 	}
 
+	awsCluster.Spec.NetworkSpec = networkSpec
 	if ic.Config.PublicAPI() {
 		awsCluster.Spec.SecondaryControlPlaneLoadBalancer = &capa.AWSLoadBalancerSpec{
 			Name:                   ptr.To(clusterID.InfraID + "-ext"),
