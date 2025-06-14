@@ -12,7 +12,7 @@ import (
 type processingFunc = func(args []string, gciCfg config.Config) error
 
 func (e *Executor) newGciCommand(use, short, long string, aliases []string, stdInSupport bool, processingFunc processingFunc) *cobra.Command {
-	var noInlineComments, noPrefixComments, skipGenerated, customOrder, debug *bool
+	var noInlineComments, noPrefixComments, skipGenerated, skipVendor, customOrder, debug *bool
 	var sectionStrings, sectionSeparatorStrings *[]string
 	cmd := cobra.Command{
 		Use:               use,
@@ -26,6 +26,7 @@ func (e *Executor) newGciCommand(use, short, long string, aliases []string, stdI
 				NoPrefixComments: *noPrefixComments,
 				Debug:            *debug,
 				SkipGenerated:    *skipGenerated,
+				SkipVendor:       *skipVendor,
 				CustomOrder:      *customOrder,
 			}
 			gciCfg, err := config.YamlConfig{Cfg: fmtCfg, SectionStrings: *sectionStrings, SectionSeparatorStrings: *sectionSeparatorStrings}.Parse()
@@ -47,14 +48,16 @@ func (e *Executor) newGciCommand(use, short, long string, aliases []string, stdI
 
 	debug = cmd.Flags().BoolP("debug", "d", false, "Enables debug output from the formatter")
 
-	sectionHelp := `Sections define how inputs will be processed. Section names are case-insensitive and may contain parameters in (). The section order is standard > default > custom > blank > dot. The default value is [standard,default].
-standard - standard section that Golang provides officially, like "fmt"
+	sectionHelp := `Sections define how inputs will be processed. Section names are case-insensitive and may contain parameters in (). The section order is standard > default > custom > blank > dot > alias. The default value is [standard,default].
+standard - standard section that Go provides officially, like "fmt"
 Prefix(github.com/daixiang0) - custom section, groups all imports with the specified Prefix. Imports will be matched to the longest Prefix. Multiple custom prefixes may be provided, they will be rendered as distinct sections separated by newline. You can regroup multiple prefixes by separating them with comma: Prefix(github.com/daixiang0,gitlab.com/daixiang0,daixiang0)
 default - default section, contains all rest imports
 blank - blank section, contains all blank imports.
-dot - dot section, contains all dot imports.`
+dot - dot section, contains all dot imports.
+alias - alias section, contains all alias imports.`
 
 	skipGenerated = cmd.Flags().Bool("skip-generated", false, "Skip generated files")
+	skipVendor = cmd.Flags().Bool("skip-vendor", false, "Skip files inside vendor directory")
 
 	customOrder = cmd.Flags().Bool("custom-order", false, "Enable custom order of sections")
 	sectionStrings = cmd.Flags().StringArrayP("section", "s", section.DefaultSections().String(), sectionHelp)

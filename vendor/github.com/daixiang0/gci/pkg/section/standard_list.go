@@ -1,12 +1,14 @@
 package section
 
-// Code generated based on go1.20.1. DO NOT EDIT.
+// Code generated based on go1.22.0 X:arenas. DO NOT EDIT.
 
 var standardPackages = map[string]struct{}{
 	"archive/tar":          {},
 	"archive/zip":          {},
+	"arena":                {},
 	"bufio":                {},
 	"bytes":                {},
+	"cmp":                  {},
 	"compress/bzip2":       {},
 	"compress/flate":       {},
 	"compress/gzip":        {},
@@ -76,6 +78,7 @@ var standardPackages = map[string]struct{}{
 	"go/scanner":           {},
 	"go/token":             {},
 	"go/types":             {},
+	"go/version":           {},
 	"hash":                 {},
 	"hash/adler32":         {},
 	"hash/crc32":           {},
@@ -96,12 +99,15 @@ var standardPackages = map[string]struct{}{
 	"io/fs":                {},
 	"io/ioutil":            {},
 	"log":                  {},
+	"log/slog":             {},
 	"log/syslog":           {},
+	"maps":                 {},
 	"math":                 {},
 	"math/big":             {},
 	"math/bits":            {},
 	"math/cmplx":           {},
 	"math/rand":            {},
+	"math/rand/v2":         {},
 	"mime":                 {},
 	"mime/multipart":       {},
 	"mime/quotedprintable": {},
@@ -139,6 +145,7 @@ var standardPackages = map[string]struct{}{
 	"runtime/pprof":        {},
 	"runtime/race":         {},
 	"runtime/trace":        {},
+	"slices":               {},
 	"sort":                 {},
 	"strconv":              {},
 	"strings":              {},
@@ -149,6 +156,7 @@ var standardPackages = map[string]struct{}{
 	"testing/fstest":       {},
 	"testing/iotest":       {},
 	"testing/quick":        {},
+	"testing/slogtest":     {},
 	"text/scanner":         {},
 	"text/tabwriter":       {},
 	"text/template":        {},
