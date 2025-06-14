@@ -7,13 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	elbv2types "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/elbv2"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +23,7 @@ import (
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	awsmanifest "github.com/openshift/installer/pkg/asset/manifests/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -128,7 +130,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	vpcID := awsCluster.Spec.NetworkSpec.VPC.ID
 	if len(subnetIDs) > 0 && len(vpcID) == 0 {
 		// All subnets belong to the same VPC, so we only need one
-		vpcID, err = getVPCFromSubnets(ctx, awsSession, awsCluster.Spec.Region, subnetIDs[:1])
+		vpcID, err = getVPCFromSubnets(ctx, in.InstallConfig, subnetIDs[:1])
 		if err != nil {
 			return err
 		}
@@ -160,7 +162,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		if err != nil {
 			return fmt.Errorf("failed to create private hosted zone: %w", err)
 		}
-		phzID = aws.StringValue(res.Id)
+		phzID = *res.Id
 		logrus.Infoln("Created private Hosted Zone")
 	}
 
@@ -175,7 +177,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		}
 
 		pubLB := awsCluster.Status.Network.SecondaryAPIServerELB
-		aliasZoneID, err := getHostedZoneIDForNLB(ctx, awsSession, awsCluster.Spec.Region, pubLB.Name)
+		aliasZoneID, err := getHostedZoneIDForNLB(ctx, in.InstallConfig, pubLB.Name)
 		if err != nil {
 			return fmt.Errorf("failed to find HostedZone ID for NLB: %w", err)
 		}
@@ -184,7 +186,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			Name:           apiName,
 			Region:         awsCluster.Spec.Region,
 			DNSTarget:      pubLB.DNSName,
-			ZoneID:         aws.StringValue(zone.Id),
+			ZoneID:         *zone.Id,
 			AliasZoneID:    aliasZoneID,
 			HostedZoneRole: "", // we dont want to assume role here
 		}); err != nil {
@@ -193,7 +195,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		logrus.Debugln("Created public API record in public zone")
 	}
 
-	aliasZoneID, err := getHostedZoneIDForNLB(ctx, awsSession, awsCluster.Spec.Region, awsCluster.Status.Network.APIServerELB.Name)
+	aliasZoneID, err := getHostedZoneIDForNLB(ctx, in.InstallConfig, awsCluster.Status.Network.APIServerELB.Name)
 	if err != nil {
 		return fmt.Errorf("failed to find HostedZone ID for NLB: %w", err)
 	}
@@ -227,61 +229,84 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	return nil
 }
 
-func getVPCFromSubnets(ctx context.Context, awsSession *session.Session, region string, subnetIDs []string) (string, error) {
+func getVPCFromSubnets(ctx context.Context, ic *installconfig.InstallConfig, subnetIDs []string) (string, error) {
 	var vpcID string
-	var lastError error
-	client := ec2.New(awsSession, aws.NewConfig().WithRegion(region))
-	err := client.DescribeSubnetsPagesWithContext(
-		ctx,
-		&ec2.DescribeSubnetsInput{SubnetIds: aws.StringSlice(subnetIDs)},
-		func(results *ec2.DescribeSubnetsOutput, lastPage bool) bool {
-			for _, subnet := range results.Subnets {
-				if subnet.SubnetId == nil {
-					continue
-				}
-				if subnet.SubnetArn == nil {
-					lastError = fmt.Errorf("%s has no ARN", *subnet.SubnetId)
-					return false
-				}
-				if subnet.VpcId == nil {
-					lastError = fmt.Errorf("%s has no VPC", *subnet.SubnetId)
-					return false
-				}
-				if subnet.AvailabilityZone == nil {
-					lastError = fmt.Errorf("%s has no availability zone", *subnet.SubnetId)
-					return false
-				}
-				// All subnets belong to the same VPC
-				vpcID = aws.StringValue(subnet.VpcId)
-				lastError = nil
-				return true
-			}
-			return !lastPage
-		},
-	)
-	if err == nil {
-		err = lastError
-	}
+
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.AWS.Region))
 	if err != nil {
-		return "", fmt.Errorf("failed to get VPC from subnets: %w", err)
+		return "", fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	client := ec2.NewFromConfig(cfg, func(options *ec2.Options) {
+		options.Region = ic.Config.AWS.Region
+		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "ec2") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	paginator := ec2.NewDescribeSubnetsPaginator(client, &ec2.DescribeSubnetsInput{SubnetIds: subnetIDs})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return "", fmt.Errorf("failed to get VPC from subnets: %w", err)
+		}
+		for _, subnet := range page.Subnets {
+			if subnet.SubnetId == nil {
+				continue
+			}
+			if subnet.SubnetArn == nil {
+				return "", fmt.Errorf("%s has no ARN", *subnet.SubnetId)
+			}
+			if subnet.VpcId == nil {
+				return "", fmt.Errorf("%s has no VPC", *subnet.SubnetId)
+			}
+			if subnet.AvailabilityZone == nil {
+				return "", fmt.Errorf("%s has no availability zone", *subnet.SubnetId)
+			}
+			vpcID = *subnet.VpcId
+			// All subnets belong to the same VPC
+			break
+		}
+	}
+
+	if vpcID == "" {
+		return "", fmt.Errorf("no VPC found for subnets %v", subnetIDs)
 	}
 
 	return vpcID, nil
 }
 
 // getHostedZoneIDForNLB returns the HostedZone ID for a region from a known table or queries it from the LB instead.
-func getHostedZoneIDForNLB(ctx context.Context, awsSession *session.Session, region string, lbName string) (string, error) {
-	if hzID, ok := awsconfig.HostedZoneIDPerRegionNLBMap[region]; ok {
+func getHostedZoneIDForNLB(ctx context.Context, ic *installconfig.InstallConfig, lbName string) (string, error) {
+	if hzID, ok := awsconfig.HostedZoneIDPerRegionNLBMap[ic.Config.AWS.Region]; ok {
 		return hzID, nil
 	}
+
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.Platform.AWS.Region))
+	if err != nil {
+		return "", fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	client := elbv2.NewFromConfig(cfg, func(options *elbv2.Options) {
+		options.Region = ic.Config.Platform.AWS.Region
+		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "elasticloadbalancing") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
 	// If the HostedZoneID is not known, query from the LoadBalancer
 	input := elbv2.DescribeLoadBalancersInput{
-		Names: aws.StringSlice([]string{lbName}),
+		Names: []string{lbName},
 	}
-	res, err := elbv2.New(awsSession).DescribeLoadBalancersWithContext(ctx, &input)
+
+	res, err := client.DescribeLoadBalancers(ctx, &input)
 	if err != nil {
-		var awsErr awserr.Error
-		if errors.As(err, &awsErr) && awsErr.Code() == elbv2.ErrCodeLoadBalancerNotFoundException {
+		var lbError *elbv2types.LoadBalancerNotFoundException
+		if errors.As(err, &lbError) {
 			return "", errNotFound
 		}
 		return "", fmt.Errorf("failed to list load balancers: %w", err)
@@ -426,17 +451,8 @@ func isSSHRuleGone(ctx context.Context, session *session.Session, region, sgID s
 
 // PostDestroy deletes the ignition bucket after capi stopped running, so it won't try to reconcile the bucket.
 func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerInput) error {
-	region := in.Metadata.AWS.Region
-	session, err := awsconfig.GetSessionWithOptions(
-		awsconfig.WithRegion(region),
-		awsconfig.WithServiceEndpoints(region, in.Metadata.AWS.ServiceEndpoints),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create aws session: %w", err)
-	}
-
 	bucketName := awsmanifest.GetIgnitionBucketName(in.Metadata.InfraID)
-	if err := removeS3Bucket(ctx, session, bucketName); err != nil {
+	if err := removeS3Bucket(ctx, in.Metadata.AWS.Region, bucketName, in.Metadata.AWS.ServiceEndpoints); err != nil {
 		if p.bestEffortDeleteIgnition {
 			logrus.Warnf("failed to delete ignition bucket %s: %v", bucketName, err)
 			return nil
@@ -448,46 +464,56 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 }
 
 // removeS3Bucket deletes an s3 bucket given its name.
-func removeS3Bucket(ctx context.Context, session *session.Session, bucketName string) error {
-	client := s3.New(session)
-
-	iter := s3manager.NewDeleteListIterator(client, &s3.ListObjectsInput{
-		Bucket: aws.String(bucketName),
-	})
-	err := s3manager.NewBatchDeleteWithClient(client).Delete(ctx, iter)
-	if err != nil && !isBucketNotFound(err) {
-		return err
+func removeS3Bucket(ctx context.Context, region string, bucketName string, endpoints []awstypes.ServiceEndpoint) error {
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(region))
+	if err != nil {
+		return fmt.Errorf("failed to load AWS config: %w", err)
 	}
-	logrus.Debugf("bucket %q emptied", bucketName)
 
-	if _, err := client.DeleteBucketWithContext(ctx, &s3.DeleteBucketInput{Bucket: aws.String(bucketName)}); err != nil {
-		if isBucketNotFound(err) {
+	client := s3.NewFromConfig(cfg, func(options *s3.Options) {
+		options.Region = region
+		for _, endpoint := range endpoints {
+			if strings.EqualFold(endpoint.Name, "s3") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{Bucket: aws.String(bucketName)})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to list objects in bucket %s: %w", bucketName, err)
+		}
+
+		var objects []s3types.ObjectIdentifier
+		for _, object := range page.Contents {
+			objects = append(objects, s3types.ObjectIdentifier{
+				Key: object.Key,
+			})
+		}
+
+		if len(objects) > 0 {
+			if _, err = client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+				Bucket: aws.String(bucketName),
+				Delete: &s3types.Delete{
+					Objects: objects,
+				},
+			}); err != nil {
+				return fmt.Errorf("failed to delete objects in bucket %s: %w", bucketName, err)
+			}
+		}
+	}
+
+	if _, err := client.DeleteBucket(ctx, &s3.DeleteBucketInput{Bucket: aws.String(bucketName)}); err != nil {
+		var noSuckBucket *s3types.NoSuchBucket
+		if errors.As(err, &noSuckBucket) {
 			logrus.Debugf("bucket %q already deleted", bucketName)
 			return nil
 		}
-		return err
+		return fmt.Errorf("failed to delete bucket %s: %w", bucketName, err)
 	}
-	return nil
-}
 
-func isBucketNotFound(err interface{}) bool {
-	switch s3Err := err.(type) {
-	case awserr.Error:
-		if s3Err.Code() == s3.ErrCodeNoSuchBucket {
-			return true
-		}
-		origErr := s3Err.OrigErr()
-		if origErr != nil {
-			return isBucketNotFound(origErr)
-		}
-	case s3manager.Error:
-		if s3Err.OrigErr != nil {
-			return isBucketNotFound(s3Err.OrigErr)
-		}
-	case s3manager.Errors:
-		if len(s3Err) == 1 {
-			return isBucketNotFound(s3Err[0])
-		}
-	}
-	return false
+	logrus.Debugf("bucket %q emptied", bucketName)
+	return nil
 }

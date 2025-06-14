@@ -3,9 +3,12 @@ package clusterapi
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/sirupsen/logrus"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,26 +36,36 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 		return nil, fmt.Errorf("failed to get AWSCluster: %w", err)
 	}
 
-	awsSession, err := in.InstallConfig.AWS.Session(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get aws session: %w", err)
-	}
-
 	// There is no direct access to load balancer IP addresses, so the security groups
 	// are used here to find the network interfaces that correspond to the load balancers.
-	securityGroupIDs := make([]*string, 0, len(awsCluster.Status.Network.SecurityGroups))
+	securityGroupIDs := make([]string, 0, len(awsCluster.Status.Network.SecurityGroups))
 	for _, securityGroup := range awsCluster.Status.Network.SecurityGroups {
-		securityGroupIDs = append(securityGroupIDs, aws.String(securityGroup.ID))
+		securityGroupIDs = append(securityGroupIDs, securityGroup.ID)
 	}
 	nicInput := ec2.DescribeNetworkInterfacesInput{
-		Filters: []*ec2.Filter{
+		Filters: []ec2types.Filter{
 			{
 				Name:   aws.String("group-id"),
 				Values: securityGroupIDs,
 			},
 		},
 	}
-	nicOutput, err := ec2.New(awsSession).DescribeNetworkInterfacesWithContext(ctx, &nicInput)
+
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(in.InstallConfig.Config.AWS.Region))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	client := ec2.NewFromConfig(cfg, func(options *ec2.Options) {
+		options.Region = in.InstallConfig.Config.AWS.Region
+		for _, endpoint := range in.InstallConfig.Config.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "ec2") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	nicOutput, err := client.DescribeNetworkInterfaces(ctx, &nicInput)
 	if err != nil {
 		return nil, fmt.Errorf("failed to describe network interfaces: %w", err)
 	}
