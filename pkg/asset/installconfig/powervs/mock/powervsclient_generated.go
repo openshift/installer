@@ -305,7 +305,7 @@ func (m *MockAPI) GetDatacenterSupportedSystems(ctx context.Context, region stri
 }
 
 // GetDatacenterSupportedSystems indicates an expected call of GetDatacenterSupportedSystems.
-func (mr *MockAPIMockRecorder) GetDatacenterSupportedSystems(ctx, region interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetDatacenterSupportedSystems(ctx, region any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatacenterSupportedSystems", reflect.TypeOf((*MockAPI)(nil).GetDatacenterSupportedSystems), ctx, region)
 }
