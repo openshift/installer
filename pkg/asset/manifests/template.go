@@ -105,3 +105,7 @@ type openshiftTemplateData struct {
 	CloudCreds                   cloudCredsSecretData
 	Base64EncodedKubeadminPwHash string
 }
+
+type mcoTemplateData struct {
+	DisableMachinesetBootMgmt bool
+}
