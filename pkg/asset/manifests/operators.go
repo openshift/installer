@@ -17,7 +17,9 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
+	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -60,10 +62,10 @@ func (m *Manifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
+		&manifests.MCO{},
 		&Ingress{},
 		&DNS{},
 		&Infrastructure{},
-		&MCO{},
 		&Networking{},
 		&Proxy{},
 		&Scheduler{},
@@ -72,6 +74,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&ImageDigestMirrorSet{},
 		&tls.RootCA{},
 		&tls.MCSCertKey{},
+		new(rhcos.Image),
 
 		&bootkube.CVOOverrides{},
 		&bootkube.KubeCloudConfig{},
@@ -87,7 +90,6 @@ func (m *Manifests) Dependencies() []asset.Asset {
 func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) error {
 	ingress := &Ingress{}
 	dns := &DNS{}
-	mco := &MCO{}
 	network := &Networking{}
 	infra := &Infrastructure{}
 	installConfig := &installconfig.InstallConfig{}
@@ -96,8 +98,9 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	imageContentSourcePolicy := &ImageContentSourcePolicy{}
 	clusterCSIDriverConfig := &ClusterCSIDriverConfig{}
 	imageDigestMirrorSet := &ImageDigestMirrorSet{}
+	mcoCfgTemplate := &manifests.MCO{}
 
-	dependencies.Get(installConfig, ingress, dns, mco, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -124,10 +127,10 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 		},
 	}
 	m.FileList = append(m.FileList, m.generateBootKubeManifests(dependencies)...)
+	m.FileList = append(m.FileList, generateMCOManifest(installConfig.Config, mcoCfgTemplate.Files())...)
 
 	m.FileList = append(m.FileList, ingress.Files()...)
 	m.FileList = append(m.FileList, dns.Files()...)
-	m.FileList = append(m.FileList, mco.Files()...)
 	m.FileList = append(m.FileList, network.Files()...)
 	m.FileList = append(m.FileList, infra.Files()...)
 	m.FileList = append(m.FileList, proxy.Files()...)

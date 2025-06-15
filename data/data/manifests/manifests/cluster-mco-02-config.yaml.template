@@ -1,0 +1,15 @@
+apiVersion: operator.openshift.io/v1
+kind: MachineConfiguration
+metadata:
+  name: cluster
+spec:
+  logLevel: Normal
+  operatorLogLevel: Normal
+{{- if .DisableMachinesetBootMgmt }}
+  managedBootImages:
+    machineManagers:
+      - resource: machinesets
+        apiGroup: machine.openshift.io
+        selection:
+          mode: None
+{{- end }}

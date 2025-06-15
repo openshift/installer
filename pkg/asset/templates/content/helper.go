@@ -11,12 +11,18 @@ const (
 	// TemplateDir is the target directory for all template assets' files
 	TemplateDir      = "templates"
 	bootkubeDataDir  = "manifests/bootkube/"
+	manifestDataDir  = "manifests/manifests"
 	openshiftDataDir = "manifests/openshift/"
 )
 
 // GetBootkubeTemplate returns the contents of the file in bootkube data dir
 func GetBootkubeTemplate(uri string) ([]byte, error) {
 	return getFileContents(path.Join(bootkubeDataDir, uri))
+}
+
+// GetManifestTemplate returns the contents of the file in openshift data dir
+func GetManifestTemplate(uri string) ([]byte, error) {
+	return getFileContents(path.Join(manifestDataDir, uri))
 }
 
 // GetOpenshiftTemplate returns the contents of the file in openshift data dir
