@@ -185,11 +185,11 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 				},
 				IngressRules: []capa.IngressRule{
 					{
-						Description: "Machine Config Server internal traffic from cluster",
-						Protocol:    capa.SecurityGroupProtocolTCP,
-						FromPort:    22623,
-						ToPort:      22623,
-						CidrBlocks:  []string{capiutils.CIDRFromInstallConfig(ic).String()},
+						Description:              "Machine Config Server internal traffic from cluster",
+						Protocol:                 capa.SecurityGroupProtocolTCP,
+						FromPort:                 22623,
+						ToPort:                   22623,
+						SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
 					},
 				},
 			},
