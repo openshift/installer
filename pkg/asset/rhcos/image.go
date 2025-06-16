@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -120,7 +121,7 @@ func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Ar
 			return rhcos.FindArtifactURL(a)
 		}
 		return "", fmt.Errorf("%s: No ibmcloud build found", st.FormatPrefix(archName))
-	case ovirt.Name, openstack.Name:
+	case ovirt.Name, openstack.Name, powervc.Name:
 		op := config.Platform.OpenStack
 		if op != nil {
 			if oi := op.ClusterOSImage; oi != "" {

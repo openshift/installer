@@ -30,6 +30,7 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -53,7 +54,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
 	case powervstypes.Name:
 		return clusterapi.InitializeProvider(&powervscapi.Provider{}), nil
-	case openstacktypes.Name:
+	case openstacktypes.Name, powervctypes.Name:
 		return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
 	case ovirttypes.Name:
 		return terraform.InitializeProvider(ovirt.PlatformStages), nil
