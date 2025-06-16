@@ -10,7 +10,11 @@ import (
 )
 
 const (
-	mcoConfigTemplateFileName = "cluster-mco-02-config.yaml.template"
+	// mcoConfigTemplateFileName is the filename for the template, and ultimately
+	// for the manifest (with 'template' trimmed). The filename is prefixed with
+	// 90_ to sort before the 99_-prefixed machinesets, so that the machineconfiguration
+	// is applied before the machinesets, which the MCO manages.
+	mcoConfigTemplateFileName = "90_cluster-mco-02-config.yaml.template"
 )
 
 var _ asset.WritableAsset = (*MCO)(nil)

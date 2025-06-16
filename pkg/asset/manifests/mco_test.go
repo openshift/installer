@@ -48,7 +48,7 @@ func TestGenerateMCO(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			fileData, err := os.ReadFile("../../../data/data/manifests/manifests/cluster-mco-02-config.yaml.template")
+			fileData, err := os.ReadFile("../../../data/data/manifests/manifests/90_cluster-mco-02-config.yaml.template")
 			if err != nil {
 				t.Errorf("failed reading mco template: %v", err)
 			}
