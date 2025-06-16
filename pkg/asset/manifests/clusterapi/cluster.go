@@ -40,6 +40,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vsphereplatform "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -119,7 +120,7 @@ func (c *Cluster) Generate(_ context.Context, dependencies asset.Parents) error 
 		if err != nil {
 			return fmt.Errorf("failed to generate vSphere manifests %w", err)
 		}
-	case openstacktypes.Name:
+	case openstacktypes.Name, powervctypes.Name:
 		var err error
 		out, err = openstack.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {

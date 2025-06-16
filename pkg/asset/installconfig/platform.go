@@ -17,6 +17,7 @@ import (
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	nutanixconfig "github.com/openshift/installer/pkg/asset/installconfig/nutanix"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
+	powervcconfig "github.com/openshift/installer/pkg/asset/installconfig/powervc"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types"
@@ -30,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -91,6 +93,11 @@ func (a *platform) Generate(ctx context.Context, _ asset.Parents) error {
 		}
 	case ovirt.Name:
 		return fmt.Errorf("platform oVirt is no longer supported")
+	case powervc.Name:
+		a.PowerVC, err = powervcconfig.Platform()
+		if err != nil {
+			return err
+		}
 	case vsphere.Name:
 		a.VSphere, err = vsphereconfig.Platform()
 		if err != nil {

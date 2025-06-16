@@ -25,6 +25,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/nutanix"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
+	_ "github.com/openshift/installer/pkg/destroy/powervc"
 	_ "github.com/openshift/installer/pkg/destroy/powervs"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 )

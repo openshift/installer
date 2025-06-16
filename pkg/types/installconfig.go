@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -45,6 +46,7 @@ var (
 		ibmcloud.Name,
 		nutanix.Name,
 		openstack.Name,
+		powervc.Name,
 		powervs.Name,
 		vsphere.Name,
 	}
@@ -199,6 +201,7 @@ type InstallConfig struct {
 	// GCP: "Mint", "Passthrough", "Manual"
 	// IBMCloud: "Manual"
 	// OpenStack: "Passthrough"
+	// PowerVC: "Passthrough"
 	// PowerVS: "Manual"
 	// Nutanix: "Manual"
 	// +optional
@@ -300,6 +303,10 @@ type Platform struct {
 	// +optional
 	OpenStack *openstack.Platform `json:"openstack,omitempty"`
 
+	// PowerVC is the configuration used when installing on Power VC.
+	// +optional
+	PowerVC *powervc.Platform `json:"powervc,omitempty"`
+
 	// PowerVS is the configuration used when installing on Power VS.
 	// +optional
 	PowerVS *powervs.Platform `json:"powervs,omitempty"`
@@ -354,6 +361,9 @@ func (p *Platform) Name() string {
 		return none.Name
 	case p.External != nil:
 		return external.Name
+	// The PowerVC check needs to be performed before the OpenStack check
+	case p.PowerVC != nil:
+		return powervc.Name
 	case p.OpenStack != nil:
 		return openstack.Name
 	case p.VSphere != nil:

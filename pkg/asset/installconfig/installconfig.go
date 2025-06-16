@@ -16,6 +16,7 @@ import (
 	icnutanix "github.com/openshift/installer/pkg/asset/installconfig/nutanix"
 	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	icpowervc "github.com/openshift/installer/pkg/asset/installconfig/powervc"
 	icpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types"
@@ -98,6 +99,7 @@ func (a *InstallConfig) Generate(ctx context.Context, parents asset.Parents) err
 	a.Config.BareMetal = platform.BareMetal
 	a.Config.Ovirt = platform.Ovirt
 	a.Config.PowerVS = platform.PowerVS
+	a.Config.PowerVC = platform.PowerVC
 	a.Config.Nutanix = platform.Nutanix
 
 	defaults.SetInstallConfigDefaults(a.Config)
@@ -234,6 +236,13 @@ func (a *InstallConfig) platformValidation(ctx context.Context) error {
 	}
 	if a.Config.Platform.Ovirt != nil {
 		return icovirt.Validate(a.Config)
+	}
+	// Since PowerVC is a thin platform, allow it to fall through so that it can also test the OpenStack case.
+	if a.Config.Platform.PowerVC != nil {
+		err := icpowervc.Validate(a.Config)
+		if err != nil {
+			return err
+		}
 	}
 	if a.Config.Platform.OpenStack != nil {
 		return icopenstack.Validate(ctx, a.Config)
