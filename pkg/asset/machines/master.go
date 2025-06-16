@@ -61,6 +61,7 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	powervsdefaults "github.com/openshift/installer/pkg/types/powervs/defaults"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -337,7 +338,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		}
 		// TODO: IBM: implement ConfigMasters() if needed
 		// ibmcloud.ConfigMasters(machines, clusterID.InfraID, ic.Publish)
-	case openstacktypes.Name:
+	case openstacktypes.Name, powervctypes.Name:
 		mpool := defaultOpenStackMachinePoolPlatform()
 		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.OpenStack)

@@ -12,6 +12,7 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -52,7 +53,7 @@ func (a *MCSCertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 		vips = installConfig.Config.BareMetal.APIVIPs
 	case nutanixtypes.Name:
 		vips = installConfig.Config.Nutanix.APIVIPs
-	case openstacktypes.Name:
+	case openstacktypes.Name, powervctypes.Name:
 		vips = installConfig.Config.OpenStack.APIVIPs
 	case ovirttypes.Name:
 		vips = installConfig.Config.Ovirt.APIVIPs

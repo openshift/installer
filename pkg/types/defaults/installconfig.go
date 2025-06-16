@@ -14,6 +14,7 @@ import (
 	nutanixdefaults "github.com/openshift/installer/pkg/types/nutanix/defaults"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	ovirtdefaults "github.com/openshift/installer/pkg/types/ovirt/defaults"
+	powervcdefaults "github.com/openshift/installer/pkg/types/powervc/defaults"
 	powervsdefaults "github.com/openshift/installer/pkg/types/powervs/defaults"
 	vspheredefaults "github.com/openshift/installer/pkg/types/vsphere/defaults"
 )
@@ -120,6 +121,8 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		for i := range c.Compute {
 			ovirtdefaults.SetComputeDefaults(c.Platform.Ovirt, &c.Compute[i])
 		}
+	case c.Platform.PowerVC != nil:
+		powervcdefaults.SetPlatformDefaults(c.Platform.PowerVC, c.Networking)
 	case c.Platform.PowerVS != nil:
 		powervsdefaults.SetPlatformDefaults(c.Platform.PowerVS)
 	case c.Platform.None != nil:

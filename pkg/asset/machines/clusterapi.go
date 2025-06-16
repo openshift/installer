@@ -47,6 +47,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -413,7 +414,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		if err != nil {
 			return fmt.Errorf("unable to generate CAPI machines for vSphere %w", err)
 		}
-	case openstacktypes.Name:
+	case openstacktypes.Name, powervctypes.Name:
 		mpool := defaultOpenStackMachinePoolPlatform()
 		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.OpenStack)
