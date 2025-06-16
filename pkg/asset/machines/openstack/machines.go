@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/types/powervc"
 )
 
 const (
@@ -38,10 +39,10 @@ const (
 
 // Machines returns a list of machines for a machinepool.
 func Machines(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
-	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
+	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name && configPlatform != powervc.Name {
 		return nil, nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
-	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name {
+	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name && poolPlatform != powervc.Name {
 		return nil, nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
 
