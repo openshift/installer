@@ -694,7 +694,7 @@ github.com/coreos/vcontext/path
 github.com/coreos/vcontext/report
 github.com/coreos/vcontext/tree
 github.com/coreos/vcontext/validate
-# github.com/daixiang0/gci v0.13.4
+# github.com/daixiang0/gci v0.13.6
 ## explicit; go 1.21
 github.com/daixiang0/gci
 github.com/daixiang0/gci/cmd/gci

@@ -1,8 +1,6 @@
 module github.com/openshift/installer
 
-go 1.23.2
-
-toolchain go1.23.5
+go 1.24.4
 
 require (
 	cloud.google.com/go/kms v1.20.2
@@ -53,7 +51,7 @@ require (
 	github.com/containers/image/v5 v5.31.0
 	github.com/coreos/ignition/v2 v2.20.0
 	github.com/coreos/stream-metadata-go v0.1.8
-	github.com/daixiang0/gci v0.13.4
+	github.com/daixiang0/gci v0.13.6
 	github.com/digitalocean/go-libvirt v0.0.0-20240220204746-fcabe97a6eed
 	github.com/diskfs/go-diskfs v1.4.0
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible

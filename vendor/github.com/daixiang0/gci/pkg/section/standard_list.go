@@ -1,6 +1,6 @@
 package section
 
-// Code generated based on go1.22.0 X:boringcrypto,arenas. DO NOT EDIT.
+// Code generated based on go1.24.0 X:boringcrypto,arenas,synctest. DO NOT EDIT.
 
 var standardPackages = map[string]struct{}{
 	"archive/tar":          {},
@@ -28,13 +28,18 @@ var standardPackages = map[string]struct{}{
 	"crypto/ecdsa":         {},
 	"crypto/ed25519":       {},
 	"crypto/elliptic":      {},
+	"crypto/fips140":       {},
+	"crypto/hkdf":          {},
 	"crypto/hmac":          {},
 	"crypto/md5":           {},
+	"crypto/mlkem":         {},
+	"crypto/pbkdf2":        {},
 	"crypto/rand":          {},
 	"crypto/rc4":           {},
 	"crypto/rsa":           {},
 	"crypto/sha1":          {},
 	"crypto/sha256":        {},
+	"crypto/sha3":          {},
 	"crypto/sha512":        {},
 	"crypto/subtle":        {},
 	"crypto/tls":           {},
@@ -100,6 +105,7 @@ var standardPackages = map[string]struct{}{
 	"io":                   {},
 	"io/fs":                {},
 	"io/ioutil":            {},
+	"iter":                 {},
 	"log":                  {},
 	"log/slog":             {},
 	"log/syslog":           {},
@@ -151,6 +157,7 @@ var standardPackages = map[string]struct{}{
 	"sort":                 {},
 	"strconv":              {},
 	"strings":              {},
+	"structs":              {},
 	"sync":                 {},
 	"sync/atomic":          {},
 	"syscall":              {},
@@ -159,6 +166,7 @@ var standardPackages = map[string]struct{}{
 	"testing/iotest":       {},
 	"testing/quick":        {},
 	"testing/slogtest":     {},
+	"testing/synctest":     {},
 	"text/scanner":         {},
 	"text/tabwriter":       {},
 	"text/template":        {},
@@ -168,5 +176,7 @@ var standardPackages = map[string]struct{}{
 	"unicode":              {},
 	"unicode/utf16":        {},
 	"unicode/utf8":         {},
+	"unique":               {},
 	"unsafe":               {},
+	"weak":                 {},
 }
