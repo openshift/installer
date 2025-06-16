@@ -2,6 +2,7 @@ package mcpserver
 
 import (
 	"context"
+	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -80,7 +81,8 @@ func (i *InstallerMcpServer) RunServeStdio() error {
 
 func (i *InstallerMcpServer) RunSSEServer() error {
 	sseServer := server.NewSSEServer(i.Server,
-		server.WithKeepAlive(true))
+		server.WithKeepAlive(true),
+		server.WithKeepAliveInterval(time.Minute))
 	logrus.Info("Starting MCP SSE Server")
 	return sseServer.Start(":8080")
 }
