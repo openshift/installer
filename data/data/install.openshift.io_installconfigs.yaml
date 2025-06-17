@@ -5373,6 +5373,22 @@ spec:
                       NetworkProjectID specifies which project the network and subnets exist in when
                       they are not in the main ProjectID.
                     type: string
+                  privateZone:
+                    description: |-
+                      PrivateZone contains the information for a private DNS zone. The Private DNS Zone can
+                      only be supplied during Shared VPC (XPN) installs. The PrivateZone can exist or be
+                      created in a second service project; a project other than the one matching projectID
+                      or networkProjectID.
+                    properties:
+                      projectID:
+                        description: ProjectID is the project where the zone resides.
+                        type: string
+                      zone:
+                        description: Zone is the name of the zone.
+                        type: string
+                    required:
+                    - zone
+                    type: object
                   projectID:
                     description: ProjectID is the the project that will be used for
                       the cluster.
