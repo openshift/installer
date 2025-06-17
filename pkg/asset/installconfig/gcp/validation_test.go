@@ -592,23 +592,56 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 
 func TestValidatePreExistingPublicDNS(t *testing.T) {
 	cases := []struct {
-		name    string
-		records []*dns.ResourceRecordSet
-		err     string
+		name     string
+		records  []*dns.ResourceRecordSet
+		platform types.Platform
+		err      string
 	}{{
-		name:    "no pre-existing",
-		records: nil,
+		name:     "no pre-existing",
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+		records:  nil,
 	}, {
-		name:    "no pre-existing",
-		records: []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.base-domain."}},
+		name:     "no pre-existing",
+		records:  []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
 	}, {
-		name:    "pre-existing",
+		name:     "pre-existing",
+		records:  []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+		err:      `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}, {
+		name:     "pre-existing",
+		records:  []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}, {Name: "api.cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+		err:      `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}, {
+		name: "no pre-existing with specified zone",
+		platform: types.Platform{GCP: &gcp.Platform{
+			ProjectID: "other-project-id",
+			PrivateZone: &gcp.DNSZone{
+				Zone:      "zone-name",
+				ProjectID: "project-id",
+			},
+			NetworkProjectID:   "network-project-id",
+			Network:            "test-network",
+			ControlPlaneSubnet: "test-subnet",
+			ComputeSubnet:      "test-subnet",
+		}},
+	}, {
+		name:    "pre-existing with specified zone",
 		records: []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}},
-		err:     `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
-	}, {
-		name:    "pre-existing",
-		records: []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}, {Name: "api.cluster-name.base-domain."}},
-		err:     `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+		platform: types.Platform{GCP: &gcp.Platform{
+			ProjectID: "other-project-id",
+			PrivateZone: &gcp.DNSZone{
+				Zone:      "zone-name",
+				ProjectID: "project-id",
+			},
+			NetworkProjectID:   "network-project-id",
+			Network:            "test-network",
+			ControlPlaneSubnet: "test-subnet",
+			ComputeSubnet:      "test-subnet",
+		}},
+		err: `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
 	}}
 
 	for _, test := range cases {
@@ -636,23 +669,56 @@ func TestValidatePreExistingPublicDNS(t *testing.T) {
 
 func TestValidatePrivateDNSZone(t *testing.T) {
 	cases := []struct {
-		name    string
-		records []*dns.ResourceRecordSet
-		err     string
+		name     string
+		records  []*dns.ResourceRecordSet
+		platform types.Platform
+		err      string
 	}{{
-		name:    "no pre-existing",
-		records: nil,
+		name:     "no pre-existing",
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", Network: "shared-vpc", NetworkProjectID: "test-network-project"}},
+		records:  nil,
 	}, {
-		name:    "no pre-existing",
-		records: []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.base-domain."}},
+		name:     "no pre-existing",
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", Network: "shared-vpc", NetworkProjectID: "test-network-project"}},
+		records:  []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.base-domain."}},
 	}, {
-		name:    "pre-existing",
+		name:     "pre-existing",
+		records:  []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", Network: "shared-vpc", NetworkProjectID: "test-network-project"}},
+		err:      `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}, {
+		name:     "pre-existing",
+		records:  []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}, {Name: "api.cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", Network: "shared-vpc", NetworkProjectID: "test-network-project"}},
+		err:      `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}, {
+		name: "no pre-existing with specified zone",
+		platform: types.Platform{GCP: &gcp.Platform{
+			ProjectID: "other-project-id",
+			PrivateZone: &gcp.DNSZone{
+				Zone:      "zone-name",
+				ProjectID: "project-id",
+			},
+			NetworkProjectID:   "network-project-id",
+			Network:            "test-network",
+			ControlPlaneSubnet: "test-subnet",
+			ComputeSubnet:      "test-subnet",
+		}},
+	}, {
+		name:    "pre-existing with specified zone",
 		records: []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}},
-		err:     `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
-	}, {
-		name:    "pre-existing",
-		records: []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}, {Name: "api.cluster-name.base-domain."}},
-		err:     `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+		platform: types.Platform{GCP: &gcp.Platform{
+			ProjectID: "other-project-id",
+			PrivateZone: &gcp.DNSZone{
+				Zone:      "zone-name",
+				ProjectID: "project-id",
+			},
+			NetworkProjectID:   "network-project-id",
+			Network:            "test-network",
+			ControlPlaneSubnet: "test-subnet",
+			ComputeSubnet:      "test-subnet",
+		}},
+		err: `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
 	}}
 
 	for _, test := range cases {
@@ -667,7 +733,7 @@ func TestValidatePrivateDNSZone(t *testing.T) {
 			err := ValidatePrivateDNSZone(gcpClient, &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster-name"},
 				BaseDomain: "base-domain",
-				Platform:   types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", Network: "shared-vpc", NetworkProjectID: "test-network-project"}},
+				Platform:   test.platform,
 			})
 			if test.err == "" {
 				assert.True(t, err == nil)
