@@ -96,7 +96,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	agentAuthToken := "agentAuthToken"
 	userAuthToken := "userAuthToken"
 	watcherAuthToken := "watcherAuthToken"
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, agentAuthToken, userAuthToken, watcherAuthToken, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, agentAuthToken, userAuthToken, watcherAuthToken, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, 0, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)

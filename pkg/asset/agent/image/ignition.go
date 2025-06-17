@@ -180,7 +180,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 		}
 		// Fetch the required number of master and worker nodes.
 		numMasters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
-		numArbiters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ArbiterAgents
+		numArbiters = manifests.GetArbiterAnnotation(agentManifests.AgentClusterInstall.GetAnnotations())
 		numWorkers = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.WorkerAgents
 		// Enable specific install services
 		enabledServices = append(enabledServices, "start-cluster-installation.service")

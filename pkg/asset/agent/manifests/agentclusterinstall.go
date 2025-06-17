@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/go-openapi/swag"
@@ -40,6 +41,7 @@ import (
 
 const (
 	installConfigOverrides = aiv1beta1.Group + "/install-config-overrides"
+	ArbiterAnnotation      = aiv1beta1.Group + "/arbiter-count"
 )
 
 var (
@@ -222,7 +224,6 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 				ProvisionRequirements: hiveext.ProvisionRequirements{
 					ControlPlaneAgents: int(*installConfig.Config.ControlPlane.Replicas),
 					WorkerAgents:       numberOfWorkers,
-					ArbiterAgents:      numberOfArbiters,
 				},
 				PlatformType: agent.HivePlatformType(installConfig.Config.Platform),
 			},
@@ -395,6 +396,8 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 			})
 		}
 
+		agentClusterInstall.SetAnnotations(setArbiterAnnotation(agentClusterInstall.GetAnnotations(), numberOfArbiters))
+
 		a.Config = agentClusterInstall
 
 	}
@@ -520,6 +523,29 @@ func isIPv6(ipAddress net.IP) bool {
 	// Same as https://github.com/openshift/installer/blob/6eca978b89fc0be17f70fc8a28fa20aab1316843/pkg/types/validation/installconfig.go#L193
 	ip := ipAddress.To4()
 	return ip == nil
+}
+
+func setArbiterAnnotation(anno map[string]string, count int) map[string]string {
+	if count == 0 {
+		return anno
+	}
+	if anno == nil {
+		anno = map[string]string{}
+	}
+	anno[ArbiterAnnotation] = fmt.Sprintf("%d", count)
+	return anno
+}
+
+func GetArbiterAnnotation(anno map[string]string) int {
+	if anno == nil {
+		return 0
+	}
+	// Since we set the annotation we know this will always parse int
+	if val, ok := anno[ArbiterAnnotation]; ok {
+		count, _ := strconv.Atoi(val)
+		return count
+	}
+	return 0
 }
 
 func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList {
