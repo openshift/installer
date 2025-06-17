@@ -91,6 +91,21 @@ func (mr *MockAPIMockRecorder) GetDNSZoneByName(ctx, project, zoneName any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZoneByName", reflect.TypeOf((*MockAPI)(nil).GetDNSZoneByName), ctx, project, zoneName)
 }
 
+// GetDNSZoneFromParams mocks base method.
+func (m *MockAPI) GetDNSZoneFromParams(ctx context.Context, params gcp.DNSZoneParams) (*dns.ManagedZone, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDNSZoneFromParams", ctx, params)
+	ret0, _ := ret[0].(*dns.ManagedZone)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDNSZoneFromParams indicates an expected call of GetDNSZoneFromParams.
+func (mr *MockAPIMockRecorder) GetDNSZoneFromParams(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZoneFromParams", reflect.TypeOf((*MockAPI)(nil).GetDNSZoneFromParams), ctx, params)
+}
+
 // GetEnabledServices mocks base method.
 func (m *MockAPI) GetEnabledServices(ctx context.Context, project string) ([]string, error) {
 	m.ctrl.T.Helper()
@@ -345,6 +360,20 @@ func (m *MockAPI) GetZones(ctx context.Context, project, filter string) ([]*comp
 func (mr *MockAPIMockRecorder) GetZones(ctx, project, filter any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetZones", reflect.TypeOf((*MockAPI)(nil).GetZones), ctx, project, filter)
+}
+
+// UpdateDNSPrivateZoneLabels mocks base method.
+func (m *MockAPI) UpdateDNSPrivateZoneLabels(ctx context.Context, baseDomain, project, zoneName string, labels map[string]string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDNSPrivateZoneLabels", ctx, baseDomain, project, zoneName, labels)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateDNSPrivateZoneLabels indicates an expected call of UpdateDNSPrivateZoneLabels.
+func (mr *MockAPIMockRecorder) UpdateDNSPrivateZoneLabels(ctx, baseDomain, project, zoneName, labels any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDNSPrivateZoneLabels", reflect.TypeOf((*MockAPI)(nil).UpdateDNSPrivateZoneLabels), ctx, baseDomain, project, zoneName, labels)
 }
 
 // ValidateServiceAccountHasPermissions mocks base method.
