@@ -40,7 +40,8 @@ const (
 	// used for resources created by the Cluster API GCP provider.
 	capgProviderOwnedLabelFmt = "capg-cluster-%s"
 
-	ownedLabelValue = "owned"
+	ownedLabelValue  = "owned"
+	sharedLabelValue = "shared"
 
 	// DONE represents the done status for a compute service operation.
 	DONE = "DONE"
@@ -48,12 +49,13 @@ const (
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
 type ClusterUninstaller struct {
-	Logger            logrus.FieldLogger
-	Region            string
-	ProjectID         string
-	NetworkProjectID  string
-	PrivateZoneDomain string
-	ClusterID         string
+	Logger               logrus.FieldLogger
+	Region               string
+	ProjectID            string
+	NetworkProjectID     string
+	PrivateZoneDomain    string
+	ClusterID            string
+	PrivateZoneProjectID string
 
 	computeSvc  *compute.Service
 	iamSvc      *iam.Service
@@ -84,16 +86,17 @@ type ClusterUninstaller struct {
 // New returns a GCP destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	return &ClusterUninstaller{
-		Logger:             logger,
-		Region:             metadata.ClusterPlatformMetadata.GCP.Region,
-		ProjectID:          metadata.ClusterPlatformMetadata.GCP.ProjectID,
-		NetworkProjectID:   metadata.ClusterPlatformMetadata.GCP.NetworkProjectID,
-		PrivateZoneDomain:  metadata.ClusterPlatformMetadata.GCP.PrivateZoneDomain,
-		ClusterID:          metadata.InfraID,
-		cloudControllerUID: gcptypes.CloudControllerUID(metadata.InfraID),
-		requestIDTracker:   newRequestIDTracker(),
-		pendingItemTracker: newPendingItemTracker(),
-		serviceEndpoints:   metadata.ClusterPlatformMetadata.GCP.ServiceEndpoints,
+		Logger:               logger,
+		Region:               metadata.ClusterPlatformMetadata.GCP.Region,
+		ProjectID:            metadata.ClusterPlatformMetadata.GCP.ProjectID,
+		NetworkProjectID:     metadata.ClusterPlatformMetadata.GCP.NetworkProjectID,
+		PrivateZoneDomain:    metadata.ClusterPlatformMetadata.GCP.PrivateZoneDomain,
+		PrivateZoneProjectID: metadata.ClusterPlatformMetadata.GCP.PrivateZoneProjectID,
+		ClusterID:            metadata.InfraID,
+		cloudControllerUID:   gcptypes.CloudControllerUID(metadata.InfraID),
+		requestIDTracker:     newRequestIDTracker(),
+		pendingItemTracker:   newPendingItemTracker(),
+		serviceEndpoints:     metadata.ClusterPlatformMetadata.GCP.ServiceEndpoints,
 	}, nil
 }
 
@@ -254,6 +257,28 @@ func getDiskLimit(typeURL string) string {
 
 func (o *ClusterUninstaller) isClusterResource(name string) bool {
 	return strings.HasPrefix(name, o.ClusterID+"-")
+}
+
+func (o *ClusterUninstaller) isLabeledResource(labels map[string]string, clusterLabelValue string) bool {
+	if labels == nil {
+		return false
+	}
+	if val, ok := labels[fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID)]; ok {
+		return val == clusterLabelValue
+	}
+	return false
+}
+
+func (o *ClusterUninstaller) isOwnedResource(labels map[string]string) bool {
+	return o.isLabeledResource(labels, ownedLabelValue)
+}
+
+func (o *ClusterUninstaller) isSharedResource(labels map[string]string) bool {
+	return o.isLabeledResource(labels, sharedLabelValue)
+}
+
+func (o *ClusterUninstaller) isManagedResource(labels map[string]string) bool {
+	return o.isOwnedResource(labels) || o.isSharedResource(labels)
 }
 
 func (o *ClusterUninstaller) clusterIDFilter() string {

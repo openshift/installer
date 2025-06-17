@@ -70,6 +70,9 @@ func IsThrottled(err error) bool {
 
 // IsNotFound checks whether a response from the GPC API was not found.
 func IsNotFound(err error) bool {
-	gErr, ok := err.(*googleapi.Error)
-	return ok && gErr.Code == http.StatusNotFound
+	var gErr *googleapi.Error
+	if errors.As(err, &gErr) {
+		return gErr.Code == http.StatusNotFound
+	}
+	return false
 }
