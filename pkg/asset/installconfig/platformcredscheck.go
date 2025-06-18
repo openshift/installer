@@ -56,7 +56,7 @@ func (a *PlatformCredsCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return err
 		}
 	case gcp.Name:
-		client, err := gcpconfig.NewClient(ctx)
+		client, err := gcpconfig.NewClient(ctx, ic.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return err
 		}

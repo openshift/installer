@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -17,10 +18,10 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
-	"google.golang.org/api/storage/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	configv1 "github.com/openshift/api/config/v1"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/destroy/providers"
@@ -57,12 +58,14 @@ type ClusterUninstaller struct {
 	computeSvc  *compute.Service
 	iamSvc      *iam.Service
 	dnsSvc      *dns.Service
-	storageSvc  *storage.Service
+	storageSvc  *storage.Client
 	rmSvc       *resourcemanager.Service
 	fileSvc     *file.Service
 	regionOpSvc *compute.RegionOperationsService
 	globalOpSvc *compute.GlobalOperationsService
 	zonalOpSvc  *compute.ZoneOperationsService
+
+	serviceEndpoints []configv1.GCPServiceEndpoint
 
 	// cpusByMachineType caches the number of CPUs per machine type, used in quota
 	// calculations on deletion
@@ -90,23 +93,20 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		cloudControllerUID: gcptypes.CloudControllerUID(metadata.InfraID),
 		requestIDTracker:   newRequestIDTracker(),
 		pendingItemTracker: newPendingItemTracker(),
+		serviceEndpoints:   metadata.ClusterPlatformMetadata.GCP.ServiceEndpoints,
 	}, nil
 }
 
 // Run is the entrypoint to start the uninstall process
 func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	ctx := context.Background()
-	ssn, err := gcpconfig.GetSession(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get session")
-	}
 
 	options := []option.ClientOption{
-		option.WithCredentials(ssn.Credentials),
 		option.WithUserAgent(fmt.Sprintf("OpenShift/4.x Destroyer/%s", version.Raw)),
 	}
 
-	o.computeSvc, err = compute.NewService(ctx, options...)
+	var err error
+	o.computeSvc, err = gcpconfig.GetComputeService(ctx, o.serviceEndpoints, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create compute service")
 	}
@@ -131,27 +131,27 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		return nil, errors.Wrap(err, "failed to cache machine types")
 	}
 
-	o.iamSvc, err = iam.NewService(ctx, options...)
+	o.iamSvc, err = gcpconfig.GetIAMService(ctx, o.serviceEndpoints, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create iam service")
 	}
 
-	o.dnsSvc, err = dns.NewService(ctx, options...)
+	o.dnsSvc, err = gcpconfig.GetDNSService(ctx, o.serviceEndpoints, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create dns service")
 	}
 
-	o.storageSvc, err = storage.NewService(ctx, options...)
+	o.storageSvc, err = gcpconfig.GetStorageService(ctx, o.serviceEndpoints, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create storage service")
 	}
 
-	o.rmSvc, err = resourcemanager.NewService(ctx, options...)
+	o.rmSvc, err = gcpconfig.GetCloudResourceService(ctx, o.serviceEndpoints, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create resourcemanager service")
 	}
 
-	o.fileSvc, err = file.NewService(ctx, options...)
+	o.fileSvc, err = gcpconfig.GetFileService(ctx, o.serviceEndpoints, options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create filestore service: %w", err)
 	}
