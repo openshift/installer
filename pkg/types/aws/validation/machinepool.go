@@ -54,6 +54,18 @@ func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *fi
 
 	allErrs = append(allErrs, validateSecurityGroups(platform, p, fldPath)...)
 
+	if p.HostAffinity != "" {
+		if len(p.HostIDs) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("hostIDs"), "a hostID must be specified when hostAffinity is set"))
+		}
+		switch p.HostAffinity {
+			case aws.HostAffinityDefault:
+			case aws.HostAffinityHost:
+			default:
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("hostAffinity"), p.HostAffinity, "hostAffinity must be either default or host"))
+		}			
+	}
+
 	return allErrs
 }
 

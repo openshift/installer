@@ -132,6 +132,24 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      hostAffinity:
+                        description: |-
+                          HostAffinity specifies the dedicated host affinity setting for the instance.
+                          When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
+                          When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
+                          When HostAffinity is defined, HostID is required.
+                        enum:
+                        - default
+                        - host
+                        type: string
+                      hostIDs:
+                        description: |-
+                          HostIDs specifies a slice of dedicated hosts on which instances should be started.
+                          presently, only a single dedicated host can be specified per pool.
+                        items:
+                          type: string
+                        maxItems: 1
+                        type: array
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -1452,6 +1470,24 @@ spec:
                             AMIID is the AMI that should be used to boot the ec2 instance.
                             If set, the AMI should belong to the same region as the cluster.
                           type: string
+                        hostAffinity:
+                          description: |-
+                            HostAffinity specifies the dedicated host affinity setting for the instance.
+                            When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
+                            When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
+                            When HostAffinity is defined, HostID is required.
+                          enum:
+                          - default
+                          - host
+                          type: string
+                        hostIDs:
+                          description: |-
+                            HostIDs specifies a slice of dedicated hosts on which instances should be started.
+                            presently, only a single dedicated host can be specified per pool.
+                          items:
+                            type: string
+                          maxItems: 1
+                          type: array
                         iamProfile:
                           description: |-
                             IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -2711,6 +2747,24 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      hostAffinity:
+                        description: |-
+                          HostAffinity specifies the dedicated host affinity setting for the instance.
+                          When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
+                          When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
+                          When HostAffinity is defined, HostID is required.
+                        enum:
+                        - default
+                        - host
+                        type: string
+                      hostIDs:
+                        description: |-
+                          HostIDs specifies a slice of dedicated hosts on which instances should be started.
+                          presently, only a single dedicated host can be specified per pool.
+                        items:
+                          type: string
+                        maxItems: 1
+                        type: array
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -4193,6 +4247,24 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      hostAffinity:
+                        description: |-
+                          HostAffinity specifies the dedicated host affinity setting for the instance.
+                          When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
+                          When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
+                          When HostAffinity is defined, HostID is required.
+                        enum:
+                        - default
+                        - host
+                        type: string
+                      hostIDs:
+                        description: |-
+                          HostIDs specifies a slice of dedicated hosts on which instances should be started.
+                          presently, only a single dedicated host can be specified per pool.
+                        items:
+                          type: string
+                        maxItems: 1
+                        type: array
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
