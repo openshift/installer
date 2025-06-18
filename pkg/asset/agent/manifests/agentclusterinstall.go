@@ -127,6 +127,8 @@ type agentClusterInstallInstallConfigOverrides struct {
 	AdditionalTrustBundlePolicy types.PolicyType `json:"additionalTrustBundlePolicy,omitempty"`
 	// Allow override of FeatureSet
 	FeatureSet configv1.FeatureSet `json:"featureSet,omitempty"`
+	// Allow override of FeatureGates
+	FeatureGates []string `json:"featureGates,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -250,6 +252,11 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		if len(installConfig.Config.FeatureSet) > 0 {
 			icOverridden = true
 			icOverrides.FeatureSet = installConfig.Config.FeatureSet
+		}
+
+		if len(installConfig.Config.FeatureGates) > 0 {
+			icOverridden = true
+			icOverrides.FeatureGates = installConfig.Config.FeatureGates
 		}
 
 		if installConfig.Config.Proxy != nil {
