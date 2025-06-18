@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
@@ -135,7 +136,7 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 			}
 		}
 	case gcptypes.Name:
-		// We donot want to configure cloud DNS when `UserProvisionedDNS` is enabled.
+		// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
 		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
 		if installConfig.Config.GCP.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
 			config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
@@ -147,25 +148,38 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 			return err
 		}
 
+		// Ingress operator can handle a zone with the following format:
+		// projects/{projectID}/managedZones/{zoneID}. This will allow
+		// the installer to pass the project without a new field in the
+		// DNSZone struct.
+		dnsZoneProject := GetProjectForDNSZones(installConfig)
+		baseZoneStr := fmt.Sprintf("projects/%s/managedZones", dnsZoneProject)
+
 		// Set the public zone
 		switch {
 		case installConfig.Config.Publish != types.ExternalPublishingStrategy:
 			// Do not use a public zone when not publishing externally.
 		default:
 			// Search the project for a zone with the specified base domain.
-			zone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)
+			zone, err := client.GetDNSZone(ctx, dnsZoneProject, installConfig.Config.BaseDomain, true)
 			if err != nil {
 				return errors.Wrapf(err, "failed to get public zone for %q", installConfig.Config.BaseDomain)
 			}
-			config.Spec.PublicZone = &configv1.DNSZone{ID: zone.Name}
+
+			publicZoneName := fmt.Sprintf("%s/%s", baseZoneStr, zone.Name)
+			logrus.Infof("generating GCP Public DNS Zone %s", publicZoneName)
+			config.Spec.PublicZone = &configv1.DNSZone{ID: publicZoneName}
 		}
 
 		// Set the private zone
-		privateZoneID, err := GetGCPPrivateZoneName(ctx, client, installConfig, clusterID.InfraID)
+		privateZoneID, _, err := GetGCPPrivateZoneName(ctx, client, installConfig, clusterID.InfraID)
 		if err != nil {
 			return fmt.Errorf("failed to find gcp private dns zone: %w", err)
 		}
-		config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
+
+		privateZoneName := fmt.Sprintf("%s/%s", baseZoneStr, privateZoneID)
+		logrus.Infof("generating GCP Private DNS Zone %s", privateZoneName)
+		config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneName}
 
 	case ibmcloudtypes.Name:
 		client, err := icibmcloud.NewClient(installConfig.Config.Platform.IBMCloud.ServiceEndpoints)
@@ -244,31 +258,44 @@ func GetProjectForDNSZones(installConfig *installconfig.InstallConfig) string {
 // GetGCPPrivateZoneName attempts to find the name of the private zone for GCP installs. When a shared vpc install
 // occurs, a precreated zone may be used. If a zone is found (in this instance), then the zone should be paired with
 // the network that is supplied through the install config (when applicable).
-func GetGCPPrivateZoneName(ctx context.Context, client *icgcp.Client, installConfig *installconfig.InstallConfig, clusterID string) (string, error) {
-	privateZoneID := fmt.Sprintf("%s-private-zone", clusterID)
+func GetGCPPrivateZoneName(ctx context.Context, client *icgcp.Client, installConfig *installconfig.InstallConfig, clusterID string) (string, bool, error) {
+	defaultPrivateZoneID := fmt.Sprintf("%s-private-zone", clusterID)
+	privateZoneID := defaultPrivateZoneID
+	shouldCreateZone := true
+
 	if installConfig.Config.GCP.NetworkProjectID != "" {
 		project := GetProjectForDNSZones(installConfig)
 		if installConfig.Config.GCP.PrivateZone != nil && installConfig.Config.GCP.PrivateZone.Zone != "" {
+			// Override the default with the name provided. If this zone does not exist, then
+			// this should still be returned.
 			privateZoneID = installConfig.Config.GCP.PrivateZone.Zone
 		}
 
 		zone, err := client.GetDNSZone(ctx, project, installConfig.Config.ClusterDomain(), false)
 		if err != nil {
-			return "", fmt.Errorf("failed to get private zone for %q: %w", installConfig.Config.BaseDomain, err)
+			// CORS-4012: The user may specify a zone to be created if it does not exist.
+			// Do not fail if the specified zone does not exist.
+			if privateZoneID != defaultPrivateZoneID {
+				return privateZoneID, true, fmt.Errorf("failed to get private zone %q: %w", privateZoneID, err)
+			}
+			return defaultPrivateZoneID, true, fmt.Errorf("failed to get private zone for %q: %w", installConfig.Config.BaseDomain, err)
 		}
-		if zone != nil {
-			if installConfig.Config.GCP.Network != "" {
-				expectedNetworkURL := GCPNetworkName(installConfig.Config.GCP.NetworkProjectID, installConfig.Config.GCP.Network)
-				for _, network := range zone.PrivateVisibilityConfig.Networks {
-					if network.NetworkUrl == expectedNetworkURL {
-						privateZoneID = zone.Name
-						break
-					}
+		if zone == nil {
+			return privateZoneID, true, nil
+		}
+
+		if installConfig.Config.GCP.Network != "" {
+			expectedNetworkURL := GCPNetworkName(installConfig.Config.GCP.NetworkProjectID, installConfig.Config.GCP.Network)
+			for _, network := range zone.PrivateVisibilityConfig.Networks {
+				if network.NetworkUrl == expectedNetworkURL {
+					privateZoneID = zone.Name
+					shouldCreateZone = false
+					break
 				}
 			}
 		}
 	}
-	return privateZoneID, nil
+	return privateZoneID, shouldCreateZone, nil
 }
 
 // Files returns the files generated by the asset.
