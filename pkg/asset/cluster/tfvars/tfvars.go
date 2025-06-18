@@ -508,8 +508,9 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		privateZoneName := ""
 
 		if installConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
+			project := manifests.GetProjectForDNSZones(installConfig)
 			if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-				publicZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)
+				publicZone, err := client.GetDNSZone(ctx, project, installConfig.Config.BaseDomain, true)
 				if err != nil {
 					return errors.Wrapf(err, "failed to get GCP public zone")
 				}
