@@ -230,13 +230,29 @@ func GCPNetworkName(project, network string) string {
 	return fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s", project, network)
 }
 
+// GetProjectForDNSZones gets the project that should be contain the dns zones and dns records.
+func GetProjectForDNSZones(installConfig *installconfig.InstallConfig) string {
+	project := installConfig.Config.GCP.ProjectID
+	if installConfig.Config.GCP.NetworkProjectID != "" {
+		if installConfig.Config.GCP.PrivateZone != nil && installConfig.Config.GCP.PrivateZone.ProjectID != "" {
+			project = installConfig.Config.GCP.PrivateZone.ProjectID
+		}
+	}
+	return project
+}
+
 // GetGCPPrivateZoneName attempts to find the name of the private zone for GCP installs. When a shared vpc install
 // occurs, a precreated zone may be used. If a zone is found (in this instance), then the zone should be paired with
 // the network that is supplied through the install config (when applicable).
 func GetGCPPrivateZoneName(ctx context.Context, client *icgcp.Client, installConfig *installconfig.InstallConfig, clusterID string) (string, error) {
 	privateZoneID := fmt.Sprintf("%s-private-zone", clusterID)
 	if installConfig.Config.GCP.NetworkProjectID != "" {
-		zone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
+		project := GetProjectForDNSZones(installConfig)
+		if installConfig.Config.GCP.PrivateZone != nil && installConfig.Config.GCP.PrivateZone.Zone != "" {
+			privateZoneID = installConfig.Config.GCP.PrivateZone.Zone
+		}
+
+		zone, err := client.GetDNSZone(ctx, project, installConfig.Config.ClusterDomain(), false)
 		if err != nil {
 			return "", fmt.Errorf("failed to get private zone for %q: %w", installConfig.Config.BaseDomain, err)
 		}
