@@ -12,14 +12,27 @@ import (
 func Metadata(config *types.InstallConfig) *gcp.Metadata {
 	// leave the private zone domain blank when not using a pre-created private zone
 	privateZoneDomain := fmt.Sprintf("%s.", config.ClusterDomain())
+	privateZoneName := ""
+	privateZoneProject := config.GCP.ProjectID
 	if config.GCP.Network == "" || config.GCP.NetworkProjectID == "" {
 		privateZoneDomain = ""
 	}
+	if config.GCP.Network != "" && config.GCP.NetworkProjectID != "" {
+		if config.GCP.PrivateZone != nil {
+			privateZoneName = config.GCP.PrivateZone.Zone
+
+			if config.GCP.PrivateZone.ProjectID != "" {
+				privateZoneProject = config.GCP.PrivateZone.ProjectID
+			}
+		}
+	}
 
 	return &gcp.Metadata{
-		Region:            config.Platform.GCP.Region,
-		ProjectID:         config.Platform.GCP.ProjectID,
-		NetworkProjectID:  config.Platform.GCP.NetworkProjectID,
-		PrivateZoneDomain: privateZoneDomain,
+		Region:             config.Platform.GCP.Region,
+		ProjectID:          config.Platform.GCP.ProjectID,
+		NetworkProjectID:   config.Platform.GCP.NetworkProjectID,
+		PrivateZoneDomain:  privateZoneDomain,
+		PrivateZoneProject: privateZoneProject,
+		PrivateZoneName:    privateZoneName,
 	}
 }
