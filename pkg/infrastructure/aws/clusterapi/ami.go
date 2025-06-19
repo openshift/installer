@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -20,13 +22,21 @@ func copyAMIToRegion(ctx context.Context, installConfig *installconfig.InstallCo
 
 	logrus.Infof("Copying AMI %s to region %s", amiID, installConfig.AWS.Region)
 
-	session, err := installConfig.AWS.Session(ctx)
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(installConfig.Config.AWS.Region))
 	if err != nil {
-		return "", fmt.Errorf("failed to get AWS session: %w", err)
+		return "", fmt.Errorf("failed to load AWS config: %w", err)
 	}
-	client := ec2.New(session)
 
-	res, err := client.CopyImageWithContext(ctx, &ec2.CopyImageInput{
+	client := ec2.NewFromConfig(cfg, func(options *ec2.Options) {
+		options.Region = installConfig.Config.AWS.Region
+		for _, endpoint := range installConfig.Config.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "ec2") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	res, err := client.CopyImage(ctx, &ec2.CopyImageInput{
 		Name:          aws.String(fmt.Sprintf("%s-master", infraID)),
 		ClientToken:   aws.String(infraID),
 		Description:   aws.String("Created by Openshift Installer"),
@@ -39,9 +49,9 @@ func copyAMIToRegion(ctx context.Context, installConfig *installconfig.InstallCo
 	}
 
 	name := fmt.Sprintf("%s-ami-%s", infraID, installConfig.AWS.Region)
-	amiTags := make([]*ec2.Tag, 0, len(installConfig.Config.AWS.UserTags)+4)
+	amiTags := make([]ec2types.Tag, 0, len(installConfig.Config.AWS.UserTags)+4)
 	for k, v := range installConfig.Config.AWS.UserTags {
-		amiTags = append(amiTags, &ec2.Tag{
+		amiTags = append(amiTags, ec2types.Tag{
 			Key:   aws.String(k),
 			Value: aws.String(v),
 		})
@@ -52,19 +62,19 @@ func copyAMIToRegion(ctx context.Context, installConfig *installconfig.InstallCo
 		"sourceRegion": amiRegion,
 		fmt.Sprintf("kubernetes.io/cluster/%s", infraID): "owned",
 	} {
-		amiTags = append(amiTags, &ec2.Tag{
+		amiTags = append(amiTags, ec2types.Tag{
 			Key:   aws.String(k),
 			Value: aws.String(v),
 		})
 	}
 
-	_, err = client.CreateTagsWithContext(ctx, &ec2.CreateTagsInput{
-		Resources: []*string{res.ImageId},
+	_, err = client.CreateTags(ctx, &ec2.CreateTagsInput{
+		Resources: []string{aws.ToString(res.ImageId)},
 		Tags:      amiTags,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to tag AMI copy (%s): %w", name, err)
 	}
 
-	return aws.StringValue(res.ImageId), nil
+	return aws.ToString(res.ImageId), nil
 }
