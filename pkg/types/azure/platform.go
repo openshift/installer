@@ -9,7 +9,7 @@ import (
 var aro bool
 
 // OutboundType is a strategy for how egress from cluster is achieved.
-// +kubebuilder:validation:Enum="";Loadbalancer;NatGateway;UserDefinedRouting
+// +kubebuilder:validation:Enum="";Loadbalancer;NatGateway;NATGatewaySingleZone;UserDefinedRouting
 type OutboundType string
 
 const (
@@ -18,8 +18,16 @@ const (
 	LoadbalancerOutboundType OutboundType = "Loadbalancer"
 
 	// NatGatewayOutboundType uses NAT gateway for egress from the cluster
+	// Only valid for 4.14-4.16 tech preview.
 	// see https://learn.microsoft.com/en-us/azure/virtual-network/nat-gateway/nat-gateway-resource
 	NatGatewayOutboundType OutboundType = "NatGateway"
+
+	// NATGatewaySingleZoneOutboundType uses a single (non-zone-resilient) NAT Gateway for compute node outbound access.
+	// see https://learn.microsoft.com/en-us/azure/virtual-network/nat-gateway/nat-gateway-resource
+	NATGatewaySingleZoneOutboundType OutboundType = "NATGatewaySingleZone"
+
+	// NATGatewayMultiZoneOutboundType uses NAT gateways in multiple zones in the compute node subnets for outbound access.
+	NatGatewayMultiZoneOutboundType OutboundType = "MultiZoneNatGateway"
 
 	// UserDefinedRoutingOutboundType uses user defined routing for egress from the cluster.
 	// see https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview
@@ -76,11 +84,15 @@ type Platform struct {
 	CloudName CloudEnvironment `json:"cloudName,omitempty"`
 
 	// OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
-	// "NatGateway" is only available in TechPreview.
 	//
 	// +kubebuilder:default=Loadbalancer
 	// +optional
 	OutboundType OutboundType `json:"outboundType"`
+
+	// NatGatewaySpec allows the user to specify the subnets and the nat gateway configuration for each subnet.
+	// Since only one nat gateway is allowed per subnet, users can create multiple subnets and create nat gateway
+	// for each subnet for zone resilience.
+	NatGatewaySpec []NatGatewaySpec `json:"natGatewaySpec"`
 
 	// ResourceGroupName is the name of an already existing resource group where the cluster should be installed.
 	// This resource group should only be used for this specific cluster and the cluster components will assume
@@ -100,6 +112,19 @@ type Platform struct {
 
 	// CustomerManagedKey has the keys needed to encrypt the storage account.
 	CustomerManagedKey *CustomerManagedKey `json:"customerManagedKey,omitempty"`
+}
+
+type NatGatewaySpec struct {
+	// Name of the nat gateway to be created.
+	Name string `json:"name"`
+	// PublicIPName specifies any public IP to be assigned to the nat gateway
+	// +optional
+	PublicIPName string `json:"publicIPName"`
+	// IPDNSName specifies the dns name for the public IP specified.
+	// +optional
+	IPDNSName string `json:"IPDNSName"`
+	// Subnet specifies the name of the subnet to be created.
+	Subnet string `json:"subnet"`
 }
 
 // KeyVault defines an Azure Key Vault.
