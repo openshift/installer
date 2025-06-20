@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -148,45 +149,34 @@ func runCreateCluster(ctx context.Context, req mcp.CallToolRequest) (string, err
 	// how do I create install config????
 	// or how could use the tui to my advantage ?
 
-	i := 0
-	steps := 2
 
-	if progressToken != nil {
-		err := srv.SendNotificationToClient(
-			ctx,
-			"notifications/progress",
-			map[string]any{
-				"progress":      i,
-				"total":         steps,
-				"progressToken": progressToken,
-				"message":       fmt.Sprintf("Server progress %d", i/steps),
-			},
-		)
-		if err != nil {
-			logrus.Warn(err)
+	done := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				if progressToken != nil {
+					srv.SendNotificationToClient(
+						ctx,
+						"notifications/progress",
+						map[string]any{
+							"progressToken": progressToken,
+							"message":       "Still working...",
+						},
+					)
+				}
+			case <-done:
+				return
+			}
 		}
-	}
+	}()
 
 	runCommand := runTargetCmd(ctx, targetassets.Cluster...)
 	runCommand(clusterTarget.command, []string{})
 
-	i = 1
 
-	if progressToken != nil {
-		err := srv.SendNotificationToClient(
-			ctx,
-			"notifications/progress",
-			map[string]any{
-				"progress":      i,
-				"total":         steps,
-				"progressToken": progressToken,
-				"message":       fmt.Sprintf("Server progress %d", i/steps),
-			},
-		)
-		if err != nil {
-			logrus.Warn(err)
-		}
-	}
 	exitCode, err := clusterCreatePostRun(ctx)
 	if err != nil {
 		return "", err
@@ -195,5 +185,6 @@ func runCreateCluster(ctx context.Context, req mcp.CallToolRequest) (string, err
 		return "", fmt.Errorf("exit code %d", exitCode)
 	}
 
+	close(done)
 	return "", nil
 }
