@@ -5,13 +5,24 @@ import (
 	"fmt"
 	"time"
 
+	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
 	cfgv2 "github.com/aws/aws-sdk-go-v2/config"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/sirupsen/logrus"
 )
+
+func setUserCredsInConfig(ctx context.Context) (awsv2.Config, error) {
+	if err := getUserCredentials(); err != nil {
+		return awsv2.Config{}, err
+	}
+	cfg, err := cfgv2.LoadDefaultConfig(ctx, cfgv2.WithRegion("us-east-1"))
+	if err != nil {
+		return awsv2.Config{}, fmt.Errorf("failed to create AWS config: %w", err)
+	}
+	return cfg, nil
+}
 
 // GetRegions get all regions that are accessible.
 func GetRegions(ctx context.Context) ([]string, error) {
@@ -20,17 +31,16 @@ func GetRegions(ctx context.Context) ([]string, error) {
 	// the DescribeRegions call will fail immediately.
 	cfg, err := cfgv2.LoadDefaultConfig(ctx, cfgv2.WithRegion("us-east-1"))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create config from platform: %w", err)
+		cfg, err = setUserCredsInConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if _, err = cfg.Credentials.Retrieve(ctx); err != nil {
-		logrus.Debugf("failed to retrieve AWS credentials: %v", err)
-		if err = getUserCredentials(); err != nil {
-			return nil, err
-		}
-		cfg, err = cfgv2.LoadDefaultConfig(ctx, cfgv2.WithRegion("us-east-1"))
+		cfg, err = setUserCredsInConfig(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create config from platform: %w", err)
+			return nil, err
 		}
 	}
 	client := ec2v2.NewFromConfig(cfg)
