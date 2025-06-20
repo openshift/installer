@@ -2,10 +2,10 @@
 # It builds an image containing only the openshift-install.
 
 # We copy from the -artifacts images because they are statically linked
-FROM registry.ci.openshift.org/ocp/4.19:installer-kube-apiserver-artifacts AS kas-artifacts
-FROM registry.ci.openshift.org/ocp/4.19:installer-etcd-artifacts AS etcd-artifacts
+FROM registry.ci.openshift.org/ocp/4.20:installer-kube-apiserver-artifacts AS kas-artifacts
+FROM registry.ci.openshift.org/ocp/4.20:installer-etcd-artifacts AS etcd-artifacts
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.23-openshift-4.19 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.20 AS builder
 # FIPS support is offered via the baremetal-installer image
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
@@ -19,7 +19,7 @@ RUN mkdir -p cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH) && \
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 RUN go run -mod=vendor hack/build-coreos-manifest.go
 
-FROM registry.ci.openshift.org/ocp/4.19:base-rhel9
+FROM registry.ci.openshift.org/ocp/4.20:base-rhel9
 
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/bin/manifests/ /manifests/
