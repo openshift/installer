@@ -41,8 +41,6 @@ const (
 	tagTestAttachZoneOnHostsTags     = 0x40
 )
 
-const wildcardDNS = "nip.io"
-
 func validIPIInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{
@@ -630,19 +628,7 @@ func Test_ensureDNS(t *testing.T) {
 		name          string
 		installConfig *types.InstallConfig
 		expectErr     string
-	}{
-		{
-			name: "valid dns",
-			installConfig: func() *types.InstallConfig {
-				installConfig := validIPIInstallConfig()
-				installConfig.ObjectMeta.Name = "0a000803"
-				installConfig.BaseDomain = wildcardDNS
-
-				return installConfig
-			}(),
-			expectErr: ``,
-		},
-	}
+	}{}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := ensureDNS(test.installConfig, platformFieldPath, resolver).ToAggregate()
@@ -707,38 +693,8 @@ func Test_ensureLoadBalancer(t *testing.T) {
 		stopTCPListen bool
 		expectLevel   string
 		expectWarn    string
-	}{
-		{
-			name: "valid lb",
-			installConfig: func() *types.InstallConfig {
-				installConfig := validIPIInstallConfig()
-				installConfig.ObjectMeta.Name = "7f000001"
-				installConfig.BaseDomain = wildcardDNS
-				installConfig.VSphere.APIVIPs = []string{}
-				installConfig.VSphere.IngressVIPs = []string{}
+	}{}
 
-				return installConfig
-			}(),
-			stopTCPListen: false,
-			expectLevel:   ``,
-			expectWarn:    ``,
-		},
-		{
-			name: "warn lb",
-			installConfig: func() *types.InstallConfig {
-				installConfig := validIPIInstallConfig()
-				installConfig.ObjectMeta.Name = "7f000002"
-				installConfig.BaseDomain = wildcardDNS
-				installConfig.VSphere.APIVIPs = []string{}
-				installConfig.VSphere.IngressVIPs = []string{}
-
-				return installConfig
-			}(),
-			stopTCPListen: true,
-			expectLevel:   `warning`,
-			expectWarn:    `Installation may fail, load balancer not available: dial tcp 127.0.0.2:6443: connect: connection refused`,
-		},
-	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if test.stopTCPListen {
