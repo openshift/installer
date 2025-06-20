@@ -331,12 +331,14 @@ func getIPWithinCIDR(subnets []*net.IPNet, ip string) string {
 			return ip
 		}
 	}
-	ipSubnets := make(net.IP, len(subnets[0].IP))
-	copy(ipSubnets, subnets[0].IP)
-	// Since the first 4 IP of the subnets are usually reserved[1], pick the next one that's available in the CIDR.
-	// [1] - https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/private-ip-addresses#allocation-method
-	ipSubnets[len(ipSubnets)-1] += 4
-	return ipSubnets.String()
+
+	// Pick the last IP address in the first subnet range using the mask.
+	subnet := *subnets[0]
+	lastIP := make(net.IP, len(subnet.Mask))
+	for i := range subnet.IP {
+		lastIP[i] = subnet.IP[i] | (subnet.Mask[i] ^ 0xFF)
+	}
+	return lastIP.String()
 }
 
 func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *installconfig.InstallConfig, lbip string) (string, error) {
