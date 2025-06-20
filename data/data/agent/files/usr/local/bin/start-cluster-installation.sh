@@ -18,8 +18,9 @@ done
 
 printf '\nInfra env id is %s\n' "${INFRA_ENV_ID}" 1>&2
 
-total_required_nodes=$(( REQUIRED_MASTER_NODES + REQUIRED_WORKER_NODES ))
+total_required_nodes=$(( REQUIRED_MASTER_NODES + REQUIRED_ARBITER_NODES + REQUIRED_WORKER_NODES ))
 echo "Number of required master nodes: ${REQUIRED_MASTER_NODES}" 1>&2
+echo "Number of required arbiter nodes: ${REQUIRED_ARBITER_NODES}" 1>&2
 echo "Number of required worker nodes: ${REQUIRED_WORKER_NODES}" 1>&2
 echo "Total number of required nodes: ${total_required_nodes}" 1>&2
 

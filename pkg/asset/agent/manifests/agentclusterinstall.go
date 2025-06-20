@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/go-openapi/swag"
@@ -18,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -39,6 +41,7 @@ import (
 
 const (
 	installConfigOverrides = aiv1beta1.Group + "/install-config-overrides"
+	ArbiterAnnotation      = aiv1beta1.Group + "/arbiter-count"
 )
 
 var (
@@ -122,6 +125,10 @@ type agentClusterInstallInstallConfigOverrides struct {
 	CPUPartitioning types.CPUPartitioningMode `json:"cpuPartitioningMode,omitempty"`
 	// Allow override of AdditionalTrustBundlePolicy
 	AdditionalTrustBundlePolicy types.PolicyType `json:"additionalTrustBundlePolicy,omitempty"`
+	// Allow override of FeatureSet
+	FeatureSet configv1.FeatureSet `json:"featureSet,omitempty"`
+	// Allow override of FeatureGates
+	FeatureGates []string `json:"featureGates,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -165,6 +172,11 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		var numberOfWorkers int = 0
 		for _, compute := range installConfig.Config.Compute {
 			numberOfWorkers = numberOfWorkers + int(*compute.Replicas)
+		}
+
+		numberOfArbiters := 0
+		if installConfig.Config.IsArbiterEnabled() {
+			numberOfArbiters = int(*installConfig.Config.Arbiter.Replicas)
 		}
 
 		clusterNetwork := []hiveext.ClusterNetworkEntry{}
@@ -235,6 +247,16 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		if installConfig.Config.FIPS {
 			icOverridden = true
 			icOverrides.FIPS = installConfig.Config.FIPS
+		}
+
+		if len(installConfig.Config.FeatureSet) > 0 {
+			icOverridden = true
+			icOverrides.FeatureSet = installConfig.Config.FeatureSet
+		}
+
+		if len(installConfig.Config.FeatureGates) > 0 {
+			icOverridden = true
+			icOverrides.FeatureGates = installConfig.Config.FeatureGates
 		}
 
 		if installConfig.Config.Proxy != nil {
@@ -381,6 +403,8 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 			})
 		}
 
+		agentClusterInstall.SetAnnotations(setArbiterAnnotation(agentClusterInstall.GetAnnotations(), numberOfArbiters))
+
 		a.Config = agentClusterInstall
 
 	}
@@ -506,6 +530,29 @@ func isIPv6(ipAddress net.IP) bool {
 	// Same as https://github.com/openshift/installer/blob/6eca978b89fc0be17f70fc8a28fa20aab1316843/pkg/types/validation/installconfig.go#L193
 	ip := ipAddress.To4()
 	return ip == nil
+}
+
+func setArbiterAnnotation(anno map[string]string, count int) map[string]string {
+	if count == 0 {
+		return anno
+	}
+	if anno == nil {
+		anno = map[string]string{}
+	}
+	anno[ArbiterAnnotation] = fmt.Sprintf("%d", count)
+	return anno
+}
+
+func GetArbiterAnnotation(anno map[string]string) int {
+	if anno == nil {
+		return 0
+	}
+	// Since we set the annotation we know this will always parse int
+	if val, ok := anno[ArbiterAnnotation]; ok {
+		count, _ := strconv.Atoi(val)
+		return count
+	}
+	return 0
 }
 
 func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList {
