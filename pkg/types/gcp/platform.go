@@ -7,6 +7,16 @@ import (
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
+// DNSZone contains the information about a specific DNS public or private zone.
+type DNSZone struct {
+	// ProjectID is the project where the zone resides.
+	// +optional
+	ProjectID string `json:"projectID,omitempty"`
+
+	// Zone is the name of the zone.
+	Zone string `json:"zone"`
+}
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
@@ -65,6 +75,13 @@ type Platform struct {
 	// There must be only one ServiceEndpoint for a service.
 	// +optional
 	ServiceEndpoints []configv1.GCPServiceEndpoint `json:"serviceEndpoints,omitempty"`
+
+	// PrivateZone contains the information for a private DNS zone. The Private DNS Zone can
+	// only be supplied during Shared VPC (XPN) installs. The PrivateZone can exist or be
+	// created in a second service project; a project other than the one matching projectID
+	// or networkProjectID.
+	// +optional
+	PrivateZone *DNSZone `json:"privateZone,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.
