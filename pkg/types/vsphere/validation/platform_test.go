@@ -389,6 +389,15 @@ func TestValidatePlatform(t *testing.T) {
 			platform: validPlatform(),
 		},
 		{
+			name: "Multi-zone platform duplicated zone names",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Zone = "test-east-1a"
+				return p
+			}(),
+			expectedError: `^test-path.failureDomains.zone: Invalid value: "test-east-1a": cannot be used more than once for the failure domain region "test-east"`,
+		},
+		{
 			name: "Multi-zone platform missing failureDomains",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
