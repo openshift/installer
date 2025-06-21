@@ -3,6 +3,7 @@ package gcp
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
@@ -56,7 +57,7 @@ type API interface {
 	ValidateServiceAccountHasPermissions(ctx context.Context, project string, permissions []string) (bool, error)
 	GetProjectTags(ctx context.Context, projectID string) (sets.Set[string], error)
 	GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*cloudresourcemanager.TagValue, error)
-	GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference) (*kmspb.KeyRing, error)
+	GetKeyRing(ctx context.Context, project, region string, kmsKeyRef *gcptypes.KMSKeyReference) (*kmspb.KeyRing, error)
 }
 
 // Client makes calls to the GCP API.
@@ -587,15 +588,31 @@ func (c *Client) getKeyManagementClient(ctx context.Context) (*kms.KeyManagement
 }
 
 // GetKeyRing returns the key ring associated with the key name (if found).
-func (c *Client) GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference) (*kmspb.KeyRing, error) {
+func (c *Client) GetKeyRing(ctx context.Context, project, region string, kmsKeyRef *gcptypes.KMSKeyReference) (*kmspb.KeyRing, error) {
+	if kmsKeyRef == nil {
+		return nil, fmt.Errorf("kms key reference cannot be empty")
+	}
+
 	kmsClient, err := c.getKeyManagementClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("key ring client creation failed: %w", err)
 	}
 
-	keyRingName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s", kmsKeyRef.ProjectID, kmsKeyRef.Location, kmsKeyRef.KeyRing)
+	projectID := kmsKeyRef.ProjectID
+	if kmsKeyRef.ProjectID == "" {
+		logrus.Debugf("kms key project ID missing, using default project: %s", projectID)
+		projectID = project
+	}
+
+	location := kmsKeyRef.Location
+	if location == "" {
+		logrus.Debugf("kms key location missing, using default region: %s", region)
+		location = region
+	}
+
+	keyRingName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s", projectID, location, kmsKeyRef.KeyRing)
 	listReq := &kmspb.ListKeyRingsRequest{
-		Parent: fmt.Sprintf("projects/%s/locations/%s", kmsKeyRef.ProjectID, kmsKeyRef.Location),
+		Parent: fmt.Sprintf("projects/%s/locations/%s", projectID, location),
 	}
 
 	// OCPBUGS-52203:  GetKeyRingRequest{Name: keyRingName} should work but the resource name (above) is not found.
