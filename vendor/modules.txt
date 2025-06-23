@@ -1533,7 +1533,6 @@ github.com/shurcooL/vfsgen
 ## explicit; go 1.13
 github.com/sirupsen/logrus
 github.com/sirupsen/logrus/hooks/test
-github.com/sirupsen/logrus/hooks/writer
 # github.com/spf13/cast v1.7.1
 ## explicit; go 1.19
 github.com/spf13/cast
