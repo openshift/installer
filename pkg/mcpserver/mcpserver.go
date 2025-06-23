@@ -2,12 +2,14 @@ package mcpserver
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/sirupsen/logrus"
 
+	mcpvsphere "github.com/openshift/installer/pkg/mcpserver/vsphere"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/version"
 )
@@ -62,6 +64,33 @@ func tools() []server.ServerTool {
 			Tool: mcp.NewTool("get_coreos_images", mcp.WithDescription("Gets the coreos images in json from the installer")),
 			Handler: func(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 				return ProcessResults(getCoreOS()), nil
+			},
+		},
+		{
+			Tool: mcp.NewTool("get_vsphere_topology",
+				mcp.WithDescription("Gets the vsphere topology in json from the installer"),
+				mcp.WithString("username"),
+				mcp.WithString("password"),
+				mcp.WithString("server"),
+			),
+			Handler: func(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+				arguments := request.GetArguments()
+				// check if the arguments are present using ok pattern
+				username, ok := arguments["username"].(string)
+				if !ok {
+					return nil, errors.New("username is required")
+				}
+				password, ok := arguments["password"].(string)
+				if !ok {
+					return nil, errors.New("password is required")
+				}
+				// missing server
+				server, ok := arguments["server"].(string)
+				if !ok {
+					return nil, errors.New("server is required")
+				}
+
+				return ProcessResults(mcpvsphere.GetVSphereTopology(username, password, server)), nil
 			},
 		},
 	}
