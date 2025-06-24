@@ -41,6 +41,11 @@ func TestGenerateMCO(t *testing.T) {
 			expectedMCO:   mcoBuild.build(mcoBuild.withComputeBootImageMgmtDisabled()),
 		},
 		{
+			name:          "aws with a custom edge compute image disables mco management",
+			installConfig: icBuild.build(icBuild.withAWSEdgeComputeAMI()),
+			expectedMCO:   mcoBuild.build(mcoBuild.withComputeBootImageMgmtDisabled()),
+		},
+		{
 			name:          "gcp with a custom compute image disables mco management",
 			installConfig: icBuild.build(icBuild.withGCPComputeAMI()),
 			expectedMCO:   mcoBuild.build(mcoBuild.withComputeBootImageMgmtDisabled()),
@@ -116,6 +121,27 @@ func (b icBuildNamespace) withAWSComputeAMI() icOption {
 		b.forAWS()(ic)
 		ic.Compute = []types.MachinePool{
 			{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						AMIID: "ami-xxxxxxxxxxxxx",
+					},
+				},
+			},
+		}
+	}
+}
+
+func (b icBuildNamespace) withAWSEdgeComputeAMI() icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAWS()(ic)
+		ic.Compute = []types.MachinePool{
+			{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{},
+				},
+			},
+			{
+				Name: "edge",
 				Platform: types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{
 						AMIID: "ami-xxxxxxxxxxxxx",

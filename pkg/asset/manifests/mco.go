@@ -52,8 +52,11 @@ func awsBootImages(ic *types.InstallConfig) (cpImg bool, wImg bool) {
 		cpImg = true
 	}
 
-	if w := ic.Compute; len(w) > 0 && w[0].Platform.AWS != nil && w[0].Platform.AWS.AMIID != "" {
-		wImg = true
+	// On AWS, we need to check both compute and edge compute machine pool.
+	for _, computeMP := range ic.Compute {
+		if awsPlatform := computeMP.Platform.AWS; awsPlatform != nil && awsPlatform.AMIID != "" {
+			wImg = true
+		}
 	}
 	return
 }
