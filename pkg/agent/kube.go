@@ -19,7 +19,7 @@ type ClusterKubeAPIClient struct {
 	Client     *kubernetes.Clientset
 	csrClient  certificatesClient.CertificateSigningRequestInterface
 	ctx        context.Context
-	config     *rest.Config
+	Config     *rest.Config
 	configPath string
 }
 
@@ -48,7 +48,7 @@ func NewClusterKubeAPIClient(ctx context.Context, kubeconfigPath string) (*Clust
 	kubeClient.Client = kubeclient
 	kubeClient.csrClient = csrClient
 	kubeClient.ctx = ctx
-	kubeClient.config = kubeconfig
+	kubeClient.Config = kubeconfig
 	kubeClient.configPath = kubeconfigPath
 
 	return kubeClient, nil
