@@ -40,6 +40,8 @@ func GetVSphereTopology(username, password, server string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		// todo: move datastore here..
+		// todo: we use it off of the datacenter object anyway
 
 		for _, cluster := range clusters {
 			logrus.Infof("Found cluster %s", cluster.InventoryPath)
