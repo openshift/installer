@@ -78,7 +78,7 @@ require (
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/jongio/azidext/go/azidext v0.5.0
 	github.com/kdomanski/iso9660 v0.2.1
-	github.com/mark3labs/mcp-go v0.30.0
+	github.com/mark3labs/mcp-go v0.32.0
 	github.com/metal3-io/baremetal-operator/apis v0.4.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.4.0
 	github.com/microsoft/kiota-authentication-azure-go v0.6.0

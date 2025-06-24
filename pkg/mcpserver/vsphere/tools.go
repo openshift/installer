@@ -40,8 +40,13 @@ func GetVSphereTopology(username, password, server string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		// todo: move datastore here..
-		// todo: we use it off of the datacenter object anyway
+
+		// get all datastores in the host
+		datastores, err := session.Finder.DatastoreList(context.Background(), path.Join(datacenter.InventoryPath, "datastore", "..."))
+		if err != nil {
+			logrus.Errorf("Error finding datastores: %v", err)
+			return "", err
+		}
 
 		for _, cluster := range clusters {
 			logrus.Infof("Found cluster %s", cluster.InventoryPath)
@@ -55,36 +60,21 @@ func GetVSphereTopology(username, password, server string) (string, error) {
 				logrus.Infof("Network object %s", network.GetInventoryPath())
 				networks[i] = network.GetInventoryPath()
 			}
-			// get all hosts in the cluster
-			hosts, err := session.Finder.HostSystemList(context.Background(), path.Join(cluster.InventoryPath, "/*"))
-			if err != nil {
-				logrus.Errorf("Error finding hosts: %v", err)
-				return "", err
-			}
-			for _, host := range hosts {
 
-				// get all datastores in the host
-				datastores, err := session.Finder.DatastoreList(context.Background(), path.Join(host.InventoryPath, "/*"))
-				if err != nil {
-					logrus.Errorf("Error finding datastores: %v", err)
-					return "", err
-				}
-				// do not add the same datastore to the failure domain more than once
-				for _, datastore := range datastores {
-					// check if the datastore is already in the failure domain
-					logrus.Infof("Datastore object %s", datastore.InventoryPath)
-					failureDomain := vsphere.FailureDomain{
-						Server: server,
-						Topology: vsphere.Topology{
-							Datacenter:     datacenter.InventoryPath,
-							ComputeCluster: cluster.InventoryPath,
-							Networks:       networks,
-							Datastore:      datastore.InventoryPath,
-						},
-					}
-					vspherePlatform.FailureDomains = append(vspherePlatform.FailureDomains, failureDomain)
-				}
+			for _, ds := range datastores {
 
+				// check if the datastore is already in the failure domain
+				logrus.Infof("Datastore object %s", ds.InventoryPath)
+				failureDomain := vsphere.FailureDomain{
+					Server: server,
+					Topology: vsphere.Topology{
+						Datacenter:     datacenter.InventoryPath,
+						ComputeCluster: cluster.InventoryPath,
+						Networks:       networks,
+						Datastore:      ds.InventoryPath,
+					},
+				}
+				vspherePlatform.FailureDomains = append(vspherePlatform.FailureDomains, failureDomain)
 			}
 
 		}

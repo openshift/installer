@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -73,6 +74,15 @@ func WithHTTPContextFunc(fn HTTPContextFunc) StreamableHTTPOption {
 	}
 }
 
+// WithStreamableHTTPServer sets the HTTP server instance for StreamableHTTPServer.
+// NOTE: When providing a custom HTTP server, you must handle routing yourself
+// If routing is not set up, the server will start but won't handle any MCP requests.
+func WithStreamableHTTPServer(srv *http.Server) StreamableHTTPOption {
+	return func(s *StreamableHTTPServer) {
+		s.httpServer = srv
+	}
+}
+
 // WithLogger sets the logger for the server
 func WithLogger(logger util.Logger) StreamableHTTPOption {
 	return func(s *StreamableHTTPServer) {
@@ -105,8 +115,9 @@ func WithLogger(logger util.Logger) StreamableHTTPOption {
 //   - Batching of requests/notifications/responses in arrays.
 //   - Stream Resumability
 type StreamableHTTPServer struct {
-	server       *MCPServer
-	sessionTools *sessionToolsStore
+	server            *MCPServer
+	sessionTools      *sessionToolsStore
+	sessionRequestIDs sync.Map // sessionId --> last requestID(*atomic.Int64)
 
 	httpServer *http.Server
 	mu         sync.RWMutex
@@ -155,15 +166,24 @@ func (s *StreamableHTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request)
 //	s.Start(":8080")
 func (s *StreamableHTTPServer) Start(addr string) error {
 	s.mu.Lock()
-	mux := http.NewServeMux()
-	mux.Handle(s.endpointPath, s)
-	s.httpServer = &http.Server{
-		Addr:    addr,
-		Handler: mux,
+	if s.httpServer == nil {
+		mux := http.NewServeMux()
+		mux.Handle(s.endpointPath, s)
+		s.httpServer = &http.Server{
+			Addr:    addr,
+			Handler: mux,
+		}
+	} else {
+		if s.httpServer.Addr == "" {
+			s.httpServer.Addr = addr
+		} else if s.httpServer.Addr != addr {
+			return fmt.Errorf("conflicting listen address: WithStreamableHTTPServer(%q) vs Start(%q)", s.httpServer.Addr, addr)
+		}
 	}
+	srv := s.httpServer
 	s.mu.Unlock()
 
-	return s.httpServer.ListenAndServe()
+	return srv.ListenAndServe()
 }
 
 // Shutdown gracefully stops the server, closing all active sessions
@@ -243,9 +263,8 @@ func (s *StreamableHTTPServer) handlePost(w http.ResponseWriter, r *http.Request
 
 	// handle potential notifications
 	mu := sync.Mutex{}
-	upgraded := false
+	upgradedHeader := false
 	done := make(chan struct{})
-	defer close(done)
 
 	go func() {
 		for {
@@ -254,6 +273,12 @@ func (s *StreamableHTTPServer) handlePost(w http.ResponseWriter, r *http.Request
 				func() {
 					mu.Lock()
 					defer mu.Unlock()
+					// if the done chan is closed, as the request is terminated, just return
+					select {
+					case <-done:
+						return
+					default:
+					}
 					defer func() {
 						flusher, ok := w.(http.Flusher)
 						if ok {
@@ -261,13 +286,13 @@ func (s *StreamableHTTPServer) handlePost(w http.ResponseWriter, r *http.Request
 						}
 					}()
 
-					// if there's notifications, upgrade to SSE response
-					if !upgraded {
-						upgraded = true
+					// if there's notifications, upgradedHeader to SSE response
+					if !upgradedHeader {
 						w.Header().Set("Content-Type", "text/event-stream")
 						w.Header().Set("Connection", "keep-alive")
 						w.Header().Set("Cache-Control", "no-cache")
 						w.WriteHeader(http.StatusAccepted)
+						upgradedHeader = true
 					}
 					err := writeSSEEvent(w, nt)
 					if err != nil {
@@ -294,10 +319,20 @@ func (s *StreamableHTTPServer) handlePost(w http.ResponseWriter, r *http.Request
 	// Write response
 	mu.Lock()
 	defer mu.Unlock()
+	// close the done chan before unlock
+	defer close(done)
 	if ctx.Err() != nil {
 		return
 	}
-	if upgraded {
+	// If client-server communication already upgraded to SSE stream
+	if session.upgradeToSSE.Load() {
+		if !upgradedHeader {
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.Header().Set("Connection", "keep-alive")
+			w.Header().Set("Cache-Control", "no-cache")
+			w.WriteHeader(http.StatusAccepted)
+			upgradedHeader = true
+		}
 		if err := writeSSEEvent(w, response); err != nil {
 			s.logger.Errorf("Failed to write final SSE response event: %v", err)
 		}
@@ -373,15 +408,16 @@ func (s *StreamableHTTPServer) handleGet(w http.ResponseWriter, r *http.Request)
 		go func() {
 			ticker := time.NewTicker(s.listenHeartbeatInterval)
 			defer ticker.Stop()
-			message := mcp.JSONRPCRequest{
-				JSONRPC: "2.0",
-				Request: mcp.Request{
-					Method: "ping",
-				},
-			}
 			for {
 				select {
 				case <-ticker.C:
+					message := mcp.JSONRPCRequest{
+						JSONRPC: "2.0",
+						ID:      mcp.NewRequestId(s.nextRequestID(sessionID)),
+						Request: mcp.Request{
+							Method: "ping",
+						},
+					}
 					select {
 					case writeChan <- message:
 					case <-done:
@@ -429,7 +465,10 @@ func (s *StreamableHTTPServer) handleDelete(w http.ResponseWriter, r *http.Reque
 	}
 
 	// remove the session relateddata from the sessionToolsStore
-	s.sessionTools.set(sessionID, nil)
+	s.sessionTools.delete(sessionID)
+
+	// remove current session's requstID information
+	s.sessionRequestIDs.Delete(sessionID)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -462,6 +501,13 @@ func (s *StreamableHTTPServer) writeJSONRPCError(
 	}
 }
 
+// nextRequestID gets the next incrementing requestID for the current session
+func (s *StreamableHTTPServer) nextRequestID(sessionID string) int64 {
+	actual, _ := s.sessionRequestIDs.LoadOrStore(sessionID, new(atomic.Int64))
+	counter := actual.(*atomic.Int64)
+	return counter.Add(1)
+}
+
 // --- session ---
 
 type sessionToolsStore struct {
@@ -487,6 +533,12 @@ func (s *sessionToolsStore) set(sessionID string, tools map[string]ServerTool) {
 	s.tools[sessionID] = tools
 }
 
+func (s *sessionToolsStore) delete(sessionID string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.tools, sessionID)
+}
+
 // streamableHttpSession is a session for streamable-http transport
 // When in POST handlers(request/notification), it's ephemeral, and only exists in the life of the request handler.
 // When in GET handlers(listening), it's a real session, and will be registered in the MCP server.
@@ -494,6 +546,7 @@ type streamableHttpSession struct {
 	sessionID           string
 	notificationChannel chan mcp.JSONRPCNotification // server -> client notifications
 	tools               *sessionToolsStore
+	upgradeToSSE        atomic.Bool
 }
 
 func newStreamableHttpSession(sessionID string, toolStore *sessionToolsStore) *streamableHttpSession {
@@ -534,6 +587,12 @@ func (s *streamableHttpSession) SetSessionTools(tools map[string]ServerTool) {
 
 var _ SessionWithTools = (*streamableHttpSession)(nil)
 
+func (s *streamableHttpSession) UpgradeToSSEWhenReceiveNotification() {
+	s.upgradeToSSE.Store(true)
+}
+
+var _ SessionWithStreamableHTTPConfig = (*streamableHttpSession)(nil)
+
 // --- session id manager ---
 
 type SessionIdManager interface {
@@ -555,9 +614,7 @@ func (s *StatelessSessionIdManager) Generate() string {
 	return ""
 }
 func (s *StatelessSessionIdManager) Validate(sessionID string) (isTerminated bool, err error) {
-	if sessionID != "" {
-		return false, fmt.Errorf("session id is not allowed to be set when stateless")
-	}
+	// In stateless mode, ignore session IDs completely - don't validate or reject them
 	return false, nil
 }
 func (s *StatelessSessionIdManager) Terminate(sessionID string) (isNotAllowed bool, err error) {

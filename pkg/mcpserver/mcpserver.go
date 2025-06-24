@@ -3,6 +3,7 @@ package mcpserver
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -10,24 +11,25 @@ import (
 	"github.com/sirupsen/logrus"
 
 	mcpvsphere "github.com/openshift/installer/pkg/mcpserver/vsphere"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/version"
 )
 
 type InstallerMcpServer struct {
-	Server *server.MCPServer
-	Tools  []server.ServerTool
+	Server    *server.MCPServer
+	Tools     []server.ServerTool
+	Resources []server.ServerResource
+	Prompts   []server.ServerPrompt
 }
 
 // using design examples from https://github.com/Prashanth684/releasecontroller-mcp-server/tree/main
 
-func NewInstallerMcpServer(serverTools []server.ServerTool) *InstallerMcpServer {
-
+func NewInstallerMcpServer(serverTools []server.ServerTool, resources []server.ServerResource) *InstallerMcpServer {
 	installerMcpServer := &InstallerMcpServer{}
 
-	// todo: yeah I know...
-
-	versionString, _ := version.Version()
+	versionString, err := version.Version()
+	if err != nil {
+		logrus.Warn(err)
+	}
 
 	hooks := &server.Hooks{}
 
@@ -38,15 +40,20 @@ func NewInstallerMcpServer(serverTools []server.ServerTool) *InstallerMcpServer 
 		"OpenShift Installer",
 		versionString,
 		server.WithToolCapabilities(true),
+		server.WithResourceCapabilities(true, true),
 		server.WithLogging(),
 		server.WithHooks(hooks),
 	)
 
 	installerMcpServer.Server = s
 	installerMcpServer.Tools = append(installerMcpServer.Tools, serverTools...)
-	installerMcpServer.Tools = append(installerMcpServer.Tools, tools()...)
+	// todo: this could be per platform Tools()
+	installerMcpServer.Tools = append(installerMcpServer.Tools, Tools()...)
+
+	installerMcpServer.Resources = append(installerMcpServer.Resources, resources...)
 
 	s.AddTools(installerMcpServer.Tools...)
+	s.AddResources(installerMcpServer.Resources...)
 
 	logrus.Infof("There are %d installed tools", len(installerMcpServer.Tools))
 
@@ -57,13 +64,13 @@ func NewInstallerMcpServer(serverTools []server.ServerTool) *InstallerMcpServer 
 	return installerMcpServer
 }
 
-func tools() []server.ServerTool {
+func Tools() []server.ServerTool {
 	logrus.Info("Initializing MCP Server Tools")
 	return []server.ServerTool{
 		{
 			Tool: mcp.NewTool("get_coreos_images", mcp.WithDescription("Gets the coreos images in json from the installer")),
 			Handler: func(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-				return ProcessResults(getCoreOS()), nil
+				return ProcessResults(GetCoreOS()), nil
 			},
 		},
 		{
@@ -85,21 +92,40 @@ func tools() []server.ServerTool {
 					return nil, errors.New("password is required")
 				}
 				// missing server
-				server, ok := arguments["server"].(string)
+				vServer, ok := arguments["server"].(string)
 				if !ok {
 					return nil, errors.New("server is required")
 				}
 
-				return ProcessResults(mcpvsphere.GetVSphereTopology(username, password, server)), nil
+				return ProcessResults(
+					mcpvsphere.GetVSphereTopology(username, password, vServer),
+				), nil
 			},
 		},
 	}
+}
+
+func ProcessResourceResults(content string, err error) (*mcp.ReadResourceResult, error) {
+	if err != nil {
+		return nil, err
+	}
+	return mcp.NewReadResourceResult(content), nil
+
 }
 
 func ProcessResults(content string, err error) *mcp.CallToolResult {
 	if err != nil {
 		return mcp.NewToolResultErrorFromErr(content, err)
 	}
+
+	/*
+		if json.Valid([]byte(content)) {
+			return mcp.newtoolre
+
+		}
+
+	*/
+
 	return mcp.NewToolResultText(content)
 }
 
@@ -111,16 +137,43 @@ func (i *InstallerMcpServer) RunServeStdio() error {
 func (i *InstallerMcpServer) RunSSEServer() error {
 	sseServer := server.NewSSEServer(i.Server,
 		server.WithKeepAlive(true),
-		server.WithKeepAliveInterval(time.Minute))
+		server.WithKeepAliveInterval(30*time.Second))
 	logrus.Info("Starting MCP SSE Server")
 	return sseServer.Start(":8080")
 }
 
-func getCoreOS() (string, error) {
-	logrus.Info("Getting CoreOS stream data")
-	streamData, err := rhcos.FetchRawCoreOSStream(context.Background())
+type McpLogrusHook struct {
+	// LogLevels specifies which log levels should trigger this hook.
+	LogLevels []logrus.Level
+
+	MCPServer *server.MCPServer
+
+	ProgressToken mcp.ProgressToken
+	ClientContext context.Context
+}
+
+func (hook *McpLogrusHook) Fire(entry *logrus.Entry) error {
+	line, err := entry.String()
 	if err != nil {
-		return "", err
+		// If formatting fails, we return an error.
+		return fmt.Errorf("failed to format log entry: %w", err)
 	}
-	return string(streamData), nil
+	//logMsgNotify := mcp.NewLoggingMessageNotification(mcp.LoggingLevel(entry.Level.String()), "logrus", line)
+
+	err = hook.MCPServer.SendNotificationToClient(hook.ClientContext,
+		"notifications/message",
+		map[string]any{
+			"level":  entry.Level.String(),
+			"data":   line,
+			"logger": "logrus",
+		},
+	)
+	if err != nil {
+		logrus.Warnf("Failed to send notification to MCP server: %v", err)
+	}
+
+	return err
+}
+func (hook *McpLogrusHook) Levels() []logrus.Level {
+	return hook.LogLevels
 }
