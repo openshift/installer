@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -77,7 +78,7 @@ func (a *PlatformPermsCheck) Generate(ctx context.Context, dependencies asset.Pa
 		// TODO: IBM[#90]: platformpermscheck
 	case powervs.Name:
 		// Nothing needs to be done here
-	case azure.Name, baremetal.Name, external.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name, nutanix.Name:
+	case azure.Name, baremetal.Name, external.Name, none.Name, openstack.Name, powervc.Name, ovirt.Name, vsphere.Name, nutanix.Name:
 		// no permissions to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
