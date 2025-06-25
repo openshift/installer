@@ -7,6 +7,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
@@ -27,25 +28,54 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+// ok, today resources are a no-go. there are very few mcp clients that actually support
+// this and the ones that work, don't. Maybe later...
+// https://modelcontextprotocol.io/clients
+
+func ResourceTemplates() []mcpserver.ServerResourceTemplate {
+	return []mcpserver.ServerResourceTemplate{
+		{
+			/*
+				Handler: func(ctx context.Context, req mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+					logrus.Info("in Handler")
+					result, err := mcpserver.ProcessResourceResults(getInstallConfigResource(ctx, req))
+					return result.Contents, err
+				},
+
+				ResourceTemplate: mcp.NewResourceTemplate("install://{platform}/config",
+					"install-config",
+					mcp.WithTemplateMIMEType("application/json"),
+					mcp.WithTemplateDescription("provides an example install-config by platform")),
+
+			*/
+		},
+	}
+}
 func Resources() []server.ServerResource {
+
 	return []server.ServerResource{
 		{
-			Resource: mcp.NewResource(
-				"config://{platform}",
-				"Install Config",
-				mcp.WithResourceDescription("provides an example install-config by platform"),
-				mcp.WithMIMEType("application/json"),
-			),
-			Handler: func(ctx context.Context, req mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
-				result, err := mcpserver.ProcessResourceResults(getInstallConfigResource(ctx, req))
-				return result.Contents, err
-			},
+			/*
+				Resource: mcp.NewResource(
+					"config://{platform}",
+					"install-config",
+					mcp.WithResourceDescription("provides an example install-config by platform"),
+					mcp.WithMIMEType("application/json"),
+				),
+				Handler: func(ctx context.Context, req mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+					logrus.Info("in Handler")
+					result, err := mcpserver.ProcessResourceResults(getInstallConfigResource(ctx, req))
+					return result.Contents, err
+				},
+			*/
 		},
 	}
 }
 
 func getInstallConfigResource(ctx context.Context, req mcp.ReadResourceRequest) (string, error) {
+	logrus.Info("in getInstallConfigResource")
 	platform := req.Params.Arguments["platform"]
+	logrus.Infof("platform: %s", platform)
 
 	// Create a new InstallConfig
 	installConfig := &types.InstallConfig{

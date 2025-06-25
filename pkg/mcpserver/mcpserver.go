@@ -14,16 +14,24 @@ import (
 	"github.com/openshift/installer/pkg/version"
 )
 
+type ServerResourceTemplate struct {
+	Handler          server.ResourceTemplateHandlerFunc
+	ResourceTemplate mcp.ResourceTemplate
+}
+
 type InstallerMcpServer struct {
 	Server    *server.MCPServer
 	Tools     []server.ServerTool
 	Resources []server.ServerResource
 	Prompts   []server.ServerPrompt
+
+	// why? really just why?
+	ResourceTemplates []ServerResourceTemplate
 }
 
 // using design examples from https://github.com/Prashanth684/releasecontroller-mcp-server/tree/main
 
-func NewInstallerMcpServer(serverTools []server.ServerTool, resources []server.ServerResource) *InstallerMcpServer {
+func NewInstallerMcpServer(serverTools []server.ServerTool, resources []server.ServerResource, resourceTemplates []ServerResourceTemplate) *InstallerMcpServer {
 	installerMcpServer := &InstallerMcpServer{}
 
 	versionString, err := version.Version()
@@ -55,6 +63,12 @@ func NewInstallerMcpServer(serverTools []server.ServerTool, resources []server.S
 	s.AddTools(installerMcpServer.Tools...)
 	s.AddResources(installerMcpServer.Resources...)
 
+	for _, t := range installerMcpServer.ResourceTemplates {
+		s.AddResourceTemplate(t.ResourceTemplate, t.Handler)
+	}
+
+	//s.AddResourceTemplate()
+
 	logrus.Infof("There are %d installed tools", len(installerMcpServer.Tools))
 
 	for _, tool := range installerMcpServer.Tools {
@@ -71,6 +85,24 @@ func Tools() []server.ServerTool {
 			Tool: mcp.NewTool("get_coreos_images", mcp.WithDescription("Gets the coreos images in json from the installer")),
 			Handler: func(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 				return ProcessResults(GetCoreOS()), nil
+			},
+		},
+		{
+			Tool: mcp.NewTool("get_example_install_config",
+				mcp.WithDescription("Gets an example install-config by platform"),
+				mcp.WithString("platform"),
+			),
+			Handler: func(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+				arguments := request.GetArguments()
+				// check if the arguments are present using ok pattern
+				platform, ok := arguments["platform"].(string)
+				if !ok {
+					return nil, errors.New("platform is required")
+				}
+
+				return ProcessResults(
+					GetExampleInstallConfig(platform),
+				), nil
 			},
 		},
 		{
@@ -140,6 +172,13 @@ func (i *InstallerMcpServer) RunSSEServer() error {
 		server.WithKeepAliveInterval(30*time.Second))
 	logrus.Info("Starting MCP SSE Server")
 	return sseServer.Start(":8080")
+}
+func (i *InstallerMcpServer) RunStreamableHttp() error {
+	streamHttp := server.NewStreamableHTTPServer(i.Server,
+		server.WithHeartbeatInterval(10*time.Second))
+
+	logrus.Info("Starting MCP Streamable HTTP server")
+	return streamHttp.Start(":8080")
 }
 
 type McpLogrusHook struct {
