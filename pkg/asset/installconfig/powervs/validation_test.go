@@ -64,6 +64,7 @@ var (
 	setValidVPCRegion      = func(ic *types.InstallConfig) { ic.Platform.PowerVS.VPCRegion = validVPCRegion }
 	validRG                = "valid-resource-group"
 	anotherValidRG         = "another-valid-resource-group"
+	invalidStorageTier     = "tier2"
 	validVPCID             = "valid-id"
 	anotherValidVPCID      = "another-valid-id"
 	validVPC               = "valid-vpc"
@@ -552,6 +553,48 @@ func TestValidatePERAvailability(t *testing.T) {
 			}
 
 			aggregatedErrors := powervs.ValidatePERAvailability(powervsClient, editedInstallConfig)
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestValidateStorageTier(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name: "Unknown Storage Tier specified",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.StorageTier = invalidStorageTier
+				},
+			},
+			errorMsg: fmt.Sprintf("platform:powervs:storageTier has an invalid value %q. Available storage tiers: tier0, tier1 and tier3", invalidStorageTier),
+		},
+		{
+			name: "Valid Storage Tier",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.ControlPlane.Platform.PowerVS = nil
+				},
+			},
+			errorMsg: "",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			aggregatedErrors := powervs.ValidateStorageTier(editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
