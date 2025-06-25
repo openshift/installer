@@ -21,6 +21,7 @@ func newRunCmd(ctx context.Context) *cobra.Command {
 
 	cmd.AddCommand(newRunMcpStdioCmd())
 	cmd.AddCommand(newRunMcpSseCmd())
+	cmd.AddCommand(newRunMcpStreamableHttpCmd())
 
 	return cmd
 }
@@ -34,9 +35,29 @@ func newRunMcpSseCmd() *cobra.Command {
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
-			i := mcpserver.NewInstallerMcpServer(Tools(), Resources())
+			i := mcpserver.NewInstallerMcpServer(Tools(), Resources(), ResourceTemplates())
 
 			err := i.RunSSEServer()
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		},
+	}
+}
+
+// https://mcp-go.dev/transports/http#standard-mcp-endpoints
+func newRunMcpStreamableHttpCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "mcp-server-streamable-http",
+		Short: "Run MCP Server-Sent Events",
+		Args:  cobra.ExactArgs(0),
+		Run: func(_ *cobra.Command, _ []string) {
+			cleanup := command.SetupFileHook(command.RootOpts.Dir)
+			defer cleanup()
+
+			i := mcpserver.NewInstallerMcpServer(Tools(), Resources(), ResourceTemplates())
+
+			err := i.RunStreamableHttp()
 			if err != nil {
 				logrus.Fatal(err)
 			}
