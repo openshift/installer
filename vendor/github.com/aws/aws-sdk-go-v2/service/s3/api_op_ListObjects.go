@@ -13,19 +13,35 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This operation is not supported by directory buckets. Returns some or all (up
-// to 1,000) of the objects in a bucket. You can use the request parameters as
-// selection criteria to return a subset of the objects in a bucket. A 200 OK
-// response can contain valid or invalid XML. Be sure to design your application to
-// parse the contents of the response and handle it appropriately. This action has
-// been revised. We recommend that you use the newer version, ListObjectsV2 (https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html)
-// , when developing applications. For backward compatibility, Amazon S3 continues
-// to support ListObjects . The following operations are related to ListObjects :
-//   - ListObjectsV2 (https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html)
-//   - GetObject (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html)
-//   - PutObject (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html)
-//   - CreateBucket (https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html)
-//   - ListBuckets (https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html)
+// This operation is not supported for directory buckets.
+//
+// Returns some or all (up to 1,000) of the objects in a bucket. You can use the
+// request parameters as selection criteria to return a subset of the objects in a
+// bucket. A 200 OK response can contain valid or invalid XML. Be sure to design
+// your application to parse the contents of the response and handle it
+// appropriately.
+//
+// This action has been revised. We recommend that you use the newer version, [ListObjectsV2],
+// when developing applications. For backward compatibility, Amazon S3 continues to
+// support ListObjects .
+//
+// The following operations are related to ListObjects :
+//
+// [ListObjectsV2]
+//
+// [GetObject]
+//
+// [PutObject]
+//
+// [CreateBucket]
+//
+// [ListBuckets]
+//
+// [ListBuckets]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html
+// [PutObject]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
+// [GetObject]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
+// [CreateBucket]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html
+// [ListObjectsV2]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
 func (c *Client) ListObjects(ctx context.Context, params *ListObjectsInput, optFns ...func(*Options)) (*ListObjectsOutput, error) {
 	if params == nil {
 		params = &ListObjectsInput{}
@@ -43,31 +59,40 @@ func (c *Client) ListObjects(ctx context.Context, params *ListObjectsInput, optF
 
 type ListObjectsInput struct {
 
-	// The name of the bucket containing the objects. Directory buckets - When you use
-	// this operation with a directory bucket, you must use virtual-hosted-style
-	// requests in the format Bucket_name.s3express-az_id.region.amazonaws.com .
-	// Path-style requests are not supported. Directory bucket names must be unique in
-	// the chosen Availability Zone. Bucket names must follow the format
-	// bucket_base_name--az-id--x-s3 (for example,  DOC-EXAMPLE-BUCKET--usw2-az1--x-s3
-	// ). For information about bucket naming restrictions, see Directory bucket
-	// naming rules (https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-bucket-naming-rules.html)
-	// in the Amazon S3 User Guide. Access points - When you use this action with an
-	// access point, you must provide the alias of the access point in place of the
-	// bucket name or specify the access point ARN. When using the access point ARN,
-	// you must direct requests to the access point hostname. The access point hostname
-	// takes the form AccessPointName-AccountId.s3-accesspoint.Region.amazonaws.com.
-	// When using this action with an access point through the Amazon Web Services
-	// SDKs, you provide the access point ARN in place of the bucket name. For more
-	// information about access point ARNs, see Using access points (https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-access-points.html)
-	// in the Amazon S3 User Guide. Access points and Object Lambda access points are
-	// not supported by directory buckets. S3 on Outposts - When you use this action
-	// with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts
-	// hostname. The S3 on Outposts hostname takes the form
-	// AccessPointName-AccountId.outpostID.s3-outposts.Region.amazonaws.com . When you
-	// use this action with S3 on Outposts through the Amazon Web Services SDKs, you
-	// provide the Outposts access point ARN in place of the bucket name. For more
-	// information about S3 on Outposts ARNs, see What is S3 on Outposts? (https://docs.aws.amazon.com/AmazonS3/latest/userguide/S3onOutposts.html)
-	// in the Amazon S3 User Guide.
+	// The name of the bucket containing the objects.
+	//
+	// Directory buckets - When you use this operation with a directory bucket, you
+	// must use virtual-hosted-style requests in the format
+	// Bucket-name.s3express-zone-id.region-code.amazonaws.com . Path-style requests
+	// are not supported. Directory bucket names must be unique in the chosen Zone
+	// (Availability Zone or Local Zone). Bucket names must follow the format
+	// bucket-base-name--zone-id--x-s3 (for example,
+	// amzn-s3-demo-bucket--usw2-az1--x-s3 ). For information about bucket naming
+	// restrictions, see [Directory bucket naming rules]in the Amazon S3 User Guide.
+	//
+	// Access points - When you use this action with an access point for general
+	// purpose buckets, you must provide the alias of the access point in place of the
+	// bucket name or specify the access point ARN. When you use this action with an
+	// access point for directory buckets, you must provide the access point name in
+	// place of the bucket name. When using the access point ARN, you must direct
+	// requests to the access point hostname. The access point hostname takes the form
+	// AccessPointName-AccountId.s3-accesspoint.Region.amazonaws.com. When using this
+	// action with an access point through the Amazon Web Services SDKs, you provide
+	// the access point ARN in place of the bucket name. For more information about
+	// access point ARNs, see [Using access points]in the Amazon S3 User Guide.
+	//
+	// Object Lambda access points are not supported by directory buckets.
+	//
+	// S3 on Outposts - When you use this action with S3 on Outposts, you must direct
+	// requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the
+	// form AccessPointName-AccountId.outpostID.s3-outposts.Region.amazonaws.com . When
+	// you use this action with S3 on Outposts, the destination bucket must be the
+	// Outposts access point ARN or the access point alias. For more information about
+	// S3 on Outposts, see [What is S3 on Outposts?]in the Amazon S3 User Guide.
+	//
+	// [Directory bucket naming rules]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-bucket-naming-rules.html
+	// [What is S3 on Outposts?]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/S3onOutposts.html
+	// [Using access points]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-access-points.html
 	//
 	// This member is required.
 	Bucket *string
@@ -75,12 +100,20 @@ type ListObjectsInput struct {
 	// A delimiter is a character that you use to group keys.
 	Delimiter *string
 
-	// Requests Amazon S3 to encode the object keys in the response and specifies the
-	// encoding method to use. An object key can contain any Unicode character;
-	// however, the XML 1.0 parser cannot parse some characters, such as characters
-	// with an ASCII value from 0 to 10. For characters that are not supported in XML
-	// 1.0, you can add this parameter to request that Amazon S3 encode the keys in the
-	// response.
+	// Encoding type used by Amazon S3 to encode the [object keys] in the response. Responses are
+	// encoded only in UTF-8. An object key can contain any Unicode character. However,
+	// the XML 1.0 parser can't parse certain characters, such as characters with an
+	// ASCII value from 0 to 10. For characters that aren't supported in XML 1.0, you
+	// can add this parameter to request that Amazon S3 encode the keys in the
+	// response. For more information about characters to avoid in object key names,
+	// see [Object key naming guidelines].
+	//
+	// When using the URL encoding type, non-ASCII characters that are used in an
+	// object's key name will be percent-encoded according to UTF-8 code values. For
+	// example, the object test_file(3).png will appear as test_file%283%29.png .
+	//
+	// [Object key naming guidelines]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-guidelines
+	// [object keys]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
 	EncodingType types.EncodingType
 
 	// The account ID of the expected bucket owner. If the account ID that you provide
@@ -113,6 +146,7 @@ type ListObjectsInput struct {
 }
 
 func (in *ListObjectsInput) bindEndpointParams(p *EndpointParameters) {
+
 	p.Bucket = in.Bucket
 	p.Prefix = in.Prefix
 
@@ -121,14 +155,20 @@ func (in *ListObjectsInput) bindEndpointParams(p *EndpointParameters) {
 type ListObjectsOutput struct {
 
 	// All of the keys (up to 1,000) rolled up in a common prefix count as a single
-	// return when calculating the number of returns. A response can contain
-	// CommonPrefixes only if you specify a delimiter. CommonPrefixes contains all (if
-	// there are any) keys between Prefix and the next occurrence of the string
-	// specified by the delimiter. CommonPrefixes lists keys that act like
-	// subdirectories in the directory specified by Prefix . For example, if the prefix
-	// is notes/ and the delimiter is a slash ( / ), as in notes/summer/july , the
-	// common prefix is notes/summer/ . All of the keys that roll up into a common
-	// prefix count as a single return when calculating the number of returns.
+	// return when calculating the number of returns.
+	//
+	// A response can contain CommonPrefixes only if you specify a delimiter.
+	//
+	// CommonPrefixes contains all (if there are any) keys between Prefix and the next
+	// occurrence of the string specified by the delimiter.
+	//
+	// CommonPrefixes lists keys that act like subdirectories in the directory
+	// specified by Prefix .
+	//
+	// For example, if the prefix is notes/ and the delimiter is a slash ( / ), as in
+	// notes/summer/july , the common prefix is notes/summer/ . All of the keys that
+	// roll up into a common prefix count as a single return when calculating the
+	// number of returns.
 	CommonPrefixes []types.CommonPrefix
 
 	// Metadata about each object returned.
@@ -141,9 +181,20 @@ type ListObjectsOutput struct {
 	// MaxKeys value.
 	Delimiter *string
 
-	// Encoding type used by Amazon S3 to encode object keys in the response. If using
-	// url , non-ASCII characters used in an object's key name will be URL encoded. For
-	// example, the object test_file(3).png will appear as test_file%283%29.png.
+	// Encoding type used by Amazon S3 to encode the [object keys] in the response. Responses are
+	// encoded only in UTF-8. An object key can contain any Unicode character. However,
+	// the XML 1.0 parser can't parse certain characters, such as characters with an
+	// ASCII value from 0 to 10. For characters that aren't supported in XML 1.0, you
+	// can add this parameter to request that Amazon S3 encode the keys in the
+	// response. For more information about characters to avoid in object key names,
+	// see [Object key naming guidelines].
+	//
+	// When using the URL encoding type, non-ASCII characters that are used in an
+	// object's key name will be percent-encoded according to UTF-8 code values. For
+	// example, the object test_file(3).png will appear as test_file%283%29.png .
+	//
+	// [Object key naming guidelines]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-guidelines
+	// [object keys]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
 	EncodingType types.EncodingType
 
 	// A flag that indicates whether Amazon S3 returned all of the results that
@@ -163,18 +214,24 @@ type ListObjectsOutput struct {
 	// When the response is truncated (the IsTruncated element value in the response
 	// is true ), you can use the key name in this field as the marker parameter in
 	// the subsequent request to get the next set of objects. Amazon S3 lists objects
-	// in alphabetical order. This element is returned only if you have the delimiter
-	// request parameter specified. If the response does not include the NextMarker
-	// element and it is truncated, you can use the value of the last Key element in
-	// the response as the marker parameter in the subsequent request to get the next
-	// set of object keys.
+	// in alphabetical order.
+	//
+	// This element is returned only if you have the delimiter request parameter
+	// specified. If the response does not include the NextMarker element and it is
+	// truncated, you can use the value of the last Key element in the response as the
+	// marker parameter in the subsequent request to get the next set of object keys.
 	NextMarker *string
 
 	// Keys that begin with the indicated prefix.
 	Prefix *string
 
 	// If present, indicates that the requester was successfully charged for the
-	// request. This functionality is not supported for directory buckets.
+	// request. For more information, see [Using Requester Pays buckets for storage transfers and usage]in the Amazon Simple Storage Service user
+	// guide.
+	//
+	// This functionality is not supported for directory buckets.
+	//
+	// [Using Requester Pays buckets for storage transfers and usage]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/RequesterPaysBuckets.html
 	RequestCharged types.RequestCharged
 
 	// Metadata pertaining to the operation's result.
@@ -226,6 +283,9 @@ func (c *Client) addOperationListObjectsMiddlewares(stack *middleware.Stack, opt
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -239,6 +299,18 @@ func (c *Client) addOperationListObjectsMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addPutBucketContextMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addIsExpressUserAgent(stack); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListObjectsValidationMiddleware(stack); err != nil {
@@ -272,6 +344,18 @@ func (c *Client) addOperationListObjectsMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addSerializeImmutableHostnameBucketMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
