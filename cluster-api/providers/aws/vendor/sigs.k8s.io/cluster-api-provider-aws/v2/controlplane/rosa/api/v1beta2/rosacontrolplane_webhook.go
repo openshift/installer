@@ -1,6 +1,8 @@
 package v1beta2
 
 import (
+	"context"
+	"fmt"
 	"net"
 
 	"github.com/blang/semver"
@@ -15,19 +17,29 @@ import (
 
 // SetupWebhookWithManager will setup the webhooks for the ROSAControlPlane.
 func (r *ROSAControlPlane) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(rosaControlPlaneWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(w).
+		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-controlplane-cluster-x-k8s-io-v1beta2-rosacontrolplane,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=controlplane.cluster.x-k8s.io,resources=rosacontrolplanes,versions=v1beta2,name=validation.rosacontrolplanes.controlplane.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-controlplane-cluster-x-k8s-io-v1beta2-rosacontrolplane,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=controlplane.cluster.x-k8s.io,resources=rosacontrolplanes,versions=v1beta2,name=default.rosacontrolplanes.controlplane.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-var _ webhook.Defaulter = &ROSAControlPlane{}
-var _ webhook.Validator = &ROSAControlPlane{}
+type rosaControlPlaneWebhook struct{}
+
+var _ webhook.CustomDefaulter = &rosaControlPlaneWebhook{}
+var _ webhook.CustomValidator = &rosaControlPlaneWebhook{}
 
 // ValidateCreate implements admission.Validator.
-func (r *ROSAControlPlane) ValidateCreate() (warnings admission.Warnings, err error) {
+func (*rosaControlPlaneWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (warnings admission.Warnings, err error) {
+	r, ok := obj.(*ROSAControlPlane)
+	if !ok {
+		return nil, fmt.Errorf("expected an ROSAControlPlane object but got %T", r)
+	}
+
 	var allErrs field.ErrorList
 
 	if err := r.validateVersion(); err != nil {
@@ -73,7 +85,12 @@ func (r *ROSAControlPlane) validateClusterRegistryConfig() *field.Error {
 }
 
 // ValidateUpdate implements admission.Validator.
-func (r *ROSAControlPlane) ValidateUpdate(old runtime.Object) (warnings admission.Warnings, err error) {
+func (*rosaControlPlaneWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (warnings admission.Warnings, err error) {
+	r, ok := newObj.(*ROSAControlPlane)
+	if !ok {
+		return nil, fmt.Errorf("expected an ROSAControlPlane object but got %T", r)
+	}
+
 	var allErrs field.ErrorList
 
 	if err := r.validateVersion(); err != nil {
@@ -99,7 +116,7 @@ func (r *ROSAControlPlane) ValidateUpdate(old runtime.Object) (warnings admissio
 }
 
 // ValidateDelete implements admission.Validator.
-func (r *ROSAControlPlane) ValidateDelete() (warnings admission.Warnings, err error) {
+func (*rosaControlPlaneWebhook) ValidateDelete(_ context.Context, obj runtime.Object) (warnings admission.Warnings, err error) {
 	return nil, nil
 }
 
@@ -163,6 +180,12 @@ func (r *ROSAControlPlane) validateExternalAuthProviders() *field.Error {
 }
 
 // Default implements admission.Defaulter.
-func (r *ROSAControlPlane) Default() {
+func (*rosaControlPlaneWebhook) Default(_ context.Context, obj runtime.Object) error {
+	r, ok := obj.(*ROSAControlPlane)
+	if !ok {
+		return fmt.Errorf("expected an ROSAControlPlane object but got %T", r)
+	}
+
 	SetObjectDefaults_ROSAControlPlane(r)
+	return nil
 }

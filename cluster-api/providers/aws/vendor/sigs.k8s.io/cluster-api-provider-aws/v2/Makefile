@@ -20,7 +20,7 @@ include $(ROOT_DIR_RELATIVE)/common.mk
 # https://suva.sh/posts/well-documented-makefiles
 
 # Go
-GO_VERSION ?=1.22.6
+GO_VERSION ?=1.23.9
 GO_CONTAINER_IMAGE ?= golang:$(GO_VERSION)
 
 # Directories.
@@ -63,7 +63,10 @@ GOJQ := $(TOOLS_BIN_DIR)/gojq
 GOLANGCI_LINT_BIN := golangci-lint
 GOLANGCI_LINT_VER := $(shell cat .github/workflows/pr-golangci-lint.yaml | grep [[:space:]]version: | sed 's/.*version: //')
 GOLANGCI_LINT := $(abspath $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_BIN)-$(GOLANGCI_LINT_VER))
-GOLANGCI_LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint
+GOLANGCI_LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint
+GOLANGCI_LINT_KAL_BIN := golangci-lint-kube-api-linter
+GOLANGCI_LINT_KAL_VER := $(shell cat ./hack/tools/.custom-gcl.yaml | grep version: | sed 's/version: //')
+GOLANGCI_LINT_KAL := $(abspath $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_KAL_BIN))
 KIND := $(TOOLS_BIN_DIR)/kind
 KUSTOMIZE := $(TOOLS_BIN_DIR)/kustomize
 MOCKGEN := $(TOOLS_BIN_DIR)/mockgen
@@ -140,6 +143,12 @@ LDFLAGS := $(shell source ./hack/version.sh; version::ldflags)
 # Set USE_EXISTING_CLUSTER to use an existing kubernetes context
 USE_EXISTING_CLUSTER ?= "false"
 
+# GORELEASER_PARALLELISM restricts the number of tasks goreleaser will run
+# concurrently. The primary reason to do this is to ensure its memory usage
+# remains within the resource limits of the
+# cluster-api-provider-aws-build-docker job
+GORELEASER_PARALLELISM ?= 2
+
 # Set E2E_SKIP_EKS_UPGRADE to false to test EKS upgrades.
 # Warning, this takes a long time
 E2E_SKIP_EKS_UPGRADE ?= "false"
@@ -148,8 +157,8 @@ E2E_SKIP_EKS_UPGRADE ?= "false"
 EKS_SOURCE_TEMPLATE ?= eks/cluster-template-eks-control-plane-only.yaml
 
 # set up `setup-envtest` to install kubebuilder dependency
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.31.0
-SETUP_ENVTEST_VER := release-0.19
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.32.0
+SETUP_ENVTEST_VER := release-0.20
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
@@ -295,13 +304,24 @@ generate-go-apis: ## Alias for .build/generate-go-apis
 $(GOLANGCI_LINT): # Build golangci-lint from tools folder.
 	GOBIN=$(abspath $(TOOLS_BIN_DIR)) $(GO_INSTALL) $(GOLANGCI_LINT_PKG) $(GOLANGCI_LINT_BIN) $(GOLANGCI_LINT_VER)
 
-.PHONY: lint
-lint: $(GOLANGCI_LINT) ## Lint codebase
-	$(GOLANGCI_LINT) run -v --fast=false $(GOLANGCI_LINT_EXTRA_ARGS)
+$(GOLANGCI_LINT_KAL): $(GOLANGCI_LINT) # Build golangci-lint-kal from custom configuration.
+	cd $(TOOLS_DIR); $(GOLANGCI_LINT) custom
 
+.PHONY: lint
+lint: $(GOLANGCI_LINT) $(GOLANGCI_LINT_KAL) ## Lint codebase
+	$(GOLANGCI_LINT) run -v $(GOLANGCI_LINT_EXTRA_ARGS)
+	
 .PHONY: lint-fix
 lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linter
 	GOLANGCI_LINT_EXTRA_ARGS=--fix $(MAKE) lint
+
+.PHONY: lint-api
+lint-api: $(GOLANGCI_LINT_KAL)
+	$(GOLANGCI_LINT_KAL) run -v --config $(REPO_ROOT)/.golangci-kal.yml $(GOLANGCI_LINT_EXTRA_ARGS)
+
+.PHONY: lint-api-fix
+lint-api-fix: $(GOLANGCI_LINT_KAL)
+	GOLANGCI_LINT_EXTRA_ARGS=--fix $(MAKE) lint-api
 
 modules: ## Runs go mod to ensure proper vendoring.
 	go mod tidy
@@ -433,15 +453,6 @@ test-e2e: $(KIND) $(SSM_PLUGIN) $(KUSTOMIZE) generate-test-flavors e2e-image ## 
 test-e2e-eks: generate-test-flavors $(KIND) $(SSM_PLUGIN) $(KUSTOMIZE) e2e-image ## Run eks e2e tests
 	time go run github.com/onsi/ginkgo/v2/ginkgo -tags=e2e $(GINKGO_ARGS) ./test/e2e/suites/managed/... -- -config-path="$(E2E_EKS_CONF_PATH)" --source-template="$(EKS_SOURCE_TEMPLATE)" $(E2E_ARGS) $(EKS_E2E_ARGS)
 
-.PHONY: test-e2e-gc ## Run garbage collection e2e tests using clusterctl
-test-e2e-gc: generate-test-flavors $(KIND) $(SSM_PLUGIN) $(KUSTOMIZE) e2e-image ## Run eks e2e tests
-	time go run github.com/onsi/ginkgo/v2/ginkgo -tags=e2e -focus="$(GINKGO_FOCUS)" -skip="$(GINKGO_SKIP)" $(GINKGO_ARGS) -p ./test/e2e/suites/gc_unmanaged/... -- -config-path="$(E2E_CONF_PATH)" $(E2E_ARGS)
-
-.PHONY: test-e2e-eks-gc ## Run EKS garbage collection e2e tests using clusterctl
-test-e2e-eks-gc: generate-test-flavors $(KIND) $(SSM_PLUGIN) $(KUSTOMIZE) e2e-image ## Run eks e2e tests
-	time go run github.com/onsi/ginkgo/v2/ginkgo -tags=e2e -focus="$(GINKGO_FOCUS)" -skip="$(GINKGO_SKIP)" $(GINKGO_ARGS) ./test/e2e/suites/gc_managed/... -- -config-path="$(E2E_EKS_CONF_PATH)" --source-template="$(EKS_SOURCE_TEMPLATE)" $(E2E_ARGS) $(EKS_E2E_ARGS)
-
-
 CONFORMANCE_E2E_ARGS ?= -kubetest.config-file=$(KUBETEST_CONF_PATH)
 CONFORMANCE_E2E_ARGS += $(E2E_ARGS)
 CONFORMANCE_GINKGO_ARGS += $(GINKGO_ARGS)
@@ -464,8 +475,6 @@ compile-e2e: ## Test e2e compilation
 	go test -c -o /dev/null -tags=e2e ./test/e2e/suites/unmanaged
 	go test -c -o /dev/null -tags=e2e ./test/e2e/suites/conformance
 	go test -c -o /dev/null -tags=e2e ./test/e2e/suites/managed
-	go test -c -o /dev/null -tags=e2e ./test/e2e/suites/gc_managed
-	go test -c -o /dev/null -tags=e2e ./test/e2e/suites/gc_unmanaged
 
 
 .PHONY: docker-pull-e2e-preloads
@@ -568,7 +577,7 @@ release: clean-release check-release-tag check-release-branch $(RELEASE_DIR) $(G
 	$(MAKE) release-changelog
 	CORE_CONTROLLER_IMG=$(PROD_REGISTRY)/$(CORE_IMAGE_NAME) $(MAKE) release-manifests
 	$(MAKE) release-policies
-	$(GORELEASER) release --config $(GORELEASER_CONFIG) --release-notes $(RELEASE_DIR)/CHANGELOG.md --clean
+	$(GORELEASER) release --config $(GORELEASER_CONFIG) --release-notes $(RELEASE_DIR)/CHANGELOG.md --clean --parallelism $(GORELEASER_PARALLELISM)
 
 release-policies: $(RELEASE_POLICIES) ## Release policies
 
@@ -603,7 +612,7 @@ promote-images: $(KPROMO) $(YQ)
 
 .PHONY: release-binaries
 release-binaries: $(GORELEASER) ## Builds only the binaries, not a release.
-	$(GORELEASER) build --config $(GORELEASER_CONFIG) --snapshot --clean
+	$(GORELEASER) build --config $(GORELEASER_CONFIG) --snapshot --clean --parallelism $(GORELEASER_PARALLELISM)
 
 .PHONY: release-staging
 release-staging: ## Builds and push container images and manifests to the staging bucket.

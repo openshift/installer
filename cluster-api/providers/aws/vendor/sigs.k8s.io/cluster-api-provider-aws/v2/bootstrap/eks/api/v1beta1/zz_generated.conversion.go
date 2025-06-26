@@ -62,6 +62,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.EKSConfigSpec)(nil), (*EKSConfigSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_EKSConfigSpec_To_v1beta1_EKSConfigSpec(a.(*v1beta2.EKSConfigSpec), b.(*EKSConfigSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*EKSConfigStatus)(nil), (*v1beta2.EKSConfigStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_EKSConfigStatus_To_v1beta2_EKSConfigStatus(a.(*EKSConfigStatus), b.(*v1beta2.EKSConfigStatus), scope)
 	}); err != nil {
@@ -122,15 +127,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*v1beta2.EKSConfigSpec)(nil), (*EKSConfigSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_EKSConfigSpec_To_v1beta1_EKSConfigSpec(a.(*v1beta2.EKSConfigSpec), b.(*EKSConfigSpec), scope)
-	}); err != nil {
-		return err
-	}
 	return nil
 }
 
 func autoConvert_v1beta1_EKSConfig_To_v1beta2_EKSConfig(in *EKSConfig, out *v1beta2.EKSConfig, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_EKSConfigSpec_To_v1beta2_EKSConfigSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -147,6 +148,7 @@ func Convert_v1beta1_EKSConfig_To_v1beta2_EKSConfig(in *EKSConfig, out *v1beta2.
 }
 
 func autoConvert_v1beta2_EKSConfig_To_v1beta1_EKSConfig(in *v1beta2.EKSConfig, out *EKSConfig, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_EKSConfigSpec_To_v1beta1_EKSConfigSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -163,6 +165,7 @@ func Convert_v1beta2_EKSConfig_To_v1beta1_EKSConfig(in *v1beta2.EKSConfig, out *
 }
 
 func autoConvert_v1beta1_EKSConfigList_To_v1beta2_EKSConfigList(in *EKSConfigList, out *v1beta2.EKSConfigList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -184,6 +187,7 @@ func Convert_v1beta1_EKSConfigList_To_v1beta2_EKSConfigList(in *EKSConfigList, o
 }
 
 func autoConvert_v1beta2_EKSConfigList_To_v1beta1_EKSConfigList(in *v1beta2.EKSConfigList, out *EKSConfigList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -272,6 +276,7 @@ func Convert_v1beta2_EKSConfigStatus_To_v1beta1_EKSConfigStatus(in *v1beta2.EKSC
 }
 
 func autoConvert_v1beta1_EKSConfigTemplate_To_v1beta2_EKSConfigTemplate(in *EKSConfigTemplate, out *v1beta2.EKSConfigTemplate, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_EKSConfigTemplateSpec_To_v1beta2_EKSConfigTemplateSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -285,6 +290,7 @@ func Convert_v1beta1_EKSConfigTemplate_To_v1beta2_EKSConfigTemplate(in *EKSConfi
 }
 
 func autoConvert_v1beta2_EKSConfigTemplate_To_v1beta1_EKSConfigTemplate(in *v1beta2.EKSConfigTemplate, out *EKSConfigTemplate, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_EKSConfigTemplateSpec_To_v1beta1_EKSConfigTemplateSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -298,6 +304,7 @@ func Convert_v1beta2_EKSConfigTemplate_To_v1beta1_EKSConfigTemplate(in *v1beta2.
 }
 
 func autoConvert_v1beta1_EKSConfigTemplateList_To_v1beta2_EKSConfigTemplateList(in *EKSConfigTemplateList, out *v1beta2.EKSConfigTemplateList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -319,6 +326,7 @@ func Convert_v1beta1_EKSConfigTemplateList_To_v1beta2_EKSConfigTemplateList(in *
 }
 
 func autoConvert_v1beta2_EKSConfigTemplateList_To_v1beta1_EKSConfigTemplateList(in *v1beta2.EKSConfigTemplateList, out *EKSConfigTemplateList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items

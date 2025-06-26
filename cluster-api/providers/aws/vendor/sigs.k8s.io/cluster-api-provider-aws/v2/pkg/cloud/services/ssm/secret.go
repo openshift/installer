@@ -17,12 +17,16 @@ limitations under the License.
 package ssm
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"path"
 	"regexp"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
+	"github.com/aws/smithy-go"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/uuid"
 
@@ -44,9 +48,29 @@ const (
 var (
 	prefixRe        = regexp.MustCompile(`(?i)^[\/]?(aws|ssm)[.]?`)
 	retryableErrors = []string{
-		ssm.ErrCodeParameterLimitExceeded,
+		"ParameterLimitExceeded",
+		"ParameterAlreadyExists",
 	}
 )
+
+func isErrorRetryable(err error, retryableCodes []string) bool {
+	// Use the ParseSmithyError utility to parse the error
+	smithyErr := awserrors.ParseSmithyError(err)
+	if smithyErr == nil {
+		return false
+	}
+
+	// Get the error code from the parsed error
+	codeToCheck := smithyErr.ErrorCode()
+
+	// Compare the extracted string with your list
+	for _, code := range retryableCodes {
+		if codeToCheck == code {
+			return true // It's a match!
+		}
+	}
+	return false
+}
 
 // Create stores data in AWS SSM for a given machine, chunking at 4kb per secret. The prefix of the secret
 // ARN and the number of chunks are returned.
@@ -93,11 +117,11 @@ func (s *Service) Create(m *scope.MachineScope, data []byte) (string, int32, err
 
 // retryableCreateSecret is a function to be passed into a waiter. In a separate function for ease of reading.
 func (s *Service) retryableCreateSecret(name string, chunk []byte, tags infrav1.Tags) (bool, error) {
-	_, err := s.SSMClient.PutParameter(&ssm.PutParameterInput{
+	_, err := s.SSMClient.PutParameter(context.TODO(), &ssm.PutParameterInput{
 		Name:  aws.String(name),
 		Value: aws.String(string(chunk)),
 		Tags:  converters.MapToSSMTags(tags),
-		Type:  aws.String("SecureString"),
+		Type:  types.ParameterTypeSecureString,
 	})
 	if err != nil {
 		return false, err
@@ -107,11 +131,14 @@ func (s *Service) retryableCreateSecret(name string, chunk []byte, tags infrav1.
 
 // forceDeleteSecretEntry deletes a single secret, ignoring if it is absent.
 func (s *Service) forceDeleteSecretEntry(name string) error {
-	_, err := s.SSMClient.DeleteParameter(&ssm.DeleteParameterInput{
+	_, err := s.SSMClient.DeleteParameter(context.TODO(), &ssm.DeleteParameterInput{
 		Name: aws.String(name),
 	})
-	if awserrors.IsNotFound(err) {
-		return nil
+	if err != nil {
+		var aerr smithy.APIError
+		if errors.As(err, &aerr) && aerr.ErrorCode() == "ParameterNotFound" {
+			return nil
+		}
 	}
 	return err
 }

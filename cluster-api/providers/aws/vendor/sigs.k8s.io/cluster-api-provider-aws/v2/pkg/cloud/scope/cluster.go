@@ -19,7 +19,9 @@ package scope
 import (
 	"context"
 	"fmt"
+	"time"
 
+	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
 	awsclient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -45,7 +47,9 @@ type ClusterScopeParams struct {
 	ControllerName               string
 	Endpoints                    []ServiceEndpoint
 	Session                      awsclient.ConfigProvider
+	SessionV2                    awsv2.Config
 	TagUnmanagedNetworkResources bool
+	MaxWaitActiveUpdateDelete    time.Duration
 }
 
 // NewClusterScope creates a new Scope from the supplied parameters.
@@ -70,11 +74,17 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 		AWSCluster:                   params.AWSCluster,
 		controllerName:               params.ControllerName,
 		tagUnmanagedNetworkResources: params.TagUnmanagedNetworkResources,
+		maxWaitActiveUpdateDelete:    params.MaxWaitActiveUpdateDelete,
 	}
 
 	session, serviceLimiters, err := sessionForClusterWithRegion(params.Client, clusterScope, params.AWSCluster.Spec.Region, params.Endpoints, params.Logger)
 	if err != nil {
 		return nil, errors.Errorf("failed to create aws session: %v", err)
+	}
+
+	sessionv2, serviceLimitersv2, err := sessionForClusterWithRegionV2(params.Client, clusterScope, params.AWSCluster.Spec.Region, params.Endpoints, params.Logger)
+	if err != nil {
+		return nil, errors.Errorf("failed to create aws V2 session: %v", err)
 	}
 
 	helper, err := patch.NewHelper(params.AWSCluster, params.Client)
@@ -84,7 +94,9 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 
 	clusterScope.patchHelper = helper
 	clusterScope.session = session
+	clusterScope.sessionV2 = *sessionv2
 	clusterScope.serviceLimiters = serviceLimiters
+	clusterScope.serviceLimitersV2 = serviceLimitersv2
 
 	return clusterScope, nil
 }
@@ -98,11 +110,14 @@ type ClusterScope struct {
 	Cluster    *clusterv1.Cluster
 	AWSCluster *infrav1.AWSCluster
 
-	session         awsclient.ConfigProvider
-	serviceLimiters throttle.ServiceLimiters
-	controllerName  string
+	session           awsclient.ConfigProvider
+	sessionV2         awsv2.Config
+	serviceLimiters   throttle.ServiceLimiters
+	serviceLimitersV2 throttle.ServiceLimiters
+	controllerName    string
 
 	tagUnmanagedNetworkResources bool
+	maxWaitActiveUpdateDelete    time.Duration
 }
 
 // Network returns the cluster network object.
@@ -351,6 +366,11 @@ func (s *ClusterScope) Session() awsclient.ConfigProvider {
 	return s.session
 }
 
+// SessionV2 returns the AWS SDK V2 session. Used for creating clients.
+func (s *ClusterScope) SessionV2() awsv2.Config {
+	return s.sessionV2
+}
+
 // ServiceLimiter returns the AWS SDK session. Used for creating clients.
 func (s *ClusterScope) ServiceLimiter(service string) *throttle.ServiceLimiter {
 	if sl, ok := s.serviceLimiters[service]; ok {
@@ -367,6 +387,11 @@ func (s *ClusterScope) Bastion() *infrav1.Bastion {
 // TagUnmanagedNetworkResources returns if the feature flag tag unmanaged network resources is set.
 func (s *ClusterScope) TagUnmanagedNetworkResources() bool {
 	return s.tagUnmanagedNetworkResources
+}
+
+// MaxWaitDuration returns time waiting for operation.
+func (s *ClusterScope) MaxWaitDuration() time.Duration {
+	return s.maxWaitActiveUpdateDelete
 }
 
 // SetBastionInstance sets the bastion instance in the status of the cluster.
@@ -411,6 +436,11 @@ func (s *ClusterScope) Partition() string {
 // AdditionalControlPlaneIngressRules returns the additional ingress rules for control plane security group.
 func (s *ClusterScope) AdditionalControlPlaneIngressRules() []infrav1.IngressRule {
 	return s.AWSCluster.Spec.NetworkSpec.DeepCopy().AdditionalControlPlaneIngressRules
+}
+
+// AdditionalNodeIngressRules returns the additional ingress rules for the node security group.
+func (s *ClusterScope) AdditionalNodeIngressRules() []infrav1.IngressRule {
+	return s.AWSCluster.Spec.NetworkSpec.DeepCopy().AdditionalNodeIngressRules
 }
 
 // UnstructuredControlPlane returns the unstructured object for the control plane, if any.

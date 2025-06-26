@@ -54,7 +54,7 @@ type AMIReference struct {
 	ID *string `json:"id,omitempty"`
 
 	// EKSOptimizedLookupType If specified, will look up an EKS Optimized image in SSM Parameter store
-	// +kubebuilder:validation:Enum:=AmazonLinux;AmazonLinuxGPU
+	// +kubebuilder:validation:Enum:=AmazonLinux;AmazonLinuxGPU;AmazonLinux2023;AmazonLinux2023GPU
 	// +optional
 	EKSOptimizedLookupType *EKSAMILookupType `json:"eksLookupType,omitempty"`
 }
@@ -463,6 +463,10 @@ const (
 	AmazonLinux EKSAMILookupType = "AmazonLinux"
 	// AmazonLinuxGPU is the AmazonLinux GPU AMI type.
 	AmazonLinuxGPU EKSAMILookupType = "AmazonLinuxGPU"
+	// AmazonLinux2023 is the AmazonLinux 2023 AMI type.
+	AmazonLinux2023 EKSAMILookupType = "AmazonLinux2023"
+	// AmazonLinux2023GPU is the AmazonLinux 2023 GPU AMI type.
+	AmazonLinux2023GPU EKSAMILookupType = "AmazonLinux2023GPU"
 )
 
 // PrivateDNSName is the options for the instance hostname.

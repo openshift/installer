@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/rosa"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	expclusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
@@ -69,7 +70,7 @@ func (r *ROSAMachinePoolReconciler) SetupWithManager(ctx context.Context, mgr ct
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&expinfrav1.ROSAMachinePool{}).
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
 		Watches(
 			&expclusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(machinePoolToInfrastructureMapFunc(gvk)),
@@ -118,9 +119,8 @@ func (r *ROSAMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, nil
 	}
 
-	if annotations.IsPaused(cluster, rosaMachinePool) {
-		log.Info("Reconciliation is paused for this object")
-		return ctrl.Result{}, nil
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, rosaMachinePool); err != nil || isPaused || conditionChanged {
+		return ctrl.Result{}, err
 	}
 
 	log = log.WithValues("cluster", klog.KObj(cluster))
@@ -366,6 +366,14 @@ func (r *ROSAMachinePoolReconciler) reconcileMachinePoolVersion(machinePoolScope
 	return nil
 }
 
+func (r *ROSAMachinePoolReconciler) shouldUpdateRosaReplicas(machinePoolScope *scope.RosaMachinePoolScope, nodePool *cmv1.NodePool) bool {
+	if machinePoolScope.MachinePool.Spec.Replicas == nil || machinePoolScope.RosaMachinePool.Spec.Autoscaling != nil || annotations.ReplicasManagedByExternalAutoscaler(machinePoolScope.MachinePool) {
+		return false
+	}
+
+	return nodePool.Replicas() != int(*machinePoolScope.MachinePool.Spec.Replicas)
+}
+
 func (r *ROSAMachinePoolReconciler) updateNodePool(machinePoolScope *scope.RosaMachinePoolScope, ocmClient rosa.OCMClient, nodePool *cmv1.NodePool) (*cmv1.NodePool, error) {
 	machinePool := machinePoolScope.RosaMachinePool.DeepCopy()
 	// default all fields before comparing, so that nil/unset fields don't cause an unnecessary update call.
@@ -373,7 +381,8 @@ func (r *ROSAMachinePoolReconciler) updateNodePool(machinePoolScope *scope.RosaM
 	desiredSpec := machinePool.Spec
 
 	specDiff := computeSpecDiff(desiredSpec, nodePool)
-	if specDiff == "" {
+	// Replicas are not part of RosaMachinePoolSpec
+	if specDiff == "" && !r.shouldUpdateRosaReplicas(machinePoolScope, nodePool) {
 		// no changes detected.
 		return nodePool, nil
 	}

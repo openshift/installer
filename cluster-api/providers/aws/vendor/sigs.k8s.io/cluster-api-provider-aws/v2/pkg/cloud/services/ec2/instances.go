@@ -108,7 +108,7 @@ func (s *Service) InstanceIfExists(id *string) (*infrav1.Instance, error) {
 // CreateInstance runs an ec2 instance.
 //
 //nolint:gocyclo // this function has multiple processes to perform
-func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, userDataFormat string) (*infrav1.Instance, error) {
+func (s *Service) CreateInstance(ctx context.Context, scope *scope.MachineScope, userData []byte, userDataFormat string) (*infrav1.Instance, error) {
 	s.scope.Debug("Creating an instance for a machine")
 
 	input := &infrav1.Instance{
@@ -164,7 +164,7 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 		}
 
 		if scope.IsEKSManaged() && imageLookupFormat == "" && imageLookupOrg == "" && imageLookupBaseOS == "" {
-			input.ImageID, err = s.eksAMILookup(*scope.Machine.Spec.Version, imageArchitecture, scope.AWSMachine.Spec.AMI.EKSOptimizedLookupType)
+			input.ImageID, err = s.eksAMILookup(ctx, *scope.Machine.Spec.Version, imageArchitecture, scope.AWSMachine.Spec.AMI.EKSOptimizedLookupType)
 			if err != nil {
 				return nil, err
 			}
@@ -946,37 +946,48 @@ func (s *Service) getInstanceAddresses(instance *ec2.Instance) []clusterv1.Machi
 	// Check if the DHCP Option Set has domain name set
 	domainName := s.GetDHCPOptionSetDomainName(s.EC2Client, instance.VpcId)
 	for _, eni := range instance.NetworkInterfaces {
-		privateDNSAddress := clusterv1.MachineAddress{
-			Type:    clusterv1.MachineInternalDNS,
-			Address: aws.StringValue(eni.PrivateDnsName),
-		}
-		privateIPAddress := clusterv1.MachineAddress{
-			Type:    clusterv1.MachineInternalIP,
-			Address: aws.StringValue(eni.PrivateIpAddress),
-		}
-
-		addresses = append(addresses, privateDNSAddress, privateIPAddress)
-
-		if domainName != nil {
-			// Add secondary private DNS Name with domain name set in DHCP Option Set
-			additionalPrivateDNSAddress := clusterv1.MachineAddress{
+		if addr := aws.StringValue(eni.PrivateDnsName); addr != "" {
+			privateDNSAddress := clusterv1.MachineAddress{
 				Type:    clusterv1.MachineInternalDNS,
-				Address: fmt.Sprintf("%s.%s", strings.Split(privateDNSAddress.Address, ".")[0], *domainName),
+				Address: addr,
 			}
-			addresses = append(addresses, additionalPrivateDNSAddress)
+			addresses = append(addresses, privateDNSAddress)
+
+			if domainName != nil {
+				// Add secondary private DNS Name with domain name set in DHCP Option Set
+				additionalPrivateDNSAddress := clusterv1.MachineAddress{
+					Type:    clusterv1.MachineInternalDNS,
+					Address: fmt.Sprintf("%s.%s", strings.Split(privateDNSAddress.Address, ".")[0], *domainName),
+				}
+				addresses = append(addresses, additionalPrivateDNSAddress)
+			}
+		}
+
+		if addr := aws.StringValue(eni.PrivateIpAddress); addr != "" {
+			privateIPAddress := clusterv1.MachineAddress{
+				Type:    clusterv1.MachineInternalIP,
+				Address: addr,
+			}
+			addresses = append(addresses, privateIPAddress)
 		}
 
 		// An elastic IP is attached if association is non nil pointer
 		if eni.Association != nil {
-			publicDNSAddress := clusterv1.MachineAddress{
-				Type:    clusterv1.MachineExternalDNS,
-				Address: aws.StringValue(eni.Association.PublicDnsName),
+			if addr := aws.StringValue(eni.Association.PublicDnsName); addr != "" {
+				publicDNSAddress := clusterv1.MachineAddress{
+					Type:    clusterv1.MachineExternalDNS,
+					Address: addr,
+				}
+				addresses = append(addresses, publicDNSAddress)
 			}
-			publicIPAddress := clusterv1.MachineAddress{
-				Type:    clusterv1.MachineExternalIP,
-				Address: aws.StringValue(eni.Association.PublicIp),
+
+			if addr := aws.StringValue(eni.Association.PublicIp); addr != "" {
+				publicIPAddress := clusterv1.MachineAddress{
+					Type:    clusterv1.MachineExternalIP,
+					Address: addr,
+				}
+				addresses = append(addresses, publicIPAddress)
 			}
-			addresses = append(addresses, publicDNSAddress, publicIPAddress)
 		}
 	}
 
@@ -1154,6 +1165,10 @@ func getInstanceMarketOptionsRequest(i *infrav1.Instance) (*ec2.InstanceMarketOp
 		return nil, errors.New("can't create spot capacity-blocks, remove spot market request")
 	}
 
+	if (i.MarketType == infrav1.MarketTypeSpot || i.SpotMarketOptions != nil) && i.CapacityReservationID != nil {
+		return nil, errors.New("unable to generate marketOptions for spot instance, capacityReservationID is incompatible with marketType spot and spotMarketOptions")
+	}
+
 	// Infer MarketType if not explicitly set
 	if i.SpotMarketOptions != nil && i.MarketType == "" {
 		i.MarketType = infrav1.MarketTypeSpot
@@ -1161,6 +1176,10 @@ func getInstanceMarketOptionsRequest(i *infrav1.Instance) (*ec2.InstanceMarketOp
 
 	if i.MarketType == "" {
 		i.MarketType = infrav1.MarketTypeOnDemand
+	}
+
+	if i.MarketType == infrav1.MarketTypeSpot && i.SpotMarketOptions == nil {
+		i.SpotMarketOptions = &infrav1.SpotMarketOptions{}
 	}
 
 	switch i.MarketType {

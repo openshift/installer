@@ -36,7 +36,7 @@ type EKSAddon struct {
 
 // IsEqual determines if 2 EKSAddon are equal.
 func (e *EKSAddon) IsEqual(other *EKSAddon, includeTags bool) bool {
-	//NOTE: we do not compare the ARN as that is only for existing addons
+	// NOTE: we do not compare the ARN as that is only for existing addons
 	if e == other {
 		return true
 	}
@@ -47,9 +47,6 @@ func (e *EKSAddon) IsEqual(other *EKSAddon, includeTags bool) bool {
 		return false
 	}
 	if !cmp.Equal(e.Configuration, other.Configuration) {
-		return false
-	}
-	if !cmp.Equal(e.ResolveConflict, other.ResolveConflict) {
 		return false
 	}
 

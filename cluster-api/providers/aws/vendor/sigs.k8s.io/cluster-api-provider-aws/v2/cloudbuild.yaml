@@ -3,7 +3,7 @@ timeout: 3000s
 options:
   substitution_option: ALLOW_LOOSE
 steps:
-  - name: 'gcr.io/k8s-staging-test-infra/gcb-docker-gcloud:v20240210-29014a6e3a'
+  - name: 'gcr.io/k8s-staging-test-infra/gcb-docker-gcloud@sha256:4e830b673791d5595719bc6c4ca62dce3746b4e20d749e45004254bc6ef0a140' # v20250116-2a05ea7e3d go 1.23.4
     entrypoint: make
     env:
     - DOCKER_CLI_EXPERIMENTAL=enabled

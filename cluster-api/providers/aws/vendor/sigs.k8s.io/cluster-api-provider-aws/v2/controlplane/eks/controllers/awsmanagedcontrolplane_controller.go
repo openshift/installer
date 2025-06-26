@@ -51,9 +51,9 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/network"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/securitygroup"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
-	capiannotations "sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
@@ -102,6 +102,7 @@ type AWSManagedControlPlaneReconciler struct {
 	ExternalResourceGC           bool
 	AlternativeGCStrategy        bool
 	WaitInfraPeriod              time.Duration
+	MaxWaitActiveUpdateDelete    time.Duration
 	TagUnmanagedNetworkResources bool
 }
 
@@ -169,9 +170,8 @@ func (r *AWSManagedControlPlaneReconciler) SetupWithManager(ctx context.Context,
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		For(awsManagedControlPlane).
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
 		Build(r)
-
 	if err != nil {
 		return fmt.Errorf("failed setting up the AWSManagedControlPlane controller manager: %w", err)
 	}
@@ -237,9 +237,8 @@ func (r *AWSManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 
 	log = log.WithValues("cluster", klog.KObj(cluster))
 
-	if capiannotations.IsPaused(cluster, awsManagedControlPlane) {
-		log.Info("Reconciliation is paused for this object")
-		return ctrl.Result{}, nil
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, awsManagedControlPlane); err != nil || isPaused || conditionChanged {
+		return ctrl.Result{}, err
 	}
 
 	managedScope, err := scope.NewManagedControlPlaneScope(scope.ManagedControlPlaneScopeParams{
@@ -247,6 +246,7 @@ func (r *AWSManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 		Cluster:                      cluster,
 		ControlPlane:                 awsManagedControlPlane,
 		ControllerName:               strings.ToLower(awsManagedControlPlaneKind),
+		MaxWaitActiveUpdateDelete:    r.MaxWaitActiveUpdateDelete,
 		EnableIAM:                    r.EnableIAM,
 		AllowAdditionalRoles:         r.AllowAdditionalRoles,
 		Endpoints:                    r.Endpoints,
@@ -364,7 +364,7 @@ func (r *AWSManagedControlPlaneReconciler) reconcileNormal(ctx context.Context, 
 
 	if feature.Gates.Enabled(feature.EventBridgeInstanceState) {
 		instancestateSvc := instancestate.NewService(managedScope)
-		if err := instancestateSvc.ReconcileEC2Events(); err != nil {
+		if err := instancestateSvc.ReconcileEC2Events(ctx); err != nil {
 			// non fatal error, so we continue
 			managedScope.Error(err, "non-fatal: failed to set up EventBridge")
 		}
@@ -407,7 +407,7 @@ func (r *AWSManagedControlPlaneReconciler) reconcileDelete(ctx context.Context, 
 	networkSvc := network.NewService(managedScope)
 	sgService := securitygroup.NewService(managedScope, securityGroupRolesForControlPlane(managedScope))
 
-	if err := ekssvc.DeleteControlPlane(); err != nil {
+	if err := ekssvc.DeleteControlPlane(ctx); err != nil {
 		log.Error(err, "error deleting EKS cluster for EKS control plane", "namespace", controlPlane.Namespace, "name", controlPlane.Name)
 		return reconcile.Result{}, err
 	}

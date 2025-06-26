@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/eks"
+	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -50,7 +50,7 @@ const (
 	relativeTokenFileKey  = "token-file"
 )
 
-func (s *Service) reconcileKubeconfig(ctx context.Context, cluster *eks.Cluster) error {
+func (s *Service) reconcileKubeconfig(ctx context.Context, cluster *ekstypes.Cluster) error {
 	s.scope.Debug("Reconciling EKS kubeconfigs for cluster", "cluster-name", s.scope.KubernetesClusterName())
 
 	clusterRef := types.NamespacedName{
@@ -82,7 +82,7 @@ func (s *Service) reconcileKubeconfig(ctx context.Context, cluster *eks.Cluster)
 	return nil
 }
 
-func (s *Service) reconcileAdditionalKubeconfigs(ctx context.Context, cluster *eks.Cluster) error {
+func (s *Service) reconcileAdditionalKubeconfigs(ctx context.Context, cluster *ekstypes.Cluster) error {
 	s.scope.Debug("Reconciling additional EKS kubeconfigs for cluster", "cluster-name", s.scope.KubernetesClusterName())
 
 	clusterRef := types.NamespacedName{
@@ -110,7 +110,7 @@ func (s *Service) reconcileAdditionalKubeconfigs(ctx context.Context, cluster *e
 	return nil
 }
 
-func (s *Service) createCAPIKubeconfigSecret(ctx context.Context, cluster *eks.Cluster, clusterRef *types.NamespacedName) error {
+func (s *Service) createCAPIKubeconfigSecret(ctx context.Context, cluster *ekstypes.Cluster, clusterRef *types.NamespacedName) error {
 	controllerOwnerRef := *metav1.NewControllerRef(s.scope.ControlPlane, ekscontrolplanev1.GroupVersion.WithKind("AWSManagedControlPlane"))
 
 	clusterName := s.scope.KubernetesClusterName()
@@ -162,7 +162,7 @@ func (s *Service) createCAPIKubeconfigSecret(ctx context.Context, cluster *eks.C
 	return nil
 }
 
-func (s *Service) updateCAPIKubeconfigSecret(ctx context.Context, configSecret *corev1.Secret, cluster *eks.Cluster) error {
+func (s *Service) updateCAPIKubeconfigSecret(ctx context.Context, configSecret *corev1.Secret, cluster *ekstypes.Cluster) error {
 	s.scope.Debug("Updating EKS kubeconfigs for cluster", "cluster-name", s.scope.KubernetesClusterName())
 	controllerOwnerRef := *metav1.NewControllerRef(s.scope.ControlPlane, ekscontrolplanev1.GroupVersion.WithKind("AWSManagedControlPlane"))
 
@@ -215,7 +215,7 @@ func (s *Service) updateCAPIKubeconfigSecret(ctx context.Context, configSecret *
 	return nil
 }
 
-func (s *Service) createUserKubeconfigSecret(ctx context.Context, cluster *eks.Cluster, clusterRef *types.NamespacedName) error {
+func (s *Service) createUserKubeconfigSecret(ctx context.Context, cluster *ekstypes.Cluster, clusterRef *types.NamespacedName) error {
 	controllerOwnerRef := *metav1.NewControllerRef(s.scope.ControlPlane, ekscontrolplanev1.GroupVersion.WithKind("AWSManagedControlPlane"))
 
 	clusterName := s.scope.KubernetesClusterName()
@@ -270,7 +270,7 @@ func (s *Service) createUserKubeconfigSecret(ctx context.Context, cluster *eks.C
 	return nil
 }
 
-func (s *Service) createBaseKubeConfig(cluster *eks.Cluster, userName string) (*api.Config, error) {
+func (s *Service) createBaseKubeConfig(cluster *ekstypes.Cluster, userName string) (*api.Config, error) {
 	clusterName := s.scope.KubernetesClusterName()
 	contextName := fmt.Sprintf("%s@%s", userName, clusterName)
 

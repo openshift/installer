@@ -20,6 +20,7 @@ import (
 	"unsafe"
 
 	"k8s.io/apimachinery/pkg/conversion"
+
 	"sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 )
 

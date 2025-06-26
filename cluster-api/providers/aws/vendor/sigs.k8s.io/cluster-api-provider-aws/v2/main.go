@@ -25,6 +25,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -104,11 +105,13 @@ var (
 	instanceStateConcurrency    int
 	awsMachineConcurrency       int
 	waitInfraPeriod             time.Duration
+	maxWaitActiveUpdateDelete   time.Duration
 	syncPeriod                  time.Duration
 	webhookPort                 int
 	webhookCertDir              string
 	healthAddr                  string
 	serviceEndpoints            string
+	disabledControllers         []string
 
 	// maxEKSSyncPeriod is the maximum allowed duration for the sync-period flag when using EKS. It is set to 10 minutes
 	// because during resync it will create a new AWS auth token which can a maximum life of 15 minutes and this ensures
@@ -126,9 +129,15 @@ var (
 // +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
 
 func main() {
+	setupLog.Info("starting cluster-api-provider-aws", "version", version.Get().String())
 	initFlags(pflag.CommandLine)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
+
+	if err := controllers.ValidateNamesAndDisable(disabledControllers); err != nil {
+		setupLog.Error(err, "unable to validate disabled controller names")
+		os.Exit(1)
+	}
 
 	if err := v1.ValidateAndApply(logOptions, nil); err != nil {
 		setupLog.Error(err, "unable to validate and apply log options")
@@ -298,29 +307,38 @@ func main() {
 func setupReconcilersAndWebhooks(ctx context.Context, mgr ctrl.Manager, awsServiceEndpoints []scope.ServiceEndpoint,
 	externalResourceGC, alternativeGCStrategy bool,
 ) {
-	if err := (&controllers.AWSMachineReconciler{
-		Client:                       mgr.GetClient(),
-		Log:                          ctrl.Log.WithName("controllers").WithName("AWSMachine"),
-		Recorder:                     mgr.GetEventRecorderFor("awsmachine-controller"),
-		Endpoints:                    awsServiceEndpoints,
-		WatchFilterValue:             watchFilterValue,
-		TagUnmanagedNetworkResources: feature.Gates.Enabled(feature.TagUnmanagedNetworkResources),
-	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: awsMachineConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "AWSMachine")
-		os.Exit(1)
-	}
+	// Default case - unmanaged controllers are enabled.
+	if !controllers.IsDisabled(controllers.Unmanaged) {
+		if err := (&controllers.AWSMachineReconciler{
+			Client:                       mgr.GetClient(),
+			Log:                          ctrl.Log.WithName("controllers").WithName("AWSMachine"),
+			Recorder:                     mgr.GetEventRecorderFor("awsmachine-controller"),
+			Endpoints:                    awsServiceEndpoints,
+			WatchFilterValue:             watchFilterValue,
+			TagUnmanagedNetworkResources: feature.Gates.Enabled(feature.TagUnmanagedNetworkResources),
+			MaxWaitActiveUpdateDelete:    maxWaitActiveUpdateDelete,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: awsMachineConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "AWSMachine")
+			os.Exit(1)
+		}
+		setupLog.Info("controller disabled", "controller", "AWSMachine", "controller-group", controllers.Unmanaged)
 
-	if err := (&controllers.AWSClusterReconciler{
-		Client:                       mgr.GetClient(),
-		Recorder:                     mgr.GetEventRecorderFor("awscluster-controller"),
-		Endpoints:                    awsServiceEndpoints,
-		WatchFilterValue:             watchFilterValue,
-		ExternalResourceGC:           externalResourceGC,
-		AlternativeGCStrategy:        alternativeGCStrategy,
-		TagUnmanagedNetworkResources: feature.Gates.Enabled(feature.TagUnmanagedNetworkResources),
-	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: awsClusterConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "AWSCluster")
-		os.Exit(1)
+		if err := (&controllers.AWSClusterReconciler{
+			Client:                       mgr.GetClient(),
+			Recorder:                     mgr.GetEventRecorderFor("awscluster-controller"),
+			Endpoints:                    awsServiceEndpoints,
+			WatchFilterValue:             watchFilterValue,
+			ExternalResourceGC:           externalResourceGC,
+			AlternativeGCStrategy:        alternativeGCStrategy,
+			TagUnmanagedNetworkResources: feature.Gates.Enabled(feature.TagUnmanagedNetworkResources),
+			MaxWaitActiveUpdateDelete:    maxWaitActiveUpdateDelete,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: awsClusterConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "AWSCluster")
+			os.Exit(1)
+		}
+	} else {
+		setupLog.Info("controller disabled", "controller", "AWSMachine", "controller-group", controllers.Unmanaged)
+		setupLog.Info("controller disabled", "controller", "AWSCluster", "controller-group", controllers.Unmanaged)
 	}
 
 	if feature.Gates.Enabled(feature.MachinePool) {
@@ -367,7 +385,7 @@ func setupReconcilersAndWebhooks(ctx context.Context, mgr ctrl.Manager, awsServi
 		}
 	}
 
-	if err := (&infrav1.AWSMachineTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&infrav1.AWSMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AWSMachineTemplate")
 		os.Exit(1)
 	}
@@ -426,6 +444,7 @@ func setupEKSReconcilersAndWebhooks(ctx context.Context, mgr ctrl.Manager, awsSe
 		ExternalResourceGC:           externalResourceGC,
 		AlternativeGCStrategy:        alternativeGCStrategy,
 		WaitInfraPeriod:              waitInfraPeriod,
+		MaxWaitActiveUpdateDelete:    maxWaitActiveUpdateDelete,
 		TagUnmanagedNetworkResources: feature.Gates.Enabled(feature.TagUnmanagedNetworkResources),
 	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: awsClusterConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AWSManagedControlPlane")
@@ -479,6 +498,7 @@ func setupEKSReconcilersAndWebhooks(ctx context.Context, mgr ctrl.Manager, awsSe
 			Recorder:                     mgr.GetEventRecorderFor("awsmanagedmachinepool-reconciler"),
 			WatchFilterValue:             watchFilterValue,
 			TagUnmanagedNetworkResources: feature.Gates.Enabled(feature.TagUnmanagedNetworkResources),
+			MaxWaitActiveUpdateDelete:    maxWaitActiveUpdateDelete,
 		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: instanceStateConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "AWSManagedMachinePool")
 			os.Exit(1)
@@ -570,6 +590,12 @@ func initFlags(fs *pflag.FlagSet) {
 		"The minimum interval at which reconcile process wait for infrastructure to be ready.",
 	)
 
+	fs.DurationVar(&maxWaitActiveUpdateDelete,
+		"max-wait-managed-resources",
+		30*time.Minute,
+		"The maximum duration to wait for managed AWS resources to be ready.",
+	)
+
 	fs.DurationVar(&syncPeriod,
 		"sync-period",
 		10*time.Minute,
@@ -594,7 +620,7 @@ func initFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&serviceEndpoints,
 		"service-endpoints",
 		"",
-		"Set custom AWS service endpoins in semi-colon separated format: ${SigningRegion1}:${ServiceID1}=${URL},${ServiceID2}=${URL};${SigningRegion2}...",
+		"Set custom AWS service endpoints in semi-colon separated format: ${SigningRegion1}:${ServiceID1}=${URL},${ServiceID2}=${URL};${SigningRegion2}...",
 	)
 
 	fs.StringVar(
@@ -602,6 +628,13 @@ func initFlags(fs *pflag.FlagSet) {
 		"watch-filter",
 		"",
 		fmt.Sprintf("Label value that the controller watches to reconcile cluster-api objects. Label key is always %s. If unspecified, the controller watches for all cluster-api objects.", clusterv1.WatchLabel),
+	)
+
+	fs.StringSliceVar(
+		&disabledControllers,
+		"disable-controllers",
+		nil,
+		fmt.Sprintf("Sets of controllers that should be disabled for this instance of the controller manager in a comma-separated list. Options are: %q", strings.Join(controllers.GetValidNames(), ",")),
 	)
 
 	logs.AddFlags(fs, logs.SkipLoggingConfigurationFlags())

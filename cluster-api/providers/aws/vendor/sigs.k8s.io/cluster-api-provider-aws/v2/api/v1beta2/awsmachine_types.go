@@ -29,6 +29,16 @@ const (
 
 	// DefaultIgnitionVersion represents default Ignition version generated for machine userdata.
 	DefaultIgnitionVersion = "2.3"
+
+	// DefaultIgnitionStorageType represents the default storage type of Ignition userdata
+	DefaultIgnitionStorageType = IgnitionStorageTypeOptionClusterObjectStore
+
+	// DefaultMachinePoolIgnitionStorageType represents the default storage type of Ignition userdata for machine pools.
+	//
+	// This is only different from DefaultIgnitionStorageType because of backward compatibility. Machine pools used to
+	// default to store Ignition user data directly on the EC2 instance. Since the choice between remote storage (S3)
+	// and direct storage was introduced, the default was kept, but might change in newer API versions.
+	DefaultMachinePoolIgnitionStorageType = IgnitionStorageTypeOptionUnencryptedUserData
 )
 
 // SecretBackend defines variants for backend secret storage.
@@ -64,6 +74,8 @@ const (
 )
 
 // AWSMachineSpec defines the desired state of an Amazon EC2 instance.
+// +kubebuilder:validation:XValidation:rule="!has(self.capacityReservationId) || !has(self.marketType) || self.marketType != 'Spot'",message="capacityReservationId may not be set when marketType is Spot"
+// +kubebuilder:validation:XValidation:rule="!has(self.capacityReservationId) || !has(self.spotMarketOptions)",message="capacityReservationId cannot be set when spotMarketOptions is specified"
 type AWSMachineSpec struct {
 	// ProviderID is the unique identifier as specified by the cloud provider.
 	ProviderID *string `json:"providerID,omitempty"`
