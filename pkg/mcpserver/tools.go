@@ -35,7 +35,7 @@ func GetCoreOS() (string, error) {
 	return string(streamData), nil
 }
 
-func GetExampleInstallConfig(platform string) (string, error) {
+func GetExampleInstallConfig(platform, pullSecret, baseDomain, clusterName string) (string, error) {
 
 	logrus.Info("in getInstallConfigResource")
 	//platform := req.Params.Arguments["platform"]
@@ -47,10 +47,10 @@ func GetExampleInstallConfig(platform string) (string, error) {
 			APIVersion: types.InstallConfigVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "example-cluster",
+			Name: clusterName,
 		},
-		BaseDomain: "example.com",
-		PullSecret: "{\"auths\":{\"fake-registry.example.com\":{\"auth\":\"ZmFrZS1hdXRoLXRva2Vu\"}}}",
+		BaseDomain: baseDomain,
+		PullSecret: pullSecret,
 		SSHKey:     "ssh-rsa AAAA...",
 		Publish:    types.ExternalPublishingStrategy,
 		Networking: &types.Networking{
@@ -167,9 +167,11 @@ func GetExampleInstallConfig(platform string) (string, error) {
 			VSphere: &vsphere.Platform{
 				VCenters: []vsphere.VCenter{
 					{
-						Server:   "vcenter.example.com",
-						Username: "administrator@vsphere.local",
-						Password: "password",
+						Server:      "vcenter.example.com",
+						Port:        443,
+						Username:    "administrator@vsphere.local",
+						Password:    "password",
+						Datacenters: []string{"datacenter-1"},
 					},
 				},
 				FailureDomains: []vsphere.FailureDomain{
@@ -177,6 +179,7 @@ func GetExampleInstallConfig(platform string) (string, error) {
 						Name:   "failure-domain-1",
 						Region: "region-1",
 						Zone:   "zone-1",
+						Server: "vcenter.example.com",
 						Topology: vsphere.Topology{
 							Datacenter:     "datacenter-1",
 							ComputeCluster: "cluster-1",
@@ -185,6 +188,8 @@ func GetExampleInstallConfig(platform string) (string, error) {
 						},
 					},
 				},
+				APIVIPs:     []string{"10.0.0.10"},
+				IngressVIPs: []string{"10.0.0.11"},
 			},
 		}
 		// Set vSphere-specific machine pool

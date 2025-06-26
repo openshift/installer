@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"path"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 
@@ -77,6 +78,13 @@ func GetVSphereTopology(username, password, server string) (string, error) {
 				vspherePlatform.FailureDomains = append(vspherePlatform.FailureDomains, failureDomain)
 			}
 
+		}
+	}
+
+	for _, fd := range vspherePlatform.FailureDomains {
+		dc := path.Base(fd.Topology.Datacenter)
+		if !slices.Contains(vspherePlatform.VCenters[0].Datacenters, dc) {
+			vspherePlatform.VCenters[0].Datacenters = append(vspherePlatform.VCenters[0].Datacenters, dc)
 		}
 	}
 
