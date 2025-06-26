@@ -18,10 +18,13 @@ limitations under the License.
 package awserrors
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/smithy-go"
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Error singletons for AWS errors.
@@ -82,6 +85,13 @@ type EC2Error struct {
 	msg string
 
 	Code int
+}
+
+// SmithyError holds parsed smithy errors from aws-sdk-go-v2 API calls.
+type SmithyError struct {
+	errCode    string
+	errMessage string
+	statusCode int
 }
 
 // Error implements the Error interface.
@@ -223,4 +233,47 @@ func IsPermissionNotFoundError(err error) bool {
 		}
 	}
 	return false
+}
+
+// ParseSmithyError returns parsed SmithyError from AWS API calls.
+func ParseSmithyError(err error) *SmithyError {
+	smithyErr := &SmithyError{}
+
+	if err == nil {
+		return nil
+	}
+
+	var ae smithy.APIError
+	if errors.As(err, &ae) {
+		smithyErr.errCode = ae.ErrorCode()
+		smithyErr.errMessage = ae.Error()
+	}
+
+	var re *smithyhttp.ResponseError
+	if errors.As(err, &re) {
+		if re.Response != nil {
+			smithyErr.statusCode = re.Response.StatusCode
+		}
+		var innerAE smithy.APIError
+		if re.Err != nil && errors.As(re.Err, &innerAE) {
+			smithyErr.errCode = innerAE.ErrorCode()
+		}
+	}
+
+	return smithyErr
+}
+
+// ErrorCode returns the error code from the SmithyError.
+func (s *SmithyError) ErrorCode() string {
+	return s.errCode
+}
+
+// ErrorMessage returns the error message from the SmithyError.
+func (s *SmithyError) ErrorMessage() string {
+	return s.errMessage
+}
+
+// StatusCode returns the status code from the SmithyError.
+func (s *SmithyError) StatusCode() int {
+	return s.statusCode
 }

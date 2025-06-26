@@ -59,9 +59,9 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/ssm"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/userdata"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
@@ -183,11 +183,6 @@ func (r *AWSMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	if annotations.IsPaused(cluster, awsMachine) {
-		log.Info("AWSMachine or linked Cluster is marked as paused. Won't reconcile")
-		return ctrl.Result{}, nil
-	}
-
 	log = log.WithValues("cluster", klog.KObj(cluster))
 
 	infraCluster, err := r.getInfraCluster(ctx, log, cluster, awsMachine)
@@ -201,10 +196,15 @@ func (r *AWSMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	infrav1.SetDefaults_AWSMachineSpec(&awsMachine.Spec)
 
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, awsMachine); err != nil || isPaused || conditionChanged {
+		return ctrl.Result{}, err
+	}
+
 	// Create the machine scope
 	machineScope, err := scope.NewMachineScope(scope.MachineScopeParams{
 		Client:       r.Client,
 		Cluster:      cluster,
+		Logger:       log,
 		Machine:      machine,
 		InfraCluster: infraCluster,
 		AWSMachine:   awsMachine,
@@ -224,13 +224,13 @@ func (r *AWSMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	switch infraScope := infraCluster.(type) {
 	case *scope.ManagedControlPlaneScope:
 		if !awsMachine.ObjectMeta.DeletionTimestamp.IsZero() {
-			return r.reconcileDelete(machineScope, infraScope, infraScope, nil, nil)
+			return r.reconcileDelete(ctx, machineScope, infraScope, infraScope, nil, nil)
 		}
 
 		return r.reconcileNormal(ctx, machineScope, infraScope, infraScope, nil, nil)
 	case *scope.ClusterScope:
 		if !awsMachine.ObjectMeta.DeletionTimestamp.IsZero() {
-			return r.reconcileDelete(machineScope, infraScope, infraScope, infraScope, infraScope)
+			return r.reconcileDelete(ctx, machineScope, infraScope, infraScope, infraScope, infraScope)
 		}
 
 		return r.reconcileNormal(ctx, machineScope, infraScope, infraScope, infraScope, infraScope)
@@ -254,7 +254,7 @@ func (r *AWSMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 			&infrav1.AWSCluster{},
 			handler.EnqueueRequestsFromMapFunc(AWSClusterToAWSMachines),
 		).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
 		WithEventFilter(
 			predicate.Funcs{
 				// Avoid reconciling if the event triggering the reconciliation is related to incremental status updates
@@ -298,12 +298,12 @@ func (r *AWSMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 	)
 }
 
-func (r *AWSMachineReconciler) reconcileDelete(machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, ec2Scope scope.EC2Scope, elbScope scope.ELBScope, objectStoreScope scope.S3Scope) (ctrl.Result, error) {
+func (r *AWSMachineReconciler) reconcileDelete(ctx context.Context, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, ec2Scope scope.EC2Scope, elbScope scope.ELBScope, objectStoreScope scope.S3Scope) (ctrl.Result, error) {
 	machineScope.Info("Handling deleted AWSMachine")
 
 	ec2Service := r.getEC2Service(ec2Scope)
 
-	if err := r.deleteBootstrapData(machineScope, clusterScope, objectStoreScope); err != nil {
+	if err := r.deleteBootstrapData(ctx, machineScope, clusterScope, objectStoreScope); err != nil {
 		machineScope.Error(err, "unable to delete machine")
 		return ctrl.Result{}, err
 	}
@@ -346,7 +346,7 @@ func (r *AWSMachineReconciler) reconcileDelete(machineScope *scope.MachineScope,
 
 	if feature.Gates.Enabled(feature.EventBridgeInstanceState) {
 		instancestateSvc := instancestate.NewService(ec2Scope)
-		instancestateSvc.RemoveInstanceFromEventPattern(instance.ID)
+		instancestateSvc.RemoveInstanceFromEventPattern(ctx, instance.ID)
 	}
 
 	// Check the instance state. If it's already shutting down or terminated,
@@ -460,7 +460,7 @@ func (r *AWSMachineReconciler) findInstance(machineScope *scope.MachineScope, ec
 }
 
 //nolint:gocyclo
-func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, ec2Scope scope.EC2Scope, elbScope scope.ELBScope, objectStoreScope scope.S3Scope) (ctrl.Result, error) {
+func (r *AWSMachineReconciler) reconcileNormal(ctx context.Context, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, ec2Scope scope.EC2Scope, elbScope scope.ELBScope, objectStoreScope scope.S3Scope) (ctrl.Result, error) {
 	machineScope.Trace("Reconciling AWSMachine")
 
 	// If the AWSMachine is in an error state, return early.
@@ -468,7 +468,7 @@ func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *
 		machineScope.Info("Error state detected, skipping reconciliation")
 
 		// If we are in a failed state, delete the secret regardless of instance state.
-		if err := r.deleteBootstrapData(machineScope, clusterScope, objectStoreScope); err != nil {
+		if err := r.deleteBootstrapData(ctx, machineScope, clusterScope, objectStoreScope); err != nil {
 			machineScope.Error(err, "unable to reconcile machine")
 			return ctrl.Result{}, err
 		}
@@ -531,7 +531,7 @@ func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *
 			objectStoreSvc = r.getObjectStoreService(objectStoreScope)
 		}
 
-		instance, err = r.createInstance(ec2svc, machineScope, clusterScope, objectStoreSvc)
+		instance, err = r.createInstance(ctx, ec2svc, machineScope, clusterScope, objectStoreSvc)
 		if err != nil {
 			machineScope.Error(err, "unable to create instance")
 			conditions.MarkFalse(machineScope.AWSMachine, infrav1.InstanceReadyCondition, infrav1.InstanceProvisionFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
@@ -558,7 +558,7 @@ func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *
 
 	if feature.Gates.Enabled(feature.EventBridgeInstanceState) {
 		instancestateSvc := instancestate.NewService(ec2Scope)
-		if err := instancestateSvc.AddInstanceToEventPattern(instance.ID); err != nil {
+		if err := instancestateSvc.AddInstanceToEventPattern(ctx, instance.ID); err != nil {
 			return ctrl.Result{}, errors.Wrap(err, "failed to add instance to Event Bridge instance state rule")
 		}
 	}
@@ -616,7 +616,7 @@ func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *
 
 	// reconcile the deletion of the bootstrap data secret now that we have updated instance state
 	if !machineScope.IsMachinePoolMachine() {
-		if deleteSecretErr := r.deleteBootstrapData(machineScope, clusterScope, objectStoreScope); deleteSecretErr != nil {
+		if deleteSecretErr := r.deleteBootstrapData(ctx, machineScope, clusterScope, objectStoreScope); deleteSecretErr != nil {
 			r.Log.Error(deleteSecretErr, "unable to delete secrets")
 			return ctrl.Result{}, deleteSecretErr
 		}
@@ -729,10 +729,10 @@ func (r *AWSMachineReconciler) deleteEncryptedBootstrapDataSecret(machineScope *
 	return nil
 }
 
-func (r *AWSMachineReconciler) createInstance(ec2svc services.EC2Interface, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, objectStoreSvc services.ObjectStoreInterface) (*infrav1.Instance, error) {
+func (r *AWSMachineReconciler) createInstance(ctx context.Context, ec2svc services.EC2Interface, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, objectStoreSvc services.ObjectStoreInterface) (*infrav1.Instance, error) {
 	machineScope.Info("Creating EC2 instance")
 
-	userData, userDataFormat, userDataErr := r.resolveUserData(machineScope, clusterScope, objectStoreSvc)
+	userData, userDataFormat, userDataErr := r.resolveUserData(ctx, machineScope, clusterScope, objectStoreSvc)
 	if userDataErr != nil {
 		return nil, errors.Wrapf(userDataErr, "failed to resolve userdata")
 	}
@@ -745,7 +745,7 @@ func (r *AWSMachineReconciler) createInstance(ec2svc services.EC2Interface, mach
 	return instance, nil
 }
 
-func (r *AWSMachineReconciler) resolveUserData(machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, objectStoreSvc services.ObjectStoreInterface) ([]byte, string, error) {
+func (r *AWSMachineReconciler) resolveUserData(ctx context.Context, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, objectStoreSvc services.ObjectStoreInterface) ([]byte, string, error) {
 	userData, userDataFormat, err := machineScope.GetRawBootstrapDataWithFormat()
 	if err != nil {
 		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedGetBootstrapData", err.Error())
@@ -759,14 +759,14 @@ func (r *AWSMachineReconciler) resolveUserData(machineScope *scope.MachineScope,
 	if machineScope.UseIgnition(userDataFormat) {
 		var ignitionStorageType infrav1.IgnitionStorageTypeOption
 		if machineScope.AWSMachine.Spec.Ignition == nil {
-			ignitionStorageType = infrav1.IgnitionStorageTypeOptionClusterObjectStore
+			ignitionStorageType = infrav1.DefaultIgnitionStorageType
 		} else {
 			ignitionStorageType = machineScope.AWSMachine.Spec.Ignition.StorageType
 		}
 
 		switch ignitionStorageType {
 		case infrav1.IgnitionStorageTypeOptionClusterObjectStore:
-			userData, err = r.generateIgnitionWithRemoteStorage(machineScope, objectStoreSvc, userData)
+			userData, err = r.generateIgnitionWithRemoteStorage(ctx, machineScope, objectStoreSvc, userData)
 		case infrav1.IgnitionStorageTypeOptionUnencryptedUserData:
 			// No further modifications to userdata are needed for plain storage in UnencryptedUserData.
 		default:
@@ -813,13 +813,13 @@ func (r *AWSMachineReconciler) cloudInitUserData(machineScope *scope.MachineScop
 
 // generateIgnitionWithRemoteStorage uses a remote object storage (S3 bucket) and stores user data in it,
 // then returns the config to instruct ignition on how to pull the user data from the bucket.
-func (r *AWSMachineReconciler) generateIgnitionWithRemoteStorage(scope *scope.MachineScope, objectStoreSvc services.ObjectStoreInterface, userData []byte) ([]byte, error) {
+func (r *AWSMachineReconciler) generateIgnitionWithRemoteStorage(ctx context.Context, scope *scope.MachineScope, objectStoreSvc services.ObjectStoreInterface, userData []byte) ([]byte, error) {
 	if objectStoreSvc == nil {
-		return nil, errors.New("using Ignition by default requires a cluster wide object storage configured at `AWSCluster.Spec.Ignition.S3Bucket`. " +
-			"You must configure one or instruct Ignition to use EC2 user data instead, by setting `AWSMachine.Spec.Ignition.StorageType` to `UnencryptedUserData`")
+		return nil, errors.New("using Ignition by default requires a cluster wide object storage configured at `AWSCluster.spec.s3Bucket`. " +
+			"You must configure one or instruct Ignition to use EC2 user data instead, by setting `AWSMachine.spec.ignition.storageType` to `UnencryptedUserData`")
 	}
 
-	objectURL, err := objectStoreSvc.Create(scope, userData)
+	objectURL, err := objectStoreSvc.Create(ctx, scope, userData)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating userdata object")
 	}
@@ -895,7 +895,7 @@ func getIgnitionVersion(scope *scope.MachineScope) string {
 	return scope.AWSMachine.Spec.Ignition.Version
 }
 
-func (r *AWSMachineReconciler) deleteBootstrapData(machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, objectStoreScope scope.S3Scope) error {
+func (r *AWSMachineReconciler) deleteBootstrapData(ctx context.Context, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, objectStoreScope scope.S3Scope) error {
 	var userDataFormat string
 	var err error
 	if machineScope.Machine.Spec.Bootstrap.DataSecretName != nil {
@@ -913,7 +913,7 @@ func (r *AWSMachineReconciler) deleteBootstrapData(machineScope *scope.MachineSc
 
 	if objectStoreScope != nil {
 		// Bootstrap data will be removed from S3 if it is already populated.
-		if err := r.deleteIgnitionBootstrapDataFromS3(machineScope, r.getObjectStoreService(objectStoreScope)); err != nil {
+		if err := r.deleteIgnitionBootstrapDataFromS3(ctx, machineScope, r.getObjectStoreService(objectStoreScope)); err != nil {
 			return err
 		}
 	}
@@ -921,7 +921,7 @@ func (r *AWSMachineReconciler) deleteBootstrapData(machineScope *scope.MachineSc
 	return nil
 }
 
-func (r *AWSMachineReconciler) deleteIgnitionBootstrapDataFromS3(machineScope *scope.MachineScope, objectStoreSvc services.ObjectStoreInterface) error {
+func (r *AWSMachineReconciler) deleteIgnitionBootstrapDataFromS3(ctx context.Context, machineScope *scope.MachineScope, objectStoreSvc services.ObjectStoreInterface) error {
 	// Do nothing if the AWSMachine is not in a failed state, and is operational from an EC2 perspective, but does not have a node reference
 	if !machineScope.HasFailed() && machineScope.InstanceIsOperational() && machineScope.Machine.Status.NodeRef == nil && !machineScope.AWSMachineIsDeleted() {
 		return nil
@@ -945,7 +945,7 @@ func (r *AWSMachineReconciler) deleteIgnitionBootstrapDataFromS3(machineScope *s
 		return nil
 	}
 
-	if err := objectStoreSvc.Delete(machineScope); err != nil {
+	if err := objectStoreSvc.Delete(ctx, machineScope); err != nil {
 		return errors.Wrap(err, "deleting bootstrap data object")
 	}
 

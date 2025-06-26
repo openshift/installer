@@ -1642,16 +1642,31 @@ func (s *Service) reconcileTargetGroupsAndListeners(lbARN string, spec *infrav1.
 			}
 			createdTargetGroups = append(createdTargetGroups, group)
 
-			if !lbSpec.PreserveClientIP {
-				targetGroupAttributeInput := &elbv2.ModifyTargetGroupAttributesInput{
-					TargetGroupArn: group.TargetGroupArn,
-					Attributes: []*elbv2.TargetGroupAttribute{
-						{
-							Key:   aws.String(infrav1.TargetGroupAttributeEnablePreserveClientIP),
-							Value: aws.String("false"),
-						},
+			targetGroupAttributeInput := &elbv2.ModifyTargetGroupAttributesInput{TargetGroupArn: group.TargetGroupArn}
+
+			if spec.LoadBalancerType == infrav1.LoadBalancerTypeNLB {
+				targetGroupAttributeInput.Attributes = append(targetGroupAttributeInput.Attributes,
+					&elbv2.TargetGroupAttribute{
+						Key:   aws.String(infrav1.TargetGroupAttributeEnableConnectionTermination),
+						Value: aws.String("false"),
 					},
-				}
+					&elbv2.TargetGroupAttribute{
+						Key:   aws.String(infrav1.TargetGroupAttributeUnhealthyDrainingIntervalSeconds),
+						Value: aws.String("300"),
+					},
+				)
+			}
+
+			if !lbSpec.PreserveClientIP {
+				targetGroupAttributeInput.Attributes = append(targetGroupAttributeInput.Attributes,
+					&elbv2.TargetGroupAttribute{
+						Key:   aws.String(infrav1.TargetGroupAttributeEnablePreserveClientIP),
+						Value: aws.String("false"),
+					},
+				)
+			}
+
+			if len(targetGroupAttributeInput.Attributes) > 0 {
 				if _, err := s.ELBV2Client.ModifyTargetGroupAttributes(targetGroupAttributeInput); err != nil {
 					return nil, nil, errors.Wrapf(err, "failed to modify target group attribute")
 				}
