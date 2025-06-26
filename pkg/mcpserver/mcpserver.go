@@ -90,18 +90,34 @@ func Tools() []server.ServerTool {
 		{
 			Tool: mcp.NewTool("get_example_install_config",
 				mcp.WithDescription("Gets an example install-config by platform"),
-				mcp.WithString("platform"),
+				mcp.WithString("platform", mcp.Required()),
+				mcp.WithString("pullsecret", mcp.Required()),
+				mcp.WithString("basedomain", mcp.Required()),
+				mcp.WithString("clustername", mcp.Required()),
 			),
 			Handler: func(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+				fmt.Print("in handler")
 				arguments := request.GetArguments()
 				// check if the arguments are present using ok pattern
 				platform, ok := arguments["platform"].(string)
 				if !ok {
 					return nil, errors.New("platform is required")
 				}
+				pullSecret, ok := arguments["pullsecret"].(string)
+				if !ok {
+					return nil, errors.New("pullsecret is required")
+				}
+				baseDomain, ok := arguments["basedomain"].(string)
+				if !ok {
+					return nil, errors.New("basedomain is required")
+				}
+				clusterName, ok := arguments["clustername"].(string)
+				if !ok {
+					return nil, errors.New("clustername is required")
+				}
 
 				return ProcessResults(
-					GetExampleInstallConfig(platform),
+					GetExampleInstallConfig(platform, pullSecret, baseDomain, clusterName),
 				), nil
 			},
 		},
