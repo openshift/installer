@@ -32,10 +32,11 @@ import (
 	"sigs.k8s.io/cluster-api/util/topology"
 )
 
-func (r *AWSMachineTemplateWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *AWSMachineTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(AWSMachineTemplateWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&AWSMachineTemplate{}).
-		WithValidator(r).
+		WithValidator(w).
 		Complete()
 }
 

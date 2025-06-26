@@ -67,11 +67,21 @@ const additionalTargetGroupPrefix = "additional-listener-"
 // cantAttachSGToNLBRegions is a set of regions that do not support Security Groups in NLBs.
 var cantAttachSGToNLBRegions = sets.New("us-iso-east-1", "us-iso-west-1", "us-isob-east-1")
 
+type lbReconciler func() error
+
 // ReconcileLoadbalancers reconciles the load balancers for the given cluster.
 func (s *Service) ReconcileLoadbalancers() error {
 	s.scope.Debug("Reconciling load balancers")
 
 	var errs []error
+	var lbReconcilers []lbReconciler
+
+	// The following splits load balancer reconciliation into 2 phases:
+	// 1. Get or create the load balancer
+	// 2. Reconcile the load balancer
+	// We ensure that we only wait for the load balancer to become available in
+	// the reconcile phase. This is useful when creating multiple load
+	// balancers, as they can take several minutes to become available.
 
 	for _, lbSpec := range s.scope.ControlPlaneLoadBalancers() {
 		if lbSpec == nil {
@@ -79,48 +89,72 @@ func (s *Service) ReconcileLoadbalancers() error {
 		}
 		switch lbSpec.LoadBalancerType {
 		case infrav1.LoadBalancerTypeClassic:
-			errs = append(errs, s.reconcileClassicLoadBalancer())
+			reconciler, err := s.getOrCreateClassicLoadBalancer()
+			if err != nil {
+				errs = append(errs, err)
+			} else {
+				lbReconcilers = append(lbReconcilers, reconciler)
+			}
 		case infrav1.LoadBalancerTypeNLB, infrav1.LoadBalancerTypeALB, infrav1.LoadBalancerTypeELB:
-			errs = append(errs, s.reconcileV2LB(lbSpec))
+			reconciler, err := s.getOrCreateV2LB(lbSpec)
+			if err != nil {
+				errs = append(errs, err)
+			} else {
+				lbReconcilers = append(lbReconcilers, reconciler)
+			}
 		default:
 			errs = append(errs, fmt.Errorf("unknown or unsupported load balancer type on primary load balancer: %s", lbSpec.LoadBalancerType))
+		}
+	}
+
+	// Reconcile all load balancers
+	for _, reconciler := range lbReconcilers {
+		if err := reconciler(); err != nil {
+			errs = append(errs, err)
 		}
 	}
 
 	return kerrors.NewAggregate(errs)
 }
 
-// reconcileV2LB creates a load balancer. It also takes care of generating unique names across
-// namespaces by appending the namespace to the name.
-func (s *Service) reconcileV2LB(lbSpec *infrav1.AWSLoadBalancerSpec) error {
+// getOrCreateV2LB gets an existing load balancer, or creates a new one if it does not exist.
+// It also takes care of generating unique names across namespaces by appending the namespace to the name.
+// It returns a function that reconciles the load balancer.
+func (s *Service) getOrCreateV2LB(lbSpec *infrav1.AWSLoadBalancerSpec) (lbReconciler, error) {
 	name, err := LBName(s.scope, lbSpec)
 	if err != nil {
-		return errors.Wrap(err, "failed to get control plane load balancer name")
+		return nil, errors.Wrap(err, "failed to get control plane load balancer name")
 	}
 
 	// Get default api server spec.
 	desiredLB, err := s.getAPIServerLBSpec(name, lbSpec)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	lb, err := s.describeLB(name, lbSpec)
 	switch {
 	case IsNotFound(err) && s.scope.ControlPlaneEndpoint().IsValid():
 		// if elb is not found and owner cluster ControlPlaneEndpoint is already populated, then we should not recreate the elb.
-		return errors.Wrapf(err, "no loadbalancer exists for the AWSCluster %s, the cluster has become unrecoverable and should be deleted manually", s.scope.InfraClusterName())
+		return nil, errors.Wrapf(err, "no loadbalancer exists for the AWSCluster %s, the cluster has become unrecoverable and should be deleted manually", s.scope.InfraClusterName())
 	case IsNotFound(err):
 		lb, err = s.createLB(desiredLB, lbSpec)
 		if err != nil {
 			s.scope.Error(err, "failed to create LB")
-			return err
+			return nil, err
 		}
 
 		s.scope.Debug("Created new network load balancer for apiserver", "api-server-lb-name", lb.Name)
 	case err != nil:
 		// Failed to describe the classic ELB
-		return err
+		return nil, err
 	}
 
+	return func() error {
+		return s.reconcileV2LB(lb, desiredLB, lbSpec)
+	}, nil
+}
+
+func (s *Service) reconcileV2LB(lb *infrav1.LoadBalancer, desiredLB *infrav1.LoadBalancer, lbSpec *infrav1.AWSLoadBalancerSpec) error {
 	wReq := &elbv2.DescribeLoadBalancersInput{
 		LoadBalancerArns: aws.StringSlice([]string{lb.ARN}),
 	}
@@ -442,12 +476,21 @@ func (s *Service) createLB(spec *infrav1.LoadBalancer, lbSpec *infrav1.AWSLoadBa
 
 	// Target Groups and listeners will be reconciled separately
 
-	s.scope.Info("Created network load balancer", "dns-name", *out.LoadBalancers[0].DNSName)
+	if out.LoadBalancers[0].DNSName == nil {
+		return nil, fmt.Errorf("CreateLoadBalancer did not return a DNS name for %s", spec.Name)
+	}
+	dnsName := *out.LoadBalancers[0].DNSName
+	if out.LoadBalancers[0].LoadBalancerArn == nil {
+		return nil, fmt.Errorf("CreateLoadBalancer did not return an ARN for %s", spec.Name)
+	}
+	arn := *out.LoadBalancers[0].LoadBalancerArn
+
+	s.scope.Info("Created network load balancer", "dns-name", dnsName)
 
 	res := spec.DeepCopy()
-	s.scope.Debug("applying load balancer DNS to result", "dns", *out.LoadBalancers[0].DNSName)
-	res.DNSName = *out.LoadBalancers[0].DNSName
-	res.ARN = *out.LoadBalancers[0].LoadBalancerArn
+	s.scope.Debug("applying load balancer DNS to result", "dns", dnsName)
+	res.DNSName = dnsName
+	res.ARN = arn
 	return res, nil
 }
 
@@ -507,37 +550,46 @@ func (s *Service) describeLB(name string, lbSpec *infrav1.AWSLoadBalancerSpec) (
 	return fromSDKTypeToLB(out.LoadBalancers[0], outAtt.Attributes, tags), nil
 }
 
-func (s *Service) reconcileClassicLoadBalancer() error {
+// getOrCreateClassicLoadBalancer gets an existing classic load balancer, or creates a new one if it does not exist.
+// It also takes care of generating unique names across namespaces by appending the namespace to the name.
+// It returns a function that reconciles the load balancer.
+func (s *Service) getOrCreateClassicLoadBalancer() (lbReconciler, error) {
 	// Generate a default control plane load balancer name. The load balancer name cannot be
 	// generated by the defaulting webhook, because it is derived from the cluster name, and that
 	// name is undefined at defaulting time when generateName is used.
 	name, err := ELBName(s.scope)
 	if err != nil {
-		return errors.Wrap(err, "failed to get control plane load balancer name")
+		return nil, errors.Wrap(err, "failed to get control plane load balancer name")
 	}
 
 	// Get default api server spec.
 	spec, err := s.getAPIServerClassicELBSpec(name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	apiELB, err := s.describeClassicELB(spec.Name)
 	switch {
 	case IsNotFound(err) && s.scope.ControlPlaneEndpoint().IsValid():
 		// if elb is not found and owner cluster ControlPlaneEndpoint is already populated, then we should not recreate the elb.
-		return errors.Wrapf(err, "no loadbalancer exists for the AWSCluster %s, the cluster has become unrecoverable and should be deleted manually", s.scope.InfraClusterName())
+		return nil, errors.Wrapf(err, "no loadbalancer exists for the AWSCluster %s, the cluster has become unrecoverable and should be deleted manually", s.scope.InfraClusterName())
 	case IsNotFound(err):
 		apiELB, err = s.createClassicELB(spec)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		s.scope.Debug("Created new classic load balancer for apiserver", "api-server-elb-name", apiELB.Name)
 	case err != nil:
 		// Failed to describe the classic ELB
-		return err
+		return nil, err
 	}
 
+	return func() error {
+		return s.reconcileClassicLoadBalancer(apiELB, spec)
+	}, nil
+}
+
+func (s *Service) reconcileClassicLoadBalancer(apiELB *infrav1.LoadBalancer, spec *infrav1.LoadBalancer) error {
 	if apiELB.IsManaged(s.scope.Name()) {
 		if !cmp.Equal(spec.ClassicElbAttributes, apiELB.ClassicElbAttributes) {
 			err := s.configureAttributes(apiELB.Name, spec.ClassicElbAttributes)
@@ -546,6 +598,9 @@ func (s *Service) reconcileClassicLoadBalancer() error {
 			}
 		}
 
+		// BUG: note that describeClassicELB doesn't set HealthCheck in its output,
+		// so we're configuring the health check on every reconcile whether it's
+		// needed or not.
 		if !cmp.Equal(spec.HealthCheck, apiELB.HealthCheck) {
 			s.scope.Debug("Reconciling health check for apiserver load balancer", "health-check", spec.HealthCheck)
 			err := s.configureHealthCheck(apiELB.Name, spec.HealthCheck)
@@ -597,7 +652,7 @@ func (s *Service) reconcileClassicLoadBalancer() error {
 }
 
 func (s *Service) configureHealthCheck(name string, healthCheck *infrav1.ClassicELBHealthCheck) error {
-	if _, err := s.ELBClient.ConfigureHealthCheck(&elb.ConfigureHealthCheckInput{
+	healthCheckInput := &elb.ConfigureHealthCheckInput{
 		LoadBalancerName: aws.String(name),
 		HealthCheck: &elb.HealthCheck{
 			Target:             aws.String(healthCheck.Target),
@@ -606,7 +661,14 @@ func (s *Service) configureHealthCheck(name string, healthCheck *infrav1.Classic
 			HealthyThreshold:   aws.Int64(healthCheck.HealthyThreshold),
 			UnhealthyThreshold: aws.Int64(healthCheck.UnhealthyThreshold),
 		},
-	}); err != nil {
+	}
+
+	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
+		if _, err := s.ELBClient.ConfigureHealthCheck(healthCheckInput); err != nil {
+			return false, err
+		}
+		return true, nil
+	}, awserrors.LoadBalancerNotFound); err != nil {
 		return errors.Wrapf(err, "failed to configure health check for classic load balancer: %s", name)
 	}
 	return nil
@@ -1193,30 +1255,15 @@ func (s *Service) createClassicELB(spec *infrav1.LoadBalancer) (*infrav1.LoadBal
 		return nil, errors.Wrapf(err, "failed to create classic load balancer: %v", spec)
 	}
 
-	if spec.HealthCheck != nil {
-		if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-			if _, err := s.ELBClient.ConfigureHealthCheck(&elb.ConfigureHealthCheckInput{
-				LoadBalancerName: aws.String(spec.Name),
-				HealthCheck: &elb.HealthCheck{
-					Target:             aws.String(spec.HealthCheck.Target),
-					Interval:           aws.Int64(int64(spec.HealthCheck.Interval.Seconds())),
-					Timeout:            aws.Int64(int64(spec.HealthCheck.Timeout.Seconds())),
-					HealthyThreshold:   aws.Int64(spec.HealthCheck.HealthyThreshold),
-					UnhealthyThreshold: aws.Int64(spec.HealthCheck.UnhealthyThreshold),
-				},
-			}); err != nil {
-				return false, err
-			}
-			return true, nil
-		}, awserrors.LoadBalancerNotFound); err != nil {
-			return nil, errors.Wrapf(err, "failed to configure health check for classic load balancer: %v", spec)
-		}
-	}
-
 	s.scope.Info("Created classic load balancer", "dns-name", *out.DNSName)
 
 	res := spec.DeepCopy()
 	res.DNSName = *out.DNSName
+
+	// We haven't configured any health check yet. Don't report it here so it
+	// will be set later during reconciliation.
+	res.HealthCheck = nil
+
 	return res, nil
 }
 
@@ -1642,16 +1689,32 @@ func (s *Service) reconcileTargetGroupsAndListeners(lbARN string, spec *infrav1.
 			}
 			createdTargetGroups = append(createdTargetGroups, group)
 
-			if !lbSpec.PreserveClientIP {
-				targetGroupAttributeInput := &elbv2.ModifyTargetGroupAttributesInput{
-					TargetGroupArn: group.TargetGroupArn,
-					Attributes: []*elbv2.TargetGroupAttribute{
-						{
-							Key:   aws.String(infrav1.TargetGroupAttributeEnablePreserveClientIP),
-							Value: aws.String("false"),
-						},
+			targetGroupAttributeInput := &elbv2.ModifyTargetGroupAttributesInput{TargetGroupArn: group.TargetGroupArn}
+
+			if lbSpec.LoadBalancerType == infrav1.LoadBalancerTypeNLB {
+				targetGroupAttributeInput.Attributes = append(targetGroupAttributeInput.Attributes,
+					&elbv2.TargetGroupAttribute{
+						Key:   aws.String(infrav1.TargetGroupAttributeEnableConnectionTermination),
+						Value: aws.String("false"),
 					},
-				}
+					&elbv2.TargetGroupAttribute{
+						Key:   aws.String(infrav1.TargetGroupAttributeUnhealthyDrainingIntervalSeconds),
+						Value: aws.String("300"),
+					},
+				)
+			}
+
+			if !lbSpec.PreserveClientIP {
+				targetGroupAttributeInput.Attributes = append(targetGroupAttributeInput.Attributes,
+					&elbv2.TargetGroupAttribute{
+						Key:   aws.String(infrav1.TargetGroupAttributeEnablePreserveClientIP),
+						Value: aws.String("false"),
+					},
+				)
+			}
+
+			if len(targetGroupAttributeInput.Attributes) > 0 {
+				s.scope.Debug("configuring target group attributes", "attributes", targetGroupAttributeInput)
 				if _, err := s.ELBV2Client.ModifyTargetGroupAttributes(targetGroupAttributeInput); err != nil {
 					return nil, nil, errors.Wrapf(err, "failed to modify target group attribute")
 				}
