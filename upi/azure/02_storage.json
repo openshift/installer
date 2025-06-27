@@ -108,6 +108,12 @@
           "properties": {
             "architecture": "[parameters('architecture')]",
             "hyperVGeneration": "V2",
+            "features": [
+              {
+                "name": "SecurityType",
+                "value": "ConfidentialVmSupported"
+              }
+            ],
             "identifier": {
               "offer": "rhcos-gen2",
               "publisher": "RedHat-gen2",

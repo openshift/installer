@@ -47,7 +47,7 @@
     },
     "masterVMSize" : {
       "type" : "string",
-      "defaultValue" : "Standard_D8s_v3",
+      "defaultValue" : "Standard_DC8as_v6",
       "metadata" : {
         "description" : "The size of the Master Virtual Machines"
       }
@@ -93,7 +93,7 @@
   },
   "resources" : [
     {
-      "apiVersion" : "2018-06-01",
+      "apiVersion" : "2024-07-01",
       "type" : "Microsoft.Network/networkInterfaces",
       "copy" : {
         "name" : "nicCopy",
@@ -124,7 +124,7 @@
       }
     },
     {
-      "apiVersion" : "2018-06-01",
+      "apiVersion" : "2024-07-01",
       "type" : "Microsoft.Compute/virtualMachines",
       "copy" : {
         "name" : "vmCopy",
@@ -154,6 +154,13 @@
             "disablePasswordAuthentication" : false
           }
         },
+        "securityProfile": {
+          "securityType": "ConfidentialVM",
+          "uefiSettings": {
+            "secureBootEnabled": true,
+            "vTpmEnabled": true
+          }
+        },
         "storageProfile" : {
           "imageReference": {
             "id": "[resourceId('Microsoft.Compute/galleries/images', variables('galleryName'), variables('imageName'))]"
@@ -165,7 +172,10 @@
             "caching": "ReadOnly",
             "writeAcceleratorEnabled": false,
             "managedDisk": {
-              "storageAccountType": "Premium_LRS"
+              "storageAccountType": "Premium_LRS",
+              "securityProfile": {
+                "securityEncryptionType": "VMGuestStateOnly"
+              }
             },
             "diskSizeGB" : "[parameters('diskSizeGB')]"
           }
