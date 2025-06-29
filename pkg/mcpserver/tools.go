@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
@@ -35,10 +37,9 @@ func GetCoreOS() (string, error) {
 	return string(streamData), nil
 }
 
-func GetExampleInstallConfig(platform, pullSecret, baseDomain, clusterName string) (string, error) {
+func GetExampleInstallConfig(platform, pullSecret, baseDomain, clusterName, sshKey string) (string, error) {
 
 	logrus.Info("in getInstallConfigResource")
-	//platform := req.Params.Arguments["platform"]
 	logrus.Infof("platform: %s", platform)
 
 	// Create a new InstallConfig
@@ -51,7 +52,7 @@ func GetExampleInstallConfig(platform, pullSecret, baseDomain, clusterName strin
 		},
 		BaseDomain: baseDomain,
 		PullSecret: pullSecret,
-		SSHKey:     "ssh-rsa AAAA...",
+		SSHKey:     sshKey,
 		Publish:    types.ExternalPublishingStrategy,
 		Networking: &types.Networking{
 			NetworkType:    "OVNKubernetes",
@@ -437,4 +438,74 @@ func GetExampleInstallConfig(platform, pullSecret, baseDomain, clusterName strin
 	}
 
 	return string(jsonData), nil
+}
+
+// MergeInstallConfigPlatform merges an install config with a platform struct at InstallConfig.Platform
+// Inputs:
+// - installConfigStr: string containing install config as either JSON or YAML
+// - platformStr: string containing platform struct as either JSON or YAML
+// - outputFormat: "json" or "yaml" to specify output format (defaults to "yaml" if empty or unsupported)
+// Outputs:
+// - string containing the merged install config in the specified format
+func MergeInstallConfigPlatform(installConfigStr, platformStr, outputFormat string) (string, error) {
+	logrus.Info("Merging install config with platform configuration")
+
+	// Parse install config
+	var installConfig types.InstallConfig
+	if err := parseConfig(installConfigStr, &installConfig); err != nil {
+		return "", fmt.Errorf("failed to parse install config: %w", err)
+	}
+
+	// Parse platform
+	var platform types.Platform
+	if err := parseConfig(platformStr, &platform); err != nil {
+		return "", fmt.Errorf("failed to parse platform: %w", err)
+	}
+
+	// Merge platform into install config
+	installConfig.Platform = platform
+
+	// Default to yaml if outputFormat is empty or unsupported
+	if outputFormat == "" {
+		outputFormat = "yaml"
+	}
+
+	// Output in requested format
+	switch strings.ToLower(outputFormat) {
+	case "json":
+		jsonData, err := json.MarshalIndent(installConfig, "", "  ")
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal install config to JSON: %w", err)
+		}
+		return string(jsonData), nil
+	case "yaml":
+		yamlData, err := yaml.Marshal(installConfig)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal install config to YAML: %w", err)
+		}
+		return string(yamlData), nil
+	default:
+		// Default to YAML for unsupported formats
+		logrus.Warnf("Unsupported output format: %s, defaulting to YAML", outputFormat)
+		yamlData, err := yaml.Marshal(installConfig)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal install config to YAML: %w", err)
+		}
+		return string(yamlData), nil
+	}
+}
+
+// parseConfig attempts to parse a string as either JSON or YAML into the target struct
+func parseConfig(configStr string, target interface{}) error {
+	// Try JSON first
+	if err := json.Unmarshal([]byte(configStr), target); err == nil {
+		return nil
+	}
+
+	// Try YAML if JSON fails
+	if err := yaml.Unmarshal([]byte(configStr), target); err != nil {
+		return fmt.Errorf("failed to parse as JSON or YAML: %w", err)
+	}
+
+	return nil
 }

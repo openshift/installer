@@ -9,10 +9,12 @@ import (
 	"github.com/sirupsen/logrus"
 
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 func GetVSphereTopology(username, password, server string) (string, error) {
+
 	vspherePlatform := &vsphere.Platform{}
 	// add a new vcenter to the vsphere platform
 	vspherePlatform.VCenters = append(vspherePlatform.VCenters, vsphere.VCenter{
@@ -87,8 +89,9 @@ func GetVSphereTopology(username, password, server string) (string, error) {
 			vspherePlatform.VCenters[0].Datacenters = append(vspherePlatform.VCenters[0].Datacenters, dc)
 		}
 	}
+	platform := types.Platform{VSphere: vspherePlatform}
 
-	jsonBytes, err := json.Marshal(vspherePlatform)
+	jsonBytes, err := json.Marshal(platform)
 	if err != nil {
 		return "", err
 	}

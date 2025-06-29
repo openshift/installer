@@ -27,6 +27,9 @@ type InstallerMcpServer struct {
 
 	// why? really just why?
 	ResourceTemplates []ServerResourceTemplate
+
+	// Error handler for MCP mode
+	ErrorHandler *MCPErrorHandler
 }
 
 // using design examples from https://github.com/Prashanth684/releasecontroller-mcp-server/tree/main
@@ -44,6 +47,14 @@ func NewInstallerMcpServer(serverTools []server.ServerTool, resources []server.S
 	hooks.AddOnRegisterSession(func(ctx context.Context, session server.ClientSession) {
 		logrus.Info(session.SessionID())
 	})
+
+	// Add error handling hook
+	hooks.AddOnError(func(ctx context.Context, id any, method mcp.MCPMethod, message any, err error) {
+		if installerMcpServer.ErrorHandler != nil {
+			installerMcpServer.ErrorHandler.HandleError(err, fmt.Sprintf("MCP method: %s", method))
+		}
+	})
+
 	s := server.NewMCPServer(
 		"OpenShift Installer",
 		versionString,
@@ -88,11 +99,37 @@ func Tools() []server.ServerTool {
 			},
 		},
 		{
+			Tool: mcp.NewTool("merge_install_config_platform",
+				mcp.WithDescription("Merges the install-config with the platform"),
+				mcp.WithString("install_config", mcp.Required()),
+				mcp.WithString("platform", mcp.Required()),
+				mcp.WithString("output_format", mcp.Required()),
+			),
+			Handler: func(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+				arguments := request.GetArguments()
+				platform, ok := arguments["platform"].(string)
+				if !ok {
+					return nil, errors.New("platform is required")
+				}
+				installConfig, ok := arguments["install_config"].(string)
+				if !ok {
+					return nil, errors.New("install_config is required")
+				}
+				outputFormat, ok := arguments["output_format"].(string)
+				if !ok {
+					return nil, errors.New("output_format is required")
+				}
+
+				return ProcessResults(MergeInstallConfigPlatform(platform, installConfig, outputFormat)), nil
+			},
+		},
+		{
 			Tool: mcp.NewTool("get_example_install_config",
 				mcp.WithDescription("Gets an example install-config by platform"),
 				mcp.WithString("platform", mcp.Required()),
 				mcp.WithString("pullsecret", mcp.Required()),
 				mcp.WithString("basedomain", mcp.Required()),
+				mcp.WithString("sshkey", mcp.Required()),
 				mcp.WithString("clustername", mcp.Required()),
 			),
 			Handler: func(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -115,15 +152,19 @@ func Tools() []server.ServerTool {
 				if !ok {
 					return nil, errors.New("clustername is required")
 				}
+				sshKey, ok := arguments["sshKey"].(string)
+				if !ok {
+					return nil, errors.New("sshKey is required")
+				}
 
 				return ProcessResults(
-					GetExampleInstallConfig(platform, pullSecret, baseDomain, clusterName),
+					GetExampleInstallConfig(platform, pullSecret, baseDomain, clusterName, sshKey),
 				), nil
 			},
 		},
 		{
-			Tool: mcp.NewTool("get_vsphere_topology",
-				mcp.WithDescription("Gets the vsphere topology in json from the installer"),
+			Tool: mcp.NewTool("get_vsphere_platform_topology",
+				mcp.WithDescription("Returns a json string of the vsphere platform"),
 				mcp.WithString("username"),
 				mcp.WithString("password"),
 				mcp.WithString("server"),
