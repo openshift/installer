@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
@@ -37,9 +37,13 @@ func newRunMcpSseCmd() *cobra.Command {
 
 			i := mcpserver.NewInstallerMcpServer(Tools(), Resources(), ResourceTemplates())
 
+			// Set up global error handling for MCP mode
+			ctx := context.Background()
+			mcpserver.SetupMCPErrorHandling(i.Server, ctx)
+
 			err := i.RunSSEServer()
 			if err != nil {
-				logrus.Fatal(err)
+				mcpserver.SafeFatal(err, "SSE server startup")
 			}
 		},
 	}
@@ -57,9 +61,13 @@ func newRunMcpStreamableHttpCmd() *cobra.Command {
 
 			i := mcpserver.NewInstallerMcpServer(Tools(), Resources(), ResourceTemplates())
 
+			// Set up global error handling for MCP mode
+			ctx := context.Background()
+			mcpserver.SetupMCPErrorHandling(i.Server, ctx)
+
 			err := i.RunStreamableHttp()
 			if err != nil {
-				logrus.Fatal(err)
+				mcpserver.SafeFatal(err, "Streamable HTTP server startup")
 			}
 		},
 	}
@@ -75,7 +83,15 @@ func newRunMcpStdioCmd() *cobra.Command {
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
-			logrus.Fatal("not implemented")
+
+			i := mcpserver.NewInstallerMcpServer(Tools(), Resources(), ResourceTemplates())
+
+			// Set up global error handling for MCP mode
+			ctx := context.Background()
+			mcpserver.SetupMCPErrorHandling(i.Server, ctx)
+
+			err := fmt.Errorf("stdio server not implemented")
+			mcpserver.SafeFatal(err, "stdio server startup")
 		},
 	}
 }
