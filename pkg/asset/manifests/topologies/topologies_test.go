@@ -1,4 +1,4 @@
-package manifests
+package topologies
 
 import (
 	"testing"
@@ -96,7 +96,7 @@ func Test_DetermineTopologies(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			controlPlane, infra := determineTopologies(tc.installConfig)
+			controlPlane, infra := DetermineTopologies(tc.installConfig)
 			if controlPlane != tc.expectedControlPlane {
 				t.Fatalf("expected control plane topology to be %s but got %s", tc.expectedControlPlane, controlPlane)
 			}
@@ -135,7 +135,7 @@ func Test_DetermineCPUPartitioning(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			mode := determineCPUPartitioning(tc.installConfig)
+			mode := DetermineCPUPartitioning(tc.installConfig)
 			if mode != tc.expectedPartitioningMode {
 				t.Fatalf("expected cpu partitioning mode to be %s but got %s", tc.expectedPartitioningMode, mode)
 			}
