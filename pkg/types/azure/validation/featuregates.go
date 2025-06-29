@@ -13,6 +13,7 @@ import (
 func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeature {
 	cp := c.ControlPlane.Platform
 	defMp := c.Platform.Azure.DefaultMachinePlatform
+
 	return []featuregates.GatedInstallConfigFeature{
 		{
 			FeatureGateName: features.FeatureGateMachineAPIMigration,
@@ -23,6 +24,31 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			FeatureGateName: features.FeatureGateMachineAPIMigration,
 			Condition:       defMp != nil && defMp.Identity != nil && defMp.Identity.UserAssignedIdentities != nil && len(defMp.Identity.UserAssignedIdentities) > 1,
 			Field:           field.NewPath("platform", "azure", "defaultMachinePlatform", "identity", "userAssignedIdentities"),
+		},
+		{
+			FeatureGateName: features.FeatureGateAzureMultiDisk,
+			Condition:       defMp != nil && len(defMp.DataDisks) != 0,
+			Field:           field.NewPath("platform", "azure", "defaultMachinePlatform", "dataDisks"),
+		},
+		{
+			FeatureGateName: features.FeatureGateAzureMultiDisk,
+			Condition:       cp.Azure != nil && len(cp.Azure.DataDisks) != 0,
+			Field:           field.NewPath("controlPlane", "azure", "dataDisks"),
+		},
+		{
+			FeatureGateName: features.FeatureGateAzureMultiDisk,
+			Condition: func() bool {
+				computeMachinePool := c.Compute
+				for _, compute := range computeMachinePool {
+					if compute.Platform.Azure != nil {
+						if len(compute.Platform.Azure.DataDisks) != 0 {
+							return true
+						}
+					}
+				}
+				return false
+			}(),
+			Field: field.NewPath("compute", "azure", "dataDisks"),
 		},
 	}
 }

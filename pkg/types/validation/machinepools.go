@@ -98,7 +98,7 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	}
 	if p.Azure != nil {
 		validate(azure.Name, p.Azure, func(f *field.Path) field.ErrorList {
-			return azurevalidation.ValidateMachinePool(p.Azure, pool.Name, platform.Azure, f)
+			return azurevalidation.ValidateMachinePool(p.Azure, pool.Name, platform.Azure, pool, f)
 		})
 	}
 	if p.GCP != nil {
