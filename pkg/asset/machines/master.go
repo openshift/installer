@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
@@ -613,6 +614,22 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			return errors.Wrap(err, "failed to create ignition to configure IPv6 for master machines")
 		}
 		machineConfigs = append(machineConfigs, ignIPv6)
+	}
+
+	if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateAzureMultiDisk) {
+		for i, d := range installConfig.Config.ControlPlane.DiskSetup {
+			if d.Type == types.Etcd {
+				azurePlatform := installConfig.Config.ControlPlane.Platform.Azure
+				if d.Etcd.PlatformDiskID == azurePlatform.DataDisks[i].NameSuffix {
+					device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azurePlatform.DataDisks[i].Lun)
+					diskSetupIgn, err := machineconfig.ForDiskSetup("master", device, "etcd", "/var/lib/etcd")
+					if err != nil {
+						return errors.Wrap(err, "failed to create ignition to setup disks for master machines")
+					}
+					machineConfigs = append(machineConfigs, diskSetupIgn)
+				}
+			}
+		}
 	}
 
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "master", directory)
