@@ -206,7 +206,7 @@ func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 
 	fields := map[string]string{
 		"bootstrapOSImage": p.BootstrapOSImage,
-		"clusterOSImage":   p.ClusterOSImage,
+		"clusterOSImage":   p.DeprecatedClusterOSImage,
 	}
 
 	for fieldName, url := range fields {
