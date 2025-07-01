@@ -616,19 +616,32 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		machineConfigs = append(machineConfigs, ignIPv6)
 	}
 
-	if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateAzureMultiDisk) {
-		for i, d := range installConfig.Config.ControlPlane.DiskSetup {
-			if d.Type == types.Etcd {
+	// todo: this feature gate will be replaced by FeatureGateMultiDiskSetup
+	for i, d := range installConfig.Config.ControlPlane.DiskSetup {
+		var path string
+
+		switch d.Type {
+		case types.Etcd:
+			path = "/var/lib/etcd"
+		case types.Swap:
+			path = ""
+		case types.UserDefined:
+			path = d.UserDefined.MountPath
+		}
+
+		switch ic.Platform.Name() {
+		case azuretypes.Name:
+			if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateAzureMultiDisk) {
 				azurePlatform := installConfig.Config.ControlPlane.Platform.Azure
-				if d.Etcd.PlatformDiskID == azurePlatform.DataDisks[i].NameSuffix {
-					device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azurePlatform.DataDisks[i].Lun)
-					diskSetupIgn, err := machineconfig.ForDiskSetup("master", device, "etcd", "/var/lib/etcd")
-					if err != nil {
-						return errors.Wrap(err, "failed to create ignition to setup disks for master machines")
-					}
-					machineConfigs = append(machineConfigs, diskSetupIgn)
+				device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azurePlatform.DataDisks[i].Lun)
+				diskSetupIgn, err := machineconfig.ForDiskSetup("master", device, string(d.Type), path)
+				if err != nil {
+					return errors.Wrap(err, "failed to create ignition to setup disks for master machines")
 				}
+				machineConfigs = append(machineConfigs, diskSetupIgn)
 			}
+		case vspheretypes.Name:
+			// adding it here to avoid the linter and this will be defined later
 		}
 	}
 
