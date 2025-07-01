@@ -14,6 +14,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -101,7 +102,11 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 	case awstypes.Name:
 		// Store the additional trust bundle in the ca-bundle.pem key if the cluster is being installed on a C2S region.
 		trustBundle := installConfig.Config.AdditionalTrustBundle
-		if trustBundle != "" && awstypes.IsSecretRegion(installConfig.Config.AWS.Region) {
+		isSecretRegion, err := awsic.IsSecretRegion(installConfig.Config.AWS.Region)
+		if err != nil {
+			return fmt.Errorf("failed to determine if AWS region is secret: %w", err)
+		}
+		if trustBundle != "" && isSecretRegion {
 			cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
 		}
 
