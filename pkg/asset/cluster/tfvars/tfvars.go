@@ -767,6 +767,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 	case baremetal.Name:
 		data, err = baremetaltfvars.TFVars(
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
+			installConfig.Config.FIPS,
 			releaseImage.PullSpec,
 			installConfig.Config.PullSecret,
 			types.BuildMirrorConfig(installConfig.Config),
