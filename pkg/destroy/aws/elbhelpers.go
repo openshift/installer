@@ -2,19 +2,18 @@ package aws
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/elb"
-	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	elbapi "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
+	elbapiv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
-func deleteElasticLoadBalancing(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+func (o *ClusterUninstaller) deleteElasticLoadBalancing(ctx context.Context, arn arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
 		return err
@@ -25,7 +24,7 @@ func deleteElasticLoadBalancing(ctx context.Context, session *session.Session, a
 	case "loadbalancer":
 		segments := strings.SplitN(id, "/", 2)
 		if len(segments) == 1 {
-			return deleteElasticLoadBalancerClassic(ctx, elb.New(session), id, logger)
+			return deleteElasticLoadBalancerClassic(ctx, o.ELBClient, id, logger)
 		} else if len(segments) != 2 {
 			return errors.Errorf("cannot parse subresource %q into {subtype}/{id}", id)
 		}
@@ -33,21 +32,21 @@ func deleteElasticLoadBalancing(ctx context.Context, session *session.Session, a
 		id = segments[1]
 		switch subtype {
 		case "net":
-			return deleteElasticLoadBalancerV2(ctx, elbv2.New(session), arn, logger)
+			return deleteElasticLoadBalancerV2(ctx, o.ELBV2Client, arn, logger)
 		default:
 			return errors.Errorf("unrecognized elastic load balancing resource subtype %s", subtype)
 		}
 	case "targetgroup":
-		return deleteElasticLoadBalancerTargetGroup(ctx, elbv2.New(session), arn, logger)
+		return deleteElasticLoadBalancerTargetGroup(ctx, o.ELBV2Client, arn, logger)
 	case "listener":
-		return deleteElasticLoadBalancerListener(ctx, elbv2.New(session), arn, logger)
+		return deleteElasticLoadBalancerListener(ctx, o.ELBV2Client, arn, logger)
 	default:
 		return errors.Errorf("unrecognized elastic load balancing resource type %s", resourceType)
 	}
 }
 
-func deleteElasticLoadBalancerClassic(ctx context.Context, client *elb.ELB, name string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteLoadBalancerWithContext(ctx, &elb.DeleteLoadBalancerInput{
+func deleteElasticLoadBalancerClassic(ctx context.Context, client *elbapi.Client, name string, logger logrus.FieldLogger) error {
+	_, err := client.DeleteLoadBalancer(ctx, &elbapi.DeleteLoadBalancerInput{
 		LoadBalancerName: aws.String(name),
 	})
 	if err != nil {
@@ -58,46 +57,45 @@ func deleteElasticLoadBalancerClassic(ctx context.Context, client *elb.ELB, name
 	return nil
 }
 
-func deleteElasticLoadBalancerClassicByVPC(ctx context.Context, client *elb.ELB, vpc string, logger logrus.FieldLogger) error {
+func deleteElasticLoadBalancerClassicByVPC(ctx context.Context, client *elbapi.Client, vpc string, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeLoadBalancersPagesWithContext(
-		ctx,
-		&elb.DescribeLoadBalancersInput{},
-		func(results *elb.DescribeLoadBalancersOutput, lastPage bool) bool {
-			logger.Debugf("iterating over a page of %d v1 load balancers", len(results.LoadBalancerDescriptions))
-			for _, lb := range results.LoadBalancerDescriptions {
-				lbLogger := logger.WithField("classic load balancer", *lb.LoadBalancerName)
+	input := &elbapi.DescribeLoadBalancersInput{}
+	paginator := elbapi.NewDescribeLoadBalancersPaginator(client, input)
 
-				if lb.VPCId == nil {
-					lbLogger.Warn("classic load balancer does not have a VPC ID so could not determine whether it should be deleted")
-					continue
-				}
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("describing load balacers by vpc %s: %w", vpc, err)
+		}
 
-				if *lb.VPCId != vpc {
-					continue
-				}
+		logger.Debugf("iterating over a page of %d v1 load balancers", len(page.LoadBalancerDescriptions))
+		for _, lb := range page.LoadBalancerDescriptions {
+			lbLogger := logger.WithField("classic load balancer", *lb.LoadBalancerName)
 
-				err := deleteElasticLoadBalancerClassic(ctx, client, *lb.LoadBalancerName, lbLogger)
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "deleting classic load balancer %s", *lb.LoadBalancerName)
-				}
+			if lb.VPCId == nil {
+				lbLogger.Warn("classic load balancer does not have a VPC ID so could not determine whether it should be deleted")
+				continue
 			}
 
-			return !lastPage
-		},
-	)
+			if *lb.VPCId != vpc {
+				continue
+			}
 
-	if lastError != nil {
-		return lastError
+			err := deleteElasticLoadBalancerClassic(ctx, client, *lb.LoadBalancerName, lbLogger)
+			if err != nil {
+				if lastError != nil {
+					logger.Debug(lastError)
+				}
+				lastError = fmt.Errorf("deleting classic load balancer %s: %w", *lb.LoadBalancerName, err)
+			}
+		}
 	}
-	return err
+
+	return lastError
 }
 
-func deleteElasticLoadBalancerTargetGroup(ctx context.Context, client *elbv2.ELBV2, arn arn.ARN, logger logrus.FieldLogger) error {
-	_, err := client.DeleteTargetGroupWithContext(ctx, &elbv2.DeleteTargetGroupInput{
+func deleteElasticLoadBalancerTargetGroup(ctx context.Context, client *elbapiv2.Client, arn arn.ARN, logger logrus.FieldLogger) error {
+	_, err := client.DeleteTargetGroup(ctx, &elbapiv2.DeleteTargetGroupInput{
 		TargetGroupArn: aws.String(arn.String()),
 	})
 	if err != nil {
@@ -108,21 +106,12 @@ func deleteElasticLoadBalancerTargetGroup(ctx context.Context, client *elbv2.ELB
 	return nil
 }
 
-func isListenerNotFound(err interface{}) bool {
-	if aerr, ok := err.(awserr.Error); ok {
-		if aerr.Code() == elbv2.ErrCodeListenerNotFoundException {
-			return true
-		}
-	}
-	return false
-}
-
-func deleteElasticLoadBalancerListener(ctx context.Context, client *elbv2.ELBV2, arn arn.ARN, logger logrus.FieldLogger) error {
-	_, err := client.DeleteListenerWithContext(ctx, &elbv2.DeleteListenerInput{
+func deleteElasticLoadBalancerListener(ctx context.Context, client *elbapiv2.Client, arn arn.ARN, logger logrus.FieldLogger) error {
+	_, err := client.DeleteListener(ctx, &elbapiv2.DeleteListenerInput{
 		ListenerArn: aws.String(arn.String()),
 	})
 	if err != nil {
-		if isListenerNotFound(err) {
+		if strings.Contains(handleErrorCode(err), "ListenerNotFound") {
 			logger.Info("Not found or already deleted")
 			return nil
 		}
@@ -133,8 +122,8 @@ func deleteElasticLoadBalancerListener(ctx context.Context, client *elbv2.ELBV2,
 	return nil
 }
 
-func deleteElasticLoadBalancerV2(ctx context.Context, client *elbv2.ELBV2, arn arn.ARN, logger logrus.FieldLogger) error {
-	_, err := client.DeleteLoadBalancerWithContext(ctx, &elbv2.DeleteLoadBalancerInput{
+func deleteElasticLoadBalancerV2(ctx context.Context, client *elbapiv2.Client, arn arn.ARN, logger logrus.FieldLogger) error {
+	_, err := client.DeleteLoadBalancer(ctx, &elbapiv2.DeleteLoadBalancerInput{
 		LoadBalancerArn: aws.String(arn.String()),
 	})
 	if err != nil {
@@ -145,47 +134,46 @@ func deleteElasticLoadBalancerV2(ctx context.Context, client *elbv2.ELBV2, arn a
 	return nil
 }
 
-func deleteElasticLoadBalancerV2ByVPC(ctx context.Context, client *elbv2.ELBV2, vpc string, logger logrus.FieldLogger) error {
+func deleteElasticLoadBalancerV2ByVPC(ctx context.Context, client *elbapiv2.Client, vpc string, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeLoadBalancersPagesWithContext(
-		ctx,
-		&elbv2.DescribeLoadBalancersInput{},
-		func(results *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
-			logger.Debugf("iterating over a page of %d v2 load balancers", len(results.LoadBalancers))
-			for _, lb := range results.LoadBalancers {
-				if lb.VpcId == nil {
-					logger.WithField("load balancer", *lb.LoadBalancerArn).Warn("load balancer does not have a VPC ID so could not determine whether it should be deleted")
-					continue
-				}
+	input := &elbapiv2.DescribeLoadBalancersInput{}
+	paginator := elbapiv2.NewDescribeLoadBalancersPaginator(client, input)
 
-				if *lb.VpcId != vpc {
-					continue
-				}
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("describing load balancers v2 by vpc %s: %w", vpc, err)
+		}
 
-				parsed, err := arn.Parse(*lb.LoadBalancerArn)
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrap(err, "parse ARN for load balancer")
-					continue
-				}
-
-				err = deleteElasticLoadBalancerV2(ctx, client, parsed, logger.WithField("load balancer", parsed.Resource))
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "deleting %s", parsed.String())
-				}
+		logger.Debugf("iterating over a page of %d v2 load balancers", len(page.LoadBalancers))
+		for _, lb := range page.LoadBalancers {
+			if lb.VpcId == nil {
+				logger.WithField("load balancer", *lb.LoadBalancerArn).Warn("load balancer does not have a VPC ID so could not determine whether it should be deleted")
+				continue
 			}
 
-			return !lastPage
-		},
-	)
+			if *lb.VpcId != vpc {
+				continue
+			}
 
-	if lastError != nil {
-		return lastError
+			parsed, err := arn.Parse(*lb.LoadBalancerArn)
+			if err != nil {
+				if lastError != nil {
+					logger.Debug(lastError)
+				}
+				lastError = fmt.Errorf("parse ARN for load balancer: %w", err)
+				continue
+			}
+
+			err = deleteElasticLoadBalancerV2(ctx, client, parsed, logger.WithField("load balancer", parsed.Resource))
+			if err != nil {
+				if lastError != nil {
+					logger.Debug(lastError)
+				}
+				lastError = fmt.Errorf("deleting %s: %w", parsed.String(), err)
+			}
+		}
 	}
-	return err
+
+	return lastError
 }
