@@ -953,7 +953,7 @@ func (pb *platformBuilder) BootstrapProvisioningIP(value string) *platformBuilde
 }
 
 func (pb *platformBuilder) BootstrapOSImage(value string) *platformBuilder {
-	pb.Platform.BootstrapOSImage = value
+	pb.Platform.DeprecatedBootstrapOSImage = value
 	return pb
 }
 

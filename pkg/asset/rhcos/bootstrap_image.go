@@ -39,10 +39,7 @@ func (i *BootstrapImage) Generate(ctx context.Context, p asset.Parents) error {
 
 	switch config.Platform.Name() {
 	case baremetal.Name:
-		// Check for CoreOS image URL override
-		if boi := config.Platform.BareMetal.BootstrapOSImage; boi != "" {
-			*i = BootstrapImage(boi)
-		}
+		// Use image from release payload
 		return nil
 	default:
 		// other platforms use the same image for all nodes
