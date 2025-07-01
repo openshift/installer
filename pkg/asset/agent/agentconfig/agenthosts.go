@@ -26,8 +26,9 @@ var (
 )
 
 const (
-	masterRole string = "master"
-	workerRole string = "worker"
+	masterRole  string = "master"
+	workerRole  string = "worker"
+	arbiterRole string = "arbiter"
 )
 
 type nmStateInterface struct {
@@ -193,9 +194,9 @@ func (a *AgentHosts) validateHostRootDeviceHints(hostPath *field.Path, host agen
 func (a *AgentHosts) validateRoles(hostPath *field.Path, host agent.Host) field.ErrorList {
 	var allErrs field.ErrorList
 
-	if len(host.Role) > 0 && host.Role != masterRole && host.Role != workerRole {
+	if len(host.Role) > 0 && host.Role != masterRole && host.Role != arbiterRole && host.Role != workerRole {
 		allErrs = append(allErrs, field.NotSupported(hostPath.Child("role"), host.Role,
-			[]string{masterRole, workerRole}))
+			[]string{masterRole, workerRole, arbiterRole}))
 	}
 
 	return allErrs
