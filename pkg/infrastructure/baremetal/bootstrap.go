@@ -175,11 +175,15 @@ func createLiveVolume(virConn *libvirt.Libvirt, config baremetalConfig, pool lib
 	}
 	defer os.Remove(isoFile)
 
+	var kargs string
+	if config.FIPS {
+		kargs += " fips=1"
+	}
 	stream, err := isoeditor.NewRHCOSStreamReader(
 		isoFile,
 		&isoeditor.IgnitionContent{Config: []byte(config.IgnitionBootstrap)},
 		nil,
-		nil, // TODO(zaneb): FIPS
+		[]byte(kargs),
 	)
 	if err != nil {
 		return libvirt.StorageVol{}, err
