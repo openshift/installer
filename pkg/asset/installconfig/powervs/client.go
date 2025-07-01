@@ -48,13 +48,15 @@ type API interface {
 
 	// VPC
 	GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error)
+	GetVPCByID(ctx context.Context, vpcID string, region string) (*vpcv1.VPC, error)
 	GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vpcv1.PublicGateway, error)
 	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error)
 
 	// TG
-	TransitGatewayID(ctx context.Context, name string) (string, error)
+	TransitGatewayNameToID(ctx context.Context, name string) (string, error)
+	TransitGatewayIDValid(ctx context.Context, id string) error
 	GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error)
 	GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error)
 
@@ -607,6 +609,22 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 	return nil, fmt.Errorf("failed to find VPC %q. Available VPCs: %v", vpcName, vpcNamesList)
 }
 
+// GetVPCByID checks if an id is a valid VPC id and, if so, returns the VPC.
+func (c *Client) GetVPCByID(ctx context.Context, vpcID string, region string) (*vpcv1.VPC, error) {
+	vpcs, err := c.GetVPCs(ctx, region)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, vpc := range vpcs {
+		if *vpc.ID == vpcID {
+			return &vpc, nil
+		}
+	}
+
+	return nil, fmt.Errorf("VPC with id (%s) does not exist in region (%s)", vpcID, region)
+}
+
 // GetPublicGatewayByVPC gets all PublicGateways in a region
 func (c *Client) GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vpcv1.PublicGateway, error) {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
@@ -1112,8 +1130,8 @@ func (c *Client) GetDatacenterSupportedSystems(ctx context.Context, region strin
 	return getOk.Payload.CapabilitiesDetails.SupportedSystems.General, nil
 }
 
-// TransitGatewayID checks to see if the name is an existing transit gateway name.
-func (c *Client) TransitGatewayID(ctx context.Context, name string) (string, error) {
+// TransitGatewayNameToID checks to see if the name is an existing transit gateway name.
+func (c *Client) TransitGatewayNameToID(ctx context.Context, name string) (string, error) {
 	var (
 		gateways []transitgatewayapisv1.TransitGateway
 		gateway  transitgatewayapisv1.TransitGateway
@@ -1131,6 +1149,27 @@ func (c *Client) TransitGatewayID(ctx context.Context, name string) (string, err
 	}
 
 	return "", nil
+}
+
+// TransitGatewayIDValid checks to see if the id is an existing transit gateway id.
+func (c *Client) TransitGatewayIDValid(ctx context.Context, id string) error {
+	var (
+		gateways []transitgatewayapisv1.TransitGateway
+		gateway  transitgatewayapisv1.TransitGateway
+		err      error
+	)
+
+	gateways, err = c.getTransitGateways(ctx)
+	if err != nil {
+		return err
+	}
+	for _, gateway = range gateways {
+		if *gateway.ID == id {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("transit gateway id (%s) not found", id)
 }
 
 // GetAttachedTransitGateway finds an existing Transit Gateway attached to the provided PowerVS cloud instance.

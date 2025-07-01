@@ -67,7 +67,7 @@ var (
 	validVPCID             = "valid-id"
 	anotherValidVPCID      = "another-valid-id"
 	validVPC               = "valid-vpc"
-	setValidVPCName        = func(ic *types.InstallConfig) { ic.Platform.PowerVS.VPCName = validVPC }
+	setValidVPCName        = func(ic *types.InstallConfig) { ic.Platform.PowerVS.VPC = validVPC }
 	anotherValidVPC        = "another-valid-vpc"
 	invalidVPC             = "bogus-vpc"
 	validVPCs              = []vpcv1.VPC{
@@ -320,7 +320,7 @@ func TestValidateCustomVPCSettings(t *testing.T) {
 			name: "invalid VPC name supplied, without VPC region, not found near PowerVS region",
 			edits: editFunctions{
 				func(ic *types.InstallConfig) {
-					ic.Platform.PowerVS.VPCName = invalidVPC
+					ic.Platform.PowerVS.VPC = invalidVPC
 				},
 			},
 			errorMsg: fmt.Sprintf(`VPC.vpcName: Not found: "%s"`, invalidVPC),
