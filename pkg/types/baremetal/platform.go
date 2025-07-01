@@ -218,6 +218,8 @@ type Platform struct {
 	// ClusterOSImage is a URL to override the default OS image
 	// for cluster nodes. The URL must contain a sha256 hash of the image
 	// e.g https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8...
+	// Deprecated: This is no longer required, the OS image is now part of the
+	// OpenShift release.
 	//
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
