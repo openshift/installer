@@ -40,36 +40,6 @@ func (m *MockMetadataAPI) EXPECT() *MockMetadataAPIMockRecorder {
 	return m.recorder
 }
 
-// APIKey mocks base method.
-func (m *MockMetadataAPI) APIKey(ctx context.Context) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "APIKey", ctx)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// APIKey indicates an expected call of APIKey.
-func (mr *MockMetadataAPIMockRecorder) APIKey(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIKey", reflect.TypeOf((*MockMetadataAPI)(nil).APIKey), ctx)
-}
-
-// AccountID mocks base method.
-func (m *MockMetadataAPI) AccountID(ctx context.Context) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AccountID", ctx)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AccountID indicates an expected call of AccountID.
-func (mr *MockMetadataAPIMockRecorder) AccountID(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AccountID", reflect.TypeOf((*MockMetadataAPI)(nil).AccountID), ctx)
-}
-
 // CISInstanceCRN mocks base method.
 func (m *MockMetadataAPI) CISInstanceCRN(ctx context.Context) (string, error) {
 	m.ctrl.T.Helper()
