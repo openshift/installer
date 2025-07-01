@@ -958,7 +958,7 @@ func (pb *platformBuilder) BootstrapOSImage(value string) *platformBuilder {
 }
 
 func (pb *platformBuilder) ClusterOSImage(value string) *platformBuilder {
-	pb.Platform.ClusterOSImage = value
+	pb.Platform.DeprecatedClusterOSImage = value
 	return pb
 }
 
