@@ -205,7 +205,7 @@ func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 	var errs field.ErrorList
 
 	fields := map[string]string{
-		"bootstrapOSImage": p.BootstrapOSImage,
+		"bootstrapOSImage": p.DeprecatedBootstrapOSImage,
 		"clusterOSImage":   p.DeprecatedClusterOSImage,
 	}
 
@@ -213,12 +213,12 @@ func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 		if url == "" {
 			continue
 		}
+		path := fldPath.Child(fieldName)
+		logrus.Infof("%s is no longer required", path.String())
 		if err := validateOSImageURI(url); err != nil {
-			errs = append(errs,
-				field.Invalid(fldPath.Child(fieldName), url, err.Error()))
+			errs = append(errs, field.Invalid(path, url, err.Error()))
 		} else if res, err := http.Head(url); err != nil || res.StatusCode != http.StatusOK /* #nosec G107 */ {
-			errs = append(errs,
-				field.NotFound(fldPath.Child(fieldName), url))
+			errs = append(errs, field.NotFound(path, url))
 		}
 	}
 	return errs

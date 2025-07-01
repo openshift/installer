@@ -5857,6 +5857,7 @@ spec:
                       BootstrapOSImage is a URL to override the default OS image
                       for the bootstrap node. The URL must contain a sha256 hash of the image
                       e.g https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd...
+                      Deprecated: This is no longer used.
                     type: string
                   bootstrapProvisioningIP:
                     description: |-
