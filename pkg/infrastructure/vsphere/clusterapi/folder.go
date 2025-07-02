@@ -43,6 +43,7 @@ func createFolder(ctx context.Context, fullpath string, session *session.Session
 	if folder, err = folderExists(ctx, dir, session); err == nil && folder == nil {
 		folder, err = createFolder(ctx, dir, session)
 		if err != nil {
+			logrus.Errorf("unable to create parent folder: %v", err)
 			return nil, err
 		}
 	}

@@ -3,6 +3,7 @@ package clusterapi
 import (
 	"context"
 
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vim25/types"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 )
@@ -10,7 +11,8 @@ import (
 func createVMGroup(ctx context.Context, session *session.Session, cluster, vmGroup string) error {
 	clusterObj, err := session.Finder.ClusterComputeResource(ctx, cluster)
 	if err != nil {
-		return err
+		logrus.Errorf("unable to find cluster compute resource: %v", err)
+		return nil
 	}
 
 	clusterConfigSpec := &types.ClusterConfigSpecEx{
@@ -30,16 +32,23 @@ func createVMGroup(ctx context.Context, session *session.Session, cluster, vmGro
 
 	task, err := clusterObj.Reconfigure(ctx, clusterConfigSpec, true)
 	if err != nil {
-		return err
+		logrus.Errorf("unable to reconfigure cluster: %v", err)
+		return nil
 	}
 
-	return task.Wait(ctx)
+	err = task.Wait(ctx)
+	if err != nil {
+		logrus.Errorf("unable to wait for cluster reconfiguration task: %v", err)
+		return nil
+	}
+	return nil
 }
 
 func createVMHostAffinityRule(ctx context.Context, session *session.Session, cluster, hostGroup, vmGroup, rule string) error {
 	clusterObj, err := session.Finder.ClusterComputeResource(ctx, cluster)
 	if err != nil {
-		return err
+		logrus.Errorf("unable to find cluster compute resource: %v", err)
+		return nil
 	}
 	clusterConfigSpec := &types.ClusterConfigSpecEx{
 		RulesSpec: []types.ClusterRuleSpec{
@@ -63,8 +72,14 @@ func createVMHostAffinityRule(ctx context.Context, session *session.Session, clu
 
 	task, err := clusterObj.Reconfigure(ctx, clusterConfigSpec, true)
 	if err != nil {
-		return err
+		logrus.Errorf("unable to reconfigure cluster: %v", err)
+		return nil
 	}
 
-	return task.Wait(ctx)
+	err = task.Wait(ctx)
+	if err != nil {
+		logrus.Errorf("unable to wait for cluster reconfiguration task: %v", err)
+		return nil
+	}
+	return nil
 }

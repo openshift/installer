@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/object"
 	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
@@ -37,7 +38,8 @@ func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, fail
 
 	dc, err := finder.Datacenter(ctx, failureDomain.Topology.Datacenter)
 	if err != nil {
-		return err
+		logrus.Errorf("unable to get datacenter: %v", err)
+		return nil
 	}
 
 	// Upstream govmomi bug, workaround
@@ -57,22 +59,26 @@ func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, fail
 	if folderObj, err = folderExists(ctx, folderPath, session); folderObj == nil && err == nil {
 		folderObj, err = createFolder(ctx, folderPath, session)
 		if err != nil {
-			return fmt.Errorf("unable to create folder: %w", err)
+			logrus.Errorf("unable to create folder: %v", err)
+			return nil
 		}
 		// attach tag to folder
 		err = session.TagManager.AttachTag(ctx, tagID, folderObj.Reference())
 		if err != nil {
-			return fmt.Errorf("unable to attach tag to folder: %w", err)
+			logrus.Errorf("unable to attach tag to folder: %v", err)
+			return nil
 		}
 	} else if err != nil {
-		return fmt.Errorf("unable to get folder: %w", err)
+		logrus.Errorf("unable to get folder: %v", err)
+		return nil
 	}
 
 	// if the template is empty, the ova must be imported
 	if len(failureDomain.Topology.Template) == 0 {
 		if err = importRhcosOva(ctx, session, folderObj,
 			cachedImage, clusterID, tagID, string(diskType), failureDomain); err != nil {
-			return fmt.Errorf("failed to import ova: %w", err)
+			logrus.Errorf("failed to import ova: %v", err)
+			return nil
 		}
 	}
 	return nil
@@ -95,7 +101,8 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	if downloadImage(installConfig) {
 		cachedImage, err = cache.DownloadImageFile(in.RhcosImage.ControlPlane, cache.InstallerApplicationName)
 		if err != nil {
-			return fmt.Errorf("failed to use cached vsphere image: %w", err)
+			logrus.Errorf("failed to use cached vsphere image: %v", err)
+			return nil
 		}
 	}
 
@@ -104,12 +111,14 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		vctrSession, err := installConfig.VSphere.Session(context.TODO(), server)
 
 		if err != nil {
-			return err
+			logrus.Errorf("unable to get vCenter session: %v", err)
+			return nil
 		}
 
 		tagID, err = createClusterTagID(ctx, vctrSession, clusterID.InfraID)
 		if err != nil {
-			return err
+			logrus.Errorf("unable to create cluster tag ID: %v", err)
+			return nil
 		}
 
 		for i := range in.MachineManifests {
@@ -130,17 +139,20 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 
 				err = createVMGroup(ctx, vctrSession, failureDomain.Topology.ComputeCluster, vmGroupAndRuleName)
 				if err != nil {
-					return err
+					logrus.Errorf("unable to create VM group: %v", err)
+					return nil
 				}
 
 				err = createVMHostAffinityRule(ctx, vctrSession, failureDomain.Topology.ComputeCluster, failureDomain.Topology.HostGroup, vmGroupAndRuleName, vmGroupAndRuleName)
 				if err != nil {
-					return err
+					logrus.Errorf("unable to create VM host affinity rule: %v", err)
+					return nil
 				}
 			}
 
 			if err = initializeFoldersAndTemplates(ctx, cachedImage, failureDomain, vctrSession, installConfig.Config.VSphere.DiskType, clusterID.InfraID, tagID); err != nil {
-				return fmt.Errorf("unable to initialize folders and templates: %w", err)
+				logrus.Errorf("unable to initialize folders and templates: %v", err)
+				return nil
 			}
 		}
 	}

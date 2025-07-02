@@ -67,19 +67,22 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	// OVA name must not exceed 80 characters
 	if len(name) > 80 {
 		logrus.Warningf("Unable to generate ova template name due to exceeding 80 characters. Cluster=\"%v\" Failure Domain=\"%v\" results in \"%v\"", clusterID, failureDomain.Name, name)
-		return fmt.Errorf("ova name \"%v\" exceeed 80 characters (%d)", name, len(name))
+		logrus.Errorf("ova name \"%v\" exceeed 80 characters (%d)", name, len(name))
+		return nil
 	}
 
 	archive := &importer.TapeArchive{Path: cachedImage}
 
 	ovfDescriptor, err := importer.ReadOvf("*.ovf", archive)
 	if err != nil {
-		return debugCorruptOva(cachedImage, err)
+		logrus.Errorf("failed to read OVF descriptor: %v", debugCorruptOva(cachedImage, err))
+		return nil
 	}
 
 	ovfEnvelope, err := importer.ReadEnvelope(ovfDescriptor)
 	if err != nil {
-		return fmt.Errorf("failed to parse ovf: %w", err)
+		logrus.Errorf("failed to parse ovf: %v", err)
+		return nil
 	}
 
 	// The fcos ova enables secure boot by default, this causes
@@ -90,37 +93,44 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	// The OVF envelope defines this.  We need a 1:1 mapping
 	// between networks with the OVF and the host
 	if len(ovfEnvelope.Network.Networks) != 1 {
-		return fmt.Errorf("expected the OVA to only have a single network adapter")
+		logrus.Errorf("expected the OVA to only have a single network adapter")
+		return nil
 	}
 
 	cluster, err := session.Finder.ClusterComputeResource(ctx, failureDomain.Topology.ComputeCluster)
 	if err != nil {
-		return fmt.Errorf("failed to find compute cluster: %w", err)
+		logrus.Errorf("failed to find compute cluster: %v", err)
+		return nil
 	}
 
 	clusterHostSystems, err := cluster.Hosts(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get cluster hosts: %w", err)
+		logrus.Errorf("failed to get cluster hosts: %v", err)
+		return nil
 	}
 
 	if len(clusterHostSystems) == 0 {
-		return fmt.Errorf("the vCenter cluster %s has no ESXi nodes", failureDomain.Topology.ComputeCluster)
+		logrus.Errorf("the vCenter cluster %s has no ESXi nodes", failureDomain.Topology.ComputeCluster)
+		return nil
 	}
 
 	resourcePool, err := session.Finder.ResourcePool(ctx, failureDomain.Topology.ResourcePool)
 	if err != nil {
-		return fmt.Errorf("failed to find resource pool: %w", err)
+		logrus.Errorf("failed to find resource pool: %v", err)
+		return nil
 	}
 
 	networkPath := path.Join(cluster.InventoryPath, failureDomain.Topology.Networks[0])
 
 	networkRef, err := session.Finder.Network(ctx, networkPath)
 	if err != nil {
-		return fmt.Errorf("failed to find network: %w", err)
+		logrus.Errorf("failed to find network: %v", err)
+		return nil
 	}
 	datastore, err := session.Finder.Datastore(ctx, failureDomain.Topology.Datastore)
 	if err != nil {
-		return fmt.Errorf("failed to find datastore: %w", err)
+		logrus.Errorf("failed to find datastore: %v", err)
+		return nil
 	}
 
 	// Create mapping between OVF and the network object
@@ -146,7 +156,8 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	case "eagerZeroedThick":
 		cisp.DiskProvisioning = string(types.OvfCreateImportSpecParamsDiskProvisioningTypeEagerZeroedThick)
 	default:
-		return errors.Errorf("disk provisioning type %q is not supported", diskProvisioningType)
+		logrus.Errorf("disk provisioning type %q is not supported", diskProvisioningType)
+		return nil
 	}
 
 	m := ovf.NewManager(session.Client.Client)
@@ -157,25 +168,30 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 		&cisp)
 
 	if err != nil {
-		return fmt.Errorf("failed to create import spec: %w", err)
+		logrus.Errorf("failed to create import spec: %v", err)
+		return nil
 	}
 	if spec.Error != nil {
-		return errors.New(spec.Error[0].LocalizedMessage)
+		logrus.Errorf("import spec error: %s", spec.Error[0].LocalizedMessage)
+		return nil
 	}
 
 	hostSystem, err := findAvailableHostSystems(ctx, clusterHostSystems, networkRef, datastore)
 	if err != nil {
-		return fmt.Errorf("failed to find available host system: %w", err)
+		logrus.Errorf("failed to find available host system: %v", err)
+		return nil
 	}
 
 	lease, err := resourcePool.ImportVApp(ctx, spec.ImportSpec, folder, hostSystem)
 	if err != nil {
-		return fmt.Errorf("failed to import vapp: %w", err)
+		logrus.Errorf("failed to import vapp: %v", err)
+		return nil
 	}
 
 	info, err := lease.Wait(ctx, spec.FileItem)
 	if err != nil {
-		return fmt.Errorf("failed to lease wait: %w", err)
+		logrus.Errorf("failed to lease wait: %v", err)
+		return nil
 	}
 
 	u := lease.StartUpdater(ctx, info)
@@ -186,40 +202,47 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 		// available with the required network and datastore.
 		err = upload(ctx, archive, lease, i)
 		if err != nil {
-			return fmt.Errorf("failed to upload: %w", err)
+			logrus.Errorf("failed to upload: %v", err)
+			return nil
 		}
 	}
 
 	err = lease.Complete(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to lease complete: %w", err)
+		logrus.Errorf("failed to lease complete: %v", err)
+		return nil
 	}
 
 	vm := object.NewVirtualMachine(session.Client.Client, info.Entity)
 	if vm == nil {
-		return fmt.Errorf("error VirtualMachine not found, managed object id: %s", info.Entity.Value)
+		logrus.Errorf("error VirtualMachine not found, managed object id: %s", info.Entity.Value)
+		return nil
 	}
 	if secureBoot {
 		bootOptions, err := vm.BootOptions(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to get boot options: %w", err)
+			logrus.Errorf("failed to get boot options: %v", err)
+			return nil
 		}
 		bootOptions.EfiSecureBootEnabled = ptr.To(false)
 
 		err = vm.SetBootOptions(ctx, bootOptions)
 		if err != nil {
-			return fmt.Errorf("failed to set boot options: %w", err)
+			logrus.Errorf("failed to set boot options: %v", err)
+			return nil
 		}
 	}
 
 	err = vm.MarkAsTemplate(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to mark vm as template: %w", err)
+		logrus.Errorf("failed to mark vm as template: %v", err)
+		return nil
 	}
 
 	err = attachTag(ctx, session, vm.Reference().Value, tagID)
 	if err != nil {
-		return fmt.Errorf("failed to attach tag: %w", err)
+		logrus.Errorf("failed to attach tag: %v", err)
+		return nil
 	}
 
 	return nil
@@ -230,6 +253,7 @@ func findAvailableHostSystems(ctx context.Context, clusterHostSystems []*object.
 	for _, hostObj := range clusterHostSystems {
 		err := hostObj.Properties(ctx, hostObj.Reference(), []string{"config.product", "network", "datastore", "runtime"}, &hostSystemManagedObject)
 		if err != nil {
+			logrus.Errorf("unable to get host properties: %v", err)
 			return nil, err
 		}
 
@@ -246,6 +270,7 @@ func findAvailableHostSystems(ctx context.Context, clusterHostSystems []*object.
 		logrus.Debugf("using ESXi %s to import the OVA image", hostObj.Name())
 		return hostObj, nil
 	}
+	logrus.Errorf("all hosts unavailable")
 	return nil, errors.New("all hosts unavailable")
 }
 
