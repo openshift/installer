@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
 )
@@ -34,7 +35,7 @@ var (
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.Platform, fldPath *field.Path) field.ErrorList {
+func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if p.OSDisk.DiskSizeGB < 0 {
@@ -108,8 +109,32 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
+	if pool != nil {
+		if len(p.DataDisks) != 0 {
+			allErrs = append(allErrs, validateDataDiskSetup(p, pool, fldPath.Child("dataDisks"))...)
+		}
+	}
+
 	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
 	allErrs = append(allErrs, validateIdentity(poolName, p, fldPath.Child("identity"))...)
+
+	return allErrs
+}
+
+func validateDataDiskSetup(azurePool *azure.MachinePool, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	for _, d := range azurePool.DataDisks {
+		if d.Lun == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%s must have lun id", d.NameSuffix)))
+		} else if *(d.Lun) < 0 || *(d.Lun) > 63 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%s must have lun id between 0 and 63", d.NameSuffix)))
+		}
+
+		if d.DiskSizeGB == 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("DiskSizeGB"), d.DiskSizeGB, "diskSizeGB must be greater than zero"))
+		}
+	}
 
 	return allErrs
 }
