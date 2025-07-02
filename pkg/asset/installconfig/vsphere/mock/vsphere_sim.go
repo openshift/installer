@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"io/fs"
+	"net/http"
 	"os"
 	"strconv"
 
@@ -61,6 +62,16 @@ func StartSimulator(setVersionToSupported bool) (*simulator.Server, error) {
 	return server, nil
 }
 
+// CustomTransport wraps the default transport for consistency with other vSphere clients
+type CustomTransport struct {
+	http.RoundTripper
+}
+
+func (t *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// For simulator, just pass through to the original transport
+	return t.RoundTripper.RoundTrip(req)
+}
+
 // GetClient returns a vim25 client which connects to and trusts the simulator
 func GetClient(server *simulator.Server) (*vim25.Client, *session.Manager, error) {
 	tmpCAdir := "/tmp/vcsimca"
@@ -86,7 +97,13 @@ func GetClient(server *simulator.Server) (*vim25.Client, *session.Manager, error
 		return nil, nil, err
 	}
 
+	// Create custom transport for consistency
+	customTransport := &CustomTransport{
+		RoundTripper: http.DefaultTransport,
+	}
+
 	soapClient := soap.NewClient(server.URL, false)
+	soapClient.Transport = customTransport
 	err = soapClient.SetRootCAs(tempFile.Name())
 	if err != nil {
 		return nil, nil, err

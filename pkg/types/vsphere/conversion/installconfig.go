@@ -2,16 +2,23 @@ package conversion
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/session"
+	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/soap"
+	"github.com/vmware/govmomi/vim25/xml"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -28,6 +35,121 @@ const (
 	GeneratedFailureDomainZone string = "generated-zone"
 )
 
+// SOAPResponse represents the structure of SOAP responses
+type SOAPResponse struct {
+	XMLName xml.Name `xml:"Envelope"`
+	Body    struct {
+		XMLName xml.Name `xml:"Body"`
+		Fault   *struct {
+			XMLName xml.Name `xml:"Fault"`
+			Code    struct {
+				XMLName xml.Name `xml:"faultcode"`
+				Value   string   `xml:",chardata"`
+			} `xml:"faultcode"`
+			Reason struct {
+				XMLName xml.Name `xml:"faultstring"`
+				Value   string   `xml:",chardata"`
+			} `xml:"faultstring"`
+			Detail struct {
+				XMLName xml.Name `xml:"detail"`
+				Content string   `xml:",chardata"`
+			} `xml:"detail"`
+		} `xml:"Fault,omitempty"`
+	} `xml:"Body"`
+}
+
+// CustomTransport wraps the default transport to intercept SOAP responses
+type CustomTransport struct {
+	http.RoundTripper
+}
+
+func (t *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Call the original transport
+	resp, err := t.RoundTripper.RoundTrip(req)
+	if err != nil {
+		return resp, err
+	}
+
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp, err
+	}
+	resp.Body.Close()
+
+	// Check if it's a SOAP response
+	if strings.Contains(string(body), "<?xml") && strings.Contains(string(body), "Envelope") {
+		var soapResp SOAPResponse
+		if err := xml.Unmarshal(body, &soapResp); err == nil {
+			if soapResp.Body.Fault != nil {
+				logrus.Error("=== SOAP FAULT DETECTED ===")
+				logrus.Errorf("Fault Code: %s", soapResp.Body.Fault.Code.Value)
+				logrus.Errorf("Fault Reason: %s", soapResp.Body.Fault.Reason.Value)
+				logrus.Errorf("Fault Detail: %s", soapResp.Body.Fault.Detail.Content)
+
+				// Check if this is an authentication error
+				if strings.Contains(strings.ToLower(soapResp.Body.Fault.Reason.Value), "incorrect user name or password") ||
+					strings.Contains(strings.ToLower(soapResp.Body.Fault.Reason.Value), "cannot complete login") {
+					logrus.Error("=== AUTHENTICATION ERROR DETECTED ===")
+					logrus.Error("Please verify your vSphere username and password credentials")
+					logrus.Error("================================================")
+				}
+				logrus.Error("================================")
+			}
+		}
+
+		// Check for authentication-related error messages in the response
+		bodyStr := string(body)
+		authKeywords := []string{
+			"incorrect user name or password", "cannot complete login", "invalidlogin",
+			"authentication failed", "login failed", "invalid credentials",
+		}
+		for _, keyword := range authKeywords {
+			if strings.Contains(strings.ToLower(bodyStr), strings.ToLower(keyword)) {
+				logrus.Errorf("=== AUTHENTICATION ISSUE DETECTED (keyword: %s) ===", keyword)
+				logrus.Error("Response contains authentication-related content")
+				logrus.Error("Please verify your vSphere username and password")
+				logrus.Error("================================================")
+				break
+			}
+		}
+
+		// Check for privilege-related error messages in the response
+		privilegeKeywords := []string{
+			"privilege", "permission", "access denied", "unauthorized", "forbidden",
+			"NoPermission", "InvalidPrivilege", "insufficient privileges",
+		}
+		for _, keyword := range privilegeKeywords {
+			if strings.Contains(strings.ToLower(bodyStr), strings.ToLower(keyword)) {
+				logrus.Errorf("=== POTENTIAL PRIVILEGE ISSUE DETECTED (keyword: %s) ===", keyword)
+				logrus.Error("Response contains privilege-related content")
+				logrus.Error("Please verify user has sufficient vSphere permissions")
+				logrus.Error("==================================================")
+				break
+			}
+		}
+	}
+
+	// Create a new response with the body
+	resp.Body = io.NopCloser(strings.NewReader(string(body)))
+	return resp, nil
+}
+
+// createTransport creates a transport that respects the insecure flag
+func createTransport(insecure bool) http.RoundTripper {
+	if insecure {
+		// Create a transport that skips TLS verification
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		return transport
+	}
+	// Use default transport for secure connections
+	return http.DefaultTransport
+}
+
 // GetFinder connects to vCenter via SOAP and returns the Finder object if the SOAP
 // connection is successful. If the connection fails it returns nil.
 // Errors are mostly ignored to support AI and agent installers.
@@ -43,7 +165,17 @@ func GetFinder(server, username, password string) (*find.Finder, error) {
 		}
 		u.User = url.UserPassword(username, password)
 
-		client, err := govmomi.NewClient(ctx, u, false)
+		// Create custom transport with SOAP response logging
+		customTransport := &CustomTransport{
+			RoundTripper: createTransport(false), // Always use secure connections in installer
+		}
+
+		// Create SOAP client with custom transport
+		soapClient := soap.NewClient(u, false)
+		soapClient.Transport = customTransport
+
+		// Create vim25 client
+		vimClient, err := vim25.NewClient(ctx, soapClient)
 		if err != nil {
 			// If bogus authentication is provided in the scenario of AI or assisted
 			// just provide warning message. If this is IPI or UPI validation will
@@ -56,6 +188,35 @@ func GetFinder(server, username, password string) (*find.Finder, error) {
 
 			return nil, nil
 		}
+
+		// Create govmomi client
+		client := &govmomi.Client{
+			Client:         vimClient,
+			SessionManager: session.NewManager(vimClient),
+		}
+
+		// Login to vSphere
+		err = client.Login(ctx, u.User)
+		if err != nil {
+			// Check if it's a credential-related error
+			if strings.Contains(err.Error(), "incorrect user name or password") ||
+				strings.Contains(err.Error(), "Cannot complete login") ||
+				strings.Contains(err.Error(), "InvalidLogin") {
+				localLogger.Debugf("vSphere authentication failed - please verify username and password: %v", err)
+			}
+
+			// If bogus authentication is provided in the scenario of AI or assisted
+			// just provide warning message. If this is IPI or UPI validation will
+			// catch and halt on incorrect authentication.
+
+			localLogger.Debugf("this can be safely ignored if non-deprecated platform spec fields are used"+
+				"or installing via UPI, Assisted or Agent Installer. "+
+				"Conversion of deprecated platform spec fields cannot continue without vCenter %s access, error: %v",
+				server, err)
+
+			return nil, nil
+		}
+
 		finder = find.NewFinder(client.Client, true)
 	}
 
