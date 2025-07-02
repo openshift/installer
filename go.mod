@@ -36,7 +36,7 @@ require (
 	github.com/containers/image/v5 v5.31.0
 	github.com/coreos/ignition/v2 v2.18.0
 	github.com/coreos/stream-metadata-go v0.1.8
-	github.com/daixiang0/gci v0.10.1
+	github.com/daixiang0/gci v0.11.2
 	github.com/digitalocean/go-libvirt v0.0.0-20240220204746-fcabe97a6eed
 	github.com/diskfs/go-diskfs v1.4.0
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
