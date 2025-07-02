@@ -135,9 +135,19 @@ func (t *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 					logrus.Errorf("Fault Detail: %s", soapResp.Body.Fault.Detail.Content)
 				} else {
 					// If no structured fault, log the entire response with formatting
-					logrus.Error("=== FULL RESPONSE CONTENT (FORMATTED) ===")
-					formattedXML := formatXML(bodyStr)
-					logrus.Errorf("Complete response:\n%s", formattedXML)
+					logrus.Error("=== FULL RESPONSE CONTENT ===")
+					if strings.TrimSpace(bodyStr) == "" {
+						logrus.Error("Response body is empty")
+					} else {
+						formattedXML := formatXML(bodyStr)
+						if strings.TrimSpace(formattedXML) == "" {
+							logrus.Error("=== ORIGINAL RESPONSE (FORMATTING FAILED) ===")
+							logrus.Errorf("Original response:\n%s", bodyStr)
+						} else {
+							logrus.Error("=== FORMATTED RESPONSE ===")
+							logrus.Errorf("Complete response:\n%s", formattedXML)
+						}
+					}
 				}
 				logrus.Error("==================================================")
 				break
@@ -469,18 +479,23 @@ func createVCenters(platform *vsphere.Platform) {
 
 // formatXML formats XML for better readability using the standard library
 func formatXML(xmlStr string) string {
-	// Parse the XML first to validate it
+	// Try to parse the XML first to validate it
 	var v interface{}
 	if err := encodingxml.Unmarshal([]byte(xmlStr), &v); err != nil {
-		// If parsing fails, return original
-		return xmlStr
+		// If parsing fails, try a simpler approach - just add basic formatting
+		// Replace common XML tags with formatted versions
+		formatted := strings.ReplaceAll(xmlStr, "><", ">\n<")
+		formatted = strings.ReplaceAll(formatted, "<?xml", "<?xml\n")
+		return formatted
 	}
 
 	// Marshal with indentation
 	prettyXML, err := encodingxml.MarshalIndent(v, "", "  ")
 	if err != nil {
-		// If marshaling fails, return original
-		return xmlStr
+		// If marshaling fails, return original with basic formatting
+		formatted := strings.ReplaceAll(xmlStr, "><", ">\n<")
+		formatted = strings.ReplaceAll(formatted, "<?xml", "<?xml\n")
+		return formatted
 	}
 
 	return string(prettyXML)
