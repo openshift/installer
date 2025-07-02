@@ -115,7 +115,7 @@ func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*Crea
 	if in.HyperVGeneration == armcompute.HyperVGenerationV2 {
 		feature := armcompute.GalleryImageFeature{
 			Name:  to.Ptr("DiskControllerTypes"),
-			Value: to.Ptr("SCSI, NVMe"),
+			Value: to.Ptr("NVMe, SCSI"),
 		}
 		features = append(features, to.Ptr(feature))
 	}
@@ -255,6 +255,7 @@ func CreateManagedImage(ctx context.Context, in *CreateManagedImageInput) error 
 		Properties: &armcompute.ImageProperties{
 			HyperVGeneration: to.Ptr(armcompute.HyperVGenerationTypesV1),
 			StorageProfile: &armcompute.ImageStorageProfile{
+
 				OSDisk: &armcompute.ImageOSDisk{
 					OSState: to.Ptr(armcompute.OperatingSystemStateTypesGeneralized),
 					OSType:  to.Ptr(armcompute.OperatingSystemTypesLinux),

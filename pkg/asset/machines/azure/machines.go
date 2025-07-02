@@ -245,6 +245,36 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 
 	ultraSSDCapability := machineapi.AzureUltraSSDCapabilityState(mpool.UltraSSDCapability)
 
+	dataDisks := make([]machineapi.DataDisk, 0, len(mpool.DataDisks))
+
+	for _, disk := range mpool.DataDisks {
+		dataDisk := machineapi.DataDisk{
+			NameSuffix:  disk.NameSuffix,
+			DiskSizeGB:  disk.DiskSizeGB,
+			CachingType: machineapi.CachingTypeOption(disk.CachingType),
+
+			// TODO: jcallen ** WARNING ** does this make sense to force delete?
+			// TODO: jcallen why does mapi have this and capz does not?
+			DeletionPolicy: machineapi.DiskDeletionPolicyTypeDelete,
+		}
+
+		if disk.Lun != nil {
+			dataDisk.Lun = *disk.Lun
+		}
+
+		if disk.ManagedDisk != nil {
+			dataDisk.ManagedDisk = machineapi.DataDiskManagedDiskParameters{
+				StorageAccountType: machineapi.StorageAccountType(disk.ManagedDisk.StorageAccountType),
+			}
+
+			if disk.ManagedDisk.DiskEncryptionSet != nil {
+				dataDisk.ManagedDisk.DiskEncryptionSet = (*machineapi.DiskEncryptionSetParameters)(disk.ManagedDisk.SecurityProfile.DiskEncryptionSet)
+			}
+		}
+
+		dataDisks = append(dataDisks, dataDisk)
+	}
+
 	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -275,6 +305,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		PublicLoadBalancer:    publicLB,
 		AcceleratedNetworking: getVMNetworkingType(mpool.VMNetworkingType),
 		Tags:                  platform.UserTags,
+		DataDisks:             dataDisks,
 	}
 	var bootDiagnostics *machineapi.AzureDiagnostics
 	if platform.DefaultMachinePlatform != nil {
