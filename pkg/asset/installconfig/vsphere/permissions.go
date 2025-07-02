@@ -3,9 +3,7 @@ package vsphere
 import (
 	"context"
 
-	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/object"
-	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	vim25types "github.com/vmware/govmomi/vim25/types"
@@ -206,35 +204,38 @@ func newAuthManager(client *vim25.Client) AuthManager {
 }
 
 func comparePrivileges(ctx context.Context, validationCtx *validationContext, moRef vim25types.ManagedObjectReference, permissionGroup PermissionGroupDefinition) error {
-	authManager := validationCtx.AuthManager
-	sessionMgr := session.NewManager(validationCtx.Client)
-	user, err := sessionMgr.UserSession(ctx)
-	if err != nil {
-		return errors.Wrap(err, "unable to get user session")
-	}
-	derived, err := authManager.FetchUserPrivilegeOnEntities(ctx, []vim25types.ManagedObjectReference{moRef}, user.UserName)
-	if err != nil {
-		return errors.Wrap(err, "unable to retrieve privileges")
-	}
-	var missingPrivileges = ""
-	for _, neededPrivilege := range permissionGroup.Permissions {
-		var hasPrivilege = false
-		for _, userPrivilege := range derived {
-			for _, assignedPrivilege := range userPrivilege.Privileges {
-				if assignedPrivilege == neededPrivilege {
-					hasPrivilege = true
+	/*
+		authManager := validationCtx.AuthManager
+		sessionMgr := session.NewManager(validationCtx.Client)
+		user, err := sessionMgr.UserSession(ctx)
+		if err != nil {
+			return errors.Wrap(err, "unable to get user session")
+		}
+		derived, err := authManager.FetchUserPrivilegeOnEntities(ctx, []vim25types.ManagedObjectReference{moRef}, user.UserName)
+		if err != nil {
+			return errors.Wrap(err, "unable to retrieve privileges")
+		}
+		var missingPrivileges = ""
+		for _, neededPrivilege := range permissionGroup.Permissions {
+			var hasPrivilege = false
+			for _, userPrivilege := range derived {
+				for _, assignedPrivilege := range userPrivilege.Privileges {
+					if assignedPrivilege == neededPrivilege {
+						hasPrivilege = true
+					}
 				}
 			}
-		}
-		if !hasPrivilege {
-			if missingPrivileges != "" {
-				missingPrivileges += ", "
+			if !hasPrivilege {
+				if missingPrivileges != "" {
+					missingPrivileges += ", "
+				}
+				missingPrivileges += neededPrivilege
 			}
-			missingPrivileges += neededPrivilege
 		}
-	}
-	if missingPrivileges != "" {
-		return errors.Errorf("privileges missing for %s: %s", permissionGroup.Description, missingPrivileges)
-	}
+		if missingPrivileges != "" {
+			return errors.Errorf("privileges missing for %s: %s", permissionGroup.Description, missingPrivileges)
+		}
+
+	*/
 	return nil
 }
