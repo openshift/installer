@@ -65,7 +65,20 @@ func (t *CustomTransport) RoundTrip(ctx context.Context, req, res soap.HasFault)
 	// Check for SOAP faults in the response first
 	if fault := res.Fault(); fault != nil {
 		logrus.Error("=== SOAP FAULT DETECTED IN RESPONSE ===")
-		logrus.Errorf("Fault: %s", fault.String)
+		logrus.Errorf("Fault Code: %s", fault.Code)
+		logrus.Errorf("Fault String: %s", fault.String)
+
+		// Log the full fault details including the Detail.Fault
+		if fault.Detail.Fault != nil {
+			logrus.Error("=== FULL SOAP FAULT DETAILS ===")
+			logrus.Errorf("Detail Fault Type: %T", fault.Detail.Fault)
+			logrus.Errorf("Detail Fault: %+v", fault.Detail.Fault)
+
+			// Try to get the raw XML representation
+			if vimFault := fault.VimFault(); vimFault != nil {
+				logrus.Errorf("VimFault: %+v", vimFault)
+			}
+		}
 
 		// Check for privilege-related error messages
 		faultStr := fault.String
@@ -99,7 +112,20 @@ func (t *CustomTransport) RoundTrip(ctx context.Context, req, res soap.HasFault)
 		if soap.IsSoapFault(err) {
 			logrus.Error("=== SOAP FAULT DETECTED IN ERROR ===")
 			soapFault := soap.ToSoapFault(err)
-			logrus.Errorf("SOAP Fault Details: %s", soapFault.String)
+			logrus.Errorf("SOAP Fault Code: %s", soapFault.Code)
+			logrus.Errorf("SOAP Fault String: %s", soapFault.String)
+
+			// Log the full fault details including the Detail.Fault
+			if soapFault.Detail.Fault != nil {
+				logrus.Error("=== FULL SOAP FAULT DETAILS FROM ERROR ===")
+				logrus.Errorf("Detail Fault Type: %T", soapFault.Detail.Fault)
+				logrus.Errorf("Detail Fault: %+v", soapFault.Detail.Fault)
+
+				// Try to get the raw XML representation
+				if vimFault := soapFault.VimFault(); vimFault != nil {
+					logrus.Errorf("VimFault: %+v", vimFault)
+				}
+			}
 
 			// Check for privilege-related error messages
 			faultStr := soapFault.String
