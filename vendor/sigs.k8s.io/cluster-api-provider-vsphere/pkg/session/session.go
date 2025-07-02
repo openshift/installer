@@ -57,9 +57,12 @@ type CustomTransport struct {
 }
 
 func (t *CustomTransport) RoundTrip(ctx context.Context, req, res soap.HasFault) error {
+	logrus.Info("=== CustomTransport.RoundTrip called ===")
+
 	// Call the original transport
 	err := t.RoundTripper.RoundTrip(ctx, req, res)
 	if err != nil {
+		logrus.Errorf("=== SOAP RoundTrip error: %v ===", err)
 		return err
 	}
 
@@ -90,6 +93,8 @@ func (t *CustomTransport) RoundTrip(ctx context.Context, req, res soap.HasFault)
 			logrus.Errorf("Fault Details: %s", faultStr)
 			logrus.Error("=== END MISSING PRIVILEGES ===")
 		}
+	} else {
+		logrus.Info("=== SOAP RoundTrip completed successfully ===")
 	}
 
 	return nil
@@ -289,10 +294,12 @@ func newClient(ctx context.Context, url *url.URL, thumbprint string, _ Feature) 
 	vimClient.UserAgent = "k8s-capv-useragent"
 
 	// Add our custom transport with SOAP logging to the vim25 client
+	logrus.Info("=== Setting up custom SOAP transport ===")
 	customTransport := &CustomTransport{
 		RoundTripper: vimClient.RoundTripper,
 	}
 	vimClient.RoundTripper = customTransport
+	logrus.Info("=== Custom SOAP transport setup complete ===")
 
 	c := &govmomi.Client{
 		Client:         vimClient,
