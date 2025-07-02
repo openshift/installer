@@ -3,7 +3,7 @@ package vsphere
 import (
 	"context"
 	"crypto/tls"
-	encodingxml "encoding/xml"
+	"encoding/xml"
 	"io"
 	"net/http"
 	"net/url"
@@ -21,7 +21,6 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
-	"github.com/vmware/govmomi/vim25/xml"
 )
 
 // Finder interface represents the client that is used to connect to VSphere to get specific
@@ -55,22 +54,22 @@ type ClientLogout func()
 
 // SOAPResponse represents the structure of SOAP responses
 type SOAPResponse struct {
-	XMLName encodingxml.Name `xml:"Envelope"`
+	XMLName xml.Name `xml:"Envelope"`
 	Body    struct {
-		XMLName encodingxml.Name `xml:"Body"`
+		XMLName xml.Name `xml:"Body"`
 		Fault   *struct {
-			XMLName encodingxml.Name `xml:"Fault"`
+			XMLName xml.Name `xml:"Fault"`
 			Code    struct {
-				XMLName encodingxml.Name `xml:"faultcode"`
-				Value   string           `xml:",chardata"`
+				XMLName xml.Name `xml:"faultcode"`
+				Value   string   `xml:",chardata"`
 			} `xml:"faultcode"`
 			Reason struct {
-				XMLName encodingxml.Name `xml:"faultstring"`
-				Value   string           `xml:",chardata"`
+				XMLName xml.Name `xml:"faultstring"`
+				Value   string   `xml:",chardata"`
 			} `xml:"faultstring"`
 			Detail struct {
-				XMLName encodingxml.Name `xml:"detail"`
-				Content string           `xml:",chardata"`
+				XMLName xml.Name `xml:"detail"`
+				Content string   `xml:",chardata"`
 			} `xml:"detail"`
 		} `xml:"Fault,omitempty"`
 	} `xml:"Body"`
@@ -79,30 +78,6 @@ type SOAPResponse struct {
 // CustomTransport wraps the default transport to intercept SOAP responses
 type CustomTransport struct {
 	http.RoundTripper
-}
-
-// formatXML formats XML for better readability using the standard library
-func formatXML(xmlStr string) string {
-	// Try to parse the XML first to validate it
-	var v interface{}
-	if err := encodingxml.Unmarshal([]byte(xmlStr), &v); err != nil {
-		// If parsing fails, try a simpler approach - just add basic formatting
-		// Replace common XML tags with formatted versions
-		formatted := strings.ReplaceAll(xmlStr, "><", ">\n<")
-		formatted = strings.ReplaceAll(formatted, "<?xml", "<?xml\n")
-		return formatted
-	}
-
-	// Marshal with indentation
-	prettyXML, err := encodingxml.MarshalIndent(v, "", "  ")
-	if err != nil {
-		// If marshaling fails, return original with basic formatting
-		formatted := strings.ReplaceAll(xmlStr, "><", ">\n<")
-		formatted = strings.ReplaceAll(formatted, "<?xml", "<?xml\n")
-		return formatted
-	}
-
-	return string(prettyXML)
 }
 
 func (t *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -121,79 +96,63 @@ func (t *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	// Check if it's a SOAP response
 	if strings.Contains(string(body), "<?xml") && strings.Contains(string(body), "Envelope") {
+		logrus.Info("=== Intercepted SOAP Response ===")
+		logrus.Infof("URL: %s", req.URL.String())
+		logrus.Infof("Method: %s", req.Method)
+		logrus.Infof("Response Body:\n%s", string(body))
+
+		// Parse SOAP response for privilege errors
 		var soapResp SOAPResponse
 		if err := xml.Unmarshal(body, &soapResp); err == nil {
 			if soapResp.Body.Fault != nil {
-				logrus.Error("=== SOAP FAULT DETECTED ===")
+				logrus.Error("=== PRIVILEGE ERROR DETECTED ===")
 				logrus.Errorf("Fault Code: %s", soapResp.Body.Fault.Code.Value)
 				logrus.Errorf("Fault Reason: %s", soapResp.Body.Fault.Reason.Value)
 				logrus.Errorf("Fault Detail: %s", soapResp.Body.Fault.Detail.Content)
-
-				// Check if this is an authentication error
-				if strings.Contains(strings.ToLower(soapResp.Body.Fault.Reason.Value), "incorrect user name or password") ||
-					strings.Contains(strings.ToLower(soapResp.Body.Fault.Reason.Value), "cannot complete login") {
-					logrus.Error("=== AUTHENTICATION ERROR DETECTED ===")
-					logrus.Error("Please verify your vSphere username and password credentials")
-					logrus.Error("================================================")
-				}
 				logrus.Error("================================")
 			}
 		}
 
-		// Check for authentication-related error messages in the response
-		bodyStr := string(body)
-		authKeywords := []string{
-			"incorrect user name or password", "cannot complete login", "invalidlogin",
-			"authentication failed", "login failed", "invalid credentials",
-		}
-		for _, keyword := range authKeywords {
-			if strings.Contains(strings.ToLower(bodyStr), strings.ToLower(keyword)) {
-				logrus.Errorf("=== AUTHENTICATION ISSUE DETECTED (keyword: %s) ===", keyword)
-				logrus.Error("Response contains authentication-related content")
-				logrus.Error("Please verify your vSphere username and password")
-				logrus.Error("================================================")
-				break
-			}
-		}
-
 		// Check for privilege-related error messages in the response
+		bodyStr := string(body)
 		privilegeKeywords := []string{
 			"privilege", "permission", "access denied", "unauthorized", "forbidden",
-			"NoPermission", "InvalidPrivilege", "insufficient privileges",
+			"NoPermission", "InvalidLogin", "InvalidPrivilege",
 		}
-
 		for _, keyword := range privilegeKeywords {
 			if strings.Contains(strings.ToLower(bodyStr), strings.ToLower(keyword)) {
-				logrus.Error("=== POTENTIAL PRIVILEGE ISSUE DETECTED ===")
+				logrus.Errorf("=== POTENTIAL PRIVILEGE ISSUE DETECTED (keyword: %s) ===", keyword)
 				logrus.Error("Response contains privilege-related content")
-				logrus.Error("Please verify user has sufficient vSphere permissions")
-
-				// Log the actual SOAP response for debugging
-				if soapResp.Body.Fault != nil {
-					logrus.Error("=== FULL SOAP FAULT DETAILS ===")
-					logrus.Errorf("Fault Code: %s", soapResp.Body.Fault.Code.Value)
-					logrus.Errorf("Fault Reason: %s", soapResp.Body.Fault.Reason.Value)
-					logrus.Errorf("Fault Detail: %s", soapResp.Body.Fault.Detail.Content)
-				} else {
-					// If no structured fault, log the entire response with formatting
-					logrus.Error("=== FULL RESPONSE CONTENT ===")
-					if strings.TrimSpace(bodyStr) == "" {
-						logrus.Error("Response body is empty")
-					} else {
-						formattedXML := formatXML(bodyStr)
-						if strings.TrimSpace(formattedXML) == "" {
-							logrus.Error("=== ORIGINAL RESPONSE (FORMATTING FAILED) ===")
-							logrus.Errorf("Original response:\n%s", bodyStr)
-						} else {
-							logrus.Error("=== FORMATTED RESPONSE ===")
-							logrus.Errorf("Complete response:\n%s", formattedXML)
-						}
-					}
-				}
 				logrus.Error("==================================================")
 				break
 			}
 		}
+
+				// Check specifically for missingPrivileges and format the message
+		if strings.Contains(bodyStr, "missingPrivileges") {
+			logrus.Error("=== MISSING PRIVILEGES DETECTED ===")
+			logrus.Error("The following SOAP response contains missingPrivileges information:")
+			
+			// Try to format the XML for better readability
+			var v interface{}
+			if err := xml.Unmarshal(body, &v); err == nil {
+				// Marshal with indentation for pretty formatting
+				prettyXML, err := xml.MarshalIndent(v, "", "  ")
+				if err == nil {
+					logrus.Errorf("Formatted Response:\n%s", string(prettyXML))
+				} else {
+					logrus.Errorf("Original Response:\n%s", bodyStr)
+				}
+			} else {
+				// If XML parsing fails, try a simpler approach - just add line breaks between tags
+				formatted := strings.ReplaceAll(bodyStr, "><", ">\n<")
+				formatted = strings.ReplaceAll(formatted, "<?xml", "<?xml\n")
+				logrus.Errorf("Formatted Response (simplified):\n%s", formatted)
+			}
+			logrus.Error("=== END MISSING PRIVILEGES ===")
+		}
+
+		logrus.Info("=== End SOAP Response ===")
 	}
 
 	// Create a new response with the body
