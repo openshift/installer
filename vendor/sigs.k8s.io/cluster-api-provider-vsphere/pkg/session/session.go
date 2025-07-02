@@ -20,6 +20,7 @@ package session
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/xml"
 	"fmt"
 	"net/netip"
 	"net/url"
@@ -51,6 +52,29 @@ var (
 	sessionMU sync.Mutex
 )
 
+// SOAPResponse represents the structure of SOAP responses
+type SOAPResponse struct {
+	XMLName xml.Name `xml:"Envelope"`
+	Body    struct {
+		XMLName xml.Name `xml:"Body"`
+		Fault   *struct {
+			XMLName xml.Name `xml:"Fault"`
+			Code    struct {
+				XMLName xml.Name `xml:"faultcode"`
+				Value   string   `xml:",chardata"`
+			} `xml:"faultcode"`
+			Reason struct {
+				XMLName xml.Name `xml:"faultstring"`
+				Value   string   `xml:",chardata"`
+			} `xml:"faultstring"`
+			Detail struct {
+				XMLName xml.Name `xml:"detail"`
+				Content string   `xml:",chardata"`
+			} `xml:"detail"`
+		} `xml:"Fault,omitempty"`
+	} `xml:"Body"`
+}
+
 // CustomTransport wraps the default transport to intercept SOAP responses
 type CustomTransport struct {
 	soap.RoundTripper
@@ -62,49 +86,10 @@ func (t *CustomTransport) RoundTrip(ctx context.Context, req, res soap.HasFault)
 	// Call the original transport
 	err := t.RoundTripper.RoundTrip(ctx, req, res)
 
-	// Check for SOAP faults in the response first
-	if fault := res.Fault(); fault != nil {
-		logrus.Error("=== SOAP FAULT DETECTED IN RESPONSE ===")
-		logrus.Errorf("Fault Code: %s", fault.Code)
-		logrus.Errorf("Fault String: %s", fault.String)
+	// Try to get the raw SOAP response from the underlying transport
+	// Since we can't easily access the raw HTTP response, we'll work with what we have
+	// and focus on the error case where we can extract more details
 
-		// Log the full fault details including the Detail.Fault
-		if fault.Detail.Fault != nil {
-			logrus.Error("=== FULL SOAP FAULT DETAILS ===")
-			logrus.Errorf("Detail Fault Type: %T", fault.Detail.Fault)
-			logrus.Errorf("Detail Fault: %+v", fault.Detail.Fault)
-
-			// Try to get the raw XML representation
-			if vimFault := fault.VimFault(); vimFault != nil {
-				logrus.Errorf("VimFault: %+v", vimFault)
-			}
-		}
-
-		// Check for privilege-related error messages
-		faultStr := fault.String
-		privilegeKeywords := []string{
-			"privilege", "permission", "access denied", "unauthorized", "forbidden",
-			"NoPermission", "InvalidLogin", "InvalidPrivilege", "missingPrivileges",
-		}
-		for _, keyword := range privilegeKeywords {
-			if strings.Contains(strings.ToLower(faultStr), strings.ToLower(keyword)) {
-				logrus.Errorf("=== PRIVILEGE ISSUE DETECTED (keyword: %s) ===", keyword)
-				logrus.Error("SOAP fault contains privilege-related content")
-				logrus.Error("=============================================")
-				break
-			}
-		}
-
-		// Check specifically for missingPrivileges
-		if strings.Contains(faultStr, "missingPrivileges") {
-			logrus.Error("=== MISSING PRIVILEGES DETECTED ===")
-			logrus.Error("The following SOAP fault contains missingPrivileges information:")
-			logrus.Errorf("Fault Details: %s", faultStr)
-			logrus.Error("=== END MISSING PRIVILEGES ===")
-		}
-	}
-
-	// Now check if there was an error returned
 	if err != nil {
 		logrus.Errorf("=== SOAP RoundTrip error: %v ===", err)
 
@@ -115,15 +100,15 @@ func (t *CustomTransport) RoundTrip(ctx context.Context, req, res soap.HasFault)
 			logrus.Errorf("SOAP Fault Code: %s", soapFault.Code)
 			logrus.Errorf("SOAP Fault String: %s", soapFault.String)
 
-			// Log the full fault details including the Detail.Fault
+			// Try to get the raw XML from the fault
 			if soapFault.Detail.Fault != nil {
 				logrus.Error("=== FULL SOAP FAULT DETAILS FROM ERROR ===")
 				logrus.Errorf("Detail Fault Type: %T", soapFault.Detail.Fault)
 				logrus.Errorf("Detail Fault: %+v", soapFault.Detail.Fault)
 
-				// Try to get the raw XML representation
-				if vimFault := soapFault.VimFault(); vimFault != nil {
-					logrus.Errorf("VimFault: %+v", vimFault)
+				// Try to marshal the fault to XML to get the raw representation
+				if faultXML, marshalErr := xml.MarshalIndent(soapFault.Detail.Fault, "", "  "); marshalErr == nil {
+					logrus.Errorf("Raw Fault XML:\n%s", string(faultXML))
 				}
 			}
 
