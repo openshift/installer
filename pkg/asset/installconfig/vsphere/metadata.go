@@ -10,6 +10,7 @@ import (
 
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/soap"
+
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -22,7 +23,6 @@ type NetworkNameMap struct {
 	NetworkNames  map[string]string
 }
 
-// VCenterContext maintains context of known vCenters to be used in CAPI manifest reconciliation.
 type VCenterContext struct {
 	VCenter           string
 	Datacenters       []string

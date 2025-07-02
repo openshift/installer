@@ -23,10 +23,12 @@ import (
 	"fmt"
 	"net/netip"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
@@ -48,6 +50,50 @@ var (
 	// session creations on startup.
 	sessionMU sync.Mutex
 )
+
+// CustomTransport wraps the default transport to intercept SOAP responses
+type CustomTransport struct {
+	soap.RoundTripper
+}
+
+func (t *CustomTransport) RoundTrip(ctx context.Context, req, res soap.HasFault) error {
+	// Call the original transport
+	err := t.RoundTripper.RoundTrip(ctx, req, res)
+	if err != nil {
+		return err
+	}
+
+	// Log the response if it's a fault
+	if fault := res.Fault(); fault != nil {
+		logrus.Error("=== SOAP FAULT DETECTED ===")
+		logrus.Errorf("Fault: %s", fault.String)
+
+		// Check for privilege-related error messages
+		faultStr := fault.String
+		privilegeKeywords := []string{
+			"privilege", "permission", "access denied", "unauthorized", "forbidden",
+			"NoPermission", "InvalidLogin", "InvalidPrivilege", "missingPrivileges",
+		}
+		for _, keyword := range privilegeKeywords {
+			if strings.Contains(strings.ToLower(faultStr), strings.ToLower(keyword)) {
+				logrus.Errorf("=== PRIVILEGE ISSUE DETECTED (keyword: %s) ===", keyword)
+				logrus.Error("SOAP fault contains privilege-related content")
+				logrus.Error("=============================================")
+				break
+			}
+		}
+
+		// Check specifically for missingPrivileges
+		if strings.Contains(faultStr, "missingPrivileges") {
+			logrus.Error("=== MISSING PRIVILEGES DETECTED ===")
+			logrus.Error("The following SOAP fault contains missingPrivileges information:")
+			logrus.Errorf("Fault Details: %s", faultStr)
+			logrus.Error("=== END MISSING PRIVILEGES ===")
+		}
+	}
+
+	return nil
+}
 
 // Session is a vSphere session with a configured Finder.
 type Session struct {
@@ -241,6 +287,12 @@ func newClient(ctx context.Context, url *url.URL, thumbprint string, _ Feature) 
 		return nil, errors.Wrapf(err, "failed to create client")
 	}
 	vimClient.UserAgent = "k8s-capv-useragent"
+
+	// Add our custom transport with SOAP logging to the vim25 client
+	customTransport := &CustomTransport{
+		RoundTripper: vimClient.RoundTripper,
+	}
+	vimClient.RoundTripper = customTransport
 
 	c := &govmomi.Client{
 		Client:         vimClient,
