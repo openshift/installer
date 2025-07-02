@@ -141,6 +141,18 @@ func (t *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 				logrus.Errorf("=== POTENTIAL PRIVILEGE ISSUE DETECTED (keyword: %s) ===", keyword)
 				logrus.Error("Response contains privilege-related content")
 				logrus.Error("Please verify user has sufficient vSphere permissions")
+
+				// Log the actual SOAP response for debugging
+				if soapResp.Body.Fault != nil {
+					logrus.Error("=== FULL SOAP FAULT DETAILS ===")
+					logrus.Errorf("Fault Code: %s", soapResp.Body.Fault.Code.Value)
+					logrus.Errorf("Fault Reason: %s", soapResp.Body.Fault.Reason.Value)
+					logrus.Errorf("Fault Detail: %s", soapResp.Body.Fault.Detail.Content)
+				} else {
+					// If no structured fault, log the entire response
+					logrus.Error("=== FULL RESPONSE CONTENT ===")
+					logrus.Errorf("Complete response: %s", bodyStr)
+				}
 				logrus.Error("==================================================")
 				break
 			}
