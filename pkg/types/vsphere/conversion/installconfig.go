@@ -3,6 +3,7 @@ package conversion
 import (
 	"context"
 	"crypto/tls"
+	encodingxml "encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -37,22 +38,22 @@ const (
 
 // SOAPResponse represents the structure of SOAP responses
 type SOAPResponse struct {
-	XMLName xml.Name `xml:"Envelope"`
+	XMLName encodingxml.Name `xml:"Envelope"`
 	Body    struct {
-		XMLName xml.Name `xml:"Body"`
+		XMLName encodingxml.Name `xml:"Body"`
 		Fault   *struct {
-			XMLName xml.Name `xml:"Fault"`
+			XMLName encodingxml.Name `xml:"Fault"`
 			Code    struct {
-				XMLName xml.Name `xml:"faultcode"`
-				Value   string   `xml:",chardata"`
+				XMLName encodingxml.Name `xml:"faultcode"`
+				Value   string           `xml:",chardata"`
 			} `xml:"faultcode"`
 			Reason struct {
-				XMLName xml.Name `xml:"faultstring"`
-				Value   string   `xml:",chardata"`
+				XMLName encodingxml.Name `xml:"faultstring"`
+				Value   string           `xml:",chardata"`
 			} `xml:"faultstring"`
 			Detail struct {
-				XMLName xml.Name `xml:"detail"`
-				Content string   `xml:",chardata"`
+				XMLName encodingxml.Name `xml:"detail"`
+				Content string           `xml:",chardata"`
 			} `xml:"detail"`
 		} `xml:"Fault,omitempty"`
 	} `xml:"Body"`
@@ -119,9 +120,10 @@ func (t *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 			"privilege", "permission", "access denied", "unauthorized", "forbidden",
 			"NoPermission", "InvalidPrivilege", "insufficient privileges",
 		}
+
 		for _, keyword := range privilegeKeywords {
 			if strings.Contains(strings.ToLower(bodyStr), strings.ToLower(keyword)) {
-				logrus.Errorf("=== POTENTIAL PRIVILEGE ISSUE DETECTED (keyword: %s) ===", keyword)
+				logrus.Error("=== POTENTIAL PRIVILEGE ISSUE DETECTED ===")
 				logrus.Error("Response contains privilege-related content")
 				logrus.Error("Please verify user has sufficient vSphere permissions")
 
@@ -132,9 +134,10 @@ func (t *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 					logrus.Errorf("Fault Reason: %s", soapResp.Body.Fault.Reason.Value)
 					logrus.Errorf("Fault Detail: %s", soapResp.Body.Fault.Detail.Content)
 				} else {
-					// If no structured fault, log the entire response
-					logrus.Error("=== FULL RESPONSE CONTENT ===")
-					logrus.Errorf("Complete response: %s", bodyStr)
+					// If no structured fault, log the entire response with formatting
+					logrus.Error("=== FULL RESPONSE CONTENT (FORMATTED) ===")
+					formattedXML := formatXML(bodyStr)
+					logrus.Errorf("Complete response:\n%s", formattedXML)
 				}
 				logrus.Error("==================================================")
 				break
@@ -462,4 +465,23 @@ func createVCenters(platform *vsphere.Platform) {
 			}
 		}
 	}
+}
+
+// formatXML formats XML for better readability using the standard library
+func formatXML(xmlStr string) string {
+	// Parse the XML first to validate it
+	var v interface{}
+	if err := encodingxml.Unmarshal([]byte(xmlStr), &v); err != nil {
+		// If parsing fails, return original
+		return xmlStr
+	}
+
+	// Marshal with indentation
+	prettyXML, err := encodingxml.MarshalIndent(v, "", "  ")
+	if err != nil {
+		// If marshaling fails, return original
+		return xmlStr
+	}
+
+	return string(prettyXML)
 }
