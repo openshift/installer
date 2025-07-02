@@ -7,7 +7,7 @@ import (
 	"github.com/go-openapi/swag"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
@@ -84,17 +84,17 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 				SSHKey:     testSSHKey,
 				ControlPlane: &types.MachinePool{
 					Name:     "master",
-					Replicas: pointer.Int64Ptr(3),
+					Replicas: ptr.To(int64(3)),
 					Platform: types.MachinePoolPlatform{},
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:     "worker-machine-pool-1",
-						Replicas: pointer.Int64Ptr(2),
+						Replicas: ptr.To(int64(2)),
 					},
 					{
 						Name:     "worker-machine-pool-2",
-						Replicas: pointer.Int64Ptr(3),
+						Replicas: ptr.To(int64(3)),
 					},
 				},
 				Networking: &types.Networking{
@@ -145,17 +145,17 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 				SSHKey:     testSSHKey,
 				ControlPlane: &types.MachinePool{
 					Name:     "master",
-					Replicas: pointer.Int64Ptr(3),
+					Replicas: ptr.To(int64(3)),
 					Platform: types.MachinePoolPlatform{},
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:     "worker-machine-pool-1",
-						Replicas: pointer.Int64Ptr(2),
+						Replicas: ptr.To(int64(2)),
 					},
 					{
 						Name:     "worker-machine-pool-2",
-						Replicas: pointer.Int64Ptr(3),
+						Replicas: ptr.To(int64(3)),
 					},
 				},
 				Networking: &types.Networking{
@@ -197,6 +197,21 @@ func getValidOptionalInstallConfigDualStackDualVIPs() *agent.OptionalInstallConf
 	installConfig := getValidOptionalInstallConfigDualStack()
 	installConfig.Config.Platform.BareMetal.APIVIPs = append(installConfig.Config.Platform.BareMetal.APIVIPs, "2001:db8:1111:2222:ffff:ffff:ffff:cafe")
 	installConfig.Config.Platform.BareMetal.IngressVIPs = append(installConfig.Config.Platform.BareMetal.IngressVIPs, "2001:db8:1111:2222:ffff:ffff:ffff:dead")
+	return installConfig
+}
+
+func getValidOptionalInstallConfigArbiter() *agent.OptionalInstallConfig {
+	installConfig := getValidOptionalInstallConfig()
+	installConfig.Config.Compute = []types.MachinePool{
+		{
+			Name:     "workers",
+			Replicas: ptr.To(int64(0)),
+		},
+	}
+	installConfig.Config.Arbiter = &types.MachinePool{
+		Name:     "arbiter",
+		Replicas: ptr.To(int64(1)),
+	}
 	return installConfig
 }
 

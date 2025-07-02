@@ -88,14 +88,10 @@ func (a *OptionalInstallConfig) validateInstallConfig(ctx context.Context, insta
 		allErrs = append(allErrs, err...)
 	}
 
-	if installConfig.FeatureSet != configv1.Default {
-		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), installConfig.FeatureSet, []string{string(configv1.Default)}))
-	}
-
 	warnUnusedConfig(installConfig)
 
-	numMasters, numWorkers := GetReplicaCount(installConfig)
-	logrus.Infof(fmt.Sprintf("Configuration has %d master replicas and %d worker replicas", numMasters, numWorkers))
+	numMasters, numArbiters, numWorkers := GetReplicaCount(installConfig)
+	logrus.Infof("Configuration has %d master replicas, %d arbiter replicas, and %d worker replicas", numMasters, numArbiters, numWorkers)
 
 	if err := a.validateControlPlaneConfiguration(installConfig); err != nil {
 		allErrs = append(allErrs, err...)
@@ -257,6 +253,10 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 		} else {
 			fieldPath = field.NewPath("compute", "replicas")
 			allErrs = append(allErrs, field.Forbidden(fieldPath, fmt.Sprintf("Total number of compute replicas must be 0 when controlPlane.replicas is 1 for platform %s or %s. Found %v", none.Name, external.Name, workers)))
+		}
+		if installConfig.Arbiter != nil && installConfig.Arbiter.Replicas != nil && *installConfig.Arbiter.Replicas > 0 {
+			fieldPath = field.NewPath("arbiter", "replicas")
+			allErrs = append(allErrs, field.Forbidden(fieldPath, fmt.Sprintf("Total number of arbiter replicas must be 0 when controlPlane.replicas is 1 for Single Node Openshift (SNO) cluster. Found %d", *installConfig.Arbiter.Replicas)))
 		}
 	}
 	return allErrs
@@ -518,11 +518,15 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 	}
 }
 
-// GetReplicaCount gets the configured master and worker replicas.
-func GetReplicaCount(installConfig *types.InstallConfig) (numMasters, numWorkers int64) {
+// GetReplicaCount gets the configured master, arbiter and worker replicas.
+func GetReplicaCount(installConfig *types.InstallConfig) (numMasters, numArbiters, numWorkers int64) {
 	numRequiredMasters := int64(0)
 	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
 		numRequiredMasters += *installConfig.ControlPlane.Replicas
+	}
+	numRequiredArbiters := int64(0)
+	if installConfig.Arbiter != nil && installConfig.Arbiter.Replicas != nil {
+		numRequiredArbiters += *installConfig.Arbiter.Replicas
 	}
 
 	numRequiredWorkers := int64(0)
@@ -532,5 +536,5 @@ func GetReplicaCount(installConfig *types.InstallConfig) (numMasters, numWorkers
 		}
 	}
 
-	return numRequiredMasters, numRequiredWorkers
+	return numRequiredMasters, numRequiredArbiters, numRequiredWorkers
 }
