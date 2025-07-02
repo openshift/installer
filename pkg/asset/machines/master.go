@@ -905,10 +905,10 @@ func createAssetFiles(objects []interface{}, fileName string) ([]*asset.File, er
 // a platform.
 func supportedSingleNodePlatform(bootstrapInPlace bool, platformName string) bool {
 	switch platformName {
-	case awstypes.Name, gcptypes.Name, azuretypes.Name, powervstypes.Name:
+	case awstypes.Name, gcptypes.Name, azuretypes.Name, powervstypes.Name, nonetypes.Name:
 		// Single node OpenShift installations supported without `bootstrapInPlace`
 		return true
-	case nonetypes.Name, externaltypes.Name:
+	case externaltypes.Name:
 		// Single node OpenShift installations supported with `bootstrapInPlace`
 		return bootstrapInPlace
 	default:
