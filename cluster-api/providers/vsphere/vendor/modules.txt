@@ -1193,4 +1193,4 @@ sigs.k8s.io/yaml/goyaml.v2
 # sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.9.1
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 # github.com/vmware-tanzu/nsx-operator/pkg/apis => github.com/vmware-tanzu/nsx-operator/pkg/apis v0.0.0-20240827061921-8f0982975508
-# github.com/kubernetes-sigs/cluster-api-provider-vsphere => github.com/jcpowermac/cluster-api-provider-vsphere v1.1.0-rc.2.0.20250702163938-31b2ed6f7ce4
+# github.com/kubernetes-sigs/cluster-api-provider-vsphere => github.com/jcpowermac/cluster-api-provider-vsphere v1.1.0-rc.2.0.20250702173315-bea2da3b0921

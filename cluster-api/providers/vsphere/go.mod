@@ -118,4 +118,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/kubernetes-sigs/cluster-api-provider-vsphere => github.com/jcpowermac/cluster-api-provider-vsphere v1.1.0-rc.2.0.20250702163938-31b2ed6f7ce4
+replace github.com/kubernetes-sigs/cluster-api-provider-vsphere => github.com/jcpowermac/cluster-api-provider-vsphere v1.1.0-rc.2.0.20250702173315-bea2da3b0921
