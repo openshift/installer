@@ -61,14 +61,10 @@ func (t *CustomTransport) RoundTrip(ctx context.Context, req, res soap.HasFault)
 
 	// Call the original transport
 	err := t.RoundTripper.RoundTrip(ctx, req, res)
-	if err != nil {
-		logrus.Errorf("=== SOAP RoundTrip error: %v ===", err)
-		return err
-	}
 
-	// Log the response if it's a fault
+	// Check for SOAP faults in the response first
 	if fault := res.Fault(); fault != nil {
-		logrus.Error("=== SOAP FAULT DETECTED ===")
+		logrus.Error("=== SOAP FAULT DETECTED IN RESPONSE ===")
 		logrus.Errorf("Fault: %s", fault.String)
 
 		// Check for privilege-related error messages
@@ -93,10 +89,46 @@ func (t *CustomTransport) RoundTrip(ctx context.Context, req, res soap.HasFault)
 			logrus.Errorf("Fault Details: %s", faultStr)
 			logrus.Error("=== END MISSING PRIVILEGES ===")
 		}
-	} else {
-		logrus.Info("=== SOAP RoundTrip completed successfully ===")
 	}
 
+	// Now check if there was an error returned
+	if err != nil {
+		logrus.Errorf("=== SOAP RoundTrip error: %v ===", err)
+
+		// Check if this is a SOAP fault error that we can extract details from
+		if soap.IsSoapFault(err) {
+			logrus.Error("=== SOAP FAULT DETECTED IN ERROR ===")
+			soapFault := soap.ToSoapFault(err)
+			logrus.Errorf("SOAP Fault Details: %s", soapFault.String)
+
+			// Check for privilege-related error messages
+			faultStr := soapFault.String
+			privilegeKeywords := []string{
+				"privilege", "permission", "access denied", "unauthorized", "forbidden",
+				"NoPermission", "InvalidLogin", "InvalidPrivilege", "missingPrivileges",
+			}
+			for _, keyword := range privilegeKeywords {
+				if strings.Contains(strings.ToLower(faultStr), strings.ToLower(keyword)) {
+					logrus.Errorf("=== PRIVILEGE ISSUE DETECTED (keyword: %s) ===", keyword)
+					logrus.Error("SOAP fault contains privilege-related content")
+					logrus.Error("=============================================")
+					break
+				}
+			}
+
+			// Check specifically for missingPrivileges
+			if strings.Contains(faultStr, "missingPrivileges") {
+				logrus.Error("=== MISSING PRIVILEGES DETECTED ===")
+				logrus.Error("The following SOAP fault contains missingPrivileges information:")
+				logrus.Errorf("Fault Details: %s", faultStr)
+				logrus.Error("=== END MISSING PRIVILEGES ===")
+			}
+		}
+
+		return err
+	}
+
+	logrus.Info("=== SOAP RoundTrip completed successfully ===")
 	return nil
 }
 
