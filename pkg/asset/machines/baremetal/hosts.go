@@ -90,10 +90,7 @@ func createBaremetalHost(host *baremetal.Host, bmc baremetalhost.BMCDetails) bar
 			APIVersion: baremetalhost.GroupVersion.String(),
 			Kind:       "BareMetalHost",
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      host.Name,
-			Namespace: "openshift-machine-api",
-		},
+		ObjectMeta: host.ObjectMeta,
 		Spec: baremetalhost.BareMetalHostSpec{
 			Online:          true,
 			BMC:             bmc,
@@ -103,6 +100,8 @@ func createBaremetalHost(host *baremetal.Host, bmc baremetalhost.BMCDetails) bar
 			RootDeviceHints: host.RootDeviceHints.MakeCRDHints(),
 		},
 	}
+	newHost.ObjectMeta.Name = host.Name
+	newHost.ObjectMeta.Namespace = "openshift-machine-api"
 
 	return newHost
 }
@@ -164,9 +163,10 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 				Method: "install_coreos",
 			}
 
-			newHost.ObjectMeta.Labels = map[string]string{
-				"installer.openshift.io/role": "control-plane",
+			if newHost.ObjectMeta.Labels == nil {
+				newHost.ObjectMeta.Labels = map[string]string{}
 			}
+			newHost.ObjectMeta.Labels["installer.openshift.io/role"] = "control-plane"
 
 			// Link the new host to the currently available machine
 			machine := machines[numMasters]
@@ -183,9 +183,10 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 			numMasters++
 		} else {
 			// Pause workers until the real control plane is up.
-			newHost.ObjectMeta.Annotations = map[string]string{
-				"baremetalhost.metal3.io/paused": "",
+			if newHost.ObjectMeta.Annotations == nil {
+				newHost.ObjectMeta.Annotations = map[string]string{}
 			}
+			newHost.ObjectMeta.Annotations["baremetalhost.metal3.io/paused"] = ""
 		}
 
 		settings.Hosts = append(settings.Hosts, newHost)
