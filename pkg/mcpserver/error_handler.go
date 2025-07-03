@@ -10,6 +10,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// cursor wrote this below
+// it doesn't work and probably can be removed
+
 // MCPErrorHandler handles errors by sending them to MCP clients instead of exiting
 type MCPErrorHandler struct {
 	mcpServer *server.MCPServer

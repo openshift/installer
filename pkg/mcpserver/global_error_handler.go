@@ -9,6 +9,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// cursor wrote this below
+// it doesn't work and probably can be removed
+
 var (
 	globalErrorHandler *MCPErrorHandler
 	globalErrorMutex   sync.RWMutex
