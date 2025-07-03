@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -77,7 +78,7 @@ func (a *PlatformCredsCheck) Generate(ctx context.Context, dependencies asset.Pa
 		if err != nil {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}
-	case openstack.Name:
+	case openstack.Name, powervc.Name:
 		_, err = openstackconfig.GetSession(ic.Config.Platform.OpenStack.Cloud)
 		if err != nil {
 			return errors.Wrap(err, "creating OpenStack session")

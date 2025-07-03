@@ -17,6 +17,7 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -38,7 +39,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 		if len(installConfig.Nutanix.APIVIPs) > 0 {
 			ignitionHost = net.JoinHostPort(installConfig.Nutanix.APIVIPs[0], "22623")
 		}
-	case openstacktypes.Name:
+	case openstacktypes.Name, powervctypes.Name:
 		ignitionHost = net.JoinHostPort(installConfig.OpenStack.APIVIPs[0], "22623")
 	case ovirttypes.Name:
 		ignitionHost = net.JoinHostPort(installConfig.Ovirt.APIVIPs[0], "22623")

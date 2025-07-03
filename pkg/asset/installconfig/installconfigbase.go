@@ -1,6 +1,7 @@
 package installconfig
 
 import (
+	"encoding/json"
 	"os"
 	"strings"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
+	"github.com/openshift/installer/pkg/types/powervc"
 )
 
 // AssetBase is the base structure for the separate InstallConfig assets used
@@ -34,6 +36,69 @@ func (a *AssetBase) Name() string {
 	return "Install Config"
 }
 
+// try and unmarshal the install config strictly.
+func unmarshalInstallConfig(data []byte, config *types.InstallConfig) error {
+	if err := yaml.UnmarshalStrict(data, config, yaml.DisallowUnknownFields); err != nil {
+		err = errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
+		if !strings.Contains(err.Error(), "unknown field") {
+			return errors.Wrap(err, asset.InstallConfigError)
+		}
+		err = errors.Wrapf(err, "failed to parse first occurrence of unknown field")
+		logrus.Warn(err.Error())
+		logrus.Info("Attempting to unmarshal while ignoring unknown keys because strict unmarshaling failed")
+		if err = yaml.Unmarshal(data, config); err != nil {
+			err = errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
+			return errors.Wrap(err, asset.InstallConfigError)
+		}
+	}
+
+	return nil
+}
+
+// process an unmarshalled JSON array structure by finding every map element.
+func replacePlatformArray(node []interface{}) error {
+	for _, value := range node {
+		if mapChild, ok := value.(map[string]any); ok {
+			if err := replacePlatformMap(mapChild); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// process an unmarshalled JSON map structure by finding every platform element, and replacing the powervc
+// child element with an openstack element.
+func replacePlatformMap(node map[string]any) error {
+	for k, v := range node {
+		switch value := v.(type) {
+		case map[string]any:
+			if k == "platform" {
+				nodePowerVC, ok := value["powervc"]
+				if ok {
+					value["openstack"] = nodePowerVC
+					delete(value, "powervc")
+				} else {
+					return errors.New("could not convert powervc in the json")
+				}
+
+				continue
+			}
+
+			if err := replacePlatformMap(value); err != nil {
+				return err
+			}
+		case []interface{}:
+			if err := replacePlatformArray(value); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadFromFile returns the installconfig from disk.
 func (a *AssetBase) LoadFromFile(f asset.FileFetcher) (found bool, err error) {
 	file, err := f.FetchByName(installConfigFilename)
@@ -45,20 +110,45 @@ func (a *AssetBase) LoadFromFile(f asset.FileFetcher) (found bool, err error) {
 	}
 
 	config := &types.InstallConfig{}
-	if err := yaml.UnmarshalStrict(file.Data, config, yaml.DisallowUnknownFields); err != nil {
-		err = errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
-		if !strings.Contains(err.Error(), "unknown field") {
-			return false, errors.Wrap(err, asset.InstallConfigError)
-		}
-		err = errors.Wrapf(err, "failed to parse first occurrence of unknown field")
-		logrus.Warnf(err.Error())
-		logrus.Info("Attempting to unmarshal while ignoring unknown keys because strict unmarshaling failed")
-		if err = yaml.Unmarshal(file.Data, config); err != nil {
-			err = errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
-			return false, errors.Wrap(err, asset.InstallConfigError)
-		}
+	if err = unmarshalInstallConfig(file.Data, config); err != nil {
+		return false, err
 	}
 	a.Config = config
+
+	if config.Platform.Name() == powervc.Name {
+		var jsonInstallConfig map[string]any
+
+		jsonOldData, err := yaml.YAMLToJSON(file.Data)
+		if err != nil {
+			return false, errors.Wrap(err, "could not convert yaml to json")
+		}
+		err = json.Unmarshal(jsonOldData, &jsonInstallConfig)
+		if err != nil {
+			return false, errors.Wrap(err, "could not unmarshal the json")
+		}
+		err = replacePlatformMap(jsonInstallConfig)
+		if err != nil {
+			return false, errors.Wrap(err, "could not replacePlatformMap the json")
+		}
+		jsonNewData, err := json.Marshal(jsonInstallConfig)
+		if err != nil {
+			return false, errors.Wrap(err, "could not marshal the json")
+		}
+		newFileData, err := yaml.JSONToYAML(jsonNewData)
+		if err != nil {
+			return false, errors.Wrap(err, "could not convert json to yaml")
+		}
+		newConfig := &types.InstallConfig{}
+		if err = unmarshalInstallConfig(newFileData, newConfig); err != nil {
+			return false, err
+		}
+		config.Platform.OpenStack = newConfig.Platform.OpenStack
+		config.ControlPlane.Platform.OpenStack = newConfig.ControlPlane.Platform.OpenStack
+		for idx := range config.Compute {
+			config.Compute[idx].Platform.OpenStack = newConfig.Compute[idx].Platform.OpenStack
+		}
+		a.Config = config
+	}
 
 	// Upconvert any deprecated fields
 	if err := conversion.ConvertInstallConfig(a.Config); err != nil {
