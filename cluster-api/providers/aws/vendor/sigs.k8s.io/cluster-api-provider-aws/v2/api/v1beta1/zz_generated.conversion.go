@@ -144,6 +144,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSClusterSpec)(nil), (*AWSClusterSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AWSClusterSpec_To_v1beta1_AWSClusterSpec(a.(*v1beta2.AWSClusterSpec), b.(*AWSClusterSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*AWSClusterStaticIdentity)(nil), (*v1beta2.AWSClusterStaticIdentity)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_AWSClusterStaticIdentity_To_v1beta2_AWSClusterStaticIdentity(a.(*AWSClusterStaticIdentity), b.(*v1beta2.AWSClusterStaticIdentity), scope)
 	}); err != nil {
@@ -239,6 +244,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSLoadBalancerSpec)(nil), (*AWSLoadBalancerSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AWSLoadBalancerSpec_To_v1beta1_AWSLoadBalancerSpec(a.(*v1beta2.AWSLoadBalancerSpec), b.(*AWSLoadBalancerSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*AWSMachine)(nil), (*v1beta2.AWSMachine)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_AWSMachine_To_v1beta2_AWSMachine(a.(*AWSMachine), b.(*v1beta2.AWSMachine), scope)
 	}); err != nil {
@@ -256,6 +266,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSMachineList)(nil), (*AWSMachineList)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_AWSMachineList_To_v1beta1_AWSMachineList(a.(*v1beta2.AWSMachineList), b.(*AWSMachineList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AWSMachineSpec)(nil), (*v1beta2.AWSMachineSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_AWSMachineSpec_To_v1beta2_AWSMachineSpec(a.(*AWSMachineSpec), b.(*v1beta2.AWSMachineSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSMachineSpec)(nil), (*AWSMachineSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(a.(*v1beta2.AWSMachineSpec), b.(*AWSMachineSpec), scope)
 	}); err != nil {
 		return err
 	}
@@ -316,6 +336,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSMachineTemplateStatus)(nil), (*AWSMachineTemplateStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_AWSMachineTemplateStatus_To_v1beta1_AWSMachineTemplateStatus(a.(*v1beta2.AWSMachineTemplateStatus), b.(*AWSMachineTemplateStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AWSResourceReference)(nil), (*v1beta2.AWSResourceReference)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_AWSResourceReference_To_v1beta2_AWSResourceReference(a.(*AWSResourceReference), b.(*v1beta2.AWSResourceReference), scope)
 	}); err != nil {
 		return err
 	}
@@ -439,8 +464,18 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.IPv6)(nil), (*IPv6)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_IPv6_To_v1beta1_IPv6(a.(*v1beta2.IPv6), b.(*IPv6), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*Ignition)(nil), (*v1beta2.Ignition)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_Ignition_To_v1beta2_Ignition(a.(*Ignition), b.(*v1beta2.Ignition), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.Ignition)(nil), (*Ignition)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_Ignition_To_v1beta1_Ignition(a.(*v1beta2.Ignition), b.(*Ignition), scope)
 	}); err != nil {
 		return err
 	}
@@ -449,8 +484,18 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.IngressRule)(nil), (*IngressRule)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_IngressRule_To_v1beta1_IngressRule(a.(*v1beta2.IngressRule), b.(*IngressRule), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*Instance)(nil), (*v1beta2.Instance)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_Instance_To_v1beta2_Instance(a.(*Instance), b.(*v1beta2.Instance), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.Instance)(nil), (*Instance)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_Instance_To_v1beta1_Instance(a.(*v1beta2.Instance), b.(*Instance), scope)
 	}); err != nil {
 		return err
 	}
@@ -459,8 +504,18 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.NetworkSpec)(nil), (*NetworkSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_NetworkSpec_To_v1beta1_NetworkSpec(a.(*v1beta2.NetworkSpec), b.(*NetworkSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*NetworkStatus)(nil), (*v1beta2.NetworkStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_NetworkStatus_To_v1beta2_NetworkStatus(a.(*NetworkStatus), b.(*v1beta2.NetworkStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.NetworkStatus)(nil), (*NetworkStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_NetworkStatus_To_v1beta1_NetworkStatus(a.(*v1beta2.NetworkStatus), b.(*NetworkStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -476,6 +531,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*S3Bucket)(nil), (*v1beta2.S3Bucket)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_S3Bucket_To_v1beta2_S3Bucket(a.(*S3Bucket), b.(*v1beta2.S3Bucket), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.S3Bucket)(nil), (*S3Bucket)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_S3Bucket_To_v1beta1_S3Bucket(a.(*v1beta2.S3Bucket), b.(*S3Bucket), scope)
 	}); err != nil {
 		return err
 	}
@@ -504,8 +564,18 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.SubnetSpec)(nil), (*SubnetSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_SubnetSpec_To_v1beta1_SubnetSpec(a.(*v1beta2.SubnetSpec), b.(*SubnetSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*VPCSpec)(nil), (*v1beta2.VPCSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_VPCSpec_To_v1beta2_VPCSpec(a.(*VPCSpec), b.(*v1beta2.VPCSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.VPCSpec)(nil), (*VPCSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_VPCSpec_To_v1beta1_VPCSpec(a.(*v1beta2.VPCSpec), b.(*VPCSpec), scope)
 	}); err != nil {
 		return err
 	}
@@ -516,86 +586,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*v1beta2.Volume)(nil), (*Volume)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_Volume_To_v1beta1_Volume(a.(*v1beta2.Volume), b.(*Volume), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*AWSMachineSpec)(nil), (*v1beta2.AWSMachineSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_AWSMachineSpec_To_v1beta2_AWSMachineSpec(a.(*AWSMachineSpec), b.(*v1beta2.AWSMachineSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*AWSResourceReference)(nil), (*v1beta2.AWSResourceReference)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_AWSResourceReference_To_v1beta2_AWSResourceReference(a.(*AWSResourceReference), b.(*v1beta2.AWSResourceReference), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*ClassicELB)(nil), (*v1beta2.LoadBalancer)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_ClassicELB_To_v1beta2_LoadBalancer(a.(*ClassicELB), b.(*v1beta2.LoadBalancer), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.AWSClusterSpec)(nil), (*AWSClusterSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AWSClusterSpec_To_v1beta1_AWSClusterSpec(a.(*v1beta2.AWSClusterSpec), b.(*AWSClusterSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.AWSLoadBalancerSpec)(nil), (*AWSLoadBalancerSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AWSLoadBalancerSpec_To_v1beta1_AWSLoadBalancerSpec(a.(*v1beta2.AWSLoadBalancerSpec), b.(*AWSLoadBalancerSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.AWSMachineSpec)(nil), (*AWSMachineSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(a.(*v1beta2.AWSMachineSpec), b.(*AWSMachineSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.IPv6)(nil), (*IPv6)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_IPv6_To_v1beta1_IPv6(a.(*v1beta2.IPv6), b.(*IPv6), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.Ignition)(nil), (*Ignition)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_Ignition_To_v1beta1_Ignition(a.(*v1beta2.Ignition), b.(*Ignition), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.IngressRule)(nil), (*IngressRule)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_IngressRule_To_v1beta1_IngressRule(a.(*v1beta2.IngressRule), b.(*IngressRule), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.Instance)(nil), (*Instance)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_Instance_To_v1beta1_Instance(a.(*v1beta2.Instance), b.(*Instance), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.LoadBalancer)(nil), (*ClassicELB)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_LoadBalancer_To_v1beta1_ClassicELB(a.(*v1beta2.LoadBalancer), b.(*ClassicELB), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.NetworkSpec)(nil), (*NetworkSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_NetworkSpec_To_v1beta1_NetworkSpec(a.(*v1beta2.NetworkSpec), b.(*NetworkSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.NetworkStatus)(nil), (*NetworkStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_NetworkStatus_To_v1beta1_NetworkStatus(a.(*v1beta2.NetworkStatus), b.(*NetworkStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.S3Bucket)(nil), (*S3Bucket)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_S3Bucket_To_v1beta1_S3Bucket(a.(*v1beta2.S3Bucket), b.(*S3Bucket), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.SubnetSpec)(nil), (*SubnetSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_SubnetSpec_To_v1beta1_SubnetSpec(a.(*v1beta2.SubnetSpec), b.(*SubnetSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.VPCSpec)(nil), (*VPCSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_VPCSpec_To_v1beta1_VPCSpec(a.(*v1beta2.VPCSpec), b.(*VPCSpec), scope)
 	}); err != nil {
 		return err
 	}
@@ -625,6 +615,7 @@ func Convert_v1beta2_AMIReference_To_v1beta1_AMIReference(in *v1beta2.AMIReferen
 }
 
 func autoConvert_v1beta1_AWSCluster_To_v1beta2_AWSCluster(in *AWSCluster, out *v1beta2.AWSCluster, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_AWSClusterSpec_To_v1beta2_AWSClusterSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -641,6 +632,7 @@ func Convert_v1beta1_AWSCluster_To_v1beta2_AWSCluster(in *AWSCluster, out *v1bet
 }
 
 func autoConvert_v1beta2_AWSCluster_To_v1beta1_AWSCluster(in *v1beta2.AWSCluster, out *AWSCluster, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_AWSClusterSpec_To_v1beta1_AWSClusterSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -657,6 +649,7 @@ func Convert_v1beta2_AWSCluster_To_v1beta1_AWSCluster(in *v1beta2.AWSCluster, ou
 }
 
 func autoConvert_v1beta1_AWSClusterControllerIdentity_To_v1beta2_AWSClusterControllerIdentity(in *AWSClusterControllerIdentity, out *v1beta2.AWSClusterControllerIdentity, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_AWSClusterControllerIdentitySpec_To_v1beta2_AWSClusterControllerIdentitySpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -670,6 +663,7 @@ func Convert_v1beta1_AWSClusterControllerIdentity_To_v1beta2_AWSClusterControlle
 }
 
 func autoConvert_v1beta2_AWSClusterControllerIdentity_To_v1beta1_AWSClusterControllerIdentity(in *v1beta2.AWSClusterControllerIdentity, out *AWSClusterControllerIdentity, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_AWSClusterControllerIdentitySpec_To_v1beta1_AWSClusterControllerIdentitySpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -683,6 +677,7 @@ func Convert_v1beta2_AWSClusterControllerIdentity_To_v1beta1_AWSClusterControlle
 }
 
 func autoConvert_v1beta1_AWSClusterControllerIdentityList_To_v1beta2_AWSClusterControllerIdentityList(in *AWSClusterControllerIdentityList, out *v1beta2.AWSClusterControllerIdentityList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	out.Items = *(*[]v1beta2.AWSClusterControllerIdentity)(unsafe.Pointer(&in.Items))
 	return nil
@@ -694,6 +689,7 @@ func Convert_v1beta1_AWSClusterControllerIdentityList_To_v1beta2_AWSClusterContr
 }
 
 func autoConvert_v1beta2_AWSClusterControllerIdentityList_To_v1beta1_AWSClusterControllerIdentityList(in *v1beta2.AWSClusterControllerIdentityList, out *AWSClusterControllerIdentityList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	out.Items = *(*[]AWSClusterControllerIdentity)(unsafe.Pointer(&in.Items))
 	return nil
@@ -749,6 +745,7 @@ func Convert_v1beta2_AWSClusterIdentitySpec_To_v1beta1_AWSClusterIdentitySpec(in
 }
 
 func autoConvert_v1beta1_AWSClusterList_To_v1beta2_AWSClusterList(in *AWSClusterList, out *v1beta2.AWSClusterList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -770,6 +767,7 @@ func Convert_v1beta1_AWSClusterList_To_v1beta2_AWSClusterList(in *AWSClusterList
 }
 
 func autoConvert_v1beta2_AWSClusterList_To_v1beta1_AWSClusterList(in *v1beta2.AWSClusterList, out *AWSClusterList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -791,6 +789,7 @@ func Convert_v1beta2_AWSClusterList_To_v1beta1_AWSClusterList(in *v1beta2.AWSClu
 }
 
 func autoConvert_v1beta1_AWSClusterRoleIdentity_To_v1beta2_AWSClusterRoleIdentity(in *AWSClusterRoleIdentity, out *v1beta2.AWSClusterRoleIdentity, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_AWSClusterRoleIdentitySpec_To_v1beta2_AWSClusterRoleIdentitySpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -804,6 +803,7 @@ func Convert_v1beta1_AWSClusterRoleIdentity_To_v1beta2_AWSClusterRoleIdentity(in
 }
 
 func autoConvert_v1beta2_AWSClusterRoleIdentity_To_v1beta1_AWSClusterRoleIdentity(in *v1beta2.AWSClusterRoleIdentity, out *AWSClusterRoleIdentity, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_AWSClusterRoleIdentitySpec_To_v1beta1_AWSClusterRoleIdentitySpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -817,6 +817,7 @@ func Convert_v1beta2_AWSClusterRoleIdentity_To_v1beta1_AWSClusterRoleIdentity(in
 }
 
 func autoConvert_v1beta1_AWSClusterRoleIdentityList_To_v1beta2_AWSClusterRoleIdentityList(in *AWSClusterRoleIdentityList, out *v1beta2.AWSClusterRoleIdentityList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	out.Items = *(*[]v1beta2.AWSClusterRoleIdentity)(unsafe.Pointer(&in.Items))
 	return nil
@@ -828,6 +829,7 @@ func Convert_v1beta1_AWSClusterRoleIdentityList_To_v1beta2_AWSClusterRoleIdentit
 }
 
 func autoConvert_v1beta2_AWSClusterRoleIdentityList_To_v1beta1_AWSClusterRoleIdentityList(in *v1beta2.AWSClusterRoleIdentityList, out *AWSClusterRoleIdentityList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	out.Items = *(*[]AWSClusterRoleIdentity)(unsafe.Pointer(&in.Items))
 	return nil
@@ -952,6 +954,7 @@ func autoConvert_v1beta2_AWSClusterSpec_To_v1beta1_AWSClusterSpec(in *v1beta2.AW
 }
 
 func autoConvert_v1beta1_AWSClusterStaticIdentity_To_v1beta2_AWSClusterStaticIdentity(in *AWSClusterStaticIdentity, out *v1beta2.AWSClusterStaticIdentity, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_AWSClusterStaticIdentitySpec_To_v1beta2_AWSClusterStaticIdentitySpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -965,6 +968,7 @@ func Convert_v1beta1_AWSClusterStaticIdentity_To_v1beta2_AWSClusterStaticIdentit
 }
 
 func autoConvert_v1beta2_AWSClusterStaticIdentity_To_v1beta1_AWSClusterStaticIdentity(in *v1beta2.AWSClusterStaticIdentity, out *AWSClusterStaticIdentity, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_AWSClusterStaticIdentitySpec_To_v1beta1_AWSClusterStaticIdentitySpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -978,6 +982,7 @@ func Convert_v1beta2_AWSClusterStaticIdentity_To_v1beta1_AWSClusterStaticIdentit
 }
 
 func autoConvert_v1beta1_AWSClusterStaticIdentityList_To_v1beta2_AWSClusterStaticIdentityList(in *AWSClusterStaticIdentityList, out *v1beta2.AWSClusterStaticIdentityList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	out.Items = *(*[]v1beta2.AWSClusterStaticIdentity)(unsafe.Pointer(&in.Items))
 	return nil
@@ -989,6 +994,7 @@ func Convert_v1beta1_AWSClusterStaticIdentityList_To_v1beta2_AWSClusterStaticIde
 }
 
 func autoConvert_v1beta2_AWSClusterStaticIdentityList_To_v1beta1_AWSClusterStaticIdentityList(in *v1beta2.AWSClusterStaticIdentityList, out *AWSClusterStaticIdentityList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	out.Items = *(*[]AWSClusterStaticIdentity)(unsafe.Pointer(&in.Items))
 	return nil
@@ -1074,6 +1080,7 @@ func Convert_v1beta2_AWSClusterStatus_To_v1beta1_AWSClusterStatus(in *v1beta2.AW
 }
 
 func autoConvert_v1beta1_AWSClusterTemplate_To_v1beta2_AWSClusterTemplate(in *AWSClusterTemplate, out *v1beta2.AWSClusterTemplate, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_AWSClusterTemplateSpec_To_v1beta2_AWSClusterTemplateSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -1087,6 +1094,7 @@ func Convert_v1beta1_AWSClusterTemplate_To_v1beta2_AWSClusterTemplate(in *AWSClu
 }
 
 func autoConvert_v1beta2_AWSClusterTemplate_To_v1beta1_AWSClusterTemplate(in *v1beta2.AWSClusterTemplate, out *AWSClusterTemplate, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_AWSClusterTemplateSpec_To_v1beta1_AWSClusterTemplateSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -1100,6 +1108,7 @@ func Convert_v1beta2_AWSClusterTemplate_To_v1beta1_AWSClusterTemplate(in *v1beta
 }
 
 func autoConvert_v1beta1_AWSClusterTemplateList_To_v1beta2_AWSClusterTemplateList(in *AWSClusterTemplateList, out *v1beta2.AWSClusterTemplateList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -1121,6 +1130,7 @@ func Convert_v1beta1_AWSClusterTemplateList_To_v1beta2_AWSClusterTemplateList(in
 }
 
 func autoConvert_v1beta2_AWSClusterTemplateList_To_v1beta1_AWSClusterTemplateList(in *v1beta2.AWSClusterTemplateList, out *AWSClusterTemplateList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -1245,6 +1255,7 @@ func autoConvert_v1beta2_AWSLoadBalancerSpec_To_v1beta1_AWSLoadBalancerSpec(in *
 }
 
 func autoConvert_v1beta1_AWSMachine_To_v1beta2_AWSMachine(in *AWSMachine, out *v1beta2.AWSMachine, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_AWSMachineSpec_To_v1beta2_AWSMachineSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -1261,6 +1272,7 @@ func Convert_v1beta1_AWSMachine_To_v1beta2_AWSMachine(in *AWSMachine, out *v1bet
 }
 
 func autoConvert_v1beta2_AWSMachine_To_v1beta1_AWSMachine(in *v1beta2.AWSMachine, out *AWSMachine, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -1277,6 +1289,7 @@ func Convert_v1beta2_AWSMachine_To_v1beta1_AWSMachine(in *v1beta2.AWSMachine, ou
 }
 
 func autoConvert_v1beta1_AWSMachineList_To_v1beta2_AWSMachineList(in *AWSMachineList, out *v1beta2.AWSMachineList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -1298,6 +1311,7 @@ func Convert_v1beta1_AWSMachineList_To_v1beta2_AWSMachineList(in *AWSMachineList
 }
 
 func autoConvert_v1beta2_AWSMachineList_To_v1beta1_AWSMachineList(in *v1beta2.AWSMachineList, out *AWSMachineList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -1471,6 +1485,7 @@ func Convert_v1beta2_AWSMachineStatus_To_v1beta1_AWSMachineStatus(in *v1beta2.AW
 }
 
 func autoConvert_v1beta1_AWSMachineTemplate_To_v1beta2_AWSMachineTemplate(in *AWSMachineTemplate, out *v1beta2.AWSMachineTemplate, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_AWSMachineTemplateSpec_To_v1beta2_AWSMachineTemplateSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -1487,6 +1502,7 @@ func Convert_v1beta1_AWSMachineTemplate_To_v1beta2_AWSMachineTemplate(in *AWSMac
 }
 
 func autoConvert_v1beta2_AWSMachineTemplate_To_v1beta1_AWSMachineTemplate(in *v1beta2.AWSMachineTemplate, out *AWSMachineTemplate, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_AWSMachineTemplateSpec_To_v1beta1_AWSMachineTemplateSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -1503,6 +1519,7 @@ func Convert_v1beta2_AWSMachineTemplate_To_v1beta1_AWSMachineTemplate(in *v1beta
 }
 
 func autoConvert_v1beta1_AWSMachineTemplateList_To_v1beta2_AWSMachineTemplateList(in *AWSMachineTemplateList, out *v1beta2.AWSMachineTemplateList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -1524,6 +1541,7 @@ func Convert_v1beta1_AWSMachineTemplateList_To_v1beta2_AWSMachineTemplateList(in
 }
 
 func autoConvert_v1beta2_AWSMachineTemplateList_To_v1beta1_AWSMachineTemplateList(in *v1beta2.AWSMachineTemplateList, out *AWSMachineTemplateList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -2085,6 +2103,7 @@ func autoConvert_v1beta2_NetworkSpec_To_v1beta1_NetworkSpec(in *v1beta2.NetworkS
 	out.CNI = (*CNISpec)(unsafe.Pointer(in.CNI))
 	out.SecurityGroupOverrides = *(*map[SecurityGroupRole]string)(unsafe.Pointer(&in.SecurityGroupOverrides))
 	// WARNING: in.AdditionalControlPlaneIngressRules requires manual conversion: does not exist in peer-type
+	// WARNING: in.AdditionalNodeIngressRules requires manual conversion: does not exist in peer-type
 	// WARNING: in.NodePortIngressRuleCidrBlocks requires manual conversion: does not exist in peer-type
 	return nil
 }

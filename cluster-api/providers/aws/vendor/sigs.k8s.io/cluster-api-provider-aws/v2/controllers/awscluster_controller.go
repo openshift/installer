@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,9 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
@@ -51,6 +48,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/securitygroup"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	infrautilconditions "sigs.k8s.io/cluster-api-provider-aws/v2/util/conditions"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	capiannotations "sigs.k8s.io/cluster-api/util/annotations"
@@ -167,9 +165,8 @@ func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	log = log.WithValues("cluster", klog.KObj(cluster))
 
-	if capiannotations.IsPaused(cluster, awsCluster) {
-		log.Info("AWSCluster or linked Cluster is marked as paused. Won't reconcile")
-		return reconcile.Result{}, nil
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, awsCluster); err != nil || isPaused || conditionChanged {
+		return ctrl.Result{}, err
 	}
 
 	// Create the scope.
@@ -199,7 +196,7 @@ func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Handle non-deleted clusters
-	return r.reconcileNormal(clusterScope)
+	return r.reconcileNormal(ctx, clusterScope)
 }
 
 func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope *scope.ClusterScope) (ctrl.Result, error) {
@@ -231,7 +228,7 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 
 	if feature.Gates.Enabled(feature.EventBridgeInstanceState) {
 		instancestateSvc := instancestate.NewService(clusterScope)
-		if err := instancestateSvc.DeleteEC2Events(); err != nil {
+		if err := instancestateSvc.DeleteEC2Events(ctx); err != nil {
 			// Not deleting the events isn't critical to cluster deletion
 			clusterScope.Error(err, "non-fatal: failed to delete EventBridge notifications")
 		}
@@ -246,7 +243,7 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 	// when external controllers might be using them.
 	allErrs := []error{}
 
-	if err := s3Service.DeleteBucket(); err != nil {
+	if err := s3Service.DeleteBucket(ctx); err != nil {
 		allErrs = append(allErrs, errors.Wrapf(err, "error deleting S3 Bucket"))
 	}
 
@@ -314,7 +311,7 @@ func (r *AWSClusterReconciler) reconcileLoadBalancer(clusterScope *scope.Cluster
 	return nil, nil
 }
 
-func (r *AWSClusterReconciler) reconcileNormal(clusterScope *scope.ClusterScope) (reconcile.Result, error) {
+func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope *scope.ClusterScope) (reconcile.Result, error) {
 	clusterScope.Info("Reconciling AWSCluster")
 
 	awsCluster := clusterScope.AWSCluster
@@ -351,7 +348,7 @@ func (r *AWSClusterReconciler) reconcileNormal(clusterScope *scope.ClusterScope)
 
 	if feature.Gates.Enabled(feature.EventBridgeInstanceState) {
 		instancestateSvc := instancestate.NewService(clusterScope)
-		if err := instancestateSvc.ReconcileEC2Events(); err != nil {
+		if err := instancestateSvc.ReconcileEC2Events(ctx); err != nil {
 			// non fatal error, so we continue
 			clusterScope.Error(err, "non-fatal: failed to set up EventBridge")
 		}
@@ -363,7 +360,7 @@ func (r *AWSClusterReconciler) reconcileNormal(clusterScope *scope.ClusterScope)
 		return reconcile.Result{RequeueAfter: *requeueAfter}, err
 	}
 
-	if err := s3Service.ReconcileBucket(); err != nil {
+	if err := s3Service.ReconcileBucket(ctx); err != nil {
 		conditions.MarkFalse(awsCluster, infrav1.S3BucketReadyCondition, infrav1.S3BucketFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 		return reconcile.Result{}, errors.Wrapf(err, "failed to reconcile S3 Bucket for AWSCluster %s/%s", awsCluster.Namespace, awsCluster.Name)
 	}
@@ -392,29 +389,7 @@ func (r *AWSClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1.AWSCluster{}).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
-		WithEventFilter(
-			predicate.Funcs{
-				// Avoid reconciling if the event triggering the reconciliation is related to incremental status updates
-				// for AWSCluster resources only
-				UpdateFunc: func(e event.UpdateEvent) bool {
-					if e.ObjectOld.GetObjectKind().GroupVersionKind().Kind != "AWSCluster" {
-						return true
-					}
-
-					oldCluster := e.ObjectOld.(*infrav1.AWSCluster).DeepCopy()
-					newCluster := e.ObjectNew.(*infrav1.AWSCluster).DeepCopy()
-
-					oldCluster.Status = infrav1.AWSClusterStatus{}
-					newCluster.Status = infrav1.AWSClusterStatus{}
-
-					oldCluster.ObjectMeta.ResourceVersion = ""
-					newCluster.ObjectMeta.ResourceVersion = ""
-
-					return !cmp.Equal(oldCluster, newCluster)
-				},
-			},
-		).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
 		WithEventFilter(predicates.ResourceIsNotExternallyManaged(mgr.GetScheme(), log.GetLogger())).
 		Build(r)
 	if err != nil {

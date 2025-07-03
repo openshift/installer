@@ -19,10 +19,10 @@ package ec2
 
 import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/network"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/ssm"
 )
 
 // Service holds a collection of interfaces.
@@ -34,7 +34,7 @@ type Service struct {
 	netService *network.Service
 
 	// SSMClient is used to look up the official EKS AMI ID
-	SSMClient ssmiface.SSMAPI
+	SSMClient ssm.SSMAPI
 }
 
 // NewService returns a new service given the ec2 api client.
