@@ -49,6 +49,16 @@ func WriteFormattedFiles(paths []string, cfg config.Config) error {
 	})
 }
 
+func ListUnFormattedFiles(paths []string, cfg config.Config) error {
+	return processGoFilesInPaths(paths, cfg, func(filePath string, unmodifiedFile, formattedFile []byte) error {
+		if bytes.Equal(unmodifiedFile, formattedFile) {
+			return nil
+		}
+		fmt.Println(filePath)
+		return nil
+	})
+}
+
 func DiffFormattedFiles(paths []string, cfg config.Config) error {
 	return processStdInAndGoFilesInPaths(paths, cfg, func(filePath string, unmodifiedFile, formattedFile []byte) error {
 		fileURI := span.URIFromPath(filePath)
@@ -76,11 +86,11 @@ func DiffFormattedFilesToArray(paths []string, cfg config.Config, diffs *[]strin
 type fileFormattingFunc func(filePath string, unmodifiedFile, formattedFile []byte) error
 
 func processStdInAndGoFilesInPaths(paths []string, cfg config.Config, fileFunc fileFormattingFunc) error {
-	return ProcessFiles(io.StdInGenerator.Combine(io.GoFilesInPathsGenerator(paths)), cfg, fileFunc)
+	return ProcessFiles(io.StdInGenerator.Combine(io.GoFilesInPathsGenerator(paths, cfg.SkipVendor)), cfg, fileFunc)
 }
 
 func processGoFilesInPaths(paths []string, cfg config.Config, fileFunc fileFormattingFunc) error {
-	return ProcessFiles(io.GoFilesInPathsGenerator(paths), cfg, fileFunc)
+	return ProcessFiles(io.GoFilesInPathsGenerator(paths, cfg.SkipVendor), cfg, fileFunc)
 }
 
 func ProcessFiles(fileGenerator io.FileGeneratorFunc, cfg config.Config, fileFunc fileFormattingFunc) error {
@@ -117,11 +127,17 @@ func LoadFormatGoFile(file io.FileObj, cfg config.Config) (src, dist []byte, err
 		return nil, nil, err
 	}
 
+	return LoadFormat(src, file.Path(), cfg)
+}
+
+func LoadFormat(in []byte, path string, cfg config.Config) (src, dist []byte, err error) {
+	src = in
+
 	if cfg.SkipGenerated && parse.IsGeneratedFileByComment(string(src)) {
 		return src, src, nil
 	}
 
-	imports, headEnd, tailStart, cStart, cEnd, err := parse.ParseFile(src, file.Path())
+	imports, headEnd, tailStart, cStart, cEnd, err := parse.ParseFile(src, path)
 	if err != nil {
 		if errors.Is(err, parse.NoImportError{}) {
 			return src, src, nil
@@ -191,6 +207,10 @@ func LoadFormatGoFile(file io.FileObj, cfg config.Config) (src, dist []byte, err
 	for _, s := range slices {
 		i += copy(dist[i:], s)
 	}
+
+	// remove ^M(\r\n) from Win to Unix
+	dist = bytes.ReplaceAll(dist, []byte{utils.WinLinebreak}, []byte{utils.Linebreak})
+
 	log.L().Debug(fmt.Sprintf("raw:\n%s", dist))
 	dist, err = goFormat.Source(dist)
 	if err != nil {
