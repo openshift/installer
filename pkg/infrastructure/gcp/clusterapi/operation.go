@@ -11,7 +11,7 @@ import (
 // WaitForOperationGlobal will attempt to wait for a operation to complete where the operational
 // resource is globally scoped.
 func WaitForOperationGlobal(ctx context.Context, projectID string, operation *compute.Operation) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
 	defer cancel()
 
 	service, err := NewComputeService()
@@ -21,7 +21,7 @@ func WaitForOperationGlobal(ctx context.Context, projectID string, operation *co
 
 	g := compute.NewGlobalOperationsService(service)
 	if _, err := g.Wait(projectID, operation.Name).Context(ctx).Do(); err != nil {
-		return fmt.Errorf("failed to wait for regional operation: %w", err)
+		return fmt.Errorf("failed to wait for global operation: %w", err)
 	}
 
 	return nil
@@ -30,7 +30,7 @@ func WaitForOperationGlobal(ctx context.Context, projectID string, operation *co
 // WaitForOperationRegional will attempt to wait for a operation to complete where the operational
 // resource is regionally scoped.
 func WaitForOperationRegional(ctx context.Context, projectID, region string, operation *compute.Operation) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
 	defer cancel()
 
 	service, err := NewComputeService()
