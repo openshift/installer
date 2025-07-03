@@ -686,7 +686,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.11": VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": clusterNetwork primary IP Family and primary IP family for the API VIP should match, platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": machineNetwork primary IP Family and primary IP family for the API VIP should match, platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": serviceNetwork primary IP Family and primary IP family for the API VIP should match, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.11": clusterNetwork primary IP Family and primary IP family for the Ingress VIP should match, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.11": machineNetwork primary IP Family and primary IP family for the Ingress VIP should match, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.11": serviceNetwork primary IP Family and primary IP family for the Ingress VIP should match]`,
 		},
 		{
 			name: "ingressVIP missing and vcenter vSphere credentials are present",
