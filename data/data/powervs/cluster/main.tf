@@ -107,6 +107,7 @@ module "loadbalancer" {
   source = "./loadbalancer"
 
   cluster_id     = var.cluster_id
+  enable_snat    = var.powervs_enable_snat
   master_count   = var.master_count
   resource_group = var.powervs_resource_group
   vpc_id         = module.vpc.vpc_id
