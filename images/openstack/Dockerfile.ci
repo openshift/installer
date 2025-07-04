@@ -2,7 +2,7 @@
 # It builds an image containing the openshift-install command as well as the openstack cli.
 FROM registry.ci.openshift.org/ocp/4.15:installer-terraform-providers as providers
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.14 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.15 AS builder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
@@ -21,21 +21,18 @@ COPY --from=builder /go/src/github.com/openshift/installer/hack/openstack/test-m
 # Install Dependendencies for tests
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    ansible-collection-ansible-netcommon \
-    ansible-collection-community-general \
     ansible-collections-openstack \
     gettext \
     git \
     glibc-locale-source \
-    gzip \
     jq \
     make \
     nmap \
     python3-netaddr \
     python3-openstackclient \
+    python3-openstacksdk \
     python3-pip \
-    unzip \
-    util-linux && \
+    unzip && \
     yum clean all && rm -rf /var/cache/yum/* && \
     localedef -c -f UTF-8 -i en_US en_US.UTF-8 && \
     git config --system user.name test && \

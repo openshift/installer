@@ -22,6 +22,8 @@ of this method of installation.
   - [Table of Contents](#table-of-contents)
   - [Prerequisites](#prerequisites)
   - [Install Ansible](#install-ansible)
+    - [RHEL8](#rhel8)
+    - [RHEL9](#rhel9)
   - [OpenShift Configuration Directory](#openshift-configuration-directory)
   - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
   - [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
@@ -113,6 +115,36 @@ accordingly (e.g. `release-4.12`).
 * Ansible collections required in the playbooks. Namely:
   * openstack.cloud
   * community.general
+
+### RHEL8
+
+From a RHEL-8 box, make sure that the repository origins are all set:
+
+```sh
+sudo subscription-manager register # if not done already
+sudo subscription-manager attach --pool=$YOUR_POOLID # if not done already
+sudo subscription-manager repos --disable=* # if not done already
+sudo subscription-manager repos \
+  --enable=rhel-8-for-x86_64-appstream-rpms \
+  --enable=rhel-8-for-x86_64-baseos-rpms \
+  --enable=openstack-16-for-rhel-8-x86_64-rpms
+```
+
+Then install the package:
+```sh
+sudo dnf install ansible-collections-openstack \
+    python3-netaddr \
+    python3-openstackclient \
+    python3-openstacksdk \
+    python3-pip
+```
+
+Followed by:
+```sh
+python -m pip install yq
+```
+
+### RHEL9
 
 From a RHEL-9 box, make sure that the repository origins are all set:
 
