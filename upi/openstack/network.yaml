@@ -20,8 +20,8 @@
       name: "{{ os_subnet }}"
       network_name: "{{ os_network }}"
       cidr: "{{ os_subnet_range }}"
-      allocation_pool_start: "{{ os_subnet_range | ansible.utils.next_nth_usable(10) }}"
-      allocation_pool_end: "{{ os_subnet_range | ansible.utils.ipaddr('last_usable') }}"
+      allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
+      allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
       dns_nameservers: "{{ os_external_dns }}"
 
   - name: 'Create the cluster IPv6 subnet'
@@ -110,8 +110,8 @@
     shell: |
       python -c 'import yaml
       path = "inventory.yaml"
-      ipv4 = "{{ item.ip_address|ansible.utils.ipv4 }}"
-      ipv6 = "{{ item.ip_address|ansible.utils.ipv6 }}"
+      ipv4 = "{{ item.ip_address|ipv4 }}"
+      ipv6 = "{{ item.ip_address|ipv6 }}"
       if ipv4 != "False":
         key = "os_apiVIP"
         ip = ipv4
@@ -129,8 +129,8 @@
     shell: |
       python -c 'import yaml
       path = "inventory.yaml"
-      ipv4 = "{{ item.ip_address|ansible.utils.ipv4 }}"
-      ipv6 = "{{ item.ip_address|ansible.utils.ipv6 }}"
+      ipv4 = "{{ item.ip_address|ipv4 }}"
+      ipv6 = "{{ item.ip_address|ipv6 }}"
       if ipv4 != "False":
         key = "os_ingressVIP"
         ip = ipv4
