@@ -42,6 +42,16 @@ func GetExampleInstallConfig(platform, pullSecret, baseDomain, clusterName, sshK
 	logrus.Info("in getInstallConfigResource")
 	logrus.Infof("platform: %s", platform)
 
+	var pull interface{}
+	if err := json.Unmarshal([]byte(pullSecret), &pull); err != nil {
+		return "", err
+	}
+
+	pullJsonBytes, err := json.Marshal(pull)
+	if err != nil {
+		return "", err
+	}
+
 	// Create a new InstallConfig
 	installConfig := &types.InstallConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -51,7 +61,7 @@ func GetExampleInstallConfig(platform, pullSecret, baseDomain, clusterName, sshK
 			Name: clusterName,
 		},
 		BaseDomain: baseDomain,
-		PullSecret: pullSecret,
+		PullSecret: string(pullJsonBytes),
 		SSHKey:     sshKey,
 		Publish:    types.ExternalPublishingStrategy,
 		Networking: &types.Networking{

@@ -152,7 +152,7 @@ func Tools() []server.ServerTool {
 				if !ok {
 					return nil, errors.New("clustername is required")
 				}
-				sshKey, ok := arguments["sshKey"].(string)
+				sshKey, ok := arguments["sshkey"].(string)
 				if !ok {
 					return nil, errors.New("sshKey is required")
 				}
