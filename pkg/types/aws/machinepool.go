@@ -1,5 +1,12 @@
 package aws
 
+const (
+	// HostAffinityDefault if an instance is stopped and restarted, it can be restarted on any available host.
+	HostAffinityDefault = "default"
+	// HostAffinityHost an instance started onto a specific host always restarts on the same host if stopped.
+	HostAffinityHost = "host"
+)
+
 // MachinePool stores the configuration for a machine pool installed
 // on AWS.
 type MachinePool struct {
@@ -48,6 +55,20 @@ type MachinePool struct {
 	// +kubebuilder:validation:MaxItems=10
 	// +optional
 	AdditionalSecurityGroupIDs []string `json:"additionalSecurityGroupIDs,omitempty"`
+
+	// HostAffinity specifies the dedicated host affinity setting for the instance.
+	// When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
+	// When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
+	// When HostAffinity is defined, HostID is required.
+	// +optional
+	// +kubebuilder:validation:Enum:=default;host
+	HostAffinity string `json:"hostAffinity,omitempty"`
+
+	// HostIDs specifies a slice of dedicated hosts on which instances should be started.
+	// presently, only a single dedicated host can be specified per pool.
+	// +kubebuilder:validation:MaxItems=1
+	// +optional
+	HostIDs []string `json:"hostIDs,omitempty"`
 }
 
 // Set sets the values from `required` to `a`.
