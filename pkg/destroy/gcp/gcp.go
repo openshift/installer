@@ -54,6 +54,9 @@ type ClusterUninstaller struct {
 	PrivateZoneDomain string
 	ClusterID         string
 
+	PrivateZoneName    string
+	PrivateZoneProject string
+
 	computeSvc  *compute.Service
 	iamSvc      *iam.Service
 	dnsSvc      *dns.Service
@@ -86,6 +89,8 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		ProjectID:          metadata.ClusterPlatformMetadata.GCP.ProjectID,
 		NetworkProjectID:   metadata.ClusterPlatformMetadata.GCP.NetworkProjectID,
 		PrivateZoneDomain:  metadata.ClusterPlatformMetadata.GCP.PrivateZoneDomain,
+		PrivateZoneName:    metadata.ClusterPlatformMetadata.GCP.PrivateZoneName,
+		PrivateZoneProject: metadata.ClusterPlatformMetadata.GCP.PrivateZoneProject,
 		ClusterID:          metadata.InfraID,
 		cloudControllerUID: gcptypes.CloudControllerUID(metadata.InfraID),
 		requestIDTracker:   newRequestIDTracker(),
