@@ -11,8 +11,9 @@ import (
 )
 
 // Removes the specified tags from the role. For more information about tagging,
-// see Tagging IAM resources (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
-// in the IAM User Guide.
+// see [Tagging IAM resources]in the IAM User Guide.
+//
+// [Tagging IAM resources]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html
 func (c *Client) UntagRole(ctx context.Context, params *UntagRoleInput, optFns ...func(*Options)) (*UntagRoleOutput, error) {
 	if params == nil {
 		params = &UntagRoleInput{}
@@ -30,10 +31,13 @@ func (c *Client) UntagRole(ctx context.Context, params *UntagRoleInput, optFns .
 
 type UntagRoleInput struct {
 
-	// The name of the IAM role from which you want to remove tags. This parameter
-	// accepts (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
-	// of characters that consist of upper and lowercase alphanumeric characters with
-	// no spaces. You can also include any of the following characters: _+=,.@-
+	// The name of the IAM role from which you want to remove tags.
+	//
+	// This parameter accepts (through its [regex pattern]) a string of characters that consist of
+	// upper and lowercase alphanumeric characters with no spaces. You can also include
+	// any of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	RoleName *string
@@ -97,6 +101,9 @@ func (c *Client) addOperationUntagRoleMiddlewares(stack *middleware.Stack, optio
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -107,6 +114,15 @@ func (c *Client) addOperationUntagRoleMiddlewares(stack *middleware.Stack, optio
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUntagRoleValidationMiddleware(stack); err != nil {
@@ -128,6 +144,18 @@ func (c *Client) addOperationUntagRoleMiddlewares(stack *middleware.Stack, optio
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
