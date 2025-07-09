@@ -13,5 +13,6 @@ type Metadata struct {
 	Zone                 string                            `json:"zone"`
 	ServiceInstanceGUID  string                            `json:"serviceInstanceGUID"`
 	ServiceEndpoints     []configv1.PowerVSServiceEndpoint `json:"serviceEndpoints,omitempty"`
-	TransitGatewayName   string                            `json:"transitGatewayName"`
+	TransitGateway       string                            `json:"transitGatewayName"`
+	VPC                  string                            `json:"vpcName"`
 }
