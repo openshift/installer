@@ -93,6 +93,38 @@ func Test_DetermineTopologies(t *testing.T) {
 			expectedControlPlane: configv1.HighlyAvailableArbiterMode,
 			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
+		{
+			desc: "should default infra to HA and controlPlane to Arbiter for 3 control replicas and 2 arbiter",
+			installConfig: &types.InstallConfig{
+				Arbiter: &types.MachinePool{
+					Replicas: ptr.To[int64](2),
+				},
+				ControlPlane: &types.MachinePool{
+					Replicas: ptr.To[int64](3),
+				},
+				Compute: []types.MachinePool{},
+			},
+			expectedControlPlane: configv1.HighlyAvailableArbiterMode,
+			expectedInfra:        configv1.HighlyAvailableTopologyMode,
+		},
+		{
+			desc: "should default infra to HA and controlPlane to HA for 3 control replicas and 3 worker pools",
+			installConfig: &types.InstallConfig{
+				Arbiter: &types.MachinePool{
+					Replicas: ptr.To[int64](0),
+				},
+				ControlPlane: &types.MachinePool{
+					Replicas: ptr.To[int64](3),
+				},
+				Compute: []types.MachinePool{
+					{
+						Replicas: ptr.To[int64](3),
+					},
+				},
+			},
+			expectedControlPlane: configv1.HighlyAvailableTopologyMode,
+			expectedInfra:        configv1.HighlyAvailableTopologyMode,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {

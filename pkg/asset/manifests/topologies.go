@@ -10,17 +10,18 @@ import (
 // determineTopologies determines the Infrastructure CR's
 // infrastructureTopology and controlPlaneTopology given an install config file
 func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopology configv1.TopologyMode, infrastructureTopology configv1.TopologyMode) {
-	controlPlaneTopology = configv1.HighlyAvailableTopologyMode
-
 	controlPlaneReplicas := ptr.Deref(installConfig.ControlPlane.Replicas, 3)
-	if controlPlaneReplicas == 2 {
-		controlPlaneTopology = configv1.DualReplicaTopologyMode
-
-		if installConfig.Arbiter != nil && ptr.Deref(installConfig.Arbiter.Replicas, 0) != 0 {
-			controlPlaneTopology = configv1.HighlyAvailableArbiterMode
-		}
-	} else if controlPlaneReplicas < 3 {
+	switch controlPlaneReplicas {
+	case 1:
 		controlPlaneTopology = configv1.SingleReplicaTopologyMode
+	case 2:
+		controlPlaneTopology = configv1.DualReplicaTopologyMode
+	default:
+		controlPlaneTopology = configv1.HighlyAvailableTopologyMode
+	}
+
+	if controlPlaneReplicas >= 2 && installConfig.Arbiter != nil && ptr.Deref(installConfig.Arbiter.Replicas, 0) != 0 {
+		controlPlaneTopology = configv1.HighlyAvailableArbiterMode
 	}
 
 	numOfWorkers := int64(0)
@@ -33,7 +34,7 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 		// Two node deployments with 0 workers mean that the control plane nodes are treated as workers
 		// in that situation we have decided that it is appropriate to set the infrastructureTopology to HA.
 		// All other configuration for different worker count are respected with the original intention.
-		if controlPlaneReplicas == 2 {
+		if controlPlaneTopology == configv1.DualReplicaTopologyMode || controlPlaneTopology == configv1.HighlyAvailableArbiterMode {
 			infrastructureTopology = configv1.HighlyAvailableTopologyMode
 		} else {
 			infrastructureTopology = controlPlaneTopology
