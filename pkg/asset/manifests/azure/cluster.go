@@ -83,10 +83,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// CAPZ enables NAT Gateways by default, so we are using this hack to disable
 	// nat gateways when we prefer to use load balancers for node egress.
 	nodeSubnetID := ""
-	if installConfig.Config.Platform.Azure.OutboundType != azure.NatGatewayOutboundType {
-		// Because the node subnet does not already exist, we are using an arbitrary value.
-		// We could populate this with the proper subnet ID in the case of BYO VNET, but
-		// the value currently has no practical effect.
+	switch installConfig.Config.Platform.Azure.OutboundType {
+	// Because the node subnet does not already exist, we are using an arbitrary value.
+	// We could populate this with the proper subnet ID in the case of BYO VNET, but
+	// the value currently has no practical effect.
+	case azure.LoadbalancerOutboundType:
+		fallthrough
+	case azure.UserDefinedRoutingOutboundType:
 		nodeSubnetID = "UNKNOWN"
 	}
 
@@ -104,6 +107,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		Name:             clusterID.InfraID,
 		FrontendIPsCount: to.Ptr(int32(1)),
 	}
+
 	if installConfig.Config.Platform.Azure.OutboundType == azure.UserDefinedRoutingOutboundType {
 		controlPlaneOutboundLB = nil
 	}
@@ -175,6 +179,60 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	azEnv := string(installConfig.Azure.CloudName)
 
+	subnetSpec := capz.Subnets{
+		{
+			SubnetClassSpec: capz.SubnetClassSpec{
+				Name: controlPlaneSubnet,
+				Role: capz.SubnetControlPlane,
+				CIDRBlocks: []string{
+					subnets[0].String(),
+				},
+			},
+			SecurityGroup: securityGroup,
+		},
+	}
+
+	computeSubnetSpec := []capz.SubnetSpec{{
+		ID: nodeSubnetID,
+		SubnetClassSpec: capz.SubnetClassSpec{
+			Name: computeSubnet,
+			Role: capz.SubnetNode,
+			CIDRBlocks: []string{
+				subnets[1].String(),
+			},
+		},
+		SecurityGroup: securityGroup,
+	}}
+
+	if installConfig.Config.Azure.OutboundType == azure.NATGatewaySingleZoneOutboundType {
+		computeSubnetSpec[0].NatGateway = capz.NatGateway{
+			NatGatewayClassSpec: capz.NatGatewayClassSpec{Name: fmt.Sprintf("%s-natgw", clusterID.InfraID)},
+		}
+	} else if installConfig.Config.Azure.OutboundType == azure.NatGatewayMultiZoneOutboundType {
+		computeSubnetSpec = []capz.SubnetSpec{}
+		for _, spec := range installConfig.Config.Azure.NatGatewaySpec {
+			computeSubnetSpec = append(computeSubnetSpec, capz.SubnetSpec{
+				ID: "UNKNOWN",
+				SubnetClassSpec: capz.SubnetClassSpec{
+					Name: computeSubnet,
+					Role: capz.SubnetNode,
+					CIDRBlocks: []string{
+						spec.Subnet,
+					},
+				},
+				NatGateway: capz.NatGateway{
+					NatGatewayIP: capz.PublicIPSpec{
+						Name:    spec.Name,
+						DNSName: spec.IPDNSName,
+					},
+					NatGatewayClassSpec: capz.NatGatewayClassSpec{Name: spec.Name},
+				},
+				SecurityGroup: securityGroup,
+			})
+		}
+	}
+
+	subnetSpec = append(subnetSpec, computeSubnetSpec...)
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -214,29 +272,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				},
 				APIServerLB:            &apiServerLB,
 				ControlPlaneOutboundLB: controlPlaneOutboundLB,
-				Subnets: capz.Subnets{
-					{
-						SubnetClassSpec: capz.SubnetClassSpec{
-							Name: controlPlaneSubnet,
-							Role: capz.SubnetControlPlane,
-							CIDRBlocks: []string{
-								subnets[0].String(),
-							},
-						},
-						SecurityGroup: securityGroup,
-					},
-					{
-						ID: nodeSubnetID,
-						SubnetClassSpec: capz.SubnetClassSpec{
-							Name: computeSubnet,
-							Role: capz.SubnetNode,
-							CIDRBlocks: []string{
-								subnets[1].String(),
-							},
-						},
-						SecurityGroup: securityGroup,
-					},
-				},
+				Subnets:                subnetSpec,
 			},
 		},
 	}
