@@ -37,7 +37,8 @@ func getDNSZoneName(ctx context.Context, ic *installconfig.InstallConfig, isPubl
 		domain = ic.Config.BaseDomain
 	}
 
-	zone, err := client.GetDNSZone(cctx, ic.Config.GCP.ProjectID, domain, isPublic)
+	project := manifests.GetProjectForDNSZones(ic)
+	zone, err := client.GetDNSZone(cctx, project, domain, isPublic)
 	if err != nil {
 		return "", fmt.Errorf("failed to get dns zone name: %w", err)
 	}
@@ -67,15 +68,16 @@ func createRecordSets(ctx context.Context, ic *installconfig.InstallConfig, clus
 	if err != nil {
 		return nil, err
 	}
-	privateZoneName, err := manifests.GetGCPPrivateZoneName(ctx, client, ic, clusterID)
+	privateZoneName, _, err := manifests.GetGCPPrivateZoneName(ctx, client, ic, clusterID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find gcp private dns zone: %w", err)
 	}
+	project := manifests.GetProjectForDNSZones(ic)
 
 	records := []recordSet{
 		{
 			// api_internal
-			projectID: ic.Config.GCP.ProjectID,
+			projectID: project,
 			zoneName:  privateZoneName,
 			record: &dns.ResourceRecordSet{
 				Name:    fmt.Sprintf("api-int.%s.", ic.Config.ClusterDomain()),
@@ -86,7 +88,7 @@ func createRecordSets(ctx context.Context, ic *installconfig.InstallConfig, clus
 		},
 		{
 			// api_external_internal_zone
-			projectID: ic.Config.GCP.ProjectID,
+			projectID: project,
 			zoneName:  privateZoneName,
 			record: &dns.ResourceRecordSet{
 				Name:    fmt.Sprintf("api.%s.", ic.Config.ClusterDomain()),
@@ -104,7 +106,7 @@ func createRecordSets(ctx context.Context, ic *installconfig.InstallConfig, clus
 		}
 
 		apiRecord := recordSet{
-			projectID: ic.Config.GCP.ProjectID,
+			projectID: project,
 			zoneName:  existingPublicZoneName,
 			record: &dns.ResourceRecordSet{
 				Name:    fmt.Sprintf("api.%s.", ic.Config.ClusterDomain()),
@@ -157,15 +159,19 @@ func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConf
 		return err
 	}
 
-	defaultPrivateZoneID := fmt.Sprintf("%s-private-zone", clusterID)
-	// A shared VPC install allows a user to preconfigure a private zone. If there is a private zone found, do not create a new one.
-	if privateZoneID, err := manifests.GetGCPPrivateZoneName(ctx, client, ic, clusterID); err != nil {
-		return fmt.Errorf("failed to get GCP private zone: %w", err)
-	} else if privateZoneID != defaultPrivateZoneID {
-		// skip if the private zone is attached to the network for the install
-		logrus.Debugf("found private zone %s, skipping creation of private zone", privateZoneID)
-		return nil
+	privateZoneID := fmt.Sprintf("%s-private-zone", clusterID)
+	if ic.Config.GCP.NetworkProjectID != "" {
+		privateZoneName, shouldCreateZone, err := manifests.GetGCPPrivateZoneName(ctx, client, ic, clusterID)
+		if err != nil {
+			logrus.Debugf("failed to find gcp private zone name: %v", err)
+		}
+		if !shouldCreateZone {
+			logrus.Debugf("found private zone %s, skipping creation of private zone", privateZoneID)
+			return nil
+		}
+		privateZoneID = privateZoneName
 	}
+	logrus.Debugf("creating private zone %s", privateZoneID)
 
 	// TODO: use the opts for the service to restrict scopes see google.golang.org/api/option.WithScopes
 	ssn, err := gcpic.GetSession(ctx)
@@ -178,7 +184,7 @@ func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConf
 	}
 
 	managedZone := &dns.ManagedZone{
-		Name:        defaultPrivateZoneID,
+		Name:        privateZoneID,
 		Description: resourceDescription,
 		DnsName:     fmt.Sprintf("%s.", ic.Config.ClusterDomain()),
 		Visibility:  "private",
@@ -195,7 +201,8 @@ func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConf
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
 	defer cancel()
 
-	if _, err = dnsService.ManagedZones.Create(ic.Config.GCP.ProjectID, managedZone).Context(ctx).Do(); err != nil {
+	project := manifests.GetProjectForDNSZones(ic)
+	if _, err = dnsService.ManagedZones.Create(project, managedZone).Context(ctx).Do(); err != nil {
 		return fmt.Errorf("failed to create private managed zone: %w", err)
 	}
 
