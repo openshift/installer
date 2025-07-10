@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"sort"
 	"strings"
 
@@ -23,6 +22,7 @@ type BoolConfig struct {
 	NoPrefixComments bool `yaml:"no-prefixComments"`
 	Debug            bool `yaml:"-"`
 	SkipGenerated    bool `yaml:"skipGenerated"`
+	SkipVendor       bool `yaml:"skipVendor"`
 	CustomOrder      bool `yaml:"customOrder"`
 }
 
@@ -72,19 +72,18 @@ func (g YamlConfig) Parse() (*Config, error) {
 	return &Config{g.Cfg, sections, sectionSeparators}, nil
 }
 
-func InitializeGciConfigFromYAML(filePath string) (*Config, error) {
+func ParseConfig(in string) (*Config, error) {
 	config := YamlConfig{}
-	yamlData, err := ioutil.ReadFile(filePath)
+
+	err := yaml.Unmarshal([]byte(in), &config)
 	if err != nil {
 		return nil, err
 	}
-	err = yaml.Unmarshal(yamlData, &config)
-	if err != nil {
-		return nil, err
-	}
+
 	gciCfg, err := config.Parse()
 	if err != nil {
 		return nil, err
 	}
+
 	return gciCfg, nil
 }
