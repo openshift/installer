@@ -421,6 +421,10 @@ func (o *ClusterUninstaller) handleOperation(ctx context.Context, op *compute.Op
 		return fmt.Errorf("failed to delete %s %s: %w", resourceType, item.name, err)
 	}
 
+	if op == nil {
+		return fmt.Errorf("failed to handle operation that does not exist for resource %s", item.name)
+	}
+
 	// wait for operation to complete before checking any further
 	op, err = o.waitFor(ctx, op, item)
 
