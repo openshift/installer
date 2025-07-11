@@ -20,17 +20,10 @@ const (
 	MastersFileName = ".masters.json"
 )
 
-type bridge struct {
-	Name string
-	MAC  string
-}
-
 type baremetalConfig struct {
 	ClusterID         string
-	BootstrapOSImage  string
 	IgnitionBootstrap string
-	LibvirtURI        string
-	Bridges           []bridge
+	baremetaltfvars.Config
 }
 
 func getConfig(dir string) (baremetalConfig, error) {
@@ -57,27 +50,7 @@ func getConfig(dir string) (baremetalConfig, error) {
 		return config, fmt.Errorf("failed to load cluster terraform variables: %w", err)
 	}
 
-	config.BootstrapOSImage = clusterBaremetalConfig.BootstrapOSImage
-	config.LibvirtURI = clusterBaremetalConfig.LibvirtURI
-
-	for _, bridgeMap := range clusterBaremetalConfig.Bridges {
-		mac, ok := bridgeMap["mac"]
-		if !ok {
-			return config, fmt.Errorf("bridge is missng a MAC address")
-		}
-
-		name, ok := bridgeMap["name"]
-		if !ok {
-			return config, fmt.Errorf("bridge is missng a name")
-		}
-
-		b := bridge{
-			Name: name,
-			MAC:  mac,
-		}
-
-		config.Bridges = append(config.Bridges, b)
-	}
+	config.Config = *clusterBaremetalConfig
 
 	return config, nil
 }
