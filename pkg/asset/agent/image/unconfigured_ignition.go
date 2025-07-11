@@ -194,6 +194,9 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		interactiveUIFile := ignition.FileFromString("/etc/assisted/interactive-ui", "root", 0644, "")
 		config.Storage.Files = append(config.Storage.Files, interactiveUIFile)
 
+		// Enable the agent-extract-tui service
+		enabledServices = append(enabledServices, "agent-extract-tui.service")
+
 		// Let's disable the assisted-service authentication.
 		agentTemplateData.AuthType = "none"
 	}
