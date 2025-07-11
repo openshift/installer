@@ -261,6 +261,16 @@ func (o *ClusterUninstaller) isClusterResource(name string) bool {
 	return strings.HasPrefix(name, o.ClusterID+"-")
 }
 
+func (o *ClusterUninstaller) isOwnedResource(labels map[string]string) bool {
+	if labels == nil {
+		return false
+	}
+	if val, ok := labels[fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID)]; ok {
+		return val == "owned"
+	}
+	return false
+}
+
 func (o *ClusterUninstaller) clusterIDFilter() string {
 	return fmt.Sprintf("name : \"%s-*\"", o.ClusterID)
 }
