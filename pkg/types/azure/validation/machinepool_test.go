@@ -93,6 +93,12 @@ func TestValidateMachinePool(t *testing.T) {
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
 				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
 						DataDisks: []capz.DataDisk{{
@@ -105,13 +111,20 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.Lun: Required value: etcd must have lun id$`,
+			expected: `^test-path\.dataDisks\.Lun: Required value: \"etcd\" must have lun id$`,
 		},
 		{
 			name:          "lun id must be below 64",
 			azurePlatform: azure.PublicCloud,
+
 			pool: &types.MachinePool{
 				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
 						DataDisks: []capz.DataDisk{{
@@ -124,13 +137,44 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.Lun: Required value: etcd must have lun id between 0 and 63$`,
+			expected: `^test-path\.dataDisks\.Lun: Required value: \"etcd\" must have lun id between 0 and 63$`,
+		},
+		{
+			name:          "multiple disk and setup PlatformDiskID does not match",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "foo",
+							DiskSizeGB:  1,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+						},
+						},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.NameSuffix: Invalid value: \"foo\": does not match etcd PlatformDiskID \"etcd\"$`,
 		},
 		{
 			name:          "lun id must be above 0",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
 				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
 						DataDisks: []capz.DataDisk{{
@@ -143,13 +187,19 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.Lun: Required value: etcd must have lun id between 0 and 63$`,
+			expected: `^test-path\.dataDisks\.Lun: Required value: \"etcd\" must have lun id between 0 and 63$`,
 		},
 		{
 			name:          "multiple disk size must be greater than zero",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
 				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
 						DataDisks: []capz.DataDisk{{
