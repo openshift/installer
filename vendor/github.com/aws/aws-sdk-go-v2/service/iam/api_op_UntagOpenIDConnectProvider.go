@@ -11,11 +11,10 @@ import (
 )
 
 // Removes the specified tags from the specified OpenID Connect (OIDC)-compatible
-// identity provider in IAM. For more information about OIDC providers, see [About web identity federation]. For
-// more information about tagging, see [Tagging IAM resources]in the IAM User Guide.
-//
-// [Tagging IAM resources]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html
-// [About web identity federation]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_oidc.html
+// identity provider in IAM. For more information about OIDC providers, see About
+// web identity federation (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_oidc.html)
+// . For more information about tagging, see Tagging IAM resources (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
+// in the IAM User Guide.
 func (c *Client) UntagOpenIDConnectProvider(ctx context.Context, params *UntagOpenIDConnectProviderInput, optFns ...func(*Options)) (*UntagOpenIDConnectProviderOutput, error) {
 	if params == nil {
 		params = &UntagOpenIDConnectProviderInput{}
@@ -33,13 +32,10 @@ func (c *Client) UntagOpenIDConnectProvider(ctx context.Context, params *UntagOp
 
 type UntagOpenIDConnectProviderInput struct {
 
-	// The ARN of the OIDC provider in IAM from which you want to remove tags.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The ARN of the OIDC provider in IAM from which you want to remove tags. This
+	// parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex) )
+	// a string of characters consisting of upper and lowercase alphanumeric characters
+	// with no spaces. You can also include any of the following characters: _+=,.@-
 	//
 	// This member is required.
 	OpenIDConnectProviderArn *string
@@ -103,9 +99,6 @@ func (c *Client) addOperationUntagOpenIDConnectProviderMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -116,15 +109,6 @@ func (c *Client) addOperationUntagOpenIDConnectProviderMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUntagOpenIDConnectProviderValidationMiddleware(stack); err != nil {
@@ -146,18 +130,6 @@ func (c *Client) addOperationUntagOpenIDConnectProviderMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

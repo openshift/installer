@@ -12,12 +12,11 @@ import (
 )
 
 // Lists information about the IAM OpenID Connect (OIDC) provider resource objects
-// defined in the Amazon Web Services account.
-//
-// IAM resource-listing operations return a subset of the available attributes for
-// the resource. For example, this operation does not return tags, even though they
-// are an attribute of the returned object. To view all of the information for an
-// OIDC provider, see GetOpenIDConnectProvider.
+// defined in the Amazon Web Services account. IAM resource-listing operations
+// return a subset of the available attributes for the resource. For example, this
+// operation does not return tags, even though they are an attribute of the
+// returned object. To view all of the information for an OIDC provider, see
+// GetOpenIDConnectProvider .
 func (c *Client) ListOpenIDConnectProviders(ctx context.Context, params *ListOpenIDConnectProvidersInput, optFns ...func(*Options)) (*ListOpenIDConnectProvidersOutput, error) {
 	if params == nil {
 		params = &ListOpenIDConnectProvidersInput{}
@@ -93,9 +92,6 @@ func (c *Client) addOperationListOpenIDConnectProvidersMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -106,15 +102,6 @@ func (c *Client) addOperationListOpenIDConnectProvidersMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListOpenIDConnectProviders(options.Region), middleware.Before); err != nil {
@@ -133,18 +120,6 @@ func (c *Client) addOperationListOpenIDConnectProvidersMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

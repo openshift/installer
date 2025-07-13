@@ -11,17 +11,14 @@ import (
 )
 
 // Removes the specified IAM role from the specified Amazon EC2 instance profile.
-//
 // Make sure that you do not have any Amazon EC2 instances running with the role
 // you are about to remove from the instance profile. Removing a role from an
 // instance profile that is associated with a running instance might break any
-// applications running on the instance.
-//
-// For more information about roles, see [IAM roles] in the IAM User Guide. For more
-// information about instance profiles, see [Using instance profiles]in the IAM User Guide.
-//
-// [Using instance profiles]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
-// [IAM roles]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html
+// applications running on the instance. For more information about roles, see IAM
+// roles (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) in the
+// IAM User Guide. For more information about instance profiles, see Using
+// instance profiles (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html)
+// in the IAM User Guide.
 func (c *Client) RemoveRoleFromInstanceProfile(ctx context.Context, params *RemoveRoleFromInstanceProfileInput, optFns ...func(*Options)) (*RemoveRoleFromInstanceProfileOutput, error) {
 	if params == nil {
 		params = &RemoveRoleFromInstanceProfileInput{}
@@ -39,24 +36,18 @@ func (c *Client) RemoveRoleFromInstanceProfile(ctx context.Context, params *Remo
 
 type RemoveRoleFromInstanceProfileInput struct {
 
-	// The name of the instance profile to update.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The name of the instance profile to update. This parameter allows (through its
+	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
+	// consisting of upper and lowercase alphanumeric characters with no spaces. You
+	// can also include any of the following characters: _+=,.@-
 	//
 	// This member is required.
 	InstanceProfileName *string
 
-	// The name of the role to remove.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The name of the role to remove. This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
+	// ) a string of characters consisting of upper and lowercase alphanumeric
+	// characters with no spaces. You can also include any of the following characters:
+	// _+=,.@-
 	//
 	// This member is required.
 	RoleName *string
@@ -114,9 +105,6 @@ func (c *Client) addOperationRemoveRoleFromInstanceProfileMiddlewares(stack *mid
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -127,15 +115,6 @@ func (c *Client) addOperationRemoveRoleFromInstanceProfileMiddlewares(stack *mid
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRemoveRoleFromInstanceProfileValidationMiddleware(stack); err != nil {
@@ -157,18 +136,6 @@ func (c *Client) addOperationRemoveRoleFromInstanceProfileMiddlewares(stack *mid
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

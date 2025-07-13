@@ -14,16 +14,13 @@ import (
 // Retrieves the user name for the specified IAM user. A login profile is created
 // when you create a password for the user to access the Amazon Web Services
 // Management Console. If the user does not exist or does not have a password, the
-// operation returns a 404 ( NoSuchEntity ) error.
-//
-// If you create an IAM user with access to the console, the CreateDate reflects
-// the date you created the initial password for the user.
-//
-// If you create an IAM user with programmatic access, and then later add a
-// password for the user to access the Amazon Web Services Management Console, the
-// CreateDate reflects the initial password creation date. A user with programmatic
-// access does not have a login profile unless you create a password for the user
-// to access the Amazon Web Services Management Console.
+// operation returns a 404 ( NoSuchEntity ) error. If you create an IAM user with
+// access to the console, the CreateDate reflects the date you created the initial
+// password for the user. If you create an IAM user with programmatic access, and
+// then later add a password for the user to access the Amazon Web Services
+// Management Console, the CreateDate reflects the initial password creation date.
+// A user with programmatic access does not have a login profile unless you create
+// a password for the user to access the Amazon Web Services Management Console.
 func (c *Client) GetLoginProfile(ctx context.Context, params *GetLoginProfileInput, optFns ...func(*Options)) (*GetLoginProfileOutput, error) {
 	if params == nil {
 		params = &GetLoginProfileInput{}
@@ -41,18 +38,12 @@ func (c *Client) GetLoginProfile(ctx context.Context, params *GetLoginProfileInp
 
 type GetLoginProfileInput struct {
 
-	// The name of the user whose login profile you want to retrieve.
+	// The name of the user whose login profile you want to retrieve. This parameter
+	// allows (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
+	// of characters consisting of upper and lowercase alphanumeric characters with no
+	// spaces. You can also include any of the following characters: _+=,.@-
 	//
-	// This parameter is optional. If no user name is included, it defaults to the
-	// principal making the request. When you make this request with root user
-	// credentials, you must use an [AssumeRoot]session to omit the user name.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [AssumeRoot]: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoot.html
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// This member is required.
 	UserName *string
 
 	noSmithyDocumentSerde
@@ -115,9 +106,6 @@ func (c *Client) addOperationGetLoginProfileMiddlewares(stack *middleware.Stack,
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -130,13 +118,7 @@ func (c *Client) addOperationGetLoginProfileMiddlewares(stack *middleware.Stack,
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
+	if err = addOpGetLoginProfileValidationMiddleware(stack); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetLoginProfile(options.Region), middleware.Before); err != nil {
@@ -155,18 +137,6 @@ func (c *Client) addOperationGetLoginProfileMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

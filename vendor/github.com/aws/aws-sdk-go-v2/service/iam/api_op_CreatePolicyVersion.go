@@ -14,15 +14,12 @@ import (
 // Creates a new version of the specified managed policy. To update a managed
 // policy, you create a new policy version. A managed policy can have up to five
 // versions. If the policy has five versions, you must delete an existing version
-// using DeletePolicyVersionbefore you create a new version.
-//
-// Optionally, you can set the new version as the policy's default version. The
-// default version is the version that is in effect for the IAM users, groups, and
-// roles to which the policy is attached.
-//
-// For more information about managed policy versions, see [Versioning for managed policies] in the IAM User Guide.
-//
-// [Versioning for managed policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-versions.html
+// using DeletePolicyVersion before you create a new version. Optionally, you can
+// set the new version as the policy's default version. The default version is the
+// version that is in effect for the IAM users, groups, and roles to which the
+// policy is attached. For more information about managed policy versions, see
+// Versioning for managed policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-versions.html)
+// in the IAM User Guide.
 func (c *Client) CreatePolicyVersion(ctx context.Context, params *CreatePolicyVersionInput, optFns ...func(*Options)) (*CreatePolicyVersionOutput, error) {
 	if params == nil {
 		params = &CreatePolicyVersionInput{}
@@ -41,55 +38,38 @@ func (c *Client) CreatePolicyVersion(ctx context.Context, params *CreatePolicyVe
 type CreatePolicyVersionInput struct {
 
 	// The Amazon Resource Name (ARN) of the IAM policy to which you want to add a new
-	// version.
-	//
-	// For more information about ARNs, see [Amazon Resource Names (ARNs)] in the Amazon Web Services General
-	// Reference.
-	//
-	// [Amazon Resource Names (ARNs)]: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
+	// version. For more information about ARNs, see Amazon Resource Names (ARNs) (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
+	// in the Amazon Web Services General Reference.
 	//
 	// This member is required.
 	PolicyArn *string
 
 	// The JSON policy document that you want to use as the content for this new
-	// version of the policy.
-	//
-	// You must provide policies in JSON format in IAM. However, for CloudFormation
-	// templates formatted in YAML, you can provide the policy in JSON or YAML format.
-	// CloudFormation always converts a YAML policy to JSON format before submitting it
-	// to IAM.
-	//
-	// The maximum length of the policy document that you can pass in this operation,
-	// including whitespace, is listed below. To view the maximum character counts of a
-	// managed policy with no whitespaces, see [IAM and STS character quotas].
-	//
-	// The [regex pattern] used to validate this parameter is a string of characters consisting of
-	// the following:
-	//
+	// version of the policy. You must provide policies in JSON format in IAM. However,
+	// for CloudFormation templates formatted in YAML, you can provide the policy in
+	// JSON or YAML format. CloudFormation always converts a YAML policy to JSON format
+	// before submitting it to IAM. The maximum length of the policy document that you
+	// can pass in this operation, including whitespace, is listed below. To view the
+	// maximum character counts of a managed policy with no whitespaces, see IAM and
+	// STS character quotas (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html#reference_iam-quotas-entity-length)
+	// . The regex pattern (http://wikipedia.org/wiki/regex) used to validate this
+	// parameter is a string of characters consisting of the following:
 	//   - Any printable ASCII character ranging from the space character ( \u0020 )
 	//   through the end of the ASCII character range
-	//
 	//   - The printable characters in the Basic Latin and Latin-1 Supplement
 	//   character set (through \u00FF )
-	//
 	//   - The special characters tab ( \u0009 ), line feed ( \u000A ), and carriage
 	//   return ( \u000D )
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
-	// [IAM and STS character quotas]: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html#reference_iam-quotas-entity-length
 	//
 	// This member is required.
 	PolicyDocument *string
 
-	// Specifies whether to set this version as the policy's default version.
-	//
-	// When this parameter is true , the new policy version becomes the operative
-	// version. That is, it becomes the version that is in effect for the IAM users,
-	// groups, and roles that the policy is attached to.
-	//
-	// For more information about managed policy versions, see [Versioning for managed policies] in the IAM User Guide.
-	//
-	// [Versioning for managed policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-versions.html
+	// Specifies whether to set this version as the policy's default version. When
+	// this parameter is true , the new policy version becomes the operative version.
+	// That is, it becomes the version that is in effect for the IAM users, groups, and
+	// roles that the policy is attached to. For more information about managed policy
+	// versions, see Versioning for managed policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-versions.html)
+	// in the IAM User Guide.
 	SetAsDefault bool
 
 	noSmithyDocumentSerde
@@ -150,9 +130,6 @@ func (c *Client) addOperationCreatePolicyVersionMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -163,15 +140,6 @@ func (c *Client) addOperationCreatePolicyVersionMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreatePolicyVersionValidationMiddleware(stack); err != nil {
@@ -193,18 +161,6 @@ func (c *Client) addOperationCreatePolicyVersionMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

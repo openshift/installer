@@ -15,11 +15,8 @@ import (
 // resource-listing operations return a subset of the available attributes for the
 // resource. For example, this operation does not return tags, even though they are
 // an attribute of the returned object. To view all of the information for a SAML
-// provider, see GetSAMLProvider.
-//
-// This operation requires [Signature Version 4].
-//
-// [Signature Version 4]: https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html
+// provider, see GetSAMLProvider . This operation requires Signature Version 4 (https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)
+// .
 func (c *Client) ListSAMLProviders(ctx context.Context, params *ListSAMLProvidersInput, optFns ...func(*Options)) (*ListSAMLProvidersOutput, error) {
 	if params == nil {
 		params = &ListSAMLProvidersInput{}
@@ -95,9 +92,6 @@ func (c *Client) addOperationListSAMLProvidersMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -108,15 +102,6 @@ func (c *Client) addOperationListSAMLProvidersMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListSAMLProviders(options.Region), middleware.Before); err != nil {
@@ -135,18 +120,6 @@ func (c *Client) addOperationListSAMLProvidersMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

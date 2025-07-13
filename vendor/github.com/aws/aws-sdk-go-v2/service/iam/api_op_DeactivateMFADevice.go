@@ -11,12 +11,10 @@ import (
 )
 
 // Deactivates the specified MFA device and removes it from association with the
-// user name for which it was originally enabled.
-//
-// For more information about creating and working with virtual MFA devices, see [Enabling a virtual multi-factor authentication (MFA) device]
+// user name for which it was originally enabled. For more information about
+// creating and working with virtual MFA devices, see Enabling a virtual
+// multi-factor authentication (MFA) device (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_VirtualMFA.html)
 // in the IAM User Guide.
-//
-// [Enabling a virtual multi-factor authentication (MFA) device]: https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_VirtualMFA.html
 func (c *Client) DeactivateMFADevice(ctx context.Context, params *DeactivateMFADeviceInput, optFns ...func(*Options)) (*DeactivateMFADeviceOutput, error) {
 	if params == nil {
 		params = &DeactivateMFADeviceInput{}
@@ -35,29 +33,20 @@ func (c *Client) DeactivateMFADevice(ctx context.Context, params *DeactivateMFAD
 type DeactivateMFADeviceInput struct {
 
 	// The serial number that uniquely identifies the MFA device. For virtual MFA
-	// devices, the serial number is the device ARN.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: =,.@:/-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// devices, the serial number is the device ARN. This parameter allows (through its
+	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
+	// consisting of upper and lowercase alphanumeric characters with no spaces. You
+	// can also include any of the following characters: =,.@:/-
 	//
 	// This member is required.
 	SerialNumber *string
 
-	// The name of the user whose MFA device you want to deactivate.
+	// The name of the user whose MFA device you want to deactivate. This parameter
+	// allows (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
+	// of characters consisting of upper and lowercase alphanumeric characters with no
+	// spaces. You can also include any of the following characters: _+=,.@-
 	//
-	// This parameter is optional. If no user name is included, it defaults to the
-	// principal making the request. When you make this request with root user
-	// credentials, you must use an [AssumeRoot]session to omit the user name.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [AssumeRoot]: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoot.html
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// This member is required.
 	UserName *string
 
 	noSmithyDocumentSerde
@@ -113,9 +102,6 @@ func (c *Client) addOperationDeactivateMFADeviceMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,15 +112,6 @@ func (c *Client) addOperationDeactivateMFADeviceMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeactivateMFADeviceValidationMiddleware(stack); err != nil {
@@ -156,18 +133,6 @@ func (c *Client) addOperationDeactivateMFADeviceMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

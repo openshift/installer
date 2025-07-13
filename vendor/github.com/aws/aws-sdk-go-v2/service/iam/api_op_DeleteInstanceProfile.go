@@ -11,16 +11,12 @@ import (
 )
 
 // Deletes the specified instance profile. The instance profile must not have an
-// associated role.
-//
-// Make sure that you do not have any Amazon EC2 instances running with the
-// instance profile you are about to delete. Deleting a role or instance profile
-// that is associated with a running instance will break any applications running
-// on the instance.
-//
-// For more information about instance profiles, see [Using instance profiles] in the IAM User Guide.
-//
-// [Using instance profiles]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
+// associated role. Make sure that you do not have any Amazon EC2 instances running
+// with the instance profile you are about to delete. Deleting a role or instance
+// profile that is associated with a running instance will break any applications
+// running on the instance. For more information about instance profiles, see
+// Using instance profiles (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html)
+// in the IAM User Guide.
 func (c *Client) DeleteInstanceProfile(ctx context.Context, params *DeleteInstanceProfileInput, optFns ...func(*Options)) (*DeleteInstanceProfileOutput, error) {
 	if params == nil {
 		params = &DeleteInstanceProfileInput{}
@@ -38,13 +34,10 @@ func (c *Client) DeleteInstanceProfile(ctx context.Context, params *DeleteInstan
 
 type DeleteInstanceProfileInput struct {
 
-	// The name of the instance profile to delete.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The name of the instance profile to delete. This parameter allows (through its
+	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
+	// consisting of upper and lowercase alphanumeric characters with no spaces. You
+	// can also include any of the following characters: _+=,.@-
 	//
 	// This member is required.
 	InstanceProfileName *string
@@ -102,9 +95,6 @@ func (c *Client) addOperationDeleteInstanceProfileMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,15 +105,6 @@ func (c *Client) addOperationDeleteInstanceProfileMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteInstanceProfileValidationMiddleware(stack); err != nil {
@@ -145,18 +126,6 @@ func (c *Client) addOperationDeleteInstanceProfileMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

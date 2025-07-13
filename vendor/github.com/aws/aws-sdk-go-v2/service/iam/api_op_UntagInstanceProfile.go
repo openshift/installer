@@ -11,9 +11,8 @@ import (
 )
 
 // Removes the specified tags from the IAM instance profile. For more information
-// about tagging, see [Tagging IAM resources]in the IAM User Guide.
-//
-// [Tagging IAM resources]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html
+// about tagging, see Tagging IAM resources (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
+// in the IAM User Guide.
 func (c *Client) UntagInstanceProfile(ctx context.Context, params *UntagInstanceProfileInput, optFns ...func(*Options)) (*UntagInstanceProfileOutput, error) {
 	if params == nil {
 		params = &UntagInstanceProfileInput{}
@@ -31,13 +30,10 @@ func (c *Client) UntagInstanceProfile(ctx context.Context, params *UntagInstance
 
 type UntagInstanceProfileInput struct {
 
-	// The name of the IAM instance profile from which you want to remove tags.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The name of the IAM instance profile from which you want to remove tags. This
+	// parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex) )
+	// a string of characters consisting of upper and lowercase alphanumeric characters
+	// with no spaces. You can also include any of the following characters: _+=,.@-
 	//
 	// This member is required.
 	InstanceProfileName *string
@@ -101,9 +97,6 @@ func (c *Client) addOperationUntagInstanceProfileMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,15 +107,6 @@ func (c *Client) addOperationUntagInstanceProfileMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUntagInstanceProfileValidationMiddleware(stack); err != nil {
@@ -144,18 +128,6 @@ func (c *Client) addOperationUntagInstanceProfileMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

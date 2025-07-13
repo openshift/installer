@@ -10,17 +10,13 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Lists the names of the inline policies embedded in the specified IAM user.
-//
-// An IAM user can also have managed policies attached to it. To list the managed
-// policies that are attached to a user, use ListAttachedUserPolicies. For more information about
-// policies, see [Managed policies and inline policies]in the IAM User Guide.
-//
-// You can paginate the results using the MaxItems and Marker parameters. If there
-// are no inline policies embedded with the specified user, the operation returns
-// an empty list.
-//
-// [Managed policies and inline policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html
+// Lists the names of the inline policies embedded in the specified IAM user. An
+// IAM user can also have managed policies attached to it. To list the managed
+// policies that are attached to a user, use ListAttachedUserPolicies . For more
+// information about policies, see Managed policies and inline policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html)
+// in the IAM User Guide. You can paginate the results using the MaxItems and
+// Marker parameters. If there are no inline policies embedded with the specified
+// user, the operation returns an empty list.
 func (c *Client) ListUserPolicies(ctx context.Context, params *ListUserPoliciesInput, optFns ...func(*Options)) (*ListUserPoliciesOutput, error) {
 	if params == nil {
 		params = &ListUserPoliciesInput{}
@@ -38,13 +34,10 @@ func (c *Client) ListUserPolicies(ctx context.Context, params *ListUserPoliciesI
 
 type ListUserPoliciesInput struct {
 
-	// The name of the user to list policies for.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The name of the user to list policies for. This parameter allows (through its
+	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
+	// consisting of upper and lowercase alphanumeric characters with no spaces. You
+	// can also include any of the following characters: _+=,.@-
 	//
 	// This member is required.
 	UserName *string
@@ -57,13 +50,11 @@ type ListUserPoliciesInput struct {
 
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true .
-	//
-	// If you do not include this parameter, the number of items defaults to 100. Note
-	// that IAM might return fewer results, even when there are more results available.
-	// In that case, the IsTruncated response element returns true , and Marker
-	// contains a value to include in the subsequent call that tells the service where
-	// to continue from.
+	// specify, the IsTruncated response element is true . If you do not include this
+	// parameter, the number of items defaults to 100. Note that IAM might return fewer
+	// results, even when there are more results available. In that case, the
+	// IsTruncated response element returns true , and Marker contains a value to
+	// include in the subsequent call that tells the service where to continue from.
 	MaxItems *int32
 
 	noSmithyDocumentSerde
@@ -138,9 +129,6 @@ func (c *Client) addOperationListUserPoliciesMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -151,15 +139,6 @@ func (c *Client) addOperationListUserPoliciesMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListUserPoliciesValidationMiddleware(stack); err != nil {
@@ -183,32 +162,26 @@ func (c *Client) addOperationListUserPoliciesMiddlewares(stack *middleware.Stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// ListUserPoliciesAPIClient is a client that implements the ListUserPolicies
+// operation.
+type ListUserPoliciesAPIClient interface {
+	ListUserPolicies(context.Context, *ListUserPoliciesInput, ...func(*Options)) (*ListUserPoliciesOutput, error)
+}
+
+var _ ListUserPoliciesAPIClient = (*Client)(nil)
 
 // ListUserPoliciesPaginatorOptions is the paginator options for ListUserPolicies
 type ListUserPoliciesPaginatorOptions struct {
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true .
-	//
-	// If you do not include this parameter, the number of items defaults to 100. Note
-	// that IAM might return fewer results, even when there are more results available.
-	// In that case, the IsTruncated response element returns true , and Marker
-	// contains a value to include in the subsequent call that tells the service where
-	// to continue from.
+	// specify, the IsTruncated response element is true . If you do not include this
+	// parameter, the number of items defaults to 100. Note that IAM might return fewer
+	// results, even when there are more results available. In that case, the
+	// IsTruncated response element returns true , and Marker contains a value to
+	// include in the subsequent call that tells the service where to continue from.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -269,9 +242,6 @@ func (p *ListUserPoliciesPaginator) NextPage(ctx context.Context, optFns ...func
 	}
 	params.MaxItems = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.ListUserPolicies(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -290,14 +260,6 @@ func (p *ListUserPoliciesPaginator) NextPage(ctx context.Context, optFns ...func
 
 	return result, nil
 }
-
-// ListUserPoliciesAPIClient is a client that implements the ListUserPolicies
-// operation.
-type ListUserPoliciesAPIClient interface {
-	ListUserPolicies(context.Context, *ListUserPoliciesInput, ...func(*Options)) (*ListUserPoliciesOutput, error)
-}
-
-var _ ListUserPoliciesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListUserPolicies(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

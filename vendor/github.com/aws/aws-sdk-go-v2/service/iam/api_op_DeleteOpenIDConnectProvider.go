@@ -11,13 +11,11 @@ import (
 )
 
 // Deletes an OpenID Connect identity provider (IdP) resource object in IAM.
-//
 // Deleting an IAM OIDC provider resource does not update any roles that reference
 // the provider as a principal in their trust policies. Any attempt to assume a
-// role that references a deleted provider fails.
-//
-// This operation is idempotent; it does not fail or return an error if you call
-// the operation for a provider that does not exist.
+// role that references a deleted provider fails. This operation is idempotent; it
+// does not fail or return an error if you call the operation for a provider that
+// does not exist.
 func (c *Client) DeleteOpenIDConnectProvider(ctx context.Context, params *DeleteOpenIDConnectProviderInput, optFns ...func(*Options)) (*DeleteOpenIDConnectProviderOutput, error) {
 	if params == nil {
 		params = &DeleteOpenIDConnectProviderInput{}
@@ -37,7 +35,7 @@ type DeleteOpenIDConnectProviderInput struct {
 
 	// The Amazon Resource Name (ARN) of the IAM OpenID Connect provider resource
 	// object to delete. You can get a list of OpenID Connect provider resource ARNs by
-	// using the ListOpenIDConnectProvidersoperation.
+	// using the ListOpenIDConnectProviders operation.
 	//
 	// This member is required.
 	OpenIDConnectProviderArn *string
@@ -95,9 +93,6 @@ func (c *Client) addOperationDeleteOpenIDConnectProviderMiddlewares(stack *middl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -108,15 +103,6 @@ func (c *Client) addOperationDeleteOpenIDConnectProviderMiddlewares(stack *middl
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteOpenIDConnectProviderValidationMiddleware(stack); err != nil {
@@ -138,18 +124,6 @@ func (c *Client) addOperationDeleteOpenIDConnectProviderMiddlewares(stack *middl
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -16,9 +16,8 @@ import (
 // service-specific credentials returned by this operation are used only for
 // authenticating the IAM user to a specific service. For more information about
 // using service-specific credentials to authenticate to an Amazon Web Services
-// service, see [Set up service-specific credentials]in the CodeCommit User Guide.
-//
-// [Set up service-specific credentials]: https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-gc.html
+// service, see Set up service-specific credentials (https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-gc.html)
+// in the CodeCommit User Guide.
 func (c *Client) ListServiceSpecificCredentials(ctx context.Context, params *ListServiceSpecificCredentialsInput, optFns ...func(*Options)) (*ListServiceSpecificCredentialsOutput, error) {
 	if params == nil {
 		params = &ListServiceSpecificCredentialsInput{}
@@ -43,13 +42,10 @@ type ListServiceSpecificCredentialsInput struct {
 
 	// The name of the user whose service-specific credentials you want information
 	// about. If this value is not specified, then the operation assumes the user whose
-	// credentials are used to call the operation.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// credentials are used to call the operation. This parameter allows (through its
+	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
+	// consisting of upper and lowercase alphanumeric characters with no spaces. You
+	// can also include any of the following characters: _+=,.@-
 	UserName *string
 
 	noSmithyDocumentSerde
@@ -110,9 +106,6 @@ func (c *Client) addOperationListServiceSpecificCredentialsMiddlewares(stack *mi
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,15 +116,6 @@ func (c *Client) addOperationListServiceSpecificCredentialsMiddlewares(stack *mi
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListServiceSpecificCredentials(options.Region), middleware.Before); err != nil {
@@ -150,18 +134,6 @@ func (c *Client) addOperationListServiceSpecificCredentialsMiddlewares(stack *mi
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
