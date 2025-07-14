@@ -11,13 +11,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Retrieves information about the specified server certificate stored in IAM.
-//
-// For more information about working with server certificates, see [Working with server certificates] in the IAM
-// User Guide. This topic includes a list of Amazon Web Services services that can
-// use the server certificates that you manage with IAM.
-//
-// [Working with server certificates]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html
+// Retrieves information about the specified server certificate stored in IAM. For
+// more information about working with server certificates, see Working with
+// server certificates (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html)
+// in the IAM User Guide. This topic includes a list of Amazon Web Services
+// services that can use the server certificates that you manage with IAM.
 func (c *Client) GetServerCertificate(ctx context.Context, params *GetServerCertificateInput, optFns ...func(*Options)) (*GetServerCertificateOutput, error) {
 	if params == nil {
 		params = &GetServerCertificateInput{}
@@ -35,13 +33,10 @@ func (c *Client) GetServerCertificate(ctx context.Context, params *GetServerCert
 
 type GetServerCertificateInput struct {
 
-	// The name of the server certificate you want to retrieve information about.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The name of the server certificate you want to retrieve information about. This
+	// parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex) )
+	// a string of characters consisting of upper and lowercase alphanumeric characters
+	// with no spaces. You can also include any of the following characters: _+=,.@-
 	//
 	// This member is required.
 	ServerCertificateName *string
@@ -106,9 +101,6 @@ func (c *Client) addOperationGetServerCertificateMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -119,15 +111,6 @@ func (c *Client) addOperationGetServerCertificateMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetServerCertificateValidationMiddleware(stack); err != nil {
@@ -149,18 +132,6 @@ func (c *Client) addOperationGetServerCertificateMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

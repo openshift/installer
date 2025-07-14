@@ -10,15 +10,13 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes the specified version from the specified managed policy.
-//
-// You cannot delete the default version from a policy using this operation. To
-// delete the default version from a policy, use DeletePolicy. To find out which version of a
-// policy is marked as the default version, use ListPolicyVersions.
-//
-// For information about versions for managed policies, see [Versioning for managed policies] in the IAM User Guide.
-//
-// [Versioning for managed policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-versions.html
+// Deletes the specified version from the specified managed policy. You cannot
+// delete the default version from a policy using this operation. To delete the
+// default version from a policy, use DeletePolicy . To find out which version of a
+// policy is marked as the default version, use ListPolicyVersions . For
+// information about versions for managed policies, see Versioning for managed
+// policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-versions.html)
+// in the IAM User Guide.
 func (c *Client) DeletePolicyVersion(ctx context.Context, params *DeletePolicyVersionInput, optFns ...func(*Options)) (*DeletePolicyVersionOutput, error) {
 	if params == nil {
 		params = &DeletePolicyVersionInput{}
@@ -37,26 +35,18 @@ func (c *Client) DeletePolicyVersion(ctx context.Context, params *DeletePolicyVe
 type DeletePolicyVersionInput struct {
 
 	// The Amazon Resource Name (ARN) of the IAM policy from which you want to delete
-	// a version.
-	//
-	// For more information about ARNs, see [Amazon Resource Names (ARNs)] in the Amazon Web Services General
-	// Reference.
-	//
-	// [Amazon Resource Names (ARNs)]: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
+	// a version. For more information about ARNs, see Amazon Resource Names (ARNs) (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
+	// in the Amazon Web Services General Reference.
 	//
 	// This member is required.
 	PolicyArn *string
 
-	// The policy version to delete.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters that consists of
-	// the lowercase letter 'v' followed by one or two digits, and optionally followed
-	// by a period '.' and a string of letters and digits.
-	//
-	// For more information about managed policy versions, see [Versioning for managed policies] in the IAM User Guide.
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
-	// [Versioning for managed policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-versions.html
+	// The policy version to delete. This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
+	// ) a string of characters that consists of the lowercase letter 'v' followed by
+	// one or two digits, and optionally followed by a period '.' and a string of
+	// letters and digits. For more information about managed policy versions, see
+	// Versioning for managed policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-versions.html)
+	// in the IAM User Guide.
 	//
 	// This member is required.
 	VersionId *string
@@ -114,9 +104,6 @@ func (c *Client) addOperationDeletePolicyVersionMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -127,15 +114,6 @@ func (c *Client) addOperationDeletePolicyVersionMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeletePolicyVersionValidationMiddleware(stack); err != nil {
@@ -157,18 +135,6 @@ func (c *Client) addOperationDeletePolicyVersionMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

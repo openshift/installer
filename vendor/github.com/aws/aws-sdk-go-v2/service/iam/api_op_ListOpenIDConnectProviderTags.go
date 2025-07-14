@@ -13,12 +13,9 @@ import (
 
 // Lists the tags that are attached to the specified OpenID Connect
 // (OIDC)-compatible identity provider. The returned list of tags is sorted by tag
-// key. For more information, see [About web identity federation].
-//
-// For more information about tagging, see [Tagging IAM resources] in the IAM User Guide.
-//
-// [Tagging IAM resources]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html
-// [About web identity federation]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_oidc.html
+// key. For more information, see About web identity federation (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_oidc.html)
+// . For more information about tagging, see Tagging IAM resources (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
+// in the IAM User Guide.
 func (c *Client) ListOpenIDConnectProviderTags(ctx context.Context, params *ListOpenIDConnectProviderTagsInput, optFns ...func(*Options)) (*ListOpenIDConnectProviderTagsOutput, error) {
 	if params == nil {
 		params = &ListOpenIDConnectProviderTagsInput{}
@@ -37,13 +34,10 @@ func (c *Client) ListOpenIDConnectProviderTags(ctx context.Context, params *List
 type ListOpenIDConnectProviderTagsInput struct {
 
 	// The ARN of the OpenID Connect (OIDC) identity provider whose tags you want to
-	// see.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// see. This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
+	// ) a string of characters consisting of upper and lowercase alphanumeric
+	// characters with no spaces. You can also include any of the following characters:
+	// _+=,.@-
 	//
 	// This member is required.
 	OpenIDConnectProviderArn *string
@@ -56,13 +50,11 @@ type ListOpenIDConnectProviderTagsInput struct {
 
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true .
-	//
-	// If you do not include this parameter, the number of items defaults to 100. Note
-	// that IAM might return fewer results, even when there are more results available.
-	// In that case, the IsTruncated response element returns true , and Marker
-	// contains a value to include in the subsequent call that tells the service where
-	// to continue from.
+	// specify, the IsTruncated response element is true . If you do not include this
+	// parameter, the number of items defaults to 100. Note that IAM might return fewer
+	// results, even when there are more results available. In that case, the
+	// IsTruncated response element returns true , and Marker contains a value to
+	// include in the subsequent call that tells the service where to continue from.
 	MaxItems *int32
 
 	noSmithyDocumentSerde
@@ -139,9 +131,6 @@ func (c *Client) addOperationListOpenIDConnectProviderTagsMiddlewares(stack *mid
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -152,15 +141,6 @@ func (c *Client) addOperationListOpenIDConnectProviderTagsMiddlewares(stack *mid
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListOpenIDConnectProviderTagsValidationMiddleware(stack); err != nil {
@@ -184,33 +164,27 @@ func (c *Client) addOperationListOpenIDConnectProviderTagsMiddlewares(stack *mid
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// ListOpenIDConnectProviderTagsAPIClient is a client that implements the
+// ListOpenIDConnectProviderTags operation.
+type ListOpenIDConnectProviderTagsAPIClient interface {
+	ListOpenIDConnectProviderTags(context.Context, *ListOpenIDConnectProviderTagsInput, ...func(*Options)) (*ListOpenIDConnectProviderTagsOutput, error)
+}
+
+var _ ListOpenIDConnectProviderTagsAPIClient = (*Client)(nil)
 
 // ListOpenIDConnectProviderTagsPaginatorOptions is the paginator options for
 // ListOpenIDConnectProviderTags
 type ListOpenIDConnectProviderTagsPaginatorOptions struct {
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true .
-	//
-	// If you do not include this parameter, the number of items defaults to 100. Note
-	// that IAM might return fewer results, even when there are more results available.
-	// In that case, the IsTruncated response element returns true , and Marker
-	// contains a value to include in the subsequent call that tells the service where
-	// to continue from.
+	// specify, the IsTruncated response element is true . If you do not include this
+	// parameter, the number of items defaults to 100. Note that IAM might return fewer
+	// results, even when there are more results available. In that case, the
+	// IsTruncated response element returns true , and Marker contains a value to
+	// include in the subsequent call that tells the service where to continue from.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -273,9 +247,6 @@ func (p *ListOpenIDConnectProviderTagsPaginator) NextPage(ctx context.Context, o
 	}
 	params.MaxItems = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.ListOpenIDConnectProviderTags(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -294,14 +265,6 @@ func (p *ListOpenIDConnectProviderTagsPaginator) NextPage(ctx context.Context, o
 
 	return result, nil
 }
-
-// ListOpenIDConnectProviderTagsAPIClient is a client that implements the
-// ListOpenIDConnectProviderTags operation.
-type ListOpenIDConnectProviderTagsAPIClient interface {
-	ListOpenIDConnectProviderTags(context.Context, *ListOpenIDConnectProviderTagsInput, ...func(*Options)) (*ListOpenIDConnectProviderTagsOutput, error)
-}
-
-var _ ListOpenIDConnectProviderTagsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListOpenIDConnectProviderTags(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

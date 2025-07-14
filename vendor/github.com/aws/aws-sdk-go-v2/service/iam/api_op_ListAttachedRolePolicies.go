@@ -11,19 +11,15 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Lists all managed policies that are attached to the specified IAM role.
-//
-// An IAM role can also have inline policies embedded with it. To list the inline
-// policies for a role, use ListRolePolicies. For information about policies, see [Managed policies and inline policies] in the IAM User
-// Guide.
-//
-// You can paginate the results using the MaxItems and Marker parameters. You can
-// use the PathPrefix parameter to limit the list of policies to only those
-// matching the specified path prefix. If there are no policies attached to the
-// specified role (or none that match the specified path prefix), the operation
-// returns an empty list.
-//
-// [Managed policies and inline policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html
+// Lists all managed policies that are attached to the specified IAM role. An IAM
+// role can also have inline policies embedded with it. To list the inline policies
+// for a role, use ListRolePolicies . For information about policies, see Managed
+// policies and inline policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html)
+// in the IAM User Guide. You can paginate the results using the MaxItems and
+// Marker parameters. You can use the PathPrefix parameter to limit the list of
+// policies to only those matching the specified path prefix. If there are no
+// policies attached to the specified role (or none that match the specified path
+// prefix), the operation returns an empty list.
 func (c *Client) ListAttachedRolePolicies(ctx context.Context, params *ListAttachedRolePoliciesInput, optFns ...func(*Options)) (*ListAttachedRolePoliciesOutput, error) {
 	if params == nil {
 		params = &ListAttachedRolePoliciesInput{}
@@ -42,12 +38,10 @@ func (c *Client) ListAttachedRolePolicies(ctx context.Context, params *ListAttac
 type ListAttachedRolePoliciesInput struct {
 
 	// The name (friendly name, not ARN) of the role to list attached policies for.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
+	// ) a string of characters consisting of upper and lowercase alphanumeric
+	// characters with no spaces. You can also include any of the following characters:
+	// _+=,.@-
 	//
 	// This member is required.
 	RoleName *string
@@ -60,25 +54,20 @@ type ListAttachedRolePoliciesInput struct {
 
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true .
-	//
-	// If you do not include this parameter, the number of items defaults to 100. Note
-	// that IAM might return fewer results, even when there are more results available.
-	// In that case, the IsTruncated response element returns true , and Marker
-	// contains a value to include in the subsequent call that tells the service where
-	// to continue from.
+	// specify, the IsTruncated response element is true . If you do not include this
+	// parameter, the number of items defaults to 100. Note that IAM might return fewer
+	// results, even when there are more results available. In that case, the
+	// IsTruncated response element returns true , and Marker contains a value to
+	// include in the subsequent call that tells the service where to continue from.
 	MaxItems *int32
 
 	// The path prefix for filtering the results. This parameter is optional. If it is
-	// not included, it defaults to a slash (/), listing all policies.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of
-	// either a forward slash (/) by itself or a string that must begin and end with
-	// forward slashes. In addition, it can contain any ASCII character from the ! (
-	// \u0021 ) through the DEL character ( \u007F ), including most punctuation
-	// characters, digits, and upper and lowercased letters.
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// not included, it defaults to a slash (/), listing all policies. This parameter
+	// allows (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
+	// of characters consisting of either a forward slash (/) by itself or a string
+	// that must begin and end with forward slashes. In addition, it can contain any
+	// ASCII character from the ! ( \u0021 ) through the DEL character ( \u007F ),
+	// including most punctuation characters, digits, and upper and lowercased letters.
 	PathPrefix *string
 
 	noSmithyDocumentSerde
@@ -151,9 +140,6 @@ func (c *Client) addOperationListAttachedRolePoliciesMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -164,15 +150,6 @@ func (c *Client) addOperationListAttachedRolePoliciesMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListAttachedRolePoliciesValidationMiddleware(stack); err != nil {
@@ -196,33 +173,27 @@ func (c *Client) addOperationListAttachedRolePoliciesMiddlewares(stack *middlewa
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// ListAttachedRolePoliciesAPIClient is a client that implements the
+// ListAttachedRolePolicies operation.
+type ListAttachedRolePoliciesAPIClient interface {
+	ListAttachedRolePolicies(context.Context, *ListAttachedRolePoliciesInput, ...func(*Options)) (*ListAttachedRolePoliciesOutput, error)
+}
+
+var _ ListAttachedRolePoliciesAPIClient = (*Client)(nil)
 
 // ListAttachedRolePoliciesPaginatorOptions is the paginator options for
 // ListAttachedRolePolicies
 type ListAttachedRolePoliciesPaginatorOptions struct {
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true .
-	//
-	// If you do not include this parameter, the number of items defaults to 100. Note
-	// that IAM might return fewer results, even when there are more results available.
-	// In that case, the IsTruncated response element returns true , and Marker
-	// contains a value to include in the subsequent call that tells the service where
-	// to continue from.
+	// specify, the IsTruncated response element is true . If you do not include this
+	// parameter, the number of items defaults to 100. Note that IAM might return fewer
+	// results, even when there are more results available. In that case, the
+	// IsTruncated response element returns true , and Marker contains a value to
+	// include in the subsequent call that tells the service where to continue from.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -284,9 +255,6 @@ func (p *ListAttachedRolePoliciesPaginator) NextPage(ctx context.Context, optFns
 	}
 	params.MaxItems = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.ListAttachedRolePolicies(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -305,14 +273,6 @@ func (p *ListAttachedRolePoliciesPaginator) NextPage(ctx context.Context, optFns
 
 	return result, nil
 }
-
-// ListAttachedRolePoliciesAPIClient is a client that implements the
-// ListAttachedRolePolicies operation.
-type ListAttachedRolePoliciesAPIClient interface {
-	ListAttachedRolePolicies(context.Context, *ListAttachedRolePoliciesInput, ...func(*Options)) (*ListAttachedRolePoliciesOutput, error)
-}
-
-var _ ListAttachedRolePoliciesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListAttachedRolePolicies(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

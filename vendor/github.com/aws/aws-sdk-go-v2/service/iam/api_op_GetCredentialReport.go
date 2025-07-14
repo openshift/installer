@@ -12,11 +12,9 @@ import (
 	"time"
 )
 
-//	Retrieves a credential report for the Amazon Web Services account. For more
-//
-// information about the credential report, see [Getting credential reports]in the IAM User Guide.
-//
-// [Getting credential reports]: https://docs.aws.amazon.com/IAM/latest/UserGuide/credential-reports.html
+// Retrieves a credential report for the Amazon Web Services account. For more
+// information about the credential report, see Getting credential reports (https://docs.aws.amazon.com/IAM/latest/UserGuide/credential-reports.html)
+// in the IAM User Guide.
 func (c *Client) GetCredentialReport(ctx context.Context, params *GetCredentialReportInput, optFns ...func(*Options)) (*GetCredentialReportOutput, error) {
 	if params == nil {
 		params = &GetCredentialReportInput{}
@@ -42,9 +40,8 @@ type GetCredentialReportOutput struct {
 	// Contains the credential report. The report is Base64-encoded.
 	Content []byte
 
-	//  The date and time when the credential report was created, in [ISO 8601 date-time format].
-	//
-	// [ISO 8601 date-time format]: http://www.iso.org/iso/iso8601
+	// The date and time when the credential report was created, in ISO 8601 date-time
+	// format (http://www.iso.org/iso/iso8601) .
 	GeneratedTime *time.Time
 
 	// The format (MIME type) of the credential report.
@@ -99,9 +96,6 @@ func (c *Client) addOperationGetCredentialReportMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,15 +106,6 @@ func (c *Client) addOperationGetCredentialReportMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetCredentialReport(options.Region), middleware.Before); err != nil {
@@ -139,18 +124,6 @@ func (c *Client) addOperationGetCredentialReportMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

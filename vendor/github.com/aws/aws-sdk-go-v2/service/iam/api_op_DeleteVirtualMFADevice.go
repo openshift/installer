@@ -10,10 +10,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes a virtual MFA device.
-//
-// You must deactivate a user's virtual MFA device before you can delete it. For
-// information about deactivating MFA devices, see DeactivateMFADevice.
+// Deletes a virtual MFA device. You must deactivate a user's virtual MFA device
+// before you can delete it. For information about deactivating MFA devices, see
+// DeactivateMFADevice .
 func (c *Client) DeleteVirtualMFADevice(ctx context.Context, params *DeleteVirtualMFADeviceInput, optFns ...func(*Options)) (*DeleteVirtualMFADeviceOutput, error) {
 	if params == nil {
 		params = &DeleteVirtualMFADeviceInput{}
@@ -32,13 +31,10 @@ func (c *Client) DeleteVirtualMFADevice(ctx context.Context, params *DeleteVirtu
 type DeleteVirtualMFADeviceInput struct {
 
 	// The serial number that uniquely identifies the MFA device. For virtual MFA
-	// devices, the serial number is the same as the ARN.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: =,.@:/-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// devices, the serial number is the same as the ARN. This parameter allows
+	// (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string of
+	// characters consisting of upper and lowercase alphanumeric characters with no
+	// spaces. You can also include any of the following characters: =,.@:/-
 	//
 	// This member is required.
 	SerialNumber *string
@@ -96,9 +92,6 @@ func (c *Client) addOperationDeleteVirtualMFADeviceMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -109,15 +102,6 @@ func (c *Client) addOperationDeleteVirtualMFADeviceMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteVirtualMFADeviceValidationMiddleware(stack); err != nil {
@@ -139,18 +123,6 @@ func (c *Client) addOperationDeleteVirtualMFADeviceMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

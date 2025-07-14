@@ -14,29 +14,15 @@ import (
 // profile can contain only one role, and this quota cannot be increased. You can
 // remove the existing role and then add a different role to an instance profile.
 // You must then wait for the change to appear across all of Amazon Web Services
-// because of [eventual consistency]. To force the change, you must [disassociate the instance profile] and then [associate the instance profile], or you can stop your
-// instance and then restart it.
-//
-// The caller of this operation must be granted the PassRole permission on the IAM
-// role by a permissions policy.
-//
-// When using the [iam:AssociatedResourceArn] condition in a policy to restrict the [PassRole] IAM action, special
-// considerations apply if the policy is intended to define access for the
-// AddRoleToInstanceProfile action. In this case, you cannot specify a Region or
-// instance ID in the EC2 instance ARN. The ARN value must be
-// arn:aws:ec2:*:CallerAccountId:instance/* . Using any other ARN value may lead to
-// unexpected evaluation results.
-//
-// For more information about roles, see [IAM roles] in the IAM User Guide. For more
-// information about instance profiles, see [Using instance profiles]in the IAM User Guide.
-//
-// [disassociate the instance profile]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateIamInstanceProfile.html
-// [associate the instance profile]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateIamInstanceProfile.html
-// [Using instance profiles]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
-// [PassRole]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_passrole.html
-// [iam:AssociatedResourceArn]: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#available-keys-for-iam
-// [eventual consistency]: https://en.wikipedia.org/wiki/Eventual_consistency
-// [IAM roles]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html
+// because of eventual consistency (https://en.wikipedia.org/wiki/Eventual_consistency)
+// . To force the change, you must disassociate the instance profile (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateIamInstanceProfile.html)
+// and then associate the instance profile (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AssociateIamInstanceProfile.html)
+// , or you can stop your instance and then restart it. The caller of this
+// operation must be granted the PassRole permission on the IAM role by a
+// permissions policy. For more information about roles, see IAM roles (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html)
+// in the IAM User Guide. For more information about instance profiles, see Using
+// instance profiles (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html)
+// in the IAM User Guide.
 func (c *Client) AddRoleToInstanceProfile(ctx context.Context, params *AddRoleToInstanceProfileInput, optFns ...func(*Options)) (*AddRoleToInstanceProfileOutput, error) {
 	if params == nil {
 		params = &AddRoleToInstanceProfileInput{}
@@ -54,24 +40,18 @@ func (c *Client) AddRoleToInstanceProfile(ctx context.Context, params *AddRoleTo
 
 type AddRoleToInstanceProfileInput struct {
 
-	// The name of the instance profile to update.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The name of the instance profile to update. This parameter allows (through its
+	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
+	// consisting of upper and lowercase alphanumeric characters with no spaces. You
+	// can also include any of the following characters: _+=,.@-
 	//
 	// This member is required.
 	InstanceProfileName *string
 
-	// The name of the role to add.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The name of the role to add. This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
+	// ) a string of characters consisting of upper and lowercase alphanumeric
+	// characters with no spaces. You can also include any of the following characters:
+	// _+=,.@-
 	//
 	// This member is required.
 	RoleName *string
@@ -129,9 +109,6 @@ func (c *Client) addOperationAddRoleToInstanceProfileMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -142,15 +119,6 @@ func (c *Client) addOperationAddRoleToInstanceProfileMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAddRoleToInstanceProfileValidationMiddleware(stack); err != nil {
@@ -172,18 +140,6 @@ func (c *Client) addOperationAddRoleToInstanceProfileMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

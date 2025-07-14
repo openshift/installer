@@ -13,11 +13,9 @@ import (
 
 // Lists the instance profiles that have the specified associated IAM role. If
 // there are none, the operation returns an empty list. For more information about
-// instance profiles, go to [Using instance profiles]in the IAM User Guide.
-//
-// You can paginate the results using the MaxItems and Marker parameters.
-//
-// [Using instance profiles]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
+// instance profiles, go to Using instance profiles (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html)
+// in the IAM User Guide. You can paginate the results using the MaxItems and
+// Marker parameters.
 func (c *Client) ListInstanceProfilesForRole(ctx context.Context, params *ListInstanceProfilesForRoleInput, optFns ...func(*Options)) (*ListInstanceProfilesForRoleOutput, error) {
 	if params == nil {
 		params = &ListInstanceProfilesForRoleInput{}
@@ -35,13 +33,10 @@ func (c *Client) ListInstanceProfilesForRole(ctx context.Context, params *ListIn
 
 type ListInstanceProfilesForRoleInput struct {
 
-	// The name of the role to list instance profiles for.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The name of the role to list instance profiles for. This parameter allows
+	// (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string of
+	// characters consisting of upper and lowercase alphanumeric characters with no
+	// spaces. You can also include any of the following characters: _+=,.@-
 	//
 	// This member is required.
 	RoleName *string
@@ -54,13 +49,11 @@ type ListInstanceProfilesForRoleInput struct {
 
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true .
-	//
-	// If you do not include this parameter, the number of items defaults to 100. Note
-	// that IAM might return fewer results, even when there are more results available.
-	// In that case, the IsTruncated response element returns true , and Marker
-	// contains a value to include in the subsequent call that tells the service where
-	// to continue from.
+	// specify, the IsTruncated response element is true . If you do not include this
+	// parameter, the number of items defaults to 100. Note that IAM might return fewer
+	// results, even when there are more results available. In that case, the
+	// IsTruncated response element returns true , and Marker contains a value to
+	// include in the subsequent call that tells the service where to continue from.
 	MaxItems *int32
 
 	noSmithyDocumentSerde
@@ -135,9 +128,6 @@ func (c *Client) addOperationListInstanceProfilesForRoleMiddlewares(stack *middl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -148,15 +138,6 @@ func (c *Client) addOperationListInstanceProfilesForRoleMiddlewares(stack *middl
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListInstanceProfilesForRoleValidationMiddleware(stack); err != nil {
@@ -180,33 +161,27 @@ func (c *Client) addOperationListInstanceProfilesForRoleMiddlewares(stack *middl
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// ListInstanceProfilesForRoleAPIClient is a client that implements the
+// ListInstanceProfilesForRole operation.
+type ListInstanceProfilesForRoleAPIClient interface {
+	ListInstanceProfilesForRole(context.Context, *ListInstanceProfilesForRoleInput, ...func(*Options)) (*ListInstanceProfilesForRoleOutput, error)
+}
+
+var _ ListInstanceProfilesForRoleAPIClient = (*Client)(nil)
 
 // ListInstanceProfilesForRolePaginatorOptions is the paginator options for
 // ListInstanceProfilesForRole
 type ListInstanceProfilesForRolePaginatorOptions struct {
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true .
-	//
-	// If you do not include this parameter, the number of items defaults to 100. Note
-	// that IAM might return fewer results, even when there are more results available.
-	// In that case, the IsTruncated response element returns true , and Marker
-	// contains a value to include in the subsequent call that tells the service where
-	// to continue from.
+	// specify, the IsTruncated response element is true . If you do not include this
+	// parameter, the number of items defaults to 100. Note that IAM might return fewer
+	// results, even when there are more results available. In that case, the
+	// IsTruncated response element returns true , and Marker contains a value to
+	// include in the subsequent call that tells the service where to continue from.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -269,9 +244,6 @@ func (p *ListInstanceProfilesForRolePaginator) NextPage(ctx context.Context, opt
 	}
 	params.MaxItems = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.ListInstanceProfilesForRole(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -290,14 +262,6 @@ func (p *ListInstanceProfilesForRolePaginator) NextPage(ctx context.Context, opt
 
 	return result, nil
 }
-
-// ListInstanceProfilesForRoleAPIClient is a client that implements the
-// ListInstanceProfilesForRole operation.
-type ListInstanceProfilesForRoleAPIClient interface {
-	ListInstanceProfilesForRole(context.Context, *ListInstanceProfilesForRoleInput, ...func(*Options)) (*ListInstanceProfilesForRoleOutput, error)
-}
-
-var _ ListInstanceProfilesForRoleAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListInstanceProfilesForRole(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

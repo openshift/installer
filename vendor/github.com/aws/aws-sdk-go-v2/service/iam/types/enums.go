@@ -12,32 +12,12 @@ const (
 
 // Values returns all known values for AccessAdvisorUsageGranularityType. Note
 // that this can be expanded in the future, and so it is only as up to date as the
-// client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
 func (AccessAdvisorUsageGranularityType) Values() []AccessAdvisorUsageGranularityType {
 	return []AccessAdvisorUsageGranularityType{
 		"SERVICE_LEVEL",
 		"ACTION_LEVEL",
-	}
-}
-
-type AssertionEncryptionModeType string
-
-// Enum values for AssertionEncryptionModeType
-const (
-	AssertionEncryptionModeTypeRequired AssertionEncryptionModeType = "Required"
-	AssertionEncryptionModeTypeAllowed  AssertionEncryptionModeType = "Allowed"
-)
-
-// Values returns all known values for AssertionEncryptionModeType. Note that this
-// can be expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
-func (AssertionEncryptionModeType) Values() []AssertionEncryptionModeType {
-	return []AssertionEncryptionModeType{
-		"Required",
-		"Allowed",
 	}
 }
 
@@ -51,9 +31,8 @@ const (
 )
 
 // Values returns all known values for AssignmentStatusType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (AssignmentStatusType) Values() []AssignmentStatusType {
 	return []AssignmentStatusType{
 		"Assigned",
@@ -81,9 +60,8 @@ const (
 )
 
 // Values returns all known values for ContextKeyTypeEnum. Note that this can be
-// expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (ContextKeyTypeEnum) Values() []ContextKeyTypeEnum {
 	return []ContextKeyTypeEnum{
 		"string",
@@ -112,9 +90,8 @@ const (
 )
 
 // Values returns all known values for DeletionTaskStatusType. Note that this can
-// be expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// be expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (DeletionTaskStatusType) Values() []DeletionTaskStatusType {
 	return []DeletionTaskStatusType{
 		"SUCCEEDED",
@@ -133,9 +110,8 @@ const (
 )
 
 // Values returns all known values for EncodingType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (EncodingType) Values() []EncodingType {
 	return []EncodingType{
 		"SSH",
@@ -155,9 +131,8 @@ const (
 )
 
 // Values returns all known values for EntityType. Note that this can be expanded
-// in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (EntityType) Values() []EntityType {
 	return []EntityType{
 		"User",
@@ -165,25 +140,6 @@ func (EntityType) Values() []EntityType {
 		"Group",
 		"LocalManagedPolicy",
 		"AWSManagedPolicy",
-	}
-}
-
-type FeatureType string
-
-// Enum values for FeatureType
-const (
-	FeatureTypeRootCredentialsManagement FeatureType = "RootCredentialsManagement"
-	FeatureTypeRootSessions              FeatureType = "RootSessions"
-)
-
-// Values returns all known values for FeatureType. Note that this can be expanded
-// in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
-func (FeatureType) Values() []FeatureType {
-	return []FeatureType{
-		"RootCredentialsManagement",
-		"RootSessions",
 	}
 }
 
@@ -197,7 +153,6 @@ const (
 
 // Values returns all known values for GlobalEndpointTokenVersion. Note that this
 // can be expanded in the future, and so it is only as up to date as the client.
-//
 // The ordering of this slice is not guaranteed to be stable across updates.
 func (GlobalEndpointTokenVersion) Values() []GlobalEndpointTokenVersion {
 	return []GlobalEndpointTokenVersion{
@@ -216,9 +171,8 @@ const (
 )
 
 // Values returns all known values for JobStatusType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (JobStatusType) Values() []JobStatusType {
 	return []JobStatusType{
 		"IN_PROGRESS",
@@ -236,9 +190,8 @@ const (
 
 // Values returns all known values for PermissionsBoundaryAttachmentType. Note
 // that this can be expanded in the future, and so it is only as up to date as the
-// client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
 func (PermissionsBoundaryAttachmentType) Values() []PermissionsBoundaryAttachmentType {
 	return []PermissionsBoundaryAttachmentType{
 		"PermissionsBoundaryPolicy",
@@ -256,9 +209,8 @@ const (
 
 // Values returns all known values for PolicyEvaluationDecisionType. Note that
 // this can be expanded in the future, and so it is only as up to date as the
-// client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
 func (PolicyEvaluationDecisionType) Values() []PolicyEvaluationDecisionType {
 	return []PolicyEvaluationDecisionType{
 		"allowed",
@@ -277,9 +229,8 @@ const (
 )
 
 // Values returns all known values for PolicyOwnerEntityType. Note that this can
-// be expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// be expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (PolicyOwnerEntityType) Values() []PolicyOwnerEntityType {
 	return []PolicyOwnerEntityType{
 		"USER",
@@ -298,9 +249,8 @@ const (
 )
 
 // Values returns all known values for PolicyScopeType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (PolicyScopeType) Values() []PolicyScopeType {
 	return []PolicyScopeType{
 		"All",
@@ -323,9 +273,8 @@ const (
 )
 
 // Values returns all known values for PolicySourceType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (PolicySourceType) Values() []PolicySourceType {
 	return []PolicySourceType{
 		"user",
@@ -347,9 +296,8 @@ const (
 )
 
 // Values returns all known values for PolicyType. Note that this can be expanded
-// in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (PolicyType) Values() []PolicyType {
 	return []PolicyType{
 		"INLINE",
@@ -366,9 +314,8 @@ const (
 )
 
 // Values returns all known values for PolicyUsageType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (PolicyUsageType) Values() []PolicyUsageType {
 	return []PolicyUsageType{
 		"PermissionsPolicy",
@@ -384,9 +331,8 @@ const (
 )
 
 // Values returns all known values for ReportFormatType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (ReportFormatType) Values() []ReportFormatType {
 	return []ReportFormatType{
 		"text/csv",
@@ -403,9 +349,8 @@ const (
 )
 
 // Values returns all known values for ReportStateType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (ReportStateType) Values() []ReportStateType {
 	return []ReportStateType{
 		"STARTED",
@@ -425,9 +370,8 @@ const (
 )
 
 // Values returns all known values for SortKeyType. Note that this can be expanded
-// in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (SortKeyType) Values() []SortKeyType {
 	return []SortKeyType{
 		"SERVICE_NAMESPACE_ASCENDING",
@@ -446,9 +390,8 @@ const (
 )
 
 // Values returns all known values for StatusType. Note that this can be expanded
-// in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (StatusType) Values() []StatusType {
 	return []StatusType{
 		"Active",
@@ -475,7 +418,6 @@ const (
 	SummaryKeyTypeMFADevicesInUse                   SummaryKeyType = "MFADevicesInUse"
 	SummaryKeyTypeAccountMFAEnabled                 SummaryKeyType = "AccountMFAEnabled"
 	SummaryKeyTypeAccountAccessKeysPresent          SummaryKeyType = "AccountAccessKeysPresent"
-	SummaryKeyTypeAccountPasswordPresent            SummaryKeyType = "AccountPasswordPresent"
 	SummaryKeyTypeAccountSigningCertificatesPresent SummaryKeyType = "AccountSigningCertificatesPresent"
 	SummaryKeyTypeAttachedPoliciesPerGroupQuota     SummaryKeyType = "AttachedPoliciesPerGroupQuota"
 	SummaryKeyTypeAttachedPoliciesPerRoleQuota      SummaryKeyType = "AttachedPoliciesPerRoleQuota"
@@ -490,9 +432,8 @@ const (
 )
 
 // Values returns all known values for SummaryKeyType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client.
-//
-// The ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (SummaryKeyType) Values() []SummaryKeyType {
 	return []SummaryKeyType{
 		"Users",
@@ -510,7 +451,6 @@ func (SummaryKeyType) Values() []SummaryKeyType {
 		"MFADevicesInUse",
 		"AccountMFAEnabled",
 		"AccountAccessKeysPresent",
-		"AccountPasswordPresent",
 		"AccountSigningCertificatesPresent",
 		"AttachedPoliciesPerGroupQuota",
 		"AttachedPoliciesPerRoleQuota",

@@ -11,10 +11,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Use UpdateRole instead.
-//
-// Modifies only the description of a role. This operation performs the same
-// function as the Description parameter in the UpdateRole operation.
+// Use UpdateRole instead. Modifies only the description of a role. This operation
+// performs the same function as the Description parameter in the UpdateRole
+// operation.
 func (c *Client) UpdateRoleDescription(ctx context.Context, params *UpdateRoleDescriptionInput, optFns ...func(*Options)) (*UpdateRoleDescriptionOutput, error) {
 	if params == nil {
 		params = &UpdateRoleDescriptionInput{}
@@ -99,9 +98,6 @@ func (c *Client) addOperationUpdateRoleDescriptionMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,15 +108,6 @@ func (c *Client) addOperationUpdateRoleDescriptionMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUpdateRoleDescriptionValidationMiddleware(stack); err != nil {
@@ -142,18 +129,6 @@ func (c *Client) addOperationUpdateRoleDescriptionMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

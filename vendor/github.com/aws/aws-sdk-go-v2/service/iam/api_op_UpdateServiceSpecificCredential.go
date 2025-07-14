@@ -32,12 +32,9 @@ func (c *Client) UpdateServiceSpecificCredential(ctx context.Context, params *Up
 
 type UpdateServiceSpecificCredentialInput struct {
 
-	// The unique identifier of the service-specific credential.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters that can consist of
-	// any upper or lowercased letter or digit.
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The unique identifier of the service-specific credential. This parameter allows
+	// (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string of
+	// characters that can consist of any upper or lowercased letter or digit.
 	//
 	// This member is required.
 	ServiceSpecificCredentialId *string
@@ -49,13 +46,10 @@ type UpdateServiceSpecificCredentialInput struct {
 
 	// The name of the IAM user associated with the service-specific credential. If
 	// you do not specify this value, then the operation assumes the user whose
-	// credentials are used to call the operation.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// credentials are used to call the operation. This parameter allows (through its
+	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
+	// consisting of upper and lowercase alphanumeric characters with no spaces. You
+	// can also include any of the following characters: _+=,.@-
 	UserName *string
 
 	noSmithyDocumentSerde
@@ -111,9 +105,6 @@ func (c *Client) addOperationUpdateServiceSpecificCredentialMiddlewares(stack *m
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -124,15 +115,6 @@ func (c *Client) addOperationUpdateServiceSpecificCredentialMiddlewares(stack *m
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUpdateServiceSpecificCredentialValidationMiddleware(stack); err != nil {
@@ -154,18 +136,6 @@ func (c *Client) addOperationUpdateServiceSpecificCredentialMiddlewares(stack *m
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

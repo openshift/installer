@@ -14,9 +14,8 @@ import (
 // Retrieves the password policy for the Amazon Web Services account. This tells
 // you the complexity requirements and mandatory rotation periods for the IAM user
 // passwords in your account. For more information about using a password policy,
-// see [Managing an IAM password policy].
-//
-// [Managing an IAM password policy]: https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_ManagingPasswordPolicies.html
+// see Managing an IAM password policy (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_ManagingPasswordPolicies.html)
+// .
 func (c *Client) GetAccountPasswordPolicy(ctx context.Context, params *GetAccountPasswordPolicyInput, optFns ...func(*Options)) (*GetAccountPasswordPolicyOutput, error) {
 	if params == nil {
 		params = &GetAccountPasswordPolicyInput{}
@@ -93,9 +92,6 @@ func (c *Client) addOperationGetAccountPasswordPolicyMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -106,15 +102,6 @@ func (c *Client) addOperationGetAccountPasswordPolicyMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetAccountPasswordPolicy(options.Region), middleware.Before); err != nil {
@@ -133,18 +120,6 @@ func (c *Client) addOperationGetAccountPasswordPolicyMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

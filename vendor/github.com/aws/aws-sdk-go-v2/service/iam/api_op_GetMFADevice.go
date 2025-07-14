@@ -30,9 +30,8 @@ func (c *Client) GetMFADevice(ctx context.Context, params *GetMFADeviceInput, op
 type GetMFADeviceInput struct {
 
 	// Serial number that uniquely identifies the MFA device. For this API, we only
-	// accept FIDO security key [ARNs].
-	//
-	// [ARNs]: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html
+	// accept FIDO security key ARNs (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html)
+	// .
 	//
 	// This member is required.
 	SerialNumber *string
@@ -46,17 +45,15 @@ type GetMFADeviceInput struct {
 type GetMFADeviceOutput struct {
 
 	// Serial number that uniquely identifies the MFA device. For this API, we only
-	// accept FIDO security key [ARNs].
-	//
-	// [ARNs]: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html
+	// accept FIDO security key ARNs (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html)
+	// .
 	//
 	// This member is required.
 	SerialNumber *string
 
 	// The certifications of a specified user's MFA device. We currently provide
-	// FIPS-140-2, FIPS-140-3, and FIDO certification levels obtained from [FIDO Alliance Metadata Service (MDS)].
-	//
-	// [FIDO Alliance Metadata Service (MDS)]: https://fidoalliance.org/metadata/
+	// FIPS-140-2, FIPS-140-3, and FIDO certification levels obtained from FIDO
+	// Alliance Metadata Service (MDS) (https://fidoalliance.org/metadata/) .
 	Certifications map[string]string
 
 	// The date that a specified user's MFA device was first enabled.
@@ -114,9 +111,6 @@ func (c *Client) addOperationGetMFADeviceMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -127,15 +121,6 @@ func (c *Client) addOperationGetMFADeviceMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetMFADeviceValidationMiddleware(stack); err != nil {
@@ -157,18 +142,6 @@ func (c *Client) addOperationGetMFADeviceMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

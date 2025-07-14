@@ -10,12 +10,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Removes the specified managed policy from the specified IAM group.
-//
-// A group can also have inline policies embedded with it. To delete an inline
-// policy, use DeleteGroupPolicy. For information about policies, see [Managed policies and inline policies] in the IAM User Guide.
-//
-// [Managed policies and inline policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html
+// Removes the specified managed policy from the specified IAM group. A group can
+// also have inline policies embedded with it. To delete an inline policy, use
+// DeleteGroupPolicy . For information about policies, see Managed policies and
+// inline policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html)
+// in the IAM User Guide.
 func (c *Client) DetachGroupPolicy(ctx context.Context, params *DetachGroupPolicyInput, optFns ...func(*Options)) (*DetachGroupPolicyOutput, error) {
 	if params == nil {
 		params = &DetachGroupPolicyInput{}
@@ -34,22 +33,17 @@ func (c *Client) DetachGroupPolicy(ctx context.Context, params *DetachGroupPolic
 type DetachGroupPolicyInput struct {
 
 	// The name (friendly name, not ARN) of the IAM group to detach the policy from.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
+	// ) a string of characters consisting of upper and lowercase alphanumeric
+	// characters with no spaces. You can also include any of the following characters:
+	// _+=,.@-
 	//
 	// This member is required.
 	GroupName *string
 
-	// The Amazon Resource Name (ARN) of the IAM policy you want to detach.
-	//
-	// For more information about ARNs, see [Amazon Resource Names (ARNs)] in the Amazon Web Services General
-	// Reference.
-	//
-	// [Amazon Resource Names (ARNs)]: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
+	// The Amazon Resource Name (ARN) of the IAM policy you want to detach. For more
+	// information about ARNs, see Amazon Resource Names (ARNs) (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
+	// in the Amazon Web Services General Reference.
 	//
 	// This member is required.
 	PolicyArn *string
@@ -107,9 +101,6 @@ func (c *Client) addOperationDetachGroupPolicyMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -120,15 +111,6 @@ func (c *Client) addOperationDetachGroupPolicyMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDetachGroupPolicyValidationMiddleware(stack); err != nil {
@@ -150,18 +132,6 @@ func (c *Client) addOperationDetachGroupPolicyMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

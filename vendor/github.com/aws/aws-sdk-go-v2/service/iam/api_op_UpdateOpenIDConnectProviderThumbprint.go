@@ -12,23 +12,20 @@ import (
 
 // Replaces the existing list of server certificate thumbprints associated with an
 // OpenID Connect (OIDC) provider resource object with a new list of thumbprints.
-//
-// The list that you pass with this operation completely replaces the existing
-// list of thumbprints. (The lists are not merged.)
-//
-// Typically, you need to update a thumbprint only when the identity provider
-// certificate changes, which occurs rarely. However, if the provider's certificate
-// does change, any attempt to assume an IAM role that specifies the OIDC provider
-// as a principal fails until the certificate thumbprint is updated.
-//
-// Amazon Web Services secures communication with OIDC identity providers (IdPs)
-// using our library of trusted root certificate authorities (CAs) to verify the
-// JSON Web Key Set (JWKS) endpoint's TLS certificate. If your OIDC IdP relies on a
-// certificate that is not signed by one of these trusted CAs, only then we secure
-// communication using the thumbprints set in the IdP's configuration.
-//
-// Trust for the OIDC provider is derived from the provider certificate and is
-// validated by the thumbprint. Therefore, it is best to limit access to the
+// The list that you pass with this operation completely replaces the existing list
+// of thumbprints. (The lists are not merged.) Typically, you need to update a
+// thumbprint only when the identity provider certificate changes, which occurs
+// rarely. However, if the provider's certificate does change, any attempt to
+// assume an IAM role that specifies the OIDC provider as a principal fails until
+// the certificate thumbprint is updated. Amazon Web Services secures communication
+// with some OIDC identity providers (IdPs) through our library of trusted root
+// certificate authorities (CAs) instead of using a certificate thumbprint to
+// verify your IdP server certificate. In these cases, your legacy thumbprint
+// remains in your configuration, but is no longer used for validation. These OIDC
+// IdPs include Auth0, GitHub, GitLab, Google, and those that use an Amazon S3
+// bucket to host a JSON Web Key Set (JWKS) endpoint. Trust for the OIDC provider
+// is derived from the provider certificate and is validated by the thumbprint.
+// Therefore, it is best to limit access to the
 // UpdateOpenIDConnectProviderThumbprint operation to highly privileged users.
 func (c *Client) UpdateOpenIDConnectProviderThumbprint(ctx context.Context, params *UpdateOpenIDConnectProviderThumbprintInput, optFns ...func(*Options)) (*UpdateOpenIDConnectProviderThumbprintOutput, error) {
 	if params == nil {
@@ -49,18 +46,15 @@ type UpdateOpenIDConnectProviderThumbprintInput struct {
 
 	// The Amazon Resource Name (ARN) of the IAM OIDC provider resource object for
 	// which you want to update the thumbprint. You can get a list of OIDC provider
-	// ARNs by using the ListOpenIDConnectProvidersoperation.
-	//
-	// For more information about ARNs, see [Amazon Resource Names (ARNs)] in the Amazon Web Services General
-	// Reference.
-	//
-	// [Amazon Resource Names (ARNs)]: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
+	// ARNs by using the ListOpenIDConnectProviders operation. For more information
+	// about ARNs, see Amazon Resource Names (ARNs) (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
+	// in the Amazon Web Services General Reference.
 	//
 	// This member is required.
 	OpenIDConnectProviderArn *string
 
 	// A list of certificate thumbprints that are associated with the specified IAM
-	// OpenID Connect provider. For more information, see CreateOpenIDConnectProvider.
+	// OpenID Connect provider. For more information, see CreateOpenIDConnectProvider .
 	//
 	// This member is required.
 	ThumbprintList []string
@@ -118,9 +112,6 @@ func (c *Client) addOperationUpdateOpenIDConnectProviderThumbprintMiddlewares(st
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -131,15 +122,6 @@ func (c *Client) addOperationUpdateOpenIDConnectProviderThumbprintMiddlewares(st
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUpdateOpenIDConnectProviderThumbprintValidationMiddleware(stack); err != nil {
@@ -161,18 +143,6 @@ func (c *Client) addOperationUpdateOpenIDConnectProviderThumbprintMiddlewares(st
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

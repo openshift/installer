@@ -32,12 +32,9 @@ func (c *Client) GetAccessKeyLastUsed(ctx context.Context, params *GetAccessKeyL
 
 type GetAccessKeyLastUsedInput struct {
 
-	// The identifier of an access key.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters that can consist of
-	// any upper or lowercased letter or digit.
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The identifier of an access key. This parameter allows (through its regex
+	// pattern (http://wikipedia.org/wiki/regex) ) a string of characters that can
+	// consist of any upper or lowercased letter or digit.
 	//
 	// This member is required.
 	AccessKeyId *string
@@ -45,8 +42,9 @@ type GetAccessKeyLastUsedInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful GetAccessKeyLastUsed request. It is also returned as a member
-// of the AccessKeyMetaDatastructure returned by the ListAccessKeys action.
+// Contains the response to a successful GetAccessKeyLastUsed request. It is also
+// returned as a member of the AccessKeyMetaData structure returned by the
+// ListAccessKeys action.
 type GetAccessKeyLastUsedOutput struct {
 
 	// Contains information about the last time the access key was used.
@@ -104,9 +102,6 @@ func (c *Client) addOperationGetAccessKeyLastUsedMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -117,15 +112,6 @@ func (c *Client) addOperationGetAccessKeyLastUsedMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetAccessKeyLastUsedValidationMiddleware(stack); err != nil {
@@ -147,18 +133,6 @@ func (c *Client) addOperationGetAccessKeyLastUsedMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

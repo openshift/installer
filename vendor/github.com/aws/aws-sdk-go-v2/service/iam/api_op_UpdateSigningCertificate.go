@@ -13,14 +13,12 @@ import (
 
 // Changes the status of the specified user signing certificate from active to
 // disabled, or vice versa. This operation can be used to disable an IAM user's
-// signing certificate as part of a certificate rotation work flow.
-//
-// If the UserName field is not specified, the user name is determined implicitly
-// based on the Amazon Web Services access key ID used to sign the request. This
-// operation works for access keys under the Amazon Web Services account.
-// Consequently, you can use this operation to manage Amazon Web Services account
-// root user credentials even if the Amazon Web Services account has no associated
-// users.
+// signing certificate as part of a certificate rotation work flow. If the UserName
+// field is not specified, the user name is determined implicitly based on the
+// Amazon Web Services access key ID used to sign the request. This operation works
+// for access keys under the Amazon Web Services account. Consequently, you can use
+// this operation to manage Amazon Web Services account root user credentials even
+// if the Amazon Web Services account has no associated users.
 func (c *Client) UpdateSigningCertificate(ctx context.Context, params *UpdateSigningCertificateInput, optFns ...func(*Options)) (*UpdateSigningCertificateOutput, error) {
 	if params == nil {
 		params = &UpdateSigningCertificateInput{}
@@ -38,30 +36,24 @@ func (c *Client) UpdateSigningCertificate(ctx context.Context, params *UpdateSig
 
 type UpdateSigningCertificateInput struct {
 
-	// The ID of the signing certificate you want to update.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters that can consist of
-	// any upper or lowercased letter or digit.
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The ID of the signing certificate you want to update. This parameter allows
+	// (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string of
+	// characters that can consist of any upper or lowercased letter or digit.
 	//
 	// This member is required.
 	CertificateId *string
 
-	//  The status you want to assign to the certificate. Active means that the
+	// The status you want to assign to the certificate. Active means that the
 	// certificate can be used for programmatic calls to Amazon Web Services Inactive
 	// means that the certificate cannot be used.
 	//
 	// This member is required.
 	Status types.StatusType
 
-	// The name of the IAM user the signing certificate belongs to.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
+	// The name of the IAM user the signing certificate belongs to. This parameter
+	// allows (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
+	// of characters consisting of upper and lowercase alphanumeric characters with no
+	// spaces. You can also include any of the following characters: _+=,.@-
 	UserName *string
 
 	noSmithyDocumentSerde
@@ -117,9 +109,6 @@ func (c *Client) addOperationUpdateSigningCertificateMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -130,15 +119,6 @@ func (c *Client) addOperationUpdateSigningCertificateMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUpdateSigningCertificateValidationMiddleware(stack); err != nil {
@@ -160,18 +140,6 @@ func (c *Client) addOperationUpdateSigningCertificateMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
