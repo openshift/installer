@@ -71,7 +71,16 @@ go mod tidy && go mod vendor
 
 When bumping version of the CAPI provider, some infrastructure CRDs might be updated and we need to ensure the installer is aware of that as it keeps a copy of the CRD in directory `data/data/cluster-api/`.
 
-First, clone the upstream CAPI provider project.
+An easy way to update the infrastructure manifests is to run `./hack/verify-capi-manifests.sh [provider-dir]`:
+
+```bash
+# Update infrastructure manifests for all providers
+./hack/verify-capi-manifests.sh
+# Or update infrastructure manifest for a specific provider (e.g. aws)
+./hack/verify-capi-manifests.sh cluster-api/providers/aws
+```
+
+Another way is to manually do it yourself. First, clone the upstream CAPI provider project.
 
 ```bash
 # We need to have a copy of the CAPI provider project if not yet
