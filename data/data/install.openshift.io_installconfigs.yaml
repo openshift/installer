@@ -7102,15 +7102,15 @@ spec:
                       instance during cluster creation.
                     type: string
                   tgName:
-                    description: TGName is the name of a pre-created TransitGateway
+                    description: tgName is the name or id of a pre-created TransitGateway
                       inside IBM Cloud.
                     type: string
                   userID:
                     description: UserID is the login for the user's IBM Cloud account.
                     type: string
                   vpcName:
-                    description: VPCName is the name of a pre-created VPC inside IBM
-                      Cloud.
+                    description: vpcName is the name or id of a pre-created VPC inside
+                      IBM Cloud.
                     type: string
                   vpcRegion:
                     description: |-

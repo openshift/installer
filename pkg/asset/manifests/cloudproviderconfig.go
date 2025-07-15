@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -263,6 +265,10 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 	case powervstypes.Name:
 		var (
 			accountID, vpcRegion string
+			client               *powervsconfig.Client
+			vpcNameOrID          string
+			vpc                  *vpcv1.VPC
+			vpcExists            = false
 			err                  error
 		)
 
@@ -278,11 +284,25 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			return err
 		}
 
-		vpc := installConfig.Config.PowerVS.VPCName
+		client, err = powervsconfig.NewClient()
+		if err != nil {
+			return err
+		}
+
+		vpcNameOrID = installConfig.Config.PowerVS.VPC
+
+		if vpcNameOrID == "" {
+			vpcNameOrID = fmt.Sprintf("vpc-%s", clusterID.InfraID)
+		} else if vpc, err = client.GetVPCByID(ctx, vpcNameOrID, vpcRegion); err == nil {
+			vpcNameOrID = *vpc.Name
+			vpcExists = true
+		} else if vpc, err = client.GetVPCByName(ctx, vpcNameOrID); err == nil {
+			vpcExists = true
+		}
+
 		vpcSubnets := installConfig.Config.PowerVS.VPCSubnets
-		if vpc == "" {
-			vpc = fmt.Sprintf("vpc-%s", clusterID.InfraID)
-		} else {
+
+		if vpcExists {
 			existingSubnets, err := installConfig.PowerVS.GetVPCSubnets(ctx, vpc)
 			if err != nil {
 				return err
@@ -340,7 +360,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		powervsConfig, err := powervsmanifests.CloudProviderConfig(
 			clusterID.InfraID,
 			accountID,
-			vpc,
+			vpcNameOrID,
 			vpcRegion,
 			installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
 			vpcSubnets,

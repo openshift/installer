@@ -699,7 +699,7 @@ func (o *ClusterUninstaller) destroyTransitGateways() error {
 	)
 
 	// Old style: delete all TGs matching by name
-	if o.TransitGatewayName == "" {
+	if o.TransitGateway == "" {
 		return o.innerDestroyTransitGateways()
 	}
 

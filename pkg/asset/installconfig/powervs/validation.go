@@ -146,7 +146,7 @@ func validatePreExistingPrivateDNS(fldPath *field.Path, client API, ic *types.In
 func ValidateCustomVPCSetup(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 	var vpcRegion = ic.PowerVS.VPCRegion
-	var vpcName = ic.PowerVS.VPCName
+	var vpcName = ic.PowerVS.VPC
 	var err error
 	fldPath := field.NewPath("VPC")
 
@@ -171,43 +171,49 @@ func ValidateCustomVPCSetup(client API, ic *types.InstallConfig) error {
 	return allErrs.ToAggregate()
 }
 
-func findVPCInRegion(client API, name string, region string, path *field.Path) field.ErrorList {
+func findVPCInRegion(client API, vpcNameOrID string, region string, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if name == "" {
+	if vpcNameOrID == "" {
 		return allErrs
 	}
 
-	vpcs, err := client.GetVPCs(context.TODO(), region)
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
+	vpcs, err := client.GetVPCs(ctx, region)
 	if err != nil {
 		return append(allErrs, field.InternalError(path.Child("vpcRegion"), err))
 	}
 
-	found := false
 	for _, vpc := range vpcs {
-		if *vpc.Name == name {
-			found = true
-			break
+		if *vpc.Name == vpcNameOrID || *vpc.ID == vpcNameOrID {
+			return allErrs
 		}
 	}
-	if !found {
-		allErrs = append(allErrs, field.NotFound(path.Child("vpcName"), name))
-	}
+
+	allErrs = append(allErrs, field.NotFound(path.Child("vpcName"), vpcNameOrID))
 
 	return allErrs
 }
 
-func findSubnetInVPC(client API, subnets []string, region string, name string, path *field.Path) field.ErrorList {
+func findSubnetInVPC(client API, subnets []string, region string, vpcNameOrID string, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(subnets) == 0 {
 		return allErrs
 	}
 
-	subnet, err := client.GetSubnetByName(context.TODO(), subnets[0], region)
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
+	subnet, err := client.GetSubnetByName(ctx, subnets[0], region)
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(path.Child("vpcSubnets"), err))
-	} else if *subnet.VPC.Name != name {
+	} else {
+		if *subnet.VPC.Name == vpcNameOrID || *subnet.VPC.ID == vpcNameOrID {
+			return allErrs
+		}
 		allErrs = append(allErrs, field.Invalid(path.Child("vpcSubnets"), nil, "not attached to VPC"))
 	}
 
@@ -327,8 +333,14 @@ func ValidateTransitGateway(client API, ic *types.InstallConfig) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
 	defer cancel()
 
-	if len(ic.PowerVS.TGName) > 0 {
-		id, err = client.TransitGatewayID(ctx, ic.PowerVS.TGName)
+	if len(ic.PowerVS.TransitGateway) > 0 {
+		// Is it a valid id?
+		err = client.TransitGatewayIDValid(ctx, ic.PowerVS.TransitGateway)
+		if err == nil {
+			return nil
+		}
+		// Is it a valid name?
+		id, err = client.TransitGatewayNameToID(ctx, ic.PowerVS.TransitGateway)
 		if err != nil {
 			return err
 		}
