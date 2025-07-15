@@ -3,8 +3,8 @@ Description=DHCP Service for Provisioning Network
 BindsTo=ironic-volume.service
 Requires=build-ironic-env.service provisioning-interface.service
 PartOf=ironic.service
-Wants=network-online.target wait-iptables-init.service
-After=network-online.target ironic-volume.service build-ironic-env.service provisioning-interface.service wait-iptables-init.service
+Wants=network-online.target
+After=network-online.target ironic-volume.service build-ironic-env.service provisioning-interface.service
 
 [Container]
 ContainerName=dnsmasq
