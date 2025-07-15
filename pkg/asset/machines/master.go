@@ -189,7 +189,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 	// Check if SNO topology is supported on this platform
 	if pool.Replicas != nil && *pool.Replicas == 1 {
 		bootstrapInPlace := false
-		if ic.BootstrapInPlace != nil {
+		if ic.BootstrapInPlace != nil && ic.BootstrapInPlace.InstallationDisk != "" {
 			bootstrapInPlace = true
 		}
 		if !supportedSingleNodePlatform(bootstrapInPlace, ic.Platform.Name()) {
@@ -985,7 +985,7 @@ func IsFencingCredentialsFile(filepath string) (bool, error) {
 // a platform.
 func supportedSingleNodePlatform(bootstrapInPlace bool, platformName string) bool {
 	switch platformName {
-	case awstypes.Name, gcptypes.Name, azuretypes.Name, powervstypes.Name, nonetypes.Name:
+	case awstypes.Name, gcptypes.Name, azuretypes.Name, powervstypes.Name, nonetypes.Name, ibmcloudtypes.Name:
 		// Single node OpenShift installations supported without `bootstrapInPlace`
 		return true
 	case externaltypes.Name:
