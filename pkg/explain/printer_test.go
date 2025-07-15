@@ -230,6 +230,10 @@ in a shared VPC scenario when the private hosted zone belongs to a
 different account than the rest of the cluster resources.
 If HostedZoneRole is set, HostedZone must also be set.
 
+    infraStack <string>
+      InfraStack indicates the network stack of the cluster infrastructure.
+If left empty, the installer will figure it out from the machineNetwork.
+
     lbType <string>
       LBType is an optional field to specify a load balancer type.
 When this field is specified, all ingresscontrollers (including the
