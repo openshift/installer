@@ -42,6 +42,7 @@ type API interface {
 	GetMachineTypeWithZones(ctx context.Context, project, region, machineType string) (*compute.MachineType, sets.Set[string], error)
 	GetPublicDomains(ctx context.Context, project string) ([]string, error)
 	GetDNSZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error)
+	GetDNSZoneFromParams(ctx context.Context, params gcptypes.DNSZoneParams) (*dns.ManagedZone, error)
 	GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error)
 	GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error)
 	GetProjects(ctx context.Context) (map[string]string, error)
@@ -260,6 +261,55 @@ func (c *Client) GetDNSZoneByName(ctx context.Context, project, zoneName string)
 	return returnedZone, nil
 }
 
+func formatBaseDomain(domain string) string {
+	if !strings.HasSuffix(domain, ".") {
+		domain = fmt.Sprintf("%s.", domain)
+	}
+	return domain
+}
+
+func getZoneVisibility(isPublic bool) string {
+	visibility := "private"
+	if isPublic {
+		visibility = "public"
+	}
+	return visibility
+}
+
+// GetDNSZoneFromParams allows the user to enter parameters found in DNSZoneParams. The user must enter at
+// least a base domain or a zone name to make a valid request. When both fields are populated extra validation
+// steps occur to ensure that the correct zone is found.
+func (c *Client) GetDNSZoneFromParams(ctx context.Context, params gcptypes.DNSZoneParams) (*dns.ManagedZone, error) {
+	switch {
+	case params.Name == "" && params.BaseDomain != "":
+		return c.GetDNSZone(ctx, params.Project, params.BaseDomain, params.IsPublic)
+	case params.Name != "":
+		managedZone, err := c.GetDNSZoneByName(ctx, params.Project, params.Name)
+		if params.BaseDomain == "" {
+			return managedZone, err
+		}
+		if err != nil {
+			if IsNotFound(err) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		if managedZone == nil {
+			return nil, nil
+		}
+		baseDomain := formatBaseDomain(params.BaseDomain)
+		if !strings.HasSuffix(managedZone.DnsName, baseDomain) {
+			return nil, fmt.Errorf("failed to find matching DNS zone for %s with base domain %s", params.Name, params.BaseDomain)
+		}
+		visibility := getZoneVisibility(params.IsPublic)
+		if managedZone.Visibility != visibility {
+			return nil, fmt.Errorf("failed to find matching DNS zone for %s with visibility %s", params.Name, visibility)
+		}
+		return managedZone, nil
+	}
+	return nil, fmt.Errorf("invalid dns zone parameters, please provide a base domain or name")
+}
+
 // GetDNSZone returns a DNS zone for a basedomain.
 func (c *Client) GetDNSZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error) {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
@@ -269,15 +319,10 @@ func (c *Client) GetDNSZone(ctx context.Context, project, baseDomain string, isP
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasSuffix(baseDomain, ".") {
-		baseDomain = fmt.Sprintf("%s.", baseDomain)
-	}
+	baseDomain = formatBaseDomain(baseDomain)
 
 	// currently, only private and public are supported. All peering zones are private.
-	visibility := "private"
-	if isPublic {
-		visibility = "public"
-	}
+	visibility := getZoneVisibility(isPublic)
 
 	req := svc.ManagedZones.List(project).DnsName(baseDomain).Context(ctx)
 	var res *dns.ManagedZone

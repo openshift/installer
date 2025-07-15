@@ -159,7 +159,7 @@ func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConf
 	if ic.Config.GCP.NetworkProjectID != "" {
 		privateZoneName, shouldCreateZone, err := manifests.GetGCPPrivateZoneName(ctx, client, ic, clusterID)
 		if err != nil {
-			logrus.Debugf("failed to find gcp private zone name: %v", err)
+			return err
 		}
 		if !shouldCreateZone {
 			logrus.Debugf("found private zone %s, skipping creation of private zone", privateZoneID)
