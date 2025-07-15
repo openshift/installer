@@ -271,28 +271,26 @@ func GetGCPPrivateZoneName(ctx context.Context, client *icgcp.Client, installCon
 			privateZoneID = installConfig.Config.GCP.PrivateZone.Zone
 		}
 
-		zone, err := client.GetDNSZone(ctx, project, installConfig.Config.ClusterDomain(), false)
+		zone, err := client.GetDNSZoneFromParams(ctx, gcptypes.DNSZoneParams{
+			Project:    project,
+			Name:       privateZoneID,
+			IsPublic:   false,
+			BaseDomain: installConfig.Config.ClusterDomain(),
+		})
 		if err != nil {
-			// CORS-4012: The user may specify a zone to be created if it does not exist.
-			// Do not fail if the specified zone does not exist.
-			if privateZoneID != defaultPrivateZoneID {
-				return privateZoneID, true, fmt.Errorf("failed to get private zone %q: %w", privateZoneID, err)
-			}
-			return defaultPrivateZoneID, true, fmt.Errorf("failed to get private zone for %q: %w", installConfig.Config.BaseDomain, err)
+			// Currently, the only time that a private zone lookup will produce an error is if we
+			// failed to find the dns zones. That should result in an error returned here too.
+			return privateZoneID, true, fmt.Errorf("private dns zone %s does not exist: %w", privateZoneID, err)
 		}
 		if zone == nil {
+			// CORS-4012: The user may specify a zone to be created if it does not exist.
+			// Do not fail if the specified zone does not exist.
 			return privateZoneID, true, nil
 		}
 
 		if installConfig.Config.GCP.Network != "" {
-			expectedNetworkURL := GCPNetworkName(installConfig.Config.GCP.NetworkProjectID, installConfig.Config.GCP.Network)
-			for _, network := range zone.PrivateVisibilityConfig.Networks {
-				if network.NetworkUrl == expectedNetworkURL {
-					privateZoneID = zone.Name
-					shouldCreateZone = false
-					break
-				}
-			}
+			privateZoneID = zone.Name
+			shouldCreateZone = false
 		}
 	}
 	return privateZoneID, shouldCreateZone, nil
