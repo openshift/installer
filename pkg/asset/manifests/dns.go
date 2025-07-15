@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	operatorv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
@@ -35,7 +36,8 @@ import (
 )
 
 var (
-	dnsCfgFilename = filepath.Join(manifestDir, "cluster-dns-02-config.yml")
+	dnsCfgFilename        = filepath.Join(manifestDir, "cluster-dns-02-config.yml")
+	dnsControllerFilename = filepath.Join(manifestDir, "cluster-dns-default-dnscontroller.yaml")
 
 	combineGCPZoneInfo = func(project, zoneName string) string {
 		return fmt.Sprintf("project/%s/managedZones/%s", project, zoneName)
@@ -243,6 +245,41 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { 
 			Filename: dnsCfgFilename,
 			Data:     configData,
 		},
+	}
+
+	// We need to point the DNS queries to the IPv6 nameserver of Route53 Resolver.
+	if installConfig.Config.Platform.Name() == awstypes.Name && installConfig.Config.IsDualStackInfra() {
+		controllerConfig := &operatorv1.DNS{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: operatorv1.SchemeGroupVersion.String(),
+				Kind:       "DNS",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "default",
+				// not namespaced
+			},
+			Spec: operatorv1.DNSSpec{
+				UpstreamResolvers: operatorv1.UpstreamResolvers{
+					Policy: operatorv1.SequentialForwardingPolicy,
+					Upstreams: []operatorv1.Upstream{
+						{
+							Type:    operatorv1.NetworkResolverType,
+							Address: "fd00:ec2::253",
+						},
+						{Type: operatorv1.SystemResolveConfType},
+					},
+				},
+			},
+		}
+
+		controllerConfigData, err := yaml.Marshal(controllerConfig)
+		if err != nil {
+			return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", d.Name())
+		}
+		d.FileList = append(d.FileList, &asset.File{
+			Filename: dnsControllerFilename,
+			Data:     controllerConfigData,
+		})
 	}
 
 	return nil
