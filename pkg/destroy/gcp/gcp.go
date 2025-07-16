@@ -416,7 +416,11 @@ func (o *ClusterUninstaller) handleOperation(ctx context.Context, op *compute.Op
 		identifier = []string{item.typeName, item.zone, item.name}
 	}
 
-	if err != nil && !isNoOp(err) {
+	if err != nil {
+		if isNoOp(err) {
+			o.Logger.Debugf("No operation found for %s %s", resourceType, item.name)
+			return nil
+		}
 		o.resetRequestID(identifier...)
 		return fmt.Errorf("failed to delete %s %s: %w", resourceType, item.name, err)
 	}
