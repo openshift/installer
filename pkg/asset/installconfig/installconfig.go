@@ -187,7 +187,7 @@ func (a *InstallConfig) platformValidation(ctx context.Context) error {
 		return icazure.Validate(client, a.Config)
 	}
 	if a.Config.Platform.GCP != nil {
-		client, err := icgcp.NewClient(ctx)
+		client, err := icgcp.NewClient(ctx, a.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return err
 		}
