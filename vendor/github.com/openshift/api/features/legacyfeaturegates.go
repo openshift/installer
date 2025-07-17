@@ -91,8 +91,6 @@ var legacyFeatureGates = sets.New(
 	// never add to this list, if you think you have an exception ask @deads2k
 	"NewOLM",
 	// never add to this list, if you think you have an exception ask @deads2k
-	"NodeDisruptionPolicy",
-	// never add to this list, if you think you have an exception ask @deads2k
 	"OVNObservability",
 	// never add to this list, if you think you have an exception ask @deads2k
 	"OnClusterBuild",
@@ -100,8 +98,6 @@ var legacyFeatureGates = sets.New(
 	"PersistentIPsForVirtualization",
 	// never add to this list, if you think you have an exception ask @deads2k
 	"PinnedImages",
-	// never add to this list, if you think you have an exception ask @deads2k
-	"PlatformOperators",
 	// never add to this list, if you think you have an exception ask @deads2k
 	"PrivateHostedZoneAWS",
 	// never add to this list, if you think you have an exception ask @deads2k
