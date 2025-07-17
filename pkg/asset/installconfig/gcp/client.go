@@ -3,6 +3,7 @@ package gcp
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -257,7 +258,10 @@ func (c *Client) GetDNSZone(ctx context.Context, project, baseDomain string, isP
 	}
 	if res == nil {
 		if isPublic {
-			return nil, errors.New("no matching public DNS Zone found")
+			return nil, &googleapi.Error{
+				Code:    http.StatusNotFound,
+				Message: "no matching public DNS Zone found",
+			}
 		}
 		// A Private DNS Zone may be created (if the correct permissions exist)
 		return nil, nil

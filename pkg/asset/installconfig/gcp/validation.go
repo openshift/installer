@@ -68,6 +68,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 	allErrs = append(allErrs, ValidateCredentialMode(client, ic)...)
 	allErrs = append(allErrs, validatePreexistingServiceAccount(client, ic)...)
+	allErrs = append(allErrs, ValidatePreExistingPublicDNS(client, ic)...)
 	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic, field.NewPath("platform").Child("gcp"))...)
@@ -390,20 +391,25 @@ func validatePreexistingServiceAccount(client API, ic *types.InstallConfig) fiel
 // DNS zone for cluster's Kubernetes API. If a PublicDNSZone is provided, the provided
 // zone is verified against the BaseDomain. If no zone is provided, the base domain is
 // checked for any public zone that can be used.
-func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) *field.Error {
+func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) field.ErrorList {
 	// If this is an internal cluster, this check is not necessary
 	if ic.Publish == types.InternalPublishingStrategy {
 		return nil
 	}
+	allErrs := field.ErrorList{}
 
 	zone, err := client.GetDNSZone(context.TODO(), ic.Platform.GCP.ProjectID, ic.BaseDomain, true)
 	if err != nil {
 		if IsNotFound(err) {
-			return field.NotFound(field.NewPath("baseDomain"), fmt.Sprintf("Public DNS Zone (%s/%s)", ic.Platform.GCP.ProjectID, ic.BaseDomain))
+			return append(allErrs, field.NotFound(field.NewPath("baseDomain"), fmt.Sprintf("Public DNS Zone (%s/%s)", ic.Platform.GCP.ProjectID, ic.BaseDomain)))
 		}
-		return field.InternalError(field.NewPath("baseDomain"), err)
+		return append(allErrs, field.InternalError(field.NewPath("baseDomain"), err))
 	}
-	return checkRecordSets(client, ic, zone, []string{apiRecordType(ic)})
+
+	if err := checkRecordSets(client, ic, zone, []string{apiRecordType(ic)}); err != nil {
+		allErrs = append(allErrs, err)
+	}
+	return allErrs
 }
 
 // ValidatePrivateDNSZone ensure no pre-existing DNS record exists in the private dns zone
@@ -459,10 +465,6 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	client, err := NewClient(context.TODO())
 	if err != nil {
 		return err
-	}
-
-	if err := ValidatePreExistingPublicDNS(client, ic); err != nil {
-		allErrs = append(allErrs, err)
 	}
 
 	if err := ValidatePrivateDNSZone(client, ic); err != nil {
