@@ -1,0 +1,19 @@
+[Unit]
+Description=Extract agent-tui at boot
+After=selinux.service
+Before=agent-interactive-console.service
+ConditionPathExists=/etc/assisted/rendezvous-host.env
+ConditionPathExists=/etc/assisted/interactive-ui
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/assisted/rendezvous-host.env
+# Temporarily load assisted-install-ui here. It was previously in agent-extract-tui.service in the
+# agent-install-utils repo but that service is being removed. 
+# TODO: Remove after assisted-install-ui is productized.
+ExecStartPre=/bin/bash -c "podman tag $(podman load -q -i /run/media/iso/images/assisted-install-ui/assisted-install-ui.tar | awk '{print $NF}') localhost/agent-installer-ui:latest"
+ExecStart=/usr/local/bin/agent-extract-tui.sh
+TimeoutStartSec=0
+
+[Install]
+WantedBy=getty@tty1.service

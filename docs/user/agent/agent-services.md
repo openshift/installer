@@ -60,4 +60,6 @@ so no connectivity checks to the release image is needed.
 The interactive workflow allows the user to install a cluster by using the assisted UI running on the rendezvous node. In this workflow
 the agent-tui is also used interactively to configure which node will be the rendezvous host, and to configure accordingly the other nodes.
 
+* agent-extract-tui - extracts agent-tui and nmstate libraries from the agent-installer-utils image during boot
 * agent-start-ui - runs the assisted UI on the rendezvous node
+
