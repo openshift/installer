@@ -68,6 +68,9 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 	allErrs = append(allErrs, ValidateCredentialMode(client, ic)...)
 	allErrs = append(allErrs, validatePreexistingServiceAccount(client, ic)...)
+	if err := ValidatePreExistingPublicDNS(client, ic); err != nil {
+		allErrs = append(allErrs, field.NotFound(field.NewPath("baseDomain"), ic.BaseDomain))
+	}
 	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic, field.NewPath("platform").Child("gcp"))...)
