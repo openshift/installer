@@ -54,6 +54,9 @@ type ClusterUninstaller struct {
 	PrivateZoneDomain string
 	ClusterID         string
 
+	PrivateZoneName    string
+	PrivateZoneProject string
+
 	computeSvc  *compute.Service
 	iamSvc      *iam.Service
 	dnsSvc      *dns.Service
@@ -86,6 +89,8 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		ProjectID:          metadata.ClusterPlatformMetadata.GCP.ProjectID,
 		NetworkProjectID:   metadata.ClusterPlatformMetadata.GCP.NetworkProjectID,
 		PrivateZoneDomain:  metadata.ClusterPlatformMetadata.GCP.PrivateZoneDomain,
+		PrivateZoneName:    metadata.ClusterPlatformMetadata.GCP.PrivateZoneName,
+		PrivateZoneProject: metadata.ClusterPlatformMetadata.GCP.PrivateZoneProject,
 		ClusterID:          metadata.InfraID,
 		cloudControllerUID: gcptypes.CloudControllerUID(metadata.InfraID),
 		requestIDTracker:   newRequestIDTracker(),
@@ -254,6 +259,16 @@ func getDiskLimit(typeURL string) string {
 
 func (o *ClusterUninstaller) isClusterResource(name string) bool {
 	return strings.HasPrefix(name, o.ClusterID+"-")
+}
+
+func (o *ClusterUninstaller) isOwnedResource(labels map[string]string) bool {
+	if labels == nil {
+		return false
+	}
+	if val, ok := labels[fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID)]; ok {
+		return val == "owned"
+	}
+	return false
 }
 
 func (o *ClusterUninstaller) clusterIDFilter() string {
