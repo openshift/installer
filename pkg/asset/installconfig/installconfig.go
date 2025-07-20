@@ -153,6 +153,13 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 	}
 	if a.Config.PowerVS != nil {
 		a.PowerVS = icpowervs.NewMetadata(a.Config)
+		if a.Config.Publish == types.InternalPublishingStrategy && a.Config.PowerVS.VPCName == "" {
+			var err error
+			a.Config.PowerVS.VPCName, err = icpowervs.GetUserSelectedPermittedNetwork(a.Config.PowerVS.PowerVSResourceGroup)
+			if err != nil {
+				return fmt.Errorf("failed to get the DNS zone's permitted network to be used for the cluster: %w", err)
+			}
+		}
 	}
 	if a.Config.VSphere != nil {
 		a.VSphere = icvsphere.NewMetadata()
