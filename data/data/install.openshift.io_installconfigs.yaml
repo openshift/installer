@@ -7101,6 +7101,11 @@ spec:
                       before the cluster is completed.  Leave unset to allow the installer to create a service
                       instance during cluster creation.
                     type: string
+                  storageTier:
+                    description: |-
+                      StorageTier is the storage tier of the VM boot volume to override default
+                      tier1 storage volume
+                    type: string
                   tgName:
                     description: TGName is the name of a pre-created TransitGateway
                       inside IBM Cloud.

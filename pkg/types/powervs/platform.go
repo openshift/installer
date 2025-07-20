@@ -63,6 +63,11 @@ type Platform struct {
 	// +optional
 	ServiceEndpoints []configv1.PowerVSServiceEndpoint `json:"serviceEndpoints,omitempty"`
 
+	// StorageTier is the storage tier of the VM boot volume to override default
+	// tier1 storage volume
+	// +optional
+	StorageTier string `json:"storageTier,omitempty"`
+
 	// TGName is the name of a pre-created TransitGateway inside IBM Cloud.
 	//
 	// +optional
