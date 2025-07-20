@@ -1,0 +1,12 @@
+FROM {{.SeedImage}}
+
+# Create the static cluster configuration
+RUN mkdir -p /usr/opt/openshift/cluster-configuration/
+COPY ./cluster-configuration/manifest.json /usr/opt/openshift/cluster-configuration/
+
+# Copy tmpfiles.d configurations
+COPY ./tmpfiles.d/ /etc/tmpfiles.d/
+
+# Extract seed data
+RUN tar xzf /usr/lib/openshift/seed/etc.tgz -C / --overwrite
+RUN tar xzf /usr/lib/openshift/seed/var.tgz -C / --overwrite 
