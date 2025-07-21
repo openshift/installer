@@ -4,17 +4,23 @@ package aws
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	r53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
@@ -68,39 +74,62 @@ func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig 
 		return err
 	}
 
-	ids := make([]*string, 0, len(privateSubnets)+len(publicSubnets)+len(edgeSubnets))
+	ids := make([]string, 0, len(privateSubnets)+len(publicSubnets)+len(edgeSubnets))
 	for id := range privateSubnets {
-		ids = append(ids, aws.String(id))
+		ids = append(ids, id)
 	}
 	for id := range publicSubnets {
-		ids = append(ids, aws.String(id))
+		ids = append(ids, id)
 	}
 	for id := range edgeSubnets {
-		ids = append(ids, aws.String(id))
-	}
-
-	session, err := installConfig.AWS.Session(ctx)
-	if err != nil {
-		return errors.Wrap(err, "could not create AWS session")
+		ids = append(ids, id)
 	}
 
 	tagKey, tagValue := sharedTag(clusterID)
 
-	ec2Client := ec2.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
-	if _, err = ec2Client.CreateTagsWithContext(ctx, &ec2.CreateTagsInput{
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(installConfig.Config.Platform.AWS.Region))
+	if err != nil {
+		return fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	ec2Client := ec2.NewFromConfig(cfg, func(options *ec2.Options) {
+		options.Region = installConfig.Config.Platform.AWS.Region
+		for _, endpoint := range installConfig.Config.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "ec2") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	if _, err = ec2Client.CreateTags(ctx, &ec2.CreateTagsInput{
 		Resources: ids,
-		Tags:      []*ec2.Tag{{Key: &tagKey, Value: &tagValue}},
+		Tags:      []ec2types.Tag{{Key: &tagKey, Value: &tagValue}},
 	}); err != nil {
 		return errors.Wrap(err, "could not add tags to subnets")
 	}
 
 	if zone := installConfig.Config.AWS.HostedZone; zone != "" {
-		r53cfg := awsic.GetR53ClientCfg(session, installConfig.Config.AWS.HostedZoneRole)
-		route53Client := route53.New(session, r53cfg)
-		if _, err := route53Client.ChangeTagsForResourceWithContext(ctx, &route53.ChangeTagsForResourceInput{
-			ResourceType: aws.String("hostedzone"),
+		if installConfig.Config.AWS.HostedZoneRole != "" {
+			stsSvc := sts.NewFromConfig(cfg)
+			creds := stscreds.NewAssumeRoleProvider(stsSvc, installConfig.Config.AWS.HostedZoneRole)
+			// The credentials for this config are set after the other uses. In the event that more
+			// clients use the config, a new config should be created.
+			cfg.Credentials = aws.NewCredentialsCache(creds)
+		}
+
+		route53Client := route53.NewFromConfig(cfg, func(options *route53.Options) {
+			options.Region = installConfig.Config.Platform.AWS.Region
+			for _, endpoint := range installConfig.Config.AWS.ServiceEndpoints {
+				if strings.EqualFold(endpoint.Name, "route53") {
+					options.BaseEndpoint = aws.String(endpoint.URL)
+				}
+			}
+		})
+
+		if _, err := route53Client.ChangeTagsForResource(ctx, &route53.ChangeTagsForResourceInput{
+			ResourceType: r53types.TagResourceTypeHostedzone,
 			ResourceId:   aws.String(zone),
-			AddTags:      []*route53.Tag{{Key: &tagKey, Value: &tagValue}},
+			AddTags:      []r53types.Tag{{Key: &tagKey, Value: &tagValue}},
 		}); err != nil {
 			return errors.Wrap(err, "could not add tags to hosted zone")
 		}
@@ -145,18 +174,26 @@ func tagSharedIAMRoles(ctx context.Context, clusterID string, installConfig *ins
 
 	logrus.Debugf("Tagging shared instance roles: %v", sets.List(iamRoles))
 
-	session, err := installConfig.AWS.Session(ctx)
-	if err != nil {
-		return fmt.Errorf("could not create AWS session: %w", err)
-	}
-
 	tagKey, tagValue := sharedTag(clusterID)
 
-	iamClient := iam.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(installConfig.Config.Platform.AWS.Region))
+	if err != nil {
+		return fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	iamClient := iam.NewFromConfig(cfg, func(options *iam.Options) {
+		options.Region = installConfig.Config.Platform.AWS.Region
+		for _, endpoint := range installConfig.Config.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "iam") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
 	for role := range iamRoles {
-		if _, err := iamClient.TagRoleWithContext(ctx, &iam.TagRoleInput{
+		if _, err := iamClient.TagRole(ctx, &iam.TagRoleInput{
 			RoleName: aws.String(role),
-			Tags: []*iam.Tag{
+			Tags: []iamtypes.Tag{
 				{Key: aws.String(tagKey), Value: aws.String(tagValue)},
 			},
 		}); err != nil {
@@ -207,17 +244,25 @@ func tagSharedIAMProfiles(ctx context.Context, clusterID string, installConfig *
 
 	logrus.Debugf("Tagging shared instance profiles: %v", sets.List(iamProfileNames))
 
-	session, err := installConfig.AWS.Session(ctx)
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(installConfig.Config.Platform.AWS.Region))
 	if err != nil {
-		return errors.Wrap(err, "could not create AWS session")
+		return fmt.Errorf("failed to load AWS config: %w", err)
 	}
-	iamClient := iam.New(session, aws.NewConfig().WithRegion(installConfig.Config.AWS.Region))
+
+	iamClient := iam.NewFromConfig(cfg, func(options *iam.Options) {
+		options.Region = installConfig.Config.Platform.AWS.Region
+		for _, endpoint := range installConfig.Config.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "iam") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
 
 	tagKey, tagValue := sharedTag(clusterID)
 	for name := range iamProfileNames {
-		if _, err := iamClient.TagInstanceProfileWithContext(ctx, &iam.TagInstanceProfileInput{
+		if _, err := iamClient.TagInstanceProfile(ctx, &iam.TagInstanceProfileInput{
 			InstanceProfileName: aws.String(name),
-			Tags: []*iam.Tag{
+			Tags: []iamtypes.Tag{
 				{Key: aws.String(tagKey), Value: aws.String(tagValue)},
 			},
 		}); err != nil {

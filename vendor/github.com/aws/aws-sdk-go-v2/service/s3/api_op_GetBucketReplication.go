@@ -14,21 +14,37 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This operation is not supported by directory buckets. Returns the replication
-// configuration of a bucket. It can take a while to propagate the put or delete a
-// replication configuration to all Amazon S3 systems. Therefore, a get request
-// soon after put or delete can return a wrong result. For information about
-// replication configuration, see Replication (https://docs.aws.amazon.com/AmazonS3/latest/dev/replication.html)
-// in the Amazon S3 User Guide. This action requires permissions for the
-// s3:GetReplicationConfiguration action. For more information about permissions,
-// see Using Bucket Policies and User Policies (https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html)
-// . If you include the Filter element in a replication configuration, you must
-// also include the DeleteMarkerReplication and Priority elements. The response
-// also returns those elements. For information about GetBucketReplication errors,
-// see List of replication-related error codes (https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html#ReplicationErrorCodeList)
+// This operation is not supported for directory buckets.
+//
+// Returns the replication configuration of a bucket.
+//
+// It can take a while to propagate the put or delete a replication configuration
+// to all Amazon S3 systems. Therefore, a get request soon after put or delete can
+// return a wrong result.
+//
+// For information about replication configuration, see [Replication] in the Amazon S3 User
+// Guide.
+//
+// This action requires permissions for the s3:GetReplicationConfiguration action.
+// For more information about permissions, see [Using Bucket Policies and User Policies].
+//
+// If you include the Filter element in a replication configuration, you must also
+// include the DeleteMarkerReplication and Priority elements. The response also
+// returns those elements.
+//
+// For information about GetBucketReplication errors, see [List of replication-related error codes]
+//
 // The following operations are related to GetBucketReplication :
-//   - PutBucketReplication (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketReplication.html)
-//   - DeleteBucketReplication (https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketReplication.html)
+//
+// [PutBucketReplication]
+//
+// [DeleteBucketReplication]
+//
+// [PutBucketReplication]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketReplication.html
+// [Using Bucket Policies and User Policies]: https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html
+// [Replication]: https://docs.aws.amazon.com/AmazonS3/latest/dev/replication.html
+// [List of replication-related error codes]: https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html#ReplicationErrorCodeList
+// [DeleteBucketReplication]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketReplication.html
 func (c *Client) GetBucketReplication(ctx context.Context, params *GetBucketReplicationInput, optFns ...func(*Options)) (*GetBucketReplicationOutput, error) {
 	if params == nil {
 		params = &GetBucketReplicationInput{}
@@ -60,6 +76,7 @@ type GetBucketReplicationInput struct {
 }
 
 func (in *GetBucketReplicationInput) bindEndpointParams(p *EndpointParameters) {
+
 	p.Bucket = in.Bucket
 	p.UseS3ExpressControlEndpoint = ptr.Bool(true)
 }
@@ -119,6 +136,9 @@ func (c *Client) addOperationGetBucketReplicationMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -132,6 +152,18 @@ func (c *Client) addOperationGetBucketReplicationMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addPutBucketContextMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addIsExpressUserAgent(stack); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetBucketReplicationValidationMiddleware(stack); err != nil {
@@ -165,6 +197,18 @@ func (c *Client) addOperationGetBucketReplicationMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSerializeImmutableHostnameBucketMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -5,11 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/sirupsen/logrus"
 	iamv1 "sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1"
 
@@ -95,14 +99,22 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 	logrus.Infoln("Reconciling IAM roles for control-plane and compute nodes")
 	// Create the IAM Role with the aws sdk.
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/iam/#IAM.CreateRole
-	session, err := ic.AWS.Session(ctx)
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.Platform.AWS.Region))
 	if err != nil {
-		return fmt.Errorf("failed to load AWS session: %w", err)
+		return fmt.Errorf("failed to load AWS config: %w", err)
 	}
-	svc := iam.New(session)
+
+	client := iam.NewFromConfig(cfg, func(options *iam.Options) {
+		options.Region = ic.Config.Platform.AWS.Region
+		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "iam") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
 
 	// Create the IAM Roles for master and workers.
-	tags := []*iam.Tag{
+	tags := []iamtypes.Tag{
 		{
 			Key:   aws.String(fmt.Sprintf("kubernetes.io/cluster/%s", infraID)),
 			Value: aws.String("owned"),
@@ -110,7 +122,7 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 	}
 
 	for k, v := range ic.Config.AWS.UserTags {
-		tags = append(tags, &iam.Tag{
+		tags = append(tags, iamtypes.Tag{
 			Key:   aws.String(k),
 			Value: aws.String(v),
 		})
@@ -123,7 +135,7 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 				Effect: "Allow",
 				Principal: iamv1.Principals{
 					iamv1.PrincipalService: []string{
-						getPartitionService(ic.AWS.Region),
+						getPartitionDNSSuffix(ic.AWS.Region),
 					},
 				},
 				Action: iamv1.Actions{
@@ -162,30 +174,36 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 			continue
 		}
 
-		roleName, err := getOrCreateIAMRole(ctx, role, infraID, string(assumePolicyBytes), *ic, tags, svc)
+		roleName, err := getOrCreateIAMRole(ctx, role, infraID, string(assumePolicyBytes), *ic, tags, client)
 		if err != nil {
 			return fmt.Errorf("failed to create IAM %s role: %w", role, err)
 		}
 
 		profileName := aws.String(fmt.Sprintf("%s-%s-profile", infraID, role))
-		if _, err := svc.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: profileName}); err != nil {
-			var awsErr awserr.Error
-			if errors.As(err, &awsErr) && awsErr.Code() != iam.ErrCodeNoSuchEntityException {
+		if _, err := client.GetInstanceProfile(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: profileName}); err != nil {
+			var noSuchEntity *iamtypes.NoSuchEntityException
+			if !errors.As(err, &noSuchEntity) {
 				return fmt.Errorf("failed to get %s instance profile: %w", role, err)
 			}
 			// If the profile does not exist, create it.
-			if _, err := svc.CreateInstanceProfileWithContext(ctx, &iam.CreateInstanceProfileInput{
+			if _, err := client.CreateInstanceProfile(ctx, &iam.CreateInstanceProfileInput{
 				InstanceProfileName: profileName,
 				Tags:                tags,
 			}); err != nil {
 				return fmt.Errorf("failed to create %s instance profile: %w", role, err)
 			}
-			if err := svc.WaitUntilInstanceProfileExistsWithContext(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: profileName}); err != nil {
+
+			waiter := iam.NewInstanceProfileExistsWaiter(client)
+			if err := waiter.Wait(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: profileName}, 2*time.Minute,
+				func(o *iam.InstanceProfileExistsWaiterOptions) {
+					o.MaxDelay = 5 * time.Second
+					o.MinDelay = 1 * time.Second
+				}); err != nil {
 				return fmt.Errorf("failed to wait for %s instance profile to exist: %w", role, err)
 			}
 
 			// Finally, attach the role to the profile.
-			if _, err := svc.AddRoleToInstanceProfileWithContext(ctx, &iam.AddRoleToInstanceProfileInput{
+			if _, err := client.AddRoleToInstanceProfile(ctx, &iam.AddRoleToInstanceProfileInput{
 				InstanceProfileName: profileName,
 				RoleName:            aws.String(roleName),
 			}); err != nil {
@@ -199,7 +217,7 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 
 // getOrCreateRole returns the name of the IAM role to be used,
 // creating it when not specified by the user in the install config.
-func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy string, ic installconfig.InstallConfig, tags []*iam.Tag, svc *iam.IAM) (string, error) {
+func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy string, ic installconfig.InstallConfig, tags []iamtypes.Tag, svc *iam.Client) (string, error) {
 	roleName := aws.String(fmt.Sprintf("%s-%s-role", infraID, nodeRole))
 
 	var defaultRole string
@@ -224,11 +242,12 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 		return workerRole, nil
 	}
 
-	if _, err := svc.GetRoleWithContext(ctx, &iam.GetRoleInput{RoleName: roleName}); err != nil {
-		var awsErr awserr.Error
-		if errors.As(err, &awsErr) && awsErr.Code() != iam.ErrCodeNoSuchEntityException {
+	if _, err := svc.GetRole(ctx, &iam.GetRoleInput{RoleName: roleName}); err != nil {
+		var noSuchRoleError *iamtypes.NoSuchEntityException
+		if !errors.As(err, &noSuchRoleError) {
 			return "", fmt.Errorf("failed to get %s role: %w", nodeRole, err)
 		}
+
 		// If the role does not exist, create it.
 		logrus.Infof("Creating IAM role for %s", nodeRole)
 		createRoleInput := &iam.CreateRoleInput{
@@ -236,11 +255,15 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 			AssumeRolePolicyDocument: aws.String(assumePolicy),
 			Tags:                     tags,
 		}
-		if _, err := svc.CreateRoleWithContext(ctx, createRoleInput); err != nil {
+		if _, err := svc.CreateRole(ctx, createRoleInput); err != nil {
 			return "", fmt.Errorf("failed to create %s role: %w", nodeRole, err)
 		}
-
-		if err := svc.WaitUntilRoleExistsWithContext(ctx, &iam.GetRoleInput{RoleName: roleName}); err != nil {
+		waiter := iam.NewRoleExistsWaiter(svc)
+		if err := waiter.Wait(ctx, &iam.GetRoleInput{RoleName: roleName}, 2*time.Minute,
+			func(o *iam.RoleExistsWaiterOptions) {
+				o.MaxDelay = 5 * time.Second
+				o.MinDelay = 1 * time.Second
+			}); err != nil {
 			return "", fmt.Errorf("failed to wait for %s role to exist: %w", nodeRole, err)
 		}
 	}
@@ -251,7 +274,7 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal %s policy: %w", nodeRole, err)
 	}
-	if _, err := svc.PutRolePolicyWithContext(ctx, &iam.PutRolePolicyInput{
+	if _, err := svc.PutRolePolicy(ctx, &iam.PutRolePolicyInput{
 		PolicyDocument: aws.String(string(b)),
 		PolicyName:     policyName,
 		RoleName:       roleName,
@@ -262,10 +285,28 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 	return *roleName, nil
 }
 
-func getPartitionService(region string) string {
-	partitionDNSSuffix := "amazonaws.com"
-	if ps, found := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region); found {
-		partitionDNSSuffix = ps.DNSSuffix()
+func getPartitionDNSSuffix(region string) string {
+	endpoint, err := ec2.NewDefaultEndpointResolver().ResolveEndpoint(region, ec2.EndpointResolverOptions{})
+	if err != nil {
+		logrus.Errorf("failed to resolve AWS ec2 endpoint: %v", err)
+		return ""
 	}
-	return fmt.Sprintf("ec2.%s", partitionDNSSuffix)
+
+	u, err := url.Parse(endpoint.URL)
+	if err != nil {
+		logrus.Errorf("failed to parse partition ID URL: %v", err)
+		return ""
+	}
+
+	domain := "amazonaws.com"
+	// Extract the hostname
+	host := u.Hostname()
+	// Split the hostname by "." to get the domain parts
+	parts := strings.Split(host, ".")
+	if len(parts) > 2 {
+		domain = strings.Join(parts[2:], ".")
+	}
+
+	logrus.Debugf("Using domain name: %s", domain)
+	return fmt.Sprintf("ec2.%s", domain)
 }

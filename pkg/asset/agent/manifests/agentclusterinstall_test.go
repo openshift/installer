@@ -150,6 +150,11 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		installConfigOverrides: `{"additionalTrustBundlePolicy":"Always"}`,
 	})
 
+	installConfigWithArbiter := getValidOptionalInstallConfigArbiter()
+	goodArbiterACI := getGoodACI()
+	goodArbiterACI.Spec.ProvisionRequirements.ArbiterAgents = 1
+	goodArbiterACI.Spec.ProvisionRequirements.WorkerAgents = 0
+
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -306,6 +311,16 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			},
 			expectedConfig: goodTrustBundlePolicyACI,
 		},
+		{
+			name: "valid configuration with ArbiterAgents",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithArbiter,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodArbiterACI,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -416,6 +431,86 @@ spec:
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
 						WorkerAgents:       2,
+					},
+					SSHPublicKey: "ssh-rsa AAAAmyKey",
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "valid-config-file-with-arbiter",
+			data: `
+metadata:
+  name: test-agent-cluster-install
+  namespace: cluster0
+spec:
+  apiVIP: 192.168.111.5
+  ingressVIP: 192.168.111.4
+  diskEncryption:
+    enableOn: workers
+    mode: tpmv2
+  platformType: BareMetal
+  clusterDeploymentRef:
+    name: ostest
+  imageSetRef:
+    name: openshift-v4.10.0
+  networking:
+    machineNetwork:
+    - cidr: 10.10.11.0/24
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    serviceNetwork:
+    - 172.30.0.0/16
+    networkType: OVNKubernetes
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 2
+    arbiterAgents: 1
+  sshPublicKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedFound: true,
+			expectedConfig: &hiveext.AgentClusterInstall{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-agent-cluster-install",
+					Namespace: "cluster0",
+				},
+				Spec: hiveext.AgentClusterInstallSpec{
+					APIVIP:     "192.168.111.5",
+					IngressVIP: "192.168.111.4",
+					DiskEncryption: &hiveext.DiskEncryption{
+						EnableOn: swag.String("workers"),
+						Mode:     swag.String("tpmv2"),
+					},
+					PlatformType: hiveext.BareMetalPlatformType,
+					ClusterDeploymentRef: corev1.LocalObjectReference{
+						Name: "ostest",
+					},
+					ImageSetRef: &hivev1.ClusterImageSetReference{
+						Name: "openshift-v4.10.0",
+					},
+					Networking: hiveext.Networking{
+						MachineNetwork: []hiveext.MachineNetworkEntry{
+							{
+								CIDR: "10.10.11.0/24",
+							},
+						},
+						ClusterNetwork: []hiveext.ClusterNetworkEntry{
+							{
+								CIDR:       "10.128.0.0/14",
+								HostPrefix: 23,
+							},
+						},
+						ServiceNetwork: []string{
+							"172.30.0.0/16",
+						},
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
+					},
+					ProvisionRequirements: hiveext.ProvisionRequirements{
+						ControlPlaneAgents: 3,
+						WorkerAgents:       2,
+						ArbiterAgents:      1,
 					},
 					SSHPublicKey: "ssh-rsa AAAAmyKey",
 				},

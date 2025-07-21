@@ -9,16 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/smithy-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
-	awssession "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/gather"
 	"github.com/openshift/installer/pkg/gather/providers"
 	"github.com/openshift/installer/pkg/types"
@@ -39,37 +39,42 @@ type Gather struct {
 	masters         []string
 	directory       string
 	serialLogBundle string
-
-	// Session is the AWS session to be used for gathering. If nil, a new
-	// session will be created based on the usual credential configuration
-	// (AWS_PROFILE, AWS_ACCESS_KEY_ID, etc.).
-	session *session.Session
+	ec2Client       *ec2.Client
 }
 
 // New returns an AWS Gather from ClusterMetadata.
 func New(logger logrus.FieldLogger, serialLogBundle string, bootstrap string, masters []string, metadata *types.ClusterMetadata) (providers.Gather, error) {
-	filters := make([]Filter, 0, len(metadata.ClusterPlatformMetadata.AWS.Identifier))
-	for _, filter := range metadata.ClusterPlatformMetadata.AWS.Identifier {
+	metadataAWS := metadata.ClusterPlatformMetadata.AWS
+
+	filters := make([]Filter, 0, len(metadataAWS.Identifier))
+	for _, filter := range metadataAWS.Identifier {
 		filters = append(filters, filter)
 	}
-	region := metadata.ClusterPlatformMetadata.AWS.Region
-	session, err := awssession.GetSessionWithOptions(
-		awssession.WithRegion(region),
-		awssession.WithServiceEndpoints(region, metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints),
-	)
+
+	region := metadataAWS.Region
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create AWS config: %w", err)
 	}
+	ec2Client := ec2.NewFromConfig(cfg,
+		ec2.WithAPIOptions(middleware.AddUserAgentKeyValue("OpenShift/4.x Gather", version.Raw)),
+		func(o *ec2.Options) {
+			for _, endpoint := range metadataAWS.ServiceEndpoints {
+				if strings.EqualFold(endpoint.Name, ec2.ServiceID) {
+					o.BaseEndpoint = aws.String(endpoint.URL)
+				}
+			}
+		})
 
 	return &Gather{
 		logger:          logger,
 		region:          region,
 		filters:         filters,
-		session:         session,
 		serialLogBundle: serialLogBundle,
 		bootstrap:       bootstrap,
 		masters:         masters,
 		directory:       filepath.Dir(serialLogBundle),
+		ec2Client:       ec2Client,
 	}, nil
 }
 
@@ -78,23 +83,7 @@ func (g *Gather) Run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	awsSession := g.session
-	if awsSession == nil {
-		var err error
-		// Relying on appropriate AWS ENV vars (eg AWS_PROFILE, AWS_ACCESS_KEY_ID, etc)
-		awsSession, err = session.NewSession(aws.NewConfig().WithRegion(g.region))
-		if err != nil {
-			return err
-		}
-	}
-	awsSession.Handlers.Build.PushBackNamed(request.NamedHandler{
-		Name: "openshiftInstaller.OpenshiftInstallerUserAgentHandler",
-		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Gather", version.Raw),
-	})
-
-	ec2Client := ec2.New(awsSession)
-
-	instances, err := g.findEC2Instances(ctx, ec2Client)
+	instances, err := g.findEC2Instances(ctx)
 	if err != nil {
 		return err
 	}
@@ -114,7 +103,7 @@ func (g *Gather) Run() error {
 	var errs []error
 	var files []string
 	for _, instance := range instances {
-		filePath, err := g.downloadConsoleOutput(ctx, ec2Client, instance, filePathDir)
+		filePath, err := g.downloadConsoleOutput(ctx, instance, filePathDir)
 		if err != nil {
 			errs = append(errs, err)
 		} else {
@@ -138,73 +127,74 @@ func (g *Gather) Run() error {
 }
 
 // findEC2Instances returns the EC2 instances with tags that satisfy the filters.
-func (g *Gather) findEC2Instances(ctx context.Context, ec2Client *ec2.EC2) ([]*ec2.Instance, error) {
-	if ec2Client.Config.Region == nil {
+func (g *Gather) findEC2Instances(ctx context.Context) ([]*ec2types.Instance, error) {
+	region := g.ec2Client.Options().Region
+	if region == "" {
 		return nil, errors.New("EC2 client does not have region configured")
 	}
 
-	var instances []*ec2.Instance
+	var instances []*ec2types.Instance
 	for _, filter := range g.filters {
-		g.logger.Debugf("Search for matching instances by tag in %s matching %#+v", *ec2Client.Config.Region, filter)
-		instanceFilters := make([]*ec2.Filter, 0, len(g.filters))
+		g.logger.Debugf("Search for matching instances by tag in %s matching %#+v", region, filter)
+		instanceFilters := make([]ec2types.Filter, 0, len(g.filters))
+
 		for key, value := range filter {
-			instanceFilters = append(instanceFilters, &ec2.Filter{
+			instanceFilters = append(instanceFilters, ec2types.Filter{
 				Name:   aws.String("tag:" + key),
-				Values: []*string{aws.String(value)},
+				Values: []string{value},
 			})
 		}
 
-		err := ec2Client.DescribeInstancesPagesWithContext(
-			ctx,
-			&ec2.DescribeInstancesInput{Filters: instanceFilters},
-			func(results *ec2.DescribeInstancesOutput, lastPage bool) bool {
-				for _, reservation := range results.Reservations {
-					if reservation.OwnerId == nil {
-						continue
-					}
+		input := &ec2.DescribeInstancesInput{Filters: instanceFilters}
+		paginator := ec2.NewDescribeInstancesPaginator(g.ec2Client, input)
 
-					for _, instance := range reservation.Instances {
-						if instance.InstanceId != nil {
-							instances = append(instances, instance)
-						}
+		for paginator.HasMorePages() {
+			page, err := paginator.NextPage(ctx)
+			if err != nil {
+				return instances, fmt.Errorf("failed to get ec2 instances: %w", err)
+			}
+
+			for _, reservation := range page.Reservations {
+				if reservation.OwnerId == nil {
+					continue
+				}
+
+				for _, instance := range reservation.Instances {
+					if instance.InstanceId != nil {
+						instances = append(instances, &instance)
 					}
 				}
-				return !lastPage
-			},
-		)
-		if err != nil {
-			err = errors.Wrap(err, "get ec2 instances")
-			return instances, err
+			}
 		}
 	}
 
 	return instances, nil
 }
 
-func (g *Gather) downloadConsoleOutput(ctx context.Context, ec2Client *ec2.EC2, instance *ec2.Instance, filePathDir string) (string, error) {
-	logger := g.logger.WithField("Instance", aws.StringValue(instance.InstanceId))
-
-	input := &ec2.GetConsoleOutputInput{
-		InstanceId: instance.InstanceId,
+// downloadConsoleOutput downloads console logs for the EC2 instance, saves it to local disk
+// and returns the file name.
+func (g *Gather) downloadConsoleOutput(ctx context.Context, instance *ec2types.Instance, filePathDir string) (string, error) {
+	instanceName := aws.ToString(instance.InstanceId)
+	for _, tags := range instance.Tags {
+		if strings.EqualFold(aws.ToString(tags.Key), "Name") {
+			instanceName = aws.ToString(tags.Value)
+		}
 	}
-	result, err := ec2Client.GetConsoleOutputWithContext(ctx, input)
+
+	logger := g.logger.WithField("Instance", instanceName)
+	logger.Debugf("Attemping to download console logs for %s", instanceName)
+
+	input := &ec2.GetConsoleOutputInput{InstanceId: instance.InstanceId}
+	result, err := g.ec2Client.GetConsoleOutput(ctx, input)
 	if err != nil {
-		// Cast err to awserr.Error to get the Message from an error.
-		if aerr, ok := err.(awserr.Error); ok {
-			logger.Errorln(aerr.Error())
+		var aerr smithy.APIError
+		if errors.As(err, &aerr) {
+			logger.Errorf("failed to gather console logs for %s: %s", instanceName, aerr.ErrorMessage())
 		}
 		return "", err
 	}
 
-	instanceName := aws.StringValue(result.InstanceId)
-	for _, tags := range instance.Tags {
-		if strings.EqualFold(aws.StringValue(tags.Key), "Name") {
-			instanceName = aws.StringValue(tags.Value)
-		}
-	}
-
-	logger.Debugf("Attemping to download console logs for %s", instanceName)
-	filePath, err := g.saveToFile(instanceName, aws.StringValue(result.Output), filePathDir)
+	filePath, err := g.saveToFile(instanceName, aws.ToString(result.Output), filePathDir)
 	if err != nil {
 		return "", err
 	}

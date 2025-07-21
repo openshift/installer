@@ -7,17 +7,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/rest"
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	agentpkg "github.com/openshift/installer/pkg/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
-)
-
-const (
-	exitCodeInstallConfigError = iota + 3
-	exitCodeInfrastructureFailed
-	exitCodeBootstrapFailed
-	exitCodeInstallFailed
+	assetstore "github.com/openshift/installer/pkg/asset/store"
 )
 
 // NewWaitForCmd create the commands for waiting the completion of the agent based cluster installation.
@@ -36,17 +31,17 @@ func NewWaitForCmd() *cobra.Command {
 	return cmd
 }
 
-func handleBootstrapError(cluster *agentpkg.Cluster, err error) {
+func handleBootstrapError(ctx context.Context, config *rest.Config, cluster *agentpkg.Cluster, err error) {
 	logrus.Debug("Printing the event list gathered from the Agent Rest API")
 	cluster.PrintInfraEnvRestAPIEventList()
-	err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
+	err2 := command.LogClusterOperatorConditions(ctx, config)
 	if err2 != nil {
 		logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
 	}
 	logrus.Info("Use the following commands to gather logs from the cluster")
 	logrus.Info("openshift-install gather bootstrap --help")
 	logrus.Error(errors.Wrap(err, "Bootstrap failed to complete: "))
-	logrus.Exit(exitCodeBootstrapFailed)
+	logrus.Exit(command.ExitCodeBootstrapFailed)
 }
 
 func newWaitForBootstrapCompleteCmd() *cobra.Command {
@@ -74,11 +69,11 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			ctx := context.Background()
 			cluster, err := agentpkg.NewCluster(ctx, assetDir, rendezvousIP, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeInstall)
 			if err != nil {
-				logrus.Exit(exitCodeBootstrapFailed)
+				logrus.Exit(command.ExitCodeBootstrapFailed)
 			}
 
 			if err := agentpkg.WaitForBootstrapComplete(cluster); err != nil {
-				handleBootstrapError(cluster, err)
+				handleBootstrapError(ctx, cluster.API.Kube.Config, cluster, err)
 			}
 		},
 	}
@@ -109,25 +104,29 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			ctx := context.Background()
 			cluster, err := agentpkg.NewCluster(ctx, assetDir, rendezvousIP, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeInstall)
 			if err != nil {
-				logrus.Exit(exitCodeBootstrapFailed)
+				logrus.Exit(command.ExitCodeBootstrapFailed)
 			}
 
 			if err := agentpkg.WaitForBootstrapComplete(cluster); err != nil {
-				handleBootstrapError(cluster, err)
+				handleBootstrapError(ctx, cluster.API.Kube.Config, cluster, err)
 			}
 
-			if err = agentpkg.WaitForInstallComplete(cluster); err != nil {
+			assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
+			if err != nil {
 				logrus.Error(err)
-				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
+				logrus.Exit(command.ExitCodeInstallFailed)
+			}
+
+			if err = command.WaitForInstallComplete(ctx, cluster.API.Kube.Config, assetStore); err != nil {
+				logrus.Error(err)
+				err2 := command.LogClusterOperatorConditions(ctx, cluster.API.Kube.Config)
 				if err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
 				}
-				logrus.Error(`Cluster initialization failed because one or more operators are not functioning properly.
-				The cluster should be accessible for troubleshooting as detailed in the documentation linked below,
-				https://docs.openshift.com/container-platform/latest/support/troubleshooting/troubleshooting-installations.html`)
-				logrus.Exit(exitCodeInstallFailed)
+				command.LogTroubleshootingLink()
+				logrus.Error(err)
+				logrus.Exit(command.ExitCodeInstallFailed)
 			}
-			cluster.PrintInstallationComplete()
 		},
 	}
 }

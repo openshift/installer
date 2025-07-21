@@ -2,12 +2,12 @@
 # the installer layered on top of the cluster-native Linux installer image.
 
 # We copy from the -artifacts images because they are statically linked
-FROM registry.ci.openshift.org/ocp/4.19:installer-kube-apiserver-artifacts AS kas-artifacts
-FROM registry.ci.openshift.org/ocp/4.19:installer-etcd-artifacts AS etcd-artifacts
+FROM registry.ci.openshift.org/ocp/4.20:installer-kube-apiserver-artifacts AS kas-artifacts
+FROM registry.ci.openshift.org/ocp/4.20:installer-etcd-artifacts AS etcd-artifacts
 
 # FIPS support is offered via the baremetal-installer image
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.23-openshift-4.19 AS macbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.20 AS macbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
@@ -16,7 +16,7 @@ COPY --from=kas-artifacts /usr/share/openshift/darwin/amd64 cluster-api/bin/darw
 COPY --from=etcd-artifacts /usr/share/openshift/darwin/amd64 cluster-api/bin/darwin_amd64
 RUN GOOS=darwin GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.23-openshift-4.19 AS macarmbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.20 AS macarmbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
@@ -25,7 +25,7 @@ COPY --from=kas-artifacts /usr/share/openshift/darwin/arm64 cluster-api/bin/darw
 COPY --from=etcd-artifacts /usr/share/openshift/darwin/arm64 cluster-api/bin/darwin_arm64
 RUN GOOS=darwin GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.23-openshift-4.19 AS linuxbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.20 AS linuxbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
@@ -34,7 +34,7 @@ COPY --from=kas-artifacts /usr/share/openshift/linux/amd64 cluster-api/bin/linux
 COPY --from=etcd-artifacts /usr/share/openshift/linux/amd64 cluster-api/bin/linux_amd64
 RUN GOOS=linux GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.23-openshift-4.19 AS linuxarmbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.20 AS linuxarmbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 ARG SKIP_ENVTEST="y"
@@ -44,14 +44,14 @@ COPY --from=kas-artifacts /usr/share/openshift/linux/arm64 cluster-api/bin/linux
 COPY --from=etcd-artifacts /usr/share/openshift/linux/arm64 cluster-api/bin/linux_arm64
 RUN GOOS=linux GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.23-openshift-4.19 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.20 AS builder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN go run -mod=vendor hack/build-coreos-manifest.go
 
-FROM registry.ci.openshift.org/ocp/4.19:base-rhel9
+FROM registry.ci.openshift.org/ocp/4.20:base-rhel9
 COPY --from=macbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac/openshift-install
 COPY --from=macarmbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac_arm64/openshift-install
 COPY --from=linuxbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/linux_amd64/openshift-install

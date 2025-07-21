@@ -90,7 +90,7 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		if err != nil {
 			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
 		}
-		instanceTypes, err := aws.InstanceTypes(ctx, session, ic.AWS.Region)
+		instanceTypes, err := aws.InstanceTypes(ctx, ic.AWS.Region, ic.AWS.Services)
 		if quotaaws.IsUnauthorized(err) {
 			logrus.Warnf("Missing permissions to fetch instance types and therefore will skip checking Quotas: %v, make sure you have `ec2:DescribeInstanceTypes` permission available to the user.", err)
 			return nil

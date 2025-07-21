@@ -157,7 +157,16 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 	allErrs := field.ErrorList{}
 	topologyFld := fldPath.Child("topology")
 	var associatedVCenter *vsphere.VCenter
+
+	zoneNames := make(map[string]string)
+
 	for index, failureDomain := range p.FailureDomains {
+		if regionName, ok := zoneNames[failureDomain.Zone]; !ok {
+			zoneNames[failureDomain.Zone] = failureDomain.Region
+		} else if regionName == failureDomain.Region {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("zone"), failureDomain.Zone, fmt.Sprintf("cannot be used more than once for the failure domain region %q", failureDomain.Region)))
+		}
+
 		if failureDomain.ZoneType == "" && failureDomain.RegionType == "" {
 			logrus.Debug("using the defaults regionType is Datacenter and zoneType is ComputeCluster")
 		}

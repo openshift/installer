@@ -122,7 +122,7 @@ func handleInterrupt(signalCtx context.Context) context.Context {
 		logrus.Warn("Received interrupt signal")
 		shutdown()
 		cancel()
-		logrus.Exit(exitCodeInterrupt)
+		logrus.Exit(command.ExitCodeInterrupt)
 	}()
 
 	return ctx
