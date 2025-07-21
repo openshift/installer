@@ -25,8 +25,10 @@ func Platform() (*aws.Platform, error) {
 	for _, region := range regions {
 		if longName, ok := aws.RegionLookupMap[region]; ok {
 			longRegions = append(longRegions, fmt.Sprintf("%s (%s)", region, longName))
-			shortRegions = append(shortRegions, region)
+		} else {
+			longRegions = append(longRegions, region)
 		}
+		shortRegions = append(shortRegions, region)
 	}
 
 	var regionTransform survey.Transformer = func(ans interface{}) interface{} {
