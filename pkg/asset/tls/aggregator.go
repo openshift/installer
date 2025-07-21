@@ -102,18 +102,18 @@ func (c *AggregatorSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(installConfig)
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "aggregator-signer", OrganizationalUnit: []string{"openshift"}},
+		Subject:   pkix.Name{CommonName: "aggregator-client-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		Validity:  ValidityOneDay(installConfig),
 		IsCA:      true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-client-signer")
 }
 
 // Name returns the human-friendly name of the asset.
 func (c *AggregatorSignerCertKey) Name() string {
-	return "Certificate (aggregator-signer)"
+	return "Certificate (aggregator-client-signer)"
 }
 
 // AggregatorCABundle is the asset the generates the aggregator-ca-bundle,
