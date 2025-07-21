@@ -21,6 +21,10 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/external"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
+	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 )
 
 func TestMasterGenerateMachineConfigs(t *testing.T) {
@@ -346,4 +350,136 @@ func networkConfig(config string) *v1.JSON {
 	var nc v1.JSON
 	yaml.Unmarshal([]byte(config), &nc)
 	return &nc
+}
+
+func TestSupportedSNOPlatforms(t *testing.T) {
+	cases := []struct {
+		name                string
+		platform            types.Platform
+		bootstrapInPlace    *types.BootstrapInPlace
+		machinePoolPlatform types.MachinePoolPlatform
+		expectedError       bool
+	}{
+		{
+			name: "AWS platform",
+			platform: types.Platform{
+				AWS: &awstypes.Platform{
+					Region: "us-east-1",
+					DefaultMachinePlatform: &awstypes.MachinePool{
+						InstanceType: "TEST_INSTANCE_TYPE",
+					},
+				},
+			},
+			bootstrapInPlace: &types.BootstrapInPlace{},
+			machinePoolPlatform: types.MachinePoolPlatform{
+				AWS: &awstypes.MachinePool{
+					Zones: []string{"us-east-1a"},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "None platform",
+			platform: types.Platform{
+				None: &none.Platform{},
+			},
+			machinePoolPlatform: types.MachinePoolPlatform{},
+			expectedError:       false,
+		},
+		{
+			name: "IBMCloud platform",
+			platform: types.Platform{
+				IBMCloud: &ibmcloudtypes.Platform{},
+			},
+			bootstrapInPlace: &types.BootstrapInPlace{},
+			machinePoolPlatform: types.MachinePoolPlatform{
+				IBMCloud: &ibmcloudtypes.MachinePool{
+					Zones: []string{"us-east-1"},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "External platform with bootstrapInPlace",
+			platform: types.Platform{
+				External: &external.Platform{},
+			},
+			bootstrapInPlace: &types.BootstrapInPlace{
+				InstallationDisk: "/dev/nvme0n1",
+			},
+			machinePoolPlatform: types.MachinePoolPlatform{},
+			expectedError:       false,
+		},
+		{
+			name: "External platform with empty bootstrapInPlace",
+			platform: types.Platform{
+				External: &external.Platform{},
+			},
+			bootstrapInPlace:    &types.BootstrapInPlace{},
+			machinePoolPlatform: types.MachinePoolPlatform{},
+			expectedError:       true,
+		},
+		{
+			name: "External platform without bootstrapInPlace",
+			platform: types.Platform{
+				External: &external.Platform{},
+			},
+			machinePoolPlatform: types.MachinePoolPlatform{},
+			expectedError:       true,
+		},
+		{
+			name: "Nutanix platform",
+			platform: types.Platform{
+				Nutanix: &nutanix.Platform{},
+			},
+			machinePoolPlatform: types.MachinePoolPlatform{},
+			expectedError:       true,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			parents := asset.Parents{}
+			parents.Add(
+				&installconfig.ClusterID{
+					UUID:    "test-uuid",
+					InfraID: "test-infra-id",
+				},
+				installconfig.MakeAsset(
+					&types.InstallConfig{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "test-cluster",
+						},
+						SSHKey:     "ssh-rsa: dummy-key",
+						BaseDomain: "test-domain",
+						Platform:   tc.platform,
+						ControlPlane: &types.MachinePool{
+							Hyperthreading: types.HyperthreadingEnabled,
+							Replicas:       ptr.To[int64](1),
+							Platform:       tc.machinePoolPlatform,
+						},
+						BootstrapInPlace: tc.bootstrapInPlace,
+					}),
+
+				rhcos.MakeAsset("test-image"),
+				(*rhcos.Release)(ptr.To[string]("412.86.202208101040-0")),
+				&machine.Master{
+					File: &asset.File{
+						Filename: "master-ignition",
+						Data:     []byte("test-ignition"),
+					},
+				},
+			)
+			snoErrorRegex := fmt.Sprintf("this install method does not support Single Node installation on platform %s", tc.platform.Name())
+			master := &Master{}
+			err := master.Generate(context.Background(), parents)
+			if tc.expectedError {
+				if assert.Error(t, err) {
+					assert.Regexp(t, snoErrorRegex, err.Error())
+				}
+			} else if err != nil {
+				// Did not expect a SNO validation error but received a different error
+				assert.NotRegexp(t, snoErrorRegex, err.Error())
+			}
+		})
+	}
 }
