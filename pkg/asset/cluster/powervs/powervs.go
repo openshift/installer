@@ -38,6 +38,7 @@ func Metadata(config *types.InstallConfig, meta *icpowervs.Metadata) (*powervs.M
 		Zone:                 config.Platform.PowerVS.Zone,
 		ServiceInstanceGUID:  config.Platform.PowerVS.ServiceInstanceGUID,
 		ServiceEndpoints:     overrides,
-		TransitGatewayName:   config.Platform.PowerVS.TGName,
+		TransitGateway:       config.Platform.PowerVS.TransitGateway,
+		VPC:                  config.Platform.PowerVS.VPC,
 	}, nil
 }

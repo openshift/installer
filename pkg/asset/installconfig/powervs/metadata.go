@@ -29,8 +29,6 @@ const (
 
 // MetadataAPI represents functions that eventually call out to the API
 type MetadataAPI interface {
-	AccountID(ctx context.Context) (string, error)
-	APIKey(ctx context.Context) (string, error)
 	CISInstanceCRN(ctx context.Context) (string, error)
 	DNSInstanceCRN(ctx context.Context) (string, error)
 }
@@ -206,9 +204,9 @@ func (m *Metadata) GetExistingVPCGateway(ctx context.Context, vpcName string, vp
 }
 
 // IsVPCPermittedNetwork checks if the VPC is a Permitted Network for the DNS Zone
-func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string, baseDomain string) (bool, error) {
-	// An empty pre-existing VPC Name signifies a new VPC will be created (not pre-existing), so it won't be permitted
-	if vpcName == "" {
+func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpc *vpcv1.VPC, baseDomain string) (bool, error) {
+	// An empty pre-existing VPC signifies a new VPC will be created (not pre-existing), so it won't be permitted
+	if vpc == nil {
 		return false, nil
 	}
 
@@ -247,10 +245,6 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string, ba
 		return false, nil
 	}
 
-	vpc, err := client.GetVPCByName(ctx, vpcName)
-	if err != nil {
-		return false, err
-	}
 	for _, network := range networks {
 		if network == *vpc.CRN {
 			return true, nil
@@ -269,13 +263,13 @@ func (m *Metadata) EnsureVPCNameIsSpecifiedForInternal(vpcName string) error {
 }
 
 // EnsureVPCIsPermittedNetwork checks if a VPC is permitted to the DNS zone and adds it if it is not.
-func (m *Metadata) EnsureVPCIsPermittedNetwork(ctx context.Context, vpcName string) error {
+func (m *Metadata) EnsureVPCIsPermittedNetwork(ctx context.Context, vpc *vpcv1.VPC) error {
 	dnsCRN, err := crn.Parse(m.dnsInstanceCRN)
 	if err != nil {
 		return fmt.Errorf("failed to parse DNSInstanceCRN: %w", err)
 	}
 
-	isVPCPermittedNetwork, err := m.IsVPCPermittedNetwork(ctx, vpcName, m.BaseDomain)
+	isVPCPermittedNetwork, err := m.IsVPCPermittedNetwork(ctx, vpc, m.BaseDomain)
 	if err != nil {
 		return fmt.Errorf("failed to determine if VPC is permitted network: %w", err)
 	}
@@ -287,11 +281,6 @@ func (m *Metadata) EnsureVPCIsPermittedNetwork(ctx context.Context, vpcName stri
 		client, err := m.client()
 		if err != nil {
 			return err
-		}
-
-		vpc, err := client.GetVPCByName(ctx, vpcName)
-		if err != nil {
-			return fmt.Errorf("failed to find VPC by name: %w", err)
 		}
 
 		zoneID, err := client.GetDNSZoneIDByName(ctx, m.BaseDomain, types.InternalPublishingStrategy)
@@ -323,7 +312,11 @@ func (m *Metadata) GetSubnetID(ctx context.Context, subnetName string, vpcRegion
 }
 
 // GetVPCSubnets gets a list of subnets in a VPC.
-func (m *Metadata) GetVPCSubnets(ctx context.Context, vpcName string) ([]vpcv1.Subnet, error) {
+func (m *Metadata) GetVPCSubnets(ctx context.Context, vpc *vpcv1.VPC) ([]vpcv1.Subnet, error) {
+	if vpc == nil {
+		return nil, fmt.Errorf("getVPCSubnets given nil VPC")
+	}
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -332,14 +325,11 @@ func (m *Metadata) GetVPCSubnets(ctx context.Context, vpcName string) ([]vpcv1.S
 		return nil, err
 	}
 
-	vpc, err := client.GetVPCByName(ctx, vpcName)
-	if err != nil {
-		return nil, err
-	}
 	subnets, err := client.GetVPCSubnets(ctx, *vpc.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get VPC subnets: %w", err)
 	}
+
 	return subnets, err
 }
 

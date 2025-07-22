@@ -27,10 +27,10 @@ type Platform struct {
 	// UserID is the login for the user's IBM Cloud account.
 	UserID string `json:"userID"`
 
-	// VPCName is the name of a pre-created VPC inside IBM Cloud.
+	// vpcName is the name or id of a pre-created VPC inside IBM Cloud.
 	//
 	// +optional
-	VPCName string `json:"vpcName,omitempty"`
+	VPC string `json:"vpcName,omitempty"`
 
 	// VPCSubnets specifies existing subnets (by ID) where cluster
 	// resources will be created.  Leave unset to have the installer
@@ -48,23 +48,26 @@ type Platform struct {
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on Power VS for machine pools which do not define their own
 	// platform configuration.
+	//
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
 	// ServiceInstanceGUID is the GUID of the Power IAAS instance created from the IBM Cloud Catalog
 	// before the cluster is completed.  Leave unset to allow the installer to create a service
 	// instance during cluster creation.
+	//
 	// +optional
 	ServiceInstanceGUID string `json:"serviceInstanceGUID,omitempty"`
 
 	// ServiceEndpoints is a list which contains custom endpoints to override default
 	// service endpoints of IBM Cloud Services.
 	// There must only be one ServiceEndpoint for a service (no duplicates).
+	//
 	// +optional
 	ServiceEndpoints []configv1.PowerVSServiceEndpoint `json:"serviceEndpoints,omitempty"`
 
-	// TGName is the name of a pre-created TransitGateway inside IBM Cloud.
+	// tgName is the name or id of a pre-created TransitGateway inside IBM Cloud.
 	//
 	// +optional
-	TGName string `json:"tgName,omitempty"`
+	TransitGateway string `json:"tgName,omitempty"`
 }
