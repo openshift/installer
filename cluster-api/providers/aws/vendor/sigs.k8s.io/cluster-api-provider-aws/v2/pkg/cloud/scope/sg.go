@@ -56,6 +56,9 @@ type SGScope interface {
 	// AdditionalControlPlaneIngressRules returns the additional ingress rules for the control plane security group.
 	AdditionalControlPlaneIngressRules() []infrav1.IngressRule
 
+	// AdditionalNodeIngressRules returns the additional ingress rules for the node security group.
+	AdditionalNodeIngressRules() []infrav1.IngressRule
+
 	// ControlPlaneLoadBalancers returns both the ControlPlaneLoadBalancer and SecondaryControlPlaneLoadBalancer AWSLoadBalancerSpecs.
 	// The control plane load balancers should always be returned in the above order.
 	ControlPlaneLoadBalancers() []*infrav1.AWSLoadBalancerSpec

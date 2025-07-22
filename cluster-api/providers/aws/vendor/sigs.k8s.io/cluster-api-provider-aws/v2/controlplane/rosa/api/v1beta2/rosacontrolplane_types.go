@@ -749,6 +749,10 @@ type RosaControlPlaneStatus struct {
 	// OIDCEndpointURL is the endpoint url for the managed OIDC provider.
 	OIDCEndpointURL string `json:"oidcEndpointURL,omitempty"`
 
+	// OpenShift semantic version, for example "4.14.5".
+	// +optional
+	Version string `json:"version"`
+
 	// Available upgrades for the ROSA hosted control plane.
 	AvailableUpgrades []string `json:"availableUpgrades,omitempty"`
 }
