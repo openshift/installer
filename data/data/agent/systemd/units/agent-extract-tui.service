@@ -1,13 +1,12 @@
 [Unit]
 Description=Extract agent-tui at boot
-After=selinux.service
+After=selinux.service start-local-registry.service
 Before=agent-interactive-console.service
 ConditionPathExists=/etc/assisted/rendezvous-host.env
 ConditionPathExists=/etc/assisted/interactive-ui
 
 [Service]
 Type=oneshot
-EnvironmentFile=/etc/assisted/rendezvous-host.env
 # Temporarily load assisted-install-ui here. It was previously in agent-extract-tui.service in the
 # agent-install-utils repo but that service is being removed. 
 # TODO: Remove after assisted-install-ui is productized.
