@@ -10,7 +10,7 @@ ConditionPathExists=!/etc/assisted/node0
 Type=oneshot
 TTYPath=/dev/%I
 EnvironmentFile=/etc/assisted/agent-installer.env
-Environment=LD_LIBRARY_PATH=/usr/local/bin/
+Environment=LD_LIBRARY_PATH=/usr/local/bin/:/usr/local/lib
 Environment=AGENT_TUI_LOG_PATH=/var/log/agent/agent-tui.log
 ExecStartPre=/usr/bin/kill -s SIGRTMIN+21 1
 ExecStartPre=mkdir -p /var/log/agent
