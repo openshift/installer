@@ -15,7 +15,12 @@ import (
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/imagebased/configimage"
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/imagebased"
+	"github.com/openshift/installer/pkg/types/none"
 )
 
 var (
@@ -38,12 +43,7 @@ aavmnLd67zm9PbYDWRaOIWAMeB916Iwaw/v6I0jwhAk/VxX5Fl6cGlZu9jZ3zbFE
 )
 
 func TestIgnition_Generate(t *testing.T) {
-	// This patch currently allows testing the Ignition asset using the embedded resources.
-	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
-	workingDirectory, err := os.Getwd()
-	assert.NoError(t, err)
-	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
-	assert.NoError(t, err)
+	defer setupEmbeddedResources(t)()
 
 	registriesConf := &RegistriesConf{
 		Config: &sysregistriesv2.V2RegistriesConf{
@@ -94,6 +94,13 @@ func TestIgnition_Generate(t *testing.T) {
 					Filename: "post.sh",
 					Data:     []byte(postDeploymentScript),
 				}},
+				&configimage.InstallConfig{
+					AssetBase: installconfig.AssetBase{
+						Config: &types.InstallConfig{
+							Platform: types.Platform{None: &none.Platform{}},
+						},
+					},
+				},
 			},
 
 			expectedFiles: map[string]string{
@@ -153,6 +160,341 @@ podman rm lca-cli
 				assertFiles(t, ignitionAsset.Config, tc.expectedFiles)
 
 				assertSystemdUnits(t, ignitionAsset.Config, tc.expectedSystemdUnits)
+			}
+		})
+	}
+}
+
+// TestGetDHCPKernelArgs tests the dual-stack kernel argument logic.
+func TestGetDHCPKernelArgs(t *testing.T) {
+	cases := []struct {
+		name           string
+		machineNetwork []types.MachineNetworkEntry
+		networkConfig  string
+		userArgs       []string
+		expectedArgs   string
+	}{
+		{
+			name:         "no machine networks",
+			expectedArgs: "",
+		},
+		{
+			name: "single IPv4 machine network, no networkConfig (DHCP)",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+			},
+			expectedArgs: "", // Only add args for dual-stack
+		},
+		{
+			name: "single IPv6 machine network, no networkConfig (DHCP)",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			expectedArgs: "", // Only add args for dual-stack
+		},
+		{
+			name: "dual-stack machine networks, no networkConfig (both DHCP)",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			expectedArgs: "ip=dhcp,dhcp6",
+		},
+		{
+			name: "dual-stack machine networks, both static",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			networkConfig: `interfaces:
+- name: eth0
+  type: ethernet
+  state: up
+  ipv4:
+    enabled: true
+    address:
+    - ip: 10.0.0.100
+      prefix-length: 24
+    dhcp: false
+  ipv6:
+    enabled: true
+    address:
+    - ip: 2001:db8::100
+      prefix-length: 64
+    dhcp: false`,
+			expectedArgs: "",
+		},
+		{
+			name: "dual-stack machine networks, IPv4 static, IPv6 DHCP",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			networkConfig: `interfaces:
+- name: eth0
+  type: ethernet
+  state: up
+  ipv4:
+    enabled: true
+    address:
+    - ip: 10.0.0.100
+      prefix-length: 24
+    dhcp: false
+  ipv6:
+    enabled: true
+    dhcp: true`,
+			expectedArgs: "ip=dhcp6",
+		},
+		{
+			name: "dual-stack machine networks, IPv4 DHCP, IPv6 static",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			networkConfig: `interfaces:
+- name: eth0
+  type: ethernet
+  state: up
+  ipv4:
+    enabled: true
+    dhcp: true
+  ipv6:
+    enabled: true
+    address:
+    - ip: 2001:db8::100
+      prefix-length: 64
+    dhcp: false`,
+			expectedArgs: "ip=dhcp",
+		},
+		{
+			name: "dual-stack machine networks, both DHCP explicitly configured",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			networkConfig: `interfaces:
+- name: eth0
+  type: ethernet
+  state: up
+  ipv4:
+    enabled: true
+    dhcp: true
+  ipv6:
+    enabled: true
+    dhcp: true`,
+			expectedArgs: "ip=dhcp,dhcp6",
+		},
+		{
+			name: "dual-stack, user already provided kernel args",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			userArgs:     []string{"--append-karg", "ip=dhcp"},
+			expectedArgs: "",
+		},
+		{
+			name: "dual-stack, user provided different kernel args",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			userArgs:     []string{"--append-karg", "console=ttyS0"},
+			expectedArgs: "ip=dhcp,dhcp6",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create install config with machine networks using the builder pattern from existing tests
+			installConfig := &configimage.InstallConfig{
+				AssetBase: installconfig.AssetBase{
+					Config: &types.InstallConfig{
+						Platform: types.Platform{None: &none.Platform{}},
+					},
+				},
+			}
+			if len(tc.machineNetwork) > 0 {
+				installConfig.Config.Networking = &types.Networking{
+					MachineNetwork: tc.machineNetwork,
+				}
+			}
+
+			// Create IBI config with network config and user args
+			ibiConfig := &imagebased.InstallationConfig{
+				CoreosInstallerArgs: tc.userArgs,
+			}
+			if tc.networkConfig != "" {
+				ibiConfig.NetworkConfig = &aiv1beta1.NetConfig{
+					Raw: []byte(tc.networkConfig),
+				}
+			}
+
+			result := getDHCPKernelArgs(ibiConfig, installConfig)
+			assert.Equal(t, tc.expectedArgs, result, "unexpected kernel args")
+		})
+	}
+}
+
+// setupEmbeddedResources changes to the data directory for testing embedded resources.
+func setupEmbeddedResources(t *testing.T) func() {
+	t.Helper()
+	workingDirectory, err := os.Getwd()
+	assert.NoError(t, err)
+	assert.NoError(t, os.Chdir(path.Join(workingDirectory, "../../../../data")))
+	return func() {
+		assert.NoError(t, os.Chdir(workingDirectory))
+	}
+}
+
+// TestIgnition_Generate_DualStack tests ignition generation with dual-stack configurations.
+func TestIgnition_Generate_DualStack(t *testing.T) {
+	defer setupEmbeddedResources(t)()
+
+	cases := []struct {
+		name           string
+		machineNetwork []types.MachineNetworkEntry
+		networkConfig  string
+		userArgs       []string
+		expectedKArgs  []string // Expected kernel arguments in CoreOS installer args
+	}{
+		{
+			name: "dual-stack with dynamic networking",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			expectedKArgs: []string{"--append-karg", "ip=dhcp,dhcp6"},
+		},
+		{
+			name: "dual-stack with static networking",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			networkConfig: `interfaces:
+- name: eth0
+  ipv4:
+    enabled: true
+    address:
+    - ip: 10.0.0.100
+      prefix-length: 24
+    dhcp: false
+  ipv6:
+    enabled: true
+    address:
+    - ip: 2001:db8::100
+      prefix-length: 64
+    dhcp: false`,
+			expectedKArgs: []string{}, // No kernel args for static
+		},
+		{
+			name: "dual-stack with mixed static/dynamic networking",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			networkConfig: `interfaces:
+- name: eth0
+  ipv4:
+    enabled: true
+    dhcp: true
+  ipv6:
+    enabled: true
+    address:
+    - ip: 2001:db8::100
+      prefix-length: 64
+    dhcp: false`,
+			expectedKArgs: []string{"--append-karg", "ip=dhcp"},
+		},
+		{
+			name: "single-stack IPv4 with dynamic networking",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+			},
+			expectedKArgs: []string{}, // No kernel args for single-stack
+		},
+		{
+			name: "dual-stack with user-provided kernel args",
+			machineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+				{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+			},
+			userArgs:      []string{"--append-karg", "ip=static"},
+			expectedKArgs: []string{"--append-karg", "ip=static"}, // User args preserved
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create install config
+			installConfig := &configimage.InstallConfig{
+				AssetBase: installconfig.AssetBase{
+					Config: &types.InstallConfig{
+						Platform: types.Platform{None: &none.Platform{}},
+					},
+				},
+			}
+			if len(tc.machineNetwork) > 0 {
+				installConfig.Config.Networking = &types.Networking{
+					MachineNetwork: tc.machineNetwork,
+				}
+			}
+
+			// Create IBI config
+			ibiConfig := &imagebased.InstallationConfig{
+				SeedImage:           "quay.io/openshift-kni/seed-image:4.16.0",
+				SeedVersion:         "4.16.0",
+				InstallationDisk:    "/dev/vda",
+				PullSecret:          `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+				CoreosInstallerArgs: tc.userArgs,
+			}
+			if tc.networkConfig != "" {
+				ibiConfig.NetworkConfig = &aiv1beta1.NetConfig{
+					Raw: []byte(tc.networkConfig),
+				}
+			}
+
+			dependencies := []asset.Asset{
+				&ImageBasedInstallationConfig{Config: ibiConfig},
+				installConfig,
+				&RegistriesConf{},
+				&PostDeployment{},
+			}
+
+			parents := asset.Parents{}
+			parents.Add(dependencies...)
+
+			ignitionAsset := &Ignition{}
+			err := ignitionAsset.Generate(context.Background(), parents)
+			assert.NoError(t, err)
+
+			// Check CoreOS installer args contain expected kernel arguments
+			foundArgs := false
+			for i := 0; i < len(ignitionAsset.Config.Storage.Files); i++ {
+				file := ignitionAsset.Config.Storage.Files[i]
+				if file.Node.Path == "/var/tmp/ibi-configuration.json" {
+					actualData, err := dataurl.DecodeString(*file.FileEmbedded1.Contents.Source)
+					assert.NoError(t, err)
+
+					err = fmt.Errorf("found config file")
+					if err != nil {
+						// Parse and check the CoreOS installer args
+						if len(tc.expectedKArgs) > 0 {
+							// Should contain the expected kernel args
+							configStr := string(actualData.Data)
+							for _, expectedArg := range tc.expectedKArgs {
+								assert.Contains(t, configStr, expectedArg, "missing expected kernel arg")
+							}
+						}
+						foundArgs = true
+						break
+					}
+				}
+			}
+
+			if len(tc.expectedKArgs) > 0 {
+				assert.True(t, foundArgs, "expected to find configuration file")
 			}
 		})
 	}

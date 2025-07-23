@@ -260,7 +260,7 @@ func TestClusterConfiguration_LoadedFromDisk(t *testing.T) {
   "kubeadmin_password_hash": "a-password-hash",
   "raw_nm_state_config": "interfaces:\n- ipv4:\n    address:\n    - ip: 192.168.122.2\n      prefix-length: 23\n    dhcp: false\n    enabled: true\n  mac-address: \"00:00:00:00:00:00\"\n  name: eth0\n  state: up\n  type: ethernet\n",
   "pull_secret": "{\"auths\":{\"cloud.openshift.com\":{\"auth\":\"b3BlUTA=\",\"email\":\"test@redhat.com\"}}}",
-  "machine_network": "10.10.11.0/24"
+  "machine_networks": ["10.10.11.0/24"]
 }`,
 
 			expectedFound:  true,
@@ -378,7 +378,9 @@ func clusterConfiguration() *ClusterConfigurationBuilder {
 		},
 	}
 
-	cc.Config.MachineNetwork = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+	for _, machineNetwork := range installConfig.Config.Networking.MachineNetwork {
+		cc.Config.MachineNetworks = append(cc.Config.MachineNetworks, machineNetwork.CIDR.String())
+	}
 
 	ccb.ClusterConfiguration = *cc
 	return ccb
