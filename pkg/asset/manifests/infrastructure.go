@@ -178,6 +178,7 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			APIServerInternalIPs: installConfig.Config.Platform.BareMetal.APIVIPs,
 			IngressIPs:           installConfig.Config.Platform.BareMetal.IngressVIPs,
 			LoadBalancer:         installConfig.Config.Platform.BareMetal.LoadBalancer,
+			DNSRecordsType:       installConfig.Config.Platform.BareMetal.DNSRecordsType,
 		}
 		config.Spec.PlatformSpec.BareMetal.APIServerInternalIPs = types.StringsToIPs(installConfig.Config.Platform.BareMetal.APIVIPs)
 		config.Spec.PlatformSpec.BareMetal.IngressIPs = types.StringsToIPs(installConfig.Config.Platform.BareMetal.IngressVIPs)

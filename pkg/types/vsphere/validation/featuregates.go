@@ -3,6 +3,7 @@ package validation
 import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/featuregates"
@@ -57,6 +58,11 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			FeatureGateName: features.FeatureGateVSphereMultiDisk,
 			Condition:       hasDataDisks(computeDefs), // Here we need to check disk count
 			Field:           field.NewPath("compute", "platform", "vsphere", "dataDisks"),
+		},
+		{
+			FeatureGateName: features.FeatureGateOnPremDNSRecords,
+			Condition:       v.DNSRecordsType == configv1.DNSRecordsTypeExternal,
+			Field:           field.NewPath("platform", "vsphere", "DNSRecordsType"),
 		},
 	}
 }

@@ -81,6 +81,22 @@ type Platform struct {
 	// +optional
 	LoadBalancer *configv1.NutanixPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 
+	// dnsRecordsType determines whether records for api, api-int, and ingress
+	// are provided by the internal DNS service or externally.
+	// Allowed values are `Internal`, `External`, and omitted.
+	// When set to `Internal`, records are provided by the internal infrastructure and
+	// no additional user configuration is required for the cluster to function.
+	// When set to `External`, records are not provided by the internal infrastructure
+	// and must be configured by the user on a DNS server outside the cluster.
+	// Cluster nodes must use this external server for their upstream DNS requests.
+	// This value may only be set when loadBalancer.type is set to UserManaged.
+	// When omitted, this means the user has no opinion and the platform is left
+	// to choose reasonable defaults. These defaults are subject to change over time.
+	// The current default is `Internal`.
+	// +openshift:enable:FeatureGate=OnPremDNSRecords
+	// +optional
+	DNSRecordsType configv1.DNSRecordsType `json:"dnsRecordsType,omitempty"`
+
 	// FailureDomains configures failure domains for the Nutanix platform.
 	// +optional
 	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
