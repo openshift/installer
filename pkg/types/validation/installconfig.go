@@ -1497,6 +1497,8 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 		gatedFeatures = append(gatedFeatures, awsvalidation.GatedFeatures(c)...)
 	case c.Azure != nil:
 		gatedFeatures = append(gatedFeatures, azurevalidation.GatedFeatures(c)...)
+	case c.BareMetal != nil:
+		gatedFeatures = append(gatedFeatures,baremetalvalidation.GatedFeatures(c)...)
 	}
 
 	if c.ControlPlane != nil {

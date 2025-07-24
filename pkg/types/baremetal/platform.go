@@ -239,6 +239,8 @@ type Platform struct {
 	// +optional
 	LoadBalancer *configv1.BareMetalPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 
+	InternalDNSRecords configv1.InternalDNSRecordsType `json:"internalDNSRecords,omitempty"`
+
 	// BootstrapExternalStaticDNS is the static network DNS of the bootstrap node.
 	// This can be useful in environments without a DHCP server.
 	// +kubebuilder:validation:Format=ip

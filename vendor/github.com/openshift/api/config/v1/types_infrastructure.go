@@ -183,6 +183,13 @@ const (
 	LoadBalancerTypeOpenShiftManagedDefault PlatformLoadBalancerType = "OpenShiftManagedDefault"
 )
 
+type InternalDNSRecordsType string
+
+const (
+	InternalDNSRecordsDisabled InternalDNSRecordsType = "Disabled"
+	InternalDNSRecordsEnabled InternalDNSRecordsType = "Enabled"
+)
+
 // PlatformType is a specific supported infrastructure provider.
 // +kubebuilder:validation:Enum="";AWS;Azure;BareMetal;GCP;Libvirt;OpenStack;None;VSphere;oVirt;IBMCloud;KubeVirt;EquinixMetal;PowerVS;AlibabaCloud;Nutanix;External
 type PlatformType string
@@ -1025,6 +1032,15 @@ type BareMetalPlatformStatus struct {
 	// +kubebuilder:default={"type": "OpenShiftManagedDefault"}
 	// +optional
 	LoadBalancer *BareMetalPlatformLoadBalancer `json:"loadBalancer,omitempty"`
+
+	// internalDNSRecords determines whether we deploy with internal records enabled for
+	// api, api-int, and ingress.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// +openshift:validation:featureGate=OnPremInternalDNSRecords
+	// +openshift:enable:FeatureGate=OnPremInternalDNSRecords
+	// +optional
+	InternalDNSRecords InternalDNSRecordsType `json:"internalDNSRecords"`
 
 	// machineNetworks are IP networks used to connect all the OpenShift cluster nodes.
 	// +listType=atomic

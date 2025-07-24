@@ -362,3 +362,5 @@ replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 
 // Pinning apimachinery to kube 32 for now since 33 breaks sigs.k8s.io/cluster-api until cluster-api releases 1.11
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.32.1
+
+replace github.com/openshift/api => /home/bnemec/go/src/github.com/openshift/api

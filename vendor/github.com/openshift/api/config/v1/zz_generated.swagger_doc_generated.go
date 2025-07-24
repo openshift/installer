@@ -1525,6 +1525,7 @@ var map_BareMetalPlatformStatus = map[string]string{
 	"ingressIPs":           "ingressIPs are the external IPs which route to the default ingress controller. The IPs are suitable targets of a wildcard DNS record used to resolve default route host names. In dual stack clusters this list contains two IPs otherwise only one.",
 	"nodeDNSIP":            "nodeDNSIP is the IP address for the internal DNS used by the nodes. Unlike the one managed by the DNS operator, `NodeDNSIP` provides name resolution for the nodes themselves. There is no DNS-as-a-service for BareMetal deployments. In order to minimize necessary changes to the datacenter DNS, a DNS service is hosted as a static pod to serve those hostnames to the nodes in the cluster.",
 	"loadBalancer":         "loadBalancer defines how the load balancer used by the cluster is configured.",
+	"internalDNSRecords":   "internalDNSRecords determines whether we deploy with internal records enabled for api, api-int, and ingress.",
 	"machineNetworks":      "machineNetworks are IP networks used to connect all the OpenShift cluster nodes.",
 }
 

@@ -142,4 +142,9 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 			return p.Hosts[i].CompareByRole(p.Hosts[j])
 		})
 	}
+
+	if p.InternalDNSRecords == "" {
+		// FIXME: Use a const for this
+		p.InternalDNSRecords = "Enabled"
+	}
 }

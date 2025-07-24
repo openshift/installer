@@ -420,6 +420,10 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		}
 	}
 
+	if c.BareMetal.InternalDNSRecords == configv1.InternalDNSRecordsDisabled && (c.BareMetal.LoadBalancer == nil || c.BareMetal.LoadBalancer.Type != configv1.LoadBalancerTypeUserManaged) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("internalDNSRecords"), c.BareMetal.InternalDNSRecords, "internal DNS records can only be disabled with user-managed loadbalancers"))
+	}
+
 	return allErrs
 }
 
