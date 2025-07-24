@@ -14,5 +14,6 @@ SERVICE_IMAGE=$(image_for agent-installer-api-server)
 CONTROLLER_IMAGE=$(image_for agent-installer-csr-approver)
 INSTALLER_IMAGE=$(image_for agent-installer-orchestrator)
 AGENT_DOCKER_IMAGE=$(image_for agent-installer-node-agent)
+AGENT_INSTALLER_UTILS_IMAGE=$(image_for agent-installer-utils)
 INSTALLER_UI_IMAGE=localhost/agent-installer-ui:latest
 EOF
