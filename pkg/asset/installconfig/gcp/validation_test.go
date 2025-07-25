@@ -118,6 +118,7 @@ var (
 	invalidateBaseDomain     = func(ic *types.InstallConfig) { ic.BaseDomain = invalidBaseDomain }
 
 	validServiceEndpoint = func(ic *types.InstallConfig) {
+		ic.Publish = types.InternalPublishingStrategy
 		ic.GCP.ServiceEndpoints = append(ic.GCP.ServiceEndpoints,
 			configv1.GCPServiceEndpoint{
 				Name: configv1.GCPServiceEndpointNameCompute,
@@ -127,6 +128,7 @@ var (
 	}
 
 	invalidServiceEndpointBadFormat = func(ic *types.InstallConfig) {
+		ic.Publish = types.InternalPublishingStrategy
 		ic.GCP.ServiceEndpoints = append(ic.GCP.ServiceEndpoints,
 			configv1.GCPServiceEndpoint{
 				Name: configv1.GCPServiceEndpointNameStorage,

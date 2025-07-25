@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	computev1 "google.golang.org/api/compute/v1"
-	"google.golang.org/api/option"
 
+	configv1 "github.com/openshift/api/config/v1"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 )
 
@@ -23,8 +23,8 @@ type Client struct {
 }
 
 // NewClient returns Client using the context and session.
-func NewClient(ctx context.Context, sess *gcpconfig.Session, projectID string) (*Client, error) {
-	svc, err := computev1.NewService(ctx, option.WithCredentials(sess.Credentials))
+func NewClient(ctx context.Context, projectID string, serviceEndpoints []configv1.GCPServiceEndpoint) (*Client, error) {
+	svc, err := gcpconfig.GetComputeService(ctx, serviceEndpoints)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create compute service")
 	}

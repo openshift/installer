@@ -132,7 +132,10 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 
 	// check if configured userLabels are valid.
 	allErrs = append(allErrs, validateUserLabels(p.UserLabels, fldPath.Child("userLabels"))...)
-	allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
+
+	if ic.Publish == types.InternalPublishingStrategy {
+		allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
+	}
 
 	return allErrs
 }

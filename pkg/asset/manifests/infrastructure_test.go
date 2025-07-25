@@ -60,11 +60,11 @@ func TestGenerateInfrastructure(t *testing.T) {
 		name: "gcp service endpoints",
 		installConfig: icBuild.build(
 			icBuild.forGCP(),
-			icBuild.withGCPServiceEndpoint(configv1.GCPServiceEndpointNameCompute, "https://googleapis.com/compute/v1/"),
+			icBuild.withGCPServiceEndpoint(configv1.GCPServiceEndpointNameCompute, "https://compute-endpoint.p.googleapis.com"),
 		),
 		expectedInfrastructure: infraBuild.build(
 			infraBuild.forPlatform(configv1.GCPPlatformType),
-			infraBuild.withGCPServiceEndpoint(configv1.GCPServiceEndpointNameCompute, "https://googleapis.com/compute/v1/"),
+			infraBuild.withGCPServiceEndpoint(configv1.GCPServiceEndpointNameCompute, "https://compute-endpoint.p.googleapis.com"),
 		),
 		expectedFilesGenerated: 2,
 	}, {
