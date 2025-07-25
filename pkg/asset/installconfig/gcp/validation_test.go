@@ -544,8 +544,8 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	validKeyRingRet := &kmspb.KeyRing{
 		Name: "validKeyRingName",
 	}
-	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &validKeyRing).Return(validKeyRingRet, nil).AnyTimes()
-	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &invalidKeyRing).Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), validProjectName, validRegion, &validKeyRing).Return(validKeyRingRet, nil).AnyTimes()
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), validProjectName, validRegion, &invalidKeyRing).Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
 
 	gcpClient.EXPECT().GetDNSZone(gomock.Any(), validProjectName, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
 	gcpClient.EXPECT().GetDNSZone(gomock.Any(), invalidProjectName, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
