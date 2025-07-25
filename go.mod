@@ -56,6 +56,7 @@ require (
 	github.com/coreos/ignition/v2 v2.20.0
 	github.com/coreos/stream-metadata-go v0.1.8
 	github.com/daixiang0/gci v0.13.4
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/digitalocean/go-libvirt v0.0.0-20240220204746-fcabe97a6eed
 	github.com/diskfs/go-diskfs v1.4.0
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
@@ -120,6 +121,7 @@ require (
 	github.com/vmware/govmomi v0.47.1
 	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.36.0
+	golang.org/x/mod v0.23.0
 	golang.org/x/oauth2 v0.27.0
 	golang.org/x/sync v0.12.0
 	golang.org/x/sys v0.31.0
@@ -197,7 +199,6 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/coreos/vcontext v0.0.0-20230201181013-d72178a18687 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab // indirect
 	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
@@ -309,7 +310,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac // indirect
-	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
 	golang.org/x/tools v0.30.0 // indirect
@@ -359,3 +359,5 @@ replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.c
 
 // This is to force capi back for the older provider version
 replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
+
+replace github.com/coreos/stream-metadata-go => github.com/patrickdillon/stream-metadata-go v0.0.0-20250721190929-19bba3ecd655
