@@ -134,7 +134,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.OutboundType = "random-egress"
 				return p
 			}(),
-			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "NatGateway", "UserDefinedRouting"$`,
+			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "NATGatewaySingleZone", "UserDefinedRouting"$`,
 		},
 		{
 			name: "invalid user defined type",
@@ -144,15 +144,6 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expected: `^test-path\.outboundType: Invalid value: "UserDefinedRouting": UserDefinedRouting is only allowed when installing to pre-existing network$`,
-		},
-		{
-			name: "invalid nat gateway",
-			platform: func() *azure.Platform {
-				p := validPlatform()
-				p.OutboundType = azure.NatGatewayOutboundType
-				return p
-			}(),
-			expected: `^test-path\.outboundType: Invalid value: "NatGateway": not supported in this feature set$`,
 		},
 		{
 			name: "missing key vault name",
