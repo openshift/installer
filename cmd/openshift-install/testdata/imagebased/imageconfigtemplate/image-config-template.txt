@@ -23,17 +23,44 @@ seedImage: quay.io/openshift-kni/seed-image:4.16.0
 seedVersion: 4.16.0
 installationDisk: /dev/vda
 pullSecret: '<your-pull-secret>'
-# networkConfig is optional and contains the network configuration for the host in NMState format.
+# networkConfig is optional and configures host networking in NMState format.
 # See https://nmstate.io/examples.html for examples.
+# 
+# Kernel arguments are automatically added ONLY for DUAL-STACK scenarios:
+# - Must have exactly 2 machine networks (IPv4 + IPv6) in install-config.yaml
+# - Only when user hasn't already provided ip= kernel arguments
+# - Adds appropriate args: ip=dhcp, ip=dhcp6, or ip=dhcp,dhcp6
+# - Single-stack clusters: no automatic kernel args added
+#
+# Example: If you already provide kernel args, automatic detection is skipped:
+# coreosInstallerArgs: ["--append-karg", "ip=dhcp,dhcp6"]
+#
+# Example 1 - Both static (no kernel args added):
 # networkConfig:
 #   interfaces:
 #     - name: eth0
-#       type: ethernet
-#       state: up
-#       mac-address: 00:00:00:00:00:00
 #       ipv4:
-#         enabled: true
-#         address:
-#           - ip: 192.168.122.2
-#             prefix-length: 23
+#         address: [ip: 192.168.122.2, prefix-length: 23]
 #         dhcp: false
+#       ipv6:
+#         address: [ip: 2001:db8::2, prefix-length: 64]
+#         dhcp: false
+#
+# Example 2 - IPv4 static, IPv6 DHCP (gets ip=dhcp6):
+# networkConfig:
+#   interfaces:
+#     - name: eth0
+#       ipv4:
+#         address: [ip: 192.168.122.2, prefix-length: 23]
+#         dhcp: false
+#       ipv6:
+#         dhcp: true
+#
+# Example 3 - Both DHCP (gets ip=dhcp,dhcp6):
+# networkConfig:
+#   interfaces:
+#     - name: eth0
+#       ipv4:
+#         dhcp: true
+#       ipv6:
+#         dhcp: true
