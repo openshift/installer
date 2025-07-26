@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -35,6 +36,7 @@ var (
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
+// nolint:gocyclo
 func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -109,8 +111,20 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
+	// dataDisks in defaultMachinePool is unsupported
+	if poolName == "" {
+		if len(p.DataDisks) > 0 {
+			var dataDiskNames []string
+			for _, d := range p.DataDisks {
+				dataDiskNames = append(dataDiskNames, d.NameSuffix)
+			}
+
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("dataDisks"), strings.Join(dataDiskNames, ","), "not allowed on default machine pool, use dataDisks compute and controlPlane only"))
+		}
+	}
+
 	if pool != nil {
-		if len(p.DataDisks) != 0 {
+		if len(p.DataDisks) != 0 && len(pool.DiskSetup) != 0 {
 			allErrs = append(allErrs, validateDataDiskSetup(p, pool, fldPath.Child("dataDisks"))...)
 		}
 	}
@@ -124,15 +138,50 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 func validateDataDiskSetup(azurePool *azure.MachinePool, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	for _, d := range azurePool.DataDisks {
+	// We could have a situation where the azure DataDisks are
+	// defined but no corresponding disk setup but we should never have
+	// more DiskSetup than DataDisks
+	if len(azurePool.DataDisks) < len(pool.DiskSetup) {
+		allErrs = append(allErrs, field.TooLong(fldPath, pool.DiskSetup, len(azurePool.DataDisks)))
+		// return early if disksetup and datadisks don't match lengths
+		return allErrs
+	}
+
+	lunNumbers := make(map[int32]interface{})
+	for i, d := range azurePool.DataDisks {
 		if d.Lun == nil {
-			allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%s must have lun id", d.NameSuffix)))
-		} else if *(d.Lun) < 0 || *(d.Lun) > 63 {
-			allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%s must have lun id between 0 and 63", d.NameSuffix)))
+			allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%q must have lun id", d.NameSuffix)))
+		} else {
+			if *(d.Lun) < 0 || *(d.Lun) > 63 {
+				allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%q must have lun id between 0 and 63", d.NameSuffix)))
+			}
+			if _, ok := lunNumbers[*d.Lun]; ok {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("Lun"), d.NameSuffix, "dataDisk must have a unique lun number"))
+			} else {
+				lunNumbers[*d.Lun] = struct{}{}
+			}
 		}
 
-		if d.DiskSizeGB == 0 {
+		if d.DiskSizeGB <= 0 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("DiskSizeGB"), d.DiskSizeGB, "diskSizeGB must be greater than zero"))
+		}
+
+		if i < len(pool.DiskSetup) {
+			setup := pool.DiskSetup[i]
+			switch setup.Type {
+			case types.Etcd:
+				if setup.Etcd != nil && setup.Etcd.PlatformDiskID != d.NameSuffix {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match etcd PlatformDiskID %q", setup.Etcd.PlatformDiskID)))
+				}
+			case types.Swap:
+				if setup.Swap != nil && setup.Swap.PlatformDiskID != d.NameSuffix {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match swap PlatformDiskID %q", setup.Swap.PlatformDiskID)))
+				}
+			case types.UserDefined:
+				if setup.UserDefined != nil && setup.UserDefined.PlatformDiskID != d.NameSuffix {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match user defined PlatformDiskID %q", setup.UserDefined.PlatformDiskID)))
+				}
+			}
 		}
 	}
 
