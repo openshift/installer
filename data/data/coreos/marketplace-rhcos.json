@@ -1,0 +1,83 @@
+{
+    "aarch64": {
+        "azure": {
+            "no-purchase-plan": {
+                "hyperVGen2": {
+                    "publisher": "azureopenshift",
+                    "offer": "aro4",
+                    "sku": "419-arm",
+                    "version": "419.6.20250523",
+                    "purchasePlan": false
+                }
+            }
+        }
+    },
+    "x86_64": {
+        "azure": {
+            "no-purchase-plan": {
+                "hyperVGen1": {
+                    "publisher": "azureopenshift",
+                    "offer": "aro4",
+                    "sku": "aro_419",
+                    "version": "419.6.20250523",
+                    "purchasePlan": false
+                },
+                "hyperVGen2": {
+                    "publisher": "azureopenshift",
+                    "offer": "aro4",
+                    "sku": "419-v2",
+                    "version": "419.6.20250523",
+                    "purchasePlan": false
+                }
+            },
+            "ocp": {
+                "hyperVGen1": {
+                    "publisher": "redhat",
+                    "offer": "rh-ocp-worker",
+                    "sku": "rh-ocp-worker-gen1",
+                    "version": "4.18.2025031114",
+                    "purchasePlan": true
+                },
+                "hyperVGen2": {
+                    "publisher": "redhat",
+                    "offer": "rh-ocp-worker",
+                    "sku": "rh-ocp-worker",
+                    "version": "4.18.2025031114",
+                    "purchasePlan": true
+                }
+            },
+            "opp": {
+                "hyperVGen1": {
+                    "publisher": "redhat",
+                    "offer": "rh-ocp-worker",
+                    "sku": "rh-ocp-worker-gen1",
+                    "version": "4.18.2025031114",
+                    "purchasePlan": true
+                },
+                "hyperVGen2": {
+                    "publisher": "redhat",
+                    "offer": "rh-ocp-worker",
+                    "sku": "rh-ocp-worker",
+                    "version": "4.18.2025031114",
+                    "purchasePlan": true
+                }
+            },
+            "oke": {
+                "hyperVGen1": {
+                    "publisher": "redhat",
+                    "offer": "rh-oke-worker",
+                    "sku": "rh-oke-worker-gen1",
+                    "version": "4.18.2025031114",
+                    "purchasePlan": true
+                },
+                "hyperVGen2": {
+                    "publisher": "redhat",
+                    "offer": "rh-oke-worker",
+                    "sku": "rh-oke-worker",
+                    "version": "4.18.2025031114",
+                    "purchasePlan": true
+                }
+            }
+        }
+    }
+}
