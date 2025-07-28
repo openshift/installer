@@ -366,7 +366,6 @@ infrastructures.config.openshift.io:
   - DyanmicServiceEndpointIBMCloud
   - GCPClusterHostedDNS
   - GCPCustomAPIEndpoints
-  - GCPLabelsTags
   - HighlyAvailableArbiter
   - HighlyAvailableArbiter+DualReplica
   - NutanixMultiSubnets

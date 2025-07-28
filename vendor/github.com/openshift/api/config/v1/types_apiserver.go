@@ -146,7 +146,7 @@ type AuditCustomRule struct {
 	// If unset, the 'Default' profile is used as the default.
 	//
 	// +required
-	Profile AuditProfileType `json:"profile,omitempty"`
+	Profile AuditProfileType `json:"profile"`
 }
 
 type APIServerServingCerts struct {

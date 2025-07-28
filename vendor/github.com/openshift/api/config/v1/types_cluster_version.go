@@ -163,6 +163,7 @@ type ClusterVersionStatus struct {
 	VersionHash string `json:"versionHash"`
 
 	// capabilities describes the state of optional, core cluster components.
+	// +optional
 	Capabilities ClusterVersionCapabilitiesStatus `json:"capabilities"`
 
 	// conditions provides information about the cluster version. The condition

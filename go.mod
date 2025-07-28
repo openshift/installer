@@ -1,8 +1,8 @@
 module github.com/openshift/installer
 
-go 1.23.2
+go 1.24.0
 
-toolchain go1.23.5
+toolchain go1.24.5
 
 require (
 	cloud.google.com/go/kms v1.20.2
@@ -86,7 +86,7 @@ require (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.5.4-0.20250116153252-296a5347104c
 	github.com/nutanix-cloud-native/prism-go-client v0.5.0
 	github.com/onsi/gomega v1.36.2
-	github.com/openshift/api v0.0.0-20250704153732-ad766c4e6d8e
+	github.com/openshift/api v0.0.0-20250725072657-92b1455121e1
 	github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
@@ -129,9 +129,9 @@ require (
 	google.golang.org/grpc v1.71.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.32.3
+	k8s.io/api v0.33.2
 	k8s.io/apiextensions-apiserver v0.32.1
-	k8s.io/apimachinery v0.32.3
+	k8s.io/apimachinery v0.33.2
 	k8s.io/client-go v0.32.1
 	k8s.io/cloud-provider-vsphere v1.31.0
 	k8s.io/klog v1.0.0
@@ -224,7 +224,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.7.0-rc.1 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
+	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
@@ -309,8 +309,8 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac // indirect
 	golang.org/x/mod v0.23.0 // indirect
-	golang.org/x/net v0.37.0 // indirect
-	golang.org/x/time v0.8.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/time v0.9.0 // indirect
 	golang.org/x/tools v0.30.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
@@ -327,10 +327,11 @@ require (
 	k8s.io/cli-runtime v0.31.3 // indirect
 	k8s.io/cluster-bootstrap v0.32.1 // indirect
 	k8s.io/component-base v0.32.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
+	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	k8s.io/kubectl v0.31.3 // indirect
 	sigs.k8s.io/kustomize/api v0.17.3 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.17.2 // indirect
+	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
 )
 
@@ -358,3 +359,6 @@ replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.c
 
 // This is to force capi back for the older provider version
 replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
+
+// Pinning apimachinery to kube 32 for now since 33 breaks sigs.k8s.io/cluster-api until cluster-api releases 1.11
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.32.1
