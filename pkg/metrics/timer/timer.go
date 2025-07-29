@@ -1,7 +1,6 @@
 package timer
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -93,7 +92,7 @@ func (t *Timer) LogSummary(logger *logrus.Logger) {
 
 	for _, item := range t.listOfStages {
 		if item != TotalTimeElapsed && t.stageTimes[item] > 0 {
-			logger.Debugf(fmt.Sprintf("%*s: %s", maxLen, item, t.stageTimes[item]))
+			logger.Debugf("%*s: %s", maxLen, item, t.stageTimes[item])
 		}
 	}
 	logger.Infof("Time elapsed: %s", t.stageTimes[TotalTimeElapsed])

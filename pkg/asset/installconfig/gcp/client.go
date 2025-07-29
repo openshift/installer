@@ -479,7 +479,7 @@ func (c *Client) GetServiceAccount(ctx context.Context, project, serviceAccount 
 	fullServiceAccountPath := fmt.Sprintf("projects/%s/serviceAccounts/%s", project, serviceAccount)
 	rsp, err := svc.Projects.ServiceAccounts.Get(fullServiceAccountPath).Context(ctx).Do()
 	if err != nil {
-		return "", errors.Wrapf(err, fmt.Sprintf("failed to find resource %s", fullServiceAccountPath))
+		return "", errors.Wrapf(err, "failed to find resource %s", fullServiceAccountPath)
 	}
 	return rsp.Name, nil
 }
