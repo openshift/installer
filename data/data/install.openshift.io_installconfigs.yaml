@@ -57,6 +57,45 @@ spec:
                 - ""
                 - amd64
                 type: string
+              diskSetup:
+                description: |-
+                  DiskSetup stores the type of disks that will be setup with MachineConfigs.
+                  The available types are etcd, swap and user-defined.
+                items:
+                  description: |-
+                    Disk defines the type of disk (etcd, swap or user-defined) and the configuration
+                    of each disk type.
+                  properties:
+                    etcd:
+                      description: DiskEtcd defines a disk type of etcd.
+                      properties:
+                        platformDiskID:
+                          type: string
+                      type: object
+                    swap:
+                      description: DiskSwap defines a disk type of swap.
+                      properties:
+                        platformDiskID:
+                          type: string
+                      type: object
+                    type:
+                      description: DiskType is the string representation of the three
+                        types disk setups
+                      enum:
+                      - etcd
+                      - swap
+                      - user-defined
+                      type: string
+                    userDefined:
+                      description: DiskUserDefined defines a disk type of user-defined.
+                      properties:
+                        mountPath:
+                          type: string
+                        platformDiskID:
+                          type: string
+                      type: object
+                  type: object
+                type: array
               fencing:
                 description: |-
                   Fencing stores the information about a baremetal host's management controller.
@@ -1458,6 +1497,45 @@ spec:
                   - ""
                   - amd64
                   type: string
+                diskSetup:
+                  description: |-
+                    DiskSetup stores the type of disks that will be setup with MachineConfigs.
+                    The available types are etcd, swap and user-defined.
+                  items:
+                    description: |-
+                      Disk defines the type of disk (etcd, swap or user-defined) and the configuration
+                      of each disk type.
+                    properties:
+                      etcd:
+                        description: DiskEtcd defines a disk type of etcd.
+                        properties:
+                          platformDiskID:
+                            type: string
+                        type: object
+                      swap:
+                        description: DiskSwap defines a disk type of swap.
+                        properties:
+                          platformDiskID:
+                            type: string
+                        type: object
+                      type:
+                        description: DiskType is the string representation of the
+                          three types disk setups
+                        enum:
+                        - etcd
+                        - swap
+                        - user-defined
+                        type: string
+                      userDefined:
+                        description: DiskUserDefined defines a disk type of user-defined.
+                        properties:
+                          mountPath:
+                            type: string
+                          platformDiskID:
+                            type: string
+                        type: object
+                    type: object
+                  type: array
                 fencing:
                   description: |-
                     Fencing stores the information about a baremetal host's management controller.
@@ -2799,6 +2877,45 @@ spec:
                 - ""
                 - amd64
                 type: string
+              diskSetup:
+                description: |-
+                  DiskSetup stores the type of disks that will be setup with MachineConfigs.
+                  The available types are etcd, swap and user-defined.
+                items:
+                  description: |-
+                    Disk defines the type of disk (etcd, swap or user-defined) and the configuration
+                    of each disk type.
+                  properties:
+                    etcd:
+                      description: DiskEtcd defines a disk type of etcd.
+                      properties:
+                        platformDiskID:
+                          type: string
+                      type: object
+                    swap:
+                      description: DiskSwap defines a disk type of swap.
+                      properties:
+                        platformDiskID:
+                          type: string
+                      type: object
+                    type:
+                      description: DiskType is the string representation of the three
+                        types disk setups
+                      enum:
+                      - etcd
+                      - swap
+                      - user-defined
+                      type: string
+                    userDefined:
+                      description: DiskUserDefined defines a disk type of user-defined.
+                      properties:
+                        mountPath:
+                          type: string
+                        platformDiskID:
+                          type: string
+                      type: object
+                  type: object
+                type: array
               fencing:
                 description: |-
                   Fencing stores the information about a baremetal host's management controller.
