@@ -17,6 +17,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/service"
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -275,7 +277,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		blobContainer := createBlobContainerOutput.BlobContainer
 		logrus.Debugf("BlobContainer.ID=%s", *blobContainer.ID)
 
-		_, err = CreatePageBlob(ctx, &CreatePageBlobInput{
+		err = CreatePageBlob(ctx, &CreatePageBlobInput{
 			StorageURL:         storageURL,
 			BlobURL:            blobURL,
 			ImageURL:           imageURL,
@@ -740,8 +742,25 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		blobIgnitionContainer = createBlobContainerOutput.BlobContainer
 		logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
 	}
-
 	sasURL := ""
+	now := time.Now().UTC().Add(-10 * time.Second)
+	expiry := now.Add(1 * time.Hour)
+	info := service.KeyInfo{
+		Start:  to.Ptr(now.UTC().Format(sas.TimeFormat)),
+		Expiry: to.Ptr(expiry.UTC().Format(sas.TimeFormat)),
+	}
+
+	serviceClient, err := service.NewClient(fmt.Sprintf("https://%s.blob.core.windows.net/", p.StorageAccountName),
+		session.TokenCreds,
+		&service.ClientOptions{},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service client: %w", err)
+	}
+	udc, err := serviceClient.GetUserDelegationCredential(context.Background(), info, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user delegation credentials: %w", err)
+	}
 
 	if in.InstallConfig.Config.Azure.CustomerManagedKey == nil {
 		logrus.Debugf("Creating a Block Blob for ignition shim")
@@ -774,7 +793,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			lengthBootstrapFile = (((lengthBootstrapFile / 512) + 1) * 512)
 		}
 
-		sasURL, err = CreatePageBlob(ctx, &CreatePageBlobInput{
+		err = CreatePageBlob(ctx, &CreatePageBlobInput{
 			StorageURL:         p.StorageURL,
 			BlobURL:            blobURL,
 			ImageURL:           "",
@@ -789,6 +808,22 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		if err != nil {
 			return nil, fmt.Errorf("failed to create PageBlob for ignition shim: %w", err)
 		}
+	}
+
+	// Should we separate azurestack from azure when using the user delegated SAS?
+	// Azurestack is generating an SAS url at this point.
+	if sasURL != "" {
+		sasQueryParams, err := sas.BlobSignatureValues{
+			Protocol:    sas.ProtocolHTTPS,
+			StartTime:   time.Now().UTC().Add(time.Second * -10),
+			ExpiryTime:  time.Now().UTC().Add(1 * time.Hour),
+			Permissions: to.Ptr(sas.ContainerPermissions{Read: true, List: true, Write: true, Create: true}).String(),
+			BlobName:    blobName,
+		}.SignWithUserDelegation(udc)
+		if err != nil {
+			return nil, fmt.Errorf("failed to sign blob %s: %w", blobURL, err)
+		}
+		sasURL = fmt.Sprintf("https://%s.blob.core.windows.net/ignition/%s?%s", p.StorageAccountName, blobName, sasQueryParams.Encode())
 	}
 	ignShim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sasURL, in.InstallConfig.Config.AdditionalTrustBundle, in.InstallConfig.Config.Proxy)
 	if err != nil {

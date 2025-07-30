@@ -231,6 +231,7 @@ type CreatePageBlobInput struct {
 	ImageURL           string
 	StorageAccountName string
 	BootstrapIgnData   []byte
+	UserDelegatedSAS   *sas.UserDelegationCredential
 	ImageLength        int64
 	AuthType           azic.AuthenticationType
 	TokenCredential    azcore.TokenCredential
@@ -245,7 +246,7 @@ type CreatePageBlobOutput struct {
 }
 
 // CreatePageBlob creates a blob and uploads a file from a URL to it.
-func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error) {
+func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) error {
 	logrus.Debugf("Getting page blob client")
 
 	pageBlobClient, err := pageblob.NewClient(
@@ -258,19 +259,19 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error
 		},
 	)
 	if err != nil {
-		return "", fmt.Errorf("failed to get page blob client: %w", err)
+		return fmt.Errorf("failed to get page blob client: %w", err)
 	}
 
 	logrus.Debugf("Creating Page blob and uploading image to it")
 	if in.ImageURL == "" {
 		_, err = pageBlobClient.Create(ctx, in.ImageLength, nil)
 		if err != nil {
-			return "", fmt.Errorf("failed to create page blob with image contents: %w", err)
+			return fmt.Errorf("failed to create page blob with image contents: %w", err)
 		}
 		// This image (example: ignition shim) needs to be uploaded from a local file.
 		err = doUploadPages(ctx, pageBlobClient, in.BootstrapIgnData, in.ImageLength)
 		if err != nil {
-			return "", fmt.Errorf("failed to upload page blob image contents: %w", err)
+			return fmt.Errorf("failed to upload page blob image contents: %w", err)
 		}
 	} else {
 		// This is used in terraform, not sure if it matters
@@ -282,26 +283,15 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error
 			Metadata: metadata,
 		})
 		if err != nil {
-			return "", fmt.Errorf("failed to create page blob with image URL: %w", err)
+			return fmt.Errorf("failed to create page blob with image URL: %w", err)
 		}
 
 		err = doUploadPagesFromURL(ctx, pageBlobClient, in.ImageURL, in.ImageLength)
 		if err != nil {
-			return "", fmt.Errorf("failed to upload page blob image from URL %s: %w", in.ImageURL, err)
+			return fmt.Errorf("failed to upload page blob image from URL %s: %w", in.ImageURL, err)
 		}
 	}
-
-	// SAS not supported when using managed identity.
-	if in.AuthType == azic.ManagedIdentityAuth {
-		return pageBlobClient.URL(), nil
-	}
-
-	// Is this addition OK for when CreatePageBlob() is called from InfraReady()
-	sasURL, err := pageBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
-	if err != nil {
-		return "", fmt.Errorf("failed to get Page Blob SAS URL: %w", err)
-	}
-	return sasURL, nil
+	return nil
 }
 
 func doUploadPages(ctx context.Context, pageBlobClient *pageblob.Client, imageData []byte, imageLength int64) error {
@@ -454,6 +444,7 @@ type CreateBlockBlobInput struct {
 	CloudEnvironment   aztypes.CloudEnvironment
 	ContainerName      string
 	BlobName           string
+	UserDelegatedSAS   *sas.UserDelegationCredential
 	StorageSuffix      string
 	ARMEndpoint        string
 	Region             string
@@ -512,12 +503,7 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput, sharedKeyCre
 	if in.AuthType == azic.ManagedIdentityAuth {
 		return blockBlobClient.URL(), nil
 	}
-
-	sasURL, err := blockBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
-	if err != nil {
-		return "", fmt.Errorf("failed to get SAS URL: %w", err)
-	}
-	return sasURL, nil
+	return "", nil
 }
 
 func createBlockBlobOnStack(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
@@ -598,6 +584,7 @@ func uploadBlockBlobOnStack(in *CreateBlockBlobInput, key string) (string, error
 	}
 	return sas, nil
 }
+
 // CustomerManagedKeyInput contains the input parameters for creating the
 // customer managed key and identity.
 type CustomerManagedKeyInput struct {
