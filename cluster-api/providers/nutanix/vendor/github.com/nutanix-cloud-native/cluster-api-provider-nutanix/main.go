@@ -45,6 +45,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	infrav1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/nutanix-cloud-native/cluster-api-provider-nutanix/controllers"
@@ -69,12 +70,26 @@ const (
 	defaultMaxConcurrentReconciles = 10
 )
 
+type options struct {
+	enableLeaderElection    bool
+	healthProbeAddr         string
+	maxConcurrentReconciles int
+
+	rateLimiterBaseDelay  time.Duration
+	rateLimiterMaxDelay   time.Duration
+	rateLimiterBucketSize int
+	rateLimiterQPS        int
+
+	managerOptions capiflags.ManagerOptions
+	zapOptions     zap.Options
+}
+
 type managerConfig struct {
 	enableLeaderElection               bool
-	probeAddr                          string
+	healthProbeAddr                    string
 	concurrentReconcilesNutanixCluster int
 	concurrentReconcilesNutanixMachine int
-	managerOptions                     capiflags.ManagerOptions
+	metricsServerOpts                  server.Options
 
 	logger      logr.Logger
 	restConfig  *rest.Config
@@ -126,42 +141,82 @@ func validateRateLimiterConfig(baseDelay, maxDelay time.Duration, bucketSize, qp
 	return nil
 }
 
-func parseFlags(config *managerConfig) {
-	capiflags.AddManagerOptions(pflag.CommandLine, &config.managerOptions)
-	pflag.StringVar(&config.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	pflag.BoolVar(&config.enableLeaderElection, "leader-elect", false,
+func initializeFlags() *options {
+	opts := &options{}
+
+	// Add the controller-runtime flags to the standard library FlagSet.
+	ctrl.RegisterFlags(flag.CommandLine)
+
+	// Add the Cluster API flags to the pflag FlagSet.
+	capiflags.AddManagerOptions(pflag.CommandLine, &opts.managerOptions)
+
+	// Add zap flags to the standard libary FlagSet.
+	opts.zapOptions.BindFlags(flag.CommandLine)
+
+	// Add our own flags to the pflag FlagSet.
+	pflag.StringVar(&opts.healthProbeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	pflag.BoolVar(&opts.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	var maxConcurrentReconciles int
-	pflag.IntVar(&maxConcurrentReconciles, "max-concurrent-reconciles", defaultMaxConcurrentReconciles,
+
+	pflag.IntVar(&opts.maxConcurrentReconciles, "max-concurrent-reconciles", defaultMaxConcurrentReconciles,
 		"The maximum number of allowed, concurrent reconciles.")
 
-	var baseDelay, maxDelay time.Duration
-	var bucketSize, qps int
-	pflag.DurationVar(&baseDelay, "rate-limiter-base-delay", 500*time.Millisecond, "The base delay for the rate limiter.")
-	pflag.DurationVar(&maxDelay, "rate-limiter-max-delay", 15*time.Minute, "The maximum delay for the rate limiter.")
-	pflag.IntVar(&bucketSize, "rate-limiter-bucket-size", 100, "The bucket size for the rate limiter.")
-	pflag.IntVar(&qps, "rate-limiter-qps", 10, "The QPS for the rate limiter.")
+	pflag.DurationVar(&opts.rateLimiterBaseDelay, "rate-limiter-base-delay", 500*time.Millisecond, "The base delay for the rate limiter.")
+	pflag.DurationVar(&opts.rateLimiterMaxDelay, "rate-limiter-max-delay", 15*time.Minute, "The maximum delay for the rate limiter.")
+	pflag.IntVar(&opts.rateLimiterBucketSize, "rate-limiter-bucket-size", 100, "The bucket size for the rate limiter.")
+	pflag.IntVar(&opts.rateLimiterQPS, "rate-limiter-qps", 10, "The QPS for the rate limiter.")
 
-	opts := zap.Options{
-		TimeEncoder: zapcore.RFC3339TimeEncoder,
-	}
-	opts.BindFlags(flag.CommandLine)
-
-	logger := zap.New(zap.UseFlagOptions(&opts))
-	ctrl.SetLogger(logger)
+	// At this point, we should be done adding flags to the standard library FlagSet, flag.CommandLine.
+	// So we can include the flags that third-party libraries, e.g. controller-runtime, and zap,
+	// have added to the standard library FlagSet, we merge it into the pflag FlagSet.
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
+	// Parse flags.
 	pflag.Parse()
 
-	config.concurrentReconcilesNutanixCluster = maxConcurrentReconciles
-	config.concurrentReconcilesNutanixMachine = maxConcurrentReconciles
+	return opts
+}
 
-	rateLimiter, err := compositeRateLimiter(baseDelay, maxDelay, bucketSize, qps)
-	if err != nil {
-		config.logger.Error(err, "unable to create composite rate limiter")
-		os.Exit(1)
+func initializeConfig(opts *options) (*managerConfig, error) {
+	config := &managerConfig{
+		enableLeaderElection: opts.enableLeaderElection,
+		healthProbeAddr:      opts.healthProbeAddr,
 	}
 
+	_, metricsServerOpts, err := capiflags.GetManagerOptions(opts.managerOptions)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get metrics server options: %w", err)
+	}
+	if metricsServerOpts == nil {
+		return nil, errors.New("parsed manager options are nil")
+	}
+	config.metricsServerOpts = *metricsServerOpts
+
+	config.concurrentReconcilesNutanixCluster = opts.maxConcurrentReconciles
+	config.concurrentReconcilesNutanixMachine = opts.maxConcurrentReconciles
+
+	rateLimiter, err := compositeRateLimiter(opts.rateLimiterBaseDelay, opts.rateLimiterMaxDelay, opts.rateLimiterBucketSize, opts.rateLimiterQPS)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create composite rate limiter: %w", err)
+	}
 	config.rateLimiter = rateLimiter
+
+	zapOptions := opts.zapOptions
+	zapOptions.TimeEncoder = zapcore.RFC3339TimeEncoder
+	config.logger = zap.New(zap.UseFlagOptions(&zapOptions))
+
+	// Configure controller-runtime logger before using calling any controller-runtime functions.
+	// Otherwise, the user will not see warnings and errors logged by these functions.
+	ctrl.SetLogger(config.logger)
+
+	// Before calling GetConfigOrDie, we have parsed flags, because the function reads value of
+	// the--kubeconfig flag.
+	config.restConfig, err = ctrl.GetConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
+	}
+
+	return config, nil
 }
 
 func setupLogger() logr.Logger {
@@ -276,19 +331,10 @@ func runManager(ctx context.Context, mgr manager.Manager, config *managerConfig)
 }
 
 func initializeManager(config *managerConfig) (manager.Manager, error) {
-	_, metricsOpts, err := capiflags.GetManagerOptions(config.managerOptions)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get manager options: %w", err)
-	}
-
-	if metricsOpts == nil {
-		return nil, errors.New("parsed manager options are nil")
-	}
-
 	mgr, err := ctrl.NewManager(config.restConfig, ctrl.Options{
 		Scheme:                 scheme,
-		Metrics:                *metricsOpts,
-		HealthProbeBindAddress: config.probeAddr,
+		Metrics:                config.metricsServerOpts,
+		HealthProbeBindAddress: config.healthProbeAddr,
 		LeaderElection:         config.enableLeaderElection,
 		LeaderElectionID:       "f265110d.cluster.x-k8s.io",
 	})
@@ -306,16 +352,17 @@ func initializeManager(config *managerConfig) (manager.Manager, error) {
 func main() {
 	logger := setupLogger()
 
-	config := &managerConfig{}
-	parseFlags(config)
-
-	// Flags must be parsed before calling GetConfigOrDie, because
-	// it reads the value of the--kubeconfig flag.
-	config.restConfig = ctrl.GetConfigOrDie()
-
-	config.logger = logger
-
 	logger.Info("Initializing Nutanix Cluster API Infrastructure Provider", "Git Hash", gitCommitHash)
+
+	opts := initializeFlags()
+	// After this point, we must not add flags to either the pflag, or the standard library FlagSets.
+
+	config, err := initializeConfig(opts)
+	if err != nil {
+		logger.Error(err, "unable to configure manager")
+		os.Exit(1)
+	}
+
 	mgr, err := initializeManager(config)
 	if err != nil {
 		logger.Error(err, "unable to create manager")

@@ -16,7 +16,7 @@ LOCAL_PROVIDER_VERSION ?= ${IMG_TAG}
 
 ifeq (${LOCAL_PROVIDER_VERSION},${IMG_TAG})
 # TODO(release-blocker): Change this versions after release when required here
-LOCAL_PROVIDER_VERSION := v1.5.99
+LOCAL_PROVIDER_VERSION := v1.6.99
 endif
 
 # PLATFORMS is a list of platforms to build for.
@@ -51,7 +51,7 @@ CNI_PATH_CILIUM ?= "${E2E_DIR}/data/cni/cilium/cilium.yaml"
 CNI_PATH_CILIUM_NO_KUBEPROXY ?= "${E2E_DIR}/data/cni/cilium/cilium-no-kubeproxy.yaml"
 CNI_PATH_FLANNEL ?= "${E2E_DIR}/data/cni/flannel/flannel.yaml"
 CNI_PATH_KINDNET ?= "${E2E_DIR}/data/cni/kindnet/kindnet.yaml"
-CCM_VERSION ?= v0.4.1
+CCM_VERSION ?= v0.5.0
 
 # CRD_OPTIONS define options to add to the CONTROLLER_GEN
 CRD_OPTIONS ?= "crd:crdVersions=v1"
@@ -278,6 +278,7 @@ cluster-e2e-templates-v1beta1: ## Generate cluster templates for v1beta1
 	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-clusterclass --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-clusterclass.yaml
 	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-clusterclass --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/clusterclass-nutanix-quick-start.yaml
 	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-topology --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-topology.yaml
+	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-image-lookup --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-image-lookup.yaml
 
 cluster-e2e-templates-no-kubeproxy: ##Generate cluster templates without kubeproxy
 	# v1beta1
@@ -303,6 +304,7 @@ cluster-templates: ## Generate cluster templates for all flavors
 	kustomize build $(TEMPLATES_DIR)/csi3 > $(TEMPLATES_DIR)/cluster-template-csi3.yaml
 	kustomize build $(TEMPLATES_DIR)/clusterclass > $(TEMPLATES_DIR)/cluster-template-clusterclass.yaml
 	kustomize build $(TEMPLATES_DIR)/topology > $(TEMPLATES_DIR)/cluster-template-topology.yaml
+	kustomize build $(TEMPLATES_DIR)/image-lookup/ > $(TEMPLATES_DIR)/cluster-template-image-lookup.yaml
 
 ##@ Testing
 
@@ -335,13 +337,21 @@ mocks: ## Generate mocks for the project
 
 GOTESTPKGS = $(shell go list ./... | grep -v /mocks | grep -v /templates)
 
+KUBEBUILDER_ASSETS=$(shell setup-envtest use --print path $(ENVTEST_K8S_VERSION) --arch=amd64)
+
+.PHONY: print-envtest
+print-envtest: ## Set up envtest (download kubebuilder assets)
+	@echo KUBEBUILDER_ASSETS=$(KUBEBUILDER_ASSETS)
+
 .PHONY: unit-test
 unit-test: mocks  ## Run unit tests.
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION)  --arch=amd64 -p path)" $(GOTEST) $(GOTESTPKGS)
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" \
+	$(GOTEST) $(GOTESTPKGS)
 
 .PHONY: coverage
 coverage: mocks ## Run the tests of the project and export the coverage
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION)  --arch=amd64 -p path)" $(GOTEST) -race -coverprofile=coverage.out -covermode=atomic $(GOTESTPKGS)
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" \
+	$(GOTEST) -race -coverprofile=coverage.out -covermode=atomic $(GOTESTPKGS)
 
 .PHONY: template-test
 template-test: docker-build prepare-local-clusterctl ## Run the template tests

@@ -83,7 +83,7 @@ require (
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.4.0
 	github.com/microsoft/kiota-authentication-azure-go v0.6.0
 	github.com/microsoftgraph/msgraph-sdk-go v0.59.0
-	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.5.4-0.20250116153252-296a5347104c
+	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.6.1
 	github.com/nutanix-cloud-native/prism-go-client v0.5.0
 	github.com/onsi/gomega v1.36.2
 	github.com/openshift/api v0.0.0-20250725072657-92b1455121e1

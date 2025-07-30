@@ -714,8 +714,8 @@ github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f h1:y5//uYreIhSUg3J
 github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f/go.mod h1:ZdcZmHo+o7JKHSa8/e818NopupXU1YMK5fe1lsApnBw=
 github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32/go.mod h1:9wM+0iRr9ahx58uYLpLIr5fm8diHn0JbqRycJi6w0Ms=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.5.4-0.20250116153252-296a5347104c h1:a3z36QEVHDZttVrxHTzV9ducuEwvg6xgztVnQRzNyaQ=
-github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.5.4-0.20250116153252-296a5347104c/go.mod h1:0dXOul8bmJUBTNeJ2k44BkeifokDOMKPbG48Dk1Dl6Y=
+github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.6.1 h1:LI08R0xuC3Z5YEW0FutU3FNrAmQ+1NWzYLE4unyyKdo=
+github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.6.1/go.mod h1:Hx0uph3fyiSupnLRfIQFteAs9B7F2uidnAoktRqp++M=
 github.com/nutanix-cloud-native/prism-go-client v0.5.0 h1:aSNuKDOK7+q676MQyetYXcySY41IjSvN2UmrDIU3+6s=
 github.com/nutanix-cloud-native/prism-go-client v0.5.0/go.mod h1:QhLX+sEep0cStzHVYU6mPgIlnA8U3DySskagrbDprRk=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
