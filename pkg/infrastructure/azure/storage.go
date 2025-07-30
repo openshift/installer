@@ -80,8 +80,6 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 			//APIVersion: "2019-06-01",
 		},
 	}
-	allowSharedKeyAccess := in.AuthType != azic.ManagedIdentityAuth
-
 	storageClientFactory, err := armstorage.NewClientFactory(in.SubscriptionID, in.TokenCredential, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get storage account factory %w", err)
@@ -98,7 +96,7 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		SKU:      &sku,
 		Properties: &armstorage.AccountPropertiesCreateParameters{
 			AllowBlobPublicAccess:       to.Ptr(false),
-			AllowSharedKeyAccess:        to.Ptr(allowSharedKeyAccess),
+			AllowSharedKeyAccess:        to.Ptr(false),
 			IsLocalUserEnabled:          to.Ptr(true),
 			LargeFileSharesState:        to.Ptr(armstorage.LargeFileSharesStateEnabled),
 			PublicNetworkAccess:         to.Ptr(armstorage.PublicNetworkAccessEnabled),
@@ -250,7 +248,15 @@ type CreatePageBlobOutput struct {
 func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error) {
 	logrus.Debugf("Getting page blob client")
 
-	pageBlobClient, err := getPageBlobClient(in)
+	pageBlobClient, err := pageblob.NewClient(
+		in.BlobURL,
+		in.TokenCredential,
+		&pageblob.ClientOptions{
+			ClientOptions: azcore.ClientOptions{
+				Cloud: in.ClientOpts.Cloud,
+			},
+		},
+	)
 	if err != nil {
 		return "", fmt.Errorf("failed to get page blob client: %w", err)
 	}
@@ -296,39 +302,6 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error
 		return "", fmt.Errorf("failed to get Page Blob SAS URL: %w", err)
 	}
 	return sasURL, nil
-}
-
-func getPageBlobClient(in *CreatePageBlobInput) (*pageblob.Client, error) {
-	var pageBlobClient *pageblob.Client
-	var err error
-
-	if in.AuthType == azic.ManagedIdentityAuth {
-		pageBlobClient, err = pageblob.NewClient(
-			in.BlobURL,
-			in.TokenCredential,
-			&pageblob.ClientOptions{
-				ClientOptions: azcore.ClientOptions{
-					Cloud: in.ClientOpts.Cloud,
-				},
-			},
-		)
-	} else {
-		sharedKeyCredential, credErr := azblob.NewSharedKeyCredential(in.StorageAccountName, *in.StorageAccountKeys[0].Value)
-		if err != nil {
-			return nil, credErr
-		}
-		pageBlobClient, err = pageblob.NewClientWithSharedKeyCredential(
-			in.BlobURL,
-			sharedKeyCredential,
-			&pageblob.ClientOptions{
-				ClientOptions: azcore.ClientOptions{
-					Cloud: in.ClientOpts.Cloud,
-				},
-			},
-		)
-	}
-
-	return pageBlobClient, err
 }
 
 func doUploadPages(ctx context.Context, pageBlobClient *pageblob.Client, imageData []byte, imageLength int64) error {
@@ -512,7 +485,15 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 
 func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput, sharedKeyCredential *azblob.SharedKeyCredential) (string, error) {
 	logrus.Debugf("Getting block blob client")
-	blockBlobClient, err := getBlockBlobClient(in)
+	blockBlobClient, err := blockblob.NewClient(
+		in.BlobURL,
+		in.TokenCredential,
+		&blockblob.ClientOptions{
+			ClientOptions: azcore.ClientOptions{
+				Cloud: in.ClientOpts.Cloud,
+			},
+		},
+	)
 	if err != nil {
 		return "", fmt.Errorf("failed to get block blob client: %w", err)
 	}
@@ -616,38 +597,6 @@ func uploadBlockBlobOnStack(in *CreateBlockBlobInput, key string) (string, error
 		return "", fmt.Errorf("failed to get SAS URI for bootstrap ignition blob: %w", err)
 	}
 	return sas, nil
-}
-func getBlockBlobClient(in *CreateBlockBlobInput) (*blockblob.Client, error) {
-	var blockBlobClient *blockblob.Client
-	var err error
-
-	if in.AuthType == azic.ManagedIdentityAuth {
-		blockBlobClient, err = blockblob.NewClient(
-			in.BlobURL,
-			in.TokenCredential,
-			&blockblob.ClientOptions{
-				ClientOptions: azcore.ClientOptions{
-					Cloud: in.ClientOpts.Cloud,
-				},
-			},
-		)
-	} else {
-		sharedKeyCredential, credErr := azblob.NewSharedKeyCredential(in.StorageAccountName, *in.StorageAccountKeys[0].Value)
-		if err != nil {
-			return nil, credErr
-		}
-		blockBlobClient, err = blockblob.NewClientWithSharedKeyCredential(
-			in.BlobURL,
-			sharedKeyCredential,
-			&blockblob.ClientOptions{
-				ClientOptions: azcore.ClientOptions{
-					Cloud: in.ClientOpts.Cloud,
-				},
-			},
-		)
-	}
-
-	return blockBlobClient, err
 }
 
 // CustomerManagedKeyInput contains the input parameters for creating the
