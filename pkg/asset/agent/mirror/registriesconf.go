@@ -267,7 +267,7 @@ func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 	if string(i.File.Data) != defaultRegistriesConf {
 		if i.validateRegistriesConf() {
 			if !i.releaseImageIsSameInRegistriesConf(releaseImage.PullSpec) {
-				logrus.Warnf(fmt.Sprintf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, releaseImage.PullSpec))
+				logrus.Warnf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, releaseImage.PullSpec)
 			}
 		}
 	}
@@ -278,7 +278,7 @@ func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 func (i *RegistriesConf) validateRegistriesConf() bool {
 	for _, registry := range i.Config.Registries {
 		if registry.Endpoint.Location == "" {
-			logrus.Warnf(fmt.Sprintf("Location key not found in %s", RegistriesConfFilename))
+			logrus.Warnf("Location key not found in %s", RegistriesConfFilename)
 			return false
 		}
 	}

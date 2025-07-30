@@ -381,23 +381,23 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		computePath := field.NewPath("compute").Index(i)
 		if compute.Hyperthreading != "Enabled" {
 			fieldPath := computePath.Child("hyperthreading")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, compute.Hyperthreading))
+			logrus.Warnf("%s: %s is ignored", fieldPath, compute.Hyperthreading)
 		}
 
 		if compute.Platform != (types.MachinePoolPlatform{}) {
 			fieldPath := computePath.Child("platform")
-			logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
+			logrus.Warnf("%s is ignored", fieldPath)
 		}
 	}
 
 	if installConfig.ControlPlane.Hyperthreading != "Enabled" {
 		fieldPath := field.NewPath("controlPlane", "hyperthreading")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.ControlPlane.Hyperthreading))
+		logrus.Warnf("%s: %s is ignored", fieldPath, installConfig.ControlPlane.Hyperthreading)
 	}
 
 	if installConfig.ControlPlane.Platform != (types.MachinePoolPlatform{}) {
 		fieldPath := field.NewPath("controlPlane", "platform")
-		logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
+		logrus.Warnf("%s is ignored", fieldPath)
 	}
 
 	switch installConfig.Platform.Name() {
@@ -412,46 +412,46 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		// Compare values from generic installconfig code to check for changes
 		if baremetal.LibvirtURI != defaultBM.LibvirtURI {
 			fieldPath := bmPath.Child("libvirtURI")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.LibvirtURI))
+			logrus.Debugf("%s: %s is ignored", fieldPath, baremetal.LibvirtURI)
 		}
 		if baremetal.BootstrapProvisioningIP != defaultBM.BootstrapProvisioningIP {
 			fieldPath := bmPath.Child("bootstrapProvisioningIP")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapProvisioningIP))
+			logrus.Debugf("%s: %s is ignored", fieldPath, baremetal.BootstrapProvisioningIP)
 		}
 		if baremetal.ExternalBridge != defaultBM.ExternalBridge {
 			fieldPath := bmPath.Child("externalBridge")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ExternalBridge))
+			logrus.Warnf("%s: %s is ignored", fieldPath, baremetal.ExternalBridge)
 		}
 		if baremetal.ProvisioningBridge != defaultBM.ProvisioningBridge {
 			fieldPath := bmPath.Child("provisioningBridge")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningBridge))
+			logrus.Warnf("%s: %s is ignored", fieldPath, baremetal.ProvisioningBridge)
 		}
 
 		for i, host := range baremetal.Hosts {
 			// The default is UEFI. +kubebuilder:validation:Enum="";UEFI;UEFISecureBoot;legacy. Set from generic install config code
 			if host.BootMode != "UEFI" {
 				fieldPath := bmPath.Child("hosts").Index(i).Child("bootMode")
-				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.BootMode))
+				logrus.Warnf("%s: %s is ignored", fieldPath, host.BootMode)
 			}
 		}
 
 		if baremetal.DefaultMachinePlatform != nil {
 			fieldPath := bmPath.Child("defaultMachinePlatform")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.DefaultMachinePlatform))
+			logrus.Warnf("%s: %s is ignored", fieldPath, baremetal.DefaultMachinePlatform)
 		}
 		if baremetal.BootstrapOSImage != "" {
 			fieldPath := bmPath.Child("bootstrapOSImage")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapOSImage))
+			logrus.Debugf("%s: %s is ignored", fieldPath, baremetal.BootstrapOSImage)
 		}
 		// ClusterOSImage is ignored even in IPI now, so we probably don't need to check it at all.
 
 		if baremetal.BootstrapExternalStaticIP != "" {
 			fieldPath := bmPath.Child("bootstrapExternalStaticIP")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapExternalStaticIP))
+			logrus.Debugf("%s: %s is ignored", fieldPath, baremetal.BootstrapExternalStaticIP)
 		}
 		if baremetal.BootstrapExternalStaticGateway != "" {
 			fieldPath := bmPath.Child("bootstrapExternalStaticGateway")
-			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapExternalStaticGateway))
+			logrus.Debugf("%s: %s is ignored", fieldPath, baremetal.BootstrapExternalStaticGateway)
 		}
 	case vsphere.Name:
 		vspherePlatform := installConfig.Platform.VSphere
@@ -459,25 +459,25 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 
 		if vspherePlatform.ClusterOSImage != "" {
 			fieldPath := vsPath.Child("clusterOSImage")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.ClusterOSImage))
+			logrus.Warnf("%s: %s is ignored", fieldPath, vspherePlatform.ClusterOSImage)
 		}
 		if vspherePlatform.DefaultMachinePlatform != nil && !reflect.DeepEqual(*vspherePlatform.DefaultMachinePlatform, vsphere.MachinePool{}) {
 			fieldPath := vsPath.Child("defaultMachinePlatform")
-			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.DefaultMachinePlatform))
+			logrus.Warnf("%s: %v is ignored", fieldPath, vspherePlatform.DefaultMachinePlatform)
 		}
 		if vspherePlatform.DiskType != "" {
 			fieldPath := vsPath.Child("diskType")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DiskType))
+			logrus.Warnf("%s: %s is ignored", fieldPath, vspherePlatform.DiskType)
 		}
 
 		if vspherePlatform.LoadBalancer != nil && !reflect.DeepEqual(*vspherePlatform.LoadBalancer, configv1.VSpherePlatformLoadBalancer{}) {
 			fieldPath := vsPath.Child("loadBalancer")
-			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.LoadBalancer))
+			logrus.Warnf("%s: %v is ignored", fieldPath, vspherePlatform.LoadBalancer)
 		}
 
 		if len(vspherePlatform.Hosts) > 1 {
 			fieldPath := vsPath.Child("hosts")
-			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.Hosts))
+			logrus.Warnf("%s: %v is ignored", fieldPath, vspherePlatform.Hosts)
 		}
 	case nutanix.Name:
 		ntxPlatform := installConfig.Platform.Nutanix
@@ -506,15 +506,15 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 	// "External" is the default set from generic install config code
 	if installConfig.Publish != "External" {
 		fieldPath := field.NewPath("publish")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.Publish))
+		logrus.Warnf("%s: %s is ignored", fieldPath, installConfig.Publish)
 	}
 	if installConfig.CredentialsMode != "" {
 		fieldPath := field.NewPath("credentialsMode")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.CredentialsMode))
+		logrus.Warnf("%s: %s is ignored", fieldPath, installConfig.CredentialsMode)
 	}
 	if installConfig.BootstrapInPlace != nil && installConfig.BootstrapInPlace.InstallationDisk != "" {
 		fieldPath := field.NewPath("bootstrapInPlace", "installationDisk")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.BootstrapInPlace.InstallationDisk))
+		logrus.Warnf("%s: %s is ignored", fieldPath, installConfig.BootstrapInPlace.InstallationDisk)
 	}
 }
 

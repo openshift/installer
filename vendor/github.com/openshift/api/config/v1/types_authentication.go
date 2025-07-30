@@ -108,6 +108,7 @@ type AuthenticationStatus struct {
 	// If the config map or expected key is not found, no metadata is served.
 	// If the specified metadata is not valid, no metadata is served.
 	// The namespace for this config map is openshift-config-managed.
+	// +optional
 	IntegratedOAuthMetadata ConfigMapNameReference `json:"integratedOAuthMetadata"`
 
 	// oidcClients is where participating operators place the current OIDC client status
@@ -119,6 +120,7 @@ type AuthenticationStatus struct {
 	// +kubebuilder:validation:MaxItems=20
 	// +openshift:enable:FeatureGate=ExternalOIDC
 	// +openshift:enable:FeatureGate=ExternalOIDCWithUIDAndExtraClaimMappings
+	// +optional
 	OIDCClients []OIDCClientStatus `json:"oidcClients"`
 }
 
@@ -207,7 +209,7 @@ type OIDCProvider struct {
 	Name string `json:"name"`
 
 	// issuer is a required field that configures how the platform interacts
-	// with the identity provider and how tokens issued from the identity provider 
+	// with the identity provider and how tokens issued from the identity provider
 	// are evaluated by the Kubernetes API server.
 	//
 	// +required
@@ -737,7 +739,7 @@ type TokenClaimValidationRule struct {
 	// JWT is valid for this identity provider.
 	//
 	// +optional
-	RequiredClaim *TokenRequiredClaim `json:"requiredClaim"`
+	RequiredClaim *TokenRequiredClaim `json:"requiredClaim,omitempty"`
 }
 
 type TokenRequiredClaim struct {
