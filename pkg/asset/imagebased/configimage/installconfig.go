@@ -164,10 +164,11 @@ func (i *InstallConfig) validateSNOConfiguration(installConfig *types.InstallCon
 		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Networking.NetworkType, "Only OVNKubernetes network type is allowed for Single Node OpenShift (SNO) cluster"))
 	}
 
+	// Allow multiple machine networks for dual-stack support in image-based installer
 	machineNetworksCount := len(installConfig.Networking.MachineNetwork)
-	if machineNetworksCount > 1 {
+	if machineNetworksCount > 2 {
 		fieldPath = field.NewPath("Networking", "MachineNetwork")
-		allErrs = append(allErrs, field.TooMany(fieldPath, machineNetworksCount, 1))
+		allErrs = append(allErrs, field.TooMany(fieldPath, machineNetworksCount, 2))
 	}
 
 	return allErrs

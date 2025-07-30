@@ -53,7 +53,7 @@ type SeedReconfiguration struct {
 
 	// KubeconfigCryptoRetention contains all the crypto material that is required
 	// for the image-based installer to ensure that the generated kubeconfigs can
-	// be used to access the cluster after its configuration.
+	// be used to access the cluster after its configuration.// Use NodeIPs instead.
 	KubeconfigCryptoRetention KubeConfigCryptoRetention
 
 	// MachineNetwork is the list of IP address pools for machines.
@@ -61,10 +61,26 @@ type SeedReconfiguration struct {
 	// be empty or match the first entry in the list.
 	// Default is 10.0.0.0/16 for all platforms other than Power VS.
 	// For Power VS, the default is 192.168.0.0/24.
+	// Deprecated: Use MachineNetworks instead.
 	MachineNetwork string `json:"machine_network,omitempty"`
 
+	// MachineNetworks is the list of subnets provided by user.
+	// For single stack ocp clusters, this will be a single subnet.
+	// For dual-stack ocp clusters, this will be a list of two subnets.
+	// This will be used to create the node network and choose ip addresses for the node.
+	// Equivalent to install-config.yaml's machineNetworks.
+	// If both MachineNetwork and MachineNetworks are specified, MachineNetworks takes precedence.
+	// Use this field instead of MachineNetwork.
+	MachineNetworks []string `json:"machine_networks,omitempty"`
+
 	// NodeIP is the desired IP address of the node.
+	// Deprecated: Use NodeIPs instead.
 	NodeIP string `json:"node_ip,omitempty"`
+
+	// The desired IP addresses of the SNO node. One for single stack
+	// clusters, and two for dual-stack clusters.
+	// Use instead of NodeIP.
+	NodeIPs []string `json:"node_ips,omitempty"`
 
 	// RawNMStateConfig contains the nmstate configuration YAML manifest as string.
 	// Example nmstate configurations can be found here: https://nmstate.io/examples.html.
