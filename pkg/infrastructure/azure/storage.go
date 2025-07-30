@@ -96,7 +96,7 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		SKU:      &sku,
 		Properties: &armstorage.AccountPropertiesCreateParameters{
 			AllowBlobPublicAccess:       to.Ptr(false),
-			AllowSharedKeyAccess:        to.Ptr(false),
+			AllowSharedKeyAccess:        to.Ptr(in.CloudName == aztypes.StackCloud),
 			IsLocalUserEnabled:          to.Ptr(true),
 			LargeFileSharesState:        to.Ptr(armstorage.LargeFileSharesStateEnabled),
 			PublicNetworkAccess:         to.Ptr(armstorage.PublicNetworkAccessEnabled),
@@ -230,9 +230,10 @@ type CreatePageBlobInput struct {
 	BlobURL            string
 	ImageURL           string
 	StorageAccountName string
+	CloudEnvironment   aztypes.CloudEnvironment
 	BootstrapIgnData   []byte
+	UserDelegatedSAS   *sas.UserDelegationCredential
 	ImageLength        int64
-	AuthType           azic.AuthenticationType
 	TokenCredential    azcore.TokenCredential
 	StorageAccountKeys []armstorage.AccountKey
 	ClientOpts         *arm.ClientOptions
@@ -290,18 +291,15 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error
 			return "", fmt.Errorf("failed to upload page blob image from URL %s: %w", in.ImageURL, err)
 		}
 	}
-
-	// SAS not supported when using managed identity.
-	if in.AuthType == azic.ManagedIdentityAuth {
-		return pageBlobClient.URL(), nil
+	if in.CloudEnvironment == aztypes.StackCloud {
+		// Is this addition OK for when CreatePageBlob() is called from InfraReady()
+		sasURL, err := pageBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
+		if err != nil {
+			return "", fmt.Errorf("failed to get Page Blob SAS URL: %w", err)
+		}
+		return sasURL, nil
 	}
-
-	// Is this addition OK for when CreatePageBlob() is called from InfraReady()
-	sasURL, err := pageBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
-	if err != nil {
-		return "", fmt.Errorf("failed to get Page Blob SAS URL: %w", err)
-	}
-	return sasURL, nil
+	return "", nil
 }
 
 func doUploadPages(ctx context.Context, pageBlobClient *pageblob.Client, imageData []byte, imageLength int64) error {
@@ -454,6 +452,7 @@ type CreateBlockBlobInput struct {
 	CloudEnvironment   aztypes.CloudEnvironment
 	ContainerName      string
 	BlobName           string
+	UserDelegatedSAS   *sas.UserDelegationCredential
 	StorageSuffix      string
 	ARMEndpoint        string
 	Region             string
@@ -512,12 +511,7 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput, sharedKeyCre
 	if in.AuthType == azic.ManagedIdentityAuth {
 		return blockBlobClient.URL(), nil
 	}
-
-	sasURL, err := blockBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
-	if err != nil {
-		return "", fmt.Errorf("failed to get SAS URL: %w", err)
-	}
-	return sasURL, nil
+	return "", nil
 }
 
 func createBlockBlobOnStack(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
@@ -598,6 +592,7 @@ func uploadBlockBlobOnStack(in *CreateBlockBlobInput, key string) (string, error
 	}
 	return sas, nil
 }
+
 // CustomerManagedKeyInput contains the input parameters for creating the
 // customer managed key and identity.
 type CustomerManagedKeyInput struct {
