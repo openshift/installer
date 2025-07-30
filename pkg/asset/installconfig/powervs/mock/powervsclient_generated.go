@@ -355,6 +355,21 @@ func (mr *MockAPIMockRecorder) GetTGConnectionVPC(ctx, gatewayID, vpcSubnetID an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTGConnectionVPC", reflect.TypeOf((*MockAPI)(nil).GetTGConnectionVPC), ctx, gatewayID, vpcSubnetID)
 }
 
+// GetVPCByID mocks base method.
+func (m *MockAPI) GetVPCByID(ctx context.Context, vpcID, region string) (*vpcv1.VPC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVPCByID", ctx, vpcID, region)
+	ret0, _ := ret[0].(*vpcv1.VPC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVPCByID indicates an expected call of GetVPCByID.
+func (mr *MockAPIMockRecorder) GetVPCByID(ctx, vpcID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCByID", reflect.TypeOf((*MockAPI)(nil).GetVPCByID), ctx, vpcID, region)
+}
+
 // GetVPCByName mocks base method.
 func (m *MockAPI) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error) {
 	m.ctrl.T.Helper()
@@ -489,17 +504,31 @@ func (mr *MockAPIMockRecorder) SetVPCServiceURLForRegion(ctx, region any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetVPCServiceURLForRegion", reflect.TypeOf((*MockAPI)(nil).SetVPCServiceURLForRegion), ctx, region)
 }
 
-// TransitGatewayID mocks base method.
-func (m *MockAPI) TransitGatewayID(ctx context.Context, name string) (string, error) {
+// TransitGatewayIDValid mocks base method.
+func (m *MockAPI) TransitGatewayIDValid(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TransitGatewayID", ctx, name)
+	ret := m.ctrl.Call(m, "TransitGatewayIDValid", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TransitGatewayIDValid indicates an expected call of TransitGatewayIDValid.
+func (mr *MockAPIMockRecorder) TransitGatewayIDValid(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransitGatewayIDValid", reflect.TypeOf((*MockAPI)(nil).TransitGatewayIDValid), ctx, id)
+}
+
+// TransitGatewayNameToID mocks base method.
+func (m *MockAPI) TransitGatewayNameToID(ctx context.Context, name string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TransitGatewayNameToID", ctx, name)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// TransitGatewayID indicates an expected call of TransitGatewayID.
-func (mr *MockAPIMockRecorder) TransitGatewayID(ctx, name any) *gomock.Call {
+// TransitGatewayNameToID indicates an expected call of TransitGatewayNameToID.
+func (mr *MockAPIMockRecorder) TransitGatewayNameToID(ctx, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransitGatewayID", reflect.TypeOf((*MockAPI)(nil).TransitGatewayID), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransitGatewayNameToID", reflect.TypeOf((*MockAPI)(nil).TransitGatewayNameToID), ctx, name)
 }

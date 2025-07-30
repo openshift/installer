@@ -13,6 +13,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	gcpcfg "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	externalinfra "github.com/openshift/installer/pkg/asset/manifests/external"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	nutanixinfra "github.com/openshift/installer/pkg/asset/manifests/nutanix"
@@ -204,11 +205,9 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			config.Status.PlatformStatus.GCP.ResourceTags = resourceTags
 		}
 
-		config.Status.PlatformStatus.GCP.ServiceEndpoints = installConfig.Config.Platform.GCP.ServiceEndpoints
-		sort.Slice(config.Status.PlatformStatus.GCP.ServiceEndpoints, func(i, j int) bool {
-			return config.Status.PlatformStatus.GCP.ServiceEndpoints[i].Name <
-				config.Status.PlatformStatus.GCP.ServiceEndpoints[j].Name
-		})
+		// The endpoints must not include any path. The path will be added by the users in other packages.
+		modifiedEndpoints := gcpcfg.FormatGCPEndpointList(installConfig.Config.Platform.GCP.ServiceEndpoints, gcpcfg.FormatGCPEndpointInput{SkipPath: true})
+		config.Status.PlatformStatus.GCP.ServiceEndpoints = modifiedEndpoints
 
 		// If the user has requested the use of a DNS provisioned by them, then OpenShift needs to
 		// start an in-cluster DNS for the installation to succeed. The user can then configure their

@@ -169,7 +169,6 @@ type AWSCSIDriverConfigSpec struct {
 	KMSKeyARN string `json:"kmsKeyARN,omitempty"`
 
 	// efsVolumeMetrics sets the configuration for collecting metrics from EFS volumes used by the EFS CSI Driver.
-	// +openshift:enable:FeatureGate=AWSEFSDriverVolumeMetrics
 	// +optional
 	EFSVolumeMetrics *AWSEFSVolumeMetrics `json:"efsVolumeMetrics,omitempty"`
 }

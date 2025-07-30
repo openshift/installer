@@ -33,7 +33,6 @@ controllerconfigs.machineconfiguration.openshift.io:
   - DyanmicServiceEndpointIBMCloud
   - GCPClusterHostedDNS
   - GCPCustomAPIEndpoints
-  - GCPLabelsTags
   - HighlyAvailableArbiter
   - HighlyAvailableArbiter+DualReplica
   - NutanixMultiSubnets

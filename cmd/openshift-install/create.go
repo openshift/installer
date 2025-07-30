@@ -329,7 +329,7 @@ func runTargetCmd(ctx context.Context, targets ...asset.WritableAsset) func(cmd 
 		switch cmd.Name() {
 		case "cluster", "image", "pxe-files":
 		default:
-			logrus.Infof(logging.LogCreatedFiles(cmd.Name(), command.RootOpts.Dir, targets))
+			logrus.Infof("%s", logging.LogCreatedFiles(cmd.Name(), command.RootOpts.Dir, targets))
 		}
 	}
 }
