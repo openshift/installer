@@ -393,7 +393,7 @@ func validatePreexistingServiceAccount(client API, ic *types.InstallConfig) fiel
 // checked for any public zone that can be used.
 func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) field.ErrorList {
 	// If this is an internal cluster, this check is not necessary
-	if ic.Publish == types.InternalPublishingStrategy {
+	if ic.Publish == types.InternalPublishingStrategy || ic.GCP.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
 		return nil
 	}
 	allErrs := field.ErrorList{}
