@@ -9,37 +9,38 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-// Define a function variable to allow assignment for testing
+// provider1 is a function variable to allow assignment for testing
 var provider1 = func(clusterID string, platform *nutanix.Platform, mpool *nutanix.MachinePool, osImage string, userDataSecret string, failureDomain *nutanix.FailureDomain) (*v1.NutanixMachineProviderConfig, error) {
 	// default implementation of provider
 	return nil, nil
 }
 
+// mockProvider is a mock function that returns a mock provider configuration
 func mockProvider(clusterID string, platform *nutanix.Platform, mpool *nutanix.MachinePool, osImage, userDataSecret string, fd *nutanix.FailureDomain) (*v1.NutanixMachineProviderConfig, error) {
 	// Mock return value matching the expected type
 	return &v1.NutanixMachineProviderConfig{}, nil
 }
 
+// setProviderForTest reassigns the provider function for testing
 func setProviderForTest() {
-	// Reassign the provider for testing
 	provider1 = mockProvider
 }
 
+// clearProviderForTest resets the provider to its original state
 func clearProviderForTest() {
-	// Reset provider to its original state
 	provider1 = func(clusterID string, platform *nutanix.Platform, mpool *nutanix.MachinePool, osImage string, userDataSecret string, failureDomain *nutanix.FailureDomain) (*v1.NutanixMachineProviderConfig, error) {
 		// original provider logic
 		return nil, nil
 	}
 }
 
+// TestMachineSetsReplicaNil tests the creation of machine sets when replica count is nil
 func TestMachineSetsReplicaNil(t *testing.T) {
 	setProviderForTest()
 	defer clearProviderForTest()
 
 	// Nutanix InstallConfig with no failure domains (simulate a real-world structure)
 	ic := &types.InstallConfig{
-
 		Platform: types.Platform{
 			Nutanix: &nutanix.Platform{
 				// purposely *no* FailureDomains to match the test case
@@ -72,7 +73,7 @@ func TestMachineSetsReplicaNil(t *testing.T) {
 		},
 	}
 
-	// Machine pool references a to failure domains
+	// Machine pool references to failure domains
 	var machinePoolList []types.MachinePool
 	machinePool1 := &types.MachinePool{
 		Name: "worker",
@@ -101,10 +102,12 @@ func TestMachineSetsReplicaNil(t *testing.T) {
 		},
 	}
 
+	// Add machine pools to list
 	machinePoolList = append(machinePoolList, *machinePool1)
 	machinePoolList = append(machinePoolList, *machinePool2)
 	machinePoolList = append(machinePoolList, *machinePool3)
 
+	// Iterate over machine pool list and check machine set creation
 	for i := range machinePoolList {
 		machinesets, err := MachineSets("test", ic, &machinePoolList[i], "fake-img", "worker", "userdata")
 		if err != nil {
@@ -121,5 +124,4 @@ func TestMachineSetsReplicaNil(t *testing.T) {
 			t.Errorf("unexpected number of machine sets:\nwant: %v\ngot:  %v", expectedNumMachineSets, len(machinesets))
 		}
 	}
-
 }
