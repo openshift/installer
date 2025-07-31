@@ -15,21 +15,21 @@ import (
 
 // MachineSets returns a list of machine sets for a given machine pool.
 func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*machineapi.MachineSet, error) {
-	// Check if the platform is Nutanix
+	// Check if the platform is Nutanix.
 	if configPlatform := config.Platform.Name(); configPlatform != nutanix.Name {
 		return nil, fmt.Errorf("non-nutanix configuration: %q", configPlatform)
 	}
 
-	// Check if the machine pool platform is Nutanix
+	// Check if the machine pool platform is Nutanix.
 	if poolPlatform := pool.Platform.Name(); poolPlatform != nutanix.Name {
 		return nil, fmt.Errorf("non-nutanix machine-pool: %q", poolPlatform)
 	}
 
 	platform := config.Platform.Nutanix
 	mpool := pool.Platform.Nutanix
-	total := int32(0)
+	var total int32
 
-	// Get total number of replicas
+	// Get total number of replicas.
 	if pool.Replicas != nil {
 		total = int32(*pool.Replicas)
 	}
@@ -38,7 +38,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	numOfFDs := int32(len(mpool.FailureDomains))
 	numOfMachineSets := numOfFDs
 
-	// Adjust number of machine sets if necessary
+	// Adjust number of machine sets if necessary.
 	if numOfMachineSets == 0 {
 		numOfMachineSets = 1
 	} else if pool.Replicas != nil && numOfMachineSets > total {
@@ -48,7 +48,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	fdName2ReplicasMap := make(map[string]*int32, numOfMachineSets)
 	fdName2FDsMap := make(map[string]*nutanix.FailureDomain, numOfFDs)
 
-	// If no failure domains, assign replicas to a single machine set
+	// If no failure domains, assign replicas to a single machine set.
 	if numOfFDs == 0 {
 		if pool.Replicas != nil {
 			fdName2ReplicasMap[""] = ptr.To(int32(*pool.Replicas))
@@ -56,7 +56,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			fdName2ReplicasMap[""] = nil
 		}
 	} else {
-		// Distribute replicas to failure domains based on order
+		// Distribute replicas to failure domains based on order.
 		for _, fdName := range mpool.FailureDomains {
 			fd, err := platform.GetFailureDomainByName(fdName)
 			if err != nil {
@@ -65,7 +65,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			fdName2FDsMap[fdName] = fd
 		}
 
-		// Distribute replicas evenly across failure domains
+		// Distribute replicas evenly across failure domains.
 		if pool.Replicas != nil {
 			for i := int32(0); i < total; i++ {
 				idx := i % numOfFDs
@@ -83,7 +83,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		}
 	}
 
-	// Create MachineSets based on failure domains and replicas
+	// Create MachineSets based on failure domains and replicas.
 	var idx int32
 	for fdName, replicaPtr := range fdName2ReplicasMap {
 		name := fmt.Sprintf("%s-%s", clusterID, pool.Name)
@@ -91,7 +91,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		var failureDomain *nutanix.FailureDomain
 		if fdName != "" {
 			failureDomain = fdName2FDsMap[fdName]
-			name = fmt.Sprintf("%s-%v", name, idx)
+			name = fmt.Sprintf("%s-%d", name, idx)
 		}
 
 		provider, err := provider(clusterID, platform, mpool, osImage, userDataSecret, failureDomain)
@@ -99,7 +99,6 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			return nil, fmt.Errorf("failed to create provider: %w", err)
 		}
 
-		// Create MachineSet
 		mset := &machineapi.MachineSet{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -133,7 +132,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 						ProviderSpec: machineapi.ProviderSpec{
 							Value: &runtime.RawExtension{Object: provider},
 						},
-						// We don't need to set Versions, because we control those via cluster operators.
+						// Versions are managed separately via cluster operators.
 					},
 				},
 			},
