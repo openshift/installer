@@ -336,6 +336,14 @@ var (
 					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
+	FeatureGateAzureClusterHostedDNSInstall = newFeatureGate("AzureClusterHostedDNSInstall").
+						reportProblemsToJiraComponent("Installer").
+						contactPerson("sadasu").
+						productScope(ocpSpecific).
+						enhancementPR("https://github.com/openshift/enhancements/pull/1468").
+						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						mustRegister()
+
 	FeatureGateMixedCPUsAllocation = newFeatureGate("MixedCPUsAllocation").
 					reportProblemsToJiraComponent("NodeTuningOperator").
 					contactPerson("titzhak").

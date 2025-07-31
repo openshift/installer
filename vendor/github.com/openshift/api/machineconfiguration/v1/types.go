@@ -844,18 +844,25 @@ type ContainerRuntimeConfiguration struct {
 	// +optional
 	OverlaySize *resource.Quantity `json:"overlaySize,omitempty"`
 
-	// defaultRuntime is the name of the OCI runtime to be used as the default.
+	// defaultRuntime is the name of the OCI runtime to be used as the default for containers.
+	// Allowed values are `runc` and `crun`.
+	// When set to `runc`, OpenShift will use runc to execute the container
+	// When set to `crun`, OpenShift will use crun to execute the container
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default,
+	// which is subject to change over time. Currently, the default is `crun`.
+	// +kubebuilder:validation:Enum=crun;runc
 	// +optional
 	DefaultRuntime ContainerRuntimeDefaultRuntime `json:"defaultRuntime,omitempty"`
 }
 
 type ContainerRuntimeDefaultRuntime string
 
+// These constants are used in the Machine Config Operator (MCO)
 const (
 	ContainerRuntimeDefaultRuntimeEmpty   = ""
 	ContainerRuntimeDefaultRuntimeRunc    = "runc"
 	ContainerRuntimeDefaultRuntimeCrun    = "crun"
-	ContainerRuntimeDefaultRuntimeDefault = ContainerRuntimeDefaultRuntimeRunc
+	ContainerRuntimeDefaultRuntimeDefault = ContainerRuntimeDefaultRuntimeCrun
 )
 
 // ContainerRuntimeConfigStatus defines the observed state of a ContainerRuntimeConfig
