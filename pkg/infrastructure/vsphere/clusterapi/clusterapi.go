@@ -6,7 +6,9 @@ import (
 	"path"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vim25/types"
 	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
@@ -22,6 +24,8 @@ type Provider struct {
 }
 
 var _ clusterapi.PreProvider = (*Provider)(nil)
+
+//var _ clusterapi.PostProvider = (*Provider)(nil)
 
 // Name returns the vsphere provider name.
 func (p Provider) Name() string {
@@ -75,6 +79,54 @@ func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, fail
 			return fmt.Errorf("failed to import ova: %w", err)
 		}
 	}
+	return nil
+}
+
+func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
+	installConfig := in.InstallConfig
+	clusterID := &installconfig.ClusterID{InfraID: in.InfraID}
+
+	for _, vcenter := range installConfig.Config.VSphere.VCenters {
+		server := vcenter.Server
+		vctrSession, err := installConfig.VSphere.Session(context.TODO(), server)
+		if err != nil {
+			return err
+		}
+
+		vim25Client := vctrSession.Client.Client
+		for _, failureDomain := range installConfig.Config.VSphere.FailureDomains {
+			if failureDomain.Server != server {
+				continue
+			}
+
+			if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+				vmGroupAndRuleName := fmt.Sprintf("%s-%s", clusterID.InfraID, failureDomain.Name)
+
+				err = createVMGroup(ctx, vctrSession, failureDomain.Topology.ComputeCluster, vmGroupAndRuleName)
+				if err != nil {
+					return err
+				}
+
+				clusterVmGroups, err := getClusterVmGroups(ctx, vim25Client, failureDomain.Topology.ComputeCluster)
+				if err != nil {
+					return err
+				}
+				var clusterVmGroup *types.ClusterVmGroup
+				for _, group := range clusterVmGroups {
+					if failureDomain.Topology.HostGroup == group.Name {
+						clusterVmGroup = group
+					}
+				}
+
+				if clusterVmGroup != nil {
+					for _, gMoRef := range clusterVmGroup.Vm {
+						logrus.Debugf("virtual machine %s", gMoRef.Value)
+					}
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
