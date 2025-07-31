@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC1091  # using path on bootstrap machine
+. /usr/local/bin/wait-for-ha-api.sh
+
 
 #[root@localhost manifests]# crictl exec -it $(crictl ps --name etcdctl -q)  etcdctl member list
 #29b43fbdc0a560b5, started, master0, https://10.x.x.100:2380, https://10.x.x.100:2379, false
