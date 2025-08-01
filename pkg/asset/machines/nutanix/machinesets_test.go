@@ -4,10 +4,11 @@ package nutanix
 import (
 	"testing"
 
+	"k8s.io/utils/ptr"
+
 	v1 "github.com/openshift/api/machine/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/nutanix"
-	"k8s.io/utils/ptr"
 )
 
 // provider1 is a function variable to allow assignment for testing.
