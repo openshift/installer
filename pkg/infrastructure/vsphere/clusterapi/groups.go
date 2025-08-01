@@ -3,9 +3,34 @@ package clusterapi
 import (
 	"context"
 
+	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/types"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 )
+
+func getClusterVmGroups(ctx context.Context, vim25Client *vim25.Client, computeCluster string) ([]*types.ClusterVmGroup, error) {
+	finder := find.NewFinder(vim25Client, true)
+
+	ccr, err := finder.ClusterComputeResource(ctx, computeCluster)
+	if err != nil {
+		return nil, err
+	}
+
+	clusterConfig, err := ccr.Configuration(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var clusterVmGroup []*types.ClusterVmGroup
+
+	for _, g := range clusterConfig.Group {
+		if vmg, ok := g.(*types.ClusterVmGroup); ok {
+			clusterVmGroup = append(clusterVmGroup, vmg)
+		}
+	}
+	return clusterVmGroup, nil
+}
 
 func createVMGroup(ctx context.Context, session *session.Session, cluster, vmGroup string) error {
 	clusterObj, err := session.Finder.ClusterComputeResource(ctx, cluster)
