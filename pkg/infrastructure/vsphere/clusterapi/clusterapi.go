@@ -8,7 +8,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/object"
-	"github.com/vmware/govmomi/vim25/types"
 	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
@@ -83,49 +82,54 @@ func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, fail
 }
 
 func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
-	installConfig := in.InstallConfig
-	clusterID := &installconfig.ClusterID{InfraID: in.InfraID}
 
-	for _, vcenter := range installConfig.Config.VSphere.VCenters {
-		server := vcenter.Server
-		vctrSession, err := installConfig.VSphere.Session(context.TODO(), server)
-		if err != nil {
-			return err
-		}
+	logrus.Debug("################# IN INFRAREADY ########################")
+	/*
+		installConfig := in.InstallConfig
+		clusterID := &installconfig.ClusterID{InfraID: in.InfraID}
 
-		vim25Client := vctrSession.Client.Client
-		for _, failureDomain := range installConfig.Config.VSphere.FailureDomains {
-			if failureDomain.Server != server {
-				continue
+		for _, vcenter := range installConfig.Config.VSphere.VCenters {
+			server := vcenter.Server
+			vctrSession, err := installConfig.VSphere.Session(context.TODO(), server)
+			if err != nil {
+				return err
 			}
 
-			if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
-				vmGroupAndRuleName := fmt.Sprintf("%s-%s", clusterID.InfraID, failureDomain.Name)
-
-				err = createVMGroup(ctx, vctrSession, failureDomain.Topology.ComputeCluster, vmGroupAndRuleName)
-				if err != nil {
-					return err
+			vim25Client := vctrSession.Client.Client
+			for _, failureDomain := range installConfig.Config.VSphere.FailureDomains {
+				if failureDomain.Server != server {
+					continue
 				}
 
-				clusterVmGroups, err := getClusterVmGroups(ctx, vim25Client, failureDomain.Topology.ComputeCluster)
-				if err != nil {
-					return err
-				}
-				var clusterVmGroup *types.ClusterVmGroup
-				for _, group := range clusterVmGroups {
-					if failureDomain.Topology.HostGroup == group.Name {
-						clusterVmGroup = group
+				if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+					vmGroupAndRuleName := fmt.Sprintf("%s-%s", clusterID.InfraID, failureDomain.Name)
+
+					err = createVMGroup(ctx, vctrSession, failureDomain.Topology.ComputeCluster, vmGroupAndRuleName)
+					if err != nil {
+						return err
 					}
-				}
 
-				if clusterVmGroup != nil {
-					for _, gMoRef := range clusterVmGroup.Vm {
-						logrus.Debugf("virtual machine %s", gMoRef.Value)
+					clusterVmGroups, err := getClusterVmGroups(ctx, vim25Client, failureDomain.Topology.ComputeCluster)
+					if err != nil {
+						return err
+					}
+					var clusterVmGroup *types.ClusterVmGroup
+					for _, group := range clusterVmGroups {
+						if failureDomain.Topology.HostGroup == group.Name {
+							clusterVmGroup = group
+						}
+					}
+
+					if clusterVmGroup != nil {
+						for _, gMoRef := range clusterVmGroup.Vm {
+							logrus.Debugf("virtual machine %s", gMoRef.Value)
+						}
 					}
 				}
 			}
 		}
-	}
+
+	*/
 
 	return nil
 }
