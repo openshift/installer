@@ -25,6 +25,7 @@ hostname: change-to-hostname
 releaseRegistry: quay.io
 # networkConfig contains the network configuration for the host in NMState format.
 # See https://nmstate.io/examples.html for examples.
+# For dual-stack networking, configure both IPv4 and IPv6 addresses:
 networkConfig:
   interfaces:
     - name: eth0
@@ -36,4 +37,10 @@ networkConfig:
         address:
           - ip: 192.168.122.2
             prefix-length: 23
+        dhcp: false
+      ipv6:
+        enabled: true
+        address:
+          - ip: 2001:db8::2
+            prefix-length: 64
         dhcp: false

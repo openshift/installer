@@ -73,6 +73,7 @@ installationDisk: /dev/vda
 pullSecret: '<your-pull-secret>'
 # networkConfig is optional and contains the network configuration for the host in NMState format.
 # See https://nmstate.io/examples.html for examples.
+# Dual-stack networking (IPv4 + IPv6) is supported - configure both address families as needed.
 # networkConfig:
 #   interfaces:
 #     - name: eth0
@@ -84,6 +85,12 @@ pullSecret: '<your-pull-secret>'
 #         address:
 #           - ip: 192.168.122.2
 #             prefix-length: 23
+#         dhcp: false
+#       ipv6:
+#         enabled: true
+#         address:
+#           - ip: 2001:db8::2
+#             prefix-length: 64
 #         dhcp: false
 `
 
