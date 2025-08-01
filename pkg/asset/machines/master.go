@@ -619,12 +619,37 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 	if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateMultiDiskSetup) {
 		for i, diskSetup := range installConfig.Config.ControlPlane.DiskSetup {
 			var dataDisk any
+			var diskName string
+
+			switch diskSetup.Type {
+			case types.Etcd:
+				diskName = diskSetup.Etcd.PlatformDiskID
+			case types.Swap:
+				diskName = diskSetup.Etcd.PlatformDiskID
+			case types.UserDefined:
+				diskName = diskSetup.UserDefined.PlatformDiskID
+			default:
+				// We shouldn't get here, but just in case
+				return errors.Errorf("disk setup type %s is not supported", diskSetup.Type)
+			}
+
 			switch ic.Platform.Name() {
 			case azuretypes.Name:
 				azureControlPlaneMachinePool := ic.ControlPlane.Platform.Azure
 
 				if i < len(azureControlPlaneMachinePool.DataDisks) {
 					dataDisk = azureControlPlaneMachinePool.DataDisks[i]
+				}
+			case vspheretypes.Name:
+				vsphereControlPlaneMachinePool := ic.ControlPlane.Platform.VSphere
+				for index, disk := range vsphereControlPlaneMachinePool.DataDisks {
+					if disk.Name == diskName {
+						dataDisk = vsphere.DiskInfo{
+							Index: index,
+							Disk:  disk,
+						}
+						break
+					}
 				}
 			default:
 				return errors.Errorf("disk setup for %s is not supported", ic.Platform.Name())
