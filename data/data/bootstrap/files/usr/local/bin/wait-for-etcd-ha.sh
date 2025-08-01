@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC1091  # using path on bootstrap machine
+# shellcheck disable=SC1091  
 . /usr/local/bin/wait-for-ha-api.sh
 
 
@@ -11,6 +11,8 @@
 #f3ee2af0de233621, started, master2, https://10.x.x.102:2380, https://10.x.x.102:2379, false
 
 wait_for_etcd_ha() {
+    # etcdctl container id
+    local etcdctl_container_id
     while :
     do
         # check topology is not HighlyAvailable or not
@@ -27,7 +29,8 @@ wait_for_etcd_ha() {
             "topology is HighlyAvailable, start to check etcd ha"
         fi
         # get member list and check for bootstrap members
-        MEMBER_LIST=$(sudo crictl exec -it $(crictl ps --name etcdctl -q)  etcdctl member list 2>/dev/null || true)
+        etcdctl_container_id=$(crictl ps --name etcdctl -q)
+        MEMBER_LIST=$(sudo crictl exec $etcdctl_container_id  etcdctl member list 2>/dev/null || true)
         if [ -z "$MEMBER_LIST" ]; then
             echo "Unable to get member list, retrying..."
             sleep 5
@@ -40,17 +43,18 @@ wait_for_etcd_ha() {
             # unexpected error
             echo "No bootstrap member found in cluster" 
             return 1
-        
+        fi
         # counting health members（status is started）
         # this check should consider the 
         # https://github.com/openshift/cluster-etcd-operator/blob/main/pkg/operator/bootstrapteardown/bootstrap_teardown_controller.go#L173
-        HEALTHY_COUNT=$(echo "$MEMBER_LIST" | grep -c 'started')
+        HEALTHY_COUNT=$(echo "$MEMBER_LIST" | grep -c 'started' || true)
         if [ "$HEALTHY_COUNT" -eq 4 ]; then
             echo "All etcd members are ready"
         else 
             echo "Waiting for all members to be ready"
             sleep 5
             continue
+        fi
 
         # remove that members static pod
         rm -f /etc/kubernetes/manifests/etcd-member-pod.yaml
