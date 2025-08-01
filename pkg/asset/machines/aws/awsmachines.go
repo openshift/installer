@@ -114,6 +114,7 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 					HTTPTokens:   imds,
 					HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
 				},
+				NonRootVolumes: mpool.DataDisks,
 			},
 		}
 		awsMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
