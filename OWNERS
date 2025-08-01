@@ -3,6 +3,7 @@
 
 approvers:
   - installer-team
+  - splat-team
   - sdodson
   - zaneb
 reviewers:

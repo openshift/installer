@@ -12,6 +12,11 @@ aliases:
     - rwsu
     - sadasu
     - tthvo
+  splat-team:
+    - jcpowermac
+    - mtulio
+    - rvanderp3
+    - vr4manta
   libvirt-approvers:
     - praveenkumar
     - cfergeau
