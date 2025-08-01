@@ -365,7 +365,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			c.getInfrastructureController(
 				&VSphere,
 				[]string{
-					"-v=2",
+					"-v=5",
 					"--diagnostics-address=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
