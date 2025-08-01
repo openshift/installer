@@ -12,6 +12,7 @@ import (
 	clusterapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/powervc"
 )
 
 const maxInt32 int64 = int64(^uint32(0)) >> 1
@@ -26,10 +27,10 @@ const maxInt32 int64 = int64(^uint32(0)) >> 1
 // more than one is specified, values of identical index are grouped in the
 // same MachineSet.
 func MachineSets(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*clusterapi.MachineSet, error) {
-	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
+	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name && configPlatform != powervc.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
-	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name {
+	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name && poolPlatform != powervc.Name {
 		return nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
 	mpool := pool.Platform.OpenStack
