@@ -1837,7 +1837,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"marketplace"}: platform baremetal requires the baremetal capability`,
 		},
-		//VIP tests
+		// VIP tests
 		{
 			name: "apivip_v4_not_in_machinenetwork_cidr",
 			installConfig: func() *types.InstallConfig {

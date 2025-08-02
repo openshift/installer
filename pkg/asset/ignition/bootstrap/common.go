@@ -29,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/aws"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/azure"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/vsphere"
@@ -103,6 +104,7 @@ type bootstrapTemplateData struct {
 // template files that are specific to one platform.
 type platformTemplateData struct {
 	AWS       *aws.TemplateData
+	Azure     *azure.TemplateData
 	BareMetal *baremetal.TemplateData
 	VSphere   *vsphere.TemplateData
 	GCP       *gcp.TemplateData
@@ -323,6 +325,8 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
 		platformData.AWS = aws.GetTemplateData(installConfig.Config.Platform.AWS)
+	case aztypes.Name:
+		platformData.Azure = azure.GetTemplateData(installConfig.Config.Platform.Azure)
 	case baremetaltypes.Name:
 		platformData.BareMetal = baremetal.GetTemplateData(
 			installConfig.Config.Platform.BareMetal,

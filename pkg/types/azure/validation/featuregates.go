@@ -5,6 +5,7 @@ import (
 
 	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/featuregates"
 )
 
@@ -13,6 +14,7 @@ import (
 func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeature {
 	cp := c.ControlPlane.Platform
 	defMp := c.Platform.Azure.DefaultMachinePlatform
+	azure := c.Azure
 
 	return []featuregates.GatedInstallConfigFeature{
 		{
@@ -49,6 +51,11 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 				return false
 			}(),
 			Field: field.NewPath("compute", "azure", "dataDisks"),
+		},
+		{
+			FeatureGateName: features.FeatureGateAzureClusterHostedDNSInstall,
+			Condition:       azure.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
+			Field:           field.NewPath("platform", "azure", "userProvisionedDNS"),
 		},
 	}
 }

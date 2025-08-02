@@ -97,31 +97,50 @@ func TestGenerateInfrastructure(t *testing.T) {
 			infraBuild.withGCPClusterHostedDNS("Enabled"),
 		),
 		expectedFilesGenerated: 2,
+	}, {
+		name:          "default AWS custom DNS",
+		installConfig: icBuild.build(icBuild.forAWS()),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AWSPlatformType),
+			infraBuild.withAWSClusterHostedDNS("Disabled"),
+			infraBuild.withAWSPlatformSpec(),
+			infraBuild.withAWSPlatformStatus(),
+		),
+		expectedFilesGenerated: 1,
+	}, {
+		name: "AWS custom DNS",
+		installConfig: icBuild.build(
+			icBuild.forAWS(),
+			icBuild.withAWSUserProvisionedDNS("Enabled"),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AWSPlatformType),
+			infraBuild.withAWSClusterHostedDNS("Enabled"),
+			infraBuild.withAWSPlatformSpec(),
+			infraBuild.withAWSPlatformStatus(),
+		),
+		expectedFilesGenerated: 1,
+	}, {
+		name:          "default Azure custom DNS",
+		installConfig: icBuild.build(icBuild.forAzure()),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AzurePlatformType),
+			infraBuild.withAzureClusterHostedDNS("Disabled"),
+		),
+		expectedFilesGenerated: 1,
+	}, {
+		name: "Azure custom DNS",
+		installConfig: icBuild.build(
+			icBuild.forAzure(),
+			icBuild.withAzureUserProvisionedDNS("Enabled"),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AzurePlatformType),
+			infraBuild.withAzureClusterHostedDNS("Enabled"),
+		),
+		expectedFilesGenerated: 1,
 	},
 		{
-			name:          "default AWS custom DNS",
-			installConfig: icBuild.build(icBuild.forAWS()),
-			expectedInfrastructure: infraBuild.build(
-				infraBuild.forPlatform(configv1.AWSPlatformType),
-				infraBuild.withAWSClusterHostedDNS("Disabled"),
-				infraBuild.withAWSPlatformSpec(),
-				infraBuild.withAWSPlatformStatus(),
-			),
-			expectedFilesGenerated: 1,
-		}, {
-			name: "AWS custom DNS",
-			installConfig: icBuild.build(
-				icBuild.forAWS(),
-				icBuild.withAWSUserProvisionedDNS("Enabled"),
-			),
-			expectedInfrastructure: infraBuild.build(
-				infraBuild.forPlatform(configv1.AWSPlatformType),
-				infraBuild.withAWSClusterHostedDNS("Enabled"),
-				infraBuild.withAWSPlatformSpec(),
-				infraBuild.withAWSPlatformStatus(),
-			),
-			expectedFilesGenerated: 1,
-		}, {
 			name: "vsphere with VIPs appended to machine networks",
 			installConfig: icBuild.build(
 				icBuild.forVSphere(),
@@ -277,6 +296,15 @@ func (b icBuildNamespace) forGCP() icOption {
 	}
 }
 
+func (b icBuildNamespace) forAzure() icOption {
+	return func(ic *types.InstallConfig) {
+		if ic.Platform.Azure != nil {
+			return
+		}
+		ic.Platform.Azure = &azuretypes.Platform{}
+	}
+}
+
 func (b icBuildNamespace) forNone() icOption {
 	return func(ic *types.InstallConfig) {
 		if ic.Platform.None != nil {
@@ -380,6 +408,23 @@ func (b icBuildNamespace) withVSphereIngressVIP(vip string) icOption {
 	}
 }
 
+func (b icBuildNamespace) withResourceTags(tags map[string]string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAzure()(ic)
+		ic.Platform.Azure.UserTags = tags
+	}
+}
+
+func (b icBuildNamespace) withAzureUserProvisionedDNS(enabled string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAzure()(ic)
+		if enabled == "Enabled" {
+			ic.Platform.Azure.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
+			ic.FeatureGates = []string{"AzureClusterHostedDNSInstall=true"}
+		}
+	}
+}
+
 type infraOption func(*configv1.Infrastructure)
 
 type infraBuildNamespace struct{}
@@ -463,15 +508,6 @@ func (b infraBuildNamespace) withGCPServiceEndpoint(name configv1.GCPServiceEndp
 	}
 }
 
-func (b icBuildNamespace) forAzure() icOption {
-	return func(ic *types.InstallConfig) {
-		if ic.Platform.Azure != nil {
-			return
-		}
-		ic.Platform.Azure = &azuretypes.Platform{}
-	}
-}
-
 func (b infraBuildNamespace) withAzurePlatformStatus() infraOption {
 	return func(infra *configv1.Infrastructure) {
 		if infra.Status.PlatformStatus.Azure != nil {
@@ -480,14 +516,10 @@ func (b infraBuildNamespace) withAzurePlatformStatus() infraOption {
 		infra.Status.PlatformStatus.Azure = &configv1.AzurePlatformStatus{
 			ResourceGroupName:        infra.Status.InfrastructureName + "-rg",
 			NetworkResourceGroupName: infra.Status.InfrastructureName + "-rg",
+			CloudLoadBalancerConfig: &configv1.CloudLoadBalancerConfig{
+				DNSType: configv1.PlatformDefaultDNSType,
+			},
 		}
-	}
-}
-
-func (b icBuildNamespace) withResourceTags(tags map[string]string) icOption {
-	return func(ic *types.InstallConfig) {
-		b.forAzure()(ic)
-		ic.Platform.Azure.UserTags = tags
 	}
 }
 
@@ -526,6 +558,18 @@ func (b infraBuildNamespace) withAWSClusterHostedDNS(enabled string) infraOption
 		}
 		if enabled == "Enabled" {
 			infra.Status.PlatformStatus.AWS.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
+		}
+	}
+}
+
+func (b infraBuildNamespace) withAzureClusterHostedDNS(enabled string) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withAzurePlatformStatus()(infra)
+		infra.Status.PlatformStatus.Azure.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{
+			DNSType: configv1.PlatformDefaultDNSType,
+		}
+		if enabled == "Enabled" {
+			infra.Status.PlatformStatus.Azure.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
 		}
 	}
 }

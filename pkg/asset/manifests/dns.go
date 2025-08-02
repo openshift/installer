@@ -133,9 +133,15 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 			config.Spec.PrivateZone = &configv1.DNSZone{
 				ID: dnsConfig.GetPrivateDNSZoneID(installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID), installConfig.Config.ClusterDomain()),
 			}
+			// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
+			// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
+			if installConfig.Config.Azure.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
+				config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
+				config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
+			}
 		}
 	case gcptypes.Name:
-		// We donot want to configure cloud DNS when `UserProvisionedDNS` is enabled.
+		// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
 		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
 		if installConfig.Config.GCP.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
 			config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
