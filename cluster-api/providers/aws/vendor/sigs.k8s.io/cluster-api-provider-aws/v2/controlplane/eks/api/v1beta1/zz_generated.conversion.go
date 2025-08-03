@@ -27,10 +27,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	apiv1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1"
 	apiv1beta2 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	v1beta2 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"
-	clusterapiapiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	apiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 func init() {
@@ -60,8 +59,23 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*AWSManagedControlPlaneSpec)(nil), (*v1beta2.AWSManagedControlPlaneSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_AWSManagedControlPlaneSpec_To_v1beta2_AWSManagedControlPlaneSpec(a.(*AWSManagedControlPlaneSpec), b.(*v1beta2.AWSManagedControlPlaneSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSManagedControlPlaneSpec)(nil), (*AWSManagedControlPlaneSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AWSManagedControlPlaneSpec_To_v1beta1_AWSManagedControlPlaneSpec(a.(*v1beta2.AWSManagedControlPlaneSpec), b.(*AWSManagedControlPlaneSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*AWSManagedControlPlaneStatus)(nil), (*v1beta2.AWSManagedControlPlaneStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_AWSManagedControlPlaneStatus_To_v1beta2_AWSManagedControlPlaneStatus(a.(*AWSManagedControlPlaneStatus), b.(*v1beta2.AWSManagedControlPlaneStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSManagedControlPlaneStatus)(nil), (*AWSManagedControlPlaneStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AWSManagedControlPlaneStatus_To_v1beta1_AWSManagedControlPlaneStatus(a.(*v1beta2.AWSManagedControlPlaneStatus), b.(*AWSManagedControlPlaneStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -210,52 +224,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*AWSManagedControlPlaneSpec)(nil), (*v1beta2.AWSManagedControlPlaneSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_AWSManagedControlPlaneSpec_To_v1beta2_AWSManagedControlPlaneSpec(a.(*AWSManagedControlPlaneSpec), b.(*v1beta2.AWSManagedControlPlaneSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*apiv1beta1.Bastion)(nil), (*apiv1beta2.Bastion)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_Bastion_To_v1beta2_Bastion(a.(*apiv1beta1.Bastion), b.(*apiv1beta2.Bastion), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*apiv1beta1.NetworkSpec)(nil), (*apiv1beta2.NetworkSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_NetworkSpec_To_v1beta2_NetworkSpec(a.(*apiv1beta1.NetworkSpec), b.(*apiv1beta2.NetworkSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*apiv1beta1.NetworkStatus)(nil), (*apiv1beta2.NetworkStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_NetworkStatus_To_v1beta2_NetworkStatus(a.(*apiv1beta1.NetworkStatus), b.(*apiv1beta2.NetworkStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.AWSManagedControlPlaneSpec)(nil), (*AWSManagedControlPlaneSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AWSManagedControlPlaneSpec_To_v1beta1_AWSManagedControlPlaneSpec(a.(*v1beta2.AWSManagedControlPlaneSpec), b.(*AWSManagedControlPlaneSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.AWSManagedControlPlaneStatus)(nil), (*AWSManagedControlPlaneStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AWSManagedControlPlaneStatus_To_v1beta1_AWSManagedControlPlaneStatus(a.(*v1beta2.AWSManagedControlPlaneStatus), b.(*AWSManagedControlPlaneStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*apiv1beta2.Bastion)(nil), (*apiv1beta1.Bastion)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_Bastion_To_v1beta1_Bastion(a.(*apiv1beta2.Bastion), b.(*apiv1beta1.Bastion), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*apiv1beta2.NetworkSpec)(nil), (*apiv1beta1.NetworkSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_NetworkSpec_To_v1beta1_NetworkSpec(a.(*apiv1beta2.NetworkSpec), b.(*apiv1beta1.NetworkSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*apiv1beta2.NetworkStatus)(nil), (*apiv1beta1.NetworkStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_NetworkStatus_To_v1beta1_NetworkStatus(a.(*apiv1beta2.NetworkStatus), b.(*apiv1beta1.NetworkStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.VpcCni)(nil), (*VpcCni)(nil), func(a, b interface{}, scope conversion.Scope) error {
+	if err := s.AddGeneratedConversionFunc((*v1beta2.VpcCni)(nil), (*VpcCni)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_VpcCni_To_v1beta1_VpcCni(a.(*v1beta2.VpcCni), b.(*VpcCni), scope)
 	}); err != nil {
 		return err
@@ -264,6 +233,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 }
 
 func autoConvert_v1beta1_AWSManagedControlPlane_To_v1beta2_AWSManagedControlPlane(in *AWSManagedControlPlane, out *v1beta2.AWSManagedControlPlane, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_AWSManagedControlPlaneSpec_To_v1beta2_AWSManagedControlPlaneSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -280,6 +250,7 @@ func Convert_v1beta1_AWSManagedControlPlane_To_v1beta2_AWSManagedControlPlane(in
 }
 
 func autoConvert_v1beta2_AWSManagedControlPlane_To_v1beta1_AWSManagedControlPlane(in *v1beta2.AWSManagedControlPlane, out *AWSManagedControlPlane, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_AWSManagedControlPlaneSpec_To_v1beta1_AWSManagedControlPlaneSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -296,6 +267,7 @@ func Convert_v1beta2_AWSManagedControlPlane_To_v1beta1_AWSManagedControlPlane(in
 }
 
 func autoConvert_v1beta1_AWSManagedControlPlaneList_To_v1beta2_AWSManagedControlPlaneList(in *AWSManagedControlPlaneList, out *v1beta2.AWSManagedControlPlaneList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -317,6 +289,7 @@ func Convert_v1beta1_AWSManagedControlPlaneList_To_v1beta2_AWSManagedControlPlan
 }
 
 func autoConvert_v1beta2_AWSManagedControlPlaneList_To_v1beta1_AWSManagedControlPlaneList(in *v1beta2.AWSManagedControlPlaneList, out *AWSManagedControlPlaneList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -384,6 +357,8 @@ func autoConvert_v1beta2_AWSManagedControlPlaneSpec_To_v1beta1_AWSManagedControl
 	out.Version = (*string)(unsafe.Pointer(in.Version))
 	out.RoleName = (*string)(unsafe.Pointer(in.RoleName))
 	out.RoleAdditionalPolicies = (*[]string)(unsafe.Pointer(in.RoleAdditionalPolicies))
+	// WARNING: in.RolePath requires manual conversion: does not exist in peer-type
+	// WARNING: in.RolePermissionsBoundary requires manual conversion: does not exist in peer-type
 	out.Logging = (*ControlPlaneLoggingSpec)(unsafe.Pointer(in.Logging))
 	out.EncryptionConfig = (*EncryptionConfig)(unsafe.Pointer(in.EncryptionConfig))
 	out.AdditionalTags = *(*apiv1beta2.Tags)(unsafe.Pointer(&in.AdditionalTags))
@@ -403,6 +378,7 @@ func autoConvert_v1beta2_AWSManagedControlPlaneSpec_To_v1beta1_AWSManagedControl
 	if err := Convert_v1beta2_VpcCni_To_v1beta1_VpcCni(&in.VpcCni, &out.VpcCni, s); err != nil {
 		return err
 	}
+	// WARNING: in.BootstrapSelfManagedAddons requires manual conversion: does not exist in peer-type
 	// WARNING: in.RestrictPrivateSubnets requires manual conversion: does not exist in peer-type
 	if err := Convert_v1beta2_KubeProxy_To_v1beta1_KubeProxy(&in.KubeProxy, &out.KubeProxy, s); err != nil {
 		return err
@@ -412,7 +388,7 @@ func autoConvert_v1beta2_AWSManagedControlPlaneSpec_To_v1beta1_AWSManagedControl
 
 func autoConvert_v1beta1_AWSManagedControlPlaneStatus_To_v1beta2_AWSManagedControlPlaneStatus(in *AWSManagedControlPlaneStatus, out *v1beta2.AWSManagedControlPlaneStatus, s conversion.Scope) error {
 	out.Network = in.Network
-	out.FailureDomains = *(*clusterapiapiv1beta1.FailureDomains)(unsafe.Pointer(&in.FailureDomains))
+	out.FailureDomains = *(*apiv1beta1.FailureDomains)(unsafe.Pointer(&in.FailureDomains))
 	out.Bastion = (*apiv1beta2.Instance)(unsafe.Pointer(in.Bastion))
 	if err := Convert_v1beta1_OIDCProviderStatus_To_v1beta2_OIDCProviderStatus(&in.OIDCProvider, &out.OIDCProvider, s); err != nil {
 		return err
@@ -421,7 +397,7 @@ func autoConvert_v1beta1_AWSManagedControlPlaneStatus_To_v1beta2_AWSManagedContr
 	out.Initialized = in.Initialized
 	out.Ready = in.Ready
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
-	out.Conditions = *(*clusterapiapiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	out.Addons = *(*[]v1beta2.AddonState)(unsafe.Pointer(&in.Addons))
 	if err := Convert_v1beta1_IdentityProviderStatus_To_v1beta2_IdentityProviderStatus(&in.IdentityProviderStatus, &out.IdentityProviderStatus, s); err != nil {
 		return err
@@ -436,7 +412,7 @@ func Convert_v1beta1_AWSManagedControlPlaneStatus_To_v1beta2_AWSManagedControlPl
 
 func autoConvert_v1beta2_AWSManagedControlPlaneStatus_To_v1beta1_AWSManagedControlPlaneStatus(in *v1beta2.AWSManagedControlPlaneStatus, out *AWSManagedControlPlaneStatus, s conversion.Scope) error {
 	out.Network = in.Network
-	out.FailureDomains = *(*clusterapiapiv1beta1.FailureDomains)(unsafe.Pointer(&in.FailureDomains))
+	out.FailureDomains = *(*apiv1beta1.FailureDomains)(unsafe.Pointer(&in.FailureDomains))
 	out.Bastion = (*apiv1beta2.Instance)(unsafe.Pointer(in.Bastion))
 	if err := Convert_v1beta2_OIDCProviderStatus_To_v1beta1_OIDCProviderStatus(&in.OIDCProvider, &out.OIDCProvider, s); err != nil {
 		return err
@@ -445,7 +421,7 @@ func autoConvert_v1beta2_AWSManagedControlPlaneStatus_To_v1beta1_AWSManagedContr
 	out.Initialized = in.Initialized
 	out.Ready = in.Ready
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
-	out.Conditions = *(*clusterapiapiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	out.Addons = *(*[]AddonState)(unsafe.Pointer(&in.Addons))
 	if err := Convert_v1beta2_IdentityProviderStatus_To_v1beta1_IdentityProviderStatus(&in.IdentityProviderStatus, &out.IdentityProviderStatus, s); err != nil {
 		return err

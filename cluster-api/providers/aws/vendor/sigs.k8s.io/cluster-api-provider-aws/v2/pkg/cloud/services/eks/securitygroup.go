@@ -20,9 +20,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/eks"
 	"k8s.io/utils/ptr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/converters"
 )
 
-func (s *Service) reconcileSecurityGroups(cluster *eks.Cluster) error {
+func (s *Service) reconcileSecurityGroups(ctx context.Context, cluster *ekstypes.Cluster) error {
 	s.scope.Info("Reconciling EKS security groups", "cluster-name", ptr.Deref(cluster.Name, ""))
 
 	if s.scope.Network().SecurityGroups == nil {
@@ -46,7 +46,7 @@ func (s *Service) reconcileSecurityGroups(cluster *eks.Cluster) error {
 		},
 	}
 
-	output, err := s.EC2Client.DescribeSecurityGroupsWithContext(context.TODO(), input)
+	output, err := s.EC2Client.DescribeSecurityGroupsWithContext(ctx, input)
 	if err != nil {
 		return fmt.Errorf("describing security groups: %w", err)
 	}
@@ -68,13 +68,13 @@ func (s *Service) reconcileSecurityGroups(cluster *eks.Cluster) error {
 		},
 	}
 
-	output, err = s.EC2Client.DescribeSecurityGroupsWithContext(context.TODO(), input)
+	output, err = s.EC2Client.DescribeSecurityGroupsWithContext(ctx, input)
 	if err != nil || len(output.SecurityGroups) == 0 {
 		return fmt.Errorf("describing EKS cluster security group: %w", err)
 	}
 
 	s.scope.ControlPlane.Status.Network.SecurityGroups[ekscontrolplanev1.SecurityGroupCluster] = infrav1.SecurityGroup{
-		ID:   aws.StringValue(cluster.ResourcesVpcConfig.ClusterSecurityGroupId),
+		ID:   aws.ToString(cluster.ResourcesVpcConfig.ClusterSecurityGroupId),
 		Name: *output.SecurityGroups[0].GroupName,
 		Tags: converters.TagsToMap(output.SecurityGroups[0].Tags),
 	}

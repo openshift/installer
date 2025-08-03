@@ -18,9 +18,10 @@ package v1beta1
 
 import (
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
+
 	"sigs.k8s.io/cluster-api-provider-aws/v2/bootstrap/eks/api/v1beta2"
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 // ConvertTo converts the v1beta1 EKSConfig receiver to a v1beta2 EKSConfig.
