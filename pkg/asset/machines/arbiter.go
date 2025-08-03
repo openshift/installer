@@ -32,6 +32,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	ibmcloudapi "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
@@ -203,7 +204,7 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	// The cluster-network-operator handles the validation of this field.
 	// Reference: https://github.com/openshift/cluster-network-operator/blob/fc3e0e25b4cfa43e14122bdcdd6d7f2585017d75/pkg/network/cluster_config.go#L45-L52
 	if ic.Networking != nil && len(ic.Networking.ServiceNetwork) == 2 &&
-		(ic.Platform.Name() == openstacktypes.Name || ic.Platform.Name() == vspheretypes.Name) {
+		(ic.Platform.Name() == openstacktypes.Name || ic.Platform.Name() == vspheretypes.Name || ic.Platform.Name() == powervctypes.Name) {
 		// Only configure kernel args for dual-stack clusters.
 		ignIPv6, err := machineconfig.ForDualStackAddresses("arbiter")
 		if err != nil {

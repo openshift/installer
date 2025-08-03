@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/types/featuregates"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/powervc"
 )
 
 // Destroy uses Terraform to remove bootstrap resources.
@@ -35,7 +36,7 @@ func Destroy(ctx context.Context, dir string) (err error) {
 		return errors.New("no platform configured in metadata")
 	}
 
-	if platform == openstack.Name {
+	if platform == openstack.Name || platform == powervc.Name {
 		if err := preprovision.SetTerraformEnvironment(); err != nil {
 			return errors.Wrapf(err, "Failed to  initialize infrastructure")
 		}

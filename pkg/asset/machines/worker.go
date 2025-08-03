@@ -61,6 +61,7 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	powervsdefaults "github.com/openshift/installer/pkg/types/powervs/defaults"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -400,7 +401,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 		// The cluster-network-operator handles the validation of this field.
 		// Reference: https://github.com/openshift/cluster-network-operator/blob/fc3e0e25b4cfa43e14122bdcdd6d7f2585017d75/pkg/network/cluster_config.go#L45-L52
 		if ic.Networking != nil && len(ic.Networking.ServiceNetwork) == 2 &&
-			(ic.Platform.Name() == openstacktypes.Name || ic.Platform.Name() == vspheretypes.Name) {
+			(ic.Platform.Name() == openstacktypes.Name || ic.Platform.Name() == vspheretypes.Name || ic.Platform.Name() == powervctypes.Name) {
 			// Only configure kernel args for dual-stack clusters.
 			ignIPv6, err := machineconfig.ForDualStackAddresses("worker")
 			if err != nil {
@@ -640,7 +641,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
-		case openstacktypes.Name:
+		case openstacktypes.Name, powervctypes.Name:
 			mpool := defaultOpenStackMachinePoolPlatform()
 			mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.OpenStack)
