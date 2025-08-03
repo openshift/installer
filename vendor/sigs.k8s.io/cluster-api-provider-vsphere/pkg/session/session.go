@@ -20,13 +20,16 @@ package session
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/xml"
 	"fmt"
 	"net/netip"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
@@ -48,6 +51,97 @@ var (
 	// session creations on startup.
 	sessionMU sync.Mutex
 )
+
+// SOAPResponse represents the structure of SOAP responses
+type SOAPResponse struct {
+	XMLName xml.Name `xml:"Envelope"`
+	Body    struct {
+		XMLName xml.Name `xml:"Body"`
+		Fault   *struct {
+			XMLName xml.Name `xml:"Fault"`
+			Code    struct {
+				XMLName xml.Name `xml:"faultcode"`
+				Value   string   `xml:",chardata"`
+			} `xml:"faultcode"`
+			Reason struct {
+				XMLName xml.Name `xml:"faultstring"`
+				Value   string   `xml:",chardata"`
+			} `xml:"faultstring"`
+			Detail struct {
+				XMLName xml.Name `xml:"detail"`
+				Content string   `xml:",chardata"`
+			} `xml:"detail"`
+		} `xml:"Fault,omitempty"`
+	} `xml:"Body"`
+}
+
+// CustomTransport wraps the default transport to intercept SOAP responses
+type CustomTransport struct {
+	soap.RoundTripper
+}
+
+func (t *CustomTransport) RoundTrip(ctx context.Context, req, res soap.HasFault) error {
+	logrus.Info("=== CustomTransport.RoundTrip called ===")
+
+	// Call the original transport
+	err := t.RoundTripper.RoundTrip(ctx, req, res)
+
+	// Try to get the raw SOAP response from the underlying transport
+	// Since we can't easily access the raw HTTP response, we'll work with what we have
+	// and focus on the error case where we can extract more details
+
+	if err != nil {
+		logrus.Errorf("=== SOAP RoundTrip error: %v ===", err)
+
+		// Check if this is a SOAP fault error that we can extract details from
+		if soap.IsSoapFault(err) {
+			logrus.Error("=== SOAP FAULT DETECTED IN ERROR ===")
+			soapFault := soap.ToSoapFault(err)
+			logrus.Errorf("SOAP Fault Code: %s", soapFault.Code)
+			logrus.Errorf("SOAP Fault String: %s", soapFault.String)
+
+			// Try to get the raw XML from the fault
+			if soapFault.Detail.Fault != nil {
+				logrus.Error("=== FULL SOAP FAULT DETAILS FROM ERROR ===")
+				logrus.Errorf("Detail Fault Type: %T", soapFault.Detail.Fault)
+				logrus.Errorf("Detail Fault: %+v", soapFault.Detail.Fault)
+
+				// Try to marshal the fault to XML to get the raw representation
+				if faultXML, marshalErr := xml.MarshalIndent(soapFault.Detail.Fault, "", "  "); marshalErr == nil {
+					logrus.Errorf("Raw Fault XML:\n%s", string(faultXML))
+				}
+			}
+
+			// Check for privilege-related error messages
+			faultStr := soapFault.String
+			privilegeKeywords := []string{
+				"privilege", "permission", "access denied", "unauthorized", "forbidden",
+				"NoPermission", "InvalidLogin", "InvalidPrivilege", "missingPrivileges",
+			}
+			for _, keyword := range privilegeKeywords {
+				if strings.Contains(strings.ToLower(faultStr), strings.ToLower(keyword)) {
+					logrus.Errorf("=== PRIVILEGE ISSUE DETECTED (keyword: %s) ===", keyword)
+					logrus.Error("SOAP fault contains privilege-related content")
+					logrus.Error("=============================================")
+					break
+				}
+			}
+
+			// Check specifically for missingPrivileges
+			if strings.Contains(faultStr, "missingPrivileges") {
+				logrus.Error("=== MISSING PRIVILEGES DETECTED ===")
+				logrus.Error("The following SOAP fault contains missingPrivileges information:")
+				logrus.Errorf("Fault Details: %s", faultStr)
+				logrus.Error("=== END MISSING PRIVILEGES ===")
+			}
+		}
+
+		return err
+	}
+
+	logrus.Info("=== SOAP RoundTrip completed successfully ===")
+	return nil
+}
 
 // Session is a vSphere session with a configured Finder.
 type Session struct {
@@ -241,6 +335,14 @@ func newClient(ctx context.Context, url *url.URL, thumbprint string, _ Feature) 
 		return nil, errors.Wrapf(err, "failed to create client")
 	}
 	vimClient.UserAgent = "k8s-capv-useragent"
+
+	// Add our custom transport with SOAP logging to the vim25 client
+	logrus.Info("=== Setting up custom SOAP transport ===")
+	customTransport := &CustomTransport{
+		RoundTripper: vimClient.RoundTripper,
+	}
+	vimClient.RoundTripper = customTransport
+	logrus.Info("=== Custom SOAP transport setup complete ===")
 
 	c := &govmomi.Client{
 		Client:         vimClient,
