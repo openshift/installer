@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	customDNS "github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -116,6 +117,7 @@ var (
 	validateXpnSA            = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = validXpnSA }
 	invalidateXpnSA          = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = invalidXpnSA }
 	invalidateBaseDomain     = func(ic *types.InstallConfig) { ic.BaseDomain = invalidBaseDomain }
+	enableCustomDNS          = func(ic *types.InstallConfig) { ic.GCP.UserProvisionedDNS = customDNS.UserProvisionedDNSEnabled }
 
 	validServiceEndpoint = func(ic *types.InstallConfig) {
 		ic.Publish = types.InternalPublishingStrategy
@@ -484,6 +486,12 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			records:        []*dns.ResourceRecordSet{},
 			expectedError:  true,
 			expectedErrMsg: `baseDomain: Not found: "invalid.installer.domain."`,
+		},
+		{
+			name:          "Custom DNS does not require existing base domain",
+			edits:         editFunctions{enableCustomDNS, invalidateBaseDomain},
+			records:       []*dns.ResourceRecordSet{},
+			expectedError: false,
 		},
 	}
 	mockCtrl := gomock.NewController(t)
