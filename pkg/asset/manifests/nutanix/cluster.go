@@ -80,13 +80,16 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	var failureDomains []capnv1.NutanixFailureDomain
-	var controlPlaneFailureDomians []corev1.LocalObjectReference
+	var controlPlaneFailureDomains []corev1.LocalObjectReference
 	for _, fd := range ic.Platform.Nutanix.FailureDomains {
 		subnets := make([]capnv1.NutanixResourceIdentifier, 0, len(fd.SubnetUUIDs))
 		for _, subnetUUID := range fd.SubnetUUIDs {
 			subnets = append(subnets, capnv1.NutanixResourceIdentifier{Type: capnv1.NutanixIdentifierUUID, UUID: ptr.To(subnetUUID)})
 		}
-		_ = append(failureDomains, capnv1.NutanixFailureDomain{
+		failureDomains = append(failureDomains, capnv1.NutanixFailureDomain{
+			TypeMeta: metav1.TypeMeta{
+				Kind: capnv1.NutanixFailureDomainKind,
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fd.Name,
 			},
@@ -98,11 +101,19 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				},
 			},
 		})
-		controlPlaneFailureDomians = append(controlPlaneFailureDomians, corev1.LocalObjectReference{
+		controlPlaneFailureDomains = append(controlPlaneFailureDomains, corev1.LocalObjectReference{
 			Name: fd.Name,
 		})
 	}
-	ntxCluster.Spec.ControlPlaneFailureDomains = controlPlaneFailureDomians
+
+	for i := range failureDomains {
+		domain := &failureDomains[i]
+		manifests = append(manifests, &asset.RuntimeFile{
+			Object: domain,
+			File:   asset.File{Filename: "01_nutanix-failureDomain.yaml"},
+		})
+	}
+	ntxCluster.Spec.ControlPlaneFailureDomains = controlPlaneFailureDomains
 
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: ntxCluster,

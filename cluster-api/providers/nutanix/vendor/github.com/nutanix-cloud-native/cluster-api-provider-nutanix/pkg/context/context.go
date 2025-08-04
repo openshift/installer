@@ -25,7 +25,6 @@ import (
 	prismclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	capiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/remote"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -91,14 +90,14 @@ func (clctx *ClusterContext) GetNutanixMachinesInCluster(client ctlclient.Client
 	return ntxMachines, nil
 }
 
-func (clctx *ClusterContext) SetFailureStatus(failureReason capierrors.ClusterStatusError, failureMessage error) {
+func (clctx *ClusterContext) SetFailureStatus(failureReason string, failureMessage error) {
 	log := ctrl.LoggerFrom(clctx.Context)
 	log.Error(failureMessage, fmt.Sprintf("cluster failed: %s", failureReason))
 	clctx.NutanixCluster.Status.FailureMessage = utils.StringPtr(fmt.Sprintf("%v", failureMessage))
 	clctx.NutanixCluster.Status.FailureReason = &failureReason
 }
 
-func (clctx *MachineContext) SetFailureStatus(failureReason capierrors.MachineStatusError, failureMessage error) {
+func (clctx *MachineContext) SetFailureStatus(failureReason string, failureMessage error) {
 	log := ctrl.LoggerFrom(clctx.Context)
 	log.Error(failureMessage, fmt.Sprintf("machine failed: %s", failureReason))
 	clctx.NutanixMachine.Status.FailureMessage = utils.StringPtr(fmt.Sprintf("%v", failureMessage))
