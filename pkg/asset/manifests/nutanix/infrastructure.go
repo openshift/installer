@@ -61,7 +61,7 @@ func GetInfrastructureNutanixPlatformSpec(ic *installconfig.InstallConfig) (*con
 		for _, subnetUUID := range fd.SubnetUUIDs {
 			subnets = append(subnets, configv1.NutanixResourceIdentifier{
 				Type: configv1.NutanixIdentifierUUID,
-				UUID: ptr.To[string](subnetUUID),
+				UUID: ptr.To(subnetUUID),
 			})
 		}
 
@@ -69,7 +69,7 @@ func GetInfrastructureNutanixPlatformSpec(ic *installconfig.InstallConfig) (*con
 			Name: fd.Name,
 			Cluster: configv1.NutanixResourceIdentifier{
 				Type: configv1.NutanixIdentifierUUID,
-				UUID: ptr.To[string](fd.PrismElement.UUID),
+				UUID: ptr.To(fd.PrismElement.UUID),
 			},
 			Subnets: subnets,
 		}

@@ -35,7 +35,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Address: ic.Platform.Nutanix.PrismCentral.Endpoint.Address,
 				Port:    ic.Platform.Nutanix.PrismCentral.Endpoint.Port,
 			},
-			FailureDomains: []capnv1.NutanixFailureDomain{},
+			ControlPlaneFailureDomains: []corev1.LocalObjectReference{},
 		},
 	}
 	ntxCluster.SetGroupVersionKind(capnv1.GroupVersion.WithKind("NutanixCluster"))
@@ -79,21 +79,30 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
+	var failureDomains []capnv1.NutanixFailureDomain
+	var controlPlaneFailureDomians []corev1.LocalObjectReference
 	for _, fd := range ic.Platform.Nutanix.FailureDomains {
 		subnets := make([]capnv1.NutanixResourceIdentifier, 0, len(fd.SubnetUUIDs))
 		for _, subnetUUID := range fd.SubnetUUIDs {
 			subnets = append(subnets, capnv1.NutanixResourceIdentifier{Type: capnv1.NutanixIdentifierUUID, UUID: ptr.To(subnetUUID)})
 		}
-
-		ntxCluster.Spec.FailureDomains = append(ntxCluster.Spec.FailureDomains, capnv1.NutanixFailureDomain{
-			Name: fd.Name,
-			Cluster: capnv1.NutanixResourceIdentifier{
-				Type: capnv1.NutanixIdentifierUUID,
-				UUID: ptr.To(fd.PrismElement.UUID),
+		_ = append(failureDomains, capnv1.NutanixFailureDomain{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fd.Name,
 			},
-			Subnets: subnets,
+			Spec: capnv1.NutanixFailureDomainSpec{
+				Subnets: subnets,
+				PrismElementCluster: capnv1.NutanixResourceIdentifier{
+					Type: capnv1.NutanixIdentifierUUID,
+					UUID: ptr.To(fd.PrismElement.UUID),
+				},
+			},
+		})
+		controlPlaneFailureDomians = append(controlPlaneFailureDomians, corev1.LocalObjectReference{
+			Name: fd.Name,
 		})
 	}
+	ntxCluster.Spec.ControlPlaneFailureDomains = controlPlaneFailureDomians
 
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: ntxCluster,
