@@ -79,14 +79,18 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
-	var failureDomains []capnv1.NutanixFailureDomain
-	var controlPlaneFailureDomains []corev1.LocalObjectReference
+	failureDomains := make([]capnv1.NutanixFailureDomain, 0, len(ic.Platform.Nutanix.FailureDomains))
+	controlPlaneFailureDomains := make([]corev1.LocalObjectReference, 0, len(ic.Platform.Nutanix.FailureDomains))
 	for _, fd := range ic.Platform.Nutanix.FailureDomains {
 		subnets := make([]capnv1.NutanixResourceIdentifier, 0, len(fd.SubnetUUIDs))
 		for _, subnetUUID := range fd.SubnetUUIDs {
-			subnets = append(subnets, capnv1.NutanixResourceIdentifier{Type: capnv1.NutanixIdentifierUUID, UUID: ptr.To(subnetUUID)})
+			subnets = append(subnets, capnv1.NutanixResourceIdentifier{
+				Type: capnv1.NutanixIdentifierUUID,
+				UUID: ptr.To(subnetUUID),
+			})
 		}
-		failureDomains = append(failureDomains, capnv1.NutanixFailureDomain{
+
+		failureDomain := capnv1.NutanixFailureDomain{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 				Kind:       capnv1.NutanixFailureDomainKind,
@@ -102,11 +106,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					UUID: ptr.To(fd.PrismElement.UUID),
 				},
 			},
-		})
-		controlPlaneFailureDomains = append(controlPlaneFailureDomains, corev1.LocalObjectReference{
-			Name: fd.Name,
-		})
+		}
+		failureDomains = append(failureDomains, failureDomain)
+		controlPlaneFailureDomains = append(controlPlaneFailureDomains, corev1.LocalObjectReference{Name: fd.Name})
 	}
+
 	for i := range failureDomains {
 		domain := &failureDomains[i]
 		manifests = append(manifests, &asset.RuntimeFile{
