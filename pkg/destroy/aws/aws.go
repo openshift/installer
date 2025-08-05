@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -65,6 +67,8 @@ type ClusterUninstaller struct {
 	// new session will be created based on the usual credential
 	// configuration (AWS_PROFILE, AWS_ACCESS_KEY_ID, etc.).
 	Session *session.Session
+
+	EC2Client *ec2v2.Client
 }
 
 // New returns an AWS destroyer from ClusterMetadata.
@@ -82,6 +86,20 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		return nil, err
 	}
 
+	cfg, err := configv2.LoadDefaultConfig(context.TODO(), configv2.WithRegion(region))
+	if err != nil {
+		return nil, fmt.Errorf("failed loading default config: %w", err)
+	}
+	ec2Client := ec2v2.NewFromConfig(cfg, func(options *ec2v2.Options) {
+		options.Region = region
+
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "ec2") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
 	return &ClusterUninstaller{
 		Filters:        filters,
 		Region:         region,
@@ -90,6 +108,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		ClusterDomain:  metadata.AWS.ClusterDomain,
 		Session:        session,
 		HostedZoneRole: metadata.AWS.HostedZoneRole,
+		EC2Client:      ec2Client,
 	}, nil
 }
 
@@ -184,7 +203,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	// Terminate EC2 instances. The instances need to be terminated first so that we can ensure that there is nothing
 	// running on the cluster creating new resources while we are attempting to delete resources, which could leak
 	// the new resources.
-	err = DeleteEC2Instances(ctx, o.Logger, awsSession, o.Filters, resourcesToDelete, deleted, tracker)
+	err = o.DeleteEC2Instances(ctx, awsSession, resourcesToDelete, deleted, tracker)
 	if err != nil {
 		return resourcesToDelete.UnsortedList(), err
 	}
@@ -193,7 +212,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	err = wait.PollImmediateUntil(
 		time.Second*10,
 		func() (done bool, err error) {
-			newlyDeleted, loopError := DeleteResources(ctx, o.Logger, awsSession, resourcesToDelete.UnsortedList(), tracker)
+			newlyDeleted, loopError := o.DeleteResources(ctx, awsSession, resourcesToDelete.UnsortedList(), tracker)
 			// Delete from the resources-to-delete set so that the current state of the resources to delete can be
 			// returned if the context is completed.
 			resourcesToDelete = resourcesToDelete.Difference(newlyDeleted)
@@ -385,17 +404,17 @@ func findResourcesByTag(
 //
 //	resources - the resources to be deleted.
 //
-// The first return is the ARNs of the resources that were successfully deleted
-func DeleteResources(ctx context.Context, logger logrus.FieldLogger, awsSession *session.Session, resources []string, tracker *ErrorTracker) (sets.Set[string], error) {
+// The first return is the ARNs of the resources that were successfully deleted.
+func (o *ClusterUninstaller) DeleteResources(ctx context.Context, awsSession *session.Session, resources []string, tracker *ErrorTracker) (sets.Set[string], error) {
 	deleted := sets.New[string]()
 	for _, arnString := range resources {
-		l := logger.WithField("arn", arnString)
+		l := o.Logger.WithField("arn", arnString)
 		parsedARN, err := arn.Parse(arnString)
 		if err != nil {
 			l.WithError(err).Debug("could not parse ARN")
 			continue
 		}
-		if err := deleteARN(ctx, awsSession, parsedARN, logger); err != nil {
+		if err := o.deleteARN(ctx, awsSession, parsedARN, o.Logger); err != nil {
 			tracker.suppressWarning(arnString, err, l)
 			if err := ctx.Err(); err != nil {
 				return deleted, err
@@ -517,10 +536,10 @@ func findPublicRoute53(ctx context.Context, client *route53.Route53, dnsName str
 	return "", nil
 }
 
-func deleteARN(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+func (o *ClusterUninstaller) deleteARN(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
 	switch arn.Service {
 	case "ec2":
-		return deleteEC2(ctx, session, arn, logger)
+		return o.deleteEC2(ctx, session, arn, logger)
 	case "elasticloadbalancing":
 		return deleteElasticLoadBalancing(ctx, session, arn, logger)
 	case "iam":
