@@ -3,6 +3,8 @@ package azure
 import (
 	"fmt"
 	"strings"
+
+	"github.com/openshift/installer/pkg/types/dns"
 )
 
 // aro is a setting to enable aro-only modifications
@@ -100,6 +102,13 @@ type Platform struct {
 
 	// CustomerManagedKey has the keys needed to encrypt the storage account.
 	CustomerManagedKey *CustomerManagedKey `json:"customerManagedKey,omitempty"`
+
+	// UserProvisionedDNS indicates if the customer is providing their own DNS solution in place of the default
+	// provisioned by the Installer.
+	// +kubebuilder:default:="Disabled"
+	// +default="Disabled"
+	// +kubebuilder:validation:Enum="Enabled";"Disabled"
+	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
 }
 
 // KeyVault defines an Azure Key Vault.
