@@ -88,10 +88,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 		failureDomains = append(failureDomains, capnv1.NutanixFailureDomain{
 			TypeMeta: metav1.TypeMeta{
-				Kind: capnv1.NutanixFailureDomainKind,
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				Kind:       capnv1.NutanixFailureDomainKind,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fd.Name,
+				Name:      fd.Name,
+				Namespace: capiutils.Namespace,
 			},
 			Spec: capnv1.NutanixFailureDomainSpec{
 				Subnets: subnets,
@@ -105,7 +107,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Name: fd.Name,
 		})
 	}
-
 	for i := range failureDomains {
 		domain := &failureDomains[i]
 		manifests = append(manifests, &asset.RuntimeFile{
