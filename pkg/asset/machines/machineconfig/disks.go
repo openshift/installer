@@ -124,7 +124,7 @@ func ForDiskSetup(role, device, label, path string, diskType types.DiskType) (*m
 			Kind:       "MachineConfig",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("01-disk-setup-%s-%s", label, role),
+			Name: fmt.Sprintf("01-disk-setup-%s-%s", strings.ToLower(label), role),
 			Labels: map[string]string{
 				"machineconfiguration.openshift.io/role": role,
 			},
