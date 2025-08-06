@@ -1,21 +1,34 @@
-linters:
-  enable:
-    - errcheck
-    - gofmt
-    - gofumpt
-    - gosimple
-    - govet
-    - ineffassign
-    - nolintlint
-    - staticcheck
-    - unused
-    - gocognit
-linters-settings:
-  nolintlint:
-    require-explanation: true
-    require-specific: true
+version: "2"
 run:
+  concurrency: 4
   build-tags:
     - e2e
-  concurrency: 4
-  timeout: 5m
+linters:
+  enable:
+    - gocognit
+    - nolintlint
+  settings:
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

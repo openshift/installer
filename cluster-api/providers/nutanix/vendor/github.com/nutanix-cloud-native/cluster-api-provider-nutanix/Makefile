@@ -10,13 +10,14 @@ LOCAL_IMAGE_REGISTRY ?= ko.local
 IMG_REPO=${LOCAL_IMAGE_REGISTRY}/cluster-api-provider-nutanix
 IMG_TAG=e2e-${GIT_COMMIT_HASH}
 MANAGER_IMAGE=${IMG_REPO}:${IMG_TAG}
+DOCKER_SOCKET := $(shell docker context inspect --format '{{.Endpoints.docker.Host}}')
 
 # Extract base and tag from IMG
 LOCAL_PROVIDER_VERSION ?= ${IMG_TAG}
 
 ifeq (${LOCAL_PROVIDER_VERSION},${IMG_TAG})
 # TODO(release-blocker): Change this versions after release when required here
-LOCAL_PROVIDER_VERSION := v1.5.99
+LOCAL_PROVIDER_VERSION := v1.7.99
 endif
 
 # PLATFORMS is a list of platforms to build for.
@@ -51,7 +52,7 @@ CNI_PATH_CILIUM ?= "${E2E_DIR}/data/cni/cilium/cilium.yaml"
 CNI_PATH_CILIUM_NO_KUBEPROXY ?= "${E2E_DIR}/data/cni/cilium/cilium-no-kubeproxy.yaml"
 CNI_PATH_FLANNEL ?= "${E2E_DIR}/data/cni/flannel/flannel.yaml"
 CNI_PATH_KINDNET ?= "${E2E_DIR}/data/cni/kindnet/kindnet.yaml"
-CCM_VERSION ?= v0.4.1
+CCM_VERSION ?= v0.5.0
 
 # CRD_OPTIONS define options to add to the CONTROLLER_GEN
 CRD_OPTIONS ?= "crd:crdVersions=v1"
@@ -217,15 +218,15 @@ run: manifests generate ## Run a controller from your host.
 .PHONY: docker-build
 docker-build:  ## Build docker image with the manager.
 	echo "Git commit hash: ${GIT_COMMIT_HASH}"
-	KO_DOCKER_REPO=ko.local GOFLAGS="-ldflags=-X=main.gitCommitHash=${GIT_COMMIT_HASH}" ko build -B --platform=${PLATFORMS} -t ${IMG_TAG} .
+	DOCKER_HOST=$(DOCKER_SOCKET) KO_DOCKER_REPO=ko.local GOFLAGS="-ldflags=-X=main.gitCommitHash=${GIT_COMMIT_HASH}" ko build -B --platform=${PLATFORMS} -t ${IMG_TAG} .
 
 .PHONY: docker-push
 docker-push:  ## Push docker image with the manager.
-	KO_DOCKER_REPO=${IMG_REPO} ko build --bare --platform=${PLATFORMS} -t ${IMG_TAG} .
+	DOCKER_HOST=$(DOCKER_SOCKET) KO_DOCKER_REPO=${IMG_REPO} GOFLAGS="-ldflags=-X=main.gitCommitHash=${GIT_COMMIT_HASH}" ko build --bare --platform=${PLATFORMS} -t ${IMG_TAG} .
 
 .PHONY: docker-push-kind
 docker-push-kind:  ## Make docker image available to kind cluster.
-	GOOS=linux GOARCH=${shell go env GOARCH} KO_DOCKER_REPO=ko.local ko build -B -t ${IMG_TAG} .
+	DOCKER_HOST=$(DOCKER_SOCKET) GOOS=linux GOARCH=${shell go env GOARCH} KO_DOCKER_REPO=ko.local ko build -B -t ${IMG_TAG} .
 	docker tag ko.local/cluster-api-provider-nutanix:${IMG_TAG} ${MANAGER_IMAGE}
 	kind load docker-image --name ${KIND_CLUSTER_NAME} ${MANAGER_IMAGE}
 
@@ -256,10 +257,10 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 ##@ Templates
 
 .PHONY: cluster-e2e-templates
-cluster-e2e-templates: cluster-e2e-templates-v1beta1 cluster-e2e-templates-v152 ## Generate cluster templates for all versions
+cluster-e2e-templates: cluster-e2e-templates-v1beta1 cluster-e2e-templates-v161 ## Generate cluster templates for all versions
 
-cluster-e2e-templates-v152: ## Generate cluster templates for CAPX v1.5.2
-	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1.5.2/cluster-template --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1.5.2/cluster-template.yaml
+cluster-e2e-templates-v161: ## Generate cluster templates for CAPX v1.6.1
+	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1.6.1/cluster-template --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1.6.1/cluster-template.yaml
 
 cluster-e2e-templates-v1beta1: ## Generate cluster templates for v1beta1
 	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template.yaml
@@ -278,6 +279,8 @@ cluster-e2e-templates-v1beta1: ## Generate cluster templates for v1beta1
 	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-clusterclass --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-clusterclass.yaml
 	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-clusterclass --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/clusterclass-nutanix-quick-start.yaml
 	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-topology --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-topology.yaml
+	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-image-lookup --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-image-lookup.yaml
+	kustomize build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-failure-domains-migration --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-failure-domains-migration.yaml
 
 cluster-e2e-templates-no-kubeproxy: ##Generate cluster templates without kubeproxy
 	# v1beta1
@@ -303,13 +306,15 @@ cluster-templates: ## Generate cluster templates for all flavors
 	kustomize build $(TEMPLATES_DIR)/csi3 > $(TEMPLATES_DIR)/cluster-template-csi3.yaml
 	kustomize build $(TEMPLATES_DIR)/clusterclass > $(TEMPLATES_DIR)/cluster-template-clusterclass.yaml
 	kustomize build $(TEMPLATES_DIR)/topology > $(TEMPLATES_DIR)/cluster-template-topology.yaml
+	kustomize build $(TEMPLATES_DIR)/image-lookup/ > $(TEMPLATES_DIR)/cluster-template-image-lookup.yaml
+	kustomize build $(TEMPLATES_DIR)/failure-domains/ > $(TEMPLATES_DIR)/cluster-template-failure-domains.yaml
 
 ##@ Testing
 
 .PHONY: docker-build-e2e
 docker-build-e2e: ## Build docker image with the manager with e2e tag.
 	echo "Git commit hash: ${GIT_COMMIT_HASH}"
-	KO_DOCKER_REPO=ko.local GOFLAGS="-ldflags=-X=main.gitCommitHash=${GIT_COMMIT_HASH}" ko build -B --platform=${PLATFORMS_E2E} -t ${IMG_TAG} .
+	DOCKER_HOST=$(DOCKER_SOCKET) KO_DOCKER_REPO=ko.local GOFLAGS="-ldflags=-X=main.gitCommitHash=${GIT_COMMIT_HASH}" ko build -B --platform=${PLATFORMS_E2E} -t ${IMG_TAG} .
 	docker tag ko.local/cluster-api-provider-nutanix:${IMG_TAG} ${IMG_REPO}:${IMG_TAG}
 
 .PHONY: prepare-local-clusterctl
@@ -335,13 +340,21 @@ mocks: ## Generate mocks for the project
 
 GOTESTPKGS = $(shell go list ./... | grep -v /mocks | grep -v /templates)
 
+KUBEBUILDER_ASSETS=$(shell setup-envtest use --print path $(ENVTEST_K8S_VERSION) --arch=amd64)
+
+.PHONY: print-envtest
+print-envtest: ## Set up envtest (download kubebuilder assets)
+	@echo KUBEBUILDER_ASSETS=$(KUBEBUILDER_ASSETS)
+
 .PHONY: unit-test
 unit-test: mocks  ## Run unit tests.
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION)  --arch=amd64 -p path)" $(GOTEST) $(GOTESTPKGS)
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" \
+	$(GOTEST) $(GOTESTPKGS)
 
 .PHONY: coverage
 coverage: mocks ## Run the tests of the project and export the coverage
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION)  --arch=amd64 -p path)" $(GOTEST) -race -coverprofile=coverage.out -covermode=atomic $(GOTESTPKGS)
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" \
+	$(GOTEST) -race -coverprofile=coverage.out -covermode=atomic $(GOTESTPKGS)
 
 .PHONY: template-test
 template-test: docker-build prepare-local-clusterctl ## Run the template tests
