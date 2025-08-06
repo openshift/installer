@@ -164,6 +164,7 @@ func setSubnets(ctx context.Context, in *networkInput) error {
 	if err := in.GatherZonesFromMetadata(ctx); err != nil {
 		return fmt.Errorf("failed to get availability zones from metadata: %w", err)
 	}
+
 	return setSubnetsManagedVPC(in)
 }
 
@@ -239,14 +240,23 @@ func setSubnetsManagedVPC(in *networkInput) error {
 		return fmt.Errorf("failed to get availability zones: %w", err)
 	}
 
+	// IPv6 capability is, as of now, only applicable to subnets in regular zones.
+	// Status of IPv6 support for edge zones:
+	// - Wavelength zones: No support
+	// - Local zones: Limited support. Requires a dedicated (secondary) VPC CIDR in the network border group of the local zones.
+	enableIPv6 := in.InstallConfig.Config.AWS.DualStackEnabled()
 	isPublishingExternal := in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy
 	allAvailabilityZones := out.GetAvailabilityZones()
 	allEdgeZones := out.GetEdgeZones()
 
 	mainCIDR := capiutils.CIDRFromInstallConfig(in.InstallConfig)
-	in.Cluster.Spec.NetworkSpec.VPC = capa.VPCSpec{
+	vpcSpec := &capa.VPCSpec{
 		CidrBlock: mainCIDR.String(),
 	}
+	if enableIPv6 {
+		vpcSpec.IPv6 = &capa.IPv6{}
+	}
+	in.Cluster.Spec.NetworkSpec.VPC = *vpcSpec
 
 	// Base subnets count considering only private zones, leaving one free block to allow
 	// future subnet expansions in Day-2.
@@ -299,6 +309,7 @@ func setSubnetsManagedVPC(in *networkInput) error {
 				CidrBlock:        privateCIDRs[idxCIDR].String(),
 				ID:               fmt.Sprintf("%s-subnet-private-%s", in.ClusterID.InfraID, zone),
 				IsPublic:         false,
+				IsIPv6:           enableIPv6,
 			})
 		}
 		if isPublishingExternal {
@@ -307,6 +318,7 @@ func setSubnetsManagedVPC(in *networkInput) error {
 				CidrBlock:        publicCIDRs[idxCIDR].String(),
 				ID:               fmt.Sprintf("%s-subnet-public-%s", in.ClusterID.InfraID, zone),
 				IsPublic:         true,
+				IsIPv6:           enableIPv6,
 			})
 		}
 	}

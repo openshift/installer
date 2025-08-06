@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	"github.com/openshift/installer/pkg/ipnet"
 )
 
 // BootstrapSSHDescription is the description for the
@@ -30,9 +31,14 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 		return nil, fmt.Errorf("failed to get user tags: %w", err)
 	}
 
-	sshRuleCidr := []string{"0.0.0.0/0"}
-	if !ic.Config.PublicAPI() {
-		sshRuleCidr = []string{capiutils.CIDRFromInstallConfig(ic).String()}
+	var sshRuleCidrs ipnet.IPNets
+	if ic.Config.PublicAPI() {
+		sshRuleCidrs = append(sshRuleCidrs, *capiutils.AnyIPv4CidrBlock)
+		if ic.Config.AWS.DualStackEnabled() {
+			sshRuleCidrs = append(sshRuleCidrs, *capiutils.AnyIPv6CidrBlock)
+		}
+	} else {
+		sshRuleCidrs = capiutils.MachineCIDRsFromInstallConfig(ic)
 	}
 
 	awsCluster := &capa.AWSCluster{
@@ -142,14 +148,15 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 						SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", "node"},
 					},
 					{
-						Description: BootstrapSSHDescription,
-						Protocol:    capa.SecurityGroupProtocolTCP,
-						FromPort:    22,
-						ToPort:      22,
-						CidrBlocks:  sshRuleCidr,
+						Description:    BootstrapSSHDescription,
+						Protocol:       capa.SecurityGroupProtocolTCP,
+						FromPort:       22,
+						ToPort:         22,
+						CidrBlocks:     sshRuleCidrs.IPv4Nets().String(),
+						IPv6CidrBlocks: sshRuleCidrs.IPv6Nets().String(),
 					},
 				},
-				NodePortIngressRuleCidrBlocks: []string{capiutils.CIDRFromInstallConfig(ic).String()},
+				NodePortIngressRuleCidrBlocks: capiutils.MachineCIDRsFromInstallConfig(ic).String(),
 			},
 			S3Bucket: &capa.S3Bucket{
 				Name:                    GetIgnitionBucketName(clusterID.InfraID),
@@ -198,7 +205,21 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 	}
 	awsCluster.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSCluster"))
 
+	// Create a ingress rule to allow acccess to the API LB.
+	apiLBIngressRule := capa.IngressRule{
+		Description: "Kubernetes API Server traffic",
+		Protocol:    capa.SecurityGroupProtocolTCP,
+		FromPort:    6443,
+		ToPort:      6443,
+		CidrBlocks:  []string{capiutils.AnyIPv4CidrBlock.String()},
+	}
+	if ic.Config.AWS.DualStackEnabled() {
+		apiLBIngressRule.IPv6CidrBlocks = []string{capiutils.AnyIPv6CidrBlock.String()}
+	}
+
 	if ic.Config.PublicAPI() {
+		apiLBIngressRule.Description = "Kubernetes API Server traffic for public access"
+
 		awsCluster.Spec.SecondaryControlPlaneLoadBalancer = &capa.AWSLoadBalancerSpec{
 			Name:                   ptr.To(clusterID.InfraID + "-ext"),
 			LoadBalancerType:       capa.LoadBalancerTypeNLB,
@@ -211,26 +232,12 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 				ThresholdCount:          ptr.To[int64](2),
 				UnhealthyThresholdCount: ptr.To[int64](2),
 			},
-			IngressRules: []capa.IngressRule{
-				{
-					Description: "Kubernetes API Server traffic for public access",
-					Protocol:    capa.SecurityGroupProtocolTCP,
-					FromPort:    6443,
-					ToPort:      6443,
-					CidrBlocks:  []string{"0.0.0.0/0"},
-				},
-			},
+			IngressRules: []capa.IngressRule{apiLBIngressRule},
 		}
 	} else {
 		awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules = append(
 			awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules,
-			capa.IngressRule{
-				Description: "Kubernetes API Server traffic",
-				Protocol:    capa.SecurityGroupProtocolTCP,
-				FromPort:    6443,
-				ToPort:      6443,
-				CidrBlocks:  []string{"0.0.0.0/0"},
-			},
+			apiLBIngressRule,
 		)
 	}
 
