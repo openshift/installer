@@ -594,6 +594,19 @@ type AzurePlatformStatus struct {
 	// +listType=atomic
 	// +optional
 	ResourceTags []AzureResourceTag `json:"resourceTags,omitempty"`
+
+	// cloudLoadBalancerConfig holds configuration related to DNS and cloud
+	// load balancers. It allows configuration of in-cluster DNS as an alternative
+	// to the platform default DNS implementation.
+	// When using the ClusterHosted DNS type, Load Balancer IP addresses
+	// must be provided for the API and internal API load balancers as well as the
+	// ingress load balancer.
+	//
+	// +default={"dnsType": "PlatformDefault"}
+	// +kubebuilder:default={"dnsType": "PlatformDefault"}
+	// +openshift:enable:FeatureGate=AzureClusterHostedDNSInstall
+	// +optional
+	CloudLoadBalancerConfig *CloudLoadBalancerConfig `json:"cloudLoadBalancerConfig,omitempty"`
 }
 
 // AzureResourceTag is a tag to apply to Azure resources created for the cluster.

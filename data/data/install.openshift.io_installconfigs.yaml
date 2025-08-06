@@ -5305,6 +5305,15 @@ spec:
                       This resource group must be empty with no other resources when trying to use it for creating a cluster.
                       If empty, a new resource group will created for the cluster.
                     type: string
+                  userProvisionedDNS:
+                    default: Disabled
+                    description: |-
+                      UserProvisionedDNS indicates if the customer is providing their own DNS solution in place of the default
+                      provisioned by the Installer.
+                    enum:
+                    - Enabled
+                    - Disabled
+                    type: string
                   userTags:
                     additionalProperties:
                       type: string

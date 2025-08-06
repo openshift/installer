@@ -1480,6 +1480,7 @@ var map_AzurePlatformStatus = map[string]string{
 	"cloudName":                "cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK with the appropriate Azure API endpoints. If empty, the value is equal to `AzurePublicCloud`.",
 	"armEndpoint":              "armEndpoint specifies a URL to use for resource management in non-soverign clouds such as Azure Stack.",
 	"resourceTags":             "resourceTags is a list of additional tags to apply to Azure resources created for the cluster. See https://docs.microsoft.com/en-us/rest/api/resources/tags for information on tagging Azure resources. Due to limitations on Automation, Content Delivery Network, DNS Azure resources, a maximum of 15 tags may be applied. OpenShift reserves 5 tags for internal use, allowing 10 tags for user configuration.",
+	"cloudLoadBalancerConfig":  "cloudLoadBalancerConfig holds configuration related to DNS and cloud load balancers. It allows configuration of in-cluster DNS as an alternative to the platform default DNS implementation. When using the ClusterHosted DNS type, Load Balancer IP addresses must be provided for the API and internal API load balancers as well as the ingress load balancer.",
 }
 
 func (AzurePlatformStatus) SwaggerDoc() map[string]string {
