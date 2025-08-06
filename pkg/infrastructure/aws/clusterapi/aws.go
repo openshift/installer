@@ -166,6 +166,8 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		logrus.Infoln("Created private Hosted Zone")
 	}
 
+	isDualStack := in.InstallConfig.Config.IsDualStackInfra()
+
 	apiName := fmt.Sprintf("api.%s.", in.InstallConfig.Config.ClusterDomain())
 	apiIntName := fmt.Sprintf("api-int.%s.", in.InstallConfig.Config.ClusterDomain())
 
@@ -189,6 +191,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			ZoneID:         *zone.Id,
 			AliasZoneID:    aliasZoneID,
 			HostedZoneRole: "", // we dont want to assume role here
+			EnableAAAA:     isDualStack,
 		}); err != nil {
 			return fmt.Errorf("failed to create records for api in public zone: %w", err)
 		}
@@ -208,6 +211,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		ZoneID:         phzID,
 		AliasZoneID:    aliasZoneID,
 		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+		EnableAAAA:     isDualStack,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api in private zone: %w", err)
 	}
@@ -221,6 +225,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		ZoneID:         phzID,
 		AliasZoneID:    aliasZoneID,
 		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+		EnableAAAA:     isDualStack,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api-int in private zone: %w", err)
 	}
