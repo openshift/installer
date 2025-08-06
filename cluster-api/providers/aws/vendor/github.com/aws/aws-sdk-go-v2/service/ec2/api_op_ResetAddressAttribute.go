@@ -11,9 +11,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Resets the attribute of the specified IP address. For requirements, see Using
-// reverse DNS for email applications (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html#Using_Elastic_Addressing_Reverse_DNS)
-// .
+// Resets the attribute of the specified IP address. For requirements, see [Using reverse DNS for email applications].
+//
+// [Using reverse DNS for email applications]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html#Using_Elastic_Addressing_Reverse_DNS
 func (c *Client) ResetAddressAttribute(ctx context.Context, params *ResetAddressAttributeInput, optFns ...func(*Options)) (*ResetAddressAttributeOutput, error) {
 	if params == nil {
 		params = &ResetAddressAttributeInput{}
@@ -104,6 +104,9 @@ func (c *Client) addOperationResetAddressAttributeMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,6 +117,15 @@ func (c *Client) addOperationResetAddressAttributeMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpResetAddressAttributeValidationMiddleware(stack); err != nil {
@@ -135,6 +147,18 @@ func (c *Client) addOperationResetAddressAttributeMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

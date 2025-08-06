@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGCPNetworkList(list []*GCPNetwork, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGCPNetworkList(list, stream)
+	WriteGCPNetworkList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGCPNetworkList(list []*GCPNetwork, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeGCPNetworkList writes a list of value of the 'GCP_network' type to
+// WriteGCPNetworkList writes a list of value of the 'GCP_network' type to
 // the given stream.
-func writeGCPNetworkList(list []*GCPNetwork, stream *jsoniter.Stream) {
+func WriteGCPNetworkList(list []*GCPNetwork, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeGCPNetwork(value, stream)
+		WriteGCPNetwork(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGCPNetworkList(source interface{}) (items []*GCPNetwork, err error
 	if err != nil {
 		return
 	}
-	items = readGCPNetworkList(iterator)
+	items = ReadGCPNetworkList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGCPNetworkList reads list of values of the ”GCP_network' type from
+// ReadGCPNetworkList reads list of values of the ”GCP_network' type from
 // the given iterator.
-func readGCPNetworkList(iterator *jsoniter.Iterator) []*GCPNetwork {
+func ReadGCPNetworkList(iterator *jsoniter.Iterator) []*GCPNetwork {
 	list := []*GCPNetwork{}
 	for iterator.ReadArray() {
-		item := readGCPNetwork(iterator)
+		item := ReadGCPNetwork(iterator)
 		list = append(list, item)
 	}
 	return list

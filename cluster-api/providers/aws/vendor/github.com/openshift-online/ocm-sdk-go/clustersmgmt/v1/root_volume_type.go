@@ -106,6 +106,29 @@ func (l *RootVolumeList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *RootVolumeList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *RootVolumeList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *RootVolumeList) SetItems(items []*RootVolume) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *RootVolumeList) Items() []*RootVolume {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *RootVolumeList) Empty() bool {
 	return l == nil || len(l.items) == 0

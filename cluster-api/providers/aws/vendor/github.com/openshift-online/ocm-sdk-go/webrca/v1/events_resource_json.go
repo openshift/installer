@@ -49,7 +49,7 @@ func readEventsListResponse(response *EventsListResponse, reader io.Reader) erro
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readEventList(iterator)
+			items := ReadEventList(iterator)
 			response.items = &EventList{
 				items: items,
 			}

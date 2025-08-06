@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalManifestList(list []*Manifest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeManifestList(list, stream)
+	WriteManifestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalManifestList(list []*Manifest, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeManifestList writes a list of value of the 'manifest' type to
+// WriteManifestList writes a list of value of the 'manifest' type to
 // the given stream.
-func writeManifestList(list []*Manifest, stream *jsoniter.Stream) {
+func WriteManifestList(list []*Manifest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeManifest(value, stream)
+		WriteManifest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalManifestList(source interface{}) (items []*Manifest, err error) {
 	if err != nil {
 		return
 	}
-	items = readManifestList(iterator)
+	items = ReadManifestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readManifestList reads list of values of the ”manifest' type from
+// ReadManifestList reads list of values of the ”manifest' type from
 // the given iterator.
-func readManifestList(iterator *jsoniter.Iterator) []*Manifest {
+func ReadManifestList(iterator *jsoniter.Iterator) []*Manifest {
 	list := []*Manifest{}
 	for iterator.ReadArray() {
-		item := readManifest(iterator)
+		item := ReadManifest(iterator)
 		list = append(list, item)
 	}
 	return list

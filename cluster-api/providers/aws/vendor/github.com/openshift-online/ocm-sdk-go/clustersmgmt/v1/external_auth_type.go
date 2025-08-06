@@ -54,7 +54,7 @@ func (o *ExternalAuth) Kind() string {
 	return ExternalAuthKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *ExternalAuth) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -228,6 +228,29 @@ func (l *ExternalAuthList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ExternalAuthList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ExternalAuthList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ExternalAuthList) SetItems(items []*ExternalAuth) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ExternalAuthList) Items() []*ExternalAuth {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

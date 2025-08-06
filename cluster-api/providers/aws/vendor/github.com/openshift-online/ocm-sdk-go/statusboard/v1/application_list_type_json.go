@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalApplicationList(list []*Application, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeApplicationList(list, stream)
+	WriteApplicationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalApplicationList(list []*Application, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeApplicationList writes a list of value of the 'application' type to
+// WriteApplicationList writes a list of value of the 'application' type to
 // the given stream.
-func writeApplicationList(list []*Application, stream *jsoniter.Stream) {
+func WriteApplicationList(list []*Application, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeApplication(value, stream)
+		WriteApplication(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalApplicationList(source interface{}) (items []*Application, err err
 	if err != nil {
 		return
 	}
-	items = readApplicationList(iterator)
+	items = ReadApplicationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readApplicationList reads list of values of the ”application' type from
+// ReadApplicationList reads list of values of the ”application' type from
 // the given iterator.
-func readApplicationList(iterator *jsoniter.Iterator) []*Application {
+func ReadApplicationList(iterator *jsoniter.Iterator) []*Application {
 	list := []*Application{}
 	for iterator.ReadArray() {
-		item := readApplication(iterator)
+		item := ReadApplication(iterator)
 		list = append(list, item)
 	}
 	return list

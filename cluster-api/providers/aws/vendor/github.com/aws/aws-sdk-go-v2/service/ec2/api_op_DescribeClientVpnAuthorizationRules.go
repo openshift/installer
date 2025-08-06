@@ -41,9 +41,12 @@ type DescribeClientVpnAuthorizationRulesInput struct {
 	DryRun *bool
 
 	// One or more filters. Filter names and values are case-sensitive.
+	//
 	//   - description - The description of the authorization rule.
+	//
 	//   - destination-cidr - The CIDR of the network to which the authorization rule
 	//   applies.
+	//
 	//   - group-id - The ID of the Active Directory group to which the authorization
 	//   rule grants access.
 	Filters []types.Filter
@@ -117,6 +120,9 @@ func (c *Client) addOperationDescribeClientVpnAuthorizationRulesMiddlewares(stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -127,6 +133,15 @@ func (c *Client) addOperationDescribeClientVpnAuthorizationRulesMiddlewares(stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeClientVpnAuthorizationRulesValidationMiddleware(stack); err != nil {
@@ -150,16 +165,20 @@ func (c *Client) addOperationDescribeClientVpnAuthorizationRulesMiddlewares(stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeClientVpnAuthorizationRulesAPIClient is a client that implements the
-// DescribeClientVpnAuthorizationRules operation.
-type DescribeClientVpnAuthorizationRulesAPIClient interface {
-	DescribeClientVpnAuthorizationRules(context.Context, *DescribeClientVpnAuthorizationRulesInput, ...func(*Options)) (*DescribeClientVpnAuthorizationRulesOutput, error)
-}
-
-var _ DescribeClientVpnAuthorizationRulesAPIClient = (*Client)(nil)
 
 // DescribeClientVpnAuthorizationRulesPaginatorOptions is the paginator options
 // for DescribeClientVpnAuthorizationRules
@@ -229,6 +248,9 @@ func (p *DescribeClientVpnAuthorizationRulesPaginator) NextPage(ctx context.Cont
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeClientVpnAuthorizationRules(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -247,6 +269,14 @@ func (p *DescribeClientVpnAuthorizationRulesPaginator) NextPage(ctx context.Cont
 
 	return result, nil
 }
+
+// DescribeClientVpnAuthorizationRulesAPIClient is a client that implements the
+// DescribeClientVpnAuthorizationRules operation.
+type DescribeClientVpnAuthorizationRulesAPIClient interface {
+	DescribeClientVpnAuthorizationRules(context.Context, *DescribeClientVpnAuthorizationRulesInput, ...func(*Options)) (*DescribeClientVpnAuthorizationRulesOutput, error)
+}
+
+var _ DescribeClientVpnAuthorizationRulesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeClientVpnAuthorizationRules(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

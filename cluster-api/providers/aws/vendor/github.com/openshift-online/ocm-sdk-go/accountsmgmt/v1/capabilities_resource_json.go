@@ -49,7 +49,7 @@ func readCapabilitiesListResponse(response *CapabilitiesListResponse, reader io.
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readCapabilityList(iterator)
+			items := ReadCapabilityList(iterator)
 			response.items = &CapabilityList{
 				items: items,
 			}

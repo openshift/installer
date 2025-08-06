@@ -63,7 +63,7 @@ func readBreakGlassCredentialsListResponse(response *BreakGlassCredentialsListRe
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readBreakGlassCredentialList(iterator)
+			items := ReadBreakGlassCredentialList(iterator)
 			response.items = &BreakGlassCredentialList{
 				items: items,
 			}

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGCPFlavourList(list []*GCPFlavour, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGCPFlavourList(list, stream)
+	WriteGCPFlavourList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGCPFlavourList(list []*GCPFlavour, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeGCPFlavourList writes a list of value of the 'GCP_flavour' type to
+// WriteGCPFlavourList writes a list of value of the 'GCP_flavour' type to
 // the given stream.
-func writeGCPFlavourList(list []*GCPFlavour, stream *jsoniter.Stream) {
+func WriteGCPFlavourList(list []*GCPFlavour, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeGCPFlavour(value, stream)
+		WriteGCPFlavour(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGCPFlavourList(source interface{}) (items []*GCPFlavour, err error
 	if err != nil {
 		return
 	}
-	items = readGCPFlavourList(iterator)
+	items = ReadGCPFlavourList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGCPFlavourList reads list of values of the ”GCP_flavour' type from
+// ReadGCPFlavourList reads list of values of the ”GCP_flavour' type from
 // the given iterator.
-func readGCPFlavourList(iterator *jsoniter.Iterator) []*GCPFlavour {
+func ReadGCPFlavourList(iterator *jsoniter.Iterator) []*GCPFlavour {
 	list := []*GCPFlavour{}
 	for iterator.ReadArray() {
-		item := readGCPFlavour(iterator)
+		item := ReadGCPFlavour(iterator)
 		list = append(list, item)
 	}
 	return list

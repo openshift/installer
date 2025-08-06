@@ -30,7 +30,7 @@ import (
 // MarshalAddOnRequirement writes a value of the 'add_on_requirement' type to the given writer.
 func MarshalAddOnRequirement(object *AddOnRequirement, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnRequirement(object, stream)
+	WriteAddOnRequirement(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAddOnRequirement(object *AddOnRequirement, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddOnRequirement writes a value of the 'add_on_requirement' type to the given stream.
-func writeAddOnRequirement(object *AddOnRequirement, stream *jsoniter.Stream) {
+// WriteAddOnRequirement writes a value of the 'add_on_requirement' type to the given stream.
+func WriteAddOnRequirement(object *AddOnRequirement, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -105,7 +105,7 @@ func writeAddOnRequirement(object *AddOnRequirement, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("status")
-		writeAddOnRequirementStatus(object.status, stream)
+		WriteAddOnRequirementStatus(object.status, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -117,13 +117,13 @@ func UnmarshalAddOnRequirement(source interface{}) (object *AddOnRequirement, er
 	if err != nil {
 		return
 	}
-	object = readAddOnRequirement(iterator)
+	object = ReadAddOnRequirement(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnRequirement reads a value of the 'add_on_requirement' type from the given iterator.
-func readAddOnRequirement(iterator *jsoniter.Iterator) *AddOnRequirement {
+// ReadAddOnRequirement reads a value of the 'add_on_requirement' type from the given iterator.
+func ReadAddOnRequirement(iterator *jsoniter.Iterator) *AddOnRequirement {
 	object := &AddOnRequirement{}
 	for {
 		field := iterator.ReadObject()
@@ -157,7 +157,7 @@ func readAddOnRequirement(iterator *jsoniter.Iterator) *AddOnRequirement {
 			object.resource = value
 			object.bitmap_ |= 8
 		case "status":
-			value := readAddOnRequirementStatus(iterator)
+			value := ReadAddOnRequirementStatus(iterator)
 			object.status = value
 			object.bitmap_ |= 16
 		default:

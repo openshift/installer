@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalProvisionShardTopologyList(list []ProvisionShardTopology, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeProvisionShardTopologyList(list, stream)
+	WriteProvisionShardTopologyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalProvisionShardTopologyList(list []ProvisionShardTopology, writer io.
 	return stream.Error
 }
 
-// writeProvisionShardTopologyList writes a list of value of the 'provision_shard_topology' type to
+// WriteProvisionShardTopologyList writes a list of value of the 'provision_shard_topology' type to
 // the given stream.
-func writeProvisionShardTopologyList(list []ProvisionShardTopology, stream *jsoniter.Stream) {
+func WriteProvisionShardTopologyList(list []ProvisionShardTopology, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalProvisionShardTopologyList(source interface{}) (items []ProvisionS
 	if err != nil {
 		return
 	}
-	items = readProvisionShardTopologyList(iterator)
+	items = ReadProvisionShardTopologyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readProvisionShardTopologyList reads list of values of the ”provision_shard_topology' type from
+// ReadProvisionShardTopologyList reads list of values of the ”provision_shard_topology' type from
 // the given iterator.
-func readProvisionShardTopologyList(iterator *jsoniter.Iterator) []ProvisionShardTopology {
+func ReadProvisionShardTopologyList(iterator *jsoniter.Iterator) []ProvisionShardTopology {
 	list := []ProvisionShardTopology{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

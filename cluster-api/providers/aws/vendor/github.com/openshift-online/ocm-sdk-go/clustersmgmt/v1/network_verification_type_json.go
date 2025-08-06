@@ -29,7 +29,7 @@ import (
 // MarshalNetworkVerification writes a value of the 'network_verification' type to the given writer.
 func MarshalNetworkVerification(object *NetworkVerification, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeNetworkVerification(object, stream)
+	WriteNetworkVerification(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalNetworkVerification(object *NetworkVerification, writer io.Writer) e
 	return stream.Error
 }
 
-// writeNetworkVerification writes a value of the 'network_verification' type to the given stream.
-func writeNetworkVerification(object *NetworkVerification, stream *jsoniter.Stream) {
+// WriteNetworkVerification writes a value of the 'network_verification' type to the given stream.
+func WriteNetworkVerification(object *NetworkVerification, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeNetworkVerification(object *NetworkVerification, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cloud_provider_data")
-		writeCloudProviderData(object.cloudProviderData, stream)
+		WriteCloudProviderData(object.cloudProviderData, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -66,7 +66,7 @@ func writeNetworkVerification(object *NetworkVerification, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("items")
-		writeSubnetNetworkVerificationList(object.items, stream)
+		WriteSubnetNetworkVerificationList(object.items, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0
@@ -96,13 +96,13 @@ func UnmarshalNetworkVerification(source interface{}) (object *NetworkVerificati
 	if err != nil {
 		return
 	}
-	object = readNetworkVerification(iterator)
+	object = ReadNetworkVerification(iterator)
 	err = iterator.Error
 	return
 }
 
-// readNetworkVerification reads a value of the 'network_verification' type from the given iterator.
-func readNetworkVerification(iterator *jsoniter.Iterator) *NetworkVerification {
+// ReadNetworkVerification reads a value of the 'network_verification' type from the given iterator.
+func ReadNetworkVerification(iterator *jsoniter.Iterator) *NetworkVerification {
 	object := &NetworkVerification{}
 	for {
 		field := iterator.ReadObject()
@@ -111,7 +111,7 @@ func readNetworkVerification(iterator *jsoniter.Iterator) *NetworkVerification {
 		}
 		switch field {
 		case "cloud_provider_data":
-			value := readCloudProviderData(iterator)
+			value := ReadCloudProviderData(iterator)
 			object.cloudProviderData = value
 			object.bitmap_ |= 1
 		case "cluster_id":
@@ -119,7 +119,7 @@ func readNetworkVerification(iterator *jsoniter.Iterator) *NetworkVerification {
 			object.clusterId = value
 			object.bitmap_ |= 2
 		case "items":
-			value := readSubnetNetworkVerificationList(iterator)
+			value := ReadSubnetNetworkVerificationList(iterator)
 			object.items = value
 			object.bitmap_ |= 4
 		case "platform":

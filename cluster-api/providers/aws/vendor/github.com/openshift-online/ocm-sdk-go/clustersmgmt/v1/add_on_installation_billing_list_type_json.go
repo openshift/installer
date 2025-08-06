@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddOnInstallationBillingList(list []*AddOnInstallationBilling, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnInstallationBillingList(list, stream)
+	WriteAddOnInstallationBillingList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddOnInstallationBillingList(list []*AddOnInstallationBilling, write
 	return stream.Error
 }
 
-// writeAddOnInstallationBillingList writes a list of value of the 'add_on_installation_billing' type to
+// WriteAddOnInstallationBillingList writes a list of value of the 'add_on_installation_billing' type to
 // the given stream.
-func writeAddOnInstallationBillingList(list []*AddOnInstallationBilling, stream *jsoniter.Stream) {
+func WriteAddOnInstallationBillingList(list []*AddOnInstallationBilling, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAddOnInstallationBilling(value, stream)
+		WriteAddOnInstallationBilling(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddOnInstallationBillingList(source interface{}) (items []*AddOnIn
 	if err != nil {
 		return
 	}
-	items = readAddOnInstallationBillingList(iterator)
+	items = ReadAddOnInstallationBillingList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnInstallationBillingList reads list of values of the ”add_on_installation_billing' type from
+// ReadAddOnInstallationBillingList reads list of values of the ”add_on_installation_billing' type from
 // the given iterator.
-func readAddOnInstallationBillingList(iterator *jsoniter.Iterator) []*AddOnInstallationBilling {
+func ReadAddOnInstallationBillingList(iterator *jsoniter.Iterator) []*AddOnInstallationBilling {
 	list := []*AddOnInstallationBilling{}
 	for iterator.ReadArray() {
-		item := readAddOnInstallationBilling(iterator)
+		item := ReadAddOnInstallationBilling(iterator)
 		list = append(list, item)
 	}
 	return list

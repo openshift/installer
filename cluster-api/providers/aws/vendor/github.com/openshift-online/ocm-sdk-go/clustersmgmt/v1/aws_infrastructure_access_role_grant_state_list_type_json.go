@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAWSInfrastructureAccessRoleGrantStateList(list []AWSInfrastructureAccessRoleGrantState, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAWSInfrastructureAccessRoleGrantStateList(list, stream)
+	WriteAWSInfrastructureAccessRoleGrantStateList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalAWSInfrastructureAccessRoleGrantStateList(list []AWSInfrastructureAc
 	return stream.Error
 }
 
-// writeAWSInfrastructureAccessRoleGrantStateList writes a list of value of the 'AWS_infrastructure_access_role_grant_state' type to
+// WriteAWSInfrastructureAccessRoleGrantStateList writes a list of value of the 'AWS_infrastructure_access_role_grant_state' type to
 // the given stream.
-func writeAWSInfrastructureAccessRoleGrantStateList(list []AWSInfrastructureAccessRoleGrantState, stream *jsoniter.Stream) {
+func WriteAWSInfrastructureAccessRoleGrantStateList(list []AWSInfrastructureAccessRoleGrantState, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalAWSInfrastructureAccessRoleGrantStateList(source interface{}) (ite
 	if err != nil {
 		return
 	}
-	items = readAWSInfrastructureAccessRoleGrantStateList(iterator)
+	items = ReadAWSInfrastructureAccessRoleGrantStateList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAWSInfrastructureAccessRoleGrantStateList reads list of values of the ”AWS_infrastructure_access_role_grant_state' type from
+// ReadAWSInfrastructureAccessRoleGrantStateList reads list of values of the ”AWS_infrastructure_access_role_grant_state' type from
 // the given iterator.
-func readAWSInfrastructureAccessRoleGrantStateList(iterator *jsoniter.Iterator) []AWSInfrastructureAccessRoleGrantState {
+func ReadAWSInfrastructureAccessRoleGrantStateList(iterator *jsoniter.Iterator) []AWSInfrastructureAccessRoleGrantState {
 	list := []AWSInfrastructureAccessRoleGrantState{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

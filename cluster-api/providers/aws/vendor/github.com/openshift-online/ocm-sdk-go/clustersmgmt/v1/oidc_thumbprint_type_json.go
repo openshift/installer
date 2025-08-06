@@ -29,7 +29,7 @@ import (
 // MarshalOidcThumbprint writes a value of the 'oidc_thumbprint' type to the given writer.
 func MarshalOidcThumbprint(object *OidcThumbprint, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeOidcThumbprint(object, stream)
+	WriteOidcThumbprint(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalOidcThumbprint(object *OidcThumbprint, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeOidcThumbprint writes a value of the 'oidc_thumbprint' type to the given stream.
-func writeOidcThumbprint(object *OidcThumbprint, stream *jsoniter.Stream) {
+// WriteOidcThumbprint writes a value of the 'oidc_thumbprint' type to the given stream.
+func WriteOidcThumbprint(object *OidcThumbprint, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -96,13 +96,13 @@ func UnmarshalOidcThumbprint(source interface{}) (object *OidcThumbprint, err er
 	if err != nil {
 		return
 	}
-	object = readOidcThumbprint(iterator)
+	object = ReadOidcThumbprint(iterator)
 	err = iterator.Error
 	return
 }
 
-// readOidcThumbprint reads a value of the 'oidc_thumbprint' type from the given iterator.
-func readOidcThumbprint(iterator *jsoniter.Iterator) *OidcThumbprint {
+// ReadOidcThumbprint reads a value of the 'oidc_thumbprint' type from the given iterator.
+func ReadOidcThumbprint(iterator *jsoniter.Iterator) *OidcThumbprint {
 	object := &OidcThumbprint{}
 	for {
 		field := iterator.ReadObject()

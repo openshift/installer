@@ -39,7 +39,7 @@ func serviceLabel(path string) string {
 	} else {
 		parts := strings.Split(path, "/")
 		if len(parts) > 3 {
-			return "ocm-" + parts[3]
+			return "ocm-" + parts[2]
 		}
 		return ""
 	}

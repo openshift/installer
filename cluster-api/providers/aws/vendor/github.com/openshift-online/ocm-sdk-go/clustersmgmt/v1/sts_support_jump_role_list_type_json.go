@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalStsSupportJumpRoleList(list []*StsSupportJumpRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeStsSupportJumpRoleList(list, stream)
+	WriteStsSupportJumpRoleList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalStsSupportJumpRoleList(list []*StsSupportJumpRole, writer io.Writer)
 	return stream.Error
 }
 
-// writeStsSupportJumpRoleList writes a list of value of the 'sts_support_jump_role' type to
+// WriteStsSupportJumpRoleList writes a list of value of the 'sts_support_jump_role' type to
 // the given stream.
-func writeStsSupportJumpRoleList(list []*StsSupportJumpRole, stream *jsoniter.Stream) {
+func WriteStsSupportJumpRoleList(list []*StsSupportJumpRole, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeStsSupportJumpRole(value, stream)
+		WriteStsSupportJumpRole(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalStsSupportJumpRoleList(source interface{}) (items []*StsSupportJum
 	if err != nil {
 		return
 	}
-	items = readStsSupportJumpRoleList(iterator)
+	items = ReadStsSupportJumpRoleList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readStsSupportJumpRoleList reads list of values of the ”sts_support_jump_role' type from
+// ReadStsSupportJumpRoleList reads list of values of the ”sts_support_jump_role' type from
 // the given iterator.
-func readStsSupportJumpRoleList(iterator *jsoniter.Iterator) []*StsSupportJumpRole {
+func ReadStsSupportJumpRoleList(iterator *jsoniter.Iterator) []*StsSupportJumpRole {
 	list := []*StsSupportJumpRole{}
 	for iterator.ReadArray() {
-		item := readStsSupportJumpRole(iterator)
+		item := ReadStsSupportJumpRole(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -49,7 +49,7 @@ func readAWSInfrastructureAccessRolesListResponse(response *AWSInfrastructureAcc
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readAWSInfrastructureAccessRoleList(iterator)
+			items := ReadAWSInfrastructureAccessRoleList(iterator)
 			response.items = &AWSInfrastructureAccessRoleList{
 				items: items,
 			}

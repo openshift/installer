@@ -112,6 +112,29 @@ func (l *ExternalAuthConfigList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ExternalAuthConfigList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ExternalAuthConfigList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ExternalAuthConfigList) SetItems(items []*ExternalAuthConfig) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ExternalAuthConfigList) Items() []*ExternalAuthConfig {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ExternalAuthConfigList) Empty() bool {
 	return l == nil || len(l.items) == 0

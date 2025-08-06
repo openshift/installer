@@ -30,7 +30,7 @@ import (
 // MarshalAccessToken writes a value of the 'access_token' type to the given writer.
 func MarshalAccessToken(object *AccessToken, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAccessToken(object, stream)
+	WriteAccessToken(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAccessToken(object *AccessToken, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAccessToken writes a value of the 'access_token' type to the given stream.
-func writeAccessToken(object *AccessToken, stream *jsoniter.Stream) {
+// WriteAccessToken writes a value of the 'access_token' type to the given stream.
+func WriteAccessToken(object *AccessToken, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -64,7 +64,7 @@ func writeAccessToken(object *AccessToken, stream *jsoniter.Stream) {
 				}
 				item := object.auths[key]
 				stream.WriteObjectField(key)
-				writeAccessTokenAuth(item, stream)
+				WriteAccessTokenAuth(item, stream)
 			}
 			stream.WriteObjectEnd()
 		} else {
@@ -81,13 +81,13 @@ func UnmarshalAccessToken(source interface{}) (object *AccessToken, err error) {
 	if err != nil {
 		return
 	}
-	object = readAccessToken(iterator)
+	object = ReadAccessToken(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAccessToken reads a value of the 'access_token' type from the given iterator.
-func readAccessToken(iterator *jsoniter.Iterator) *AccessToken {
+// ReadAccessToken reads a value of the 'access_token' type from the given iterator.
+func ReadAccessToken(iterator *jsoniter.Iterator) *AccessToken {
 	object := &AccessToken{}
 	for {
 		field := iterator.ReadObject()
@@ -102,7 +102,7 @@ func readAccessToken(iterator *jsoniter.Iterator) *AccessToken {
 				if key == "" {
 					break
 				}
-				item := readAccessTokenAuth(iterator)
+				item := ReadAccessTokenAuth(iterator)
 				value[key] = item
 			}
 			object.auths = value

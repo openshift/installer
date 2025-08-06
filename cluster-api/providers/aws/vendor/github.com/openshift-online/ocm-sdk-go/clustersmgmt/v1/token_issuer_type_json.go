@@ -29,7 +29,7 @@ import (
 // MarshalTokenIssuer writes a value of the 'token_issuer' type to the given writer.
 func MarshalTokenIssuer(object *TokenIssuer, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTokenIssuer(object, stream)
+	WriteTokenIssuer(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalTokenIssuer(object *TokenIssuer, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeTokenIssuer writes a value of the 'token_issuer' type to the given stream.
-func writeTokenIssuer(object *TokenIssuer, stream *jsoniter.Stream) {
+// WriteTokenIssuer writes a value of the 'token_issuer' type to the given stream.
+func WriteTokenIssuer(object *TokenIssuer, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -66,7 +66,7 @@ func writeTokenIssuer(object *TokenIssuer, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("audiences")
-		writeStringList(object.audiences, stream)
+		WriteStringList(object.audiences, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -78,13 +78,13 @@ func UnmarshalTokenIssuer(source interface{}) (object *TokenIssuer, err error) {
 	if err != nil {
 		return
 	}
-	object = readTokenIssuer(iterator)
+	object = ReadTokenIssuer(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTokenIssuer reads a value of the 'token_issuer' type from the given iterator.
-func readTokenIssuer(iterator *jsoniter.Iterator) *TokenIssuer {
+// ReadTokenIssuer reads a value of the 'token_issuer' type from the given iterator.
+func ReadTokenIssuer(iterator *jsoniter.Iterator) *TokenIssuer {
 	object := &TokenIssuer{}
 	for {
 		field := iterator.ReadObject()
@@ -101,7 +101,7 @@ func readTokenIssuer(iterator *jsoniter.Iterator) *TokenIssuer {
 			object.url = value
 			object.bitmap_ |= 2
 		case "audiences":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.audiences = value
 			object.bitmap_ |= 4
 		default:

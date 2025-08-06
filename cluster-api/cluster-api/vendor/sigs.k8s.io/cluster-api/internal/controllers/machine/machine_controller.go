@@ -53,8 +53,8 @@ import (
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/controllers/noderefutil"
 	"sigs.k8s.io/cluster-api/feature"
+	"sigs.k8s.io/cluster-api/internal/contract"
 	"sigs.k8s.io/cluster-api/internal/controllers/machine/drain"
-	"sigs.k8s.io/cluster-api/internal/util/ssa"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/cache"
@@ -101,7 +101,8 @@ type Reconciler struct {
 
 	RemoteConditionsGracePeriod time.Duration
 
-	AdditionalSyncMachineLabels []*regexp.Regexp
+	AdditionalSyncMachineLabels      []*regexp.Regexp
+	AdditionalSyncMachineAnnotations []*regexp.Regexp
 
 	controller      controller.Controller
 	recorder        record.EventRecorder
@@ -110,7 +111,6 @@ type Reconciler struct {
 	// nodeDeletionRetryTimeout determines how long the controller will retry deleting a node
 	// during a single reconciliation.
 	nodeDeletionRetryTimeout time.Duration
-	ssaCache                 ssa.Cache
 
 	// reconcileDeleteCache is used to store when reconcileDelete should not be executed before a
 	// specific time for a specific Request. This is used to implement rate-limiting to avoid
@@ -185,8 +185,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 		Scheme:          mgr.GetScheme(),
 		PredicateLogger: r.predicateLog,
 	}
-	r.ssaCache = ssa.NewCache()
-	r.reconcileDeleteCache = cache.New[cache.ReconcileEntry]()
+	r.reconcileDeleteCache = cache.New[cache.ReconcileEntry](cache.DefaultTTL)
 	return nil
 }
 
@@ -204,8 +203,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	log := ctrl.LoggerFrom(ctx).WithValues("Cluster", klog.KRef(m.Namespace, m.Spec.ClusterName))
-	ctx = ctrl.LoggerInto(ctx, log)
+	ctx = ctrl.LoggerInto(ctx, ctrl.LoggerFrom(ctx).WithValues("Cluster", klog.KRef(m.Namespace, m.Spec.ClusterName)))
 
 	// Add finalizer first if not set to avoid the race condition between init and delete.
 	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, m, clusterv1.MachineFinalizer); err != nil || finalizerAdded {
@@ -214,7 +212,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 
 	// AddOwners adds the owners of Machine as k/v pairs to the logger.
 	// Specifically, it will add KubeadmControlPlane, MachineSet and MachineDeployment.
-	ctx, log, err := clog.AddOwners(ctx, r.Client, m)
+	ctx, _, err := clog.AddOwners(ctx, r.Client, m)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -225,7 +223,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 			m.Spec.ClusterName, m.Name, m.Namespace)
 	}
 
-	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, m); err != nil || isPaused || conditionChanged {
+	// Initialize the patch helper
+	patchHelper, err := patch.NewHelper(m, r.Client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if isPaused, requeue, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, m); err != nil || isPaused || requeue {
 		return ctrl.Result{}, err
 	}
 
@@ -242,12 +246,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 	s := &scope{
 		cluster: cluster,
 		machine: m,
-	}
-
-	// Initialize the patch helper
-	patchHelper, err := patch.NewHelper(m, r.Client)
-	if err != nil {
-		return ctrl.Result{}, err
 	}
 
 	defer func() {
@@ -279,23 +277,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 			r.reconcileDelete,
 		)
 
-		res, err := doReconcile(ctx, reconcileDelete, s)
-		// Requeue if the reconcile failed because connection to workload cluster was down.
-		if errors.Is(err, clustercache.ErrClusterNotConnected) {
-			log.V(5).Info("Requeuing because connection to the workload cluster is down")
-			return ctrl.Result{RequeueAfter: time.Minute}, nil
-		}
-		return res, err
+		return doReconcile(ctx, reconcileDelete, s)
 	}
 
 	// Handle normal reconciliation loop.
-	res, err := doReconcile(ctx, alwaysReconcile, s)
-	// Requeue if the reconcile failed because connection to workload cluster was down.
-	if errors.Is(err, clustercache.ErrClusterNotConnected) {
-		log.V(5).Info("Requeuing because connection to the workload cluster is down")
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
-	}
-	return res, err
+	return doReconcile(ctx, alwaysReconcile, s)
 }
 
 func patchMachine(ctx context.Context, patchHelper *patch.Helper, machine *clusterv1.Machine, options ...patch.Option) error {
@@ -331,6 +317,7 @@ func patchMachine(ctx context.Context, patchHelper *patch.Helper, machine *clust
 			clusterv1.DrainingSucceededCondition,
 		}},
 		patch.WithOwnedV1Beta2Conditions{Conditions: []string{
+			clusterv1.PausedV1Beta2Condition,
 			clusterv1.MachineAvailableV1Beta2Condition,
 			clusterv1.MachineReadyV1Beta2Condition,
 			clusterv1.MachineBootstrapConfigReadyV1Beta2Condition,
@@ -449,7 +436,7 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (ctrl.Result
 	s.deletingReason = clusterv1.MachineDeletingV1Beta2Reason
 	s.deletingMessage = "Deletion started"
 
-	err := r.isDeleteNodeAllowed(ctx, cluster, m)
+	err := r.isDeleteNodeAllowed(ctx, cluster, m, s.infraMachine)
 	isDeleteNodeAllowed := err == nil
 	if err != nil {
 		switch err {
@@ -727,14 +714,24 @@ func (r *Reconciler) nodeVolumeDetachTimeoutExceeded(machine *clusterv1.Machine)
 
 // isDeleteNodeAllowed returns nil only if the Machine's NodeRef is not nil
 // and if the Machine is not the last control plane node in the cluster.
-func (r *Reconciler) isDeleteNodeAllowed(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
+func (r *Reconciler) isDeleteNodeAllowed(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine, infraMachine *unstructured.Unstructured) error {
 	log := ctrl.LoggerFrom(ctx)
 	// Return early if the cluster is being deleted.
 	if !cluster.DeletionTimestamp.IsZero() {
 		return errClusterIsBeingDeleted
 	}
 
-	if machine.Status.NodeRef == nil && machine.Spec.ProviderID != nil {
+	var providerID string
+	if machine.Spec.ProviderID != nil {
+		providerID = *machine.Spec.ProviderID
+	} else if infraMachine != nil {
+		// Fallback to retrieve from infraMachine.
+		if providerIDFromInfraMachine, err := contract.InfrastructureMachine().ProviderID().Get(infraMachine); err == nil {
+			providerID = *providerIDFromInfraMachine
+		}
+	}
+
+	if machine.Status.NodeRef == nil && providerID != "" {
 		// If we don't have a node reference, but a provider id has been set,
 		// try to retrieve the node one more time.
 		//
@@ -745,7 +742,7 @@ func (r *Reconciler) isDeleteNodeAllowed(ctx context.Context, cluster *clusterv1
 		if err != nil {
 			log.Error(err, "Failed to get cluster client while deleting Machine and checking for nodes")
 		} else {
-			node, err := r.getNode(ctx, remoteClient, *machine.Spec.ProviderID)
+			node, err := r.getNode(ctx, remoteClient, providerID)
 			if err != nil && err != ErrNodeNotFound {
 				log.Error(err, "Failed to get node while deleting Machine")
 			} else if err == nil {
@@ -822,14 +819,7 @@ func (r *Reconciler) drainNode(ctx context.Context, s *scope) (ctrl.Result, erro
 
 	remoteClient, err := r.ClusterCache.GetClient(ctx, util.ObjectKey(cluster))
 	if err != nil {
-		if errors.Is(err, clustercache.ErrClusterNotConnected) {
-			log.V(5).Info("Requeuing drain Node because connection to the workload cluster is down")
-			s.deletingReason = clusterv1.MachineDeletingDrainingNodeV1Beta2Reason
-			s.deletingMessage = "Requeuing drain Node because connection to the workload cluster is down"
-			return ctrl.Result{RequeueAfter: time.Minute}, nil
-		}
-		log.Error(err, "Error creating a remote client for cluster while draining Node, won't retry")
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, errors.Wrapf(err, "failed to drain Node %s", nodeName)
 	}
 
 	node := &corev1.Node{}
@@ -995,15 +985,9 @@ func (r *Reconciler) shouldWaitForNodeVolumes(ctx context.Context, s *scope) (ct
 }
 
 func (r *Reconciler) deleteNode(ctx context.Context, cluster *clusterv1.Cluster, name string) error {
-	log := ctrl.LoggerFrom(ctx)
-
 	remoteClient, err := r.ClusterCache.GetClient(ctx, util.ObjectKey(cluster))
 	if err != nil {
-		if errors.Is(err, clustercache.ErrClusterNotConnected) {
-			return errors.Wrapf(err, "failed deleting Node because connection to the workload cluster is down")
-		}
-		log.Error(err, "Error creating a remote client for cluster while deleting Node, won't retry")
-		return nil
+		return errors.Wrapf(err, "failed deleting Node because connection to the workload cluster is down")
 	}
 
 	node := &corev1.Node{

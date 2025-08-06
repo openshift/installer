@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalProxyList(list []*Proxy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeProxyList(list, stream)
+	WriteProxyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalProxyList(list []*Proxy, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeProxyList writes a list of value of the 'proxy' type to
+// WriteProxyList writes a list of value of the 'proxy' type to
 // the given stream.
-func writeProxyList(list []*Proxy, stream *jsoniter.Stream) {
+func WriteProxyList(list []*Proxy, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeProxy(value, stream)
+		WriteProxy(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalProxyList(source interface{}) (items []*Proxy, err error) {
 	if err != nil {
 		return
 	}
-	items = readProxyList(iterator)
+	items = ReadProxyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readProxyList reads list of values of the ”proxy' type from
+// ReadProxyList reads list of values of the ”proxy' type from
 // the given iterator.
-func readProxyList(iterator *jsoniter.Iterator) []*Proxy {
+func ReadProxyList(iterator *jsoniter.Iterator) []*Proxy {
 	list := []*Proxy{}
 	for iterator.ReadArray() {
-		item := readProxy(iterator)
+		item := ReadProxy(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -29,7 +29,7 @@ import (
 // MarshalSTSOperator writes a value of the 'STS_operator' type to the given writer.
 func MarshalSTSOperator(object *STSOperator, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSTSOperator(object, stream)
+	WriteSTSOperator(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSTSOperator(object *STSOperator, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeSTSOperator writes a value of the 'STS_operator' type to the given stream.
-func writeSTSOperator(object *STSOperator, stream *jsoniter.Stream) {
+// WriteSTSOperator writes a value of the 'STS_operator' type to the given stream.
+func WriteSTSOperator(object *STSOperator, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -84,7 +84,7 @@ func writeSTSOperator(object *STSOperator, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("service_accounts")
-		writeStringList(object.serviceAccounts, stream)
+		WriteStringList(object.serviceAccounts, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -96,13 +96,13 @@ func UnmarshalSTSOperator(source interface{}) (object *STSOperator, err error) {
 	if err != nil {
 		return
 	}
-	object = readSTSOperator(iterator)
+	object = ReadSTSOperator(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSTSOperator reads a value of the 'STS_operator' type from the given iterator.
-func readSTSOperator(iterator *jsoniter.Iterator) *STSOperator {
+// ReadSTSOperator reads a value of the 'STS_operator' type from the given iterator.
+func ReadSTSOperator(iterator *jsoniter.Iterator) *STSOperator {
 	object := &STSOperator{}
 	for {
 		field := iterator.ReadObject()
@@ -127,7 +127,7 @@ func readSTSOperator(iterator *jsoniter.Iterator) *STSOperator {
 			object.namespace = value
 			object.bitmap_ |= 8
 		case "service_accounts":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.serviceAccounts = value
 			object.bitmap_ |= 16
 		default:

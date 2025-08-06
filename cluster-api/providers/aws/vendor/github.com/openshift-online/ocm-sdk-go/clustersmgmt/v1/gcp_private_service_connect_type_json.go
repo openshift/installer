@@ -29,7 +29,7 @@ import (
 // MarshalGcpPrivateServiceConnect writes a value of the 'gcp_private_service_connect' type to the given writer.
 func MarshalGcpPrivateServiceConnect(object *GcpPrivateServiceConnect, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGcpPrivateServiceConnect(object, stream)
+	WriteGcpPrivateServiceConnect(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGcpPrivateServiceConnect(object *GcpPrivateServiceConnect, writer io
 	return stream.Error
 }
 
-// writeGcpPrivateServiceConnect writes a value of the 'gcp_private_service_connect' type to the given stream.
-func writeGcpPrivateServiceConnect(object *GcpPrivateServiceConnect, stream *jsoniter.Stream) {
+// WriteGcpPrivateServiceConnect writes a value of the 'gcp_private_service_connect' type to the given stream.
+func WriteGcpPrivateServiceConnect(object *GcpPrivateServiceConnect, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalGcpPrivateServiceConnect(source interface{}) (object *GcpPrivateSe
 	if err != nil {
 		return
 	}
-	object = readGcpPrivateServiceConnect(iterator)
+	object = ReadGcpPrivateServiceConnect(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGcpPrivateServiceConnect reads a value of the 'gcp_private_service_connect' type from the given iterator.
-func readGcpPrivateServiceConnect(iterator *jsoniter.Iterator) *GcpPrivateServiceConnect {
+// ReadGcpPrivateServiceConnect reads a value of the 'gcp_private_service_connect' type from the given iterator.
+func ReadGcpPrivateServiceConnect(iterator *jsoniter.Iterator) *GcpPrivateServiceConnect {
 	object := &GcpPrivateServiceConnect{}
 	for {
 		field := iterator.ReadObject()

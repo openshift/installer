@@ -30,7 +30,7 @@ import (
 // MarshalManifest writes a value of the 'manifest' type to the given writer.
 func MarshalManifest(object *Manifest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeManifest(object, stream)
+	WriteManifest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalManifest(object *Manifest, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeManifest writes a value of the 'manifest' type to the given stream.
-func writeManifest(object *Manifest, stream *jsoniter.Stream) {
+// WriteManifest writes a value of the 'manifest' type to the given stream.
+func WriteManifest(object *Manifest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -108,7 +108,7 @@ func writeManifest(object *Manifest, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("workloads")
-		writeInterfaceList(object.workloads, stream)
+		WriteInterfaceList(object.workloads, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -120,13 +120,13 @@ func UnmarshalManifest(source interface{}) (object *Manifest, err error) {
 	if err != nil {
 		return
 	}
-	object = readManifest(iterator)
+	object = ReadManifest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readManifest reads a value of the 'manifest' type from the given iterator.
-func readManifest(iterator *jsoniter.Iterator) *Manifest {
+// ReadManifest reads a value of the 'manifest' type from the given iterator.
+func ReadManifest(iterator *jsoniter.Iterator) *Manifest {
 	object := &Manifest{}
 	for {
 		field := iterator.ReadObject()
@@ -172,7 +172,7 @@ func readManifest(iterator *jsoniter.Iterator) *Manifest {
 			object.updatedTimestamp = value
 			object.bitmap_ |= 64
 		case "workloads":
-			value := readInterfaceList(iterator)
+			value := ReadInterfaceList(iterator)
 			object.workloads = value
 			object.bitmap_ |= 128
 		default:

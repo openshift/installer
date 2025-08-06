@@ -18,25 +18,14 @@ limitations under the License.
 package ssm
 
 import (
-	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/internal/mime"
-)
-
-const (
-	serviceID = "ssm"
 )
 
 // UserData creates a multi-part MIME document including a script boothook to
 // download userdata from AWS Systems Manager and then restart cloud-init, and an include part
 // specifying the on disk location of the new userdata.
-func (s *Service) UserData(secretPrefix string, chunks int32, region string, endpoints []scope.ServiceEndpoint) ([]byte, error) {
-	var serviceEndpoint = ""
-	for _, v := range endpoints {
-		if v.ServiceID == serviceID {
-			serviceEndpoint = v.URL
-		}
-	}
-	var userData, err = mime.GenerateInitDocument(secretPrefix, chunks, region, serviceEndpoint, secretFetchScript)
+func (s *Service) UserData(secretPrefix string, chunks int32, region string) ([]byte, error) {
+	var userData, err = mime.GenerateInitDocument(secretPrefix, chunks, region, secretFetchScript)
 	if err != nil {
 		return []byte{}, err
 	}

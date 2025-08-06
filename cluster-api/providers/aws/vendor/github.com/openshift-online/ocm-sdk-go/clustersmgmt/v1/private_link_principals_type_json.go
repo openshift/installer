@@ -29,7 +29,7 @@ import (
 // MarshalPrivateLinkPrincipals writes a value of the 'private_link_principals' type to the given writer.
 func MarshalPrivateLinkPrincipals(object *PrivateLinkPrincipals, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writePrivateLinkPrincipals(object, stream)
+	WritePrivateLinkPrincipals(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalPrivateLinkPrincipals(object *PrivateLinkPrincipals, writer io.Write
 	return stream.Error
 }
 
-// writePrivateLinkPrincipals writes a value of the 'private_link_principals' type to the given stream.
-func writePrivateLinkPrincipals(object *PrivateLinkPrincipals, stream *jsoniter.Stream) {
+// WritePrivateLinkPrincipals writes a value of the 'private_link_principals' type to the given stream.
+func WritePrivateLinkPrincipals(object *PrivateLinkPrincipals, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func writePrivateLinkPrincipals(object *PrivateLinkPrincipals, stream *jsoniter.
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("principals")
-		writePrivateLinkPrincipalList(object.principals, stream)
+		WritePrivateLinkPrincipalList(object.principals, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -83,13 +83,13 @@ func UnmarshalPrivateLinkPrincipals(source interface{}) (object *PrivateLinkPrin
 	if err != nil {
 		return
 	}
-	object = readPrivateLinkPrincipals(iterator)
+	object = ReadPrivateLinkPrincipals(iterator)
 	err = iterator.Error
 	return
 }
 
-// readPrivateLinkPrincipals reads a value of the 'private_link_principals' type from the given iterator.
-func readPrivateLinkPrincipals(iterator *jsoniter.Iterator) *PrivateLinkPrincipals {
+// ReadPrivateLinkPrincipals reads a value of the 'private_link_principals' type from the given iterator.
+func ReadPrivateLinkPrincipals(iterator *jsoniter.Iterator) *PrivateLinkPrincipals {
 	object := &PrivateLinkPrincipals{}
 	for {
 		field := iterator.ReadObject()
@@ -109,7 +109,7 @@ func readPrivateLinkPrincipals(iterator *jsoniter.Iterator) *PrivateLinkPrincipa
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "principals":
-			value := readPrivateLinkPrincipalList(iterator)
+			value := ReadPrivateLinkPrincipalList(iterator)
 			object.principals = value
 			object.bitmap_ |= 8
 		default:

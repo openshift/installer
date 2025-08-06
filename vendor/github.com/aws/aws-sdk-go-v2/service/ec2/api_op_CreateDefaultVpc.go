@@ -13,10 +13,13 @@ import (
 
 // Creates a default VPC with a size /16 IPv4 CIDR block and a default subnet in
 // each Availability Zone. For more information about the components of a default
-// VPC, see Default VPCs (https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html)
-// in the Amazon VPC User Guide. You cannot specify the components of the default
-// VPC yourself. If you deleted your previous default VPC, you can create a default
-// VPC. You cannot have more than one default VPC per Region.
+// VPC, see [Default VPCs]in the Amazon VPC User Guide. You cannot specify the components of the
+// default VPC yourself.
+//
+// If you deleted your previous default VPC, you can create a default VPC. You
+// cannot have more than one default VPC per Region.
+//
+// [Default VPCs]: https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html
 func (c *Client) CreateDefaultVpc(ctx context.Context, params *CreateDefaultVpcInput, optFns ...func(*Options)) (*CreateDefaultVpcOutput, error) {
 	if params == nil {
 		params = &CreateDefaultVpcInput{}
@@ -97,6 +100,9 @@ func (c *Client) addOperationCreateDefaultVpcMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -107,6 +113,15 @@ func (c *Client) addOperationCreateDefaultVpcMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateDefaultVpc(options.Region), middleware.Before); err != nil {
@@ -125,6 +140,18 @@ func (c *Client) addOperationCreateDefaultVpcMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

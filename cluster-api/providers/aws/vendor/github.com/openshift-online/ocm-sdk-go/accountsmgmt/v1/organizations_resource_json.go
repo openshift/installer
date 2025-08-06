@@ -57,7 +57,7 @@ func readOrganizationsListResponse(response *OrganizationsListResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readOrganizationList(iterator)
+			items := ReadOrganizationList(iterator)
 			response.items = &OrganizationList{
 				items: items,
 			}

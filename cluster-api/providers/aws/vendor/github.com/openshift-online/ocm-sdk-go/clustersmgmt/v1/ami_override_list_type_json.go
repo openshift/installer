@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAMIOverrideList(list []*AMIOverride, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAMIOverrideList(list, stream)
+	WriteAMIOverrideList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAMIOverrideList(list []*AMIOverride, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAMIOverrideList writes a list of value of the 'AMI_override' type to
+// WriteAMIOverrideList writes a list of value of the 'AMI_override' type to
 // the given stream.
-func writeAMIOverrideList(list []*AMIOverride, stream *jsoniter.Stream) {
+func WriteAMIOverrideList(list []*AMIOverride, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAMIOverride(value, stream)
+		WriteAMIOverride(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAMIOverrideList(source interface{}) (items []*AMIOverride, err err
 	if err != nil {
 		return
 	}
-	items = readAMIOverrideList(iterator)
+	items = ReadAMIOverrideList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAMIOverrideList reads list of values of the ”AMI_override' type from
+// ReadAMIOverrideList reads list of values of the ”AMI_override' type from
 // the given iterator.
-func readAMIOverrideList(iterator *jsoniter.Iterator) []*AMIOverride {
+func ReadAMIOverrideList(iterator *jsoniter.Iterator) []*AMIOverride {
 	list := []*AMIOverride{}
 	for iterator.ReadArray() {
-		item := readAMIOverride(iterator)
+		item := ReadAMIOverride(iterator)
 		list = append(list, item)
 	}
 	return list

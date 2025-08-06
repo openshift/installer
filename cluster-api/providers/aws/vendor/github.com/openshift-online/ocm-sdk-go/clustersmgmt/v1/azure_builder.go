@@ -26,6 +26,7 @@ type AzureBuilder struct {
 	bitmap_                        uint32
 	managedResourceGroupName       string
 	networkSecurityGroupResourceID string
+	nodesOutboundConnectivity      *AzureNodesOutboundConnectivityBuilder
 	operatorsAuthentication        *AzureOperatorsAuthenticationBuilder
 	resourceGroupName              string
 	resourceName                   string
@@ -58,12 +59,11 @@ func (b *AzureBuilder) NetworkSecurityGroupResourceID(value string) *AzureBuilde
 	return b
 }
 
-// OperatorsAuthentication sets the value of the 'operators_authentication' attribute to the given value.
+// NodesOutboundConnectivity sets the value of the 'nodes_outbound_connectivity' attribute to the given value.
 //
-// The configuration that the operators of the
-// cluster have to authenticate to Azure.
-func (b *AzureBuilder) OperatorsAuthentication(value *AzureOperatorsAuthenticationBuilder) *AzureBuilder {
-	b.operatorsAuthentication = value
+// The configuration of the node outbound connectivity
+func (b *AzureBuilder) NodesOutboundConnectivity(value *AzureNodesOutboundConnectivityBuilder) *AzureBuilder {
+	b.nodesOutboundConnectivity = value
 	if value != nil {
 		b.bitmap_ |= 4
 	} else {
@@ -72,38 +72,52 @@ func (b *AzureBuilder) OperatorsAuthentication(value *AzureOperatorsAuthenticati
 	return b
 }
 
+// OperatorsAuthentication sets the value of the 'operators_authentication' attribute to the given value.
+//
+// The configuration that the operators of the
+// cluster have to authenticate to Azure.
+func (b *AzureBuilder) OperatorsAuthentication(value *AzureOperatorsAuthenticationBuilder) *AzureBuilder {
+	b.operatorsAuthentication = value
+	if value != nil {
+		b.bitmap_ |= 8
+	} else {
+		b.bitmap_ &^= 8
+	}
+	return b
+}
+
 // ResourceGroupName sets the value of the 'resource_group_name' attribute to the given value.
 func (b *AzureBuilder) ResourceGroupName(value string) *AzureBuilder {
 	b.resourceGroupName = value
-	b.bitmap_ |= 8
+	b.bitmap_ |= 16
 	return b
 }
 
 // ResourceName sets the value of the 'resource_name' attribute to the given value.
 func (b *AzureBuilder) ResourceName(value string) *AzureBuilder {
 	b.resourceName = value
-	b.bitmap_ |= 16
+	b.bitmap_ |= 32
 	return b
 }
 
 // SubnetResourceID sets the value of the 'subnet_resource_ID' attribute to the given value.
 func (b *AzureBuilder) SubnetResourceID(value string) *AzureBuilder {
 	b.subnetResourceID = value
-	b.bitmap_ |= 32
+	b.bitmap_ |= 64
 	return b
 }
 
 // SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
 func (b *AzureBuilder) SubscriptionID(value string) *AzureBuilder {
 	b.subscriptionID = value
-	b.bitmap_ |= 64
+	b.bitmap_ |= 128
 	return b
 }
 
 // TenantID sets the value of the 'tenant_ID' attribute to the given value.
 func (b *AzureBuilder) TenantID(value string) *AzureBuilder {
 	b.tenantID = value
-	b.bitmap_ |= 128
+	b.bitmap_ |= 256
 	return b
 }
 
@@ -115,6 +129,11 @@ func (b *AzureBuilder) Copy(object *Azure) *AzureBuilder {
 	b.bitmap_ = object.bitmap_
 	b.managedResourceGroupName = object.managedResourceGroupName
 	b.networkSecurityGroupResourceID = object.networkSecurityGroupResourceID
+	if object.nodesOutboundConnectivity != nil {
+		b.nodesOutboundConnectivity = NewAzureNodesOutboundConnectivity().Copy(object.nodesOutboundConnectivity)
+	} else {
+		b.nodesOutboundConnectivity = nil
+	}
 	if object.operatorsAuthentication != nil {
 		b.operatorsAuthentication = NewAzureOperatorsAuthentication().Copy(object.operatorsAuthentication)
 	} else {
@@ -134,6 +153,12 @@ func (b *AzureBuilder) Build() (object *Azure, err error) {
 	object.bitmap_ = b.bitmap_
 	object.managedResourceGroupName = b.managedResourceGroupName
 	object.networkSecurityGroupResourceID = b.networkSecurityGroupResourceID
+	if b.nodesOutboundConnectivity != nil {
+		object.nodesOutboundConnectivity, err = b.nodesOutboundConnectivity.Build()
+		if err != nil {
+			return
+		}
+	}
 	if b.operatorsAuthentication != nil {
 		object.operatorsAuthentication, err = b.operatorsAuthentication.Build()
 		if err != nil {

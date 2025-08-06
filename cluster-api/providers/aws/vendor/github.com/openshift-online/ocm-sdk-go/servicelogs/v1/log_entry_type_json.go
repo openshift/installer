@@ -30,7 +30,7 @@ import (
 // MarshalLogEntry writes a value of the 'log_entry' type to the given writer.
 func MarshalLogEntry(object *LogEntry, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLogEntry(object, stream)
+	WriteLogEntry(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalLogEntry(object *LogEntry, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeLogEntry writes a value of the 'log_entry' type to the given stream.
-func writeLogEntry(object *LogEntry, stream *jsoniter.Stream) {
+// WriteLogEntry writes a value of the 'log_entry' type to the given stream.
+func WriteLogEntry(object *LogEntry, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -117,7 +117,7 @@ func writeLogEntry(object *LogEntry, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("doc_references")
-		writeStringList(object.docReferences, stream)
+		WriteStringList(object.docReferences, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0
@@ -210,13 +210,13 @@ func UnmarshalLogEntry(source interface{}) (object *LogEntry, err error) {
 	if err != nil {
 		return
 	}
-	object = readLogEntry(iterator)
+	object = ReadLogEntry(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLogEntry reads a value of the 'log_entry' type from the given iterator.
-func readLogEntry(iterator *jsoniter.Iterator) *LogEntry {
+// ReadLogEntry reads a value of the 'log_entry' type from the given iterator.
+func ReadLogEntry(iterator *jsoniter.Iterator) *LogEntry {
 	object := &LogEntry{}
 	for {
 		field := iterator.ReadObject()
@@ -260,7 +260,7 @@ func readLogEntry(iterator *jsoniter.Iterator) *LogEntry {
 			object.description = value
 			object.bitmap_ |= 128
 		case "doc_references":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.docReferences = value
 			object.bitmap_ |= 256
 		case "event_stream_id":

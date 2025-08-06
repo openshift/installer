@@ -42,7 +42,7 @@ func writeHTPasswdUsersImportRequest(request *HTPasswdUsersImportRequest, writer
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("items")
-		writeHTPasswdUserList(request.items, stream)
+		WriteHTPasswdUserList(request.items, stream)
 		count++
 	}
 	if request.page != nil {
@@ -80,7 +80,7 @@ func readHTPasswdUsersImportResponse(response *HTPasswdUsersImportResponse, read
 		}
 		switch field {
 		case "items":
-			value := readHTPasswdUserList(iterator)
+			value := ReadHTPasswdUserList(iterator)
 			response.items = value
 		case "page":
 			value := iterator.ReadInt()
@@ -121,7 +121,7 @@ func readHTPasswdUsersListResponse(response *HTPasswdUsersListResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readHTPasswdUserList(iterator)
+			items := ReadHTPasswdUserList(iterator)
 			response.items = &HTPasswdUserList{
 				items: items,
 			}

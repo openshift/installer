@@ -54,7 +54,7 @@ func (o *SkuRule) Kind() string {
 	return SkuRuleKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *SkuRule) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -228,6 +228,29 @@ func (l *SkuRuleList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *SkuRuleList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SkuRuleList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SkuRuleList) SetItems(items []*SkuRule) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SkuRuleList) Items() []*SkuRule {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

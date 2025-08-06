@@ -57,7 +57,7 @@ func readGenericLabelsListResponse(response *GenericLabelsListResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readLabelList(iterator)
+			items := ReadLabelList(iterator)
 			response.items = &LabelList{
 				items: items,
 			}

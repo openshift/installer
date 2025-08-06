@@ -29,7 +29,7 @@ import (
 // MarshalLog writes a value of the 'log' type to the given writer.
 func MarshalLog(object *Log, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLog(object, stream)
+	WriteLog(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalLog(object *Log, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeLog writes a value of the 'log' type to the given stream.
-func writeLog(object *Log, stream *jsoniter.Stream) {
+// WriteLog writes a value of the 'log' type to the given stream.
+func WriteLog(object *Log, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -83,13 +83,13 @@ func UnmarshalLog(source interface{}) (object *Log, err error) {
 	if err != nil {
 		return
 	}
-	object = readLog(iterator)
+	object = ReadLog(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLog reads a value of the 'log' type from the given iterator.
-func readLog(iterator *jsoniter.Iterator) *Log {
+// ReadLog reads a value of the 'log' type from the given iterator.
+func ReadLog(iterator *jsoniter.Iterator) *Log {
 	object := &Log{}
 	for {
 		field := iterator.ReadObject()

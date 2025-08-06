@@ -76,6 +76,29 @@ func (l *TokenAuthorizationResponseList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *TokenAuthorizationResponseList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *TokenAuthorizationResponseList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *TokenAuthorizationResponseList) SetItems(items []*TokenAuthorizationResponse) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *TokenAuthorizationResponseList) Items() []*TokenAuthorizationResponse {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *TokenAuthorizationResponseList) Empty() bool {
 	return l == nil || len(l.items) == 0

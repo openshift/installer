@@ -29,7 +29,7 @@ import (
 // MarshalExportControlReviewResponse writes a value of the 'export_control_review_response' type to the given writer.
 func MarshalExportControlReviewResponse(object *ExportControlReviewResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeExportControlReviewResponse(object, stream)
+	WriteExportControlReviewResponse(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalExportControlReviewResponse(object *ExportControlReviewResponse, wri
 	return stream.Error
 }
 
-// writeExportControlReviewResponse writes a value of the 'export_control_review_response' type to the given stream.
-func writeExportControlReviewResponse(object *ExportControlReviewResponse, stream *jsoniter.Stream) {
+// WriteExportControlReviewResponse writes a value of the 'export_control_review_response' type to the given stream.
+func WriteExportControlReviewResponse(object *ExportControlReviewResponse, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalExportControlReviewResponse(source interface{}) (object *ExportCon
 	if err != nil {
 		return
 	}
-	object = readExportControlReviewResponse(iterator)
+	object = ReadExportControlReviewResponse(iterator)
 	err = iterator.Error
 	return
 }
 
-// readExportControlReviewResponse reads a value of the 'export_control_review_response' type from the given iterator.
-func readExportControlReviewResponse(iterator *jsoniter.Iterator) *ExportControlReviewResponse {
+// ReadExportControlReviewResponse reads a value of the 'export_control_review_response' type from the given iterator.
+func ReadExportControlReviewResponse(iterator *jsoniter.Iterator) *ExportControlReviewResponse {
 	object := &ExportControlReviewResponse{}
 	for {
 		field := iterator.ReadObject()
