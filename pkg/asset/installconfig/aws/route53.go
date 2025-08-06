@@ -24,6 +24,10 @@ import (
 // https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-r53.html
 var cnameRegions = sets.New[string]("us-gov-west-1", "us-gov-east-1")
 
+func isGovCloudRegion(region string) bool {
+	return cnameRegions.Has(region)
+}
+
 // API represents the calls made to the API.
 type API interface {
 	GetHostedZone(hostedZone string, cfg *aws.Config) (*route53.GetHostedZoneOutput, error)
@@ -169,6 +173,8 @@ type CreateRecordInput struct {
 	AliasZoneID string
 	// Role to assume to create the record. Leave empty to not assume role.
 	HostedZoneRole string
+	// Whether to also include an AAAA record.
+	EnableAAAA bool
 }
 
 // CreateOrUpdateRecord Creates or Updates the Route53 Record for the cluster endpoint.
@@ -176,7 +182,7 @@ func (c *Client) CreateOrUpdateRecord(ctx context.Context, in *CreateRecordInput
 	recordSet := &route53.ResourceRecordSet{
 		Name: aws.String(in.Name),
 	}
-	if cnameRegions.Has(in.Region) {
+	if isGovCloudRegion(in.Region) {
 		recordSet.SetType("CNAME")
 		recordSet.SetTTL(10)
 		recordSet.SetResourceRecords([]*route53.ResourceRecord{
@@ -201,6 +207,21 @@ func (c *Client) CreateOrUpdateRecord(ctx context.Context, in *CreateRecordInput
 				},
 			},
 		},
+	}
+
+	if in.EnableAAAA {
+		ipv6RecordSet := &route53.ResourceRecordSet{Name: aws.String(in.Name)}
+		ipv6RecordSet.SetType(route53.RRTypeAaaa)
+		ipv6RecordSet.SetAliasTarget(&route53.AliasTarget{
+			DNSName:              aws.String(in.DNSTarget),
+			HostedZoneId:         aws.String(in.AliasZoneID),
+			EvaluateTargetHealth: aws.Bool(false),
+		})
+
+		input.ChangeBatch.Changes = append(input.ChangeBatch.Changes, &route53.Change{
+			Action:            aws.String("UPSERT"),
+			ResourceRecordSet: ipv6RecordSet,
+		})
 	}
 
 	// Create service with assumed role, if set

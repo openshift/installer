@@ -189,6 +189,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			ZoneID:         *zone.Id,
 			AliasZoneID:    aliasZoneID,
 			HostedZoneRole: "", // we dont want to assume role here
+			EnableAAAA:     in.InstallConfig.Config.AWS.DualStackEnabled(),
 		}); err != nil {
 			return fmt.Errorf("failed to create records for api in public zone: %w", err)
 		}
@@ -208,6 +209,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		ZoneID:         phzID,
 		AliasZoneID:    aliasZoneID,
 		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+		EnableAAAA:     in.InstallConfig.Config.AWS.DualStackEnabled(),
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api in private zone: %w", err)
 	}
@@ -221,6 +223,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		ZoneID:         phzID,
 		AliasZoneID:    aliasZoneID,
 		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+		EnableAAAA:     in.InstallConfig.Config.AWS.DualStackEnabled(),
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api-int in private zone: %w", err)
 	}
