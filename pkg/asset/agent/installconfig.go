@@ -219,10 +219,16 @@ func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig 
 	var fieldPath *field.Path
 
 	if installConfig.ControlPlane != nil {
-		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 || (installConfig.Arbiter == nil && *installConfig.ControlPlane.Replicas == 2) {
+		// Note: Arbiter is GA so this will always be true for default installs, so two node control plane is supported.
+		// However, this is kept here for now until the feature itself phases out and becomes part of the platform with out
+		// a flag, until then this logic is kept for situations where the feature is explicitly turned off.
+		twoNodeEnabled := installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) || installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica)
+		controlPlaneReplicas := *installConfig.ControlPlane.Replicas
+
+		if controlPlaneReplicas < 1 || controlPlaneReplicas > 5 || (!twoNodeEnabled && controlPlaneReplicas == 2) {
 			fieldPath = field.NewPath("controlPlane", "replicas")
 			supportedControlPlaneRange := []string{"3", "1", "4", "5"}
-			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
+			if twoNodeEnabled {
 				supportedControlPlaneRange = append(supportedControlPlaneRange, "2")
 			}
 			allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Replicas, supportedControlPlaneRange))

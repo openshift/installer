@@ -892,7 +892,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found, controlPlane.replicas: Unsupported value: 2: supported values: \"3\", \"1\", \"4\", \"5\"]",
+			expectedError: "invalid install-config configuration: controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found",
 		},
 		{
 			name: "invalid platform for SNO cluster",
