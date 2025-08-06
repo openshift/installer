@@ -1,0 +1,45 @@
+/*
+Copyright (c) 2021 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Description of a cloud provider data used for cloud provider inquiries.
+struct CloudProviderData {
+    // Amazon Web Services settings.
+    AWS AWS
+
+    // Google cloud platform settings.
+    GCP GCP
+
+    // Region
+    Region CloudRegion
+
+    // Key location
+    KeyLocation String
+
+    // Key ring name
+    KeyRingName  String
+
+    // Openshift version
+    Version Version
+
+    // Availability zone
+    AvailabilityZones []String
+
+    // Subnets
+    Subnets []String
+
+    // VPC ids
+    VpcIds []string
+}

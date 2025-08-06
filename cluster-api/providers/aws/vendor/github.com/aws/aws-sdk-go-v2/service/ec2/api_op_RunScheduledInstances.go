@@ -11,14 +11,15 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Launches the specified Scheduled Instances. Before you can launch a Scheduled
-// Instance, you must purchase it and obtain an identifier using
-// PurchaseScheduledInstances . You must launch a Scheduled Instance during its
-// scheduled time period. You can't stop or reboot a Scheduled Instance, but you
-// can terminate it as needed. If you terminate a Scheduled Instance before the
-// current scheduled time period ends, you can launch it again after a few minutes.
-// For more information, see Scheduled Instances (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-scheduled-instances.html)
-// in the Amazon EC2 User Guide.
+// Launches the specified Scheduled Instances.
+//
+// Before you can launch a Scheduled Instance, you must purchase it and obtain an
+// identifier using PurchaseScheduledInstances.
+//
+// You must launch a Scheduled Instance during its scheduled time period. You
+// can't stop or reboot a Scheduled Instance, but you can terminate it as needed.
+// If you terminate a Scheduled Instance before the current scheduled time period
+// ends, you can launch it again after a few minutes.
 func (c *Client) RunScheduledInstances(ctx context.Context, params *RunScheduledInstancesInput, optFns ...func(*Options)) (*RunScheduledInstancesOutput, error) {
 	if params == nil {
 		params = &RunScheduledInstancesInput{}
@@ -49,8 +50,9 @@ type RunScheduledInstancesInput struct {
 	ScheduledInstanceId *string
 
 	// Unique, case-sensitive identifier that ensures the idempotency of the request.
-	// For more information, see Ensuring Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
-	// .
+	// For more information, see [Ensuring Idempotency].
+	//
+	// [Ensuring Idempotency]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html
 	ClientToken *string
 
 	// Checks whether you have the required permissions for the action, without
@@ -59,7 +61,9 @@ type RunScheduledInstancesInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
-	// The number of instances. Default: 1
+	// The number of instances.
+	//
+	// Default: 1
 	InstanceCount *int32
 
 	noSmithyDocumentSerde
@@ -120,6 +124,9 @@ func (c *Client) addOperationRunScheduledInstancesMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -130,6 +137,15 @@ func (c *Client) addOperationRunScheduledInstancesMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opRunScheduledInstancesMiddleware(stack, options); err != nil {
@@ -154,6 +170,18 @@ func (c *Client) addOperationRunScheduledInstancesMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

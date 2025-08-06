@@ -20,8 +20,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/pkg/errors"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -42,16 +43,16 @@ func (s *Service) getOrAllocateAddresses(num int, role string, pool *infrav1.Ela
 	// Reuse existing unallocated addreses with the same role.
 	for _, address := range out.Addresses {
 		if address.AssociationId == nil {
-			eips = append(eips, aws.StringValue(address.AllocationId))
+			eips = append(eips, aws.ToString(address.AllocationId))
 		}
 	}
 
 	// allocate addresses when needed.
-	tagSpecifications := tags.BuildParamsToTagSpecification(ec2.ResourceTypeElasticIp, s.getEIPTagParams(role))
+	tagSpecifications := tags.BuildParamsToTagSpecification(types.ResourceTypeElasticIp, s.getEIPTagParams(role))
 	for len(eips) < num {
 		allocInput := &ec2.AllocateAddressInput{
-			Domain: aws.String("vpc"),
-			TagSpecifications: []*ec2.TagSpecification{
+			Domain: types.DomainTypeVpc,
+			TagSpecifications: []types.TagSpecification{
 				tagSpecifications,
 			},
 		}
@@ -76,28 +77,28 @@ func (s *Service) getOrAllocateAddresses(num int, role string, pool *infrav1.Ela
 }
 
 func (s *Service) allocateAddress(alloc *ec2.AllocateAddressInput) (string, error) {
-	out, err := s.EC2Client.AllocateAddressWithContext(context.TODO(), alloc)
+	out, err := s.EC2Client.AllocateAddress(context.TODO(), alloc)
 	if err != nil {
 		return "", err
 	}
 
-	return aws.StringValue(out.AllocationId), nil
+	return aws.ToString(out.AllocationId), nil
 }
 
 func (s *Service) describeAddresses(role string) (*ec2.DescribeAddressesOutput, error) {
-	x := []*ec2.Filter{filter.EC2.Cluster(s.scope.Name())}
+	x := []types.Filter{filter.EC2.Cluster(s.scope.Name())}
 	if role != "" {
 		x = append(x, filter.EC2.ProviderRole(role))
 	}
 
-	return s.EC2Client.DescribeAddressesWithContext(context.TODO(), &ec2.DescribeAddressesInput{
+	return s.EC2Client.DescribeAddresses(context.TODO(), &ec2.DescribeAddressesInput{
 		Filters: x,
 	})
 }
 
-func (s *Service) disassociateAddress(ip *ec2.Address) error {
+func (s *Service) disassociateAddress(ip types.Address) error {
 	err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-		_, err := s.EC2Client.DisassociateAddressWithContext(context.TODO(), &ec2.DisassociateAddressInput{
+		_, err := s.EC2Client.DisassociateAddress(context.TODO(), &ec2.DisassociateAddressInput{
 			AssociationId: ip.AssociationId,
 		})
 		if err != nil {
@@ -116,9 +117,9 @@ func (s *Service) disassociateAddress(ip *ec2.Address) error {
 }
 
 // releaseAddress releases an given EIP address back to the pool.
-func (s *Service) releaseAddress(ip *ec2.Address) error {
+func (s *Service) releaseAddress(ip types.Address) error {
 	if ip.AssociationId != nil {
-		if _, err := s.EC2Client.DisassociateAddressWithContext(context.TODO(), &ec2.DisassociateAddressInput{
+		if _, err := s.EC2Client.DisassociateAddress(context.TODO(), &ec2.DisassociateAddressInput{
 			AssociationId: ip.AssociationId,
 		}); err != nil {
 			record.Warnf(s.scope.InfraCluster(), "FailedDisassociateEIP", "Failed to disassociate Elastic IP %q: %v", *ip.AllocationId, err)
@@ -127,7 +128,7 @@ func (s *Service) releaseAddress(ip *ec2.Address) error {
 	}
 
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-		_, err := s.EC2Client.ReleaseAddressWithContext(context.TODO(), &ec2.ReleaseAddressInput{AllocationId: ip.AllocationId})
+		_, err := s.EC2Client.ReleaseAddress(context.TODO(), &ec2.ReleaseAddressInput{AllocationId: ip.AllocationId})
 		if err != nil {
 			if ip.AssociationId != nil {
 				if s.disassociateAddress(ip) != nil {
@@ -148,8 +149,8 @@ func (s *Service) releaseAddress(ip *ec2.Address) error {
 
 // releaseAddressesWithFilter discovery address to be released based in filters, returning no error,
 // when all addresses have been released.
-func (s *Service) releaseAddressesWithFilter(filters []*ec2.Filter) error {
-	out, err := s.EC2Client.DescribeAddressesWithContext(context.TODO(), &ec2.DescribeAddressesInput{
+func (s *Service) releaseAddressesWithFilter(filters []types.Filter) error {
+	out, err := s.EC2Client.DescribeAddresses(context.TODO(), &ec2.DescribeAddressesInput{
 		Filters: filters,
 	})
 	if err != nil {
@@ -169,7 +170,7 @@ func (s *Service) releaseAddressesWithFilter(filters []*ec2.Filter) error {
 // releaseAddresses is default cluster release flow, discoverying and releasing all
 // addresses associated and owned by the cluster tag.
 func (s *Service) releaseAddresses() error {
-	filters := []*ec2.Filter{filter.EC2.Cluster(s.scope.Name())}
+	filters := []types.Filter{filter.EC2.Cluster(s.scope.Name())}
 	filters = append(filters, filter.EC2.ClusterOwned(s.scope.Name()))
 	return s.releaseAddressesWithFilter(filters)
 }
@@ -198,7 +199,7 @@ func (s *Service) GetAddresses(role string) (*ec2.DescribeAddressesOutput, error
 
 // ReleaseAddressByRole releases EIP addresses filtering by tag CAPA provider role.
 func (s *Service) ReleaseAddressByRole(role string) error {
-	return s.releaseAddressesWithFilter([]*ec2.Filter{
+	return s.releaseAddressesWithFilter([]types.Filter{
 		filter.EC2.ClusterOwned(s.scope.Name()),
 		filter.EC2.ProviderRole(role),
 	})
@@ -229,7 +230,7 @@ func (s *Service) setByoPublicIpv4(pool *infrav1.ElasticIPPool, alloc *ec2.Alloc
 }
 
 // publicIpv4PoolHasAtLeastNFreeIPs check if there are N IPs address available in a Public IPv4 Pool.
-func (s *Service) publicIpv4PoolHasAtLeastNFreeIPs(pool *infrav1.ElasticIPPool, want int64) (bool, error) {
+func (s *Service) publicIpv4PoolHasAtLeastNFreeIPs(pool *infrav1.ElasticIPPool, want int32) (bool, error) {
 	if pool == nil {
 		return true, nil
 	}
@@ -237,8 +238,8 @@ func (s *Service) publicIpv4PoolHasAtLeastNFreeIPs(pool *infrav1.ElasticIPPool, 
 		return true, nil
 	}
 	publicIpv4Pool := pool.PublicIpv4Pool
-	pools, err := s.EC2Client.DescribePublicIpv4Pools(&ec2.DescribePublicIpv4PoolsInput{
-		PoolIds: []*string{publicIpv4Pool},
+	pools, err := s.EC2Client.DescribePublicIpv4Pools(context.TODO(), &ec2.DescribePublicIpv4PoolsInput{
+		PoolIds: []string{aws.ToString(publicIpv4Pool)},
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to describe Public IPv4 Pool %q: %w", *publicIpv4Pool, err)
@@ -247,7 +248,7 @@ func (s *Service) publicIpv4PoolHasAtLeastNFreeIPs(pool *infrav1.ElasticIPPool, 
 		return false, fmt.Errorf("unexpected number of configured Public IPv4 Pools. want 1, got %d", len(pools.PublicIpv4Pools))
 	}
 
-	freeIPs := aws.Int64Value(pools.PublicIpv4Pools[0].TotalAvailableAddressCount)
+	freeIPs := aws.ToInt32(pools.PublicIpv4Pools[0].TotalAvailableAddressCount)
 	hasFreeIPs := freeIPs >= want
 
 	// force to fallback to Amazon pool when the custom pool is full.

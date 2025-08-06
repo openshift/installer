@@ -68,12 +68,12 @@ type MachineSetSpec struct {
 
 // MachineTemplateSpec describes the data needed to create a Machine from a template.
 type MachineTemplateSpec struct {
-	// Standard object's metadata.
+	// metadata is the standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
 	ObjectMeta `json:"metadata,omitempty"`
 
-	// Specification of the desired behavior of the machine.
+	// spec is the specification of the desired behavior of the machine.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 	// +optional
 	Spec MachineSpec `json:"spec,omitempty"`
@@ -119,15 +119,15 @@ type MachineSetStatus struct {
 	// +optional
 	Replicas int32 `json:"replicas,omitempty"`
 
-	// The number of replicas that have labels matching the labels of the machine template of the MachineSet.
+	// fullyLabeledReplicas is the number of replicas that have labels matching the labels of the machine template of the MachineSet.
 	// +optional
 	FullyLabeledReplicas int32 `json:"fullyLabeledReplicas,omitempty"`
 
-	// The number of ready replicas for this MachineSet. A machine is considered ready when the node has been created and is "Ready".
+	// readyReplicas is the number of ready replicas for this MachineSet. A machine is considered ready when the node has been created and is "Ready".
 	// +optional
 	ReadyReplicas int32 `json:"readyReplicas,omitempty"`
 
-	// The number of available replicas (ready for at least minReadySeconds) for this MachineSet.
+	// availableReplicas is the number of available replicas (ready for at least minReadySeconds) for this MachineSet.
 	// +optional
 	AvailableReplicas int32 `json:"availableReplicas,omitempty"`
 
@@ -135,6 +135,10 @@ type MachineSetStatus struct {
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
+	// failureReason will be set in the event that there is a terminal problem
+	// reconciling the Machine and will contain a succinct value suitable
+	// for machine interpretation.
+	//
 	// In the event that there is a terminal problem reconciling the
 	// replicas, both FailureReason and FailureMessage will be set. FailureReason
 	// will be populated with a succinct value suitable for machine
@@ -155,6 +159,10 @@ type MachineSetStatus struct {
 	// controller's output.
 	// +optional
 	FailureReason *capierrors.MachineSetStatusError `json:"failureReason,omitempty"`
+
+	// failureMessage will be set in the event that there is a terminal problem
+	// reconciling the Machine and will contain a more verbose string suitable
+	// for logging and human consumption.
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
 }
@@ -198,10 +206,14 @@ func (m *MachineSet) Validate() field.ErrorList {
 //
 // Deprecated: This type will be removed in one of the next releases.
 type MachineSet struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   MachineSetSpec   `json:"spec,omitempty"`
+	// spec is the desired state of MachineSet.
+	Spec MachineSetSpec `json:"spec,omitempty"`
+	// status is the observed state of MachineSet.
 	Status MachineSetStatus `json:"status,omitempty"`
 }
 
@@ -212,8 +224,11 @@ type MachineSet struct {
 // Deprecated: This type will be removed in one of the next releases.
 type MachineSetList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []MachineSet `json:"items"`
+	// items is the list of MachineSets.
+	Items []MachineSet `json:"items"`
 }
 
 func init() {

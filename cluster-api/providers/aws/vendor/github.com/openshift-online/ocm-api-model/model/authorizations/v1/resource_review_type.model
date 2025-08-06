@@ -1,0 +1,40 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Contains the result of performing a resource access review.
+struct ResourceReview {
+	// Name of the account that is trying to perform the access.
+	AccountUsername String
+
+	// Action that will the user is trying to perform.
+	Action String
+
+	// Type of resource.
+	ResourceType String
+
+	// Identifiers of the Clusters (internal ids) that the user has permission to perform the action upon.
+	ClusterIDs []String
+
+	// Identifiers which Clusters (external ids) that the user has permission to perform the action upon.
+	ClusterUUIDs []String
+
+	// Identifiers of the subscriptions that the user has permission to perform the action upon.
+	SubscriptionIDs []String
+
+	// Identifiers of the organizations that the user has permissions to perform the action
+	// upon.
+	OrganizationIDs []String
+}

@@ -115,7 +115,7 @@ func (c *awsClient) EnsureOsdCcsAdminUser(stackName string, adminUserName string
 
 func (c *awsClient) CreateStack(cfTemplateBody, stackName string) (bool, error) {
 	// Create cloudformation stack
-	_, err := c.cfClient.CreateStack(context.Background(), buildCreateStackInput(cfTemplateBody, stackName))
+	_, err := c.cfClient.CreateStack(context.Background(), buildCreateStackInput(cfTemplateBody, stackName, []cloudformationtypes.Parameter{}, []cloudformationtypes.Tag{}))
 	if err != nil {
 		return false, err
 	}
@@ -126,6 +126,69 @@ func (c *awsClient) CreateStack(cfTemplateBody, stackName string) (bool, error) 
 	}
 
 	return true, nil
+}
+
+func (c *awsClient) CreateStackWithParamsTags(ctx context.Context, cfTemplateBody, stackName string, stackParams, stackTags map[string]string) (*string, error) {
+	// stack tags
+	var cfTags []cloudformationtypes.Tag
+	for k, v := range stackTags {
+		cfTags = append(cfTags, cloudformationtypes.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
+
+	// Create a slice for CloudFormation parameters
+	var cfParams []cloudformationtypes.Parameter
+	for k, v := range stackParams {
+		cfParams = append(cfParams, cloudformationtypes.Parameter{
+			ParameterKey:   aws.String(k),
+			ParameterValue: aws.String(v),
+		})
+	}
+
+	// Create cloudformation stack
+	stackOutput, err := c.cfClient.CreateStack(ctx, buildCreateStackInput(cfTemplateBody, stackName, cfParams, cfTags))
+	if err != nil {
+		return nil, err
+	}
+
+	return stackOutput.StackId, nil
+}
+
+func (c *awsClient) GetCFStack(ctx context.Context, stackName string) (*cloudformationtypes.Stack, error) {
+	output, err := c.cfClient.DescribeStacks(ctx, &cloudformation.DescribeStacksInput{
+		StackName: aws.String(stackName),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(output.Stacks) == 0 {
+		return nil, fmt.Errorf("No CF stacks with name %s found", stackName)
+	}
+
+	return &output.Stacks[0], nil
+}
+
+func (c *awsClient) DescribeCFStackResources(ctx context.Context, stackName string) (*[]cloudformationtypes.StackResource, error) {
+	output, err := c.cfClient.DescribeStackResources(ctx, &cloudformation.DescribeStackResourcesInput{
+		StackName: aws.String(stackName),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &output.StackResources, nil
+}
+
+func (c *awsClient) DeleteCFStack(ctx context.Context, stackName string) error {
+	_, err := c.cfClient.DeleteStack(ctx, &cloudformation.DeleteStackInput{
+		StackName: aws.String(stackName),
+	})
+
+	return err
 }
 
 func (c *awsClient) UpdateStack(cfTemplateBody, stackName string) error {
@@ -202,16 +265,20 @@ func (c *awsClient) DeleteOsdCcsAdminUser(stackName string) error {
 }
 
 // Build cloudformation create stack input
-func buildCreateStackInput(cfTemplateBody, stackName string) *cloudformation.CreateStackInput {
+func buildCreateStackInput(cfTemplateBody, stackName string, cfParams []cloudformationtypes.Parameter, cfTags []cloudformationtypes.Tag) *cloudformation.CreateStackInput {
 	// Special cloudformation capabilities are required to create IAM resources in AWS
 	cfCapabilityIAM := cloudformationtypes.CapabilityCapabilityIam
 	cfCapabilityNamedIAM := cloudformationtypes.CapabilityCapabilityNamedIam
-	cfTemplateCapabilities := []cloudformationtypes.Capability{cfCapabilityIAM, cfCapabilityNamedIAM}
+	cfCapabilityAutoExpand := cloudformationtypes.CapabilityCapabilityAutoExpand
+	cfTemplateCapabilities := []cloudformationtypes.Capability{
+		cfCapabilityIAM, cfCapabilityNamedIAM, cfCapabilityAutoExpand}
 
 	return &cloudformation.CreateStackInput{
 		Capabilities: cfTemplateCapabilities,
 		StackName:    aws.String(stackName),
 		TemplateBody: aws.String(cfTemplateBody),
+		Parameters:   cfParams,
+		Tags:         cfTags,
 	}
 }
 
@@ -220,7 +287,9 @@ func buildUpdateStackInput(cfTemplateBody, stackName string) *cloudformation.Upd
 	// Special cloudformation capabilities are required to update IAM resources in AWS
 	cfCapabilityIAM := cloudformationtypes.CapabilityCapabilityIam
 	cfCapabilityNamedIAM := cloudformationtypes.CapabilityCapabilityNamedIam
-	cfTemplateCapabilities := []cloudformationtypes.Capability{cfCapabilityIAM, cfCapabilityNamedIAM}
+	cfCapabilityAutoExpand := cloudformationtypes.CapabilityCapabilityAutoExpand
+	cfTemplateCapabilities := []cloudformationtypes.Capability{
+		cfCapabilityIAM, cfCapabilityNamedIAM, cfCapabilityAutoExpand}
 
 	return &cloudformation.UpdateStackInput{
 		Capabilities: cfTemplateCapabilities,

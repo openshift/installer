@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -30,6 +32,7 @@ import (
 	"github.com/openshift/rosa/pkg/constants"
 	"github.com/openshift/rosa/pkg/fedramp"
 	"github.com/openshift/rosa/pkg/helper"
+	"github.com/openshift/rosa/pkg/reporter"
 	rprtr "github.com/openshift/rosa/pkg/reporter"
 )
 
@@ -178,7 +181,7 @@ func getClientDetails(awsClient *awsClient) (*sts.GetCallerIdentityOutput, bool,
 
 // Currently user can rosa init using the region from their config or using --region
 // When checking for cloud formation we need to check in the region used by the user
-func GetAWSClientForUserRegion(reporter *rprtr.Object, logger *logrus.Logger,
+func GetAWSClientForUserRegion(reporter reporter.Logger, logger *logrus.Logger,
 	supportedRegions []string, useLocalCreds bool) Client {
 	// Get AWS region from env
 	awsRegionInUserConfig, err := GetRegion(arguments.GetRegion())
@@ -451,8 +454,12 @@ func GetAdminPolicyARN(partition string, accountID string, name string, path str
 	return getPolicyARN(partition, accountID, GetAdminPolicyName(name), path)
 }
 
-func GetPolicyARN(partition string, accountID string, name string, path string) string {
+func GetPolicyArnWithSuffix(partition string, accountID string, name string, path string) string {
 	return getPolicyARN(partition, accountID, GetPolicyName(name), path)
+}
+
+func GetPolicyArn(partition string, accountID string, name string, path string) string {
+	return getPolicyARN(partition, accountID, name, path)
 }
 
 func getPolicyARN(partition string, accountID string, name string, path string) string {
@@ -485,6 +492,18 @@ func GetPathFromARN(arnStr string) (string, error) {
 	}
 	path := resource[firstIndex : lastIndex+1]
 	return path, nil
+}
+
+func IsArnAssumedRole(arnStr string) (bool, error) {
+	parse, err := arn.Parse(arnStr)
+	if err != nil {
+		return false, err
+	}
+	resource := strings.SplitN(parse.Resource, "/", 2)[0]
+	if resource == AssumedRoleRolePrefix {
+		return true, nil
+	}
+	return false, nil
 }
 
 func GetRoleARN(accountID string, name string, path string, partition string) string {
@@ -616,7 +635,7 @@ func GetInstallerAccountRoleName(cluster *cmv1.Cluster) (string, error) {
 	return GetAccountRoleName(cluster, AccountRoles[InstallerAccountRole].Name)
 }
 
-func GenerateOperatorRolePolicyFiles(reporter *rprtr.Object, policies map[string]*cmv1.AWSSTSPolicy,
+func GenerateOperatorRolePolicyFiles(reporter reporter.Logger, policies map[string]*cmv1.AWSSTSPolicy,
 	credRequests map[string]*cmv1.STSOperator, sharedVpcRoleArn string, partition string) error {
 	isSharedVpc := sharedVpcRoleArn != ""
 	for credrequest := range credRequests {
@@ -642,7 +661,7 @@ func GenerateOperatorRolePolicyFiles(reporter *rprtr.Object, policies map[string
 	return nil
 }
 
-func GenerateAccountRolePolicyFiles(reporter *rprtr.Object, env string, policies map[string]*cmv1.AWSSTSPolicy,
+func GenerateAccountRolePolicyFiles(reporter rprtr.Logger, env string, policies map[string]*cmv1.AWSSTSPolicy,
 	skipPermissionFiles bool, accountRoles map[string]AccountRole, partition string) error {
 	for file := range accountRoles {
 		//Get trust policy
@@ -671,7 +690,7 @@ func GenerateAccountRolePolicyFiles(reporter *rprtr.Object, env string, policies
 	return nil
 }
 
-func generatePermissionPolicyFile(reporter *rprtr.Object, file string, policies map[string]*cmv1.AWSSTSPolicy) error {
+func generatePermissionPolicyFile(reporter rprtr.Logger, file string, policies map[string]*cmv1.AWSSTSPolicy) error {
 	filename := fmt.Sprintf("sts_%s_permission_policy", file)
 	policyDetail := GetPolicyDetails(policies, filename)
 	if policyDetail == "" {
@@ -757,7 +776,7 @@ func FindFirstAttachedPolicy(policiesDetails []PolicyDetail) PolicyDetail {
 }
 
 func UpgradeOperatorRolePolicies(
-	reporter *rprtr.Object,
+	reporter reporter.Logger,
 	awsClient Client,
 	partition string,
 	accountID string,
@@ -961,9 +980,6 @@ func GetAccountRolePolicyKeys(roleType string) []string {
 // GetAccountRolePolicyKeys returns the policy key for fetching the managed policy ARN
 func GetHcpAccountRolePolicyKeys(roleType string) []string {
 	policyKeys := []string{fmt.Sprintf("sts_hcp_%s_permission_policy", roleType)}
-	if roleType == HCPWorkerRole {
-		policyKeys = append(policyKeys, WorkerEC2RegistryKey)
-	}
 
 	return policyKeys
 }
@@ -1029,5 +1045,32 @@ func waitForStackDeleteComplete(ctx context.Context, cfClient client.CloudFormat
 	// You can also use WaitForOutput if you need the output
 	return waiter.Wait(ctx, params, maxWaitDur, func(o *cloudformation.StackDeleteCompleteWaiterOptions) {
 		// Optionally set MinDelay, MaxDelay, and other options here
+	})
+}
+
+func sortAccountRolesByHCPSuffix(roles []iamtypes.Role) {
+	sort.Slice(roles, func(i, j int) bool {
+		prefixI := strings.SplitAfter(*roles[i].RoleName, "-")[0]
+		prefixJ := strings.SplitAfter(*roles[j].RoleName, "-")[0]
+
+		roleGroupI, errI := strconv.Atoi(prefixI)
+		roleGroupJ, errJ := strconv.Atoi(prefixJ)
+
+		if errI == nil && errJ == nil {
+			if roleGroupI != roleGroupJ {
+				return roleGroupI < roleGroupJ
+			}
+		} else {
+			if prefixI != prefixJ {
+				return prefixI < prefixJ
+			}
+		}
+
+		hcpI := strings.Contains(*roles[i].RoleName, HCPSuffixPattern)
+		hcpJ := strings.Contains(*roles[j].RoleName, HCPSuffixPattern)
+		if hcpI != hcpJ {
+			return hcpI
+		}
+		return roleGroupI < roleGroupJ
 	})
 }

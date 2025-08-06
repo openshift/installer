@@ -1100,15 +1100,15 @@ func (w *TransportWrapper) debugExpiry(ctx context.Context, typ string, token *t
 func parsePullSecretAccessToken(text string) error {
 	elems := strings.Split(text, ":")
 	if len(elems) != 2 {
-		return fmt.Errorf("Unparseable pull secret token")
+		return fmt.Errorf("unparseable pull secret token")
 	}
 	_, err := uuid.Parse(elems[0])
 	if err != nil {
-		return fmt.Errorf("Unparseable pull secret token cluster ID")
+		return fmt.Errorf("unparseable pull secret token cluster ID")
 	}
 	_, err = base64.StdEncoding.DecodeString(elems[1])
 	if err != nil {
-		return fmt.Errorf("Unparseable pull secret token value")
+		return fmt.Errorf("unparseable pull secret token value")
 	}
 	return nil
 }

@@ -1,0 +1,57 @@
+/*
+Copyright (c) 2023 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of addon installation
+class AddonInstallation {
+    // Addon installed
+    Addon Addon
+
+    // Addon version of the addon
+    AddonVersion AddonVersion
+
+    // Billing of addon installation.
+    Billing AddonInstallationBilling
+
+    // Date and time when the add-on was initially installed in the cluster.
+    CreationTimestamp Date
+
+    // Version of the operator installed by the add-on.
+    OperatorVersion String
+
+    // Version of the next scheduled upgrade
+    DesiredVersion String
+
+    // Current CSV installed on cluster
+    CsvName String
+
+    // Parameters in the installation
+    link Parameters []AddonInstallationParameter
+
+    // Addon Installation State
+    State AddonInstallationState
+
+    // Subscription for the addon installation
+    Subscription ObjectReference
+
+    // Reason for the current State.
+    StateDescription String
+
+    // Date and time when the add-on installation information was last updated.
+    UpdatedTimestamp Date
+
+    // Date and time when the add-on installation deleted at.
+    DeletedTimestamp Date
+}

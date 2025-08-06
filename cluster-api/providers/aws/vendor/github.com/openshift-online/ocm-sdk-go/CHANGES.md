@@ -3,6 +3,148 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+## 0.1.476
+- Update model to version 0.0.431
+  - Add support for ImageMirrors for ROSA HCP 
+
+## 0.1.475
+- Update model to version 0.0.430
+  - update MarketType enum to match the camelcase values expected by CS
+  - deprecate os disk configuration old design
+  - Add API endpoints for cluster autoscaler in ARO HCP
+
+## 0.1.474
+- Update mode to version 0.0.429
+  - Add support for AutoNode for ROSA HCP 
+
+## 0.1.473
+- Update model to version 0.0.426:
+  - Restructure OS disk attributes for ARO-HCP NodePool
+  - Add `AzureNodePoolOsDisk` type and related resources
+  - Consolidate Azure node pool OS disk configuration into structured approach
+
+## 0.1.472
+- Add script to simplify model update process
+- Add git hook to validate pushed tag matches the Version constant
+- Add version bump script and update the version file
+- Update ocm-api-metamodel to v0.0.422
+- Update API model with Azure node pool OS disk types and endpoints
+
+## 0.1.471
+- Reorganize CONTRIBUTING.md file and remove unnecessary instructions
+- Update release process documentation for ocm-api-model
+- Add optional commit SHA argument to update-model script
+- Update model with latest changes
+
+## 0.1.470
+- Update model to version 0.0.422:
+  - Add AWS backup configuration support with `AWSBackupConfig` type
+  - Add Azure encryption enhancements including `AzureEtcdDataEncryption`, `AzureKmsEncryption`, and `AzureKmsKey` types
+  - Add new access transparency service with access protection and request types
+  - Add `ClientComponent` type for ARO-HCP
+- Add development workflow improvements
+- Prepare infrastructure for Azure node pool enhancements
+
+## 0.1.469
+- Update model to add arohcp ManagedIdentitiesRequirements types and endpoints
+ 
+## 0.1.468
+- update golangci to v2
+- add macgregor, cristianoveiga to owners/approvers
+- leadership flag enhancement: precheck handler added
+- move JSON structs (serialization) to ocm-api-model
+
+## 0.1.467
+- Update model version v0.0.419
+  - Add `LogType` to `NotificationDetailsRequest`
+
+## 0.1.466
+- Update model version v0.0.418
+  - Add arohcp Version types and endpoints
+  - Add missing not-yet-generated changes for node pool encryption
+
+## 0.1.465
+- Update model version v0.0.417
+  - Add `RhRegionID` field to `Subscription` and `ClusterAuthorizationRequest` type
+
+## 0.1.464
+- Update model version to v0.0.416
+  - Added annotation to Node Pool State
+
+## 0.1.463
+- Updated model version to v0.0.415
+  - Added `ClusterCapabilities` type
+  - Added `Capabilities` field to `Cluster` type
+
+## 0.1.462
+- Updated model version to v0.0.414
+  - Added node pool endpoint resources for aro_hcp
+  - Added node pool state model in clusters_mgmt
+  - Added node pool status resources for aro_hcp
+- Updated meta model version to v0.0.67
+  - Added async methods
+
+## 0.1.461
+- Updated model version to v0.0.413
+  - Add the new inflight check endpoints
+- Updated meta model version to v0.0.66
+
+## 0.1.460
+- Updated model version to v0.0.412
+  - Added `ClusterCondition` field to `VersionGate` type
+
+## 0.1.459
+- Update model version to v0.0.411
+  - Update json values for SDN to OVN Cluster Migration configuration properties
+
+## 0.1.458
+- Update metamodel version to v0.0.65
+  - Enhance 'ref' mechanism
+- Update model versiont to v0.0.410
+  - Add ClusterStatus to aro_hcp
+
+## 0.1.457
+- Fix leadership/flag not respecting initial context supplied
+
+## 0.1.456
+- Update model version to v0.0.409
+  - Update cluster migration state to match API object
+
+## 0.1.455
+- Update model version to v0.0.408
+  - Update cluster migration type constant
+
+## 0.1.454
+- Update model version to v0.0.407
+  - Add ClusterMigration resources
+
+## 0.1.453
+- Update model version to v0.0.406
+  - Expose the GCP Shielded VM secure boot setting at the machine pool level
+
+## 0.1.452
+- Update model version v0.0.405
+- Update metamodel version v0.0.64
+  - Add ARO HCP v1alpha1 root resource
+
+## 0.1.451
+- Update model version v0.0.404
+  - Add WifConfig patch endpoint
+
+## 0.1.450
+- Update model version v0.0.403
+  - Add `NodesOutboundConnectivity` in azure_type.model to the `Azure` model
+  - Add `AzureNodesOutboundConnectivity` model
+
+## 0.1.449
+Update model version v0.0.402
+  - Add WifConfig status endpoint
+  - Add `WifConfigStatus` model
+
+## 0.1.448
+- Update model version v0.0.401
+  - Include support for HCP shared vpc fields in `Cluster` and `DNS` models.
+
 ## 0.1.447
 - Update model version v0.0.400
   - Update ocm-sdk-go examples for Addons

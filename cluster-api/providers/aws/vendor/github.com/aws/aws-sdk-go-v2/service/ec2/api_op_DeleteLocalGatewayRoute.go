@@ -37,7 +37,7 @@ type DeleteLocalGatewayRouteInput struct {
 	// The CIDR range for the route. This must match the CIDR for the route exactly.
 	DestinationCidrBlock *string
 
-	// Use a prefix list in place of DestinationCidrBlock . You cannot use
+	//  Use a prefix list in place of DestinationCidrBlock . You cannot use
 	// DestinationPrefixListId and DestinationCidrBlock in the same request.
 	DestinationPrefixListId *string
 
@@ -104,6 +104,9 @@ func (c *Client) addOperationDeleteLocalGatewayRouteMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,6 +117,15 @@ func (c *Client) addOperationDeleteLocalGatewayRouteMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteLocalGatewayRouteValidationMiddleware(stack); err != nil {
@@ -135,6 +147,18 @@ func (c *Client) addOperationDeleteLocalGatewayRouteMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

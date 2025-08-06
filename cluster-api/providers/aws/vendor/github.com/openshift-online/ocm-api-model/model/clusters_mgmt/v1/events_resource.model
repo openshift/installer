@@ -1,0 +1,29 @@
+/*
+Copyright (c) 2021 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Manages a collection used to track events reported by external clients.
+resource Events {
+	// Adds a new event to be tracked. When sending a new event request,
+	// it gets tracked in Prometheus, Pendo, CloudWatch, or whichever
+	// analytics client is configured as part of clusters service. This
+	// allows for reporting on events that happen outside of a regular API
+	// request, but are found to be useful for understanding customer
+	// needs and possible blockers.
+	method Add {
+		// Description of the event.
+		in out Body Event
+	}
+}

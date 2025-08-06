@@ -1,0 +1,60 @@
+/*
+Copyright (c) 2022 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of an addon version.
+class AddonVersion {
+    // Indicates if this addon version can be added to clusters.
+    Enabled Boolean
+
+    // The catalog source image for this addon version.
+    SourceImage String
+
+    // The pull secret name used for this addon version.
+    PullSecretName String
+
+    // The specific addon catalog source channel of packages
+    Channel String
+
+    // Additional catalog sources associated with this addon version
+    AdditionalCatalogSources []AdditionalCatalogSource
+
+    // The url for the package image
+    PackageImage String
+
+    // Indicates if upgrade plans have been created for this addon version
+    UpgradePlansCreated Boolean
+
+    // List of parameters for this addon version.
+    Parameters AddonParameters
+
+    // List of requirements for this addon version.
+    Requirements []AddonRequirement
+
+    // List of sub operators for this addon version.
+    SubOperators []AddonSubOperator
+
+    // Additional configs to be used by the addon once its installed in the cluster.
+    Config  AddonConfig
+
+    // AvailableUpgrades is the list of versions this version can be upgraded to.
+    AvailableUpgrades []String
+
+    // Configuration parameters which will determine the underlying configuration of the MonitoringStack CR. 
+    MonitoringStack MonitoringStack
+
+    // Configuration parameters to be injected in the ServiceMonitor used for federation.
+    MetricsFederation MetricsFederation
+}

@@ -38,21 +38,32 @@ type DescribeFpgaImagesInput struct {
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - create-time - The creation time of the AFI.
+	//
 	//   - fpga-image-id - The FPGA image identifier (AFI ID).
+	//
 	//   - fpga-image-global-id - The global FPGA image identifier (AGFI ID).
+	//
 	//   - name - The name of the AFI.
+	//
 	//   - owner-id - The Amazon Web Services account ID of the AFI owner.
+	//
 	//   - product-code - The product code.
+	//
 	//   - shell-version - The version of the Amazon Web Services Shell that was used
 	//   to create the bitstream.
+	//
 	//   - state - The state of the AFI ( pending | failed | available | unavailable ).
+	//
 	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
+	//
 	//   - tag-key - The key of a tag assigned to the resource. Use this filter to find
 	//   all resources assigned a tag with a specific key, regardless of the tag value.
+	//
 	//   - update-time - The time of the most recent update.
 	Filters []types.Filter
 
@@ -131,6 +142,9 @@ func (c *Client) addOperationDescribeFpgaImagesMiddlewares(stack *middleware.Sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -141,6 +155,15 @@ func (c *Client) addOperationDescribeFpgaImagesMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeFpgaImages(options.Region), middleware.Before); err != nil {
@@ -161,16 +184,20 @@ func (c *Client) addOperationDescribeFpgaImagesMiddlewares(stack *middleware.Sta
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeFpgaImagesAPIClient is a client that implements the DescribeFpgaImages
-// operation.
-type DescribeFpgaImagesAPIClient interface {
-	DescribeFpgaImages(context.Context, *DescribeFpgaImagesInput, ...func(*Options)) (*DescribeFpgaImagesOutput, error)
-}
-
-var _ DescribeFpgaImagesAPIClient = (*Client)(nil)
 
 // DescribeFpgaImagesPaginatorOptions is the paginator options for
 // DescribeFpgaImages
@@ -236,6 +263,9 @@ func (p *DescribeFpgaImagesPaginator) NextPage(ctx context.Context, optFns ...fu
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeFpgaImages(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -254,6 +284,14 @@ func (p *DescribeFpgaImagesPaginator) NextPage(ctx context.Context, optFns ...fu
 
 	return result, nil
 }
+
+// DescribeFpgaImagesAPIClient is a client that implements the DescribeFpgaImages
+// operation.
+type DescribeFpgaImagesAPIClient interface {
+	DescribeFpgaImages(context.Context, *DescribeFpgaImagesInput, ...func(*Options)) (*DescribeFpgaImagesOutput, error)
+}
+
+var _ DescribeFpgaImagesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeFpgaImages(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
