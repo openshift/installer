@@ -31,6 +31,7 @@ import (
 )
 
 const Production = "production"
+const ProductionAlias = "prod"
 
 // URLAliases allows the value of the `--env` option to map to the various API URLs.
 var URLAliases = map[string]string{

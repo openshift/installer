@@ -1,0 +1,70 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Root of the tree of resources of the authorization service.
+resource Root {
+	// Reference to the resource that is used to submit export control review requests.
+	locator ExportControlReview {
+		target ExportControlReview
+	}
+
+	// Reference to the resource that is used to submit access review requests.
+	locator AccessReview {
+		target AccessReview
+	}
+
+	// Reference to the resource that is used to submit self access review requests.
+	locator SelfAccessReview {
+		target SelfAccessReview
+	}
+
+	// Reference to the resource that is used to submit resource review requests.
+	locator ResourceReview {
+		target ResourceReview
+	}
+
+	// Reference to the resource that is used to submit Red Hat's Terms and Conditions
+	// for using OpenShift Dedicated and Amazon Red Hat OpenShift review requests.
+	locator TermsReview {
+		target TermsReview
+	}
+
+	// Reference to the resource that is used to submit Red Hat's Terms and Conditions
+	// for using OpenShift Dedicated and Amazon Red Hat OpenShift self-review requests.
+	locator SelfTermsReview {
+		target SelfTermsReview
+	}
+
+	// Reference to the resource that is used to submit self capability review requests.
+	locator SelfCapabilityReview {
+		target SelfCapabilityReview
+	}
+
+	// Reference to the resource that is used to submit capability review requests.
+	locator CapabilityReview {
+		target CapabilityReview
+	}
+
+	// Reference to the resource that is used to submit feature review requests.
+	locator FeatureReview {
+		target FeatureReview
+	}
+
+	// Reference to the resource that is used to submit self feature review requests.
+	locator SelfFeatureReview {
+		target SelfFeatureReview
+	}
+}

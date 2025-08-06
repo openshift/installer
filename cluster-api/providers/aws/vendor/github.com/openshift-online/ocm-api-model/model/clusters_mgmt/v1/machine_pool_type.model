@@ -1,0 +1,53 @@
+/*
+Copyright (c) 2020 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of a machine pool in a cluster.
+class MachinePool {
+	// The number of Machines (and Nodes) to create.
+	// Replicas and autoscaling cannot be used together.
+	Replicas Integer
+
+	// Details for auto-scaling the machine pool.
+	// Replicas and autoscaling cannot be used together.
+	Autoscaling MachinePoolAutoscaling
+
+	// The instance type of Nodes to create.
+	InstanceType String
+
+	// The availability zones upon which the nodes are created.
+	AvailabilityZones []String
+
+	// The subnets upon which the nodes are created.
+	Subnets []String
+
+	// The labels set on the Nodes created.
+	Labels [String]String
+
+	// The taints set on the Nodes created.
+	Taints []Taint
+
+	// AWS specific parameters (Optional).
+	AWS AWSMachinePool
+
+	// GCP specific parameters (Optional).
+	GCP GCPMachinePool
+
+	// List of security groups to be applied to MachinePool (Optional)
+	SecurityGroupFilters []MachinePoolSecurityGroupFilter
+
+	// The machine root volume capabilities.
+	RootVolume RootVolume
+}

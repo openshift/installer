@@ -32,7 +32,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"gitlab.com/c0b/go-ordered-json"
+	ordered "gitlab.com/c0b/go-ordered-json"
 )
 
 // RoundTripperBuilder contains the information an logic needed to build a new round tripper that

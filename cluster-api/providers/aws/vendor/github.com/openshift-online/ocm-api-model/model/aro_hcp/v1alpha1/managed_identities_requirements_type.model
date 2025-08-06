@@ -1,0 +1,110 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of managed identities requirements.
+// When creating ARO-HCP Clusters, the end-users will need to pre-create the set of Managed Identities
+// required by the clusters.
+// The set of Managed Identities that the end-users need to precreate is not static and depends on 
+// several factors:
+// (1) The OpenShift version of the cluster being created. 
+// (2) The functionalities that are being enabled for the cluster. Some Managed Identities are not
+// always required but become required if a given functionality is enabled.
+// Additionally, the Managed Identities that the end-users will need to precreate will have to have a 
+// set of required permissions assigned to them which also have to be returned to the end users.
+class ManagedIdentitiesRequirements {
+  // The control plane operators managed identities requirements
+  ControlPlaneOperatorsIdentities []ControlPlaneOperatorIdentityRequirement
+  // The data plane operators managed identities requirements
+  DataPlaneOperatorsIdentities []DataPlaneOperatorIdentityRequirement
+}
+
+struct ControlPlaneOperatorIdentityRequirement {
+  // Indicates whether the identity is always required or not.
+  // "always" means that the identity is always required
+  // "on_enablement" means that the identity is only required when a functionality 
+  // that leverages the operator is enabled. 
+  // Possible values are ("always", "on_enablement")
+  Required String
+
+  // The name of the control plane operator that needs the identity
+  OperatorName String
+
+  // The field is a string and it is of format X.Y.
+  // Not specifying it indicates support for this operator in all Openshift versions,
+  // starting from min_openshift_version if min_openshift_version is defined. 
+  @json(name="max_openshift_version")
+  MaxOpenShiftVersion String
+
+  // The field is a string and it is of format X.Y.
+  // Not specifying it indicates support for this operator in all Openshift versions,
+  // or up to max_openshift_version, if defined. 
+  @json(name="min_openshift_version")
+  MinOpenShiftVersion String   
+
+  // A list of roles that are required by the operator 
+  RoleDefinitions []RoleDefinitionOperatorIdentityRequirement
+}
+
+struct DataPlaneOperatorIdentityRequirement {
+   // Indicates whether the identity is always required or not
+   // "always" means that the identity is always required
+   // "on_enablement" means that the identity is only required when a functionality 
+   // that leverages the operator is enabled.
+   // Possible values are ("always", "on_enablement")
+   Required String
+
+   // The name of the data plane operator that needs the identity
+   OperatorName String
+
+   // The field is a string and it is of format X.Y (e.g 4.18) where X and Y are major and 
+   // minor segments of the OpenShift version respectively.
+   // Not specifying it indicates support for this operator in all Openshift versions,
+   // starting from min_openshift_version if min_openshift_version is defined. 
+   @json(name="max_openshift_version")
+   MaxOpenShiftVersion String
+
+   // The field is a string and it is of format X.Y (e.g 4.18) where X and Y are major and 
+   // minor segments of the OpenShift version respectively.
+   // Not specifying it indicates support for this operator in all Openshift versions,
+   // or up to max_openshift_version, if defined. 
+   @json(name="min_openshift_version")
+   MinOpenShiftVersion String
+
+   // It is a list of K8s ServiceAccounts leveraged by the operator.
+   // There must be at least a single service account specified.
+   // This information is needed to federate a managed identity to a k8s subject.
+   // There should be no duplicated "name:namespace" entries within this field. 
+   ServiceAccounts []K8sServiceAccountOperatorIdentityRequirement
+
+   // A list of roles that are required by the operator 
+   RoleDefinitions []RoleDefinitionOperatorIdentityRequirement
+}
+
+struct K8sServiceAccountOperatorIdentityRequirement {
+  // The name of the service account to be leveraged by the operator
+  Name String
+  // The namespace of the service account to be leveraged by the operator
+  Namespace String
+}
+
+struct RoleDefinitionOperatorIdentityRequirement {
+  // The official name of the Role defined in resource_id. 
+  // It is purely a friendly/descriptive name.
+  Name String
+  // A string representing the Resource ID of an Azure Role Definition. 
+  // The role definition indicates what permissions are needed by the operator
+  ResourceId String
+}

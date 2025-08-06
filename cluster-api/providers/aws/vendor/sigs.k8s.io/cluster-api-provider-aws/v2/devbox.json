@@ -1,22 +1,29 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.7/.schema/devbox.schema.json",
   "packages": [
-    "go@1.22",
-    "kubectl",
-    "kind",
-    "docker",
-    "helm",
-    "jq",
-    "yq",
-    "git",
-    "k9s",
-    "tilt",
-    "awscli"
+    "go@latest",
+    "kind@latest",
+    "docker@latest",
+    "jq@latest",
+    "yq@latest",
+    "git@latest",
+    "k9s@latest",
+    "tilt@latest",
+    "awscli2@latest",
+    "direnv@latest",
+    "kustomize@5.5.0"
   ],
   "shell": {
+    "init_hook": [
+      "export PATH=$PWD/bin:$PATH",
+      "./scripts/devbox-init-hook.sh"
+    ],
     "scripts": {
+      "clean": [
+        "make clean"
+      ],
       "build": [
-        "make clusterawsadm"
+        "make generate && make clusterawsadm"
       ]
     }
   }

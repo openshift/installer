@@ -31,9 +31,12 @@ import (
 //
 // Deprecated: This type will be removed in one of the next releases.
 type ClusterClass struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// spec is the desired state of ClusterClass.
 	Spec ClusterClassSpec `json:"spec,omitempty"`
 }
 
@@ -69,7 +72,7 @@ type ControlPlaneClass struct {
 	// LocalObjectTemplate contains the reference to the control plane provider.
 	LocalObjectTemplate `json:",inline"`
 
-	// MachineTemplate defines the metadata and infrastructure information
+	// machineInfrastructure defines the metadata and infrastructure information
 	// for control plane machines.
 	//
 	// This field is supported if and only if the control plane provider template
@@ -129,8 +132,11 @@ type LocalObjectTemplate struct {
 // Deprecated: This type will be removed in one of the next releases.
 type ClusterClassList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ClusterClass `json:"items"`
+	// items is the list of ClusterClasses.
+	Items []ClusterClass `json:"items"`
 }
 
 func init() {

@@ -42,6 +42,7 @@ type GetTransitGatewayAttachmentPropagationsInput struct {
 	DryRun *bool
 
 	// One or more filters. The possible values are:
+	//
 	//   - transit-gateway-route-table-id - The ID of the transit gateway route table.
 	Filters []types.Filter
 
@@ -113,6 +114,9 @@ func (c *Client) addOperationGetTransitGatewayAttachmentPropagationsMiddlewares(
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,6 +127,15 @@ func (c *Client) addOperationGetTransitGatewayAttachmentPropagationsMiddlewares(
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetTransitGatewayAttachmentPropagationsValidationMiddleware(stack); err != nil {
@@ -146,16 +159,20 @@ func (c *Client) addOperationGetTransitGatewayAttachmentPropagationsMiddlewares(
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// GetTransitGatewayAttachmentPropagationsAPIClient is a client that implements
-// the GetTransitGatewayAttachmentPropagations operation.
-type GetTransitGatewayAttachmentPropagationsAPIClient interface {
-	GetTransitGatewayAttachmentPropagations(context.Context, *GetTransitGatewayAttachmentPropagationsInput, ...func(*Options)) (*GetTransitGatewayAttachmentPropagationsOutput, error)
-}
-
-var _ GetTransitGatewayAttachmentPropagationsAPIClient = (*Client)(nil)
 
 // GetTransitGatewayAttachmentPropagationsPaginatorOptions is the paginator
 // options for GetTransitGatewayAttachmentPropagations
@@ -224,6 +241,9 @@ func (p *GetTransitGatewayAttachmentPropagationsPaginator) NextPage(ctx context.
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.GetTransitGatewayAttachmentPropagations(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -242,6 +262,14 @@ func (p *GetTransitGatewayAttachmentPropagationsPaginator) NextPage(ctx context.
 
 	return result, nil
 }
+
+// GetTransitGatewayAttachmentPropagationsAPIClient is a client that implements
+// the GetTransitGatewayAttachmentPropagations operation.
+type GetTransitGatewayAttachmentPropagationsAPIClient interface {
+	GetTransitGatewayAttachmentPropagations(context.Context, *GetTransitGatewayAttachmentPropagationsInput, ...func(*Options)) (*GetTransitGatewayAttachmentPropagationsOutput, error)
+}
+
+var _ GetTransitGatewayAttachmentPropagationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opGetTransitGatewayAttachmentPropagations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

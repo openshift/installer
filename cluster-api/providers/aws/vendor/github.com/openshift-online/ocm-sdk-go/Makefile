@@ -26,13 +26,6 @@ export PATH := $(LOCAL_BIN_PATH):$(PATH)
 # Disable CGO so that we always generate static binaries:
 export CGO_ENABLED=0
 
-# Details of the model to use:
-model_version:=v0.0.400
-model_url:=https://github.com/openshift-online/ocm-api-model.git
-
-# Details of the metamodel to use:
-metamodel_version:=v0.0.61
-
 goimports_version:=v0.4.0
 
 # Additional flags to pass to the `ginkgo` command. This is used in the GitHub
@@ -46,6 +39,41 @@ GINKGO := $(LOCAL_BIN_PATH)/ginkgo
 ginkgo-install:
 	@GOBIN=$(LOCAL_BIN_PATH) go install github.com/onsi/ginkgo/v2/ginkgo@v2.1.4 ;\
 
+verify: lint examples model metamodel-install goimports-install verify-hooks
+	go vet $(find . -maxdepth 1 -type d  ! -name 'vendor' ! -name '.')
+	hack/verify-gofmt.sh
+	hack/verify-client.sh $(METAMODEL) .
+	hack/verify-openapi.sh $(METAMODEL) ./openapi
+.PHONY: verify
+
+.PHONY: install-hooks
+install-hooks:
+	@echo "Installing git hooks..."
+	@if [ -f hooks/pre-push ]; then \
+		cp hooks/pre-push .git/hooks/pre-push && \
+		chmod +x .git/hooks/pre-push && \
+		echo "Installed and made .git/hooks/pre-push executable"; \
+	else \
+		echo "Error: hooks/pre-push not found in repository"; \
+		exit 1; \
+	fi
+
+.PHONY: verify-hooks
+verify-hooks:
+	@echo "Verifying git hooks..."
+	@if [ -f .git/hooks/pre-push ]; then \
+		if [ -x .git/hooks/pre-push ]; then \
+			echo ".git/hooks/pre-push is executable"; \
+		else \
+			echo ".git/hooks/pre-push is not executable"; \
+			echo "  Run 'make install-hooks' to fix this"; \
+			exit 1; \
+		fi \
+	else \
+		echo "Warning: .git/hooks/pre-push not found"; \
+		echo "  Run 'make install-hooks' to install it"; \
+	fi
+
 .PHONY: examples
 examples:
 	cd examples && \
@@ -55,7 +83,12 @@ examples:
 
 .PHONY: test tests
 test tests: ginkgo-install
+ifndef JUNITFILE
 	$(GINKGO) run -r $(ginkgo_flags)
+else
+	$(GINKGO) run -r $(ginkgo_flags) --junit-report=junit_golang_tests_junit.xml --output-dir=${ARTIFACT_DIR}
+endif
+
 
 .PHONY: fmt
 fmt:
@@ -66,47 +99,24 @@ lint:
 	golangci-lint --version
 	golangci-lint run
 
+# set "normal" alias matching kube and ocp
+.PHONY: update
+update: generate
+
 .PHONY: generate
 generate: model metamodel-install goimports-install
-	rm -rf \
-		accesstransparency \
-		accountsmgmt \
-		addonsmgmt \
-		authorizations \
-		clustersmgmt \
-		errors \
-		helpers \
-		jobqueue \
-		servicelogs \
-		servicemgmt \
-		statusboard \
-		webrca \
-		osdfleetmgmt \
-		openapi
-	$(METAMODEL) generate go \
-		--model=model/model \
-		--base=github.com/openshift-online/ocm-sdk-go \
-		--output=.
-	$(METAMODEL) generate openapi \
-		--model=model/model \
-		--output=openapi
+	hack/generate-client.sh $(METAMODEL) .
+	hack/generate-openapi.sh $(METAMODEL) ./openapi
 
 .PHONY: model
 model:
-	rm -rf "$@"
-	if [ -d "$(model_url)" ]; then \
-		cp -r "$(model_url)" "$@"; \
-	else \
-		git clone "$(model_url)" "$@"; \
-		cd "$@"; \
-		git fetch --tags origin; \
-		git checkout -B build "$(model_version)"; \
-	fi
+	go mod tidy && go mod vendor
 
 .PHONY: metamodel
-METAMODEL=$(LOCAL_BIN_PATH)/metamodel
+METAMODEL=$(PROJECT_PATH)/metamodel_generator/metamodel
 metamodel-install:
-	GOBIN=$(LOCAL_BIN_PATH) go install github.com/openshift-online/ocm-api-metamodel/cmd/metamodel@$(metamodel_version)
+	 $(MAKE) -C metamodel_generator clean
+	 $(MAKE) -C metamodel_generator build
 
 .PHONY: goimports
 goimports-install:
@@ -114,7 +124,9 @@ goimports-install:
 
 .PHONY: clean
 clean:
+	hack/clean-client.sh
+	hack/clean-openapi.sh
 	rm -rf \
-		metamodel \
+		$(PROJECT_PATH)/metamodel_generator/metamodel \
 		model \
 		$(NULL)

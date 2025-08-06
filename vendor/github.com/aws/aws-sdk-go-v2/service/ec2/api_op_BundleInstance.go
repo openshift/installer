@@ -11,10 +11,13 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Bundles an Amazon instance store-backed Windows instance. During bundling, only
-// the root device volume (C:\) is bundled. Data on other instance store volumes is
-// not preserved. This action is not applicable for Linux/Unix instances or Windows
-// instances that are backed by Amazon EBS.
+// Bundles an Amazon instance store-backed Windows instance.
+//
+// During bundling, only the root device volume (C:\) is bundled. Data on other
+// instance store volumes is not preserved.
+//
+// This action is not applicable for Linux/Unix instances or Windows instances
+// that are backed by Amazon EBS.
 func (c *Client) BundleInstance(ctx context.Context, params *BundleInstanceInput, optFns ...func(*Options)) (*BundleInstanceOutput, error) {
 	if params == nil {
 		params = &BundleInstanceInput{}
@@ -33,7 +36,9 @@ func (c *Client) BundleInstance(ctx context.Context, params *BundleInstanceInput
 // Contains the parameters for BundleInstance.
 type BundleInstanceInput struct {
 
-	// The ID of the instance to bundle. Default: None
+	// The ID of the instance to bundle.
+	//
+	// Default: None
 	//
 	// This member is required.
 	InstanceId *string
@@ -109,6 +114,9 @@ func (c *Client) addOperationBundleInstanceMiddlewares(stack *middleware.Stack, 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -119,6 +127,15 @@ func (c *Client) addOperationBundleInstanceMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpBundleInstanceValidationMiddleware(stack); err != nil {
@@ -140,6 +157,18 @@ func (c *Client) addOperationBundleInstanceMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

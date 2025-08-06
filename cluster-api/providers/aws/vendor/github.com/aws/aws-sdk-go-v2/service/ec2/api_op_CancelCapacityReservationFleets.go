@@ -13,10 +13,13 @@ import (
 
 // Cancels one or more Capacity Reservation Fleets. When you cancel a Capacity
 // Reservation Fleet, the following happens:
+//
 //   - The Capacity Reservation Fleet's status changes to cancelled .
+//
 //   - The individual Capacity Reservations in the Fleet are cancelled. Instances
 //     running in the Capacity Reservations at the time of cancelling the Fleet
 //     continue to run in shared capacity.
+//
 //   - The Fleet stops creating new Capacity Reservations.
 func (c *Client) CancelCapacityReservationFleets(ctx context.Context, params *CancelCapacityReservationFleetsInput, optFns ...func(*Options)) (*CancelCapacityReservationFleetsOutput, error) {
 	if params == nil {
@@ -107,6 +110,9 @@ func (c *Client) addOperationCancelCapacityReservationFleetsMiddlewares(stack *m
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -117,6 +123,15 @@ func (c *Client) addOperationCancelCapacityReservationFleetsMiddlewares(stack *m
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCancelCapacityReservationFleetsValidationMiddleware(stack); err != nil {
@@ -138,6 +153,18 @@ func (c *Client) addOperationCancelCapacityReservationFleetsMiddlewares(stack *m
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

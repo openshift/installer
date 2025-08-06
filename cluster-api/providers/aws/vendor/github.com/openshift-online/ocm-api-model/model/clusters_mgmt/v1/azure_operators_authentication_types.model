@@ -1,0 +1,134 @@
+/*
+Copyright (c) 2024 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// The configuration that the operators of the
+// cluster have to authenticate to Azure.
+struct AzureOperatorsAuthentication {
+	// The authentication configuration to authenticate
+	// to Azure using Azure User-Assigned Managed Identities.
+	// Required during creation.
+	ManagedIdentities AzureOperatorsAuthenticationManagedIdentities
+}
+
+// Represents the information related to Azure User-Assigned managed identities
+// needed to perform Operators authentication based on Azure User-Assigned
+// Managed Identities
+struct AzureOperatorsAuthenticationManagedIdentities {
+	// The Managed Identities Data Plane Identity URL associated with the
+	// cluster. It is the URL that will be used to communicate with the
+	// Managed Identities Resource Provider (MI RP).
+	// Required during creation.
+	// Immutable.
+	ManagedIdentitiesDataPlaneIdentityUrl String
+
+	// The set of Azure User-Assigned Managed Identities leveraged for the
+	// Control Plane operators of the cluster. The set of required managed
+	// identities is dependent on the Cluster's OpenShift version.
+	// Immutable
+	ControlPlaneOperatorsManagedIdentities [String]AzureControlPlaneManagedIdentity
+
+	// The set of Azure User-Assigned Managed Identities leveraged for the
+	// Data Plane operators of the cluster. The set of required managed
+	// identities is dependent on the Cluster's OpenShift version.
+	// Immutable.
+	DataPlaneOperatorsManagedIdentities [String]AzureDataPlaneManagedIdentity
+	// The Azure User-Assigned Managed Identity used to perform service
+	// level actions. Specifically:
+	// - Add Federated Identity Credentials to the identities in
+	//   `data_plane_operators_managed_identities` that belong to Data
+	//   Plane Cluster Operators
+	// - Perform permissions validation for the BYOVNet related resources
+	//   associated to the Cluster
+	// Required during creation.
+	// Immutable.
+	ServiceManagedIdentity AzureServiceManagedIdentity
+}
+
+// Represents the information associated to an Azure User-Assigned
+// Managed Identity belonging to the Control Plane of the cluster.
+struct AzureControlPlaneManagedIdentity {
+	// The Azure Resource ID of the Azure User-Assigned Managed
+	// Identity. The managed identity represented must exist before
+	// creating the cluster.
+	// The Azure Resource Group Name specified as part of the Resource ID
+	// must belong to the Azure Subscription specified in `.azure.subscription_id`,
+	// and in the same Azure location as the cluster's region.
+	// The Azure Resource Group Name specified as part of the Resource ID
+	// must be a different Resource Group Name than the one specified in
+	// `.azure.managed_resource_group_name`.
+	// The Azure Resource Group Name specified as part of the Resource ID
+	// can be the same, or a different one than the one specified in
+	// `.azure.resource_group_name`.
+	// Required during creation.
+	// Immutable.
+	ResourceID String
+
+	// The Client ID associated to the Azure User-Assigned Managed Identity.
+	// Readonly.
+	ClientID String
+
+	// The Principal ID associated to the Azure User-Assigned Identity.
+	// Readonly.
+	PrincipalID String
+}
+
+// Represents the information associated to an Azure User-Assigned
+// Managed Identity belonging to the Data Plane of the cluster.
+struct AzureDataPlaneManagedIdentity {
+	// The Azure Resource ID of the Azure User-Assigned Managed
+	// Identity. The managed identity represented must exist before
+	// creating the cluster.
+	// The Azure Resource Group Name specified as part of the Resource ID
+	// must belong to the Azure Subscription specified in `.azure.subscription_id`,
+	// and in the same Azure location as the cluster's region.
+	// The Azure Resource Group Name specified as part of the Resource ID
+	// must be a different Resource Group Name than the one specified in
+	// `.azure.managed_resource_group_name`.
+	// The Azure Resource Group Name specified as part of the Resource ID
+	// can be the same, or a different one than the one specified in
+	// `.azure.resource_group_name`.
+	// Required during creation.
+	// Immutable.
+	ResourceID String
+}
+
+// Represents the information associated to an Azure User-Assigned
+// Managed Identity whose purpose is to perform service level actions.
+struct AzureServiceManagedIdentity {
+	// The Azure Resource ID of the Azure User-Assigned Managed
+	// Identity. The managed identity represented must exist before
+	// creating the cluster.
+	// The Azure Resource Group Name specified as part of the Resource ID
+	// must belong to the Azure Subscription specified in `.azure.subscription_id`,
+	// and in the same Azure location as the cluster's region.
+	// The Azure Resource Group Name specified as part of the Resource ID
+	// must be a different Resource Group Name than the one specified in
+	// `.azure.managed_resource_group_name`.
+	// The Azure Resource Group Name specified as part of the Resource ID
+	// can be the same, or a different one than the one specified in
+	// `.azure.resource_group_name`.
+	// Required during creation.
+	// Immutable.
+	ResourceID String
+
+	// The Client ID associated to the Azure User-Assigned Managed Identity.
+	// Readonly.
+	ClientID String
+
+	// The Principal ID associated to the Azure User-Assigned Managed Identity.
+	// Readonly.
+	PrincipalID String
+}
