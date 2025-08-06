@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/pkg/errors"
+	netutils "k8s.io/utils/net"
 )
 
 var nullString = "null"
@@ -59,6 +60,39 @@ func (ipnet *IPNet) UnmarshalJSON(b []byte) (err error) {
 	*ipnet = *parsedIPNet
 
 	return nil
+}
+
+// IPNets represents a list of IPNet.
+type IPNets []IPNet
+
+func (ipnets IPNets) String() []string {
+	cidrs := make([]string, len(ipnets))
+	for i, ipnet := range ipnets {
+		cidrs[i] = ipnet.String()
+	}
+	return cidrs
+}
+
+// IPv4Nets returns all IPNet of IPv4 familiy.
+func (ipnets IPNets) IPv4Nets() IPNets {
+	var ipv4Nets IPNets
+	for _, ipnet := range ipnets {
+		if netutils.IsIPv4CIDR(&ipnet.IPNet) {
+			ipv4Nets = append(ipv4Nets, ipnet)
+		}
+	}
+	return ipv4Nets
+}
+
+// IPv6Nets returns all IPNet of IPv6 familiy.
+func (ipnets IPNets) IPv6Nets() IPNets {
+	var ipv6Nets IPNets
+	for _, ipnet := range ipnets {
+		if netutils.IsIPv6CIDR(&ipnet.IPNet) {
+			ipv6Nets = append(ipv6Nets, ipnet)
+		}
+	}
+	return ipv6Nets
 }
 
 // ParseCIDR parses a CIDR from its string representation.
