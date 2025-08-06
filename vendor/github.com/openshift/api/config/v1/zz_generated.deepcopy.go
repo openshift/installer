@@ -616,11 +616,6 @@ func (in *AzurePlatformStatus) DeepCopyInto(out *AzurePlatformStatus) {
 		*out = make([]AzureResourceTag, len(*in))
 		copy(*out, *in)
 	}
-	if in.CloudLoadBalancerConfig != nil {
-		in, out := &in.CloudLoadBalancerConfig, &out.CloudLoadBalancerConfig
-		*out = new(CloudLoadBalancerConfig)
-		(*in).DeepCopyInto(*out)
-	}
 	return
 }
 

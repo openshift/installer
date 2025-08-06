@@ -1283,7 +1283,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v0.0.0-20250731182533-c7fbd085e10c
+# github.com/openshift/api v0.0.0-20250730121250-4c1f9af7fc78
 ## explicit; go 1.24.0
 github.com/openshift/api/annotations
 github.com/openshift/api/config/v1
