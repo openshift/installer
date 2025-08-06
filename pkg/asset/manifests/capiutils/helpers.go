@@ -7,6 +7,10 @@ import (
 
 var (
 	defaultCIDR = ipnet.MustParseCIDR("10.0.0.0/16")
+	// AnyIPv4CidrBlock is the CIDR block to match all IPv4 addresses.
+	AnyIPv4CidrBlock = ipnet.MustParseCIDR("0.0.0.0/0")
+	// AnyIPv6CidrBlock is the CIDR block to match all IPv6 addresses.
+	AnyIPv6CidrBlock = ipnet.MustParseCIDR("::/0")
 )
 
 // CIDRFromInstallConfig generates the CIDR from the install config,
@@ -16,6 +20,15 @@ func CIDRFromInstallConfig(installConfig *installconfig.InstallConfig) *ipnet.IP
 		return &installConfig.Config.MachineNetwork[0].CIDR
 	}
 	return defaultCIDR
+}
+
+// MachineCIDRsFromInstallConfig returns the machine network CIDRs from the install config.
+func MachineCIDRsFromInstallConfig(ic *installconfig.InstallConfig) ipnet.IPNets {
+	var cidrs ipnet.IPNets
+	for _, cidr := range ic.Config.MachineNetwork {
+		cidrs = append(cidrs, cidr.CIDR)
+	}
+	return cidrs
 }
 
 // IsEnabled returns true if the feature gate is enabled.

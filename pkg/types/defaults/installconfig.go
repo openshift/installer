@@ -20,11 +20,14 @@ import (
 
 var (
 	// DefaultMachineCIDR default machine CIDR applied to MachineNetwork.
-	DefaultMachineCIDR    = ipnet.MustParseCIDR("10.0.0.0/16")
-	defaultServiceNetwork = ipnet.MustParseCIDR("172.30.0.0/16")
-	defaultClusterNetwork = ipnet.MustParseCIDR("10.128.0.0/14")
-	defaultHostPrefix     = 23
-	defaultNetworkType    = string(operv1.NetworkTypeOVNKubernetes)
+	DefaultMachineCIDR        = ipnet.MustParseCIDR("10.0.0.0/16")
+	defaultServiceNetwork     = ipnet.MustParseCIDR("172.30.0.0/16")
+	defaultIpv6ServiceNetwork = ipnet.MustParseCIDR("fd02::/112")
+	defaultClusterNetwork     = ipnet.MustParseCIDR("10.128.0.0/14")
+	defaultIpv6ClusterNetwork = ipnet.MustParseCIDR("fd01::/48")
+	defaultHostPrefix         = 23
+	defaultIpv6HostPrefix     = 64
+	defaultNetworkType        = string(operv1.NetworkTypeOVNKubernetes)
 )
 
 // SetInstallConfigDefaults sets the defaults for the install config.
@@ -48,6 +51,10 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	}
 	if len(c.Networking.ServiceNetwork) == 0 {
 		c.Networking.ServiceNetwork = []ipnet.IPNet{*defaultServiceNetwork}
+		// Here, we are looking for any platform explicit infra stack spec.
+		if c.IsDualStackInfra() {
+			c.Networking.ServiceNetwork = append(c.Networking.ServiceNetwork, *defaultIpv6ServiceNetwork)
+		}
 	}
 	if len(c.Networking.ClusterNetwork) == 0 {
 		c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
@@ -55,6 +62,15 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 				CIDR:       *defaultClusterNetwork,
 				HostPrefix: int32(defaultHostPrefix),
 			},
+		}
+		// Here, we are looking for any platform explicit infra stack spec.
+		if c.IsDualStackInfra() {
+			c.Networking.ClusterNetwork = append(c.Networking.ClusterNetwork,
+				types.ClusterNetworkEntry{
+					CIDR:       *defaultIpv6ClusterNetwork,
+					HostPrefix: int32(defaultIpv6HostPrefix), // the host prefix must be 64 anyways
+				},
+			)
 		}
 	}
 
