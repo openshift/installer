@@ -57,7 +57,7 @@ func readAddOnVersionsListResponse(response *AddOnVersionsListResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readAddOnVersionList(iterator)
+			items := ReadAddOnVersionList(iterator)
 			response.items = &AddOnVersionList{
 				items: items,
 			}

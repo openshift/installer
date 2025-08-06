@@ -145,7 +145,7 @@ func (r *MachinePoolReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 		Scheme:          mgr.GetScheme(),
 		PredicateLogger: r.predicateLog,
 	}
-	r.ssaCache = ssa.NewCache()
+	r.ssaCache = ssa.NewCache("machinepool")
 
 	return nil
 }
@@ -179,13 +179,13 @@ func (r *MachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			mp.Spec.ClusterName, mp.Name, mp.Namespace)
 	}
 
-	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, mp); err != nil || isPaused || conditionChanged {
-		return ctrl.Result{}, err
-	}
-
 	// Initialize the patch helper.
 	patchHelper, err := patch.NewHelper(mp, r.Client)
 	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if isPaused, requeue, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, mp); err != nil || isPaused || requeue {
 		return ctrl.Result{}, err
 	}
 
@@ -211,6 +211,9 @@ func (r *MachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 				clusterv1.InfrastructureReadyCondition,
 				expv1.ReplicasReadyCondition,
 			}},
+			patch.WithOwnedV1Beta2Conditions{Conditions: []string{
+				clusterv1.PausedV1Beta2Condition,
+			}},
 		}
 		if reterr == nil {
 			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
@@ -228,14 +231,7 @@ func (r *MachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// Handle deletion reconciliation loop.
 	if !mp.ObjectMeta.DeletionTimestamp.IsZero() {
-		err := r.reconcileDelete(ctx, cluster, mp)
-		// Requeue if the reconcile failed because connection to workload cluster was down.
-		if errors.Is(err, clustercache.ErrClusterNotConnected) {
-			log.V(5).Info("Requeuing because connection to the workload cluster is down")
-			return ctrl.Result{RequeueAfter: time.Minute}, nil
-		}
-
-		return ctrl.Result{}, err
+		return ctrl.Result{}, r.reconcileDelete(ctx, cluster, mp)
 	}
 
 	// Handle normal reconciliation loop.
@@ -243,13 +239,7 @@ func (r *MachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		cluster:     cluster,
 		machinePool: mp,
 	}
-	res, err := r.reconcile(ctx, scope)
-	// Requeue if the reconcile failed because connection to workload cluster was down.
-	if errors.Is(err, clustercache.ErrClusterNotConnected) {
-		log.V(5).Info("Requeuing because connection to the workload cluster is down")
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
-	}
-	return res, err
+	return r.reconcile(ctx, scope)
 }
 
 func (r *MachinePoolReconciler) reconcile(ctx context.Context, s *scope) (ctrl.Result, error) {

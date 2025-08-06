@@ -60,7 +60,7 @@ func (o *Product) Kind() string {
 	return ProductKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Product) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -280,6 +280,29 @@ func (l *ProductList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ProductList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ProductList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ProductList) SetItems(items []*Product) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ProductList) Items() []*Product {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

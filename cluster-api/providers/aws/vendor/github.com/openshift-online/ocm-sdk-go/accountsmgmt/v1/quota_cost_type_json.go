@@ -29,7 +29,7 @@ import (
 // MarshalQuotaCost writes a value of the 'quota_cost' type to the given writer.
 func MarshalQuotaCost(object *QuotaCost, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeQuotaCost(object, stream)
+	WriteQuotaCost(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalQuotaCost(object *QuotaCost, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeQuotaCost writes a value of the 'quota_cost' type to the given stream.
-func writeQuotaCost(object *QuotaCost, stream *jsoniter.Stream) {
+// WriteQuotaCost writes a value of the 'quota_cost' type to the given stream.
+func WriteQuotaCost(object *QuotaCost, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func writeQuotaCost(object *QuotaCost, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cloud_accounts")
-		writeCloudAccountList(object.cloudAccounts, stream)
+		WriteCloudAccountList(object.cloudAccounts, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0
@@ -93,7 +93,7 @@ func writeQuotaCost(object *QuotaCost, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("related_resources")
-		writeRelatedResourceList(object.relatedResources, stream)
+		WriteRelatedResourceList(object.relatedResources, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -114,13 +114,13 @@ func UnmarshalQuotaCost(source interface{}) (object *QuotaCost, err error) {
 	if err != nil {
 		return
 	}
-	object = readQuotaCost(iterator)
+	object = ReadQuotaCost(iterator)
 	err = iterator.Error
 	return
 }
 
-// readQuotaCost reads a value of the 'quota_cost' type from the given iterator.
-func readQuotaCost(iterator *jsoniter.Iterator) *QuotaCost {
+// ReadQuotaCost reads a value of the 'quota_cost' type from the given iterator.
+func ReadQuotaCost(iterator *jsoniter.Iterator) *QuotaCost {
 	object := &QuotaCost{}
 	for {
 		field := iterator.ReadObject()
@@ -133,7 +133,7 @@ func readQuotaCost(iterator *jsoniter.Iterator) *QuotaCost {
 			object.allowed = value
 			object.bitmap_ |= 1
 		case "cloud_accounts":
-			value := readCloudAccountList(iterator)
+			value := ReadCloudAccountList(iterator)
 			object.cloudAccounts = value
 			object.bitmap_ |= 2
 		case "consumed":
@@ -149,7 +149,7 @@ func readQuotaCost(iterator *jsoniter.Iterator) *QuotaCost {
 			object.quotaID = value
 			object.bitmap_ |= 16
 		case "related_resources":
-			value := readRelatedResourceList(iterator)
+			value := ReadRelatedResourceList(iterator)
 			object.relatedResources = value
 			object.bitmap_ |= 32
 		case "version":

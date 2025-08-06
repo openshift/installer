@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSummaryMetricsList(list []*SummaryMetrics, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSummaryMetricsList(list, stream)
+	WriteSummaryMetricsList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSummaryMetricsList(list []*SummaryMetrics, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeSummaryMetricsList writes a list of value of the 'summary_metrics' type to
+// WriteSummaryMetricsList writes a list of value of the 'summary_metrics' type to
 // the given stream.
-func writeSummaryMetricsList(list []*SummaryMetrics, stream *jsoniter.Stream) {
+func WriteSummaryMetricsList(list []*SummaryMetrics, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeSummaryMetrics(value, stream)
+		WriteSummaryMetrics(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSummaryMetricsList(source interface{}) (items []*SummaryMetrics, e
 	if err != nil {
 		return
 	}
-	items = readSummaryMetricsList(iterator)
+	items = ReadSummaryMetricsList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSummaryMetricsList reads list of values of the ”summary_metrics' type from
+// ReadSummaryMetricsList reads list of values of the ”summary_metrics' type from
 // the given iterator.
-func readSummaryMetricsList(iterator *jsoniter.Iterator) []*SummaryMetrics {
+func ReadSummaryMetricsList(iterator *jsoniter.Iterator) []*SummaryMetrics {
 	list := []*SummaryMetrics{}
 	for iterator.ReadArray() {
-		item := readSummaryMetrics(iterator)
+		item := ReadSummaryMetrics(iterator)
 		list = append(list, item)
 	}
 	return list

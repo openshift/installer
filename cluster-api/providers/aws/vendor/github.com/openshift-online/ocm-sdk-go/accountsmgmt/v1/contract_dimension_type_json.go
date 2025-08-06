@@ -29,7 +29,7 @@ import (
 // MarshalContractDimension writes a value of the 'contract_dimension' type to the given writer.
 func MarshalContractDimension(object *ContractDimension, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeContractDimension(object, stream)
+	WriteContractDimension(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalContractDimension(object *ContractDimension, writer io.Writer) error
 	return stream.Error
 }
 
-// writeContractDimension writes a value of the 'contract_dimension' type to the given stream.
-func writeContractDimension(object *ContractDimension, stream *jsoniter.Stream) {
+// WriteContractDimension writes a value of the 'contract_dimension' type to the given stream.
+func WriteContractDimension(object *ContractDimension, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalContractDimension(source interface{}) (object *ContractDimension, 
 	if err != nil {
 		return
 	}
-	object = readContractDimension(iterator)
+	object = ReadContractDimension(iterator)
 	err = iterator.Error
 	return
 }
 
-// readContractDimension reads a value of the 'contract_dimension' type from the given iterator.
-func readContractDimension(iterator *jsoniter.Iterator) *ContractDimension {
+// ReadContractDimension reads a value of the 'contract_dimension' type from the given iterator.
+func ReadContractDimension(iterator *jsoniter.Iterator) *ContractDimension {
 	object := &ContractDimension{}
 	for {
 		field := iterator.ReadObject()

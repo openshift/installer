@@ -11,11 +11,13 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates an EC2 Instance Connect Endpoint. An EC2 Instance Connect Endpoint
-// allows you to connect to an instance, without requiring the instance to have a
-// public IPv4 address. For more information, see Connect to your instances
-// without requiring a public IPv4 address using EC2 Instance Connect Endpoint (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Connect-using-EC2-Instance-Connect-Endpoint.html)
-// in the Amazon EC2 User Guide.
+// Creates an EC2 Instance Connect Endpoint.
+//
+// An EC2 Instance Connect Endpoint allows you to connect to an instance, without
+// requiring the instance to have a public IPv4 or public IPv6 address. For more
+// information, see [Connect to your instances using EC2 Instance Connect Endpoint]in the Amazon EC2 User Guide.
+//
+// [Connect to your instances using EC2 Instance Connect Endpoint]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Connect-using-EC2-Instance-Connect-Endpoint.html
 func (c *Client) CreateInstanceConnectEndpoint(ctx context.Context, params *CreateInstanceConnectEndpointInput, optFns ...func(*Options)) (*CreateInstanceConnectEndpointOutput, error) {
 	if params == nil {
 		params = &CreateInstanceConnectEndpointInput{}
@@ -48,12 +50,32 @@ type CreateInstanceConnectEndpointInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
-	// Indicates whether your client's IP address is preserved as the source. The
-	// value is true or false .
-	//   - If true , your client's IP address is used when you connect to a resource.
-	//   - If false , the elastic network interface IP address is used when you connect
-	//   to a resource.
-	// Default: true
+	// The IP address type of the endpoint.
+	//
+	// If no value is specified, the default value is determined by the IP address
+	// type of the subnet:
+	//
+	//   - dualstack - If the subnet has both IPv4 and IPv6 CIDRs
+	//
+	//   - ipv4 - If the subnet has only IPv4 CIDRs
+	//
+	//   - ipv6 - If the subnet has only IPv6 CIDRs
+	//
+	// PreserveClientIp is only supported on IPv4 EC2 Instance Connect Endpoints. To
+	// use PreserveClientIp , the value for IpAddressType must be ipv4 .
+	IpAddressType types.IpAddressType
+
+	// Indicates whether the client IP address is preserved as the source. The
+	// following are the possible values.
+	//
+	//   - true - Use the client IP address as the source.
+	//
+	//   - false - Use the network interface IP address as the source.
+	//
+	// PreserveClientIp is only supported on IPv4 EC2 Instance Connect Endpoints. To
+	// use PreserveClientIp , the value for IpAddressType must be ipv4 .
+	//
+	// Default: false
 	PreserveClientIp *bool
 
 	// One or more security groups to associate with the endpoint. If you don't
@@ -125,6 +147,9 @@ func (c *Client) addOperationCreateInstanceConnectEndpointMiddlewares(stack *mid
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -135,6 +160,15 @@ func (c *Client) addOperationCreateInstanceConnectEndpointMiddlewares(stack *mid
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opCreateInstanceConnectEndpointMiddleware(stack, options); err != nil {
@@ -159,6 +193,18 @@ func (c *Client) addOperationCreateInstanceConnectEndpointMiddlewares(stack *mid
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

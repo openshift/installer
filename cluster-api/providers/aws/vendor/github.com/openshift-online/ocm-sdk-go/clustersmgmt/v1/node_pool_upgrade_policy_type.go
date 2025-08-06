@@ -66,7 +66,7 @@ func (o *NodePoolUpgradePolicy) Kind() string {
 	return NodePoolUpgradePolicyKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *NodePoolUpgradePolicy) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -424,6 +424,29 @@ func (l *NodePoolUpgradePolicyList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *NodePoolUpgradePolicyList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *NodePoolUpgradePolicyList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *NodePoolUpgradePolicyList) SetItems(items []*NodePoolUpgradePolicy) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *NodePoolUpgradePolicyList) Items() []*NodePoolUpgradePolicy {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

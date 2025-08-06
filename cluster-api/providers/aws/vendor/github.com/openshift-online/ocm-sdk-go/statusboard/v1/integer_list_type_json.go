@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalIntegerList(list []int, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeIntegerList(list, stream)
+	WriteIntegerList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalIntegerList(list []int, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeIntegerList writes a list of value of the 'integer' type to
+// WriteIntegerList writes a list of value of the 'integer' type to
 // the given stream.
-func writeIntegerList(list []int, stream *jsoniter.Stream) {
+func WriteIntegerList(list []int, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalIntegerList(source interface{}) (items []int, err error) {
 	if err != nil {
 		return
 	}
-	items = readIntegerList(iterator)
+	items = ReadIntegerList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readIntegerList reads list of values of the ”integer' type from
+// ReadIntegerList reads list of values of the ”integer' type from
 // the given iterator.
-func readIntegerList(iterator *jsoniter.Iterator) []int {
+func ReadIntegerList(iterator *jsoniter.Iterator) []int {
 	list := []int{}
 	for iterator.ReadArray() {
 		item := iterator.ReadInt()

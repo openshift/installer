@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -38,14 +39,15 @@ import (
 	"sigs.k8s.io/cluster-api/api/v1beta1/index"
 	"sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/internal/topology/check"
-	"sigs.k8s.io/cluster-api/internal/topology/names"
+	topologynames "sigs.k8s.io/cluster-api/internal/topology/names"
 	"sigs.k8s.io/cluster-api/internal/topology/variables"
+	clog "sigs.k8s.io/cluster-api/util/log"
 )
 
 func (webhook *ClusterClass) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&clusterv1.ClusterClass{}).
-		WithDefaulter(webhook).
+		WithDefaulter(webhook, admission.DefaulterRemoveUnknownOrOmitableFields).
 		WithValidator(webhook).
 		Complete()
 }
@@ -137,9 +139,11 @@ func (webhook *ClusterClass) ValidateDelete(ctx context.Context, obj runtime.Obj
 	}
 
 	if len(clusters) > 0 {
-		// TODO(killianmuldoon): Improve error here to include the names of some clusters using the clusterClass.
+		clustersList := clog.ListToString(clusters, func(cluster clusterv1.Cluster) string {
+			return klog.KObj(&cluster).String()
+		}, 3)
 		return nil, apierrors.NewForbidden(clusterv1.GroupVersion.WithResource("ClusterClass").GroupResource(), clusterClass.Name,
-			fmt.Errorf("ClusterClass cannot be deleted because it is used by %d Cluster(s)", len(clusters)))
+			fmt.Errorf("ClusterClass cannot be deleted because it is used by Cluster(s): %s", clustersList))
 	}
 	return nil, nil
 }
@@ -435,8 +439,25 @@ func validateMachineHealthCheckClasses(clusterClass *clusterv1.ClusterClass) fie
 func validateNamingStrategies(clusterClass *clusterv1.ClusterClass) field.ErrorList {
 	var allErrs field.ErrorList
 
+	if clusterClass.Spec.InfrastructureNamingStrategy != nil && clusterClass.Spec.InfrastructureNamingStrategy.Template != nil {
+		name, err := topologynames.InfraClusterNameGenerator(*clusterClass.Spec.InfrastructureNamingStrategy.Template, "cluster").GenerateName()
+		templateFldPath := field.NewPath("spec", "infrastructureNamingStrategy", "template")
+		if err != nil {
+			allErrs = append(allErrs,
+				field.Invalid(
+					templateFldPath,
+					*clusterClass.Spec.InfrastructureNamingStrategy.Template,
+					fmt.Sprintf("invalid InfraCluster name template: %v", err),
+				))
+		} else {
+			for _, err := range validation.IsDNS1123Subdomain(name) {
+				allErrs = append(allErrs, field.Invalid(templateFldPath, *clusterClass.Spec.InfrastructureNamingStrategy.Template, err))
+			}
+		}
+	}
+
 	if clusterClass.Spec.ControlPlane.NamingStrategy != nil && clusterClass.Spec.ControlPlane.NamingStrategy.Template != nil {
-		name, err := names.ControlPlaneNameGenerator(*clusterClass.Spec.ControlPlane.NamingStrategy.Template, "cluster").GenerateName()
+		name, err := topologynames.ControlPlaneNameGenerator(*clusterClass.Spec.ControlPlane.NamingStrategy.Template, "cluster").GenerateName()
 		templateFldPath := field.NewPath("spec", "controlPlane", "namingStrategy", "template")
 		if err != nil {
 			allErrs = append(allErrs,
@@ -456,7 +477,7 @@ func validateNamingStrategies(clusterClass *clusterv1.ClusterClass) field.ErrorL
 		if md.NamingStrategy == nil || md.NamingStrategy.Template == nil {
 			continue
 		}
-		name, err := names.MachineDeploymentNameGenerator(*md.NamingStrategy.Template, "cluster", "mdtopology").GenerateName()
+		name, err := topologynames.MachineDeploymentNameGenerator(*md.NamingStrategy.Template, "cluster", "mdtopology").GenerateName()
 		templateFldPath := field.NewPath("spec", "workers", "machineDeployments").Key(md.Class).Child("namingStrategy", "template")
 		if err != nil {
 			allErrs = append(allErrs,
@@ -476,7 +497,7 @@ func validateNamingStrategies(clusterClass *clusterv1.ClusterClass) field.ErrorL
 		if mp.NamingStrategy == nil || mp.NamingStrategy.Template == nil {
 			continue
 		}
-		name, err := names.MachinePoolNameGenerator(*mp.NamingStrategy.Template, "cluster", "mptopology").GenerateName()
+		name, err := topologynames.MachinePoolNameGenerator(*mp.NamingStrategy.Template, "cluster", "mptopology").GenerateName()
 		templateFldPath := field.NewPath("spec", "workers", "machinePools").Key(mp.Class).Child("namingStrategy", "template")
 		if err != nil {
 			allErrs = append(allErrs,

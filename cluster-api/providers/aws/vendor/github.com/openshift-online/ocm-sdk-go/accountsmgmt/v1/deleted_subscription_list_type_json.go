@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalDeletedSubscriptionList(list []*DeletedSubscription, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDeletedSubscriptionList(list, stream)
+	WriteDeletedSubscriptionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalDeletedSubscriptionList(list []*DeletedSubscription, writer io.Write
 	return stream.Error
 }
 
-// writeDeletedSubscriptionList writes a list of value of the 'deleted_subscription' type to
+// WriteDeletedSubscriptionList writes a list of value of the 'deleted_subscription' type to
 // the given stream.
-func writeDeletedSubscriptionList(list []*DeletedSubscription, stream *jsoniter.Stream) {
+func WriteDeletedSubscriptionList(list []*DeletedSubscription, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeDeletedSubscription(value, stream)
+		WriteDeletedSubscription(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalDeletedSubscriptionList(source interface{}) (items []*DeletedSubsc
 	if err != nil {
 		return
 	}
-	items = readDeletedSubscriptionList(iterator)
+	items = ReadDeletedSubscriptionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDeletedSubscriptionList reads list of values of the ”deleted_subscription' type from
+// ReadDeletedSubscriptionList reads list of values of the ”deleted_subscription' type from
 // the given iterator.
-func readDeletedSubscriptionList(iterator *jsoniter.Iterator) []*DeletedSubscription {
+func ReadDeletedSubscriptionList(iterator *jsoniter.Iterator) []*DeletedSubscription {
 	list := []*DeletedSubscription{}
 	for iterator.ReadArray() {
-		item := readDeletedSubscription(iterator)
+		item := ReadDeletedSubscription(iterator)
 		list = append(list, item)
 	}
 	return list

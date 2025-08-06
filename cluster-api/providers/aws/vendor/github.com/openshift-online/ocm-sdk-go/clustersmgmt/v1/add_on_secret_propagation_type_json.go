@@ -29,7 +29,7 @@ import (
 // MarshalAddOnSecretPropagation writes a value of the 'add_on_secret_propagation' type to the given writer.
 func MarshalAddOnSecretPropagation(object *AddOnSecretPropagation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnSecretPropagation(object, stream)
+	WriteAddOnSecretPropagation(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddOnSecretPropagation(object *AddOnSecretPropagation, writer io.Wri
 	return stream.Error
 }
 
-// writeAddOnSecretPropagation writes a value of the 'add_on_secret_propagation' type to the given stream.
-func writeAddOnSecretPropagation(object *AddOnSecretPropagation, stream *jsoniter.Stream) {
+// WriteAddOnSecretPropagation writes a value of the 'add_on_secret_propagation' type to the given stream.
+func WriteAddOnSecretPropagation(object *AddOnSecretPropagation, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalAddOnSecretPropagation(source interface{}) (object *AddOnSecretPro
 	if err != nil {
 		return
 	}
-	object = readAddOnSecretPropagation(iterator)
+	object = ReadAddOnSecretPropagation(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnSecretPropagation reads a value of the 'add_on_secret_propagation' type from the given iterator.
-func readAddOnSecretPropagation(iterator *jsoniter.Iterator) *AddOnSecretPropagation {
+// ReadAddOnSecretPropagation reads a value of the 'add_on_secret_propagation' type from the given iterator.
+func ReadAddOnSecretPropagation(iterator *jsoniter.Iterator) *AddOnSecretPropagation {
 	object := &AddOnSecretPropagation{}
 	for {
 		field := iterator.ReadObject()

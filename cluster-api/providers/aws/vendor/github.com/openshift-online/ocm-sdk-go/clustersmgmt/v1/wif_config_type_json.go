@@ -29,7 +29,7 @@ import (
 // MarshalWifConfig writes a value of the 'wif_config' type to the given writer.
 func MarshalWifConfig(object *WifConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifConfig(object, stream)
+	WriteWifConfig(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalWifConfig(object *WifConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeWifConfig writes a value of the 'wif_config' type to the given stream.
-func writeWifConfig(object *WifConfig, stream *jsoniter.Stream) {
+// WriteWifConfig writes a value of the 'wif_config' type to the given stream.
+func WriteWifConfig(object *WifConfig, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -80,7 +80,7 @@ func writeWifConfig(object *WifConfig, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("gcp")
-		writeWifGcp(object.gcp, stream)
+		WriteWifGcp(object.gcp, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0 && object.organization != nil
@@ -89,7 +89,7 @@ func writeWifConfig(object *WifConfig, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("organization")
-		writeOrganizationLink(object.organization, stream)
+		WriteOrganizationLink(object.organization, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0 && object.wifTemplates != nil
@@ -98,7 +98,7 @@ func writeWifConfig(object *WifConfig, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("wif_templates")
-		writeStringList(object.wifTemplates, stream)
+		WriteStringList(object.wifTemplates, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -110,13 +110,13 @@ func UnmarshalWifConfig(source interface{}) (object *WifConfig, err error) {
 	if err != nil {
 		return
 	}
-	object = readWifConfig(iterator)
+	object = ReadWifConfig(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifConfig reads a value of the 'wif_config' type from the given iterator.
-func readWifConfig(iterator *jsoniter.Iterator) *WifConfig {
+// ReadWifConfig reads a value of the 'wif_config' type from the given iterator.
+func ReadWifConfig(iterator *jsoniter.Iterator) *WifConfig {
 	object := &WifConfig{}
 	for {
 		field := iterator.ReadObject()
@@ -140,15 +140,15 @@ func readWifConfig(iterator *jsoniter.Iterator) *WifConfig {
 			object.displayName = value
 			object.bitmap_ |= 8
 		case "gcp":
-			value := readWifGcp(iterator)
+			value := ReadWifGcp(iterator)
 			object.gcp = value
 			object.bitmap_ |= 16
 		case "organization":
-			value := readOrganizationLink(iterator)
+			value := ReadOrganizationLink(iterator)
 			object.organization = value
 			object.bitmap_ |= 32
 		case "wif_templates":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.wifTemplates = value
 			object.bitmap_ |= 64
 		default:

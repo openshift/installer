@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalOperatorIAMRoleList(list []*OperatorIAMRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeOperatorIAMRoleList(list, stream)
+	WriteOperatorIAMRoleList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalOperatorIAMRoleList(list []*OperatorIAMRole, writer io.Writer) error
 	return stream.Error
 }
 
-// writeOperatorIAMRoleList writes a list of value of the 'operator_IAM_role' type to
+// WriteOperatorIAMRoleList writes a list of value of the 'operator_IAM_role' type to
 // the given stream.
-func writeOperatorIAMRoleList(list []*OperatorIAMRole, stream *jsoniter.Stream) {
+func WriteOperatorIAMRoleList(list []*OperatorIAMRole, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeOperatorIAMRole(value, stream)
+		WriteOperatorIAMRole(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalOperatorIAMRoleList(source interface{}) (items []*OperatorIAMRole,
 	if err != nil {
 		return
 	}
-	items = readOperatorIAMRoleList(iterator)
+	items = ReadOperatorIAMRoleList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readOperatorIAMRoleList reads list of values of the ”operator_IAM_role' type from
+// ReadOperatorIAMRoleList reads list of values of the ”operator_IAM_role' type from
 // the given iterator.
-func readOperatorIAMRoleList(iterator *jsoniter.Iterator) []*OperatorIAMRole {
+func ReadOperatorIAMRoleList(iterator *jsoniter.Iterator) []*OperatorIAMRole {
 	list := []*OperatorIAMRole{}
 	for iterator.ReadArray() {
-		item := readOperatorIAMRole(iterator)
+		item := ReadOperatorIAMRole(iterator)
 		list = append(list, item)
 	}
 	return list

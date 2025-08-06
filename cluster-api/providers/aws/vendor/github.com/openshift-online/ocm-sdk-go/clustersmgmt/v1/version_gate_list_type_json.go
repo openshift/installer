@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalVersionGateList(list []*VersionGate, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeVersionGateList(list, stream)
+	WriteVersionGateList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalVersionGateList(list []*VersionGate, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeVersionGateList writes a list of value of the 'version_gate' type to
+// WriteVersionGateList writes a list of value of the 'version_gate' type to
 // the given stream.
-func writeVersionGateList(list []*VersionGate, stream *jsoniter.Stream) {
+func WriteVersionGateList(list []*VersionGate, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeVersionGate(value, stream)
+		WriteVersionGate(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalVersionGateList(source interface{}) (items []*VersionGate, err err
 	if err != nil {
 		return
 	}
-	items = readVersionGateList(iterator)
+	items = ReadVersionGateList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readVersionGateList reads list of values of the ”version_gate' type from
+// ReadVersionGateList reads list of values of the ”version_gate' type from
 // the given iterator.
-func readVersionGateList(iterator *jsoniter.Iterator) []*VersionGate {
+func ReadVersionGateList(iterator *jsoniter.Iterator) []*VersionGate {
 	list := []*VersionGate{}
 	for iterator.ReadArray() {
-		item := readVersionGate(iterator)
+		item := ReadVersionGate(iterator)
 		list = append(list, item)
 	}
 	return list

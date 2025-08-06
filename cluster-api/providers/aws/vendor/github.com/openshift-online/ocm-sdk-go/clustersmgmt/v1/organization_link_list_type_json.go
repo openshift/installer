@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalOrganizationLinkList(list []*OrganizationLink, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeOrganizationLinkList(list, stream)
+	WriteOrganizationLinkList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalOrganizationLinkList(list []*OrganizationLink, writer io.Writer) err
 	return stream.Error
 }
 
-// writeOrganizationLinkList writes a list of value of the 'organization_link' type to
+// WriteOrganizationLinkList writes a list of value of the 'organization_link' type to
 // the given stream.
-func writeOrganizationLinkList(list []*OrganizationLink, stream *jsoniter.Stream) {
+func WriteOrganizationLinkList(list []*OrganizationLink, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeOrganizationLink(value, stream)
+		WriteOrganizationLink(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalOrganizationLinkList(source interface{}) (items []*OrganizationLin
 	if err != nil {
 		return
 	}
-	items = readOrganizationLinkList(iterator)
+	items = ReadOrganizationLinkList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readOrganizationLinkList reads list of values of the ”organization_link' type from
+// ReadOrganizationLinkList reads list of values of the ”organization_link' type from
 // the given iterator.
-func readOrganizationLinkList(iterator *jsoniter.Iterator) []*OrganizationLink {
+func ReadOrganizationLinkList(iterator *jsoniter.Iterator) []*OrganizationLink {
 	list := []*OrganizationLink{}
 	for iterator.ReadArray() {
-		item := readOrganizationLink(iterator)
+		item := ReadOrganizationLink(iterator)
 		list = append(list, item)
 	}
 	return list

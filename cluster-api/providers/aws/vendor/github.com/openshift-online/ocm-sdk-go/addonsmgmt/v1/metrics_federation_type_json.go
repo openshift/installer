@@ -30,7 +30,7 @@ import (
 // MarshalMetricsFederation writes a value of the 'metrics_federation' type to the given writer.
 func MarshalMetricsFederation(object *MetricsFederation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeMetricsFederation(object, stream)
+	WriteMetricsFederation(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalMetricsFederation(object *MetricsFederation, writer io.Writer) error
 	return stream.Error
 }
 
-// writeMetricsFederation writes a value of the 'metrics_federation' type to the given stream.
-func writeMetricsFederation(object *MetricsFederation, stream *jsoniter.Stream) {
+// WriteMetricsFederation writes a value of the 'metrics_federation' type to the given stream.
+func WriteMetricsFederation(object *MetricsFederation, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,7 +78,7 @@ func writeMetricsFederation(object *MetricsFederation, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("match_names")
-		writeStringList(object.matchNames, stream)
+		WriteStringList(object.matchNames, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0
@@ -108,13 +108,13 @@ func UnmarshalMetricsFederation(source interface{}) (object *MetricsFederation, 
 	if err != nil {
 		return
 	}
-	object = readMetricsFederation(iterator)
+	object = ReadMetricsFederation(iterator)
 	err = iterator.Error
 	return
 }
 
-// readMetricsFederation reads a value of the 'metrics_federation' type from the given iterator.
-func readMetricsFederation(iterator *jsoniter.Iterator) *MetricsFederation {
+// ReadMetricsFederation reads a value of the 'metrics_federation' type from the given iterator.
+func ReadMetricsFederation(iterator *jsoniter.Iterator) *MetricsFederation {
 	object := &MetricsFederation{}
 	for {
 		field := iterator.ReadObject()
@@ -135,7 +135,7 @@ func readMetricsFederation(iterator *jsoniter.Iterator) *MetricsFederation {
 			object.matchLabels = value
 			object.bitmap_ |= 1
 		case "match_names":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.matchNames = value
 			object.bitmap_ |= 2
 		case "namespace":

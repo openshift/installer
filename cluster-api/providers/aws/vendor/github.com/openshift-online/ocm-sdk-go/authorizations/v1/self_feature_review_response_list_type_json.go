@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSelfFeatureReviewResponseList(list []*SelfFeatureReviewResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSelfFeatureReviewResponseList(list, stream)
+	WriteSelfFeatureReviewResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSelfFeatureReviewResponseList(list []*SelfFeatureReviewResponse, wri
 	return stream.Error
 }
 
-// writeSelfFeatureReviewResponseList writes a list of value of the 'self_feature_review_response' type to
+// WriteSelfFeatureReviewResponseList writes a list of value of the 'self_feature_review_response' type to
 // the given stream.
-func writeSelfFeatureReviewResponseList(list []*SelfFeatureReviewResponse, stream *jsoniter.Stream) {
+func WriteSelfFeatureReviewResponseList(list []*SelfFeatureReviewResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeSelfFeatureReviewResponse(value, stream)
+		WriteSelfFeatureReviewResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSelfFeatureReviewResponseList(source interface{}) (items []*SelfFe
 	if err != nil {
 		return
 	}
-	items = readSelfFeatureReviewResponseList(iterator)
+	items = ReadSelfFeatureReviewResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSelfFeatureReviewResponseList reads list of values of the ”self_feature_review_response' type from
+// ReadSelfFeatureReviewResponseList reads list of values of the ”self_feature_review_response' type from
 // the given iterator.
-func readSelfFeatureReviewResponseList(iterator *jsoniter.Iterator) []*SelfFeatureReviewResponse {
+func ReadSelfFeatureReviewResponseList(iterator *jsoniter.Iterator) []*SelfFeatureReviewResponse {
 	list := []*SelfFeatureReviewResponse{}
 	for iterator.ReadArray() {
-		item := readSelfFeatureReviewResponse(iterator)
+		item := ReadSelfFeatureReviewResponse(iterator)
 		list = append(list, item)
 	}
 	return list

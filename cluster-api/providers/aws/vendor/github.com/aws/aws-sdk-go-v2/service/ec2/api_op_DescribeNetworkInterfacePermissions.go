@@ -31,13 +31,18 @@ func (c *Client) DescribeNetworkInterfacePermissions(ctx context.Context, params
 type DescribeNetworkInterfacePermissionsInput struct {
 
 	// One or more filters.
+	//
 	//   - network-interface-permission.network-interface-permission-id - The ID of the
 	//   permission.
+	//
 	//   - network-interface-permission.network-interface-id - The ID of the network
 	//   interface.
+	//
 	//   - network-interface-permission.aws-account-id - The Amazon Web Services
 	//   account ID.
-	//   - network-interface-permission.aws-service - The Amazon Web Service.
+	//
+	//   - network-interface-permission.aws-service - The Amazon Web Services service.
+	//
 	//   - network-interface-permission.permission - The type of permission (
 	//   INSTANCE-ATTACH | EIP-ASSOCIATE ).
 	Filters []types.Filter
@@ -45,8 +50,9 @@ type DescribeNetworkInterfacePermissionsInput struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. If this
 	// parameter is not specified, up to 50 results are returned by default. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The network interface permission IDs.
@@ -118,6 +124,9 @@ func (c *Client) addOperationDescribeNetworkInterfacePermissionsMiddlewares(stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -128,6 +137,15 @@ func (c *Client) addOperationDescribeNetworkInterfacePermissionsMiddlewares(stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeNetworkInterfacePermissions(options.Region), middleware.Before); err != nil {
@@ -148,16 +166,20 @@ func (c *Client) addOperationDescribeNetworkInterfacePermissionsMiddlewares(stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeNetworkInterfacePermissionsAPIClient is a client that implements the
-// DescribeNetworkInterfacePermissions operation.
-type DescribeNetworkInterfacePermissionsAPIClient interface {
-	DescribeNetworkInterfacePermissions(context.Context, *DescribeNetworkInterfacePermissionsInput, ...func(*Options)) (*DescribeNetworkInterfacePermissionsOutput, error)
-}
-
-var _ DescribeNetworkInterfacePermissionsAPIClient = (*Client)(nil)
 
 // DescribeNetworkInterfacePermissionsPaginatorOptions is the paginator options
 // for DescribeNetworkInterfacePermissions
@@ -165,8 +187,9 @@ type DescribeNetworkInterfacePermissionsPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. If this
 	// parameter is not specified, up to 50 results are returned by default. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -229,6 +252,9 @@ func (p *DescribeNetworkInterfacePermissionsPaginator) NextPage(ctx context.Cont
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeNetworkInterfacePermissions(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -247,6 +273,14 @@ func (p *DescribeNetworkInterfacePermissionsPaginator) NextPage(ctx context.Cont
 
 	return result, nil
 }
+
+// DescribeNetworkInterfacePermissionsAPIClient is a client that implements the
+// DescribeNetworkInterfacePermissions operation.
+type DescribeNetworkInterfacePermissionsAPIClient interface {
+	DescribeNetworkInterfacePermissions(context.Context, *DescribeNetworkInterfacePermissionsInput, ...func(*Options)) (*DescribeNetworkInterfacePermissionsOutput, error)
+}
+
+var _ DescribeNetworkInterfacePermissionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeNetworkInterfacePermissions(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

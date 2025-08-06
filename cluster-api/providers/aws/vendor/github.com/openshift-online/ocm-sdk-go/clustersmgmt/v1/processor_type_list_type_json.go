@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalProcessorTypeList(list []ProcessorType, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeProcessorTypeList(list, stream)
+	WriteProcessorTypeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalProcessorTypeList(list []ProcessorType, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeProcessorTypeList writes a list of value of the 'processor_type' type to
+// WriteProcessorTypeList writes a list of value of the 'processor_type' type to
 // the given stream.
-func writeProcessorTypeList(list []ProcessorType, stream *jsoniter.Stream) {
+func WriteProcessorTypeList(list []ProcessorType, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalProcessorTypeList(source interface{}) (items []ProcessorType, err 
 	if err != nil {
 		return
 	}
-	items = readProcessorTypeList(iterator)
+	items = ReadProcessorTypeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readProcessorTypeList reads list of values of the ”processor_type' type from
+// ReadProcessorTypeList reads list of values of the ”processor_type' type from
 // the given iterator.
-func readProcessorTypeList(iterator *jsoniter.Iterator) []ProcessorType {
+func ReadProcessorTypeList(iterator *jsoniter.Iterator) []ProcessorType {
 	list := []ProcessorType{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

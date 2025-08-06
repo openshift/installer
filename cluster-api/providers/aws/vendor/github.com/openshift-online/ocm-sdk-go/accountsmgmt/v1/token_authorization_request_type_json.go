@@ -29,7 +29,7 @@ import (
 // MarshalTokenAuthorizationRequest writes a value of the 'token_authorization_request' type to the given writer.
 func MarshalTokenAuthorizationRequest(object *TokenAuthorizationRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTokenAuthorizationRequest(object, stream)
+	WriteTokenAuthorizationRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalTokenAuthorizationRequest(object *TokenAuthorizationRequest, writer 
 	return stream.Error
 }
 
-// writeTokenAuthorizationRequest writes a value of the 'token_authorization_request' type to the given stream.
-func writeTokenAuthorizationRequest(object *TokenAuthorizationRequest, stream *jsoniter.Stream) {
+// WriteTokenAuthorizationRequest writes a value of the 'token_authorization_request' type to the given stream.
+func WriteTokenAuthorizationRequest(object *TokenAuthorizationRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalTokenAuthorizationRequest(source interface{}) (object *TokenAuthor
 	if err != nil {
 		return
 	}
-	object = readTokenAuthorizationRequest(iterator)
+	object = ReadTokenAuthorizationRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTokenAuthorizationRequest reads a value of the 'token_authorization_request' type from the given iterator.
-func readTokenAuthorizationRequest(iterator *jsoniter.Iterator) *TokenAuthorizationRequest {
+// ReadTokenAuthorizationRequest reads a value of the 'token_authorization_request' type from the given iterator.
+func ReadTokenAuthorizationRequest(iterator *jsoniter.Iterator) *TokenAuthorizationRequest {
 	object := &TokenAuthorizationRequest{}
 	for {
 		field := iterator.ReadObject()

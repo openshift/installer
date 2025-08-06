@@ -57,7 +57,7 @@ func readExternalAuthsListResponse(response *ExternalAuthsListResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readExternalAuthList(iterator)
+			items := ReadExternalAuthList(iterator)
 			response.items = &ExternalAuthList{
 				items: items,
 			}

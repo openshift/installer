@@ -159,18 +159,24 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retRes ct
 		return ctrl.Result{}, err
 	}
 
-	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, cluster); err != nil || isPaused || conditionChanged {
+	// Initialize the patch helper.
+	patchHelper, err := patch.NewHelper(cluster, r.Client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if isPaused, requeue, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, cluster); err != nil || isPaused || requeue {
 		return ctrl.Result{}, err
 	}
 
 	s := &scope{
 		cluster: cluster,
 	}
-
-	// Initialize the patch helper.
-	patchHelper, err := patch.NewHelper(cluster, r.Client)
-	if err != nil {
-		return ctrl.Result{}, err
+	if cluster.Spec.Topology != nil {
+		s.clusterClass = &clusterv1.ClusterClass{}
+		if err := r.Client.Get(ctx, cluster.GetClassKey(), s.clusterClass); err != nil {
+			return ctrl.Result{}, errors.Wrapf(err, "failed to get ClusterClass %s", cluster.GetClassKey())
+		}
 	}
 
 	defer func() {
@@ -266,6 +272,7 @@ func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *clust
 			clusterv1.InfrastructureReadyCondition,
 		}},
 		patch.WithOwnedV1Beta2Conditions{Conditions: []string{
+			clusterv1.PausedV1Beta2Condition,
 			clusterv1.ClusterInfrastructureReadyV1Beta2Condition,
 			clusterv1.ClusterControlPlaneAvailableV1Beta2Condition,
 			clusterv1.ClusterControlPlaneInitializedV1Beta2Condition,
@@ -315,6 +322,10 @@ type scope struct {
 	// cluster is the Cluster object being reconciled.
 	// It is set at the beginning of the reconcile function.
 	cluster *clusterv1.Cluster
+
+	// clusterClass is the ClusterClass referenced by the object being reconciled.
+	// It is set at the beginning of the reconcile function.
+	clusterClass *clusterv1.ClusterClass
 
 	// infraCluster is the Infrastructure Cluster object that is referenced by the
 	// Cluster. It is set after reconcileInfrastructure is called.
@@ -454,7 +465,9 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 			s.deletingReason = clusterv1.ClusterDeletingWaitingForControlPlaneDeletionV1Beta2Reason
 			s.deletingMessage = fmt.Sprintf("Waiting for %s to be deleted", cluster.Spec.ControlPlaneRef.Kind)
 
-			log.Info("Cluster still has descendants - need to requeue", "controlPlaneRef", cluster.Spec.ControlPlaneRef.Name)
+			// We are watching it, will try again when it is deleted.
+			ref := cluster.Spec.ControlPlaneRef
+			log.Info("Cluster still has descendants - waiting for control plane deletion", ref.Kind, klog.KRef(ref.Namespace, ref.Name))
 			return ctrl.Result{}, nil
 		}
 	}
@@ -492,7 +505,9 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 			s.deletingReason = clusterv1.ClusterDeletingWaitingForInfrastructureDeletionV1Beta2Reason
 			s.deletingMessage = fmt.Sprintf("Waiting for %s to be deleted", cluster.Spec.InfrastructureRef.Kind)
 
-			log.Info("Cluster still has descendants - need to requeue", "infrastructureRef", cluster.Spec.InfrastructureRef.Name)
+			// We are watching it, will try again when it is deleted.
+			ref := cluster.Spec.InfrastructureRef
+			log.Info("Cluster still has descendants - waiting for infrastructure cluster deletion", ref.Kind, klog.KRef(ref.Namespace, ref.Name))
 			return ctrl.Result{}, nil
 		}
 	}

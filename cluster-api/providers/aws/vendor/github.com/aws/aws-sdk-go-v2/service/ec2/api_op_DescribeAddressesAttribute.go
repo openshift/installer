@@ -12,8 +12,9 @@ import (
 )
 
 // Describes the attributes of the specified Elastic IP addresses. For
-// requirements, see Using reverse DNS for email applications (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html#Using_Elastic_Addressing_Reverse_DNS)
-// .
+// requirements, see [Using reverse DNS for email applications].
+//
+// [Using reverse DNS for email applications]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html#Using_Elastic_Addressing_Reverse_DNS
 func (c *Client) DescribeAddressesAttribute(ctx context.Context, params *DescribeAddressesAttributeInput, optFns ...func(*Options)) (*DescribeAddressesAttributeOutput, error) {
 	if params == nil {
 		params = &DescribeAddressesAttributeInput{}
@@ -111,6 +112,9 @@ func (c *Client) addOperationDescribeAddressesAttributeMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -121,6 +125,15 @@ func (c *Client) addOperationDescribeAddressesAttributeMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeAddressesAttribute(options.Region), middleware.Before); err != nil {
@@ -141,16 +154,20 @@ func (c *Client) addOperationDescribeAddressesAttributeMiddlewares(stack *middle
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeAddressesAttributeAPIClient is a client that implements the
-// DescribeAddressesAttribute operation.
-type DescribeAddressesAttributeAPIClient interface {
-	DescribeAddressesAttribute(context.Context, *DescribeAddressesAttributeInput, ...func(*Options)) (*DescribeAddressesAttributeOutput, error)
-}
-
-var _ DescribeAddressesAttributeAPIClient = (*Client)(nil)
 
 // DescribeAddressesAttributePaginatorOptions is the paginator options for
 // DescribeAddressesAttribute
@@ -219,6 +236,9 @@ func (p *DescribeAddressesAttributePaginator) NextPage(ctx context.Context, optF
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeAddressesAttribute(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -237,6 +257,14 @@ func (p *DescribeAddressesAttributePaginator) NextPage(ctx context.Context, optF
 
 	return result, nil
 }
+
+// DescribeAddressesAttributeAPIClient is a client that implements the
+// DescribeAddressesAttribute operation.
+type DescribeAddressesAttributeAPIClient interface {
+	DescribeAddressesAttribute(context.Context, *DescribeAddressesAttributeInput, ...func(*Options)) (*DescribeAddressesAttributeOutput, error)
+}
+
+var _ DescribeAddressesAttributeAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeAddressesAttribute(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -29,7 +29,7 @@ import (
 // MarshalTermsReviewRequest writes a value of the 'terms_review_request' type to the given writer.
 func MarshalTermsReviewRequest(object *TermsReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTermsReviewRequest(object, stream)
+	WriteTermsReviewRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalTermsReviewRequest(object *TermsReviewRequest, writer io.Writer) err
 	return stream.Error
 }
 
-// writeTermsReviewRequest writes a value of the 'terms_review_request' type to the given stream.
-func writeTermsReviewRequest(object *TermsReviewRequest, stream *jsoniter.Stream) {
+// WriteTermsReviewRequest writes a value of the 'terms_review_request' type to the given stream.
+func WriteTermsReviewRequest(object *TermsReviewRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalTermsReviewRequest(source interface{}) (object *TermsReviewRequest
 	if err != nil {
 		return
 	}
-	object = readTermsReviewRequest(iterator)
+	object = ReadTermsReviewRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTermsReviewRequest reads a value of the 'terms_review_request' type from the given iterator.
-func readTermsReviewRequest(iterator *jsoniter.Iterator) *TermsReviewRequest {
+// ReadTermsReviewRequest reads a value of the 'terms_review_request' type from the given iterator.
+func ReadTermsReviewRequest(iterator *jsoniter.Iterator) *TermsReviewRequest {
 	object := &TermsReviewRequest{}
 	for {
 		field := iterator.ReadObject()

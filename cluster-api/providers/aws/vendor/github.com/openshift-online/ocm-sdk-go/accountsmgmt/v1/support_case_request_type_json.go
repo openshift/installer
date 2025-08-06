@@ -29,7 +29,7 @@ import (
 // MarshalSupportCaseRequest writes a value of the 'support_case_request' type to the given writer.
 func MarshalSupportCaseRequest(object *SupportCaseRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSupportCaseRequest(object, stream)
+	WriteSupportCaseRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSupportCaseRequest(object *SupportCaseRequest, writer io.Writer) err
 	return stream.Error
 }
 
-// writeSupportCaseRequest writes a value of the 'support_case_request' type to the given stream.
-func writeSupportCaseRequest(object *SupportCaseRequest, stream *jsoniter.Stream) {
+// WriteSupportCaseRequest writes a value of the 'support_case_request' type to the given stream.
+func WriteSupportCaseRequest(object *SupportCaseRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -137,13 +137,13 @@ func UnmarshalSupportCaseRequest(source interface{}) (object *SupportCaseRequest
 	if err != nil {
 		return
 	}
-	object = readSupportCaseRequest(iterator)
+	object = ReadSupportCaseRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSupportCaseRequest reads a value of the 'support_case_request' type from the given iterator.
-func readSupportCaseRequest(iterator *jsoniter.Iterator) *SupportCaseRequest {
+// ReadSupportCaseRequest reads a value of the 'support_case_request' type from the given iterator.
+func ReadSupportCaseRequest(iterator *jsoniter.Iterator) *SupportCaseRequest {
 	object := &SupportCaseRequest{}
 	for {
 		field := iterator.ReadObject()

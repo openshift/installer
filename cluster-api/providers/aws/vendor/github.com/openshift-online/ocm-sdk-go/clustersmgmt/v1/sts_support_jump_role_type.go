@@ -82,6 +82,29 @@ func (l *StsSupportJumpRoleList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *StsSupportJumpRoleList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *StsSupportJumpRoleList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *StsSupportJumpRoleList) SetItems(items []*StsSupportJumpRole) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *StsSupportJumpRoleList) Items() []*StsSupportJumpRole {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *StsSupportJumpRoleList) Empty() bool {
 	return l == nil || len(l.items) == 0

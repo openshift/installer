@@ -533,7 +533,7 @@ func (r *MachinePoolReconciler) waitForMachineCreation(ctx context.Context, mach
 	// The polling is against a local memory cache.
 	const waitForCacheUpdateInterval = 100 * time.Millisecond
 
-	for i := range len(machineList) {
+	for i := range machineList {
 		machine := machineList[i]
 		pollErr := wait.PollUntilContextTimeout(ctx, waitForCacheUpdateInterval, waitForCacheUpdateTimeout, true, func(ctx context.Context) (bool, error) {
 			key := client.ObjectKey{Namespace: machine.Namespace, Name: machine.Name}
@@ -559,23 +559,18 @@ func (r *MachinePoolReconciler) getNodeRefMap(ctx context.Context, c client.Clie
 	log := ctrl.LoggerFrom(ctx)
 	nodeRefsMap := make(map[string]*corev1.Node)
 	nodeList := corev1.NodeList{}
-	for {
-		if err := c.List(ctx, &nodeList, client.Continue(nodeList.Continue)); err != nil {
-			return nil, err
+	// Note: We don't use pagination as this is a cached client and a cached client doesn't support pagination.
+	if err := c.List(ctx, &nodeList); err != nil {
+		return nil, err
+	}
+
+	for _, node := range nodeList.Items {
+		if node.Spec.ProviderID == "" {
+			log.V(2).Info("No ProviderID detected, skipping", "providerID", node.Spec.ProviderID)
+			continue
 		}
 
-		for _, node := range nodeList.Items {
-			if node.Spec.ProviderID == "" {
-				log.V(2).Info("No ProviderID detected, skipping", "providerID", node.Spec.ProviderID)
-				continue
-			}
-
-			nodeRefsMap[node.Spec.ProviderID] = &node
-		}
-
-		if nodeList.Continue == "" {
-			break
-		}
+		nodeRefsMap[node.Spec.ProviderID] = &node
 	}
 
 	return nodeRefsMap, nil

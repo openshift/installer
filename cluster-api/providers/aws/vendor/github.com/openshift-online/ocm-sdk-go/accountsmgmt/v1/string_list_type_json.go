@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalStringList(list []string, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeStringList(list, stream)
+	WriteStringList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalStringList(list []string, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeStringList writes a list of value of the 'string' type to
+// WriteStringList writes a list of value of the 'string' type to
 // the given stream.
-func writeStringList(list []string, stream *jsoniter.Stream) {
+func WriteStringList(list []string, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalStringList(source interface{}) (items []string, err error) {
 	if err != nil {
 		return
 	}
-	items = readStringList(iterator)
+	items = ReadStringList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readStringList reads list of values of the ”string' type from
+// ReadStringList reads list of values of the ”string' type from
 // the given iterator.
-func readStringList(iterator *jsoniter.Iterator) []string {
+func ReadStringList(iterator *jsoniter.Iterator) []string {
 	list := []string{}
 	for iterator.ReadArray() {
 		item := iterator.ReadString()

@@ -61,7 +61,7 @@ func (o *ClusterAutoscaler) Kind() string {
 	return ClusterAutoscalerKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *ClusterAutoscaler) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -414,6 +414,29 @@ func (l *ClusterAutoscalerList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ClusterAutoscalerList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ClusterAutoscalerList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ClusterAutoscalerList) SetItems(items []*ClusterAutoscaler) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ClusterAutoscalerList) Items() []*ClusterAutoscaler {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

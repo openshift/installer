@@ -58,7 +58,7 @@ func (o *SupportCaseResponse) Kind() string {
 	return SupportCaseResponseKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *SupportCaseResponse) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -370,6 +370,29 @@ func (l *SupportCaseResponseList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *SupportCaseResponseList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SupportCaseResponseList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SupportCaseResponseList) SetItems(items []*SupportCaseResponse) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SupportCaseResponseList) Items() []*SupportCaseResponse {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

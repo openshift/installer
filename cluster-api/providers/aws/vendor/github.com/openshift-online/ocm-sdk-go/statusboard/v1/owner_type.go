@@ -53,7 +53,7 @@ func (o *Owner) Kind() string {
 	return OwnerKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Owner) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -204,6 +204,29 @@ func (l *OwnerList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *OwnerList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *OwnerList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *OwnerList) SetItems(items []*Owner) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *OwnerList) Items() []*Owner {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

@@ -35,3 +35,11 @@ func readWifConfigGetResponse(response *WifConfigGetResponse, reader io.Reader) 
 	response.body, err = UnmarshalWifConfig(reader)
 	return err
 }
+func writeWifConfigUpdateRequest(request *WifConfigUpdateRequest, writer io.Writer) error {
+	return MarshalWifConfig(request.body, writer)
+}
+func readWifConfigUpdateResponse(response *WifConfigUpdateResponse, reader io.Reader) error {
+	var err error
+	response.body, err = UnmarshalWifConfig(reader)
+	return err
+}

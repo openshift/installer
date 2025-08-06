@@ -20,6 +20,8 @@ package desiredstate
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -193,11 +195,16 @@ func computeInfrastructureCluster(_ context.Context, s *scope.Scope) (*unstructu
 	cluster := s.Current.Cluster
 	currentRef := cluster.Spec.InfrastructureRef
 
+	nameTemplate := "{{ .cluster.name }}-{{ .random }}"
+	if s.Blueprint.ClusterClass.Spec.InfrastructureNamingStrategy != nil && s.Blueprint.ClusterClass.Spec.InfrastructureNamingStrategy.Template != nil {
+		nameTemplate = *s.Blueprint.ClusterClass.Spec.InfrastructureNamingStrategy.Template
+	}
+
 	infrastructureCluster, err := templateToObject(templateToInput{
 		template:              template,
 		templateClonedFromRef: templateClonedFromRef,
 		cluster:               cluster,
-		nameGenerator:         topologynames.SimpleNameGenerator(fmt.Sprintf("%s-", cluster.Name)),
+		nameGenerator:         topologynames.InfraClusterNameGenerator(nameTemplate, cluster.Name),
 		currentObjectRef:      currentRef,
 		// Note: It is not possible to add an ownerRef to Cluster at this stage, otherwise the provisioning
 		// of the infrastructure cluster starts no matter of the object being actually referenced by the Cluster itself.
@@ -311,23 +318,23 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 		if s.Current.ControlPlane.Object != nil {
 			currentRef, err := contract.ControlPlane().MachineTemplate().InfrastructureRef().Get(s.Current.ControlPlane.Object)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed get spec.machineTemplate.infrastructureRef from the ControlPlane object")
+				return nil, errors.Wrapf(err, "failed get %s from the ControlPlane object", contract.ControlPlane().MachineTemplate().InfrastructureRef().Path())
 			}
 			desiredRef, err := calculateRefDesiredAPIVersion(currentRef, refCopy)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to calculate desired spec.machineTemplate.infrastructureRef")
+				return nil, errors.Wrapf(err, "failed to calculate desired %s", contract.ControlPlane().MachineTemplate().InfrastructureRef().Path())
 			}
 			refCopy.SetAPIVersion(desiredRef.APIVersion)
 		}
 		if err := contract.ControlPlane().MachineTemplate().InfrastructureRef().Set(controlPlane, refCopy); err != nil {
-			return nil, errors.Wrap(err, "failed to spec.machineTemplate.infrastructureRef in the ControlPlane object")
+			return nil, errors.Wrapf(err, "failed to %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().InfrastructureRef().Path())
 		}
 
 		// Add the ControlPlane labels and annotations to the ControlPlane machines as well.
 		// Note: We have to ensure the machine template metadata copied from the control plane template is not overwritten.
 		controlPlaneMachineTemplateMetadata, err := contract.ControlPlane().MachineTemplate().Metadata().Get(controlPlane)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to get spec.machineTemplate.metadata from the ControlPlane object")
+			return nil, errors.Wrapf(err, "failed to get %s from the ControlPlane object", contract.ControlPlane().MachineTemplate().Metadata().Path())
 		}
 
 		controlPlaneMachineTemplateMetadata.Labels = util.MergeMap(controlPlaneLabels, controlPlaneMachineTemplateMetadata.Labels)
@@ -338,7 +345,7 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 				Labels:      controlPlaneMachineTemplateMetadata.Labels,
 				Annotations: controlPlaneMachineTemplateMetadata.Annotations,
 			}); err != nil {
-			return nil, errors.Wrap(err, "failed to set spec.machineTemplate.metadata in the ControlPlane object")
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().Metadata().Path())
 		}
 	}
 
@@ -347,7 +354,20 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 	// does not implement support for this field and the ControlPlane object is generated without the number of Replicas.
 	if s.Blueprint.Topology.ControlPlane.Replicas != nil {
 		if err := contract.ControlPlane().Replicas().Set(controlPlane, int64(*s.Blueprint.Topology.ControlPlane.Replicas)); err != nil {
-			return nil, errors.Wrap(err, "failed to set spec.replicas in the ControlPlane object")
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().Replicas().Path())
+		}
+	}
+
+	// If it is required to manage the readinessGates for the control plane, set the corresponding field.
+	// NOTE: If readinessGates value from both Cluster and ClusterClass is nil, it is assumed that the control plane controller
+	// does not implement support for this field and the ControlPlane object is generated without readinessGates.
+	if s.Blueprint.Topology.ControlPlane.ReadinessGates != nil {
+		if err := contract.ControlPlane().MachineTemplate().ReadinessGates().Set(controlPlane, s.Blueprint.Topology.ControlPlane.ReadinessGates); err != nil {
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().ReadinessGates().Path())
+		}
+	} else if s.Blueprint.ClusterClass.Spec.ControlPlane.ReadinessGates != nil {
+		if err := contract.ControlPlane().MachineTemplate().ReadinessGates().Set(controlPlane, s.Blueprint.ClusterClass.Spec.ControlPlane.ReadinessGates); err != nil {
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().ReadinessGates().Path())
 		}
 	}
 
@@ -358,7 +378,7 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 	}
 	if nodeDrainTimeout != nil {
 		if err := contract.ControlPlane().MachineTemplate().NodeDrainTimeout().Set(controlPlane, *nodeDrainTimeout); err != nil {
-			return nil, errors.Wrap(err, "failed to set spec.machineTemplate.nodeDrainTimeout in the ControlPlane object")
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().NodeDrainTimeout().Path())
 		}
 	}
 
@@ -369,7 +389,7 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 	}
 	if nodeVolumeDetachTimeout != nil {
 		if err := contract.ControlPlane().MachineTemplate().NodeVolumeDetachTimeout().Set(controlPlane, *nodeVolumeDetachTimeout); err != nil {
-			return nil, errors.Wrap(err, "failed to set spec.machineTemplate.nodeVolumeDetachTimeout in the ControlPlane object")
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().NodeVolumeDetachTimeout().Path())
 		}
 	}
 
@@ -380,7 +400,7 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 	}
 	if nodeDeletionTimeout != nil {
 		if err := contract.ControlPlane().MachineTemplate().NodeDeletionTimeout().Set(controlPlane, *nodeDeletionTimeout); err != nil {
-			return nil, errors.Wrap(err, "failed to set spec.machineTemplate.nodeDeletionTimeout in the ControlPlane object")
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().NodeDeletionTimeout().Path())
 		}
 	}
 
@@ -390,7 +410,7 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 		return nil, errors.Wrap(err, "failed to compute version of control plane")
 	}
 	if err := contract.ControlPlane().Version().Set(controlPlane, version); err != nil {
-		return nil, errors.Wrap(err, "failed to set spec.version in the ControlPlane object")
+		return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().Version().Path())
 	}
 
 	return controlPlane, nil
@@ -490,19 +510,6 @@ func (g *generator) computeControlPlaneVersion(ctx context.Context, s *scope.Sco
 		return *currentVersion, nil
 	}
 
-	// If the control plane supports replicas, check if the control plane is in the middle of a scale operation.
-	// If yes, then do not pick up the desiredVersion yet. We will pick up the new version after the control plane is stable.
-	if s.Blueprint.Topology.ControlPlane.Replicas != nil {
-		cpScaling, err := contract.ControlPlane().IsScaling(s.Current.ControlPlane.Object)
-		if err != nil {
-			return "", errors.Wrap(err, "failed to check if the control plane is scaling")
-		}
-		if cpScaling {
-			s.UpgradeTracker.ControlPlane.IsScaling = true
-			return *currentVersion, nil
-		}
-	}
-
 	// If the control plane is not upgrading or scaling, we can assume the control plane is stable.
 	// However, we should also check for the MachineDeployments/MachinePools upgrading.
 	// If the MachineDeployments/MachinePools are upgrading, then do not pick up the desiredVersion yet.
@@ -513,6 +520,35 @@ func (g *generator) computeControlPlaneVersion(ctx context.Context, s *scope.Sco
 	}
 
 	if feature.Gates.Enabled(feature.RuntimeSDK) {
+		var hookAnnotations []string
+		for key := range s.Current.Cluster.Annotations {
+			if strings.HasPrefix(key, clusterv1.BeforeClusterUpgradeHookAnnotationPrefix) {
+				hookAnnotations = append(hookAnnotations, key)
+			}
+		}
+		if len(hookAnnotations) > 0 {
+			slices.Sort(hookAnnotations)
+			message := fmt.Sprintf("annotations [%s] are set", strings.Join(hookAnnotations, ", "))
+			if len(hookAnnotations) == 1 {
+				message = fmt.Sprintf("annotation [%s] is set", strings.Join(hookAnnotations, ", "))
+			}
+			// Add the hook with a response to the tracker so we can later update the condition.
+			s.HookResponseTracker.Add(runtimehooksv1.BeforeClusterUpgrade, &runtimehooksv1.BeforeClusterUpgradeResponse{
+				CommonRetryResponse: runtimehooksv1.CommonRetryResponse{
+					// RetryAfterSeconds needs to be set because having only hooks without RetryAfterSeconds
+					// would lead to not updating the condition. We can rely on getting an event when the
+					// annotation gets removed so we set twice of the default sync-period to not cause additional reconciles.
+					RetryAfterSeconds: 20 * 60,
+					CommonResponse: runtimehooksv1.CommonResponse{
+						Message: message,
+					},
+				},
+			})
+
+			log.Info(fmt.Sprintf("Cluster upgrade to version %q is blocked by %q hook (via annotations)", desiredVersion, runtimecatalog.HookName(runtimehooksv1.BeforeClusterUpgrade)), "hooks", strings.Join(hookAnnotations, ","))
+			return *currentVersion, nil
+		}
+
 		// At this point the control plane and the machine deployments are stable and we are almost ready to pick
 		// up the desiredVersion. Call the BeforeClusterUpgrade hook before picking up the desired version.
 		hookRequest := &runtimehooksv1.BeforeClusterUpgradeRequest{
@@ -732,6 +768,11 @@ func (g *generator) computeMachineDeployment(ctx context.Context, s *scope.Scope
 		nodeDeletionTimeout = machineDeploymentTopology.NodeDeletionTimeout
 	}
 
+	readinessGates := machineDeploymentClass.ReadinessGates
+	if machineDeploymentTopology.ReadinessGates != nil {
+		readinessGates = machineDeploymentTopology.ReadinessGates
+	}
+
 	// Compute the MachineDeployment object.
 	desiredBootstrapTemplateRef, err := calculateRefDesiredAPIVersion(currentBootstrapTemplateRef, desiredMachineDeployment.BootstrapTemplate)
 	if err != nil {
@@ -775,6 +816,7 @@ func (g *generator) computeMachineDeployment(ctx context.Context, s *scope.Scope
 					NodeDrainTimeout:        nodeDrainTimeout,
 					NodeVolumeDetachTimeout: nodeVolumeDetachTimeout,
 					NodeDeletionTimeout:     nodeDeletionTimeout,
+					ReadinessGates:          readinessGates,
 				},
 			},
 		},

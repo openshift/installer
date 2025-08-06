@@ -53,7 +53,7 @@ func (o *SubnetNetworkVerification) Kind() string {
 	return SubnetNetworkVerificationKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *SubnetNetworkVerification) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -250,6 +250,29 @@ func (l *SubnetNetworkVerificationList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *SubnetNetworkVerificationList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SubnetNetworkVerificationList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SubnetNetworkVerificationList) SetItems(items []*SubnetNetworkVerification) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SubnetNetworkVerificationList) Items() []*SubnetNetworkVerification {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

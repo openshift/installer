@@ -30,7 +30,7 @@ import (
 // MarshalResourceQuota writes a value of the 'resource_quota' type to the given writer.
 func MarshalResourceQuota(object *ResourceQuota, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeResourceQuota(object, stream)
+	WriteResourceQuota(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalResourceQuota(object *ResourceQuota, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeResourceQuota writes a value of the 'resource_quota' type to the given stream.
-func writeResourceQuota(object *ResourceQuota, stream *jsoniter.Stream) {
+// WriteResourceQuota writes a value of the 'resource_quota' type to the given stream.
+func WriteResourceQuota(object *ResourceQuota, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -129,13 +129,13 @@ func UnmarshalResourceQuota(source interface{}) (object *ResourceQuota, err erro
 	if err != nil {
 		return
 	}
-	object = readResourceQuota(iterator)
+	object = ReadResourceQuota(iterator)
 	err = iterator.Error
 	return
 }
 
-// readResourceQuota reads a value of the 'resource_quota' type from the given iterator.
-func readResourceQuota(iterator *jsoniter.Iterator) *ResourceQuota {
+// ReadResourceQuota reads a value of the 'resource_quota' type from the given iterator.
+func ReadResourceQuota(iterator *jsoniter.Iterator) *ResourceQuota {
 	object := &ResourceQuota{}
 	for {
 		field := iterator.ReadObject()

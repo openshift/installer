@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalEscalationList(list []*Escalation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeEscalationList(list, stream)
+	WriteEscalationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalEscalationList(list []*Escalation, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeEscalationList writes a list of value of the 'escalation' type to
+// WriteEscalationList writes a list of value of the 'escalation' type to
 // the given stream.
-func writeEscalationList(list []*Escalation, stream *jsoniter.Stream) {
+func WriteEscalationList(list []*Escalation, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeEscalation(value, stream)
+		WriteEscalation(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalEscalationList(source interface{}) (items []*Escalation, err error
 	if err != nil {
 		return
 	}
-	items = readEscalationList(iterator)
+	items = ReadEscalationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readEscalationList reads list of values of the ”escalation' type from
+// ReadEscalationList reads list of values of the ”escalation' type from
 // the given iterator.
-func readEscalationList(iterator *jsoniter.Iterator) []*Escalation {
+func ReadEscalationList(iterator *jsoniter.Iterator) []*Escalation {
 	list := []*Escalation{}
 	for iterator.ReadArray() {
-		item := readEscalation(iterator)
+		item := ReadEscalation(iterator)
 		list = append(list, item)
 	}
 	return list

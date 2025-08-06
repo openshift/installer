@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalDefaultCapabilityList(list []*DefaultCapability, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDefaultCapabilityList(list, stream)
+	WriteDefaultCapabilityList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalDefaultCapabilityList(list []*DefaultCapability, writer io.Writer) e
 	return stream.Error
 }
 
-// writeDefaultCapabilityList writes a list of value of the 'default_capability' type to
+// WriteDefaultCapabilityList writes a list of value of the 'default_capability' type to
 // the given stream.
-func writeDefaultCapabilityList(list []*DefaultCapability, stream *jsoniter.Stream) {
+func WriteDefaultCapabilityList(list []*DefaultCapability, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeDefaultCapability(value, stream)
+		WriteDefaultCapability(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalDefaultCapabilityList(source interface{}) (items []*DefaultCapabil
 	if err != nil {
 		return
 	}
-	items = readDefaultCapabilityList(iterator)
+	items = ReadDefaultCapabilityList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDefaultCapabilityList reads list of values of the ”default_capability' type from
+// ReadDefaultCapabilityList reads list of values of the ”default_capability' type from
 // the given iterator.
-func readDefaultCapabilityList(iterator *jsoniter.Iterator) []*DefaultCapability {
+func ReadDefaultCapabilityList(iterator *jsoniter.Iterator) []*DefaultCapability {
 	list := []*DefaultCapability{}
 	for iterator.ReadArray() {
-		item := readDefaultCapability(iterator)
+		item := ReadDefaultCapability(iterator)
 		list = append(list, item)
 	}
 	return list

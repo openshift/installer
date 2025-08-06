@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalKubeletConfigList(list []*KubeletConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeKubeletConfigList(list, stream)
+	WriteKubeletConfigList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalKubeletConfigList(list []*KubeletConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeKubeletConfigList writes a list of value of the 'kubelet_config' type to
+// WriteKubeletConfigList writes a list of value of the 'kubelet_config' type to
 // the given stream.
-func writeKubeletConfigList(list []*KubeletConfig, stream *jsoniter.Stream) {
+func WriteKubeletConfigList(list []*KubeletConfig, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeKubeletConfig(value, stream)
+		WriteKubeletConfig(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalKubeletConfigList(source interface{}) (items []*KubeletConfig, err
 	if err != nil {
 		return
 	}
-	items = readKubeletConfigList(iterator)
+	items = ReadKubeletConfigList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readKubeletConfigList reads list of values of the ”kubelet_config' type from
+// ReadKubeletConfigList reads list of values of the ”kubelet_config' type from
 // the given iterator.
-func readKubeletConfigList(iterator *jsoniter.Iterator) []*KubeletConfig {
+func ReadKubeletConfigList(iterator *jsoniter.Iterator) []*KubeletConfig {
 	list := []*KubeletConfig{}
 	for iterator.ReadArray() {
-		item := readKubeletConfig(iterator)
+		item := ReadKubeletConfig(iterator)
 		list = append(list, item)
 	}
 	return list

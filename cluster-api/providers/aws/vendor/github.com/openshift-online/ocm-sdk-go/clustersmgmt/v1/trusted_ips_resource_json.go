@@ -49,7 +49,7 @@ func readTrustedIpsListResponse(response *TrustedIpsListResponse, reader io.Read
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readTrustedIpList(iterator)
+			items := ReadTrustedIpList(iterator)
 			response.items = &TrustedIpList{
 				items: items,
 			}

@@ -218,6 +218,29 @@ func (l *RelatedResourceList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *RelatedResourceList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *RelatedResourceList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *RelatedResourceList) SetItems(items []*RelatedResource) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *RelatedResourceList) Items() []*RelatedResource {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *RelatedResourceList) Empty() bool {
 	return l == nil || len(l.items) == 0

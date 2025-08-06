@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalUpgradePolicyStateList(list []*UpgradePolicyState, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeUpgradePolicyStateList(list, stream)
+	WriteUpgradePolicyStateList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalUpgradePolicyStateList(list []*UpgradePolicyState, writer io.Writer)
 	return stream.Error
 }
 
-// writeUpgradePolicyStateList writes a list of value of the 'upgrade_policy_state' type to
+// WriteUpgradePolicyStateList writes a list of value of the 'upgrade_policy_state' type to
 // the given stream.
-func writeUpgradePolicyStateList(list []*UpgradePolicyState, stream *jsoniter.Stream) {
+func WriteUpgradePolicyStateList(list []*UpgradePolicyState, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeUpgradePolicyState(value, stream)
+		WriteUpgradePolicyState(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalUpgradePolicyStateList(source interface{}) (items []*UpgradePolicy
 	if err != nil {
 		return
 	}
-	items = readUpgradePolicyStateList(iterator)
+	items = ReadUpgradePolicyStateList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readUpgradePolicyStateList reads list of values of the ”upgrade_policy_state' type from
+// ReadUpgradePolicyStateList reads list of values of the ”upgrade_policy_state' type from
 // the given iterator.
-func readUpgradePolicyStateList(iterator *jsoniter.Iterator) []*UpgradePolicyState {
+func ReadUpgradePolicyStateList(iterator *jsoniter.Iterator) []*UpgradePolicyState {
 	list := []*UpgradePolicyState{}
 	for iterator.ReadArray() {
-		item := readUpgradePolicyState(iterator)
+		item := ReadUpgradePolicyState(iterator)
 		list = append(list, item)
 	}
 	return list

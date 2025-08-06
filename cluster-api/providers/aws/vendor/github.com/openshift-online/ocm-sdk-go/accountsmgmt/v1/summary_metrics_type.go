@@ -96,6 +96,29 @@ func (l *SummaryMetricsList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *SummaryMetricsList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SummaryMetricsList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SummaryMetricsList) SetItems(items []*SummaryMetrics) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SummaryMetricsList) Items() []*SummaryMetrics {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *SummaryMetricsList) Empty() bool {
 	return l == nil || len(l.items) == 0

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterConsoleList(list []*ClusterConsole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterConsoleList(list, stream)
+	WriteClusterConsoleList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterConsoleList(list []*ClusterConsole, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeClusterConsoleList writes a list of value of the 'cluster_console' type to
+// WriteClusterConsoleList writes a list of value of the 'cluster_console' type to
 // the given stream.
-func writeClusterConsoleList(list []*ClusterConsole, stream *jsoniter.Stream) {
+func WriteClusterConsoleList(list []*ClusterConsole, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeClusterConsole(value, stream)
+		WriteClusterConsole(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterConsoleList(source interface{}) (items []*ClusterConsole, e
 	if err != nil {
 		return
 	}
-	items = readClusterConsoleList(iterator)
+	items = ReadClusterConsoleList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterConsoleList reads list of values of the ”cluster_console' type from
+// ReadClusterConsoleList reads list of values of the ”cluster_console' type from
 // the given iterator.
-func readClusterConsoleList(iterator *jsoniter.Iterator) []*ClusterConsole {
+func ReadClusterConsoleList(iterator *jsoniter.Iterator) []*ClusterConsole {
 	list := []*ClusterConsole{}
 	for iterator.ReadArray() {
-		item := readClusterConsole(iterator)
+		item := ReadClusterConsole(iterator)
 		list = append(list, item)
 	}
 	return list

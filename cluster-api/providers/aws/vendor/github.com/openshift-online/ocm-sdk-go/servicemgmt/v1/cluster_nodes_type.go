@@ -76,6 +76,29 @@ func (l *ClusterNodesList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ClusterNodesList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ClusterNodesList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ClusterNodesList) SetItems(items []*ClusterNodes) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ClusterNodesList) Items() []*ClusterNodes {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ClusterNodesList) Empty() bool {
 	return l == nil || len(l.items) == 0

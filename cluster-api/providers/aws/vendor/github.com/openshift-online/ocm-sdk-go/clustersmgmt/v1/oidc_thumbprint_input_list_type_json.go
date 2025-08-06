@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalOidcThumbprintInputList(list []*OidcThumbprintInput, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeOidcThumbprintInputList(list, stream)
+	WriteOidcThumbprintInputList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalOidcThumbprintInputList(list []*OidcThumbprintInput, writer io.Write
 	return stream.Error
 }
 
-// writeOidcThumbprintInputList writes a list of value of the 'oidc_thumbprint_input' type to
+// WriteOidcThumbprintInputList writes a list of value of the 'oidc_thumbprint_input' type to
 // the given stream.
-func writeOidcThumbprintInputList(list []*OidcThumbprintInput, stream *jsoniter.Stream) {
+func WriteOidcThumbprintInputList(list []*OidcThumbprintInput, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeOidcThumbprintInput(value, stream)
+		WriteOidcThumbprintInput(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalOidcThumbprintInputList(source interface{}) (items []*OidcThumbpri
 	if err != nil {
 		return
 	}
-	items = readOidcThumbprintInputList(iterator)
+	items = ReadOidcThumbprintInputList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readOidcThumbprintInputList reads list of values of the ”oidc_thumbprint_input' type from
+// ReadOidcThumbprintInputList reads list of values of the ”oidc_thumbprint_input' type from
 // the given iterator.
-func readOidcThumbprintInputList(iterator *jsoniter.Iterator) []*OidcThumbprintInput {
+func ReadOidcThumbprintInputList(iterator *jsoniter.Iterator) []*OidcThumbprintInput {
 	list := []*OidcThumbprintInput{}
 	for iterator.ReadArray() {
-		item := readOidcThumbprintInput(iterator)
+		item := ReadOidcThumbprintInput(iterator)
 		list = append(list, item)
 	}
 	return list

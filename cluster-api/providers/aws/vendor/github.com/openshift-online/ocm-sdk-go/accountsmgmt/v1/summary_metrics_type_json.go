@@ -29,7 +29,7 @@ import (
 // MarshalSummaryMetrics writes a value of the 'summary_metrics' type to the given writer.
 func MarshalSummaryMetrics(object *SummaryMetrics, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSummaryMetrics(object, stream)
+	WriteSummaryMetrics(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSummaryMetrics(object *SummaryMetrics, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeSummaryMetrics writes a value of the 'summary_metrics' type to the given stream.
-func writeSummaryMetrics(object *SummaryMetrics, stream *jsoniter.Stream) {
+// WriteSummaryMetrics writes a value of the 'summary_metrics' type to the given stream.
+func WriteSummaryMetrics(object *SummaryMetrics, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func writeSummaryMetrics(object *SummaryMetrics, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("vector")
-		writeSummarySampleList(object.vector, stream)
+		WriteSummarySampleList(object.vector, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -69,13 +69,13 @@ func UnmarshalSummaryMetrics(source interface{}) (object *SummaryMetrics, err er
 	if err != nil {
 		return
 	}
-	object = readSummaryMetrics(iterator)
+	object = ReadSummaryMetrics(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSummaryMetrics reads a value of the 'summary_metrics' type from the given iterator.
-func readSummaryMetrics(iterator *jsoniter.Iterator) *SummaryMetrics {
+// ReadSummaryMetrics reads a value of the 'summary_metrics' type from the given iterator.
+func ReadSummaryMetrics(iterator *jsoniter.Iterator) *SummaryMetrics {
 	object := &SummaryMetrics{}
 	for {
 		field := iterator.ReadObject()
@@ -88,7 +88,7 @@ func readSummaryMetrics(iterator *jsoniter.Iterator) *SummaryMetrics {
 			object.name = value
 			object.bitmap_ |= 1
 		case "vector":
-			value := readSummarySampleList(iterator)
+			value := ReadSummarySampleList(iterator)
 			object.vector = value
 			object.bitmap_ |= 2
 		default:

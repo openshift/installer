@@ -29,7 +29,7 @@ import (
 // MarshalSubscriptionRegistration writes a value of the 'subscription_registration' type to the given writer.
 func MarshalSubscriptionRegistration(object *SubscriptionRegistration, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSubscriptionRegistration(object, stream)
+	WriteSubscriptionRegistration(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSubscriptionRegistration(object *SubscriptionRegistration, writer io
 	return stream.Error
 }
 
-// writeSubscriptionRegistration writes a value of the 'subscription_registration' type to the given stream.
-func writeSubscriptionRegistration(object *SubscriptionRegistration, stream *jsoniter.Stream) {
+// WriteSubscriptionRegistration writes a value of the 'subscription_registration' type to the given stream.
+func WriteSubscriptionRegistration(object *SubscriptionRegistration, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -96,13 +96,13 @@ func UnmarshalSubscriptionRegistration(source interface{}) (object *Subscription
 	if err != nil {
 		return
 	}
-	object = readSubscriptionRegistration(iterator)
+	object = ReadSubscriptionRegistration(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSubscriptionRegistration reads a value of the 'subscription_registration' type from the given iterator.
-func readSubscriptionRegistration(iterator *jsoniter.Iterator) *SubscriptionRegistration {
+// ReadSubscriptionRegistration reads a value of the 'subscription_registration' type from the given iterator.
+func ReadSubscriptionRegistration(iterator *jsoniter.Iterator) *SubscriptionRegistration {
 	object := &SubscriptionRegistration{}
 	for {
 		field := iterator.ReadObject()

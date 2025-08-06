@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSecurityGroupList(list []*SecurityGroup, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSecurityGroupList(list, stream)
+	WriteSecurityGroupList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSecurityGroupList(list []*SecurityGroup, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeSecurityGroupList writes a list of value of the 'security_group' type to
+// WriteSecurityGroupList writes a list of value of the 'security_group' type to
 // the given stream.
-func writeSecurityGroupList(list []*SecurityGroup, stream *jsoniter.Stream) {
+func WriteSecurityGroupList(list []*SecurityGroup, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeSecurityGroup(value, stream)
+		WriteSecurityGroup(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSecurityGroupList(source interface{}) (items []*SecurityGroup, err
 	if err != nil {
 		return
 	}
-	items = readSecurityGroupList(iterator)
+	items = ReadSecurityGroupList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSecurityGroupList reads list of values of the ”security_group' type from
+// ReadSecurityGroupList reads list of values of the ”security_group' type from
 // the given iterator.
-func readSecurityGroupList(iterator *jsoniter.Iterator) []*SecurityGroup {
+func ReadSecurityGroupList(iterator *jsoniter.Iterator) []*SecurityGroup {
 	list := []*SecurityGroup{}
 	for iterator.ReadArray() {
-		item := readSecurityGroup(iterator)
+		item := ReadSecurityGroup(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -29,7 +29,7 @@ import (
 // MarshalAddOnParameterOption writes a value of the 'add_on_parameter_option' type to the given writer.
 func MarshalAddOnParameterOption(object *AddOnParameterOption, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnParameterOption(object, stream)
+	WriteAddOnParameterOption(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddOnParameterOption(object *AddOnParameterOption, writer io.Writer)
 	return stream.Error
 }
 
-// writeAddOnParameterOption writes a value of the 'add_on_parameter_option' type to the given stream.
-func writeAddOnParameterOption(object *AddOnParameterOption, stream *jsoniter.Stream) {
+// WriteAddOnParameterOption writes a value of the 'add_on_parameter_option' type to the given stream.
+func WriteAddOnParameterOption(object *AddOnParameterOption, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -66,7 +66,7 @@ func writeAddOnParameterOption(object *AddOnParameterOption, stream *jsoniter.St
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("requirements")
-		writeAddOnRequirementList(object.requirements, stream)
+		WriteAddOnRequirementList(object.requirements, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0
@@ -87,13 +87,13 @@ func UnmarshalAddOnParameterOption(source interface{}) (object *AddOnParameterOp
 	if err != nil {
 		return
 	}
-	object = readAddOnParameterOption(iterator)
+	object = ReadAddOnParameterOption(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnParameterOption reads a value of the 'add_on_parameter_option' type from the given iterator.
-func readAddOnParameterOption(iterator *jsoniter.Iterator) *AddOnParameterOption {
+// ReadAddOnParameterOption reads a value of the 'add_on_parameter_option' type from the given iterator.
+func ReadAddOnParameterOption(iterator *jsoniter.Iterator) *AddOnParameterOption {
 	object := &AddOnParameterOption{}
 	for {
 		field := iterator.ReadObject()
@@ -110,7 +110,7 @@ func readAddOnParameterOption(iterator *jsoniter.Iterator) *AddOnParameterOption
 			object.rank = value
 			object.bitmap_ |= 2
 		case "requirements":
-			value := readAddOnRequirementList(iterator)
+			value := ReadAddOnRequirementList(iterator)
 			object.requirements = value
 			object.bitmap_ |= 4
 		case "value":

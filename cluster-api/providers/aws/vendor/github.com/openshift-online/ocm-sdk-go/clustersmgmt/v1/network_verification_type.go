@@ -176,6 +176,29 @@ func (l *NetworkVerificationList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *NetworkVerificationList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *NetworkVerificationList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *NetworkVerificationList) SetItems(items []*NetworkVerification) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *NetworkVerificationList) Items() []*NetworkVerification {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *NetworkVerificationList) Empty() bool {
 	return l == nil || len(l.items) == 0

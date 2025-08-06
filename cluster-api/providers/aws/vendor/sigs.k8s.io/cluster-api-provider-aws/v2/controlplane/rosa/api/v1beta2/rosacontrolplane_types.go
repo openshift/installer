@@ -59,6 +59,9 @@ const (
 	// Stable channel group is the default channel group for stable releases.
 	Stable ChannelGroupType = "stable"
 
+	// Fast channel group is for fast channel releases.
+	Fast ChannelGroupType = "fast"
+
 	// Candidate channel group is for testing candidate builds.
 	Candidate ChannelGroupType = "candidate"
 
@@ -107,7 +110,7 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 
 	// OpenShift version channel group, default is stable.
 	//
-	// +kubebuilder:validation:Enum=stable;candidate;nightly
+	// +kubebuilder:validation:Enum=stable;fast;candidate;nightly
 	// +kubebuilder:default=stable
 	ChannelGroup ChannelGroupType `json:"channelGroup"`
 
@@ -748,6 +751,10 @@ type RosaControlPlaneStatus struct {
 	ConsoleURL string `json:"consoleURL,omitempty"`
 	// OIDCEndpointURL is the endpoint url for the managed OIDC provider.
 	OIDCEndpointURL string `json:"oidcEndpointURL,omitempty"`
+
+	// OpenShift semantic version, for example "4.14.5".
+	// +optional
+	Version string `json:"version"`
 
 	// Available upgrades for the ROSA hosted control plane.
 	AvailableUpgrades []string `json:"availableUpgrades,omitempty"`

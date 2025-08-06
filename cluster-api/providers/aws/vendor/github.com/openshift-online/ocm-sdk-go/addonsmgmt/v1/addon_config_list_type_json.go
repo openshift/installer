@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonConfigList(list []*AddonConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonConfigList(list, stream)
+	WriteAddonConfigList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddonConfigList(list []*AddonConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddonConfigList writes a list of value of the 'addon_config' type to
+// WriteAddonConfigList writes a list of value of the 'addon_config' type to
 // the given stream.
-func writeAddonConfigList(list []*AddonConfig, stream *jsoniter.Stream) {
+func WriteAddonConfigList(list []*AddonConfig, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAddonConfig(value, stream)
+		WriteAddonConfig(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddonConfigList(source interface{}) (items []*AddonConfig, err err
 	if err != nil {
 		return
 	}
-	items = readAddonConfigList(iterator)
+	items = ReadAddonConfigList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonConfigList reads list of values of the ”addon_config' type from
+// ReadAddonConfigList reads list of values of the ”addon_config' type from
 // the given iterator.
-func readAddonConfigList(iterator *jsoniter.Iterator) []*AddonConfig {
+func ReadAddonConfigList(iterator *jsoniter.Iterator) []*AddonConfig {
 	list := []*AddonConfig{}
 	for iterator.ReadArray() {
-		item := readAddonConfig(iterator)
+		item := ReadAddonConfig(iterator)
 		list = append(list, item)
 	}
 	return list

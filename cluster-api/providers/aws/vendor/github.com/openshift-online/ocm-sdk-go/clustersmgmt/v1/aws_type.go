@@ -36,12 +36,14 @@ type AWS struct {
 	billingAccountID                       string
 	ec2MetadataHttpTokens                  Ec2MetadataHttpTokens
 	etcdEncryption                         *AwsEtcdEncryption
+	hcpInternalCommunicationHostedZoneId   string
 	privateHostedZoneID                    string
 	privateHostedZoneRoleARN               string
 	privateLinkConfiguration               *PrivateLinkClusterConfiguration
 	secretAccessKey                        string
 	subnetIDs                              []string
 	tags                                   map[string]string
+	vpcEndpointRoleArn                     string
 	privateLink                            bool
 }
 
@@ -326,12 +328,35 @@ func (o *AWS) GetEtcdEncryption() (value *AwsEtcdEncryption, ok bool) {
 	return
 }
 
+// HcpInternalCommunicationHostedZoneId returns the value of the 'hcp_internal_communication_hosted_zone_id' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// ID of local private hosted zone for hypershift internal communication.
+func (o *AWS) HcpInternalCommunicationHostedZoneId() string {
+	if o != nil && o.bitmap_&4096 != 0 {
+		return o.hcpInternalCommunicationHostedZoneId
+	}
+	return ""
+}
+
+// GetHcpInternalCommunicationHostedZoneId returns the value of the 'hcp_internal_communication_hosted_zone_id' attribute and
+// a flag indicating if the attribute has a value.
+//
+// ID of local private hosted zone for hypershift internal communication.
+func (o *AWS) GetHcpInternalCommunicationHostedZoneId() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&4096 != 0
+	if ok {
+		value = o.hcpInternalCommunicationHostedZoneId
+	}
+	return
+}
+
 // PrivateHostedZoneID returns the value of the 'private_hosted_zone_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // ID of private hosted zone.
 func (o *AWS) PrivateHostedZoneID() string {
-	if o != nil && o.bitmap_&4096 != 0 {
+	if o != nil && o.bitmap_&8192 != 0 {
 		return o.privateHostedZoneID
 	}
 	return ""
@@ -342,7 +367,7 @@ func (o *AWS) PrivateHostedZoneID() string {
 //
 // ID of private hosted zone.
 func (o *AWS) GetPrivateHostedZoneID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&4096 != 0
+	ok = o != nil && o.bitmap_&8192 != 0
 	if ok {
 		value = o.privateHostedZoneID
 	}
@@ -354,7 +379,7 @@ func (o *AWS) GetPrivateHostedZoneID() (value string, ok bool) {
 //
 // Role ARN for private hosted zone.
 func (o *AWS) PrivateHostedZoneRoleARN() string {
-	if o != nil && o.bitmap_&8192 != 0 {
+	if o != nil && o.bitmap_&16384 != 0 {
 		return o.privateHostedZoneRoleARN
 	}
 	return ""
@@ -365,7 +390,7 @@ func (o *AWS) PrivateHostedZoneRoleARN() string {
 //
 // Role ARN for private hosted zone.
 func (o *AWS) GetPrivateHostedZoneRoleARN() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&8192 != 0
+	ok = o != nil && o.bitmap_&16384 != 0
 	if ok {
 		value = o.privateHostedZoneRoleARN
 	}
@@ -377,7 +402,7 @@ func (o *AWS) GetPrivateHostedZoneRoleARN() (value string, ok bool) {
 //
 // Sets cluster to be inaccessible externally.
 func (o *AWS) PrivateLink() bool {
-	if o != nil && o.bitmap_&16384 != 0 {
+	if o != nil && o.bitmap_&32768 != 0 {
 		return o.privateLink
 	}
 	return false
@@ -388,7 +413,7 @@ func (o *AWS) PrivateLink() bool {
 //
 // Sets cluster to be inaccessible externally.
 func (o *AWS) GetPrivateLink() (value bool, ok bool) {
-	ok = o != nil && o.bitmap_&16384 != 0
+	ok = o != nil && o.bitmap_&32768 != 0
 	if ok {
 		value = o.privateLink
 	}
@@ -400,7 +425,7 @@ func (o *AWS) GetPrivateLink() (value bool, ok bool) {
 //
 // Manages additional configuration for Private Links.
 func (o *AWS) PrivateLinkConfiguration() *PrivateLinkClusterConfiguration {
-	if o != nil && o.bitmap_&32768 != 0 {
+	if o != nil && o.bitmap_&65536 != 0 {
 		return o.privateLinkConfiguration
 	}
 	return nil
@@ -411,7 +436,7 @@ func (o *AWS) PrivateLinkConfiguration() *PrivateLinkClusterConfiguration {
 //
 // Manages additional configuration for Private Links.
 func (o *AWS) GetPrivateLinkConfiguration() (value *PrivateLinkClusterConfiguration, ok bool) {
-	ok = o != nil && o.bitmap_&32768 != 0
+	ok = o != nil && o.bitmap_&65536 != 0
 	if ok {
 		value = o.privateLinkConfiguration
 	}
@@ -423,7 +448,7 @@ func (o *AWS) GetPrivateLinkConfiguration() (value *PrivateLinkClusterConfigurat
 //
 // AWS secret access key.
 func (o *AWS) SecretAccessKey() string {
-	if o != nil && o.bitmap_&65536 != 0 {
+	if o != nil && o.bitmap_&131072 != 0 {
 		return o.secretAccessKey
 	}
 	return ""
@@ -434,7 +459,7 @@ func (o *AWS) SecretAccessKey() string {
 //
 // AWS secret access key.
 func (o *AWS) GetSecretAccessKey() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&65536 != 0
+	ok = o != nil && o.bitmap_&131072 != 0
 	if ok {
 		value = o.secretAccessKey
 	}
@@ -446,7 +471,7 @@ func (o *AWS) GetSecretAccessKey() (value string, ok bool) {
 //
 // The subnet ids to be used when installing the cluster.
 func (o *AWS) SubnetIDs() []string {
-	if o != nil && o.bitmap_&131072 != 0 {
+	if o != nil && o.bitmap_&262144 != 0 {
 		return o.subnetIDs
 	}
 	return nil
@@ -457,7 +482,7 @@ func (o *AWS) SubnetIDs() []string {
 //
 // The subnet ids to be used when installing the cluster.
 func (o *AWS) GetSubnetIDs() (value []string, ok bool) {
-	ok = o != nil && o.bitmap_&131072 != 0
+	ok = o != nil && o.bitmap_&262144 != 0
 	if ok {
 		value = o.subnetIDs
 	}
@@ -469,7 +494,7 @@ func (o *AWS) GetSubnetIDs() (value []string, ok bool) {
 //
 // Optional keys and values that the installer will add as tags to all AWS resources it creates
 func (o *AWS) Tags() map[string]string {
-	if o != nil && o.bitmap_&262144 != 0 {
+	if o != nil && o.bitmap_&524288 != 0 {
 		return o.tags
 	}
 	return nil
@@ -480,9 +505,32 @@ func (o *AWS) Tags() map[string]string {
 //
 // Optional keys and values that the installer will add as tags to all AWS resources it creates
 func (o *AWS) GetTags() (value map[string]string, ok bool) {
-	ok = o != nil && o.bitmap_&262144 != 0
+	ok = o != nil && o.bitmap_&524288 != 0
 	if ok {
 		value = o.tags
+	}
+	return
+}
+
+// VpcEndpointRoleArn returns the value of the 'vpc_endpoint_role_arn' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Role ARN for VPC Endpoint Service cross account role.
+func (o *AWS) VpcEndpointRoleArn() string {
+	if o != nil && o.bitmap_&1048576 != 0 {
+		return o.vpcEndpointRoleArn
+	}
+	return ""
+}
+
+// GetVpcEndpointRoleArn returns the value of the 'vpc_endpoint_role_arn' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Role ARN for VPC Endpoint Service cross account role.
+func (o *AWS) GetVpcEndpointRoleArn() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&1048576 != 0
+	if ok {
+		value = o.vpcEndpointRoleArn
 	}
 	return
 }
@@ -512,6 +560,29 @@ func (l *AWSList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *AWSList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AWSList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AWSList) SetItems(items []*AWS) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AWSList) Items() []*AWS {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

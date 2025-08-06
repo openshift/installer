@@ -30,7 +30,7 @@ import (
 // MarshalDNSDomain writes a value of the 'DNS_domain' type to the given writer.
 func MarshalDNSDomain(object *DNSDomain, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDNSDomain(object, stream)
+	WriteDNSDomain(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalDNSDomain(object *DNSDomain, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeDNSDomain writes a value of the 'DNS_domain' type to the given stream.
-func writeDNSDomain(object *DNSDomain, stream *jsoniter.Stream) {
+// WriteDNSDomain writes a value of the 'DNS_domain' type to the given stream.
+func WriteDNSDomain(object *DNSDomain, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,19 +72,28 @@ func writeDNSDomain(object *DNSDomain, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cluster")
-		writeClusterLink(object.cluster, stream)
+		WriteClusterLink(object.cluster, stream)
 		count++
 	}
-	present_ = object.bitmap_&16 != 0 && object.organization != nil
+	present_ = object.bitmap_&16 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("cluster_arch")
+		stream.WriteString(string(object.clusterArch))
+		count++
+	}
+	present_ = object.bitmap_&32 != 0 && object.organization != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("organization")
-		writeOrganizationLink(object.organization, stream)
+		WriteOrganizationLink(object.organization, stream)
 		count++
 	}
-	present_ = object.bitmap_&32 != 0
+	present_ = object.bitmap_&64 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -93,7 +102,7 @@ func writeDNSDomain(object *DNSDomain, stream *jsoniter.Stream) {
 		stream.WriteString((object.reservedAtTimestamp).Format(time.RFC3339))
 		count++
 	}
-	present_ = object.bitmap_&64 != 0
+	present_ = object.bitmap_&128 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -111,13 +120,13 @@ func UnmarshalDNSDomain(source interface{}) (object *DNSDomain, err error) {
 	if err != nil {
 		return
 	}
-	object = readDNSDomain(iterator)
+	object = ReadDNSDomain(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDNSDomain reads a value of the 'DNS_domain' type from the given iterator.
-func readDNSDomain(iterator *jsoniter.Iterator) *DNSDomain {
+// ReadDNSDomain reads a value of the 'DNS_domain' type from the given iterator.
+func ReadDNSDomain(iterator *jsoniter.Iterator) *DNSDomain {
 	object := &DNSDomain{}
 	for {
 		field := iterator.ReadObject()
@@ -137,13 +146,18 @@ func readDNSDomain(iterator *jsoniter.Iterator) *DNSDomain {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "cluster":
-			value := readClusterLink(iterator)
+			value := ReadClusterLink(iterator)
 			object.cluster = value
 			object.bitmap_ |= 8
-		case "organization":
-			value := readOrganizationLink(iterator)
-			object.organization = value
+		case "cluster_arch":
+			text := iterator.ReadString()
+			value := ClusterArchitecture(text)
+			object.clusterArch = value
 			object.bitmap_ |= 16
+		case "organization":
+			value := ReadOrganizationLink(iterator)
+			object.organization = value
+			object.bitmap_ |= 32
 		case "reserved_at_timestamp":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -151,11 +165,11 @@ func readDNSDomain(iterator *jsoniter.Iterator) *DNSDomain {
 				iterator.ReportError("", err.Error())
 			}
 			object.reservedAtTimestamp = value
-			object.bitmap_ |= 32
+			object.bitmap_ |= 64
 		case "user_defined":
 			value := iterator.ReadBool()
 			object.userDefined = value
-			object.bitmap_ |= 64
+			object.bitmap_ |= 128
 		default:
 			iterator.ReadAny()
 		}

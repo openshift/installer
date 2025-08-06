@@ -130,6 +130,29 @@ func (l *GcpAuthenticationList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *GcpAuthenticationList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *GcpAuthenticationList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *GcpAuthenticationList) SetItems(items []*GcpAuthentication) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *GcpAuthenticationList) Items() []*GcpAuthentication {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *GcpAuthenticationList) Empty() bool {
 	return l == nil || len(l.items) == 0

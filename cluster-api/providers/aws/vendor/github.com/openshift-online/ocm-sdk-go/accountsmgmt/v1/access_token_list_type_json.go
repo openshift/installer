@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAccessTokenList(list []*AccessToken, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAccessTokenList(list, stream)
+	WriteAccessTokenList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAccessTokenList(list []*AccessToken, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAccessTokenList writes a list of value of the 'access_token' type to
+// WriteAccessTokenList writes a list of value of the 'access_token' type to
 // the given stream.
-func writeAccessTokenList(list []*AccessToken, stream *jsoniter.Stream) {
+func WriteAccessTokenList(list []*AccessToken, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAccessToken(value, stream)
+		WriteAccessToken(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAccessTokenList(source interface{}) (items []*AccessToken, err err
 	if err != nil {
 		return
 	}
-	items = readAccessTokenList(iterator)
+	items = ReadAccessTokenList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAccessTokenList reads list of values of the ”access_token' type from
+// ReadAccessTokenList reads list of values of the ”access_token' type from
 // the given iterator.
-func readAccessTokenList(iterator *jsoniter.Iterator) []*AccessToken {
+func ReadAccessTokenList(iterator *jsoniter.Iterator) []*AccessToken {
 	list := []*AccessToken{}
 	for iterator.ReadArray() {
-		item := readAccessToken(iterator)
+		item := ReadAccessToken(iterator)
 		list = append(list, item)
 	}
 	return list
