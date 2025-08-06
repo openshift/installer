@@ -342,6 +342,12 @@ resource group.
 This resource group must be empty with no other resources when trying to use it for creating a cluster.
 If empty, a new resource group will created for the cluster.
 
+    userProvisionedDNS <string>
+      Default: "Disabled"
+      Valid Values: "Enabled","Disabled"
+      UserProvisionedDNS indicates if the customer is providing their own DNS solution in place of the default
+provisioned by the Installer.
+
     userTags <object>
       UserTags has additional keys and values that the installer will add
 as tags to all resources that it creates on AzurePublicCloud alone.

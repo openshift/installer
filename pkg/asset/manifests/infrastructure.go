@@ -161,6 +161,15 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			}
 			config.Status.PlatformStatus.Azure.ResourceTags = resourceTags
 		}
+		// If the user has requested the use of a DNS provisioned by them, then OpenShift needs to
+		// start an in-cluster DNS for the installation to succeed. The user can then configure their
+		// DNS post-install.
+		config.Status.PlatformStatus.Azure.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{
+			DNSType: configv1.PlatformDefaultDNSType,
+		}
+		if installConfig.Config.Azure.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
+			config.Status.PlatformStatus.Azure.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
+		}
 	case baremetal.Name:
 		config.Spec.PlatformSpec.Type = configv1.BareMetalPlatformType
 		config.Spec.PlatformSpec.BareMetal = &configv1.BareMetalPlatformSpec{}

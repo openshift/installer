@@ -27,7 +27,7 @@ func TestFeatureGates(t *testing.T) {
 				c.GCP.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
 				return c
 			}(),
-			expected: `^platform.gcp.userProvisionedDNS: Forbidden: this field is protected by the GCPClusterHostedDNS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+			expected: `^platform.gcp.userProvisionedDNS: Forbidden: this field is protected by the GCPClusterHostedDNSInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "GCP Custom API Endpoints is not allowed without Feature Gates",
@@ -42,7 +42,7 @@ func TestFeatureGates(t *testing.T) {
 				}
 				return c
 			}(),
-			expected: `^platform.gcp.serviceEndpoints: Forbidden: this field is protected by the GCPCustomAPIEndpoints feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+			expected: `^platform.gcp.serviceEndpoints: Forbidden: this field is protected by the GCPCustomAPIEndpointsInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "AWS UserProvisionedDNS is not allowed without Feature Gates",
@@ -52,7 +52,18 @@ func TestFeatureGates(t *testing.T) {
 				c.AWS.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
 				return c
 			}(),
-			expected: `^platform.aws.userProvisionedDNS: Forbidden: this field is protected by the AWSClusterHostedDNS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+			expected: `^platform.aws.userProvisionedDNS: Forbidden: this field is protected by the AWSClusterHostedDNSInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "Azure UserProvisionedDNS is not allowed without Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = &azure.Platform{}
+				c.Azure.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
+				return c
+			}(),
+			expected: `^platform.azure.userProvisionedDNS: Forbidden: this field is protected by the AzureClusterHostedDNSInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "vSphere hosts is allowed with Feature Gates enabled",

@@ -532,7 +532,7 @@ type AWSPlatformStatus struct {
 	//
 	// +default={"dnsType": "PlatformDefault"}
 	// +kubebuilder:default={"dnsType": "PlatformDefault"}
-	// +openshift:enable:FeatureGate=AWSClusterHostedDNS
+	// +openshift:enable:FeatureGate=AWSClusterHostedDNSInstall
 	// +optional
 	// +nullable
 	CloudLoadBalancerConfig *CloudLoadBalancerConfig `json:"cloudLoadBalancerConfig,omitempty"`
@@ -594,6 +594,19 @@ type AzurePlatformStatus struct {
 	// +listType=atomic
 	// +optional
 	ResourceTags []AzureResourceTag `json:"resourceTags,omitempty"`
+
+	// cloudLoadBalancerConfig holds configuration related to DNS and cloud
+	// load balancers. It allows configuration of in-cluster DNS as an alternative
+	// to the platform default DNS implementation.
+	// When using the ClusterHosted DNS type, Load Balancer IP addresses
+	// must be provided for the API and internal API load balancers as well as the
+	// ingress load balancer.
+	//
+	// +default={"dnsType": "PlatformDefault"}
+	// +kubebuilder:default={"dnsType": "PlatformDefault"}
+	// +openshift:enable:FeatureGate=AzureClusterHostedDNSInstall
+	// +optional
+	CloudLoadBalancerConfig *CloudLoadBalancerConfig `json:"cloudLoadBalancerConfig,omitempty"`
 }
 
 // AzureResourceTag is a tag to apply to Azure resources created for the cluster.
@@ -745,7 +758,7 @@ type GCPPlatformStatus struct {
 	//
 	// +default={"dnsType": "PlatformDefault"}
 	// +kubebuilder:default={"dnsType": "PlatformDefault"}
-	// +openshift:enable:FeatureGate=GCPClusterHostedDNS
+	// +openshift:enable:FeatureGate=GCPClusterHostedDNSInstall
 	// +optional
 	// +nullable
 	CloudLoadBalancerConfig *CloudLoadBalancerConfig `json:"cloudLoadBalancerConfig,omitempty"`
@@ -760,7 +773,7 @@ type GCPPlatformStatus struct {
 	// +kubebuilder:validation:MaxItems=8
 	// +kubebuilder:validation:XValidation:rule="self.all(x, self.exists_one(y, x.name == y.name))",message="only 1 endpoint override is permitted per GCP service name"
 	// +optional
-	// +openshift:enable:FeatureGate=GCPCustomAPIEndpoints
+	// +openshift:enable:FeatureGate=GCPCustomAPIEndpointsInstall
 	ServiceEndpoints []GCPServiceEndpoint `json:"serviceEndpoints,omitempty"`
 }
 

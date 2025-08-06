@@ -37,6 +37,7 @@ import (
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -514,6 +515,10 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	switch installConfig.Config.Platform.Name() { //nolint:gocritic
 	case aws.Name:
 		if installConfig.Config.AWS.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
+			return nil
+		}
+	case azure.Name:
+		if installConfig.Config.Azure.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
 			return nil
 		}
 	case gcp.Name:
