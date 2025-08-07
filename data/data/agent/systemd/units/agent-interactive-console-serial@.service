@@ -1,7 +1,8 @@
 [Unit]
 Description=Get interactive user configuration at boot on %I
-After=dev-fb0.device dev-%i.device network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service
+After=dev-fb0.device dev-%i.device network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service agent-extract-tui.service
 Before=serial-getty@%i.service network.target network.service agent.service node-zero.service NetworkManager-wait-online.service
+Wants=agent-extract-tui.service
 ConditionPathExists=/usr/local/bin/agent-tui
 ConditionPathExists=!/dev/fb0
 ConditionPathExists=!/etc/assisted/node0
@@ -10,7 +11,7 @@ ConditionPathExists=!/etc/assisted/node0
 Type=oneshot
 TTYPath=/dev/%I
 EnvironmentFile=/etc/assisted/agent-installer.env
-Environment=LD_LIBRARY_PATH=/usr/local/bin/
+Environment=LD_LIBRARY_PATH=/usr/local/bin/:/usr/local/lib
 Environment=AGENT_TUI_LOG_PATH=/var/log/agent/agent-tui.log
 ExecStartPre=/usr/bin/kill -s SIGRTMIN+21 1
 ExecStartPre=mkdir -p /var/log/agent
