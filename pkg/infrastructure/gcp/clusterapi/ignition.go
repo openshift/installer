@@ -76,5 +76,5 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 	}
 
 	logrus.Debugf("GCP: Editing Ignition files to start in-cluster DNS when UserProvisionedDNS is enabled")
-	return clusterapi.EditIgnition(in, gcp.Name, []string{computeAddress}, []string{computeIntAddress})
+	return clusterapi.EditIgnitionForCustomDNS(in, gcp.Name, []string{computeAddress}, []string{computeIntAddress})
 }
