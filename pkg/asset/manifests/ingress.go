@@ -163,6 +163,7 @@ func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig
 	case aws.Name:
 		// FIXME: CCM cannot create an IPv6-enabled load balancer
 		// Thus, we set publish to NodePort and manage the Load Balancer in the installer.
+		// Remove after CCM support dualstack NLB.
 		if config.IsDualStackInfra() {
 			obj = getDefaultIngressController()
 			obj.Spec.EndpointPublishingStrategy = &operatorv1.EndpointPublishingStrategy{
