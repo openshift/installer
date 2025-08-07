@@ -163,6 +163,8 @@ func (o *ClusterUninstaller) deleteEC2(ctx context.Context, session *session.Ses
 		return deleteEC2VPCPeeringConnection(ctx, o.EC2Client, id, logger)
 	case "vpc-endpoint-service":
 		return deleteEC2VPCEndpointService(ctx, o.EC2Client, id, logger)
+	case "egress-only-internet-gateway":
+		return deleteEgressOnlyInternetGateway(ctx, o.EC2Client, id, logger)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
@@ -912,6 +914,21 @@ func deleteEC2VPCEndpointService(ctx context.Context, client *ec2v2.Client, id s
 		}
 		return errors.Wrapf(err, "cannot delete VPC Endpoint Service %s", id)
 	}
+	logger.Info("Deleted")
+	return nil
+}
+
+func deleteEgressOnlyInternetGateway(ctx context.Context, client *ec2v2.Client, id string, logger logrus.FieldLogger) error {
+	_, err := client.DeleteEgressOnlyInternetGateway(ctx, &ec2v2.DeleteEgressOnlyInternetGatewayInput{
+		EgressOnlyInternetGatewayId: aws.String(id),
+	})
+	if err != nil {
+		if HandleErrorCode(err) == "InvalidEgressOnlyInternetGatewayId.NotFound" {
+			return nil
+		}
+		return err
+	}
+
 	logger.Info("Deleted")
 	return nil
 }
