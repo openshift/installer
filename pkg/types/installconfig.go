@@ -192,13 +192,14 @@ type InstallConfig struct {
 	// "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest
 	// "Manual": CredentialsRequests must be handled manually by the user
 	//
-	// For each of the following platforms, the field can set to the specified values. For all other platforms, the
+	// For each of the following platforms, the field can be set to the specified values. For all other platforms, the
 	// field must not be set.
 	// AWS: "Mint", "Passthrough", "Manual"
 	// Azure: "Passthrough", "Manual"
 	// AzureStack: "Manual"
 	// GCP: "Mint", "Passthrough", "Manual"
 	// IBMCloud: "Manual"
+	// OpenStack: "Passthrough"
 	// PowerVS: "Manual"
 	// Nutanix: "Manual"
 	// +optional
