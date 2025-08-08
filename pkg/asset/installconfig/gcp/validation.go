@@ -406,7 +406,7 @@ func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) field.Err
 		return append(allErrs, field.InternalError(field.NewPath("baseDomain"), err))
 	}
 
-	if err := checkRecordSets(client, ic, zone, []string{apiRecordType(ic)}); err != nil {
+	if err := checkRecordSets(client, ic, ic.Platform.GCP.ProjectID, zone, []string{apiRecordType(ic)}); err != nil {
 		allErrs = append(allErrs, err)
 	}
 	return allErrs
@@ -419,24 +419,33 @@ func ValidatePrivateDNSZone(client API, ic *types.InstallConfig) *field.Error {
 		return nil
 	}
 
-	zone, err := client.GetDNSZone(context.TODO(), ic.GCP.ProjectID, ic.ClusterDomain(), false)
+	// The private zone does NOT need to exist. When the zone does exist it will be used, but when
+	// the zone does not exist one will be created with the specified zone name.
+	project := ic.GCP.ProjectID
+	if ic.GCP.NetworkProjectID != "" && ic.GCP.PrivateZone != nil {
+		if ic.GCP.PrivateZone.ProjectID != "" {
+			project = ic.GCP.PrivateZone.ProjectID
+		}
+	}
+
+	zone, err := client.GetDNSZone(context.TODO(), project, ic.ClusterDomain(), false)
 	if err != nil {
 		logrus.Debug("No private DNS Zone found")
 		if IsNotFound(err) {
-			return field.NotFound(field.NewPath("baseDomain"), fmt.Sprintf("Private DNS Zone (%s/%s)", ic.Platform.GCP.ProjectID, ic.BaseDomain))
+			return field.NotFound(field.NewPath("baseDomain"), fmt.Sprintf("Private DNS Zone (%s/%s)", project, ic.BaseDomain))
 		}
 		return field.InternalError(field.NewPath("baseDomain"), err)
 	}
 
 	// Private Zone can be nil, check to see if it was found or not
 	if zone != nil {
-		return checkRecordSets(client, ic, zone, []string{apiRecordType(ic), apiIntRecordName(ic)})
+		return checkRecordSets(client, ic, project, zone, []string{apiRecordType(ic), apiIntRecordName(ic)})
 	}
 	return nil
 }
 
-func checkRecordSets(client API, ic *types.InstallConfig, zone *dns.ManagedZone, records []string) *field.Error {
-	rrSets, err := client.GetRecordSets(context.TODO(), ic.GCP.ProjectID, zone.Name)
+func checkRecordSets(client API, ic *types.InstallConfig, project string, zone *dns.ManagedZone, records []string) *field.Error {
+	rrSets, err := client.GetRecordSets(context.TODO(), project, zone.Name)
 	if err != nil {
 		return field.InternalError(field.NewPath("baseDomain"), err)
 	}
@@ -448,7 +457,7 @@ func checkRecordSets(client API, ic *types.InstallConfig, zone *dns.ManagedZone,
 	preexistingRecords := sets.New[string](records...).Intersection(setOfReturnedRecords)
 
 	if preexistingRecords.Len() > 0 {
-		errMsg := fmt.Sprintf("record(s) %q already exists in DNS Zone (%s/%s) and might be in use by another cluster, please remove it to continue", sets.List(preexistingRecords), ic.GCP.ProjectID, zone.Name)
+		errMsg := fmt.Sprintf("record(s) %q already exists in DNS Zone (%s/%s) and might be in use by another cluster, please remove it to continue", sets.List(preexistingRecords), project, zone.Name)
 		return field.Invalid(field.NewPath("metadata", "name"), ic.ObjectMeta.Name, errMsg)
 	}
 	return nil

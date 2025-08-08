@@ -156,6 +156,54 @@ func TestValidatePlatform(t *testing.T) {
 			valid:           false,
 		},
 		{
+			name: "GCP missing network project with private zone",
+			platform: &gcp.Platform{
+				Region:             "us-east1",
+				ProjectID:          "valid-project",
+				Network:            "valid-vpc",
+				ComputeSubnet:      "valid-compute-subnet",
+				ControlPlaneSubnet: "valid-cp-subnet",
+				PrivateZone: &gcp.DNSZone{
+					Zone: "test-private-zone-name",
+				},
+			},
+			credentialsMode: types.PassthroughCredentialsMode,
+			valid:           false,
+		},
+		{
+			name: "GCP missing Zone with private zone",
+			platform: &gcp.Platform{
+				Region:             "us-east1",
+				NetworkProjectID:   "valid-network-project",
+				ProjectID:          "valid-project",
+				Network:            "valid-vpc",
+				ComputeSubnet:      "valid-compute-subnet",
+				ControlPlaneSubnet: "valid-cp-subnet",
+				PrivateZone: &gcp.DNSZone{
+					ProjectID: "valid-project",
+				},
+			},
+			credentialsMode: types.PassthroughCredentialsMode,
+			valid:           false,
+		},
+		{
+			name: "GCP valid private zone",
+			platform: &gcp.Platform{
+				Region:             "us-east1",
+				NetworkProjectID:   "valid-network-project",
+				ProjectID:          "valid-project",
+				Network:            "valid-vpc",
+				ComputeSubnet:      "valid-compute-subnet",
+				ControlPlaneSubnet: "valid-cp-subnet",
+				PrivateZone: &gcp.DNSZone{
+					ProjectID: "valid-project",
+					Zone:      "test-private-zone-name",
+				},
+			},
+			credentialsMode: types.PassthroughCredentialsMode,
+			valid:           true,
+		},
+		{
 			name: "invalid gcp endpoint blank name",
 			platform: &gcp.Platform{
 				Region: "us-east1",

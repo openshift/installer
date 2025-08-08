@@ -15,6 +15,7 @@ type dnsZone struct {
 	name    string
 	domain  string
 	project string
+	labels  map[string]string
 }
 
 func (o *ClusterUninstaller) listDNSZones(ctx context.Context) (private *dnsZone, public []dnsZone, err error) {
@@ -26,18 +27,24 @@ func (o *ClusterUninstaller) listDNSZones(ctx context.Context) (private *dnsZone
 	if o.NetworkProjectID != "" {
 		projects = append(projects, o.NetworkProjectID)
 	}
+	if o.PrivateZoneProject != "" {
+		projects = append(projects, o.PrivateZoneProject)
+	}
 
 	for _, project := range projects {
-		req := o.dnsSvc.ManagedZones.List(project).Fields("managedZones(name,dnsName,visibility),nextPageToken")
+		req := o.dnsSvc.ManagedZones.List(project).Fields("managedZones(name,dnsName,visibility,labels),nextPageToken")
 		err = req.Pages(ctx, func(response *dns.ManagedZonesListResponse) error {
 			for _, zone := range response.ManagedZones {
 				switch zone.Visibility {
 				case "private":
-					if o.isClusterResource(zone.Name) || (o.PrivateZoneDomain != "" && o.PrivateZoneDomain == zone.DnsName) {
-						private = &dnsZone{name: zone.Name, domain: zone.DnsName, project: project}
+					if o.isClusterResource(zone.Name) || (o.PrivateZoneDomain != "" && o.PrivateZoneDomain == zone.DnsName) ||
+						(o.PrivateZoneName != "" && zone.Name == o.PrivateZoneName && o.PrivateZoneProject == project) {
+						private = &dnsZone{name: zone.Name, domain: zone.DnsName, project: project, labels: zone.Labels}
 					}
 				default:
-					public = append(public, dnsZone{name: zone.Name, domain: zone.DnsName, project: project})
+					if project == o.ProjectID {
+						public = append(public, dnsZone{name: zone.Name, domain: zone.DnsName, project: project, labels: zone.Labels})
+					}
 				}
 			}
 			return nil
@@ -49,8 +56,8 @@ func (o *ClusterUninstaller) listDNSZones(ctx context.Context) (private *dnsZone
 	return
 }
 
-func (o *ClusterUninstaller) deleteDNSZone(ctx context.Context, name string) error {
-	if !o.isClusterResource(name) {
+func (o *ClusterUninstaller) deleteDNSZone(ctx context.Context, name string, labels map[string]string) error {
+	if !o.isOwnedResource(labels) && !o.isClusterResource(name) {
 		o.Logger.Warnf("Skipping deletion of DNS Zone %s, not created by installer", name)
 		return nil
 	}
@@ -58,7 +65,7 @@ func (o *ClusterUninstaller) deleteDNSZone(ctx context.Context, name string) err
 	o.Logger.Debugf("Deleting DNS zones %s", name)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
-	err := o.dnsSvc.ManagedZones.Delete(o.ProjectID, name).Context(ctx).Do()
+	err := o.dnsSvc.ManagedZones.Delete(o.PrivateZoneProject, name).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
 		return errors.Wrapf(err, "failed to delete DNS zone %s", name)
 	}
@@ -194,7 +201,7 @@ func (o *ClusterUninstaller) destroyDNS(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	err = o.deleteDNSZone(ctx, privateZone.name)
+	err = o.deleteDNSZone(ctx, privateZone.name, privateZone.labels)
 	if err != nil {
 		return err
 	}
