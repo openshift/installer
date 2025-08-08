@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	capnv1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/sirupsen/logrus"
@@ -91,8 +90,6 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 		Scheme:                   Scheme,
 		AttachControlPlaneOutput: true,
 		BinaryAssetsDirectory:    c.BinDir,
-		ControlPlaneStartTimeout: 10 * time.Second,
-		ControlPlaneStopTimeout:  10 * time.Second,
 		ControlPlane: envtest.ControlPlane{
 			Etcd: &envtest.Etcd{
 				DataDir: c.EtcdDataDir,
