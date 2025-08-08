@@ -11,8 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/elb"
-	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/smithy-go"
 	"github.com/pkg/errors"
@@ -156,7 +154,7 @@ func (o *ClusterUninstaller) deleteEC2(ctx context.Context, session *session.Ses
 	case "volume":
 		return deleteEC2Volume(ctx, o.EC2Client, id, logger)
 	case "vpc":
-		return deleteEC2VPC(ctx, o.EC2Client, elb.New(session), elbv2.New(session), id, logger)
+		return deleteEC2VPC(ctx, o.EC2Client, id, logger)
 	case "vpc-endpoint":
 		return deleteEC2VPCEndpoint(ctx, o.EC2Client, id, logger)
 	case "vpc-peering-connection":
@@ -778,36 +776,7 @@ func deleteEC2Volume(ctx context.Context, client *ec2v2.Client, id string, logge
 	return nil
 }
 
-func deleteEC2VPC(ctx context.Context, ec2Client *ec2v2.Client, elbClient *elb.ELB, elbv2Client *elbv2.ELBV2, id string, logger logrus.FieldLogger) error {
-	// first delete any Load Balancers under this VPC (not all of them are tagged)
-	v1lbError := deleteElasticLoadBalancerClassicByVPC(ctx, elbClient, id, logger)
-	v2lbError := deleteElasticLoadBalancerV2ByVPC(ctx, elbv2Client, id, logger)
-	if v1lbError != nil {
-		if v2lbError != nil {
-			logger.Info(v2lbError)
-		}
-		return v1lbError
-	} else if v2lbError != nil {
-		return v2lbError
-	}
-
-	for _, child := range []struct {
-		helper   func(ctx context.Context, client *ec2v2.Client, vpc string, failFast bool, logger logrus.FieldLogger) error
-		failFast bool
-	}{
-		{helper: deleteEC2NATGatewaysByVPC, failFast: true},      // not always tagged
-		{helper: deleteEC2NetworkInterfaceByVPC, failFast: true}, // not always tagged
-		{helper: deleteEC2RouteTablesByVPC, failFast: true},      // not always tagged
-		{helper: deleteEC2SecurityGroupsByVPC, failFast: false},  // not always tagged
-		{helper: deleteEC2SubnetsByVPC, failFast: true},          // not always tagged
-		{helper: deleteEC2VPCEndpointsByVPC, failFast: true},     // not taggable
-	} {
-		err := child.helper(ctx, ec2Client, id, child.failFast, logger)
-		if err != nil {
-			return err
-		}
-	}
-
+func deleteEC2VPC(ctx context.Context, ec2Client *ec2v2.Client, id string, logger logrus.FieldLogger) error {
 	_, err := ec2Client.DeleteVpc(ctx, &ec2v2.DeleteVpcInput{
 		VpcId: aws.String(id),
 	})
