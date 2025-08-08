@@ -39,7 +39,16 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service": false,
 				"oci-eval-user-data.service":         true,
-				"agent-check-config-image.service":   true},
+				"agent-check-config-image.service":   true,
+				"agent-extract-tui.service":          false},
+		},
+		{
+			name: "interactive-disconnected-workflow-should-have-agent-extract-tui-service-enabled",
+			overrideDeps: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstallInteractiveDisconnected},
+			},
+			serviceEnabledMap: map[string]bool{
+				"agent-extract-tui.service": true},
 		},
 		{
 			name: "with-mirror-configs",

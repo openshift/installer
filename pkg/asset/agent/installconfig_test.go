@@ -868,7 +868,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 			expectedError: "invalid install-config configuration: compute.replicas: Forbidden: Total number of compute replicas must be 0 when controlPlane.replicas is 1 for platform none or external. Found 3",
 		},
 		{
-			name: "incorrect compute.replicas set",
+			name: "incorrect controlPlane.fencing.credentials set for DualReplica",
 			data: `
 apiVersion: v1
 metadata:
@@ -882,6 +882,9 @@ controlPlane:
   name: master
   platform: {}
   replicas: 2
+featureSet: CustomNoUpgrade
+featureGates:
+- DualReplica=true
 platform:
   external:
     platformName: oci
