@@ -99,12 +99,14 @@ func externalURLs(apiVIPs []string, protocol string) (externalURLv4 string, exte
 		if protocol == "https" {
 			port = "6183"
 		}
-		externalURL := fmt.Sprintf("%s://%s/", protocol, net.JoinHostPort(apiVIPs[1], port))
-		if utilsnet.IsIPv6String(apiVIPs[1]) {
-			externalURLv6 = externalURL
-		}
-		if utilsnet.IsIPv4String(apiVIPs[1]) {
-			externalURLv4 = externalURL
+		for _, apiVIP := range apiVIPs {
+			externalURL := fmt.Sprintf("%s://%s/", protocol, net.JoinHostPort(apiVIP, port))
+			if utilsnet.IsIPv6String(apiVIP) {
+				externalURLv6 = externalURL
+			}
+			if utilsnet.IsIPv4String(apiVIP) {
+				externalURLv4 = externalURL
+			}
 		}
 	}
 
