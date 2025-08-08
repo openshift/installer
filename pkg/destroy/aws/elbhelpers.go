@@ -19,7 +19,7 @@ func deleteElasticLoadBalancing(ctx context.Context, session *session.Session, a
 	if err != nil {
 		return err
 	}
-	logger = logger.WithField("id", id)
+	logger = logger.WithField("id", id).WithField("resourceType", resourceType)
 
 	switch resourceType {
 	case "loadbalancer":
