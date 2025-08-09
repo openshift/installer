@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	defaultCIDR = ipnet.MustParseCIDR("10.0.0.0/16")
+	defaultIPv4CIDR = ipnet.MustParseCIDR("10.0.0.0/16")
+	defaultIPv6CIDR = ipnet.MustParseCIDR("fd00::/8")
 )
 
 // CIDRFromInstallConfig generates the CIDR from the install config,
@@ -15,7 +16,21 @@ func CIDRFromInstallConfig(installConfig *installconfig.InstallConfig) *ipnet.IP
 	if len(installConfig.Config.MachineNetwork) > 0 {
 		return &installConfig.Config.MachineNetwork[0].CIDR
 	}
-	return defaultCIDR
+	return defaultIPv4CIDR
+}
+
+// CIDRsFromInstallConfig generates multiple CIDRs from the install config,
+// or returns the default IPv4 CIDR if none is found.
+func CIDRsFromInstallConfig(installConfig *installconfig.InstallConfig) []ipnet.IPNet {
+	var cidrs []ipnet.IPNet
+	for _, machineNetwork := range installConfig.Config.MachineNetwork {
+		cidrs = append(cidrs, machineNetwork.CIDR)
+	}
+	if len(cidrs) == 0 {
+		// XXX: Do we even support single stack IPv6?
+		cidrs = append(cidrs, *defaultIPv4CIDR)
+	}
+	return cidrs
 }
 
 // IsEnabled returns true if the feature gate is enabled.
