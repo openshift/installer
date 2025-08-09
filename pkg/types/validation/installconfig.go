@@ -386,7 +386,7 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 			}
 		}
 
-	case hasIPv6:
+	case hasIPv6 && p.Azure == nil:
 		switch {
 		case p.BareMetal != nil:
 		case p.VSphere != nil:
@@ -395,6 +395,7 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		case p.Nutanix != nil:
 		case p.None != nil:
 		case p.External != nil:
+		// XXX: need to do this differently
 		case p.Azure != nil && p.Azure.CloudName == azure.StackCloud:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "Azure Stack does not support IPv6"))
 		default:
