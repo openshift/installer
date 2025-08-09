@@ -28,7 +28,7 @@ type Metadata struct {
 	edgeZones         []string
 	subnets           SubnetGroups
 	vpcSubnets        SubnetGroups
-	vpc               string
+	vpc               VPC
 	instanceTypes     map[string]InstanceType
 
 	Region          string                     `json:"region,omitempty"`
@@ -274,13 +274,22 @@ func (m *Metadata) VPCSubnets(ctx context.Context) (SubnetGroups, error) {
 	return m.vpcSubnets, nil
 }
 
-// VPC retrieves the VPC ID containing PublicSubnets and PrivateSubnets.
-func (m *Metadata) VPC(ctx context.Context) (string, error) {
-	err := m.populateSubnets(ctx)
+// VPC retrieves the VPC containing provided subnets.
+func (m *Metadata) VPC(ctx context.Context) (VPC, error) {
+	err := m.populateVPC(ctx)
+	if err != nil {
+		return m.vpc, fmt.Errorf("error retrieving VPC: %w", err)
+	}
+	return m.vpc, nil
+}
+
+// VPCID retrieves the ID of the VPC containing provided subnets.
+func (m *Metadata) VPCID(ctx context.Context) (string, error) {
+	err := m.populateVPC(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error retrieving VPC: %w", err)
 	}
-	return m.vpc, nil
+	return m.vpc.ID, nil
 }
 
 // SubnetByID retrieves subnet metadata for a subnet ID.
@@ -315,7 +324,7 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 	}
 
 	subnetGroups := m.subnets
-	if m.vpc != "" || len(subnetGroups.Private) > 0 || len(subnetGroups.Public) > 0 || len(subnetGroups.Edge) > 0 {
+	if subnetGroups.VpcID != "" || len(subnetGroups.Private) > 0 || len(subnetGroups.Public) > 0 || len(subnetGroups.Edge) > 0 {
 		// Call to populate subnets has already happened
 		return nil
 	}
@@ -331,7 +340,6 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 	}
 
 	sb, err := subnets(ctx, client, subnetIDs, "")
-	m.vpc = sb.VPC
 	m.subnets = sb
 	return err
 }
@@ -339,7 +347,7 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 // populateVPCSubnets retrieves metadata for all subnets in the VPC of provided subnets.
 func (m *Metadata) populateVPCSubnets(ctx context.Context) error {
 	// we need to populate provided subnets to get the VPC ID.
-	if err := m.populateSubnets(ctx); err != nil {
+	if err := m.populateVPC(ctx); err != nil {
 		return err
 	}
 
@@ -357,8 +365,33 @@ func (m *Metadata) populateVPCSubnets(ctx context.Context) error {
 		return err
 	}
 
-	sb, err := subnets(ctx, client, nil, m.vpc)
+	sb, err := subnets(ctx, client, nil, m.vpc.ID)
 	m.vpcSubnets = sb
+	return err
+}
+
+// populateVPC retrieves metadata for the VPC of provided subnets.
+func (m *Metadata) populateVPC(ctx context.Context) error {
+	// we need to populate provided subnets to get the VPC ID.
+	if err := m.populateSubnets(ctx); err != nil {
+		return err
+	}
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if m.vpc.ID != "" {
+		// Call to populate vpc has already happened
+		return nil
+	}
+
+	client, err := m.EC2Client(ctx)
+	if err != nil {
+		return err
+	}
+
+	vpc, err := vpc(ctx, client, m.subnets.VpcID)
+	m.vpc = vpc
 	return err
 }
 
