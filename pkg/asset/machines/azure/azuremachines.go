@@ -32,6 +32,7 @@ type MachineInput struct {
 	HyperVGen       string
 	StorageSuffix   string
 	UseImageGallery bool
+	PublicIP        bool
 	Private         bool
 	UserTags        map[string]string
 	Platform        *aztypes.Platform
@@ -211,7 +212,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 				AdditionalTags:             tags,
 				AdditionalCapabilities:     additionalCapabilities,
 				DisableExtensionOperations: ptr.To(true),
-				AllocatePublicIP:           false,
+				AllocatePublicIP:           in.PublicIP,
 				EnableIPForwarding:         false,
 				SecurityProfile:            securityProfile,
 				NetworkInterfaces: []capz.NetworkInterface{
@@ -293,6 +294,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 			AdditionalTags:             tags,
 			DisableExtensionOperations: ptr.To(true),
 			AllocatePublicIP:           !in.Private,
+			EnableIPForwarding:         false,
 			AdditionalCapabilities:     additionalCapabilities,
 			SecurityProfile:            securityProfile,
 			Identity:                   mpool.Identity.Type,
