@@ -2,6 +2,7 @@ package azure
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/openshift/installer/pkg/types/dns"
@@ -26,6 +27,17 @@ const (
 	// UserDefinedRoutingOutboundType uses user defined routing for egress from the cluster.
 	// see https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview
 	UserDefinedRoutingOutboundType OutboundType = "UserDefinedRouting"
+)
+
+// StackType is the networking stack protocol type.
+type StackType string
+
+const (
+	// StackTypeIPv4 is the IPv4 networking protocol type.
+	StackTypeIPv4 StackType = "IPv4"
+
+	// StackTypeIPv6 is the IPv6 networking protocol type.
+	StackTypeIPv6 StackType = "IPv6"
 )
 
 // Platform stores all the global configuration that all machinesets
@@ -108,6 +120,11 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+	// IPv4, IPv6, or both
+	// XXX: This implementation is not final - leaving here until
+	// enhancement fleshes out.
+	// https://github.com/openshift/enhancements/pull/1731
+	StackType []StackType
 }
 
 // KeyVault defines an Azure Key Vault.
@@ -213,4 +230,14 @@ func GetStorageAccountName(infraID string) string {
 	storageAccountName = fmt.Sprintf("%ssa", storageAccountName)
 
 	return storageAccountName
+}
+
+// IsIPv4 returns true if using the IPv4 stack type
+func (p *Platform) IsIPv4() bool {
+	return slices.Contains(p.StackType, StackTypeIPv4)
+}
+
+// IsIPv6 returns true if using the IPv6 stack type
+func (p *Platform) IsIPv6() bool {
+	return slices.Contains(p.StackType, StackTypeIPv6)
 }
