@@ -125,6 +125,10 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 	// Create the local control plane.
 	lcp := &localControlPlane{}
 
+	currentLevel := logrus.GetLevel()
+	logLevel := fmt.Sprintf("-v=%d", currentLevel)
+	logrus.Debugf("Setting the capi controllers log level to %s", logLevel)
+
 	ipv4, err := hostHasIPv4Address()
 	if err != nil {
 		return err
@@ -361,11 +365,12 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			),
 		)
 	case vsphere.Name:
+
 		controllers = append(controllers,
 			c.getInfrastructureController(
 				&VSphere,
 				[]string{
-					"-v=2",
+					logLevel,
 					"--diagnostics-address=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
