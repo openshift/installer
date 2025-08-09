@@ -24,15 +24,25 @@ const (
 	VolumeGroupDetachFailed = "VolumeGroupDetachFailed"
 )
 
+// Conditions and Reasons releated to failure domain
 const (
-	// FailureDomainsReconciled indicates the status of the failure domain reconciliation
-	FailureDomainsReconciled capiv1.ConditionType = "FailureDomainsReconciled"
+	// FailureDomainSafeForDeletionCondition indicates whether the failure domain object is safe for deletion,
+	// ie., when it is not used or referenced by other resources
+	FailureDomainSafeForDeletionCondition capiv1.ConditionType = "FailureDomainSafeForDeletion"
 
-	// NoFailureDomainsReconciled indicates no failure domains have been defined
-	NoFailureDomainsReconciled capiv1.ConditionType = "NoFailureDomainsReconciled"
+	// FailureDomainInUseReason indicates that the failure domain is used by
+	// Machines and/or referenced by cluster
+	FailureDomainInUseReason = "FailureDomainInUse"
 
-	// FailureDomainsReconciliationFailed indicates the failure domain reconciliation failed
-	FailureDomainsReconciliationFailed = "FailureDomainsReconciliationFailed"
+	// NoFailureDomainsConfiguredCondition indicates no failure domains have been configured
+	NoFailureDomainsConfiguredCondition capiv1.ConditionType = "NoFailureDomainsConfigured"
+
+	// FailureDomainsValidatedCondition indicates whether the failure domains are configured correctly or not.
+	FailureDomainsValidatedCondition capiv1.ConditionType = "FailureDomainsValidated"
+
+	// FailureDomainsMisconfiguredReason (Severity=Warning) indicates that some of the failure domains
+	// are misconfigured.
+	FailureDomainsMisconfiguredReason = "FailureDomainsMisconfigured"
 )
 
 const (

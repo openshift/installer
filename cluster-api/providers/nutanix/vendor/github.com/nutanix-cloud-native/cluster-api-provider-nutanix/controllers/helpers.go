@@ -17,12 +17,14 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
-	"strconv"
+	"regexp"
+	"sort"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/google/uuid"
@@ -53,7 +55,19 @@ const (
 	gpuUnused = "UNUSED"
 
 	detachVGRequeueAfter = 30 * time.Second
+
+	ImageStateDeletePending    = "DELETE_PENDING"
+	ImageStateDeleteInProgress = "DELETE_IN_PROGRESS"
+
+	createErrorFailureReason = "CreateError"
 )
+
+type StorageContainerIntentResponse struct {
+	Name        *string
+	UUID        *string
+	ClusterName *string
+	ClusterUUID *string
+}
 
 // DeleteVM deletes a VM and is invoked by the NutanixMachineReconciler
 func DeleteVM(ctx context.Context, client *prismclientv3.Client, vmName, vmUUID string) (string, error) {
@@ -197,6 +211,7 @@ func GetPEUUID(ctx context.Context, client *prismclientv3.Client, peName, peUUID
 			if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
 				return "", fmt.Errorf("failed to find Prism Element cluster with UUID %s: %v", *peUUID, err)
 			}
+			return "", fmt.Errorf("failed to get Prism Element cluster with UUID %s: %v", *peUUID, err)
 		}
 		return *peIntentResponse.Metadata.UUID, nil
 	} else if peName != nil && *peName != "" {
@@ -246,6 +261,110 @@ func CreateSystemDiskSpec(imageUUID string, systemDiskSize int64) (*prismclientv
 	return systemDisk, nil
 }
 
+// CreateDataDiskList creates a list of data disks with the given data disk specs
+func CreateDataDiskList(ctx context.Context, client *prismclientv3.Client, dataDiskSpecs []infrav1.NutanixMachineVMDisk, peUUID string) ([]*prismclientv3.VMDisk, error) {
+	dataDisks := make([]*prismclientv3.VMDisk, 0)
+
+	latestDeviceIndexByAdapterType := make(map[string]int64)
+	getDeviceIndex := func(adapterType string) int64 {
+		if latestDeviceIndex, ok := latestDeviceIndexByAdapterType[adapterType]; ok {
+			latestDeviceIndexByAdapterType[adapterType] = latestDeviceIndex + 1
+			return latestDeviceIndex
+		}
+
+		if adapterType == string(infrav1.NutanixMachineDiskAdapterTypeSCSI) || adapterType == string(infrav1.NutanixMachineDiskAdapterTypeIDE) {
+			latestDeviceIndexByAdapterType[adapterType] = 1
+			return 1
+		} else {
+			latestDeviceIndexByAdapterType[adapterType] = 0
+			return 0
+		}
+	}
+
+	for _, dataDiskSpec := range dataDiskSpecs {
+		dataDisk := &prismclientv3.VMDisk{
+			DiskSizeMib: utils.Int64Ptr(GetMibValueOfQuantity(dataDiskSpec.DiskSize)),
+		}
+
+		// If data source is provided, get the image UUID
+		if dataDiskSpec.DataSource != nil {
+			image, err := GetImage(ctx, client, infrav1.NutanixResourceIdentifier{
+				UUID: dataDiskSpec.DataSource.UUID,
+				Type: infrav1.NutanixIdentifierUUID,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			imageUUID := *image.Metadata.UUID
+
+			dataSourceReference := &prismclientv3.Reference{
+				Kind: utils.StringPtr("image"),
+				UUID: utils.StringPtr(imageUUID),
+			}
+
+			dataDisk.DataSourceReference = dataSourceReference
+		}
+
+		// Set deault values for device type and adapter type
+		deviceType := infrav1.NutanixMachineDiskDeviceTypeDisk
+		adapterType := infrav1.NutanixMachineDiskAdapterTypeSCSI
+
+		// If device properties are provided, use them
+		if dataDiskSpec.DeviceProperties != nil {
+			deviceType = dataDiskSpec.DeviceProperties.DeviceType
+			adapterType = dataDiskSpec.DeviceProperties.AdapterType
+		}
+
+		// Set device properties
+		deviceProperties := &prismclientv3.VMDiskDeviceProperties{
+			DeviceType: utils.StringPtr(strings.ToUpper(string(deviceType))),
+			DiskAddress: &prismclientv3.DiskAddress{
+				AdapterType: utils.StringPtr(strings.ToUpper(string(adapterType))),
+				DeviceIndex: utils.Int64Ptr(getDeviceIndex(string(adapterType))),
+			},
+		}
+
+		if dataDiskSpec.DeviceProperties != nil && dataDiskSpec.DeviceProperties.DeviceIndex != 0 {
+			deviceProperties.DiskAddress.DeviceIndex = utils.Int64Ptr(int64(dataDiskSpec.DeviceProperties.DeviceIndex))
+		}
+
+		dataDisk.DeviceProperties = deviceProperties
+
+		if dataDiskSpec.StorageConfig != nil {
+			storageConfig := &prismclientv3.VMStorageConfig{}
+
+			flashMode := "DISABLED"
+			if dataDiskSpec.StorageConfig.DiskMode == infrav1.NutanixMachineDiskModeFlash {
+				flashMode = "ENABLED"
+			}
+
+			storageConfig.FlashMode = flashMode
+
+			if dataDiskSpec.StorageConfig.StorageContainer != nil {
+				peID := infrav1.NutanixResourceIdentifier{
+					UUID: &peUUID,
+					Type: infrav1.NutanixIdentifierUUID,
+				}
+				sc, err := GetStorageContainerInCluster(ctx, client, *dataDiskSpec.StorageConfig.StorageContainer, peID)
+				if err != nil {
+					return nil, err
+				}
+
+				storageConfig.StorageContainerReference = &prismclientv3.StorageContainerReference{
+					Kind: "storage_container",
+					UUID: *sc.UUID,
+				}
+			}
+
+			dataDisk.StorageConfig = storageConfig
+		}
+
+		dataDisks = append(dataDisks, dataDisk)
+	}
+	return dataDisks, nil
+}
+
 // GetSubnetUUID returns the UUID of the subnet with the given name
 func GetSubnetUUID(ctx context.Context, client *prismclientv3.Client, peUUID string, subnetName, subnetUUID *string) (string, error) {
 	var foundSubnetUUID string
@@ -258,6 +377,7 @@ func GetSubnetUUID(ctx context.Context, client *prismclientv3.Client, peUUID str
 			if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
 				return "", fmt.Errorf("failed to find subnet with UUID %s: %v", *subnetUUID, err)
 			}
+			return "", fmt.Errorf("failed to get subnet with UUID %s: %v", *subnetUUID, err)
 		}
 		foundSubnetUUID = *subnetIntentResponse.Metadata.UUID
 	} else { // else search by name
@@ -278,7 +398,7 @@ func GetSubnetUUID(ctx context.Context, client *prismclientv3.Client, peUUID str
 					foundSubnets = append(foundSubnets, subnet)
 				} else {
 					// By default check if the PE UUID matches if it is not an overlay subnet.
-					if *subnet.Spec.ClusterReference.UUID == peUUID {
+					if subnet.Spec.ClusterReference != nil && *subnet.Spec.ClusterReference.UUID == peUUID {
 						foundSubnets = append(foundSubnets, subnet)
 					}
 				}
@@ -298,46 +418,111 @@ func GetSubnetUUID(ctx context.Context, client *prismclientv3.Client, peUUID str
 	return foundSubnetUUID, nil
 }
 
-// GetImageUUID returns the UUID of the image with the given name
-func GetImageUUID(ctx context.Context, client *prismclientv3.Client, imageName, imageUUID *string) (string, error) {
-	var foundImageUUID string
-
-	if imageUUID == nil && imageName == nil {
-		return "", fmt.Errorf("image name or image uuid must be passed in order to retrieve the image")
-	}
-	if imageUUID != nil {
-		imageIntentResponse, err := client.V3.GetImage(ctx, *imageUUID)
+// GetImage returns an image. If no UUID is provided, returns the unique image with the name.
+// Returns an error if no image has the UUID, if no image has the name, or more than one image has the name.
+func GetImage(ctx context.Context, client *prismclientv3.Client, id infrav1.NutanixResourceIdentifier) (*prismclientv3.ImageIntentResponse, error) {
+	switch {
+	case id.IsUUID():
+		resp, err := client.V3.GetImage(ctx, *id.UUID)
 		if err != nil {
 			if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
-				return "", fmt.Errorf("failed to find image with UUID %s: %v", *imageUUID, err)
+				return nil, fmt.Errorf("failed to find image with UUID %s: %v", *id.UUID, err)
 			}
+			return nil, fmt.Errorf("failed to get image with UUID %s: %v", *id.UUID, err)
 		}
-		foundImageUUID = *imageIntentResponse.Metadata.UUID
-	} else { // else search by name
+		return resp, nil
+	case id.IsName():
 		responseImages, err := client.V3.ListAllImage(ctx, "")
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		// Validate filtered Images
 		foundImages := make([]*prismclientv3.ImageIntentResponse, 0)
 		for _, s := range responseImages.Entities {
 			imageSpec := s.Spec
-			if strings.EqualFold(*imageSpec.Name, *imageName) {
+			if strings.EqualFold(*imageSpec.Name, *id.Name) {
 				foundImages = append(foundImages, s)
 			}
 		}
 		if len(foundImages) == 0 {
-			return "", fmt.Errorf("failed to retrieve image by name %s", *imageName)
+			return nil, fmt.Errorf("found no image with name %s", *id.Name)
 		} else if len(foundImages) > 1 {
-			return "", fmt.Errorf("more than one image found with name %s", *imageName)
+			return nil, fmt.Errorf("more than one image found with name %s", *id.Name)
 		} else {
-			foundImageUUID = *foundImages[0].Metadata.UUID
+			return foundImages[0], nil
 		}
-		if foundImageUUID == "" {
-			return "", fmt.Errorf("failed to retrieve image by name or uuid. Verify input parameters")
+	default:
+		return nil, fmt.Errorf("image identifier is missing both name and uuid")
+	}
+}
+
+type ImageLookup struct {
+	BaseOS     string
+	K8sVersion string
+}
+
+func GetImageByLookup(
+	ctx context.Context,
+	client *prismclientv3.Client,
+	imageTemplate,
+	imageLookupBaseOS,
+	k8sVersion *string,
+) (*prismclientv3.ImageIntentResponse, error) {
+	if strings.Contains(*k8sVersion, "v") {
+		k8sVersion = ptr.To(strings.Replace(*k8sVersion, "v", "", 1))
+	}
+	params := ImageLookup{*imageLookupBaseOS, *k8sVersion}
+	t, err := template.New("k8sTemplate").Parse(*imageTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse template given %s %v", *imageTemplate, err)
+	}
+	var templateBytes bytes.Buffer
+	err = t.Execute(&templateBytes, params)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to substitute string %s with params %v error: %w",
+			*imageTemplate,
+			params,
+			err,
+		)
+	}
+	responseImages, err := client.V3.ListAllImage(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+	re := regexp.MustCompile(templateBytes.String())
+	foundImages := make([]*prismclientv3.ImageIntentResponse, 0)
+	for _, s := range responseImages.Entities {
+		imageSpec := s.Spec
+		if re.Match([]byte(*imageSpec.Name)) {
+			foundImages = append(foundImages, s)
 		}
 	}
-	return foundImageUUID, nil
+	sorted := sortImagesByLatestCreationTime(foundImages)
+	if len(sorted) == 0 {
+		return nil, fmt.Errorf("failed to find image with filter %s", templateBytes.String())
+	}
+	return sorted[0], nil
+}
+
+// returns the images with the latest creation time first.
+func sortImagesByLatestCreationTime(
+	images []*prismclientv3.ImageIntentResponse,
+) []*prismclientv3.ImageIntentResponse {
+	sort.Slice(images, func(i, j int) bool {
+		if images[i].Metadata.CreationTime == nil || images[j].Metadata.CreationTime == nil {
+			return images[i].Metadata.CreationTime != nil
+		}
+		timeI := *images[i].Metadata.CreationTime
+		timeJ := *images[j].Metadata.CreationTime
+		return timeI.After(timeJ)
+	})
+	return images
+}
+
+func ImageMarkedForDeletion(image *prismclientv3.ImageIntentResponse) bool {
+	state := *image.Status.State
+	return state == ImageStateDeletePending || state == ImageStateDeleteInProgress
 }
 
 // HasTaskInProgress returns true if the given task is in progress
@@ -631,6 +816,7 @@ func GetProjectUUID(ctx context.Context, client *prismclientv3.Client, projectNa
 			if strings.Contains(fmt.Sprint(err), "ENTITY_NOT_FOUND") {
 				return "", fmt.Errorf("failed to find project with UUID %s: %v", *projectUUID, err)
 			}
+			return "", fmt.Errorf("failed to get project with UUID %s: %v", *projectUUID, err)
 		}
 		foundProjectUUID = *projectIntentResponse.Metadata.UUID
 	} else { // else search by name
@@ -743,40 +929,180 @@ func GetGPUsForPE(ctx context.Context, client *prismclientv3.Client, peUUID stri
 	return gpus, nil
 }
 
-// GetFailureDomain gets the failure domain with a given name from a NutanixCluster object.
-func GetFailureDomain(failureDomainName string, nutanixCluster *infrav1.NutanixCluster) (*infrav1.NutanixFailureDomain, error) {
-	if failureDomainName == "" {
-		return nil, fmt.Errorf("failure domain name must be set when searching for failure domains on a Nutanix cluster object")
-	}
-	if nutanixCluster == nil {
-		return nil, fmt.Errorf("nutanixCluster cannot be nil when searching for failure domains")
-	}
-	for _, fd := range nutanixCluster.Spec.FailureDomains {
+// GetLegacyFailureDomainFromNutanixCluster gets the failure domain with a given name from a NutanixCluster object.
+func GetLegacyFailureDomainFromNutanixCluster(failureDomainName string, nutanixCluster *infrav1.NutanixCluster) *infrav1.NutanixFailureDomainConfig { //nolint:staticcheck // suppress complaining on Deprecated type
+	for _, fd := range nutanixCluster.Spec.FailureDomains { //nolint:staticcheck // suppress complaining on Deprecated field
 		if fd.Name == failureDomainName {
-			return &fd, nil
+			return &fd
 		}
 	}
-	return nil, fmt.Errorf("failed to find failure domain %s on nutanix cluster object", failureDomainName)
+	return nil
+}
+
+func ListStorageContainers(ctx context.Context, client *prismclientv3.Client) ([]*StorageContainerIntentResponse, error) {
+	result := make([]*StorageContainerIntentResponse, 0)
+	request := &prismclientv3.GroupsGetEntitiesRequest{
+		EntityType: utils.StringPtr("storage_container"),
+		GroupMemberAttributes: []*prismclientv3.GroupsRequestedAttribute{
+			{
+				Attribute: utils.StringPtr("container_name"),
+			},
+			{
+				Attribute: utils.StringPtr("cluster_name"),
+			},
+			{
+				Attribute: utils.StringPtr("cluster"),
+			},
+		},
+	}
+	response, err := client.V3.GroupsGetEntities(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	if response != nil && response.GroupResults != nil && len(response.GroupResults) > 0 {
+		if len(response.GroupResults) > 1 {
+			return nil, fmt.Errorf("unexpected number of group results: %d", len(response.GroupResults))
+		}
+
+		if response.GroupResults[0].EntityResults != nil {
+			for _, entity := range response.GroupResults[0].EntityResults {
+
+				storageContainer := &StorageContainerIntentResponse{
+					UUID: &entity.EntityID,
+				}
+
+				for _, d := range entity.Data {
+					if len(d.Values) > 0 {
+						switch d.Name {
+						case "container_name":
+							storageContainer.Name = utils.StringPtr(d.Values[0].Values[0])
+						case "cluster_name":
+							storageContainer.ClusterName = utils.StringPtr(d.Values[0].Values[0])
+						case "cluster":
+							storageContainer.ClusterUUID = utils.StringPtr(d.Values[0].Values[0])
+						}
+					}
+				}
+
+				result = append(result, storageContainer)
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func GetStorageContainerByNtnxResourceIdentifier(ctx context.Context, client *prismclientv3.Client, storageContainerIdentifier infrav1.NutanixResourceIdentifier) (*StorageContainerIntentResponse, error) {
+	storageContainers, err := ListStorageContainers(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case storageContainerIdentifier.IsUUID():
+		for _, sc := range storageContainers {
+			if *sc.UUID == *storageContainerIdentifier.UUID {
+				return sc, nil
+			}
+		}
+
+		return nil, fmt.Errorf("failed to find storage container %s", *storageContainerIdentifier.UUID)
+
+	case storageContainerIdentifier.IsName():
+		for _, sc := range storageContainers {
+			if *sc.Name == *storageContainerIdentifier.Name {
+				return sc, nil
+			}
+		}
+
+		return nil, fmt.Errorf("failed to find storage container %s", *storageContainerIdentifier.Name)
+
+	default:
+		return nil, fmt.Errorf("storage container identifier is missing both name and uuid")
+	}
+}
+
+func GetStorageContainerInCluster(ctx context.Context, client *prismclientv3.Client, storageContainerIdentifier, clusterIdentifier infrav1.NutanixResourceIdentifier) (*StorageContainerIntentResponse, error) {
+	storageContainer, err := ListStorageContainers(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case storageContainerIdentifier.IsUUID():
+		return getSCinClusterByUUID(storageContainer, storageContainerIdentifier, clusterIdentifier)
+
+	case storageContainerIdentifier.IsName():
+		return getSCinClusterByName(storageContainer, storageContainerIdentifier, clusterIdentifier)
+
+	default:
+		return nil, fmt.Errorf("storage container identifier is missing both name and uuid")
+	}
+}
+
+func getSCinClusterByName(storageContainer []*StorageContainerIntentResponse, storageContainerIdentifier infrav1.NutanixResourceIdentifier, clusterIdentifier infrav1.NutanixResourceIdentifier) (*StorageContainerIntentResponse, error) {
+	for _, sc := range storageContainer {
+		if strings.EqualFold(*sc.Name, *storageContainerIdentifier.Name) {
+			if clusterIdentifier.IsUUID() {
+				if *sc.ClusterUUID == *clusterIdentifier.UUID {
+					return sc, nil
+				}
+			} else if clusterIdentifier.IsName() {
+				if *sc.ClusterName == *clusterIdentifier.Name {
+					return sc, nil
+				}
+			} else {
+				return nil, fmt.Errorf("cluster identifier is missing both name and uuid")
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("failed to find storage container %s for cluster %v", *storageContainerIdentifier.Name, clusterIdentifier)
+}
+
+func getSCinClusterByUUID(storageContainer []*StorageContainerIntentResponse, storageContainerIdentifier infrav1.NutanixResourceIdentifier, clusterIdentifier infrav1.NutanixResourceIdentifier) (*StorageContainerIntentResponse, error) {
+	for _, sc := range storageContainer {
+		if *sc.UUID == *storageContainerIdentifier.UUID {
+			if clusterIdentifier.IsUUID() {
+				if *sc.ClusterUUID == *clusterIdentifier.UUID {
+					return sc, nil
+				}
+			} else if clusterIdentifier.IsName() {
+				if *sc.ClusterName == *clusterIdentifier.Name {
+					return sc, nil
+				}
+			} else {
+				return nil, fmt.Errorf("cluster identifier is missing both name and uuid")
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("failed to find storage container %s for cluster %v", *storageContainerIdentifier.UUID, clusterIdentifier)
 }
 
 func getPrismCentralClientForCluster(ctx context.Context, cluster *infrav1.NutanixCluster, secretInformer v1.SecretInformer, mapInformer v1.ConfigMapInformer) (*prismclientv3.Client, error) {
 	log := ctrl.LoggerFrom(ctx)
 
+	log.V(1).Info("Get client helper")
 	clientHelper := nutanixclient.NewHelper(secretInformer, mapInformer)
+
+	log.V(1).Info("Build management endpoint")
 	managementEndpoint, err := clientHelper.BuildManagementEndpoint(ctx, cluster)
 	if err != nil {
 		log.Error(err, fmt.Sprintf("error occurred while getting management endpoint for cluster %q", cluster.GetNamespacedName()))
-		conditions.MarkFalse(cluster, infrav1.PrismCentralClientCondition, infrav1.PrismCentralClientInitializationFailed, capiv1.ConditionSeverityError, err.Error()) //nolint:govet // error will not be a constant
+		conditions.MarkFalse(cluster, infrav1.PrismCentralClientCondition, infrav1.PrismCentralClientInitializationFailed, capiv1.ConditionSeverityError, "%s", err.Error())
 		return nil, err
 	}
 
+	log.V(1).Info("Get or create prism central client v3")
 	v3Client, err := nutanixclient.NutanixClientCache.GetOrCreate(&nutanixclient.CacheParams{
 		NutanixCluster:          cluster,
 		PrismManagementEndpoint: managementEndpoint,
 	})
 	if err != nil {
 		log.Error(err, "error occurred while getting nutanix prism v3 Client from cache")
-		conditions.MarkFalse(cluster, infrav1.PrismCentralClientCondition, infrav1.PrismCentralClientInitializationFailed, capiv1.ConditionSeverityError, err.Error()) //nolint:govet // error will not be a constant
+		conditions.MarkFalse(cluster, infrav1.PrismCentralClientCondition, infrav1.PrismCentralClientInitializationFailed, capiv1.ConditionSeverityError, "%s", err.Error())
 		return nil, fmt.Errorf("nutanix prism v3 Client error: %w", err)
 	}
 
@@ -791,7 +1117,7 @@ func getPrismCentralV4ClientForCluster(ctx context.Context, cluster *infrav1.Nut
 	managementEndpoint, err := clientHelper.BuildManagementEndpoint(ctx, cluster)
 	if err != nil {
 		log.Error(err, fmt.Sprintf("error occurred while getting management endpoint for cluster %q", cluster.GetNamespacedName()))
-		conditions.MarkFalse(cluster, infrav1.PrismCentralV4ClientCondition, infrav1.PrismCentralV4ClientInitializationFailed, capiv1.ConditionSeverityError, err.Error()) //nolint:govet // error will not be a constant
+		conditions.MarkFalse(cluster, infrav1.PrismCentralV4ClientCondition, infrav1.PrismCentralV4ClientInitializationFailed, capiv1.ConditionSeverityError, "%s", err.Error())
 		return nil, err
 	}
 
@@ -801,73 +1127,12 @@ func getPrismCentralV4ClientForCluster(ctx context.Context, cluster *infrav1.Nut
 	})
 	if err != nil {
 		log.Error(err, "error occurred while getting nutanix prism v4 client from cache")
-		conditions.MarkFalse(cluster, infrav1.PrismCentralV4ClientCondition, infrav1.PrismCentralV4ClientInitializationFailed, capiv1.ConditionSeverityError, err.Error()) //nolint:govet // error will not be a constant
+		conditions.MarkFalse(cluster, infrav1.PrismCentralV4ClientCondition, infrav1.PrismCentralV4ClientInitializationFailed, capiv1.ConditionSeverityError, "%s", err.Error())
 		return nil, fmt.Errorf("nutanix prism v4 client error: %w", err)
 	}
 
 	conditions.MarkTrue(cluster, infrav1.PrismCentralV4ClientCondition)
 	return client, nil
-}
-
-// isPrismCentralV4Compatible checks if the Prism Central is v4 API compatible
-func isPrismCentralV4Compatible(ctx context.Context, v3Client *prismclientv3.Client) (bool, error) {
-	log := ctrl.LoggerFrom(ctx)
-	internalPCNames := []string{"master", "fraser"}
-	pcVersion, err := getPrismCentralVersion(ctx, v3Client)
-	if err != nil {
-		return false, fmt.Errorf("failed to get Prism Central version: %w", err)
-	}
-
-	// Check if the version is v4 compatible
-	// PC versions look like pc.2024.1.0.1
-	// We can check if the version is greater than or equal to 2024
-
-	if pcVersion == "" {
-		return false, errors.New("prism central version is empty")
-	}
-
-	for _, internalPCName := range internalPCNames {
-		// TODO(sid): This is a naive check to see if the PC version is an internal build. This can potentially lead to failures
-		// if internal fraser build is not v4 compatible.
-		if strings.Contains(pcVersion, internalPCName) {
-			log.Info(fmt.Sprintf("Prism Central version %s is an internal build; assuming it is v4 compatible", pcVersion))
-			return true, nil
-		}
-	}
-
-	// Remove the prefix "pc."
-	version := strings.TrimPrefix(pcVersion, "pc.")
-	// Split the version string by "." to extract the year part
-	parts := strings.Split(version, ".")
-	if len(parts) < 1 {
-		return false, errors.New("invalid version format")
-	}
-
-	// Convert the year part to an integer
-	year, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return false, errors.New("invalid version: failed to parse year from PC version")
-	}
-
-	if year >= 2024 {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-// getPrismCentralVersion returns the version of the Prism Central instance
-func getPrismCentralVersion(ctx context.Context, v3Client *prismclientv3.Client) (string, error) {
-	pcInfo, err := v3Client.V3.GetPrismCentral(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	if pcInfo.Resources == nil || pcInfo.Resources.Version == nil {
-		return "", fmt.Errorf("failed to get Prism Central version")
-	}
-
-	return *pcInfo.Resources.Version, nil
 }
 
 func detachVolumeGroupsFromVM(ctx context.Context, v4Client *prismclientv4.Client, vmName string, vmUUID string, vmDiskList []*prismclientv3.VMDisk) error {
@@ -900,4 +1165,30 @@ func detachVolumeGroupsFromVM(ctx context.Context, v4Client *prismclientv4.Clien
 	}
 
 	return nil
+}
+
+func resourceIdsEquals(nris1, nris2 []infrav1.NutanixResourceIdentifier) bool {
+	if nris1 == nil && nris2 == nil {
+		return true
+	}
+	if (nris1 == nil && nris2 != nil) ||
+		(nris1 != nil && nris2 == nil) ||
+		len(nris1) != len(nris2) {
+		return false
+	}
+
+	for i := range nris1 {
+		found := false
+		for j := range nris2 {
+			if nris1[i].EqualTo(&nris2[j]) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+
+	return true
 }

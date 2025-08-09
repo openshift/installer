@@ -10,7 +10,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.18.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-nutanix
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -36,6 +36,10 @@ spec:
     - description: in ready status
       jsonPath: .status.ready
       name: Ready
+      type: string
+    - description: NutanixCluster FailureDomains
+      jsonPath: .status.failureDomains
+      name: FailureDomains
       type: string
     name: v1beta1
     schema:
@@ -68,24 +72,53 @@ spec:
                   host can be either DNS name or ip address
                 properties:
                   host:
-                    description: The hostname on which the API server is serving.
+                    description: host is the hostname on which the API server is serving.
+                    maxLength: 512
                     type: string
                   port:
-                    description: The port on which the API server is serving.
+                    description: port is the port on which the API server is serving.
                     format: int32
                     type: integer
                 required:
                 - host
                 - port
                 type: object
+              controlPlaneFailureDomains:
+                description: |-
+                  controlPlaneFailureDomains configures references to the NutanixFailureDomain objects
+                  that the cluster uses to deploy its control-plane machines.
+                items:
+                  description: |-
+                    LocalObjectReference contains enough information to let you locate the
+                    referenced object inside the same namespace.
+                  properties:
+                    name:
+                      default: ""
+                      description: |-
+                        Name of the referent.
+                        This field is effectively required, but due to backwards compatibility is
+                        allowed to be empty. Instances of this type with an empty value here are
+                        almost certainly wrong.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      type: string
+                  type: object
+                  x-kubernetes-map-type: atomic
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
               failureDomains:
                 description: |-
                   failureDomains configures failure domains information for the Nutanix platform.
                   When set, the failure domains defined here may be used to spread Machines across
                   prism element clusters to improve fault tolerance of the cluster.
+
+                  Deprecated: This field is replaced by the field controlPlaneFailureDomains and will be removed in the next apiVersion.
                 items:
-                  description: NutanixFailureDomain configures failure domain information
-                    for Nutanix.
+                  description: |-
+                    NutanixFailureDomainConfig configures failure domain information for Nutanix.
+
+                    Deprecated: This type is replaced by the NutanixFailureDomain CRD type and will be removed in the next apiVersion.
                   properties:
                     cluster:
                       description: |-
@@ -153,6 +186,7 @@ spec:
                       type: array
                   required:
                   - cluster
+                  - controlPlane
                   - name
                   - subnets
                   type: object
@@ -237,6 +271,11 @@ spec:
                 - port
                 type: object
             type: object
+            x-kubernetes-validations:
+            - message: Cannot set both 'failureDomains' and 'controlPlaneFailureDomains'
+                fields simultaneously. Use 'controlPlaneFailureDomains' as 'failureDomains'
+                is deprecated.
+              rule: '!(has(self.failureDomains) && has(self.controlPlaneFailureDomains))'
           status:
             description: NutanixClusterStatus defines the observed state of NutanixCluster
             properties:
@@ -248,36 +287,43 @@ spec:
                   properties:
                     lastTransitionTime:
                       description: |-
-                        Last time the condition transitioned from one status to another.
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
                         This should be when the underlying condition changed. If that is not known, then using the time when
                         the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
                       description: |-
-                        A human readable message indicating details about the transition.
+                        message is a human readable message indicating details about the transition.
                         This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
                       type: string
                     reason:
                       description: |-
-                        The reason for the condition's last transition in CamelCase.
+                        reason is the reason for the condition's last transition in CamelCase.
                         The specific API may choose whether or not this field is considered a guaranteed API.
-                        This field may not be empty.
+                        This field may be empty.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                     severity:
                       description: |-
-                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
                         understand the current situation and act accordingly.
                         The Severity field MUST be set only when Status=False.
+                      maxLength: 32
                       type: string
                     status:
-                      description: Status of the condition, one of True, False, Unknown.
+                      description: status of the condition, one of True, False, Unknown.
                       type: string
                     type:
                       description: |-
-                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
                         Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
                         can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                   required:
                   - lastTransitionTime
@@ -294,15 +340,17 @@ spec:
                     attributes:
                       additionalProperties:
                         type: string
-                      description: Attributes is a free form map of attributes an
+                      description: attributes is a free form map of attributes an
                         infrastructure provider might use or require.
                       type: object
                     controlPlane:
-                      description: ControlPlane determines if this failure domain
+                      description: controlPlane determines if this failure domain
                         is suitable for use by control plane machines.
                       type: boolean
                   type: object
-                description: FailureDomains is a slice of FailureDomains.
+                description: |-
+                  failureDomains are a list of failure domains configured in the
+                  cluster's spec and validated by the cluster controller.
                 type: object
               failureMessage:
                 description: Will be set in case of failure of Cluster instance
@@ -323,7 +371,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.18.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-nutanix
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -378,24 +426,55 @@ spec:
                           host can be either DNS name or ip address
                         properties:
                           host:
-                            description: The hostname on which the API server is serving.
+                            description: host is the hostname on which the API server
+                              is serving.
+                            maxLength: 512
                             type: string
                           port:
-                            description: The port on which the API server is serving.
+                            description: port is the port on which the API server
+                              is serving.
                             format: int32
                             type: integer
                         required:
                         - host
                         - port
                         type: object
+                      controlPlaneFailureDomains:
+                        description: |-
+                          controlPlaneFailureDomains configures references to the NutanixFailureDomain objects
+                          that the cluster uses to deploy its control-plane machines.
+                        items:
+                          description: |-
+                            LocalObjectReference contains enough information to let you locate the
+                            referenced object inside the same namespace.
+                          properties:
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       failureDomains:
                         description: |-
                           failureDomains configures failure domains information for the Nutanix platform.
                           When set, the failure domains defined here may be used to spread Machines across
                           prism element clusters to improve fault tolerance of the cluster.
+
+                          Deprecated: This field is replaced by the field controlPlaneFailureDomains and will be removed in the next apiVersion.
                         items:
-                          description: NutanixFailureDomain configures failure domain
-                            information for Nutanix.
+                          description: |-
+                            NutanixFailureDomainConfig configures failure domain information for Nutanix.
+
+                            Deprecated: This type is replaced by the NutanixFailureDomain CRD type and will be removed in the next apiVersion.
                           properties:
                             cluster:
                               description: |-
@@ -467,6 +546,7 @@ spec:
                               type: array
                           required:
                           - cluster
+                          - controlPlane
                           - name
                           - subnets
                           type: object
@@ -548,6 +628,11 @@ spec:
                         - port
                         type: object
                     type: object
+                    x-kubernetes-validations:
+                    - message: Cannot set both 'failureDomains' and 'controlPlaneFailureDomains'
+                        fields simultaneously. Use 'controlPlaneFailureDomains' as
+                        'failureDomains' is deprecated.
+                      rule: '!(has(self.failureDomains) && has(self.controlPlaneFailureDomains))'
                 required:
                 - spec
                 type: object
@@ -562,7 +647,174 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.18.0
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-nutanix
+    cluster.x-k8s.io/v1beta1: v1beta1
+    clusterctl.cluster.x-k8s.io/move: ""
+  name: nutanixfailuredomains.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: NutanixFailureDomain
+    listKind: NutanixFailureDomainList
+    plural: nutanixfailuredomains
+    shortNames:
+    - nfd
+    singular: nutanixfailuredomain
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: NutanixFailureDomain is the Schema for the NutanixFailureDomain
+          API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NutanixFailureDomainSpec defines the desired state of NutanixFailureDomain.
+            properties:
+              prismElementCluster:
+                description: prismElementCluster is to identify the Prism Element
+                  cluster in the Prism Central for the failure domain.
+                properties:
+                  name:
+                    description: name is the resource name in the PC
+                    type: string
+                  type:
+                    description: Type is the identifier type to use for this resource.
+                    enum:
+                    - uuid
+                    - name
+                    type: string
+                  uuid:
+                    description: uuid is the UUID of the resource in the PC.
+                    type: string
+                required:
+                - type
+                type: object
+                x-kubernetes-validations:
+                - message: prismElementCluster is immutable once set
+                  rule: self == oldSelf
+              subnets:
+                description: |-
+                  subnets holds a list of identifiers (one or more) of the PE cluster's network subnets
+                  for the Machine's VM to connect to.
+                items:
+                  description: NutanixResourceIdentifier holds the identity of a Nutanix
+                    PC resource (cluster, image, subnet, etc.)
+                  properties:
+                    name:
+                      description: name is the resource name in the PC
+                      type: string
+                    type:
+                      description: Type is the identifier type to use for this resource.
+                      enum:
+                      - uuid
+                      - name
+                      type: string
+                    uuid:
+                      description: uuid is the UUID of the resource in the PC.
+                      type: string
+                  required:
+                  - type
+                  type: object
+                minItems: 1
+                type: array
+                x-kubernetes-validations:
+                - message: subnets is immutable once set
+                  rule: self == oldSelf
+            required:
+            - prismElementCluster
+            - subnets
+            type: object
+          status:
+            description: NutanixFailureDomainStatus defines the observed state of
+              NutanixFailureDomain resource.
+            properties:
+              conditions:
+                description: conditions represent the latest states of the failure
+                  domain.
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
+                      type: string
+                    reason:
+                      description: |-
+                        reason is the reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may be empty.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                    severity:
+                      description: |-
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
+                      maxLength: 32
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-nutanix
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -592,6 +844,10 @@ spec:
     - description: NutanixMachine instance ID
       jsonPath: .spec.providerID
       name: ProviderID
+      type: string
+    - description: NutanixMachine FailureDomain
+      jsonPath: .status.failureDomain
+      name: FailureDomain
       type: string
     name: v1beta1
     schema:
@@ -656,7 +912,6 @@ spec:
                       the event) or if no container name is specified "spec.containers[2]" (container with
                       index 2 in this pod). This syntax is chosen only to have some well-defined way of
                       referencing a part of an object.
-                      TODO: this design is not final and this field is subject to change in the future.
                     type: string
                   kind:
                     description: |-
@@ -707,6 +962,124 @@ spec:
                 required:
                 - type
                 type: object
+              dataDisks:
+                description: dataDisks hold the list of data disks to be attached
+                  to the VM
+                items:
+                  description: NutanixMachineVMDisk defines the disk configuration
+                    for a NutanixMachine
+                  properties:
+                    dataSource:
+                      description: dataSource refers to a data source image for the
+                        VM disk.
+                      properties:
+                        name:
+                          description: name is the resource name in the PC
+                          type: string
+                        type:
+                          description: Type is the identifier type to use for this
+                            resource.
+                          enum:
+                          - uuid
+                          - name
+                          type: string
+                        uuid:
+                          description: uuid is the UUID of the resource in the PC.
+                          type: string
+                      required:
+                      - type
+                      type: object
+                    deviceProperties:
+                      description: deviceProperties are the properties of the disk
+                        device.
+                      properties:
+                        adapterType:
+                          description: |-
+                            adapterType is the adapter type of the disk address.
+                            If the deviceType is "Disk", the valid adapterType can be "SCSI", "IDE", "PCI", "SATA" or "SPAPR".
+                            If the deviceType is "CDRom", the valid adapterType can be "IDE" or "SATA".
+                          enum:
+                          - SCSI
+                          - IDE
+                          - PCI
+                          - SATA
+                          - SPAPR
+                          type: string
+                        deviceIndex:
+                          default: 0
+                          description: |-
+                            deviceIndex is the index of the disk address. The valid values are non-negative integers, with the default value 0.
+                            For a Machine VM, the deviceIndex for the disks with the same deviceType.adapterType combination should
+                            start from 0 and increase consecutively afterwards. Note that for each Machine VM, the Disk.SCSI.0
+                            and CDRom.IDE.0 are reserved to be used by the VM's system. So for dataDisks of Disk.SCSI and CDRom.IDE,
+                            the deviceIndex should start from 1.
+                          format: int32
+                          minimum: 0
+                          type: integer
+                        deviceType:
+                          default: Disk
+                          description: |-
+                            deviceType specifies the disk device type.
+                            The valid values are "Disk" and "CDRom", and the default is "Disk".
+                          enum:
+                          - Disk
+                          - CDRom
+                          type: string
+                      required:
+                      - adapterType
+                      - deviceType
+                      type: object
+                    diskSize:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      description: |-
+                        diskSize is the size (in Quantity format) of the disk attached to the VM.
+                        See https://pkg.go.dev/k8s.io/apimachinery/pkg/api/resource#Format for the Quantity format and example documentation.
+                        The minimum diskSize is 1GB.
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    storageConfig:
+                      description: storageConfig are the storage configuration parameters
+                        of the VM disks.
+                      properties:
+                        diskMode:
+                          default: Standard
+                          description: |-
+                            diskMode specifies the disk mode.
+                            The valid values are Standard and Flash, and the default is Standard.
+                          enum:
+                          - Standard
+                          - Flash
+                          type: string
+                        storageContainer:
+                          description: storageContainer refers to the storage_container
+                            used by the VM disk.
+                          properties:
+                            name:
+                              description: name is the resource name in the PC
+                              type: string
+                            type:
+                              description: Type is the identifier type to use for
+                                this resource.
+                              enum:
+                              - uuid
+                              - name
+                              type: string
+                            uuid:
+                              description: uuid is the UUID of the resource in the
+                                PC.
+                              type: string
+                          required:
+                          - type
+                          type: object
+                      required:
+                      - diskMode
+                      type: object
+                  required:
+                  - diskSize
+                  type: object
+                type: array
               gpus:
                 description: List of GPU devices that need to be added to the machines.
                 items:
@@ -730,7 +1103,7 @@ spec:
                 type: array
               image:
                 description: |-
-                  image is to identify the rhcos image uploaded to the Prism Central (PC)
+                  image is to identify the nutanix machine image uploaded to the Prism Central (PC)
                   The image identifier (uuid or name) can be obtained from the Prism Central console
                   or using the prism_central API.
                 properties:
@@ -748,6 +1121,34 @@ spec:
                     type: string
                 required:
                 - type
+                type: object
+              imageLookup:
+                description: imageLookup is a container that holds how to look up
+                  rhcos images for the cluster.
+                properties:
+                  baseOS:
+                    description: |-
+                      BaseOS is the name of the base operating system to use for
+                      image lookup.
+                    minLength: 1
+                    type: string
+                  format:
+                    default: capx-{{.BaseOS}}-{{.K8sVersion}}-*
+                    description: |-
+                      Format is the naming format to look up the image for this
+                      machine It will be ignored if an explicit image is set. Supports
+                      substitutions for {{.BaseOS}} and {{.K8sVersion}} with the base OS and
+                      kubernetes version, respectively. The BaseOS will be the value in
+                      BaseOS and the K8sVersion is the value in the Machine .spec.version, with the v prefix removed.
+                      This is effectively the defined by the packages produced by kubernetes/release without v as a
+                      prefix: 1.13.0, 1.12.5-mybuild.1, or 1.17.3. For example, the default
+                      image format of {{.BaseOS}}-?{{.K8sVersion}}-* and BaseOS as "rhel-8.10" will end up
+                      searching for images that match the pattern rhel-8.10-1.30.5-* for a
+                      Machine that is targeting kubernetes v1.30.5. See
+                      also: https://golang.org/pkg/text/template/
+                    type: string
+                required:
+                - baseOS
                 type: object
               memorySize:
                 anyOf:
@@ -826,12 +1227,14 @@ spec:
                 minimum: 1
                 type: integer
             required:
-            - image
             - memorySize
             - systemDiskSize
             - vcpuSockets
             - vcpusPerSocket
             type: object
+            x-kubernetes-validations:
+            - message: Either 'image' or 'imageLookup' must be set, but not both
+              rule: has(self.image) != has(self.imageLookup)
           status:
             description: NutanixMachineStatus defines the observed state of NutanixMachine
             properties:
@@ -844,11 +1247,19 @@ spec:
                     address.
                   properties:
                     address:
-                      description: The machine address.
+                      description: address is the machine address.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                     type:
-                      description: Machine address type, one of Hostname, ExternalIP,
-                        InternalIP, ExternalDNS or InternalDNS.
+                      description: type is the machine address type, one of Hostname,
+                        ExternalIP, InternalIP, ExternalDNS or InternalDNS.
+                      enum:
+                      - Hostname
+                      - ExternalIP
+                      - InternalIP
+                      - ExternalDNS
+                      - InternalDNS
                       type: string
                   required:
                   - address
@@ -863,36 +1274,43 @@ spec:
                   properties:
                     lastTransitionTime:
                       description: |-
-                        Last time the condition transitioned from one status to another.
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
                         This should be when the underlying condition changed. If that is not known, then using the time when
                         the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
                       description: |-
-                        A human readable message indicating details about the transition.
+                        message is a human readable message indicating details about the transition.
                         This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
                       type: string
                     reason:
                       description: |-
-                        The reason for the condition's last transition in CamelCase.
+                        reason is the reason for the condition's last transition in CamelCase.
                         The specific API may choose whether or not this field is considered a guaranteed API.
-                        This field may not be empty.
+                        This field may be empty.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                     severity:
                       description: |-
-                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
                         understand the current situation and act accordingly.
                         The Severity field MUST be set only when Status=False.
+                      maxLength: 32
                       type: string
                     status:
-                      description: Status of the condition, one of True, False, Unknown.
+                      description: status of the condition, one of True, False, Unknown.
                       type: string
                     type:
                       description: |-
-                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
                         Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
                         can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                   required:
                   - lastTransitionTime
@@ -900,6 +1318,10 @@ spec:
                   - type
                   type: object
                 type: array
+              failureDomain:
+                description: failureDomain is the name of the failure domain where
+                  this Machine has been placed in.
+                type: string
               failureMessage:
                 description: Will be set in case of failure of Machine instance
                 type: string
@@ -923,7 +1345,6 @@ spec:
                       the event) or if no container name is specified "spec.containers[2]" (container with
                       index 2 in this pod). This syntax is chosen only to have some well-defined way of
                       referencing a part of an object.
-                      TODO: this design is not final and this field is subject to change in the future.
                     type: string
                   kind:
                     description: |-
@@ -969,7 +1390,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.18.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-nutanix
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1026,7 +1447,7 @@ spec:
                         additionalProperties:
                           type: string
                         description: |-
-                          Annotations is an unstructured key value map stored with a resource that may be
+                          annotations is an unstructured key value map stored with a resource that may be
                           set by external tools to store and retrieve arbitrary metadata. They are not
                           queryable and should be preserved when modifying objects.
                           More info: http://kubernetes.io/docs/user-guide/annotations
@@ -1035,7 +1456,7 @@ spec:
                         additionalProperties:
                           type: string
                         description: |-
-                          Map of string keys and values that can be used to organize and categorize
+                          labels is a map of string keys and values that can be used to organize and categorize
                           (scope and select) objects. May match selectors of replication controllers
                           and services.
                           More info: http://kubernetes.io/docs/user-guide/labels
@@ -1083,7 +1504,6 @@ spec:
                               the event) or if no container name is specified "spec.containers[2]" (container with
                               index 2 in this pod). This syntax is chosen only to have some well-defined way of
                               referencing a part of an object.
-                              TODO: this design is not final and this field is subject to change in the future.
                             type: string
                           kind:
                             description: |-
@@ -1135,6 +1555,126 @@ spec:
                         required:
                         - type
                         type: object
+                      dataDisks:
+                        description: dataDisks hold the list of data disks to be attached
+                          to the VM
+                        items:
+                          description: NutanixMachineVMDisk defines the disk configuration
+                            for a NutanixMachine
+                          properties:
+                            dataSource:
+                              description: dataSource refers to a data source image
+                                for the VM disk.
+                              properties:
+                                name:
+                                  description: name is the resource name in the PC
+                                  type: string
+                                type:
+                                  description: Type is the identifier type to use
+                                    for this resource.
+                                  enum:
+                                  - uuid
+                                  - name
+                                  type: string
+                                uuid:
+                                  description: uuid is the UUID of the resource in
+                                    the PC.
+                                  type: string
+                              required:
+                              - type
+                              type: object
+                            deviceProperties:
+                              description: deviceProperties are the properties of
+                                the disk device.
+                              properties:
+                                adapterType:
+                                  description: |-
+                                    adapterType is the adapter type of the disk address.
+                                    If the deviceType is "Disk", the valid adapterType can be "SCSI", "IDE", "PCI", "SATA" or "SPAPR".
+                                    If the deviceType is "CDRom", the valid adapterType can be "IDE" or "SATA".
+                                  enum:
+                                  - SCSI
+                                  - IDE
+                                  - PCI
+                                  - SATA
+                                  - SPAPR
+                                  type: string
+                                deviceIndex:
+                                  default: 0
+                                  description: |-
+                                    deviceIndex is the index of the disk address. The valid values are non-negative integers, with the default value 0.
+                                    For a Machine VM, the deviceIndex for the disks with the same deviceType.adapterType combination should
+                                    start from 0 and increase consecutively afterwards. Note that for each Machine VM, the Disk.SCSI.0
+                                    and CDRom.IDE.0 are reserved to be used by the VM's system. So for dataDisks of Disk.SCSI and CDRom.IDE,
+                                    the deviceIndex should start from 1.
+                                  format: int32
+                                  minimum: 0
+                                  type: integer
+                                deviceType:
+                                  default: Disk
+                                  description: |-
+                                    deviceType specifies the disk device type.
+                                    The valid values are "Disk" and "CDRom", and the default is "Disk".
+                                  enum:
+                                  - Disk
+                                  - CDRom
+                                  type: string
+                              required:
+                              - adapterType
+                              - deviceType
+                              type: object
+                            diskSize:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                diskSize is the size (in Quantity format) of the disk attached to the VM.
+                                See https://pkg.go.dev/k8s.io/apimachinery/pkg/api/resource#Format for the Quantity format and example documentation.
+                                The minimum diskSize is 1GB.
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            storageConfig:
+                              description: storageConfig are the storage configuration
+                                parameters of the VM disks.
+                              properties:
+                                diskMode:
+                                  default: Standard
+                                  description: |-
+                                    diskMode specifies the disk mode.
+                                    The valid values are Standard and Flash, and the default is Standard.
+                                  enum:
+                                  - Standard
+                                  - Flash
+                                  type: string
+                                storageContainer:
+                                  description: storageContainer refers to the storage_container
+                                    used by the VM disk.
+                                  properties:
+                                    name:
+                                      description: name is the resource name in the
+                                        PC
+                                      type: string
+                                    type:
+                                      description: Type is the identifier type to
+                                        use for this resource.
+                                      enum:
+                                      - uuid
+                                      - name
+                                      type: string
+                                    uuid:
+                                      description: uuid is the UUID of the resource
+                                        in the PC.
+                                      type: string
+                                  required:
+                                  - type
+                                  type: object
+                              required:
+                              - diskMode
+                              type: object
+                          required:
+                          - diskSize
+                          type: object
+                        type: array
                       gpus:
                         description: List of GPU devices that need to be added to
                           the machines.
@@ -1160,7 +1700,7 @@ spec:
                         type: array
                       image:
                         description: |-
-                          image is to identify the rhcos image uploaded to the Prism Central (PC)
+                          image is to identify the nutanix machine image uploaded to the Prism Central (PC)
                           The image identifier (uuid or name) can be obtained from the Prism Central console
                           or using the prism_central API.
                         properties:
@@ -1179,6 +1719,34 @@ spec:
                             type: string
                         required:
                         - type
+                        type: object
+                      imageLookup:
+                        description: imageLookup is a container that holds how to
+                          look up rhcos images for the cluster.
+                        properties:
+                          baseOS:
+                            description: |-
+                              BaseOS is the name of the base operating system to use for
+                              image lookup.
+                            minLength: 1
+                            type: string
+                          format:
+                            default: capx-{{.BaseOS}}-{{.K8sVersion}}-*
+                            description: |-
+                              Format is the naming format to look up the image for this
+                              machine It will be ignored if an explicit image is set. Supports
+                              substitutions for {{.BaseOS}} and {{.K8sVersion}} with the base OS and
+                              kubernetes version, respectively. The BaseOS will be the value in
+                              BaseOS and the K8sVersion is the value in the Machine .spec.version, with the v prefix removed.
+                              This is effectively the defined by the packages produced by kubernetes/release without v as a
+                              prefix: 1.13.0, 1.12.5-mybuild.1, or 1.17.3. For example, the default
+                              image format of {{.BaseOS}}-?{{.K8sVersion}}-* and BaseOS as "rhel-8.10" will end up
+                              searching for images that match the pattern rhel-8.10-1.30.5-* for a
+                              Machine that is targeting kubernetes v1.30.5. See
+                              also: https://golang.org/pkg/text/template/
+                            type: string
+                        required:
+                        - baseOS
                         type: object
                       memorySize:
                         anyOf:
@@ -1262,12 +1830,15 @@ spec:
                         minimum: 1
                         type: integer
                     required:
-                    - image
                     - memorySize
                     - systemDiskSize
                     - vcpuSockets
                     - vcpusPerSocket
                     type: object
+                    x-kubernetes-validations:
+                    - message: Either 'image' or 'imageLookup' must be set, but not
+                        both
+                      rule: has(self.image) != has(self.imageLookup)
                 required:
                 - spec
                 type: object
@@ -1337,6 +1908,7 @@ rules:
   - ""
   resources:
   - configmaps
+  - secrets
   verbs:
   - delete
   - get
@@ -1351,16 +1923,6 @@ rules:
   - get
   - list
   - patch
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - delete
-  - get
-  - list
-  - update
   - watch
 - apiGroups:
   - bootstrap.cluster.x-k8s.io
@@ -1385,15 +1947,7 @@ rules:
 - apiGroups:
   - cluster.x-k8s.io
   resources:
-  - clusters
   - clusters/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
   - machines
   - machines/status
   verbs:
@@ -1404,31 +1958,7 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - nutanixclusters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - nutanixclusters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - nutanixclusters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
+  - nutanixfailuredomains
   - nutanixmachines
   verbs:
   - create
@@ -1441,12 +1971,16 @@ rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
+  - nutanixclusters/finalizers
   - nutanixmachines/finalizers
   verbs:
   - update
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
+  - nutanixclusters/status
+  - nutanixfailuredomains/finalizers
+  - nutanixfailuredomains/status
   - nutanixmachines/status
   verbs:
   - get
@@ -1649,23 +2183,8 @@ spec:
     spec:
       containers:
       - args:
-        - --secure-listen-address=0.0.0.0:8443
-        - --upstream=http://127.0.0.1:8080/
-        - --logtostderr=true
-        - --v=10
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 8443
-          name: https
-        resources:
-          requests:
-            cpu: 10m
-            memory: 20Mi
-      - args:
         - --health-probe-bind-address=:8081
-        - --diagnostics-address=127.0.0.1:8080
-        - --insecure-diagnostics
+        - --diagnostics-address=:8443
         - --leader-elect
         - --zap-log-level=${NUTANIX_LOG_LEVEL=info}
         - --zap-devel=${NUTANIX_LOG_DEVELOPMENT=true}
@@ -1679,7 +2198,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/nutanix-cloud-native/cluster-api-provider-nutanix/controller:v1.5.3
+        image: ghcr.io/nutanix-cloud-native/cluster-api-provider-nutanix/controller:v1.7.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -1688,6 +2207,10 @@ spec:
           initialDelaySeconds: 15
           periodSeconds: 20
         name: manager
+        ports:
+        - containerPort: 8443
+          name: https
+          protocol: TCP
         readinessProbe:
           httpGet:
             path: /readyz

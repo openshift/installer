@@ -24,7 +24,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	capiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/errors"
 )
 
 const (
@@ -34,14 +33,18 @@ const (
 	// NutanixClusterFinalizer allows NutanixClusterReconciler to clean up AHV
 	// resources associated with NutanixCluster before removing it from the
 	// API Server.
-	NutanixClusterFinalizer           = "nutanixcluster.infrastructure.cluster.x-k8s.io"
-	NutanixClusterCredentialFinalizer = "nutanixcluster/infrastructure.cluster.x-k8s.io"
+	NutanixClusterFinalizer           = "infrastructure.cluster.x-k8s.io/nutanixcluster"
+	DeprecatedNutanixClusterFinalizer = "nutanixcluster.infrastructure.cluster.x-k8s.io"
+
+	NutanixClusterCredentialFinalizer           = "infrastructure.cluster.x-k8s.io/nutanixclustercredential"
+	DeprecatedNutanixClusterCredentialFinalizer = "nutanixcluster/infrastructure.cluster.x-k8s.io"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // NutanixClusterSpec defines the desired state of NutanixCluster
+// +kubebuilder:validation:XValidation:rule="!(has(self.failureDomains) && has(self.controlPlaneFailureDomains))",message="Cannot set both 'failureDomains' and 'controlPlaneFailureDomains' fields simultaneously. Use 'controlPlaneFailureDomains' as 'failureDomains' is deprecated."
 type NutanixClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -64,7 +67,17 @@ type NutanixClusterSpec struct {
 	// +listType=map
 	// +listMapKey=name
 	// +optional
-	FailureDomains []NutanixFailureDomain `json:"failureDomains"`
+	//
+	// Deprecated: This field is replaced by the field controlPlaneFailureDomains and will be removed in the next apiVersion.
+	//
+	FailureDomains []NutanixFailureDomainConfig `json:"failureDomains,omitempty"`
+
+	// controlPlaneFailureDomains configures references to the NutanixFailureDomain objects
+	// that the cluster uses to deploy its control-plane machines.
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	ControlPlaneFailureDomains []corev1.LocalObjectReference `json:"controlPlaneFailureDomains,omitempty"`
 }
 
 // NutanixClusterStatus defines the observed state of NutanixCluster
@@ -75,6 +88,8 @@ type NutanixClusterStatus struct {
 	// +optional
 	Ready bool `json:"ready,omitempty"`
 
+	// failureDomains are a list of failure domains configured in the
+	// cluster's spec and validated by the cluster controller.
 	FailureDomains capiv1.FailureDomains `json:"failureDomains,omitempty"`
 
 	// Conditions defines current service state of the NutanixCluster.
@@ -83,7 +98,7 @@ type NutanixClusterStatus struct {
 
 	// Will be set in case of failure of Cluster instance
 	// +optional
-	FailureReason *errors.ClusterStatusError `json:"failureReason,omitempty"`
+	FailureReason *string `json:"failureReason,omitempty"`
 
 	// Will be set in case of failure of Cluster instance
 	// +optional
@@ -96,6 +111,7 @@ type NutanixClusterStatus struct {
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="ControlplaneEndpoint",type="string",JSONPath=".spec.controlPlaneEndpoint.host",description="ControlplaneEndpoint"
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="in ready status"
+// +kubebuilder:printcolumn:name="FailureDomains",type="string",JSONPath=".status.failureDomains",description="NutanixCluster FailureDomains"
 
 // NutanixCluster is the Schema for the nutanixclusters API
 type NutanixCluster struct {
@@ -106,8 +122,10 @@ type NutanixCluster struct {
 	Status NutanixClusterStatus `json:"status,omitempty"`
 }
 
-// NutanixFailureDomain configures failure domain information for Nutanix.
-type NutanixFailureDomain struct {
+// NutanixFailureDomainConfig configures failure domain information for Nutanix.
+//
+// Deprecated: This type is replaced by the NutanixFailureDomain CRD type and will be removed in the next apiVersion.
+type NutanixFailureDomainConfig struct {
 	// name defines the unique name of a failure domain.
 	// Name is required and must be at most 64 characters in length.
 	// It must consist of only lower case alphanumeric characters and hyphens (-).

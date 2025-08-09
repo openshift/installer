@@ -16,6 +16,8 @@ limitations under the License.
 
 package v1beta1
 
+import "fmt"
+
 // NutanixIdentifierType is an enumeration of different resource identifier types.
 type NutanixIdentifierType string
 
@@ -72,6 +74,59 @@ type NutanixResourceIdentifier struct {
 	// name is the resource name in the PC
 	// +optional
 	Name *string `json:"name,omitempty"`
+}
+
+func (nri NutanixResourceIdentifier) String() string {
+	if nri.Type == NutanixIdentifierUUID && nri.UUID != nil {
+		return *nri.UUID
+	}
+	if nri.Type == NutanixIdentifierName && nri.Name != nil {
+		return *nri.Name
+	}
+	return ""
+}
+
+// DisplayString returns a human-readable string representation of the NutanixResourceIdentifier
+// that includes both the type and value, suitable for error messages and logging.
+func (nri NutanixResourceIdentifier) DisplayString() string {
+	switch nri.Type {
+	case NutanixIdentifierUUID:
+		if nri.UUID != nil {
+			return fmt.Sprintf("uuid=%q", *nri.UUID)
+		}
+	case NutanixIdentifierName:
+		if nri.Name != nil {
+			return fmt.Sprintf("name=%q", *nri.Name)
+		}
+	}
+	return "unknown"
+}
+
+func (nri NutanixResourceIdentifier) IsUUID() bool {
+	return nri.Type == NutanixIdentifierUUID && nri.UUID != nil
+}
+
+func (nri NutanixResourceIdentifier) IsName() bool {
+	return nri.Type == NutanixIdentifierName && nri.Name != nil
+}
+
+// EqualTo checks if two NutanixResourceIdentifiers are equal based on their type and value.
+func (nri NutanixResourceIdentifier) EqualTo(other *NutanixResourceIdentifier) bool {
+	if other == nil {
+		return false
+	}
+	if nri.Type != other.Type {
+		return false
+	}
+
+	switch nri.Type {
+	case NutanixIdentifierName:
+		return nri.Name != nil && other.Name != nil && *nri.Name == *other.Name
+	case NutanixIdentifierUUID:
+		return nri.UUID != nil && other.UUID != nil && *nri.UUID == *other.UUID
+	}
+
+	return false
 }
 
 type NutanixCategoryIdentifier struct {
