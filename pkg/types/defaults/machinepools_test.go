@@ -1,6 +1,7 @@
 package defaults
 
 import (
+	"github.com/openshift/installer/pkg/types/libvirt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,22 +27,24 @@ func defaultEdgeMachinePool(name string) *types.MachinePool {
 	return defaultMachinePoolWithReplicaCount(name, 0)
 }
 
-func TestSetMahcinePoolDefaults(t *testing.T) {
+func TestSetMachinePoolDefaults(t *testing.T) {
 	defaultEdgeReplicaCount := int64(0)
 	cases := []struct {
 		name     string
 		pool     *types.MachinePool
-		platform string
+		config   *types.InstallConfig
 		expected *types.MachinePool
 	}{
 		{
 			name:     "empty",
 			pool:     &types.MachinePool{},
+			config:   &types.InstallConfig{},
 			expected: defaultMachinePool(""),
 		},
 		{
 			name:     "empty",
 			pool:     &types.MachinePool{Replicas: &defaultEdgeReplicaCount},
+			config:   &types.InstallConfig{},
 			expected: defaultEdgeMachinePool(""),
 		},
 		{
@@ -57,11 +60,13 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 		{
 			name:     "default",
 			pool:     defaultMachinePool("test-name"),
+			config:   &types.InstallConfig{},
 			expected: defaultMachinePool("test-name"),
 		},
 		{
 			name:     "default",
 			pool:     defaultEdgeMachinePool("test-name"),
+			config:   &types.InstallConfig{},
 			expected: defaultEdgeMachinePool("test-name"),
 		},
 		{
@@ -72,6 +77,7 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 				p.Replicas = &repCount
 				return p
 			}(),
+			config: &types.InstallConfig{},
 			expected: func() *types.MachinePool {
 				p := defaultMachinePool("test-name")
 				repCount := int64(5)
@@ -87,6 +93,7 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 				p.Replicas = &repCount
 				return p
 			}(),
+			config: &types.InstallConfig{},
 			expected: func() *types.MachinePool {
 				p := defaultEdgeMachinePool("test-name")
 				repCount := int64(5)
@@ -101,6 +108,7 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 				p.Hyperthreading = types.HyperthreadingMode("test-hyperthreading")
 				return p
 			}(),
+			config: &types.InstallConfig{},
 			expected: func() *types.MachinePool {
 				p := defaultMachinePool("test-name")
 				p.Hyperthreading = types.HyperthreadingMode("test-hyperthreading")
@@ -114,6 +122,7 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 				p.Hyperthreading = types.HyperthreadingMode("test-hyperthreading")
 				return p
 			}(),
+			config: &types.InstallConfig{},
 			expected: func() *types.MachinePool {
 				p := defaultEdgeMachinePool("test-name")
 				p.Hyperthreading = types.HyperthreadingMode("test-hyperthreading")
@@ -123,7 +132,7 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			SetMachinePoolDefaults(tc.pool, tc.platform)
+			SetMachinePoolDefaults(tc.pool, tc.config)
 			assert.Equal(t, tc.expected, tc.pool, "unexpected machine pool")
 		})
 	}

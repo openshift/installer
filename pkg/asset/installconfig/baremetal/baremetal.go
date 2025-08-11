@@ -3,10 +3,11 @@ package baremetal
 
 import (
 	"fmt"
-
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/pkg/errors"
+	"net"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -81,6 +82,8 @@ func Platform() (*baremetal.Platform, error) {
 		return nil, err
 	}
 
+	apiVIP, ingressVIP := getVIPs()
+
 	// Keep prompting for hosts
 	for {
 		var hostRole string
@@ -122,7 +125,23 @@ func Platform() (*baremetal.Platform, error) {
 		ProvisioningNetworkCIDR:      parsedCIDR,
 		ProvisioningNetworkInterface: provisioningNetworkInterface,
 		Hosts:                        hosts,
+		APIVIPs:                      []string{apiVIP},
+		IngressVIPs:                  []string{ingressVIP},
 	}, nil
+}
+
+func getVIPs() (string, string) {
+	machineCIDR := defaults.DefaultMachineCIDR
+
+	apiVIP := make(net.IP, len(machineCIDR.IP))
+	copy(apiVIP, machineCIDR.IP.Mask(machineCIDR.Mask))
+	apiVIP[len(apiVIP)-1]++
+
+	ingressVIP := make(net.IP, len(apiVIP))
+	copy(ingressVIP, apiVIP)
+	ingressVIP[len(ingressVIP)-1]++
+
+	return apiVIP.String(), ingressVIP.String()
 }
 
 // ipNetValidator validates for a valid IP
