@@ -58,44 +58,6 @@ func deleteElasticLoadBalancerClassic(ctx context.Context, client *elb.ELB, name
 	return nil
 }
 
-func deleteElasticLoadBalancerClassicByVPC(ctx context.Context, client *elb.ELB, vpc string, logger logrus.FieldLogger) error {
-	var lastError error
-	err := client.DescribeLoadBalancersPagesWithContext(
-		ctx,
-		&elb.DescribeLoadBalancersInput{},
-		func(results *elb.DescribeLoadBalancersOutput, lastPage bool) bool {
-			logger.Debugf("iterating over a page of %d v1 load balancers", len(results.LoadBalancerDescriptions))
-			for _, lb := range results.LoadBalancerDescriptions {
-				lbLogger := logger.WithField("classic load balancer", *lb.LoadBalancerName)
-
-				if lb.VPCId == nil {
-					lbLogger.Warn("classic load balancer does not have a VPC ID so could not determine whether it should be deleted")
-					continue
-				}
-
-				if *lb.VPCId != vpc {
-					continue
-				}
-
-				err := deleteElasticLoadBalancerClassic(ctx, client, *lb.LoadBalancerName, lbLogger)
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "deleting classic load balancer %s", *lb.LoadBalancerName)
-				}
-			}
-
-			return !lastPage
-		},
-	)
-
-	if lastError != nil {
-		return lastError
-	}
-	return err
-}
-
 func deleteElasticLoadBalancerTargetGroup(ctx context.Context, client *elbv2.ELBV2, arn arn.ARN, logger logrus.FieldLogger) error {
 	_, err := client.DeleteTargetGroupWithContext(ctx, &elbv2.DeleteTargetGroupInput{
 		TargetGroupArn: aws.String(arn.String()),
@@ -143,49 +105,4 @@ func deleteElasticLoadBalancerV2(ctx context.Context, client *elbv2.ELBV2, arn a
 
 	logger.Info("Deleted")
 	return nil
-}
-
-func deleteElasticLoadBalancerV2ByVPC(ctx context.Context, client *elbv2.ELBV2, vpc string, logger logrus.FieldLogger) error {
-	var lastError error
-	err := client.DescribeLoadBalancersPagesWithContext(
-		ctx,
-		&elbv2.DescribeLoadBalancersInput{},
-		func(results *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
-			logger.Debugf("iterating over a page of %d v2 load balancers", len(results.LoadBalancers))
-			for _, lb := range results.LoadBalancers {
-				if lb.VpcId == nil {
-					logger.WithField("load balancer", *lb.LoadBalancerArn).Warn("load balancer does not have a VPC ID so could not determine whether it should be deleted")
-					continue
-				}
-
-				if *lb.VpcId != vpc {
-					continue
-				}
-
-				parsed, err := arn.Parse(*lb.LoadBalancerArn)
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrap(err, "parse ARN for load balancer")
-					continue
-				}
-
-				err = deleteElasticLoadBalancerV2(ctx, client, parsed, logger.WithField("load balancer", parsed.Resource))
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "deleting %s", parsed.String())
-				}
-			}
-
-			return !lastPage
-		},
-	)
-
-	if lastError != nil {
-		return lastError
-	}
-	return err
 }
