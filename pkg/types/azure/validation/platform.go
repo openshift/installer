@@ -127,6 +127,11 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 			allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), fmt.Sprintf("clusterOSImage must not be set when the cloud name is %s", cloud)))
 		}
 	}
+	for index, subnet := range p.Subnets {
+		if subnet.NatGatewayName != "" && p.OutboundType != azure.NATGatewayMultiZoneOutboundType {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("subnet").Index(index), subnet.NatGatewayName, "cannot specify nat gateway if outbound type is not MultiZoneNatGateway"))
+		}
+	}
 
 	return allErrs
 }
@@ -239,6 +244,7 @@ func findDuplicateTagKeys(tagSet map[string]string) error {
 var (
 	validOutboundTypes = map[azure.OutboundType]struct{}{
 		azure.LoadbalancerOutboundType:         {},
+		azure.NATGatewayMultiZoneOutboundType:  {},
 		azure.NATGatewaySingleZoneOutboundType: {},
 		azure.UserDefinedRoutingOutboundType:   {},
 	}
