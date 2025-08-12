@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -147,6 +148,13 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		subnet := fmt.Sprintf("%s-worker-subnet", clusterID.InfraID)
 		if installConfig.Config.Azure.ComputeSubnet != "" {
 			subnet = installConfig.Config.Azure.ComputeSubnet
+		} else {
+			for _, subnetSpec := range installConfig.Config.Azure.Subnets {
+				if subnetSpec.Role == capz.SubnetNode {
+					subnet = subnetSpec.Name
+					break
+				}
+			}
 		}
 		azureConfig, err := azure.CloudProviderConfig{
 			CloudName:                installConfig.Config.Azure.CloudName,
