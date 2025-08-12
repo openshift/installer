@@ -73,6 +73,7 @@ func (n *NutanixClientHelper) BuildManagementEndpoint(ctx context.Context, nutan
 	providers := make([]envTypes.Provider, 0)
 
 	// Attempt to build a provider from the NutanixCluster object
+	log.Info("Attemp to build provider from NutanixCluster")
 	providerForNutanixCluster, err := n.buildProviderFromNutanixCluster(nutanixCluster)
 	if err != nil {
 		return nil, fmt.Errorf("error building an environment provider from NutanixCluster: %w", err)
@@ -93,8 +94,10 @@ func (n *NutanixClientHelper) BuildManagementEndpoint(ctx context.Context, nutan
 	}
 
 	// Initialize environment with providers
+	log.Info("Initializing environment with providers")
 	env := environment.NewEnvironment(providers...)
 	// GetManagementEndpoint will return the first valid endpoint from the list of providers
+	log.V(1).Info("Getting management endpoint")
 	me, err := env.GetManagementEndpoint(envTypes.Topology{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get management endpoint object: %w", err)

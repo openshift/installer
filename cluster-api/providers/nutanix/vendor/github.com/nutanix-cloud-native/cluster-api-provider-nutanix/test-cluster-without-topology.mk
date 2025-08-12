@@ -20,7 +20,7 @@ generate-cluster-kubeconfig: ## generate kubeconfig of workload cluster without 
 	kubectl -n ${TEST_NAMESPACE} get secret ${TEST_CLUSTER_NAME}-kubeconfig -o json | jq -r .data.value | base64 --decode > ${TEST_CLUSTER_NAME}.workload.kubeconfig
 
 .PHONY: test-cluster-install-cni
-test-cluster-install-cni: generate-cc-cluster-kubeconfig ## install cni on workload cluster without topology
+test-cluster-install-cni: generate-cluster-kubeconfig ## install cni on workload cluster without topology
 	kubectl --kubeconfig ./${TEST_CLUSTER_NAME}.workload.kubeconfig apply -f https://raw.githubusercontent.com/nutanix-cloud-native/cluster-api-provider-nutanix/main/test/e2e/data/cni/calico/calico.yaml
 
 .PHONY: list-bootstrap-resources
