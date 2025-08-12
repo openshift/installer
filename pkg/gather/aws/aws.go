@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/config"
+	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go"
@@ -19,6 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
+	awssession "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/gather"
 	"github.com/openshift/installer/pkg/gather/providers"
 	"github.com/openshift/installer/pkg/types"
@@ -51,24 +51,17 @@ func New(logger logrus.FieldLogger, serialLogBundle string, bootstrap string, ma
 		filters = append(filters, filter)
 	}
 
-	region := metadataAWS.Region
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+	ec2Client, err := awssession.NewEC2Client(context.TODO(), awssession.EndpointOptions{
+		Region:    metadataAWS.Region,
+		Endpoints: metadataAWS.ServiceEndpoints,
+	}, ec2.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerGatherUserAgent, version.Raw)))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS config: %w", err)
+		return nil, fmt.Errorf("failed to create EC2 client: %w", err)
 	}
-	ec2Client := ec2.NewFromConfig(cfg,
-		ec2.WithAPIOptions(middleware.AddUserAgentKeyValue("OpenShift/4.x Gather", version.Raw)),
-		func(o *ec2.Options) {
-			for _, endpoint := range metadataAWS.ServiceEndpoints {
-				if strings.EqualFold(endpoint.Name, ec2.ServiceID) {
-					o.BaseEndpoint = aws.String(endpoint.URL)
-				}
-			}
-		})
 
 	return &Gather{
 		logger:          logger,
-		region:          region,
+		region:          metadataAWS.Region,
 		filters:         filters,
 		serialLogBundle: serialLogBundle,
 		bootstrap:       bootstrap,

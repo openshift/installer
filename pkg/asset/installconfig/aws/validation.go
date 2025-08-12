@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"sort"
 
-	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
+	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -156,17 +156,14 @@ func validateAMI(ctx context.Context, meta *Metadata, config *types.InstallConfi
 		return nil
 	}
 
+	// accept AMI that can be copied from us-east-1 if the region is in the standard AWS partition
 	regions, err := meta.Regions(ctx)
 	if err != nil {
 		return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to get list of regions: %w", err))}
 	}
-
 	if sets.New(regions...).Has(config.Platform.AWS.Region) {
-		defaultEndpoint, err := getDefaultServiceEndpoint(config.Platform.AWS.Region, "ec2", endpointOptions{
-			DisableHTTPS:         false,
-			UseDualStackEndpoint: awsv2.DualStackEndpointStateDisabled,
-		})
-		if err != nil || defaultEndpoint == nil {
+		defaultEndpoint, err := GetDefaultServiceEndpoint(ctx, ec2v2.ServiceID, EndpointOptions{Region: config.Platform.AWS.Region, UseFIPS: false})
+		if err != nil {
 			return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to resolve ec2 endpoint"))}
 		}
 		if defaultEndpoint.PartitionID == endpoints.AwsPartitionID {
