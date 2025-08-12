@@ -264,7 +264,7 @@ func getProbes(lbSpec LBSpec) []*armnetwork.Probe {
 					Port:              ptr.To[int32](lbSpec.APIServerPort),
 					RequestPath:       ptr.To(httpsProbeRequestPath),
 					IntervalInSeconds: ptr.To[int32](15),
-					NumberOfProbes:    ptr.To[int32](4),
+					ProbeThreshold:    ptr.To[int32](2),
 				},
 			},
 		}
