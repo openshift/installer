@@ -328,7 +328,9 @@ type HostHeaderConditionConfig struct {
 
 	// The host names. The maximum size of each name is 128 characters. The comparison
 	// is case insensitive. The following wildcard characters are supported: * (matches
-	// 0 or more characters) and ? (matches exactly 1 character).
+	// 0 or more characters) and ? (matches exactly 1 character). You must include at
+	// least one "." character. You can include only alphabetical characters after the
+	// final "." character.
 	//
 	// If you specify multiple strings, the condition is satisfied if one of the
 	// strings matches the host name.
@@ -347,8 +349,10 @@ type HttpHeaderConditionConfig struct {
 	// header name is case insensitive. The allowed characters are specified by RFC
 	// 7230. Wildcards are not supported.
 	//
-	// You can't use an HTTP header condition to specify the host header. Use HostHeaderConditionConfig to
-	// specify a host header condition.
+	// You can't use an HTTP header condition to specify the host header. Instead, use
+	// a [host condition].
+	//
+	// [host condition]: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#host-conditions
 	HttpHeaderName *string
 
 	// The strings to compare against the value of the HTTP header. The maximum size
@@ -385,6 +389,16 @@ type HttpRequestMethodConditionConfig struct {
 	// HEAD requests in the same way, because the response to a HEAD request may be
 	// cached.
 	Values []string
+
+	noSmithyDocumentSerde
+}
+
+// An IPAM pool is a collection of IP address CIDRs. IPAM pools enable you to
+// organize your IP addresses according to your routing and security needs.
+type IpamPools struct {
+
+	// The ID of the IPv4 IPAM pool.
+	Ipv4IpamPoolId *string
 
 	noSmithyDocumentSerde
 }
@@ -611,6 +625,10 @@ type LoadBalancer struct {
 	// (IPv4 addresses) and dualstack (IPv4 and IPv6 addresses).
 	IpAddressType IpAddressType
 
+	// [Application Load Balancers] The IPAM pool in use by the load balancer, if
+	// configured.
+	IpamPools *IpamPools
+
 	// The Amazon Resource Name (ARN) of the load balancer.
 	LoadBalancerArn *string
 
@@ -778,6 +796,11 @@ type LoadBalancerAttribute struct {
 	//   availability_zone_affinity with 100 percent zonal affinity,
 	//   partial_availability_zone_affinity with 85 percent zonal affinity, and
 	//   any_availability_zone with 0 percent zonal affinity.
+	//
+	//   - secondary_ips.auto_assigned.per_subnet - The number of secondary IP
+	//   addresses to configure for your load balancer nodes. Use to address port
+	//   allocation errors if you can't add targets. The valid range is 0 to 7. The
+	//   default is 0. After you set this value, you can't decrease it.
 	Key *string
 
 	// The value of the attribute.
@@ -869,7 +892,9 @@ type PathPatternConditionConfig struct {
 	//
 	// If you specify multiple strings, the condition is satisfied if one of them
 	// matches the request URL. The path pattern is compared only to the path of the
-	// URL, not to its query string. To compare against the query string, use QueryStringConditionConfig.
+	// URL, not to its query string. To compare against the query string, use a [query string condition].
+	//
+	// [query string condition]: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#query-string-conditions
 	Values []string
 
 	noSmithyDocumentSerde
@@ -1115,9 +1140,11 @@ type SourceIpConditionConfig struct {
 	// If you specify multiple addresses, the condition is satisfied if the source IP
 	// address of the request matches one of the CIDR blocks. This condition is not
 	// satisfied by the addresses in the X-Forwarded-For header. To search for
-	// addresses in the X-Forwarded-For header, use HttpHeaderConditionConfig.
+	// addresses in the X-Forwarded-For header, use an [HTTP header condition].
 	//
 	// The total number of values must be less than, or equal to five.
+	//
+	// [HTTP header condition]: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#http-header-conditions
 	Values []string
 
 	noSmithyDocumentSerde
@@ -1346,7 +1373,7 @@ type TargetGroupAttribute struct {
 	//   number of targets that must be healthy. If the number of healthy targets is
 	//   below this value, mark the zone as unhealthy in DNS, so that traffic is routed
 	//   only to healthy zones. The possible values are off or an integer from 1 to the
-	//   maximum number of targets. The default is off .
+	//   maximum number of targets. The default is 1.
 	//
 	//   - target_group_health.dns_failover.minimum_healthy_targets.percentage - The
 	//   minimum percentage of targets that must be healthy. If the percentage of healthy
@@ -1430,7 +1457,8 @@ type TargetGroupAttribute struct {
 	//
 	//   - target_health_state.unhealthy.connection_termination.enabled - Indicates
 	//   whether the load balancer terminates connections to unhealthy targets. The value
-	//   is true or false . The default is true .
+	//   is true or false . The default is true . This attribute can't be enabled for
+	//   UDP and TCP_UDP target groups.
 	//
 	//   - target_health_state.unhealthy.draining_interval_seconds - The amount of time
 	//   for Elastic Load Balancing to wait before changing the state of an unhealthy
@@ -1465,7 +1493,8 @@ type TargetGroupAttribute struct {
 type TargetGroupStickinessConfig struct {
 
 	// The time period, in seconds, during which requests from a client should be
-	// routed to the same target group. The range is 1-604800 seconds (7 days).
+	// routed to the same target group. The range is 1-604800 seconds (7 days). You
+	// must specify this value when enabling target group stickiness.
 	DurationSeconds *int32
 
 	// Indicates whether target group stickiness is enabled.
@@ -1629,10 +1658,10 @@ type TrustStoreRevocation struct {
 	noSmithyDocumentSerde
 }
 
-// The capacity reservation status for each availability zone.
+// The capacity reservation status for each Availability Zone.
 type ZonalCapacityReservationState struct {
 
-	// Information about the availability zone.
+	// Information about the Availability Zone.
 	AvailabilityZone *string
 
 	// The number of effective capacity units.

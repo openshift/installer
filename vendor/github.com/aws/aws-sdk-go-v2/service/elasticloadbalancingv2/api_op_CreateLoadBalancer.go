@@ -74,6 +74,9 @@ type CreateLoadBalancerInput struct {
 	// (IPv4 addresses) and dualstack (IPv4 and IPv6 addresses).
 	IpAddressType types.IpAddressType
 
+	// [Application Load Balancers] The IPAM pools to use with the load balancer.
+	IpamPools *types.IpamPools
+
 	// The nodes of an Internet-facing load balancer have public IP addresses. The DNS
 	// name of an Internet-facing load balancer is publicly resolvable to the public IP
 	// addresses of the nodes. Therefore, Internet-facing load balancers can route
@@ -215,6 +218,9 @@ func (c *Client) addOperationCreateLoadBalancerMiddlewares(stack *middleware.Sta
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = addOpCreateLoadBalancerValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -234,6 +240,36 @@ func (c *Client) addOperationCreateLoadBalancerMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {
