@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/thoas/go-funk"
 	k8sjson "sigs.k8s.io/json"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -156,10 +157,9 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 		},
 	}
 
-	// validation for the length of the MachineNetwork is performed in the InstallConfig
-	if len(installConfig.Config.Networking.MachineNetwork) > 0 {
-		cc.Config.MachineNetwork = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
-	}
+	funk.ForEach(installConfig.Config.Networking.MachineNetwork, func(machineNetwork *types.MachineNetworkEntry) {
+		cc.Config.MachineNetworks = append(cc.Config.MachineNetworks, machineNetwork.CIDR.String())
+	})
 
 	clusterConfigurationData, err := json.Marshal(cc.Config)
 	if err != nil {

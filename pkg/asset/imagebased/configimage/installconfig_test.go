@@ -104,7 +104,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: [controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found, ControlPlane.Replicas: Required value: Only Single Node OpenShift (SNO) is supported, total number of ControlPlane.Replicas must be 1. Found 2]",
 		},
 		{
-			name: "invalid number of MachineNetworks",
+			name: "valid dual-stack configuration with two IPv4 machine networks",
 			data: `
 apiVersion: v1
 metadata:
@@ -131,8 +131,193 @@ platform:
   none : {}
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				BaseDomain: "test-domain",
+				Networking: &types.Networking{
+					NetworkType: "OVNKubernetes",
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+						{CIDR: *ipnet.MustParseCIDR("10.10.0.0/24")},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       ptr.To[int64](1),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       ptr.To[int64](0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform:   types.Platform{None: &none.Platform{}},
+				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+			},
+		},
+		{
+			name: "valid dual-stack configuration with IPv4 and IPv6 machine networks",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 10.0.0.0/24
+  - cidr: 2001:db8::/64
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+platform:
+  none : {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				BaseDomain: "test-domain",
+				Networking: &types.Networking{
+					NetworkType: "OVNKubernetes",
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
+						{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       ptr.To[int64](1),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       ptr.To[int64](0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform:   types.Platform{None: &none.Platform{}},
+				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+			},
+		},
+		{
+			name: "valid single-stack IPv6 configuration",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 2001:db8::/64
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+platform:
+  none : {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				BaseDomain: "test-domain",
+				Networking: &types.Networking{
+					NetworkType: "OVNKubernetes",
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("2001:db8::/64")},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       ptr.To[int64](1),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       ptr.To[int64](0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform:   types.Platform{None: &none.Platform{}},
+				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+			},
+		},
+		{
+			name: "invalid configuration with 3 machine networks",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 10.0.0.0/24
+  - cidr: 2001:db8::/64
+  - cidr: 192.168.1.0/24
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+platform:
+  none : {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Networking.MachineNetwork: Too many: 2: must have at most 1 items",
+			expectedError: "invalid install-config configuration: Networking.MachineNetwork: Too many: 3: must have at most 2 items",
 		},
 		{
 			name: "valid configuration for none platform for sno",
