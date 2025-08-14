@@ -67,7 +67,7 @@ func (*DNS) Dependencies() []asset.Asset {
 }
 
 // Generate generates the DNS config and its CRD.
-func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
+func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { //nolint:gocyclo
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	dependencies.Get(installConfig, clusterID)
@@ -88,6 +88,13 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
+		// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
+		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
+		if installConfig.Config.AWS.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
+			config.Spec.PublicZone = nil
+			config.Spec.PrivateZone = nil
+			break
+		}
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 			sess, err := installConfig.AWS.Session(ctx)
 			if err != nil {
@@ -144,8 +151,8 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 		// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
 		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
 		if installConfig.Config.GCP.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
-			config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
-			config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
+			config.Spec.PublicZone = nil
+			config.Spec.PrivateZone = nil
 			break
 		}
 		client, err := icgcp.NewClient(context.Background(), installConfig.Config.GCP.ServiceEndpoints)
