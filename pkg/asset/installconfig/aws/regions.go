@@ -11,18 +11,24 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-const (
-	isoPartition  = "aws-iso"
-	isobPartition = "aws-iso-b"
-)
-
 // knownPublicRegions is the subset of public AWS regions where RHEL CoreOS images are published.
 // This subset does not include supported regions which are found in other partitions, such as us-gov-east-1.
 // Returns: a list of region names.
 func knownPublicRegions(architecture types.Architecture) ([]string, error) {
 	required := rhcos.AMIRegions(architecture)
+	ctx := context.Background()
 
-	regions, err := GetRegions(context.Background())
+	client, err := NewEC2Client(ctx, EndpointOptions{
+		// Pass the default region (used for survey purposes)
+		// Without a region, the API call will fail immediately.
+		// At this point, custom endpoints are unknown (i.e. not configured yet).
+		Region: "us-east-1",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create EC2 client: %w", err)
+	}
+
+	regions, err := GetRegions(ctx, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get aws regions: %w", err)
 	}
@@ -47,6 +53,7 @@ func IsKnownPublicRegion(region string, architecture types.Architecture) (bool, 
 }
 
 // IsSecretRegion determines if the region is part of a secret partition.
+// Note: This uses the v1 EndpointResolver, which exposes the partition ID.
 func IsSecretRegion(region string) (bool, error) {
 	endpoint, err := ec2.NewDefaultEndpointResolver().ResolveEndpoint(region, ec2.EndpointResolverOptions{})
 	if err != nil {
@@ -54,7 +61,7 @@ func IsSecretRegion(region string) (bool, error) {
 	}
 
 	switch endpoint.PartitionID {
-	case isoPartition, isobPartition:
+	case AwsIsoPartitionID, AwsIsoBPartitionID:
 		return true, nil
 	}
 
