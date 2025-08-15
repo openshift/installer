@@ -598,14 +598,20 @@ func (c *Client) getKeyManagementClient(ctx context.Context) (*kms.KeyManagement
 
 // GetKeyRing returns the key ring associated with the key name (if found).
 func (c *Client) GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference) (*kmspb.KeyRing, error) {
+	if kmsKeyRef == nil {
+		return nil, fmt.Errorf("kms key reference cannot be empty")
+	}
+
 	kmsClient, err := c.getKeyManagementClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("key ring client creation failed: %w", err)
 	}
 
-	keyRingName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s", kmsKeyRef.ProjectID, kmsKeyRef.Location, kmsKeyRef.KeyRing)
+	projectID := kmsKeyRef.ProjectID
+	location := kmsKeyRef.Location
+	keyRingName := fmt.Sprintf("projects/%s/locations/%s/keyRings/%s", projectID, location, kmsKeyRef.KeyRing)
 	listReq := &kmspb.ListKeyRingsRequest{
-		Parent: fmt.Sprintf("projects/%s/locations/%s", kmsKeyRef.ProjectID, kmsKeyRef.Location),
+		Parent: fmt.Sprintf("projects/%s/locations/%s", projectID, location),
 	}
 
 	// OCPBUGS-52203:  GetKeyRingRequest{Name: keyRingName} should work but the resource name (above) is not found.

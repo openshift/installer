@@ -99,21 +99,11 @@ func (csi *ClusterCSIDriverConfig) Generate(_ context.Context, dependencies asse
 		}
 		kmsKey := platform.OSDisk.EncryptionKey.KMSKey
 
-		projectID := kmsKey.ProjectID
-		if projectID == "" {
-			projectID = installConfig.Config.GCP.ProjectID
-		}
-
-		location := kmsKey.Location
-		if location == "" {
-			location = installConfig.Config.GCP.Region
-		}
-
 		configData, err := gcp.ClusterCSIDriverConfig{
 			Name:      kmsKey.Name,
 			KeyRing:   kmsKey.KeyRing,
-			ProjectID: projectID,
-			Location:  location,
+			ProjectID: kmsKey.ProjectID,
+			Location:  kmsKey.Location,
 		}.YAML()
 		if err != nil {
 			return errors.Wrap(err, "could not create CSI cluster driver config")
