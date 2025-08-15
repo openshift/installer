@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -86,19 +85,13 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		return nil, err
 	}
 
-	cfg, err := configv2.LoadDefaultConfig(context.TODO(), configv2.WithRegion(region))
-	if err != nil {
-		return nil, fmt.Errorf("failed loading default config: %w", err)
-	}
-	ec2Client := ec2v2.NewFromConfig(cfg, func(options *ec2v2.Options) {
-		options.Region = region
-
-		for _, endpoint := range metadata.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "ec2") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
+	ec2Client, err := awssession.NewEC2Client(context.TODO(), awssession.EndpointOptions{
+		Region:    region,
+		Endpoints: metadata.AWS.ServiceEndpoints,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create EC2 client: %w", err)
+	}
 
 	return &ClusterUninstaller{
 		Filters:        filters,

@@ -3,12 +3,11 @@ package aws
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
 
@@ -23,20 +22,13 @@ type InstanceTypeInfo struct {
 func InstanceTypes(ctx context.Context, region string, serviceEndpoints []typesaws.ServiceEndpoint) (map[string]InstanceTypeInfo, error) {
 	ret := map[string]InstanceTypeInfo{}
 
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	client, err := awsconfig.NewEC2Client(ctx, awsconfig.EndpointOptions{
+		Region:    region,
+		Endpoints: serviceEndpoints,
+	})
 	if err != nil {
-		return ret, fmt.Errorf("failed to create AWS config: %w", err)
+		return ret, fmt.Errorf("failed to create EC2 client: %w", err)
 	}
-
-	client := ec2.NewFromConfig(cfg,
-		func(o *ec2.Options) {
-			for _, endpoint := range serviceEndpoints {
-				if strings.EqualFold(endpoint.Name, ec2.ServiceID) {
-					o.BaseEndpoint = aws.String(endpoint.URL)
-				}
-			}
-		},
-	)
 
 	paginator := ec2.NewDescribeInstanceTypesPaginator(client, &ec2.DescribeInstanceTypesInput{})
 	for paginator.HasMorePages() {

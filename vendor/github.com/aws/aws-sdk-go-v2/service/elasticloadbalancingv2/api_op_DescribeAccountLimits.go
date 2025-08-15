@@ -131,6 +131,9 @@ func (c *Client) addOperationDescribeAccountLimitsMiddlewares(stack *middleware.
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeAccountLimits(options.Region), middleware.Before); err != nil {
 		return err
 	}
@@ -149,6 +152,36 @@ func (c *Client) addOperationDescribeAccountLimitsMiddlewares(stack *middleware.
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
 	if err = addSpanInitializeStart(stack); err != nil {
 		return err
 	}
@@ -163,6 +196,88 @@ func (c *Client) addOperationDescribeAccountLimitsMiddlewares(stack *middleware.
 	}
 	return nil
 }
+
+// DescribeAccountLimitsPaginatorOptions is the paginator options for
+// DescribeAccountLimits
+type DescribeAccountLimitsPaginatorOptions struct {
+	// Set to true if pagination should stop if the service returns a pagination token
+	// that matches the most recent token provided to the service.
+	StopOnDuplicateToken bool
+}
+
+// DescribeAccountLimitsPaginator is a paginator for DescribeAccountLimits
+type DescribeAccountLimitsPaginator struct {
+	options   DescribeAccountLimitsPaginatorOptions
+	client    DescribeAccountLimitsAPIClient
+	params    *DescribeAccountLimitsInput
+	nextToken *string
+	firstPage bool
+}
+
+// NewDescribeAccountLimitsPaginator returns a new DescribeAccountLimitsPaginator
+func NewDescribeAccountLimitsPaginator(client DescribeAccountLimitsAPIClient, params *DescribeAccountLimitsInput, optFns ...func(*DescribeAccountLimitsPaginatorOptions)) *DescribeAccountLimitsPaginator {
+	if params == nil {
+		params = &DescribeAccountLimitsInput{}
+	}
+
+	options := DescribeAccountLimitsPaginatorOptions{}
+
+	for _, fn := range optFns {
+		fn(&options)
+	}
+
+	return &DescribeAccountLimitsPaginator{
+		options:   options,
+		client:    client,
+		params:    params,
+		firstPage: true,
+		nextToken: params.Marker,
+	}
+}
+
+// HasMorePages returns a boolean indicating whether more pages are available
+func (p *DescribeAccountLimitsPaginator) HasMorePages() bool {
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
+}
+
+// NextPage retrieves the next DescribeAccountLimits page.
+func (p *DescribeAccountLimitsPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeAccountLimitsOutput, error) {
+	if !p.HasMorePages() {
+		return nil, fmt.Errorf("no more pages available")
+	}
+
+	params := *p.params
+	params.Marker = p.nextToken
+
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
+	result, err := p.client.DescribeAccountLimits(ctx, &params, optFns...)
+	if err != nil {
+		return nil, err
+	}
+	p.firstPage = false
+
+	prevToken := p.nextToken
+	p.nextToken = result.NextMarker
+
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
+		p.nextToken = nil
+	}
+
+	return result, nil
+}
+
+// DescribeAccountLimitsAPIClient is a client that implements the
+// DescribeAccountLimits operation.
+type DescribeAccountLimitsAPIClient interface {
+	DescribeAccountLimits(context.Context, *DescribeAccountLimitsInput, ...func(*Options)) (*DescribeAccountLimitsOutput, error)
+}
+
+var _ DescribeAccountLimitsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeAccountLimits(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -5,45 +5,22 @@ import (
 	"fmt"
 	"time"
 
-	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
-	cfgv2 "github.com/aws/aws-sdk-go-v2/config"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
-func setUserCredsInConfig(ctx context.Context) (awsv2.Config, error) {
-	if err := getUserCredentials(); err != nil {
-		return awsv2.Config{}, err
-	}
-	cfg, err := cfgv2.LoadDefaultConfig(ctx, cfgv2.WithRegion("us-east-1"))
-	if err != nil {
-		return awsv2.Config{}, fmt.Errorf("failed to create AWS config: %w", err)
-	}
-	return cfg, nil
-}
-
 // GetRegions get all regions that are accessible.
 func GetRegions(ctx context.Context) ([]string, error) {
-	// Create a basic/default config. The function is currently called during the survey.
-	// Pass the default region (used for survey purposes) as the region here. Without a region
-	// the DescribeRegions call will fail immediately.
-	cfg, err := cfgv2.LoadDefaultConfig(ctx, cfgv2.WithRegion("us-east-1"))
+	client, err := NewEC2Client(ctx, EndpointOptions{
+		// Pass the default region (used for survey purposes) as the region here. Without a region
+		// the DescribeRegions call will fail immediately.
+		Region: "us-east-1",
+	})
 	if err != nil {
-		cfg, err = setUserCredsInConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf("failed to create EC2 client: %w", err)
 	}
-
-	if _, err = cfg.Credentials.Retrieve(ctx); err != nil {
-		cfg, err = setUserCredsInConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-	client := ec2v2.NewFromConfig(cfg)
 
 	output, err := client.DescribeRegions(ctx, &ec2v2.DescribeRegionsInput{AllRegions: aws.Bool(true)})
 	if err != nil {

@@ -7,12 +7,9 @@ import (
 	"sync"
 
 	"github.com/IBM/ibm-cos-sdk-go/aws"
-	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/sirupsen/logrus"
 
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
@@ -22,7 +19,6 @@ import (
 // from external APIs).
 type Metadata struct {
 	session           *session.Session
-	config            *awsv2.Config
 	availabilityZones []string
 	availableRegions  []string
 	edgeZones         []string
@@ -66,38 +62,18 @@ func (m *Metadata) unlockedSession(ctx context.Context) (*session.Session, error
 	return m.session, nil
 }
 
-func (m *Metadata) unlockedConfig(ctx context.Context) (*awsv2.Config, error) {
-	if m.config == nil {
-		cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(m.Region))
-		if err != nil {
-			return nil, fmt.Errorf("creating AWS configuration: %w", err)
-		}
-		m.config = &cfg
-	}
-	return m.config, nil
-}
-
 // EC2Client initiates a new EC2 client when one does not already exist, otherwise the existing client
 // is returned.
 func (m *Metadata) EC2Client(ctx context.Context) (*ec2.Client, error) {
 	if m.ec2Client == nil {
-		cfg, err := m.unlockedConfig(ctx)
+		ec2Client, err := NewEC2Client(ctx, EndpointOptions{
+			Region:    m.Region,
+			Endpoints: m.Services,
+		})
 		if err != nil {
-			return nil, fmt.Errorf("metadata failed to create config: %w", err)
+			return nil, fmt.Errorf("failed to create EC2 client: %w", err)
 		}
-
-		optFns := []func(*ec2.Options){}
-		for _, service := range m.Services {
-			if service.Name == "ec2" {
-				optFns = append(optFns, func(o *ec2.Options) {
-					o.BaseEndpoint = awssdk.String(service.URL)
-				})
-				logrus.Warnf("setting ec2 endpoint URL to %s", service.URL)
-				break
-			}
-		}
-
-		m.ec2Client = ec2.NewFromConfig(*cfg, optFns...)
+		m.ec2Client = ec2Client
 	}
 	return m.ec2Client, nil
 }
