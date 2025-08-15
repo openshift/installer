@@ -7,8 +7,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/servicequotas"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
@@ -19,7 +22,11 @@ func NewEC2Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...f
 	if err != nil {
 		return nil, err
 	}
+	return NewEC2ClientFromConfig(ctx, cfg, endpointOpts, optFns...)
+}
 
+// NewEC2ClientFromConfig creates a new EC2 API client from an existing AWS Config.
+func NewEC2ClientFromConfig(ctx context.Context, cfg aws.Config, endpointOpts EndpointOptions, optFns ...func(*ec2.Options)) (*ec2.Client, error) {
 	ec2Opts := []func(*ec2.Options){
 		func(o *ec2.Options) {
 			o.EndpointResolverV2 = &EC2EndpointResolver{
@@ -52,6 +59,7 @@ func NewIAMClient(ctx context.Context, endpointOpts EndpointOptions, optFns ...f
 }
 
 // NewRoute53Client creates a new Route 53 API client.
+// Note: To configure the client to assume an IAM role, define a non-empty roleArn.
 func NewRoute53Client(ctx context.Context, endpointOpts EndpointOptions, roleArn string, optFns ...func(*route53.Options)) (*route53.Client, error) {
 	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
 	if err != nil {
@@ -115,4 +123,71 @@ func NewServiceQuotasClient(ctx context.Context, endpointOpts EndpointOptions, o
 	sqOpts = append(sqOpts, optFns...)
 
 	return servicequotas.NewFromConfig(cfg, sqOpts...), nil
+}
+
+// NewS3Client creates a new S3 API client.
+func NewS3Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*s3.Options)) (*s3.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	s3Opts := []func(*s3.Options){
+		func(o *s3.Options) {
+			o.EndpointResolverV2 = &S3EndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	s3Opts = append(s3Opts, optFns...)
+
+	return s3.NewFromConfig(cfg, s3Opts...), nil
+}
+
+// NewELBV2Client creates a new ELBV2 client.
+func NewELBV2Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*elbv2.Options)) (*elbv2.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	elbv2Opts := []func(*elbv2.Options){
+		func(o *elbv2.Options) {
+			o.EndpointResolverV2 = &ELBV2EndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	elbv2Opts = append(elbv2Opts, optFns...)
+
+	return elbv2.NewFromConfig(cfg, elbv2Opts...), nil
+}
+
+// NewTaggingClient creates a new Resource Groups Tagging API client.
+// Note: To configure the client to assume an IAM role, define a non-empty roleArn.
+func NewTaggingClient(ctx context.Context, endpointOpts EndpointOptions, roleArn string, optFns ...func(*resourcegroupstaggingapi.Options)) (*resourcegroupstaggingapi.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(roleArn) > 0 {
+		stsClient, err := NewSTSClient(ctx, endpointOpts)
+		if err != nil {
+			return nil, err
+		}
+		creds := stscreds.NewAssumeRoleProvider(stsClient, roleArn)
+		cfg.Credentials = aws.NewCredentialsCache(creds)
+	}
+
+	rgtapiOpts := []func(*resourcegroupstaggingapi.Options){
+		func(o *resourcegroupstaggingapi.Options) {
+			o.EndpointResolverV2 = &TaggingEndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	rgtapiOpts = append(rgtapiOpts, optFns...)
+
+	return resourcegroupstaggingapi.NewFromConfig(cfg, rgtapiOpts...), nil
 }

@@ -51,7 +51,7 @@ func (a *PlatformCredsCheck) Generate(ctx context.Context, dependencies asset.Pa
 	platform := ic.Config.Platform.Name()
 	switch platform {
 	case aws.Name:
-		_, err := ic.AWS.Session(ctx)
+		_, err := ic.AWS.AWSConfig(ctx)
 		if err != nil {
 			return err
 		}

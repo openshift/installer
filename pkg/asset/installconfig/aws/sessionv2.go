@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	survey "github.com/AlecAivazis/survey/v2"
@@ -31,6 +32,12 @@ const (
 
 	// RetryMaxAttempts is the total number of times an API request is retried.
 	RetryMaxAttempts = 25
+
+	// SharedCredsProviderName defines the source name of AWS credentials
+	// from a shared credential file.
+	// Note: The SDK does not expose any constants for this string so
+	// we define one here as a replacement.
+	SharedCredsProviderName = "SharedConfigCredentials" //nolint:gosec
 )
 
 var (
@@ -112,7 +119,14 @@ func getCredentialsV2(ctx context.Context, options ConfigOptions) (aws.Credentia
 // static credentials safe for installer to transfer to cluster for use as-is.
 // TODO: Remove suffix V2 when completing migration aws sdk v2 (i.e. removing session.go).
 func IsStaticCredentialsV2(creds aws.Credentials) bool {
-	if creds.Source == credentials.StaticCredentialsName {
+	switch creds.Source {
+	case credentials.StaticCredentialsName, SharedCredsProviderName, config.CredentialsSourceName:
+		return creds.SessionToken == ""
+	}
+
+	// The AWS SDK appends the shared credential file name
+	// if AWS_SHARED_CREDENTIALS_FILE is set.
+	if strings.HasPrefix(creds.Source, SharedCredsProviderName) {
 		return creds.SessionToken == ""
 	}
 	return false

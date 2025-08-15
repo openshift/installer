@@ -3,16 +3,15 @@ package clusterapi
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/sirupsen/logrus"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -51,19 +50,14 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 		},
 	}
 
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(in.InstallConfig.Config.AWS.Region))
-	if err != nil {
-		return nil, fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	client := ec2.NewFromConfig(cfg, func(options *ec2.Options) {
-		options.Region = in.InstallConfig.Config.AWS.Region
-		for _, endpoint := range in.InstallConfig.Config.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "ec2") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
+	platformAWS := in.InstallConfig.Config.AWS
+	client, err := awsconfig.NewEC2Client(ctx, awsconfig.EndpointOptions{
+		Region:    platformAWS.Region,
+		Endpoints: platformAWS.ServiceEndpoints,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ec2 client: %w", err)
+	}
 
 	nicOutput, err := client.DescribeNetworkInterfaces(ctx, &nicInput)
 	if err != nil {

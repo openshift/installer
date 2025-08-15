@@ -97,11 +97,15 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { 
 			break
 		}
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-			sess, err := installConfig.AWS.Session(ctx)
+			client, err := icaws.NewRoute53Client(ctx, icaws.EndpointOptions{
+				Region:    installConfig.Config.AWS.Region,
+				Endpoints: installConfig.Config.AWS.ServiceEndpoints,
+			}, "")
 			if err != nil {
-				return errors.Wrap(err, "failed to initialize session")
+				return fmt.Errorf("failed to create route 53 client: %w", err)
 			}
-			zone, err := icaws.GetPublicZone(sess, installConfig.Config.BaseDomain)
+
+			zone, err := icaws.GetPublicZone(ctx, client, installConfig.Config.BaseDomain)
 			if err != nil {
 				return errors.Wrapf(err, "getting public zone for %q", installConfig.Config.BaseDomain)
 			}

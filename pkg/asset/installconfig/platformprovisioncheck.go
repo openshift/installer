@@ -64,12 +64,15 @@ func (a *PlatformProvisionCheck) Generate(ctx context.Context, dependencies asse
 
 	switch platform {
 	case aws.Name:
-		session, err := ic.AWS.Session(ctx)
+		platformAWS := ic.Config.AWS
+		client, err := awsconfig.NewClient(ctx, awsconfig.EndpointOptions{
+			Region:    platformAWS.Region,
+			Endpoints: platformAWS.ServiceEndpoints,
+		}, platformAWS.HostedZoneRole)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create route 53 client: %w", err)
 		}
-		client := awsconfig.NewClient(session)
-		return awsconfig.ValidateForProvisioning(client, ic.Config, ic.AWS)
+		return awsconfig.ValidateForProvisioning(ctx, client, ic.Config, ic.AWS)
 	case azure.Name:
 		dnsConfig, err := ic.Azure.DNSConfig()
 		if err != nil {
