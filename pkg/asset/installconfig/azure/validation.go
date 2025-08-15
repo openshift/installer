@@ -71,6 +71,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	}
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 	allErrs = append(allErrs, validateBootDiagnostics(client, ic)...)
+	// allErrs = append(allErrs, validateCustomSubnetsAndNatGateways(client, ic.Azure)...)
 	return allErrs.ToAggregate()
 }
 
@@ -995,3 +996,34 @@ func checkBootDiagnosticsURI(client API, diag *aztypes.BootDiagnostics, region s
 	}
 	return nil
 }
+
+// func validateCustomSubnetsAndNatGateways(client API, p *aztypes.Platform, fldPath *field.Path) field.ErrorList {
+// 	var allErrs field.ErrorList
+// 	ctx := context.TODO()
+// 	for index, subnet := range p.Subnets {
+// 		subnetPrefixes := subnet.SubnetCIDR
+// 		if len(subnet.SubnetCIDR) == 0 {
+// 			sub, err := client.GetControlPlaneSubnet(ctx, p.ResourceGroupName, p.VirtualNetwork, subnet.Name)
+// 			if err != nil {
+// 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fmt.Sprintf("subnets[%d]", index)), subnet.Name, "unable to find subnet"))
+// 				continue
+// 			}
+// 			subnetPrefixes = to.StringSlice(sub.AddressPrefixes)
+// 		}
+// 		vnet, err := client.GetVirtualNetwork(ctx, p.ResourceGroupName, p.VirtualNetwork)
+// 		if err != nil {
+// 			continue
+// 		} else {
+// 			// check if the vnet has the subnets.
+// 			vnetSubnets := vnet.Subnets
+// 			for _, subnetcidr := range subnetPrefixes {
+// 				_, subnetRange, err := net.ParseCIDR(subnetcidr)
+// 				if err != nil {
+// 					allErrs = append(allErrs, field.Invalid(fldPath.Child(fmt.Sprintf("subnets[%d]", index)), subnetRange, "unable to translate subnet cidr"))
+// 					continue
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return allErrs
+// }
