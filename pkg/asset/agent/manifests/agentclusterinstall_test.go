@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	operv1 "github.com/openshift/api/operator/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -79,7 +80,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 
 	goodNetworkOverrideACI := getGoodACI()
 	goodNetworkOverrideACI.SetAnnotations(map[string]string{
-		installConfigOverrides: `{"networking":{"networkType":"CustomNetworkType","machineNetwork":[{"cidr":"10.10.11.0/24"}],"clusterNetwork":[{"cidr":"192.168.111.0/24","hostPrefix":23}],"serviceNetwork":["172.30.0.0/16"]}}`,
+		installConfigOverrides: `{"networking":{"networkType":"CustomNetworkType","machineNetwork":[{"cidr":"10.10.11.0/24"}],"clusterNetwork":[{"cidr":"192.168.96.0/20","hostPrefix":23}],"serviceNetwork":["172.30.0.0/16"]}}`,
 	})
 
 	installConfigWithCPUPartitioning := getValidOptionalInstallConfig()
@@ -813,7 +814,7 @@ spec:
     clusterNetwork:
     - cidr: 10.128.0.0/14
       hostPrefix: 23
-    - cidr: 2001:db8:1111:2222::/64
+    - cidr: 2001:db8:1111::/48
       hostPrefix: 64
     serviceNetwork:
     - 172.30.0.0/16
@@ -853,7 +854,7 @@ spec:
 								HostPrefix: 23,
 							},
 							{
-								CIDR:       "2001:db8:1111:2222::/64",
+								CIDR:       "2001:db8:1111::/48",
 								HostPrefix: 64,
 							},
 						},
@@ -1035,4 +1036,143 @@ spec:
 		})
 	}
 
+}
+
+func TestAgentClusterInstall_validateClusterNetwork(t *testing.T) {
+	cases := []struct {
+		name           string
+		clusterNetwork hiveext.ClusterNetworkEntry
+		controlPlane   int
+		workers        int
+		expectFailure  bool
+	}{
+		{
+			name: "SNO host prefix matches network",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/25",
+				HostPrefix: 25,
+			},
+			controlPlane:  1,
+			workers:       0,
+			expectFailure: false,
+		},
+		{
+			name: "compact",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/22",
+				HostPrefix: 24,
+			},
+			controlPlane:  3,
+			workers:       0,
+			expectFailure: false,
+		},
+		{
+			name: "ha",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/21",
+				HostPrefix: 24,
+			},
+			controlPlane:  3,
+			workers:       2,
+			expectFailure: false,
+		},
+		{
+			name: "ha 8 nodes",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/21",
+				HostPrefix: 24,
+			},
+			controlPlane:  3,
+			workers:       5,
+			expectFailure: false,
+		},
+		{
+			name: "sno ipv6",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "fd01::/64",
+				HostPrefix: 64,
+			},
+			controlPlane:  1,
+			workers:       0,
+			expectFailure: false,
+		},
+		{
+			name: "ha ipv6",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "fd01::/48",
+				HostPrefix: 64,
+			},
+			controlPlane:  3,
+			workers:       8,
+			expectFailure: false,
+		},
+		{
+			name: "SNO host prefix smaller than network",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/24",
+				HostPrefix: 23,
+			},
+			controlPlane:  1,
+			workers:       0,
+			expectFailure: true,
+		},
+		{
+			name: "compact too many hosts",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/23",
+				HostPrefix: 24,
+			},
+			controlPlane:  3,
+			workers:       0,
+			expectFailure: true,
+		},
+		{
+			name: "ha too many hosts",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/22",
+				HostPrefix: 24,
+			},
+			controlPlane:  3,
+			workers:       2,
+			expectFailure: true,
+		},
+		{
+			name: "host prefix too large",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/20",
+				HostPrefix: 26,
+			},
+			controlPlane:  3,
+			workers:       0,
+			expectFailure: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			aci := &AgentClusterInstall{
+				Config: &hiveext.AgentClusterInstall{
+					Spec: hiveext.AgentClusterInstallSpec{
+						Networking: hiveext.Networking{
+							NetworkType: string(operv1.NetworkTypeOVNKubernetes),
+							ClusterNetwork: []hiveext.ClusterNetworkEntry{
+								tc.clusterNetwork,
+							},
+						},
+						ProvisionRequirements: hiveext.ProvisionRequirements{
+							ControlPlaneAgents: tc.controlPlane,
+							WorkerAgents:       tc.workers,
+						},
+					},
+				},
+			}
+
+			errs := aci.validateIPAddressAndNetworkType().ToAggregate()
+			if tc.expectFailure {
+				assert.Error(t, errs)
+			} else {
+				assert.NoError(t, errs)
+			}
+		})
+	}
 }
