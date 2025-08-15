@@ -89,20 +89,20 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
 	case awstypes.Name:
-		ssn, err := installConfig.AWS.Session(ctx)
+		awsConfig, err := installConfig.AWS.AWSConfig(ctx)
 		if err != nil {
 			return err
 		}
-		creds, err := ssn.Config.Credentials.Get()
+		creds, err := awsConfig.Credentials.Retrieve(ctx)
 		if err != nil {
 			return err
 		}
-		if !installconfigaws.IsStaticCredentials(creds) {
+		if !installconfigaws.IsStaticCredentialsV2(creds) {
 			switch {
 			case installConfig.Config.CredentialsMode == "":
-				return errors.Errorf("AWS credentials provided by %s are not valid for default credentials mode", creds.ProviderName)
+				return errors.Errorf("AWS credentials provided by %s are not valid for default credentials mode", creds.Source)
 			case installConfig.Config.CredentialsMode != types.ManualCredentialsMode:
-				return errors.Errorf("AWS credentials provided by %s are not valid for %s credentials mode", creds.ProviderName, installConfig.Config.CredentialsMode)
+				return errors.Errorf("AWS credentials provided by %s are not valid for %s credentials mode", creds.Source, installConfig.Config.CredentialsMode)
 			}
 		}
 		cloudCreds = cloudCredsSecretData{

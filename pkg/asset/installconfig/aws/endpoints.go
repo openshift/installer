@@ -29,18 +29,73 @@ const (
 	AwsIsoBPartitionID  = "aws-iso-b"  // AWS ISOB (US) partition.
 )
 
+// AWS Standard partition's regions.
+const (
+	AfSouth1RegionID     = "af-south-1"     // Africa (Cape Town).
+	ApEast1RegionID      = "ap-east-1"      // Asia Pacific (Hong Kong).
+	ApNortheast1RegionID = "ap-northeast-1" // Asia Pacific (Tokyo).
+	ApNortheast2RegionID = "ap-northeast-2" // Asia Pacific (Seoul).
+	ApNortheast3RegionID = "ap-northeast-3" // Asia Pacific (Osaka).
+	ApSouth1RegionID     = "ap-south-1"     // Asia Pacific (Mumbai).
+	ApSouth2RegionID     = "ap-south-2"     // Asia Pacific (Hyderabad).
+	ApSoutheast1RegionID = "ap-southeast-1" // Asia Pacific (Singapore).
+	ApSoutheast2RegionID = "ap-southeast-2" // Asia Pacific (Sydney).
+	ApSoutheast3RegionID = "ap-southeast-3" // Asia Pacific (Jakarta).
+	ApSoutheast4RegionID = "ap-southeast-4" // Asia Pacific (Melbourne).
+	CaCentral1RegionID   = "ca-central-1"   // Canada (Central).
+	CaWest1RegionID      = "ca-west-1"      // Canada West (Calgary).
+	EuCentral1RegionID   = "eu-central-1"   // Europe (Frankfurt).
+	EuCentral2RegionID   = "eu-central-2"   // Europe (Zurich).
+	EuNorth1RegionID     = "eu-north-1"     // Europe (Stockholm).
+	EuSouth1RegionID     = "eu-south-1"     // Europe (Milan).
+	EuSouth2RegionID     = "eu-south-2"     // Europe (Spain).
+	EuWest1RegionID      = "eu-west-1"      // Europe (Ireland).
+	EuWest2RegionID      = "eu-west-2"      // Europe (London).
+	EuWest3RegionID      = "eu-west-3"      // Europe (Paris).
+	IlCentral1RegionID   = "il-central-1"   // Israel (Tel Aviv).
+	MeCentral1RegionID   = "me-central-1"   // Middle East (UAE).
+	MeSouth1RegionID     = "me-south-1"     // Middle East (Bahrain).
+	SaEast1RegionID      = "sa-east-1"      // South America (Sao Paulo).
+	UsEast1RegionID      = "us-east-1"      // US East (N. Virginia).
+	UsEast2RegionID      = "us-east-2"      // US East (Ohio).
+	UsWest1RegionID      = "us-west-1"      // US West (N. California).
+	UsWest2RegionID      = "us-west-2"      // US West (Oregon).
+)
+
+// AWS China partition's regions.
+const (
+	CnNorth1RegionID     = "cn-north-1"     // China (Beijing).
+	CnNorthwest1RegionID = "cn-northwest-1" // China (Ningxia).
+)
+
+// AWS GovCloud (US) partition's regions.
+const (
+	UsGovEast1RegionID = "us-gov-east-1" // AWS GovCloud (US-East).
+	UsGovWest1RegionID = "us-gov-west-1" // AWS GovCloud (US-West).
+)
+
 var (
+	// IMPORTANT: In v1 sdk, a constant EndpointsID is exported in each service subpackage to
+	// look up custom service endpoints.
+	// In v2 SDK, these constants are no longer available.
+	// For backwards compatibility, we copy those constants from the SDK v1
+	// and map it to ServiceID in SDK v2.
 	// v1Tov2ServiceIDMap maps v1 service ID to its v2 equivalent.
 	v1Tov2ServiceIDMap = map[string]string{
-		"ec2":                      ec2.ServiceID,
-		"elasticloadbalancing":     elb.ServiceID,
-		"elasticloadbalancingv2":   elbv2.ServiceID,
-		"iam":                      iam.ServiceID,
-		"route53":                  route53.ServiceID,
-		"s3":                       s3.ServiceID,
-		"sts":                      sts.ServiceID,
-		"resourcegroupstaggingapi": resourcegroupstaggingapi.ServiceID,
-		"servicequotas":            servicequotas.ServiceID,
+		"ec2": ec2.ServiceID,
+
+		// In v1 SDK, elb and elbv2 uses the same identifier,
+		// thus the same endpoint. We define a simple -v2 equivalent
+		// for elbv2 to distinguish between two services.
+		"elasticloadbalancing":   elb.ServiceID,
+		"elasticloadbalancingv2": elbv2.ServiceID,
+
+		"iam":           iam.ServiceID,
+		"route53":       route53.ServiceID,
+		"s3":            s3.ServiceID,
+		"sts":           sts.ServiceID,
+		"tagging":       resourcegroupstaggingapi.ServiceID,
+		"servicequotas": servicequotas.ServiceID,
 	}
 )
 
@@ -198,6 +253,85 @@ func (s *ServiceQuotasEndpointResolver) ResolveEndpoint(ctx context.Context, par
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return servicequotas.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// S3EndpointResolver implements EndpointResolverV2 interface for S3.
+type S3EndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for S3.
+func (s *S3EndpointResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[s3.ServiceID]
+	if !ok {
+		s.logger.Debug("Custom S3 endpoint not found, using default endpoint")
+		return s3.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	s.logger.Debugf("Custom S3 endpoint found, using custom endpoint: %s", endpoint.URL)
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return s3.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// ELBV2EndpointResolver implements EndpointResolverV2 interface for ELBV2.
+type ELBV2EndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for ELBV2.
+func (s *ELBV2EndpointResolver) ResolveEndpoint(ctx context.Context, params elbv2.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	endpoint, ok := s.endpoints[elbv2.ServiceID]
+	if !ok {
+		// For backwards compatibility, we use the elb endpoint if
+		// no elbv2 endpoint is defined.
+		endpoint, ok = s.endpoints[elb.ServiceID]
+		// If custom endpoint not found, return default endpoint for the service.
+		if !ok {
+			s.logger.Debug("Custom ELBV2 endpoint not found, using default endpoint")
+			return elbv2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+		}
+
+		s.logger.Debugf("Using ELB endpoint for ELBV2: %s", endpoint.URL)
+		params.Endpoint = aws.String(endpoint.URL)
+		params.Region = aws.String(s.endpointOptions.Region)
+		return elbv2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	s.logger.Debugf("Custom ELBV2 endpoint found, using custom endpoint: %s", endpoint.URL)
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return elbv2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// TaggingEndpointResolver implements EndpointResolverV2 interface for Resource Groups Tagging API.
+type TaggingEndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for Resource Groups Tagging API.
+func (s *TaggingEndpointResolver) ResolveEndpoint(ctx context.Context, params resourcegroupstaggingapi.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[resourcegroupstaggingapi.ServiceID]
+	if !ok {
+		s.logger.Debug("Custom Resource Groups Tagging API endpoint not found, using default endpoint")
+		return resourcegroupstaggingapi.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	s.logger.Debugf("Custom Resource Groups Tagging API endpoint found, using custom endpoint: %s", endpoint.URL)
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return resourcegroupstaggingapi.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 }
 
 // GetDefaultServiceEndpoint will get the default service endpoint for a service and region.
