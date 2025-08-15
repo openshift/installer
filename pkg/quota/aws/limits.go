@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/servicequotas"
-	"github.com/pkg/errors"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/servicequotas"
+	sqtypes "github.com/aws/aws-sdk-go-v2/service/servicequotas/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
@@ -41,47 +41,51 @@ type record struct {
 	Value int64
 }
 
-func loadLimits(ctx context.Context, client *servicequotas.ServiceQuotas, services ...string) ([]record, error) {
+func loadLimits(ctx context.Context, client *servicequotas.Client, services ...string) ([]record, error) {
 	records := map[string]record{}
-	key := func(q *servicequotas.ServiceQuota) string {
-		return fmt.Sprintf("%s/%s", aws.StringValue(q.ServiceCode), aws.StringValue(q.QuotaCode))
+	key := func(q sqtypes.ServiceQuota) string {
+		return fmt.Sprintf("%s/%s", aws.ToString(q.ServiceCode), aws.ToString(q.QuotaCode))
 	}
 
 	for _, service := range services {
-		if err := client.ListAWSDefaultServiceQuotasPagesWithContext(ctx,
-			&servicequotas.ListAWSDefaultServiceQuotasInput{ServiceCode: aws.String(service)},
-			func(page *servicequotas.ListAWSDefaultServiceQuotasOutput, lastPage bool) bool {
-				for _, sq := range page.Quotas {
-					records[key(sq)] = record{
-						Service: service,
-						Name:    aws.StringValue(sq.QuotaCode),
-						global:  aws.BoolValue(sq.GlobalQuota),
-						Value:   int64(aws.Float64Value(sq.Value)),
-					}
-				}
-				return !lastPage
-			}); err != nil {
-			return nil, errors.Wrapf(err, "failed to list default serviceqquotas for %s", service)
+		defaultSQInput := &servicequotas.ListAWSDefaultServiceQuotasInput{ServiceCode: aws.String(service)}
+		defaultSQPaginator := servicequotas.NewListAWSDefaultServiceQuotasPaginator(client, defaultSQInput)
 
+		for defaultSQPaginator.HasMorePages() {
+			page, err := defaultSQPaginator.NextPage(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list default service quotas for %s: %w", service, err)
+			}
+
+			for _, sq := range page.Quotas {
+				records[key(sq)] = record{
+					Service: service,
+					Name:    aws.ToString(sq.QuotaCode),
+					global:  sq.GlobalQuota,
+					Value:   int64(aws.ToFloat64(sq.Value)),
+				}
+			}
 		}
 
-		if err := client.ListServiceQuotasPagesWithContext(ctx,
-			&servicequotas.ListServiceQuotasInput{ServiceCode: aws.String(service)},
-			func(page *servicequotas.ListServiceQuotasOutput, lastPage bool) bool {
-				for _, sq := range page.Quotas {
-					records[key(sq)] = record{
-						Service: service,
-						Name:    aws.StringValue(sq.QuotaCode),
-						global:  aws.BoolValue(sq.GlobalQuota),
-						Value:   int64(aws.Float64Value(sq.Value)),
-					}
-				}
-				return !lastPage
-			}); err != nil {
-			return nil, errors.Wrapf(err, "failed to list serviceqquotas for %s", service)
-		}
+		sqInput := &servicequotas.ListServiceQuotasInput{ServiceCode: aws.String(service)}
+		sqPaginator := servicequotas.NewListServiceQuotasPaginator(client, sqInput)
+		for sqPaginator.HasMorePages() {
+			page, err := sqPaginator.NextPage(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list service quotas for %s: %w", service, err)
+			}
 
+			for _, sq := range page.Quotas {
+				records[key(sq)] = record{
+					Service: service,
+					Name:    aws.ToString(sq.QuotaCode),
+					global:  sq.GlobalQuota,
+					Value:   int64(aws.ToFloat64(sq.Value)),
+				}
+			}
+		}
 	}
+
 	var ret []record
 	for _, r := range records {
 		ret = append(ret, r)

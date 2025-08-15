@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/servicequotas"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	smithyendpoints "github.com/aws/smithy-go/endpoints"
 	"github.com/sirupsen/logrus"
@@ -39,6 +40,7 @@ var (
 		"s3":                       s3.ServiceID,
 		"sts":                      sts.ServiceID,
 		"resourcegroupstaggingapi": resourcegroupstaggingapi.ServiceID,
+		"servicequotas":            servicequotas.ServiceID,
 	}
 )
 
@@ -173,6 +175,29 @@ func (s *Route53EndpointResolver) ResolveEndpoint(ctx context.Context, params ro
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return route53.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// ServiceQuotasEndpointResolver implements EndpointResolverV2 interface for Service Quotas.
+type ServiceQuotasEndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for Service Quotas.
+func (s *ServiceQuotasEndpointResolver) ResolveEndpoint(ctx context.Context, params servicequotas.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[servicequotas.ServiceID]
+	if !ok {
+		s.logger.Debug("Custom Service Quotas endpoint not found, using default endpoint")
+		return servicequotas.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	s.logger.Debugf("Custom Service Quotas endpoint found, using custom endpoint: %s", endpoint.URL)
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return servicequotas.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 }
 
 // GetDefaultServiceEndpoint will get the default service endpoint for a service and region.

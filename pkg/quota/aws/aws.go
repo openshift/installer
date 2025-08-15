@@ -4,22 +4,25 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/servicequotas"
-	"github.com/pkg/errors"
-
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/quota"
+	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
 
 // Load load the quota information for a region. It provides information
 // about the usage and limit for each resource quota.
-func Load(ctx context.Context, sess *session.Session, region string, services ...string) ([]quota.Quota, error) {
-	client := servicequotas.New(sess, aws.NewConfig().WithRegion(region))
+func Load(ctx context.Context, region string, endpoints []typesaws.ServiceEndpoint, services ...string) ([]quota.Quota, error) {
+	client, err := awsconfig.NewServiceQuotasClient(ctx, awsconfig.EndpointOptions{
+		Region:    region,
+		Endpoints: endpoints,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service quotas client: %w", err)
+	}
+
 	records, err := loadLimits(ctx, client, services...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to load limits for servicequotas")
+		return nil, fmt.Errorf("failed to load limits for servicequotas: %w", err)
 	}
 	return newQuota(region, records), nil
 }
@@ -40,19 +43,4 @@ func newQuota(region string, limits []record) []quota.Quota {
 		ret = append(ret, q)
 	}
 	return ret
-}
-
-// IsUnauthorized checks if the error is un authorized.
-func IsUnauthorized(err error) bool {
-	if err == nil {
-		return false
-	}
-	var awsErr awserr.Error
-	if errors.As(err, &awsErr) {
-		// see reference:
-		// https://docs.aws.amazon.com/servicequotas/2019-06-24/apireference/API_GetServiceQuota.html
-		// https://docs.aws.amazon.com/servicequotas/2019-06-24/apireference/API_GetAWSDefaultServiceQuota.html
-		return awsErr.Code() == "AccessDeniedException" || awsErr.Code() == "NoSuchResourceException"
-	}
-	return false
 }
