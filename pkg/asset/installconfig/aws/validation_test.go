@@ -72,6 +72,7 @@ func TestValidate(t *testing.T) {
 		edgeZones     []string
 		subnets       SubnetGroups
 		subnetsInVPC  *SubnetGroups
+		vpcTags       Tags
 		instanceTypes map[string]InstanceType
 		proxy         string
 		publicOnly    bool
@@ -122,7 +123,7 @@ func TestValidate(t *testing.T) {
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
 				Edge:    validSubnets("edge"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 		},
 		{
@@ -150,7 +151,7 @@ func TestValidate(t *testing.T) {
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
 				Edge:    validSubnets("edge"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			expectErr: `^compute\[1\].architecture: Invalid value: "arm64": all compute machine pools must be of the same architecture$`,
 		},
@@ -324,7 +325,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 		},
 		{
@@ -339,7 +340,7 @@ func TestValidate(t *testing.T) {
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
 				Edge:    validSubnets("edge"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 		},
 		{
@@ -353,7 +354,7 @@ func TestValidate(t *testing.T) {
 			availZones:   validAvailZones(),
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 		},
 		{
@@ -367,7 +368,7 @@ func TestValidate(t *testing.T) {
 			availZones:   validAvailZones(),
 			subnets: SubnetGroups{
 				Public: validSubnets("public"),
-				VPC:    validVPCID,
+				VpcID:  validVPCID,
 			},
 			expectErr: `^\[platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-valid-public-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: no private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\]\]$`,
 		},
@@ -381,7 +382,7 @@ func TestValidate(t *testing.T) {
 			availZones:   validAvailZones(),
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			expectErr: `^platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-valid-private-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-private-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-private-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No public subnet provided for zones \[a b c\]$`,
 		},
@@ -404,7 +405,7 @@ func TestValidate(t *testing.T) {
 					Zone: &Zone{Name: "zone-for-invalid-cidr-subnet"},
 					CIDR: "192.168.127.0/24",
 				}}),
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 			expectErr: `^\[platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"invalid-private-cidr-subnet\": subnet's CIDR range start 192\.168\.126\.0 is outside of the specified machine networks, platform\.aws\.vpc\.subnets\[7\]: Invalid value: \"invalid-public-cidr-subnet\": subnet's CIDR range start 192\.168\.127\.0 is outside of the specified machine networks\]$`,
 		},
@@ -423,7 +424,7 @@ func TestValidate(t *testing.T) {
 					CIDR: "10.0.7.0/24",
 				}}),
 				Public: validSubnets("public"),
-				VPC:    validVPCID,
+				VpcID:  validVPCID,
 			},
 			expectErr: `^platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-valid-private-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-private-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-private-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"no-matching-public-private-zone\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No public subnet provided for zones \[f\]$`,
 		},
@@ -442,7 +443,7 @@ func TestValidate(t *testing.T) {
 					CIDR: "10.0.7.0/24",
 				}}),
 				Public: validSubnets("public"),
-				VPC:    validVPCID,
+				VpcID:  validVPCID,
 			},
 			expectErr: `^platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"valid-private-zone-c-2\": private subnet subnet-valid-private-c is also in zone c$`,
 		},
@@ -461,7 +462,7 @@ func TestValidate(t *testing.T) {
 					Zone: &Zone{Name: "c"},
 					CIDR: "10.0.7.0/24",
 				}}),
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 			expectErr: `^platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"valid-public-zone-c-2\": public subnet subnet-valid-public-c is also in zone c$`,
 		},
@@ -484,7 +485,7 @@ func TestValidate(t *testing.T) {
 						CIDR: "10.0.9.0/24",
 					},
 				}),
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 			expectErr: `^platform\.aws\.vpc\.subnets\[9\]: Invalid value: \"valid-public-zone-edge-c-2\": edge subnet subnet-valid-public-edge-c is also in zone edge-c$`,
 		},
@@ -499,7 +500,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			expectErr: `^compute\[1\]\.platform\.aws: Required value: the provided subnets must include valid subnets for the specified edge zones$`,
 		},
@@ -512,8 +513,8 @@ func TestValidate(t *testing.T) {
 			availRegions: validAvailRegions(),
 			availZones:   validEdgeAvailZones(),
 			subnets: SubnetGroups{
-				Edge: validSubnets("edge"),
-				VPC:  validVPCID,
+				Edge:  validSubnets("edge"),
+				VpcID: validVPCID,
 			},
 			expectErr: `^\[platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-valid-public-edge-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-edge-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-edge-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: no private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\]\]$`,
 		},
@@ -528,7 +529,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			expectErr: `^controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\", \"e\"}: No subnets provided for zones \[d e\]$`,
 		},
@@ -543,7 +544,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			expectErr: `^compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\]$`,
 		},
@@ -566,7 +567,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			expectErr: `^\[compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\], compute\[1\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"e\"}: No subnets provided for zones \[e\]\]$`,
 		},
@@ -578,7 +579,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: mergeSubnets(validSubnets("public"), validSubnets("private")),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			publicOnly: true,
 		},
@@ -593,7 +594,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("public"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			publicOnly: true,
 		},
@@ -607,7 +608,7 @@ func TestValidate(t *testing.T) {
 			availZones:   validAvailZones(),
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			publicOnly: true,
 			expectErr:  `^\Q[platform.aws.vpc.subnets: Required value: public subnets are required for a public-only subnets cluster, platform.aws.vpc.subnets: Invalid value: []aws.Subnet{aws.Subnet{ID:"subnet-valid-private-a", Roles:[]aws.SubnetRole(nil)}, aws.Subnet{ID:"subnet-valid-private-b", Roles:[]aws.SubnetRole(nil)}, aws.Subnet{ID:"subnet-valid-private-c", Roles:[]aws.SubnetRole(nil)}}: No public subnet provided for zones [a b c]]\E$`,
@@ -622,7 +623,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			publicOnly: true,
 			expectErr:  `^publish: Invalid value: \"Internal\": cluster cannot be private with public subnets$`,
@@ -636,12 +637,12 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			subnetsInVPC: &SubnetGroups{
 				Private: mergeSubnets(validSubnets("private"), otherTaggedPrivateSubnets()),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 		},
 		{
@@ -653,12 +654,12 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			subnetsInVPC: &SubnetGroups{
 				Private: mergeSubnets(validSubnets("private"), otherUntaggedPrivateSubnets()),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			expectErr: `^platform\.aws\.vpc\.subnets: Forbidden: additional subnets \[subnet-valid-private-a1 subnet-valid-private-b1\] without tag prefix kubernetes\.io/cluster/ are found in vpc vpc-valid-id of provided subnets\. Please add a tag kubernetes\.io/cluster/unmanaged to those subnets to exclude them from cluster installation or explicitly assign roles in the install-config to provided subnets$`,
 		},
@@ -672,7 +673,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 		},
 		{
@@ -687,7 +688,7 @@ func TestValidate(t *testing.T) {
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
 				Edge:    validSubnets("edge"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 		},
 		{
@@ -700,12 +701,12 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			subnetsInVPC: &SubnetGroups{
 				Private: mergeSubnets(validSubnets("private"), otherUntaggedPrivateSubnets()),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 		},
 		{
@@ -718,12 +719,12 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			subnetsInVPC: &SubnetGroups{
 				Private: mergeSubnets(validSubnets("private"), otherTaggedPrivateSubnets()),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 		},
 		{
@@ -790,7 +791,7 @@ func TestValidate(t *testing.T) {
 						Public: true,
 					},
 				},
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 		},
 		{
@@ -833,7 +834,7 @@ func TestValidate(t *testing.T) {
 						Public: true,
 					},
 				}),
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 			expectErr: `^\Q[platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": subnets subnet-valid-private-a and subnet-valid-private-a1 have role ClusterNode and are both in zone a, platform.aws.vpc.subnets[7]: Invalid value: "subnet-valid-public-a1": subnets subnet-valid-public-a and subnet-valid-public-a1 have role BootstrapNode and are both in zone a, platform.aws.vpc.subnets[7]: Invalid value: "subnet-valid-public-a1": subnets subnet-valid-public-a and subnet-valid-public-a1 have role IngressControllerLB and are both in zone a, platform.aws.vpc.subnets[7]: Invalid value: "subnet-valid-public-a1": subnets subnet-valid-public-a and subnet-valid-public-a1 have role ControlPlaneExternalLB and are both in zone a, platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": subnets subnet-valid-private-a and subnet-valid-private-a1 have role ControlPlaneInternalLB and are both in zone a]\E$`,
 		},
@@ -860,7 +861,7 @@ func TestValidate(t *testing.T) {
 						Public: true,
 					},
 				}),
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 			expectErr: `\Qplatform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-public-a1": subnet subnet-valid-public-a1 has role ClusterNode, but is public, expected to be private\E`,
 		},
@@ -886,7 +887,7 @@ func TestValidate(t *testing.T) {
 					},
 				}),
 				Public: validSubnets("public"),
-				VPC:    validVPCID,
+				VpcID:  validVPCID,
 			},
 			expectErr: `\Qplatform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": subnet subnet-valid-private-a1 has role BootstrapNode, but is private, expected to be public\E`,
 		},
@@ -912,7 +913,7 @@ func TestValidate(t *testing.T) {
 					},
 				}),
 				Public: validSubnets("public"),
-				VPC:    validVPCID,
+				VpcID:  validVPCID,
 			},
 			expectErr: `\Qplatform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": subnet subnet-valid-private-a1 has role ControlPlaneExternalLB, but is private, expected to be public\E`,
 		},
@@ -939,7 +940,7 @@ func TestValidate(t *testing.T) {
 						Public: true,
 					},
 				}),
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 			expectErr: `\Qplatform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-public-a1": subnet subnet-valid-public-a1 has role ControlPlaneInternalLB, but is public, expected to be private\E`,
 		},
@@ -953,7 +954,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Public:  validSubnets("public"),
 				Private: validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			publicOnly: true,
 		},
@@ -968,7 +969,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public:  validSubnets("public"),
-				VPC:     validVPCID,
+				VpcID:   validVPCID,
 			},
 			expectErr: `platform\.aws\.vpc\.subnets\[3\]: Invalid value: \"subnet-valid-public-a\": subnet subnet-valid-public-a has role IngressControllerLB and is public, which is not allowed when publish is set to Internal`,
 		},
@@ -994,7 +995,7 @@ func TestValidate(t *testing.T) {
 					},
 				}),
 				Public: validSubnets("public"),
-				VPC:    validVPCID,
+				VpcID:  validVPCID,
 			},
 			expectErr: `platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-private-a1\": subnet subnet-valid-private-a1 has role IngressControllerLB and is private, which is not allowed when publish is set to External`,
 		},
@@ -1021,7 +1022,7 @@ func TestValidate(t *testing.T) {
 						Public: true,
 					},
 				}),
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 			expectErr: `^\Qplatform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-public-a1": subnets subnet-valid-public-a and subnet-valid-public-a1 have role IngressControllerLB and are both in zone a\E$`,
 		},
@@ -1058,7 +1059,7 @@ func TestValidate(t *testing.T) {
 						Public: true,
 					},
 				}),
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 			expectErr: `^\Q[platform.aws.vpc.subnets: Forbidden: zones [f] are enabled for ControlPlaneInternalLB load balancers, but are not used by any nodes, platform.aws.vpc.subnets: Forbidden: zones [f] are enabled for IngressControllerLB load balancers, but are not used by any nodes, platform.aws.vpc.subnets: Forbidden: zones [f] are enabled for ControlPlaneExternalLB load balancers, but are not used by any nodes]\E$`,
 		},
@@ -1095,7 +1096,7 @@ func TestValidate(t *testing.T) {
 						Public: true,
 					},
 				}),
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 			expectErr: `^\Q[platform.aws.vpc.subnets: Forbidden: zones [f] are not enabled for ControlPlaneInternalLB load balancers, nodes in those zones are unreachable, platform.aws.vpc.subnets: Forbidden: zones [f] are not enabled for IngressControllerLB load balancers, nodes in those zones are unreachable, platform.aws.vpc.subnets: Forbidden: zones [f] are not enabled for ControlPlaneExternalLB load balancers, nodes in those zones are unreachable]\E$`,
 		},
@@ -1122,8 +1123,8 @@ func TestValidate(t *testing.T) {
 						Public: true,
 					},
 				}),
-				Edge: validSubnets("edge"),
-				VPC:  validVPCID,
+				Edge:  validSubnets("edge"),
+				VpcID: validVPCID,
 			},
 			expectErr: `platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-public-a1\": subnet subnet-valid-public-a1 has role EdgeNode, but is not in a Local or WaveLength Zone`,
 		},
@@ -1151,9 +1152,53 @@ func TestValidate(t *testing.T) {
 						Public: true,
 					},
 				}),
-				VPC: validVPCID,
+				VpcID: validVPCID,
 			},
 			expectErr: `platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-public-edge-a1\": subnet subnet-valid-public-edge-a1 must only be assigned role EdgeNode since it is in a Local or WaveLength Zone`,
+		},
+		{
+			name: "invalid byo subnets, vpc has cluster-owned tags",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public:  validSubnets("public"),
+				VpcID:   validVPCID,
+			},
+			vpcTags: Tags{
+				"kubernetes.io/cluster/another-cluster": "owned",
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: VPC of subnets is owned by other clusters [another-cluster] and cannot be used for new installations, another VPC must be created separately\E$`,
+		},
+		{
+			name: "invalid byo subnets, subnets have cluster-owned tags",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnets([]aws.Subnet{
+					{
+						ID: "subnet-valid-public-d",
+					},
+				}, false),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public: mergeSubnets(validSubnets("public"), Subnets{
+					"subnet-valid-public-a1": {
+						ID:     "subnet-valid-public-d",
+						Zone:   &Zone{Name: "d"},
+						CIDR:   "10.0.6.0/24",
+						Public: true,
+						Tags: Tags{
+							"kubernetes.io/cluster/another-cluster": "owned",
+						},
+					},
+				}),
+				VpcID: validVPCID,
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: subnet subnet-valid-public-a1 is owned by other clusters [another-cluster] and cannot be used for new installations, another subnet must be created separately\E$`,
 		},
 	}
 
@@ -1181,9 +1226,13 @@ func TestValidate(t *testing.T) {
 				edgeZones:         test.edgeZones,
 				subnets:           test.subnets,
 				vpcSubnets:        test.subnets,
-				vpc:               validVPCID,
-				instanceTypes:     test.instanceTypes,
-				ProvidedSubnets:   test.installConfig.Platform.AWS.VPC.Subnets,
+				vpc: VPC{
+					ID:   validVPCID,
+					CIDR: validCIDR,
+					Tags: test.vpcTags,
+				},
+				instanceTypes:   test.instanceTypes,
+				ProvidedSubnets: test.installConfig.Platform.AWS.VPC.Subnets,
 			}
 
 			if test.subnetsInVPC != nil {
@@ -1320,11 +1369,14 @@ func TestValidateForProvisioning(t *testing.T) {
 				subnets: SubnetGroups{
 					Private: validSubnets("private"),
 					Public:  validSubnets("public"),
-					VPC:     validVPCID,
+					VpcID:   validVPCID,
 				},
-				instanceTypes:   validInstanceTypes(),
-				Region:          ic.AWS.Region,
-				vpc:             validVPCID,
+				instanceTypes: validInstanceTypes(),
+				Region:        ic.AWS.Region,
+				vpc: VPC{
+					ID:   validVPCID,
+					CIDR: validCIDR,
+				},
 				ProvidedSubnets: ic.Platform.AWS.VPC.Subnets,
 			}
 

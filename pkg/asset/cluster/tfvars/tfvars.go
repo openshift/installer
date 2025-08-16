@@ -240,7 +240,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 				publicSubnets = append(publicSubnets, id)
 			}
 
-			vpc, err = installConfig.AWS.VPC(ctx)
+			vpc, err = installConfig.AWS.VPCID(ctx)
 			if err != nil {
 				return err
 			}

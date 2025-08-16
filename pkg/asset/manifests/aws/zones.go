@@ -51,7 +51,7 @@ func (nin *networkInput) GatherSubnetsFromMetadata(ctx context.Context) (err err
 	if nin.Subnets.edgeSubnets, err = nin.InstallConfig.AWS.EdgeSubnets(ctx); err != nil {
 		return fmt.Errorf("failed to get edge subnets: %w", err)
 	}
-	if nin.Subnets.vpc, err = nin.InstallConfig.AWS.VPC(ctx); err != nil {
+	if nin.Subnets.vpc, err = nin.InstallConfig.AWS.VPCID(ctx); err != nil {
 		return fmt.Errorf("failed to get VPC: %w", err)
 	}
 	return nil
