@@ -31,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/agent"
 )
 
@@ -722,7 +723,7 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 					Filename: "registries.conf",
 					Data:     []byte(""),
 				},
-				MirrorConfig: []mirror.RegistriesConfig{
+				MirrorConfig: types.MirrorConfig{
 					{
 						Location: "some.registry.org/release",
 						Mirrors:  []string{"some.mirror.org"},
@@ -739,7 +740,7 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 					Filename: "registries.conf",
 					Data:     []byte(""),
 				},
-				MirrorConfig: []mirror.RegistriesConfig{
+				MirrorConfig: types.MirrorConfig{
 					{
 						Location: "registry.ci.openshift.org/ocp/release",
 						Mirrors:  []string{"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"},
@@ -756,7 +757,7 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 					Filename: "registries.conf",
 					Data:     []byte(""),
 				},
-				MirrorConfig: []mirror.RegistriesConfig{
+				MirrorConfig: types.MirrorConfig{
 					{
 						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
 						Mirrors:  []string{"localhost:5000/openshift4/openshift/release"},
@@ -777,7 +778,7 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 					Filename: "registries.conf",
 					Data:     []byte(""),
 				},
-				MirrorConfig: []mirror.RegistriesConfig{
+				MirrorConfig: types.MirrorConfig{
 					{
 						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
 						Mirrors: []string{"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
@@ -822,7 +823,7 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 					Filename: "registries.conf",
 					Data:     []byte(""),
 				},
-				MirrorConfig: []mirror.RegistriesConfig{
+				MirrorConfig: types.MirrorConfig{
 					{
 						Location: "some.registry.org/release",
 						Mirrors:  []string{"some.mirror.org"},
@@ -838,7 +839,7 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 					Filename: "registries.conf",
 					Data:     []byte(""),
 				},
-				MirrorConfig: []mirror.RegistriesConfig{
+				MirrorConfig: types.MirrorConfig{
 					{
 						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
 						Mirrors:  []string{"localhost:5000/openshift4/openshift/release"},
@@ -858,7 +859,7 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 					Filename: "registries.conf",
 					Data:     []byte(""),
 				},
-				MirrorConfig: []mirror.RegistriesConfig{
+				MirrorConfig: types.MirrorConfig{
 					{
 						Location: "registry.ci.openshift.org/ocp-v4.0-art-dev",
 						Mirrors:  []string{"localhost:5000/openshift4/openshift/release"},
