@@ -304,6 +304,9 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		}
 
 		// AWS Zones is used to determine which route table the edge zone will be associated.
+		// TODO: Does this have to be skipped when custom-dns is enabled? Afaik, DNS zones
+		// should not be created when custom-dns is enabled. But, AllZones() seem to be
+		// returning availability zones.
 		allZones, err := installConfig.AWS.AllZones(ctx)
 		if err != nil {
 			return err

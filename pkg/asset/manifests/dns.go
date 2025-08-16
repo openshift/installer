@@ -88,6 +88,13 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
+		// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
+		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
+		if installConfig.Config.AWS.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
+			config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
+			config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
+			break
+		}
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 			sess, err := installConfig.AWS.Session(ctx)
 			if err != nil {
