@@ -168,6 +168,15 @@ func (a *AgentImage) appendKargs(kargs string) error {
 		return nil
 	}
 
+	if a.cpuArch == "s390x" {
+		err := isoeditor.EmbedKargsIntoBootImage(a.isoPath, a.tmpPath, kargs)
+		if err != nil {
+			return err
+		} else {
+			return nil
+		}
+	}
+
 	fileInfo, err := isoeditor.NewKargsReader(a.isoPath, kargs)
 	if err != nil {
 		return err
