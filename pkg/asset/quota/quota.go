@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	openstackvalidation "github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	configpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -76,12 +77,8 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return nil
 		}
 		services := []string{"ec2", "vpc"}
-		session, err := ic.AWS.Session(ctx)
-		if err != nil {
-			return errors.Wrap(err, "failed to load AWS session")
-		}
-		q, err := quotaaws.Load(ctx, session, ic.AWS.Region, services...)
-		if quotaaws.IsUnauthorized(err) {
+		q, err := quotaaws.Load(ctx, ic.AWS.Region, ic.AWS.Services, services...)
+		if awsconfig.IsUnauthorized(err) {
 			logrus.Debugf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `servicequotas:ListAWSDefaultServiceQuotas` permission available to the user.", err)
 			logrus.Info("Skipping quota checks")
 			return nil
@@ -90,7 +87,7 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
 		}
 		instanceTypes, err := aws.InstanceTypes(ctx, ic.AWS.Region, ic.AWS.Services)
-		if quotaaws.IsUnauthorized(err) {
+		if awsconfig.IsUnauthorized(err) {
 			logrus.Warnf("Missing permissions to fetch instance types and therefore will skip checking Quotas: %v, make sure you have `ec2:DescribeInstanceTypes` permission available to the user.", err)
 			return nil
 		}
