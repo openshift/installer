@@ -116,6 +116,12 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 				}
 			}
 		}
+		// For UserProvisionedDNS, set zones to nil so the ingress controller will not
+		// create DNS records in the cloud provider.
+		if installConfig.Config.AWS.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
+			config.Spec.PublicZone = nil
+			config.Spec.PrivateZone = nil
+		}
 	case azuretypes.Name:
 		dnsConfig, err := installConfig.Azure.DNSConfig()
 		if err != nil {
@@ -133,19 +139,19 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 			config.Spec.PrivateZone = &configv1.DNSZone{
 				ID: dnsConfig.GetPrivateDNSZoneID(installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID), installConfig.Config.ClusterDomain()),
 			}
-			// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
-			// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
-			if installConfig.Config.Azure.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
-				config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
-				config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
-			}
+		}
+		// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
+		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
+		if installConfig.Config.Azure.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
+			config.Spec.PublicZone = nil
+			config.Spec.PrivateZone = nil
 		}
 	case gcptypes.Name:
 		// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
 		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
 		if installConfig.Config.GCP.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
-			config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
-			config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
+			config.Spec.PublicZone = nil
+			config.Spec.PrivateZone = nil
 			break
 		}
 		client, err := icgcp.NewClient(context.Background(), installConfig.Config.GCP.ServiceEndpoints)
