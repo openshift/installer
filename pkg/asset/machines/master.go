@@ -590,7 +590,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 
 		if installConfig.Config.Publish == types.InternalPublishingStrategy &&
 			(len(installConfig.Config.ImageDigestSources) > 0 || len(installConfig.Config.DeprecatedImageContentSources) > 0) {
-			ignChrony, err := machineconfig.ForCustomNTP("master", powervsdefaults.DefaultNTPServer)
+			ignChrony, err := machineconfig.ForCustomNTP("master", []string{powervsdefaults.DefaultNTPServer})
 			if err != nil {
 				return errors.Wrap(err, "failed to create ignition for custom NTP for master machines")
 			}
