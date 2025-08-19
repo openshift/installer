@@ -21,9 +21,12 @@
     "masterLoadBalancerName" : "[concat(parameters('baseName'))]",
     "masterLoadBalancerID" : "[resourceId('Microsoft.Network/loadBalancers', variables('masterLoadBalancerName'))]",
     "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-cluster')]",
+    "outboundPulicIpAddressName" : "[concat(parameters('baseName'), '-outbound-pip')]",
+    "outboundPulicIpAddressID" : "[resourceId('Microsoft.Network/publicIPAddresses', variables('outboundPulicIpAddressName'))]",
+    "outboundBackendPoolName" : "[concat(parameters('baseName'), '-outbound')]",
     "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal')]",
     "internalLoadBalancerID" : "[resourceId('Microsoft.Network/loadBalancers', variables('internalLoadBalancerName'))]",
-    "skuName": "Basic"
+    "skuName": "Standard"
   },
   "resources" : [
     {
@@ -56,6 +59,21 @@
     },
     {
       "apiVersion" : "2017-10-01",
+      "type" : "Microsoft.Network/publicIPAddresses",
+      "name" : "[variables('outboundPulicIpAddressName')]",
+      "location" : "[variables('location')]",
+      "sku": {
+        "name": "[variables('skuName')]"
+      },
+      "properties" : {
+        "publicIPAllocationMethod" : "Static",
+        "dnsSettings" : {
+          "domainNameLabel" : "[variables('outboundPulicIpAddressName')]"
+        }
+      }
+    },
+    {
+      "apiVersion" : "2018-06-01",
       "type" : "Microsoft.Network/loadBalancers",
       "name" : "[variables('masterLoadBalancerName')]",
       "location" : "[variables('location')]",
@@ -74,11 +92,22 @@
                 "id" : "[variables('masterPublicIpAddressID')]"
               }
             }
+          },
+          {
+            "name" : "outbound-frontendEnd",
+            "properties" : {
+              "publicIPAddress" : {
+                "id" : "[variables('outboundPulicIpAddressID')]"
+              }
+            }
           }
         ],
         "backendAddressPools" : [
           {
             "name" : "[variables('masterLoadBalancerName')]"
+          },
+          {
+            "name" : "[variables('outboundBackendPoolName')]"
           }
         ],
         "loadBalancingRules" : [
@@ -99,6 +128,24 @@
               "probe" : {
                 "id" : "[concat(variables('masterLoadBalancerID'), '/probes/api-public-probe')]"
               }
+            }
+          }
+        ],
+        "outboundRules": [
+          {
+            "name": "OutboundNATAllProtocols",
+            "properties": {
+              "backendAddressPool": {
+                "id": "[concat(variables('masterLoadBalancerID'), '/backendAddressPools/', variables('outboundBackendPoolName'))]"
+              },
+              "enableTcpReset": false,
+              "frontendIPConfigurations": [
+                {
+                  "id": "[concat(variables('masterLoadBalancerID'), '/frontendIPConfigurations/outbound-frontendEnd')]"
+                }
+              ],
+              "idleTimeoutInMinutes": 4,
+              "protocol": "All"
             }
           }
         ],
