@@ -19,9 +19,11 @@ package eks
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/eks"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
+	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	ekscontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"
@@ -36,7 +38,7 @@ func (s *Service) reconcileAddons(ctx context.Context) error {
 	eksClusterName := s.scope.KubernetesClusterName()
 
 	// Get available addon names for the cluster
-	addonNames, err := s.listAddons(eksClusterName)
+	addonNames, err := s.listAddons(ctx, eksClusterName)
 	if err != nil {
 		s.Error(err, "failed listing addons")
 		return fmt.Errorf("listing eks addons: %w", err)
@@ -44,7 +46,7 @@ func (s *Service) reconcileAddons(ctx context.Context) error {
 
 	// Get installed addons for the cluster
 	s.scope.Debug("getting installed eks addons", "cluster", eksClusterName)
-	installed, err := s.getClusterAddonsInstalled(eksClusterName, addonNames)
+	installed, err := s.getClusterAddonsInstalled(ctx, eksClusterName, addonNames)
 	if err != nil {
 		return fmt.Errorf("getting installed eks addons: %w", err)
 	}
@@ -60,7 +62,7 @@ func (s *Service) reconcileAddons(ctx context.Context) error {
 
 	//  Compute operations to move installed to desired
 	s.scope.Debug("creating eks addons plan", "cluster", eksClusterName, "numdesired", len(desiredAddons), "numinstalled", len(installed))
-	addonsPlan := eksaddons.NewPlan(eksClusterName, desiredAddons, installed, s.EKSClient)
+	addonsPlan := eksaddons.NewPlan(eksClusterName, desiredAddons, installed, s.EKSClient, s.scope.MaxWaitActiveUpdateDelete)
 	procedures, err := addonsPlan.Create(ctx)
 	if err != nil {
 		s.scope.Error(err, "failed creating eks addons plane")
@@ -81,7 +83,7 @@ func (s *Service) reconcileAddons(ctx context.Context) error {
 	// Note: we are not relying on the computed state from the operations as we still want
 	// to update the state even if there are no operations to capture things like status changes
 	s.scope.Debug("getting installed eks addons to update status", "cluster", eksClusterName)
-	addonState, err := s.getInstalledState(eksClusterName, addonNames)
+	addonState, err := s.getInstalledState(ctx, eksClusterName, addonNames)
 	if err != nil {
 		return fmt.Errorf("getting installed state of eks addons: %w", err)
 	}
@@ -97,7 +99,7 @@ func (s *Service) reconcileAddons(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) getClusterAddonsInstalled(eksClusterName string, addonNames []*string) ([]*eksaddons.EKSAddon, error) {
+func (s *Service) getClusterAddonsInstalled(ctx context.Context, eksClusterName string, addonNames []string) ([]*eksaddons.EKSAddon, error) {
 	s.Debug("getting eks addons installed")
 
 	addonsInstalled := []*eksaddons.EKSAddon{}
@@ -108,30 +110,30 @@ func (s *Service) getClusterAddonsInstalled(eksClusterName string, addonNames []
 
 	for _, addon := range addonNames {
 		describeInput := &eks.DescribeAddonInput{
-			AddonName:   addon,
+			AddonName:   aws.String(addon),
 			ClusterName: &eksClusterName,
 		}
-		describeOutput, err := s.EKSClient.DescribeAddon(describeInput)
+		describeOutput, err := s.EKSClient.DescribeAddon(ctx, describeInput)
 		if err != nil {
-			return addonsInstalled, fmt.Errorf("describing eks addon %s: %w", *addon, err)
+			return addonsInstalled, fmt.Errorf("describing eks addon %s: %w", addon, err)
 		}
 
 		if describeOutput.Addon == nil {
 			continue
 		}
 		s.scope.Debug("describe output", "output", describeOutput.Addon)
-
+		status := string(describeOutput.Addon.Status)
 		installedAddon := &eksaddons.EKSAddon{
 			Name:                  describeOutput.Addon.AddonName,
 			Version:               describeOutput.Addon.AddonVersion,
 			ARN:                   describeOutput.Addon.AddonArn,
 			Configuration:         describeOutput.Addon.ConfigurationValues,
 			Tags:                  infrav1.Tags{},
-			Status:                describeOutput.Addon.Status,
+			Status:                aws.String(status),
 			ServiceAccountRoleARN: describeOutput.Addon.ServiceAccountRoleArn,
 		}
 		for k, v := range describeOutput.Addon.Tags {
-			installedAddon.Tags[k] = *v
+			installedAddon.Tags[k] = v
 		}
 
 		addonsInstalled = append(addonsInstalled, installedAddon)
@@ -140,7 +142,7 @@ func (s *Service) getClusterAddonsInstalled(eksClusterName string, addonNames []
 	return addonsInstalled, nil
 }
 
-func (s *Service) getInstalledState(eksClusterName string, addonNames []*string) ([]ekscontrolplanev1.AddonState, error) {
+func (s *Service) getInstalledState(ctx context.Context, eksClusterName string, addonNames []string) ([]ekscontrolplanev1.AddonState, error) {
 	s.Debug("getting eks addons installed to create state")
 
 	addonState := []ekscontrolplanev1.AddonState{}
@@ -151,12 +153,12 @@ func (s *Service) getInstalledState(eksClusterName string, addonNames []*string)
 
 	for _, addonName := range addonNames {
 		describeInput := &eks.DescribeAddonInput{
-			AddonName:   addonName,
+			AddonName:   aws.String(addonName),
 			ClusterName: &eksClusterName,
 		}
-		describeOutput, err := s.EKSClient.DescribeAddon(describeInput)
+		describeOutput, err := s.EKSClient.DescribeAddon(ctx, describeInput)
 		if err != nil {
-			return addonState, fmt.Errorf("describing eks addon %s: %w", *addonName, err)
+			return addonState, fmt.Errorf("describing eks addon %s: %w", addonName, err)
 		}
 
 		if describeOutput.Addon == nil {
@@ -171,15 +173,15 @@ func (s *Service) getInstalledState(eksClusterName string, addonNames []*string)
 	return addonState, nil
 }
 
-func (s *Service) listAddons(eksClusterName string) ([]*string, error) {
+func (s *Service) listAddons(ctx context.Context, eksClusterName string) ([]string, error) {
 	s.Debug("getting list of eks addons")
 
 	input := &eks.ListAddonsInput{
 		ClusterName: &eksClusterName,
 	}
 
-	addons := []*string{}
-	output, err := s.EKSClient.ListAddons(input)
+	addons := []string{}
+	output, err := s.EKSClient.ListAddons(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("listing eks addons: %w", err)
 	}
@@ -197,7 +199,7 @@ func (s *Service) translateAPIToAddon(addons []ekscontrolplanev1.Addon) []*eksad
 		convertedAddon := &eksaddons.EKSAddon{
 			Name:                  &addon.Name,
 			Version:               &addon.Version,
-			Configuration:         &addon.Configuration,
+			Configuration:         convertConfiguration(addon.Configuration),
 			Tags:                  ngTags(s.scope.Cluster.Name, s.scope.AdditionalTags()),
 			ResolveConflict:       convertConflictResolution(*addon.ConflictResolution),
 			ServiceAccountRoleARN: addon.ServiceAccountRoleArn,
@@ -209,9 +211,28 @@ func (s *Service) translateAPIToAddon(addons []ekscontrolplanev1.Addon) []*eksad
 	return converted
 }
 
+// WaitUntilAddonDeleted is blocking function to wait until EKS Addon is Deleted.
+func (k *EKSClient) WaitUntilAddonDeleted(ctx context.Context, input *eks.DescribeAddonInput, maxWait time.Duration) error {
+	waiter := eks.NewAddonDeletedWaiter(k, func(o *eks.AddonDeletedWaiterOptions) {
+		o.LogWaitAttempts = true
+	})
+
+	return waiter.Wait(ctx, input, maxWait)
+}
+
 func convertConflictResolution(conflict ekscontrolplanev1.AddonResolution) *string {
 	if conflict == ekscontrolplanev1.AddonResolutionNone {
-		return aws.String(eks.ResolveConflictsNone)
+		res := string(ekstypes.ResolveConflictsNone)
+		return aws.String(res)
 	}
-	return aws.String(eks.ResolveConflictsOverwrite)
+
+	res := string(ekstypes.ResolveConflictsOverwrite)
+	return aws.String(res)
+}
+
+func convertConfiguration(configuration string) *string {
+	if configuration == "" {
+		return nil
+	}
+	return &configuration
 }

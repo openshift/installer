@@ -65,9 +65,9 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/rosa"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/utils"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
-	capiannotations "sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -94,6 +94,8 @@ type ROSAControlPlaneReconciler struct {
 	Endpoints        []scope.ServiceEndpoint
 	NewStsClient     func(cloud.ScopeUsage, cloud.Session, logger.Wrapper, runtime.Object) stsiface.STSAPI
 	NewOCMClient     func(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (rosa.OCMClient, error)
+	// Exposing the restClientConfig for integration test. No need to initialize.
+	restClientConfig *restclient.Config
 }
 
 // SetupWithManager is used to setup the controller.
@@ -106,11 +108,11 @@ func (r *ROSAControlPlaneReconciler) SetupWithManager(ctx context.Context, mgr c
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		For(rosaControlPlane).
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
 		Build(r)
 
 	if err != nil {
-		return fmt.Errorf("failed setting up the AWSManagedControlPlane controller manager: %w", err)
+		return fmt.Errorf("failed setting up the ROSAControlPlane controller manager: %w", err)
 	}
 
 	if err = c.Watch(
@@ -168,9 +170,8 @@ func (r *ROSAControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	log = log.WithValues("cluster", klog.KObj(cluster))
 
-	if capiannotations.IsPaused(cluster, rosaControlPlane) {
-		log.Info("Reconciliation is paused for this object")
-		return ctrl.Result{}, nil
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, rosaControlPlane); err != nil || isPaused || conditionChanged {
+		return ctrl.Result{}, err
 	}
 
 	rosaScope, err := scope.NewROSAControlPlaneScope(scope.ROSAControlPlaneScopeParams{
@@ -253,6 +254,7 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 		rosaScope.ControlPlane.Status.ConsoleURL = cluster.Console().URL()
 		rosaScope.ControlPlane.Status.OIDCEndpointURL = cluster.AWS().STS().OIDCEndpointURL()
 		rosaScope.ControlPlane.Status.Ready = false
+		rosaScope.ControlPlane.Status.Version = rosa.RawVersionID(cluster.Version())
 
 		switch cluster.Status().State() {
 		case cmv1.ClusterStateReady:
@@ -802,13 +804,16 @@ func (r *ROSAControlPlaneReconciler) reconcileKubeconfig(ctx context.Context, ro
 		return err
 	}
 
-	clientConfig := &restclient.Config{
-		Host:     apiServerURL,
-		Username: userName,
+	if r.restClientConfig == nil {
+		r.restClientConfig = &restclient.Config{
+			Host:     apiServerURL,
+			Username: userName,
+		}
 	}
+
 	// request an acccess token using the credentials of the cluster admin user created earlier.
 	// this token is used in the kubeconfig to authenticate with the API server.
-	token, err := rosa.RequestToken(ctx, apiServerURL, userName, password, clientConfig)
+	token, err := rosa.RequestToken(ctx, apiServerURL, userName, password, r.restClientConfig)
 	if err != nil {
 		return fmt.Errorf("failed to request token: %w", err)
 	}

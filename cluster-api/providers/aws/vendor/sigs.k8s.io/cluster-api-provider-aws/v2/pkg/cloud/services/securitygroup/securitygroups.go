@@ -440,7 +440,7 @@ func (s *Service) revokeIngressAndEgressRulesFromVPCDefaultSecurityGroup() error
 		},
 	}
 	err = s.revokeSecurityGroupIngressRules(defaultSecurityGroupID, ingressRules)
-	if err != nil && !awserrors.IsPermissionNotFoundError(errors.Cause(err)) {
+	if err != nil {
 		return errors.Wrapf(err, "failed to revoke ingress rules from vpc default security group %q in VPC %q", defaultSecurityGroupID, s.scope.VPC().ID)
 	}
 
@@ -453,7 +453,7 @@ func (s *Service) revokeIngressAndEgressRulesFromVPCDefaultSecurityGroup() error
 		},
 	}
 	err = s.revokeSecurityGroupEgressRules(defaultSecurityGroupID, egressRules)
-	if err != nil && !awserrors.IsPermissionNotFoundError(errors.Cause(err)) {
+	if err != nil {
 		return errors.Wrapf(err, "failed to revoke egress rules from vpc default security group %q in VPC %q", defaultSecurityGroupID, s.scope.VPC().ID)
 	}
 
@@ -514,7 +514,7 @@ func (s *Service) revokeSecurityGroupIngressRules(id string, rules infrav1.Ingre
 		input.IpPermissions = append(input.IpPermissions, ingressRuleToSDKType(s.scope, &rule))
 	}
 
-	if _, err := s.EC2Client.RevokeSecurityGroupIngressWithContext(context.TODO(), input); err != nil {
+	if _, err := s.EC2Client.RevokeSecurityGroupIngressWithContext(context.TODO(), input); err != nil && !awserrors.IsPermissionNotFoundError(errors.Cause(err)) {
 		record.Warnf(s.scope.InfraCluster(), "FailedRevokeSecurityGroupIngressRules", "Failed to revoke security group ingress rules %v for SecurityGroup %q: %v", rules, id, err)
 		return errors.Wrapf(err, "failed to revoke security group %q ingress rules: %v", id, rules)
 	}
@@ -530,7 +530,7 @@ func (s *Service) revokeSecurityGroupEgressRules(id string, rules infrav1.Ingres
 		input.IpPermissions = append(input.IpPermissions, ingressRuleToSDKType(s.scope, &rule))
 	}
 
-	if _, err := s.EC2Client.RevokeSecurityGroupEgressWithContext(context.TODO(), input); err != nil {
+	if _, err := s.EC2Client.RevokeSecurityGroupEgressWithContext(context.TODO(), input); err != nil && !awserrors.IsPermissionNotFoundError(errors.Cause(err)) {
 		record.Warnf(s.scope.InfraCluster(), "FailedRevokeSecurityGroupEgressRules", "Failed to revoke security group egress rules %v for SecurityGroup %q: %v", rules, id, err)
 		return errors.Wrapf(err, "failed to revoke security group %q egress rules: %v", id, rules)
 	}
@@ -680,6 +680,13 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 				IPv6CidrBlocks: []string{services.AnyIPv6CidrBlock},
 			})
 		}
+
+		additionalIngressRules, err := s.processIngressRulesSGs(s.scope.AdditionalNodeIngressRules())
+		if err != nil {
+			return nil, err
+		}
+		rules = append(rules, additionalIngressRules...)
+
 		return append(cniRules, rules...), nil
 	case infrav1.SecurityGroupEKSNodeAdditional:
 		ingressRules := s.scope.AdditionalControlPlaneIngressRules()

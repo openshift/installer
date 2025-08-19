@@ -37,9 +37,9 @@ import (
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
@@ -82,9 +82,8 @@ func (r *ROSAClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return reconcile.Result{}, nil
 	}
 
-	if annotations.IsPaused(cluster, rosaCluster) {
-		log.Info("ROSACluster or linked Cluster is marked as paused. Won't reconcile")
-		return reconcile.Result{}, nil
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, rosaCluster); err != nil || isPaused || conditionChanged {
+		return ctrl.Result{}, err
 	}
 
 	log = log.WithValues("cluster", cluster.Name)
@@ -127,9 +126,8 @@ func (r *ROSAClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(rosaCluster).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
 		Build(r)
-
 	if err != nil {
 		return fmt.Errorf("error creating controller: %w", err)
 	}
@@ -138,7 +136,7 @@ func (r *ROSAClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 	if err = controller.Watch(
 		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("ROSACluster"), mgr.GetClient(), &expinfrav1.ROSACluster{})),
-			predicates.ClusterUnpaused(mgr.GetScheme(), log.GetLogger())),
+			predicates.ClusterPausedTransitions(mgr.GetScheme(), log.GetLogger())),
 	); err != nil {
 		return fmt.Errorf("failed adding a watch for ready clusters: %w", err)
 	}
