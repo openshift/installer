@@ -48,6 +48,8 @@ build_ironic_env() {
     # Allow some extra time for the provisioning interface to come up
     # https://issues.redhat.com/browse/OCPBUGS-5151
     printf 'IRONIC_KERNEL_PARAMS="rd.net.timeout.carrier=30 ip=%s"\n' "${dhcp_opt}"
+
+    printf 'ARCHITECTURE="%s"\n' "$(uname -p)"
 }
 
 build_ironic_env | tee -a /etc/ironic.env

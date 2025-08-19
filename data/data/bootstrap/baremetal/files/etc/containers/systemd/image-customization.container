@@ -27,6 +27,7 @@ Environment="REGISTRIES_CONF_PATH=/tmp/containers/registries.conf"
 Environment="KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback"
 Environment="ADDITIONAL_NTP_SERVERS=${ADDITIONAL_NTP_SERVERS}"
 Environment="CA_BUNDLE=/tmp/ca.crt"
+Environment="ARCHITECTURE=${ARCHITECTURE}"
 
 [Service]
 EnvironmentFile=/etc/ironic.env
