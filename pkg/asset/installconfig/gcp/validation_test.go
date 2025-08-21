@@ -1186,6 +1186,26 @@ func TestValidateInstanceType(t *testing.T) {
 			expectedErrMsg:      `^\[instance.onHostMaintenance: Invalid value: "Migrate": onHostMaintenace must be set to Terminate when confidentialCompute is IntelTrustedDomainExtensions\]`,
 		},
 		{
+			name:                "Enabled confidential compute with unsupported machine type",
+			zones:               []string{"a"},
+			instanceType:        "c3-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "Enabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "c3-standard-4": Machine type does not support a Confidential Compute value of Enabled. Machine types supporting Enabled: c2d, n2d, c3d\]`,
+		},
+		{
+			name:                "Enabled confidential compute with supported machine type",
+			zones:               []string{"a"},
+			instanceType:        "c3d-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "Enabled",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
 			name:                "AMDEncryptedVirtualization confidential compute with unsupported machine type",
 			zones:               []string{"a"},
 			instanceType:        "c3-standard-4",
@@ -1193,7 +1213,7 @@ func TestValidateInstanceType(t *testing.T) {
 			onHostMaintenance:   "Terminate",
 			confidentialCompute: "AMDEncryptedVirtualization",
 			expectedError:       true,
-			expectedErrMsg:      `^\[instance.type: Invalid value: "c3-standard-4": Machine type do not support AMDEncryptedVirtualization. Machine types supporting AMDEncryptedVirtualization: c2d, n2d, c3d\]`,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "c3-standard-4": Machine type does not support a Confidential Compute value of AMDEncryptedVirtualization. Machine types supporting AMDEncryptedVirtualization: c2d, n2d, c3d\]`,
 		},
 		{
 			name:                "AMDEncryptedVirtualization confidential compute with supported machine type",
@@ -1213,7 +1233,7 @@ func TestValidateInstanceType(t *testing.T) {
 			onHostMaintenance:   "Terminate",
 			confidentialCompute: "AMDEncryptedVirtualizationNestedPaging",
 			expectedError:       true,
-			expectedErrMsg:      `^\[instance.type: Invalid value: "c2d-standard-4": Machine type do not support AMDEncryptedVirtualizationNestedPaging. Machine types supporting AMDEncryptedVirtualizationNestedPaging: n2d\]`,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "c2d-standard-4": Machine type does not support a Confidential Compute value of AMDEncryptedVirtualizationNestedPaging. Machine types supporting AMDEncryptedVirtualizationNestedPaging: n2d\]`,
 		},
 		{
 			name:                "AMDEncryptedVirtualizationNestedPaging confidential compute with supported machine type",
@@ -1233,7 +1253,7 @@ func TestValidateInstanceType(t *testing.T) {
 			onHostMaintenance:   "Terminate",
 			confidentialCompute: "IntelTrustedDomainExtensions",
 			expectedError:       true,
-			expectedErrMsg:      `^\[instance.type: Invalid value: "n2d-standard-4": Machine type do not support IntelTrustedDomainExtensions. Machine types supporting IntelTrustedDomainExtensions: c3\]`,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "n2d-standard-4": Machine type does not support a Confidential Compute value of IntelTrustedDomainExtensions. Machine types supporting IntelTrustedDomainExtensions: c3\]`,
 		},
 		{
 			name:                "IntelTrustedDomainExtensions confidential compute with supported machine type",
