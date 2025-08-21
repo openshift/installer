@@ -245,9 +245,14 @@ func (c *Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (
 		"Name": fmt.Sprintf("%s-int", input.InfraID),
 		fmt.Sprintf("kubernetes.io/cluster/%s", input.InfraID): "owned",
 	})
+
+	// Of all the route53 actions being used in the installer,
+	// the AWS SDK does sanitize the hosted zone ID to remove any resource prefix
+	// except ChangeTagsForResource.
+	hostedZoneID := sanitizeHostedZoneID(aws.ToString(res.HostedZone.Id))
 	_, err = c.route53Client.ChangeTagsForResource(ctx, &route53.ChangeTagsForResourceInput{
 		ResourceType: route53types.TagResourceTypeHostedzone,
-		ResourceId:   res.HostedZone.Id,
+		ResourceId:   aws.String(hostedZoneID),
 		AddTags:      r53Tags(tags),
 	})
 	if err != nil {
@@ -350,6 +355,16 @@ func r53Tags(tags map[string]string) []route53types.Tag {
 		})
 	}
 	return rtags
+}
+
+// sanitizeHostedZoneID splits apart the Route53 hostedZone ID and returns the last piece.
+// For example, an input of /hostedzone/Z12345678ABCDEFGHIJK will return Z12345678ABCDEFGHIJK.
+func sanitizeHostedZoneID(hostedZoneID string) string {
+	idx := strings.LastIndex(hostedZoneID, "/")
+	if idx > 0 {
+		return hostedZoneID[idx+1:]
+	}
+	return hostedZoneID
 }
 
 // HostedZoneIDPerRegionNLBMap maps HostedZoneIDs from known regions.
