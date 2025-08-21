@@ -1,11 +1,6 @@
 run:
   timeout: 10m
   go: "1.23"
-  skip-files:
-    - "zz_generated.*\\.go$"
-    - "_conversion\\.go$"
-    - "vendored_cluster_api\\.go$"
-    - "^internal/apis/topology/v1alpha1"
   allow-parallel-runners: true
 
 linters:
@@ -143,14 +138,13 @@ linters-settings:
       - pkg: sigs.k8s.io/cluster-api/exp/api/v1beta1
         alias: expv1
       # CAPI exp addons
-      - pkg: sigs.k8s.io/cluster-api/exp/addons/api/v1beta1
+      - pkg: sigs.k8s.io/cluster-api/api/addons/v1beta1
         alias: addonsv1
       # CAPI IPAM 
       - pkg: sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1
         alias: ipamv1
   nolintlint:
     allow-unused: false
-    allow-leading-space: false
     require-specific: true
   revive:
     rules:
@@ -196,6 +190,11 @@ issues:
   # We are disabling default golangci exclusions because we want to help reviewers to focus on reviewing the most relevant
   # changes in PRs and avoid nitpicking.
   exclude-use-default: false
+  exclude-files:
+    - "zz_generated.*\\.go$"
+    - "_conversion\\.go$"
+    - "vendored_cluster_api\\.go$"
+    - "^internal/apis/topology/v1alpha1"
   exclude-rules:
   # Specific exclude rules for deprecated items that are still part of the codebase. These
   # should be removed as the referenced deprecated item is removed from the project.
@@ -215,10 +214,6 @@ issues:
   - linters:
     - staticcheck
     text: "SA1019: \"sigs.k8s.io/cluster-api-provider-vsphere/apis/(v1alpha3|v1alpha4)\" is deprecated: This package will be removed in one of the next releases."
-  # Deprecations for Cluster API's predicates.ClusterUnpausedAndInfrastructureReady
-  - linters:
-    - staticcheck
-    text: "SA1019: predicates.ClusterUnpausedAndInfrastructureReady is deprecated: This predicate is deprecated and will be removed in a future version, use ClusterPausedTransitionsOrInfrastructureReady instead."
   - linters:
     - revive
     text: "exported: exported method .*\\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported"

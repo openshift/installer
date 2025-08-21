@@ -26,6 +26,7 @@ import (
 	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
 	ncpv1 "github.com/vmware-tanzu/vm-operator/external/ncp/api/v1alpha1"
 	"gopkg.in/fsnotify.v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -54,6 +55,7 @@ func New(ctx context.Context, opts Options) (Manager, error) {
 	// Ensure the default options are set.
 	opts.defaults()
 
+	_ = apiextensionsv1.AddToScheme(opts.Scheme)
 	_ = clientgoscheme.AddToScheme(opts.Scheme)
 	_ = clusterv1.AddToScheme(opts.Scheme)
 	_ = infrav1alpha3.AddToScheme(opts.Scheme)

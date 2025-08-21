@@ -39,12 +39,12 @@ const machineTemplateImmutableMsg = "VSphereMachineTemplate spec.template.spec f
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-vspheremachinetemplate,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachinetemplates,versions=v1beta1,name=validation.vspheremachinetemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 
-// VSphereMachineTemplateWebhook implements a validation and defaulting webhook for VSphereMachineTemplate.
-type VSphereMachineTemplateWebhook struct{}
+// VSphereMachineTemplate implements a validation webhook for VSphereMachineTemplate.
+type VSphereMachineTemplate struct{}
 
-var _ webhook.CustomValidator = &VSphereMachineTemplateWebhook{}
+var _ webhook.CustomValidator = &VSphereMachineTemplate{}
 
-func (webhook *VSphereMachineTemplateWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (webhook *VSphereMachineTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&infrav1.VSphereMachineTemplate{}).
 		WithValidator(webhook).
@@ -52,7 +52,7 @@ func (webhook *VSphereMachineTemplateWebhook) SetupWebhookWithManager(mgr ctrl.M
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachineTemplateWebhook) ValidateCreate(ctx context.Context, raw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachineTemplate) ValidateCreate(ctx context.Context, raw runtime.Object) (admission.Warnings, error) {
 	obj, ok := raw.(*infrav1.VSphereMachineTemplate)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineTemplate but got a %T", raw))
@@ -97,7 +97,7 @@ func (webhook *VSphereMachineTemplateWebhook) ValidateCreate(ctx context.Context
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachineTemplateWebhook) ValidateUpdate(ctx context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachineTemplate) ValidateUpdate(ctx context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
 	oldTyped, ok := oldRaw.(*infrav1.VSphereMachineTemplate)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineTemplate but got a %T", oldRaw))
@@ -126,7 +126,7 @@ func (webhook *VSphereMachineTemplateWebhook) ValidateUpdate(ctx context.Context
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachineTemplateWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachineTemplate) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 

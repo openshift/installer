@@ -22,6 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/conditions/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -30,6 +31,7 @@ type MachineContext interface {
 	String() string
 	Patch(ctx context.Context) error
 	GetVSphereMachine() VSphereMachine
+	GetReady() bool
 	GetObjectMeta() metav1.ObjectMeta
 	GetCluster() *clusterv1.Cluster
 	GetMachine() *clusterv1.Machine
@@ -40,4 +42,5 @@ type MachineContext interface {
 type VSphereMachine interface {
 	client.Object
 	conditions.Setter
+	v1beta2conditions.Setter
 }

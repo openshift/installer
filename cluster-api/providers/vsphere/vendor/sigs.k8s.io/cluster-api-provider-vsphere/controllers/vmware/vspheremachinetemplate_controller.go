@@ -74,6 +74,11 @@ func (r *vSphereMachineTemplateReconciler) Reconcile(ctx context.Context, req ct
 		return reconcile.Result{}, err
 	}
 
+	// If ClassName is not set, there is nothing to do.
+	if vSphereMachineTemplate.Spec.Template.Spec.ClassName == "" {
+		return reconcile.Result{}, nil
+	}
+
 	// Fetch the VirtualMachineClass
 	vmClass := &vmoprv1.VirtualMachineClass{}
 	if err := r.Client.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: vSphereMachineTemplate.Spec.Template.Spec.ClassName}, vmClass); err != nil {

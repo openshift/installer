@@ -24,19 +24,27 @@ import (
 // IPAddressSpec is the desired state of an IPAddress.
 type IPAddressSpec struct {
 	// claimRef is a reference to the claim this IPAddress was created for.
+	// +required
 	ClaimRef corev1.LocalObjectReference `json:"claimRef"`
 
 	// poolRef is a reference to the pool that this IPAddress was created from.
+	// +required
 	PoolRef corev1.TypedLocalObjectReference `json:"poolRef"`
 
 	// address is the IP address.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=39
 	Address string `json:"address"`
 
 	// prefix is the prefix of the address.
+	// +required
 	Prefix int `json:"prefix"`
 
 	// gateway is the network gateway of the network the address is from.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=39
 	Gateway string `json:"gateway,omitempty"`
 }
 
@@ -50,9 +58,14 @@ type IPAddressSpec struct {
 
 // IPAddress is the Schema for the ipaddress API.
 type IPAddress struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// spec is the desired state of IPAddress.
+	// +optional
 	Spec IPAddressSpec `json:"spec,omitempty"`
 }
 
@@ -61,8 +74,12 @@ type IPAddress struct {
 // IPAddressList is a list of IPAddress.
 type IPAddressList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
+	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []IPAddress `json:"items"`
+	// items is the list of IPAddresses.
+	Items []IPAddress `json:"items"`
 }
 
 func init() {

@@ -39,6 +39,9 @@ const (
 	//
 	// alpha: v0.3
 	// beta: v0.4
+	// GA: v1.10
+	//
+	// Deprecated: ClusterResourceSet feature is now GA and the corresponding feature flag will be removed in 1.12 release.
 	ClusterResourceSet featuregate.Feature = "ClusterResourceSet"
 
 	// ClusterTopology is a feature gate for the ClusterClass and managed topologies functionality.
@@ -68,6 +71,12 @@ const (
 	//
 	// beta: v1.9
 	MachineWaitForVolumeDetachConsiderVolumeAttachments featuregate.Feature = "MachineWaitForVolumeDetachConsiderVolumeAttachments"
+
+	// PriorityQueue is a feature gate that controls if the controller uses the controller-runtime PriorityQueue
+	// instead of the default queue implementation.
+	//
+	// alpha: v1.10
+	PriorityQueue featuregate.Feature = "PriorityQueue"
 )
 
 func init() {
@@ -78,10 +87,11 @@ func init() {
 // To add a new feature, define a key for it above and add it here.
 var defaultClusterAPIFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	// Every feature should be initiated here:
-	ClusterResourceSet:        {Default: true, PreRelease: featuregate.Beta},
+	ClusterResourceSet:        {Default: true, PreRelease: featuregate.GA},
 	MachinePool:               {Default: true, PreRelease: featuregate.Beta},
 	MachineSetPreflightChecks: {Default: true, PreRelease: featuregate.Beta},
 	MachineWaitForVolumeDetachConsiderVolumeAttachments: {Default: true, PreRelease: featuregate.Beta},
+	PriorityQueue:                  {Default: false, PreRelease: featuregate.Alpha},
 	ClusterTopology:                {Default: false, PreRelease: featuregate.Alpha},
 	KubeadmBootstrapFormatIgnition: {Default: false, PreRelease: featuregate.Alpha},
 	RuntimeSDK:                     {Default: false, PreRelease: featuregate.Alpha},

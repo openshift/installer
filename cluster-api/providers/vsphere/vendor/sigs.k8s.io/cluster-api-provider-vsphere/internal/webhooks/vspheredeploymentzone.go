@@ -32,12 +32,12 @@ import (
 
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-vspheredeploymentzone,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheredeploymentzones,versions=v1beta1,name=default.vspheredeploymentzone.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 
-// VSphereDeploymentZoneWebhook implements a validation and defaulting webhook for VSphereDeploymentZone.
-type VSphereDeploymentZoneWebhook struct{}
+// VSphereDeploymentZone implements a defaulting webhook for VSphereDeploymentZone.
+type VSphereDeploymentZone struct{}
 
-var _ webhook.CustomDefaulter = &VSphereDeploymentZoneWebhook{}
+var _ webhook.CustomDefaulter = &VSphereDeploymentZone{}
 
-func (webhook *VSphereDeploymentZoneWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (webhook *VSphereDeploymentZone) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&infrav1.VSphereDeploymentZone{}).
 		WithDefaulter(webhook, admission.DefaulterRemoveUnknownOrOmitableFields).
@@ -45,7 +45,7 @@ func (webhook *VSphereDeploymentZoneWebhook) SetupWebhookWithManager(mgr ctrl.Ma
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (webhook *VSphereDeploymentZoneWebhook) Default(_ context.Context, obj runtime.Object) error {
+func (webhook *VSphereDeploymentZone) Default(_ context.Context, obj runtime.Object) error {
 	typedObj, ok := obj.(*infrav1.VSphereDeploymentZone)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereDeploymentZone but got a %T", obj))

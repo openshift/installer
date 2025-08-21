@@ -18,11 +18,9 @@ limitations under the License.
 package vmware
 
 import (
-	"context"
 	"fmt"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
 
 	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
@@ -38,17 +36,4 @@ type ClusterContext struct {
 // String returns ClusterAPIVersion/ClusterNamespace/ClusterName.
 func (c *ClusterContext) String() string {
 	return fmt.Sprintf("%s %s/%s", c.VSphereCluster.GroupVersionKind(), c.VSphereCluster.Namespace, c.VSphereCluster.Name)
-}
-
-// Patch updates the object and its status on the API server.
-func (c *ClusterContext) Patch(ctx context.Context) error {
-	// always update the readyCondition.
-	conditions.SetSummary(c.VSphereCluster,
-		conditions.WithConditions(
-			vmwarev1.ResourcePolicyReadyCondition,
-			vmwarev1.ClusterNetworkReadyCondition,
-			vmwarev1.LoadBalancerReadyCondition,
-		),
-	)
-	return c.PatchHelper.Patch(ctx, c.VSphereCluster)
 }

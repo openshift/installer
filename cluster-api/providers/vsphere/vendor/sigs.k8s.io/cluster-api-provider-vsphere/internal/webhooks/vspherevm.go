@@ -36,13 +36,13 @@ import (
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-vspherevm,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspherevms,versions=v1beta1,name=validation.vspherevm.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-vspherevm,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspherevms,versions=v1beta1,name=default.vspherevm.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 
-// VSphereVMWebhook implements a validation and defaulting webhook for VSphereVM.
-type VSphereVMWebhook struct{}
+// VSphereVM implements a validation and defaulting webhook for VSphereVM.
+type VSphereVM struct{}
 
-var _ webhook.CustomValidator = &VSphereVMWebhook{}
-var _ webhook.CustomDefaulter = &VSphereVMWebhook{}
+var _ webhook.CustomValidator = &VSphereVM{}
+var _ webhook.CustomDefaulter = &VSphereVM{}
 
-func (webhook *VSphereVMWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (webhook *VSphereVM) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&infrav1.VSphereVM{}).
 		WithValidator(webhook).
@@ -51,7 +51,7 @@ func (webhook *VSphereVMWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (webhook *VSphereVMWebhook) Default(_ context.Context, obj runtime.Object) error {
+func (webhook *VSphereVM) Default(_ context.Context, obj runtime.Object) error {
 	typedObj, ok := obj.(*infrav1.VSphereVM)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereVM but got a %T", obj))
@@ -64,7 +64,7 @@ func (webhook *VSphereVMWebhook) Default(_ context.Context, obj runtime.Object) 
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereVMWebhook) ValidateCreate(_ context.Context, raw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereVM) ValidateCreate(_ context.Context, raw runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 	objValue, ok := raw.(*infrav1.VSphereVM)
 	if !ok {
@@ -99,7 +99,7 @@ func (webhook *VSphereVMWebhook) ValidateCreate(_ context.Context, raw runtime.O
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereVMWebhook) ValidateUpdate(_ context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereVM) ValidateUpdate(_ context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	oldTyped, ok := oldRaw.(*infrav1.VSphereVM)
@@ -160,11 +160,11 @@ func (webhook *VSphereVMWebhook) ValidateUpdate(_ context.Context, oldRaw runtim
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereVMWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereVM) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
-func (webhook *VSphereVMWebhook) deleteSpecKeys(spec map[string]interface{}, keys []string) {
+func (webhook *VSphereVM) deleteSpecKeys(spec map[string]interface{}, keys []string) {
 	if len(spec) == 0 || len(keys) == 0 {
 		return
 	}

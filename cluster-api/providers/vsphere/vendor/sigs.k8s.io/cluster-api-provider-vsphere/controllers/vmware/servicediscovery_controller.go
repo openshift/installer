@@ -41,6 +41,7 @@ import (
 	clusterutilv1 "sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/conditions/v1beta2"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -61,9 +62,7 @@ import (
 const (
 	clusterNotReadyRequeueTime = time.Minute * 2
 
-	supervisorLoadBalancerSvcNamespace = "kube-system"
-	supervisorLoadBalancerSvcName      = "kube-apiserver-lb-svc"
-	supervisorAPIServerPort            = 6443
+	supervisorAPIServerPort = 6443
 
 	supervisorHeadlessSvcNamespace = "default"
 	supervisorHeadlessSvcName      = "supervisor"
@@ -173,6 +172,7 @@ func (r *serviceDiscoveryReconciler) Reconcile(ctx context.Context, req reconcil
 	log = log.WithValues("Cluster", klog.KObj(cluster))
 	ctx = ctrl.LoggerInto(ctx, log)
 
+	// In future we might consider to surface a separate paused condition for this controller.
 	if annotations.IsPaused(cluster, vsphereCluster) {
 		log.Info("Reconciliation is paused for this object")
 		return ctrl.Result{}, nil
@@ -194,7 +194,7 @@ func (r *serviceDiscoveryReconciler) Reconcile(ctx context.Context, req reconcil
 	// Always issue a patch when exiting this function so changes to the
 	// resource are patched back to the API server.
 	defer func() {
-		if err := clusterContext.Patch(ctx); err != nil {
+		if err := r.patch(ctx, clusterContext); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 	}()
@@ -223,10 +223,28 @@ func (r *serviceDiscoveryReconciler) Reconcile(ctx context.Context, req reconcil
 	})
 }
 
+func (r *serviceDiscoveryReconciler) patch(ctx context.Context, clusterCtx *vmwarecontext.ClusterContext) error {
+	// NOTE: this controller only owns the ServiceDiscoveryReady condition on the VSphereCluster object.
+	return clusterCtx.PatchHelper.Patch(ctx, clusterCtx.VSphereCluster,
+		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+			vmwarev1.ServiceDiscoveryReadyCondition,
+		}},
+		patch.WithOwnedV1Beta2Conditions{Conditions: []string{
+			vmwarev1.VSphereClusterServiceDiscoveryReadyV1Beta2Condition,
+		}},
+	)
+}
+
 func (r *serviceDiscoveryReconciler) reconcileNormal(ctx context.Context, guestClusterCtx *vmwarecontext.GuestClusterContext) error {
 	if err := r.reconcileSupervisorHeadlessService(ctx, guestClusterCtx); err != nil {
 		conditions.MarkFalse(guestClusterCtx.VSphereCluster, vmwarev1.ServiceDiscoveryReadyCondition, vmwarev1.SupervisorHeadlessServiceSetupFailedReason,
 			clusterv1.ConditionSeverityWarning, err.Error())
+		v1beta2conditions.Set(guestClusterCtx.VSphereCluster, metav1.Condition{
+			Type:    vmwarev1.VSphereClusterServiceDiscoveryReadyV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  vmwarev1.VSphereClusterServiceDiscoveryNotReadyV1Beta2Reason,
+			Message: err.Error(),
+		})
 		return errors.Wrapf(err, "failed to reconcile supervisor headless Service")
 	}
 
@@ -265,6 +283,12 @@ func (r *serviceDiscoveryReconciler) reconcileSupervisorHeadlessService(ctx cont
 		// There is no need to return an error to keep re-trying.
 		conditions.MarkFalse(guestClusterCtx.VSphereCluster, vmwarev1.ServiceDiscoveryReadyCondition, vmwarev1.SupervisorHeadlessServiceSetupFailedReason,
 			clusterv1.ConditionSeverityWarning, err.Error())
+		v1beta2conditions.Set(guestClusterCtx.VSphereCluster, metav1.Condition{
+			Type:    vmwarev1.VSphereClusterServiceDiscoveryReadyV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  vmwarev1.VSphereClusterServiceDiscoveryNotReadyV1Beta2Reason,
+			Message: err.Error(),
+		})
 		return nil
 	}
 
@@ -314,6 +338,11 @@ func (r *serviceDiscoveryReconciler) reconcileSupervisorHeadlessService(ctx cont
 	}
 
 	conditions.MarkTrue(guestClusterCtx.VSphereCluster, vmwarev1.ServiceDiscoveryReadyCondition)
+	v1beta2conditions.Set(guestClusterCtx.VSphereCluster, metav1.Condition{
+		Type:   vmwarev1.VSphereClusterServiceDiscoveryReadyV1Beta2Condition,
+		Status: metav1.ConditionTrue,
+		Reason: vmwarev1.VSphereClusterServiceDiscoveryReadyV1Beta2Reason,
+	})
 	return nil
 }
 

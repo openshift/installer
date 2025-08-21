@@ -28,6 +28,92 @@ const (
 	DeploymentZoneFinalizer = "vspheredeploymentzone.infrastructure.cluster.x-k8s.io"
 )
 
+// VSphereDeploymentZone's Ready condition and corresponding reasons that will be used in v1Beta2 API version.
+const (
+	// VSphereDeploymentZoneReadyV1Beta2Condition is true if the VSphereDeploymentZone's deletionTimestamp is not set, VSphereDeploymentZone's
+	// VCenterAvailable, PlacementConstraintReady and FailureDomainValidated conditions are true.
+	VSphereDeploymentZoneReadyV1Beta2Condition = clusterv1.ReadyV1Beta2Condition
+
+	// VSphereDeploymentZoneReadyV1Beta2Reason surfaces when the VSphereDeploymentZone readiness criteria is met.
+	VSphereDeploymentZoneReadyV1Beta2Reason = clusterv1.ReadyV1Beta2Reason
+
+	// VSphereDeploymentZoneNotReadyV1Beta2Reason surfaces when the VSphereDeploymentZone readiness criteria is not met.
+	VSphereDeploymentZoneNotReadyV1Beta2Reason = clusterv1.NotReadyV1Beta2Reason
+
+	// VSphereDeploymentZoneReadyUnknownV1Beta2Reason surfaces when at least one VSphereDeploymentZone readiness criteria is unknown
+	// and no VSphereDeploymentZone readiness criteria is not met.
+	VSphereDeploymentZoneReadyUnknownV1Beta2Reason = clusterv1.ReadyUnknownV1Beta2Reason
+)
+
+// VSphereDeploymentZone's VCenterAvailable condition and corresponding reasons that will be used in v1Beta2 API version.
+const (
+	// VSphereDeploymentZoneVCenterAvailableV1Beta2Condition documents the status of vCenter for a VSphereDeploymentZone.
+	VSphereDeploymentZoneVCenterAvailableV1Beta2Condition = "VCenterAvailable"
+
+	// VSphereDeploymentZoneVCenterAvailableV1Beta2Reason surfaces when the vCenter for a VSphereDeploymentZone is available.
+	VSphereDeploymentZoneVCenterAvailableV1Beta2Reason = clusterv1.AvailableV1Beta2Reason
+
+	// VSphereDeploymentZoneVCenterUnreachableV1Beta2Reason surfaces when the vCenter for a VSphereDeploymentZone is unreachable.
+	VSphereDeploymentZoneVCenterUnreachableV1Beta2Reason = "VCenterUnreachable"
+
+	// VSphereDeploymentZoneVCenterAvailableDeletingV1Beta2Reason surfaces when the vCenter for a VSphereDeploymentZone is being deleted.
+	VSphereDeploymentZoneVCenterAvailableDeletingV1Beta2Reason = clusterv1.DeletingV1Beta2Reason
+)
+
+// VSphereDeploymentZone's PlacementConstraintReady condition and corresponding reasons that will be used in v1Beta2 API version.
+const (
+	// VSphereDeploymentZonePlacementConstraintReadyV1Beta2Condition documents the placement constraint status for a VSphereDeploymentZone.
+	VSphereDeploymentZonePlacementConstraintReadyV1Beta2Condition = "PlacementConstraintReady"
+
+	// VSphereDeploymentZonePlacementConstraintReadyV1Beta2Reason surfaces when the placement status for a VSphereDeploymentZone is ready.
+	VSphereDeploymentZonePlacementConstraintReadyV1Beta2Reason = clusterv1.ReadyV1Beta2Reason
+
+	// VSphereDeploymentZonePlacementConstraintResourcePoolNotFoundV1Beta2Reason surfaces when the resource pool for a VSphereDeploymentZone is not found.
+	VSphereDeploymentZonePlacementConstraintResourcePoolNotFoundV1Beta2Reason = "ResourcePoolNotFound"
+
+	// VSphereDeploymentZonePlacementConstraintFolderNotFoundV1Beta2Reason surfaces when the folder for a VSphereDeploymentZone is not found.
+	VSphereDeploymentZonePlacementConstraintFolderNotFoundV1Beta2Reason = "FolderNotFound"
+
+	// VSphereDeploymentZonePlacementConstraintDeletingV1Beta2Reason surfaces when the VSphereDeploymentZone is being deleted.
+	VSphereDeploymentZonePlacementConstraintDeletingV1Beta2Reason = clusterv1.DeletingV1Beta2Reason
+)
+
+// VSphereDeploymentZone's FailureDomainValidated condition and corresponding reasons that will be used in v1Beta2 API version.
+const (
+	// VSphereDeploymentZoneFailureDomainValidatedV1Beta2Condition documents failure domain validation status for a VSphereDeploymentZone.
+	VSphereDeploymentZoneFailureDomainValidatedV1Beta2Condition = "FailureDomainValidated"
+
+	// VSphereDeploymentZoneFailureDomainValidatedV1Beta2Reason surfaces when the failure domain for a VSphereDeploymentZone is validated.
+	VSphereDeploymentZoneFailureDomainValidatedV1Beta2Reason = "Validated"
+
+	// VSphereDeploymentZoneFailureDomainValidationFailedV1Beta2Reason surfaces when the failure domain's validation for a VSphereDeploymentZone failed.
+	VSphereDeploymentZoneFailureDomainValidationFailedV1Beta2Reason = "ValidationFailed"
+
+	// VSphereDeploymentZoneFailureDomainRegionMisconfiguredV1Beta2Reason surfaces when the failure domain's region for a VSphereDeploymentZone is misconfigured.
+	VSphereDeploymentZoneFailureDomainRegionMisconfiguredV1Beta2Reason = "RegionMisconfigured"
+
+	// VSphereDeploymentZoneFailureDomainZoneMisconfiguredV1Beta2Reason surfaces when the failure domain's zone for a VSphereDeploymentZone is misconfigured.
+	VSphereDeploymentZoneFailureDomainZoneMisconfiguredV1Beta2Reason = "ZoneMisconfigured"
+
+	// VSphereDeploymentZoneFailureDomainHostsMisconfiguredV1Beta2Reason surfaces when the failure domain's hosts for a VSphereDeploymentZone are misconfigured.
+	VSphereDeploymentZoneFailureDomainHostsMisconfiguredV1Beta2Reason = "HostsMisconfigured"
+
+	// VSphereDeploymentZoneFailureDomainDatastoreNotFoundV1Beta2Reason surfaces when the failure domain's datastore for a VSphereDeploymentZone is not found.
+	VSphereDeploymentZoneFailureDomainDatastoreNotFoundV1Beta2Reason = "DatastoreNotFound"
+
+	// VSphereDeploymentZoneFailureDomainNetworkNotFoundV1Beta2Reason surfaces when the failure domain's network for a VSphereDeploymentZone is not found.
+	VSphereDeploymentZoneFailureDomainNetworkNotFoundV1Beta2Reason = "NetworkNotFound"
+
+	// VSphereDeploymentZoneFailureDomainComputeClusterNotFoundV1Beta2Reason surfaces when the failure domain's compute cluster for a VSphereDeploymentZone is not found.
+	VSphereDeploymentZoneFailureDomainComputeClusterNotFoundV1Beta2Reason = "ComputeClusterNotFound"
+
+	// VSphereDeploymentZoneFailureDomainResourcePoolNotFoundV1Beta2Reason surfaces when the failure domain's resource pool for a VSphereDeploymentZone is not found.
+	VSphereDeploymentZoneFailureDomainResourcePoolNotFoundV1Beta2Reason = "ResourcePoolNotFound"
+
+	// VSphereDeploymentZoneFailureDomainDeletingV1Beta2Reason surfaces when the VSphereDeploymentZone is being deleted.
+	VSphereDeploymentZoneFailureDomainDeletingV1Beta2Reason = clusterv1.DeletingV1Beta2Reason
+)
+
 // VSphereDeploymentZoneSpec defines the desired state of VSphereDeploymentZone.
 type VSphereDeploymentZoneSpec struct {
 
@@ -83,6 +169,22 @@ type VSphereDeploymentZoneStatus struct {
 	// Conditions defines current service state of the VSphereMachine.
 	// +optional
 	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+
+	// v1beta2 groups all the fields that will be added or modified in VSphereDeploymentZone's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *VSphereDeploymentZoneV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// VSphereDeploymentZoneV1Beta2Status groups all the fields that will be added or modified in VSphereDeploymentZoneStatus with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type VSphereDeploymentZoneV1Beta2Status struct {
+	// conditions represents the observations of a VSphereDeploymentZone's current state.
+	// Known condition types are Ready, VCenterAvailable, PlacementConstraintReady, FailureDomainValidated and Paused.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -107,6 +209,22 @@ func (z *VSphereDeploymentZone) GetConditions() clusterv1.Conditions {
 // SetConditions sets the conditions on the VSphereDeploymentZone.
 func (z *VSphereDeploymentZone) SetConditions(conditions clusterv1.Conditions) {
 	z.Status.Conditions = conditions
+}
+
+// GetV1Beta2Conditions returns the set of conditions for this object.
+func (z *VSphereDeploymentZone) GetV1Beta2Conditions() []metav1.Condition {
+	if z.Status.V1Beta2 == nil {
+		return nil
+	}
+	return z.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for an API object.
+func (z *VSphereDeploymentZone) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if z.Status.V1Beta2 == nil {
+		z.Status.V1Beta2 = &VSphereDeploymentZoneV1Beta2Status{}
+	}
+	z.Status.V1Beta2.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true

@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/conditions/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -57,6 +58,12 @@ func (np *netopNetworkProvider) SupportsVMReadinessProbe() bool {
 // ProvisionClusterNetwork marks the ClusterNetworkReadyCondition true.
 func (np *netopNetworkProvider) ProvisionClusterNetwork(_ context.Context, clusterCtx *vmware.ClusterContext) error {
 	conditions.MarkTrue(clusterCtx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition)
+	v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+		Type:   vmwarev1.VSphereClusterNetworkReadyV1Beta2Condition,
+		Status: metav1.ConditionTrue,
+		Reason: vmwarev1.VSphereClusterNetworkReadyV1Beta2Reason,
+	})
+
 	return nil
 }
 

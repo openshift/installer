@@ -42,6 +42,7 @@ import (
 	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
+	"sigs.k8s.io/cluster-api/controllers/crdmigrator"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/cluster-api/util/apiwarnings"
 	capiflags "sigs.k8s.io/cluster-api/util/flags"
@@ -58,12 +59,12 @@ import (
 	"sigs.k8s.io/cluster-api-provider-vsphere/controllers"
 	"sigs.k8s.io/cluster-api-provider-vsphere/controllers/vmware"
 	"sigs.k8s.io/cluster-api-provider-vsphere/feature"
-	"sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks"
-	vmwarewebhooks "sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks/vmware"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/manager"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/version"
+	"sigs.k8s.io/cluster-api-provider-vsphere/webhooks"
+	vmwarewebhooks "sigs.k8s.io/cluster-api-provider-vsphere/webhooks/vmware"
 )
 
 var (
@@ -93,6 +94,7 @@ var (
 	vSphereVMConcurrency              int
 	vSphereClusterIdentityConcurrency int
 	vSphereDeploymentZoneConcurrency  int
+	skipCRDMigrationPhases            []string
 
 	managerOptions = capiflags.ManagerOptions{}
 
@@ -187,6 +189,9 @@ func InitFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&enableContentionProfiling, "contention-profiling", false,
 		"Enable block profiling.")
 
+	fs.StringSliceVar(&skipCRDMigrationPhases, "skip-crd-migration-phases", []string{},
+		"List of CRD migration phases to skip. Valid values are: StorageVersionMigration, CleanupManagedFields.")
+
 	fs.DurationVar(&syncPeriod, "sync-period", defaultSyncPeriod,
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
 
@@ -225,8 +230,18 @@ func InitFlags(fs *pflag.FlagSet) {
 // Add RBAC for the authorized diagnostics endpoint.
 // +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
 // +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
+// ADD CRD RBAC for CRD Migrator.
+// +kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
+// govmomi
+// +kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions;customresourcedefinitions/status,verbs=update;patch,resourceNames=vsphereclusters.infrastructure.cluster.x-k8s.io;vsphereclustertemplates.infrastructure.cluster.x-k8s.io;vspheremachines.infrastructure.cluster.x-k8s.io;vspheremachinetemplates.infrastructure.cluster.x-k8s.io;vspherevms.infrastructure.cluster.x-k8s.io;vsphereclusteridentities.infrastructure.cluster.x-k8s.io;vspheredeploymentzones.infrastructure.cluster.x-k8s.io;vspherefailuredomains.infrastructure.cluster.x-k8s.io
+// supervisor
+// +kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions;customresourcedefinitions/status,verbs=update;patch,resourceNames=vsphereclusters.vmware.infrastructure.cluster.x-k8s.io;vsphereclustertemplates.vmware.infrastructure.cluster.x-k8s.io;vspheremachines.vmware.infrastructure.cluster.x-k8s.io;vspheremachinetemplates.vmware.infrastructure.cluster.x-k8s.io;providerserviceaccounts.vmware.infrastructure.cluster.x-k8s.io
+// govmomi CRs
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=vspheremachinetemplates;vsphereclustertemplates,verbs=get;list;watch;patch;update
 
 func main() {
+	setupLog.Info(fmt.Sprintf("Version: %+v", version.Get().String()))
+
 	InitFlags(pflag.CommandLine)
 	pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -317,6 +332,43 @@ func main() {
 			setupLog.Info(fmt.Sprintf("CRD for %s not loaded, skipping.", supervisorGVR.String()))
 		}
 
+		// Note: The kubebuilder RBAC markers above has to be kept in sync
+		// with the CRDs that should be migrated by this provider.
+		crdMigratorConfig := map[client.Object]crdmigrator.ByObjectConfig{}
+		if isGovmomiCRDLoaded {
+			crdMigratorConfig[&infrav1.VSphereCluster{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+			crdMigratorConfig[&infrav1.VSphereClusterTemplate{}] = crdmigrator.ByObjectConfig{UseCache: false}
+			crdMigratorConfig[&infrav1.VSphereMachine{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+			crdMigratorConfig[&infrav1.VSphereMachineTemplate{}] = crdmigrator.ByObjectConfig{UseCache: true}
+			crdMigratorConfig[&infrav1.VSphereVM{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+			crdMigratorConfig[&infrav1.VSphereClusterIdentity{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+			crdMigratorConfig[&infrav1.VSphereDeploymentZone{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+			crdMigratorConfig[&infrav1.VSphereFailureDomain{}] = crdmigrator.ByObjectConfig{UseCache: true}
+		}
+		if isSupervisorCRDLoaded {
+			crdMigratorConfig[&vmwarev1.VSphereCluster{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+			crdMigratorConfig[&vmwarev1.VSphereClusterTemplate{}] = crdmigrator.ByObjectConfig{UseCache: false}
+			crdMigratorConfig[&vmwarev1.VSphereMachine{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+			crdMigratorConfig[&vmwarev1.VSphereMachineTemplate{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+			crdMigratorConfig[&vmwarev1.ProviderServiceAccount{}] = crdmigrator.ByObjectConfig{UseCache: true}
+		}
+
+		crdMigratorSkipPhases := []crdmigrator.Phase{}
+		for _, p := range skipCRDMigrationPhases {
+			crdMigratorSkipPhases = append(crdMigratorSkipPhases, crdmigrator.Phase(p))
+		}
+		if err := (&crdmigrator.CRDMigrator{
+			Client:                 mgr.GetClient(),
+			APIReader:              mgr.GetAPIReader(),
+			SkipCRDMigrationPhases: crdMigratorSkipPhases,
+			Config:                 crdMigratorConfig,
+			// The CRDMigrator is run with only concurrency 1 to ensure we don't overwhelm the apiserver by patching a
+			// lot of CRs concurrently.
+		}).SetupWithManager(ctx, mgr, concurrency(1)); err != nil {
+			setupLog.Error(err, "Unable to create controller", "controller", "CRDMigrator")
+			os.Exit(1)
+		}
+
 		return nil
 	}
 
@@ -363,27 +415,27 @@ func main() {
 }
 
 func setupVAPIControllers(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager, clusterCache clustercache.ClusterCache) error {
-	if err := (&webhooks.VSphereClusterTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := (&webhooks.VSphereMachineWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereMachine{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := (&webhooks.VSphereMachineTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := (&webhooks.VSphereVMWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereVM{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := (&webhooks.VSphereDeploymentZoneWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereDeploymentZone{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := (&webhooks.VSphereFailureDomainWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereFailureDomain{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
@@ -404,10 +456,10 @@ func setupVAPIControllers(ctx context.Context, controllerCtx *capvcontext.Contro
 }
 
 func setupSupervisorControllers(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager, clusterCache clustercache.ClusterCache) error {
-	if err := (&vmwarewebhooks.VSphereMachineTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&vmwarewebhooks.VSphereMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
-	if err := (&vmwarewebhooks.VSphereMachineWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&vmwarewebhooks.VSphereMachine{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 	if err := controllers.AddClusterControllerToManager(ctx, controllerCtx, mgr, true, concurrency(vSphereClusterConcurrency)); err != nil {

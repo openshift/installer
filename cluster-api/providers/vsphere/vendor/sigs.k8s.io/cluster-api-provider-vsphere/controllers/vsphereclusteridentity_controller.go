@@ -29,9 +29,11 @@ import (
 	"k8s.io/klog/v2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	clusterutilv1 "sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/conditions/v1beta2"
+	"sigs.k8s.io/cluster-api/util/finalizers"
 	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/cluster-api/util/paused"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -61,7 +63,7 @@ func AddVsphereClusterIdentityControllerToManager(ctx context.Context, controlle
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1.VSphereClusterIdentity{}).
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue)).
 		Complete(reconciler)
 }
 
@@ -72,8 +74,6 @@ type clusterIdentityReconciler struct {
 }
 
 func (r clusterIdentityReconciler) Reconcile(ctx context.Context, req reconcile.Request) (_ reconcile.Result, reterr error) {
-	log := ctrl.LoggerFrom(ctx)
-
 	identity := &infrav1.VSphereClusterIdentity{}
 	if err := r.Client.Get(ctx, req.NamespacedName, identity); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -83,9 +83,9 @@ func (r clusterIdentityReconciler) Reconcile(ctx context.Context, req reconcile.
 		return reconcile.Result{}, err
 	}
 
-	if annotations.HasPaused(identity) {
-		log.Info("Reconciliation is paused for this object")
-		return reconcile.Result{}, nil
+	// Add finalizer first if not set to avoid the race condition between init and delete.
+	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, identity, infrav1.VSphereClusterIdentityFinalizer); err != nil || finalizerAdded {
+		return ctrl.Result{}, err
 	}
 
 	// Create the patch helper.
@@ -94,22 +94,23 @@ func (r clusterIdentityReconciler) Reconcile(ctx context.Context, req reconcile.
 		return reconcile.Result{}, err
 	}
 
+	if isPaused, requeue, err := paused.EnsurePausedCondition(ctx, r.Client, nil, identity); err != nil || isPaused || requeue {
+		return ctrl.Result{}, err
+	}
+
 	defer func() {
 		conditions.SetSummary(identity, conditions.WithConditions(infrav1.CredentialsAvailableCondidtion))
 
-		if err := patchHelper.Patch(ctx, identity); err != nil {
+		if err := patchHelper.Patch(ctx, identity, patch.WithOwnedV1Beta2Conditions{Conditions: []string{
+			clusterv1.PausedV1Beta2Condition,
+			infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+		}}); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 	}()
 
 	if !identity.DeletionTimestamp.IsZero() {
 		return ctrl.Result{}, r.reconcileDelete(ctx, identity)
-	}
-
-	// Add a finalizer and requeue to ensure that the secret is deleted when the identity is deleted.
-	if !ctrlutil.ContainsFinalizer(identity, infrav1.VSphereClusterIdentityFinalizer) {
-		ctrlutil.AddFinalizer(identity, infrav1.VSphereClusterIdentityFinalizer)
-		return reconcile.Result{}, nil
 	}
 
 	// fetch secret
@@ -120,12 +121,24 @@ func (r clusterIdentityReconciler) Reconcile(ctx context.Context, req reconcile.
 	}
 	if err := r.Client.Get(ctx, secretKey, secret); err != nil {
 		conditions.MarkFalse(identity, infrav1.CredentialsAvailableCondidtion, infrav1.SecretNotAvailableReason, clusterv1.ConditionSeverityWarning, err.Error())
+		v1beta2conditions.Set(identity, metav1.Condition{
+			Type:    infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereClusterIdentitySecretNotAvailableV1Beta2Reason,
+			Message: err.Error(),
+		})
 		return reconcile.Result{}, errors.Wrapf(err, "failed to get Secret %s", klog.KRef(secretKey.Namespace, secretKey.Name))
 	}
 
 	// If this secret is owned by a different VSphereClusterIdentity or a VSphereCluster, mark the identity as not ready and return an error.
 	if !clusterutilv1.IsOwnedByObject(secret, identity) && pkgidentity.IsOwnedByIdentityOrCluster(secret.GetOwnerReferences()) {
 		conditions.MarkFalse(identity, infrav1.CredentialsAvailableCondidtion, infrav1.SecretAlreadyInUseReason, clusterv1.ConditionSeverityError, "secret being used by another Cluster/VSphereIdentity")
+		v1beta2conditions.Set(identity, metav1.Condition{
+			Type:    infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereClusterIdentitySecretAlreadyInUseV1Beta2Reason,
+			Message: "secret being used by another Cluster/VSphereIdentity",
+		})
 		identity.Status.Ready = false
 		return reconcile.Result{}, errors.New("secret being used by another Cluster/VSphereIdentity")
 	}
@@ -146,10 +159,22 @@ func (r clusterIdentityReconciler) Reconcile(ctx context.Context, req reconcile.
 	err = r.Client.Update(ctx, secret)
 	if err != nil {
 		conditions.MarkFalse(identity, infrav1.CredentialsAvailableCondidtion, infrav1.SecretOwnerReferenceFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
+		v1beta2conditions.Set(identity, metav1.Condition{
+			Type:    infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereClusterIdentitySettingSecretOwnerReferenceFailedV1Beta2Reason,
+			Message: err.Error(),
+		})
 		return reconcile.Result{}, err
 	}
 
 	conditions.MarkTrue(identity, infrav1.CredentialsAvailableCondidtion)
+	v1beta2conditions.Set(identity, metav1.Condition{
+		Type:   infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+		Status: metav1.ConditionTrue,
+		Reason: infrav1.VSphereClusterIdentityAvailableV1Beta2Reason,
+	})
+
 	identity.Status.Ready = true
 	return reconcile.Result{}, nil
 }
@@ -161,6 +186,13 @@ func (r clusterIdentityReconciler) reconcileDelete(ctx context.Context, identity
 		Namespace: r.ControllerManagerCtx.Namespace,
 		Name:      identity.Spec.SecretName,
 	}
+
+	v1beta2conditions.Set(identity, metav1.Condition{
+		Type:   infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+		Status: metav1.ConditionFalse,
+		Reason: infrav1.VSphereClusterIdentityDeletingV1Beta2Reason,
+	})
+
 	err := r.Client.Get(ctx, secretKey, secret)
 	if err != nil {
 		if apierrors.IsNotFound(err) {

@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"cmp"
 	"fmt"
 	"net"
 	"strings"
@@ -465,7 +466,7 @@ type ClusterSpec struct {
 	// +optional
 	Paused bool `json:"paused,omitempty"`
 
-	// Cluster network configuration.
+	// clusterNetwork represents the cluster network configuration.
 	// +optional
 	ClusterNetwork *ClusterNetwork `json:"clusterNetwork,omitempty"`
 
@@ -483,7 +484,7 @@ type ClusterSpec struct {
 	// +optional
 	InfrastructureRef *corev1.ObjectReference `json:"infrastructureRef,omitempty"`
 
-	// This encapsulates the topology for the cluster.
+	// topology encapsulates the topology for the cluster.
 	// NOTE: It is required to enable the ClusterTopology
 	// feature gate flag to activate managed topologies support;
 	// this feature is highly experimental, and parts of it might still be not implemented.
@@ -491,6 +492,9 @@ type ClusterSpec struct {
 	Topology *Topology `json:"topology,omitempty"`
 
 	// availabilityGates specifies additional conditions to include when evaluating Cluster Available condition.
+	//
+	// If this field is not defined and the Cluster implements a managed topology, availabilityGates
+	// from the corresponding ClusterClass will be used, if any.
 	//
 	// NOTE: this field is considered only for computing v1beta2 conditions.
 	// +optional
@@ -500,24 +504,61 @@ type ClusterSpec struct {
 	AvailabilityGates []ClusterAvailabilityGate `json:"availabilityGates,omitempty"`
 }
 
+// ConditionPolarity defines the polarity for a metav1.Condition.
+type ConditionPolarity string
+
+const (
+	// PositivePolarityCondition describe a condition with positive polarity, a condition
+	// where the normal state is True. e.g. NetworkReady.
+	PositivePolarityCondition ConditionPolarity = "Positive"
+
+	// NegativePolarityCondition describe a condition with negative polarity, a condition
+	// where the normal state is False. e.g. MemoryPressure.
+	NegativePolarityCondition ConditionPolarity = "Negative"
+)
+
 // ClusterAvailabilityGate contains the type of a Cluster condition to be used as availability gate.
 type ClusterAvailabilityGate struct {
-	// conditionType refers to a positive polarity condition (status true means good) with matching type in the Cluster's condition list.
+	// conditionType refers to a condition with matching type in the Cluster's condition list.
 	// If the conditions doesn't exist, it will be treated as unknown.
 	// Note: Both Cluster API conditions or conditions added by 3rd party controllers can be used as availability gates.
 	// +required
 	// +kubebuilder:validation:Pattern=`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$`
-	// +kubebuilder:validation:MaxLength=316
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=316
 	ConditionType string `json:"conditionType"`
+
+	// polarity of the conditionType specified in this availabilityGate.
+	// Valid values are Positive, Negative and omitted.
+	// When omitted, the default behaviour will be Positive.
+	// A positive polarity means that the condition should report a true status under normal conditions.
+	// A negative polarity means that the condition should report a false status under normal conditions.
+	// +kubebuilder:validation:Enum=Positive;Negative
+	// +optional
+	Polarity ConditionPolarity `json:"polarity,omitempty"`
 }
 
 // Topology encapsulates the information of the managed resources.
 type Topology struct {
-	// The name of the ClusterClass object to create the topology.
+	// class is the name of the ClusterClass object to create the topology.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	Class string `json:"class"`
 
-	// The Kubernetes version of the cluster.
+	// classNamespace is the namespace of the ClusterClass object to create the topology.
+	// If the namespace is empty or not set, it is defaulted to the namespace of the cluster object.
+	// Value must follow the DNS1123Subdomain syntax.
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9](?:[-a-z0-9]*[a-z0-9])?)*$`
+	ClassNamespace string `json:"classNamespace,omitempty"`
+
+	// version is the Kubernetes version of the cluster.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Version string `json:"version"`
 
 	// rolloutAfter performs a rollout of the entire cluster one component at a time,
@@ -543,6 +584,7 @@ type Topology struct {
 	// +optional
 	// +listType=map
 	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=1000
 	Variables []ClusterVariable `json:"variables,omitempty"`
 }
 
@@ -584,6 +626,22 @@ type ControlPlaneTopology struct {
 	// +optional
 	NodeDeletionTimeout *metav1.Duration `json:"nodeDeletionTimeout,omitempty"`
 
+	// readinessGates specifies additional conditions to include when evaluating Machine Ready condition.
+	//
+	// This field can be used e.g. to instruct the machine controller to include in the computation for Machine's ready
+	// computation a condition, managed by an external controllers, reporting the status of special software/hardware installed on the Machine.
+	//
+	// If this field is not defined, readinessGates from the corresponding ControlPlaneClass will be used, if any.
+	//
+	// NOTE: This field is considered only for computing v1beta2 conditions.
+	// NOTE: Specific control plane provider implementations might automatically extend the list of readinessGates;
+	// e.g. the kubeadm control provider adds ReadinessGates for the APIServerPodHealthy, SchedulerPodHealthy conditions, etc.
+	// +optional
+	// +listType=map
+	// +listMapKey=conditionType
+	// +kubebuilder:validation:MaxItems=32
+	ReadinessGates []MachineReadinessGate `json:"readinessGates,omitempty"`
+
 	// variables can be used to customize the ControlPlane through patches.
 	// +optional
 	Variables *ControlPlaneVariables `json:"variables,omitempty"`
@@ -595,12 +653,14 @@ type WorkersTopology struct {
 	// +optional
 	// +listType=map
 	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=2000
 	MachineDeployments []MachineDeploymentTopology `json:"machineDeployments,omitempty"`
 
 	// machinePools is a list of machine pools in the cluster.
 	// +optional
 	// +listType=map
 	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=2000
 	MachinePools []MachinePoolTopology `json:"machinePools,omitempty"`
 }
 
@@ -615,17 +675,25 @@ type MachineDeploymentTopology struct {
 	// class is the name of the MachineDeploymentClass used to create the set of worker nodes.
 	// This should match one of the deployment classes defined in the ClusterClass object
 	// mentioned in the `Cluster.Spec.Class` field.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Class string `json:"class"`
 
 	// name is the unique identifier for this MachineDeploymentTopology.
 	// The value is used with other unique identifiers to create a MachineDeployment's Name
 	// (e.g. cluster's name, etc). In case the name is greater than the allowed maximum length,
 	// the values are hashed together.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
 	Name string `json:"name"`
 
 	// failureDomain is the failure domain the machines will be created in.
 	// Must match a key in the FailureDomains map stored on the cluster object.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	FailureDomain *string `json:"failureDomain,omitempty"`
 
 	// replicas is the number of worker nodes belonging to this set.
@@ -657,14 +725,28 @@ type MachineDeploymentTopology struct {
 	// +optional
 	NodeDeletionTimeout *metav1.Duration `json:"nodeDeletionTimeout,omitempty"`
 
-	// Minimum number of seconds for which a newly created machine should
+	// minReadySeconds is the minimum number of seconds for which a newly created machine should
 	// be ready.
 	// Defaults to 0 (machine will be considered available as soon as it
 	// is ready)
 	// +optional
 	MinReadySeconds *int32 `json:"minReadySeconds,omitempty"`
 
-	// The deployment strategy to use to replace existing machines with
+	// readinessGates specifies additional conditions to include when evaluating Machine Ready condition.
+	//
+	// This field can be used e.g. to instruct the machine controller to include in the computation for Machine's ready
+	// computation a condition, managed by an external controllers, reporting the status of special software/hardware installed on the Machine.
+	//
+	// If this field is not defined, readinessGates from the corresponding MachineDeploymentClass will be used, if any.
+	//
+	// NOTE: This field is considered only for computing v1beta2 conditions.
+	// +optional
+	// +listType=map
+	// +listMapKey=conditionType
+	// +kubebuilder:validation:MaxItems=32
+	ReadinessGates []MachineReadinessGate `json:"readinessGates,omitempty"`
+
+	// strategy is the deployment strategy to use to replace existing machines with
 	// new ones.
 	// +optional
 	Strategy *MachineDeploymentStrategy `json:"strategy,omitempty"`
@@ -704,17 +786,26 @@ type MachinePoolTopology struct {
 	// class is the name of the MachinePoolClass used to create the pool of worker nodes.
 	// This should match one of the deployment classes defined in the ClusterClass object
 	// mentioned in the `Cluster.Spec.Class` field.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Class string `json:"class"`
 
 	// name is the unique identifier for this MachinePoolTopology.
 	// The value is used with other unique identifiers to create a MachinePool's Name
 	// (e.g. cluster's name, etc). In case the name is greater than the allowed maximum length,
 	// the values are hashed together.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
 	Name string `json:"name"`
 
 	// failureDomains is the list of failure domains the machine pool will be created in.
 	// Must match a key in the FailureDomains map stored on the cluster object.
 	// +optional
+	// +kubebuilder:validation:MaxItems=100
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=256
 	FailureDomains []string `json:"failureDomains,omitempty"`
 
 	// nodeDrainTimeout is the total amount of time that the controller will spend on draining a node.
@@ -734,7 +825,7 @@ type MachinePoolTopology struct {
 	// +optional
 	NodeDeletionTimeout *metav1.Duration `json:"nodeDeletionTimeout,omitempty"`
 
-	// Minimum number of seconds for which a newly created machine pool should
+	// minReadySeconds is the minimum number of seconds for which a newly created machine pool should
 	// be ready.
 	// Defaults to 0 (machine will be considered available as soon as it
 	// is ready)
@@ -757,6 +848,9 @@ type MachinePoolTopology struct {
 // Variable definition in the ClusterClass `status` variables.
 type ClusterVariable struct {
 	// name of the variable.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Name string `json:"name"`
 
 	// definitionFrom specifies where the definition of this Variable is from.
@@ -764,6 +858,7 @@ type ClusterVariable struct {
 	// Deprecated: This field is deprecated, must not be set anymore and is going to be removed in the next apiVersion.
 	//
 	// +optional
+	// +kubebuilder:validation:MaxLength=256
 	DefinitionFrom string `json:"definitionFrom,omitempty"`
 
 	// value of the variable.
@@ -773,6 +868,7 @@ type ClusterVariable struct {
 	// hard-coded schema for apiextensionsv1.JSON which cannot be produced by another type via controller-tools,
 	// i.e. it is not possible to have no type field.
 	// Ref: https://github.com/kubernetes-sigs/controller-tools/blob/d0e03a142d0ecdd5491593e941ee1d6b5d91dba6/pkg/crd/known_types.go#L106-L111
+	// +required
 	Value apiextensionsv1.JSON `json:"value"`
 }
 
@@ -782,6 +878,7 @@ type ControlPlaneVariables struct {
 	// +optional
 	// +listType=map
 	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=1000
 	Overrides []ClusterVariable `json:"overrides,omitempty"`
 }
 
@@ -791,6 +888,7 @@ type MachineDeploymentVariables struct {
 	// +optional
 	// +listType=map
 	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=1000
 	Overrides []ClusterVariable `json:"overrides,omitempty"`
 }
 
@@ -800,6 +898,7 @@ type MachinePoolVariables struct {
 	// +optional
 	// +listType=map
 	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=1000
 	Overrides []ClusterVariable `json:"overrides,omitempty"`
 }
 
@@ -815,16 +914,18 @@ type ClusterNetwork struct {
 	// +optional
 	APIServerPort *int32 `json:"apiServerPort,omitempty"`
 
-	// The network ranges from which service VIPs are allocated.
+	// services is the network ranges from which service VIPs are allocated.
 	// +optional
 	Services *NetworkRanges `json:"services,omitempty"`
 
-	// The network ranges from which Pod networks are allocated.
+	// pods is the network ranges from which Pod networks are allocated.
 	// +optional
 	Pods *NetworkRanges `json:"pods,omitempty"`
 
-	// Domain name for services.
+	// serviceDomain is the domain name for services.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	ServiceDomain string `json:"serviceDomain,omitempty"`
 }
 
@@ -834,6 +935,11 @@ type ClusterNetwork struct {
 
 // NetworkRanges represents ranges of network addresses.
 type NetworkRanges struct {
+	// cidrBlocks is a list of CIDR blocks.
+	// +required
+	// +kubebuilder:validation:MaxItems=100
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=43
 	CIDRBlocks []string `json:"cidrBlocks"`
 }
 
@@ -869,11 +975,13 @@ type ClusterStatus struct {
 	// Deprecated: This field is deprecated and is going to be removed in the next apiVersion. Please see https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more details.
 	//
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=10240
 	FailureMessage *string `json:"failureMessage,omitempty"`
 
 	// phase represents the current phase of cluster actuation.
-	// E.g. Pending, Running, Terminating, Failed etc.
 	// +optional
+	// +kubebuilder:validation:Enum=Pending;Provisioning;Provisioned;Deleting;Failed;Unknown
 	Phase string `json:"phase,omitempty"`
 
 	// infrastructureReady is the state of the infrastructure provider.
@@ -998,10 +1106,14 @@ func (c *ClusterStatus) GetTypedPhase() ClusterPhase {
 
 // APIEndpoint represents a reachable Kubernetes API endpoint.
 type APIEndpoint struct {
-	// The hostname on which the API server is serving.
+	// host is the hostname on which the API server is serving.
+	// TODO: Can't set MinLength=1 for now, because this struct is not always used in pointer fields so today we have cases where host is set to an empty string.
+	// +required
+	// +kubebuilder:validation:MaxLength=512
 	Host string `json:"host"`
 
-	// The port on which the API server is serving.
+	// port is the port on which the API server is serving.
+	// +required
 	Port int32 `json:"port"`
 }
 
@@ -1033,10 +1145,17 @@ func (v APIEndpoint) String() string {
 
 // Cluster is the Schema for the clusters API.
 type Cluster struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterSpec   `json:"spec,omitempty"`
+	// spec is the desired state of Cluster.
+	// +optional
+	Spec ClusterSpec `json:"spec,omitempty"`
+	// status is the observed state of Cluster.
+	// +optional
 	Status ClusterStatus `json:"status,omitempty"`
 }
 
@@ -1045,7 +1164,9 @@ func (c *Cluster) GetClassKey() types.NamespacedName {
 	if c.Spec.Topology == nil {
 		return types.NamespacedName{}
 	}
-	return types.NamespacedName{Namespace: c.GetNamespace(), Name: c.Spec.Topology.Class}
+
+	namespace := cmp.Or(c.Spec.Topology.ClassNamespace, c.Namespace)
+	return types.NamespacedName{Namespace: namespace, Name: c.Spec.Topology.Class}
 }
 
 // GetConditions returns the set of conditions for this object.
@@ -1166,8 +1287,12 @@ func (f ClusterIPFamily) String() string {
 // ClusterList contains a list of Cluster.
 type ClusterList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
+	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Cluster `json:"items"`
+	// items is the list of Clusters.
+	Items []Cluster `json:"items"`
 }
 
 func init() {
