@@ -68,30 +68,6 @@ type VSphereMachineSpec struct {
 	//
 	// +optional
 	GuestSoftPowerOffTimeout *metav1.Duration `json:"guestSoftPowerOffTimeout,omitempty"`
-
-	// NamingStrategy allows configuring the naming strategy used when calculating the name of the VSphereVM.
-	// +optional
-	NamingStrategy *VSphereVMNamingStrategy `json:"namingStrategy,omitempty"`
-}
-
-// VSphereVMNamingStrategy defines the naming strategy for the VSphereVMs.
-type VSphereVMNamingStrategy struct {
-	// Template defines the template to use for generating the name of the VSphereVM object.
-	// If not defined, it will fall back to `{{ .machine.name }}`.
-	// The templating has the following data available:
-	// * `.machine.name`: The name of the Machine object.
-	// The templating also has the following funcs available:
-	// * `trimSuffix`: same as strings.TrimSuffix
-	// * `trunc`: truncates a string, e.g. `trunc 2 "hello"` or `trunc -2 "hello"`
-	// Notes:
-	// * While the template offers some flexibility, we would like the name to link to the Machine name
-	//   to ensure better user experience when troubleshooting
-	// * Generated names must be valid Kubernetes names as they are used to create a VSphereVM object
-	//   and usually also as the name of the Node object.
-	// * Names are automatically truncated at 63 characters. Please note that this can lead to name conflicts,
-	//   so we highly recommend to use a template which leads to a name shorter than 63 characters.
-	// +optional
-	Template *string `json:"template,omitempty"`
 }
 
 // VSphereMachineStatus defines the observed state of VSphereMachine.

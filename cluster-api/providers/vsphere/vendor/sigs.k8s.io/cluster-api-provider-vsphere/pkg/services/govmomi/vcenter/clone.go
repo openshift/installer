@@ -27,6 +27,7 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/pbm"
 	pbmTypes "github.com/vmware/govmomi/pbm/types"
+	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 	"k8s.io/utils/ptr"
@@ -42,11 +43,6 @@ import (
 const (
 	fullCloneDiskMoveType = types.VirtualMachineRelocateDiskMoveOptionsMoveAllDiskBackingsAndConsolidate
 	linkCloneDiskMoveType = types.VirtualMachineRelocateDiskMoveOptionsCreateNewChildDiskBacking
-
-	// maxUnitNumber constant is used to define the maximum number of devices that can be assigned to a virtual machine's controller.
-	// Not all controllers support up to 30, but the maximum is 30.
-	// xref: https://docs.vmware.com/en/VMware-vSphere/8.0/vsphere-vm-administration/GUID-5872D173-A076-42FE-8D0B-9DB0EB0E7362.html#:~:text=If%20you%20add%20a%20hard,values%20from%200%20to%2014.
-	maxUnitNumber = 30
 )
 
 // Clone kicks off a clone operation on vCenter to create a new virtual machine. This function does not wait for
@@ -150,16 +146,6 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 		deviceSpecs = append(deviceSpecs, diskSpecs...)
 	}
 
-	// Process all DataDisks definitions to dynamically create and add disks to the VM
-	if len(vmCtx.VSphereVM.Spec.DataDisks) > 0 {
-		dataDisks, err := createDataDisks(ctx, vmCtx.VSphereVM.Spec.DataDisks, devices)
-		if err != nil {
-			return errors.Wrapf(err, "error getting data disks")
-		}
-		log.V(4).Info("Adding the following data disks", "disks", dataDisks)
-		deviceSpecs = append(deviceSpecs, dataDisks...)
-	}
-
 	networkSpecs, err := getNetworkSpecs(ctx, vmCtx, devices)
 	if err != nil {
 		return errors.Wrapf(err, "error getting network specs for %q", vmCtx)
@@ -254,12 +240,28 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 			if err != nil {
 				return errors.Wrapf(err, "failed to get owning cluster of resourcepool %q to calculate datastore based on storage policy", pool)
 			}
-			dsGetter := object.NewComputeResource(vmCtx.Session.Client.Client, cluster.Reference())
-			datastores, err := dsGetter.Datastores(ctx)
+
+			dsList, err := object.NewComputeResource(vmCtx.Session.Client.Client, cluster.Reference()).Datastores(ctx)
 			if err != nil {
 				return errors.Wrapf(err, "unable to list datastores from owning cluster of requested resourcepool")
 			}
+
+			var refs []types.ManagedObjectReference
+			for i := range dsList {
+				refs = append(refs, dsList[i].Reference())
+			}
+
+			var datastores []mo.Datastore
+			if err := property.DefaultCollector(vmCtx.Session.Client.Client).Retrieve(ctx, refs, []string{"summary"}, &datastores); err != nil {
+				return errors.Wrapf(err, "unable to collect datastore properties to validate maintenance mode")
+			}
+
 			for _, ds := range datastores {
+				if ds.Summary.MaintenanceMode != string(types.DatastoreSummaryMaintenanceModeStateNormal) {
+					log.V(4).Info("datastore is in maintenance mode, skipping", "datastore", ds.Summary.Name)
+					continue
+				}
+
 				hubs = append(hubs, pbmTypes.PbmPlacementHub{
 					HubType: ds.Reference().Type,
 					HubId:   ds.Reference().Value,
@@ -403,133 +405,6 @@ func getDiskConfigSpec(disk *types.VirtualDisk, diskCloneCapacityKB int64) (type
 		Operation: types.VirtualDeviceConfigSpecOperationEdit,
 		Device:    disk,
 	}, nil
-}
-
-// createDataDisks parses through the list of VSphereDisk objects and generates the VirtualDeviceConfigSpec for each one.
-func createDataDisks(ctx context.Context, dataDiskDefs []infrav1.VSphereDisk, devices object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
-	log := ctrl.LoggerFrom(ctx)
-	additionalDisks := []types.BaseVirtualDeviceConfigSpec{}
-
-	disks := devices.SelectByType((*types.VirtualDisk)(nil))
-	if len(disks) == 0 {
-		return nil, errors.Errorf("Invalid disk count: %d", len(disks))
-	}
-
-	// There is at least one disk
-	primaryDisk := disks[0].(*types.VirtualDisk)
-
-	// Get the controller of the primary disk.
-	controller, ok := devices.FindByKey(primaryDisk.ControllerKey).(types.BaseVirtualController)
-	if !ok {
-		return nil, errors.Errorf("unable to find controller with key=%v", primaryDisk.ControllerKey)
-	}
-
-	controllerKey := controller.GetVirtualController().Key
-	unitNumberAssigner, err := newUnitNumberAssigner(controller, devices)
-	if err != nil {
-		return nil, err
-	}
-
-	for i, dataDisk := range dataDiskDefs {
-		log.V(2).Info("Adding disk", "name", dataDisk.Name, "spec", dataDisk)
-
-		backing := &types.VirtualDiskFlatVer2BackingInfo{
-			DiskMode: string(types.VirtualDiskModePersistent),
-			VirtualDeviceFileBackingInfo: types.VirtualDeviceFileBackingInfo{
-				FileName: "",
-			},
-		}
-
-		// Set provisioning type for the new data disk.
-		// Currently, if ThinProvisioned is not set, GOVC will set default to false.  We may want to change this behavior
-		// to match what template image OS disk has configured to make them match if not set.
-		switch dataDisk.ProvisioningMode {
-		case infrav1.ThinProvisioningMode:
-			backing.ThinProvisioned = types.NewBool(true)
-		case infrav1.ThickProvisioningMode:
-			backing.ThinProvisioned = types.NewBool(false)
-		case infrav1.EagerlyZeroedProvisioningMode:
-			backing.ThinProvisioned = types.NewBool(false)
-			backing.EagerlyScrub = types.NewBool(true)
-		default:
-			log.V(2).Info("No provisioning type detected.  Leaving configuration empty.")
-		}
-
-		dev := &types.VirtualDisk{
-			VirtualDevice: types.VirtualDevice{
-				// Key needs to be unique and cannot match another new disk being added.  So we'll use the index as an
-				// input to NewKey.  NewKey() will always return same value since our new devices are not part of devices yet.
-				Key:           devices.NewKey() - int32(i),
-				Backing:       backing,
-				ControllerKey: controller.GetVirtualController().Key,
-			},
-			CapacityInKB: int64(dataDisk.SizeGiB) * 1024 * 1024,
-		}
-
-		vd := dev.GetVirtualDevice()
-		vd.ControllerKey = controllerKey
-
-		// Assign unit number to the new disk.  Should be next available slot on the controller.
-		unitNumber, err := unitNumberAssigner.assign()
-		if err != nil {
-			return nil, err
-		}
-		vd.UnitNumber = &unitNumber
-
-		log.V(4).Info("Created device for data disk device", "name", dataDisk.Name, "spec", dataDisk, "device", dev)
-
-		additionalDisks = append(additionalDisks, &types.VirtualDeviceConfigSpec{
-			Device:        dev,
-			Operation:     types.VirtualDeviceConfigSpecOperationAdd,
-			FileOperation: types.VirtualDeviceConfigSpecFileOperationCreate,
-		})
-	}
-
-	return additionalDisks, nil
-}
-
-type unitNumberAssigner struct {
-	used   []bool
-	offset int32
-}
-
-func newUnitNumberAssigner(controller types.BaseVirtualController, existingDevices object.VirtualDeviceList) (*unitNumberAssigner, error) {
-	if controller == nil {
-		return nil, errors.New("controller parameter cannot be nil")
-	}
-	used := make([]bool, maxUnitNumber)
-
-	// SCSIControllers also use a unit.
-	if scsiController, ok := controller.(types.BaseVirtualSCSIController); ok {
-		used[scsiController.GetVirtualSCSIController().ScsiCtlrUnitNumber] = true
-	}
-	controllerKey := controller.GetVirtualController().Key
-
-	// Mark all unit numbers of existing devices as used
-	for _, device := range existingDevices {
-		d := device.GetVirtualDevice()
-		if d.ControllerKey == controllerKey && d.UnitNumber != nil {
-			used[*d.UnitNumber] = true
-		}
-	}
-
-	// Set offset to 0, it will auto-increment on the first assignment.
-	return &unitNumberAssigner{used: used, offset: 0}, nil
-}
-
-func (a *unitNumberAssigner) assign() (int32, error) {
-	if int(a.offset) > len(a.used) {
-		return -1, fmt.Errorf("all unit numbers are already in-use")
-	}
-	for i, isInUse := range a.used[a.offset:] {
-		unit := int32(i) + a.offset
-		if !isInUse {
-			a.used[unit] = true
-			a.offset++
-			return unit, nil
-		}
-	}
-	return -1, fmt.Errorf("all unit numbers are already in-use")
 }
 
 const ethCardType = "vmxnet3"
