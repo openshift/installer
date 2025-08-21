@@ -320,6 +320,10 @@ func (ci *ClusterInfo) retrieveSSHKey() error {
 			ci.SSHKey = installConfig.SSHKey
 			return nil
 		}
+
+		if errors.IsNotFound(err) {
+			return nil
+		}
 		return err
 	}
 	var ign igntypes.Config
