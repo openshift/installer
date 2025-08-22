@@ -152,6 +152,8 @@ require (
 
 require github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.29.0
 
+require github.com/aws/aws-sdk-go-v2/service/servicequotas v1.31.0
+
 require (
 	cloud.google.com/go v0.116.0 // indirect
 	cloud.google.com/go/auth v0.13.0 // indirect

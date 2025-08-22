@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/servicequotas"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
@@ -95,4 +96,23 @@ func NewSTSClient(ctx context.Context, endpointOpts EndpointOptions, optFns ...f
 	stsOpts = append(stsOpts, optFns...)
 
 	return sts.NewFromConfig(cfg, stsOpts...), nil
+}
+
+// NewServiceQuotasClient creates a new Service Quotas API client.
+func NewServiceQuotasClient(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*servicequotas.Options)) (*servicequotas.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	sqOpts := []func(*servicequotas.Options){
+		func(o *servicequotas.Options) {
+			o.EndpointResolverV2 = &ServiceQuotasEndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	sqOpts = append(sqOpts, optFns...)
+
+	return servicequotas.NewFromConfig(cfg, sqOpts...), nil
 }
