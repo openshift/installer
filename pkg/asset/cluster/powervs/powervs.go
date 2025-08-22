@@ -3,6 +3,7 @@ package powervs
 
 import (
 	"context"
+	"time"
 
 	icpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/types"
@@ -11,8 +12,36 @@ import (
 
 // Metadata converts an install configuration to PowerVS metadata.
 func Metadata(config *types.InstallConfig, meta *icpowervs.Metadata) (*powervs.Metadata, error) {
-	cisCRN, _ := meta.CISInstanceCRN(context.TODO())
-	dnsCRN, _ := meta.DNSInstanceCRN(context.TODO())
+	var (
+		ctx    context.Context
+		cancel context.CancelFunc
+		err    error
+	)
+
+	// Update the saved session storage with the install config since the session
+	// storage is used as the defaults.
+	err = icpowervs.UpdateSessionStoreToAuthFile(&icpowervs.SessionStore{
+		ID:                   config.PowerVS.UserID,
+		DefaultRegion:        config.PowerVS.Region,
+		DefaultZone:          config.PowerVS.Zone,
+		PowerVSResourceGroup: config.PowerVS.PowerVSResourceGroup,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel = context.WithTimeout(context.TODO(), 1*time.Minute)
+	defer cancel()
+
+	cisCRN, err := meta.CISInstanceCRN(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	dnsCRN, err := meta.DNSInstanceCRN(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	overrides := config.Platform.PowerVS.ServiceEndpoints
 	if config.Publish == types.InternalPublishingStrategy &&
@@ -25,7 +54,7 @@ func Metadata(config *types.InstallConfig, meta *icpowervs.Metadata) (*powervs.M
 		if err != nil {
 			return nil, err
 		}
-		overrides = meta.SetDefaultPrivateServiceEndpoints(context.TODO(), overrides, cosRegion, vpcRegion)
+		overrides = meta.SetDefaultPrivateServiceEndpoints(ctx, overrides, cosRegion, vpcRegion)
 	}
 
 	return &powervs.Metadata{

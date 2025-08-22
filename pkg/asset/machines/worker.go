@@ -191,6 +191,19 @@ func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.Mac
 		err      error
 	)
 
+	// Update the saved session storage with the install config since the session
+	// storage is used as the defaults.
+	err = powervsconfig.UpdateSessionStoreToAuthFile(&powervsconfig.SessionStore{
+		ID:                   ic.PowerVS.UserID,
+		DefaultRegion:        ic.PowerVS.Region,
+		DefaultZone:          ic.PowerVS.Zone,
+		PowerVSResourceGroup: ic.PowerVS.PowerVSResourceGroup,
+	})
+	if err != nil {
+		fallback = true
+		logrus.Warnf("could not UpdateSessionStoreToAuthFile in defaultPowerVSMachinePoolPlatform")
+	}
+
 	client, err = powervsconfig.NewClient()
 	if err != nil {
 		fallback = true
