@@ -65,6 +65,9 @@ foreach ($vc in $vcenters) {
         Remove-Folder -Server $vcenter -Folder $($folder.Entity) -DeletePermanently -confirm:$false
     }
 
+    # Clean up CNS volumes
+    # TODO: Add cleanup for CNS here.  This will be done in later PR.
+
     # Clean up storage policy.  Must be done after all other object cleanup except tag/tagCategory
     $storagePolicies = Get-SpbmStoragePolicy -Server $vcenter -Tag $tag
 
@@ -80,8 +83,16 @@ foreach ($vc in $vcenters) {
                 $clusterInventory = @(Get-Inventory -Server $vcenter -Name "$($clusterId)*" -ErrorAction Continue)
 
                 if ($clusterInventory.Count -eq 0) {
+                    # Remove policy from all configurations that still may exist
+                    $entityConfig = Get-SpbmEntityConfiguration -StoragePolicy $policy
+                    if ($null -ne $entityConfig -and $entityConfig -ne $null) {
+                        Write-Host "Unsetting storage policy for "$entityConfig
+                        Set-SpbmEntityConfiguration $entityConfig -StoragePolicy $null
+                    }
+
+                    # Now we can delete the policy
                     Write-Host "Removing policy: $($policy.Name)"
-                    $policy | Remove-SpbmStoragePolicy -Server $vcenter -Confirm:$false
+                    $policy | Remove-SpbmStoragePolicy -Server $vcenter -Confirm:$false -ErrorAction Continue
                 }
                 else {
                     Write-Host "not deleting: $($clusterInventory)"
