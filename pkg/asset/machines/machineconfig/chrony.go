@@ -2,6 +2,7 @@ package machineconfig
 
 import (
 	"fmt"
+	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,8 +12,8 @@ import (
 )
 
 // ForCustomNTP lays down chrony.conf with given NTP server.
-func ForCustomNTP(role string, server string) (*mcfgv1.MachineConfig, error) {
-	chronyConf, err := createChronyConf(server)
+func ForCustomNTP(role string, servers []string) (*mcfgv1.MachineConfig, error) {
+	chronyConf, err := createChronyConf(servers)
 	if err != nil {
 		return nil, err
 	}
@@ -49,11 +50,17 @@ func ForCustomNTP(role string, server string) (*mcfgv1.MachineConfig, error) {
 	}, nil
 }
 
-func createChronyConf(server string) (string, error) {
-	unit := `server %s iburst
+func createChronyConf(servers []string) (string, error) {
+	lines := []string{}
+
+	for _, server := range servers {
+		lines = append(lines, fmt.Sprintf("server %s iburst", server))
+	}
+
+	unit := `%s
 driftfile /var/lib/chrony/drift
 makestep 1.0 3
 rtcsync
 logdir /var/log/chrony`
-	return fmt.Sprintf(unit, server), nil
+	return fmt.Sprintf(unit, strings.Join(lines, "\n")), nil
 }
