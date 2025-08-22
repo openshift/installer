@@ -50,36 +50,44 @@ type Artifact struct {
 	UncompressedSha256 string `json:"uncompressed-sha256,omitempty"`
 }
 
-type KubeVirtContainerDisk struct {
-	Image string `json:"image"`
-}
-
 // Images contains images available in cloud providers
 type Images struct {
-	Aliyun   *ReplicatedImage       `json:"aliyun,omitempty"`
-	Aws      *AwsImage              `json:"aws,omitempty"`
-	Gcp      *GcpImage              `json:"gcp,omitempty"`
-	Ibmcloud *ReplicatedObject      `json:"ibmcloud,omitempty"`
-	KubeVirt *KubeVirtContainerDisk `json:"kubevirt,omitempty"`
-	PowerVS  *ReplicatedObject      `json:"powervs,omitempty"`
+	Aliyun   *ReplicatedImage  `json:"aliyun,omitempty"`
+	Aws      *AwsImage         `json:"aws,omitempty"`
+	Gcp      *GcpImage         `json:"gcp,omitempty"`
+	Ibmcloud *ReplicatedObject `json:"ibmcloud,omitempty"`
+	KubeVirt *ContainerImage   `json:"kubevirt,omitempty"`
+	PowerVS  *ReplicatedObject `json:"powervs,omitempty"`
 }
 
 // ReplicatedImage represents an image in all regions of an AWS-like cloud
 type ReplicatedImage struct {
-	Regions map[string]RegionImage `json:"regions,omitempty"`
+	Regions map[string]SingleImage `json:"regions,omitempty"`
 }
 
-// RegionImage represents an image in a single region of an AWS-like cloud
-type RegionImage struct {
+// SingleImage represents a globally-accessible image or an image in a
+// single region of an AWS-like cloud
+type SingleImage struct {
 	Release string `json:"release"`
 	Image   string `json:"image"`
+}
+
+// ContainerImage represents a tagged container image
+type ContainerImage struct {
+	Release string `json:"release"`
+	// Preferred way to reference the image, which might be by tag or digest
+	Image     string `json:"image"`
+	DigestRef string `json:"digest-ref"`
 }
 
 // AwsImage is a typedef for backwards compatibility.
 type AwsImage = ReplicatedImage
 
 // AwsRegionImage is a typedef for backwards compatibility.
-type AwsRegionImage = RegionImage
+type AwsRegionImage = SingleImage
+
+// RegionImage is a typedef for backwards compatibility.
+type RegionImage = SingleImage
 
 // GcpImage represents a GCP cloud image
 type GcpImage struct {
@@ -89,15 +97,20 @@ type GcpImage struct {
 	Name    string `json:"name"`
 }
 
-// ReplicatedObject represents an object in all regions of an IBMCloud-like cloud
+// ReplicatedObject represents an object in all regions of an IBMCloud-like
+// cloud
 type ReplicatedObject struct {
-	Regions map[string]RegionObject `json:"regions,omitempty"`
+	Regions map[string]SingleObject `json:"regions,omitempty"`
 }
 
-// RegionObject represents an IBMCloud/PowerVS cloud image
-type RegionObject struct {
+// SingleObject represents a globally-accessible cloud storage object, or
+// an object in a single region of an IBMCloud-like cloud
+type SingleObject struct {
 	Release string `json:"release"`
 	Object  string `json:"object"`
 	Bucket  string `json:"bucket"`
 	Url     string `json:"url"`
 }
+
+// RegionObject is a typedef for backwards compatibility.
+type RegionObject = SingleObject
