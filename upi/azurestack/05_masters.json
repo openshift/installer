@@ -48,6 +48,7 @@
     "masterLoadBalancerName" : "[concat(parameters('baseName'))]",
     "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-cluster')]",
     "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal')]",
+    "outboundBackendPoolName" : "[concat(parameters('baseName'), '-outbound')]",
     "sshKeyPath" : "/home/core/.ssh/authorized_keys",
     "clusterNsgName" : "[concat(parameters('baseName'), '-nsg')]",
     "imageName" : "[parameters('baseName')]",
@@ -97,6 +98,9 @@
               "loadBalancerBackendAddressPools" : [
                 {
                   "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('masterLoadBalancerName'), '/backendAddressPools/', variables('masterLoadBalancerName'))]"
+                },
+                {
+                  "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('masterLoadBalancerName'), '/backendAddressPools/', variables('outboundBackendPoolName'))]"
                 },
                 {
                   "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('internalLoadBalancerName'), '/backendAddressPools/', variables('internalLoadBalancerName'))]"

@@ -47,7 +47,8 @@
     "virtualNetworkID" : "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "nodeSubnetName" : "[concat(parameters('baseName'), '-worker-subnet')]",
     "nodeSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('nodeSubnetName'))]",
-    "infraLoadBalancerName" : "[parameters('baseName')]",
+    "masterLoadBalancerName" : "[concat(parameters('baseName'))]",
+    "outboundBackendPoolName" : "[concat(parameters('baseName'), '-outbound')]",
     "sshKeyPath" : "/home/core/.ssh/authorized_keys",
     "imageName" : "[parameters('baseName')]",
     "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-cluster')]",
@@ -93,7 +94,12 @@
               "privateIPAllocationMethod" : "Dynamic",
               "subnet" : {
                 "id" : "[variables('nodeSubnetRef')]"
-              }
+              },
+              "loadBalancerBackendAddressPools" : [
+                {
+                  "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('masterLoadBalancerName'), '/backendAddressPools/', variables('outboundBackendPoolName'))]"
+                }
+              ]
             }
           }
         ]
