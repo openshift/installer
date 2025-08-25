@@ -167,7 +167,7 @@ func validateAMI(ctx context.Context, meta *Metadata, config *types.InstallConfi
 		if err != nil {
 			return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to resolve ec2 endpoint"))}
 		}
-		if defaultEndpoint.PartitionID == AwsPartitionID {
+		if defaultEndpoint.PartitionID == awstypes.AwsPartitionID {
 			return nil
 		}
 	}
