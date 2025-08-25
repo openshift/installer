@@ -12,6 +12,10 @@ const (
 	// to differentiate multiple logically independent clusters running in the same AZ.
 	TagNameKubernetesClusterPrefix = "kubernetes.io/cluster/"
 
+	// TagNameAWSProviderClusterPrefix is the tag prefix added by CAPI/CAPA to differentiate
+	// cluster-api-provider-aws owned components.
+	TagNameAWSProviderClusterPrefix = "sigs.k8s.io/cluster-api-provider-aws/cluster/"
+
 	// TagValueOwned is the tag value to indicate that a resource is considered owned
 	// and managed by the cluster.
 	TagValueOwned = "owned"
@@ -55,7 +59,7 @@ func (t Tags) HasTagKeyPrefix(prefix string) bool {
 }
 
 // HasClusterOwnedTag returns true if there is a cluster owned tag.
-// That is  kubernetes.io/cluster/<cluster-id>: owned.
+// That is "kubernetes.io/cluster/<cluster-id>: owned".
 func (t Tags) HasClusterOwnedTag() bool {
 	clusterIDs := t.GetOwnedClusterIDs()
 	return len(clusterIDs) > 0
@@ -68,6 +72,27 @@ func (t Tags) GetOwnedClusterIDs() []string {
 	for _, key := range keys {
 		if value := t[key]; value == TagValueOwned {
 			if clusterID := strings.TrimPrefix(key, TagNameKubernetesClusterPrefix); clusterID != "" {
+				clusterIDs = append(clusterIDs, clusterID)
+			}
+		}
+	}
+	return clusterIDs
+}
+
+// HasClusterAPIOwnedTag returns true if there is a CAPI/CAPA cluster owned tag.
+// That is "sigs.k8s.io/cluster-api-provider-aws/cluster/<cluster-id>: owned".
+func (t Tags) HasClusterAPIOwnedTag() bool {
+	clusterIDs := t.GetOwnedCAPIClusterIDs()
+	return len(clusterIDs) > 0
+}
+
+// GetOwnedCAPIClusterIDs returns the cluster IDs from tag "sigs.k8s.io/cluster-api-provider-aws/cluster/<cluster-id>: owned" if any.
+func (t Tags) GetOwnedCAPIClusterIDs() []string {
+	clusterIDs := make([]string, 0)
+	keys := t.GetTagKeysWithPrefix(TagNameAWSProviderClusterPrefix)
+	for _, key := range keys {
+		if value := t[key]; value == TagValueOwned {
+			if clusterID := strings.TrimPrefix(key, TagNameAWSProviderClusterPrefix); clusterID != "" {
 				clusterIDs = append(clusterIDs, clusterID)
 			}
 		}
