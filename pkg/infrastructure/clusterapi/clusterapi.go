@@ -388,23 +388,33 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	logrus.Info("Control-plane machines are ready")
 
 	if p, ok := i.impl.(PostProvider); ok {
-		postMachineInput := PostProvisionInput{
-			Client:        cl,
-			InstallConfig: installConfig,
-			InfraID:       clusterID.InfraID,
-		}
+    logrus.Infof("impl implements PostProvider")
+    postMachineInput := PostProvisionInput{
+        Client:        cl,
+        InstallConfig: installConfig,
+        InfraID:       clusterID.InfraID,
+    }
+    logrus.Infof("PostProvisionInput initialized: %#v", postMachineInput)
 
-		timer.StartTimer(postProvisionStage)
-		if err = p.PostProvision(ctx, postMachineInput); err != nil {
-			return fileList, fmt.Errorf("failed during post-machine creation hook: %w", err)
-		}
-		timer.StopTimer(postProvisionStage)
-	}
+    timer.StartTimer(postProvisionStage)
+    logrus.Infof("Started timer for postProvisionStage")
 
-	logrus.Infof("Cluster API resources have been created. Waiting for cluster to become ready...")
+    if err = p.PostProvision(ctx, postMachineInput); err != nil {
+        logrus.Infof("PostProvision returned error: %v", err)
+        return fileList, fmt.Errorf("failed during post-machine creation hook: %w", err)
+    }
+    logrus.Infof("PostProvision succeeded")
 
-	return fileList, nil
+    timer.StopTimer(postProvisionStage)
+    logrus.Infof("Stopped timer for postProvisionStage")
 }
+
+logrus.Infof("Cluster API resources have been created. Waiting for cluster to become ready...")
+logrus.Infof("Finished main execution, returning fileList")
+
+return fileList, nil
+}
+
 
 // DestroyBootstrap destroys the temporary bootstrap resources.
 func (i *InfraProvider) DestroyBootstrap(ctx context.Context, dir string) error {
