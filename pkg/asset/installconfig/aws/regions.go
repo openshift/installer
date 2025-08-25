@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
 
 // knownPublicRegions is the subset of public AWS regions where RHEL CoreOS images are published.
@@ -61,7 +62,7 @@ func IsSecretRegion(region string) (bool, error) {
 	}
 
 	switch endpoint.PartitionID {
-	case AwsIsoPartitionID, AwsIsoBPartitionID:
+	case typesaws.AwsIsoPartitionID, typesaws.AwsIsoBPartitionID:
 		return true, nil
 	}
 
