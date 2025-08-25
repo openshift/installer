@@ -314,7 +314,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 	if err != nil {
 		return fmt.Errorf("failed to get NewClient in PostProvision: %w", err)
 	}
-	logrus.Debugf("PostProvision: NewClient returns %+v", client)
+	logrus.Infof("PostProvision: NewClient returns %+v", client)
 
 	// We need to set the region we will eventually query inside
 	vpcRegion = in.InstallConfig.Config.Platform.PowerVS.VPCRegion
@@ -324,7 +324,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 			return fmt.Errorf("failed to get VPC region (%s) in PostProvision: %w", vpcRegion, err)
 		}
 	}
-	logrus.Debugf("InfraReady: vpcRegion = %s", vpcRegion)
+	logrus.Infof("InfraReady: vpcRegion = %s", vpcRegion)
 	if err = client.SetVPCServiceURLForRegion(ctx, vpcRegion); err != nil {
 		return fmt.Errorf("failed to set the VPC service region (%s) in PostProvision: %w", vpcRegion, err)
 	}
@@ -338,7 +338,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 	if reps := in.InstallConfig.Config.ControlPlane.Replicas; reps != nil {
 		masterCount = *reps
 	}
-	logrus.Debugf("PostProvision: masterCount = %d", masterCount)
+	logrus.Infof("PostProvision: masterCount = %d", masterCount)
 	for i := int64(0); i < masterCount; i++ {
 		key := crclient.ObjectKey{
 			Name:      fmt.Sprintf("%s-master-%d", in.InfraID, i),
@@ -347,7 +347,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 		if ipAddr, err = findMachineAddress(ctx, in, key); err != nil {
 			return err
 		}
-		logrus.Debugf("PostProvision: %s ipAddr = %v", key.Name, ipAddr)
+		logrus.Infof("PostProvision: %s ipAddr = %v", key.Name, ipAddr)
 	}
 
 	// Get the bootstrap machine from the provider
@@ -355,23 +355,23 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 		Name:      fmt.Sprintf("%s-bootstrap", in.InfraID),
 		Namespace: capiutils.Namespace,
 	}
-	logrus.Debugf("PostProvision: machine key = %+v", key)
+	logrus.Infof("PostProvision: machine key = %+v", key)
 
 	// Find its address
 	if ipAddr, err = findMachineAddress(ctx, in, key); err != nil {
 		return err
 	}
-	logrus.Debugf("PostProvision: ipAddr = %v", ipAddr)
+	logrus.Infof("PostProvision: ipAddr = %v", ipAddr)
 
 	// Get information about it
 	powerVSMachine := &capibm.IBMPowerVSMachine{}
 	if err := in.Client.Get(ctx, key, powerVSMachine); err != nil {
 		return fmt.Errorf("failed to get PowerVS bootstrap machine in PostProvision: %w", err)
 	}
-	logrus.Debugf("PostProvision: machine = %+v", powerVSMachine)
+	logrus.Infof("PostProvision: machine = %+v", powerVSMachine)
 
 	// Specifically the Power Virtual Server (PVS)
-	logrus.Debugf("PostProvision: machine.Spec.ServiceInstance = %+v", powerVSMachine.Spec.ServiceInstance)
+	logrus.Infof("PostProvision: machine.Spec.ServiceInstance = %+v", powerVSMachine.Spec.ServiceInstance)
 	refServiceInstance = powerVSMachine.Spec.ServiceInstance
 
 	// Step 2.
@@ -384,13 +384,13 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 
 	switch {
 	case refServiceInstance.ID != nil:
-		logrus.Debugf("PostProvision: CreateSSHKey: si id = %s, key = %s",
+		logrus.Infof("PostProvision: CreateSSHKey: si id = %s, key = %s",
 			*refServiceInstance.ID,
 			in.InstallConfig.Config.SSHKey)
 		instanceID = refServiceInstance.ID
 		fieldType = "ID"
 	case refServiceInstance.Name != nil:
-		logrus.Debugf("PostProvision: CreateSSHKey: si name = %s, key = %s",
+		logrus.Infof("PostProvision: CreateSSHKey: si name = %s, key = %s",
 			*refServiceInstance.Name,
 			in.InstallConfig.Config.SSHKey)
 		guid, err := client.ServiceInstanceNameToGUID(ctx, *refServiceInstance.Name)
@@ -399,7 +399,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 				*refServiceInstance.Name,
 				err)
 		}
-		logrus.Debugf("PostProvision: CreateSSHKey: guid = %s", guid)
+		logrus.Infof("PostProvision: CreateSSHKey: guid = %s", guid)
 		instanceID = ptr.To(guid)
 		fieldType = "Name"
 	default:
@@ -436,7 +436,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 		Name:      in.InfraID,
 		Namespace: capiutils.Namespace,
 	}
-	logrus.Debugf("PostProvision: cluster key = %+v", key)
+	logrus.Infof("PostProvision: cluster key = %+v", key)
 	if err = in.Client.Get(ctx, key, powerVSCluster); err != nil {
 		return fmt.Errorf("failed to get PowerVS cluster in PostProvision: %w", err)
 	}
@@ -448,7 +448,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 		if !lbIntExp.MatchString(lbKey) {
 			continue
 		}
-		logrus.Debugf("PostProvision: Found internal load balancer ID = %s, State = %s, Hostname = %s",
+		logrus.Infof("PostProvision: Found internal load balancer ID = %s, State = %s, Hostname = %s",
 			*loadBalancerStatus.ID,
 			loadBalancerStatus.State,
 			*loadBalancerStatus.Hostname)
