@@ -230,11 +230,16 @@ func (r vmReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.R
 		return ctrl.Result{}, err
 	}
 
+	failureDomain := ptr.Deref(machine.Spec.FailureDomain, "")
+	if failureDomain == "" && vsphereMachine.Spec.FailureDomain != nil {
+		failureDomain = *vsphereMachine.Spec.FailureDomain
+	}
+
 	var vsphereFailureDomain *infrav1.VSphereFailureDomain
-	if failureDomain := machine.Spec.FailureDomain; failureDomain != nil {
+	if failureDomain != "" {
 		vsphereDeploymentZone := &infrav1.VSphereDeploymentZone{}
-		if err := r.Client.Get(ctx, apitypes.NamespacedName{Name: *failureDomain}, vsphereDeploymentZone); err != nil {
-			return reconcile.Result{}, errors.Wrapf(err, "failed to get VSphereDeploymentZone %s", *failureDomain)
+		if err := r.Client.Get(ctx, apitypes.NamespacedName{Name: failureDomain}, vsphereDeploymentZone); err != nil {
+			return reconcile.Result{}, errors.Wrapf(err, "failed to get VSphereDeploymentZone %s", failureDomain)
 		}
 
 		vsphereFailureDomain = &infrav1.VSphereFailureDomain{}
@@ -437,6 +442,9 @@ func (r vmReconciler) reconcileNormal(ctx context.Context, vmCtx *capvcontext.VM
 	// Do not proceed until the backend VM is marked ready.
 	if vm.State != infrav1.VirtualMachineStateReady {
 		log.Info(fmt.Sprintf("VM state is %q, waiting for %q", vm.State, infrav1.VirtualMachineStateReady))
+		if !vmCtx.VSphereVM.Status.RetryAfter.IsZero() {
+			return reconcile.Result{RequeueAfter: time.Until(vmCtx.VSphereVM.Status.RetryAfter.Time)}, nil
+		}
 		return reconcile.Result{}, nil
 	}
 

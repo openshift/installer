@@ -66,9 +66,6 @@ github.com/go-openapi/jsonreference/internal
 # github.com/go-openapi/swag v0.23.0
 ## explicit; go 1.20
 github.com/go-openapi/swag
-# github.com/go-task/slim-sprig/v3 v3.0.0
-## explicit; go 1.20
-github.com/go-task/slim-sprig/v3
 # github.com/gobuffalo/flect v1.0.3
 ## explicit; go 1.16
 github.com/gobuffalo/flect
@@ -1089,8 +1086,8 @@ sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
 sigs.k8s.io/cluster-api/util/version
 sigs.k8s.io/cluster-api/version
-# sigs.k8s.io/cluster-api-provider-vsphere v1.12.0-rc.0.0.20250203113257-38f6b67f9b7d
-## explicit; go 1.23.0
+# sigs.k8s.io/cluster-api-provider-vsphere v1.12.2-0.20250821143509-f29262cee64e
+## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-vsphere
 sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha3
 sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha4
@@ -1126,6 +1123,8 @@ sigs.k8s.io/cluster-api-provider-vsphere/pkg/session
 sigs.k8s.io/cluster-api-provider-vsphere/pkg/taggable
 sigs.k8s.io/cluster-api-provider-vsphere/pkg/util
 sigs.k8s.io/cluster-api-provider-vsphere/pkg/version
+sigs.k8s.io/cluster-api-provider-vsphere/webhooks
+sigs.k8s.io/cluster-api-provider-vsphere/webhooks/vmware
 # sigs.k8s.io/controller-runtime v0.20.1
 ## explicit; go 1.23.0
 sigs.k8s.io/controller-runtime

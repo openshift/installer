@@ -203,46 +203,7 @@ type VirtualMachineCloneSpec struct {
 	// Check the compatibility with the ESXi version before setting the value.
 	// +optional
 	HardwareVersion string `json:"hardwareVersion,omitempty"`
-	// DataDisks are additional disks to add to the VM that are not part of the VM's OVA template.
-	// +optional
-	// +listType=map
-	// +listMapKey=name
-	// +kubebuilder:validation:MaxItems=29
-	DataDisks []VSphereDisk `json:"dataDisks,omitempty"`
 }
-
-// VSphereDisk is an additional disk to add to the VM that is not part of the VM OVA template.
-type VSphereDisk struct {
-	// Name is used to identify the disk definition. Name is required and needs to be unique so that it can be used to
-	// clearly identify purpose of the disk.
-	// +kubebuilder:validation:Required
-	Name string `json:"name,omitempty"`
-	// SizeGiB is the size of the disk in GiB.
-	// +kubebuilder:validation:Required
-	SizeGiB int32 `json:"sizeGiB"`
-	// ProvisioningMode specifies the provisioning type to be used by this vSphere data disk.
-	// If not set, the setting will be provided by the default storage policy.
-	// +optional
-	ProvisioningMode ProvisioningMode `json:"provisioningMode,omitempty"`
-}
-
-// ProvisioningMode represents the various provisioning types available to a VMs disk.
-// +kubebuilder:validation:Enum=Thin;Thick;EagerlyZeroed
-type ProvisioningMode string
-
-var (
-	// ThinProvisioningMode creates the disk using thin provisioning. This means a sparse (allocate on demand)
-	// format with additional space optimizations.
-	ThinProvisioningMode ProvisioningMode = "Thin"
-
-	// ThickProvisioningMode creates the disk with all space allocated.
-	ThickProvisioningMode ProvisioningMode = "Thick"
-
-	// EagerlyZeroedProvisioningMode creates the disk using eager zero provisioning. An eager zeroed thick disk
-	// has all space allocated and wiped clean of any previous contents on the physical media at
-	// creation time. Such disks may take longer time during creation compared to other disk formats.
-	EagerlyZeroedProvisioningMode ProvisioningMode = "EagerlyZeroed"
-)
 
 // VSphereMachineTemplateResource describes the data needed to create a VSphereMachine from a template.
 type VSphereMachineTemplateResource struct {
