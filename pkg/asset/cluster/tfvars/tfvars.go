@@ -246,13 +246,19 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			}
 		}
 
-		sess, err := installConfig.AWS.Session(ctx)
-		if err != nil {
-			return err
-		}
 		object := "bootstrap.ign"
 		bucket := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
-		url, err := awsconfig.PresignedS3URL(sess, installConfig.Config.Platform.AWS.Region, bucket, object)
+		platformAWS := installConfig.Config.Platform.AWS
+
+		client, err := awsconfig.NewS3Client(ctx, awsconfig.EndpointOptions{
+			Region:    platformAWS.Region,
+			Endpoints: platformAWS.ServiceEndpoints,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create s3 client: %w", err)
+		}
+
+		url, err := awsconfig.PresignedS3URL(ctx, client, bucket, object)
 		if err != nil {
 			return err
 		}
