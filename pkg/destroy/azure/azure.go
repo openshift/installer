@@ -193,7 +193,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 			if o.CloudName == azure.StackCloud {
 				err = deleteAzureStackPublicRecords(ctx, o)
 			} else {
-				err = deletePublicRecords(ctx, o.zonesClient, o.recordsClient, o.privateZonesClient, o.privateRecordSetsClient, o.Logger, o.ResourceGroupName)
+				err = deletePublicRecords(ctx, o)
 			}
 			if err != nil {
 				o.Logger.Debug(err)
@@ -273,6 +273,42 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	}
 
 	return nil, utilerrors.NewAggregate(errs)
+}
+
+func deleteCustomDNSRecords(ctx context.Context, o *ClusterUninstaller, clusterName, zoneName string) error {
+	var errs []error
+	tag := fmt.Sprintf("kubernetes.io_cluster.%s", o.InfraID)
+	suffix := fmt.Sprintf("%s.%s", clusterName, zoneName)
+	records, err := o.recordsClient.ListAllByDNSZone(ctx, o.BaseDomainResourceGroupName, zoneName, to.Int32Ptr(100), suffix)
+	if err != nil {
+		logrus.Debugf("unable to find records with suffix %s: already deleted or insufficient permissions", suffix)
+		if isAuthError(err) {
+			return err
+		}
+		return nil
+	}
+
+	for _, result := range records.Values() {
+		if value, ok := result.Metadata[tag]; ok && *value == "owned" {
+			deleteResult, err := o.recordsClient.Delete(ctx, o.BaseDomainResourceGroupName, zoneName, *result.Name, dns.A, "")
+			if err != nil {
+				if deleteResult.IsHTTPStatus(http.StatusNotFound) {
+					o.Logger.Debug("already deleted")
+					return utilerrors.NewAggregate(errs)
+				}
+				errs = append(errs, fmt.Errorf("failed to delete base domain dns zone: %w", err))
+				if isAuthError(err) {
+					return err
+				}
+			} else {
+				o.Logger.WithField("record", *result.Name).Info("deleted")
+			}
+		} else {
+			o.Logger.WithField("record", *result.Name).Debugf("metadata mismatch")
+		}
+	}
+
+	return utilerrors.NewAggregate(errs)
 }
 
 func removeSharedTags(
@@ -419,7 +455,13 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 	return utilerrors.NewAggregate(errs)
 }
 
-func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, privateDNSClient privatedns.PrivateZonesClient, privateRecordsClient privatedns.RecordSetsClient, logger logrus.FieldLogger, rgName string) error {
+func deletePublicRecords(ctx context.Context, o *ClusterUninstaller) error {
+	dnsClient := o.zonesClient
+	recordsClient := o.recordsClient
+	privateDNSClient := o.privateZonesClient
+	privateRecordsClient := o.privateRecordSetsClient
+	logger := o.Logger
+	rgName := o.ResourceGroupName
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
@@ -449,6 +491,13 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 		for _, zone := range zonesPage.Values() {
 			if zone.ZoneType == dns.Private {
 				if err := deletePublicRecordsForZone(ctx, dnsClient, recordsClient, logger, rgName, to.String(zone.Name)); err != nil {
+					errs = append(errs, fmt.Errorf("failed to delete public records for %s: %w", to.String(zone.Name), err))
+					if isAuthError(err) {
+						return err
+					}
+					continue
+				}
+				if err := deleteCustomDNSRecords(ctx, o, o.InfraID, to.String(zone.Name)); err != nil {
 					errs = append(errs, fmt.Errorf("failed to delete public records for %s: %w", to.String(zone.Name), err))
 					if isAuthError(err) {
 						return err
