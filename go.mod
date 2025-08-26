@@ -115,7 +115,7 @@ require (
 	github.com/thoas/go-funk v0.9.3
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
-	github.com/vmware/govmomi v0.47.1
+	github.com/vmware/govmomi v0.49.0
 	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.38.0
 	golang.org/x/oauth2 v0.28.0

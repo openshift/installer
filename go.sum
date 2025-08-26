@@ -950,8 +950,8 @@ github.com/vincent-petithory/dataurl v1.0.0/go.mod h1:FHafX5vmDzyP+1CQATJn7WFKc9
 github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/vmihailenco/msgpack/v4 v4.3.12/go.mod h1:gborTTJjAo/GWTqqRjrLCn9pgNN+NXzzngzBKDPIqw4=
 github.com/vmihailenco/tagparser v0.1.1/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
-github.com/vmware/govmomi v0.47.1 h1:6a2iNaqSS2/AFfvI8UMe0l787/TBKkK0KK9jCqCyYCE=
-github.com/vmware/govmomi v0.47.1/go.mod h1:bYwUHpGpisE4AOlDl5eph90T+cjJMIcKx/kaa5v5rQM=
+github.com/vmware/govmomi v0.49.0 h1:M80ExmFq3kOfeMvMJcHnXgA/4w5hUAFfYfc+Qm3lmPg=
+github.com/vmware/govmomi v0.49.0/go.mod h1:+oZ0tYJw/pXKoeWHLR9Egq5KENVr2hLePRzisFhEWpA=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI=
