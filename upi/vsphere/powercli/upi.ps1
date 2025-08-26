@@ -263,7 +263,7 @@ $template = Get-VM -Server $fds[0].server -Name $vm_template -Location $fds[0].d
 # Create LB for Cluster
 $ignition = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((New-LoadBalancerIgnition $sshKey)))
 $network = New-VMNetworkConfig -Server $fds[0].server -Hostname "$($metadata.infraID)-lb" -IPAddress $lb_ip_address -Netmask $netmask -Gateway $gateway -DNS $dns -Network $failure_domains[0].network
-$vm = New-OpenShiftVM -IgnitionData $ignition -Name "$($metadata.infraID)-lb" -Template $template -Server $fds[0].server -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -Tag $tag -Networking $network -Network $($fds[0].network) -SecureBoot $secureboot -StoragePolicy $storagepolicy -MemoryMB 8192 -NumCpu 4
+$vm = New-OpenShiftVM -IgnitionData $ignition -Name "$($metadata.infraID)-lb" -Template $template -Server $fds[0].server -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -Tag $tag -Networking $network -Network $($fds[0].network) -SecureBoot $secureboot -StoragePolicy $storagepolicy -MemoryMB 8192 -NumCpu 4 -CoresPerSocket 4
 $vm | Start-VM
 
 # Take the $virtualmachines defined in upi-variables and convert to a powershell object
