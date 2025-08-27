@@ -215,6 +215,41 @@ storage:
 				name:     "99-worker-ssh",
 				err:      errors.NewForbidden(schema.GroupResource{}, "", nil),
 			},
+			overrideExpectedClusterInfo: func(clusterInfo ClusterInfo) ClusterInfo {
+				t.Helper()
+				clusterInfo.SSHKey = "my-ssh-key-from-installconfig"
+				return clusterInfo
+			},
+		},
+		{
+			name:     "ssh-key from 99-worker-ssh configmap",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
+				t.Helper()
+				objs, ocObjs, ocMachineConfigObjs := defaultObjects()(t)
+				ocMachineConfigObjs = append(ocMachineConfigObjs, &machineconfigv1.MachineConfig{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "99-worker-ssh",
+					},
+					Spec: machineconfigv1.MachineConfigSpec{
+						Config: runtime.RawExtension{
+							Raw: []byte(`
+ignition:
+  version: 3.2.0
+passwd:
+  users:
+  - name: core
+    sshAuthorizedKeys:
+    - my-ssh-key-from-cm`),
+						}}})
+
+				return objs, ocObjs, ocMachineConfigObjs
+			},
+			overrideExpectedClusterInfo: func(clusterInfo ClusterInfo) ClusterInfo {
+				t.Helper()
+				clusterInfo.SSHKey = "my-ssh-key-from-cm"
+				return clusterInfo
+			},
 		},
 	}
 	for _, tc := range cases {
@@ -343,7 +378,7 @@ func makeInstallConfig(t *testing.T) string {
 				},
 			},
 		},
-		SSHKey: "my-ssh-key",
+		SSHKey: "my-ssh-key-from-installconfig",
 		FIPS:   true,
 	}
 	data, err := yaml.Marshal(ic)
@@ -480,23 +515,6 @@ func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object, []
 		openshiftMachineConfigObjects := []runtime.Object{
 			&machineconfigv1.MachineConfig{
 				ObjectMeta: v1.ObjectMeta{
-					Name: "99-worker-ssh",
-				},
-				Spec: machineconfigv1.MachineConfigSpec{
-					Config: runtime.RawExtension{
-						Raw: []byte(`
-ignition:
-  version: 3.2.0
-passwd:
-  users:
-  - name: core
-    sshAuthorizedKeys:
-    - my-ssh-key`),
-					},
-				},
-			},
-			&machineconfigv1.MachineConfig{
-				ObjectMeta: v1.ObjectMeta{
 					Name: "99-worker-fips",
 				},
 				Spec: machineconfigv1.MachineConfigSpec{
@@ -534,7 +552,6 @@ func defaultExpectedClusterInfo() ClusterInfo {
 			},
 		},
 		PlatformType:    v1beta1.BareMetalPlatformType,
-		SSHKey:          "my-ssh-key",
 		OSImage:         buildStreamData(),
 		OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-0",
 		IgnitionEndpointWorker: &models.IgnitionEndpoint{
