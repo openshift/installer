@@ -445,9 +445,9 @@ func ValidatePrivateDNSZone(client API, ic *types.InstallConfig) field.ErrorList
 	for _, paramSet := range params {
 		zone, err := client.GetDNSZoneFromParams(context.TODO(), paramSet)
 		if err != nil {
-			logrus.Debug("No private DNS Zone found")
 			if IsNotFound(err) {
 				// Ignore the not found error, because the zone will be created in this instance.
+				logrus.Debug("No private DNS Zone found")
 				continue
 			}
 			return append(allErrs, field.Invalid(field.NewPath("baseDomain"), ic.BaseDomain, err.Error()))
@@ -459,7 +459,7 @@ func ValidatePrivateDNSZone(client API, ic *types.InstallConfig) field.ErrorList
 				allErrs = append(allErrs, field.Invalid(
 					field.NewPath("platform").Child("gcp").Child("dns").Child("privateZone").Child("name"),
 					zoneName,
-					fmt.Sprintf("found existing private zone %s in project %s with base domain %s", zone.Name, project, ic.BaseDomain),
+					fmt.Sprintf("found existing private zone %s in project %s with DNS name %s", zone.Name, project, zone.DnsName),
 				))
 			} else if err := checkRecordSets(client, ic, project, zone, []string{apiRecordType(ic), apiIntRecordName(ic)}); err != nil {
 				allErrs = append(allErrs, err)
