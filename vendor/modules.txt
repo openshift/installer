@@ -1569,8 +1569,8 @@ github.com/ulikunitz/xz/lzma
 # github.com/vincent-petithory/dataurl v1.0.0
 ## explicit
 github.com/vincent-petithory/dataurl
-# github.com/vmware/govmomi v0.47.1
-## explicit; go 1.21
+# github.com/vmware/govmomi v0.49.0
+## explicit; go 1.23.0
 github.com/vmware/govmomi
 github.com/vmware/govmomi/cli/esx
 github.com/vmware/govmomi/cns
