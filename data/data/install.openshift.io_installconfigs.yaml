@@ -5813,6 +5813,28 @@ spec:
                           type: string
                         type: array
                     type: object
+                  dns:
+                    description: |-
+                      DNS contains the dns zone information for the cluster. The DNS information can
+                      only be supplied during Shared VPC (XPN) installs.
+                    properties:
+                      privateZone:
+                        description: |-
+                          PrivateZone contains the information for a private DNS zone. The Private DNS Zone can
+                          only be supplied during Shared VPC (XPN) installs. The PrivateZone can exist or be
+                          created in a second service project; a project other than the one matching projectID
+                          or networkProjectID.
+                        properties:
+                          name:
+                            description: Name is the name of the dns-managed zone.
+                            type: string
+                          projectID:
+                            description: ProjectID is the project where the zone resides.
+                            type: string
+                        required:
+                        - name
+                        type: object
+                    type: object
                   network:
                     description: |-
                       Network specifies an existing VPC where the cluster should be created
