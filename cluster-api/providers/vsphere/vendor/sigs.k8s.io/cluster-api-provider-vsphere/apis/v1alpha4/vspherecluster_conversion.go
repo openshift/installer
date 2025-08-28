@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha4
 
 import (
+	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
@@ -25,13 +26,29 @@ import (
 // ConvertTo converts this VSphereCluster to the Hub version (v1beta1).
 func (src *VSphereCluster) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*infrav1.VSphereCluster)
-	return Convert_v1alpha4_VSphereCluster_To_v1beta1_VSphereCluster(src, dst, nil)
+	if err := Convert_v1alpha4_VSphereCluster_To_v1beta1_VSphereCluster(src, dst, nil); err != nil {
+		return err
+	}
+
+	// Manually restore data.
+	restored := &infrav1.VSphereCluster{}
+	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
+		return err
+	}
+	dst.Status.V1Beta2 = restored.Status.V1Beta2
+
+	return nil
 }
 
 // ConvertFrom converts from the Hub version (v1beta1) to this VSphereCluster.
 func (dst *VSphereCluster) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*infrav1.VSphereCluster)
-	return Convert_v1beta1_VSphereCluster_To_v1alpha4_VSphereCluster(src, dst, nil)
+
+	if err := Convert_v1beta1_VSphereCluster_To_v1alpha4_VSphereCluster(src, dst, nil); err != nil {
+		return err
+	}
+
+	return utilconversion.MarshalData(src, dst)
 }
 
 // ConvertTo converts this VSphereClusterList to the Hub version (v1beta1).

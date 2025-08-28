@@ -92,6 +92,9 @@ const (
 	// LabelsFromMachineAnnotation is the annotation set on nodes to track the labels originated from machines.
 	LabelsFromMachineAnnotation = "cluster.x-k8s.io/labels-from-machine"
 
+	// AnnotationsFromMachineAnnotation is the annotation set on nodes to track the annotations that originated from machines.
+	AnnotationsFromMachineAnnotation = "cluster.x-k8s.io/annotations-from-machine"
+
 	// OwnerNameAnnotation is the annotation set on nodes identifying the owner name.
 	OwnerNameAnnotation = "cluster.x-k8s.io/owner-name"
 
@@ -128,7 +131,7 @@ const (
 	// MachineSkipRemediationAnnotation is the annotation used to mark the machines that should not be considered for remediation by MachineHealthCheck reconciler.
 	MachineSkipRemediationAnnotation = "cluster.x-k8s.io/skip-remediation"
 
-	// RemediateMachineAnnotation is the annotation used to mark machines that should be remediated by MachineHealthCheck reconciler.
+	// RemediateMachineAnnotation request the MachineHealthCheck reconciler to mark a Machine as unhealthy. CAPI builtin remediation will prioritize Machines with the annotation to be remediated.
 	RemediateMachineAnnotation = "cluster.x-k8s.io/remediate-machine"
 
 	// MachineSetSkipPreflightChecksAnnotation is the annotation used to provide a comma-separated list of
@@ -197,6 +200,16 @@ const (
 	// VariableDefinitionFromInline indicates a patch or variable was defined in the `.spec` of a ClusterClass
 	// rather than from an external patch extension.
 	VariableDefinitionFromInline = "inline"
+
+	// CRDMigrationObservedGenerationAnnotation indicates on a CRD for which generation CRD migration is completed.
+	CRDMigrationObservedGenerationAnnotation = "crd-migration.cluster.x-k8s.io/observed-generation"
+
+	// BeforeClusterUpgradeHookAnnotationPrefix annotation specifies the prefix we search each annotation
+	// for during the before-upgrade lifecycle hook to block propagating the new version to the control plane.
+	// This hook can be used to execute pre-upgrade add-on tasks and block upgrades of the ControlPlane and Workers.
+	// Note: While the upgrade is blocked changes made to the Cluster Topology will be delayed propagating to the underlying
+	// objects while the object is waiting for upgrade.
+	BeforeClusterUpgradeHookAnnotationPrefix = "before-upgrade.hook.cluster.cluster.x-k8s.io"
 )
 
 // MachineSetPreflightCheck defines a valid MachineSet preflight check.
@@ -208,10 +221,7 @@ const (
 
 	// MachineSetPreflightCheckKubeadmVersionSkew is the name of the preflight check
 	// that verifies if the machine being created or remediated for the MachineSet conforms to the kubeadm version
-	// skew policy that requires the machine to be at the same version as the control plane.
-	// Note: This is a stopgap while the root cause of the problem is fixed in kubeadm; this check will become
-	// a no-op when this check will be available in kubeadm, and then eventually be dropped when all the
-	// supported Kuberenetes/kubeadm versions have implemented the fix.
+	// skew policy that requires the machine to be at the same minor version as the control plane.
 	// The preflight check is only run if a ControlPlane is used (controlPlaneRef must exist in the Cluster),
 	// the ControlPlane has a version, the MachineSet has a version and the MachineSet uses the Kubeadm bootstrap
 	// provider.
@@ -219,16 +229,27 @@ const (
 
 	// MachineSetPreflightCheckKubernetesVersionSkew is the name of the preflight check that verifies
 	// if the machines being created or remediated for the MachineSet conform to the Kubernetes version skew policy
-	// that requires the machines to be at a version that is not more than 2 minor lower than the ControlPlane version.
+	// that requires the machines to be at a version that is not more than 2 (< v1.28) or 3 (>= v1.28) minor
+	// lower than the ControlPlane version.
 	// The preflight check is only run if a ControlPlane is used (controlPlaneRef must exist in the Cluster),
 	// the ControlPlane has a version and the MachineSet has a version.
 	MachineSetPreflightCheckKubernetesVersionSkew MachineSetPreflightCheck = "KubernetesVersionSkew"
 
 	// MachineSetPreflightCheckControlPlaneIsStable is the name of the preflight check
 	// that verifies if the control plane is not provisioning and not upgrading.
+	// For Clusters with a managed topology it also checks if a control plane upgrade is pending.
 	// The preflight check is only run if a ControlPlane is used (controlPlaneRef must exist in the Cluster)
 	// and the ControlPlane has a version.
 	MachineSetPreflightCheckControlPlaneIsStable MachineSetPreflightCheck = "ControlPlaneIsStable"
+
+	// MachineSetPreflightCheckControlPlaneVersionSkew is the name of the preflight check
+	// that verifies if the machine being created or remediated for the MachineSet has exactly the same version
+	// as the control plane.
+	// The idea behind this check is that it doesn't make sense to create a Machine with an old version, if we already
+	// know based on the control plane version that the Machine has to be replaced soon.
+	// The preflight check is only run if the Cluster has a managed topology, a ControlPlane is used (controlPlaneRef
+	// must exist in the Cluster), the ControlPlane has a version and the MachineSet has a version.
+	MachineSetPreflightCheckControlPlaneVersionSkew MachineSetPreflightCheck = "ControlPlaneVersionSkew"
 )
 
 // NodeOutdatedRevisionTaint can be added to Nodes at rolling updates in general triggered by updating MachineDeployment
@@ -260,6 +281,7 @@ var (
 )
 
 // MachineAddressType describes a valid MachineAddress type.
+// +kubebuilder:validation:Enum=Hostname;ExternalIP;InternalIP;ExternalDNS;InternalDNS
 type MachineAddressType string
 
 // Define the MachineAddressType constants.
@@ -273,10 +295,14 @@ const (
 
 // MachineAddress contains information for the node's address.
 type MachineAddress struct {
-	// Machine address type, one of Hostname, ExternalIP, InternalIP, ExternalDNS or InternalDNS.
+	// type is the machine address type, one of Hostname, ExternalIP, InternalIP, ExternalDNS or InternalDNS.
+	// +required
 	Type MachineAddressType `json:"type"`
 
-	// The machine address.
+	// address is the machine address.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Address string `json:"address"`
 }
 
@@ -305,7 +331,7 @@ type MachineAddresses []MachineAddress
 // In future versions, controller-tools@v2 might allow overriding the type and validation for embedded
 // types. When that happens, this hack should be revisited.
 type ObjectMeta struct {
-	// Map of string keys and values that can be used to organize and categorize
+	// labels is a map of string keys and values that can be used to organize and categorize
 	// (scope and select) objects. May match selectors of replication controllers
 	// and services.
 	// More info: http://kubernetes.io/docs/user-guide/labels

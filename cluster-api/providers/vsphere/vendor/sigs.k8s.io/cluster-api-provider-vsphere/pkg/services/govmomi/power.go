@@ -18,13 +18,16 @@ package govmomi
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/conditions/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
@@ -101,6 +104,12 @@ func (vms *VMService) triggerSoftPowerOff(ctx context.Context, virtualMachineCtx
 
 		conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.GuestSoftPowerOffSucceededCondition, infrav1.GuestSoftPowerOffFailedReason, clusterv1.ConditionSeverityWarning,
 			"VMware Tools not installed on VM %s", client.ObjectKeyFromObject(virtualMachineCtx.VSphereVM))
+		v1beta2conditions.Set(virtualMachineCtx.VSphereVM, metav1.Condition{
+			Type:    infrav1.VSphereVMGuestSoftPowerOffSucceededV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereVMGuestSoftPowerOffFailedV1Beta2Reason,
+			Message: fmt.Sprintf("VMware Tools not installed on VM %s", client.ObjectKeyFromObject(virtualMachineCtx.VSphereVM)),
+		})
 		// we are not able to trigger the soft power off so returning true to wait infinitely
 		return true, nil
 	}
@@ -118,6 +127,12 @@ func (vms *VMService) triggerSoftPowerOff(ctx context.Context, virtualMachineCtx
 
 		conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.GuestSoftPowerOffSucceededCondition, infrav1.GuestSoftPowerOffFailedReason, clusterv1.ConditionSeverityWarning,
 			"unable to trigger soft power off because guest state change is not supported on VM %s.", client.ObjectKeyFromObject(virtualMachineCtx.VSphereVM))
+		v1beta2conditions.Set(virtualMachineCtx.VSphereVM, metav1.Condition{
+			Type:    infrav1.VSphereVMGuestSoftPowerOffSucceededV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereVMGuestSoftPowerOffFailedV1Beta2Reason,
+			Message: fmt.Sprintf("Unable to trigger soft power off because guest state change is not supported on VM %s.", client.ObjectKeyFromObject(virtualMachineCtx.VSphereVM)),
+		})
 		// we are not able to trigger the soft power off so returning true to wait infinitely
 		return true, nil
 	}
@@ -129,5 +144,11 @@ func (vms *VMService) triggerSoftPowerOff(ctx context.Context, virtualMachineCtx
 
 	conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.GuestSoftPowerOffSucceededCondition, infrav1.GuestSoftPowerOffInProgressReason, clusterv1.ConditionSeverityInfo,
 		"guest soft power off initiated on VM %s", client.ObjectKeyFromObject(virtualMachineCtx.VSphereVM))
+	v1beta2conditions.Set(virtualMachineCtx.VSphereVM, metav1.Condition{
+		Type:    infrav1.VSphereVMGuestSoftPowerOffSucceededV1Beta2Condition,
+		Status:  metav1.ConditionFalse,
+		Reason:  infrav1.VSphereVMGuestSoftPowerOffInProgressV1Beta2Reason,
+		Message: fmt.Sprintf("guest soft power off initiated on VM %s", client.ObjectKeyFromObject(virtualMachineCtx.VSphereVM)),
+	})
 	return true, nil
 }
