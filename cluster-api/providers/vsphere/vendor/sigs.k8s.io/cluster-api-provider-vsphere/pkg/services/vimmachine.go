@@ -197,15 +197,10 @@ func (v *VimMachineService) GetHostInfo(ctx context.Context, machineCtx capvcont
 		return "", errors.New("received unexpected VIMMachineContext type")
 	}
 
-	name, err := generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name)
-	if err != nil {
-		return "", err
-	}
-
 	vsphereVM := &infrav1.VSphereVM{}
 	if err := v.Client.Get(ctx, client.ObjectKey{
 		Namespace: vimMachineCtx.VSphereMachine.Namespace,
-		Name:      name,
+		Name:      generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name),
 	}, vsphereVM); err != nil {
 		return "", err
 	}
@@ -220,14 +215,9 @@ func (v *VimMachineService) GetHostInfo(ctx context.Context, machineCtx capvcont
 func (v *VimMachineService) findVSphereVM(ctx context.Context, vimMachineCtx *capvcontext.VIMMachineContext) (*infrav1.VSphereVM, error) {
 	// Get ready to find the associated VSphereVM resource.
 	vm := &infrav1.VSphereVM{}
-	name, err := generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name)
-	if err != nil {
-		return nil, err
-	}
-
 	vmKey := types.NamespacedName{
 		Namespace: vimMachineCtx.VSphereMachine.Namespace,
-		Name:      name,
+		Name:      generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name),
 	}
 	// Attempt to find the associated VSphereVM resource.
 	if err := v.Client.Get(ctx, vmKey, vm); err != nil {
@@ -311,15 +301,10 @@ func (v *VimMachineService) reconcileNetwork(ctx context.Context, vimMachineCtx 
 func (v *VimMachineService) createOrPatchVSphereVM(ctx context.Context, vimMachineCtx *capvcontext.VIMMachineContext, vsphereVM *infrav1.VSphereVM) (*infrav1.VSphereVM, error) {
 	log := ctrl.LoggerFrom(ctx)
 	// Create or update the VSphereVM resource.
-	name, err := generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name)
-	if err != nil {
-		return nil, err
-	}
-
 	vm := &infrav1.VSphereVM{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: vimMachineCtx.VSphereMachine.Namespace,
-			Name:      name,
+			Name:      generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name),
 		},
 	}
 	mutateFn := func() (err error) {
@@ -408,32 +393,12 @@ func (v *VimMachineService) createOrPatchVSphereVM(ctx context.Context, vimMachi
 
 // generateVMObjectName returns a new VM object name in specific cases, otherwise return the same
 // passed in the parameter.
-func generateVMObjectName(vimMachineCtx *capvcontext.VIMMachineContext, machineName string) (string, error) {
-	name, err := GenerateVSphereVMName(machineName, vimMachineCtx.VSphereMachine.Spec.NamingStrategy)
-	if err != nil {
-		return "", err
-	}
+func generateVMObjectName(vimMachineCtx *capvcontext.VIMMachineContext, machineName string) string {
 	// Windows VM names must have 15 characters length at max.
 	if vimMachineCtx.VSphereMachine.Spec.OS == infrav1.Windows && len(machineName) > 15 {
-		return strings.TrimSuffix(name[0:9], "-") + "-" + name[len(name)-5:], nil
+		return strings.TrimSuffix(machineName[0:9], "-") + "-" + machineName[len(machineName)-5:]
 	}
-	return name, nil
-}
-
-// GenerateVSphereVMName generates the name of a VSphereVM based on the naming strategy.
-func GenerateVSphereVMName(machineName string, namingStrategy *infrav1.VSphereVMNamingStrategy) (string, error) {
-	// Per default the name of the VSphereVM should be equal to the Machine name (this is the same as "{{ .machine.name }}")
-	if namingStrategy == nil || namingStrategy.Template == nil {
-		// Note: No need to trim to max length in this case as valid Machine names will also be valid VSphereVM names.
-		return machineName, nil
-	}
-
-	name, err := infrautilv1.GenerateMachineNameFromTemplate(machineName, namingStrategy.Template)
-	if err != nil {
-		return name, errors.Wrap(err, "failed to generate name for VSphereVM")
-	}
-
-	return name, nil
+	return machineName
 }
 
 // generateOverrideFunc returns a function which can override the values in the VSphereVM Spec
