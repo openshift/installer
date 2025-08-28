@@ -8,13 +8,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	elbv2types "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -117,11 +115,6 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		return fmt.Errorf("failed to get AWSCluster: %w", err)
 	}
 
-	awsSession, err := in.InstallConfig.AWS.Session(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get aws session: %w", err)
-	}
-
 	subnetIDs := make([]string, 0, len(awsCluster.Spec.NetworkSpec.Subnets))
 	for _, s := range awsCluster.Spec.NetworkSpec.Subnets {
 		subnetIDs = append(subnetIDs, s.ResourceID)
@@ -130,13 +123,20 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	vpcID := awsCluster.Spec.NetworkSpec.VPC.ID
 	if len(subnetIDs) > 0 && len(vpcID) == 0 {
 		// All subnets belong to the same VPC, so we only need one
-		vpcID, err = getVPCFromSubnets(ctx, in.InstallConfig, subnetIDs[:1])
+		id, err := getVPCFromSubnets(ctx, in.InstallConfig, subnetIDs[:1])
 		if err != nil {
 			return err
 		}
+		vpcID = id
 	}
 
-	client := awsconfig.NewClient(awsSession)
+	client, err := awsconfig.NewClient(ctx, awsconfig.EndpointOptions{
+		Region:    in.InstallConfig.Config.AWS.Region,
+		Endpoints: in.InstallConfig.Config.AWS.ServiceEndpoints,
+	}, in.InstallConfig.Config.AWS.HostedZoneRole)
+	if err != nil {
+		return fmt.Errorf("failed to create route 53 client: %w", err)
+	}
 
 	// The user has selected to provision their own DNS solution. Skip the creation of the
 	// Hosted Zone(s) and the records for those zones.
@@ -156,7 +156,6 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			VpcID:    vpcID,
 			Region:   awsCluster.Spec.Region,
 			Name:     in.InstallConfig.Config.ClusterDomain(),
-			Role:     in.InstallConfig.Config.AWS.HostedZoneRole,
 			UserTags: awsCluster.Spec.AdditionalTags,
 		})
 		if err != nil {
@@ -171,7 +170,15 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 
 	// Create api record in public zone
 	if in.InstallConfig.Config.PublicAPI() {
-		zone, err := client.GetBaseDomain(in.InstallConfig.Config.BaseDomain)
+		client, err := awsconfig.NewClient(ctx, awsconfig.EndpointOptions{
+			Region:    in.InstallConfig.Config.AWS.Region,
+			Endpoints: in.InstallConfig.Config.AWS.ServiceEndpoints,
+		}, "") // we dont want to assume role here
+		if err != nil {
+			return fmt.Errorf("failed to create route 53 client: %w", err)
+		}
+
+		zone, err := client.GetBaseDomain(ctx, in.InstallConfig.Config.BaseDomain)
 		if err != nil {
 			return err
 		}
@@ -183,12 +190,11 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		}
 
 		if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
-			Name:           apiName,
-			Region:         awsCluster.Spec.Region,
-			DNSTarget:      pubLB.DNSName,
-			ZoneID:         *zone.Id,
-			AliasZoneID:    aliasZoneID,
-			HostedZoneRole: "", // we dont want to assume role here
+			Name:        apiName,
+			Region:      awsCluster.Spec.Region,
+			DNSTarget:   pubLB.DNSName,
+			ZoneID:      *zone.Id,
+			AliasZoneID: aliasZoneID,
 		}); err != nil {
 			return fmt.Errorf("failed to create records for api in public zone: %w", err)
 		}
@@ -202,12 +208,11 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 
 	// Create api record in private zone
 	if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
-		Name:           apiName,
-		Region:         awsCluster.Spec.Region,
-		DNSTarget:      awsCluster.Spec.ControlPlaneEndpoint.Host,
-		ZoneID:         phzID,
-		AliasZoneID:    aliasZoneID,
-		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+		Name:        apiName,
+		Region:      awsCluster.Spec.Region,
+		DNSTarget:   awsCluster.Spec.ControlPlaneEndpoint.Host,
+		ZoneID:      phzID,
+		AliasZoneID: aliasZoneID,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api in private zone: %w", err)
 	}
@@ -215,12 +220,11 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 
 	// Create api-int record in private zone
 	if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
-		Name:           apiIntName,
-		Region:         awsCluster.Spec.Region,
-		DNSTarget:      awsCluster.Spec.ControlPlaneEndpoint.Host,
-		ZoneID:         phzID,
-		AliasZoneID:    aliasZoneID,
-		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+		Name:        apiIntName,
+		Region:      awsCluster.Spec.Region,
+		DNSTarget:   awsCluster.Spec.ControlPlaneEndpoint.Host,
+		ZoneID:      phzID,
+		AliasZoneID: aliasZoneID,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api-int in private zone: %w", err)
 	}
@@ -232,19 +236,10 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 func getVPCFromSubnets(ctx context.Context, ic *installconfig.InstallConfig, subnetIDs []string) (string, error) {
 	var vpcID string
 
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.AWS.Region))
+	client, err := ic.AWS.EC2Client(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to load AWS config: %w", err)
+		return "", err
 	}
-
-	client := ec2.NewFromConfig(cfg, func(options *ec2.Options) {
-		options.Region = ic.Config.AWS.Region
-		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "ec2") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
-	})
 
 	paginator := ec2.NewDescribeSubnetsPaginator(client, &ec2.DescribeSubnetsInput{SubnetIds: subnetIDs})
 	for paginator.HasMorePages() {
@@ -284,19 +279,14 @@ func getHostedZoneIDForNLB(ctx context.Context, ic *installconfig.InstallConfig,
 		return hzID, nil
 	}
 
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.Platform.AWS.Region))
-	if err != nil {
-		return "", fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	client := elbv2.NewFromConfig(cfg, func(options *elbv2.Options) {
-		options.Region = ic.Config.Platform.AWS.Region
-		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "elasticloadbalancing") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
+	platformAWS := ic.Config.AWS
+	client, err := awsconfig.NewELBV2Client(ctx, awsconfig.EndpointOptions{
+		Region:    platformAWS.Region,
+		Endpoints: platformAWS.ServiceEndpoints,
 	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create elbv2 client :%w", err)
+	}
 
 	// If the HostedZoneID is not known, query from the LoadBalancer
 	input := elbv2.DescribeLoadBalancersInput{
@@ -346,13 +336,12 @@ func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.Bootstrap
 		return fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
 	}
 
-	region := in.Metadata.ClusterPlatformMetadata.AWS.Region
-	session, err := awsconfig.GetSessionWithOptions(
-		awsconfig.WithRegion(region),
-		awsconfig.WithServiceEndpoints(region, in.Metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints),
-	)
+	ec2Client, err := awsconfig.NewEC2Client(ctx, awsconfig.EndpointOptions{
+		Region:    in.Metadata.ClusterPlatformMetadata.AWS.Region,
+		Endpoints: in.Metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to create aws session: %w", err)
+		return fmt.Errorf("failed to create ec2 client: %w", err)
 	}
 
 	timeout := 15 * time.Minute
@@ -371,7 +360,7 @@ func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.Bootstrap
 				}
 				return true, fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
 			}
-			return isSSHRuleGone(ctx, session, region, sgID)
+			return isSSHRuleGone(ctx, ec2Client, sgID)
 		},
 	); err != nil {
 		if wait.Interrupted(err) {
@@ -418,8 +407,8 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 }
 
 // isSSHRuleGone checks that the Public SSH rule has been removed from the security group.
-func isSSHRuleGone(ctx context.Context, session *session.Session, region, sgID string) (bool, error) {
-	sgs, err := awsconfig.DescribeSecurityGroups(ctx, session, []string{sgID}, region)
+func isSSHRuleGone(ctx context.Context, client *ec2.Client, sgID string) (bool, error) {
+	sgs, err := awsconfig.DescribeSecurityGroups(ctx, client, []string{sgID})
 	if err != nil {
 		return false, fmt.Errorf("error getting security group: %w", err)
 	}
@@ -465,19 +454,13 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 
 // removeS3Bucket deletes an s3 bucket given its name.
 func removeS3Bucket(ctx context.Context, region string, bucketName string, endpoints []awstypes.ServiceEndpoint) error {
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(region))
-	if err != nil {
-		return fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	client := s3.NewFromConfig(cfg, func(options *s3.Options) {
-		options.Region = region
-		for _, endpoint := range endpoints {
-			if strings.EqualFold(endpoint.Name, "s3") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
+	client, err := awsconfig.NewS3Client(ctx, awsconfig.EndpointOptions{
+		Region:    region,
+		Endpoints: endpoints,
 	})
+	if err != nil {
+		return fmt.Errorf("failed to create s3 client: %w", err)
+	}
 
 	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{Bucket: aws.String(bucketName)})
 	for paginator.HasMorePages() {
