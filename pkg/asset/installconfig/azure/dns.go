@@ -19,6 +19,7 @@ type DNSConfig struct {
 // ZonesGetter fetches the DNS zones available for the installer
 type ZonesGetter interface {
 	GetAllPublicZones() (map[string]string, error)
+	ZoneExists(string, string) bool
 }
 
 // ZonesClient wraps the azure ZonesClient internal
@@ -101,6 +102,12 @@ func (config DNSConfig) GetDNSRecordSet(rgName string, zoneName string, relative
 	return recordsetsClient.GetRecordSet(rgName, zoneName, relativeRecordSetName, recordType)
 }
 
+// DNSZoneExists validates if a DNS zone exists in the provided resource group
+func (config DNSConfig) DNSZoneExists(rgName, zoneName string) bool {
+	zonesClient := newZonesClient(config.session)
+	return zonesClient.ZoneExists(rgName, zoneName)
+}
+
 // NewDNSConfig returns a new DNSConfig struct that helps configuring the DNS
 // by querying your subscription and letting you choose
 // which domain you wish to use for the cluster
@@ -137,6 +144,19 @@ func (client *ZonesClient) GetAllPublicZones() (map[string]string, error) {
 		}
 	}
 	return allZones, nil
+}
+
+// DNSZoneExists validates if a DNS zone exists in the provided resource group
+func (client *ZonesClient) ZoneExists(rgName, zoneName string) bool {
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	_, err := client.azureClient.Get(ctx, rgName, zoneName)
+	if err != nil {
+		return false
+	}
+
+	return true
 }
 
 // GetRecordSet gets an Azure DNS recordset by zone, name and recordset type
