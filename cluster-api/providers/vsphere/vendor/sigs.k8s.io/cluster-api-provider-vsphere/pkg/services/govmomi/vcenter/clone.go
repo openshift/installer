@@ -27,6 +27,7 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/pbm"
 	pbmTypes "github.com/vmware/govmomi/pbm/types"
+	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 	"k8s.io/utils/ptr"
@@ -254,12 +255,28 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 			if err != nil {
 				return errors.Wrapf(err, "failed to get owning cluster of resourcepool %q to calculate datastore based on storage policy", pool)
 			}
-			dsGetter := object.NewComputeResource(vmCtx.Session.Client.Client, cluster.Reference())
-			datastores, err := dsGetter.Datastores(ctx)
+
+			dsList, err := object.NewComputeResource(vmCtx.Session.Client.Client, cluster.Reference()).Datastores(ctx)
 			if err != nil {
 				return errors.Wrapf(err, "unable to list datastores from owning cluster of requested resourcepool")
 			}
+
+			var refs []types.ManagedObjectReference
+			for i := range dsList {
+				refs = append(refs, dsList[i].Reference())
+			}
+
+			var datastores []mo.Datastore
+			if err := property.DefaultCollector(vmCtx.Session.Client.Client).Retrieve(ctx, refs, []string{"summary"}, &datastores); err != nil {
+				return errors.Wrapf(err, "unable to collect datastore properties to validate maintenance mode")
+			}
+
 			for _, ds := range datastores {
+				if ds.Summary.MaintenanceMode != string(types.DatastoreSummaryMaintenanceModeStateNormal) {
+					log.V(4).Info("datastore is in maintenance mode, skipping", "datastore", ds.Summary.Name)
+					continue
+				}
+
 				hubs = append(hubs, pbmTypes.PbmPlacementHub{
 					HubType: ds.Reference().Type,
 					HubId:   ds.Reference().Value,

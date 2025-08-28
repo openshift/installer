@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
@@ -33,8 +21,8 @@ type VirtualMachineSnapshot struct {
 	DataSets map[string]*DataSet
 }
 
-func (v *VirtualMachineSnapshot) createSnapshotFiles() types.BaseMethodFault {
-	vm := Map.Get(v.Vm).(*VirtualMachine)
+func (v *VirtualMachineSnapshot) createSnapshotFiles(ctx *Context) types.BaseMethodFault {
+	vm := ctx.Map.Get(v.Vm).(*VirtualMachine)
 
 	snapshotDirectory := vm.Config.Files.SnapshotDirectory
 	if snapshotDirectory == "" {
@@ -44,7 +32,7 @@ func (v *VirtualMachineSnapshot) createSnapshotFiles() types.BaseMethodFault {
 	index := 1
 	for {
 		fileName := fmt.Sprintf("%s-Snapshot%d.vmsn", vm.Name, index)
-		f, err := vm.createFile(snapshotDirectory, fileName, false)
+		f, err := vm.createFile(ctx, snapshotDirectory, fileName, false)
 		if err != nil {
 			switch err.(type) {
 			case *types.FileAlreadyExists:
@@ -58,15 +46,15 @@ func (v *VirtualMachineSnapshot) createSnapshotFiles() types.BaseMethodFault {
 		_ = f.Close()
 
 		p, _ := parseDatastorePath(snapshotDirectory)
-		vm.useDatastore(p.Datastore)
+		vm.useDatastore(ctx, p.Datastore)
 		datastorePath := object.DatastorePath{
 			Datastore: p.Datastore,
 			Path:      path.Join(p.Path, fileName),
 		}
 
-		dataLayoutKey := vm.addFileLayoutEx(datastorePath, 0)
-		vm.addSnapshotLayout(v.Self, dataLayoutKey)
-		vm.addSnapshotLayoutEx(v.Self, dataLayoutKey, -1)
+		dataLayoutKey := vm.addFileLayoutEx(ctx, datastorePath, 0)
+		vm.addSnapshotLayout(ctx, v.Self, dataLayoutKey)
+		vm.addSnapshotLayoutEx(ctx, v.Self, dataLayoutKey, -1)
 
 		return nil
 	}
@@ -95,7 +83,7 @@ func (v *VirtualMachineSnapshot) removeSnapshotFiles(ctx *Context) types.BaseMet
 
 					host := ctx.Map.Get(*vm.Runtime.Host).(*HostSystem)
 					datastore := ctx.Map.FindByName(p.Datastore, host.Datastore).(*Datastore)
-					dFilePath := path.Join(datastore.Info.GetDatastoreInfo().Url, p.Path)
+					dFilePath := datastore.resolve(ctx, p.Path)
 
 					_ = os.Remove(dFilePath)
 				}
@@ -171,6 +159,62 @@ func (v *VirtualMachineSnapshot) RevertToSnapshotTask(ctx *Context, req *types.R
 	return &methods.RevertToSnapshot_TaskBody{
 		Res: &types.RevertToSnapshot_TaskResponse{
 			Returnval: task.Run(ctx),
+		},
+	}
+}
+
+func (v *VirtualMachineSnapshot) ExportSnapshot(ctx *Context, req *types.ExportSnapshot) soap.HasFault {
+
+	vm := ctx.Map.Get(v.Vm).(*VirtualMachine)
+
+	lease := newHttpNfcLease(ctx)
+	lease.InitializeProgress = 100
+	lease.TransferProgress = 0
+	lease.Mode = string(types.HttpNfcLeaseModePushOrGet)
+	lease.Capabilities = types.HttpNfcLeaseCapabilities{
+		CorsSupported:     true,
+		PullModeSupported: true,
+	}
+
+	device := object.VirtualDeviceList(v.Config.Hardware.Device)
+	ndevice := make(map[string]int)
+	var urls []types.HttpNfcLeaseDeviceUrl
+	u := leaseURL(ctx)
+
+	for _, d := range device {
+		info, ok := d.GetVirtualDevice().Backing.(types.BaseVirtualDeviceFileBackingInfo)
+		if !ok {
+			continue
+		}
+		var file object.DatastorePath
+		file.FromString(info.GetVirtualDeviceFileBackingInfo().FileName)
+		name := path.Base(file.Path)
+		ds := vm.findDatastore(ctx, file.Datastore)
+		lease.files[name] = ds.resolve(ctx, file.Path)
+
+		_, disk := d.(*types.VirtualDisk)
+		kind := device.Type(d)
+		n := ndevice[kind]
+		ndevice[kind]++
+
+		u.Path = nfcPrefix + path.Join(lease.Reference().Value, name)
+		urls = append(urls, types.HttpNfcLeaseDeviceUrl{
+			Key:           fmt.Sprintf("/%s/%s:%d", vm.Self.Value, kind, n),
+			ImportKey:     fmt.Sprintf("/%s/%s:%d", vm.Name, kind, n),
+			Url:           u.String(),
+			SslThumbprint: "",
+			Disk:          types.NewBool(disk),
+			TargetId:      name,
+			DatastoreKey:  "",
+			FileSize:      0,
+		})
+	}
+
+	lease.ready(ctx, v.Vm, urls)
+
+	return &methods.ExportSnapshotBody{
+		Res: &types.ExportSnapshotResponse{
+			Returnval: lease.Reference(),
 		},
 	}
 }

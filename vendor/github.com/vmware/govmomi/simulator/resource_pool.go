@@ -1,24 +1,11 @@
-/*
-Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
 import (
 	"fmt"
-	"net/url"
 	"path"
 	"strings"
 
@@ -50,12 +37,12 @@ func resourcePoolHosts(ctx *Context, pool *ResourcePool) []types.ManagedObjectRe
 	}
 }
 
-func NewResourcePool() *ResourcePool {
+func NewResourcePool(ctx *Context) *ResourcePool {
 	pool := &ResourcePool{
 		ResourcePool: esx.ResourcePool,
 	}
 
-	if Map.IsVPX() {
+	if ctx.Map.IsVPX() {
 		pool.DisabledMethod = nil // Enable VApp methods for VC
 	}
 
@@ -97,8 +84,8 @@ func allResourceFieldsValid(info *types.ResourceAllocationInfo) bool {
 	return true
 }
 
-func (p *ResourcePool) createChild(name string, spec types.ResourceConfigSpec) (*ResourcePool, *soap.Fault) {
-	if e := Map.FindByName(name, p.ResourcePool.ResourcePool); e != nil {
+func (p *ResourcePool) createChild(ctx *Context, name string, spec types.ResourceConfigSpec) (*ResourcePool, *soap.Fault) {
+	if e := ctx.Map.FindByName(name, p.ResourcePool.ResourcePool); e != nil {
 		return nil, Fault("", &types.DuplicateName{
 			Name:   e.Entity().Name,
 			Object: e.Reference(),
@@ -117,7 +104,7 @@ func (p *ResourcePool) createChild(name string, spec types.ResourceConfigSpec) (
 		})
 	}
 
-	child := NewResourcePool()
+	child := NewResourcePool(ctx)
 
 	child.Name = name
 	child.Owner = p.Owner
@@ -129,16 +116,16 @@ func (p *ResourcePool) createChild(name string, spec types.ResourceConfigSpec) (
 	return child, nil
 }
 
-func (p *ResourcePool) CreateResourcePool(c *types.CreateResourcePool) soap.HasFault {
+func (p *ResourcePool) CreateResourcePool(ctx *Context, c *types.CreateResourcePool) soap.HasFault {
 	body := &methods.CreateResourcePoolBody{}
 
-	child, err := p.createChild(c.Name, c.Spec)
+	child, err := p.createChild(ctx, c.Name, c.Spec)
 	if err != nil {
 		body.Fault_ = err
 		return body
 	}
 
-	Map.PutEntity(p, Map.NewEntity(child))
+	ctx.Map.PutEntity(p, ctx.Map.NewEntity(child))
 
 	p.ResourcePool.ResourcePool = append(p.ResourcePool.ResourcePool, child.Reference())
 
@@ -171,11 +158,11 @@ func updateResourceAllocation(kind string, src, dst *types.ResourceAllocationInf
 	return nil
 }
 
-func (p *ResourcePool) UpdateConfig(c *types.UpdateConfig) soap.HasFault {
+func (p *ResourcePool) UpdateConfig(ctx *Context, c *types.UpdateConfig) soap.HasFault {
 	body := &methods.UpdateConfigBody{}
 
 	if c.Name != "" {
-		if e := Map.FindByName(c.Name, p.ResourcePool.ResourcePool); e != nil {
+		if e := ctx.Map.FindByName(c.Name, p.ResourcePool.ResourcePool); e != nil {
 			body.Fault_ = Fault("", &types.DuplicateName{
 				Name:   e.Entity().Name,
 				Object: e.Reference(),
@@ -281,6 +268,7 @@ func (p *ResourcePool) ImportVApp(ctx *Context, req *types.ImportVApp) soap.HasF
 		device := object.VirtualDeviceList(vm.Config.Hardware.Device)
 		ndevice := make(map[string]int)
 		var urls []types.HttpNfcLeaseDeviceUrl
+		u := leaseURL(ctx)
 
 		for _, d := range device {
 			info, ok := d.GetVirtualDevice().Backing.(types.BaseVirtualDeviceFileBackingInfo)
@@ -290,22 +278,19 @@ func (p *ResourcePool) ImportVApp(ctx *Context, req *types.ImportVApp) soap.HasF
 			var file object.DatastorePath
 			file.FromString(info.GetVirtualDeviceFileBackingInfo().FileName)
 			name := path.Base(file.Path)
-			ds := vm.findDatastore(file.Datastore)
-			lease.files[name] = path.Join(ds.Info.GetDatastoreInfo().Url, file.Path)
+			ds := vm.findDatastore(ctx, file.Datastore)
+			lease.files[name] = ds.resolve(ctx, file.Path)
 
 			_, disk := d.(*types.VirtualDisk)
 			kind := device.Type(d)
 			n := ndevice[kind]
 			ndevice[kind]++
 
+			u.Path = nfcPrefix + path.Join(ref.Value, name)
 			urls = append(urls, types.HttpNfcLeaseDeviceUrl{
-				Key:       fmt.Sprintf("/%s/%s:%d", vm.Self.Value, kind, n),
-				ImportKey: fmt.Sprintf("/%s/%s:%d", vm.Name, kind, n),
-				Url: (&url.URL{
-					Scheme: "https",
-					Host:   "*",
-					Path:   nfcPrefix + path.Join(ref.Value, name),
-				}).String(),
+				Key:           fmt.Sprintf("/%s/%s:%d", vm.Self.Value, kind, n),
+				ImportKey:     fmt.Sprintf("/%s/%s:%d", vm.Name, kind, n),
+				Url:           u.String(),
 				SslThumbprint: "",
 				Disk:          types.NewBool(disk),
 				TargetId:      name,
@@ -355,10 +340,10 @@ func NewVAppConfigSpec() types.VAppConfigSpec {
 	return spec
 }
 
-func (p *ResourcePool) CreateVApp(req *types.CreateVApp) soap.HasFault {
+func (p *ResourcePool) CreateVApp(ctx *Context, req *types.CreateVApp) soap.HasFault {
 	body := &methods.CreateVAppBody{}
 
-	pool, err := p.createChild(req.Name, req.ResSpec)
+	pool, err := p.createChild(ctx, req.Name, req.ResSpec)
 	if err != nil {
 		body.Fault_ = err
 		return body
@@ -370,7 +355,7 @@ func (p *ResourcePool) CreateVApp(req *types.CreateVApp) soap.HasFault {
 	child.ParentFolder = req.VmFolder
 
 	if child.ParentFolder == nil {
-		folder := Map.getEntityDatacenter(p).VmFolder
+		folder := ctx.Map.getEntityDatacenter(p).VmFolder
 		child.ParentFolder = &folder
 	}
 
@@ -383,7 +368,7 @@ func (p *ResourcePool) CreateVApp(req *types.CreateVApp) soap.HasFault {
 		child.VAppConfig.Product = append(child.VAppConfig.Product, *product.Info)
 	}
 
-	Map.PutEntity(p, Map.NewEntity(child))
+	ctx.Map.PutEntity(p, ctx.Map.NewEntity(child))
 
 	p.ResourcePool.ResourcePool = append(p.ResourcePool.ResourcePool, child.Reference())
 
@@ -426,7 +411,7 @@ func (a *VirtualApp) CloneVAppTask(ctx *Context, req *types.CloneVApp_Task) soap
 			rspec = &s
 		}
 
-		res := a.CreateVApp(&types.CreateVApp{
+		res := a.CreateVApp(ctx, &types.CreateVApp{
 			This:       a.Self,
 			Name:       req.Name,
 			ResSpec:    *rspec,
@@ -472,8 +457,8 @@ func (a *VirtualApp) CloneVAppTask(ctx *Context, req *types.CloneVApp_Task) soap
 	}
 }
 
-func (a *VirtualApp) CreateVApp(req *types.CreateVApp) soap.HasFault {
-	return (&ResourcePool{ResourcePool: a.ResourcePool}).CreateVApp(req)
+func (a *VirtualApp) CreateVApp(ctx *Context, req *types.CreateVApp) soap.HasFault {
+	return (&ResourcePool{ResourcePool: a.ResourcePool}).CreateVApp(ctx, req)
 }
 
 func (a *VirtualApp) DestroyTask(ctx *Context, req *types.Destroy_Task) soap.HasFault {

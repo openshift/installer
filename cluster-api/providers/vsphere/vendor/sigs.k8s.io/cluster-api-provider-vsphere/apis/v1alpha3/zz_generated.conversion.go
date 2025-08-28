@@ -1410,7 +1410,6 @@ func autoConvert_v1beta1_VSphereMachineSpec_To_v1alpha3_VSphereMachineSpec(in *v
 	out.FailureDomain = (*string)(unsafe.Pointer(in.FailureDomain))
 	// WARNING: in.PowerOffMode requires manual conversion: does not exist in peer-type
 	// WARNING: in.GuestSoftPowerOffTimeout requires manual conversion: does not exist in peer-type
-	// WARNING: in.NamingStrategy requires manual conversion: does not exist in peer-type
 	return nil
 }
 

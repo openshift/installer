@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
@@ -21,7 +9,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -70,14 +57,13 @@ type Method struct {
 
 // Service decodes incoming requests and dispatches to a Handler
 type Service struct {
-	client *vim25.Client
-	sm     *SessionManager
-	sdk    map[string]*Registry
-	funcs  []handleFunc
-	delay  *DelayConfig
+	sdk   map[string]*Registry
+	funcs []handleFunc
+	delay *DelayConfig
 
 	readAll func(io.Reader) ([]byte, error)
 
+	Context  *Context
 	Listen   *url.URL
 	TLS      *tls.Config
 	ServeMux *http.ServeMux
@@ -95,16 +81,19 @@ type Server struct {
 }
 
 // New returns an initialized simulator Service instance
-func New(instance *ServiceInstance) *Service {
+func New(ctx *Context, instance *ServiceInstance) *Service {
 	s := &Service{
+		Context: ctx,
 		readAll: io.ReadAll,
-		sm:      Map.SessionManager(),
 		sdk:     make(map[string]*Registry),
 	}
-
-	s.client, _ = vim25.NewClient(context.Background(), s)
-
+	s.Context.svc = s
 	return s
+}
+
+func (s *Service) client() *vim25.Client {
+	c, _ := vim25.NewClient(context.Background(), s)
+	return c
 }
 
 type serverFaultBody struct {
@@ -129,7 +118,7 @@ func Fault(msg string, fault types.BaseMethodFault) *soap.Fault {
 	return f
 }
 
-func tracef(format string, v ...interface{}) {
+func tracef(format string, v ...any) {
 	if Trace {
 		log.Printf(format, v...)
 	}
@@ -152,7 +141,12 @@ func (s *Service) call(ctx *Context, method *Method) soap.HasFault {
 
 	if session == nil {
 		switch method.Name {
-		case "RetrieveServiceContent", "PbmRetrieveServiceContent", "Fetch", "List", "Login", "LoginByToken", "LoginExtensionByCertificate", "RetrieveProperties", "RetrievePropertiesEx", "CloneSession":
+		case
+			"Login", "LoginByToken", "LoginExtensionByCertificate", "CloneSession", // SessionManager
+			"RetrieveServiceContent", "RetrieveInternalContent", "PbmRetrieveServiceContent", // ServiceContent
+			"Fetch", "RetrieveProperties", "RetrievePropertiesEx", // PropertyCollector
+			"List",                   // lookup service
+			"GetTrustedCertificates": // ssoadmin
 			// ok for now, TODO: authz
 		default:
 			fault := &types.NotAuthenticated{
@@ -251,9 +245,13 @@ func (s *Service) RoundTrip(ctx context.Context, request, response soap.HasFault
 	}
 
 	res := s.call(&Context{
-		Map:     Map,
+		Map:     s.Context.Map,
 		Context: ctx,
-		Session: internalSession,
+		Session: &Session{
+			UserSession: internalSession.UserSession,
+			Registry:    internalSession.Registry,
+			Map:         s.Context.Map,
+		},
 	}, method)
 
 	if err := res.Fault(); err != nil {
@@ -269,12 +267,12 @@ func (s *Service) RoundTrip(ctx context.Context, request, response soap.HasFault
 // and additional namespace attributes required by some client libraries.
 // Go still has issues decoding with such a namespace, but encoding is ok.
 type soapEnvelope struct {
-	XMLName xml.Name    `xml:"soapenv:Envelope"`
-	Enc     string      `xml:"xmlns:soapenc,attr"`
-	Env     string      `xml:"xmlns:soapenv,attr"`
-	XSD     string      `xml:"xmlns:xsd,attr"`
-	XSI     string      `xml:"xmlns:xsi,attr"`
-	Body    interface{} `xml:"soapenv:Body"`
+	XMLName xml.Name `xml:"soapenv:Envelope"`
+	Enc     string   `xml:"xmlns:soapenc,attr"`
+	Env     string   `xml:"xmlns:soapenv,attr"`
+	XSD     string   `xml:"xmlns:xsd,attr"`
+	XSI     string   `xml:"xmlns:xsi,attr"`
+	Body    any      `xml:"soapenv:Body"`
 }
 
 type faultDetail struct {
@@ -499,7 +497,7 @@ func (s *Service) ServeSDK(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var res soap.HasFault
-	var soapBody interface{}
+	var soapBody any
 
 	method, err := UnmarshalBody(ctx.Map.typeFunc, body)
 	if err != nil {
@@ -510,7 +508,7 @@ func (s *Service) ServeSDK(w http.ResponseWriter, r *http.Request) {
 			// Redirect any Fetch method calls to the PropertyCollector singleton
 			method.This = ctx.Map.content().PropertyCollector
 		}
-		ctx.Map.WithLock(ctx, s.sm, ctx.mapSession)
+		ctx.Map.WithLock(ctx, ctx.sessionManager(), ctx.mapSession)
 		res = s.call(ctx, method)
 	}
 
@@ -566,7 +564,7 @@ func (s *Service) ServeSDK(w http.ResponseWriter, r *http.Request) {
 func (s *Service) findDatastore(query url.Values) (*Datastore, error) {
 	ctx := context.Background()
 
-	finder := find.NewFinder(s.client, false)
+	finder := find.NewFinder(s.client(), false)
 	dc, err := finder.DatacenterOrDefault(ctx, query.Get("dcPath"))
 	if err != nil {
 		return nil, err
@@ -579,7 +577,7 @@ func (s *Service) findDatastore(query url.Values) (*Datastore, error) {
 		return nil, err
 	}
 
-	return Map.Get(ds.Reference()).(*Datastore), nil
+	return s.Context.Map.Get(ds.Reference()).(*Datastore), nil
 }
 
 const folderPrefix = "/folder/"
@@ -593,8 +591,13 @@ func (s *Service) ServeDatastore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if strings.Contains(r.URL.Path, "..") {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	r.URL.Path = strings.TrimPrefix(r.URL.Path, folderPrefix)
-	p := path.Join(ds.Info.GetDatastoreInfo().Url, r.URL.Path)
+	p := ds.resolve(s.Context, r.URL.Path)
 
 	switch r.Method {
 	case http.MethodPost:
@@ -621,7 +624,11 @@ func (s *Service) ServeDatastore(w http.ResponseWriter, r *http.Request) {
 
 		_, _ = io.Copy(f, r.Body)
 	default:
-		fs := http.FileServer(http.Dir(ds.Info.GetDatastoreInfo().Url))
+		// ds.resolve() may have translated vsan friendly name to uuid,
+		// apply the same to the Request.URL.Path
+		r.URL.Path = strings.TrimPrefix(p, ds.Summary.Url)
+
+		fs := http.FileServer(http.Dir(ds.Summary.Url))
 
 		fs.ServeHTTP(w, r)
 	}
@@ -640,7 +647,7 @@ func (s *Service) ServiceVersions(w http.ResponseWriter, r *http.Request) {
  </namespace>
 </namespaces>
 `
-	fmt.Fprintf(w, versions, s.client.ServiceContent.About.ApiVersion)
+	fmt.Fprintf(w, versions, s.Context.Map.content().About.ApiVersion)
 }
 
 // ServiceVersionsVsan handler for the /sdk/vsanServiceVersions.xml path.
@@ -656,7 +663,7 @@ func (s *Service) ServiceVersionsVsan(w http.ResponseWriter, r *http.Request) {
  </namespace>
 </namespaces>
 `
-	fmt.Fprintf(w, versions, s.client.ServiceContent.About.ApiVersion)
+	fmt.Fprintf(w, versions, s.Context.Map.content().About.ApiVersion)
 }
 
 // defaultIP returns addr.IP if specified, otherwise attempts to find a non-loopback ipv4 IP
@@ -692,11 +699,12 @@ func defaultIP(addr *net.TCPAddr) string {
 
 // NewServer returns an http Server instance for the given service
 func (s *Service) NewServer() *Server {
-	s.RegisterSDK(Map, Map.Path+"/vimService")
+	ctx := s.Context
+	s.RegisterSDK(ctx.Map, ctx.Map.Path+"/vimService")
 
 	mux := s.ServeMux
-	mux.HandleFunc(Map.Path+"/vimServiceVersions.xml", s.ServiceVersions)
-	mux.HandleFunc(Map.Path+"/vsanServiceVersions.xml", s.ServiceVersionsVsan)
+	mux.HandleFunc(ctx.Map.Path+"/vimServiceVersions.xml", s.ServiceVersions)
+	mux.HandleFunc(ctx.Map.Path+"/vsanServiceVersions.xml", s.ServiceVersionsVsan)
 	mux.HandleFunc(folderPrefix, s.ServeDatastore)
 	mux.HandleFunc(guestPrefix, ServeGuest)
 	mux.HandleFunc(nfcPrefix, ServeNFC)
@@ -711,17 +719,17 @@ func (s *Service) NewServer() *Server {
 	u := &url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort(defaultIP(addr), port),
-		Path:   Map.Path,
+		Path:   ctx.Map.Path,
 	}
 	if s.TLS != nil {
 		u.Scheme += "s"
 	}
 
 	// Redirect clients to this http server, rather than HostSystem.Name
-	Map.SessionManager().ServiceHostName = u.Host
+	ctx.sessionManager().ServiceHostName = u.Host
 
 	// Add vcsim config to OptionManager for use by SDK handlers (see lookup/simulator for example)
-	m := Map.OptionManager()
+	m := ctx.Map.OptionManager()
 	for i := range m.Setting {
 		setting := m.Setting[i].GetOptionValue()
 
@@ -735,12 +743,12 @@ func (s *Service) NewServer() *Server {
 			}
 		}
 	}
-	m.Setting = append(m.Setting,
-		&types.OptionValue{
+	m.UpdateOptions(&types.UpdateOptions{
+		ChangedValue: []types.BaseOptionValue{&types.OptionValue{
 			Key:   "vcsim.server.url",
 			Value: u.String(),
-		},
-	)
+		}},
+	})
 
 	u.User = s.Listen.User
 	if u.User == nil {
@@ -750,7 +758,7 @@ func (s *Service) NewServer() *Server {
 
 	if s.RegisterEndpoints {
 		for i := range endpoints {
-			endpoints[i](s, Map)
+			endpoints[i](s, ctx.Map)
 		}
 	}
 
@@ -768,9 +776,7 @@ func (s *Service) NewServer() *Server {
 	if s.TLS != nil {
 		ts.TLS = s.TLS
 		ts.TLS.ClientAuth = tls.RequestClientCert // Used by SessionManager.LoginExtensionByCertificate
-		Map.SessionManager().TLSCert = func() string {
-			return base64.StdEncoding.EncodeToString(ts.TLS.Certificates[0].Certificate[0])
-		}
+		ctx.Map.SessionManager().TLS = func() *tls.Config { return ts.TLS }
 		ts.StartTLS()
 	} else {
 		ts.Start()
@@ -916,7 +922,7 @@ func (e *Element) decoder() *xml.Decoder {
 	return decoder
 }
 
-func (e *Element) Decode(val interface{}) error {
+func (e *Element) Decode(val any) error {
 	return e.decoder().DecodeElement(val, &e.start)
 }
 

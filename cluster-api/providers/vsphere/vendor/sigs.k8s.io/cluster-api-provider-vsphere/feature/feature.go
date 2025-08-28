@@ -38,12 +38,6 @@ const (
 	//
 	// alpha: v1.11
 	NamespaceScopedZones featuregate.Feature = "NamespaceScopedZones"
-
-	// PriorityQueue is a feature gate that controls if the controller uses the controller-runtime PriorityQueue
-	// instead of the default queue implementation.
-	//
-	// alpha: v1.10
-	PriorityQueue featuregate.Feature = "PriorityQueue"
 )
 
 func init() {
@@ -56,5 +50,4 @@ var defaultCAPVFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	// Every feature should be initiated here:
 	NodeAntiAffinity:     {Default: false, PreRelease: featuregate.Alpha},
 	NamespaceScopedZones: {Default: false, PreRelease: featuregate.Alpha},
-	PriorityQueue:        {Default: false, PreRelease: featuregate.Alpha},
 }

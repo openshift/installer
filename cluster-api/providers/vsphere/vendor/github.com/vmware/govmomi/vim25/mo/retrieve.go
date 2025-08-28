@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2014-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package mo
 
@@ -36,6 +24,11 @@ func ignoreMissingProperty(ref types.ManagedObjectReference, p types.MissingProp
 			// Seen with vApp child VM
 			return true
 		}
+	case "ResourcePool":
+		switch p.Path {
+		case "resourceConfigSpecDetailed":
+			return true
+		}
 	}
 
 	return false
@@ -46,7 +39,7 @@ func ignoreMissingProperty(ref types.ManagedObjectReference, p types.MissingProp
 // it returns the first fault it finds there as error. If the 'MissingSet'
 // field is empty, it returns a pointer to a reflect.Value. It handles contain
 // nested properties, such as 'guest.ipAddress' or 'config.hardware'.
-func ObjectContentToType(o types.ObjectContent, ptr ...bool) (interface{}, error) {
+func ObjectContentToType(o types.ObjectContent, ptr ...bool) (any, error) {
 	// Expect no properties in the missing set
 	for _, p := range o.MissingSet {
 		if ignoreMissingProperty(o.Obj, p) {
@@ -93,7 +86,7 @@ func ApplyPropertyChange(obj Reference, changes []types.PropertyChange) {
 
 // LoadObjectContent converts the response of a call to
 // RetrieveProperties{Ex} to one or more managed objects.
-func LoadObjectContent(content []types.ObjectContent, dst interface{}) error {
+func LoadObjectContent(content []types.ObjectContent, dst any) error {
 	rt := reflect.TypeOf(dst)
 	if rt == nil || rt.Kind() != reflect.Ptr {
 		panic("need pointer")
@@ -194,7 +187,7 @@ func RetrievePropertiesEx(ctx context.Context, r soap.RoundTripper, req types.Re
 // RetrievePropertiesForRequest calls the RetrieveProperties method with the
 // specified request and decodes the response struct into the value pointed to
 // by dst.
-func RetrievePropertiesForRequest(ctx context.Context, r soap.RoundTripper, req types.RetrieveProperties, dst interface{}) error {
+func RetrievePropertiesForRequest(ctx context.Context, r soap.RoundTripper, req types.RetrieveProperties, dst any) error {
 	objects, err := RetrievePropertiesEx(ctx, r, types.RetrievePropertiesEx{
 		This:    req.This,
 		SpecSet: req.SpecSet,
@@ -208,7 +201,7 @@ func RetrievePropertiesForRequest(ctx context.Context, r soap.RoundTripper, req 
 
 // RetrieveProperties retrieves the properties of the managed object specified
 // as obj and decodes the response struct into the value pointed to by dst.
-func RetrieveProperties(ctx context.Context, r soap.RoundTripper, pc, obj types.ManagedObjectReference, dst interface{}) error {
+func RetrieveProperties(ctx context.Context, r soap.RoundTripper, pc, obj types.ManagedObjectReference, dst any) error {
 	req := types.RetrieveProperties{
 		This: pc,
 		SpecSet: []types.PropertyFilterSpec{
@@ -237,7 +230,7 @@ var morType = reflect.TypeOf((*types.ManagedObjectReference)(nil)).Elem()
 // References returns all non-nil moref field values in the given struct.
 // Only Anonymous struct fields are followed by default. The optional follow
 // param will follow any struct fields when true.
-func References(s interface{}, follow ...bool) []types.ManagedObjectReference {
+func References(s any, follow ...bool) []types.ManagedObjectReference {
 	var refs []types.ManagedObjectReference
 	rval := reflect.ValueOf(s)
 	rtype := rval.Type()

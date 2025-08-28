@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
@@ -118,7 +106,7 @@ func getManagedObject(obj mo.Reference) reflect.Value {
 }
 
 // wrapValue converts slice types to the appropriate ArrayOf type used in property collector responses.
-func wrapValue(rval reflect.Value, rtype reflect.Type) interface{} {
+func wrapValue(rval reflect.Value, rtype reflect.Type) any {
 	pval := rval.Interface()
 
 	if rval.Kind() == reflect.Slice {
@@ -162,7 +150,7 @@ func wrapValue(rval reflect.Value, rtype reflect.Type) interface{} {
 	return pval
 }
 
-func fieldValueInterface(f reflect.StructField, rval reflect.Value, keyed ...bool) interface{} {
+func fieldValueInterface(f reflect.StructField, rval reflect.Value, keyed ...bool) any {
 	if rval.Kind() == reflect.Ptr {
 		rval = rval.Elem()
 	}
@@ -174,8 +162,8 @@ func fieldValueInterface(f reflect.StructField, rval reflect.Value, keyed ...boo
 	return wrapValue(rval, f.Type)
 }
 
-func fieldValue(rval reflect.Value, p string, keyed ...bool) (interface{}, error) {
-	var value interface{}
+func fieldValue(rval reflect.Value, p string, keyed ...bool) (any, error) {
+	var value any
 	fields := strings.Split(p, ".")
 
 	for i, name := range fields {
@@ -223,7 +211,7 @@ func fieldValue(rval reflect.Value, p string, keyed ...bool) (interface{}, error
 	return value, nil
 }
 
-func fieldValueKey(rval reflect.Value, p mo.Field) (interface{}, error) {
+func fieldValueKey(rval reflect.Value, p mo.Field) (any, error) {
 	if rval.Kind() != reflect.Slice {
 		return nil, errInvalidField
 	}
@@ -272,7 +260,7 @@ func fieldValueKey(rval reflect.Value, p mo.Field) (interface{}, error) {
 	return nil, nil
 }
 
-func fieldValueIndex(rval reflect.Value, p mo.Field) (interface{}, error) {
+func fieldValueIndex(rval reflect.Value, p mo.Field) (any, error) {
 	val, err := fieldValueKey(rval, p)
 	if err != nil || val == nil || p.Item == "" {
 		return val, err
@@ -281,7 +269,7 @@ func fieldValueIndex(rval reflect.Value, p mo.Field) (interface{}, error) {
 	return fieldValue(reflect.ValueOf(val), p.Item)
 }
 
-func fieldRefs(f interface{}) []types.ManagedObjectReference {
+func fieldRefs(f any) []types.ManagedObjectReference {
 	switch fv := f.(type) {
 	case types.ManagedObjectReference:
 		return []types.ManagedObjectReference{fv}
@@ -396,7 +384,7 @@ func (rr *retrieveResult) collectFields(ctx *Context, rval reflect.Value, fields
 		}
 		seen[name] = true
 
-		var val interface{}
+		var val any
 		var err error
 		var field mo.Field
 		if field.FromString(name) {
@@ -531,10 +519,10 @@ func collect(ctx *Context, r *types.RetrievePropertiesEx) (*types.RetrieveResult
 	// Select object references
 	for _, spec := range r.SpecSet {
 		for _, o := range spec.ObjectSet {
-			var rval reflect.Value
-			ok := false
-			ctx.WithLock(o.Obj, func() { rval, ok = getObject(ctx, o.Obj) })
+			unlock := ctx.Map.AcquireLock(ctx, o.Obj)
+			rval, ok := getObject(ctx, o.Obj)
 			if !ok {
+				unlock()
 				if isFalse(spec.ReportMissingObjectsInResults) {
 					return nil, &types.ManagedObjectNotFound{Obj: o.Obj}
 				}
@@ -542,10 +530,12 @@ func collect(ctx *Context, r *types.RetrievePropertiesEx) (*types.RetrieveResult
 			}
 
 			if o.SelectSet == nil || isFalse(o.Skip) {
-				refs = append(refs, o.Obj)
+				rr.collect(ctx, o.Obj)
 			}
 
-			if err := rr.selectSet(ctx, rval, o.SelectSet, &refs); err != nil {
+			err := rr.selectSet(ctx, rval, o.SelectSet, &refs)
+			unlock()
+			if err != nil {
 				return nil, err
 			}
 		}
@@ -597,11 +587,13 @@ func (pc *PropertyCollector) DestroyPropertyCollector(ctx *Context, c *types.Des
 	body := &methods.DestroyPropertyCollectorBody{}
 
 	for _, ref := range pc.Filter {
+		// Same as DestroyPropertyFilter
+		ctx.Map.RemoveHandler(ctx.Session.Get(ref).(*PropertyFilter))
 		ctx.Session.Remove(ctx, ref)
 	}
 
+	ctx.Map.RemoveHandler(pc)
 	ctx.Session.Remove(ctx, c.This)
-	ctx.Map.Remove(ctx, c.This)
 
 	body.Res = &types.DestroyPropertyCollectorResponse{}
 
@@ -755,7 +747,7 @@ func (pc *PropertyCollector) update(u types.ObjectUpdate) {
 	pc.mu.Unlock()
 }
 
-func (pc *PropertyCollector) PutObject(o mo.Reference) {
+func (pc *PropertyCollector) PutObject(_ *Context, o mo.Reference) {
 	pc.update(types.ObjectUpdate{
 		Obj:       o.Reference(),
 		Kind:      types.ObjectUpdateKindEnter,

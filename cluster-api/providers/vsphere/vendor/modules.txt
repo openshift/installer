@@ -66,9 +66,6 @@ github.com/go-openapi/jsonreference/internal
 # github.com/go-openapi/swag v0.23.0
 ## explicit; go 1.20
 github.com/go-openapi/swag
-# github.com/go-task/slim-sprig/v3 v3.0.0
-## explicit; go 1.20
-github.com/go-task/slim-sprig/v3
 # github.com/gobuffalo/flect v1.0.3
 ## explicit; go 1.16
 github.com/gobuffalo/flect
@@ -117,8 +114,8 @@ github.com/google/gnostic-models/extensions
 github.com/google/gnostic-models/jsonschema
 github.com/google/gnostic-models/openapiv2
 github.com/google/gnostic-models/openapiv3
-# github.com/google/go-cmp v0.6.0
-## explicit; go 1.13
+# github.com/google/go-cmp v0.7.0
+## explicit; go 1.21
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -220,8 +217,8 @@ github.com/vmware-tanzu/vm-operator/api/v1alpha2/sysprep
 # github.com/vmware-tanzu/vm-operator/external/ncp v0.0.0-20240404200847-de75746a9505
 ## explicit; go 1.13
 github.com/vmware-tanzu/vm-operator/external/ncp/api/v1alpha1
-# github.com/vmware/govmomi v0.47.1
-## explicit; go 1.21
+# github.com/vmware/govmomi v0.50.0
+## explicit; go 1.23.0
 github.com/vmware/govmomi
 github.com/vmware/govmomi/fault
 github.com/vmware/govmomi/find
@@ -344,8 +341,8 @@ golang.org/x/net/websocket
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sync v0.10.0
-## explicit; go 1.18
+# golang.org/x/sync v0.13.0
+## explicit; go 1.23.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/singleflight
 # golang.org/x/sys v0.29.0
@@ -357,8 +354,8 @@ golang.org/x/sys/windows/registry
 # golang.org/x/term v0.28.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.21.0
-## explicit; go 1.18
+# golang.org/x/text v0.24.0
+## explicit; go 1.23.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -1089,8 +1086,8 @@ sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
 sigs.k8s.io/cluster-api/util/version
 sigs.k8s.io/cluster-api/version
-# sigs.k8s.io/cluster-api-provider-vsphere v1.12.0-rc.0.0.20250203113257-38f6b67f9b7d
-## explicit; go 1.23.0
+# sigs.k8s.io/cluster-api-provider-vsphere v1.12.0-rc.0.0.20250203113257-38f6b67f9b7d => github.com/jcpowermac/cluster-api-provider-vsphere v1.1.0-rc.2.0.20250827173522-74ab47f75a68
+## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-vsphere
 sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha3
 sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha4
@@ -1126,6 +1123,8 @@ sigs.k8s.io/cluster-api-provider-vsphere/pkg/session
 sigs.k8s.io/cluster-api-provider-vsphere/pkg/taggable
 sigs.k8s.io/cluster-api-provider-vsphere/pkg/util
 sigs.k8s.io/cluster-api-provider-vsphere/pkg/version
+sigs.k8s.io/cluster-api-provider-vsphere/webhooks
+sigs.k8s.io/cluster-api-provider-vsphere/webhooks/vmware
 # sigs.k8s.io/controller-runtime v0.20.1
 ## explicit; go 1.23.0
 sigs.k8s.io/controller-runtime
@@ -1193,3 +1192,4 @@ sigs.k8s.io/yaml/goyaml.v2
 # sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.9.1
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 # github.com/vmware-tanzu/nsx-operator/pkg/apis => github.com/vmware-tanzu/nsx-operator/pkg/apis v0.0.0-20240827061921-8f0982975508
+# sigs.k8s.io/cluster-api-provider-vsphere => github.com/jcpowermac/cluster-api-provider-vsphere v1.1.0-rc.2.0.20250827173522-74ab47f75a68

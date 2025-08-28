@@ -115,7 +115,7 @@ require (
 	github.com/thoas/go-funk v0.9.3
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
-	github.com/vmware/govmomi v0.47.1
+	github.com/vmware/govmomi v0.50.0
 	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.38.0
 	golang.org/x/oauth2 v0.28.0
@@ -371,3 +371,5 @@ replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.32.1
 
 replace sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.9.6
+
+replace sigs.k8s.io/cluster-api-provider-vsphere => github.com/jcpowermac/cluster-api-provider-vsphere v1.1.0-rc.2.0.20250827173522-74ab47f75a68
