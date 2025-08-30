@@ -294,6 +294,39 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 	return nil
 }
 
+func validateMTUIsInteger(nmstateYAML []byte) error {
+	var config map[string]interface{}
+	if err := yaml.Unmarshal(nmstateYAML, &config); err != nil {
+		return fmt.Errorf("failed to unmarshal NMState config: %w", err)
+	}
+
+	interfaces, ok := config["interfaces"].([]interface{})
+	if !ok {
+		// No interfaces section, nothing to check
+		return nil
+	}
+
+	var errs []string
+	for idx, iface := range interfaces {
+		ifaceMap, ok := iface.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if mtu, exists := ifaceMap["mtu"]; exists {
+			switch mtu.(type) {
+			case int, int64, float64: // YAML numbers are float64 by default
+				// valid
+			default:
+				errs = append(errs, fmt.Sprintf("interface %d: mtu must be an integer, got %T (%v)", idx, mtu, mtu))
+			}
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("%s", strings.Join(errs, "; "))
+	}
+	return nil
+}
+
 // ensure that the NetworkConfig field contains a valid Yaml string
 func validateNetworkConfig(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
 	for idx, host := range hosts {
@@ -302,6 +335,11 @@ func validateNetworkConfig(hosts []*baremetal.Host, fldPath *field.Path) (errors
 			err := yaml.Unmarshal(host.NetworkConfig.Raw, &networkConfig)
 			if err != nil {
 				errors = append(errors, field.Invalid(fldPath.Index(idx).Child("networkConfig"), host.NetworkConfig, fmt.Sprintf("Not a valid yaml: %s", err.Error())))
+			}
+
+			err = validateMTUIsInteger(host.NetworkConfig.Raw)
+			if err != nil {
+				errors = append(errors, field.Invalid(fldPath.Index(idx).Child("networkConfig"), string(host.NetworkConfig.Raw), fmt.Sprintf("mtu validation failed: %s", err.Error())))
 			}
 		}
 	}
