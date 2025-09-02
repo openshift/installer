@@ -238,7 +238,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		}
 
 		// Create the public (optional) and private dns records
-		if err := createDNSRecords(ctx, in.InstallConfig, in.InfraID, apiIPAddress, apiIntIPAddress); err != nil {
+		if err := createDNSRecords(ctx, client, in.InstallConfig, in.InfraID, apiIPAddress, apiIntIPAddress); err != nil {
 			return fmt.Errorf("failed to create DNS records: %w", err)
 		}
 	}

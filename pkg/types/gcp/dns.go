@@ -17,4 +17,9 @@ type DNSZoneParams struct {
 	// BaseDomain is the base domain of the DNS zone.
 	// Note that either `Name` or `BaseDomain` must be provided.
 	BaseDomain string
+
+	// InstallerCreated is true when the DNS zone should be created
+	// by the OpenShift Installer (and will be owned by the
+	// OpenShift Installer).
+	InstallerCreated bool
 }
