@@ -349,7 +349,7 @@ interfaces:
 - name: eth0
   type: ethernet
   state: up
-  mtu: "not-an-integer"
+  mtu: "1500"
 `)).build(),
 			expected: "mtu must be an integer",
 		},

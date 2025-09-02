@@ -326,7 +326,7 @@ func validateMTUIsInteger(nmstateYAML []byte, fldPath *field.Path) field.ErrorLi
 						field.Invalid(
 							fldPath.Child("interfaces").Index(idx).Child("mtu"),
 							v,
-							"must be an integer",
+							"mtu must be an integer",
 						),
 					)
 				} else {
@@ -334,7 +334,7 @@ func validateMTUIsInteger(nmstateYAML []byte, fldPath *field.Path) field.ErrorLi
 						field.Invalid(
 							fldPath.Child("interfaces").Index(idx).Child("mtu"),
 							v,
-							"must be an integer (not quoted string)",
+							"mtu must be an integer (not quoted string)",
 						),
 					)
 				}
@@ -343,7 +343,7 @@ func validateMTUIsInteger(nmstateYAML []byte, fldPath *field.Path) field.ErrorLi
 					field.Invalid(
 						fldPath.Child("interfaces").Index(idx).Child("mtu"),
 						v,
-						fmt.Sprintf("must be an integer, got %T", v),
+						fmt.Sprintf("mtu must be an integer, got %T", v),
 					),
 				)
 			}
