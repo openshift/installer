@@ -157,7 +157,8 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 						IPv6CidrBlocks: sshRuleCidrs.IPv6Nets().String(),
 					},
 				},
-				NodePortIngressRuleCidrBlocks: capiutils.MachineCIDRsFromInstallConfig(ic).String(),
+				// FIXME: Use the configured machine network instead
+				NodePortIngressRuleCidrBlocks: capiutils.AnyWhereCidrBlocks().String(),
 			},
 			S3Bucket: &capa.S3Bucket{
 				Name:                    GetIgnitionBucketName(clusterID.InfraID),

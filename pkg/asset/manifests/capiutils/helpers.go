@@ -31,6 +31,13 @@ func MachineCIDRsFromInstallConfig(ic *installconfig.InstallConfig) ipnet.IPNets
 	return cidrs
 }
 
+// AnyWhereCidrBlocks returns the 0.0.0.0 and ::/0 CIDR blocks.
+func AnyWhereCidrBlocks() ipnet.IPNets {
+	return ipnet.IPNets{
+		*AnyIPv4CidrBlock, *AnyIPv6CidrBlock,
+	}
+}
+
 // IsEnabled returns true if the feature gate is enabled.
 func IsEnabled(installConfig *installconfig.InstallConfig) bool {
 	// TODO(padillon): refactor to remove IsEnabled function.
