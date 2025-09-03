@@ -4,9 +4,8 @@ import (
 	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"fmt"
 	"net"
-
-	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -297,9 +296,14 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(ctx context.Context,
 	ca := &KubeAPIServerServiceNetworkSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(ca, installConfig)
-	serviceAddress, err := cidrhost(installConfig.Config.Networking.ServiceNetwork[0].IPNet, 1)
-	if err != nil {
-		return errors.Wrap(err, "failed to get service address for kube-apiserver from InstallConfig")
+
+	serviceAddresses := make([]net.IP, len(installConfig.Config.Networking.ServiceNetwork))
+	for i, svcNet := range installConfig.Config.Networking.ServiceNetwork {
+		serviceAddress, err := cidrhost(svcNet.IPNet, 1)
+		if err != nil {
+			return fmt.Errorf("failed to get service address for kube-apiserver from InstallConfig: %w", err)
+		}
+		serviceAddresses[i] = net.ParseIP(serviceAddress)
 	}
 
 	cfg := &CertCfg{
@@ -315,7 +319,7 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(ctx context.Context,
 			"openshift.default.svc",
 			"openshift.default.svc.cluster.local",
 		},
-		IPAddresses: []net.IP{net.ParseIP(serviceAddress)},
+		IPAddresses: serviceAddresses,
 	}
 
 	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-service-network-server", AppendParent)
