@@ -83,7 +83,7 @@ func AddClusterControllerToManager(ctx context.Context, controllerManagerCtx *ca
 				&vmwarev1.VSphereMachine{},
 				handler.EnqueueRequestsFromMapFunc(reconciler.VSphereMachineToCluster),
 			).
-			WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue))
+			WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue))
 
 		// Conditionally add a Watch for topologyv1.Zone when the feature gate is enabled
 		if feature.Gates.Enabled(feature.NamespaceScopedZones) {
@@ -157,7 +157,7 @@ func AddClusterControllerToManager(ctx context.Context, controllerManagerCtx *ca
 				&handler.EnqueueRequestForObject{},
 			),
 		).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue)).
 		WithEventFilter(predicates.ResourceIsNotExternallyManaged(mgr.GetScheme(), predicateLog)).
 		Build(reconciler)
 	if err != nil {
