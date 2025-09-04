@@ -19,7 +19,7 @@ var (
 	errNotFound = errors.New("not found")
 )
 
-func getDNSZoneName(ctx context.Context, ic *installconfig.InstallConfig, isPublic bool) (string, error) {
+func getDNSZoneName(ctx context.Context, ic *installconfig.InstallConfig, clusterID string, isPublic bool) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
 	defer cancel()
 
@@ -31,11 +31,16 @@ func getDNSZoneName(ctx context.Context, ic *installconfig.InstallConfig, isPubl
 	cctx, ccancel := context.WithTimeout(ctx, time.Minute*1)
 	defer ccancel()
 
-	domain := ic.Config.BaseDomain
-	project := ic.Config.GCP.ProjectID
-	if !isPublic {
-		project, _ = manifests.GetPrivateDNSZoneAndProject(ic)
-		domain = ic.Config.ClusterDomain()
+	params, err := manifests.GetGCPPrivateZoneInfo(ctx, client, ic, clusterID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get private zone info: %w", err)
+	}
+
+	domain := params.BaseDomain
+	project := params.Project
+	if isPublic {
+		project = ic.Config.GCP.ProjectID
+		domain = ic.Config.BaseDomain
 	}
 
 	zone, err := client.GetDNSZone(cctx, project, domain, isPublic)
@@ -57,20 +62,20 @@ type recordSet struct {
 }
 
 // createRecordSets will create a list of records that will be created during the install.
-func createRecordSets(ctx context.Context, ic *installconfig.InstallConfig, clusterID, apiIP, apiIntIP string) ([]recordSet, error) {
+func createRecordSets(ctx context.Context, client *gcpic.Client, ic *installconfig.InstallConfig, clusterID, apiIP, apiIntIP string) ([]recordSet, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
 	defer cancel()
 
-	project, privateZoneName := manifests.GetPrivateDNSZoneAndProject(ic)
-	if privateZoneName == "" {
-		privateZoneName = manifests.GCPDefaultPrivateZoneID(clusterID)
+	privateZoneParams, err := manifests.GetGCPPrivateZoneInfo(ctx, client, ic, clusterID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get private zone info for record creation: %w", err)
 	}
 
 	records := []recordSet{
 		{
 			// api_internal
-			projectID: project,
-			zoneName:  privateZoneName,
+			projectID: privateZoneParams.Project,
+			zoneName:  privateZoneParams.Name,
 			record: &dns.ResourceRecordSet{
 				Name:    fmt.Sprintf("api-int.%s.", ic.Config.ClusterDomain()),
 				Type:    "A",
@@ -80,8 +85,8 @@ func createRecordSets(ctx context.Context, ic *installconfig.InstallConfig, clus
 		},
 		{
 			// api_external_internal_zone
-			projectID: project,
-			zoneName:  privateZoneName,
+			projectID: privateZoneParams.Project,
+			zoneName:  privateZoneParams.Name,
 			record: &dns.ResourceRecordSet{
 				Name:    fmt.Sprintf("api.%s.", ic.Config.ClusterDomain()),
 				Type:    "A",
@@ -92,7 +97,7 @@ func createRecordSets(ctx context.Context, ic *installconfig.InstallConfig, clus
 	}
 
 	if ic.Config.Publish == types.ExternalPublishingStrategy {
-		existingPublicZoneName, err := getDNSZoneName(ctx, ic, true)
+		existingPublicZoneName, err := getDNSZoneName(ctx, ic, clusterID, true)
 		if err != nil {
 			return nil, fmt.Errorf("failed to find a public zone: %w", err)
 		}
@@ -114,14 +119,14 @@ func createRecordSets(ctx context.Context, ic *installconfig.InstallConfig, clus
 }
 
 // createDNSRecords will get the list of records to be created and execute their creation through the gcp dns api.
-func createDNSRecords(ctx context.Context, ic *installconfig.InstallConfig, clusterID, apiIP, apiIntIP string) error {
+func createDNSRecords(ctx context.Context, client *gcpic.Client, ic *installconfig.InstallConfig, clusterID, apiIP, apiIntIP string) error {
 	// TODO: use the opts for the service to restrict scopes see google.golang.org/api/option.WithScopes
 	dnsService, err := gcpic.GetDNSService(ctx, ic.Config.GCP.ServiceEndpoints)
 	if err != nil {
 		return fmt.Errorf("failed to create the gcp dns service: %w", err)
 	}
 
-	records, err := createRecordSets(ctx, ic, clusterID, apiIP, apiIntIP)
+	records, err := createRecordSets(ctx, client, ic, clusterID, apiIP, apiIntIP)
 	if err != nil {
 		return err
 	}
@@ -147,25 +152,23 @@ func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConf
 		return err
 	}
 
-	privateZoneID := manifests.GCPDefaultPrivateZoneID(clusterID)
+	params, err := manifests.GetGCPPrivateZoneInfo(ctx, client, ic, clusterID)
+	if err != nil {
+		return err
+	}
+
 	if ic.Config.GCP.NetworkProjectID != "" {
-		privateZoneName, shouldCreateZone, err := manifests.GetGCPPrivateZoneName(ctx, client, ic, clusterID)
-		if err != nil {
-			return err
-		}
-		if !shouldCreateZone {
-			logrus.Debugf("found private zone %s, skipping creation of private zone", privateZoneName)
-			privateZoneProject, _ := manifests.GetPrivateDNSZoneAndProject(ic)
+		if !params.InstallerCreated {
+			logrus.Debugf("found private zone %s, skipping creation of private zone", params.Name)
 			// The private zone already exists, so we need to add the shared label to the zone.
 			labels := mergeLabels(ic, clusterID, sharedLabelValue)
-			if err := client.UpdateDNSPrivateZoneLabels(ctx, ic.Config.ClusterDomain(), privateZoneProject, privateZoneName, labels); err != nil {
+			if err := client.UpdateDNSPrivateZoneLabels(ctx, ic.Config.ClusterDomain(), params.Project, params.Name, labels); err != nil {
 				return fmt.Errorf("failed to update dns private zone labels: %w", err)
 			}
 			return nil
 		}
-		privateZoneID = privateZoneName
 	}
-	logrus.Debugf("creating private zone %s", privateZoneID)
+	logrus.Debugf("creating private zone %s", params.Name)
 
 	// TODO: use the opts for the service to restrict scopes see google.golang.org/api/option.WithScopes
 	dnsService, err := gcpic.GetDNSService(ctx, ic.Config.GCP.ServiceEndpoints)
@@ -174,7 +177,7 @@ func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConf
 	}
 
 	managedZone := &dns.ManagedZone{
-		Name:        privateZoneID,
+		Name:        params.Name,
 		Description: resourceDescription,
 		DnsName:     fmt.Sprintf("%s.", ic.Config.ClusterDomain()),
 		Visibility:  "private",
@@ -191,8 +194,7 @@ func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConf
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
 	defer cancel()
 
-	project, _ := manifests.GetPrivateDNSZoneAndProject(ic)
-	if _, err = dnsService.ManagedZones.Create(project, managedZone).Context(ctx).Do(); err != nil {
+	if _, err = dnsService.ManagedZones.Create(params.Project, managedZone).Context(ctx).Do(); err != nil {
 		return fmt.Errorf("failed to create private managed zone: %w", err)
 	}
 
