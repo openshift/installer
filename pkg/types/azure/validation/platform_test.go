@@ -134,7 +134,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.OutboundType = "random-egress"
 				return p
 			}(),
-			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "NATGatewaySingleZone", "UserDefinedRouting"$`,
+			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "MultiZoneNatGateway", "NATGatewaySingleZone", "UserDefinedRouting"$`,
 		},
 		{
 			name: "invalid user defined type",
@@ -216,6 +216,17 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expected: `^test-path\.customerManagedKey: Invalid value: "-": invalid user assigned identity key for encryption$`,
+		},
+		{
+			name: "mentioned nat gateway when outbound type is not multi zone",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.Subnets = []azure.SubnetSpec{{
+					NatGatewayName: "test-invalid",
+				}}
+				return p
+			}(),
+			expected: `^test-path\.subnet\[0\]: Invalid value: "test-invalid": cannot specify nat gateway if outbound type is not MultiZoneNatGateway$`,
 		},
 	}
 	ic := types.InstallConfig{}
