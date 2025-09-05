@@ -1,25 +1,12 @@
-/*
-Copyright (c) 2017 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
 import (
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/vmware/govmomi/simulator/esx"
@@ -33,7 +20,7 @@ type FileManager struct {
 	mo.FileManager
 }
 
-func (f *FileManager) findDatastore(ref mo.Reference, name string) (*Datastore, types.BaseMethodFault) {
+func (f *FileManager) findDatastore(ctx *Context, ref mo.Reference, name string) (*Datastore, types.BaseMethodFault) {
 	var refs []types.ManagedObjectReference
 
 	if d, ok := asFolderMO(ref); ok {
@@ -44,19 +31,19 @@ func (f *FileManager) findDatastore(ref mo.Reference, name string) (*Datastore, 
 	}
 
 	for _, ref := range refs {
-		obj := Map.Get(ref)
+		obj := ctx.Map.Get(ref)
 
 		if ds, ok := obj.(*Datastore); ok && ds.Name == name {
 			return ds, nil
 		}
 		if p, ok := obj.(*StoragePod); ok {
-			ds, _ := f.findDatastore(p, name)
+			ds, _ := f.findDatastore(ctx, p, name)
 			if ds != nil {
 				return ds, nil
 			}
 		}
 		if d, ok := asFolderMO(obj); ok {
-			ds, _ := f.findDatastore(d, name)
+			ds, _ := f.findDatastore(ctx, d, name)
 			if ds != nil {
 				return ds, nil
 			}
@@ -66,30 +53,28 @@ func (f *FileManager) findDatastore(ref mo.Reference, name string) (*Datastore, 
 	return nil, &types.InvalidDatastore{Name: name}
 }
 
-func (f *FileManager) resolve(dc *types.ManagedObjectReference, name string) (string, types.BaseMethodFault) {
+func (f *FileManager) resolve(ctx *Context, dc *types.ManagedObjectReference, name string, remove ...bool) (string, types.BaseMethodFault) {
 	p, fault := parseDatastorePath(name)
 	if fault != nil {
 		return "", fault
 	}
 
 	if dc == nil {
-		if Map.IsESX() {
+		if ctx.Map.IsESX() {
 			dc = &esx.Datacenter.Self
 		} else {
 			return "", &types.InvalidArgument{InvalidProperty: "dc"}
 		}
 	}
 
-	folder := Map.Get(*dc).(*Datacenter).DatastoreFolder
+	folder := ctx.Map.Get(*dc).(*Datacenter).DatastoreFolder
 
-	ds, fault := f.findDatastore(Map.Get(folder), p.Datastore)
+	ds, fault := f.findDatastore(ctx, ctx.Map.Get(folder), p.Datastore)
 	if fault != nil {
 		return "", fault
 	}
 
-	dir := ds.Info.GetDatastoreInfo().Url
-
-	return path.Join(dir, p.Path), nil
+	return ds.resolve(ctx, p.Path, remove...), nil
 }
 
 func (f *FileManager) fault(name string, err error, fault types.BaseFileFault) types.BaseMethodFault {
@@ -105,8 +90,8 @@ func (f *FileManager) fault(name string, err error, fault types.BaseFileFault) t
 	return fault.(types.BaseMethodFault)
 }
 
-func (f *FileManager) deleteDatastoreFile(req *types.DeleteDatastoreFile_Task) types.BaseMethodFault {
-	file, fault := f.resolve(req.Datacenter, req.Name)
+func (f *FileManager) deleteDatastoreFile(ctx *Context, req *types.DeleteDatastoreFile_Task) types.BaseMethodFault {
+	file, fault := f.resolve(ctx, req.Datacenter, req.Name, true)
 	if fault != nil {
 		return fault
 	}
@@ -128,7 +113,7 @@ func (f *FileManager) deleteDatastoreFile(req *types.DeleteDatastoreFile_Task) t
 
 func (f *FileManager) DeleteDatastoreFileTask(ctx *Context, req *types.DeleteDatastoreFile_Task) soap.HasFault {
 	task := CreateTask(f, "deleteDatastoreFile", func(*Task) (types.AnyType, types.BaseMethodFault) {
-		return nil, f.deleteDatastoreFile(req)
+		return nil, f.deleteDatastoreFile(ctx, req)
 	})
 
 	return &methods.DeleteDatastoreFile_TaskBody{
@@ -138,10 +123,10 @@ func (f *FileManager) DeleteDatastoreFileTask(ctx *Context, req *types.DeleteDat
 	}
 }
 
-func (f *FileManager) MakeDirectory(req *types.MakeDirectory) soap.HasFault {
+func (f *FileManager) MakeDirectory(ctx *Context, req *types.MakeDirectory) soap.HasFault {
 	body := &methods.MakeDirectoryBody{}
 
-	name, fault := f.resolve(req.Datacenter, req.Name)
+	name, fault := f.resolve(ctx, req.Datacenter, req.Name)
 	if fault != nil {
 		body.Fault_ = Fault("", fault)
 		return body
@@ -164,13 +149,13 @@ func (f *FileManager) MakeDirectory(req *types.MakeDirectory) soap.HasFault {
 	return body
 }
 
-func (f *FileManager) moveDatastoreFile(req *types.MoveDatastoreFile_Task) types.BaseMethodFault {
-	src, fault := f.resolve(req.SourceDatacenter, req.SourceName)
+func (f *FileManager) moveDatastoreFile(ctx *Context, req *types.MoveDatastoreFile_Task) types.BaseMethodFault {
+	src, fault := f.resolve(ctx, req.SourceDatacenter, req.SourceName)
 	if fault != nil {
 		return fault
 	}
 
-	dst, fault := f.resolve(req.DestinationDatacenter, req.DestinationName)
+	dst, fault := f.resolve(ctx, req.DestinationDatacenter, req.DestinationName)
 	if fault != nil {
 		return fault
 	}
@@ -192,7 +177,7 @@ func (f *FileManager) moveDatastoreFile(req *types.MoveDatastoreFile_Task) types
 
 func (f *FileManager) MoveDatastoreFileTask(ctx *Context, req *types.MoveDatastoreFile_Task) soap.HasFault {
 	task := CreateTask(f, "moveDatastoreFile", func(*Task) (types.AnyType, types.BaseMethodFault) {
-		return nil, f.moveDatastoreFile(req)
+		return nil, f.moveDatastoreFile(ctx, req)
 	})
 
 	return &methods.MoveDatastoreFile_TaskBody{
@@ -202,13 +187,13 @@ func (f *FileManager) MoveDatastoreFileTask(ctx *Context, req *types.MoveDatasto
 	}
 }
 
-func (f *FileManager) copyDatastoreFile(req *types.CopyDatastoreFile_Task) types.BaseMethodFault {
-	src, fault := f.resolve(req.SourceDatacenter, req.SourceName)
+func (f *FileManager) copyDatastoreFile(ctx *Context, req *types.CopyDatastoreFile_Task) types.BaseMethodFault {
+	src, fault := f.resolve(ctx, req.SourceDatacenter, req.SourceName)
 	if fault != nil {
 		return fault
 	}
 
-	dst, fault := f.resolve(req.DestinationDatacenter, req.DestinationName)
+	dst, fault := f.resolve(ctx, req.DestinationDatacenter, req.DestinationName)
 	if fault != nil {
 		return fault
 	}
@@ -241,7 +226,7 @@ func (f *FileManager) copyDatastoreFile(req *types.CopyDatastoreFile_Task) types
 
 func (f *FileManager) CopyDatastoreFileTask(ctx *Context, req *types.CopyDatastoreFile_Task) soap.HasFault {
 	task := CreateTask(f, "copyDatastoreFile", func(*Task) (types.AnyType, types.BaseMethodFault) {
-		return nil, f.copyDatastoreFile(req)
+		return nil, f.copyDatastoreFile(ctx, req)
 	})
 
 	return &methods.CopyDatastoreFile_TaskBody{

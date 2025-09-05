@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2019-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
@@ -24,6 +12,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -144,6 +133,22 @@ func newHttpNfcLease(ctx *Context) *HttpNfcLease {
 	nfcLease.Store(lease.Reference(), lease)
 
 	return lease
+}
+
+func leaseURL(ctx *Context) *url.URL {
+	opt := ctx.Map.OptionManager().find("vcsim.server.url")
+
+	u, _ := url.Parse(opt.Value.(string))
+
+	// See NfcLease.DeviceUrl doc:
+	//  If a "*" is returned the client must substitute "*" with the
+	//  hostname or IP address used when connecting to the server.
+	// This is the case when connecting directly to an ESX host.
+	if ctx.Map.IsESX() {
+		u.Host = "*"
+	}
+
+	return u
 }
 
 func (l *HttpNfcLease) HttpNfcLeaseComplete(ctx *Context, req *types.HttpNfcLeaseComplete) soap.HasFault {

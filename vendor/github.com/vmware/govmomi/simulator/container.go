@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2018 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
@@ -82,6 +70,11 @@ type networkSettings struct {
 }
 
 type containerDetails struct {
+	Config struct {
+		Hostname   string
+		Domainname string
+		DNS        []string `json:"dns"`
+	}
 	State struct {
 		Running bool
 		Paused  bool
@@ -107,16 +100,6 @@ func constructContainerName(name, uid string) string {
 
 func constructVolumeName(containerName, uid, volumeName string) string {
 	return constructContainerName(containerName, uid) + "--" + sanitizeName(volumeName)
-}
-
-func extractNameAndUid(containerName string) (name string, uid string, err error) {
-	parts := strings.Split(strings.TrimPrefix(containerName, "vcsim-"), "-")
-	if len(parts) != 2 {
-		err = fmt.Errorf("container name does not match expected vcsim-name-uid format: %s", containerName)
-		return
-	}
-
-	return parts[0], parts[1], nil
 }
 
 func prefixToMask(prefix int) string {
@@ -489,6 +472,15 @@ func (c *container) inspect() (out []byte, detail containerDetails, err error) {
 	}
 
 	detail = details[0]
+
+	// DNS setting
+	f, oerr := os.Open("/etc/docker/daemon.json")
+	if oerr != nil {
+		return
+	}
+	err = json.NewDecoder(f).Decode(&detail.Config)
+	_ = f.Close()
+
 	return
 }
 
@@ -697,7 +689,7 @@ func (c *container) updated() {
 // returns:
 //
 //	err - uninitializedContainer error - if c.id is empty
-func (c *container) watchContainer(ctx context.Context, updateFn func(*containerDetails, *container) error) error {
+func (c *container) watchContainer(ctx *Context, updateFn func(*containerDetails, *container) error) error {
 	c.Lock()
 	defer c.Unlock()
 
@@ -725,7 +717,7 @@ func (c *container) watchContainer(ctx context.Context, updateFn func(*container
 			var removing bool
 			if _, ok := err.(uninitializedContainer); ok {
 				removing = true
-				rmErr = c.remove(SpoofContext())
+				rmErr = c.remove(ctx)
 			}
 
 			updateErr := updateFn(&details, c)

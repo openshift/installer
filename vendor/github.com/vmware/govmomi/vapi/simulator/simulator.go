@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2018-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
@@ -21,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"crypto/rand"
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
@@ -34,6 +23,7 @@ import (
 	"hash"
 	"io"
 	"log"
+	"math/big"
 	"net/http"
 	"net/url"
 	"os"
@@ -97,7 +87,7 @@ type download struct {
 
 type handler struct {
 	sync.Mutex
-	sm          *simulator.SessionManager
+	Map         *simulator.Registry
 	ServeMux    *http.ServeMux
 	URL         url.URL
 	Category    map[string]*tags.Category
@@ -125,7 +115,7 @@ func init() {
 // New creates a vAPI simulator.
 func New(u *url.URL, r *simulator.Registry) ([]string, http.Handler) {
 	s := &handler{
-		sm:          r.SessionManager(),
+		Map:         r,
 		ServeMux:    http.NewServeMux(),
 		URL:         *u,
 		Category:    make(map[string]*tags.Category),
@@ -179,8 +169,10 @@ func New(u *url.URL, r *simulator.Registry) ([]string, http.Handler) {
 		{internal.VCenterOVFLibraryItem + "/", s.libraryItemOVFID},
 		{internal.VCenterVMTXLibraryItem, s.libraryItemCreateTemplate},
 		{internal.VCenterVMTXLibraryItem + "/", s.libraryItemTemplateID},
+		{"/vcenter/certificate-authority/", s.certificateAuthority},
 		{internal.DebugEcho, s.debugEcho},
 		// /api/ patterns.
+		{vapi.Path, s.jsonRPC},
 		{internal.SecurityPoliciesPath, s.librarySecurityPolicies},
 		{internal.TrustedCertificatesPath, s.libraryTrustedCertificates},
 		{internal.TrustedCertificatesPath + "/", s.libraryTrustedCertificatesID},
@@ -191,7 +183,10 @@ func New(u *url.URL, r *simulator.Registry) ([]string, http.Handler) {
 		s.HandleFunc(h.p, h.m)
 	}
 
-	return []string{rest.Path + "/", vapi.Path + "/"}, s
+	return []string{
+		rest.Path, rest.Path + "/",
+		vapi.Path, vapi.Path + "/",
+	}, s
 }
 
 func (s *handler) withClient(f func(context.Context, *vim25.Client) error) error {
@@ -278,8 +273,13 @@ func (s *handler) HandleFunc(pattern string, handler func(http.ResponseWriter, *
 }
 
 func (s *handler) isAuthorized(r *http.Request) bool {
-	if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, internal.SessionPath) && s.action(r) == "" {
-		return true
+	if r.Method == http.MethodPost && s.action(r) == "" {
+		if r.URL.Path == vapi.Path {
+			return true
+		}
+		if strings.HasSuffix(r.URL.Path, internal.SessionPath) {
+			return true
+		}
 	}
 	id := r.Header.Get(internal.SessionCookieName)
 	if id == "" {
@@ -300,7 +300,7 @@ func (s *handler) isAuthorized(r *http.Request) bool {
 func (s *handler) hasAuthorization(r *http.Request) (string, bool) {
 	u, p, ok := r.BasicAuth()
 	if ok { // user+pass auth
-		return u, s.sm.Authenticate(s.URL, &vim.Login{UserName: u, Password: p})
+		return u, s.Map.SessionManager().Authenticate(s.URL, &vim.Login{UserName: u, Password: p})
 	}
 	auth := r.Header.Get("Authorization")
 	return "TODO", strings.HasPrefix(auth, "SIGN ") // token auth
@@ -385,7 +385,7 @@ func (s *handler) DetachTag(id vim.ManagedObjectReference, tag vim.VslmTagEntry)
 
 // StatusOK responds with http.StatusOK and encodes val, if specified, to JSON
 // For use with "/api" endpoints.
-func StatusOK(w http.ResponseWriter, val ...interface{}) {
+func StatusOK(w http.ResponseWriter, val ...any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if len(val) == 0 {
@@ -401,14 +401,14 @@ func StatusOK(w http.ResponseWriter, val ...interface{}) {
 
 // OK responds with http.StatusOK and encodes val, if specified, to JSON
 // For use with "/rest" endpoints where the response is a "value" wrapped structure.
-func OK(w http.ResponseWriter, val ...interface{}) {
+func OK(w http.ResponseWriter, val ...any) {
 	if len(val) == 0 {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
 	s := struct {
-		Value interface{} `json:"value,omitempty"`
+		Value any `json:"value,omitempty"`
 	}{
 		val[0],
 	}
@@ -503,17 +503,17 @@ func (s *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h, _ := s.ServeMux.Handler(r)
-	h.ServeHTTP(w, r)
+	// Use ServeHTTP directly and not via handler otherwise the path values like "{id}" are not set
+	s.ServeMux.ServeHTTP(w, r)
 }
 
-func (s *handler) decode(r *http.Request, w http.ResponseWriter, val interface{}) bool {
+func (s *handler) decode(r *http.Request, w http.ResponseWriter, val any) bool {
 	return Decode(r, w, val)
 }
 
 // Decode the request Body into val.
 // Returns true on success, otherwise false and sends the http.StatusBadRequest response.
-func Decode(r *http.Request, w http.ResponseWriter, val interface{}) bool {
+func Decode(r *http.Request, w http.ResponseWriter, val any) bool {
 	defer r.Body.Close()
 	err := json.NewDecoder(r.Body).Decode(val)
 	if err != nil {
@@ -577,6 +577,106 @@ func (s *handler) session(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// just enough json-rpc to support Supervisor upgrade testing
+func (s *handler) jsonRPC(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var rpc, out map[string]any
+
+	if Decode(r, w, &rpc) {
+		params := rpc["params"].(map[string]any)
+
+		switch params["serviceId"] {
+		case "com.vmware.cis.session":
+			switch params["operationId"] {
+			case "create":
+				id := uuid.New().String()
+				now := time.Now()
+				s.Session[id] = &rest.Session{User: id, Created: now, LastAccessed: now}
+				out = map[string]any{"SECRET": id}
+			case "delete":
+			}
+		}
+
+		res := map[string]any{
+			"jsonrpc": rpc["jsonrpc"],
+			"id":      rpc["id"],
+			"result": map[string]any{
+				"output": out,
+			},
+		}
+
+		StatusOK(w, res)
+	}
+}
+
+func (s *handler) certificateAuthority(w http.ResponseWriter, r *http.Request) {
+	signer := s.Map.SessionManager().TLS().Certificates[0]
+
+	switch path.Base(r.URL.Path) {
+	case "get-root":
+		var encoded bytes.Buffer
+		_ = pem.Encode(&encoded, &pem.Block{Type: "CERTIFICATE", Bytes: signer.Leaf.Raw})
+		OK(w, encoded.String())
+	case "sign-cert":
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req struct {
+			Duration string `json:"duration"`
+			CSR      string `json:"csr"`
+		}
+
+		if Decode(r, w, &req) {
+			block, _ := pem.Decode([]byte(req.CSR))
+			csr, err := x509.ParseCertificateRequest(block.Bytes)
+			if err != nil {
+				BadRequest(w, err.Error())
+				return
+			}
+			duration, err := strconv.ParseInt(req.Duration, 10, 64)
+			if err != nil {
+				BadRequest(w, err.Error())
+				return
+			}
+
+			serialNumber, _ := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+			now := time.Now()
+			cert := &x509.Certificate{
+				SerialNumber:   serialNumber,
+				Subject:        csr.Subject,
+				DNSNames:       csr.DNSNames,
+				IPAddresses:    csr.IPAddresses,
+				NotBefore:      now,
+				NotAfter:       now.Add(time.Hour * 24 * time.Duration(duration)),
+				AuthorityKeyId: signer.Leaf.SubjectKeyId,
+			}
+
+			der, err := x509.CreateCertificate(rand.Reader, cert, signer.Leaf, csr.PublicKey, signer.PrivateKey)
+			if err != nil {
+				BadRequest(w, err.Error())
+				return
+			}
+
+			var encoded bytes.Buffer
+			err = pem.Encode(&encoded, &pem.Block{Type: "CERTIFICATE", Bytes: der})
+			if err != nil {
+				BadRequest(w, err.Error())
+				return
+			}
+
+			OK(w, encoded.String())
+		}
+	default:
+		http.NotFound(w, r)
+	}
+}
+
 func (s *handler) action(r *http.Request) string {
 	return r.URL.Query().Get("~action")
 }
@@ -607,7 +707,13 @@ func (s *handler) category(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
-			id := newID("Category")
+			id := spec.Category.CategoryID
+			if id == "" {
+				id = newID("Category")
+			} else if !strings.HasPrefix(id, "urn:vmomi:InventoryServiceCategory:") {
+				BadRequest(w, "com.vmware.vapi.std.errors.invalid_argument")
+				return
+			}
 			spec.Category.ID = id
 			s.Category[id] = &spec.Category
 			OK(w, id)
@@ -680,7 +786,13 @@ func (s *handler) tag(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
-			id := newID("Tag")
+			id := spec.Tag.TagID
+			if id == "" {
+				id = newID("Tag")
+			} else if !strings.HasPrefix(id, "urn:vmomi:InventoryServiceTag:") {
+				BadRequest(w, "com.vmware.vapi.std.errors.invalid_argument")
+				return
+			}
 			spec.Tag.ID = id
 			s.Tag[id] = &spec.Tag
 			s.Association[id] = make(map[internal.AssociatedObject]bool)
@@ -926,7 +1038,7 @@ func (s *handler) library(w http.ResponseWriter, r *http.Request) {
 			spec.Library.CreationTime = types.NewTime(time.Now())
 			spec.Library.LastModifiedTime = types.NewTime(time.Now())
 			spec.Library.UnsetSecurityPolicyID = spec.Library.SecurityPolicyID == ""
-			dir := libraryPath(&spec.Library, "")
+			dir := s.libraryPath(&spec.Library, "")
 			if err := os.Mkdir(dir, 0750); err != nil {
 				s.error(w, err)
 				return
@@ -1103,7 +1215,7 @@ func (s *handler) syncItem(
 	}
 
 	// Get the path to the destination library item on the local filesystem.
-	dstItemPath := libraryPath(dstLib.Library, dstItem.ID)
+	dstItemPath := s.libraryPath(dstLib.Library, dstItem.ID)
 
 	// Get the source item.
 	srcItem, ok := srcLib.Item[dstItem.SourceID]
@@ -1167,7 +1279,7 @@ func (s *handler) syncItem(
 	}
 
 	// Update the the destination item's files.
-	srcItemPath := libraryPath(srcLib.Library, srcItem.ID)
+	srcItemPath := s.libraryPath(srcLib.Library, srcItem.ID)
 	for i := range dstItem.File {
 		var (
 			dstFile = &dstItem.File[i]
@@ -1362,7 +1474,7 @@ func (s *handler) libraryID(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodDelete:
-		p := libraryPath(l.Library, "")
+		p := s.libraryPath(l.Library, "")
 		if err := os.RemoveAll(p); err != nil {
 			s.error(w, err)
 			return
@@ -1627,7 +1739,7 @@ func (s *handler) libraryItemID(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodDelete:
-		p := libraryPath(l.Library, id)
+		p := s.libraryPath(l.Library, id)
 		if err := os.RemoveAll(p); err != nil {
 			s.error(w, err)
 			return
@@ -1730,7 +1842,7 @@ func (s *handler) libraryItemStorageByID(id string) ([]library.Storage, bool) {
 		storage[i] = library.Storage{
 			StorageBacking: lib.Storage[0],
 			StorageURIs: []string{
-				path.Join(libraryPath(lib.Library, id), file.Name),
+				path.Join(s.libraryPath(lib.Library, id), file.Name),
 			},
 			Name:    file.Name,
 			Version: file.Version,
@@ -2264,12 +2376,12 @@ func (s *handler) updateFileInfo(id string) *update {
 }
 
 // libraryPath returns the local Datastore fs path for a Library or Item if id is specified.
-func libraryPath(l *library.Library, id string) string {
+func (s *handler) libraryPath(l *library.Library, id string) string {
 	dsref := types.ManagedObjectReference{
 		Type:  "Datastore",
 		Value: l.Storage[0].DatastoreID,
 	}
-	ds := simulator.Map.Get(dsref).(*simulator.Datastore)
+	ds := s.Map.Get(dsref).(*simulator.Datastore)
 
 	if !isValidFileName(l.ID) || !isValidFileName(id) {
 		panic("invalid file name")
@@ -2290,7 +2402,7 @@ func (s *handler) libraryItemFileCreate(
 		return errors.New("invalid file name")
 	}
 
-	dstItemPath := libraryPath(up.Library, up.Session.LibraryItemID)
+	dstItemPath := s.libraryPath(up.Library, up.Session.LibraryItemID)
 	if err := os.MkdirAll(dstItemPath, 0750); err != nil {
 		return err
 	}
@@ -2422,7 +2534,7 @@ func (s *handler) libraryItemFileData(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
-		p := path.Join(libraryPath(dl.Library, dl.Session.LibraryItemID), name)
+		p := path.Join(s.libraryPath(dl.Library, dl.Session.LibraryItemID), name)
 		f, err := os.Open(p)
 		if err != nil {
 			s.error(w, err)
@@ -2547,7 +2659,7 @@ func (s *handler) libraryDeploy(ctx context.Context, c *vim25.Client, lib *libra
 	}
 
 	name := item.ovf()
-	desc, err := os.ReadFile(filepath.Join(libraryPath(lib, item.ID), name))
+	desc, err := os.ReadFile(filepath.Join(s.libraryPath(lib, item.ID), name))
 	if err != nil {
 		return nil, err
 	}

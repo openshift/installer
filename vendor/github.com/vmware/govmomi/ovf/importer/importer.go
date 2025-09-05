@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2024-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package importer
 
@@ -29,6 +17,7 @@ import (
 	"github.com/vmware/govmomi/nfc"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/ovf"
+	"github.com/vmware/govmomi/task"
 	"github.com/vmware/govmomi/vapi/library"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/progress"
@@ -74,16 +63,15 @@ func (imp *Importer) ReadManifest(fpath string) error {
 	return err
 }
 
-func (imp *Importer) Import(ctx context.Context, fpath string, opts Options) (*types.ManagedObjectReference, error) {
-
+func (imp *Importer) ImportVApp(ctx context.Context, fpath string, opts Options) (*nfc.LeaseInfo, *nfc.Lease, error) {
 	o, err := ReadOvf(fpath, imp.Archive)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	e, err := ReadEnvelope(o)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse ovf: %s", err)
+		return nil, nil, fmt.Errorf("failed to parse ovf: %s", err)
 	}
 
 	if e.VirtualSystem != nil {
@@ -110,7 +98,7 @@ func (imp *Importer) Import(ctx context.Context, fpath string, opts Options) (*t
 
 	nmap, err := imp.NetworkMap(ctx, e, opts.NetworkMapping)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	cisp := types.OvfCreateImportSpecParams{
@@ -128,10 +116,10 @@ func (imp *Importer) Import(ctx context.Context, fpath string, opts Options) (*t
 	m := ovf.NewManager(imp.Client)
 	spec, err := m.CreateImportSpec(ctx, string(o), imp.ResourcePool, imp.Datastore, &cisp)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if spec.Error != nil {
-		return nil, errors.New(spec.Error[0].LocalizedMessage)
+		return nil, nil, &task.Error{LocalizedMethodFault: &spec.Error[0]}
 	}
 	if spec.Warning != nil {
 		for _, w := range spec.Warning {
@@ -150,18 +138,27 @@ func (imp *Importer) Import(ctx context.Context, fpath string, opts Options) (*t
 
 	if imp.VerifyManifest {
 		if err := imp.ReadManifest(fpath); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	lease, err := imp.ResourcePool.ImportVApp(ctx, spec.ImportSpec, imp.Folder, imp.Host)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	info, err := lease.Wait(ctx, spec.FileItem)
 	if err != nil {
 		_ = lease.Abort(ctx, nil)
+		return nil, nil, err
+	}
+
+	return info, lease, nil
+}
+
+func (imp *Importer) Import(ctx context.Context, fpath string, opts Options) (*types.ManagedObjectReference, error) {
+	info, lease, err := imp.ImportVApp(ctx, fpath, opts)
+	if err != nil {
 		return nil, err
 	}
 
