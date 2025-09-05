@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"github.com/vincent-petithory/dataurl"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	mcfgv1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -15,6 +17,22 @@ func ForDualStackAddresses(role string) (*mcfgv1.MachineConfig, error) {
 	ignConfig := igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
+		},
+		Storage: igntypes.Storage{
+			Files: []igntypes.File{
+				{
+					Node: igntypes.Node{
+						Path:      "/etc/kubernetes/kubelet-workaround",
+						Overwrite: ptr.To(true),
+					},
+					FileEmbedded1: igntypes.FileEmbedded1{
+						Mode: ptr.To(644),
+						Contents: igntypes.Resource{
+							Source: ptr.To(dataurl.EncodeBytes([]byte(fmt.Sprint("KUBELET_NODE_IPS=0.0.0.0")))),
+						},
+					},
+				},
+			},
 		},
 	}
 
