@@ -168,6 +168,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	bucketName = fmt.Sprintf("%s-bootstrap-ign", clusterID.InfraID)
 
+	vpcSecurityGroups := getVPCSecurityGroups(clusterID.InfraID, installConfig.Config.Publish)
 	powerVSCluster = &capibm.IBMPowerVSCluster{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: capibm.GroupVersion.String(),
@@ -187,8 +188,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			DHCPServer: &capibm.DHCPServer{
 				Cidr: &dhcpSubnet,
 			},
-			ServiceInstance: &service,
-			Zone:            &installConfig.Config.Platform.PowerVS.Zone,
+			VPCSecurityGroups: vpcSecurityGroups,
+			ServiceInstance:   &service,
+			Zone:              &installConfig.Config.Platform.PowerVS.Zone,
 			ResourceGroup: &capibm.IBMPowerVSResourceReference{
 				Name: &installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
 			},

@@ -6,9 +6,15 @@ import (
 	"math"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	"github.com/openshift/installer/pkg/types"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -16,17 +22,15 @@ import (
 	"k8s.io/utils/ptr"
 	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
-
-	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
-	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
-	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
-	"github.com/openshift/installer/pkg/types"
-	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
 // Provider is the vSphere implementation of the clusterapi InfraProvider.
 type Provider struct {
 	clusterapi.InfraProvider
+}
+
+type SGIDCollection struct {
+	ClusterWideSGID string
 }
 
 var _ clusterapi.Timeouts = (*Provider)(nil)
@@ -74,8 +78,11 @@ func (p Provider) ProvisionTimeout() time.Duration {
 // to create DNS records.
 func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	var (
-		err  error
-		rule *vpcv1.SecurityGroupRulePrototype
+		client    *powervsconfig.Client
+		kubeapilb KubeAPILB
+		groups    []vpcv1.SecurityGroup
+		rule      *vpcv1.SecurityGroupRulePrototype
+		err       error
 	)
 
 	logrus.Debugf("InfraReady: in = %+v", in)
@@ -146,7 +153,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		}
 
 		logrus.Debugf("InfraReady: Adding port %d to security group rule to %v", port, *powerVSCluster.Status.VPC.ID)
-		err := in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID)
+		err := in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID, "")
 		if err != nil {
 			return fmt.Errorf("failed to add security group rule for port %d: %w", port, err)
 		}
@@ -158,9 +165,43 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		Protocol:  ptr.To("icmp"),
 	}
 
-	err = in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID)
+	err = in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID, "")
 	if err != nil {
 		return fmt.Errorf("failed to add ping security group rule: %w", err)
+	}
+
+	client, err = powervsconfig.NewClient()
+	if err != nil {
+		return fmt.Errorf("failed to get NewClient in PostProvision: %w", err)
+	}
+	logrus.Debugf("Region is %v ", in.InstallConfig.Config.PowerVS.Region)
+	groups, err = client.ListSecurityGroups(ctx, *powerVSCluster.Status.VPC.ID, in.InstallConfig.Config.PowerVS.Region)
+	if err != nil {
+		return fmt.Errorf("failed to list security groups")
+	}
+	sgIDs := SGIDCollection{}
+	for _, sg := range groups {
+		if strings.Contains(*sg.Name, "clusterwide") {
+			sgIDs.ClusterWideSGID = *sg.ID
+		}
+	}
+	logrus.Debugf("Found %v security groups", len(groups))
+	for _, sg := range groups {
+		logrus.Debugf("Found security group %v", sg.Name)
+		if strings.Contains(*sg.Name, "kube") {
+			logrus.Debugf("Found Kube-API security group")
+			rules := GetSGRules(kubeapilb, sgIDs)
+			logrus.Debugf("Number of security group rules are %v", len(rules))
+			for _, rule := range rules {
+				logrus.Debugf("Adding security group rule: Direction: %w, Protocol: %w, Max port: %w, Min port: %w", *rule.Direction, *rule.Protocol, *rule.PortMax, *rule.PortMin)
+				err := in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID, *sg.ID)
+				if err != nil {
+					return fmt.Errorf("failed to add security group rule %w", err)
+				} else {
+					logrus.Debugf("Kube API LB rule added")
+				}
+			}
+		}
 	}
 
 	if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy &&
