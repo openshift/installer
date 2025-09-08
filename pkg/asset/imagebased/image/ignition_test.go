@@ -117,7 +117,7 @@ podman rm lca-cli
 /usr/local/bin/lca-cli ibi -f "${ibi_config}"
 `,
 
-				"/var/tmp/ibi-configuration.json": "{\"extraPartitionLabel\":\"var-lib-containers\",\"extraPartitionNumber\":5,\"extraPartitionStart\":\"-40G\",\"installationDisk\":\"/dev/vda\",\"seedImage\":\"quay.io/openshift-kni/seed-image:4.16.0\",\"seedVersion\":\"4.16.0\"}\n",
+				"/var/tmp/ibi-configuration.json": "{\"extraPartitionLabel\":\"var-lib-containers\",\"extraPartitionNumber\":5,\"extraPartitionStart\":\"-40G\",\"installationDisk\":\"/dev/vda\",\"releaseRegistry\":\"mirror.quay.io\",\"seedImage\":\"quay.io/openshift-kni/seed-image:4.16.0\",\"seedVersion\":\"4.16.0\"}\n",
 
 				"/etc/containers/registries.conf": "credential-helpers = []\nshort-name-mode = \"\"\nunqualified-search-registries = []\n\n[[registry]]\n  location = \"quay.io\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"mirror-quay.io\"\n",
 
