@@ -637,7 +637,7 @@ func provisionDefaultRouterResources(ctx context.Context, in clusterapi.InfraRea
 	for _, port := range openPorts {
 		name := "ingress-secure"
 		if port == 80 {
-			name = fmt.Sprint("ingress-insecure")
+			name = "ingress-insecure"
 		}
 		targetGroupInput := &elbv2.CreateTargetGroupInput{
 			Name:     aws.String(name),
