@@ -6,7 +6,7 @@
 # Get target architecture
 arch=$(uname -m)
 
-if test "x${1}" = 'x--id'
+if test "${1}" = '--id'
 then
 	GATHER_ID="${2}"
 	shift 2
