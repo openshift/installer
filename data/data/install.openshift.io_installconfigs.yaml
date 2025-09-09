@@ -6917,6 +6917,11 @@ spec:
                       in your OpenShift cluster.
                       Deprecated: the machine manifest should be used to specify that trunk should be used.
                     type: string
+                  uploadIgnitionSwift:
+                    description: |-
+                      UploadIgnitionSwift will upload the bootstrap's ignition file to the Swift object storage
+                      rather than the Glance image storage.
+                    type: boolean
                 required:
                 - cloud
                 type: object

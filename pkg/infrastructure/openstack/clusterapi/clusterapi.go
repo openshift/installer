@@ -140,7 +140,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		installConfig    = in.InstallConfig
 	)
 
-	ignShim, err := preprovision.UploadIgnitionAndBuildShim(ctx, installConfig.Config.Platform.OpenStack.Cloud, infraID, installConfig.Config.Proxy, bootstrapIgnData)
+	ignShim, err := preprovision.UploadIgnitionAndBuildShim(ctx, installConfig.Config.Platform.OpenStack.Cloud, infraID, installConfig.Config.Proxy, bootstrapIgnData, installConfig.Config.Platform.OpenStack.UploadIgnitionSwift)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload and build ignition shim: %w", err)
 	}

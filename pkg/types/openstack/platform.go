@@ -129,4 +129,9 @@ type Platform struct {
 	// LoadBalancer defines how the load balancer used by the cluster is configured.
 	// +optional
 	LoadBalancer *configv1.OpenStackPlatformLoadBalancer `json:"loadBalancer,omitempty"`
+
+	// UploadIgnitionSwift will upload the bootstrap's ignition file to the Swift object storage
+	// rather than the Glance image storage.
+	// +optional
+	UploadIgnitionSwift bool `json:"uploadIgnitionSwift,omitempty"`
 }

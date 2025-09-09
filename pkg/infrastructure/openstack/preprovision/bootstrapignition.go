@@ -16,6 +16,8 @@ import (
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/imagedata"
 	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
+	"github.com/gophercloud/gophercloud/v2/openstack/objectstorage/v1/containers"
+	"github.com/gophercloud/gophercloud/v2/openstack/objectstorage/v1/objects"
 	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
@@ -49,8 +51,7 @@ func ReplaceBootstrapIgnitionInTFVars(ctx context.Context, tfvarsFile *asset.Fil
 		return fmt.Errorf("failed to decode bootstrap's Ignition")
 	}
 
-	logrus.Debugf("Uploading Ignition to Glance")
-	bootstrapShim, err := UploadIgnitionAndBuildShim(ctx, installConfig.Config.Platform.OpenStack.Cloud, clusterID.InfraID, installConfig.Config.Proxy, []byte(bootstrapIgnition))
+	bootstrapShim, err := UploadIgnitionAndBuildShim(ctx, installConfig.Config.Platform.OpenStack.Cloud, clusterID.InfraID, installConfig.Config.Proxy, []byte(bootstrapIgnition), false)
 	if err != nil {
 		return fmt.Errorf("failed to build bootstrap's Ignition shim: %w", err)
 	}
@@ -72,11 +73,29 @@ func ReplaceBootstrapIgnitionInTFVars(ctx context.Context, tfvarsFile *asset.Fil
 }
 
 // UploadIgnitionAndBuildShim uploads the bootstrap Ignition config in Glance.
-func UploadIgnitionAndBuildShim(ctx context.Context, cloud string, infraID string, proxy *types.Proxy, bootstrapIgn []byte) ([]byte, error) {
-	opts := openstackdefaults.DefaultClientOpts(cloud)
-	conn, err := openstackdefaults.NewServiceClient(ctx, "image", opts)
-	if err != nil {
-		return nil, err
+func UploadIgnitionAndBuildShim(ctx context.Context, cloud string, infraID string, proxy *types.Proxy, bootstrapIgn []byte, useGlance bool) ([]byte, error) {
+	var (
+		opts *clientconfig.ClientOpts
+		conn *gophercloud.ServiceClient
+		err  error
+	)
+
+	if useGlance {
+		logrus.Debugf("Uploading Ignition to Glance")
+
+		opts = openstackdefaults.DefaultClientOpts(cloud)
+		conn, err = openstackdefaults.NewServiceClient(ctx, "image", opts)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		logrus.Debugf("Uploading Ignition to Swift")
+
+		opts = openstackdefaults.DefaultClientOpts(cloud)
+		conn, err = openstackdefaults.NewServiceClient(ctx, "object-store", opts)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var userCA []byte
@@ -102,6 +121,7 @@ func UploadIgnitionAndBuildShim(ctx context.Context, cloud string, infraID strin
 	// https://docs.openstack.org/api-ref/identity/v3/?expanded=token-authentication-with-scoped-authorization-detail#token-authentication-with-scoped-authorization
 	// Unfortunately this feature is not currently supported by Terraform, so we had to implement it here.
 	var glancePublicURL string
+	var swiftPublicURL string
 	{
 		// Authenticate in OpenStack, get the token and extract the service catalog
 		var serviceCatalog *tokens.ServiceCatalog
@@ -130,26 +150,62 @@ func UploadIgnitionAndBuildShim(ctx context.Context, cloud string, infraID strin
 		if err != nil {
 			return nil, fmt.Errorf("cannot retrieve Glance URL from the service catalog: %w", err)
 		}
+		swiftPublicURL, err = gophercloud_openstack.V3EndpointURL(serviceCatalog, gophercloud.EndpointOpts{
+			Type:         "object-store",
+			Availability: gophercloud.AvailabilityPublic,
+			Region:       clientConfigCloud.RegionName,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("cannot retrieve Swift URL from the service catalog: %w", err)
+		}
 	}
 
 	// upload the bootstrap Ignition config in Glance and save its location
 	var bootstrapConfigURL string
 	{
-		img, err := images.Create(ctx, conn, images.CreateOpts{
-			Name:            infraID + "-ignition",
-			ContainerFormat: "bare",
-			DiskFormat:      "raw",
-			Tags:            []string{"openshiftClusterID=" + infraID},
-		}).Extract()
-		if err != nil {
-			return nil, fmt.Errorf("unable to create a Glance image for the bootstrap server's Ignition file: %w", err)
-		}
+		if useGlance {
+			img, err := images.Create(ctx, conn, images.CreateOpts{
+				Name:            infraID + "-ignition",
+				ContainerFormat: "bare",
+				DiskFormat:      "raw",
+				Tags:            []string{"openshiftClusterID=" + infraID},
+			}).Extract()
+			if err != nil {
+				return nil, fmt.Errorf("unable to create a Glance image for the bootstrap server's Ignition file: %w", err)
+			}
 
-		if res := imagedata.Upload(ctx, conn, img.ID, bytes.NewReader(bootstrapIgn)); res.Err != nil {
-			return nil, fmt.Errorf("unable to upload a Glance image for the bootstrap server's Ignition file: %w", res.Err)
-		}
+			if res := imagedata.Upload(ctx, conn, img.ID, bytes.NewReader(bootstrapIgn)); res.Err != nil {
+				return nil, fmt.Errorf("unable to upload a Glance image for the bootstrap server's Ignition file: %w", res.Err)
+			}
 
-		bootstrapConfigURL = glancePublicURL + img.File
+			bootstrapConfigURL = glancePublicURL + img.File
+		} else {
+			name := infraID + "-ignition"
+
+			_, err = containers.Create(ctx,
+				conn,
+				name, // container name
+				containers.CreateOpts{
+					ContentType: "text/plain",
+				}).Extract()
+			if err != nil {
+				return nil, fmt.Errorf("unable to create a Swift container for the bootstrap server's Ignition file: %w", err)
+			}
+
+			_, err = objects.Create(ctx,
+				conn,
+				name, // container name
+				name, // object name
+				objects.CreateOpts{
+					ContentType: "text/plain",
+					Content:     strings.NewReader(string(bootstrapIgn)),
+				}).Extract()
+			if err != nil {
+				return nil, fmt.Errorf("unable to create a Swift image for the bootstrap server's Ignition file: %w", err)
+			}
+
+			bootstrapConfigURL = fmt.Sprintf("%s%s/%s", swiftPublicURL, name, name)
+		}
 	}
 
 	// To allow Ignition to download its config on the bootstrap machine from a location secured by a
