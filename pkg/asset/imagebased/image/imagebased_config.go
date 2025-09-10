@@ -19,6 +19,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/manifests/staticnetworkconfig"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/imagebased"
 	"github.com/openshift/installer/pkg/validate"
 )
@@ -30,6 +31,7 @@ const (
 var (
 	configFilename              = "image-based-installation-config.yaml"
 	allowedFlags                = []string{"--append-karg", "--delete-karg", "--save-partlabel", "--save-partindex"}
+	allowedArchitectures        = []string{types.ArchitectureAMD64, types.ArchitectureARM64}
 	defaultExtraPartitionLabel  = "var-lib-containers"
 	defaultExtraPartitionStart  = "-40G"
 	defaultExtraPartitionNumber = uint(5)
@@ -196,6 +198,9 @@ func (i *ImageBasedInstallationConfig) validate() field.ErrorList {
 	if err := i.validateCoreosInstallerArgs(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
+	if err := i.validateArchitecture(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
 
 	return allErrs
 }
@@ -325,6 +330,23 @@ func (i *ImageBasedInstallationConfig) validateImageDigestSources() field.ErrorL
 			}
 		}
 	}
+	return allErrs
+}
+
+func (i *ImageBasedInstallationConfig) validateArchitecture() field.ErrorList {
+	var allErrs field.ErrorList
+
+	// empty Architecture is fine
+	if i.Config.Architecture == "" {
+		return nil
+	}
+
+	architecturePath := field.NewPath("architecture")
+
+	if !funk.ContainsString(allowedArchitectures, i.Config.Architecture) {
+		allErrs = append(allErrs, field.Invalid(architecturePath, i.Config.Architecture, fmt.Sprintf("architecture must be one of %v", allowedArchitectures)))
+	}
+
 	return allErrs
 }
 
