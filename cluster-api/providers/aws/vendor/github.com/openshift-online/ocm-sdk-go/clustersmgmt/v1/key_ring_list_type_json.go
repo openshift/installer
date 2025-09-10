@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalKeyRingList(list []*KeyRing, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeKeyRingList(list, stream)
+	WriteKeyRingList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalKeyRingList(list []*KeyRing, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeKeyRingList writes a list of value of the 'key_ring' type to
+// WriteKeyRingList writes a list of value of the 'key_ring' type to
 // the given stream.
-func writeKeyRingList(list []*KeyRing, stream *jsoniter.Stream) {
+func WriteKeyRingList(list []*KeyRing, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeKeyRing(value, stream)
+		WriteKeyRing(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalKeyRingList(source interface{}) (items []*KeyRing, err error) {
 	if err != nil {
 		return
 	}
-	items = readKeyRingList(iterator)
+	items = ReadKeyRingList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readKeyRingList reads list of values of the ”key_ring' type from
+// ReadKeyRingList reads list of values of the ”key_ring' type from
 // the given iterator.
-func readKeyRingList(iterator *jsoniter.Iterator) []*KeyRing {
+func ReadKeyRingList(iterator *jsoniter.Iterator) []*KeyRing {
 	list := []*KeyRing{}
 	for iterator.ReadArray() {
-		item := readKeyRing(iterator)
+		item := ReadKeyRing(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -54,7 +54,7 @@ func (o *CloudProvider) Kind() string {
 	return CloudProviderKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *CloudProvider) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -230,6 +230,29 @@ func (l *CloudProviderList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *CloudProviderList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *CloudProviderList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *CloudProviderList) SetItems(items []*CloudProvider) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *CloudProviderList) Items() []*CloudProvider {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

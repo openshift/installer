@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterConfigurationModeList(list []ClusterConfigurationMode, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterConfigurationModeList(list, stream)
+	WriteClusterConfigurationModeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalClusterConfigurationModeList(list []ClusterConfigurationMode, writer
 	return stream.Error
 }
 
-// writeClusterConfigurationModeList writes a list of value of the 'cluster_configuration_mode' type to
+// WriteClusterConfigurationModeList writes a list of value of the 'cluster_configuration_mode' type to
 // the given stream.
-func writeClusterConfigurationModeList(list []ClusterConfigurationMode, stream *jsoniter.Stream) {
+func WriteClusterConfigurationModeList(list []ClusterConfigurationMode, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalClusterConfigurationModeList(source interface{}) (items []ClusterC
 	if err != nil {
 		return
 	}
-	items = readClusterConfigurationModeList(iterator)
+	items = ReadClusterConfigurationModeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterConfigurationModeList reads list of values of the ”cluster_configuration_mode' type from
+// ReadClusterConfigurationModeList reads list of values of the ”cluster_configuration_mode' type from
 // the given iterator.
-func readClusterConfigurationModeList(iterator *jsoniter.Iterator) []ClusterConfigurationMode {
+func ReadClusterConfigurationModeList(iterator *jsoniter.Iterator) []ClusterConfigurationMode {
 	list := []ClusterConfigurationMode{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

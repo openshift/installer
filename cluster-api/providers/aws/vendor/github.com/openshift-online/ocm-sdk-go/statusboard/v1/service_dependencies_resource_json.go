@@ -57,7 +57,7 @@ func readServiceDependenciesListResponse(response *ServiceDependenciesListRespon
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readServiceDependencyList(iterator)
+			items := ReadServiceDependencyList(iterator)
 			response.items = &ServiceDependencyList{
 				items: items,
 			}

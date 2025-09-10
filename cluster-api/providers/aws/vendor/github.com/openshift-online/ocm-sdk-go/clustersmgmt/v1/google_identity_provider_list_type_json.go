@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGoogleIdentityProviderList(list []*GoogleIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGoogleIdentityProviderList(list, stream)
+	WriteGoogleIdentityProviderList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGoogleIdentityProviderList(list []*GoogleIdentityProvider, writer io
 	return stream.Error
 }
 
-// writeGoogleIdentityProviderList writes a list of value of the 'google_identity_provider' type to
+// WriteGoogleIdentityProviderList writes a list of value of the 'google_identity_provider' type to
 // the given stream.
-func writeGoogleIdentityProviderList(list []*GoogleIdentityProvider, stream *jsoniter.Stream) {
+func WriteGoogleIdentityProviderList(list []*GoogleIdentityProvider, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeGoogleIdentityProvider(value, stream)
+		WriteGoogleIdentityProvider(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGoogleIdentityProviderList(source interface{}) (items []*GoogleIde
 	if err != nil {
 		return
 	}
-	items = readGoogleIdentityProviderList(iterator)
+	items = ReadGoogleIdentityProviderList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGoogleIdentityProviderList reads list of values of the ”google_identity_provider' type from
+// ReadGoogleIdentityProviderList reads list of values of the ”google_identity_provider' type from
 // the given iterator.
-func readGoogleIdentityProviderList(iterator *jsoniter.Iterator) []*GoogleIdentityProvider {
+func ReadGoogleIdentityProviderList(iterator *jsoniter.Iterator) []*GoogleIdentityProvider {
 	list := []*GoogleIdentityProvider{}
 	for iterator.ReadArray() {
-		item := readGoogleIdentityProvider(iterator)
+		item := ReadGoogleIdentityProvider(iterator)
 		list = append(list, item)
 	}
 	return list

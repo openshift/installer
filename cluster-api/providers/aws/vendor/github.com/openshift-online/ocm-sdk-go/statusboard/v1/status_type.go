@@ -61,7 +61,7 @@ func (o *Status) Kind() string {
 	return StatusKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Status) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -304,6 +304,29 @@ func (l *StatusList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *StatusList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *StatusList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *StatusList) SetItems(items []*Status) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *StatusList) Items() []*Status {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

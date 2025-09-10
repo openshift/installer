@@ -29,7 +29,7 @@ import (
 // MarshalMachinePoolSecurityGroupFilter writes a value of the 'machine_pool_security_group_filter' type to the given writer.
 func MarshalMachinePoolSecurityGroupFilter(object *MachinePoolSecurityGroupFilter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeMachinePoolSecurityGroupFilter(object, stream)
+	WriteMachinePoolSecurityGroupFilter(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalMachinePoolSecurityGroupFilter(object *MachinePoolSecurityGroupFilte
 	return stream.Error
 }
 
-// writeMachinePoolSecurityGroupFilter writes a value of the 'machine_pool_security_group_filter' type to the given stream.
-func writeMachinePoolSecurityGroupFilter(object *MachinePoolSecurityGroupFilter, stream *jsoniter.Stream) {
+// WriteMachinePoolSecurityGroupFilter writes a value of the 'machine_pool_security_group_filter' type to the given stream.
+func WriteMachinePoolSecurityGroupFilter(object *MachinePoolSecurityGroupFilter, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalMachinePoolSecurityGroupFilter(source interface{}) (object *Machin
 	if err != nil {
 		return
 	}
-	object = readMachinePoolSecurityGroupFilter(iterator)
+	object = ReadMachinePoolSecurityGroupFilter(iterator)
 	err = iterator.Error
 	return
 }
 
-// readMachinePoolSecurityGroupFilter reads a value of the 'machine_pool_security_group_filter' type from the given iterator.
-func readMachinePoolSecurityGroupFilter(iterator *jsoniter.Iterator) *MachinePoolSecurityGroupFilter {
+// ReadMachinePoolSecurityGroupFilter reads a value of the 'machine_pool_security_group_filter' type from the given iterator.
+func ReadMachinePoolSecurityGroupFilter(iterator *jsoniter.Iterator) *MachinePoolSecurityGroupFilter {
 	object := &MachinePoolSecurityGroupFilter{}
 	for {
 		field := iterator.ReadObject()

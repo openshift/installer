@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddOnEnvironmentVariableList(list []*AddOnEnvironmentVariable, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnEnvironmentVariableList(list, stream)
+	WriteAddOnEnvironmentVariableList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddOnEnvironmentVariableList(list []*AddOnEnvironmentVariable, write
 	return stream.Error
 }
 
-// writeAddOnEnvironmentVariableList writes a list of value of the 'add_on_environment_variable' type to
+// WriteAddOnEnvironmentVariableList writes a list of value of the 'add_on_environment_variable' type to
 // the given stream.
-func writeAddOnEnvironmentVariableList(list []*AddOnEnvironmentVariable, stream *jsoniter.Stream) {
+func WriteAddOnEnvironmentVariableList(list []*AddOnEnvironmentVariable, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAddOnEnvironmentVariable(value, stream)
+		WriteAddOnEnvironmentVariable(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddOnEnvironmentVariableList(source interface{}) (items []*AddOnEn
 	if err != nil {
 		return
 	}
-	items = readAddOnEnvironmentVariableList(iterator)
+	items = ReadAddOnEnvironmentVariableList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnEnvironmentVariableList reads list of values of the ”add_on_environment_variable' type from
+// ReadAddOnEnvironmentVariableList reads list of values of the ”add_on_environment_variable' type from
 // the given iterator.
-func readAddOnEnvironmentVariableList(iterator *jsoniter.Iterator) []*AddOnEnvironmentVariable {
+func ReadAddOnEnvironmentVariableList(iterator *jsoniter.Iterator) []*AddOnEnvironmentVariable {
 	list := []*AddOnEnvironmentVariable{}
 	for iterator.ReadArray() {
-		item := readAddOnEnvironmentVariable(iterator)
+		item := ReadAddOnEnvironmentVariable(iterator)
 		list = append(list, item)
 	}
 	return list

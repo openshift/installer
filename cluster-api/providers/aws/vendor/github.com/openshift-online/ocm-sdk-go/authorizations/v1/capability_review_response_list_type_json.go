@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalCapabilityReviewResponseList(list []*CapabilityReviewResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeCapabilityReviewResponseList(list, stream)
+	WriteCapabilityReviewResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalCapabilityReviewResponseList(list []*CapabilityReviewResponse, write
 	return stream.Error
 }
 
-// writeCapabilityReviewResponseList writes a list of value of the 'capability_review_response' type to
+// WriteCapabilityReviewResponseList writes a list of value of the 'capability_review_response' type to
 // the given stream.
-func writeCapabilityReviewResponseList(list []*CapabilityReviewResponse, stream *jsoniter.Stream) {
+func WriteCapabilityReviewResponseList(list []*CapabilityReviewResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeCapabilityReviewResponse(value, stream)
+		WriteCapabilityReviewResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalCapabilityReviewResponseList(source interface{}) (items []*Capabil
 	if err != nil {
 		return
 	}
-	items = readCapabilityReviewResponseList(iterator)
+	items = ReadCapabilityReviewResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readCapabilityReviewResponseList reads list of values of the ”capability_review_response' type from
+// ReadCapabilityReviewResponseList reads list of values of the ”capability_review_response' type from
 // the given iterator.
-func readCapabilityReviewResponseList(iterator *jsoniter.Iterator) []*CapabilityReviewResponse {
+func ReadCapabilityReviewResponseList(iterator *jsoniter.Iterator) []*CapabilityReviewResponse {
 	list := []*CapabilityReviewResponse{}
 	for iterator.ReadArray() {
-		item := readCapabilityReviewResponse(iterator)
+		item := ReadCapabilityReviewResponse(iterator)
 		list = append(list, item)
 	}
 	return list

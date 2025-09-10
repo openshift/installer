@@ -54,7 +54,7 @@ func (o *KubeletConfig) Kind() string {
 	return KubeletConfigKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *KubeletConfig) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -209,6 +209,29 @@ func (l *KubeletConfigList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *KubeletConfigList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *KubeletConfigList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *KubeletConfigList) SetItems(items []*KubeletConfig) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *KubeletConfigList) Items() []*KubeletConfig {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

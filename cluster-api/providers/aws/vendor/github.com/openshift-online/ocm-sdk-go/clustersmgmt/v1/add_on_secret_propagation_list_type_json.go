@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddOnSecretPropagationList(list []*AddOnSecretPropagation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnSecretPropagationList(list, stream)
+	WriteAddOnSecretPropagationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddOnSecretPropagationList(list []*AddOnSecretPropagation, writer io
 	return stream.Error
 }
 
-// writeAddOnSecretPropagationList writes a list of value of the 'add_on_secret_propagation' type to
+// WriteAddOnSecretPropagationList writes a list of value of the 'add_on_secret_propagation' type to
 // the given stream.
-func writeAddOnSecretPropagationList(list []*AddOnSecretPropagation, stream *jsoniter.Stream) {
+func WriteAddOnSecretPropagationList(list []*AddOnSecretPropagation, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAddOnSecretPropagation(value, stream)
+		WriteAddOnSecretPropagation(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddOnSecretPropagationList(source interface{}) (items []*AddOnSecr
 	if err != nil {
 		return
 	}
-	items = readAddOnSecretPropagationList(iterator)
+	items = ReadAddOnSecretPropagationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnSecretPropagationList reads list of values of the ”add_on_secret_propagation' type from
+// ReadAddOnSecretPropagationList reads list of values of the ”add_on_secret_propagation' type from
 // the given iterator.
-func readAddOnSecretPropagationList(iterator *jsoniter.Iterator) []*AddOnSecretPropagation {
+func ReadAddOnSecretPropagationList(iterator *jsoniter.Iterator) []*AddOnSecretPropagation {
 	list := []*AddOnSecretPropagation{}
 	for iterator.ReadArray() {
-		item := readAddOnSecretPropagation(iterator)
+		item := ReadAddOnSecretPropagation(iterator)
 		list = append(list, item)
 	}
 	return list

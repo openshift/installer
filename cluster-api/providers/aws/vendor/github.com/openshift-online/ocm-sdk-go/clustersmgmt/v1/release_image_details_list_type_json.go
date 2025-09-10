@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalReleaseImageDetailsList(list []*ReleaseImageDetails, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeReleaseImageDetailsList(list, stream)
+	WriteReleaseImageDetailsList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalReleaseImageDetailsList(list []*ReleaseImageDetails, writer io.Write
 	return stream.Error
 }
 
-// writeReleaseImageDetailsList writes a list of value of the 'release_image_details' type to
+// WriteReleaseImageDetailsList writes a list of value of the 'release_image_details' type to
 // the given stream.
-func writeReleaseImageDetailsList(list []*ReleaseImageDetails, stream *jsoniter.Stream) {
+func WriteReleaseImageDetailsList(list []*ReleaseImageDetails, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeReleaseImageDetails(value, stream)
+		WriteReleaseImageDetails(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalReleaseImageDetailsList(source interface{}) (items []*ReleaseImage
 	if err != nil {
 		return
 	}
-	items = readReleaseImageDetailsList(iterator)
+	items = ReadReleaseImageDetailsList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readReleaseImageDetailsList reads list of values of the ”release_image_details' type from
+// ReadReleaseImageDetailsList reads list of values of the ”release_image_details' type from
 // the given iterator.
-func readReleaseImageDetailsList(iterator *jsoniter.Iterator) []*ReleaseImageDetails {
+func ReadReleaseImageDetailsList(iterator *jsoniter.Iterator) []*ReleaseImageDetails {
 	list := []*ReleaseImageDetails{}
 	for iterator.ReadArray() {
-		item := readReleaseImageDetails(iterator)
+		item := ReadReleaseImageDetails(iterator)
 		list = append(list, item)
 	}
 	return list

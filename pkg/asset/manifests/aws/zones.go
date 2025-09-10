@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/ptr"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -164,6 +165,25 @@ func setSubnets(ctx context.Context, in *networkInput) error {
 	if err := in.GatherZonesFromMetadata(ctx); err != nil {
 		return fmt.Errorf("failed to get availability zones from metadata: %w", err)
 	}
+
+	// When IPv6 is configured, a few things must be noted:
+	// - VPC IPv6 CIDR is not known before provisioning.
+	// - Subnet spec cannot be defined as subnet IPv6 CIDR is not available yet.
+	// - Failure domain must be set explicitly: https://github.com/kubernetes-sigs/cluster-api-provider-aws/pull/4950
+	// Thus, we set the main IPv4 CIDR and the IPv6 spec, but leave IPv6 CIDR
+	// empty to allow AWS to allocate one for the cluster.
+	if in.InstallConfig.Config.IsDualStackInfra() {
+		in.Cluster.Spec.NetworkSpec.VPC = capa.VPCSpec{
+			CidrBlock:                 capiutils.CIDRFromInstallConfig(in.InstallConfig).String(),
+			AvailabilityZoneSelection: &capa.AZSelectionSchemeOrdered,
+			// We use all available AZs in the region. Except us-east-1, we skip us-east-1e
+			// FIXME: do not use this field as a subnet is created in us-east-1e.
+			AvailabilityZoneUsageLimit: ptr.To(len(in.ZonesInRegion) + 1),
+			IPv6:                       &capa.IPv6{},
+		}
+		return nil
+	}
+
 	return setSubnetsManagedVPC(in)
 }
 

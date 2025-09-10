@@ -52,7 +52,7 @@ func (o *Group) Kind() string {
 	return GroupKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Group) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -180,6 +180,29 @@ func (l *GroupList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *GroupList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *GroupList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *GroupList) SetItems(items []*Group) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *GroupList) Items() []*Group {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

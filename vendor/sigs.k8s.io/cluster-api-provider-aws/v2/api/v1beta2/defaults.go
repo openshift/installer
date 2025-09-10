@@ -26,7 +26,7 @@ import (
 func SetDefaults_Bastion(obj *Bastion) { //nolint:golint,stylecheck
 	// Default to allow open access to the bastion host if no CIDR Blocks have been set
 	if len(obj.AllowedCIDRBlocks) == 0 && !obj.DisableIngressRules {
-		obj.AllowedCIDRBlocks = []string{"0.0.0.0/0"}
+		obj.AllowedCIDRBlocks = []string{"0.0.0.0/0", "::/0"}
 	}
 }
 

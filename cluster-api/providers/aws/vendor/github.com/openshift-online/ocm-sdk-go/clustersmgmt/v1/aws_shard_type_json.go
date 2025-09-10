@@ -29,7 +29,7 @@ import (
 // MarshalAWSShard writes a value of the 'AWS_shard' type to the given writer.
 func MarshalAWSShard(object *AWSShard, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAWSShard(object, stream)
+	WriteAWSShard(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAWSShard(object *AWSShard, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAWSShard writes a value of the 'AWS_shard' type to the given stream.
-func writeAWSShard(object *AWSShard, stream *jsoniter.Stream) {
+// WriteAWSShard writes a value of the 'AWS_shard' type to the given stream.
+func WriteAWSShard(object *AWSShard, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeAWSShard(object *AWSShard, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("ecr_repository_urls")
-		writeStringList(object.ecrRepositoryURLs, stream)
+		WriteStringList(object.ecrRepositoryURLs, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalAWSShard(source interface{}) (object *AWSShard, err error) {
 	if err != nil {
 		return
 	}
-	object = readAWSShard(iterator)
+	object = ReadAWSShard(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAWSShard reads a value of the 'AWS_shard' type from the given iterator.
-func readAWSShard(iterator *jsoniter.Iterator) *AWSShard {
+// ReadAWSShard reads a value of the 'AWS_shard' type from the given iterator.
+func ReadAWSShard(iterator *jsoniter.Iterator) *AWSShard {
 	object := &AWSShard{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func readAWSShard(iterator *jsoniter.Iterator) *AWSShard {
 		}
 		switch field {
 		case "ecr_repository_urls":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.ecrRepositoryURLs = value
 			object.bitmap_ |= 1
 		default:

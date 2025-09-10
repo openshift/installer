@@ -30,7 +30,7 @@ import (
 // MarshalStatusUpdate writes a value of the 'status_update' type to the given writer.
 func MarshalStatusUpdate(object *StatusUpdate, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeStatusUpdate(object, stream)
+	WriteStatusUpdate(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalStatusUpdate(object *StatusUpdate, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeStatusUpdate writes a value of the 'status_update' type to the given stream.
-func writeStatusUpdate(object *StatusUpdate, stream *jsoniter.Stream) {
+// WriteStatusUpdate writes a value of the 'status_update' type to the given stream.
+func WriteStatusUpdate(object *StatusUpdate, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -90,7 +90,7 @@ func writeStatusUpdate(object *StatusUpdate, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("service")
-		writeService(object.service, stream)
+		WriteService(object.service, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0 && object.serviceInfo != nil
@@ -99,7 +99,7 @@ func writeStatusUpdate(object *StatusUpdate, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("service_info")
-		writeServiceInfo(object.serviceInfo, stream)
+		WriteServiceInfo(object.serviceInfo, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -129,13 +129,13 @@ func UnmarshalStatusUpdate(source interface{}) (object *StatusUpdate, err error)
 	if err != nil {
 		return
 	}
-	object = readStatusUpdate(iterator)
+	object = ReadStatusUpdate(iterator)
 	err = iterator.Error
 	return
 }
 
-// readStatusUpdate reads a value of the 'status_update' type from the given iterator.
-func readStatusUpdate(iterator *jsoniter.Iterator) *StatusUpdate {
+// ReadStatusUpdate reads a value of the 'status_update' type from the given iterator.
+func ReadStatusUpdate(iterator *jsoniter.Iterator) *StatusUpdate {
 	object := &StatusUpdate{}
 	for {
 		field := iterator.ReadObject()
@@ -168,11 +168,11 @@ func readStatusUpdate(iterator *jsoniter.Iterator) *StatusUpdate {
 			object.metadata = value
 			object.bitmap_ |= 16
 		case "service":
-			value := readService(iterator)
+			value := ReadService(iterator)
 			object.service = value
 			object.bitmap_ |= 32
 		case "service_info":
-			value := readServiceInfo(iterator)
+			value := ReadServiceInfo(iterator)
 			object.serviceInfo = value
 			object.bitmap_ |= 64
 		case "status":

@@ -29,7 +29,7 @@ import (
 // MarshalNetwork writes a value of the 'network' type to the given writer.
 func MarshalNetwork(object *Network, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeNetwork(object, stream)
+	WriteNetwork(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalNetwork(object *Network, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeNetwork writes a value of the 'network' type to the given stream.
-func writeNetwork(object *Network, stream *jsoniter.Stream) {
+// WriteNetwork writes a value of the 'network' type to the given stream.
+func WriteNetwork(object *Network, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -96,13 +96,13 @@ func UnmarshalNetwork(source interface{}) (object *Network, err error) {
 	if err != nil {
 		return
 	}
-	object = readNetwork(iterator)
+	object = ReadNetwork(iterator)
 	err = iterator.Error
 	return
 }
 
-// readNetwork reads a value of the 'network' type from the given iterator.
-func readNetwork(iterator *jsoniter.Iterator) *Network {
+// ReadNetwork reads a value of the 'network' type from the given iterator.
+func ReadNetwork(iterator *jsoniter.Iterator) *Network {
 	object := &Network{}
 	for {
 		field := iterator.ReadObject()

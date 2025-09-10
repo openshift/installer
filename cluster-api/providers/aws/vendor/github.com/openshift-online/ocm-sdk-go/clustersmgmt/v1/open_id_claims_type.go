@@ -154,6 +154,29 @@ func (l *OpenIDClaimsList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *OpenIDClaimsList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *OpenIDClaimsList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *OpenIDClaimsList) SetItems(items []*OpenIDClaims) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *OpenIDClaimsList) Items() []*OpenIDClaims {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *OpenIDClaimsList) Empty() bool {
 	return l == nil || len(l.items) == 0

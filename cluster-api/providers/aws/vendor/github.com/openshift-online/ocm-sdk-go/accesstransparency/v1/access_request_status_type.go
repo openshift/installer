@@ -112,6 +112,29 @@ func (l *AccessRequestStatusList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AccessRequestStatusList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AccessRequestStatusList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AccessRequestStatusList) SetItems(items []*AccessRequestStatus) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AccessRequestStatusList) Items() []*AccessRequestStatus {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AccessRequestStatusList) Empty() bool {
 	return l == nil || len(l.items) == 0

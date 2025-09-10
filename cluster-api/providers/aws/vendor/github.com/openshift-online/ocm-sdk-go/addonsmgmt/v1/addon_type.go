@@ -74,7 +74,7 @@ func (o *Addon) Kind() string {
 	return AddonKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Addon) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -708,6 +708,29 @@ func (l *AddonList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *AddonList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddonList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddonList) SetItems(items []*Addon) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddonList) Items() []*Addon {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

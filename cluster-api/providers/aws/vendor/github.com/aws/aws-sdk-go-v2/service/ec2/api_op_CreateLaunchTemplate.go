@@ -11,15 +11,19 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates a launch template. A launch template contains the parameters to launch
-// an instance. When you launch an instance using RunInstances , you can specify a
-// launch template instead of providing the launch parameters in the request. For
-// more information, see Launch an instance from a launch template (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html)
-// in the Amazon Elastic Compute Cloud User Guide. To clone an existing launch
-// template as the basis for a new launch template, use the Amazon EC2 console. The
-// API, SDKs, and CLI do not support cloning a template. For more information, see
-// Create a launch template from an existing launch template (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html#create-launch-template-from-existing-launch-template)
-// in the Amazon Elastic Compute Cloud User Guide.
+// Creates a launch template.
+//
+// A launch template contains the parameters to launch an instance. When you
+// launch an instance using RunInstances, you can specify a launch template instead of
+// providing the launch parameters in the request. For more information, see [Store instance launch parameters in Amazon EC2 launch templates]in
+// the Amazon EC2 User Guide.
+//
+// To clone an existing launch template as the basis for a new launch template,
+// use the Amazon EC2 console. The API, SDKs, and CLI do not support cloning a
+// template. For more information, see [Create a launch template from an existing launch template]in the Amazon EC2 User Guide.
+//
+// [Create a launch template from an existing launch template]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-launch-template.html#create-launch-template-from-existing-launch-template
+// [Store instance launch parameters in Amazon EC2 launch templates]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html
 func (c *Client) CreateLaunchTemplate(ctx context.Context, params *CreateLaunchTemplateInput, optFns ...func(*Options)) (*CreateLaunchTemplateOutput, error) {
 	if params == nil {
 		params = &CreateLaunchTemplateInput{}
@@ -48,8 +52,14 @@ type CreateLaunchTemplateInput struct {
 	LaunchTemplateName *string
 
 	// Unique, case-sensitive identifier you provide to ensure the idempotency of the
-	// request. For more information, see Ensuring idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
-	// . Constraint: Maximum 128 ASCII characters.
+	// request. If a client token isn't specified, a randomly generated token is used
+	// in the request to ensure idempotency.
+	//
+	// For more information, see [Ensuring idempotency].
+	//
+	// Constraint: Maximum 128 ASCII characters.
+	//
+	// [Ensuring idempotency]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html
 	ClientToken *string
 
 	// Checks whether you have the required permissions for the action, without
@@ -58,11 +68,16 @@ type CreateLaunchTemplateInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
+	// Reserved for internal use.
+	Operator *types.OperatorRequest
+
 	// The tags to apply to the launch template on creation. To tag the launch
-	// template, the resource type must be launch-template . To specify the tags for
-	// the resources that are created when an instance is launched, you must use the
-	// TagSpecifications parameter in the launch template data (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RequestLaunchTemplateData.html)
-	// structure.
+	// template, the resource type must be launch-template .
+	//
+	// To specify the tags for the resources that are created when an instance is
+	// launched, you must use the TagSpecifications parameter in the [launch template data] structure.
+	//
+	// [launch template data]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RequestLaunchTemplateData.html
 	TagSpecifications []types.TagSpecification
 
 	// A description for the first version of the launch template.
@@ -130,6 +145,9 @@ func (c *Client) addOperationCreateLaunchTemplateMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -140,6 +158,18 @@ func (c *Client) addOperationCreateLaunchTemplateMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
+	if err = addIdempotencyToken_opCreateLaunchTemplateMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateLaunchTemplateValidationMiddleware(stack); err != nil {
@@ -163,7 +193,52 @@ func (c *Client) addOperationCreateLaunchTemplateMiddlewares(stack *middleware.S
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
+}
+
+type idempotencyToken_initializeOpCreateLaunchTemplate struct {
+	tokenProvider IdempotencyTokenProvider
+}
+
+func (*idempotencyToken_initializeOpCreateLaunchTemplate) ID() string {
+	return "OperationIdempotencyTokenAutoFill"
+}
+
+func (m *idempotencyToken_initializeOpCreateLaunchTemplate) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	if m.tokenProvider == nil {
+		return next.HandleInitialize(ctx, in)
+	}
+
+	input, ok := in.Parameters.(*CreateLaunchTemplateInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("expected middleware input to be of type *CreateLaunchTemplateInput ")
+	}
+
+	if input.ClientToken == nil {
+		t, err := m.tokenProvider.GetIdempotencyToken()
+		if err != nil {
+			return out, metadata, err
+		}
+		input.ClientToken = &t
+	}
+	return next.HandleInitialize(ctx, in)
+}
+func addIdempotencyToken_opCreateLaunchTemplateMiddleware(stack *middleware.Stack, cfg Options) error {
+	return stack.Initialize.Add(&idempotencyToken_initializeOpCreateLaunchTemplate{tokenProvider: cfg.IdempotencyTokenProvider}, middleware.Before)
 }
 
 func newServiceMetadataMiddleware_opCreateLaunchTemplate(region string) *awsmiddleware.RegisterServiceMetadata {

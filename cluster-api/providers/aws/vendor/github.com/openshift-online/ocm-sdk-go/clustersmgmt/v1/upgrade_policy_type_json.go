@@ -30,7 +30,7 @@ import (
 // MarshalUpgradePolicy writes a value of the 'upgrade_policy' type to the given writer.
 func MarshalUpgradePolicy(object *UpgradePolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeUpgradePolicy(object, stream)
+	WriteUpgradePolicy(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalUpgradePolicy(object *UpgradePolicy, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeUpgradePolicy writes a value of the 'upgrade_policy' type to the given stream.
-func writeUpgradePolicy(object *UpgradePolicy, stream *jsoniter.Stream) {
+// WriteUpgradePolicy writes a value of the 'upgrade_policy' type to the given stream.
+func WriteUpgradePolicy(object *UpgradePolicy, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -138,13 +138,13 @@ func UnmarshalUpgradePolicy(source interface{}) (object *UpgradePolicy, err erro
 	if err != nil {
 		return
 	}
-	object = readUpgradePolicy(iterator)
+	object = ReadUpgradePolicy(iterator)
 	err = iterator.Error
 	return
 }
 
-// readUpgradePolicy reads a value of the 'upgrade_policy' type from the given iterator.
-func readUpgradePolicy(iterator *jsoniter.Iterator) *UpgradePolicy {
+// ReadUpgradePolicy reads a value of the 'upgrade_policy' type from the given iterator.
+func ReadUpgradePolicy(iterator *jsoniter.Iterator) *UpgradePolicy {
 	object := &UpgradePolicy{}
 	for {
 		field := iterator.ReadObject()

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAccessReviewResponseList(list []*AccessReviewResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAccessReviewResponseList(list, stream)
+	WriteAccessReviewResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAccessReviewResponseList(list []*AccessReviewResponse, writer io.Wri
 	return stream.Error
 }
 
-// writeAccessReviewResponseList writes a list of value of the 'access_review_response' type to
+// WriteAccessReviewResponseList writes a list of value of the 'access_review_response' type to
 // the given stream.
-func writeAccessReviewResponseList(list []*AccessReviewResponse, stream *jsoniter.Stream) {
+func WriteAccessReviewResponseList(list []*AccessReviewResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAccessReviewResponse(value, stream)
+		WriteAccessReviewResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAccessReviewResponseList(source interface{}) (items []*AccessRevie
 	if err != nil {
 		return
 	}
-	items = readAccessReviewResponseList(iterator)
+	items = ReadAccessReviewResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAccessReviewResponseList reads list of values of the ”access_review_response' type from
+// ReadAccessReviewResponseList reads list of values of the ”access_review_response' type from
 // the given iterator.
-func readAccessReviewResponseList(iterator *jsoniter.Iterator) []*AccessReviewResponse {
+func ReadAccessReviewResponseList(iterator *jsoniter.Iterator) []*AccessReviewResponse {
 	list := []*AccessReviewResponse{}
 	for iterator.ReadArray() {
-		item := readAccessReviewResponse(iterator)
+		item := ReadAccessReviewResponse(iterator)
 		list = append(list, item)
 	}
 	return list

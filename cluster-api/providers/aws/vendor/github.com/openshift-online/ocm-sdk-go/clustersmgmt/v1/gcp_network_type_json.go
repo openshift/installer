@@ -29,7 +29,7 @@ import (
 // MarshalGCPNetwork writes a value of the 'GCP_network' type to the given writer.
 func MarshalGCPNetwork(object *GCPNetwork, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGCPNetwork(object, stream)
+	WriteGCPNetwork(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGCPNetwork(object *GCPNetwork, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeGCPNetwork writes a value of the 'GCP_network' type to the given stream.
-func writeGCPNetwork(object *GCPNetwork, stream *jsoniter.Stream) {
+// WriteGCPNetwork writes a value of the 'GCP_network' type to the given stream.
+func WriteGCPNetwork(object *GCPNetwork, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalGCPNetwork(source interface{}) (object *GCPNetwork, err error) {
 	if err != nil {
 		return
 	}
-	object = readGCPNetwork(iterator)
+	object = ReadGCPNetwork(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGCPNetwork reads a value of the 'GCP_network' type from the given iterator.
-func readGCPNetwork(iterator *jsoniter.Iterator) *GCPNetwork {
+// ReadGCPNetwork reads a value of the 'GCP_network' type from the given iterator.
+func ReadGCPNetwork(iterator *jsoniter.Iterator) *GCPNetwork {
 	object := &GCPNetwork{}
 	for {
 		field := iterator.ReadObject()

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalTaintList(list []*Taint, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTaintList(list, stream)
+	WriteTaintList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalTaintList(list []*Taint, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeTaintList writes a list of value of the 'taint' type to
+// WriteTaintList writes a list of value of the 'taint' type to
 // the given stream.
-func writeTaintList(list []*Taint, stream *jsoniter.Stream) {
+func WriteTaintList(list []*Taint, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeTaint(value, stream)
+		WriteTaint(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalTaintList(source interface{}) (items []*Taint, err error) {
 	if err != nil {
 		return
 	}
-	items = readTaintList(iterator)
+	items = ReadTaintList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTaintList reads list of values of the ”taint' type from
+// ReadTaintList reads list of values of the ”taint' type from
 // the given iterator.
-func readTaintList(iterator *jsoniter.Iterator) []*Taint {
+func ReadTaintList(iterator *jsoniter.Iterator) []*Taint {
 	list := []*Taint{}
 	for iterator.ReadArray() {
-		item := readTaint(iterator)
+		item := ReadTaint(iterator)
 		list = append(list, item)
 	}
 	return list

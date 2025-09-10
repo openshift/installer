@@ -29,7 +29,7 @@ import (
 // MarshalCloudRegion writes a value of the 'cloud_region' type to the given writer.
 func MarshalCloudRegion(object *CloudRegion, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeCloudRegion(object, stream)
+	WriteCloudRegion(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalCloudRegion(object *CloudRegion, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeCloudRegion writes a value of the 'cloud_region' type to the given stream.
-func writeCloudRegion(object *CloudRegion, stream *jsoniter.Stream) {
+// WriteCloudRegion writes a value of the 'cloud_region' type to the given stream.
+func WriteCloudRegion(object *CloudRegion, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalCloudRegion(source interface{}) (object *CloudRegion, err error) {
 	if err != nil {
 		return
 	}
-	object = readCloudRegion(iterator)
+	object = ReadCloudRegion(iterator)
 	err = iterator.Error
 	return
 }
 
-// readCloudRegion reads a value of the 'cloud_region' type from the given iterator.
-func readCloudRegion(iterator *jsoniter.Iterator) *CloudRegion {
+// ReadCloudRegion reads a value of the 'cloud_region' type from the given iterator.
+func ReadCloudRegion(iterator *jsoniter.Iterator) *CloudRegion {
 	object := &CloudRegion{}
 	for {
 		field := iterator.ReadObject()

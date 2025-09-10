@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalScheduleTypeList(list []ScheduleType, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeScheduleTypeList(list, stream)
+	WriteScheduleTypeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalScheduleTypeList(list []ScheduleType, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeScheduleTypeList writes a list of value of the 'schedule_type' type to
+// WriteScheduleTypeList writes a list of value of the 'schedule_type' type to
 // the given stream.
-func writeScheduleTypeList(list []ScheduleType, stream *jsoniter.Stream) {
+func WriteScheduleTypeList(list []ScheduleType, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalScheduleTypeList(source interface{}) (items []ScheduleType, err er
 	if err != nil {
 		return
 	}
-	items = readScheduleTypeList(iterator)
+	items = ReadScheduleTypeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readScheduleTypeList reads list of values of the ”schedule_type' type from
+// ReadScheduleTypeList reads list of values of the ”schedule_type' type from
 // the given iterator.
-func readScheduleTypeList(iterator *jsoniter.Iterator) []ScheduleType {
+func ReadScheduleTypeList(iterator *jsoniter.Iterator) []ScheduleType {
 	list := []ScheduleType{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

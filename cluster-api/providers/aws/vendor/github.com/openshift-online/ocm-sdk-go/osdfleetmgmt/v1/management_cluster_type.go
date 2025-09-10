@@ -104,7 +104,7 @@ func (o *ManagementCluster) Kind() string {
 	return ManagementClusterKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *ManagementCluster) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -462,6 +462,29 @@ func (l *ManagementClusterList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ManagementClusterList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ManagementClusterList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ManagementClusterList) SetItems(items []*ManagementCluster) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ManagementClusterList) Items() []*ManagementCluster {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

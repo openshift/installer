@@ -11,14 +11,19 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes the Regions that are enabled for your account, or all Regions. For a
-// list of the Regions supported by Amazon EC2, see Amazon Elastic Compute Cloud
-// endpoints and quotas (https://docs.aws.amazon.com/general/latest/gr/ec2-service.html)
-// . For information about enabling and disabling Regions for your account, see
-// Managing Amazon Web Services Regions (https://docs.aws.amazon.com/general/latest/gr/rande-manage.html)
-// in the Amazon Web Services General Reference. The order of the elements in the
-// response, including those within nested structures, might vary. Applications
-// should not assume the elements appear in a particular order.
+// Describes the Regions that are enabled for your account, or all Regions.
+//
+// For a list of the Regions supported by Amazon EC2, see [Amazon EC2 service endpoints].
+//
+// For information about enabling and disabling Regions for your account, see [Specify which Amazon Web Services Regions your account can use] in
+// the Amazon Web Services Account Management Reference Guide.
+//
+// The order of the elements in the response, including those within nested
+// structures, might vary. Applications should not assume the elements appear in a
+// particular order.
+//
+// [Specify which Amazon Web Services Regions your account can use]: https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-regions.html
+// [Amazon EC2 service endpoints]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-endpoints.html
 func (c *Client) DescribeRegions(ctx context.Context, params *DescribeRegionsInput, optFns ...func(*Options)) (*DescribeRegionsOutput, error) {
 	if params == nil {
 		params = &DescribeRegionsInput{}
@@ -47,10 +52,13 @@ type DescribeRegionsInput struct {
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - endpoint - The endpoint of the Region (for example,
 	//   ec2.us-east-1.amazonaws.com ).
+	//
 	//   - opt-in-status - The opt-in status of the Region ( opt-in-not-required |
 	//   opted-in | not-opted-in ).
+	//
 	//   - region-name - The name of the Region (for example, us-east-1 ).
 	Filters []types.Filter
 
@@ -115,6 +123,9 @@ func (c *Client) addOperationDescribeRegionsMiddlewares(stack *middleware.Stack,
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,6 +136,15 @@ func (c *Client) addOperationDescribeRegionsMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeRegions(options.Region), middleware.Before); err != nil {
@@ -143,6 +163,18 @@ func (c *Client) addOperationDescribeRegionsMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

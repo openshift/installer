@@ -20,13 +20,14 @@ package drain
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math"
+	"slices"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	"golang.org/x/exp/maps"
 	corev1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -315,7 +316,7 @@ func (d *Helper) EvictPods(ctx context.Context, podDeleteList *PodDeleteList) Ev
 
 	// Trigger evictions for at most 10s. We'll continue on the next reconcile if we hit the timeout.
 	evictionTimeout := 10 * time.Second
-	ctx, cancel := context.WithTimeout(ctx, evictionTimeout)
+	ctx, cancel := context.WithTimeoutCause(ctx, evictionTimeout, errors.New("eviction timeout expired"))
 	defer cancel()
 
 	res := EvictionResult{
@@ -484,8 +485,7 @@ func (r EvictionResult) ConditionMessage(nodeDrainStartTime *metav1.Time) string
 			conditionMessage, kind, PodListToString(r.PodsDeletionTimestampSet, 3))
 	}
 	if len(r.PodsFailedEviction) > 0 {
-		sortedFailureMessages := maps.Keys(r.PodsFailedEviction)
-		sort.Strings(sortedFailureMessages)
+		sortedFailureMessages := slices.Sorted(maps.Keys(r.PodsFailedEviction))
 
 		skippedFailureMessages := []string{}
 		if len(sortedFailureMessages) > 5 {

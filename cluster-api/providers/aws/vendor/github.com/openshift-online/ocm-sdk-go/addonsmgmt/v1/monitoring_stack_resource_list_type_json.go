@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalMonitoringStackResourceList(list []*MonitoringStackResource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeMonitoringStackResourceList(list, stream)
+	WriteMonitoringStackResourceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalMonitoringStackResourceList(list []*MonitoringStackResource, writer 
 	return stream.Error
 }
 
-// writeMonitoringStackResourceList writes a list of value of the 'monitoring_stack_resource' type to
+// WriteMonitoringStackResourceList writes a list of value of the 'monitoring_stack_resource' type to
 // the given stream.
-func writeMonitoringStackResourceList(list []*MonitoringStackResource, stream *jsoniter.Stream) {
+func WriteMonitoringStackResourceList(list []*MonitoringStackResource, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeMonitoringStackResource(value, stream)
+		WriteMonitoringStackResource(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalMonitoringStackResourceList(source interface{}) (items []*Monitori
 	if err != nil {
 		return
 	}
-	items = readMonitoringStackResourceList(iterator)
+	items = ReadMonitoringStackResourceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readMonitoringStackResourceList reads list of values of the ”monitoring_stack_resource' type from
+// ReadMonitoringStackResourceList reads list of values of the ”monitoring_stack_resource' type from
 // the given iterator.
-func readMonitoringStackResourceList(iterator *jsoniter.Iterator) []*MonitoringStackResource {
+func ReadMonitoringStackResourceList(iterator *jsoniter.Iterator) []*MonitoringStackResource {
 	list := []*MonitoringStackResource{}
 	for iterator.ReadArray() {
-		item := readMonitoringStackResource(iterator)
+		item := ReadMonitoringStackResource(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -57,7 +57,7 @@ func readPrivateLinkPrincipalsListResponse(response *PrivateLinkPrincipalsListRe
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readPrivateLinkPrincipalList(iterator)
+			items := ReadPrivateLinkPrincipalList(iterator)
 			response.items = &PrivateLinkPrincipalList{
 				items: items,
 			}

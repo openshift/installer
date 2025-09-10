@@ -30,7 +30,7 @@ import (
 // MarshalVersionGateAgreement writes a value of the 'version_gate_agreement' type to the given writer.
 func MarshalVersionGateAgreement(object *VersionGateAgreement, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeVersionGateAgreement(object, stream)
+	WriteVersionGateAgreement(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalVersionGateAgreement(object *VersionGateAgreement, writer io.Writer)
 	return stream.Error
 }
 
-// writeVersionGateAgreement writes a value of the 'version_gate_agreement' type to the given stream.
-func writeVersionGateAgreement(object *VersionGateAgreement, stream *jsoniter.Stream) {
+// WriteVersionGateAgreement writes a value of the 'version_gate_agreement' type to the given stream.
+func WriteVersionGateAgreement(object *VersionGateAgreement, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -81,7 +81,7 @@ func writeVersionGateAgreement(object *VersionGateAgreement, stream *jsoniter.St
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("version_gate")
-		writeVersionGate(object.versionGate, stream)
+		WriteVersionGate(object.versionGate, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -93,13 +93,13 @@ func UnmarshalVersionGateAgreement(source interface{}) (object *VersionGateAgree
 	if err != nil {
 		return
 	}
-	object = readVersionGateAgreement(iterator)
+	object = ReadVersionGateAgreement(iterator)
 	err = iterator.Error
 	return
 }
 
-// readVersionGateAgreement reads a value of the 'version_gate_agreement' type from the given iterator.
-func readVersionGateAgreement(iterator *jsoniter.Iterator) *VersionGateAgreement {
+// ReadVersionGateAgreement reads a value of the 'version_gate_agreement' type from the given iterator.
+func ReadVersionGateAgreement(iterator *jsoniter.Iterator) *VersionGateAgreement {
 	object := &VersionGateAgreement{}
 	for {
 		field := iterator.ReadObject()
@@ -127,7 +127,7 @@ func readVersionGateAgreement(iterator *jsoniter.Iterator) *VersionGateAgreement
 			object.agreedTimestamp = value
 			object.bitmap_ |= 8
 		case "version_gate":
-			value := readVersionGate(iterator)
+			value := ReadVersionGate(iterator)
 			object.versionGate = value
 			object.bitmap_ |= 16
 		default:

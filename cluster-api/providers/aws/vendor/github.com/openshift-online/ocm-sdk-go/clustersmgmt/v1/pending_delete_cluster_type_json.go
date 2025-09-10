@@ -30,7 +30,7 @@ import (
 // MarshalPendingDeleteCluster writes a value of the 'pending_delete_cluster' type to the given writer.
 func MarshalPendingDeleteCluster(object *PendingDeleteCluster, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writePendingDeleteCluster(object, stream)
+	WritePendingDeleteCluster(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalPendingDeleteCluster(object *PendingDeleteCluster, writer io.Writer)
 	return stream.Error
 }
 
-// writePendingDeleteCluster writes a value of the 'pending_delete_cluster' type to the given stream.
-func writePendingDeleteCluster(object *PendingDeleteCluster, stream *jsoniter.Stream) {
+// WritePendingDeleteCluster writes a value of the 'pending_delete_cluster' type to the given stream.
+func WritePendingDeleteCluster(object *PendingDeleteCluster, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -81,7 +81,7 @@ func writePendingDeleteCluster(object *PendingDeleteCluster, stream *jsoniter.St
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cluster")
-		writeCluster(object.cluster, stream)
+		WriteCluster(object.cluster, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0
@@ -102,13 +102,13 @@ func UnmarshalPendingDeleteCluster(source interface{}) (object *PendingDeleteClu
 	if err != nil {
 		return
 	}
-	object = readPendingDeleteCluster(iterator)
+	object = ReadPendingDeleteCluster(iterator)
 	err = iterator.Error
 	return
 }
 
-// readPendingDeleteCluster reads a value of the 'pending_delete_cluster' type from the given iterator.
-func readPendingDeleteCluster(iterator *jsoniter.Iterator) *PendingDeleteCluster {
+// ReadPendingDeleteCluster reads a value of the 'pending_delete_cluster' type from the given iterator.
+func ReadPendingDeleteCluster(iterator *jsoniter.Iterator) *PendingDeleteCluster {
 	object := &PendingDeleteCluster{}
 	for {
 		field := iterator.ReadObject()
@@ -132,7 +132,7 @@ func readPendingDeleteCluster(iterator *jsoniter.Iterator) *PendingDeleteCluster
 			object.bestEffort = value
 			object.bitmap_ |= 8
 		case "cluster":
-			value := readCluster(iterator)
+			value := ReadCluster(iterator)
 			object.cluster = value
 			object.bitmap_ |= 16
 		case "creation_timestamp":

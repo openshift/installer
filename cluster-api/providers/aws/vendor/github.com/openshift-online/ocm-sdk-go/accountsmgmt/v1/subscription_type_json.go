@@ -30,7 +30,7 @@ import (
 // MarshalSubscription writes a value of the 'subscription' type to the given writer.
 func MarshalSubscription(object *Subscription, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSubscription(object, stream)
+	WriteSubscription(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalSubscription(object *Subscription, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeSubscription writes a value of the 'subscription' type to the given stream.
-func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
+// WriteSubscription writes a value of the 'subscription' type to the given stream.
+func WriteSubscription(object *Subscription, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -81,7 +81,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("capabilities")
-		writeCapabilityList(object.capabilities, stream)
+		WriteCapabilityList(object.capabilities, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0
@@ -162,7 +162,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("creator")
-		writeAccount(object.creator, stream)
+		WriteAccount(object.creator, stream)
 		count++
 	}
 	present_ = object.bitmap_&16384 != 0
@@ -189,7 +189,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("labels")
-		writeLabelList(object.labels, stream)
+		WriteLabelList(object.labels, stream)
 		count++
 	}
 	present_ = object.bitmap_&131072 != 0
@@ -234,7 +234,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("metrics")
-		writeSubscriptionMetricsList(object.metrics, stream)
+		WriteSubscriptionMetricsList(object.metrics, stream)
 		count++
 	}
 	present_ = object.bitmap_&4194304 != 0 && object.notificationContacts != nil
@@ -243,7 +243,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("notification_contacts")
-		writeAccountList(object.notificationContacts, stream)
+		WriteAccountList(object.notificationContacts, stream)
 		count++
 	}
 	present_ = object.bitmap_&8388608 != 0
@@ -261,7 +261,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("plan")
-		writePlan(object.plan, stream)
+		WritePlan(object.plan, stream)
 		count++
 	}
 	present_ = object.bitmap_&33554432 != 0
@@ -305,11 +305,20 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("rh_region_id")
+		stream.WriteString(object.rhRegionID)
+		count++
+	}
+	present_ = object.bitmap_&1073741824 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("service_level")
 		stream.WriteString(object.serviceLevel)
 		count++
 	}
-	present_ = object.bitmap_&1073741824 != 0
+	present_ = object.bitmap_&2147483648 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -318,7 +327,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 		stream.WriteInt(object.socketTotal)
 		count++
 	}
-	present_ = object.bitmap_&2147483648 != 0
+	present_ = object.bitmap_&4294967296 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -327,7 +336,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 		stream.WriteString(object.status)
 		count++
 	}
-	present_ = object.bitmap_&4294967296 != 0
+	present_ = object.bitmap_&8589934592 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -336,7 +345,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 		stream.WriteString(object.supportLevel)
 		count++
 	}
-	present_ = object.bitmap_&8589934592 != 0
+	present_ = object.bitmap_&17179869184 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -345,7 +354,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 		stream.WriteString(object.systemUnits)
 		count++
 	}
-	present_ = object.bitmap_&17179869184 != 0
+	present_ = object.bitmap_&34359738368 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -354,7 +363,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 		stream.WriteString((object.trialEndDate).Format(time.RFC3339))
 		count++
 	}
-	present_ = object.bitmap_&34359738368 != 0
+	present_ = object.bitmap_&68719476736 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -363,7 +372,7 @@ func writeSubscription(object *Subscription, stream *jsoniter.Stream) {
 		stream.WriteString((object.updatedAt).Format(time.RFC3339))
 		count++
 	}
-	present_ = object.bitmap_&68719476736 != 0
+	present_ = object.bitmap_&137438953472 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -381,13 +390,13 @@ func UnmarshalSubscription(source interface{}) (object *Subscription, err error)
 	if err != nil {
 		return
 	}
-	object = readSubscription(iterator)
+	object = ReadSubscription(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSubscription reads a value of the 'subscription' type from the given iterator.
-func readSubscription(iterator *jsoniter.Iterator) *Subscription {
+// ReadSubscription reads a value of the 'subscription' type from the given iterator.
+func ReadSubscription(iterator *jsoniter.Iterator) *Subscription {
 	object := &Subscription{}
 	for {
 		field := iterator.ReadObject()
@@ -411,7 +420,7 @@ func readSubscription(iterator *jsoniter.Iterator) *Subscription {
 			object.billingMarketplaceAccount = value
 			object.bitmap_ |= 8
 		case "capabilities":
-			value := readCapabilityList(iterator)
+			value := ReadCapabilityList(iterator)
 			object.capabilities = value
 			object.bitmap_ |= 16
 		case "cloud_account_id":
@@ -452,7 +461,7 @@ func readSubscription(iterator *jsoniter.Iterator) *Subscription {
 			object.createdAt = value
 			object.bitmap_ |= 4096
 		case "creator":
-			value := readAccount(iterator)
+			value := ReadAccount(iterator)
 			object.creator = value
 			object.bitmap_ |= 8192
 		case "display_name":
@@ -464,7 +473,7 @@ func readSubscription(iterator *jsoniter.Iterator) *Subscription {
 			object.externalClusterID = value
 			object.bitmap_ |= 32768
 		case "labels":
-			value := readLabelList(iterator)
+			value := ReadLabelList(iterator)
 			object.labels = value
 			object.bitmap_ |= 65536
 		case "last_reconcile_date":
@@ -496,11 +505,11 @@ func readSubscription(iterator *jsoniter.Iterator) *Subscription {
 			object.managed = value
 			object.bitmap_ |= 1048576
 		case "metrics":
-			value := readSubscriptionMetricsList(iterator)
+			value := ReadSubscriptionMetricsList(iterator)
 			object.metrics = value
 			object.bitmap_ |= 2097152
 		case "notification_contacts":
-			value := readAccountList(iterator)
+			value := ReadAccountList(iterator)
 			object.notificationContacts = value
 			object.bitmap_ |= 4194304
 		case "organization_id":
@@ -508,7 +517,7 @@ func readSubscription(iterator *jsoniter.Iterator) *Subscription {
 			object.organizationID = value
 			object.bitmap_ |= 8388608
 		case "plan":
-			value := readPlan(iterator)
+			value := ReadPlan(iterator)
 			object.plan = value
 			object.bitmap_ |= 16777216
 		case "product_bundle":
@@ -527,26 +536,30 @@ func readSubscription(iterator *jsoniter.Iterator) *Subscription {
 			value := iterator.ReadBool()
 			object.released = value
 			object.bitmap_ |= 268435456
+		case "rh_region_id":
+			value := iterator.ReadString()
+			object.rhRegionID = value
+			object.bitmap_ |= 536870912
 		case "service_level":
 			value := iterator.ReadString()
 			object.serviceLevel = value
-			object.bitmap_ |= 536870912
+			object.bitmap_ |= 1073741824
 		case "socket_total":
 			value := iterator.ReadInt()
 			object.socketTotal = value
-			object.bitmap_ |= 1073741824
+			object.bitmap_ |= 2147483648
 		case "status":
 			value := iterator.ReadString()
 			object.status = value
-			object.bitmap_ |= 2147483648
+			object.bitmap_ |= 4294967296
 		case "support_level":
 			value := iterator.ReadString()
 			object.supportLevel = value
-			object.bitmap_ |= 4294967296
+			object.bitmap_ |= 8589934592
 		case "system_units":
 			value := iterator.ReadString()
 			object.systemUnits = value
-			object.bitmap_ |= 8589934592
+			object.bitmap_ |= 17179869184
 		case "trial_end_date":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -554,7 +567,7 @@ func readSubscription(iterator *jsoniter.Iterator) *Subscription {
 				iterator.ReportError("", err.Error())
 			}
 			object.trialEndDate = value
-			object.bitmap_ |= 17179869184
+			object.bitmap_ |= 34359738368
 		case "updated_at":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -562,11 +575,11 @@ func readSubscription(iterator *jsoniter.Iterator) *Subscription {
 				iterator.ReportError("", err.Error())
 			}
 			object.updatedAt = value
-			object.bitmap_ |= 34359738368
+			object.bitmap_ |= 68719476736
 		case "usage":
 			value := iterator.ReadString()
 			object.usage = value
-			object.bitmap_ |= 68719476736
+			object.bitmap_ |= 137438953472
 		default:
 			iterator.ReadAny()
 		}

@@ -29,7 +29,7 @@ import (
 // MarshalLabelRequestPayload writes a value of the 'label_request_payload' type to the given writer.
 func MarshalLabelRequestPayload(object *LabelRequestPayload, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLabelRequestPayload(object, stream)
+	WriteLabelRequestPayload(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalLabelRequestPayload(object *LabelRequestPayload, writer io.Writer) e
 	return stream.Error
 }
 
-// writeLabelRequestPayload writes a value of the 'label_request_payload' type to the given stream.
-func writeLabelRequestPayload(object *LabelRequestPayload, stream *jsoniter.Stream) {
+// WriteLabelRequestPayload writes a value of the 'label_request_payload' type to the given stream.
+func WriteLabelRequestPayload(object *LabelRequestPayload, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalLabelRequestPayload(source interface{}) (object *LabelRequestPaylo
 	if err != nil {
 		return
 	}
-	object = readLabelRequestPayload(iterator)
+	object = ReadLabelRequestPayload(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLabelRequestPayload reads a value of the 'label_request_payload' type from the given iterator.
-func readLabelRequestPayload(iterator *jsoniter.Iterator) *LabelRequestPayload {
+// ReadLabelRequestPayload reads a value of the 'label_request_payload' type from the given iterator.
+func ReadLabelRequestPayload(iterator *jsoniter.Iterator) *LabelRequestPayload {
 	object := &LabelRequestPayload{}
 	for {
 		field := iterator.ReadObject()

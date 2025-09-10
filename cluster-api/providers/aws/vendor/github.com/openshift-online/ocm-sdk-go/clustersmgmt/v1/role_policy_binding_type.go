@@ -200,6 +200,29 @@ func (l *RolePolicyBindingList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *RolePolicyBindingList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *RolePolicyBindingList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *RolePolicyBindingList) SetItems(items []*RolePolicyBinding) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *RolePolicyBindingList) Items() []*RolePolicyBinding {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *RolePolicyBindingList) Empty() bool {
 	return l == nil || len(l.items) == 0

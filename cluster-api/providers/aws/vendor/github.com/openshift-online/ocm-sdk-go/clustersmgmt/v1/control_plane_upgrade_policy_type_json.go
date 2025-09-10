@@ -30,7 +30,7 @@ import (
 // MarshalControlPlaneUpgradePolicy writes a value of the 'control_plane_upgrade_policy' type to the given writer.
 func MarshalControlPlaneUpgradePolicy(object *ControlPlaneUpgradePolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeControlPlaneUpgradePolicy(object, stream)
+	WriteControlPlaneUpgradePolicy(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalControlPlaneUpgradePolicy(object *ControlPlaneUpgradePolicy, writer 
 	return stream.Error
 }
 
-// writeControlPlaneUpgradePolicy writes a value of the 'control_plane_upgrade_policy' type to the given stream.
-func writeControlPlaneUpgradePolicy(object *ControlPlaneUpgradePolicy, stream *jsoniter.Stream) {
+// WriteControlPlaneUpgradePolicy writes a value of the 'control_plane_upgrade_policy' type to the given stream.
+func WriteControlPlaneUpgradePolicy(object *ControlPlaneUpgradePolicy, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -135,7 +135,7 @@ func writeControlPlaneUpgradePolicy(object *ControlPlaneUpgradePolicy, stream *j
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("state")
-		writeUpgradePolicyState(object.state, stream)
+		WriteUpgradePolicyState(object.state, stream)
 		count++
 	}
 	present_ = object.bitmap_&2048 != 0
@@ -165,13 +165,13 @@ func UnmarshalControlPlaneUpgradePolicy(source interface{}) (object *ControlPlan
 	if err != nil {
 		return
 	}
-	object = readControlPlaneUpgradePolicy(iterator)
+	object = ReadControlPlaneUpgradePolicy(iterator)
 	err = iterator.Error
 	return
 }
 
-// readControlPlaneUpgradePolicy reads a value of the 'control_plane_upgrade_policy' type from the given iterator.
-func readControlPlaneUpgradePolicy(iterator *jsoniter.Iterator) *ControlPlaneUpgradePolicy {
+// ReadControlPlaneUpgradePolicy reads a value of the 'control_plane_upgrade_policy' type from the given iterator.
+func ReadControlPlaneUpgradePolicy(iterator *jsoniter.Iterator) *ControlPlaneUpgradePolicy {
 	object := &ControlPlaneUpgradePolicy{}
 	for {
 		field := iterator.ReadObject()
@@ -232,7 +232,7 @@ func readControlPlaneUpgradePolicy(iterator *jsoniter.Iterator) *ControlPlaneUpg
 			object.scheduleType = value
 			object.bitmap_ |= 512
 		case "state":
-			value := readUpgradePolicyState(iterator)
+			value := ReadUpgradePolicyState(iterator)
 			object.state = value
 			object.bitmap_ |= 1024
 		case "upgrade_type":

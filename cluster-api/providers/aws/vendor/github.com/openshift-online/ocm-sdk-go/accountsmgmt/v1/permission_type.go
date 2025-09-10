@@ -51,7 +51,7 @@ func (o *Permission) Kind() string {
 	return PermissionKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Permission) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -194,6 +194,29 @@ func (l *PermissionList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *PermissionList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *PermissionList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *PermissionList) SetItems(items []*Permission) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *PermissionList) Items() []*Permission {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

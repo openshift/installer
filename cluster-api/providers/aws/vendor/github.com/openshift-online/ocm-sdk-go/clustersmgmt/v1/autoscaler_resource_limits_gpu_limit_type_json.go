@@ -29,7 +29,7 @@ import (
 // MarshalAutoscalerResourceLimitsGPULimit writes a value of the 'autoscaler_resource_limits_GPU_limit' type to the given writer.
 func MarshalAutoscalerResourceLimitsGPULimit(object *AutoscalerResourceLimitsGPULimit, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAutoscalerResourceLimitsGPULimit(object, stream)
+	WriteAutoscalerResourceLimitsGPULimit(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAutoscalerResourceLimitsGPULimit(object *AutoscalerResourceLimitsGPU
 	return stream.Error
 }
 
-// writeAutoscalerResourceLimitsGPULimit writes a value of the 'autoscaler_resource_limits_GPU_limit' type to the given stream.
-func writeAutoscalerResourceLimitsGPULimit(object *AutoscalerResourceLimitsGPULimit, stream *jsoniter.Stream) {
+// WriteAutoscalerResourceLimitsGPULimit writes a value of the 'autoscaler_resource_limits_GPU_limit' type to the given stream.
+func WriteAutoscalerResourceLimitsGPULimit(object *AutoscalerResourceLimitsGPULimit, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeAutoscalerResourceLimitsGPULimit(object *AutoscalerResourceLimitsGPULi
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("range")
-		writeResourceRange(object.range_, stream)
+		WriteResourceRange(object.range_, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -69,13 +69,13 @@ func UnmarshalAutoscalerResourceLimitsGPULimit(source interface{}) (object *Auto
 	if err != nil {
 		return
 	}
-	object = readAutoscalerResourceLimitsGPULimit(iterator)
+	object = ReadAutoscalerResourceLimitsGPULimit(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAutoscalerResourceLimitsGPULimit reads a value of the 'autoscaler_resource_limits_GPU_limit' type from the given iterator.
-func readAutoscalerResourceLimitsGPULimit(iterator *jsoniter.Iterator) *AutoscalerResourceLimitsGPULimit {
+// ReadAutoscalerResourceLimitsGPULimit reads a value of the 'autoscaler_resource_limits_GPU_limit' type from the given iterator.
+func ReadAutoscalerResourceLimitsGPULimit(iterator *jsoniter.Iterator) *AutoscalerResourceLimitsGPULimit {
 	object := &AutoscalerResourceLimitsGPULimit{}
 	for {
 		field := iterator.ReadObject()
@@ -84,7 +84,7 @@ func readAutoscalerResourceLimitsGPULimit(iterator *jsoniter.Iterator) *Autoscal
 		}
 		switch field {
 		case "range":
-			value := readResourceRange(iterator)
+			value := ReadResourceRange(iterator)
 			object.range_ = value
 			object.bitmap_ |= 1
 		case "type":

@@ -79,6 +79,29 @@ func (l *SocketTotalsNodeRoleOSMetricNodeList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *SocketTotalsNodeRoleOSMetricNodeList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SocketTotalsNodeRoleOSMetricNodeList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SocketTotalsNodeRoleOSMetricNodeList) SetItems(items []*SocketTotalsNodeRoleOSMetricNode) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SocketTotalsNodeRoleOSMetricNodeList) Items() []*SocketTotalsNodeRoleOSMetricNode {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *SocketTotalsNodeRoleOSMetricNodeList) Empty() bool {
 	return l == nil || len(l.items) == 0

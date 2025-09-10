@@ -29,6 +29,16 @@ const (
 
 	// DefaultIgnitionVersion represents default Ignition version generated for machine userdata.
 	DefaultIgnitionVersion = "2.3"
+
+	// DefaultIgnitionStorageType represents the default storage type of Ignition userdata
+	DefaultIgnitionStorageType = IgnitionStorageTypeOptionClusterObjectStore
+
+	// DefaultMachinePoolIgnitionStorageType represents the default storage type of Ignition userdata for machine pools.
+	//
+	// This is only different from DefaultIgnitionStorageType because of backward compatibility. Machine pools used to
+	// default to store Ignition user data directly on the EC2 instance. Since the choice between remote storage (S3)
+	// and direct storage was introduced, the default was kept, but might change in newer API versions.
+	DefaultMachinePoolIgnitionStorageType = IgnitionStorageTypeOptionUnencryptedUserData
 )
 
 // SecretBackend defines variants for backend secret storage.
@@ -64,6 +74,8 @@ const (
 )
 
 // AWSMachineSpec defines the desired state of an Amazon EC2 instance.
+// +kubebuilder:validation:XValidation:rule="!has(self.capacityReservationId) || !has(self.marketType) || self.marketType != 'Spot'",message="capacityReservationId may not be set when marketType is Spot"
+// +kubebuilder:validation:XValidation:rule="!has(self.capacityReservationId) || !has(self.spotMarketOptions)",message="capacityReservationId cannot be set when spotMarketOptions is specified"
 type AWSMachineSpec struct {
 	// ProviderID is the unique identifier as specified by the cloud provider.
 	ProviderID *string `json:"providerID,omitempty"`
@@ -221,6 +233,26 @@ type AWSMachineSpec struct {
 	// If marketType is not specified and spotMarketOptions is provided, the marketType defaults to "Spot".
 	// +optional
 	MarketType MarketType `json:"marketType,omitempty"`
+
+	// HostID specifies the Dedicated Host on which the instance must be started.
+	// +optional
+	HostID *string `json:"hostID,omitempty"`
+
+	// HostAffinity specifies the dedicated host affinity setting for the instance.
+	// When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
+	// When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
+	// When HostAffinity is defined, HostID is required.
+	// +optional
+	// +kubebuilder:validation:Enum:=default;host
+	HostAffinity *string `json:"hostAffinity,omitempty"`
+
+	// CapacityReservationPreference specifies the preference for use of Capacity Reservations by the instance. Valid values include:
+	// "Open": The instance may make use of open Capacity Reservations that match its AZ and InstanceType
+	// "None": The instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
+	// "CapacityReservationsOnly": The instance will only run if matched or targeted to a Capacity Reservation
+	// +kubebuilder:validation:Enum="";None;CapacityReservationsOnly;Open
+	// +optional
+	CapacityReservationPreference CapacityReservationPreference `json:"capacityReservationPreference,omitempty"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where
