@@ -10,7 +10,8 @@ function lookup_url() {
     unset IPS
     unset IP
     IPS=$(dig "${2}" +short)
-    if [[ ! -z "${IPS}" ]] ; then
+    V6IPS=$(dig "${2}" AAAA +short)
+    if [[ ! -z "${IPS}" ]] || [[ ! -z "${V6IPS}" ]]; then
         echo "Successfully resolved ${1} ${2}"
         return 0
     else
