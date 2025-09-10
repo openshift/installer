@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/types"
 )
 
 func TestBaseIso_Generate(t *testing.T) {
@@ -22,6 +23,7 @@ func TestBaseIso_Generate(t *testing.T) {
 		name                       string
 		envVarOsImageOverrideValue string
 		expectedBaseIsoFilename    string
+		architecture               string
 	}{
 		{
 			name:                       "os image override",
@@ -31,6 +33,11 @@ func TestBaseIso_Generate(t *testing.T) {
 		{
 			name:                    "default",
 			expectedBaseIsoFilename: ocReleaseImage,
+		},
+		{
+			name:                    "arm64 architecture",
+			expectedBaseIsoFilename: fmt.Sprintf("%s-arm64", ocReleaseImage),
+			architecture:            types.ArchitectureARM64,
 		},
 	}
 	for _, tc := range cases {
@@ -82,11 +89,31 @@ func TestBaseIso_Generate(t *testing.T) {
 									},
 								},
 							},
+							"aarch64": {
+								Artifacts: map[string]stream.PlatformArtifacts{
+									"metal": {
+										Release: ocReleaseImage,
+										Formats: map[string]stream.ImageFormat{
+											"iso": {
+												Disk: &stream.Artifact{
+													Location: fmt.Sprintf("%s/%s-arm64", svr.URL, ocReleaseImage),
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					}, nil
 				},
 			}
-			err = baseIso.Generate(context.TODO(), asset.Parents{})
+			parents := asset.Parents{}
+			parents.Add(&ImageBasedInstallationConfig{
+				Config: ibiConfig().
+					architecture(tc.architecture).
+					build(),
+			})
+			err = baseIso.Generate(context.TODO(), parents)
 
 			assert.NoError(t, err)
 			assert.Regexp(t, tc.expectedBaseIsoFilename, baseIso.File.Filename)

@@ -39,11 +39,16 @@ func (i *BaseIso) Name() string {
 
 // Dependencies returns dependencies used by the asset.
 func (i *BaseIso) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{
+		&ImageBasedInstallationConfig{},
+	}
 }
 
 // Generate generates the base ISO.
 func (i *BaseIso) Generate(_ context.Context, dependencies asset.Parents) error {
+	installationConfig := &ImageBasedInstallationConfig{}
+	dependencies.Get(installationConfig)
+
 	var err error
 	var baseIsoFileName string
 
@@ -54,8 +59,11 @@ func (i *BaseIso) Generate(_ context.Context, dependencies asset.Parents) error 
 		if i.streamGetter == nil {
 			i.streamGetter = defaultCoreOSStreamGetter
 		}
-		// default to the amd64 architecture because the lifecycle-agent CLI is built only for amd64.
-		baseIsoFileName, err = i.downloadBaseIso(arch.RpmArch(types.ArchitectureAMD64))
+		if installationConfig.Config.Architecture != "" {
+			baseIsoFileName, err = i.downloadBaseIso(arch.RpmArch(installationConfig.Config.Architecture))
+		} else {
+			baseIsoFileName, err = i.downloadBaseIso(arch.RpmArch(types.ArchitectureAMD64))
+		}
 	}
 
 	if err == nil {
