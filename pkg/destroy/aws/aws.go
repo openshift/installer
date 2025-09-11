@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -137,7 +138,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		}
 	})
 
-	s3Client := s3.NewFromConfig(cfg, func(options *s3.Options) {
+	// FIXME: remove this code when the s3client is made
+	s3Cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region))
+	s3Client := s3.NewFromConfig(s3Cfg, func(options *s3.Options) {
 		options.Region = region
 		for _, endpoint := range metadata.AWS.ServiceEndpoints {
 			if strings.EqualFold(endpoint.Name, "s3") {
@@ -146,7 +149,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		}
 	})
 
-	efsClient := efs.NewFromConfig(cfg, func(options *efs.Options) {
+	// FIXME: remove this code when the EFS client is made
+	efsCfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region))
+	efsClient := efs.NewFromConfig(efsCfg, func(options *efs.Options) {
 		options.Region = region
 		for _, endpoint := range metadata.AWS.ServiceEndpoints {
 			if strings.EqualFold(endpoint.Name, "efs") {
@@ -155,14 +160,13 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		}
 	})
 
-	route53Client := route53.NewFromConfig(cfg, func(options *route53.Options) {
-		options.Region = region
-		for _, endpoint := range metadata.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "route53") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
-	})
+	route53Client, err := awssession.NewRoute53Client(ctx, awssession.EndpointOptions{
+		Region:    region,
+		Endpoints: metadata.AWS.ServiceEndpoints,
+	}, "") // FIXME: Do we need an ARN here?
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Route53 client: %w", err)
+	}
 
 	return &ClusterUninstaller{
 		Filters:        filters,
@@ -778,7 +782,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 		Id: aws.String(id),
 	})
 	if err != nil {
-		if strings.Contains(handleErrorCode(err), "NoSuchHostedZone") {
+		if strings.Contains(HandleErrorCode(err), "NoSuchHostedZone") {
 			return nil
 		}
 		return err
