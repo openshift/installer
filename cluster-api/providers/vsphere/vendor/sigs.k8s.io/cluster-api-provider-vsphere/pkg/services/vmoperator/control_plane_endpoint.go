@@ -27,6 +27,7 @@ import (
 	"k8s.io/klog/v2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/conditions/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -80,6 +81,12 @@ func (s *CPService) ReconcileControlPlaneEndpointService(ctx context.Context, cl
 		if !apierrors.IsNotFound(err) {
 			err = errors.Wrapf(err, "failed to check if VirtualMachineService exists")
 			conditions.MarkFalse(clusterCtx.VSphereCluster, vmwarev1.LoadBalancerReadyCondition, vmwarev1.LoadBalancerCreationFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
+			v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+				Type:    vmwarev1.VSphereClusterLoadBalancerReadyV1Beta2Condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  vmwarev1.VSphereClusterLoadBalancerNotReadyV1Beta2Reason,
+				Message: err.Error(),
+			})
 			return nil, err
 		}
 
@@ -88,6 +95,12 @@ func (s *CPService) ReconcileControlPlaneEndpointService(ctx context.Context, cl
 		if err != nil {
 			err = errors.Wrapf(err, "failed to get provider VirtualMachineService annotations")
 			conditions.MarkFalse(clusterCtx.VSphereCluster, vmwarev1.LoadBalancerReadyCondition, vmwarev1.LoadBalancerCreationFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
+			v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+				Type:    vmwarev1.VSphereClusterLoadBalancerReadyV1Beta2Condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  vmwarev1.VSphereClusterLoadBalancerNotReadyV1Beta2Reason,
+				Message: err.Error(),
+			})
 			return nil, err
 		}
 
@@ -95,6 +108,12 @@ func (s *CPService) ReconcileControlPlaneEndpointService(ctx context.Context, cl
 		if err != nil {
 			err = errors.Wrapf(err, "failed to create VirtualMachineService")
 			conditions.MarkFalse(clusterCtx.VSphereCluster, vmwarev1.LoadBalancerReadyCondition, vmwarev1.LoadBalancerCreationFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
+			v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+				Type:    vmwarev1.VSphereClusterLoadBalancerReadyV1Beta2Condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  vmwarev1.VSphereClusterLoadBalancerNotReadyV1Beta2Reason,
+				Message: err.Error(),
+			})
 			return nil, err
 		}
 	}
@@ -104,6 +123,12 @@ func (s *CPService) ReconcileControlPlaneEndpointService(ctx context.Context, cl
 	if err != nil {
 		err = errors.Wrapf(err, "VirtualMachineService LB does not yet have VIP assigned")
 		conditions.MarkFalse(clusterCtx.VSphereCluster, vmwarev1.LoadBalancerReadyCondition, vmwarev1.WaitingForLoadBalancerIPReason, clusterv1.ConditionSeverityInfo, err.Error())
+		v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+			Type:    vmwarev1.VSphereClusterLoadBalancerReadyV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  vmwarev1.VSphereClusterLoadBalancerWaitingForIPV1Beta2Reason,
+			Message: err.Error(),
+		})
 		return nil, err
 	}
 
@@ -111,15 +136,32 @@ func (s *CPService) ReconcileControlPlaneEndpointService(ctx context.Context, cl
 	if err != nil {
 		err = errors.Wrapf(err, "VirtualMachineService LB does not have an apiserver endpoint")
 		conditions.MarkFalse(clusterCtx.VSphereCluster, vmwarev1.LoadBalancerReadyCondition, vmwarev1.WaitingForLoadBalancerIPReason, clusterv1.ConditionSeverityWarning, err.Error())
+		v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+			Type:    vmwarev1.VSphereClusterLoadBalancerReadyV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  vmwarev1.VSphereClusterLoadBalancerWaitingForIPV1Beta2Reason,
+			Message: err.Error(),
+		})
 		return nil, err
 	}
 
 	conditions.MarkTrue(clusterCtx.VSphereCluster, vmwarev1.LoadBalancerReadyCondition)
+	v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+		Type:   vmwarev1.VSphereClusterLoadBalancerReadyV1Beta2Condition,
+		Status: metav1.ConditionTrue,
+		Reason: vmwarev1.VSphereClusterLoadBalancerReadyV1Beta2Reason,
+	})
 	return cpEndpoint, nil
 }
 
-func controlPlaneVMServiceName(ctx *vmware.ClusterContext) string {
-	return fmt.Sprintf("%s-control-plane-service", ctx.Cluster.Name)
+func controlPlaneVMServiceName(clusterName string) string {
+	return clusterName
+}
+
+// legacyControlPlaneVMServiceName was used for creating the ControlPlane VirtualMachineService prior to
+// v1.13.0. It resulted in limiting the name of a Cluster to 41 characters (besides other places).
+func legacyControlPlaneVMServiceName(clusterName string) string {
+	return fmt.Sprintf("%s-control-plane-service", clusterName)
 }
 
 // ClusterRoleVMLabels returns labels applied to a VirtualMachine in the cluster. The Control Plane
@@ -143,7 +185,7 @@ func clusterRoleVMLabels(ctx *vmware.ClusterContext, controlPlane bool) map[stri
 func newVirtualMachineService(ctx *vmware.ClusterContext) *vmoprv1.VirtualMachineService {
 	return &vmoprv1.VirtualMachineService{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      controlPlaneVMServiceName(ctx),
+			Name:      controlPlaneVMServiceName(ctx.Cluster.Name),
 			Namespace: ctx.Cluster.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
@@ -211,15 +253,26 @@ func (s *CPService) getVMControlPlaneService(ctx context.Context, clusterCtx *vm
 	vmService := &vmoprv1.VirtualMachineService{}
 	vmServiceKey := client.ObjectKey{
 		Namespace: clusterCtx.Cluster.Namespace,
-		Name:      controlPlaneVMServiceName(clusterCtx),
+		Name:      controlPlaneVMServiceName(clusterCtx.Cluster.Name),
 	}
 	if err := s.Client.Get(ctx, vmServiceKey, vmService); err != nil {
 		if !apierrors.IsNotFound(err) {
 			return nil, fmt.Errorf("failed to get VirtualMachineService %s: %v", vmServiceKey.Name, err)
 		}
 
-		log.Info("VirtualMachineService was not found", "VirtualMachineService", klog.KRef(vmServiceKey.Namespace, vmServiceKey.Name))
-		return nil, err
+		// In case of not finding the ControlPlane VirtualMachineService: fallback to try the legacy name.
+		fallbackVMServiceKey := client.ObjectKey{
+			Namespace: vmServiceKey.Namespace,
+			Name:      legacyControlPlaneVMServiceName(clusterCtx.Cluster.Name),
+		}
+		if fallbackErr := s.Client.Get(ctx, fallbackVMServiceKey, vmService); fallbackErr != nil {
+			if !apierrors.IsNotFound(fallbackErr) {
+				return nil, fmt.Errorf("failed to get VirtualMachineService %s: %v", fallbackVMServiceKey.Name, fallbackErr)
+			}
+
+			log.Info("VirtualMachineService was not found", "VirtualMachineService", klog.KRef(vmServiceKey.Namespace, vmServiceKey.Name))
+			return nil, err
+		}
 	}
 
 	return vmService, nil

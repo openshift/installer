@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha4
 
 import (
+	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
@@ -25,13 +26,36 @@ import (
 // ConvertTo converts this VSphereDeploymentZone to the Hub version (v1beta1).
 func (src *VSphereDeploymentZone) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*infrav1.VSphereDeploymentZone)
-	return Convert_v1alpha4_VSphereDeploymentZone_To_v1beta1_VSphereDeploymentZone(src, dst, nil)
+
+	if err := Convert_v1alpha4_VSphereDeploymentZone_To_v1beta1_VSphereDeploymentZone(src, dst, nil); err != nil {
+		return err
+	}
+
+	// Manually restore data.
+	restored := &infrav1.VSphereDeploymentZone{}
+	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
+		return err
+	}
+
+	dst.Status.V1Beta2 = restored.Status.V1Beta2
+
+	return nil
 }
 
 // ConvertFrom converts from the Hub version (v1beta1) to this VSphereDeploymentZone.
 func (dst *VSphereDeploymentZone) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*infrav1.VSphereDeploymentZone)
-	return Convert_v1beta1_VSphereDeploymentZone_To_v1alpha4_VSphereDeploymentZone(src, dst, nil)
+
+	if err := Convert_v1beta1_VSphereDeploymentZone_To_v1alpha4_VSphereDeploymentZone(src, dst, nil); err != nil {
+		return err
+	}
+
+	// Preserve Hub data on down-conversion except for metadata
+	if err := utilconversion.MarshalData(src, dst); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ConvertTo converts this VSphereDeploymentZoneList to the Hub version (v1beta1).
