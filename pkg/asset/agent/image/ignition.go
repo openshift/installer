@@ -457,6 +457,11 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, agentAuthtoken, userAuthT
 		Host:   net.JoinHostPort(nodeZeroIP, "8888"),
 		Path:   "/",
 	}
+	uiBaseURL := url.URL{
+		Scheme: serviceProtocol,
+		Host:   net.JoinHostPort(nodeZeroIP, "3001"),
+		Path:   "/",
+	}
 	// USER_AUTH_TOKEN is required to authenticate API requests against agent-installer-local auth type
 	// and for the endpoints marked with userAuth security definition in assisted-service swagger.yaml.
 	// PULL_SECRET_TOKEN contains the AGENT_AUTH_TOKEN and is required for the endpoints marked with agentAuth security definition in assisted-service swagger.yaml.
@@ -475,19 +480,9 @@ IMAGE_SERVICE_BASE_URL=%s
 PULL_SECRET_TOKEN=%s
 USER_AUTH_TOKEN=%s
 WORKFLOW_TYPE=%s
-`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), agentAuthtoken, userAuthToken, workflowType)
-
-	if workflowType == workflow.AgentWorkflowTypeInstallInteractiveDisconnected {
-		uiBaseURL := url.URL{
-			Scheme: serviceProtocol,
-			Host:   net.JoinHostPort(nodeZeroIP, "3001"),
-			Path:   "/",
-		}
-		uiEnv := fmt.Sprintf(`AIUI_APP_API_URL=%s
+AIUI_APP_API_URL=%s
 AIUI_URL=%s
-`, serviceBaseURL.String(), uiBaseURL.String())
-		rendezvousHostEnv = fmt.Sprintf("%s%s", rendezvousHostEnv, uiEnv)
-	}
+`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), agentAuthtoken, userAuthToken, workflowType, serviceBaseURL.String(), uiBaseURL.String())
 
 	return rendezvousHostEnv
 }
