@@ -157,7 +157,7 @@ We also use the issue tracker to track features. If you have an idea for a featu
 
 [kops]: https://github.com/kubernetes/kops
 
-[kubicorn]: http://kubicorn.io/
+[kubicorn]: https://github.com/kubicorn/kubicorn
 
 [mailint_list]: https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle
 
