@@ -1,9 +1,10 @@
 [Unit]
 Description=Extract agent-tui at boot
 After=selinux.service start-local-registry.service
-Before=agent-interactive-console.service
 ConditionPathExists=/etc/assisted/rendezvous-host.env
 ConditionPathExists=/etc/assisted/interactive-ui
+ConditionPathExists=!/usr/local/bin/agent-tui
+ConditionPathExists=/run/media/iso/images/assisted-install-ui/assisted-install-ui.tar
 
 [Service]
 Type=oneshot
@@ -13,6 +14,3 @@ Type=oneshot
 ExecStartPre=/bin/bash -c "podman tag $(podman load -q -i /run/media/iso/images/assisted-install-ui/assisted-install-ui.tar | awk '{print $NF}') localhost/agent-installer-ui:latest"
 ExecStart=/usr/local/bin/agent-extract-tui.sh
 TimeoutStartSec=0
-
-[Install]
-WantedBy=getty@tty1.service
