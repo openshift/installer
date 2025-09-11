@@ -114,7 +114,7 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 			response, err := search.client.ListUserTags(ctx, &iamv2.ListUserTagsInput{UserName: aws.String(*user.UserName)})
 			if err != nil {
 				switch {
-				case strings.Contains(handleErrorCode(err), "NoSuchEntity"):
+				case strings.Contains(HandleErrorCode(err), "NoSuchEntity"):
 					// The user does not exist.
 					// Ignore this IAM User and do not report this error via lastError.
 					search.unmatched[*user.Arn] = exists
