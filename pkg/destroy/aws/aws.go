@@ -379,7 +379,7 @@ func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, delete
 		profile := fmt.Sprintf("%s-%s-profile", o.ClusterID, profileType)
 		response, err := o.IAMClient.GetInstanceProfile(ctx, &iamv2.GetInstanceProfileInput{InstanceProfileName: &profile})
 		if err != nil {
-			if strings.Contains(handleErrorCode(err), "NoSuchEntity") {
+			if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
 				continue
 			}
 			return resources, fmt.Errorf("failed to get IAM instance profile: %w", err)
@@ -682,7 +682,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 	if err != nil {
 		// In some cases AWS may return the zone in the list of tagged resources despite the fact
 		// it no longer exists.
-		if strings.Contains(handleErrorCode(err), "NoSuchHostedZone") {
+		if strings.Contains(HandleErrorCode(err), "NoSuchHostedZone") {
 			return nil
 		}
 		return err
@@ -894,7 +894,7 @@ func deleteFileSystem(ctx context.Context, client *efs.Client, fsid string, logg
 
 	_, err = client.DeleteFileSystem(ctx, &efs.DeleteFileSystemInput{FileSystemId: aws.String(fsid)})
 	if err != nil {
-		if strings.Contains(handleErrorCode(err), "FileSystemNotFound") {
+		if strings.Contains(HandleErrorCode(err), "FileSystemNotFound") {
 			return nil
 		}
 		return err
@@ -953,7 +953,7 @@ func deleteAccessPoint(ctx context.Context, client *efs.Client, id string, logge
 	logger = logger.WithField("AccessPoint ID", id)
 	_, err := client.DeleteAccessPoint(ctx, &efs.DeleteAccessPointInput{AccessPointId: aws.String(id)})
 	if err != nil {
-		if strings.Contains(handleErrorCode(err), "AccessPointNotFound") {
+		if strings.Contains(HandleErrorCode(err), "AccessPointNotFound") {
 			return nil
 		}
 		return err
@@ -967,7 +967,7 @@ func deleteMountTarget(ctx context.Context, client *efs.Client, id string, logge
 	logger = logger.WithField("Mount Target ID", id)
 	_, err := client.DeleteMountTarget(ctx, &efs.DeleteMountTargetInput{MountTargetId: aws.String(id)})
 	if err != nil {
-		if strings.Contains(handleErrorCode(err), "MountTargetNotFound") {
+		if strings.Contains(HandleErrorCode(err), "MountTargetNotFound") {
 			return nil
 		}
 		return err
