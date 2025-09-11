@@ -370,6 +370,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 
 func getDefaultEnabledServices() []string {
 	return []string{
+		"agent-extract-tui.service",
 		"agent-interactive-console.service",
 		"agent-interactive-console-serial@.service",
 		"agent-register-cluster.service",
