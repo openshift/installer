@@ -172,7 +172,7 @@ func deleteEC2DHCPOptions(ctx context.Context, client *ec2v2.Client, id string, 
 		DhcpOptionsId: &id,
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidDhcpOptions.NotFound" {
+		if HandleErrorCode(err) == "InvalidDhcpOptions.NotFound" {
 			return nil
 		}
 		return err
@@ -189,7 +189,7 @@ func deleteEC2Image(ctx context.Context, client *ec2v2.Client, id string, logger
 		ImageIds: []string{id},
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidAMI.NotFound" {
+		if HandleErrorCode(err) == "InvalidAMI.NotFound" {
 			return nil
 		}
 		return err
@@ -252,7 +252,7 @@ func deleteEC2ElasticIP(ctx context.Context, client *ec2v2.Client, id string, lo
 		AllocationId: aws.String(id),
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidAllocation.NotFound" {
+		if HandleErrorCode(err) == "InvalidAllocation.NotFound" {
 			return nil
 		}
 		return err
@@ -267,7 +267,7 @@ func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClien
 		InstanceIds: []string{id},
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidInstance.NotFound" {
+		if HandleErrorCode(err) == "InvalidInstance.NotFound" {
 			return nil
 		}
 		return err
@@ -321,7 +321,7 @@ func deleteEC2InternetGateway(ctx context.Context, client *ec2v2.Client, id stri
 			})
 			if err == nil {
 				logger.WithField("vpc", *vpc.VpcId).Debug("Detached")
-			} else if handleErrorCode(err) == "Gateway.NotAttached" {
+			} else if HandleErrorCode(err) == "Gateway.NotAttached" {
 				return nil
 			}
 		}
@@ -343,7 +343,7 @@ func deleteEC2CarrierGateway(ctx context.Context, client *ec2v2.Client, id strin
 		CarrierGatewayId: &id,
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidCarrierGateway.NotFound" {
+		if HandleErrorCode(err) == "InvalidCarrierGateway.NotFound" {
 			return nil
 		}
 		return err
@@ -358,7 +358,7 @@ func deleteEC2NATGateway(ctx context.Context, client *ec2v2.Client, id string, l
 		NatGatewayId: aws.String(id),
 	})
 	if err != nil {
-		if handleErrorCode(err) == "NatGateway.NotFound" {
+		if HandleErrorCode(err) == "NatGateway.NotFound" {
 			return nil
 		}
 		return err
@@ -411,7 +411,7 @@ func deleteEC2PlacementGroup(ctx context.Context, client *ec2v2.Client, id strin
 		GroupIds: []string{id},
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidPlacementGroup.NotFound" {
+		if HandleErrorCode(err) == "InvalidPlacementGroup.NotFound" {
 			return nil
 		}
 		return err
@@ -434,7 +434,7 @@ func deleteEC2RouteTable(ctx context.Context, client *ec2v2.Client, id string, l
 		RouteTableIds: []string{id},
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidRouteTableID.NotFound" {
+		if HandleErrorCode(err) == "InvalidRouteTableID.NotFound" {
 			return nil
 		}
 		return err
@@ -564,7 +564,7 @@ func deleteEC2SecurityGroup(ctx context.Context, client *ec2v2.Client, id string
 		GroupIds: []string{id},
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidGroup.NotFound" {
+		if HandleErrorCode(err) == "InvalidGroup.NotFound" {
 			return nil
 		}
 		return err
@@ -614,7 +614,7 @@ func deleteEC2SecurityGroupObject(ctx context.Context, client *ec2v2.Client, gro
 		GroupId: group.GroupId,
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidGroup.NotFound" {
+		if HandleErrorCode(err) == "InvalidGroup.NotFound" {
 			return nil
 		}
 		return err
@@ -695,7 +695,7 @@ func deleteEC2NetworkInterface(ctx context.Context, client *ec2v2.Client, id str
 		NetworkInterfaceId: aws.String(id),
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidNetworkInterfaceID.NotFound" {
+		if HandleErrorCode(err) == "InvalidNetworkInterfaceID.NotFound" {
 			return nil
 		}
 		return err
@@ -746,7 +746,7 @@ func deleteEC2Subnet(ctx context.Context, client *ec2v2.Client, id string, logge
 		SubnetId: aws.String(id),
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidSubnetID.NotFound" {
+		if HandleErrorCode(err) == "InvalidSubnetID.NotFound" {
 			return nil
 		}
 		return err
@@ -798,7 +798,7 @@ func deleteEC2Volume(ctx context.Context, client *ec2v2.Client, id string, logge
 		VolumeId: aws.String(id),
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidVolume.NotFound" {
+		if HandleErrorCode(err) == "InvalidVolume.NotFound" {
 			return nil
 		}
 		return err
@@ -877,7 +877,7 @@ func deleteEC2VPCEndpointsByVPC(ctx context.Context, client *ec2v2.Client, vpc s
 	for _, endpoint := range response.VpcEndpoints {
 		err := deleteEC2VPCEndpoint(ctx, client, *endpoint.VpcEndpointId, logger.WithField("VPC endpoint", *endpoint.VpcEndpointId))
 		if err != nil {
-			if handleErrorCode(err) == "InvalidVpcID.NotFound" {
+			if HandleErrorCode(err) == "InvalidVpcID.NotFound" {
 				return nil
 			}
 			return err
@@ -892,7 +892,7 @@ func deleteEC2VPCPeeringConnection(ctx context.Context, client *ec2v2.Client, id
 		VpcPeeringConnectionId: &id,
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidVpcPeeringConnection.NotFound" {
+		if HandleErrorCode(err) == "InvalidVpcPeeringConnection.NotFound" {
 			return nil
 		}
 		return errors.Wrapf(err, "cannot delete VPC Peering Connection %s", id)
@@ -939,7 +939,7 @@ func deleteEC2VPCEndpointService(ctx context.Context, client *ec2v2.Client, id s
 		ServiceIds: []string{id},
 	})
 	if err != nil {
-		if handleErrorCode(err) == "InvalidVpcEndpointService.NotFound" {
+		if HandleErrorCode(err) == "InvalidVpcEndpointService.NotFound" {
 			return nil
 		}
 		return errors.Wrapf(err, "cannot delete VPC Endpoint Service %s", id)
