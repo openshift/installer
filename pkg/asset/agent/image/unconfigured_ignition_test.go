@@ -218,6 +218,7 @@ func generatedFilesUnconfiguredIgnition(otherFiles ...string) []string {
 		"/etc/assisted/manifests/pull-secret.yaml",
 		"/etc/assisted/manifests/cluster-image-set.yaml",
 		"/etc/assisted/manifests/infraenv.yaml",
+		"/etc/assisted/rendezvous-host.env.template",
 	}
 	unconfiguredIgnitionFiles = append(unconfiguredIgnitionFiles, otherFiles...)
 	return append(unconfiguredIgnitionFiles, commonFiles()...)
