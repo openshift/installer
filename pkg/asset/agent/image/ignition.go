@@ -448,6 +448,37 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 	}
 }
 
+func getRendezvousHostEnvTemplate(serviceProtocol, agentAuthtoken, userAuthToken string, workflowType workflow.AgentWorkflowType) string {
+	host := "{{.RendezvousIP}}"
+	serviceBaseURL := fmt.Sprintf("%s://%s:8090/", serviceProtocol, host)
+	imageServiceBaseURL := fmt.Sprintf("%s://%s:8888/", serviceProtocol, host)
+	uiBaseURL := fmt.Sprintf("%s://%s:3001/", serviceProtocol, host)
+
+	// USER_AUTH_TOKEN is required to authenticate API requests against agent-installer-local auth type
+	// and for the endpoints marked with userAuth security definition in assisted-service swagger.yaml.
+	// PULL_SECRET_TOKEN contains the AGENT_AUTH_TOKEN and is required for the endpoints marked with agentAuth security definition in assisted-service swagger.yaml.
+	// The name PULL_SECRET_TOKEN is used in
+	// assisted-installer-agent, which is responsible for authenticating API requests related to agents.
+	// Historically, PULL_SECRET_TOKEN was used solely to store the pull secrets.
+	// However, as the authentication mechanisms have evolved, PULL_SECRET_TOKEN now
+	// stores a JWT (JSON Web Token) in the context of local authentication.
+	// Consequently, PULL_SECRET_TOKEN must be set with the value of AGENT_AUTH_TOKEN to maintain compatibility
+	// and ensure successful authentication.
+	// In the absence of PULL_SECRET_TOKEN, the cluster installation will wait forever.
+
+	rendezvousHostEnvTemplate := fmt.Sprintf(`NODE_ZERO_IP={{.RendezvousIP}}
+SERVICE_BASE_URL=%s
+IMAGE_SERVICE_BASE_URL=%s
+PULL_SECRET_TOKEN=%s
+USER_AUTH_TOKEN=%s
+WORKFLOW_TYPE=%s
+AIUI_APP_API_URL=%s
+AIUI_URL=%s
+`, serviceBaseURL, imageServiceBaseURL, agentAuthtoken, userAuthToken, workflowType, serviceBaseURL, uiBaseURL)
+
+	return rendezvousHostEnvTemplate
+}
+
 func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, agentAuthtoken, userAuthToken string, workflowType workflow.AgentWorkflowType) string {
 	serviceBaseURL := url.URL{
 		Scheme: serviceProtocol,
