@@ -126,7 +126,7 @@ func TestIgnition_getRendezvousHostEnv(t *testing.T) {
 	userAuthToken := "userAuthToken"
 	rendezvousHostEnv := getRendezvousHostEnv("http", nodeZeroIP, agentAuthtoken, userAuthToken, workflow.AgentWorkflowTypeInstall)
 	assert.Equal(t,
-		"NODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\nPULL_SECRET_TOKEN="+agentAuthtoken+"\nUSER_AUTH_TOKEN="+userAuthToken+"\nWORKFLOW_TYPE=install\nAIUI_APP_API_URL=http://["+nodeZeroIP+"]:8090/\nAIUI_URL=http://["+nodeZeroIP+"]:3001/\n",
+		"#\nNODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\nPULL_SECRET_TOKEN="+agentAuthtoken+"\nUSER_AUTH_TOKEN="+userAuthToken+"\nWORKFLOW_TYPE=install\nAIUI_APP_API_URL=http://["+nodeZeroIP+"]:8090/\nAIUI_URL=http://["+nodeZeroIP+"]:3001/\n",
 		rendezvousHostEnv)
 }
 
