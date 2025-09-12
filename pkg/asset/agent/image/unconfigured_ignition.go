@@ -185,7 +185,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 			rendezvousIP = agentConfig.Config.RendezvousIP
 		}
 		if rendezvousIP != "" {
-			rendezvousHostData, err := getRendezvousHostEnv("http", rendezvousIP, "", "", agentWorkflow.Workflow)
+			rendezvousHostData, err := getRendezvousHostEnvFromTemplate(rendezvousHostTemplateData, rendezvousIP)
 			if err != nil {
 				return err
 			}
