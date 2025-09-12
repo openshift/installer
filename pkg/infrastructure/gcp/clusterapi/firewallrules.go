@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"google.golang.org/api/compute/v1"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -15,9 +14,13 @@ import (
 )
 
 const (
-	// gcpFirewallPermission is the role/permission to create or skip the creation of
+	// gcpCreateFirewallPermission is the role/permission to create or skip the creation of
 	// firewall rules for GCP during a xpn installation.
-	gcpFirewallPermission = "compute.firewalls.create"
+	gcpCreateFirewallPermission = "compute.firewalls.create"
+
+	// gcpDeleteFirewallPermission is the role/permission to delete or skip the delete of
+	// firewall rules for GCP during a bootstrap firewall rule deletion during a xpn installation.
+	gcpDeleteFirewallPermission = "compute.firewalls.delete"
 )
 
 func getEtcdPorts() []*compute.FirewallAllowed {
@@ -206,25 +209,24 @@ func deleteFirewallRule(ctx context.Context, svc *compute.Service, name, project
 	return nil
 }
 
-func hasFirewallPermission(ctx context.Context, projectID string, endpoints []configv1.GCPServiceEndpoint) (bool, error) {
+func hasFirewallPermission(ctx context.Context, projectID string, permissions []string, endpoints []configv1.GCPServiceEndpoint) (bool, error) {
 	client, err := gcpconfig.NewClient(ctx, endpoints)
 	if err != nil {
 		return false, fmt.Errorf("failed to create client during firewall permission check: %w", err)
 	}
 
-	permissions, err := client.GetProjectPermissions(ctx, projectID, []string{
-		gcpFirewallPermission,
-	})
+	foundPermissions, err := client.GetProjectPermissions(ctx, projectID, permissions)
 	if err != nil {
 		return false, fmt.Errorf("failed to find project permissions during firewall permission check: %w", err)
 	}
 
-	hasPermission := permissions.Has(gcpFirewallPermission)
-	if !hasPermission {
-		logrus.Warnf("failed to find permission %s, skipping firewall rule creation", gcpFirewallPermission)
+	for _, permission := range permissions {
+		if hasPermission := foundPermissions.Has(permission); !hasPermission {
+			return false, fmt.Errorf("failed to find firewall permission %s", permission)
+		}
 	}
 
-	return hasPermission, nil
+	return true, nil
 }
 
 // createFirewallRules creates the rules needed between the worker and master nodes.
@@ -233,7 +235,7 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	if in.InstallConfig.Config.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.GCP.NetworkProjectID
 
-		createFwRules, err := hasFirewallPermission(ctx, projectID, in.InstallConfig.Config.GCP.ServiceEndpoints)
+		createFwRules, err := hasFirewallPermission(ctx, projectID, []string{gcpCreateFirewallPermission}, in.InstallConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return fmt.Errorf("failed to create cluster firewall rules: %w", err)
 		}
@@ -321,7 +323,7 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 	if in.InstallConfig.Config.Platform.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.Platform.GCP.NetworkProjectID
 
-		createFwRules, err := hasFirewallPermission(ctx, projectID, in.InstallConfig.Config.GCP.ServiceEndpoints)
+		createFwRules, err := hasFirewallPermission(ctx, projectID, []string{gcpCreateFirewallPermission}, in.InstallConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap firewall rules: %w", err)
 		}
