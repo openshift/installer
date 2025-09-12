@@ -169,6 +169,16 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	rendezvousHostTemplateFile := ignition.FileFromString(fmt.Sprintf("%s.template", rendezvousHostEnvPath), "root", 0644, rendezvousHostTemplateData)
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostTemplateFile)
 
+	rendezvousIP, err := RetrieveRendezvousIP(agentConfig.Config, nil, nil)
+	if err == nil {
+		rendezvousHostData, err := getRendezvousHostEnvFromTemplate(rendezvousHostTemplateData, rendezvousIP)
+		if err != nil {
+			return err
+		}
+		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostData)
+		config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
+	}
+
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		agentTemplateData.ConfigImageFiles = strings.Join(GetConfigImageFiles(), ",")
@@ -179,17 +189,10 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
 		// Add the rendezvous host file. Agent TUI will interact with that file in case
 		// the rendezvous IP wasn't previously configured, by managing it as a template file.
-		var rendezvousHostData string
-		if rendezvousIP, err := RetrieveRendezvousIP(agentConfig.Config, nil, nil); err == nil {
-			rendezvousHostData, err := getRendezvousHostEnvFromTemplate(rendezvousHostTemplateData, rendezvousIP)
-			if err != nil {
-				return err
-			}
-		} else {
-			rendezvousHostData = rendezvousHostTemplateData
+		if rendezvousIP == "" {
+			rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostTemplateData)
+			config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 		}
-		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostData)
-		config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 		// Explicitly disable the load-config-iso service, not required in the current flow
 		// (even though disabled by default, the udev rule may require it).
