@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/assisted-service/models"
 	fakeclientconfig "github.com/openshift/client-go/config/clientset/versioned/fake"
 	fakeclientmachineconfig "github.com/openshift/client-go/machineconfiguration/clientset/versioned/fake"
+	fakeoperatorconfig "github.com/openshift/client-go/operator/clientset/versioned/fake"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
@@ -169,7 +170,7 @@ storage:
 			objs:     defaultObjects(),
 			fakeClientError: &fakeClientErr{
 				verb:     "list",
-				resource: "imagecontentpolicies",
+				resource: "imagecontentsourcepolicies",
 				err:      errors.NewForbidden(schema.GroupResource{}, "", nil),
 			},
 		},
@@ -266,6 +267,7 @@ passwd:
 			}
 			fakeClient := fake.NewSimpleClientset(objects...)
 			fakeOCClient := fakeclientconfig.NewSimpleClientset(openshiftObjects...)
+			fakeOperatorClient := fakeoperatorconfig.NewSimpleClientset()
 			fakeOCMachineConfigClient := fakeclientmachineconfig.NewSimpleClientset(openshiftMachineConfigObjects...)
 
 			if tc.fakeClientError != nil {
@@ -282,8 +284,20 @@ passwd:
 						}
 						return false, nil, nil
 					})
-				case "imagedigestmirrorsets", "imagecontentpolicies":
+				case "imagedigestmirrorsets":
 					fakeOCClient.PrependReactor(tc.fakeClientError.verb, tc.fakeClientError.resource, func(action faketesting.Action) (handled bool, ret runtime.Object, err error) {
+						listAction, ok := action.(faketesting.ListAction)
+						if ok && listAction.GetResource().Resource == tc.fakeClientError.resource {
+							return true, nil, errors.NewForbidden(
+								schema.GroupResource{Group: "", Resource: tc.fakeClientError.resource},
+								tc.fakeClientError.name,
+								fmt.Errorf("access denied"),
+							)
+						}
+						return false, nil, nil
+					})
+				case "imagecontentsourcepolicies":
+					fakeOperatorClient.Fake.PrependReactor(tc.fakeClientError.verb, tc.fakeClientError.resource, func(action faketesting.Action) (handled bool, ret runtime.Object, err error) {
 						listAction, ok := action.(faketesting.ListAction)
 						if ok && listAction.GetResource().Resource == tc.fakeClientError.resource {
 							return true, nil, errors.NewForbidden(
@@ -300,6 +314,7 @@ passwd:
 			clusterInfo := ClusterInfo{
 				Client:                       fakeClient,
 				OpenshiftClient:              fakeOCClient,
+				OpenshiftOperatorClient:      fakeOperatorClient,
 				OpenshiftMachineConfigClient: fakeOCMachineConfigClient,
 			}
 			err := clusterInfo.Generate(context.Background(), parents)
