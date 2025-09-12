@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/library-go/pkg/crypto"
 )
@@ -280,7 +281,8 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 	newConfig := config
 
 	newConfig.PullSecret = ""
-	if newConfig.Platform.VSphere != nil {
+	switch {
+	case newConfig.Platform.VSphere != nil:
 		p := config.VSphere
 		newVCenters := make([]vsphere.VCenter, len(p.VCenters))
 		for i, v := range p.VCenters {
@@ -308,6 +310,30 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 			FailureDomains:             p.FailureDomains,
 		}
 		newConfig.Platform.VSphere = &newVSpherePlatform
+
+	case newConfig.Platform.Nutanix != nil:
+		p := config.Nutanix
+		newPrismCentral := nutanix.PrismCentral{
+			Endpoint: p.PrismCentral.Endpoint,
+			Username: "",
+			Password: "",
+		}
+		newNutanixPlatform := nutanix.Platform{
+			PrismCentral:           newPrismCentral,
+			PrismElements:          p.PrismElements,
+			ClusterOSImage:         p.ClusterOSImage,
+			PreloadedOSImageName:   p.PreloadedOSImageName,
+			DeprecatedAPIVIP:       p.DeprecatedAPIVIP,
+			APIVIPs:                p.APIVIPs,
+			DeprecatedIngressVIP:   p.DeprecatedIngressVIP,
+			IngressVIPs:            p.IngressVIPs,
+			DefaultMachinePlatform: p.DefaultMachinePlatform,
+			SubnetUUIDs:            p.SubnetUUIDs,
+			LoadBalancer:           p.LoadBalancer,
+			FailureDomains:         p.FailureDomains,
+			PrismAPICallTimeout:    p.PrismAPICallTimeout,
+		}
+		newConfig.Platform.Nutanix = &newNutanixPlatform
 	}
 
 	return yaml.Marshal(newConfig)
