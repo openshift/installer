@@ -178,12 +178,9 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
 		// Add the rendezvous host file. Agent TUI will interact with that file in case
 		// the rendezvous IP wasn't previously configured, by managing it as a template file.
-		var rendezvousIP, rendezvousHostData string
-		if agentConfig.Config != nil {
-			rendezvousIP = agentConfig.Config.RendezvousIP
-		}
-		if rendezvousIP != "" {
-			rendezvousHostData, err := getRendezvousHostEnv("http", rendezvousIP, "", "", agentWorkflow.Workflow)
+		var rendezvousHostData string
+		if rendezvousIP, err := RetrieveRendezvousIP(agentConfig.Config, nil, nil); err == nil {
+			rendezvousHostData, err := getRendezvousHostEnvFromTemplate(rendezvousHostTemplateData, rendezvousIP)
 			if err != nil {
 				return err
 			}
