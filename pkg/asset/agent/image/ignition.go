@@ -1,12 +1,12 @@
 package image
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"net"
-	"net/url"
 	"path"
 	"path/filepath"
 	"strings"
@@ -449,7 +449,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 }
 
 func getRendezvousHostEnvTemplate(serviceProtocol, agentAuthtoken, userAuthToken string, workflowType workflow.AgentWorkflowType) string {
-	host := "{{.RendezvousIP}}"
+	host := "{{ if $isIPv6 }}{{ printf \"[%s]\" .RendezvousIP }}{{ else }}{{ .RendezvousIP }}{{ end }}"
 	serviceBaseURL := fmt.Sprintf("%s://%s:8090/", serviceProtocol, host)
 	imageServiceBaseURL := fmt.Sprintf("%s://%s:8888/", serviceProtocol, host)
 	uiBaseURL := fmt.Sprintf("%s://%s:3001/", serviceProtocol, host)
@@ -466,7 +466,8 @@ func getRendezvousHostEnvTemplate(serviceProtocol, agentAuthtoken, userAuthToken
 	// and ensure successful authentication.
 	// In the absence of PULL_SECRET_TOKEN, the cluster installation will wait forever.
 
-	rendezvousHostEnvTemplate := fmt.Sprintf(`NODE_ZERO_IP={{.RendezvousIP}}
+	rendezvousHostEnvTemplate := fmt.Sprintf(`#{{ $isIPv6 := false }}{{ $host := .RendezvousIP }}{{ range ( len .RendezvousIP ) }}{{if eq ( index ( slice $host . ) 0 ) ':'}}{{ $isIPv6 = true }}{{ end }}{{ end }}
+NODE_ZERO_IP={{.RendezvousIP}}
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
 PULL_SECRET_TOKEN=%s
@@ -479,45 +480,26 @@ AIUI_URL=%s
 	return rendezvousHostEnvTemplate
 }
 
+func getRendezvousHostEnvFromTemplate(hostEnvTemplate, nodeZeroIP string) (string, error) {
+	tmpl, err := template.New("rendezvous-host.env").Parse(hostEnvTemplate)
+	if err != nil {
+		return "", err
+	}
+	buf := &bytes.Buffer{}
+	if err := tmpl.Execute(buf, struct{ RendezvousIP string }{nodeZeroIP}); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
 func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, agentAuthtoken, userAuthToken string, workflowType workflow.AgentWorkflowType) string {
-	serviceBaseURL := url.URL{
-		Scheme: serviceProtocol,
-		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
-		Path:   "/",
+	env, err := getRendezvousHostEnvFromTemplate(
+		getRendezvousHostEnvTemplate(serviceProtocol, agentAuthtoken, userAuthToken, workflowType),
+		nodeZeroIP)
+	if err != nil {
+		panic(err)
 	}
-	imageServiceBaseURL := url.URL{
-		Scheme: serviceProtocol,
-		Host:   net.JoinHostPort(nodeZeroIP, "8888"),
-		Path:   "/",
-	}
-	uiBaseURL := url.URL{
-		Scheme: serviceProtocol,
-		Host:   net.JoinHostPort(nodeZeroIP, "3001"),
-		Path:   "/",
-	}
-	// USER_AUTH_TOKEN is required to authenticate API requests against agent-installer-local auth type
-	// and for the endpoints marked with userAuth security definition in assisted-service swagger.yaml.
-	// PULL_SECRET_TOKEN contains the AGENT_AUTH_TOKEN and is required for the endpoints marked with agentAuth security definition in assisted-service swagger.yaml.
-	// The name PULL_SECRET_TOKEN is used in
-	// assisted-installer-agent, which is responsible for authenticating API requests related to agents.
-	// Historically, PULL_SECRET_TOKEN was used solely to store the pull secrets.
-	// However, as the authentication mechanisms have evolved, PULL_SECRET_TOKEN now
-	// stores a JWT (JSON Web Token) in the context of local authentication.
-	// Consequently, PULL_SECRET_TOKEN must be set with the value of AGENT_AUTH_TOKEN to maintain compatibility
-	// and ensure successful authentication.
-	// In the absence of PULL_SECRET_TOKEN, the cluster installation will wait forever.
-
-	rendezvousHostEnv := fmt.Sprintf(`NODE_ZERO_IP=%s
-SERVICE_BASE_URL=%s
-IMAGE_SERVICE_BASE_URL=%s
-PULL_SECRET_TOKEN=%s
-USER_AUTH_TOKEN=%s
-WORKFLOW_TYPE=%s
-AIUI_APP_API_URL=%s
-AIUI_URL=%s
-`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), agentAuthtoken, userAuthToken, workflowType, serviceBaseURL.String(), uiBaseURL.String())
-
-	return rendezvousHostEnv
+	return env
 }
 
 func getAddNodesEnv(clusterInfo joiner.ClusterInfo, authTokenExpiry string) string {
