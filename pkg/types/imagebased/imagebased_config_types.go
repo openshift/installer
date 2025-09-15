@@ -62,6 +62,11 @@ type InstallationConfig struct {
 	// +optional
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
 
+	// Architecture is the instruction set architecture for the machines
+	// that will be installed. Defaults to amd64.
+	// +optional
+	Architecture string `json:"architecture,omitempty"`
+
 	// ExtraPartitionLabel label of extra partition used for /var/lib/containers.
 	// Default is var-lib-containers
 	// +optional
