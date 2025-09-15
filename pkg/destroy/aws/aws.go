@@ -7,6 +7,7 @@ import (
 	"time"
 
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2v2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -105,10 +106,76 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	}, nil
 }
 
-func (o *ClusterUninstaller) validate() error {
+// validate runs before the uninstall process to ensure that
+// all prerequisites are met for a safe destroy.
+func (o *ClusterUninstaller) validate(ctx context.Context) error {
 	if len(o.Filters) == 0 {
 		return errors.Errorf("you must specify at least one tag filter")
 	}
+
+	return o.ValidateOwnedVPC(ctx)
+}
+
+// ValidateOwnedVPC validates whether the VPC owned by the cluster is safe to destroy. That is the VPC is not currently in used (shared) by other clusters.
+// This scenario is a misconfiguration and should not happen, but in practice it happened: https://issues.redhat.com//browse/OCPBUGS-60071
+// Thus, we adds a preflight check to abort the uninstall process in this case to avoid disruptions to other clusters.
+func (o *ClusterUninstaller) ValidateOwnedVPC(ctx context.Context) error {
+	vpcs := make(map[string]awssession.VPC, 0)
+
+	// Retrieve the VPC(s) to be destroyed during the uninstall process.
+	for _, tags := range o.Filters {
+		vpcFilters := make([]ec2v2types.Filter, 0, len(tags))
+		for tagKey, tagValue := range tags {
+			vpcFilters = append(vpcFilters, ec2v2types.Filter{
+				Name:   aws.String(fmt.Sprintf("tag:%s", tagKey)),
+				Values: []string{tagValue},
+			})
+		}
+		vpcOutput, err := o.EC2Client.DescribeVpcs(ctx,
+			&ec2v2.DescribeVpcsInput{
+				Filters: vpcFilters,
+			})
+		if err != nil {
+			return fmt.Errorf("failed to describe VPC by tags: %w", err)
+		}
+
+		for _, vpc := range vpcOutput.Vpcs {
+			vpcID := aws.StringValue(vpc.VpcId)
+			if vpcID == "" {
+				continue
+			}
+			if _, ok := vpcs[vpcID]; ok {
+				// If the results return the same VPC, skip adding.
+				continue
+			}
+
+			vpcs[vpcID] = awssession.VPC{
+				ID:   vpcID,
+				Tags: awssession.FromAWSTags(vpc.Tags),
+				CIDR: aws.StringValue(vpc.CidrBlock),
+			}
+		}
+	}
+
+	// The cluster is sharing the VPC (i.e. BYO VPC/Subnet use case)
+	// so we can skip the check.
+	if len(vpcs) == 0 {
+		return nil
+	}
+
+	for _, vpc := range vpcs {
+		// The VPC is marked for deletion but has a shared tag.
+		// We abort the uninstall process.
+		if vpc.Tags.HasClusterSharedTag() {
+			sharedClusterIDs := vpc.Tags.GetClusterIDs(awssession.TagValueShared)
+
+			errMsg := fmt.Sprintf("shared tags found from clusters %v on VPC %s, owned by cluster %s. Destroying cluster %s will delete resources depended on by other clusters, resulting in an outage",
+				sharedClusterIDs, vpc.ID, o.ClusterID, o.ClusterID)
+			resolveMsg := fmt.Sprintf("To destroy cluster %s, first destroy clusters %v", o.ClusterID, sharedClusterIDs)
+			return fmt.Errorf("%s. %s", errMsg, resolveMsg)
+		}
+	}
+
 	return nil
 }
 
@@ -121,7 +188,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 // RunWithContext runs the uninstall process with a context.
 // The first return is the list of ARNs for resources that could not be destroyed.
 func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, error) {
-	err := o.validate()
+	err := o.validate(ctx)
 	if err != nil {
 		return nil, err
 	}
