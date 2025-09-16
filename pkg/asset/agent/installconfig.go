@@ -213,17 +213,47 @@ func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.Inst
 
 	return allErrs
 }
+func isValidTNFCluster(installConfig *types.InstallConfig) bool {
+	// Check basic TNF requirements
+	if installConfig.ControlPlane == nil ||
+		installConfig.ControlPlane.Replicas == nil ||
+		*installConfig.ControlPlane.Replicas != 2 ||
+		installConfig.Arbiter != nil ||
+		!installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica) {
+		return false
+	}
+
+	// Check fencing credentials are provided
+	if installConfig.ControlPlane.Fencing == nil ||
+		len(installConfig.ControlPlane.Fencing.Credentials) == 0 {
+		return false
+	}
+
+	// Check platform is supported (baremetal, external, or none)
+	platformName := installConfig.Platform.Name()
+	if platformName != baremetal.Name && platformName != external.Name && platformName != none.Name {
+		return false
+	}
+
+	return true
+}
 
 func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 	var fieldPath *field.Path
 
 	if installConfig.ControlPlane != nil {
-		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 || (installConfig.Arbiter == nil && *installConfig.ControlPlane.Replicas == 2) {
+		if *installConfig.ControlPlane.Replicas < 1 ||
+			*installConfig.ControlPlane.Replicas > 5 ||
+			(installConfig.Arbiter == nil && *installConfig.ControlPlane.Replicas == 2 && !isValidTNFCluster(installConfig)) {
+
 			fieldPath = field.NewPath("controlPlane", "replicas")
 			supportedControlPlaneRange := []string{"3", "1", "4", "5"}
 			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
-				supportedControlPlaneRange = append(supportedControlPlaneRange, "2")
+				supportedControlPlaneRange = append(supportedControlPlaneRange, "2 (with arbiter)")
+			}
+			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica) {
+				supportedControlPlaneRange = append(supportedControlPlaneRange, "2 (with fencing)")
 			}
 			allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Replicas, supportedControlPlaneRange))
 		}
