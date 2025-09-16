@@ -374,7 +374,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 
 			if installConfig.Config.Publish == types.InternalPublishingStrategy &&
 				(len(installConfig.Config.ImageDigestSources) > 0 || len(installConfig.Config.DeprecatedImageContentSources) > 0) {
-				ignChrony, err := machineconfig.ForCustomNTP("worker", powervsdefaults.DefaultNTPServer)
+				ignChrony, err := machineconfig.ForCustomNTP("worker", []string{powervsdefaults.DefaultNTPServer})
 				if err != nil {
 					return errors.Wrap(err, "failed to create ignition for custom NTP for worker machines")
 				}
@@ -628,6 +628,14 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				for _, set := range sets {
 					machineSets = append(machineSets, set)
 				}
+			}
+
+			if len(ic.Platform.BareMetal.AdditionalNTPServers) > 0 {
+				ignChrony, err := machineconfig.ForCustomNTP("worker", ic.Platform.BareMetal.AdditionalNTPServers)
+				if err != nil {
+					return errors.Wrap(err, "failed to create ignition for custom NTP for worker machines")
+				}
+				machineConfigs = append(machineConfigs, ignChrony)
 			}
 		case gcptypes.Name:
 			mpool := defaultGCPMachinePoolPlatform(pool.Architecture)
