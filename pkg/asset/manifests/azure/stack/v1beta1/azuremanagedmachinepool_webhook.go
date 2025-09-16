@@ -32,7 +32,7 @@ import (
 	"k8s.io/utils/ptr"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	webhookutils "sigs.k8s.io/cluster-api-provider-azure/util/webhook"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterctlv1alpha3 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
