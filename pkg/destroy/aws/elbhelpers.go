@@ -65,7 +65,7 @@ func deleteElasticLoadBalancerClassicByVPC(ctx context.Context, client *elbapi.C
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return fmt.Errorf("describing load balacers by vpc %s: %w", vpc, err)
+			return fmt.Errorf("describing load balancers by vpc %s: %w", vpc, err)
 		}
 
 		logger.Debugf("iterating over a page of %d v1 load balancers", len(page.LoadBalancerDescriptions))
