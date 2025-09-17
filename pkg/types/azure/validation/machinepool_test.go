@@ -854,6 +854,335 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path.identity.type: Invalid value: "None": userAssignedIdentities may only be used with type: UserAssigned$`,
 		},
+		// Bug fix tests for OCPBUGS-59743: Azure Stack does not support data disks
+		{
+			name:          "data disks not supported on Azure Stack Cloud",
+			azurePlatform: azure.StackCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 100,
+							Lun:        ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks: Invalid value:.*: the field dataDisks is not supported on AzureStackCloud\.$`,
+		},
+		// Bug fix tests for validateDataDisk: Worker machines cannot use security profiles on data disks
+		{
+			name:          "worker data disk with security profile should fail",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				DiskSetup: []types.Disk{{
+					Type: "user-defined",
+					UserDefined: &types.DiskUserDefined{
+						PlatformDiskID: "data",
+						MountPath:      "/data",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "data",
+							DiskSizeGB: 100,
+							Lun:        ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+								SecurityProfile: &capz.VMDiskSecurityProfile{
+									SecurityEncryptionType: capz.SecurityEncryptionTypeVMGuestStateOnly,
+								},
+							},
+						}},
+					},
+				},
+			},
+			expected: `^\[test-path\.dataDisks\[0\]\.managedDisk\.securityProfile\.SecurityEncryptionType: Invalid value: ".*": security encryption types are not supported on data disks, test-path\.dataDisks\[0\]\.managedDisk\.securityProfile: Invalid value: .*: data disk security profiles are not supported for worker machines \(Machine API limitation\)\. Security profiles for data disks are only supported on control plane machines\.\]$`,
+		},
+		// Bug fix tests for validateDataDisk: Master machines require storageAccountType for managed disks
+		{
+			name:          "master data disk with empty storageAccountType should fail",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 100,
+							Lun:        ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "",
+							},
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.managedDisk\.storageAccountType: Invalid value: "": storageAccount type must not be empty$`,
+		},
+		// Bug fix tests: Master machines without security encryption type on data disks should pass
+		{
+			name:          "master data disk without security profile should pass",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 100,
+							Lun:        ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+							},
+						}},
+					},
+				},
+			},
+		},
+		{
+			name:          "master data disk with security encryption type should fail",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 100,
+							Lun:        ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+								SecurityProfile: &capz.VMDiskSecurityProfile{
+									SecurityEncryptionType: capz.SecurityEncryptionTypeVMGuestStateOnly,
+								},
+							},
+						}},
+						OSDisk: azure.OSDisk{
+							DiskSizeGB: 120,
+							SecurityProfile: &azure.VMDiskSecurityProfile{
+								SecurityEncryptionType: azure.SecurityEncryptionTypesVMGuestStateOnly,
+							},
+						},
+						Settings: &azure.SecuritySettings{
+							SecurityType: azure.SecurityTypesConfidentialVM,
+							ConfidentialVM: &azure.ConfidentialVM{
+								UEFISettings: &azure.UEFISettings{
+									VirtualizedTrustedPlatformModule: pointer.String("Enabled"),
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.managedDisk\.securityProfile\.SecurityEncryptionType: Invalid value: ".*": security encryption types are not supported on data disks$`,
+		},
+		// Bug fix tests for Confidential VM validation with data disk security encryption
+		{
+			name:          "confidential VM with data disk VMGuestStateOnly requires vTPM enabled",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 100,
+							Lun:        ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+								SecurityProfile: &capz.VMDiskSecurityProfile{
+									SecurityEncryptionType: capz.SecurityEncryptionTypeVMGuestStateOnly,
+								},
+							},
+						}},
+						OSDisk: azure.OSDisk{
+							DiskSizeGB: 120,
+							SecurityProfile: &azure.VMDiskSecurityProfile{
+								SecurityEncryptionType: azure.SecurityEncryptionTypesVMGuestStateOnly,
+							},
+						},
+						Settings: &azure.SecuritySettings{
+							SecurityType: azure.SecurityTypesConfidentialVM,
+							ConfidentialVM: &azure.ConfidentialVM{
+								UEFISettings: &azure.UEFISettings{
+									VirtualizedTrustedPlatformModule: pointer.String("Disabled"),
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: `^\[test-path\.defaultMachinePlatform\.settings\.confidentialVM\.uefiSettings\.virtualizedTrustedPlatformModule: Invalid value:.*: virtualizedTrustedPlatformModule should be enabled when securityType is set to ConfidentialVM\., test-path\.dataDisks\[0\]\.managedDisk\.securityProfile\.SecurityEncryptionType: Invalid value: ".*": security encryption types are not supported on data disks\]$`,
+		},
+		{
+			name:          "confidential VM with data disk DiskWithVMGuestState requires secureBoot and vTPM enabled",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 100,
+							Lun:        ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+							},
+						}},
+						OSDisk: azure.OSDisk{
+							DiskSizeGB: 120,
+							SecurityProfile: &azure.VMDiskSecurityProfile{
+								SecurityEncryptionType: azure.SecurityEncryptionTypesDiskWithVMGuestState,
+							},
+						},
+						Settings: &azure.SecuritySettings{
+							SecurityType: azure.SecurityTypesConfidentialVM,
+							ConfidentialVM: &azure.ConfidentialVM{
+								UEFISettings: &azure.UEFISettings{
+									SecureBoot:                       pointer.String("Disabled"),
+									VirtualizedTrustedPlatformModule: pointer.String("Enabled"),
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: `^test-path\.defaultMachinePlatform\.settings\.confidentialVM\.uefiSettings\.secureBoot: Invalid value:.*: secureBoot should be enabled when securityEncryptionType is set to DiskWithVMGuestState\.$`,
+		},
+		{
+			name:          "confidential VM with data disk DiskWithVMGuestState requires encryptionAtHost disabled",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						EncryptionAtHost: true,
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 100,
+							Lun:        ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+							},
+						}},
+						OSDisk: azure.OSDisk{
+							DiskSizeGB: 120,
+							SecurityProfile: &azure.VMDiskSecurityProfile{
+								SecurityEncryptionType: azure.SecurityEncryptionTypesDiskWithVMGuestState,
+							},
+						},
+						Settings: &azure.SecuritySettings{
+							SecurityType: azure.SecurityTypesConfidentialVM,
+							ConfidentialVM: &azure.ConfidentialVM{
+								UEFISettings: &azure.UEFISettings{
+									SecureBoot:                       pointer.String("Enabled"),
+									VirtualizedTrustedPlatformModule: pointer.String("Enabled"),
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: `^test-path\.defaultMachinePlatform\.encryptionAtHost: Invalid value: true: encryptionAtHost cannot be set to true when securityEncryptionType is set to DiskWithVMGuestState\.$`,
+		},
+		{
+			name:          "swap disk setup validation - matches swap PlatformDiskID",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "swap",
+					Swap: &types.DiskSwap{
+						PlatformDiskID: "swap",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "swap",
+							DiskSizeGB: 50,
+							Lun:        ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+							},
+						}},
+					},
+				},
+			},
+		},
+		{
+			name:          "swap disk setup validation - does not match swap PlatformDiskID",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "swap",
+					Swap: &types.DiskSwap{
+						PlatformDiskID: "swap",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "wrongname",
+							DiskSizeGB: 50,
+							Lun:        ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+							},
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.NameSuffix: Invalid value: "wrongname": does not match swap PlatformDiskID "swap"$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
