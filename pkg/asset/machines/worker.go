@@ -397,7 +397,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				case types.Etcd:
 					diskName = diskSetup.Etcd.PlatformDiskID
 				case types.Swap:
-					diskName = diskSetup.Etcd.PlatformDiskID
+					diskName = diskSetup.Swap.PlatformDiskID
 				case types.UserDefined:
 					diskName = diskSetup.UserDefined.PlatformDiskID
 				default:
