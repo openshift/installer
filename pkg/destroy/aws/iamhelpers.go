@@ -63,7 +63,7 @@ func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []s
 					lastError = fmt.Errorf("get tags for %s: %w", *role.Arn, err)
 				}
 			} else {
-				tags := make(map[string]string, len(role.Tags))
+				tags := make(map[string]string, len(response.Tags))
 				for _, tag := range response.Tags {
 					tags[*tag.Key] = *tag.Value
 				}
@@ -111,7 +111,7 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 			}
 
 			// Unfortunately user.Tags is empty from ListUsers, so we need to query each one
-			response, err := search.client.ListUserTags(ctx, &iamv2.ListUserTagsInput{UserName: aws.String(*user.UserName)})
+			response, err := search.client.ListUserTags(ctx, &iamv2.ListUserTagsInput{UserName: user.UserName})
 			if err != nil {
 				switch {
 				case strings.Contains(HandleErrorCode(err), "NoSuchEntity"):
