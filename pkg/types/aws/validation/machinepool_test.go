@@ -129,6 +129,80 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path\.authentication: Invalid value: \"foobarbaz\": must be either Required or Optional$`,
 		},
+		{
+			name: "valid root volume throughput, within allowed range",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(1200)),
+				},
+			},
+		},
+		{
+			name: "valid root volume throughput, nil or unspecified",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type: "gp3",
+					Size: 100,
+				},
+			},
+		},
+		{
+			name: "invalid root volume throughput, below minimum",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(124)),
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 124: throughput must be between 125 MiB/s and 2000 MiB/s$`,
+		},
+		{
+			name: "invalid root volume throughput, above maximum",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(2001)),
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 2001: throughput must be between 125 MiB/s and 2000 MiB/s$`,
+		},
+		{
+			name: "invalid root volume throughput, zero",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(0)),
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 0: throughput must be between 125 MiB/s and 2000 MiB/s$`,
+		},
+		{
+			name: "invalid root volume throughput, negative",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(-100)),
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: -100: throughput must be between 125 MiB/s and 2000 MiB/s$`,
+		},
+		{
+			name: "invalid root volume throughput, unsupported volume type",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp2",
+					Size:       100,
+					Throughput: ptr.To(int32(125)),
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 125: throughput not supported for type gp2$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

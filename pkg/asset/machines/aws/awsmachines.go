@@ -118,6 +118,10 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 		}
 		awsMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
 
+		if throughput := mpool.EC2RootVolume.Throughput; throughput != nil {
+			awsMachine.Spec.RootVolume.Throughput = ptr.To(int64(*throughput))
+		}
+
 		if in.Role == "bootstrap" {
 			awsMachine.Name = capiutils.GenerateBoostrapMachineName(clusterID)
 			awsMachine.Labels["install.openshift.io/bootstrap"] = ""
