@@ -218,7 +218,6 @@ func isValidTNFCluster(installConfig *types.InstallConfig) bool {
 	if installConfig.ControlPlane == nil ||
 		installConfig.ControlPlane.Replicas == nil ||
 		*installConfig.ControlPlane.Replicas != 2 ||
-		installConfig.Arbiter != nil ||
 		!installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica) {
 		return false
 	}
@@ -229,12 +228,7 @@ func isValidTNFCluster(installConfig *types.InstallConfig) bool {
 		return false
 	}
 
-	// Check platform is supported (baremetal, external, or none)
-	platformName := installConfig.Platform.Name()
-	if platformName != baremetal.Name && platformName != external.Name && platformName != none.Name {
-		return false
-	}
-
+	// Platform validation is handled by validateFencingForPlatform() in general validation
 	return true
 }
 
