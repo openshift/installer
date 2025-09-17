@@ -8,7 +8,7 @@ import (
 
 	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
-	"github.com/aws/aws-sdk-go-v2/aws/middleware"
+	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -23,6 +23,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/aws/smithy-go/middleware"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -87,6 +88,9 @@ const (
 	endpointISOBEast1    = "us-isob-east-1"
 	endpointUSGovEast1   = "us-gov-east-1"
 	endpointUSGovWest1   = "us-gov-west-1"
+
+	// OpenShiftInstallerDestroyerUserAgent is the User Agent key to add to the AWS Destroy API request header.
+	OpenShiftInstallerDestroyerUserAgent = "OpenShift/4.x Destroyer"
 )
 
 // New returns an AWS destroyer from ClusterMetadata.
@@ -101,7 +105,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	ec2Client, err := awssession.NewEC2Client(ctx, awssession.EndpointOptions{
 		Region:    region,
 		Endpoints: metadata.AWS.ServiceEndpoints,
-	})
+	}, ec2v2.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create EC2 client: %w", err)
 	}
@@ -109,41 +113,50 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	iamClient, err := awssession.NewIAMClient(ctx, awssession.EndpointOptions{
 		Region:    region,
 		Endpoints: metadata.AWS.ServiceEndpoints,
-	})
+	}, iamv2.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create IAM client: %w", err)
 	}
 
 	// FIXME: remove this code when the elb and elbv2 clients are "fixed" or figured out
-	elbCfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region))
+	elbCfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region),
+		configv2.WithAPIOptions([]func(*middleware.Stack) error{
+			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
+		}))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS config for elb client: %w", err)
 	}
 	elbclient := elb.NewFromConfig(elbCfg, func(options *elb.Options) {
 		options.Region = region
 		for _, endpoint := range metadata.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "elb") {
+			if strings.EqualFold(endpoint.Name, "elb") || strings.EqualFold(endpoint.Name, "elasticloadbalancing") {
 				options.BaseEndpoint = awsv2.String(endpoint.URL)
 			}
 		}
 	})
 
 	// FIXME: remove this code when the elb and elbv2 clients are "fixed" or figured out
-	elbv2Cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region))
+	elbv2Cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region),
+		configv2.WithAPIOptions([]func(*middleware.Stack) error{
+			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
+		}))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS config for elbv2 client: %w", err)
 	}
 	elbv2client := elbv2.NewFromConfig(elbv2Cfg, func(options *elbv2.Options) {
 		options.Region = region
 		for _, endpoint := range metadata.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "elbv2") {
+			if strings.EqualFold(endpoint.Name, "elbv2") || strings.EqualFold(endpoint.Name, "elasticloadbalancingv2") {
 				options.BaseEndpoint = awsv2.String(endpoint.URL)
 			}
 		}
 	})
 
 	// FIXME: remove this code when the s3client is made
-	s3Cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region))
+	s3Cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region),
+		configv2.WithAPIOptions([]func(*middleware.Stack) error{
+			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
+		}))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS config for S3 client: %w", err)
 	}
@@ -157,14 +170,17 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	})
 
 	// FIXME: remove this code when the EFS client is made
-	efsCfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region))
+	efsCfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region),
+		configv2.WithAPIOptions([]func(*middleware.Stack) error{
+			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
+		}))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS config for EFS client: %w", err)
 	}
 	efsClient := efs.NewFromConfig(efsCfg, func(options *efs.Options) {
 		options.Region = region
 		for _, endpoint := range metadata.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "efs") {
+			if strings.EqualFold(endpoint.Name, "elasticfilesystem") {
 				options.BaseEndpoint = awsv2.String(endpoint.URL)
 			}
 		}
@@ -173,7 +189,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	route53Client, err := awssession.NewRoute53Client(ctx, awssession.EndpointOptions{
 		Region:    region,
 		Endpoints: metadata.AWS.ServiceEndpoints,
-	}, "") // FIXME: Do we need an ARN here?
+	}, "", route53.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Route53 client: %w", err)
 	}
@@ -213,7 +229,7 @@ func createResourceTaggingClientWithConfig(cfg awsv2.Config, region string, endp
 	return resourcegroupstaggingapi.NewFromConfig(cfg, func(options *resourcegroupstaggingapi.Options) {
 		options.Region = region
 		for _, endpoint := range endpoints {
-			if strings.EqualFold(endpoint.Name, "resourcegroupstaggingapi") {
+			if strings.EqualFold(endpoint.Name, "tagging") {
 				options.BaseEndpoint = awsv2.String(endpoint.URL)
 			}
 		}
@@ -221,7 +237,10 @@ func createResourceTaggingClientWithConfig(cfg awsv2.Config, region string, endp
 }
 
 func createResourceTaggingClient(region string, endpoints []awstypes.ServiceEndpoint) (*resourcegroupstaggingapi.Client, error) {
-	cfg, err := awssession.GetConfigWithOptions(context.Background(), configv2.WithRegion(region))
+	cfg, err := awssession.GetConfigWithOptions(context.Background(), configv2.WithRegion(region),
+		configv2.WithAPIOptions([]func(*middleware.Stack) error{
+			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
+		}))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS config for resource tagging client: %w", err)
 	}
@@ -250,7 +269,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		stsSvc, err := awssession.NewSTSClient(ctx, awssession.EndpointOptions{
 			Region:    endpointUSEast1,
 			Endpoints: o.endpoints,
-		}, sts.WithAPIOptions(middleware.AddUserAgentKeyValue("OpenShift/4.x Destroyer", version.Raw)))
+		}, sts.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create STS client: %w", err)
 		}
@@ -691,7 +710,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 		for paginator.HasMorePages() {
 			page, err := paginator.NextPage(ctx)
 			if err != nil {
-				return fmt.Errorf("listing record sets for public zone: %w", err)
+				return fmt.Errorf("listing record sets for public zone %s: %w", publicZoneID, err)
 			}
 			for _, recordSet := range page.ResourceRecordSets {
 				key := recordSetKey(recordSet)
@@ -707,7 +726,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return fmt.Errorf("listing record sets: %w", err)
+			return fmt.Errorf("listing record sets for zone %s: %w", id, err)
 		}
 
 		for _, recordSet := range page.ResourceRecordSets {
