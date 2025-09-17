@@ -264,13 +264,79 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				StorageAccountType: machineapi.StorageAccountType(disk.ManagedDisk.StorageAccountType),
 			}
 
+			// todo: OCPBUGS-59521, should fix the panic
 			if disk.ManagedDisk.DiskEncryptionSet != nil {
-				dataDisk.ManagedDisk.DiskEncryptionSet = (*machineapi.DiskEncryptionSetParameters)(disk.ManagedDisk.SecurityProfile.DiskEncryptionSet)
+				diskEncryptionSet = &machineapi.DiskEncryptionSetParameters{
+					ID: disk.ManagedDisk.SecurityProfile.DiskEncryptionSet.ID,
+				}
+				dataDisk.ManagedDisk.DiskEncryptionSet = diskEncryptionSet
 			}
 		}
 
 		dataDisks = append(dataDisks, dataDisk)
 	}
+
+	/* todo: OCPBUGS-59522
+	For master nodes, the spec in cluster api machine manifests looks correct.
+	$ cat 10_inframachine_jimamdisk-789cj-master-0.yaml
+	apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+	......
+	spec:
+	  additionalCapabilities:
+	    ultraSSDEnabled: false
+	  additionalTags:
+	    kubernetes.io_cluster.jimamdisk-789cj: owned
+	  dataDisks:
+	  - cachingType: ReadWrite
+	    diskSizeGB: 256
+	    lun: 1
+	    managedDisk:
+	      securityProfile:
+	        securityEncryptionType: VMGuestStateOnly
+	      storageAccountType: Premium_LRS
+	    nameSuffix: uddisk
+
+	todo: capz broke? unless the manifest is not being set correctly
+
+	But securityProfile on created master machine is null.
+	$ az vm show -n jimamdisk-4bgfj-master-0 -g jimamdisk-4bgfj-rg --query storageProfile.dataDisks[].managedDisk
+	[
+	  {
+	    "diskEncryptionSet": null,
+	    "id": "/subscriptions/53b8f551-f0fc-4bea-8cba-6d1fefd54c8a/resourceGroups/jimamdisk-4bgfj-rg/providers/Microsoft.Compute/disks/jimamdisk-4bgfj-master-0_uddisk",
+	    "resourceGroup": "jimamdisk-4bgfj-rg",
+	    "securityProfile": null,
+	    "storageAccountType": "Premium_LRS"
+	  }
+	]
+
+	todo: mapi is def broke
+
+
+	For worker nodes, after generating manifests, the spec in worker machineset manifests yaml file does not include securityProfile settings.
+	$ cat 99_openshift-cluster-api_worker-machineset-0.yaml
+	apiVersion: machine.openshift.io/v1beta1
+	......
+	spec:
+	......
+	  template:
+	    spec:
+	      providerSpec:
+	        value:
+	          apiVersion: machine.openshift.io/v1beta1
+	          credentialsSecret:
+	            name: azure-cloud-credentials
+	            namespace: openshift-machine-api
+	          dataDisks:
+	          - cachingType: ReadWrite
+	            deletionPolicy: Delete
+	            diskSizeGB: 256
+	            lun: 1
+	            managedDisk:
+	              storageAccountType: Premium_LRS
+	            nameSuffix: vardisk
+
+	*/
 
 	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{

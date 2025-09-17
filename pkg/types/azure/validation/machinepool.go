@@ -125,7 +125,7 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 
 	if pool != nil {
 		if len(p.DataDisks) != 0 && len(pool.DiskSetup) != 0 {
-			allErrs = append(allErrs, validateDataDiskSetup(p, pool, fldPath.Child("dataDisks"))...)
+			allErrs = append(allErrs, validateDataDiskSetup(p, pool, platform.CloudName, fldPath.Child("dataDisks"))...)
 		}
 	}
 
@@ -135,9 +135,16 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 	return allErrs
 }
 
-func validateDataDiskSetup(azurePool *azure.MachinePool, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateDataDiskSetup(azurePool *azure.MachinePool, pool *types.MachinePool, cloudName azure.CloudEnvironment, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
+	// todo: jcallen: Fixes OCPBUGS-59743
+	// todo: More research is needed if azure stack will even support data disks
+	// todo: and that is not the current requirement
+	if cloudName == azure.StackCloud {
+		return append(allErrs, field.Invalid(fldPath, azurePool.DataDisks,
+			fmt.Sprintf("the field dataDisks is not supported on %s.", azure.StackCloud)))
+	}
 	// We could have a situation where the azure DataDisks are
 	// defined but no corresponding disk setup but we should never have
 	// more DiskSetup than DataDisks
@@ -221,6 +228,34 @@ func validateOSImage(p *azure.MachinePool, fldPath *field.Path) field.ErrorList 
 	return allErrs
 }
 
+// todo: jcallen: somewhere in here add check for
+
+// todo: https://github.com/kubernetes-sigs/cluster-api-provider-azure/blob/0ef12e9c9d6af911fe887064662088c1c8da028b/api/v1beta1/types.go#L690-L706
+// todo: When set to VMGuestStateOnly, VirtualizedTrustedPlatformModule should be set to Enabled.
+
+// todo: When set to DiskWithVMGuestState, EncryptionAtHost should be disabled, SecureBoot and
+// todo: VirtualizedTrustedPlatformModule should be set to Enabled.
+// todo: It can be set only for Confidential VMs.
+
+// todo: kinda guessing I would assume it would be hard to mix and match these types
+
+func getDataDisksSecurityProfileType(p *azure.MachinePool) capz.SecurityEncryptionType {
+	for _, dataDisk := range p.DataDisks {
+		if dataDisk.ManagedDisk != nil && dataDisk.ManagedDisk.SecurityProfile != nil {
+			switch dataDisk.ManagedDisk.SecurityProfile.SecurityEncryptionType {
+			case capz.SecurityEncryptionTypeDiskWithVMGuestState:
+				return capz.SecurityEncryptionTypeDiskWithVMGuestState
+			case capz.SecurityEncryptionTypeVMGuestStateOnly:
+				return capz.SecurityEncryptionTypeVMGuestStateOnly
+
+			default:
+				continue
+			}
+		}
+	}
+	return ""
+}
+
 func validateSecurityProfile(p *azure.MachinePool, cloudName azure.CloudEnvironment, fieldPath *field.Path) field.ErrorList {
 	var errs field.ErrorList
 
@@ -238,16 +273,18 @@ func validateSecurityProfile(p *azure.MachinePool, cloudName azure.CloudEnvironm
 			fmt.Sprintf("the securityType field is not supported on %s.", azure.StackCloud)))
 	}
 
+	dataDiskSecurityProfileType := getDataDisksSecurityProfileType(p)
 	switch p.Settings.SecurityType {
 	case azure.SecurityTypesConfidentialVM:
-		if p.OSDisk.SecurityProfile == nil || p.OSDisk.SecurityProfile.SecurityEncryptionType == "" {
+		if p.OSDisk.SecurityProfile == nil || p.OSDisk.SecurityProfile.SecurityEncryptionType == "" || dataDiskSecurityProfileType == "" {
 			securityProfileFieldPath := fieldPath.Child("osDisk").Child("securityProfile")
 			return append(errs, field.Required(securityProfileFieldPath.Child("securityEncryptionType"),
 				fmt.Sprintf("securityEncryptionType should be set when securityType is set to %s.",
 					azure.SecurityTypesConfidentialVM)))
 		}
 
-		if !validSecurityEncryptionTypes[p.OSDisk.SecurityProfile.SecurityEncryptionType] {
+		if !validSecurityEncryptionTypes[p.OSDisk.SecurityProfile.SecurityEncryptionType] ||
+			!validSecurityEncryptionTypes[azure.SecurityEncryptionTypes(dataDiskSecurityProfileType)] {
 			securityProfileFieldPath := fieldPath.Child("osDisk").Child("securityProfile")
 			return append(errs, field.NotSupported(securityProfileFieldPath.Child("securityEncryptionType"),
 				p.OSDisk.SecurityProfile.SecurityEncryptionType, validSecurityEncryptionTypeValues))
@@ -274,7 +311,8 @@ func validateSecurityProfile(p *azure.MachinePool, cloudName azure.CloudEnvironm
 					azure.SecurityTypesConfidentialVM)))
 		}
 
-		if p.OSDisk.SecurityProfile.SecurityEncryptionType == azure.SecurityEncryptionTypesDiskWithVMGuestState {
+		if p.OSDisk.SecurityProfile.SecurityEncryptionType == azure.SecurityEncryptionTypesDiskWithVMGuestState ||
+			dataDiskSecurityProfileType == capz.SecurityEncryptionTypeDiskWithVMGuestState {
 			if p.EncryptionAtHost {
 				return append(errs, field.Invalid(fieldPath.Child("encryptionAtHost"), p.EncryptionAtHost,
 					fmt.Sprintf("encryptionAtHost cannot be set to true when securityEncryptionType is set to %s.",
