@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
@@ -98,6 +100,8 @@ func (a *CVOIgnore) Generate(_ context.Context, dependencies asset.Parents) erro
 	if !ok && originalOverridesAsInterface != nil {
 		return errors.Errorf("unexpected type (%T) for .spec.overrides in clusterversion", originalOverridesAsInterface)
 	}
+	originalOverrides = append(originalOverrides, getClusterVersionOperatorOverrides()...)
+
 	originalOverridesPatch := map[string]interface{}{
 		"spec": map[string]interface{}{
 			"overrides": originalOverrides,
@@ -134,4 +138,25 @@ func (a *CVOIgnore) Files() []*asset.File {
 // Load does nothing as the file should not be loaded from disk.
 func (a *CVOIgnore) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
+}
+
+// getClusterVersionOperatorOverrides returns Cluster Version Operator (CVO) overrides if any.
+// The CVO overrides allow disabling CVO management of specified resources.
+func getClusterVersionOperatorOverrides() []interface{} {
+	var overrides []interface{}
+
+	// OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY, if set non-empty, will instruct the installer
+	// to include an entry for the cluster-scoped "openshift" ClusterImagePolicy in the CVO overrides.
+	// This enables internal testing to opt out of the sigstore signing requirement for release images.
+	if disableImagePolicy, ok := os.LookupEnv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY"); ok && disableImagePolicy != "" {
+		logrus.Warn("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY is set, opting out of the sigstore signing requirement for release images")
+		overrides = append(overrides, configv1.ComponentOverride{
+			Group:     configv1.GroupVersion.Group,
+			Kind:      "ClusterImagePolicy",
+			Name:      "openshift",
+			Unmanaged: true,
+		})
+	}
+
+	return overrides
 }
