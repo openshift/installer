@@ -240,7 +240,6 @@ func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig 
 		if *installConfig.ControlPlane.Replicas < 1 ||
 			*installConfig.ControlPlane.Replicas > 5 ||
 			(installConfig.Arbiter == nil && *installConfig.ControlPlane.Replicas == 2 && !isValidTNFCluster(installConfig)) {
-
 			fieldPath = field.NewPath("controlPlane", "replicas")
 			supportedControlPlaneRange := []string{"3", "1", "4", "5"}
 			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
