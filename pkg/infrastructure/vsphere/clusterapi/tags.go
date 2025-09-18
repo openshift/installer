@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25/types"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
@@ -20,7 +21,8 @@ func attachTag(ctx context.Context, session *session.Session, vmMoRefValue, tagI
 	err := tagManager.AttachTag(ctx, tagID, moRef)
 
 	if err != nil {
-		return fmt.Errorf("unable to attach tag: %w", err)
+		logrus.Errorf("unable to attach tag: %v", err)
+		return nil
 	}
 	return nil
 }
@@ -29,7 +31,8 @@ func createClusterTagID(ctx context.Context, session *session.Session, clusterID
 	tagManager := session.TagManager
 	categories, err := tagManager.GetCategories(ctx)
 	if err != nil {
-		return "", fmt.Errorf("unable to get tag categories: %w", err)
+		logrus.Errorf("unable to get tag categories: %v", err)
+		return "", nil
 	}
 
 	var clusterTagCategory *tags.Category
@@ -59,7 +62,8 @@ func createClusterTagID(ctx context.Context, session *session.Session, clusterID
 		}
 		tagCategoryID, err = tagManager.CreateCategory(ctx, clusterTagCategory)
 		if err != nil {
-			return "", fmt.Errorf("unable to create tag category: %w", err)
+			logrus.Errorf("unable to create tag category: %v", err)
+			return "", nil
 		}
 	}
 
@@ -68,7 +72,8 @@ func createClusterTagID(ctx context.Context, session *session.Session, clusterID
 
 	categoryTags, err := tagManager.GetTagsForCategory(ctx, tagCategoryID)
 	if err != nil {
-		return "", fmt.Errorf("unable to get tags for category: %w", err)
+		logrus.Errorf("unable to get tags for category: %v", err)
+		return "", nil
 	}
 	for i, tag := range categoryTags {
 		if tag.Name == clusterID {
@@ -86,7 +91,8 @@ func createClusterTagID(ctx context.Context, session *session.Session, clusterID
 		}
 		tagID, err = tagManager.CreateTag(ctx, categoryTag)
 		if err != nil {
-			return "", fmt.Errorf("unable to create tag: %w", err)
+			logrus.Errorf("unable to create tag: %v", err)
+			return "", nil
 		}
 	}
 
