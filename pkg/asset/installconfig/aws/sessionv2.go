@@ -47,12 +47,20 @@ type ConfigOptions []func(*config.LoadOptions) error
 
 // getDefaultConfigOptions returns the default settings for config.LoadOptions.
 func getDefaultConfigOptions() ConfigOptions {
-	return ConfigOptions{
+	opts := ConfigOptions{
 		config.WithRetryMaxAttempts(RetryMaxAttempts),
 		config.WithAPIOptions([]func(*middleware.Stack) error{
 			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerUserAgent, version.Raw),
 		}),
 	}
+
+	// Enable logging the HTTP request sent to the AWS service
+	// including headers and body (if applicable).
+	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_AWS_ENABLE_SDK_LOG"); ok {
+		opts = append(opts, config.WithClientLogMode(aws.LogRequest))
+	}
+
+	return opts
 }
 
 // GetConfig returns an AWS config by checking credentials

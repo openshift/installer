@@ -70,7 +70,7 @@ type ServiceEndpointResolver struct {
 	endpoints       map[string]typesaws.ServiceEndpoint
 	endpointOptions EndpointOptions
 
-	logger logrus.FieldLogger
+	logger *logrus.Logger
 }
 
 // NewServiceEndpointResolver returns a new ServiceEndpointResolver.
@@ -99,11 +99,9 @@ func (s *EC2EndpointResolver) ResolveEndpoint(ctx context.Context, params ec2.En
 	// If custom endpoint not found, return default endpoint for the service.
 	endpoint, ok := s.endpoints[ec2.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom EC2 endpoint not found, using default endpoint")
 		return ec2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom EC2 endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return ec2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -122,11 +120,9 @@ func (s *IAMEndpointResolver) ResolveEndpoint(ctx context.Context, params iam.En
 	// If custom endpoint not found, return default endpoint for the service.
 	endpoint, ok := s.endpoints[iam.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom IAM endpoint not found, using default endpoint")
 		return iam.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom IAM endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return iam.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -145,11 +141,9 @@ func (s *STSEndpointResolver) ResolveEndpoint(ctx context.Context, params sts.En
 	// If custom endpoint not found, return default endpoint for the service
 	endpoint, ok := s.endpoints[sts.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom STS endpoint not found, using default endpoint")
 		return sts.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom STS endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return sts.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -168,11 +162,9 @@ func (s *Route53EndpointResolver) ResolveEndpoint(ctx context.Context, params ro
 	// If custom endpoint not found, return default endpoint for the service.
 	endpoint, ok := s.endpoints[route53.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom Route53 endpoint not found, using default endpoint")
 		return route53.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom Route53 endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return route53.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -191,11 +183,9 @@ func (s *ServiceQuotasEndpointResolver) ResolveEndpoint(ctx context.Context, par
 	// If custom endpoint not found, return default endpoint for the service.
 	endpoint, ok := s.endpoints[servicequotas.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom Service Quotas endpoint not found, using default endpoint")
 		return servicequotas.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom Service Quotas endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return servicequotas.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -214,11 +204,9 @@ func (s *S3EndpointResolver) ResolveEndpoint(ctx context.Context, params s3.Endp
 	// If custom endpoint not found, return default endpoint for the service.
 	endpoint, ok := s.endpoints[s3.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom S3 endpoint not found, using default endpoint")
 		return s3.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom S3 endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return s3.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -241,17 +229,14 @@ func (s *ELBV2EndpointResolver) ResolveEndpoint(ctx context.Context, params elbv
 		endpoint, ok = s.endpoints[elb.ServiceID]
 		// If custom endpoint not found, return default endpoint for the service.
 		if !ok {
-			s.logger.Debug("Custom ELBV2 endpoint not found, using default endpoint")
 			return elbv2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 		}
 
-		s.logger.Debugf("Using ELB endpoint for ELBV2: %s", endpoint.URL)
 		params.Endpoint = aws.String(endpoint.URL)
 		params.Region = aws.String(s.endpointOptions.Region)
 		return elbv2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom ELBV2 endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return elbv2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -270,11 +255,9 @@ func (s *TaggingEndpointResolver) ResolveEndpoint(ctx context.Context, params re
 	// If custom endpoint not found, return default endpoint for the service.
 	endpoint, ok := s.endpoints[resourcegroupstaggingapi.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom Resource Groups Tagging API endpoint not found, using default endpoint")
 		return resourcegroupstaggingapi.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom Resource Groups Tagging API endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return resourcegroupstaggingapi.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
