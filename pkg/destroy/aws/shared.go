@@ -125,7 +125,7 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, tagClients []*
 				}
 				result, err := tagClient.UntagResources(ctx, request)
 				if err != nil {
-					if strings.Contains(HandleErrorCode(err), "InvalidParameter") {
+					if strings.Contains(awssession.GetAWSErrorCode(err), awssession.InvalidParameter) {
 						nextTagClients = nextTagClients[:len(nextTagClients)-1]
 					}
 					err = errors.Wrap(err, "untag shared resources")
@@ -211,10 +211,10 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, id strin
 	// The private hosted zone (phz) may belong to a different account,
 	// in which case we need a separate client.
 	// Note: the ClusterUninstaller has a basic Route53 client used for public zone resources.
-	privateZoneClient, err := awssession.NewRoute53Client(ctx, awssession.EndpointOptions{
-		Region:    o.Region,
-		Endpoints: o.endpoints,
-	}, o.HostedZoneRole, route53.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw)))
+	privateZoneClient, err := awssession.NewRoute53Client(ctx,
+		awssession.EndpointOptions{Region: o.Region, Endpoints: o.endpoints}, o.HostedZoneRole,
+		route53.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create Route53 private zone client: %w", err)
 	}
