@@ -12,7 +12,7 @@ container_id=$(podman create "$AGENT_INSTALLER_UTILS_IMAGE")
 mnt=$(podman mount "$container_id")
 
 cp "${mnt}/usr/bin/agent-tui" /usr/local/bin
-cp "${mnt}/usr/lib64/libnmstate.so.*" /usr/local/lib
+find "${mnt}/usr/lib64" -name "libnmstate*" -exec cp -a -t /usr/local/lib {} +
 
 podman unmount "$container_id"
 podman rm "$container_id"
