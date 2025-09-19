@@ -731,7 +731,7 @@ func validateSharedVPC(ctx context.Context, meta *Metadata, fldPath *field.Path)
 	}
 
 	if vpc.Tags.HasClusterOwnedTag() {
-		clusterIDs := vpc.Tags.GetOwnedClusterIDs()
+		clusterIDs := vpc.Tags.GetClusterIDs(TagValueOwned)
 		allErrs = append(allErrs, field.Forbidden(fldPath,
 			fmt.Sprintf("VPC of subnets is owned by other clusters %v and cannot be used for new installations, another VPC must be created separately", clusterIDs)))
 	}
@@ -751,7 +751,7 @@ func validateSharedSubnets(ctx context.Context, meta *Metadata, fldPath *field.P
 
 	for id, subnet := range mergeSubnets(subnets.Private, subnets.Public, subnets.Edge) {
 		if subnet.Tags.HasClusterOwnedTag() {
-			clusterIDs := subnet.Tags.GetOwnedClusterIDs()
+			clusterIDs := subnet.Tags.GetClusterIDs(TagValueOwned)
 			allErrs = append(allErrs, field.Forbidden(fldPath, fmt.Sprintf("subnet %s is owned by other clusters %v and cannot be used for new installations, another subnet must be created separately", id, clusterIDs)))
 		}
 	}
