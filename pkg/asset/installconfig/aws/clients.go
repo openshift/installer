@@ -7,6 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/efs"
+	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
 	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
@@ -144,6 +146,25 @@ func NewS3Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...fu
 	return s3.NewFromConfig(cfg, s3Opts...), nil
 }
 
+// NewELBClient creates a new ELB (classic) client.
+func NewELBClient(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*elb.Options)) (*elb.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	elbOpts := []func(*elb.Options){
+		func(o *elb.Options) {
+			o.EndpointResolverV2 = &ELBEndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	elbOpts = append(elbOpts, optFns...)
+
+	return elb.NewFromConfig(cfg, elbOpts...), nil
+}
+
 // NewELBV2Client creates a new ELBV2 client.
 func NewELBV2Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*elbv2.Options)) (*elbv2.Client, error) {
 	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
@@ -190,4 +211,23 @@ func NewTaggingClient(ctx context.Context, endpointOpts EndpointOptions, roleArn
 	rgtapiOpts = append(rgtapiOpts, optFns...)
 
 	return resourcegroupstaggingapi.NewFromConfig(cfg, rgtapiOpts...), nil
+}
+
+// NewEFSClient creates a new EFS client.
+func NewEFSClient(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*efs.Options)) (*efs.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	efsOpts := []func(*efs.Options){
+		func(o *efs.Options) {
+			o.EndpointResolverV2 = &EFSEndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	efsOpts = append(efsOpts, optFns...)
+
+	return efs.NewFromConfig(cfg, efsOpts...), nil
 }
