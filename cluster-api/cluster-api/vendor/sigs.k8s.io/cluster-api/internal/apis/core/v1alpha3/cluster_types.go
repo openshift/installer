@@ -42,7 +42,7 @@ type ClusterSpec struct {
 	// +optional
 	Paused bool `json:"paused,omitempty"`
 
-	// Cluster network configuration.
+	// clusterNetwork is the cluster network configuration.
 	// +optional
 	ClusterNetwork *ClusterNetwork `json:"clusterNetwork,omitempty"`
 
@@ -73,15 +73,15 @@ type ClusterNetwork struct {
 	// +optional
 	APIServerPort *int32 `json:"apiServerPort,omitempty"`
 
-	// The network ranges from which service VIPs are allocated.
+	// services is the network ranges from which service VIPs are allocated.
 	// +optional
 	Services *NetworkRanges `json:"services,omitempty"`
 
-	// The network ranges from which Pod networks are allocated.
+	// pods is the network ranges from which Pod networks are allocated.
 	// +optional
 	Pods *NetworkRanges `json:"pods,omitempty"`
 
-	// Domain name for services.
+	// serviceDomain is the domain name for services.
 	// +optional
 	ServiceDomain string `json:"serviceDomain,omitempty"`
 }
@@ -92,6 +92,7 @@ type ClusterNetwork struct {
 
 // NetworkRanges represents ranges of network addresses.
 type NetworkRanges struct {
+	// cidrBlocks is a list of CIDR blocks.
 	CIDRBlocks []string `json:"cidrBlocks"`
 }
 
@@ -175,10 +176,10 @@ func (c *ClusterStatus) GetTypedPhase() ClusterPhase {
 
 // APIEndpoint represents a reachable Kubernetes API endpoint.
 type APIEndpoint struct {
-	// The hostname on which the API server is serving.
+	// host is the hostname on which the API server is serving.
 	Host string `json:"host"`
 
-	// The port on which the API server is serving.
+	// port is the port on which the API server is serving.
 	Port int32 `json:"port"`
 }
 
@@ -208,10 +209,14 @@ func (v APIEndpoint) String() string {
 
 // Cluster is the Schema for the clusters API.
 type Cluster struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterSpec   `json:"spec,omitempty"`
+	// spec is the desired state of Cluster.
+	Spec ClusterSpec `json:"spec,omitempty"`
+	// status is the observed state of Cluster.
 	Status ClusterStatus `json:"status,omitempty"`
 }
 
@@ -230,8 +235,11 @@ func (c *Cluster) SetConditions(conditions Conditions) {
 // ClusterList contains a list of Cluster.
 type ClusterList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Cluster `json:"items"`
+	// items is the list of Clusters.
+	Items []Cluster `json:"items"`
 }
 
 func init() {

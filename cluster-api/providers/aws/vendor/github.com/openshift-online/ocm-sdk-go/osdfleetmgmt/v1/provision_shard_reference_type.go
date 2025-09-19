@@ -106,6 +106,29 @@ func (l *ProvisionShardReferenceList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ProvisionShardReferenceList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ProvisionShardReferenceList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ProvisionShardReferenceList) SetItems(items []*ProvisionShardReference) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ProvisionShardReferenceList) Items() []*ProvisionShardReference {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ProvisionShardReferenceList) Empty() bool {
 	return l == nil || len(l.items) == 0

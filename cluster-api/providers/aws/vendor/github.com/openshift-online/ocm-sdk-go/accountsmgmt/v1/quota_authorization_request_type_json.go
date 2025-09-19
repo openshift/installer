@@ -29,7 +29,7 @@ import (
 // MarshalQuotaAuthorizationRequest writes a value of the 'quota_authorization_request' type to the given writer.
 func MarshalQuotaAuthorizationRequest(object *QuotaAuthorizationRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeQuotaAuthorizationRequest(object, stream)
+	WriteQuotaAuthorizationRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalQuotaAuthorizationRequest(object *QuotaAuthorizationRequest, writer 
 	return stream.Error
 }
 
-// writeQuotaAuthorizationRequest writes a value of the 'quota_authorization_request' type to the given stream.
-func writeQuotaAuthorizationRequest(object *QuotaAuthorizationRequest, stream *jsoniter.Stream) {
+// WriteQuotaAuthorizationRequest writes a value of the 'quota_authorization_request' type to the given stream.
+func WriteQuotaAuthorizationRequest(object *QuotaAuthorizationRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -111,7 +111,7 @@ func writeQuotaAuthorizationRequest(object *QuotaAuthorizationRequest, stream *j
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("resources")
-		writeReservedResourceList(object.resources, stream)
+		WriteReservedResourceList(object.resources, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -123,13 +123,13 @@ func UnmarshalQuotaAuthorizationRequest(source interface{}) (object *QuotaAuthor
 	if err != nil {
 		return
 	}
-	object = readQuotaAuthorizationRequest(iterator)
+	object = ReadQuotaAuthorizationRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readQuotaAuthorizationRequest reads a value of the 'quota_authorization_request' type from the given iterator.
-func readQuotaAuthorizationRequest(iterator *jsoniter.Iterator) *QuotaAuthorizationRequest {
+// ReadQuotaAuthorizationRequest reads a value of the 'quota_authorization_request' type from the given iterator.
+func ReadQuotaAuthorizationRequest(iterator *jsoniter.Iterator) *QuotaAuthorizationRequest {
 	object := &QuotaAuthorizationRequest{}
 	for {
 		field := iterator.ReadObject()
@@ -166,7 +166,7 @@ func readQuotaAuthorizationRequest(iterator *jsoniter.Iterator) *QuotaAuthorizat
 			object.reserve = value
 			object.bitmap_ |= 64
 		case "resources":
-			value := readReservedResourceList(iterator)
+			value := ReadReservedResourceList(iterator)
 			object.resources = value
 			object.bitmap_ |= 128
 		default:

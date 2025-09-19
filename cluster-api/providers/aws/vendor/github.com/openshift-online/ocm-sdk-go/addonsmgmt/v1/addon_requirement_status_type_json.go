@@ -29,7 +29,7 @@ import (
 // MarshalAddonRequirementStatus writes a value of the 'addon_requirement_status' type to the given writer.
 func MarshalAddonRequirementStatus(object *AddonRequirementStatus, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonRequirementStatus(object, stream)
+	WriteAddonRequirementStatus(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddonRequirementStatus(object *AddonRequirementStatus, writer io.Wri
 	return stream.Error
 }
 
-// writeAddonRequirementStatus writes a value of the 'addon_requirement_status' type to the given stream.
-func writeAddonRequirementStatus(object *AddonRequirementStatus, stream *jsoniter.Stream) {
+// WriteAddonRequirementStatus writes a value of the 'addon_requirement_status' type to the given stream.
+func WriteAddonRequirementStatus(object *AddonRequirementStatus, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeAddonRequirementStatus(object *AddonRequirementStatus, stream *jsonite
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("error_msgs")
-		writeStringList(object.errorMsgs, stream)
+		WriteStringList(object.errorMsgs, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -69,13 +69,13 @@ func UnmarshalAddonRequirementStatus(source interface{}) (object *AddonRequireme
 	if err != nil {
 		return
 	}
-	object = readAddonRequirementStatus(iterator)
+	object = ReadAddonRequirementStatus(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonRequirementStatus reads a value of the 'addon_requirement_status' type from the given iterator.
-func readAddonRequirementStatus(iterator *jsoniter.Iterator) *AddonRequirementStatus {
+// ReadAddonRequirementStatus reads a value of the 'addon_requirement_status' type from the given iterator.
+func ReadAddonRequirementStatus(iterator *jsoniter.Iterator) *AddonRequirementStatus {
 	object := &AddonRequirementStatus{}
 	for {
 		field := iterator.ReadObject()
@@ -84,7 +84,7 @@ func readAddonRequirementStatus(iterator *jsoniter.Iterator) *AddonRequirementSt
 		}
 		switch field {
 		case "error_msgs":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.errorMsgs = value
 			object.bitmap_ |= 1
 		case "fulfilled":

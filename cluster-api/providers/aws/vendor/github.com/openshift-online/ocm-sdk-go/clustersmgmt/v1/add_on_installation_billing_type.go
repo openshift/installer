@@ -53,7 +53,7 @@ func (o *AddOnInstallationBilling) Kind() string {
 	return AddOnInstallationBillingKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *AddOnInstallationBilling) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -204,6 +204,29 @@ func (l *AddOnInstallationBillingList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *AddOnInstallationBillingList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddOnInstallationBillingList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddOnInstallationBillingList) SetItems(items []*AddOnInstallationBilling) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddOnInstallationBillingList) Items() []*AddOnInstallationBilling {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

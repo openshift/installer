@@ -36,12 +36,14 @@ type AWSBuilder struct {
 	billingAccountID                       string
 	ec2MetadataHttpTokens                  Ec2MetadataHttpTokens
 	etcdEncryption                         *AwsEtcdEncryptionBuilder
+	hcpInternalCommunicationHostedZoneId   string
 	privateHostedZoneID                    string
 	privateHostedZoneRoleARN               string
 	privateLinkConfiguration               *PrivateLinkClusterConfigurationBuilder
 	secretAccessKey                        string
 	subnetIDs                              []string
 	tags                                   map[string]string
+	vpcEndpointRoleArn                     string
 	privateLink                            bool
 }
 
@@ -163,24 +165,31 @@ func (b *AWSBuilder) EtcdEncryption(value *AwsEtcdEncryptionBuilder) *AWSBuilder
 	return b
 }
 
+// HcpInternalCommunicationHostedZoneId sets the value of the 'hcp_internal_communication_hosted_zone_id' attribute to the given value.
+func (b *AWSBuilder) HcpInternalCommunicationHostedZoneId(value string) *AWSBuilder {
+	b.hcpInternalCommunicationHostedZoneId = value
+	b.bitmap_ |= 4096
+	return b
+}
+
 // PrivateHostedZoneID sets the value of the 'private_hosted_zone_ID' attribute to the given value.
 func (b *AWSBuilder) PrivateHostedZoneID(value string) *AWSBuilder {
 	b.privateHostedZoneID = value
-	b.bitmap_ |= 4096
+	b.bitmap_ |= 8192
 	return b
 }
 
 // PrivateHostedZoneRoleARN sets the value of the 'private_hosted_zone_role_ARN' attribute to the given value.
 func (b *AWSBuilder) PrivateHostedZoneRoleARN(value string) *AWSBuilder {
 	b.privateHostedZoneRoleARN = value
-	b.bitmap_ |= 8192
+	b.bitmap_ |= 16384
 	return b
 }
 
 // PrivateLink sets the value of the 'private_link' attribute to the given value.
 func (b *AWSBuilder) PrivateLink(value bool) *AWSBuilder {
 	b.privateLink = value
-	b.bitmap_ |= 16384
+	b.bitmap_ |= 32768
 	return b
 }
 
@@ -190,9 +199,9 @@ func (b *AWSBuilder) PrivateLink(value bool) *AWSBuilder {
 func (b *AWSBuilder) PrivateLinkConfiguration(value *PrivateLinkClusterConfigurationBuilder) *AWSBuilder {
 	b.privateLinkConfiguration = value
 	if value != nil {
-		b.bitmap_ |= 32768
+		b.bitmap_ |= 65536
 	} else {
-		b.bitmap_ &^= 32768
+		b.bitmap_ &^= 65536
 	}
 	return b
 }
@@ -200,7 +209,7 @@ func (b *AWSBuilder) PrivateLinkConfiguration(value *PrivateLinkClusterConfigura
 // SecretAccessKey sets the value of the 'secret_access_key' attribute to the given value.
 func (b *AWSBuilder) SecretAccessKey(value string) *AWSBuilder {
 	b.secretAccessKey = value
-	b.bitmap_ |= 65536
+	b.bitmap_ |= 131072
 	return b
 }
 
@@ -208,7 +217,7 @@ func (b *AWSBuilder) SecretAccessKey(value string) *AWSBuilder {
 func (b *AWSBuilder) SubnetIDs(values ...string) *AWSBuilder {
 	b.subnetIDs = make([]string, len(values))
 	copy(b.subnetIDs, values)
-	b.bitmap_ |= 131072
+	b.bitmap_ |= 262144
 	return b
 }
 
@@ -216,10 +225,17 @@ func (b *AWSBuilder) SubnetIDs(values ...string) *AWSBuilder {
 func (b *AWSBuilder) Tags(value map[string]string) *AWSBuilder {
 	b.tags = value
 	if value != nil {
-		b.bitmap_ |= 262144
+		b.bitmap_ |= 524288
 	} else {
-		b.bitmap_ &^= 262144
+		b.bitmap_ &^= 524288
 	}
+	return b
+}
+
+// VpcEndpointRoleArn sets the value of the 'vpc_endpoint_role_arn' attribute to the given value.
+func (b *AWSBuilder) VpcEndpointRoleArn(value string) *AWSBuilder {
+	b.vpcEndpointRoleArn = value
+	b.bitmap_ |= 1048576
 	return b
 }
 
@@ -273,6 +289,7 @@ func (b *AWSBuilder) Copy(object *AWS) *AWSBuilder {
 	} else {
 		b.etcdEncryption = nil
 	}
+	b.hcpInternalCommunicationHostedZoneId = object.hcpInternalCommunicationHostedZoneId
 	b.privateHostedZoneID = object.privateHostedZoneID
 	b.privateHostedZoneRoleARN = object.privateHostedZoneRoleARN
 	b.privateLink = object.privateLink
@@ -296,6 +313,7 @@ func (b *AWSBuilder) Copy(object *AWS) *AWSBuilder {
 	} else {
 		b.tags = nil
 	}
+	b.vpcEndpointRoleArn = object.vpcEndpointRoleArn
 	return b
 }
 
@@ -342,6 +360,7 @@ func (b *AWSBuilder) Build() (object *AWS, err error) {
 			return
 		}
 	}
+	object.hcpInternalCommunicationHostedZoneId = b.hcpInternalCommunicationHostedZoneId
 	object.privateHostedZoneID = b.privateHostedZoneID
 	object.privateHostedZoneRoleARN = b.privateHostedZoneRoleARN
 	object.privateLink = b.privateLink
@@ -362,5 +381,6 @@ func (b *AWSBuilder) Build() (object *AWS, err error) {
 			object.tags[k] = v
 		}
 	}
+	object.vpcEndpointRoleArn = b.vpcEndpointRoleArn
 	return
 }

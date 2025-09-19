@@ -29,7 +29,7 @@ import (
 // MarshalRolePolicy writes a value of the 'role_policy' type to the given writer.
 func MarshalRolePolicy(object *RolePolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeRolePolicy(object, stream)
+	WriteRolePolicy(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalRolePolicy(object *RolePolicy, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeRolePolicy writes a value of the 'role_policy' type to the given stream.
-func writeRolePolicy(object *RolePolicy, stream *jsoniter.Stream) {
+// WriteRolePolicy writes a value of the 'role_policy' type to the given stream.
+func WriteRolePolicy(object *RolePolicy, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalRolePolicy(source interface{}) (object *RolePolicy, err error) {
 	if err != nil {
 		return
 	}
-	object = readRolePolicy(iterator)
+	object = ReadRolePolicy(iterator)
 	err = iterator.Error
 	return
 }
 
-// readRolePolicy reads a value of the 'role_policy' type from the given iterator.
-func readRolePolicy(iterator *jsoniter.Iterator) *RolePolicy {
+// ReadRolePolicy reads a value of the 'role_policy' type from the given iterator.
+func ReadRolePolicy(iterator *jsoniter.Iterator) *RolePolicy {
 	object := &RolePolicy{}
 	for {
 		field := iterator.ReadObject()

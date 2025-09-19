@@ -29,7 +29,7 @@ import (
 // MarshalSelfAccessReviewRequest writes a value of the 'self_access_review_request' type to the given writer.
 func MarshalSelfAccessReviewRequest(object *SelfAccessReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSelfAccessReviewRequest(object, stream)
+	WriteSelfAccessReviewRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSelfAccessReviewRequest(object *SelfAccessReviewRequest, writer io.W
 	return stream.Error
 }
 
-// writeSelfAccessReviewRequest writes a value of the 'self_access_review_request' type to the given stream.
-func writeSelfAccessReviewRequest(object *SelfAccessReviewRequest, stream *jsoniter.Stream) {
+// WriteSelfAccessReviewRequest writes a value of the 'self_access_review_request' type to the given stream.
+func WriteSelfAccessReviewRequest(object *SelfAccessReviewRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -105,13 +105,13 @@ func UnmarshalSelfAccessReviewRequest(source interface{}) (object *SelfAccessRev
 	if err != nil {
 		return
 	}
-	object = readSelfAccessReviewRequest(iterator)
+	object = ReadSelfAccessReviewRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSelfAccessReviewRequest reads a value of the 'self_access_review_request' type from the given iterator.
-func readSelfAccessReviewRequest(iterator *jsoniter.Iterator) *SelfAccessReviewRequest {
+// ReadSelfAccessReviewRequest reads a value of the 'self_access_review_request' type from the given iterator.
+func ReadSelfAccessReviewRequest(iterator *jsoniter.Iterator) *SelfAccessReviewRequest {
 	object := &SelfAccessReviewRequest{}
 	for {
 		field := iterator.ReadObject()

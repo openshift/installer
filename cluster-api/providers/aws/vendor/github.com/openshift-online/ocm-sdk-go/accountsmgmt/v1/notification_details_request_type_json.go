@@ -29,7 +29,7 @@ import (
 // MarshalNotificationDetailsRequest writes a value of the 'notification_details_request' type to the given writer.
 func MarshalNotificationDetailsRequest(object *NotificationDetailsRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeNotificationDetailsRequest(object, stream)
+	WriteNotificationDetailsRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalNotificationDetailsRequest(object *NotificationDetailsRequest, write
 	return stream.Error
 }
 
-// writeNotificationDetailsRequest writes a value of the 'notification_details_request' type to the given stream.
-func writeNotificationDetailsRequest(object *NotificationDetailsRequest, stream *jsoniter.Stream) {
+// WriteNotificationDetailsRequest writes a value of the 'notification_details_request' type to the given stream.
+func WriteNotificationDetailsRequest(object *NotificationDetailsRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -114,13 +114,13 @@ func UnmarshalNotificationDetailsRequest(source interface{}) (object *Notificati
 	if err != nil {
 		return
 	}
-	object = readNotificationDetailsRequest(iterator)
+	object = ReadNotificationDetailsRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readNotificationDetailsRequest reads a value of the 'notification_details_request' type from the given iterator.
-func readNotificationDetailsRequest(iterator *jsoniter.Iterator) *NotificationDetailsRequest {
+// ReadNotificationDetailsRequest reads a value of the 'notification_details_request' type from the given iterator.
+func ReadNotificationDetailsRequest(iterator *jsoniter.Iterator) *NotificationDetailsRequest {
 	object := &NotificationDetailsRequest{}
 	for {
 		field := iterator.ReadObject()

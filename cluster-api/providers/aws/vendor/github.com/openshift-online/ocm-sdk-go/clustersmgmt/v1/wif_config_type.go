@@ -55,7 +55,7 @@ func (o *WifConfig) Kind() string {
 	return WifConfigKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *WifConfig) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -252,6 +252,29 @@ func (l *WifConfigList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *WifConfigList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *WifConfigList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *WifConfigList) SetItems(items []*WifConfig) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *WifConfigList) Items() []*WifConfig {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

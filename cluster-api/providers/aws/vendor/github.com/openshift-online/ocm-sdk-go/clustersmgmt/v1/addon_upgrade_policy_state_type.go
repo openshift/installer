@@ -53,7 +53,7 @@ func (o *AddonUpgradePolicyState) Kind() string {
 	return AddonUpgradePolicyStateKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *AddonUpgradePolicyState) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -206,6 +206,29 @@ func (l *AddonUpgradePolicyStateList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *AddonUpgradePolicyStateList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddonUpgradePolicyStateList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddonUpgradePolicyStateList) SetItems(items []*AddonUpgradePolicyState) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddonUpgradePolicyStateList) Items() []*AddonUpgradePolicyState {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

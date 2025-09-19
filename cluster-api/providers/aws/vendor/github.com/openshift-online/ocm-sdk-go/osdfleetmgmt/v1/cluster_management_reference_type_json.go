@@ -29,7 +29,7 @@ import (
 // MarshalClusterManagementReference writes a value of the 'cluster_management_reference' type to the given writer.
 func MarshalClusterManagementReference(object *ClusterManagementReference, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterManagementReference(object, stream)
+	WriteClusterManagementReference(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterManagementReference(object *ClusterManagementReference, write
 	return stream.Error
 }
 
-// writeClusterManagementReference writes a value of the 'cluster_management_reference' type to the given stream.
-func writeClusterManagementReference(object *ClusterManagementReference, stream *jsoniter.Stream) {
+// WriteClusterManagementReference writes a value of the 'cluster_management_reference' type to the given stream.
+func WriteClusterManagementReference(object *ClusterManagementReference, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalClusterManagementReference(source interface{}) (object *ClusterMan
 	if err != nil {
 		return
 	}
-	object = readClusterManagementReference(iterator)
+	object = ReadClusterManagementReference(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterManagementReference reads a value of the 'cluster_management_reference' type from the given iterator.
-func readClusterManagementReference(iterator *jsoniter.Iterator) *ClusterManagementReference {
+// ReadClusterManagementReference reads a value of the 'cluster_management_reference' type from the given iterator.
+func ReadClusterManagementReference(iterator *jsoniter.Iterator) *ClusterManagementReference {
 	object := &ClusterManagementReference{}
 	for {
 		field := iterator.ReadObject()

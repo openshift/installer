@@ -66,7 +66,7 @@ func (o *RoleBinding) Kind() string {
 	return RoleBindingKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *RoleBinding) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -418,6 +418,29 @@ func (l *RoleBindingList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *RoleBindingList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *RoleBindingList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *RoleBindingList) SetItems(items []*RoleBinding) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *RoleBindingList) Items() []*RoleBinding {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

@@ -30,7 +30,7 @@ import (
 // MarshalClusterRegistryConfig writes a value of the 'cluster_registry_config' type to the given writer.
 func MarshalClusterRegistryConfig(object *ClusterRegistryConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterRegistryConfig(object, stream)
+	WriteClusterRegistryConfig(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalClusterRegistryConfig(object *ClusterRegistryConfig, writer io.Write
 	return stream.Error
 }
 
-// writeClusterRegistryConfig writes a value of the 'cluster_registry_config' type to the given stream.
-func writeClusterRegistryConfig(object *ClusterRegistryConfig, stream *jsoniter.Stream) {
+// WriteClusterRegistryConfig writes a value of the 'cluster_registry_config' type to the given stream.
+func WriteClusterRegistryConfig(object *ClusterRegistryConfig, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,7 +78,7 @@ func writeClusterRegistryConfig(object *ClusterRegistryConfig, stream *jsoniter.
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("allowed_registries_for_import")
-		writeRegistryLocationList(object.allowedRegistriesForImport, stream)
+		WriteRegistryLocationList(object.allowedRegistriesForImport, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0 && object.platformAllowlist != nil
@@ -87,7 +87,7 @@ func writeClusterRegistryConfig(object *ClusterRegistryConfig, stream *jsoniter.
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("platform_allowlist")
-		writeRegistryAllowlist(object.platformAllowlist, stream)
+		WriteRegistryAllowlist(object.platformAllowlist, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0 && object.registrySources != nil
@@ -96,7 +96,7 @@ func writeClusterRegistryConfig(object *ClusterRegistryConfig, stream *jsoniter.
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("registry_sources")
-		writeRegistrySources(object.registrySources, stream)
+		WriteRegistrySources(object.registrySources, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -108,13 +108,13 @@ func UnmarshalClusterRegistryConfig(source interface{}) (object *ClusterRegistry
 	if err != nil {
 		return
 	}
-	object = readClusterRegistryConfig(iterator)
+	object = ReadClusterRegistryConfig(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterRegistryConfig reads a value of the 'cluster_registry_config' type from the given iterator.
-func readClusterRegistryConfig(iterator *jsoniter.Iterator) *ClusterRegistryConfig {
+// ReadClusterRegistryConfig reads a value of the 'cluster_registry_config' type from the given iterator.
+func ReadClusterRegistryConfig(iterator *jsoniter.Iterator) *ClusterRegistryConfig {
 	object := &ClusterRegistryConfig{}
 	for {
 		field := iterator.ReadObject()
@@ -135,15 +135,15 @@ func readClusterRegistryConfig(iterator *jsoniter.Iterator) *ClusterRegistryConf
 			object.additionalTrustedCa = value
 			object.bitmap_ |= 1
 		case "allowed_registries_for_import":
-			value := readRegistryLocationList(iterator)
+			value := ReadRegistryLocationList(iterator)
 			object.allowedRegistriesForImport = value
 			object.bitmap_ |= 2
 		case "platform_allowlist":
-			value := readRegistryAllowlist(iterator)
+			value := ReadRegistryAllowlist(iterator)
 			object.platformAllowlist = value
 			object.bitmap_ |= 4
 		case "registry_sources":
-			value := readRegistrySources(iterator)
+			value := ReadRegistrySources(iterator)
 			object.registrySources = value
 			object.bitmap_ |= 8
 		default:

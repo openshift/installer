@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalFloatList(list []float64, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeFloatList(list, stream)
+	WriteFloatList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalFloatList(list []float64, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeFloatList writes a list of value of the 'float' type to
+// WriteFloatList writes a list of value of the 'float' type to
 // the given stream.
-func writeFloatList(list []float64, stream *jsoniter.Stream) {
+func WriteFloatList(list []float64, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalFloatList(source interface{}) (items []float64, err error) {
 	if err != nil {
 		return
 	}
-	items = readFloatList(iterator)
+	items = ReadFloatList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readFloatList reads list of values of the ”float' type from
+// ReadFloatList reads list of values of the ”float' type from
 // the given iterator.
-func readFloatList(iterator *jsoniter.Iterator) []float64 {
+func ReadFloatList(iterator *jsoniter.Iterator) []float64 {
 	list := []float64{}
 	for iterator.ReadArray() {
 		item := iterator.ReadFloat64()

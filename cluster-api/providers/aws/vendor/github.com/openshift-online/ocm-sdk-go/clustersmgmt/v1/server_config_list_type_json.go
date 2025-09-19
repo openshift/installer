@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalServerConfigList(list []*ServerConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeServerConfigList(list, stream)
+	WriteServerConfigList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalServerConfigList(list []*ServerConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeServerConfigList writes a list of value of the 'server_config' type to
+// WriteServerConfigList writes a list of value of the 'server_config' type to
 // the given stream.
-func writeServerConfigList(list []*ServerConfig, stream *jsoniter.Stream) {
+func WriteServerConfigList(list []*ServerConfig, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeServerConfig(value, stream)
+		WriteServerConfig(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalServerConfigList(source interface{}) (items []*ServerConfig, err e
 	if err != nil {
 		return
 	}
-	items = readServerConfigList(iterator)
+	items = ReadServerConfigList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readServerConfigList reads list of values of the ”server_config' type from
+// ReadServerConfigList reads list of values of the ”server_config' type from
 // the given iterator.
-func readServerConfigList(iterator *jsoniter.Iterator) []*ServerConfig {
+func ReadServerConfigList(iterator *jsoniter.Iterator) []*ServerConfig {
 	list := []*ServerConfig{}
 	for iterator.ReadArray() {
-		item := readServerConfig(iterator)
+		item := ReadServerConfig(iterator)
 		list = append(list, item)
 	}
 	return list

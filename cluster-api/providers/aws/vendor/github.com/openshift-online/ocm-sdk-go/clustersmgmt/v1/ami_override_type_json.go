@@ -29,7 +29,7 @@ import (
 // MarshalAMIOverride writes a value of the 'AMI_override' type to the given writer.
 func MarshalAMIOverride(object *AMIOverride, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAMIOverride(object, stream)
+	WriteAMIOverride(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAMIOverride(object *AMIOverride, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAMIOverride writes a value of the 'AMI_override' type to the given stream.
-func writeAMIOverride(object *AMIOverride, stream *jsoniter.Stream) {
+// WriteAMIOverride writes a value of the 'AMI_override' type to the given stream.
+func WriteAMIOverride(object *AMIOverride, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -80,7 +80,7 @@ func writeAMIOverride(object *AMIOverride, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("product")
-		writeProduct(object.product, stream)
+		WriteProduct(object.product, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0 && object.region != nil
@@ -89,7 +89,7 @@ func writeAMIOverride(object *AMIOverride, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("region")
-		writeCloudRegion(object.region, stream)
+		WriteCloudRegion(object.region, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -101,13 +101,13 @@ func UnmarshalAMIOverride(source interface{}) (object *AMIOverride, err error) {
 	if err != nil {
 		return
 	}
-	object = readAMIOverride(iterator)
+	object = ReadAMIOverride(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAMIOverride reads a value of the 'AMI_override' type from the given iterator.
-func readAMIOverride(iterator *jsoniter.Iterator) *AMIOverride {
+// ReadAMIOverride reads a value of the 'AMI_override' type from the given iterator.
+func ReadAMIOverride(iterator *jsoniter.Iterator) *AMIOverride {
 	object := &AMIOverride{}
 	for {
 		field := iterator.ReadObject()
@@ -131,11 +131,11 @@ func readAMIOverride(iterator *jsoniter.Iterator) *AMIOverride {
 			object.ami = value
 			object.bitmap_ |= 8
 		case "product":
-			value := readProduct(iterator)
+			value := ReadProduct(iterator)
 			object.product = value
 			object.bitmap_ |= 16
 		case "region":
-			value := readCloudRegion(iterator)
+			value := ReadCloudRegion(iterator)
 			object.region = value
 			object.bitmap_ |= 32
 		default:

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterResourceList(list []*ClusterResource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterResourceList(list, stream)
+	WriteClusterResourceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterResourceList(list []*ClusterResource, writer io.Writer) error
 	return stream.Error
 }
 
-// writeClusterResourceList writes a list of value of the 'cluster_resource' type to
+// WriteClusterResourceList writes a list of value of the 'cluster_resource' type to
 // the given stream.
-func writeClusterResourceList(list []*ClusterResource, stream *jsoniter.Stream) {
+func WriteClusterResourceList(list []*ClusterResource, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeClusterResource(value, stream)
+		WriteClusterResource(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterResourceList(source interface{}) (items []*ClusterResource,
 	if err != nil {
 		return
 	}
-	items = readClusterResourceList(iterator)
+	items = ReadClusterResourceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterResourceList reads list of values of the ”cluster_resource' type from
+// ReadClusterResourceList reads list of values of the ”cluster_resource' type from
 // the given iterator.
-func readClusterResourceList(iterator *jsoniter.Iterator) []*ClusterResource {
+func ReadClusterResourceList(iterator *jsoniter.Iterator) []*ClusterResource {
 	list := []*ClusterResource{}
 	for iterator.ReadArray() {
-		item := readClusterResource(iterator)
+		item := ReadClusterResource(iterator)
 		list = append(list, item)
 	}
 	return list

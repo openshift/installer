@@ -29,7 +29,7 @@ import (
 // MarshalValue writes a value of the 'value' type to the given writer.
 func MarshalValue(object *Value, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeValue(object, stream)
+	WriteValue(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalValue(object *Value, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeValue writes a value of the 'value' type to the given stream.
-func writeValue(object *Value, stream *jsoniter.Stream) {
+// WriteValue writes a value of the 'value' type to the given stream.
+func WriteValue(object *Value, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalValue(source interface{}) (object *Value, err error) {
 	if err != nil {
 		return
 	}
-	object = readValue(iterator)
+	object = ReadValue(iterator)
 	err = iterator.Error
 	return
 }
 
-// readValue reads a value of the 'value' type from the given iterator.
-func readValue(iterator *jsoniter.Iterator) *Value {
+// ReadValue reads a value of the 'value' type from the given iterator.
+func ReadValue(iterator *jsoniter.Iterator) *Value {
 	object := &Value{}
 	for {
 		field := iterator.ReadObject()

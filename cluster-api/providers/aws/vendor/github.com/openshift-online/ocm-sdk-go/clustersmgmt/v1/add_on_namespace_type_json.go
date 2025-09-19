@@ -30,7 +30,7 @@ import (
 // MarshalAddOnNamespace writes a value of the 'add_on_namespace' type to the given writer.
 func MarshalAddOnNamespace(object *AddOnNamespace, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnNamespace(object, stream)
+	WriteAddOnNamespace(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAddOnNamespace(object *AddOnNamespace, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddOnNamespace writes a value of the 'add_on_namespace' type to the given stream.
-func writeAddOnNamespace(object *AddOnNamespace, stream *jsoniter.Stream) {
+// WriteAddOnNamespace writes a value of the 'add_on_namespace' type to the given stream.
+func WriteAddOnNamespace(object *AddOnNamespace, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -142,13 +142,13 @@ func UnmarshalAddOnNamespace(source interface{}) (object *AddOnNamespace, err er
 	if err != nil {
 		return
 	}
-	object = readAddOnNamespace(iterator)
+	object = ReadAddOnNamespace(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnNamespace reads a value of the 'add_on_namespace' type from the given iterator.
-func readAddOnNamespace(iterator *jsoniter.Iterator) *AddOnNamespace {
+// ReadAddOnNamespace reads a value of the 'add_on_namespace' type from the given iterator.
+func ReadAddOnNamespace(iterator *jsoniter.Iterator) *AddOnNamespace {
 	object := &AddOnNamespace{}
 	for {
 		field := iterator.ReadObject()

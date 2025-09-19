@@ -57,7 +57,7 @@ func readProvisionShardsListResponse(response *ProvisionShardsListResponse, read
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readProvisionShardList(iterator)
+			items := ReadProvisionShardList(iterator)
 			response.items = &ProvisionShardList{
 				items: items,
 			}

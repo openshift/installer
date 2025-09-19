@@ -29,7 +29,7 @@ import (
 // MarshalLimitedSupportReasonOverride writes a value of the 'limited_support_reason_override' type to the given writer.
 func MarshalLimitedSupportReasonOverride(object *LimitedSupportReasonOverride, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLimitedSupportReasonOverride(object, stream)
+	WriteLimitedSupportReasonOverride(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalLimitedSupportReasonOverride(object *LimitedSupportReasonOverride, w
 	return stream.Error
 }
 
-// writeLimitedSupportReasonOverride writes a value of the 'limited_support_reason_override' type to the given stream.
-func writeLimitedSupportReasonOverride(object *LimitedSupportReasonOverride, stream *jsoniter.Stream) {
+// WriteLimitedSupportReasonOverride writes a value of the 'limited_support_reason_override' type to the given stream.
+func WriteLimitedSupportReasonOverride(object *LimitedSupportReasonOverride, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -83,13 +83,13 @@ func UnmarshalLimitedSupportReasonOverride(source interface{}) (object *LimitedS
 	if err != nil {
 		return
 	}
-	object = readLimitedSupportReasonOverride(iterator)
+	object = ReadLimitedSupportReasonOverride(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLimitedSupportReasonOverride reads a value of the 'limited_support_reason_override' type from the given iterator.
-func readLimitedSupportReasonOverride(iterator *jsoniter.Iterator) *LimitedSupportReasonOverride {
+// ReadLimitedSupportReasonOverride reads a value of the 'limited_support_reason_override' type from the given iterator.
+func ReadLimitedSupportReasonOverride(iterator *jsoniter.Iterator) *LimitedSupportReasonOverride {
 	object := &LimitedSupportReasonOverride{}
 	for {
 		field := iterator.ReadObject()

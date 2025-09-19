@@ -33,6 +33,7 @@ type ClusterAuthorizationRequestBuilder struct {
 	productCategory   string
 	quotaVersion      string
 	resources         []*ReservedResourceBuilder
+	rhRegionID        string
 	scope             string
 	byoc              bool
 	disconnected      bool
@@ -156,10 +157,17 @@ func (b *ClusterAuthorizationRequestBuilder) Resources(values ...*ReservedResour
 	return b
 }
 
+// RhRegionID sets the value of the 'rh_region_ID' attribute to the given value.
+func (b *ClusterAuthorizationRequestBuilder) RhRegionID(value string) *ClusterAuthorizationRequestBuilder {
+	b.rhRegionID = value
+	b.bitmap_ |= 32768
+	return b
+}
+
 // Scope sets the value of the 'scope' attribute to the given value.
 func (b *ClusterAuthorizationRequestBuilder) Scope(value string) *ClusterAuthorizationRequestBuilder {
 	b.scope = value
-	b.bitmap_ |= 32768
+	b.bitmap_ |= 65536
 	return b
 }
 
@@ -191,6 +199,7 @@ func (b *ClusterAuthorizationRequestBuilder) Copy(object *ClusterAuthorizationRe
 	} else {
 		b.resources = nil
 	}
+	b.rhRegionID = object.rhRegionID
 	b.scope = object.scope
 	return b
 }
@@ -222,6 +231,7 @@ func (b *ClusterAuthorizationRequestBuilder) Build() (object *ClusterAuthorizati
 			}
 		}
 	}
+	object.rhRegionID = b.rhRegionID
 	object.scope = b.scope
 	return
 }

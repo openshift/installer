@@ -29,7 +29,7 @@ import (
 // MarshalServiceParameter writes a value of the 'service_parameter' type to the given writer.
 func MarshalServiceParameter(object *ServiceParameter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeServiceParameter(object, stream)
+	WriteServiceParameter(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalServiceParameter(object *ServiceParameter, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeServiceParameter writes a value of the 'service_parameter' type to the given stream.
-func writeServiceParameter(object *ServiceParameter, stream *jsoniter.Stream) {
+// WriteServiceParameter writes a value of the 'service_parameter' type to the given stream.
+func WriteServiceParameter(object *ServiceParameter, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalServiceParameter(source interface{}) (object *ServiceParameter, er
 	if err != nil {
 		return
 	}
-	object = readServiceParameter(iterator)
+	object = ReadServiceParameter(iterator)
 	err = iterator.Error
 	return
 }
 
-// readServiceParameter reads a value of the 'service_parameter' type from the given iterator.
-func readServiceParameter(iterator *jsoniter.Iterator) *ServiceParameter {
+// ReadServiceParameter reads a value of the 'service_parameter' type from the given iterator.
+func ReadServiceParameter(iterator *jsoniter.Iterator) *ServiceParameter {
 	object := &ServiceParameter{}
 	for {
 		field := iterator.ReadObject()

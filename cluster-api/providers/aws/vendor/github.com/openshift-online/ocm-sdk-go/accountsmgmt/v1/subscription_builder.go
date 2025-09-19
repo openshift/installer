@@ -52,6 +52,7 @@ type SubscriptionBuilder struct {
 	productBundle             string
 	provenance                string
 	regionID                  string
+	rhRegionID                string
 	serviceLevel              string
 	socketTotal               int
 	status                    string
@@ -290,59 +291,66 @@ func (b *SubscriptionBuilder) Released(value bool) *SubscriptionBuilder {
 	return b
 }
 
+// RhRegionID sets the value of the 'rh_region_ID' attribute to the given value.
+func (b *SubscriptionBuilder) RhRegionID(value string) *SubscriptionBuilder {
+	b.rhRegionID = value
+	b.bitmap_ |= 536870912
+	return b
+}
+
 // ServiceLevel sets the value of the 'service_level' attribute to the given value.
 func (b *SubscriptionBuilder) ServiceLevel(value string) *SubscriptionBuilder {
 	b.serviceLevel = value
-	b.bitmap_ |= 536870912
+	b.bitmap_ |= 1073741824
 	return b
 }
 
 // SocketTotal sets the value of the 'socket_total' attribute to the given value.
 func (b *SubscriptionBuilder) SocketTotal(value int) *SubscriptionBuilder {
 	b.socketTotal = value
-	b.bitmap_ |= 1073741824
+	b.bitmap_ |= 2147483648
 	return b
 }
 
 // Status sets the value of the 'status' attribute to the given value.
 func (b *SubscriptionBuilder) Status(value string) *SubscriptionBuilder {
 	b.status = value
-	b.bitmap_ |= 2147483648
+	b.bitmap_ |= 4294967296
 	return b
 }
 
 // SupportLevel sets the value of the 'support_level' attribute to the given value.
 func (b *SubscriptionBuilder) SupportLevel(value string) *SubscriptionBuilder {
 	b.supportLevel = value
-	b.bitmap_ |= 4294967296
+	b.bitmap_ |= 8589934592
 	return b
 }
 
 // SystemUnits sets the value of the 'system_units' attribute to the given value.
 func (b *SubscriptionBuilder) SystemUnits(value string) *SubscriptionBuilder {
 	b.systemUnits = value
-	b.bitmap_ |= 8589934592
+	b.bitmap_ |= 17179869184
 	return b
 }
 
 // TrialEndDate sets the value of the 'trial_end_date' attribute to the given value.
 func (b *SubscriptionBuilder) TrialEndDate(value time.Time) *SubscriptionBuilder {
 	b.trialEndDate = value
-	b.bitmap_ |= 17179869184
+	b.bitmap_ |= 34359738368
 	return b
 }
 
 // UpdatedAt sets the value of the 'updated_at' attribute to the given value.
 func (b *SubscriptionBuilder) UpdatedAt(value time.Time) *SubscriptionBuilder {
 	b.updatedAt = value
-	b.bitmap_ |= 34359738368
+	b.bitmap_ |= 68719476736
 	return b
 }
 
 // Usage sets the value of the 'usage' attribute to the given value.
 func (b *SubscriptionBuilder) Usage(value string) *SubscriptionBuilder {
 	b.usage = value
-	b.bitmap_ |= 68719476736
+	b.bitmap_ |= 137438953472
 	return b
 }
 
@@ -416,6 +424,7 @@ func (b *SubscriptionBuilder) Copy(object *Subscription) *SubscriptionBuilder {
 	b.provenance = object.provenance
 	b.regionID = object.regionID
 	b.released = object.released
+	b.rhRegionID = object.rhRegionID
 	b.serviceLevel = object.serviceLevel
 	b.socketTotal = object.socketTotal
 	b.status = object.status
@@ -501,6 +510,7 @@ func (b *SubscriptionBuilder) Build() (object *Subscription, err error) {
 	object.provenance = b.provenance
 	object.regionID = b.regionID
 	object.released = b.released
+	object.rhRegionID = b.rhRegionID
 	object.serviceLevel = b.serviceLevel
 	object.socketTotal = b.socketTotal
 	object.status = b.status

@@ -30,6 +30,7 @@ type VersionGateBuilder struct {
 	bitmap_            uint32
 	id                 string
 	href               string
+	clusterCondition   string
 	creationTimestamp  time.Time
 	description        string
 	documentationURL   string
@@ -77,52 +78,59 @@ func (b *VersionGateBuilder) STSOnly(value bool) *VersionGateBuilder {
 	return b
 }
 
+// ClusterCondition sets the value of the 'cluster_condition' attribute to the given value.
+func (b *VersionGateBuilder) ClusterCondition(value string) *VersionGateBuilder {
+	b.clusterCondition = value
+	b.bitmap_ |= 16
+	return b
+}
+
 // CreationTimestamp sets the value of the 'creation_timestamp' attribute to the given value.
 func (b *VersionGateBuilder) CreationTimestamp(value time.Time) *VersionGateBuilder {
 	b.creationTimestamp = value
-	b.bitmap_ |= 16
+	b.bitmap_ |= 32
 	return b
 }
 
 // Description sets the value of the 'description' attribute to the given value.
 func (b *VersionGateBuilder) Description(value string) *VersionGateBuilder {
 	b.description = value
-	b.bitmap_ |= 32
+	b.bitmap_ |= 64
 	return b
 }
 
 // DocumentationURL sets the value of the 'documentation_URL' attribute to the given value.
 func (b *VersionGateBuilder) DocumentationURL(value string) *VersionGateBuilder {
 	b.documentationURL = value
-	b.bitmap_ |= 64
+	b.bitmap_ |= 128
 	return b
 }
 
 // Label sets the value of the 'label' attribute to the given value.
 func (b *VersionGateBuilder) Label(value string) *VersionGateBuilder {
 	b.label = value
-	b.bitmap_ |= 128
+	b.bitmap_ |= 256
 	return b
 }
 
 // Value sets the value of the 'value' attribute to the given value.
 func (b *VersionGateBuilder) Value(value string) *VersionGateBuilder {
 	b.value = value
-	b.bitmap_ |= 256
+	b.bitmap_ |= 512
 	return b
 }
 
 // VersionRawIDPrefix sets the value of the 'version_raw_ID_prefix' attribute to the given value.
 func (b *VersionGateBuilder) VersionRawIDPrefix(value string) *VersionGateBuilder {
 	b.versionRawIDPrefix = value
-	b.bitmap_ |= 512
+	b.bitmap_ |= 1024
 	return b
 }
 
 // WarningMessage sets the value of the 'warning_message' attribute to the given value.
 func (b *VersionGateBuilder) WarningMessage(value string) *VersionGateBuilder {
 	b.warningMessage = value
-	b.bitmap_ |= 1024
+	b.bitmap_ |= 2048
 	return b
 }
 
@@ -135,6 +143,7 @@ func (b *VersionGateBuilder) Copy(object *VersionGate) *VersionGateBuilder {
 	b.id = object.id
 	b.href = object.href
 	b.stsOnly = object.stsOnly
+	b.clusterCondition = object.clusterCondition
 	b.creationTimestamp = object.creationTimestamp
 	b.description = object.description
 	b.documentationURL = object.documentationURL
@@ -152,6 +161,7 @@ func (b *VersionGateBuilder) Build() (object *VersionGate, err error) {
 	object.href = b.href
 	object.bitmap_ = b.bitmap_
 	object.stsOnly = b.stsOnly
+	object.clusterCondition = b.clusterCondition
 	object.creationTimestamp = b.creationTimestamp
 	object.description = b.description
 	object.documentationURL = b.documentationURL

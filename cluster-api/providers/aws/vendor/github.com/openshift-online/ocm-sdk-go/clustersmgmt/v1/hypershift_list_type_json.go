@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalHypershiftList(list []*Hypershift, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeHypershiftList(list, stream)
+	WriteHypershiftList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalHypershiftList(list []*Hypershift, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeHypershiftList writes a list of value of the 'hypershift' type to
+// WriteHypershiftList writes a list of value of the 'hypershift' type to
 // the given stream.
-func writeHypershiftList(list []*Hypershift, stream *jsoniter.Stream) {
+func WriteHypershiftList(list []*Hypershift, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeHypershift(value, stream)
+		WriteHypershift(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalHypershiftList(source interface{}) (items []*Hypershift, err error
 	if err != nil {
 		return
 	}
-	items = readHypershiftList(iterator)
+	items = ReadHypershiftList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readHypershiftList reads list of values of the ”hypershift' type from
+// ReadHypershiftList reads list of values of the ”hypershift' type from
 // the given iterator.
-func readHypershiftList(iterator *jsoniter.Iterator) []*Hypershift {
+func ReadHypershiftList(iterator *jsoniter.Iterator) []*Hypershift {
 	list := []*Hypershift{}
 	for iterator.ReadArray() {
-		item := readHypershift(iterator)
+		item := ReadHypershift(iterator)
 		list = append(list, item)
 	}
 	return list

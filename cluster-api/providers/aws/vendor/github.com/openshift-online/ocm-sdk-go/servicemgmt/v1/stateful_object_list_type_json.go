@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalStatefulObjectList(list []*StatefulObject, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeStatefulObjectList(list, stream)
+	WriteStatefulObjectList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalStatefulObjectList(list []*StatefulObject, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeStatefulObjectList writes a list of value of the 'stateful_object' type to
+// WriteStatefulObjectList writes a list of value of the 'stateful_object' type to
 // the given stream.
-func writeStatefulObjectList(list []*StatefulObject, stream *jsoniter.Stream) {
+func WriteStatefulObjectList(list []*StatefulObject, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeStatefulObject(value, stream)
+		WriteStatefulObject(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalStatefulObjectList(source interface{}) (items []*StatefulObject, e
 	if err != nil {
 		return
 	}
-	items = readStatefulObjectList(iterator)
+	items = ReadStatefulObjectList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readStatefulObjectList reads list of values of the ”stateful_object' type from
+// ReadStatefulObjectList reads list of values of the ”stateful_object' type from
 // the given iterator.
-func readStatefulObjectList(iterator *jsoniter.Iterator) []*StatefulObject {
+func ReadStatefulObjectList(iterator *jsoniter.Iterator) []*StatefulObject {
 	list := []*StatefulObject{}
 	for iterator.ReadArray() {
-		item := readStatefulObject(iterator)
+		item := ReadStatefulObject(iterator)
 		list = append(list, item)
 	}
 	return list

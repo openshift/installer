@@ -30,7 +30,7 @@ import (
 // MarshalAWSNodePool writes a value of the 'AWS_node_pool' type to the given writer.
 func MarshalAWSNodePool(object *AWSNodePool, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAWSNodePool(object, stream)
+	WriteAWSNodePool(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAWSNodePool(object *AWSNodePool, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAWSNodePool writes a value of the 'AWS_node_pool' type to the given stream.
-func writeAWSNodePool(object *AWSNodePool, stream *jsoniter.Stream) {
+// WriteAWSNodePool writes a value of the 'AWS_node_pool' type to the given stream.
+func WriteAWSNodePool(object *AWSNodePool, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func writeAWSNodePool(object *AWSNodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("additional_security_group_ids")
-		writeStringList(object.additionalSecurityGroupIds, stream)
+		WriteStringList(object.additionalSecurityGroupIds, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.availabilityZoneTypes != nil
@@ -137,7 +137,7 @@ func writeAWSNodePool(object *AWSNodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("root_volume")
-		writeAWSVolume(object.rootVolume, stream)
+		WriteAWSVolume(object.rootVolume, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0 && object.subnetOutposts != nil
@@ -207,13 +207,13 @@ func UnmarshalAWSNodePool(source interface{}) (object *AWSNodePool, err error) {
 	if err != nil {
 		return
 	}
-	object = readAWSNodePool(iterator)
+	object = ReadAWSNodePool(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAWSNodePool reads a value of the 'AWS_node_pool' type from the given iterator.
-func readAWSNodePool(iterator *jsoniter.Iterator) *AWSNodePool {
+// ReadAWSNodePool reads a value of the 'AWS_node_pool' type from the given iterator.
+func ReadAWSNodePool(iterator *jsoniter.Iterator) *AWSNodePool {
 	object := &AWSNodePool{}
 	for {
 		field := iterator.ReadObject()
@@ -233,7 +233,7 @@ func readAWSNodePool(iterator *jsoniter.Iterator) *AWSNodePool {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "additional_security_group_ids":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.additionalSecurityGroupIds = value
 			object.bitmap_ |= 8
 		case "availability_zone_types":
@@ -262,7 +262,7 @@ func readAWSNodePool(iterator *jsoniter.Iterator) *AWSNodePool {
 			object.instanceType = value
 			object.bitmap_ |= 128
 		case "root_volume":
-			value := readAWSVolume(iterator)
+			value := ReadAWSVolume(iterator)
 			object.rootVolume = value
 			object.bitmap_ |= 256
 		case "subnet_outposts":

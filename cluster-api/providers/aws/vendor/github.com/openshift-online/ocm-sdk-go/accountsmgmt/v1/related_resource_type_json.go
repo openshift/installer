@@ -29,7 +29,7 @@ import (
 // MarshalRelatedResource writes a value of the 'related_resource' type to the given writer.
 func MarshalRelatedResource(object *RelatedResource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeRelatedResource(object, stream)
+	WriteRelatedResource(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalRelatedResource(object *RelatedResource, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeRelatedResource writes a value of the 'related_resource' type to the given stream.
-func writeRelatedResource(object *RelatedResource, stream *jsoniter.Stream) {
+// WriteRelatedResource writes a value of the 'related_resource' type to the given stream.
+func WriteRelatedResource(object *RelatedResource, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -123,13 +123,13 @@ func UnmarshalRelatedResource(source interface{}) (object *RelatedResource, err 
 	if err != nil {
 		return
 	}
-	object = readRelatedResource(iterator)
+	object = ReadRelatedResource(iterator)
 	err = iterator.Error
 	return
 }
 
-// readRelatedResource reads a value of the 'related_resource' type from the given iterator.
-func readRelatedResource(iterator *jsoniter.Iterator) *RelatedResource {
+// ReadRelatedResource reads a value of the 'related_resource' type from the given iterator.
+func ReadRelatedResource(iterator *jsoniter.Iterator) *RelatedResource {
 	object := &RelatedResource{}
 	for {
 		field := iterator.ReadObject()

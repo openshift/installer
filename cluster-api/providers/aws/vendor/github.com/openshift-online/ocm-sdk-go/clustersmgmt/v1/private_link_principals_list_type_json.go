@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalPrivateLinkPrincipalsList(list []*PrivateLinkPrincipals, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writePrivateLinkPrincipalsList(list, stream)
+	WritePrivateLinkPrincipalsList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalPrivateLinkPrincipalsList(list []*PrivateLinkPrincipals, writer io.W
 	return stream.Error
 }
 
-// writePrivateLinkPrincipalsList writes a list of value of the 'private_link_principals' type to
+// WritePrivateLinkPrincipalsList writes a list of value of the 'private_link_principals' type to
 // the given stream.
-func writePrivateLinkPrincipalsList(list []*PrivateLinkPrincipals, stream *jsoniter.Stream) {
+func WritePrivateLinkPrincipalsList(list []*PrivateLinkPrincipals, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writePrivateLinkPrincipals(value, stream)
+		WritePrivateLinkPrincipals(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalPrivateLinkPrincipalsList(source interface{}) (items []*PrivateLin
 	if err != nil {
 		return
 	}
-	items = readPrivateLinkPrincipalsList(iterator)
+	items = ReadPrivateLinkPrincipalsList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readPrivateLinkPrincipalsList reads list of values of the ”private_link_principals' type from
+// ReadPrivateLinkPrincipalsList reads list of values of the ”private_link_principals' type from
 // the given iterator.
-func readPrivateLinkPrincipalsList(iterator *jsoniter.Iterator) []*PrivateLinkPrincipals {
+func ReadPrivateLinkPrincipalsList(iterator *jsoniter.Iterator) []*PrivateLinkPrincipals {
 	list := []*PrivateLinkPrincipals{}
 	for iterator.ReadArray() {
-		item := readPrivateLinkPrincipals(iterator)
+		item := ReadPrivateLinkPrincipals(iterator)
 		list = append(list, item)
 	}
 	return list

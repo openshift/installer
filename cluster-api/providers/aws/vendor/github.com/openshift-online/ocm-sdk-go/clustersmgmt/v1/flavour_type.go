@@ -57,7 +57,7 @@ func (o *Flavour) Kind() string {
 	return FlavourKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Flavour) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -293,6 +293,29 @@ func (l *FlavourList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *FlavourList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *FlavourList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *FlavourList) SetItems(items []*Flavour) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *FlavourList) Items() []*Flavour {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

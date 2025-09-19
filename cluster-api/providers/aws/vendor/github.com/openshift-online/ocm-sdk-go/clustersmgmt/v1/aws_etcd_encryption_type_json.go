@@ -29,7 +29,7 @@ import (
 // MarshalAwsEtcdEncryption writes a value of the 'aws_etcd_encryption' type to the given writer.
 func MarshalAwsEtcdEncryption(object *AwsEtcdEncryption, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAwsEtcdEncryption(object, stream)
+	WriteAwsEtcdEncryption(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAwsEtcdEncryption(object *AwsEtcdEncryption, writer io.Writer) error
 	return stream.Error
 }
 
-// writeAwsEtcdEncryption writes a value of the 'aws_etcd_encryption' type to the given stream.
-func writeAwsEtcdEncryption(object *AwsEtcdEncryption, stream *jsoniter.Stream) {
+// WriteAwsEtcdEncryption writes a value of the 'aws_etcd_encryption' type to the given stream.
+func WriteAwsEtcdEncryption(object *AwsEtcdEncryption, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalAwsEtcdEncryption(source interface{}) (object *AwsEtcdEncryption, 
 	if err != nil {
 		return
 	}
-	object = readAwsEtcdEncryption(iterator)
+	object = ReadAwsEtcdEncryption(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAwsEtcdEncryption reads a value of the 'aws_etcd_encryption' type from the given iterator.
-func readAwsEtcdEncryption(iterator *jsoniter.Iterator) *AwsEtcdEncryption {
+// ReadAwsEtcdEncryption reads a value of the 'aws_etcd_encryption' type from the given iterator.
+func ReadAwsEtcdEncryption(iterator *jsoniter.Iterator) *AwsEtcdEncryption {
 	object := &AwsEtcdEncryption{}
 	for {
 		field := iterator.ReadObject()

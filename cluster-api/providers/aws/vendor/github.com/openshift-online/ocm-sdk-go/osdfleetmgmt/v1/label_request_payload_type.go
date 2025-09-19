@@ -96,6 +96,29 @@ func (l *LabelRequestPayloadList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *LabelRequestPayloadList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *LabelRequestPayloadList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *LabelRequestPayloadList) SetItems(items []*LabelRequestPayload) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *LabelRequestPayloadList) Items() []*LabelRequestPayload {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *LabelRequestPayloadList) Empty() bool {
 	return l == nil || len(l.items) == 0

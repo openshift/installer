@@ -49,7 +49,7 @@ func readBillingModelsListResponse(response *BillingModelsListResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readBillingModelItemList(iterator)
+			items := ReadBillingModelItemList(iterator)
 			response.items = &BillingModelItemList{
 				items: items,
 			}

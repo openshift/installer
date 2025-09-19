@@ -29,7 +29,7 @@ import (
 // MarshalHTPasswdUser writes a value of the 'HT_passwd_user' type to the given writer.
 func MarshalHTPasswdUser(object *HTPasswdUser, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeHTPasswdUser(object, stream)
+	WriteHTPasswdUser(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalHTPasswdUser(object *HTPasswdUser, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeHTPasswdUser writes a value of the 'HT_passwd_user' type to the given stream.
-func writeHTPasswdUser(object *HTPasswdUser, stream *jsoniter.Stream) {
+// WriteHTPasswdUser writes a value of the 'HT_passwd_user' type to the given stream.
+func WriteHTPasswdUser(object *HTPasswdUser, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalHTPasswdUser(source interface{}) (object *HTPasswdUser, err error)
 	if err != nil {
 		return
 	}
-	object = readHTPasswdUser(iterator)
+	object = ReadHTPasswdUser(iterator)
 	err = iterator.Error
 	return
 }
 
-// readHTPasswdUser reads a value of the 'HT_passwd_user' type from the given iterator.
-func readHTPasswdUser(iterator *jsoniter.Iterator) *HTPasswdUser {
+// ReadHTPasswdUser reads a value of the 'HT_passwd_user' type from the given iterator.
+func ReadHTPasswdUser(iterator *jsoniter.Iterator) *HTPasswdUser {
 	object := &HTPasswdUser{}
 	for {
 		field := iterator.ReadObject()

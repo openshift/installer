@@ -57,7 +57,7 @@ func readVersionGateAgreementsListResponse(response *VersionGateAgreementsListRe
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readVersionGateAgreementList(iterator)
+			items := ReadVersionGateAgreementList(iterator)
 			response.items = &VersionGateAgreementList{
 				items: items,
 			}

@@ -29,7 +29,7 @@ import (
 // MarshalClusterCredentials writes a value of the 'cluster_credentials' type to the given writer.
 func MarshalClusterCredentials(object *ClusterCredentials, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterCredentials(object, stream)
+	WriteClusterCredentials(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterCredentials(object *ClusterCredentials, writer io.Writer) err
 	return stream.Error
 }
 
-// writeClusterCredentials writes a value of the 'cluster_credentials' type to the given stream.
-func writeClusterCredentials(object *ClusterCredentials, stream *jsoniter.Stream) {
+// WriteClusterCredentials writes a value of the 'cluster_credentials' type to the given stream.
+func WriteClusterCredentials(object *ClusterCredentials, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -83,13 +83,13 @@ func UnmarshalClusterCredentials(source interface{}) (object *ClusterCredentials
 	if err != nil {
 		return
 	}
-	object = readClusterCredentials(iterator)
+	object = ReadClusterCredentials(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterCredentials reads a value of the 'cluster_credentials' type from the given iterator.
-func readClusterCredentials(iterator *jsoniter.Iterator) *ClusterCredentials {
+// ReadClusterCredentials reads a value of the 'cluster_credentials' type from the given iterator.
+func ReadClusterCredentials(iterator *jsoniter.Iterator) *ClusterCredentials {
 	object := &ClusterCredentials{}
 	for {
 		field := iterator.ReadObject()

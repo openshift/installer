@@ -46,8 +46,9 @@ type GetCapacityReservationUsageInput struct {
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token to use to retrieve the next page of results.
@@ -77,18 +78,45 @@ type GetCapacityReservationUsageOutput struct {
 
 	// The current state of the Capacity Reservation. A Capacity Reservation can be in
 	// one of the following states:
-	//   - active - The Capacity Reservation is active and the capacity is available
-	//   for your use.
+	//
+	//   - active - The capacity is available for use.
+	//
 	//   - expired - The Capacity Reservation expired automatically at the date and
-	//   time specified in your request. The reserved capacity is no longer available for
-	//   your use.
-	//   - cancelled - The Capacity Reservation was cancelled. The reserved capacity is
+	//   time specified in your reservation request. The reserved capacity is no longer
+	//   available for your use.
+	//
+	//   - cancelled - The Capacity Reservation was canceled. The reserved capacity is
 	//   no longer available for your use.
+	//
 	//   - pending - The Capacity Reservation request was successful but the capacity
 	//   provisioning is still pending.
-	//   - failed - The Capacity Reservation request has failed. A request might fail
-	//   due to invalid request parameters, capacity constraints, or instance limit
-	//   constraints. Failed requests are retained for 60 minutes.
+	//
+	//   - failed - The Capacity Reservation request has failed. A request can fail due
+	//   to request parameters that are not valid, capacity constraints, or instance
+	//   limit constraints. You can view a failed request for 60 minutes.
+	//
+	//   - scheduled - (Future-dated Capacity Reservations) The future-dated Capacity
+	//   Reservation request was approved and the Capacity Reservation is scheduled for
+	//   delivery on the requested start date.
+	//
+	//   - payment-pending - (Capacity Blocks) The upfront payment has not been
+	//   processed yet.
+	//
+	//   - payment-failed - (Capacity Blocks) The upfront payment was not processed in
+	//   the 12-hour time frame. Your Capacity Block was released.
+	//
+	//   - assessing - (Future-dated Capacity Reservations) Amazon EC2 is assessing
+	//   your request for a future-dated Capacity Reservation.
+	//
+	//   - delayed - (Future-dated Capacity Reservations) Amazon EC2 encountered a
+	//   delay in provisioning the requested future-dated Capacity Reservation. Amazon
+	//   EC2 is unable to deliver the requested capacity by the requested start date and
+	//   time.
+	//
+	//   - unsupported - (Future-dated Capacity Reservations) Amazon EC2 can't support
+	//   the future-dated Capacity Reservation request due to capacity constraints. You
+	//   can view unsupported requests for 30 days. The Capacity Reservation will not be
+	//   delivered.
 	State types.CapacityReservationState
 
 	// The number of instances for which the Capacity Reservation reserves capacity.
@@ -143,6 +171,9 @@ func (c *Client) addOperationGetCapacityReservationUsageMiddlewares(stack *middl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -153,6 +184,15 @@ func (c *Client) addOperationGetCapacityReservationUsageMiddlewares(stack *middl
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetCapacityReservationUsageValidationMiddleware(stack); err != nil {
@@ -174,6 +214,18 @@ func (c *Client) addOperationGetCapacityReservationUsageMiddlewares(stack *middl
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

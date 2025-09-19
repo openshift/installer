@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalWifCredentialRequestList(list []*WifCredentialRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifCredentialRequestList(list, stream)
+	WriteWifCredentialRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalWifCredentialRequestList(list []*WifCredentialRequest, writer io.Wri
 	return stream.Error
 }
 
-// writeWifCredentialRequestList writes a list of value of the 'wif_credential_request' type to
+// WriteWifCredentialRequestList writes a list of value of the 'wif_credential_request' type to
 // the given stream.
-func writeWifCredentialRequestList(list []*WifCredentialRequest, stream *jsoniter.Stream) {
+func WriteWifCredentialRequestList(list []*WifCredentialRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeWifCredentialRequest(value, stream)
+		WriteWifCredentialRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalWifCredentialRequestList(source interface{}) (items []*WifCredenti
 	if err != nil {
 		return
 	}
-	items = readWifCredentialRequestList(iterator)
+	items = ReadWifCredentialRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifCredentialRequestList reads list of values of the ”wif_credential_request' type from
+// ReadWifCredentialRequestList reads list of values of the ”wif_credential_request' type from
 // the given iterator.
-func readWifCredentialRequestList(iterator *jsoniter.Iterator) []*WifCredentialRequest {
+func ReadWifCredentialRequestList(iterator *jsoniter.Iterator) []*WifCredentialRequest {
 	list := []*WifCredentialRequest{}
 	for iterator.ReadArray() {
-		item := readWifCredentialRequest(iterator)
+		item := ReadWifCredentialRequest(iterator)
 		list = append(list, item)
 	}
 	return list

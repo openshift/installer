@@ -49,7 +49,7 @@ func readAccessRequestsListResponse(response *AccessRequestsListResponse, reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readAccessRequestList(iterator)
+			items := ReadAccessRequestList(iterator)
 			response.items = &AccessRequestList{
 				items: items,
 			}

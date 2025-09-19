@@ -60,7 +60,7 @@ func (o *ClusterStatus) Kind() string {
 	return ClusterStatusKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *ClusterStatus) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -372,6 +372,29 @@ func (l *ClusterStatusList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ClusterStatusList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ClusterStatusList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ClusterStatusList) SetItems(items []*ClusterStatus) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ClusterStatusList) Items() []*ClusterStatus {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

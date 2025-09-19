@@ -29,7 +29,7 @@ import (
 // MarshalDeleteProtection writes a value of the 'delete_protection' type to the given writer.
 func MarshalDeleteProtection(object *DeleteProtection, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDeleteProtection(object, stream)
+	WriteDeleteProtection(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalDeleteProtection(object *DeleteProtection, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeDeleteProtection writes a value of the 'delete_protection' type to the given stream.
-func writeDeleteProtection(object *DeleteProtection, stream *jsoniter.Stream) {
+// WriteDeleteProtection writes a value of the 'delete_protection' type to the given stream.
+func WriteDeleteProtection(object *DeleteProtection, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalDeleteProtection(source interface{}) (object *DeleteProtection, er
 	if err != nil {
 		return
 	}
-	object = readDeleteProtection(iterator)
+	object = ReadDeleteProtection(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDeleteProtection reads a value of the 'delete_protection' type from the given iterator.
-func readDeleteProtection(iterator *jsoniter.Iterator) *DeleteProtection {
+// ReadDeleteProtection reads a value of the 'delete_protection' type from the given iterator.
+func ReadDeleteProtection(iterator *jsoniter.Iterator) *DeleteProtection {
 	object := &DeleteProtection{}
 	for {
 		field := iterator.ReadObject()
