@@ -31,6 +31,7 @@ type Config struct {
 	EdgeZonesGatewayIndex           map[string]int    `json:"aws_edge_parent_zones_index,omitempty"`
 	EdgeZonesType                   map[string]string `json:"aws_edge_zones_type,omitempty"`
 	IOPS                            int64             `json:"aws_master_root_volume_iops"`
+	Throughput                      int64             `json:"aws_master_root_volume_throughput"`
 	Size                            int64             `json:"aws_master_root_volume_size,omitempty"`
 	Type                            string            `json:"aws_master_root_volume_type,omitempty"`
 	Encrypted                       bool              `json:"aws_master_root_volume_encrypted"`
@@ -243,6 +244,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 
 	if rootVolume.EBS.Iops != nil {
 		cfg.IOPS = *rootVolume.EBS.Iops
+	}
+	if rootVolume.EBS.Throughput != nil {
+		cfg.Throughput = *rootVolume.EBS.Throughput
 	}
 
 	cfg.Encrypted = true

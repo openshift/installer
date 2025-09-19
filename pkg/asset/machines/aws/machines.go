@@ -242,6 +242,7 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 					VolumeType: pointer.String(in.root.Type),
 					VolumeSize: pointer.Int64(int64(in.root.Size)),
 					Iops:       pointer.Int64(int64(in.root.IOPS)),
+					Throughput: pointer.Int64(int64(in.root.Throughput)),
 					Encrypted:  pointer.Bool(true),
 					KMSKey:     machineapi.AWSResourceReference{ARN: pointer.String(in.root.KMSKeyARN)},
 				},
