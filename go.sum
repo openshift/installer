@@ -799,8 +799,8 @@ github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6 h
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6/go.mod h1:o2H5VwQhUD8P6XsK6dRmKpCCJqVvv12KJQZBXmcCXCU=
 github.com/openshift/assisted-service v1.0.10-0.20230830164851-6573b5d7021d h1:CKw2Y4EdaFsMoqAdr2Tq0nlYTaaXmCRdP0gOu7pN64U=
 github.com/openshift/assisted-service v1.0.10-0.20230830164851-6573b5d7021d/go.mod h1:1J9kimemAdpLZVb3yLDEGmzwK0DXZ4/x6POeEog8A+4=
-github.com/openshift/assisted-service/api v0.0.0-20250625193139-474abcbea19a h1:P4RKYLRsXR+Ua755pZ9WklczEwWpV22XPpI8M+SDCK4=
-github.com/openshift/assisted-service/api v0.0.0-20250625193139-474abcbea19a/go.mod h1:tvE25aC7I07Uz2jUt7gH2E8+a1Rw4W7qtW6/EFb8l64=
+github.com/openshift/assisted-service/api v0.0.0-20250919003946-2b568e33e228 h1:VmFTtQBQQv545PI3w2UYOlza2AtqWymF29QxNSsVDjg=
+github.com/openshift/assisted-service/api v0.0.0-20250919003946-2b568e33e228/go.mod h1:wA7MaLcf/KoUl7fhB1bHBdhRBLjWPih90sHpxOV6ZLE=
 github.com/openshift/assisted-service/client v0.0.0-20241001055825-63e8b0d3ad63 h1:wYkC5wQIGjTORD3CVSNTs3dLaly9Vge/GrluayUMe+g=
 github.com/openshift/assisted-service/client v0.0.0-20241001055825-63e8b0d3ad63/go.mod h1:y+GNZgra/iQDYlacSjgscim8ldrSOMtV3jQaSKC3APc=
 github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63 h1:192yBdPaJccBdFhBVKgt4Nirm6X5IA+yhh54CnGd/n8=
@@ -973,7 +973,7 @@ github.com/zclconf/go-cty v1.10.0/go.mod h1:vVKLxnk3puL4qRAv72AO+W99LUD4da90g3uU
 github.com/zclconf/go-cty v1.11.0 h1:726SxLdi2SDnjY+BStqB9J1hNp4+2WlzyXLuimibIe0=
 github.com/zclconf/go-cty v1.11.0/go.mod h1:s9IfD1LK5ccNMSWCVFCE2rJfHiZgi7JijgeWIMfhLvA=
 github.com/zclconf/go-cty-debug v0.0.0-20191215020915-b22d67c1ba0b/go.mod h1:ZRKQfBXbGkpdV6QMzT3rU1kSTAnfu1dO8dPKjYprgj8=
-go.keploy.io/server v0.8.6 h1:czE9jaliyAkMMJcYnMPNuu6tun7UgwFbokxEG95vLN4=
+go.keploy.io/server v0.8.6 h1:4u2GnKgMdI2FKiwSl8SLLNSoslUfvvnWk1efIbDdWG0=
 go.keploy.io/server v0.8.6/go.mod h1:t7BPuZQSiC3PNHZ9dbn3e3VB61HNWwiqVmaRujfDFUg=
 go.mongodb.org/mongo-driver v1.4.3/go.mod h1:WcMNYLx/IlOxLe6JRJiv2uXuCz6zBLndR4SoGjYphSc=
 go.mongodb.org/mongo-driver v1.17.2 h1:gvZyk8352qSfzyZ2UMWcpDpMSGEr1eqE4T793SqyhzM=
