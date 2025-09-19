@@ -95,3 +95,14 @@ const (
 	UsGovEast1RegionID = "us-gov-east-1" // AWS GovCloud (US-East).
 	UsGovWest1RegionID = "us-gov-west-1" // AWS GovCloud (US-West).
 )
+
+// AWS ISO (US) partition's regions.
+const (
+	UsIsoEast1RegionID = "us-iso-east-1" // US ISO East.
+	UsIsoWest1RegionID = "us-iso-west-1" // US ISO WEST.
+)
+
+// AWS ISOB (US) partition's regions.
+const (
+	UsIsobEast1RegionID = "us-isob-east-1" // US ISOB East (Ohio).
+)

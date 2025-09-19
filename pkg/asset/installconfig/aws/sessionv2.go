@@ -30,6 +30,10 @@ const (
 	// when gather command is invoked.
 	OpenShiftInstallerGatherUserAgent = "OpenShift/4.x Gather"
 
+	// OpenShiftInstallerDestroyerUserAgent is the User Agent key to add to the AWS API request header.
+	// when destroy command is invoked.
+	OpenShiftInstallerDestroyerUserAgent = "OpenShift/4.x Destroyer"
+
 	// RetryMaxAttempts is the total number of times an API request is retried.
 	RetryMaxAttempts = 25
 
