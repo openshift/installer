@@ -125,7 +125,7 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, tagClients []*
 				}
 				result, err := tagClient.UntagResources(ctx, request)
 				if err != nil {
-					if strings.Contains(HandleErrorCode(err), "InvalidParameter") {
+					if strings.Contains(awssession.GetAWSErrorCode(err), awssession.InvalidParameter) {
 						nextTagClients = nextTagClients[:len(nextTagClients)-1]
 					}
 					err = errors.Wrap(err, "untag shared resources")

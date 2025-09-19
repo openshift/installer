@@ -10,8 +10,42 @@ import (
 
 // Error constants for AWS error codes.
 const (
+	// Common error codes.
 	AccessDeniedException   = "AccessDeniedException"
 	NoSuchResourceException = "NoSuchResourceException"
+	InvalidParameter        = "InvalidParameter"
+	NoSuchEntity            = "NoSuchEntity"
+
+	// Route53 error codes.
+	NoSuchHostedZone = "NoSuchHostedZone"
+
+	// EFS error codes.
+	FileSystemNotFound  = "FileSystemNotFound"
+	AccessPointNotFound = "AccessPointNotFound"
+	MountTargetNotFound = "MountTargetNotFound"
+
+	// ELB and ELBv2 error codes.
+	ListenerNotFound = "ListenerNotFound"
+
+	// EC2 error codes.
+	InvalidDhcpOptionsNotFound                 = "InvalidDhcpOptions.NotFound"
+	InvalidAMINotFound                         = "InvalidAMI.NotFound"
+	InvalidAllocationNotFound                  = "InvalidAllocation.NotFound"
+	InvalidInstanceNotFound                    = "InvalidInstance.NotFound"
+	GatewayNotAttached                         = "Gateway.NotAttached"
+	InvalidCarrierGatewayNotFound              = "InvalidCarrierGateway.NotFound"
+	NatGatewayNotFound                         = "NatGateway.NotFound"
+	InvalidPlacementGroupNotFound              = "InvalidPlacementGroup.NotFound"
+	InvalidRouteTableIDNotFound                = "InvalidRouteTableID.NotFound"
+	InvalidGroupNotFound                       = "InvalidGroup.NotFound"
+	InvalidSnapshotNotFound                    = "InvalidSnapshot.NotFound"
+	InvalidNetworkInterfaceIDNotFound          = "InvalidNetworkInterfaceID.NotFound"
+	InvalidSubnetIDNotFound                    = "InvalidSubnetID.NotFound"
+	InvalidVolumeNotFound                      = "InvalidVolume.NotFound"
+	InvalidVpcIDNotFound                       = "InvalidVpcID.NotFound"
+	InvalidVpcPeeringConnectionNotFound        = "InvalidVpcPeeringConnection.NotFound"
+	InvalidVpcEndpointServiceNotFound          = "InvalidVpcEndpointService.NotFound"
+	InvalidEgressOnlyInternetGatewayIDNotFound = "InvalidEgressOnlyInternetGatewayId.NotFound"
 )
 
 // IsUnauthorized checks if the error is due to lacking permissions.
@@ -41,4 +75,13 @@ func IsHTTPForbidden(err error) bool {
 		return respErr.HTTPStatusCode() == http.StatusForbidden
 	}
 	return false
+}
+
+// GetAWSErrorCode takes the error and extracts the AWS error code if it is an AWS API Error.
+func GetAWSErrorCode(err error) string {
+	var apiErr smithy.APIError
+	if errors.As(err, &apiErr) {
+		return apiErr.ErrorCode()
+	}
+	return ""
 }
