@@ -11,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	awssession "github.com/openshift/installer/pkg/asset/installconfig/aws"
 )
 
 // IamRoleSearch holds data to search for IAM roles.
@@ -46,7 +48,7 @@ func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []s
 			response, err := search.Client.ListRoleTags(ctx, &iamv2.ListRoleTagsInput{RoleName: role.RoleName})
 			if err != nil {
 				switch {
-				case strings.Contains(HandleErrorCode(err), "NoSuchEntity"):
+				case awssession.IsNoSuchEntity(err):
 					// The role does not exist.
 					// Ignore this IAM Role and donot report this error via
 					// lastError
@@ -114,7 +116,7 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 			response, err := search.client.ListUserTags(ctx, &iamv2.ListUserTagsInput{UserName: user.UserName})
 			if err != nil {
 				switch {
-				case strings.Contains(HandleErrorCode(err), "NoSuchEntity"):
+				case awssession.IsNoSuchEntity(err):
 					// The user does not exist.
 					// Ignore this IAM User and do not report this error via lastError.
 					search.unmatched[*user.Arn] = exists
@@ -195,7 +197,7 @@ func deleteIAMInstanceProfileByName(ctx context.Context, client *iamv2.Client, n
 		InstanceProfileName: name,
 	})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
+		if awssession.IsNoSuchEntity(err) {
 			return nil
 		}
 		return err
@@ -218,7 +220,7 @@ func deleteIAMInstanceProfile(ctx context.Context, client *iamv2.Client, profile
 		InstanceProfileName: &name,
 	})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
+		if awssession.IsNoSuchEntity(err) {
 			return nil
 		}
 		return err

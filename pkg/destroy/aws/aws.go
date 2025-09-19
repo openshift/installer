@@ -301,7 +301,7 @@ func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, delete
 		profile := fmt.Sprintf("%s-%s-profile", o.ClusterID, profileType)
 		response, err := o.IAMClient.GetInstanceProfile(ctx, &iamv2.GetInstanceProfileInput{InstanceProfileName: &profile})
 		if err != nil {
-			if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
+			if awssession.IsNoSuchEntity(err) {
 				continue
 			}
 			return resources, fmt.Errorf("failed to get IAM instance profile: %w", err)
@@ -604,7 +604,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 	if err != nil {
 		// In some cases AWS may return the zone in the list of tagged resources despite the fact
 		// it no longer exists.
-		if strings.Contains(HandleErrorCode(err), "NoSuchHostedZone") {
+		if awssession.IsHostedZoneNotFound(err) {
 			return nil
 		}
 		return err
@@ -677,7 +677,7 @@ func deleteRoute53(ctx context.Context, client *route53.Client, arn arn.ARN, log
 		Id: awsv2.String(id),
 	})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "NoSuchHostedZone") {
+		if awssession.IsHostedZoneNotFound(err) {
 			return nil
 		}
 		return err
@@ -794,7 +794,7 @@ func deleteFileSystem(ctx context.Context, client *efs.Client, fsid string, logg
 
 	_, err = client.DeleteFileSystem(ctx, &efs.DeleteFileSystemInput{FileSystemId: awsv2.String(fsid)})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "FileSystemNotFound") {
+		if awssession.IsFileSystemNotFound(err) {
 			return nil
 		}
 		return err
@@ -853,7 +853,7 @@ func deleteAccessPoint(ctx context.Context, client *efs.Client, id string, logge
 	logger = logger.WithField("AccessPoint ID", id)
 	_, err := client.DeleteAccessPoint(ctx, &efs.DeleteAccessPointInput{AccessPointId: awsv2.String(id)})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "AccessPointNotFound") {
+		if awssession.IsAccessPointNotFound(err) {
 			return nil
 		}
 		return err
@@ -867,7 +867,7 @@ func deleteMountTarget(ctx context.Context, client *efs.Client, id string, logge
 	logger = logger.WithField("Mount Target ID", id)
 	_, err := client.DeleteMountTarget(ctx, &efs.DeleteMountTargetInput{MountTargetId: awsv2.String(id)})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "MountTargetNotFound") {
+		if awssession.IsMountTargetNotFound(err) {
 			return nil
 		}
 		return err

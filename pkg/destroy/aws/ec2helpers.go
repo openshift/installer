@@ -16,6 +16,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	awssession "github.com/openshift/installer/pkg/asset/installconfig/aws"
 )
 
 // findEC2Instances returns the EC2 instances with tags that satisfy the filters.
@@ -172,7 +174,7 @@ func deleteEC2DHCPOptions(ctx context.Context, client *ec2v2.Client, id string, 
 		DhcpOptionsId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidDhcpOptions.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -189,7 +191,7 @@ func deleteEC2Image(ctx context.Context, client *ec2v2.Client, id string, logger
 		ImageIds: []string{id},
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidAMI.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -216,7 +218,7 @@ func deleteEC2Image(ctx context.Context, client *ec2v2.Client, id string, logger
 		ImageId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidAMI.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -231,7 +233,7 @@ func deleteEC2ElasticIP(ctx context.Context, client *ec2v2.Client, id string, lo
 		AllocationId: aws.String(id),
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidAllocation.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -246,7 +248,7 @@ func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClien
 		InstanceIds: []string{id},
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidInstance.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -300,7 +302,7 @@ func deleteEC2InternetGateway(ctx context.Context, client *ec2v2.Client, id stri
 			})
 			if err == nil {
 				logger.WithField("vpc", *vpc.VpcId).Debug("Detached")
-			} else if HandleErrorCode(err) == "Gateway.NotAttached" {
+			} else if awssession.IsInvalidNotFound(err) {
 				return nil
 			}
 		}
@@ -322,7 +324,7 @@ func deleteEC2CarrierGateway(ctx context.Context, client *ec2v2.Client, id strin
 		CarrierGatewayId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidCarrierGateway.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -337,7 +339,7 @@ func deleteEC2NATGateway(ctx context.Context, client *ec2v2.Client, id string, l
 		NatGatewayId: aws.String(id),
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "NatGateway.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -390,7 +392,7 @@ func deleteEC2PlacementGroup(ctx context.Context, client *ec2v2.Client, id strin
 		GroupIds: []string{id},
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidPlacementGroup.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -413,7 +415,7 @@ func deleteEC2RouteTable(ctx context.Context, client *ec2v2.Client, id string, l
 		RouteTableIds: []string{id},
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidRouteTableID.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -543,7 +545,7 @@ func deleteEC2SecurityGroup(ctx context.Context, client *ec2v2.Client, id string
 		GroupIds: []string{id},
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidGroup.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -593,7 +595,7 @@ func deleteEC2SecurityGroupObject(ctx context.Context, client *ec2v2.Client, gro
 		GroupId: group.GroupId,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidGroup.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -647,7 +649,7 @@ func deleteEC2Snapshot(ctx context.Context, client *ec2v2.Client, id string, log
 		SnapshotId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidSnapshot.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -662,7 +664,7 @@ func deleteEC2NetworkInterface(ctx context.Context, client *ec2v2.Client, id str
 		NetworkInterfaceId: aws.String(id),
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidNetworkInterfaceID.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -713,7 +715,7 @@ func deleteEC2Subnet(ctx context.Context, client *ec2v2.Client, id string, logge
 		SubnetId: aws.String(id),
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidSubnetID.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -765,7 +767,7 @@ func deleteEC2Volume(ctx context.Context, client *ec2v2.Client, id string, logge
 		VolumeId: aws.String(id),
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidVolume.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
@@ -844,7 +846,7 @@ func deleteEC2VPCEndpointsByVPC(ctx context.Context, client *ec2v2.Client, vpc s
 	for _, endpoint := range response.VpcEndpoints {
 		err := deleteEC2VPCEndpoint(ctx, client, *endpoint.VpcEndpointId, logger.WithField("VPC endpoint", *endpoint.VpcEndpointId))
 		if err != nil {
-			if HandleErrorCode(err) == "InvalidVpcID.NotFound" {
+			if awssession.IsInvalidNotFound(err) {
 				return nil
 			}
 			return err
@@ -859,7 +861,7 @@ func deleteEC2VPCPeeringConnection(ctx context.Context, client *ec2v2.Client, id
 		VpcPeeringConnectionId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidVpcPeeringConnection.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return errors.Wrapf(err, "cannot delete VPC Peering Connection %s", id)
@@ -906,7 +908,7 @@ func deleteEC2VPCEndpointService(ctx context.Context, client *ec2v2.Client, id s
 		ServiceIds: []string{id},
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidVpcEndpointService.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return errors.Wrapf(err, "cannot delete VPC Endpoint Service %s", id)
@@ -920,7 +922,7 @@ func deleteEgressOnlyInternetGateway(ctx context.Context, client *ec2v2.Client, 
 		EgressOnlyInternetGatewayId: aws.String(id),
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidEgressOnlyInternetGatewayId.NotFound" {
+		if awssession.IsInvalidNotFound(err) {
 			return nil
 		}
 		return err
