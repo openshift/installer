@@ -63,7 +63,7 @@ var (
 )
 
 // PublishingStrategy is a strategy for how various endpoints for the cluster are exposed.
-// +kubebuilder:validation:Enum="";External;Internal
+// +kubebuilder:validation:Enum="";External;Internal;Mixed
 type PublishingStrategy string
 
 const (
@@ -157,6 +157,7 @@ type InstallConfig struct {
 	ImageDigestSources []ImageDigestSource `json:"imageDigestSources,omitempty"`
 
 	// Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+	// A "Mixed" strategy only applies to the "azure" platform, and requires "operatorPublishingStrategy" to be configured.
 	// When no strategy is specified, the strategy is "External".
 	//
 	// +kubebuilder:default=External

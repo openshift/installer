@@ -143,8 +143,9 @@ If unset, the cluster will not be configured to use a proxy.
 
     publish <string>
       Default: "External"
-      Valid Values: "","External","Internal"
+      Valid Values: "","External","Internal","Mixed"
       Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+A "Mixed" strategy only applies to the "azure" platform, and requires "operatorPublishingStrategy" to be configured.
 When no strategy is specified, the strategy is "External".
 
     pullSecret <string> -required-
@@ -414,8 +415,9 @@ VERSION:  v1
 
 RESOURCE: <string>
   Default: "External"
-  Valid Values: "","External","Internal"
+  Valid Values: "","External","Internal","Mixed"
   Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+A "Mixed" strategy only applies to the "azure" platform, and requires "operatorPublishingStrategy" to be configured.
 When no strategy is specified, the strategy is "External".
 		`,
 	}, {
