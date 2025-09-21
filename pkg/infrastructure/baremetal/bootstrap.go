@@ -2,7 +2,6 @@ package baremetal
 
 import (
 	"context"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -172,10 +171,10 @@ func getLiveISO(config baremetalConfig) (string, error) {
 }
 
 func bootstrapIgnition(config baremetalConfig) (*isoeditor.IgnitionContent, error) {
-	ign := &igntypes.Config{}
-	// TODO(zaneb): Put swap config into system ignition rather than modifying user ignition
-	if err := json.Unmarshal([]byte(config.IgnitionBootstrap), &ign); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal bootstrap Ignition config: %w", err)
+	ign := &igntypes.Config{
+		Ignition: igntypes.Ignition{
+			Version: igntypes.MaxVersion.String(),
+		},
 	}
 
 	fsLabel := "var"
@@ -222,7 +221,12 @@ RequiredBy=localfs.target
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal bootstrap Ignition config: %w", err)
 	}
-	return &isoeditor.IgnitionContent{Config: ignData}, nil
+	return &isoeditor.IgnitionContent{
+		Config: []byte(config.IgnitionBootstrap),
+		SystemConfigs: map[string][]byte{
+			"30-scratch-disk.ign": ignData,
+		},
+	}, nil
 }
 
 func createLiveVolume(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool) (libvirt.StorageVol, error) {
