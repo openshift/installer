@@ -306,7 +306,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, authConfig.AgentAuthToken, authConfig.UserAuthToken, agentWorkflow.Workflow))
+		getRendezvousHostEnv(agentTemplateData, a.RendezvousIP, agentWorkflow.Workflow))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
@@ -448,11 +448,11 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 	}
 }
 
-func getRendezvousHostEnvTemplate(serviceProtocol, agentAuthtoken, userAuthToken string, workflowType workflow.AgentWorkflowType) string {
+func getRendezvousHostEnvTemplate(data *agentTemplateData, workflowType workflow.AgentWorkflowType) string {
 	host := "{{ if $isIPv6 }}{{ printf \"[%s]\" .RendezvousIP }}{{ else }}{{ .RendezvousIP }}{{ end }}"
-	serviceBaseURL := fmt.Sprintf("%s://%s:8090/", serviceProtocol, host)
-	imageServiceBaseURL := fmt.Sprintf("%s://%s:8888/", serviceProtocol, host)
-	uiBaseURL := fmt.Sprintf("%s://%s:3001/", serviceProtocol, host)
+	serviceBaseURL := fmt.Sprintf("%s://%s:8090/", data.ServiceProtocol, host)
+	imageServiceBaseURL := fmt.Sprintf("%s://%s:8888/", data.ServiceProtocol, host)
+	uiBaseURL := fmt.Sprintf("%s://%s:3001/", data.ServiceProtocol, host)
 
 	// USER_AUTH_TOKEN is required to authenticate API requests against agent-installer-local auth type
 	// and for the endpoints marked with userAuth security definition in assisted-service swagger.yaml.
@@ -475,7 +475,7 @@ USER_AUTH_TOKEN=%s
 WORKFLOW_TYPE=%s
 AIUI_APP_API_URL=%s
 AIUI_URL=%s
-`, serviceBaseURL, imageServiceBaseURL, agentAuthtoken, userAuthToken, workflowType, serviceBaseURL, uiBaseURL)
+`, serviceBaseURL, imageServiceBaseURL, data.AgentAuthToken, data.UserAuthToken, workflowType, serviceBaseURL, uiBaseURL)
 
 	return rendezvousHostEnvTemplate
 }
@@ -492,9 +492,9 @@ func getRendezvousHostEnvFromTemplate(hostEnvTemplate, nodeZeroIP string) (strin
 	return buf.String(), nil
 }
 
-func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, agentAuthtoken, userAuthToken string, workflowType workflow.AgentWorkflowType) string {
+func getRendezvousHostEnv(data *agentTemplateData, nodeZeroIP string, workflowType workflow.AgentWorkflowType) string {
 	env, err := getRendezvousHostEnvFromTemplate(
-		getRendezvousHostEnvTemplate(serviceProtocol, agentAuthtoken, userAuthToken, workflowType),
+		getRendezvousHostEnvTemplate(data, workflowType),
 		nodeZeroIP)
 	if err != nil {
 		panic(err)
