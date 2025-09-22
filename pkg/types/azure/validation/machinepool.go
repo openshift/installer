@@ -59,10 +59,6 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		if !diskTypes.Has(p.OSDisk.DiskType) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.OSDisk.DiskType, diskTypes.List()))
 		}
-
-		if p.OSDisk.DiskType == "swap" {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("diskType"), p.OSDisk.DiskType, "swap disk type is not supported on Azure"))
-		}
 	}
 
 	if p.UltraSSDCapability != "" {
