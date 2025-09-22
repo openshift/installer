@@ -151,6 +151,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	a.CPUArch = *osImage.CPUArchitecture
 
 	agentTemplateData := &agentTemplateData{
+		ServiceProtocol:           "http",
 		PullSecret:                pullSecretAsset.GetPullSecretData(),
 		ReleaseImages:             releaseImageList,
 		ReleaseImage:              clusterImageSet.Spec.ReleaseImage,
@@ -164,7 +165,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 
 	enabledServices := getDefaultEnabledServices()
 
-	rendezvousHostTemplateData := getRendezvousHostEnvTemplate("http", "", "", agentWorkflow.Workflow)
+	rendezvousHostTemplateData := getRendezvousHostEnvTemplate(agentTemplateData, agentWorkflow.Workflow)
 	rendezvousHostTemplateFile := ignition.FileFromString(fmt.Sprintf("%s.template", rendezvousHostEnvPath), "root", 0644, rendezvousHostTemplateData)
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostTemplateFile)
 
