@@ -30,6 +30,7 @@ import (
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 	clusterutilv1 "sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/conditions/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -50,8 +51,9 @@ func (r vmReconciler) reconcileIPAddressClaims(ctx context.Context, vmCtx *capvc
 	log := ctrl.LoggerFrom(ctx)
 
 	var (
-		claims  []conditions.Getter
-		errList []error
+		claims        []conditions.Getter
+		v1beta2Claims []v1beta2conditions.Getter
+		errList       []error
 	)
 
 	for devIdx, device := range vmCtx.VSphereVM.Spec.Network.Devices {
@@ -88,6 +90,7 @@ func (r vmReconciler) reconcileIPAddressClaims(ctx context.Context, vmCtx *capvc
 			// IPAddressClaimed condition for the VSphereVM object.
 			if conditions.Has(ipAddrClaim, clusterv1.ReadyCondition) {
 				claims = append(claims, ipAddrClaim)
+				v1beta2Claims = append(v1beta2Claims, ipAddrClaim)
 			}
 		}
 	}
@@ -99,6 +102,12 @@ func (r vmReconciler) reconcileIPAddressClaims(ctx context.Context, vmCtx *capvc
 			infrav1.IPAddressClaimNotFoundReason,
 			clusterv1.ConditionSeverityError,
 			aggregatedErr.Error())
+		v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+			Type:    infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereVMIPAddressClaimsNotFulfilledV1Beta2Reason,
+			Message: aggregatedErr.Error(),
+		})
 		return aggregatedErr
 	}
 
@@ -112,6 +121,18 @@ func (r vmReconciler) reconcileIPAddressClaims(ctx context.Context, vmCtx *capvc
 			claims,
 			conditions.AddSourceRef(),
 			conditions.WithStepCounter())
+
+		if len(v1beta2Claims) > 0 {
+			if err := v1beta2conditions.SetAggregateCondition(v1beta2Claims, vmCtx.VSphereVM, clusterv1.ReadyV1Beta2Condition, v1beta2conditions.TargetConditionType(infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition)); err != nil {
+				return errors.Wrap(err, "failed to aggregate Ready condition from IPAddressClaims")
+			}
+		} else {
+			v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+				Type:   infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+				Status: metav1.ConditionTrue,
+				Reason: infrav1.VSphereVMIPAddressClaimsNotFulfilledV1Beta2Reason,
+			})
+		}
 		return nil
 	}
 
@@ -119,14 +140,31 @@ func (r vmReconciler) reconcileIPAddressClaims(ctx context.Context, vmCtx *capvc
 	switch {
 	case totalClaims == claimsFulfilled:
 		conditions.MarkTrue(vmCtx.VSphereVM, infrav1.IPAddressClaimedCondition)
+		v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+			Type:   infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+			Status: metav1.ConditionTrue,
+			Reason: infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Reason,
+		})
 	case claimsFulfilled < totalClaims && claimsCreated > 0:
 		conditions.MarkFalse(vmCtx.VSphereVM, infrav1.IPAddressClaimedCondition,
 			infrav1.IPAddressClaimsBeingCreatedReason, clusterv1.ConditionSeverityInfo,
 			"%d/%d claims being created", claimsCreated, totalClaims)
+		v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+			Type:    infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereVMIPAddressClaimsBeingCreatedV1Beta2Reason,
+			Message: fmt.Sprintf("%d/%d claims being created", claimsCreated, totalClaims),
+		})
 	case claimsFulfilled < totalClaims && claimsCreated == 0:
 		conditions.MarkFalse(vmCtx.VSphereVM, infrav1.IPAddressClaimedCondition,
 			infrav1.WaitingForIPAddressReason, clusterv1.ConditionSeverityInfo,
 			"%d/%d claims being processed", totalClaims-claimsFulfilled, totalClaims)
+		v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+			Type:    infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereVMIPAddressClaimsWaitingForIPAddressV1Beta2Reason,
+			Message: fmt.Sprintf("%d/%d claims being processed", totalClaims-claimsFulfilled, totalClaims),
+		})
 	}
 	return nil
 }

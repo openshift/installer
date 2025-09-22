@@ -28,6 +28,7 @@ import (
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/conditions/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -69,6 +70,12 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 	if !clustermodule.IsClusterCompatible(clusterCtx) {
 		conditions.MarkFalse(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableCondition, infrav1.VCenterVersionIncompatibleReason, clusterv1.ConditionSeverityInfo,
 			"vCenter version %s does not support cluster modules", clusterCtx.VSphereCluster.Status.VCenterVersion)
+		v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+			Type:    infrav1.VSphereClusterClusterModulesReadyV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereClusterModulesInvalidVCenterVersionV1Beta2Reason,
+			Message: fmt.Sprintf("vCenter version %s does not support cluster modules", clusterCtx.VSphereCluster.Status.VCenterVersion),
+		})
 		log.V(5).Info(fmt.Sprintf("vCenter version %s does not support cluster modules to implement anti affinity (vCenter >= 7 required)", clusterCtx.VSphereCluster.Status.VCenterVersion))
 		return reconcile.Result{}, nil
 	}
@@ -170,11 +177,23 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 		}
 		conditions.MarkFalse(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableCondition, infrav1.ClusterModuleSetupFailedReason,
 			clusterv1.ConditionSeverityWarning, generateClusterModuleErrorMessage(modErrs))
+		v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+			Type:    infrav1.VSphereClusterClusterModulesReadyV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereClusterClusterModulesNotReadyV1Beta2Reason,
+			Message: generateClusterModuleErrorMessage(modErrs),
+		})
+		return reconcile.Result{}, err
 	case len(modErrs) == 0 && len(clusterModuleSpecs) > 0:
 		conditions.MarkTrue(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableCondition)
 	default:
 		conditions.Delete(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableCondition)
 	}
+	v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+		Type:   infrav1.VSphereClusterClusterModulesReadyV1Beta2Condition,
+		Status: metav1.ConditionTrue,
+		Reason: infrav1.VSphereClusterClusterModulesReadyV1Beta2Reason,
+	})
 	return reconcile.Result{}, err
 }
 
@@ -319,7 +338,7 @@ type clusterModError struct {
 
 func generateClusterModuleErrorMessage(errList []clusterModError) string {
 	sb := strings.Builder{}
-	sb.WriteString("failed to create cluster modules for: ")
+	sb.WriteString("Failed to create cluster modules for: ")
 
 	for _, e := range errList {
 		sb.WriteString(fmt.Sprintf("%s %s, ", e.name, e.err.Error()))

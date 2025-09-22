@@ -36,13 +36,13 @@ import (
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-vspheremachine,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines,versions=v1beta1,name=validation.vspheremachine.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-vspheremachine,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines,versions=v1beta1,name=default.vspheremachine.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 
-// VSphereMachineWebhook implements a validation and defaulting webhook for VSphereMachine.
-type VSphereMachineWebhook struct{}
+// VSphereMachine implements a validation and defaulting webhook for VSphereMachine.
+type VSphereMachine struct{}
 
-var _ webhook.CustomValidator = &VSphereMachineWebhook{}
-var _ webhook.CustomDefaulter = &VSphereMachineWebhook{}
+var _ webhook.CustomValidator = &VSphereMachine{}
+var _ webhook.CustomDefaulter = &VSphereMachine{}
 
-func (webhook *VSphereMachineWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (webhook *VSphereMachine) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&infrav1.VSphereMachine{}).
 		WithValidator(webhook).
@@ -51,7 +51,7 @@ func (webhook *VSphereMachineWebhook) SetupWebhookWithManager(mgr ctrl.Manager) 
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (webhook *VSphereMachineWebhook) Default(_ context.Context, obj runtime.Object) error {
+func (webhook *VSphereMachine) Default(_ context.Context, obj runtime.Object) error {
 	objValue, ok := obj.(*infrav1.VSphereMachine)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachine but got a %T", obj))
@@ -63,7 +63,7 @@ func (webhook *VSphereMachineWebhook) Default(_ context.Context, obj runtime.Obj
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachineWebhook) ValidateCreate(_ context.Context, raw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachine) ValidateCreate(_ context.Context, raw runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	obj, ok := raw.(*infrav1.VSphereMachine)
@@ -99,7 +99,7 @@ func (webhook *VSphereMachineWebhook) ValidateCreate(_ context.Context, raw runt
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachineWebhook) ValidateUpdate(_ context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachine) ValidateUpdate(_ context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	newTyped, ok := newRaw.(*infrav1.VSphereMachine)
@@ -159,7 +159,7 @@ func (webhook *VSphereMachineWebhook) ValidateUpdate(_ context.Context, oldRaw r
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachineWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachine) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
