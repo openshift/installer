@@ -143,11 +143,10 @@ func parseBlockData(u uint32) *blockData {
 		size:       u & 0x00ffffff,
 	}
 }
-func parseFileBlockSizes(b []byte, fileSize, blocksize int) []*blockData {
-	count := fileSize / blocksize
-	blocks := make([]*blockData, 0)
-	for j := 0; j < count && j < len(b); j += 4 {
-		blocks = append(blocks, parseBlockData(binary.LittleEndian.Uint32(b[j:j+4])))
+func parseFileBlockSizes(b []byte, blockListSize int) []*blockData {
+	blocks := make([]*blockData, 0, blockListSize)
+	for j := 0; j < blockListSize && j < len(b); j++ {
+		blocks = append(blocks, parseBlockData(binary.LittleEndian.Uint32(b[4*j:4*j+4])))
 	}
 	return blocks
 }
@@ -440,14 +439,14 @@ func parseBasicFile(b []byte, blocksize int) (*basicFile, int, error) {
 		fileSize:           fileSize,
 	}
 	// see how many other bytes we need to read
-	blockListSize := int(d.fileSize) / blocksize
-	if int(d.fileSize)%blocksize > 0 && d.fragmentBlockIndex != 0xffffffff {
+	blockListSize := int(d.fileSize / uint32(blocksize))
+	if d.fileSize%uint32(blocksize) > 0 && d.fragmentBlockIndex == 0xffffffff {
 		blockListSize++
 	}
 	// do we have enough data left to read those?
 	extra = blockListSize * 4
 	if len(b[16:]) >= extra {
-		d.blockSizes = parseFileBlockSizes(b[16:], int(fileSize), blocksize)
+		d.blockSizes = parseFileBlockSizes(b[16:], blockListSize)
 		extra = 0
 	}
 
@@ -531,14 +530,14 @@ func parseExtendedFile(b []byte, blocksize int) (*extendedFile, int, error) {
 		xAttrIndex:         binary.LittleEndian.Uint32(b[36:40]),
 	}
 	// see how many other bytes we need to read
-	blockListSize := int(d.fileSize) / blocksize
-	if int(d.fileSize)%blocksize > 0 && d.fragmentBlockIndex != 0xffffffff {
+	blockListSize := int(d.fileSize / uint64(blocksize))
+	if d.fileSize%uint64(blocksize) > 0 && d.fragmentBlockIndex == 0xffffffff {
 		blockListSize++
 	}
 	// do we have enough data left to read those?
 	extra = blockListSize * 4
-	if len(b[16:]) >= extra {
-		d.blockSizes = parseFileBlockSizes(b[16:], int(fileSize), blocksize)
+	if len(b[40:]) >= extra {
+		d.blockSizes = parseFileBlockSizes(b[40:], blockListSize)
 		extra = 0
 	}
 	return d, extra, nil
