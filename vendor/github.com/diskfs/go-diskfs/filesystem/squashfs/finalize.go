@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -415,21 +416,24 @@ func finalizeFragment(buf []byte, to util.File, toOffset int64, c Compressor) (r
 // because the inode data is different.
 // The first entry in the return always will be the root
 func walkTree(workspace string) ([]*finalizeFileInfo, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, fmt.Errorf("could not get pwd: %v", err)
-	}
-	// make everything relative to the workspace
-	_ = os.Chdir(workspace)
 	dirMap := make(map[string]*finalizeFileInfo)
 	fileList := make([]*finalizeFileInfo, 0)
 	var entry *finalizeFileInfo
-	_ = filepath.Walk(".", func(fp string, fi os.FileInfo, err error) error {
+	err := filepath.WalkDir(workspace, func(actualPath string, d iofs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+		fp := strings.TrimPrefix(actualPath, workspace)
+		fp = strings.TrimPrefix(fp, string(filepath.Separator))
+		if fp == "" {
+			fp = "."
+		}
 		isRoot := fp == "."
-		name := fi.Name()
+		name := d.Name()
+		fi, err := d.Info()
+		if err != nil {
+			return fmt.Errorf("could not get file info for %s: %v", fp, err)
+		}
 		m := fi.Mode()
 		var fType fileType
 		switch {
@@ -448,7 +452,7 @@ func walkTree(workspace string) ([]*finalizeFileInfo, error) {
 		default:
 			fType = fileRegular
 		}
-		xattrNames, err := xattr.List(fp)
+		xattrNames, err := xattr.List(actualPath)
 		if err != nil {
 			return fmt.Errorf("unable to list xattrs for %s: %v", fp, err)
 		}
@@ -495,8 +499,9 @@ func walkTree(workspace string) ([]*finalizeFileInfo, error) {
 		fileList = append(fileList, entry)
 		return nil
 	})
-	// reset the workspace
-	_ = os.Chdir(cwd)
+	if err != nil {
+		return nil, err
+	}
 
 	return fileList, nil
 }
@@ -750,7 +755,7 @@ func writeDirectories(dirs []*finalizeFileInfo, f util.File, compressor Compress
 
 // writeFragmentTable write the fragment table
 //
-//nolint:unparam // this does not use fragmentBlocksStart yet, but only because we have not yet added support
+//nolint:unparam,unused,revive // this does not use fragmentBlocksStart yet, but only because we have not yet added support
 func writeFragmentTable(fragmentBlocks []fragmentBlock, fragmentBlocksStart int64, f util.File, compressor Compressor, location int64) (fragmentsWritten int, finalLocation uint64, err error) {
 	// now write the actual fragment table entries
 	var (

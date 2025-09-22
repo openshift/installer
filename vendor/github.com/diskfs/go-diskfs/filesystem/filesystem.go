@@ -34,4 +34,6 @@ const (
 	TypeISO9660
 	// TypeSquashfs is a squashfs filesystem
 	TypeSquashfs
+	// TypeExt4 is an ext4 compatible filesystem
+	TypeExt4
 )
