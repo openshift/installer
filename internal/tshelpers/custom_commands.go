@@ -431,7 +431,7 @@ func byteCompareInternal(ts *testscript.TestScript, neg bool, aData, eData []byt
 		return
 	}
 
-	ts.Logf(aText)
+	ts.Logf("%s", aText)
 
 	var sb strings.Builder
 	if err := diff.Text(eFilePath, aFilePath, eText, aText, &sb); err != nil {
