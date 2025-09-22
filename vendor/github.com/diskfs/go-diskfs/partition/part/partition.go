@@ -12,4 +12,5 @@ type Partition interface {
 	GetStart() int64
 	ReadContents(util.File, io.Writer) (int64, error)
 	WriteContents(util.File, io.Reader) (uint64, error)
+	UUID() string
 }
