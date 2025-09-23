@@ -101,6 +101,10 @@ func (a *OptionalInstallConfig) validateInstallConfig(ctx context.Context, insta
 		allErrs = append(allErrs, err...)
 	}
 
+	if err := a.validateTwoNodeConfiguration(installConfig); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
 	return allErrs
 }
 
@@ -232,14 +236,38 @@ func isValidTNFCluster(installConfig *types.InstallConfig) bool {
 	return true
 }
 
+func isValidTNACluster(installConfig *types.InstallConfig) bool {
+	// Check if this is a valid TNA (Two Node with Arbiter) configuration
+	return installConfig.ControlPlane != nil &&
+		installConfig.ControlPlane.Replicas != nil &&
+		*installConfig.ControlPlane.Replicas == 2 &&
+		installConfig.Arbiter != nil
+}
+
+func (a *OptionalInstallConfig) validateTwoNodeConfiguration(installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+
+	// Check if this is a valid TNA or TNF configuration when we have 2 replicas
+	if !isValidTNACluster(installConfig) && !isValidTNFCluster(installConfig) {
+		// Only add error if we actually have 2 replicas but neither TNA nor TNF is valid
+		if installConfig.ControlPlane != nil && 
+			installConfig.ControlPlane.Replicas != nil && 
+			*installConfig.ControlPlane.Replicas == 2 {
+			fieldPath := field.NewPath("controlPlane", "replicas")
+			allErrs = append(allErrs, field.Invalid(fieldPath, 2, "2 control plane replicas require either arbiter configuration or fencing configuration with FeatureGateDualReplica enabled"))
+		}
+	}
+
+	return allErrs
+}
+
 func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 	var fieldPath *field.Path
 
 	if installConfig.ControlPlane != nil {
-		if *installConfig.ControlPlane.Replicas < 1 ||
-			*installConfig.ControlPlane.Replicas > 5 ||
-			(installConfig.Arbiter == nil && *installConfig.ControlPlane.Replicas == 2 && !isValidTNFCluster(installConfig)) {
+		// Basic boundary check for control plane replicas
+		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 {
 			fieldPath = field.NewPath("controlPlane", "replicas")
 			supportedControlPlaneRange := []string{"3", "1", "4", "5"}
 			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
