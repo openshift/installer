@@ -105,6 +105,14 @@ type agentClusterInstallPlatform struct {
 	Nutanix *nutanix.Platform `json:"nutanix,omitempty"`
 }
 
+// Used for overriding fields in the control plane object.
+// Note: we are avoiding pulling in the types.MachinePool to avoid any accidental serializations, we are being
+// explicit here on what we wish to override.
+type agentClusterInstallControlPlane struct {
+	// Allow overriding Fencing credentials
+	Fencing *types.Fencing `json:"fencing,omitempty"`
+}
+
 // Used to generate InstallConfig overrides for Assisted Service to apply
 type agentClusterInstallInstallConfigOverrides struct {
 	// FIPS configures https://www.nist.gov/itl/fips-general-information
@@ -127,6 +135,8 @@ type agentClusterInstallInstallConfigOverrides struct {
 	FeatureSet configv1.FeatureSet `json:"featureSet,omitempty"`
 	// Allow override of FeatureGates
 	FeatureGates []string `json:"featureGates,omitempty"`
+	// Allow overriding ControlPlane fields
+	ControlPlane *agentClusterInstallControlPlane `json:"controlPlane,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -256,6 +266,13 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		if len(installConfig.Config.FeatureGates) > 0 {
 			icOverridden = true
 			icOverrides.FeatureGates = installConfig.Config.FeatureGates
+		}
+
+		if installConfig.Config.ControlPlane.Fencing != nil && len(installConfig.Config.ControlPlane.Fencing.Credentials) > 0 {
+			icOverridden = true
+			icOverrides.ControlPlane = &agentClusterInstallControlPlane{
+				Fencing: installConfig.Config.ControlPlane.Fencing,
+			}
 		}
 
 		if installConfig.Config.Proxy != nil {
