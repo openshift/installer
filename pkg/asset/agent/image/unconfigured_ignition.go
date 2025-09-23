@@ -169,7 +169,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	rendezvousHostTemplateFile := ignition.FileFromString(fmt.Sprintf("%s.template", rendezvousHostEnvPath), "root", 0644, rendezvousHostTemplateData)
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostTemplateFile)
 
-	rendezvousIP, err := RetrieveRendezvousIP(agentConfig.Config, nil, nil)
+	rendezvousIP, err := RetrieveRendezvousIP(agentConfig.Config, nil, nmStateConfigs.Config)
 	if err == nil {
 		rendezvousHostData, err := getRendezvousHostEnvFromTemplate(rendezvousHostTemplateData, rendezvousIP)
 		if err != nil {
