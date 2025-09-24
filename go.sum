@@ -803,6 +803,8 @@ github.com/openshift/assisted-service v1.0.10-0.20230830164851-6573b5d7021d h1:C
 github.com/openshift/assisted-service v1.0.10-0.20230830164851-6573b5d7021d/go.mod h1:1J9kimemAdpLZVb3yLDEGmzwK0DXZ4/x6POeEog8A+4=
 github.com/openshift/assisted-service/api v0.0.0-20250625193139-474abcbea19a h1:P4RKYLRsXR+Ua755pZ9WklczEwWpV22XPpI8M+SDCK4=
 github.com/openshift/assisted-service/api v0.0.0-20250625193139-474abcbea19a/go.mod h1:tvE25aC7I07Uz2jUt7gH2E8+a1Rw4W7qtW6/EFb8l64=
+github.com/openshift/assisted-service/api v0.0.0-20250919003946-2b568e33e228 h1:VmFTtQBQQv545PI3w2UYOlza2AtqWymF29QxNSsVDjg=
+github.com/openshift/assisted-service/api v0.0.0-20250919003946-2b568e33e228/go.mod h1:wA7MaLcf/KoUl7fhB1bHBdhRBLjWPih90sHpxOV6ZLE=
 github.com/openshift/assisted-service/client v0.0.0-20241001055825-63e8b0d3ad63 h1:wYkC5wQIGjTORD3CVSNTs3dLaly9Vge/GrluayUMe+g=
 github.com/openshift/assisted-service/client v0.0.0-20241001055825-63e8b0d3ad63/go.mod h1:y+GNZgra/iQDYlacSjgscim8ldrSOMtV3jQaSKC3APc=
 github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63 h1:192yBdPaJccBdFhBVKgt4Nirm6X5IA+yhh54CnGd/n8=
