@@ -10,6 +10,8 @@ import (
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/aws/ratelimit"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/smithy-go/middleware"
@@ -41,7 +43,17 @@ type ConfigOptions []func(*config.LoadOptions) error
 // getDefaultConfigOptions returns the default settings for config.LoadOptions.
 func getDefaultConfigOptions() ConfigOptions {
 	return ConfigOptions{
-		config.WithRetryMaxAttempts(RetryMaxAttempts),
+		config.WithRetryer(func() aws.Retryer {
+			return retry.NewStandard(func(so *retry.StandardOptions) {
+				so.MaxAttempts = RetryMaxAttempts
+
+				// The SDK v2 introduces a new client-side rate-limiting mechanism in the standard retry.
+				// The default settings are not a good fit for the installer, especially the destroy code.
+				// Until we figure out a good settings, we disable it to align with SDK v1 behavior.
+				// Reference: https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-retries-timeouts.html
+				so.RateLimiter = ratelimit.None
+			})
+		}),
 		config.WithAPIOptions([]func(*middleware.Stack) error{
 			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerUserAgent, version.Raw),
 		}),
