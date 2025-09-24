@@ -11,6 +11,8 @@ import (
 	elbapiv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	awssession "github.com/openshift/installer/pkg/asset/installconfig/aws"
 )
 
 func (o *ClusterUninstaller) deleteElasticLoadBalancing(ctx context.Context, arn arn.ARN, logger logrus.FieldLogger) error {
@@ -111,7 +113,7 @@ func deleteElasticLoadBalancerListener(ctx context.Context, client *elbapiv2.Cli
 		ListenerArn: aws.String(arn.String()),
 	})
 	if err != nil {
-		if strings.Contains(HandleErrorCode(err), "ListenerNotFound") {
+		if awssession.IsListenerNotFound(err) {
 			logger.Info("Not found or already deleted")
 			return nil
 		}

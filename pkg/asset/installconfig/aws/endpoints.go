@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/efs"
 	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
 	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
@@ -20,34 +21,28 @@ import (
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
 
-// Partition identifiers.
-const (
-	AwsPartitionID      = "aws"        // AWS Standard partition.
-	AwsCnPartitionID    = "aws-cn"     // AWS China partition.
-	AwsUsGovPartitionID = "aws-us-gov" // AWS GovCloud (US) partition.
-	AwsIsoPartitionID   = "aws-iso"    // AWS ISO (US) partition.
-	AwsIsoBPartitionID  = "aws-iso-b"  // AWS ISOB (US) partition.
-)
-
 var (
-	// v1Tov2ServiceIDMap maps v1 service ID to its v2 equivalent.
-	v1Tov2ServiceIDMap = map[string]string{
-		"ec2":                      ec2.ServiceID,
-		"elasticloadbalancing":     elb.ServiceID,
-		"elasticloadbalancingv2":   elbv2.ServiceID,
-		"iam":                      iam.ServiceID,
-		"route53":                  route53.ServiceID,
-		"s3":                       s3.ServiceID,
-		"sts":                      sts.ServiceID,
-		"resourcegroupstaggingapi": resourcegroupstaggingapi.ServiceID,
-		"servicequotas":            servicequotas.ServiceID,
+	// In v1 sdk, a constant EndpointsID is exported in each service to look up the custom service endpoint.
+	// For example: https://github.com/aws/aws-sdk-go/blob/070853e88d22854d2355c2543d0958a5f76ad407/service/resourcegroupstaggingapi/service.go#L33-L34
+	// In v2 SDK, these constants are no longer available.
+	// For backwards compatibility, we copy those constants from the SDK v1 and map it to ServiceID in SDK v2.
+	compatServiceIDMap = map[string]string{
+		"ec2":                  ec2.ServiceID,
+		"elasticloadbalancing": elb.ServiceID,
+		"iam":                  iam.ServiceID,
+		"route53":              route53.ServiceID,
+		"s3":                   s3.ServiceID,
+		"sts":                  sts.ServiceID,
+		"tagging":              resourcegroupstaggingapi.ServiceID,
+		"servicequotas":        servicequotas.ServiceID,
+		"elasticfilesystem":    efs.ServiceID,
 	}
 )
 
-// resolveServiceID converts a service ID in the SDK from v1 to v2.
-// If the service ID is not recognized, return as-is.
+// resolveServiceID returns the serviceID for service endpoint resolvers to look up the endpoint URL.
+// If the serviceID is an SDKv1 identifier, this converts it SDKv2. Otherwise, return as-is.
 func resolveServiceID(serviceID string) string {
-	if v2serviceID, ok := v1Tov2ServiceIDMap[serviceID]; ok {
+	if v2serviceID, ok := compatServiceIDMap[serviceID]; ok {
 		return v2serviceID
 	}
 	return serviceID
@@ -68,8 +63,6 @@ type ServiceEndpointResolver struct {
 	// indexed by service ID.
 	endpoints       map[string]typesaws.ServiceEndpoint
 	endpointOptions EndpointOptions
-
-	logger logrus.FieldLogger
 }
 
 // NewServiceEndpointResolver returns a new ServiceEndpointResolver.
@@ -78,10 +71,23 @@ func NewServiceEndpointResolver(opts EndpointOptions) *ServiceEndpointResolver {
 	for _, endpoint := range opts.Endpoints {
 		endpointMap[resolveServiceID(endpoint.Name)] = endpoint
 	}
+
+	// In v1 SDK, elb and elbv2 uses the same identifier, thus the same endpoint.
+	// elbv2: https://github.com/aws/aws-sdk-go/blob/070853e88d22854d2355c2543d0958a5f76ad407/service/elbv2/service.go#L32-L33
+	// elb: https://github.com/aws/aws-sdk-go/blob/070853e88d22854d2355c2543d0958a5f76ad407/service/elb/service.go#L32-L33
+	// For backwards compatibility, if elbv2 endpoint is undefined, the elbv2 endpoint resolver should fall back to elb endpoint if any.
+	if _, ok := endpointMap[elbv2.ServiceID]; !ok {
+		if elbEp, ok := endpointMap[elb.ServiceID]; ok {
+			endpointMap[elbv2.ServiceID] = typesaws.ServiceEndpoint{
+				Name: elbv2.ServiceID,
+				URL:  elbEp.URL,
+			}
+		}
+	}
+
 	return &ServiceEndpointResolver{
 		endpoints:       endpointMap,
 		endpointOptions: opts,
-		logger:          logrus.StandardLogger(),
 	}
 }
 
@@ -98,11 +104,9 @@ func (s *EC2EndpointResolver) ResolveEndpoint(ctx context.Context, params ec2.En
 	// If custom endpoint not found, return default endpoint for the service.
 	endpoint, ok := s.endpoints[ec2.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom EC2 endpoint not found, using default endpoint")
 		return ec2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom EC2 endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return ec2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -121,11 +125,9 @@ func (s *IAMEndpointResolver) ResolveEndpoint(ctx context.Context, params iam.En
 	// If custom endpoint not found, return default endpoint for the service.
 	endpoint, ok := s.endpoints[iam.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom IAM endpoint not found, using default endpoint")
 		return iam.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom IAM endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return iam.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -144,11 +146,9 @@ func (s *STSEndpointResolver) ResolveEndpoint(ctx context.Context, params sts.En
 	// If custom endpoint not found, return default endpoint for the service
 	endpoint, ok := s.endpoints[sts.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom STS endpoint not found, using default endpoint")
 		return sts.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom STS endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return sts.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -167,11 +167,9 @@ func (s *Route53EndpointResolver) ResolveEndpoint(ctx context.Context, params ro
 	// If custom endpoint not found, return default endpoint for the service.
 	endpoint, ok := s.endpoints[route53.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom Route53 endpoint not found, using default endpoint")
 		return route53.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom Route53 endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return route53.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -190,14 +188,117 @@ func (s *ServiceQuotasEndpointResolver) ResolveEndpoint(ctx context.Context, par
 	// If custom endpoint not found, return default endpoint for the service.
 	endpoint, ok := s.endpoints[servicequotas.ServiceID]
 	if !ok {
-		s.logger.Debug("Custom Service Quotas endpoint not found, using default endpoint")
 		return servicequotas.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 	}
 
-	s.logger.Debugf("Custom Service Quotas endpoint found, using custom endpoint: %s", endpoint.URL)
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return servicequotas.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// S3EndpointResolver implements EndpointResolverV2 interface for S3.
+type S3EndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for S3.
+func (s *S3EndpointResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[s3.ServiceID]
+	if !ok {
+		return s3.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return s3.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// ELBEndpointResolver implements EndpointResolverV2 interface for ELB (classic).
+type ELBEndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for ELB.
+func (s *ELBEndpointResolver) ResolveEndpoint(ctx context.Context, params elb.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[elb.ServiceID]
+	if !ok {
+		return elb.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return elb.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// ELBV2EndpointResolver implements EndpointResolverV2 interface for ELBV2.
+type ELBV2EndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for ELBV2.
+func (s *ELBV2EndpointResolver) ResolveEndpoint(ctx context.Context, params elbv2.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[elbv2.ServiceID]
+	if !ok {
+		return elbv2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return elbv2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// TaggingEndpointResolver implements EndpointResolverV2 interface for Resource Groups Tagging API.
+type TaggingEndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for Resource Groups Tagging API.
+func (s *TaggingEndpointResolver) ResolveEndpoint(ctx context.Context, params resourcegroupstaggingapi.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[resourcegroupstaggingapi.ServiceID]
+	if !ok {
+		return resourcegroupstaggingapi.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return resourcegroupstaggingapi.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// EFSEndpointResolver implements EndpointResolverV2 interface for ElasticFileSystem (EFS).
+type EFSEndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for EFS.
+func (s *EFSEndpointResolver) ResolveEndpoint(ctx context.Context, params efs.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[efs.ServiceID]
+	if !ok {
+		return efs.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return efs.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 }
 
 // GetDefaultServiceEndpoint will get the default service endpoint for a service and region.
