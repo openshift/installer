@@ -20,6 +20,7 @@ func Test_lookup(t *testing.T) {
 	}, {
 		path: []string{"publish"},
 		desc: `Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+A "Mixed" strategy only applies to the "azure" platform, and requires "operatorPublishingStrategy" to be configured.
 When no strategy is specified, the strategy is "External".`,
 	}, {
 		path: []string{"publish", "unknown"},
