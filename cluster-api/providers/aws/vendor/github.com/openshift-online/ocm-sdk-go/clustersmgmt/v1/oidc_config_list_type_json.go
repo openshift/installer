@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalOidcConfigList(list []*OidcConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeOidcConfigList(list, stream)
+	WriteOidcConfigList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalOidcConfigList(list []*OidcConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeOidcConfigList writes a list of value of the 'oidc_config' type to
+// WriteOidcConfigList writes a list of value of the 'oidc_config' type to
 // the given stream.
-func writeOidcConfigList(list []*OidcConfig, stream *jsoniter.Stream) {
+func WriteOidcConfigList(list []*OidcConfig, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeOidcConfig(value, stream)
+		WriteOidcConfig(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalOidcConfigList(source interface{}) (items []*OidcConfig, err error
 	if err != nil {
 		return
 	}
-	items = readOidcConfigList(iterator)
+	items = ReadOidcConfigList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readOidcConfigList reads list of values of the ”oidc_config' type from
+// ReadOidcConfigList reads list of values of the ”oidc_config' type from
 // the given iterator.
-func readOidcConfigList(iterator *jsoniter.Iterator) []*OidcConfig {
+func ReadOidcConfigList(iterator *jsoniter.Iterator) []*OidcConfig {
 	list := []*OidcConfig{}
 	for iterator.ReadArray() {
-		item := readOidcConfig(iterator)
+		item := ReadOidcConfig(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -30,7 +30,7 @@ import (
 // MarshalAccessRequestStatus writes a value of the 'access_request_status' type to the given writer.
 func MarshalAccessRequestStatus(object *AccessRequestStatus, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAccessRequestStatus(object, stream)
+	WriteAccessRequestStatus(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAccessRequestStatus(object *AccessRequestStatus, writer io.Writer) e
 	return stream.Error
 }
 
-// writeAccessRequestStatus writes a value of the 'access_request_status' type to the given stream.
-func writeAccessRequestStatus(object *AccessRequestStatus, stream *jsoniter.Stream) {
+// WriteAccessRequestStatus writes a value of the 'access_request_status' type to the given stream.
+func WriteAccessRequestStatus(object *AccessRequestStatus, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -70,13 +70,13 @@ func UnmarshalAccessRequestStatus(source interface{}) (object *AccessRequestStat
 	if err != nil {
 		return
 	}
-	object = readAccessRequestStatus(iterator)
+	object = ReadAccessRequestStatus(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAccessRequestStatus reads a value of the 'access_request_status' type from the given iterator.
-func readAccessRequestStatus(iterator *jsoniter.Iterator) *AccessRequestStatus {
+// ReadAccessRequestStatus reads a value of the 'access_request_status' type from the given iterator.
+func ReadAccessRequestStatus(iterator *jsoniter.Iterator) *AccessRequestStatus {
 	object := &AccessRequestStatus{}
 	for {
 		field := iterator.ReadObject()

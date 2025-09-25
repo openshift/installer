@@ -63,7 +63,7 @@ func (o *ServiceDependency) Kind() string {
 	return ServiceDependencyKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *ServiceDependency) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -352,6 +352,29 @@ func (l *ServiceDependencyList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ServiceDependencyList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ServiceDependencyList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ServiceDependencyList) SetItems(items []*ServiceDependency) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ServiceDependencyList) Items() []*ServiceDependency {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

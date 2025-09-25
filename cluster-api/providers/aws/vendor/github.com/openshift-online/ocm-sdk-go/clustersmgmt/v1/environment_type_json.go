@@ -30,7 +30,7 @@ import (
 // MarshalEnvironment writes a value of the 'environment' type to the given writer.
 func MarshalEnvironment(object *Environment, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeEnvironment(object, stream)
+	WriteEnvironment(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalEnvironment(object *Environment, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeEnvironment writes a value of the 'environment' type to the given stream.
-func writeEnvironment(object *Environment, stream *jsoniter.Stream) {
+// WriteEnvironment writes a value of the 'environment' type to the given stream.
+func WriteEnvironment(object *Environment, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -88,13 +88,13 @@ func UnmarshalEnvironment(source interface{}) (object *Environment, err error) {
 	if err != nil {
 		return
 	}
-	object = readEnvironment(iterator)
+	object = ReadEnvironment(iterator)
 	err = iterator.Error
 	return
 }
 
-// readEnvironment reads a value of the 'environment' type from the given iterator.
-func readEnvironment(iterator *jsoniter.Iterator) *Environment {
+// ReadEnvironment reads a value of the 'environment' type from the given iterator.
+func ReadEnvironment(iterator *jsoniter.Iterator) *Environment {
 	object := &Environment{}
 	for {
 		field := iterator.ReadObject()

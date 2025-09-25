@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSelfCapabilityReviewResponseList(list []*SelfCapabilityReviewResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSelfCapabilityReviewResponseList(list, stream)
+	WriteSelfCapabilityReviewResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSelfCapabilityReviewResponseList(list []*SelfCapabilityReviewRespons
 	return stream.Error
 }
 
-// writeSelfCapabilityReviewResponseList writes a list of value of the 'self_capability_review_response' type to
+// WriteSelfCapabilityReviewResponseList writes a list of value of the 'self_capability_review_response' type to
 // the given stream.
-func writeSelfCapabilityReviewResponseList(list []*SelfCapabilityReviewResponse, stream *jsoniter.Stream) {
+func WriteSelfCapabilityReviewResponseList(list []*SelfCapabilityReviewResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeSelfCapabilityReviewResponse(value, stream)
+		WriteSelfCapabilityReviewResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSelfCapabilityReviewResponseList(source interface{}) (items []*Sel
 	if err != nil {
 		return
 	}
-	items = readSelfCapabilityReviewResponseList(iterator)
+	items = ReadSelfCapabilityReviewResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSelfCapabilityReviewResponseList reads list of values of the ”self_capability_review_response' type from
+// ReadSelfCapabilityReviewResponseList reads list of values of the ”self_capability_review_response' type from
 // the given iterator.
-func readSelfCapabilityReviewResponseList(iterator *jsoniter.Iterator) []*SelfCapabilityReviewResponse {
+func ReadSelfCapabilityReviewResponseList(iterator *jsoniter.Iterator) []*SelfCapabilityReviewResponse {
 	list := []*SelfCapabilityReviewResponse{}
 	for iterator.ReadArray() {
-		item := readSelfCapabilityReviewResponse(iterator)
+		item := ReadSelfCapabilityReviewResponse(iterator)
 		list = append(list, item)
 	}
 	return list

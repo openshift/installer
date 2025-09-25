@@ -61,7 +61,7 @@ func (o *Handoff) Kind() string {
 	return HandoffKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Handoff) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -292,6 +292,29 @@ func (l *HandoffList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *HandoffList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *HandoffList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *HandoffList) SetItems(items []*Handoff) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *HandoffList) Items() []*Handoff {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

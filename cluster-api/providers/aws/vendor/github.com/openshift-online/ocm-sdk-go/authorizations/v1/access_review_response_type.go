@@ -300,6 +300,29 @@ func (l *AccessReviewResponseList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AccessReviewResponseList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AccessReviewResponseList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AccessReviewResponseList) SetItems(items []*AccessReviewResponse) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AccessReviewResponseList) Items() []*AccessReviewResponse {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AccessReviewResponseList) Empty() bool {
 	return l == nil || len(l.items) == 0

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterOperatorInfoList(list []*ClusterOperatorInfo, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterOperatorInfoList(list, stream)
+	WriteClusterOperatorInfoList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterOperatorInfoList(list []*ClusterOperatorInfo, writer io.Write
 	return stream.Error
 }
 
-// writeClusterOperatorInfoList writes a list of value of the 'cluster_operator_info' type to
+// WriteClusterOperatorInfoList writes a list of value of the 'cluster_operator_info' type to
 // the given stream.
-func writeClusterOperatorInfoList(list []*ClusterOperatorInfo, stream *jsoniter.Stream) {
+func WriteClusterOperatorInfoList(list []*ClusterOperatorInfo, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeClusterOperatorInfo(value, stream)
+		WriteClusterOperatorInfo(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterOperatorInfoList(source interface{}) (items []*ClusterOpera
 	if err != nil {
 		return
 	}
-	items = readClusterOperatorInfoList(iterator)
+	items = ReadClusterOperatorInfoList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterOperatorInfoList reads list of values of the ”cluster_operator_info' type from
+// ReadClusterOperatorInfoList reads list of values of the ”cluster_operator_info' type from
 // the given iterator.
-func readClusterOperatorInfoList(iterator *jsoniter.Iterator) []*ClusterOperatorInfo {
+func ReadClusterOperatorInfoList(iterator *jsoniter.Iterator) []*ClusterOperatorInfo {
 	list := []*ClusterOperatorInfo{}
 	for iterator.ReadArray() {
-		item := readClusterOperatorInfo(iterator)
+		item := ReadClusterOperatorInfo(iterator)
 		list = append(list, item)
 	}
 	return list

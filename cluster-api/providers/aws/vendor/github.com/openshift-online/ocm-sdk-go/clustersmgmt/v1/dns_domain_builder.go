@@ -31,6 +31,7 @@ type DNSDomainBuilder struct {
 	id                  string
 	href                string
 	cluster             *ClusterLinkBuilder
+	clusterArch         ClusterArchitecture
 	organization        *OrganizationLinkBuilder
 	reservedAtTimestamp time.Time
 	userDefined         bool
@@ -79,15 +80,24 @@ func (b *DNSDomainBuilder) Cluster(value *ClusterLinkBuilder) *DNSDomainBuilder 
 	return b
 }
 
+// ClusterArch sets the value of the 'cluster_arch' attribute to the given value.
+//
+// Possible cluster architectures.
+func (b *DNSDomainBuilder) ClusterArch(value ClusterArchitecture) *DNSDomainBuilder {
+	b.clusterArch = value
+	b.bitmap_ |= 16
+	return b
+}
+
 // Organization sets the value of the 'organization' attribute to the given value.
 //
 // Definition of an organization link.
 func (b *DNSDomainBuilder) Organization(value *OrganizationLinkBuilder) *DNSDomainBuilder {
 	b.organization = value
 	if value != nil {
-		b.bitmap_ |= 16
+		b.bitmap_ |= 32
 	} else {
-		b.bitmap_ &^= 16
+		b.bitmap_ &^= 32
 	}
 	return b
 }
@@ -95,14 +105,14 @@ func (b *DNSDomainBuilder) Organization(value *OrganizationLinkBuilder) *DNSDoma
 // ReservedAtTimestamp sets the value of the 'reserved_at_timestamp' attribute to the given value.
 func (b *DNSDomainBuilder) ReservedAtTimestamp(value time.Time) *DNSDomainBuilder {
 	b.reservedAtTimestamp = value
-	b.bitmap_ |= 32
+	b.bitmap_ |= 64
 	return b
 }
 
 // UserDefined sets the value of the 'user_defined' attribute to the given value.
 func (b *DNSDomainBuilder) UserDefined(value bool) *DNSDomainBuilder {
 	b.userDefined = value
-	b.bitmap_ |= 64
+	b.bitmap_ |= 128
 	return b
 }
 
@@ -119,6 +129,7 @@ func (b *DNSDomainBuilder) Copy(object *DNSDomain) *DNSDomainBuilder {
 	} else {
 		b.cluster = nil
 	}
+	b.clusterArch = object.clusterArch
 	if object.organization != nil {
 		b.organization = NewOrganizationLink().Copy(object.organization)
 	} else {
@@ -141,6 +152,7 @@ func (b *DNSDomainBuilder) Build() (object *DNSDomain, err error) {
 			return
 		}
 	}
+	object.clusterArch = b.clusterArch
 	if b.organization != nil {
 		object.organization, err = b.organization.Build()
 		if err != nil {

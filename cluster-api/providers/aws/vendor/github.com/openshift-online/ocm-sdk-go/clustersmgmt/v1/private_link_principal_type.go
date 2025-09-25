@@ -50,7 +50,7 @@ func (o *PrivateLinkPrincipal) Kind() string {
 	return PrivateLinkPrincipalKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *PrivateLinkPrincipal) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -178,6 +178,29 @@ func (l *PrivateLinkPrincipalList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *PrivateLinkPrincipalList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *PrivateLinkPrincipalList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *PrivateLinkPrincipalList) SetItems(items []*PrivateLinkPrincipal) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *PrivateLinkPrincipalList) Items() []*PrivateLinkPrincipal {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

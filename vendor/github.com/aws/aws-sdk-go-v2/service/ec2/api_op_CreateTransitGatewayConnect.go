@@ -13,9 +13,10 @@ import (
 
 // Creates a Connect attachment from a specified transit gateway attachment. A
 // Connect attachment is a GRE-based tunnel attachment that you can use to
-// establish a connection between a transit gateway and an appliance. A Connect
-// attachment uses an existing VPC or Amazon Web Services Direct Connect attachment
-// as the underlying transport mechanism.
+// establish a connection between a transit gateway and an appliance.
+//
+// A Connect attachment uses an existing VPC or Amazon Web Services Direct Connect
+// attachment as the underlying transport mechanism.
 func (c *Client) CreateTransitGatewayConnect(ctx context.Context, params *CreateTransitGatewayConnectInput, optFns ...func(*Options)) (*CreateTransitGatewayConnectOutput, error) {
 	if params == nil {
 		params = &CreateTransitGatewayConnectInput{}
@@ -110,6 +111,9 @@ func (c *Client) addOperationCreateTransitGatewayConnectMiddlewares(stack *middl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -120,6 +124,15 @@ func (c *Client) addOperationCreateTransitGatewayConnectMiddlewares(stack *middl
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateTransitGatewayConnectValidationMiddleware(stack); err != nil {
@@ -141,6 +154,18 @@ func (c *Client) addOperationCreateTransitGatewayConnectMiddlewares(stack *middl
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

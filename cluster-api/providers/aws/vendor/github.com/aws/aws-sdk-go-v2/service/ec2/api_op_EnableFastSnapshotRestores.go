@@ -12,12 +12,15 @@ import (
 )
 
 // Enables fast snapshot restores for the specified snapshots in the specified
-// Availability Zones. You get the full benefit of fast snapshot restores after
-// they enter the enabled state. To get the current state of fast snapshot
-// restores, use DescribeFastSnapshotRestores . To disable fast snapshot restores,
-// use DisableFastSnapshotRestores . For more information, see Amazon EBS fast
-// snapshot restore (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-fast-snapshot-restore.html)
-// in the Amazon EBS User Guide.
+// Availability Zones.
+//
+// You get the full benefit of fast snapshot restores after they enter the enabled
+// state. To get the current state of fast snapshot restores, use DescribeFastSnapshotRestores. To disable
+// fast snapshot restores, use DisableFastSnapshotRestores.
+//
+// For more information, see [Amazon EBS fast snapshot restore] in the Amazon EBS User Guide.
+//
+// [Amazon EBS fast snapshot restore]: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-fast-snapshot-restore.html
 func (c *Client) EnableFastSnapshotRestores(ctx context.Context, params *EnableFastSnapshotRestoresInput, optFns ...func(*Options)) (*EnableFastSnapshotRestoresOutput, error) {
 	if params == nil {
 		params = &EnableFastSnapshotRestoresInput{}
@@ -115,6 +118,9 @@ func (c *Client) addOperationEnableFastSnapshotRestoresMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,6 +131,15 @@ func (c *Client) addOperationEnableFastSnapshotRestoresMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpEnableFastSnapshotRestoresValidationMiddleware(stack); err != nil {
@@ -146,6 +161,18 @@ func (c *Client) addOperationEnableFastSnapshotRestoresMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

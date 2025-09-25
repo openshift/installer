@@ -57,7 +57,7 @@ func readDecisionsListResponse(response *DecisionsListResponse, reader io.Reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readDecisionList(iterator)
+			items := ReadDecisionList(iterator)
 			response.items = &DecisionList{
 				items: items,
 			}

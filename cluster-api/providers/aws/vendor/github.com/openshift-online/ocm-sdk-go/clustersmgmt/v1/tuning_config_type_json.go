@@ -29,7 +29,7 @@ import (
 // MarshalTuningConfig writes a value of the 'tuning_config' type to the given writer.
 func MarshalTuningConfig(object *TuningConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTuningConfig(object, stream)
+	WriteTuningConfig(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalTuningConfig(object *TuningConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeTuningConfig writes a value of the 'tuning_config' type to the given stream.
-func writeTuningConfig(object *TuningConfig, stream *jsoniter.Stream) {
+// WriteTuningConfig writes a value of the 'tuning_config' type to the given stream.
+func WriteTuningConfig(object *TuningConfig, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalTuningConfig(source interface{}) (object *TuningConfig, err error)
 	if err != nil {
 		return
 	}
-	object = readTuningConfig(iterator)
+	object = ReadTuningConfig(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTuningConfig reads a value of the 'tuning_config' type from the given iterator.
-func readTuningConfig(iterator *jsoniter.Iterator) *TuningConfig {
+// ReadTuningConfig reads a value of the 'tuning_config' type from the given iterator.
+func ReadTuningConfig(iterator *jsoniter.Iterator) *TuningConfig {
 	object := &TuningConfig{}
 	for {
 		field := iterator.ReadObject()

@@ -28,6 +28,7 @@ type NodePoolStatusBuilder struct {
 	href            string
 	currentReplicas int
 	message         string
+	state           *NodePoolStateBuilder
 }
 
 // NewNodePoolStatus creates a new builder of 'node_pool_status' objects.
@@ -74,6 +75,19 @@ func (b *NodePoolStatusBuilder) Message(value string) *NodePoolStatusBuilder {
 	return b
 }
 
+// State sets the value of the 'state' attribute to the given value.
+//
+// Representation of the status of a node pool.
+func (b *NodePoolStatusBuilder) State(value *NodePoolStateBuilder) *NodePoolStatusBuilder {
+	b.state = value
+	if value != nil {
+		b.bitmap_ |= 32
+	} else {
+		b.bitmap_ &^= 32
+	}
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *NodePoolStatusBuilder) Copy(object *NodePoolStatus) *NodePoolStatusBuilder {
 	if object == nil {
@@ -84,6 +98,11 @@ func (b *NodePoolStatusBuilder) Copy(object *NodePoolStatus) *NodePoolStatusBuil
 	b.href = object.href
 	b.currentReplicas = object.currentReplicas
 	b.message = object.message
+	if object.state != nil {
+		b.state = NewNodePoolState().Copy(object.state)
+	} else {
+		b.state = nil
+	}
 	return b
 }
 
@@ -95,5 +114,11 @@ func (b *NodePoolStatusBuilder) Build() (object *NodePoolStatus, err error) {
 	object.bitmap_ = b.bitmap_
 	object.currentReplicas = b.currentReplicas
 	object.message = b.message
+	if b.state != nil {
+		object.state, err = b.state.Build()
+		if err != nil {
+			return
+		}
+	}
 	return
 }

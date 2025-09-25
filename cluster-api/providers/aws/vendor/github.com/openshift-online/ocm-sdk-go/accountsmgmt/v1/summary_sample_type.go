@@ -96,6 +96,29 @@ func (l *SummarySampleList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *SummarySampleList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SummarySampleList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SummarySampleList) SetItems(items []*SummarySample) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SummarySampleList) Items() []*SummarySample {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *SummarySampleList) Empty() bool {
 	return l == nil || len(l.items) == 0

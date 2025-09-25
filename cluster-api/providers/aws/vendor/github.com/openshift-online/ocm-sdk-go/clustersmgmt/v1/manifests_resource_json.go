@@ -57,7 +57,7 @@ func readManifestsListResponse(response *ManifestsListResponse, reader io.Reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readManifestList(iterator)
+			items := ReadManifestList(iterator)
 			response.items = &ManifestList{
 				items: items,
 			}

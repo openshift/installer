@@ -82,6 +82,29 @@ func (l *AwsEtcdEncryptionList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AwsEtcdEncryptionList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AwsEtcdEncryptionList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AwsEtcdEncryptionList) SetItems(items []*AwsEtcdEncryption) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AwsEtcdEncryptionList) Items() []*AwsEtcdEncryption {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AwsEtcdEncryptionList) Empty() bool {
 	return l == nil || len(l.items) == 0

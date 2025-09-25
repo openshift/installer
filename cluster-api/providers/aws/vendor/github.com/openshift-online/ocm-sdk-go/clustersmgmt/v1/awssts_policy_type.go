@@ -154,6 +154,29 @@ func (l *AWSSTSPolicyList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AWSSTSPolicyList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AWSSTSPolicyList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AWSSTSPolicyList) SetItems(items []*AWSSTSPolicy) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AWSSTSPolicyList) Items() []*AWSSTSPolicy {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AWSSTSPolicyList) Empty() bool {
 	return l == nil || len(l.items) == 0

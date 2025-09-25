@@ -30,7 +30,7 @@ import (
 // MarshalAzureOperatorsAuthenticationManagedIdentities writes a value of the 'azure_operators_authentication_managed_identities' type to the given writer.
 func MarshalAzureOperatorsAuthenticationManagedIdentities(object *AzureOperatorsAuthenticationManagedIdentities, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAzureOperatorsAuthenticationManagedIdentities(object, stream)
+	WriteAzureOperatorsAuthenticationManagedIdentities(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAzureOperatorsAuthenticationManagedIdentities(object *AzureOperators
 	return stream.Error
 }
 
-// writeAzureOperatorsAuthenticationManagedIdentities writes a value of the 'azure_operators_authentication_managed_identities' type to the given stream.
-func writeAzureOperatorsAuthenticationManagedIdentities(object *AzureOperatorsAuthenticationManagedIdentities, stream *jsoniter.Stream) {
+// WriteAzureOperatorsAuthenticationManagedIdentities writes a value of the 'azure_operators_authentication_managed_identities' type to the given stream.
+func WriteAzureOperatorsAuthenticationManagedIdentities(object *AzureOperatorsAuthenticationManagedIdentities, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -64,7 +64,7 @@ func writeAzureOperatorsAuthenticationManagedIdentities(object *AzureOperatorsAu
 				}
 				item := object.controlPlaneOperatorsManagedIdentities[key]
 				stream.WriteObjectField(key)
-				writeAzureControlPlaneManagedIdentity(item, stream)
+				WriteAzureControlPlaneManagedIdentity(item, stream)
 			}
 			stream.WriteObjectEnd()
 		} else {
@@ -93,7 +93,7 @@ func writeAzureOperatorsAuthenticationManagedIdentities(object *AzureOperatorsAu
 				}
 				item := object.dataPlaneOperatorsManagedIdentities[key]
 				stream.WriteObjectField(key)
-				writeAzureDataPlaneManagedIdentity(item, stream)
+				WriteAzureDataPlaneManagedIdentity(item, stream)
 			}
 			stream.WriteObjectEnd()
 		} else {
@@ -116,7 +116,7 @@ func writeAzureOperatorsAuthenticationManagedIdentities(object *AzureOperatorsAu
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("service_managed_identity")
-		writeAzureServiceManagedIdentity(object.serviceManagedIdentity, stream)
+		WriteAzureServiceManagedIdentity(object.serviceManagedIdentity, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -128,13 +128,13 @@ func UnmarshalAzureOperatorsAuthenticationManagedIdentities(source interface{}) 
 	if err != nil {
 		return
 	}
-	object = readAzureOperatorsAuthenticationManagedIdentities(iterator)
+	object = ReadAzureOperatorsAuthenticationManagedIdentities(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAzureOperatorsAuthenticationManagedIdentities reads a value of the 'azure_operators_authentication_managed_identities' type from the given iterator.
-func readAzureOperatorsAuthenticationManagedIdentities(iterator *jsoniter.Iterator) *AzureOperatorsAuthenticationManagedIdentities {
+// ReadAzureOperatorsAuthenticationManagedIdentities reads a value of the 'azure_operators_authentication_managed_identities' type from the given iterator.
+func ReadAzureOperatorsAuthenticationManagedIdentities(iterator *jsoniter.Iterator) *AzureOperatorsAuthenticationManagedIdentities {
 	object := &AzureOperatorsAuthenticationManagedIdentities{}
 	for {
 		field := iterator.ReadObject()
@@ -149,7 +149,7 @@ func readAzureOperatorsAuthenticationManagedIdentities(iterator *jsoniter.Iterat
 				if key == "" {
 					break
 				}
-				item := readAzureControlPlaneManagedIdentity(iterator)
+				item := ReadAzureControlPlaneManagedIdentity(iterator)
 				value[key] = item
 			}
 			object.controlPlaneOperatorsManagedIdentities = value
@@ -161,7 +161,7 @@ func readAzureOperatorsAuthenticationManagedIdentities(iterator *jsoniter.Iterat
 				if key == "" {
 					break
 				}
-				item := readAzureDataPlaneManagedIdentity(iterator)
+				item := ReadAzureDataPlaneManagedIdentity(iterator)
 				value[key] = item
 			}
 			object.dataPlaneOperatorsManagedIdentities = value
@@ -171,7 +171,7 @@ func readAzureOperatorsAuthenticationManagedIdentities(iterator *jsoniter.Iterat
 			object.managedIdentitiesDataPlaneIdentityUrl = value
 			object.bitmap_ |= 4
 		case "service_managed_identity":
-			value := readAzureServiceManagedIdentity(iterator)
+			value := ReadAzureServiceManagedIdentity(iterator)
 			object.serviceManagedIdentity = value
 			object.bitmap_ |= 8
 		default:

@@ -29,7 +29,7 @@ import (
 // MarshalAdminCredentials writes a value of the 'admin_credentials' type to the given writer.
 func MarshalAdminCredentials(object *AdminCredentials, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAdminCredentials(object, stream)
+	WriteAdminCredentials(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAdminCredentials(object *AdminCredentials, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAdminCredentials writes a value of the 'admin_credentials' type to the given stream.
-func writeAdminCredentials(object *AdminCredentials, stream *jsoniter.Stream) {
+// WriteAdminCredentials writes a value of the 'admin_credentials' type to the given stream.
+func WriteAdminCredentials(object *AdminCredentials, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalAdminCredentials(source interface{}) (object *AdminCredentials, er
 	if err != nil {
 		return
 	}
-	object = readAdminCredentials(iterator)
+	object = ReadAdminCredentials(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAdminCredentials reads a value of the 'admin_credentials' type from the given iterator.
-func readAdminCredentials(iterator *jsoniter.Iterator) *AdminCredentials {
+// ReadAdminCredentials reads a value of the 'admin_credentials' type from the given iterator.
+func ReadAdminCredentials(iterator *jsoniter.Iterator) *AdminCredentials {
 	object := &AdminCredentials{}
 	for {
 		field := iterator.ReadObject()

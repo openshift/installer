@@ -29,7 +29,7 @@ import (
 // MarshalOwner writes a value of the 'owner' type to the given writer.
 func MarshalOwner(object *Owner, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeOwner(object, stream)
+	WriteOwner(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalOwner(object *Owner, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeOwner writes a value of the 'owner' type to the given stream.
-func writeOwner(object *Owner, stream *jsoniter.Stream) {
+// WriteOwner writes a value of the 'owner' type to the given stream.
+func WriteOwner(object *Owner, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalOwner(source interface{}) (object *Owner, err error) {
 	if err != nil {
 		return
 	}
-	object = readOwner(iterator)
+	object = ReadOwner(iterator)
 	err = iterator.Error
 	return
 }
 
-// readOwner reads a value of the 'owner' type from the given iterator.
-func readOwner(iterator *jsoniter.Iterator) *Owner {
+// ReadOwner reads a value of the 'owner' type from the given iterator.
+func ReadOwner(iterator *jsoniter.Iterator) *Owner {
 	object := &Owner{}
 	for {
 		field := iterator.ReadObject()

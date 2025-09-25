@@ -30,7 +30,7 @@ import (
 // MarshalNotification writes a value of the 'notification' type to the given writer.
 func MarshalNotification(object *Notification, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeNotification(object, stream)
+	WriteNotification(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalNotification(object *Notification, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeNotification writes a value of the 'notification' type to the given stream.
-func writeNotification(object *Notification, stream *jsoniter.Stream) {
+// WriteNotification writes a value of the 'notification' type to the given stream.
+func WriteNotification(object *Notification, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -99,7 +99,7 @@ func writeNotification(object *Notification, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("incident")
-		writeIncident(object.incident, stream)
+		WriteIncident(object.incident, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -138,13 +138,13 @@ func UnmarshalNotification(source interface{}) (object *Notification, err error)
 	if err != nil {
 		return
 	}
-	object = readNotification(iterator)
+	object = ReadNotification(iterator)
 	err = iterator.Error
 	return
 }
 
-// readNotification reads a value of the 'notification' type from the given iterator.
-func readNotification(iterator *jsoniter.Iterator) *Notification {
+// ReadNotification reads a value of the 'notification' type from the given iterator.
+func ReadNotification(iterator *jsoniter.Iterator) *Notification {
 	object := &Notification{}
 	for {
 		field := iterator.ReadObject()
@@ -184,7 +184,7 @@ func readNotification(iterator *jsoniter.Iterator) *Notification {
 			object.deletedAt = value
 			object.bitmap_ |= 32
 		case "incident":
-			value := readIncident(iterator)
+			value := ReadIncident(iterator)
 			object.incident = value
 			object.bitmap_ |= 64
 		case "name":

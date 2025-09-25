@@ -40,6 +40,10 @@ type CloudFormationApiClient interface {
 		params *cloudformation.DescribeStackInstanceInput, optFns ...func(*cloudformation.Options),
 	) (*cloudformation.DescribeStackInstanceOutput, error)
 
+	DescribeStackResources(ctx context.Context,
+		params *cloudformation.DescribeStackResourcesInput, optFns ...func(*cloudformation.Options),
+	) (*cloudformation.DescribeStackResourcesOutput, error)
+
 	DescribeStackSetOperation(ctx context.Context,
 		params *cloudformation.DescribeStackSetOperationInput, optFns ...func(*cloudformation.Options),
 	) (*cloudformation.DescribeStackSetOperationOutput, error)

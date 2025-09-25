@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalControlPlaneUpgradePolicyList(list []*ControlPlaneUpgradePolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeControlPlaneUpgradePolicyList(list, stream)
+	WriteControlPlaneUpgradePolicyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalControlPlaneUpgradePolicyList(list []*ControlPlaneUpgradePolicy, wri
 	return stream.Error
 }
 
-// writeControlPlaneUpgradePolicyList writes a list of value of the 'control_plane_upgrade_policy' type to
+// WriteControlPlaneUpgradePolicyList writes a list of value of the 'control_plane_upgrade_policy' type to
 // the given stream.
-func writeControlPlaneUpgradePolicyList(list []*ControlPlaneUpgradePolicy, stream *jsoniter.Stream) {
+func WriteControlPlaneUpgradePolicyList(list []*ControlPlaneUpgradePolicy, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeControlPlaneUpgradePolicy(value, stream)
+		WriteControlPlaneUpgradePolicy(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalControlPlaneUpgradePolicyList(source interface{}) (items []*Contro
 	if err != nil {
 		return
 	}
-	items = readControlPlaneUpgradePolicyList(iterator)
+	items = ReadControlPlaneUpgradePolicyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readControlPlaneUpgradePolicyList reads list of values of the ”control_plane_upgrade_policy' type from
+// ReadControlPlaneUpgradePolicyList reads list of values of the ”control_plane_upgrade_policy' type from
 // the given iterator.
-func readControlPlaneUpgradePolicyList(iterator *jsoniter.Iterator) []*ControlPlaneUpgradePolicy {
+func ReadControlPlaneUpgradePolicyList(iterator *jsoniter.Iterator) []*ControlPlaneUpgradePolicy {
 	list := []*ControlPlaneUpgradePolicy{}
 	for iterator.ReadArray() {
-		item := readControlPlaneUpgradePolicy(iterator)
+		item := ReadControlPlaneUpgradePolicy(iterator)
 		list = append(list, item)
 	}
 	return list

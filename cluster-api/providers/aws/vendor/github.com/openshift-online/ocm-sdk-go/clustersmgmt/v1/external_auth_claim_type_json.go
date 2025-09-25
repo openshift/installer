@@ -29,7 +29,7 @@ import (
 // MarshalExternalAuthClaim writes a value of the 'external_auth_claim' type to the given writer.
 func MarshalExternalAuthClaim(object *ExternalAuthClaim, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeExternalAuthClaim(object, stream)
+	WriteExternalAuthClaim(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalExternalAuthClaim(object *ExternalAuthClaim, writer io.Writer) error
 	return stream.Error
 }
 
-// writeExternalAuthClaim writes a value of the 'external_auth_claim' type to the given stream.
-func writeExternalAuthClaim(object *ExternalAuthClaim, stream *jsoniter.Stream) {
+// WriteExternalAuthClaim writes a value of the 'external_auth_claim' type to the given stream.
+func WriteExternalAuthClaim(object *ExternalAuthClaim, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeExternalAuthClaim(object *ExternalAuthClaim, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("mappings")
-		writeTokenClaimMappings(object.mappings, stream)
+		WriteTokenClaimMappings(object.mappings, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0 && object.validationRules != nil
@@ -57,7 +57,7 @@ func writeExternalAuthClaim(object *ExternalAuthClaim, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("validation_rules")
-		writeTokenClaimValidationRuleList(object.validationRules, stream)
+		WriteTokenClaimValidationRuleList(object.validationRules, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -69,13 +69,13 @@ func UnmarshalExternalAuthClaim(source interface{}) (object *ExternalAuthClaim, 
 	if err != nil {
 		return
 	}
-	object = readExternalAuthClaim(iterator)
+	object = ReadExternalAuthClaim(iterator)
 	err = iterator.Error
 	return
 }
 
-// readExternalAuthClaim reads a value of the 'external_auth_claim' type from the given iterator.
-func readExternalAuthClaim(iterator *jsoniter.Iterator) *ExternalAuthClaim {
+// ReadExternalAuthClaim reads a value of the 'external_auth_claim' type from the given iterator.
+func ReadExternalAuthClaim(iterator *jsoniter.Iterator) *ExternalAuthClaim {
 	object := &ExternalAuthClaim{}
 	for {
 		field := iterator.ReadObject()
@@ -84,11 +84,11 @@ func readExternalAuthClaim(iterator *jsoniter.Iterator) *ExternalAuthClaim {
 		}
 		switch field {
 		case "mappings":
-			value := readTokenClaimMappings(iterator)
+			value := ReadTokenClaimMappings(iterator)
 			object.mappings = value
 			object.bitmap_ |= 1
 		case "validation_rules":
-			value := readTokenClaimValidationRuleList(iterator)
+			value := ReadTokenClaimValidationRuleList(iterator)
 			object.validationRules = value
 			object.bitmap_ |= 2
 		default:

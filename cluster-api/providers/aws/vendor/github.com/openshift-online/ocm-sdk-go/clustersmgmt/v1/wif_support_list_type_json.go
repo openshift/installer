@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalWifSupportList(list []*WifSupport, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifSupportList(list, stream)
+	WriteWifSupportList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalWifSupportList(list []*WifSupport, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeWifSupportList writes a list of value of the 'wif_support' type to
+// WriteWifSupportList writes a list of value of the 'wif_support' type to
 // the given stream.
-func writeWifSupportList(list []*WifSupport, stream *jsoniter.Stream) {
+func WriteWifSupportList(list []*WifSupport, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeWifSupport(value, stream)
+		WriteWifSupport(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalWifSupportList(source interface{}) (items []*WifSupport, err error
 	if err != nil {
 		return
 	}
-	items = readWifSupportList(iterator)
+	items = ReadWifSupportList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifSupportList reads list of values of the ”wif_support' type from
+// ReadWifSupportList reads list of values of the ”wif_support' type from
 // the given iterator.
-func readWifSupportList(iterator *jsoniter.Iterator) []*WifSupport {
+func ReadWifSupportList(iterator *jsoniter.Iterator) []*WifSupport {
 	list := []*WifSupport{}
 	for iterator.ReadArray() {
-		item := readWifSupport(iterator)
+		item := ReadWifSupport(iterator)
 		list = append(list, item)
 	}
 	return list

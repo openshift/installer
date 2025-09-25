@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalProductTechnologyPreviewList(list []*ProductTechnologyPreview, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeProductTechnologyPreviewList(list, stream)
+	WriteProductTechnologyPreviewList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalProductTechnologyPreviewList(list []*ProductTechnologyPreview, write
 	return stream.Error
 }
 
-// writeProductTechnologyPreviewList writes a list of value of the 'product_technology_preview' type to
+// WriteProductTechnologyPreviewList writes a list of value of the 'product_technology_preview' type to
 // the given stream.
-func writeProductTechnologyPreviewList(list []*ProductTechnologyPreview, stream *jsoniter.Stream) {
+func WriteProductTechnologyPreviewList(list []*ProductTechnologyPreview, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeProductTechnologyPreview(value, stream)
+		WriteProductTechnologyPreview(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalProductTechnologyPreviewList(source interface{}) (items []*Product
 	if err != nil {
 		return
 	}
-	items = readProductTechnologyPreviewList(iterator)
+	items = ReadProductTechnologyPreviewList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readProductTechnologyPreviewList reads list of values of the ”product_technology_preview' type from
+// ReadProductTechnologyPreviewList reads list of values of the ”product_technology_preview' type from
 // the given iterator.
-func readProductTechnologyPreviewList(iterator *jsoniter.Iterator) []*ProductTechnologyPreview {
+func ReadProductTechnologyPreviewList(iterator *jsoniter.Iterator) []*ProductTechnologyPreview {
 	list := []*ProductTechnologyPreview{}
 	for iterator.ReadArray() {
-		item := readProductTechnologyPreview(iterator)
+		item := ReadProductTechnologyPreview(iterator)
 		list = append(list, item)
 	}
 	return list

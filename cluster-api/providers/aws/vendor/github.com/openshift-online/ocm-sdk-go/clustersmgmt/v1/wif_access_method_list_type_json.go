@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalWifAccessMethodList(list []WifAccessMethod, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifAccessMethodList(list, stream)
+	WriteWifAccessMethodList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalWifAccessMethodList(list []WifAccessMethod, writer io.Writer) error 
 	return stream.Error
 }
 
-// writeWifAccessMethodList writes a list of value of the 'wif_access_method' type to
+// WriteWifAccessMethodList writes a list of value of the 'wif_access_method' type to
 // the given stream.
-func writeWifAccessMethodList(list []WifAccessMethod, stream *jsoniter.Stream) {
+func WriteWifAccessMethodList(list []WifAccessMethod, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalWifAccessMethodList(source interface{}) (items []WifAccessMethod, 
 	if err != nil {
 		return
 	}
-	items = readWifAccessMethodList(iterator)
+	items = ReadWifAccessMethodList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifAccessMethodList reads list of values of the ”wif_access_method' type from
+// ReadWifAccessMethodList reads list of values of the ”wif_access_method' type from
 // the given iterator.
-func readWifAccessMethodList(iterator *jsoniter.Iterator) []WifAccessMethod {
+func ReadWifAccessMethodList(iterator *jsoniter.Iterator) []WifAccessMethod {
 	list := []WifAccessMethod{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

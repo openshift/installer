@@ -227,6 +227,29 @@ func (l *NotificationDetailsRequestList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *NotificationDetailsRequestList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *NotificationDetailsRequestList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *NotificationDetailsRequestList) SetItems(items []*NotificationDetailsRequest) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *NotificationDetailsRequestList) Items() []*NotificationDetailsRequest {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *NotificationDetailsRequestList) Empty() bool {
 	return l == nil || len(l.items) == 0

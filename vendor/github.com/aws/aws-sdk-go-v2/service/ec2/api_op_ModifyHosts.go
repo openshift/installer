@@ -17,9 +17,11 @@ import (
 // that has auto-placement enabled. When auto-placement is disabled, you need to
 // provide a host ID to have the instance launch onto a specific host. If no host
 // ID is provided, the instance is launched onto a suitable host with
-// auto-placement enabled. You can also use this API action to modify a Dedicated
-// Host to support either multiple instance types in an instance family, or to
-// support a specific instance type only.
+// auto-placement enabled.
+//
+// You can also use this API action to modify a Dedicated Host to support either
+// multiple instance types in an instance family, or to support a specific instance
+// type only.
 func (c *Client) ModifyHosts(ctx context.Context, params *ModifyHostsInput, optFns ...func(*Options)) (*ModifyHostsOutput, error) {
 	if params == nil {
 		params = &ModifyHostsInput{}
@@ -46,28 +48,32 @@ type ModifyHostsInput struct {
 	AutoPlacement types.AutoPlacement
 
 	// Indicates whether to enable or disable host maintenance for the Dedicated Host.
-	// For more information, see Host maintenance (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-hosts-maintenance.html)
-	// in the Amazon EC2 User Guide.
+	// For more information, see [Host maintenance]in the Amazon EC2 User Guide.
+	//
+	// [Host maintenance]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-hosts-maintenance.html
 	HostMaintenance types.HostMaintenance
 
 	// Indicates whether to enable or disable host recovery for the Dedicated Host.
-	// For more information, see Host recovery (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-hosts-recovery.html)
-	// in the Amazon EC2 User Guide.
+	// For more information, see [Host recovery]in the Amazon EC2 User Guide.
+	//
+	// [Host recovery]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-hosts-recovery.html
 	HostRecovery types.HostRecovery
 
 	// Specifies the instance family to be supported by the Dedicated Host. Specify
 	// this parameter to modify a Dedicated Host to support multiple instance types
-	// within its current instance family. If you want to modify a Dedicated Host to
-	// support a specific instance type only, omit this parameter and specify
-	// InstanceType instead. You cannot specify InstanceFamily and InstanceType in the
-	// same request.
+	// within its current instance family.
+	//
+	// If you want to modify a Dedicated Host to support a specific instance type
+	// only, omit this parameter and specify InstanceType instead. You cannot specify
+	// InstanceFamily and InstanceType in the same request.
 	InstanceFamily *string
 
 	// Specifies the instance type to be supported by the Dedicated Host. Specify this
 	// parameter to modify a Dedicated Host to support only a specific instance type.
-	// If you want to modify a Dedicated Host to support multiple instance types in its
-	// current instance family, omit this parameter and specify InstanceFamily instead.
-	// You cannot specify InstanceType and InstanceFamily in the same request.
+	//
+	// If you want to modify a Dedicated Host to support multiple instance types in
+	// its current instance family, omit this parameter and specify InstanceFamily
+	// instead. You cannot specify InstanceType and InstanceFamily in the same request.
 	InstanceType *string
 
 	noSmithyDocumentSerde
@@ -131,6 +137,9 @@ func (c *Client) addOperationModifyHostsMiddlewares(stack *middleware.Stack, opt
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -141,6 +150,15 @@ func (c *Client) addOperationModifyHostsMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyHostsValidationMiddleware(stack); err != nil {
@@ -162,6 +180,18 @@ func (c *Client) addOperationModifyHostsMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

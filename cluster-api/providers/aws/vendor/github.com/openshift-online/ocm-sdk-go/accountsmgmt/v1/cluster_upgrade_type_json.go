@@ -30,7 +30,7 @@ import (
 // MarshalClusterUpgrade writes a value of the 'cluster_upgrade' type to the given writer.
 func MarshalClusterUpgrade(object *ClusterUpgrade, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterUpgrade(object, stream)
+	WriteClusterUpgrade(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalClusterUpgrade(object *ClusterUpgrade, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeClusterUpgrade writes a value of the 'cluster_upgrade' type to the given stream.
-func writeClusterUpgrade(object *ClusterUpgrade, stream *jsoniter.Stream) {
+// WriteClusterUpgrade writes a value of the 'cluster_upgrade' type to the given stream.
+func WriteClusterUpgrade(object *ClusterUpgrade, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -88,13 +88,13 @@ func UnmarshalClusterUpgrade(source interface{}) (object *ClusterUpgrade, err er
 	if err != nil {
 		return
 	}
-	object = readClusterUpgrade(iterator)
+	object = ReadClusterUpgrade(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterUpgrade reads a value of the 'cluster_upgrade' type from the given iterator.
-func readClusterUpgrade(iterator *jsoniter.Iterator) *ClusterUpgrade {
+// ReadClusterUpgrade reads a value of the 'cluster_upgrade' type from the given iterator.
+func ReadClusterUpgrade(iterator *jsoniter.Iterator) *ClusterUpgrade {
 	object := &ClusterUpgrade{}
 	for {
 		field := iterator.ReadObject()

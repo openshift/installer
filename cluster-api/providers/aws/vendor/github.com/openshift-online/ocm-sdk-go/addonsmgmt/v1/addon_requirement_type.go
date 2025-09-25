@@ -178,6 +178,29 @@ func (l *AddonRequirementList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AddonRequirementList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddonRequirementList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddonRequirementList) SetItems(items []*AddonRequirement) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddonRequirementList) Items() []*AddonRequirement {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AddonRequirementList) Empty() bool {
 	return l == nil || len(l.items) == 0

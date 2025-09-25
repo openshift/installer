@@ -110,6 +110,9 @@ func (c *Client) addOperationGetTransitGatewayPolicyTableAssociationsMiddlewares
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -120,6 +123,15 @@ func (c *Client) addOperationGetTransitGatewayPolicyTableAssociationsMiddlewares
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetTransitGatewayPolicyTableAssociationsValidationMiddleware(stack); err != nil {
@@ -143,16 +155,20 @@ func (c *Client) addOperationGetTransitGatewayPolicyTableAssociationsMiddlewares
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// GetTransitGatewayPolicyTableAssociationsAPIClient is a client that implements
-// the GetTransitGatewayPolicyTableAssociations operation.
-type GetTransitGatewayPolicyTableAssociationsAPIClient interface {
-	GetTransitGatewayPolicyTableAssociations(context.Context, *GetTransitGatewayPolicyTableAssociationsInput, ...func(*Options)) (*GetTransitGatewayPolicyTableAssociationsOutput, error)
-}
-
-var _ GetTransitGatewayPolicyTableAssociationsAPIClient = (*Client)(nil)
 
 // GetTransitGatewayPolicyTableAssociationsPaginatorOptions is the paginator
 // options for GetTransitGatewayPolicyTableAssociations
@@ -221,6 +237,9 @@ func (p *GetTransitGatewayPolicyTableAssociationsPaginator) NextPage(ctx context
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.GetTransitGatewayPolicyTableAssociations(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -239,6 +258,14 @@ func (p *GetTransitGatewayPolicyTableAssociationsPaginator) NextPage(ctx context
 
 	return result, nil
 }
+
+// GetTransitGatewayPolicyTableAssociationsAPIClient is a client that implements
+// the GetTransitGatewayPolicyTableAssociations operation.
+type GetTransitGatewayPolicyTableAssociationsAPIClient interface {
+	GetTransitGatewayPolicyTableAssociations(context.Context, *GetTransitGatewayPolicyTableAssociationsInput, ...func(*Options)) (*GetTransitGatewayPolicyTableAssociationsOutput, error)
+}
+
+var _ GetTransitGatewayPolicyTableAssociationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opGetTransitGatewayPolicyTableAssociations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

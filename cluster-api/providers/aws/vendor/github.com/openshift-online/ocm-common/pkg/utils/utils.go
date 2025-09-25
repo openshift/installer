@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/openshift-online/ocm-common/pkg/log"
 	"math/rand"
 	"time"
 )
@@ -44,4 +45,38 @@ func Truncate(s string, truncateLength int) string {
 		s = s[0:truncateLength]
 	}
 	return s
+}
+
+func GeneratePassword(length int) string {
+	lowercase := "abcdefghijklmnopqrstuvwxyz"
+	uppercase := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	digits := "0123456789"
+	special := "!#$^&*()-_=+{}|;:,.<>?/~`"
+	allChars := lowercase + uppercase + digits + special
+
+	var password []rune
+
+	password = append(password, rune(lowercase[randInt(len(lowercase))]))
+	password = append(password, rune(uppercase[randInt(len(uppercase))]))
+	password = append(password, rune(digits[randInt(len(digits))]))
+	password = append(password, rune(special[randInt(len(special))]))
+
+	for len(password) < length {
+		password = append(password, rune(allChars[randInt(len(allChars))]))
+	}
+
+	shuffleStrings(password)
+	log.LogInfo("Generate squid password finished.")
+	return string(password)
+}
+
+func randInt(max int) int {
+	return rand.Intn(max)
+}
+
+func shuffleStrings(s []rune) {
+	for i := len(s) - 1; i > 0; i-- {
+		j := randInt(i + 1)
+		s[i], s[j] = s[j], s[i]
+	}
 }

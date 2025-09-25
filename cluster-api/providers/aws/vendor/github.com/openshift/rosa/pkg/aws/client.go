@@ -33,6 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	cftypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
@@ -46,6 +47,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
+	"github.com/go-logr/logr"
 	awserr "github.com/openshift-online/ocm-common/pkg/aws/errors"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/sirupsen/logrus"
@@ -73,6 +75,9 @@ var (
 const (
 	AdminUserName        = "osdCcsAdmin"
 	OsdCcsAdminStackName = "osdCcsAdminIAMUser"
+
+	AssumeRolePolicyPrefix = "%s-assume-role"
+	AssumedRoleRolePrefix  = "assumed-role"
 
 	// Since CloudFormation stacks are region-dependent, we hard-code OCM's default region and
 	// then use it to ensure that the user always gets the stack from the same region.
@@ -119,7 +124,7 @@ type Client interface {
 	ValidateQuota() (bool, error)
 	TagUserRegion(username string, region string) error
 	GetClusterRegionTagForUser(username string) (string, error)
-	EnsureRole(reporter *reporter.Object, name string, policy string, permissionsBoundary string,
+	EnsureRole(reporter reporter.Logger, name string, policy string, permissionsBoundary string,
 		version string, tagList map[string]string, path string, managedPolicies bool) (string, error)
 	ValidateRoleNameAvailable(name string) (err error)
 	PutRolePolicy(roleName string, policyName string, policy string) error
@@ -127,7 +132,7 @@ type Client interface {
 		path string) (string, error)
 	EnsurePolicy(policyArn string, document string, version string, tagList map[string]string,
 		path string) (string, error)
-	AttachRolePolicy(reporter *reporter.Object, roleName string, policyARN string) error
+	AttachRolePolicy(reporter reporter.Logger, roleName string, policyARN string) error
 	CreateOpenIDConnectProvider(issuerURL string, thumbprint string, clusterID string) (string, error)
 	DeleteOpenIDConnectProvider(providerURL string) error
 	HasOpenIDConnectProvider(issuerURL string, partition string, accountID string) (bool, error)
@@ -143,7 +148,7 @@ type Client interface {
 	ListOidcProviders(targetClusterId string, config *cmv1.OidcConfig) ([]OidcProviderOutput, error)
 	GetRoleByARN(roleARN string) (iamtypes.Role, error)
 	GetRoleByName(roleName string) (iamtypes.Role, error)
-	DeleteOperatorRole(roles string, managedPolicies bool) error
+	DeleteOperatorRole(roles string, managedPolicies bool, deleteHcpSharedVpcPolicies bool) (map[string]bool, error)
 	GetOperatorRolesFromAccountByClusterID(
 		clusterID string,
 		credRequests map[string]*cmv1.STSOperator,
@@ -154,11 +159,12 @@ type Client interface {
 	GetAccountRoleForCurrentEnv(env string, roleName string) (Role, error)
 	GetAccountRoleForCurrentEnvWithPrefix(env string, rolePrefix string,
 		accountRolesMap map[string]AccountRole) ([]Role, error)
-	DeleteAccountRole(roleName string, prefix string, managedPolicies bool) error
+	DeleteAccountRole(roleName string, prefix string, managedPolicies bool, deleteHcpSharedVpcPolicies bool) error
 	DeleteOCMRole(roleARN string, managedPolicies bool) error
 	DeleteUserRole(roleName string) error
 	GetAccountRolePolicies(roles []string, prefix string) (map[string][]PolicyDetail, map[string][]PolicyDetail, error)
 	GetAttachedPolicy(role *string) ([]PolicyDetail, error)
+	GetPolicyDetailsFromRole(role *string) ([]*iam.GetPolicyOutput, error)
 	HasPermissionsBoundary(roleName string) (bool, error)
 	GetOpenIDConnectProviderByClusterIdTag(clusterID string) (string, error)
 	GetOpenIDConnectProviderByOidcEndpointUrl(oidcEndpointUrl string) (string, error)
@@ -216,6 +222,12 @@ type Client interface {
 	GetAccountRoleDefaultPolicy(roleName string, prefix string) (string, error)
 	GetOperatorRoleDefaultPolicy(roleName string) (string, error)
 	ListPolicyVersions(policyArn string) ([]PolicyVersion, error)
+	GetCallerIdentity() (*sts.GetCallerIdentityOutput, error)
+	CheckIfMachinePoolHasDedicatedHost(instanceIDs []string) (bool, error)
+	CreateStackWithParamsTags(ctx context.Context, cfTemplateBody, stackName string, stackParams, stackTags map[string]string) (*string, error)
+	GetCFStack(ctx context.Context, stackName string) (*cftypes.Stack, error)
+	DescribeCFStackResources(ctx context.Context, stackName string) (*[]cftypes.StackResource, error)
+	DeleteCFStack(ctx context.Context, stackName string) error
 }
 
 type AccessKeyGetter interface {
@@ -226,14 +238,16 @@ type AccessKeyGetter interface {
 // ClientBuilder contains the information and logic needed to build a new AWS client.
 type ClientBuilder struct {
 	logger              *logrus.Logger
+	capaLogger          *logr.Logger
 	region              *string
 	credentials         *AccessKey
 	useLocalCredentials bool
+	extCfg              *aws.Config
 }
 
 type awsClient struct {
 	cfg                 aws.Config
-	logger              *logrus.Logger
+	logger              *LoggerWrapper
 	iamClient           client.IamApiClient
 	ec2Client           client.Ec2ApiClient
 	orgClient           client.OrganizationsApiClient
@@ -247,7 +261,7 @@ type awsClient struct {
 	useLocalCredentials bool
 }
 
-func CreateNewClientOrExit(logger *logrus.Logger, reporter *reporter.Object) Client {
+func CreateNewClientOrExit(logger *logrus.Logger, reporter reporter.Logger) Client {
 	awsClient, err := NewClient().
 		Logger(logger).
 		Build()
@@ -266,7 +280,7 @@ func NewClient() *ClientBuilder {
 
 func New(
 	cfg aws.Config,
-	logger *logrus.Logger,
+	logger *LoggerWrapper,
 	iamClient client.IamApiClient,
 	ec2Client client.Ec2ApiClient,
 	orgClient client.OrganizationsApiClient,
@@ -297,9 +311,40 @@ func New(
 	}
 }
 
+// CheckIfMachinePoolHasDedicatedHost checks if any of the given instances are running on dedicated hosts
+func (c *awsClient) CheckIfMachinePoolHasDedicatedHost(instanceIDs []string) (bool, error) {
+	if len(instanceIDs) == 0 {
+		return false, nil
+	}
+
+	input := &ec2.DescribeInstancesInput{
+		InstanceIds: instanceIDs,
+	}
+
+	result, err := c.ec2Client.DescribeInstances(context.Background(), input)
+	if err != nil {
+		return false, fmt.Errorf("failed to describe instances: %w", err)
+	}
+
+	for _, reservation := range result.Reservations {
+		for _, instance := range reservation.Instances {
+			if instance.Placement != nil && instance.Placement.Tenancy == ec2types.TenancyHost {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
 // Logger sets the logger that the AWS client will use to send messages to the log.
 func (b *ClientBuilder) Logger(value *logrus.Logger) *ClientBuilder {
 	b.logger = value
+	return b
+}
+
+func (b *ClientBuilder) CapaLogger(value *logr.Logger) *ClientBuilder {
+	b.capaLogger = value
 	return b
 }
 
@@ -315,6 +360,11 @@ func (b *ClientBuilder) AccessKeys(value *AccessKey) *ClientBuilder {
 
 func (b *ClientBuilder) UseLocalCredentials(value bool) *ClientBuilder {
 	b.useLocalCredentials = value
+	return b
+}
+
+func (b *ClientBuilder) ExternalConfig(value *aws.Config) *ClientBuilder {
+	b.extCfg = value
 	return b
 }
 
@@ -382,7 +432,7 @@ func (b *ClientBuilder) BuildSessionWithOptions(logLevel aws.ClientLogMode) (aws
 func (b *ClientBuilder) BuildSession() (aws.Config, error) {
 	var logLevel aws.ClientLogMode
 	logLevel = 0
-	if b.logger.Level == logrus.DebugLevel {
+	if b.logger != nil && b.logger.Level == logrus.DebugLevel {
 		logLevel = aws.LogRequestWithBody | aws.LogResponseWithBody
 	}
 	// Convert the map to a slice of strings.
@@ -390,6 +440,10 @@ func (b *ClientBuilder) BuildSession() (aws.Config, error) {
 		throttleErrorCodes = append(throttleErrorCodes, code)
 	}
 	allErrorCodes = append(throttleErrorCodes, awserr.InvalidClientTokenID)
+
+	if b.extCfg != nil {
+		return *b.extCfg, nil
+	}
 
 	if b.credentials != nil {
 		return b.BuildSessionWithOptionsCredentials(b.credentials, logLevel)
@@ -401,7 +455,7 @@ func (b *ClientBuilder) BuildSession() (aws.Config, error) {
 // Build uses the information stored in the builder to build a new AWS client.
 func (b *ClientBuilder) Build() (Client, error) {
 	// Check parameters:
-	if b.logger == nil {
+	if b.logger == nil && b.capaLogger == nil {
 		return nil, fmt.Errorf("logger is mandatory")
 	}
 
@@ -430,7 +484,7 @@ func (b *ClientBuilder) Build() (Client, error) {
 	}
 
 	if profile.Profile() != "" {
-		b.logger.Debugf("Using AWS profile: %s", profile.Profile())
+		b.logger.Debug(fmt.Sprintf("Using AWS profile: %s", profile.Profile()))
 	}
 
 	// IAM Service is only available in "us-east-1", need to create specific config for it
@@ -443,7 +497,7 @@ func (b *ClientBuilder) Build() (Client, error) {
 	// Create and populate the object:
 	c := &awsClient{
 		cfg:                 cfg,
-		logger:              b.logger,
+		logger:              NewLoggerWrapper(b.logger, b.capaLogger),
 		iamClient:           iam.NewFromConfig(cfg),
 		ec2Client:           ec2.NewFromConfig(cfg),
 		orgClient:           organizations.NewFromConfig(cfg),
@@ -704,6 +758,14 @@ type Creator struct {
 	IsSTS      bool
 	IsGovcloud bool
 	Partition  string
+}
+
+func (c *awsClient) GetCallerIdentity() (*sts.GetCallerIdentityOutput, error) {
+	getCallerIdentityOutput, err := c.stsClient.GetCallerIdentity(context.Background(), &sts.GetCallerIdentityInput{})
+	if err != nil {
+		return nil, err
+	}
+	return getCallerIdentityOutput, nil
 }
 
 func (c *awsClient) GetCreator() (*Creator, error) {
@@ -1133,6 +1195,23 @@ const ReadOnlyAnonUserPolicyTemplate = `{
 	]
 }`
 
+const ReadOnlyAnonUserPolicyTemplateGovcloud = `{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "AllowReadPublicAccess",
+			"Principal": "*",
+			"Effect": "Allow",
+			"Action": [
+				"s3:GetObject"
+			],
+			"Resource": [
+				"arn:aws-us-gov:s3:::%s/*"
+			]
+		}
+	]
+}`
+
 func (c *awsClient) CreateS3Bucket(bucketName string, region string) error {
 	_, err := c.s3Client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
 		Bucket: aws.String(bucketName),
@@ -1167,9 +1246,14 @@ func (c *awsClient) CreateS3Bucket(bucketName string, region string) error {
 		return err
 	}
 
+	policyTemplate := ReadOnlyAnonUserPolicyTemplate
+	if fedramp.Enabled() {
+		policyTemplate = ReadOnlyAnonUserPolicyTemplateGovcloud
+	}
+
 	_, err = c.s3Client.PutBucketPolicy(context.TODO(), &s3.PutBucketPolicyInput{
 		Bucket: aws.String(bucketName),
-		Policy: aws.String(fmt.Sprintf(ReadOnlyAnonUserPolicyTemplate, bucketName)),
+		Policy: aws.String(fmt.Sprintf(policyTemplate, bucketName)),
 	})
 	if err != nil {
 		return err

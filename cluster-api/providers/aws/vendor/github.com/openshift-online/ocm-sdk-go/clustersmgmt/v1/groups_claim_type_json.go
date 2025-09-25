@@ -29,7 +29,7 @@ import (
 // MarshalGroupsClaim writes a value of the 'groups_claim' type to the given writer.
 func MarshalGroupsClaim(object *GroupsClaim, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGroupsClaim(object, stream)
+	WriteGroupsClaim(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGroupsClaim(object *GroupsClaim, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeGroupsClaim writes a value of the 'groups_claim' type to the given stream.
-func writeGroupsClaim(object *GroupsClaim, stream *jsoniter.Stream) {
+// WriteGroupsClaim writes a value of the 'groups_claim' type to the given stream.
+func WriteGroupsClaim(object *GroupsClaim, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalGroupsClaim(source interface{}) (object *GroupsClaim, err error) {
 	if err != nil {
 		return
 	}
-	object = readGroupsClaim(iterator)
+	object = ReadGroupsClaim(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGroupsClaim reads a value of the 'groups_claim' type from the given iterator.
-func readGroupsClaim(iterator *jsoniter.Iterator) *GroupsClaim {
+// ReadGroupsClaim reads a value of the 'groups_claim' type from the given iterator.
+func ReadGroupsClaim(iterator *jsoniter.Iterator) *GroupsClaim {
 	object := &GroupsClaim{}
 	for {
 		field := iterator.ReadObject()

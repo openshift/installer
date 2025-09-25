@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalPrivateLinkConfigurationList(list []*PrivateLinkConfiguration, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writePrivateLinkConfigurationList(list, stream)
+	WritePrivateLinkConfigurationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalPrivateLinkConfigurationList(list []*PrivateLinkConfiguration, write
 	return stream.Error
 }
 
-// writePrivateLinkConfigurationList writes a list of value of the 'private_link_configuration' type to
+// WritePrivateLinkConfigurationList writes a list of value of the 'private_link_configuration' type to
 // the given stream.
-func writePrivateLinkConfigurationList(list []*PrivateLinkConfiguration, stream *jsoniter.Stream) {
+func WritePrivateLinkConfigurationList(list []*PrivateLinkConfiguration, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writePrivateLinkConfiguration(value, stream)
+		WritePrivateLinkConfiguration(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalPrivateLinkConfigurationList(source interface{}) (items []*Private
 	if err != nil {
 		return
 	}
-	items = readPrivateLinkConfigurationList(iterator)
+	items = ReadPrivateLinkConfigurationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readPrivateLinkConfigurationList reads list of values of the ”private_link_configuration' type from
+// ReadPrivateLinkConfigurationList reads list of values of the ”private_link_configuration' type from
 // the given iterator.
-func readPrivateLinkConfigurationList(iterator *jsoniter.Iterator) []*PrivateLinkConfiguration {
+func ReadPrivateLinkConfigurationList(iterator *jsoniter.Iterator) []*PrivateLinkConfiguration {
 	list := []*PrivateLinkConfiguration{}
 	for iterator.ReadArray() {
-		item := readPrivateLinkConfiguration(iterator)
+		item := ReadPrivateLinkConfiguration(iterator)
 		list = append(list, item)
 	}
 	return list

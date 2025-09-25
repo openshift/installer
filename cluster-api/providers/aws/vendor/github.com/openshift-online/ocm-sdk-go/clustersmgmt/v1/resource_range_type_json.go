@@ -29,7 +29,7 @@ import (
 // MarshalResourceRange writes a value of the 'resource_range' type to the given writer.
 func MarshalResourceRange(object *ResourceRange, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeResourceRange(object, stream)
+	WriteResourceRange(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalResourceRange(object *ResourceRange, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeResourceRange writes a value of the 'resource_range' type to the given stream.
-func writeResourceRange(object *ResourceRange, stream *jsoniter.Stream) {
+// WriteResourceRange writes a value of the 'resource_range' type to the given stream.
+func WriteResourceRange(object *ResourceRange, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalResourceRange(source interface{}) (object *ResourceRange, err erro
 	if err != nil {
 		return
 	}
-	object = readResourceRange(iterator)
+	object = ReadResourceRange(iterator)
 	err = iterator.Error
 	return
 }
 
-// readResourceRange reads a value of the 'resource_range' type from the given iterator.
-func readResourceRange(iterator *jsoniter.Iterator) *ResourceRange {
+// ReadResourceRange reads a value of the 'resource_range' type from the given iterator.
+func ReadResourceRange(iterator *jsoniter.Iterator) *ResourceRange {
 	object := &ResourceRange{}
 	for {
 		field := iterator.ReadObject()

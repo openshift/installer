@@ -29,7 +29,7 @@ import (
 // MarshalGcpAuthentication writes a value of the 'gcp_authentication' type to the given writer.
 func MarshalGcpAuthentication(object *GcpAuthentication, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGcpAuthentication(object, stream)
+	WriteGcpAuthentication(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGcpAuthentication(object *GcpAuthentication, writer io.Writer) error
 	return stream.Error
 }
 
-// writeGcpAuthentication writes a value of the 'gcp_authentication' type to the given stream.
-func writeGcpAuthentication(object *GcpAuthentication, stream *jsoniter.Stream) {
+// WriteGcpAuthentication writes a value of the 'gcp_authentication' type to the given stream.
+func WriteGcpAuthentication(object *GcpAuthentication, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalGcpAuthentication(source interface{}) (object *GcpAuthentication, 
 	if err != nil {
 		return
 	}
-	object = readGcpAuthentication(iterator)
+	object = ReadGcpAuthentication(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGcpAuthentication reads a value of the 'gcp_authentication' type from the given iterator.
-func readGcpAuthentication(iterator *jsoniter.Iterator) *GcpAuthentication {
+// ReadGcpAuthentication reads a value of the 'gcp_authentication' type from the given iterator.
+func ReadGcpAuthentication(iterator *jsoniter.Iterator) *GcpAuthentication {
 	object := &GcpAuthentication{}
 	for {
 		field := iterator.ReadObject()

@@ -54,7 +54,7 @@ func (o *AWSInfrastructureAccessRole) Kind() string {
 	return AWSInfrastructureAccessRoleKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *AWSInfrastructureAccessRole) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -228,6 +228,29 @@ func (l *AWSInfrastructureAccessRoleList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *AWSInfrastructureAccessRoleList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AWSInfrastructureAccessRoleList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AWSInfrastructureAccessRoleList) SetItems(items []*AWSInfrastructureAccessRole) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AWSInfrastructureAccessRoleList) Items() []*AWSInfrastructureAccessRole {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

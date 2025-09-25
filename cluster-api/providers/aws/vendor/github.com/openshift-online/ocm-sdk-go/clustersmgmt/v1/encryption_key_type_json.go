@@ -29,7 +29,7 @@ import (
 // MarshalEncryptionKey writes a value of the 'encryption_key' type to the given writer.
 func MarshalEncryptionKey(object *EncryptionKey, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeEncryptionKey(object, stream)
+	WriteEncryptionKey(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalEncryptionKey(object *EncryptionKey, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeEncryptionKey writes a value of the 'encryption_key' type to the given stream.
-func writeEncryptionKey(object *EncryptionKey, stream *jsoniter.Stream) {
+// WriteEncryptionKey writes a value of the 'encryption_key' type to the given stream.
+func WriteEncryptionKey(object *EncryptionKey, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -83,13 +83,13 @@ func UnmarshalEncryptionKey(source interface{}) (object *EncryptionKey, err erro
 	if err != nil {
 		return
 	}
-	object = readEncryptionKey(iterator)
+	object = ReadEncryptionKey(iterator)
 	err = iterator.Error
 	return
 }
 
-// readEncryptionKey reads a value of the 'encryption_key' type from the given iterator.
-func readEncryptionKey(iterator *jsoniter.Iterator) *EncryptionKey {
+// ReadEncryptionKey reads a value of the 'encryption_key' type from the given iterator.
+func ReadEncryptionKey(iterator *jsoniter.Iterator) *EncryptionKey {
 	object := &EncryptionKey{}
 	for {
 		field := iterator.ReadObject()

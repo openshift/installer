@@ -57,7 +57,7 @@ func readIncidentsListResponse(response *IncidentsListResponse, reader io.Reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readIncidentList(iterator)
+			items := ReadIncidentList(iterator)
 			response.items = &IncidentList{
 				items: items,
 			}

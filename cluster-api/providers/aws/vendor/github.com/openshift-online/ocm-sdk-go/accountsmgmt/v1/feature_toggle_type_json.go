@@ -29,7 +29,7 @@ import (
 // MarshalFeatureToggle writes a value of the 'feature_toggle' type to the given writer.
 func MarshalFeatureToggle(object *FeatureToggle, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeFeatureToggle(object, stream)
+	WriteFeatureToggle(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalFeatureToggle(object *FeatureToggle, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeFeatureToggle writes a value of the 'feature_toggle' type to the given stream.
-func writeFeatureToggle(object *FeatureToggle, stream *jsoniter.Stream) {
+// WriteFeatureToggle writes a value of the 'feature_toggle' type to the given stream.
+func WriteFeatureToggle(object *FeatureToggle, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -83,13 +83,13 @@ func UnmarshalFeatureToggle(source interface{}) (object *FeatureToggle, err erro
 	if err != nil {
 		return
 	}
-	object = readFeatureToggle(iterator)
+	object = ReadFeatureToggle(iterator)
 	err = iterator.Error
 	return
 }
 
-// readFeatureToggle reads a value of the 'feature_toggle' type from the given iterator.
-func readFeatureToggle(iterator *jsoniter.Iterator) *FeatureToggle {
+// ReadFeatureToggle reads a value of the 'feature_toggle' type from the given iterator.
+func ReadFeatureToggle(iterator *jsoniter.Iterator) *FeatureToggle {
 	object := &FeatureToggle{}
 	for {
 		field := iterator.ReadObject()

@@ -29,7 +29,7 @@ import (
 // MarshalHypershiftConfig writes a value of the 'hypershift_config' type to the given writer.
 func MarshalHypershiftConfig(object *HypershiftConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeHypershiftConfig(object, stream)
+	WriteHypershiftConfig(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalHypershiftConfig(object *HypershiftConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeHypershiftConfig writes a value of the 'hypershift_config' type to the given stream.
-func writeHypershiftConfig(object *HypershiftConfig, stream *jsoniter.Stream) {
+// WriteHypershiftConfig writes a value of the 'hypershift_config' type to the given stream.
+func WriteHypershiftConfig(object *HypershiftConfig, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalHypershiftConfig(source interface{}) (object *HypershiftConfig, er
 	if err != nil {
 		return
 	}
-	object = readHypershiftConfig(iterator)
+	object = ReadHypershiftConfig(iterator)
 	err = iterator.Error
 	return
 }
 
-// readHypershiftConfig reads a value of the 'hypershift_config' type from the given iterator.
-func readHypershiftConfig(iterator *jsoniter.Iterator) *HypershiftConfig {
+// ReadHypershiftConfig reads a value of the 'hypershift_config' type from the given iterator.
+func ReadHypershiftConfig(iterator *jsoniter.Iterator) *HypershiftConfig {
 	object := &HypershiftConfig{}
 	for {
 		field := iterator.ReadObject()

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterAuthorizationResponseList(list []*ClusterAuthorizationResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterAuthorizationResponseList(list, stream)
+	WriteClusterAuthorizationResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterAuthorizationResponseList(list []*ClusterAuthorizationRespons
 	return stream.Error
 }
 
-// writeClusterAuthorizationResponseList writes a list of value of the 'cluster_authorization_response' type to
+// WriteClusterAuthorizationResponseList writes a list of value of the 'cluster_authorization_response' type to
 // the given stream.
-func writeClusterAuthorizationResponseList(list []*ClusterAuthorizationResponse, stream *jsoniter.Stream) {
+func WriteClusterAuthorizationResponseList(list []*ClusterAuthorizationResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeClusterAuthorizationResponse(value, stream)
+		WriteClusterAuthorizationResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterAuthorizationResponseList(source interface{}) (items []*Clu
 	if err != nil {
 		return
 	}
-	items = readClusterAuthorizationResponseList(iterator)
+	items = ReadClusterAuthorizationResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterAuthorizationResponseList reads list of values of the ”cluster_authorization_response' type from
+// ReadClusterAuthorizationResponseList reads list of values of the ”cluster_authorization_response' type from
 // the given iterator.
-func readClusterAuthorizationResponseList(iterator *jsoniter.Iterator) []*ClusterAuthorizationResponse {
+func ReadClusterAuthorizationResponseList(iterator *jsoniter.Iterator) []*ClusterAuthorizationResponse {
 	list := []*ClusterAuthorizationResponse{}
 	for iterator.ReadArray() {
-		item := readClusterAuthorizationResponse(iterator)
+		item := ReadClusterAuthorizationResponse(iterator)
 		list = append(list, item)
 	}
 	return list

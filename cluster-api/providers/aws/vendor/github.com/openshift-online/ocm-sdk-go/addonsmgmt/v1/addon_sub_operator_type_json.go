@@ -29,7 +29,7 @@ import (
 // MarshalAddonSubOperator writes a value of the 'addon_sub_operator' type to the given writer.
 func MarshalAddonSubOperator(object *AddonSubOperator, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonSubOperator(object, stream)
+	WriteAddonSubOperator(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddonSubOperator(object *AddonSubOperator, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddonSubOperator writes a value of the 'addon_sub_operator' type to the given stream.
-func writeAddonSubOperator(object *AddonSubOperator, stream *jsoniter.Stream) {
+// WriteAddonSubOperator writes a value of the 'addon_sub_operator' type to the given stream.
+func WriteAddonSubOperator(object *AddonSubOperator, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeAddonSubOperator(object *AddonSubOperator, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("addon")
-		writeAddon(object.addon, stream)
+		WriteAddon(object.addon, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -87,13 +87,13 @@ func UnmarshalAddonSubOperator(source interface{}) (object *AddonSubOperator, er
 	if err != nil {
 		return
 	}
-	object = readAddonSubOperator(iterator)
+	object = ReadAddonSubOperator(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonSubOperator reads a value of the 'addon_sub_operator' type from the given iterator.
-func readAddonSubOperator(iterator *jsoniter.Iterator) *AddonSubOperator {
+// ReadAddonSubOperator reads a value of the 'addon_sub_operator' type from the given iterator.
+func ReadAddonSubOperator(iterator *jsoniter.Iterator) *AddonSubOperator {
 	object := &AddonSubOperator{}
 	for {
 		field := iterator.ReadObject()
@@ -102,7 +102,7 @@ func readAddonSubOperator(iterator *jsoniter.Iterator) *AddonSubOperator {
 		}
 		switch field {
 		case "addon":
-			value := readAddon(iterator)
+			value := ReadAddon(iterator)
 			object.addon = value
 			object.bitmap_ |= 1
 		case "enabled":

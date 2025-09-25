@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNamespaceOwnershipPolicyList(list []NamespaceOwnershipPolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeNamespaceOwnershipPolicyList(list, stream)
+	WriteNamespaceOwnershipPolicyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalNamespaceOwnershipPolicyList(list []NamespaceOwnershipPolicy, writer
 	return stream.Error
 }
 
-// writeNamespaceOwnershipPolicyList writes a list of value of the 'namespace_ownership_policy' type to
+// WriteNamespaceOwnershipPolicyList writes a list of value of the 'namespace_ownership_policy' type to
 // the given stream.
-func writeNamespaceOwnershipPolicyList(list []NamespaceOwnershipPolicy, stream *jsoniter.Stream) {
+func WriteNamespaceOwnershipPolicyList(list []NamespaceOwnershipPolicy, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalNamespaceOwnershipPolicyList(source interface{}) (items []Namespac
 	if err != nil {
 		return
 	}
-	items = readNamespaceOwnershipPolicyList(iterator)
+	items = ReadNamespaceOwnershipPolicyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readNamespaceOwnershipPolicyList reads list of values of the ”namespace_ownership_policy' type from
+// ReadNamespaceOwnershipPolicyList reads list of values of the ”namespace_ownership_policy' type from
 // the given iterator.
-func readNamespaceOwnershipPolicyList(iterator *jsoniter.Iterator) []NamespaceOwnershipPolicy {
+func ReadNamespaceOwnershipPolicyList(iterator *jsoniter.Iterator) []NamespaceOwnershipPolicy {
 	list := []NamespaceOwnershipPolicy{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

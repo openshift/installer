@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalWifPoolList(list []*WifPool, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifPoolList(list, stream)
+	WriteWifPoolList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalWifPoolList(list []*WifPool, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeWifPoolList writes a list of value of the 'wif_pool' type to
+// WriteWifPoolList writes a list of value of the 'wif_pool' type to
 // the given stream.
-func writeWifPoolList(list []*WifPool, stream *jsoniter.Stream) {
+func WriteWifPoolList(list []*WifPool, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeWifPool(value, stream)
+		WriteWifPool(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalWifPoolList(source interface{}) (items []*WifPool, err error) {
 	if err != nil {
 		return
 	}
-	items = readWifPoolList(iterator)
+	items = ReadWifPoolList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifPoolList reads list of values of the ”wif_pool' type from
+// ReadWifPoolList reads list of values of the ”wif_pool' type from
 // the given iterator.
-func readWifPoolList(iterator *jsoniter.Iterator) []*WifPool {
+func ReadWifPoolList(iterator *jsoniter.Iterator) []*WifPool {
 	list := []*WifPool{}
 	for iterator.ReadArray() {
-		item := readWifPool(iterator)
+		item := ReadWifPool(iterator)
 		list = append(list, item)
 	}
 	return list

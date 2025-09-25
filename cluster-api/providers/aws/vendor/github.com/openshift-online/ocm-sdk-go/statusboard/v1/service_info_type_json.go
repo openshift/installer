@@ -29,7 +29,7 @@ import (
 // MarshalServiceInfo writes a value of the 'service_info' type to the given writer.
 func MarshalServiceInfo(object *ServiceInfo, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeServiceInfo(object, stream)
+	WriteServiceInfo(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalServiceInfo(object *ServiceInfo, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeServiceInfo writes a value of the 'service_info' type to the given stream.
-func writeServiceInfo(object *ServiceInfo, stream *jsoniter.Stream) {
+// WriteServiceInfo writes a value of the 'service_info' type to the given stream.
+func WriteServiceInfo(object *ServiceInfo, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalServiceInfo(source interface{}) (object *ServiceInfo, err error) {
 	if err != nil {
 		return
 	}
-	object = readServiceInfo(iterator)
+	object = ReadServiceInfo(iterator)
 	err = iterator.Error
 	return
 }
 
-// readServiceInfo reads a value of the 'service_info' type from the given iterator.
-func readServiceInfo(iterator *jsoniter.Iterator) *ServiceInfo {
+// ReadServiceInfo reads a value of the 'service_info' type from the given iterator.
+func ReadServiceInfo(iterator *jsoniter.Iterator) *ServiceInfo {
 	object := &ServiceInfo{}
 	for {
 		field := iterator.ReadObject()

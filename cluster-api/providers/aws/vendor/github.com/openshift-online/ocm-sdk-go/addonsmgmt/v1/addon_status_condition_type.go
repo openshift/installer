@@ -154,6 +154,29 @@ func (l *AddonStatusConditionList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AddonStatusConditionList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddonStatusConditionList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddonStatusConditionList) SetItems(items []*AddonStatusCondition) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddonStatusConditionList) Items() []*AddonStatusCondition {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AddonStatusConditionList) Empty() bool {
 	return l == nil || len(l.items) == 0

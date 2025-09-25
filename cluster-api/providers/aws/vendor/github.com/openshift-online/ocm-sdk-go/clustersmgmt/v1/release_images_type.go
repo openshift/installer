@@ -104,6 +104,29 @@ func (l *ReleaseImagesList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ReleaseImagesList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ReleaseImagesList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ReleaseImagesList) SetItems(items []*ReleaseImages) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ReleaseImagesList) Items() []*ReleaseImages {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ReleaseImagesList) Empty() bool {
 	return l == nil || len(l.items) == 0

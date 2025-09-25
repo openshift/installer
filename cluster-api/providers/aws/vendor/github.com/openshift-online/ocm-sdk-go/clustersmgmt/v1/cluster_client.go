@@ -351,6 +351,14 @@ func (c *ClusterClient) MetricQueries() *MetricQueriesClient {
 	)
 }
 
+// Migrations returns the target 'cluster_migrations' resource.
+func (c *ClusterClient) Migrations() *ClusterMigrationsClient {
+	return NewClusterMigrationsClient(
+		c.transport,
+		path.Join(c.path, "migrations"),
+	)
+}
+
 // NodePools returns the target 'node_pools' resource.
 //
 // Reference to the resource that manages the collection of node pool resources.

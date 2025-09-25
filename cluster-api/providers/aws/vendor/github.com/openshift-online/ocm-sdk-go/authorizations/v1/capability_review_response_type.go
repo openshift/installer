@@ -78,6 +78,29 @@ func (l *CapabilityReviewResponseList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *CapabilityReviewResponseList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *CapabilityReviewResponseList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *CapabilityReviewResponseList) SetItems(items []*CapabilityReviewResponse) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *CapabilityReviewResponseList) Items() []*CapabilityReviewResponse {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *CapabilityReviewResponseList) Empty() bool {
 	return l == nil || len(l.items) == 0

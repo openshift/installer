@@ -30,7 +30,7 @@ import (
 // MarshalCloudResource writes a value of the 'cloud_resource' type to the given writer.
 func MarshalCloudResource(object *CloudResource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeCloudResource(object, stream)
+	WriteCloudResource(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalCloudResource(object *CloudResource, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeCloudResource writes a value of the 'cloud_resource' type to the given stream.
-func writeCloudResource(object *CloudResource, stream *jsoniter.Stream) {
+// WriteCloudResource writes a value of the 'cloud_resource' type to the given stream.
+func WriteCloudResource(object *CloudResource, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -192,13 +192,13 @@ func UnmarshalCloudResource(source interface{}) (object *CloudResource, err erro
 	if err != nil {
 		return
 	}
-	object = readCloudResource(iterator)
+	object = ReadCloudResource(iterator)
 	err = iterator.Error
 	return
 }
 
-// readCloudResource reads a value of the 'cloud_resource' type from the given iterator.
-func readCloudResource(iterator *jsoniter.Iterator) *CloudResource {
+// ReadCloudResource reads a value of the 'cloud_resource' type from the given iterator.
+func ReadCloudResource(iterator *jsoniter.Iterator) *CloudResource {
 	object := &CloudResource{}
 	for {
 		field := iterator.ReadObject()

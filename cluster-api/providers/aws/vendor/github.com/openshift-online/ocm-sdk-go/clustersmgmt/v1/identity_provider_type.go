@@ -62,7 +62,7 @@ func (o *IdentityProvider) Kind() string {
 	return IdentityProviderKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *IdentityProvider) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -430,6 +430,29 @@ func (l *IdentityProviderList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *IdentityProviderList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *IdentityProviderList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *IdentityProviderList) SetItems(items []*IdentityProvider) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *IdentityProviderList) Items() []*IdentityProvider {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

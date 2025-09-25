@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonInstallationBillingList(list []*AddonInstallationBilling, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonInstallationBillingList(list, stream)
+	WriteAddonInstallationBillingList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddonInstallationBillingList(list []*AddonInstallationBilling, write
 	return stream.Error
 }
 
-// writeAddonInstallationBillingList writes a list of value of the 'addon_installation_billing' type to
+// WriteAddonInstallationBillingList writes a list of value of the 'addon_installation_billing' type to
 // the given stream.
-func writeAddonInstallationBillingList(list []*AddonInstallationBilling, stream *jsoniter.Stream) {
+func WriteAddonInstallationBillingList(list []*AddonInstallationBilling, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAddonInstallationBilling(value, stream)
+		WriteAddonInstallationBilling(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddonInstallationBillingList(source interface{}) (items []*AddonIn
 	if err != nil {
 		return
 	}
-	items = readAddonInstallationBillingList(iterator)
+	items = ReadAddonInstallationBillingList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonInstallationBillingList reads list of values of the ”addon_installation_billing' type from
+// ReadAddonInstallationBillingList reads list of values of the ”addon_installation_billing' type from
 // the given iterator.
-func readAddonInstallationBillingList(iterator *jsoniter.Iterator) []*AddonInstallationBilling {
+func ReadAddonInstallationBillingList(iterator *jsoniter.Iterator) []*AddonInstallationBilling {
 	list := []*AddonInstallationBilling{}
 	for iterator.ReadArray() {
-		item := readAddonInstallationBilling(iterator)
+		item := ReadAddonInstallationBilling(iterator)
 		list = append(list, item)
 	}
 	return list
