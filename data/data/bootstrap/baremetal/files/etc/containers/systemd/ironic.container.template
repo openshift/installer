@@ -22,6 +22,9 @@ Volume=ironic.volume:/shared:z
 Volume=/opt/openshift/tls/ironic/:/certs/vmedia/:z
 {{ end }}
 Volume=/opt/openshift/tls/ironic/:/certs/ironic/:z
+# Note we are limited here by conductor.file_url_allowed_paths in the ironic config
+Volume=/run/media/iso/images/pxeboot/vmlinuz:/var/lib/ironic/pxe/vmlinuz:ro
+SecurityLabelDisable=true
 Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
 Environment="PROVISIONING_INTERFACE=${PROVISIONING_INTERFACE}"
 Environment="OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120"
