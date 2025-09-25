@@ -3186,7 +3186,7 @@ func TestValidateTNF(t *testing.T) {
 			if tc.checkCompute {
 				err = validateCompute(&tc.config.Platform, tc.config.ControlPlane, tc.config.Compute, field.NewPath("compute")).ToAggregate()
 			} else {
-				err = validateFencingCredentials(tc.config).ToAggregate()
+				err = validateFencingCredentialsAndPlatform(tc.config).ToAggregate()
 			}
 
 			if tc.expected == "" {

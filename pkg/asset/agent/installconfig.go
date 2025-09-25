@@ -101,6 +101,10 @@ func (a *OptionalInstallConfig) validateInstallConfig(ctx context.Context, insta
 		allErrs = append(allErrs, err...)
 	}
 
+	if err := a.validateTwoNodeConfiguration(installConfig); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
 	return allErrs
 }
 
@@ -213,17 +217,117 @@ func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.Inst
 
 	return allErrs
 }
+func (a *OptionalInstallConfig) validateTwoNodeConfiguration(installConfig *types.InstallConfig) field.ErrorList {
+	// Progressive disclosure: Early exit if not a 2-node scenario
+	if installConfig.ControlPlane == nil ||
+		installConfig.ControlPlane.Replicas == nil ||
+		*installConfig.ControlPlane.Replicas != 2 {
+		return nil // Not a 2-node case, nothing to validate
+	}
+
+	var allErrs field.ErrorList
+
+	// Check for conflicting feature gates (only one should be enabled)
+	if err := a.validateTwoNodeFeatureGates(installConfig); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	// Validate TNA configuration if applicable
+	if err := a.validateTNAConfiguration(installConfig); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	// Validate TNF configuration if applicable
+	if err := a.validateTNFConfiguration(installConfig); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	// If we have errors from both TNA and TNF validation, then neither is properly configured
+	// This replaces the current "neither is valid" check
+	return allErrs
+}
+
+func (a *OptionalInstallConfig) validateTwoNodeFeatureGates(installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+
+	hasTNAFeature := installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter)
+	hasTNFFeature := installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica)
+
+	if hasTNAFeature && hasTNFFeature {
+		fieldPath := field.NewPath("featureSet")
+		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.FeatureSet,
+			"cannot enable both TNA (FeatureGateHighlyAvailableArbiter) and TNF (FeatureGateDualReplica) features simultaneously"))
+	}
+
+	return allErrs
+}
+
+func (a *OptionalInstallConfig) validateTNAConfiguration(installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+
+	// Only validate TNA if arbiter is configured
+	if installConfig.Arbiter == nil {
+		return nil
+	}
+
+	// Validate arbiter replicas count for TNA (should be exactly 1)
+	if *installConfig.Arbiter.Replicas != 1 {
+		fieldPath := field.NewPath("arbiter", "replicas")
+		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Arbiter.Replicas,
+			"TNA (Two Node with Arbiter) configuration requires exactly 1 arbiter replica"))
+	}
+	// At this point we know: 2 replicas + arbiter configured
+	// Check if TNA feature gate is enabled
+	if !installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
+		fieldPath := field.NewPath("arbiter")
+		allErrs = append(allErrs, field.Invalid(fieldPath, "configured",
+			"arbiter configuration requires FeatureGateHighlyAvailableArbiter to be enabled"))
+	}
+
+	return allErrs
+}
+
+func (a *OptionalInstallConfig) validateTNFConfiguration(installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+
+	// Only validate TNF if fencing is configured
+	if installConfig.ControlPlane.Fencing == nil ||
+		len(installConfig.ControlPlane.Fencing.Credentials) == 0 {
+		return nil
+	}
+
+	// At this point we know: 2 replicas + fencing configured
+	// Check if TNF feature gate is enabled
+	if !installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica) {
+		fieldPath := field.NewPath("controlPlane", "fencing")
+		allErrs = append(allErrs, field.Invalid(fieldPath, "configured",
+			"fencing configuration requires FeatureGateDualReplica to be enabled"))
+	}
+
+	// Validate fencing credentials count matches control plane replicas
+	if len(installConfig.ControlPlane.Fencing.Credentials) != 2 {
+		fieldPath := field.NewPath("controlPlane", "fencing", "credentials")
+		allErrs = append(allErrs, field.Invalid(fieldPath, len(installConfig.ControlPlane.Fencing.Credentials),
+			"must provide exactly 2 fencing credentials for 2 control plane replicas"))
+	}
+
+	return allErrs
+}
 
 func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 	var fieldPath *field.Path
 
 	if installConfig.ControlPlane != nil {
-		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 || (installConfig.Arbiter == nil && *installConfig.ControlPlane.Replicas == 2) {
+		// Basic boundary check for control plane replicas
+		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 {
 			fieldPath = field.NewPath("controlPlane", "replicas")
 			supportedControlPlaneRange := []string{"3", "1", "4", "5"}
 			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
-				supportedControlPlaneRange = append(supportedControlPlaneRange, "2")
+				supportedControlPlaneRange = append(supportedControlPlaneRange, "2 (with arbiter)")
+			}
+			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica) {
+				supportedControlPlaneRange = append(supportedControlPlaneRange, "2 (with fencing)")
 			}
 			allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Replicas, supportedControlPlaneRange))
 		}
