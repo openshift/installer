@@ -380,8 +380,7 @@ func validIpiInstallConfig() *types.InstallConfig {
 
 func TestConvertInstallConfig(t *testing.T) {
 	logger, hook := test.NewNullLogger()
-
-	vs := mock.NewSimulator("", "", 0, 0)
+	vs := mock.NewSimulator("8.0.2", "8.0.2", 24321653, 23825572)
 	sim, err := vs.StartSimulator()
 
 	if err != nil {

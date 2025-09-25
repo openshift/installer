@@ -224,7 +224,7 @@ func simulatorHelper(t *testing.T, vs *mock.VSphereSimulator) (*validationContex
 	t.Helper()
 
 	if vs == nil {
-		vs = mock.NewSimulator("", "", 0, 0)
+		vs = mock.NewSimulator("8.0.2", "8.0.2", 24321653, 23825572)
 	}
 	server, err := vs.StartSimulator()
 	if err != nil {
@@ -541,7 +541,7 @@ func Test_validateVCenterVersion(t *testing.T) {
 			expectErr: ``,
 		},
 		{
-			name: "vcf 9 is not supported",
+			name: "vcf 9 is supported",
 			VSphereSimulator: &mock.VSphereSimulator{
 				VCenterVersion: "9.0.0",
 				VCenterBuild:   24755230,
@@ -551,7 +551,7 @@ func Test_validateVCenterVersion(t *testing.T) {
 				EsxiBuild:   24859861,
 			},
 			fldPath:   field.NewPath("platform").Child("vsphere").Child("vcenters"),
-			expectErr: `platform.vsphere.vcenters: Required value: Unsupported or untested version of vSphere. Current vCenter version: 9.0.0, build: 24755230`,
+			expectErr: ``,
 		},
 		{
 			name: "vsphere 7 eol but csi support",
@@ -567,6 +567,19 @@ func Test_validateVCenterVersion(t *testing.T) {
 			expectErr: ``,
 		},
 		{
+			name: "vsphere 7 eol but no csi support",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "7.0.1",
+				// vCenter Server 7.0 Update 1d
+				VCenterBuild: 17491160,
+				EsxiVersion:  "7.0.1",
+				// ESXi 7.0.2 EP2
+				EsxiBuild: 18538813,
+			},
+			fldPath:   field.NewPath("platform").Child("vsphere").Child("vcenters"),
+			expectErr: `platform.vsphere.vcenters: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. Current vCenter version: 7.0.1, build: 17491160`,
+		},
+		{
 			name: "vsphere 6 eol",
 			VSphereSimulator: &mock.VSphereSimulator{
 				VCenterVersion: "6.7",
@@ -577,7 +590,7 @@ func Test_validateVCenterVersion(t *testing.T) {
 				EsxiBuild: 20497097,
 			},
 			fldPath:   field.NewPath("platform").Child("vsphere").Child("vcenters"),
-			expectErr: `platform.vsphere.vcenters: Required value: Unsupported or untested version of vSphere. Current vCenter version: 6.7, build: 24337536`,
+			expectErr: `platform.vsphere.vcenters: Required value: Unsupported version of vSphere. Current vCenter version: 6.7, build: 24337536`,
 		},
 	}
 
@@ -648,6 +661,19 @@ func Test_validateESXiVersion(t *testing.T) {
 			},
 			computeClusterPath: platform.FailureDomains[0].Topology.ComputeCluster,
 			expectErr:          ``,
+		},
+		{
+			name: "vsphere 7 eol but no csi support",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "7.0.2",
+				// vCenter Server 7.0 Update 2a
+				VCenterBuild: 17920168,
+				EsxiVersion:  "7.0.1",
+				// ESXi 7.0.2 EP2
+				EsxiBuild: 16850804,
+			},
+			computeClusterPath: platform.FailureDomains[0].Topology.ComputeCluster,
+			expectErr:          `[platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H0 is version: 7.0.1 and build: 16850804, platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H1 is version: 7.0.1 and build: 16850804, platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H2 is version: 7.0.1 and build: 16850804, platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H3 is version: 7.0.1 and build: 16850804, platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H4 is version: 7.0.1 and build: 16850804, platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H5 is version: 7.0.1 and build: 16850804]`,
 		},
 		{
 			name: "computeCluster not found",
