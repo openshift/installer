@@ -90,8 +90,7 @@ func FormatURLWithIntegrity(artifact *stream.Artifact) (string, error) {
 }
 
 // FindArtifactURL returns a single "disk" artifact type; this
-// mainly abstracts over e.g. `qcow2.xz` and `qcow2.gz`.  (FCOS uses
-// xz, RHCOS uses gzip right now)
+// mainly abstracts over different compression formats like `qcow2.xz` and `qcow2.gz`.
 //
 // Use this function only for cases where there's a single artifact type, such
 // as `qemu` and `openstack`.
