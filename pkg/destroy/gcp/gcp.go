@@ -85,13 +85,19 @@ type ClusterUninstaller struct {
 
 // New returns a GCP destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
+	privateZoneProjectID := metadata.ClusterPlatformMetadata.GCP.PrivateZoneProjectID
+	if privateZoneProjectID == "" {
+		// During upgrades, the PrivateZoneProjectID may not exist, default to ProjectID.
+		privateZoneProjectID = metadata.ClusterPlatformMetadata.GCP.ProjectID
+	}
+
 	return &ClusterUninstaller{
 		Logger:               logger,
 		Region:               metadata.ClusterPlatformMetadata.GCP.Region,
 		ProjectID:            metadata.ClusterPlatformMetadata.GCP.ProjectID,
 		NetworkProjectID:     metadata.ClusterPlatformMetadata.GCP.NetworkProjectID,
 		PrivateZoneDomain:    metadata.ClusterPlatformMetadata.GCP.PrivateZoneDomain,
-		PrivateZoneProjectID: metadata.ClusterPlatformMetadata.GCP.PrivateZoneProjectID,
+		PrivateZoneProjectID: privateZoneProjectID,
 		ClusterID:            metadata.InfraID,
 		cloudControllerUID:   gcptypes.CloudControllerUID(metadata.InfraID),
 		requestIDTracker:     newRequestIDTracker(),
