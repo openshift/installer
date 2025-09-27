@@ -20,8 +20,8 @@ import (
 // swagger:model disk-encryption
 type DiskEncryption struct {
 
-	// Enable/disable disk encryption on master nodes, worker nodes, or all nodes.
-	// Enum: [none all masters workers]
+	// Enable/disable disk encryption on master nodes, arbiter nodes, worker nodes, or a combination of them.
+	// Enum: [none masters arbiters workers masters,arbiters masters,workers arbiters,workers masters,arbiters,workers all]
 	EnableOn *string `json:"enable_on,omitempty"`
 
 	// The disk encryption mode to use.
@@ -55,7 +55,7 @@ var diskEncryptionTypeEnableOnPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["none","all","masters","workers"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["none","masters","arbiters","workers","masters,arbiters","masters,workers","arbiters,workers","masters,arbiters,workers","all"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -68,14 +68,29 @@ const (
 	// DiskEncryptionEnableOnNone captures enum value "none"
 	DiskEncryptionEnableOnNone string = "none"
 
-	// DiskEncryptionEnableOnAll captures enum value "all"
-	DiskEncryptionEnableOnAll string = "all"
-
 	// DiskEncryptionEnableOnMasters captures enum value "masters"
 	DiskEncryptionEnableOnMasters string = "masters"
 
+	// DiskEncryptionEnableOnArbiters captures enum value "arbiters"
+	DiskEncryptionEnableOnArbiters string = "arbiters"
+
 	// DiskEncryptionEnableOnWorkers captures enum value "workers"
 	DiskEncryptionEnableOnWorkers string = "workers"
+
+	// DiskEncryptionEnableOnMastersArbiters captures enum value "masters,arbiters"
+	DiskEncryptionEnableOnMastersArbiters string = "masters,arbiters"
+
+	// DiskEncryptionEnableOnMastersWorkers captures enum value "masters,workers"
+	DiskEncryptionEnableOnMastersWorkers string = "masters,workers"
+
+	// DiskEncryptionEnableOnArbitersWorkers captures enum value "arbiters,workers"
+	DiskEncryptionEnableOnArbitersWorkers string = "arbiters,workers"
+
+	// DiskEncryptionEnableOnMastersArbitersWorkers captures enum value "masters,arbiters,workers"
+	DiskEncryptionEnableOnMastersArbitersWorkers string = "masters,arbiters,workers"
+
+	// DiskEncryptionEnableOnAll captures enum value "all"
+	DiskEncryptionEnableOnAll string = "all"
 )
 
 // prop value enum
