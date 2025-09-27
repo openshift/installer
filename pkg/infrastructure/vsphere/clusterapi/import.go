@@ -199,12 +199,16 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	if vm == nil {
 		return fmt.Errorf("error VirtualMachine not found, managed object id: %s", info.Entity.Value)
 	}
+	// For cs10, we want to keep SecureBoot enabled if it's enabled in the OVA
+	// For other versions, we disable it to maintain backward compatibility
 	if secureBoot {
 		bootOptions, err := vm.BootOptions(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get boot options: %w", err)
 		}
-		bootOptions.EfiSecureBootEnabled = ptr.To(false)
+		
+		// Keep SecureBoot enabled for cs10
+		bootOptions.EfiSecureBootEnabled = ptr.To(true)
 
 		err = vm.SetBootOptions(ctx, bootOptions)
 		if err != nil {
