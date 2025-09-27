@@ -60,7 +60,7 @@ done
 For testing purpose, we can do the following to set up basic auth in addition
 or in stead of mTLS:
 
-1. Provision a Fedora VM
+1. Provision a Fedora VM    //FIX ME
 2. Install `dnf install golang-github-prometheus caddy`
 3. Configure prometheus to enable remote write (and limit retention to avoid
    filling up disk space). In `/etc/default/prometheus`, add the following

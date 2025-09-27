@@ -44,7 +44,7 @@ The controller execution system has been modified to:
 ### Installing RR
 
 ```bash
-# On Fedora/RHEL/CentOS
+# On RHEL/CentOS
 sudo dnf install rr
 
 # On Ubuntu/Debian

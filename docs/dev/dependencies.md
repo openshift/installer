@@ -4,7 +4,7 @@
 
 The following dependencies must be installed on your system before you can build the installer.
 
-### Fedora, CentOS, RHEL
+### CentOS, RHEL
 
 ```sh
 sudo dnf install gcc-c++ zip
