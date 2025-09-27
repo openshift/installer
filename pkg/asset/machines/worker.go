@@ -61,6 +61,7 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	powervsdefaults "github.com/openshift/installer/pkg/types/powervs/defaults"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -677,13 +678,19 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
-		case openstacktypes.Name:
+		case openstacktypes.Name, powervctypes.Name:
 			mpool := defaultOpenStackMachinePoolPlatform()
 			mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.OpenStack)
 			pool.Platform.OpenStack = &mpool
 
-			imageName, _ := rhcosutils.GenerateOpenStackImageName(rhcosImage.Compute, clusterID.InfraID)
+			var imageName string
+
+			if ic.Platform.Name() == openstacktypes.Name {
+				imageName, _ = rhcosutils.GenerateOpenStackImageName(rhcosImage.Compute, clusterID.InfraID)
+			} else {
+				imageName = ic.Platform.PowerVC.ImageName
+			}
 
 			sets, err := openstack.MachineSets(ctx, clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
 			if err != nil {

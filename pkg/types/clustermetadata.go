@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -37,6 +38,7 @@ type ClusterPlatformMetadata struct {
 	IBMCloud  *ibmcloud.Metadata  `json:"ibmcloud,omitempty"`
 	BareMetal *baremetal.Metadata `json:"baremetal,omitempty"`
 	Ovirt     *ovirt.Metadata     `json:"ovirt,omitempty"`
+	PowerVC   *powervc.Metadata   `json:"powervc,omitempty"`
 	PowerVS   *powervs.Metadata   `json:"powervs,omitempty"`
 	VSphere   *vsphere.Metadata   `json:"vsphere,omitempty"`
 	Nutanix   *nutanix.Metadata   `json:"nutanix,omitempty"`
@@ -51,6 +53,9 @@ func (cpm *ClusterPlatformMetadata) Platform() string {
 	}
 	if cpm.AWS != nil {
 		return aws.Name
+	}
+	if cpm.PowerVC != nil {
+		return powervc.Name
 	}
 	if cpm.OpenStack != nil {
 		return openstack.Name
