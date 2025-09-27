@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -31,6 +32,9 @@ const (
 
 	// RetryMaxAttempts is the total number of times an API request is retried.
 	RetryMaxAttempts = 25
+
+	// RetryBackoffDuration is max duration between retried attempts.
+	RetryBackoffDuration = 300 * time.Second
 )
 
 var (
@@ -46,6 +50,12 @@ func getDefaultConfigOptions() ConfigOptions {
 		config.WithRetryer(func() aws.Retryer {
 			return retry.NewStandard(func(so *retry.StandardOptions) {
 				so.MaxAttempts = RetryMaxAttempts
+
+				// The SDK v2 implements exponential backoff and jitter by default, but with 20s max backoff duration,
+				// which can cause the installer to aggressively retry.
+				// Thus, setting this to a higher value to allow more rest time and ease AWS API load.
+				// In SDK v1, this value was also 300s: https://github.com/hashicorp/terraform-provider-aws/issues/36837
+				so.Backoff = retry.NewExponentialJitterBackoff(RetryBackoffDuration)
 
 				// The SDK v2 introduces a new client-side rate-limiting mechanism in the standard retry.
 				// The default settings are not a good fit for the installer, especially the destroy code.
