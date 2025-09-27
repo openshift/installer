@@ -341,6 +341,30 @@ interfaces:
           stp-priority: 32`)).build(),
 			expected: "",
 		},
+		{
+			name: "networkConfig_invalid_mtu_string",
+			platform: platform().Hosts(
+				host1().NetworkConfig(`
+interfaces:
+- name: eth0
+  type: ethernet
+  state: up
+  mtu: "1500"
+`)).build(),
+			expected: `baremetal.hosts\[0\].networkConfig.interfaces\[0\].mtu: Invalid value: "1500": mtu must be an integer \(not quoted string\)`,
+		},
+		{
+			name: "networkConfig_valid_mtu_integer",
+			platform: platform().Hosts(
+				host1().NetworkConfig(`
+interfaces:
+- name: eth0
+  type: ethernet
+  state: up
+  mtu: 1500
+`)).build(),
+			expected: "",
+		},
 	}
 
 	for _, tc := range cases {
