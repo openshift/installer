@@ -66,3 +66,4 @@ openshift-install destroy cluster
 Note that you almost certainly also want to clean up the installer state files too, including `auth/`, `terraform.tfstate`, etc.
 The best thing to do is always pass the `--dir` argument to `create` and `destroy`.
 And if you want to reinstall from scratch, `rm -rf` the asset directory beforehand.
+just for test for open PR
