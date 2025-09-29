@@ -12,7 +12,7 @@ Type=oneshot
 # TODO: Remove after assisted-install-ui is productized.
 ExecStartPre=/bin/bash -c "podman tag $(podman load -q -i /run/media/iso/images/agent-installer-ui/agent-installer-ui.tar | awk '{print $NF}') localhost/agent-installer-ui:latest"
 ExecStart=/usr/local/bin/agent-extract-tui.sh
-TimeoutStartSec=0
+TimeoutStartSec=300s
 
 [Install]
 WantedBy=getty@tty1.service
