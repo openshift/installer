@@ -175,7 +175,7 @@ CRD_ROOT ?= $(MANIFEST_ROOT)/crd/bases
 WEBHOOK_ROOT ?= $(MANIFEST_ROOT)/webhook
 RBAC_ROOT ?= $(MANIFEST_ROOT)/rbac
 ASO_CRDS_PATH := $(MANIFEST_ROOT)/aso/crds.yaml
-ASO_VERSION := v2.11.0
+ASO_VERSION := $(shell go list -m -f '{{ .Version }}' github.com/Azure/azure-service-operator/v2)
 ASO_CRDS := resourcegroups.resources.azure.com natgateways.network.azure.com managedclusters.containerservice.azure.com managedclustersagentpools.containerservice.azure.com bastionhosts.network.azure.com virtualnetworks.network.azure.com virtualnetworkssubnets.network.azure.com privateendpoints.network.azure.com fleetsmembers.containerservice.azure.com extensions.kubernetesconfiguration.azure.com
 
 # Allow overriding the imagePullPolicy
@@ -358,7 +358,7 @@ create-management-cluster: $(KUSTOMIZE) $(ENVSUBST) $(KUBECTL) $(KIND) ## Create
 	./hack/create-custom-cloud-provider-config.sh
 
 	# Deploy CAPI
-	timeout --foreground 300 bash -c "until curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.10.7/cluster-api-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -; do sleep 5; done"
+	timeout --foreground 300 bash -c "until curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.10.4/cluster-api-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -; do sleep 5; done"
 
 	# Deploy CAAPH
 	timeout --foreground 300 bash -c "until curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api-addon-provider-helm/releases/download/v0.3.2/addon-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -; do sleep 5; done"
@@ -559,11 +559,9 @@ generate-e2e-templates: $(KUSTOMIZE) ## Generate Azure infrastructure templates 
 	$(KUSTOMIZE) build $(AZURE_TEMPLATES)/v1beta1/cluster-template-aks --load-restrictor LoadRestrictionsNone > $(AZURE_TEMPLATES)/v1beta1/cluster-template-aks.yaml
 
 .PHONY: generate-addons
-generate-addons: fetch-calico-manifests ## Generate metric-server, calico, calico-ipv6, azure cni v1 addons.
+generate-addons: fetch-calico-manifests $(ENVSUBST)
 	$(KUSTOMIZE) build $(ADDONS_DIR)/metrics-server > $(ADDONS_DIR)/metrics-server/metrics-server.yaml
-	$(KUSTOMIZE) build $(ADDONS_DIR)/calico > $(ADDONS_DIR)/calico.yaml
-	$(KUSTOMIZE) build $(ADDONS_DIR)/calico-ipv6 > $(ADDONS_DIR)/calico-ipv6.yaml
-	$(KUSTOMIZE) build $(ADDONS_DIR)/calico-dual-stack > $(ADDONS_DIR)/calico-dual-stack.yaml
+	$(KUSTOMIZE) build $(ADDONS_DIR)/calico | $(ENVSUBST) > $(ADDONS_DIR)/calico.yaml
 	$(KUSTOMIZE) build $(ADDONS_DIR)/azure-cni-v1 > $(ADDONS_DIR)/azure-cni-v1.yaml
 
 .PHONY: generate-aso-crds
@@ -572,13 +570,13 @@ generate-addons: fetch-calico-manifests ## Generate metric-server, calico, calic
 # envsubst, '$$$$' changes back to '$$' so ASO will not detect a diff and try to
 # update the CRDs for which we don't give it permission.
 generate-aso-crds: $(YQ)
+	$(YQ) e -i '.resources[] |= sub("^(https://github\.com/Azure/azure-service-operator/releases/download/)[^/]+(/.*_).*(\.yaml)$$", "$${1}$(ASO_VERSION)$${2}$(ASO_VERSION)$${3}")' $(ROOT_DIR)/config/aso/kustomization.yaml
 	curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/$(ASO_VERSION)/azureserviceoperator_customresourcedefinitions_$(ASO_VERSION).yaml" | \
 		$(YQ) e '. | select($(foreach name,$(ASO_CRDS),.metadata.name == "$(name)" or )false)' - | \
 		sed 's/\$$\$$/$$$$$$$$/g' \
 		> $(ASO_CRDS_PATH)
 
-# When updating this, make sure to also update the Windows image version in templates/addons/windows/calico.
-export CALICO_VERSION := v3.26.1
+export CALICO_VERSION := v3.29.4
 # Where all downloaded Calico manifests are unpacked and stored.
 CALICO_RELEASES := $(ARTIFACTS)/calico
 # Path to manifests directory in a Calico release archive.
@@ -770,7 +768,7 @@ kind-create-bootstrap: $(KUBECTL) ## Create capz kind bootstrap cluster.
 create-bootstrap: $(KUBECTL) ## Create bootstrap cluster (AKS or KIND) for CAPZ testing. Default is KIND.
 	@echo "Creating bootstrap cluster with type: $(MGMT_CLUSTER_TYPE)"
 	@if [ "$(MGMT_CLUSTER_TYPE)" == "aks" ]; then \
-		MGMT_CLUSTER_NAME="$${MGMT_CLUSTER_NAME:-capz-e2e-$(shell date +%s)}" \
+		MGMT_CLUSTER_NAME="$${MGMT_CLUSTER_NAME:-capz-e2e-$(RANDOM_SUFFIX)}" \
 		./scripts/aks-as-mgmt.sh || { echo "Failed to create AKS bootstrap cluster" >&2; exit 1; }; \
 	else \
 		KIND_CLUSTER_NAME=capz-e2e ./scripts/kind-with-registry.sh || { echo "Failed to create KIND bootstrap cluster" >&2; exit 1; }; \
