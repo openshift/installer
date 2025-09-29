@@ -31,9 +31,11 @@ type recordPrivateList struct {
 }
 
 type createDNSEntriesInput struct {
-	infra                clusterapi.InfraReadyInput
-	extLBFQDNIPv4        string
-	extLBFQDNIPv6        string
+	infra clusterapi.InfraReadyInput
+	/*
+		extLBFQDNIPv4        string
+		extLBFQDNIPv6        string
+	*/
 	publicIPv4           string
 	publicIPv6           string
 	resourceGroupName    string
@@ -162,8 +164,10 @@ func createDNSEntries(ctx context.Context, in *createDNSEntriesInput) error {
 	// CAPI currently creates a record called "apiserver" instead of "api" so creating "api" for the installer in the private zone.
 	if in.infra.InstallConfig.Config.PublicAPI() {
 		logrus.Debugf("XXX: apiExternalName=%s", apiExternalName)
-		logrus.Debugf("XXX: extLBFQDNIPv4=%s", in.extLBFQDNIPv4)
-		logrus.Debugf("XXX: extLBFQDNIPv6=%s", in.extLBFQDNIPv6)
+		/*
+			logrus.Debugf("XXX: extLBFQDNIPv4=%s", in.extLBFQDNIPv4)
+			logrus.Debugf("XXX: extLBFQDNIPv6=%s", in.extLBFQDNIPv6)
+		*/
 		// apiExternalNameV6 := fmt.Sprintf("v6-api.%s", infraID)
 		// if useIPv6 {
 		// 	cnameRecordName = apiExternalNameV6
