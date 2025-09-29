@@ -442,6 +442,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 		return err
 	}
 
+	// TODO: bump CCO version with AWS SDK v2.
 	client := ccaws.NewClientFromSession(ssn)
 
 	sParams := &ccaws.SimulateParams{

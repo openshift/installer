@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
@@ -18,6 +17,7 @@ import (
 	iamv1 "sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 )
 
 const (
@@ -97,21 +97,15 @@ var (
 // createIAMRoles creates the roles used by control-plane and compute nodes.
 func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.InstallConfig) error {
 	logrus.Infoln("Reconciling IAM roles for control-plane and compute nodes")
-	// Create the IAM Role with the aws sdk.
-	// https://docs.aws.amazon.com/sdk-for-go/api/service/iam/#IAM.CreateRole
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.Platform.AWS.Region))
-	if err != nil {
-		return fmt.Errorf("failed to load AWS config: %w", err)
-	}
 
-	client := iam.NewFromConfig(cfg, func(options *iam.Options) {
-		options.Region = ic.Config.Platform.AWS.Region
-		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "iam") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
+	platformAWS := ic.Config.Platform.AWS
+	client, err := awsconfig.NewIAMClient(ctx, awsconfig.EndpointOptions{
+		Region:    platformAWS.Region,
+		Endpoints: platformAWS.ServiceEndpoints,
 	})
+	if err != nil {
+		return fmt.Errorf("failed to create iam client: %w", err)
+	}
 
 	// Create the IAM Roles for master and workers.
 	tags := []iamtypes.Tag{
