@@ -120,6 +120,7 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+
 	// IPv4, IPv6, or both
 	// XXX: This implementation is not final - leaving here until
 	// enhancement fleshes out.
