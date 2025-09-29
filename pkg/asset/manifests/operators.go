@@ -334,6 +334,12 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 			PrismAPICallTimeout:    p.PrismAPICallTimeout,
 		}
 		newConfig.Platform.Nutanix = &newNutanixPlatform
+
+	case newConfig.Platform.BareMetal != nil:
+		for _, host := range newConfig.Platform.BareMetal.Hosts {
+			host.BMC.Username = ""
+			host.BMC.Password = ""
+		}
 	}
 
 	return yaml.Marshal(newConfig)
