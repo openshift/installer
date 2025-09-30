@@ -1565,7 +1565,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid dual-stack configuration, IPv6-primary",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Platform = types.Platform{GCP: &gcp.Platform{}}
 				c.Networking = validDualStackNetworkingConfig()
 				c.Networking.ServiceNetwork = []ipnet.IPNet{
 					c.Networking.ServiceNetwork[1],
