@@ -63,7 +63,7 @@ func Machines(ctx context.Context, clusterID string, config *types.InstallConfig
 		providerSpec, err := generateProviderSpec(
 			ctx,
 			clusterID,
-			config.Platform.OpenStack,
+			config,
 			mpool,
 			osImage,
 			role,
@@ -102,7 +102,7 @@ func Machines(ctx context.Context, clusterID string, config *types.InstallConfig
 	machineSetProviderSpec, err := generateProviderSpec(
 		ctx,
 		clusterID,
-		config.Platform.OpenStack,
+		config,
 		mpool,
 		osImage,
 		role,
@@ -167,10 +167,12 @@ func Machines(ctx context.Context, clusterID string, config *types.InstallConfig
 	return machines, controlPlaneMachineSet, nil
 }
 
-func generateProviderSpec(ctx context.Context, clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, failureDomain machinev1.OpenStackFailureDomain, configDrive *bool) (*machinev1alpha1.OpenstackProviderSpec, error) {
+func generateProviderSpec(ctx context.Context, clusterID string, config *types.InstallConfig, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, failureDomain machinev1.OpenStackFailureDomain, configDrive *bool) (*machinev1alpha1.OpenstackProviderSpec, error) {
 	var controlPlaneNetwork machinev1alpha1.NetworkParam
 	additionalNetworks := make([]machinev1alpha1.NetworkParam, 0, len(mpool.AdditionalNetworkIDs))
 	primarySubnet := ""
+
+	platform := config.Platform.OpenStack
 
 	if platform.ControlPlanePort != nil {
 		var subnets []machinev1alpha1.SubnetParam
@@ -229,6 +231,9 @@ func generateProviderSpec(ctx context.Context, clusterID string, platform *opens
 		securityGroups = append(securityGroups, machinev1alpha1.SecurityGroupParam{
 			UUID: sg,
 		})
+	}
+	if config.Platform.Name() == powervc.Name {
+		securityGroups = nil
 	}
 
 	serverGroupName := clusterID + "-" + role

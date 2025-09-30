@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure/openstack/preprovision"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/powervc"
 )
 
 // Provider defines the InfraProvider.
@@ -75,8 +76,10 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 				break
 			}
 		}
-		if err := preprovision.SecurityGroups(ctx, installConfig, infraID, mastersSchedulable); err != nil {
-			return fmt.Errorf("failed to create security groups: %w", err)
+		if installConfig.Config.Platform.Name() != powervc.Name {
+			if err := preprovision.SecurityGroups(ctx, installConfig, infraID, mastersSchedulable); err != nil {
+				return fmt.Errorf("failed to create security groups: %w", err)
+			}
 		}
 	}
 
