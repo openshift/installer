@@ -18,7 +18,7 @@ func (o *ClusterUninstaller) deleteElasticLoadBalancing(ctx context.Context, arn
 	if err != nil {
 		return err
 	}
-	logger = logger.WithField("id", id)
+	logger = logger.WithField("id", id).WithField("resourceType", resourceType)
 
 	switch resourceType {
 	case "loadbalancer":
