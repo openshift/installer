@@ -2,13 +2,20 @@ package vsphere
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/xml"
+	"io"
+	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/vapi/rest"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -45,6 +52,129 @@ func NewFinder(client *vim25.Client, all ...bool) Finder {
 // ClientLogout is empty function that logs out of vSphere clients
 type ClientLogout func()
 
+// SOAPResponse represents the structure of SOAP responses
+type SOAPResponse struct {
+	XMLName xml.Name `xml:"Envelope"`
+	Body    struct {
+		XMLName xml.Name `xml:"Body"`
+		Fault   *struct {
+			XMLName xml.Name `xml:"Fault"`
+			Code    struct {
+				XMLName xml.Name `xml:"faultcode"`
+				Value   string   `xml:",chardata"`
+			} `xml:"faultcode"`
+			Reason struct {
+				XMLName xml.Name `xml:"faultstring"`
+				Value   string   `xml:",chardata"`
+			} `xml:"faultstring"`
+			Detail struct {
+				XMLName xml.Name `xml:"detail"`
+				Content string   `xml:",chardata"`
+			} `xml:"detail"`
+		} `xml:"Fault,omitempty"`
+	} `xml:"Body"`
+}
+
+// CustomTransport wraps the default transport to intercept SOAP responses
+type CustomTransport struct {
+	http.RoundTripper
+}
+
+func (t *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Call the original transport
+	resp, err := t.RoundTripper.RoundTrip(req)
+	if err != nil {
+		return resp, err
+	}
+
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp, err
+	}
+	resp.Body.Close()
+
+	// Check if it's a SOAP response
+	if strings.Contains(string(body), "<?xml") && strings.Contains(string(body), "Envelope") {
+		logrus.Info("=== Intercepted SOAP Response ===")
+		logrus.Infof("URL: %s", req.URL.String())
+		logrus.Infof("Method: %s", req.Method)
+		logrus.Infof("Response Body:\n%s", string(body))
+
+		// Parse SOAP response for privilege errors
+		var soapResp SOAPResponse
+		if err := xml.Unmarshal(body, &soapResp); err == nil {
+			if soapResp.Body.Fault != nil {
+				logrus.Error("=== PRIVILEGE ERROR DETECTED ===")
+				logrus.Errorf("Fault Code: %s", soapResp.Body.Fault.Code.Value)
+				logrus.Errorf("Fault Reason: %s", soapResp.Body.Fault.Reason.Value)
+				logrus.Errorf("Fault Detail: %s", soapResp.Body.Fault.Detail.Content)
+				logrus.Error("================================")
+			}
+		}
+
+		// Check for privilege-related error messages in the response
+		bodyStr := string(body)
+		privilegeKeywords := []string{
+			"privilege", "permission", "access denied", "unauthorized", "forbidden",
+			"NoPermission", "InvalidLogin", "InvalidPrivilege",
+		}
+		for _, keyword := range privilegeKeywords {
+			if strings.Contains(strings.ToLower(bodyStr), strings.ToLower(keyword)) {
+				logrus.Errorf("=== POTENTIAL PRIVILEGE ISSUE DETECTED (keyword: %s) ===", keyword)
+				logrus.Error("Response contains privilege-related content")
+				logrus.Error("==================================================")
+				break
+			}
+		}
+
+				// Check specifically for missingPrivileges and format the message
+		if strings.Contains(bodyStr, "missingPrivileges") {
+			logrus.Error("=== MISSING PRIVILEGES DETECTED ===")
+			logrus.Error("The following SOAP response contains missingPrivileges information:")
+			
+			// Try to format the XML for better readability
+			var v interface{}
+			if err := xml.Unmarshal(body, &v); err == nil {
+				// Marshal with indentation for pretty formatting
+				prettyXML, err := xml.MarshalIndent(v, "", "  ")
+				if err == nil {
+					logrus.Errorf("Formatted Response:\n%s", string(prettyXML))
+				} else {
+					logrus.Errorf("Original Response:\n%s", bodyStr)
+				}
+			} else {
+				// If XML parsing fails, try a simpler approach - just add line breaks between tags
+				formatted := strings.ReplaceAll(bodyStr, "><", ">\n<")
+				formatted = strings.ReplaceAll(formatted, "<?xml", "<?xml\n")
+				logrus.Errorf("Formatted Response (simplified):\n%s", formatted)
+			}
+			logrus.Error("=== END MISSING PRIVILEGES ===")
+		}
+
+		logrus.Info("=== End SOAP Response ===")
+	}
+
+	// Create a new response with the body
+	resp.Body = io.NopCloser(strings.NewReader(string(body)))
+	return resp, nil
+}
+
+// createTransport creates a transport that respects the insecure flag
+func createTransport(insecure bool) http.RoundTripper {
+	if insecure {
+		// Create a transport that skips TLS verification
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		return transport
+	}
+	// Use default transport for secure connections
+	return http.DefaultTransport
+}
+
 // CreateVSphereClients creates the SOAP and REST client to access
 // different portions of the vSphere API
 // e.g. tags are only available in REST
@@ -57,24 +187,52 @@ func CreateVSphereClients(ctx context.Context, vcenter, username, password strin
 		return nil, nil, nil, err
 	}
 	u.User = url.UserPassword(username, password)
-	c, err := govmomi.NewClient(ctx, u, false)
 
+	// Create custom transport with SOAP response logging
+	customTransport := &CustomTransport{
+		RoundTripper: createTransport(false), // Always use secure connections in installer
+	}
+
+	// Create SOAP client with custom transport
+	soapClient := soap.NewClient(u, false)
+	soapClient.Transport = customTransport
+
+	// Create vim25 client
+	vimClient, err := vim25.NewClient(ctx, soapClient)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	restClient := rest.NewClient(c.Client)
+	// Create govmomi client
+	client := &govmomi.Client{
+		Client:         vimClient,
+		SessionManager: session.NewManager(vimClient),
+	}
+
+	// Login to vSphere
+	err = client.Login(ctx, u.User)
+	if err != nil {
+		// Check if it's a credential-related error
+		if strings.Contains(err.Error(), "incorrect user name or password") ||
+			strings.Contains(err.Error(), "Cannot complete login") ||
+			strings.Contains(err.Error(), "InvalidLogin") {
+			return nil, nil, nil, errors.Errorf("vSphere authentication failed - please verify username and password: %w", err)
+		}
+		return nil, nil, nil, errors.Errorf("unable to login to vCenter: %w", err)
+	}
+
+	restClient := rest.NewClient(client.Client)
 	err = restClient.Login(ctx, u.User)
 	if err != nil {
-		logoutErr := c.Logout(context.TODO())
+		logoutErr := client.Logout(context.TODO())
 		if logoutErr != nil {
 			err = logoutErr
 		}
 		return nil, nil, nil, err
 	}
 
-	return c.Client, restClient, func() {
-		c.Logout(context.TODO())
+	return client.Client, restClient, func() {
+		client.Logout(context.TODO())
 		restClient.Logout(context.TODO())
 	}, nil
 }
