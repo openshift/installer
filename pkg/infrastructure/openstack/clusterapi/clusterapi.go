@@ -55,12 +55,14 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		return fmt.Errorf("failed to tag VIP ports: %w", err)
 	}
 
-	// upload the corresponding image to Glance if rhcosImage contains a
-	// URL. If rhcosImage contains a name, then that points to an existing
-	// Glance image.
-	if imageName, isURL := rhcos.GenerateOpenStackImageName(rhcosImage, infraID); isURL {
-		if err := preprovision.UploadBaseImage(ctx, installConfig.Config.Platform.OpenStack.Cloud, rhcosImage, imageName, infraID, installConfig.Config.Platform.OpenStack.ClusterOSImageProperties); err != nil {
-			return fmt.Errorf("failed to upload the RHCOS base image: %w", err)
+	if installConfig.Config.Platform.Name() != powervc.Name {
+		// upload the corresponding image to Glance if rhcosImage contains a
+		// URL. If rhcosImage contains a name, then that points to an existing
+		// Glance image.
+		if imageName, isURL := rhcos.GenerateOpenStackImageName(rhcosImage, infraID); isURL {
+			if err := preprovision.UploadBaseImage(ctx, installConfig.Config.Platform.OpenStack.Cloud, rhcosImage, imageName, infraID, installConfig.Config.Platform.OpenStack.ClusterOSImageProperties); err != nil {
+				return fmt.Errorf("failed to upload the RHCOS base image: %w", err)
+			}
 		}
 	}
 
@@ -143,7 +145,9 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		installConfig    = in.InstallConfig
 	)
 
-	ignShim, err := preprovision.UploadIgnitionAndBuildShim(ctx, installConfig.Config.Platform.OpenStack.Cloud, infraID, installConfig.Config.Proxy, bootstrapIgnData)
+	useGlance := installConfig.Config.Platform.Name() == openstack.Name
+
+	ignShim, err := preprovision.UploadIgnitionAndBuildShim(ctx, installConfig.Config.Platform.OpenStack.Cloud, infraID, installConfig.Config.Proxy, bootstrapIgnData, useGlance)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload and build ignition shim: %w", err)
 	}
