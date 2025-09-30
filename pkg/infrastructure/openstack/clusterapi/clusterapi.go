@@ -75,8 +75,10 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 				break
 			}
 		}
-		if err := preprovision.SecurityGroups(ctx, installConfig, infraID, mastersSchedulable); err != nil {
-			return fmt.Errorf("failed to create security groups: %w", err)
+		if installConfig.Config.Platform.Name() == openstack.Name {
+			if err := preprovision.SecurityGroups(ctx, installConfig, infraID, mastersSchedulable); err != nil {
+				return fmt.Errorf("failed to create security groups: %w", err)
+			}
 		}
 	}
 

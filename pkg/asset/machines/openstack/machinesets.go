@@ -66,7 +66,7 @@ func MachineSets(ctx context.Context, clusterID string, config *types.InstallCon
 		providerSpec, err := generateProviderSpec(
 			ctx,
 			clusterID,
-			config.Platform.OpenStack,
+			config,
 			mpool,
 			osImage,
 			role,
