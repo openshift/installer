@@ -130,7 +130,7 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 				}
 			} else {
 				tags := make(map[string]string, len(response.Tags))
-				for _, tag := range user.Tags {
+				for _, tag := range response.Tags {
 					tags[*tag.Key] = *tag.Value
 				}
 				if tagMatch(search.filters, tags) {
