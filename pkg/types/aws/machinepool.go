@@ -1,5 +1,9 @@
 package aws
 
+import (
+	capav1beta2 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+)
+
 // MachinePool stores the configuration for a machine pool installed
 // on AWS.
 type MachinePool struct {
@@ -48,12 +52,17 @@ type MachinePool struct {
 	// +kubebuilder:validation:MaxItems=10
 	// +optional
 	AdditionalSecurityGroupIDs []string `json:"additionalSecurityGroupIDs,omitempty"`
+
+	DataDisks []capav1beta2.Volume `json:"dataDisks,omitempty"`
 }
 
 // Set sets the values from `required` to `a`.
 func (a *MachinePool) Set(required *MachinePool) {
 	if required == nil || a == nil {
 		return
+	}
+	if len(required.DataDisks) > 0 {
+		a.DataDisks = required.DataDisks
 	}
 
 	if len(required.Zones) > 0 {
