@@ -5,13 +5,12 @@
 package filedesc
 
 import (
-	"fmt"
 	"sync"
 
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/internal/genid"
 	"google.golang.org/protobuf/internal/strs"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	pref "google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // fileRaw is a data struct used when initializing a file descriptor from
@@ -96,10 +95,9 @@ func (fd *File) unmarshalSeed(b []byte) {
 	sb := getBuilder()
 	defer putBuilder(sb)
 
-	var prevField protoreflect.FieldNumber
+	var prevField pref.FieldNumber
 	var numEnums, numMessages, numExtensions, numServices int
 	var posEnums, posMessages, posExtensions, posServices int
-	var options []byte
 	b0 := b
 	for len(b) > 0 {
 		num, typ, n := protowire.ConsumeTag(b)
@@ -112,20 +110,16 @@ func (fd *File) unmarshalSeed(b []byte) {
 			case genid.FileDescriptorProto_Syntax_field_number:
 				switch string(v) {
 				case "proto2":
-					fd.L1.Syntax = protoreflect.Proto2
+					fd.L1.Syntax = pref.Proto2
 				case "proto3":
-					fd.L1.Syntax = protoreflect.Proto3
-				case "editions":
-					fd.L1.Syntax = protoreflect.Editions
+					fd.L1.Syntax = pref.Proto3
 				default:
 					panic("invalid syntax")
 				}
 			case genid.FileDescriptorProto_Name_field_number:
 				fd.L1.Path = sb.MakeString(v)
 			case genid.FileDescriptorProto_Package_field_number:
-				fd.L1.Package = protoreflect.FullName(sb.MakeString(v))
-			case genid.FileDescriptorProto_Options_field_number:
-				options = v
+				fd.L1.Package = pref.FullName(sb.MakeString(v))
 			case genid.FileDescriptorProto_EnumType_field_number:
 				if prevField != genid.FileDescriptorProto_EnumType_field_number {
 					if numEnums > 0 {
@@ -160,13 +154,6 @@ func (fd *File) unmarshalSeed(b []byte) {
 				numServices++
 			}
 			prevField = num
-		case protowire.VarintType:
-			v, m := protowire.ConsumeVarint(b)
-			b = b[m:]
-			switch num {
-			case genid.FileDescriptorProto_Edition_field_number:
-				fd.L1.Edition = Edition(v)
-			}
 		default:
 			m := protowire.ConsumeFieldValue(num, typ, b)
 			b = b[m:]
@@ -176,16 +163,7 @@ func (fd *File) unmarshalSeed(b []byte) {
 
 	// If syntax is missing, it is assumed to be proto2.
 	if fd.L1.Syntax == 0 {
-		fd.L1.Syntax = protoreflect.Proto2
-	}
-
-	if fd.L1.Syntax == protoreflect.Editions {
-		fd.L1.EditionFeatures = getFeaturesFor(fd.L1.Edition)
-	}
-
-	// Parse editions features from options if any
-	if options != nil {
-		fd.unmarshalSeedOptions(options)
+		fd.L1.Syntax = pref.Proto2
 	}
 
 	// Must allocate all declarations before parsing each descriptor type
@@ -241,29 +219,7 @@ func (fd *File) unmarshalSeed(b []byte) {
 	}
 }
 
-func (fd *File) unmarshalSeedOptions(b []byte) {
-	for b := b; len(b) > 0; {
-		num, typ, n := protowire.ConsumeTag(b)
-		b = b[n:]
-		switch typ {
-		case protowire.BytesType:
-			v, m := protowire.ConsumeBytes(b)
-			b = b[m:]
-			switch num {
-			case genid.FileOptions_Features_field_number:
-				if fd.Syntax() != protoreflect.Editions {
-					panic(fmt.Sprintf("invalid descriptor: using edition features in a proto with syntax %s", fd.Syntax()))
-				}
-				fd.L1.EditionFeatures = unmarshalFeatureSet(v, fd.L1.EditionFeatures)
-			}
-		default:
-			m := protowire.ConsumeFieldValue(num, typ, b)
-			b = b[m:]
-		}
-	}
-}
-
-func (ed *Enum) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd protoreflect.Descriptor, i int) {
+func (ed *Enum) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd pref.Descriptor, i int) {
 	ed.L0.ParentFile = pf
 	ed.L0.Parent = pd
 	ed.L0.Index = i
@@ -315,13 +271,12 @@ func (ed *Enum) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd protorefl
 	}
 }
 
-func (md *Message) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd protoreflect.Descriptor, i int) {
+func (md *Message) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd pref.Descriptor, i int) {
 	md.L0.ParentFile = pf
 	md.L0.Parent = pd
 	md.L0.Index = i
-	md.L1.EditionFeatures = featuresFromParentDesc(md.Parent())
 
-	var prevField protoreflect.FieldNumber
+	var prevField pref.FieldNumber
 	var numEnums, numMessages, numExtensions int
 	var posEnums, posMessages, posExtensions int
 	b0 := b
@@ -425,13 +380,6 @@ func (md *Message) unmarshalSeedOptions(b []byte) {
 			case genid.MessageOptions_MessageSetWireFormat_field_number:
 				md.L1.IsMessageSet = protowire.DecodeBool(v)
 			}
-		case protowire.BytesType:
-			v, m := protowire.ConsumeBytes(b)
-			b = b[m:]
-			switch num {
-			case genid.MessageOptions_Features_field_number:
-				md.L1.EditionFeatures = unmarshalFeatureSet(v, md.L1.EditionFeatures)
-			}
 		default:
 			m := protowire.ConsumeFieldValue(num, typ, b)
 			b = b[m:]
@@ -439,7 +387,7 @@ func (md *Message) unmarshalSeedOptions(b []byte) {
 	}
 }
 
-func (xd *Extension) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd protoreflect.Descriptor, i int) {
+func (xd *Extension) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd pref.Descriptor, i int) {
 	xd.L0.ParentFile = pf
 	xd.L0.Parent = pd
 	xd.L0.Index = i
@@ -453,11 +401,11 @@ func (xd *Extension) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd prot
 			b = b[m:]
 			switch num {
 			case genid.FieldDescriptorProto_Number_field_number:
-				xd.L1.Number = protoreflect.FieldNumber(v)
+				xd.L1.Number = pref.FieldNumber(v)
 			case genid.FieldDescriptorProto_Label_field_number:
-				xd.L1.Cardinality = protoreflect.Cardinality(v)
+				xd.L1.Cardinality = pref.Cardinality(v)
 			case genid.FieldDescriptorProto_Type_field_number:
-				xd.L1.Kind = protoreflect.Kind(v)
+				xd.L1.Kind = pref.Kind(v)
 			}
 		case protowire.BytesType:
 			v, m := protowire.ConsumeBytes(b)
@@ -475,7 +423,7 @@ func (xd *Extension) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd prot
 	}
 }
 
-func (sd *Service) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd protoreflect.Descriptor, i int) {
+func (sd *Service) unmarshalSeed(b []byte, sb *strs.Builder, pf *File, pd pref.Descriptor, i int) {
 	sd.L0.ParentFile = pf
 	sd.L0.Parent = pd
 	sd.L0.Index = i
@@ -511,13 +459,13 @@ func putBuilder(b *strs.Builder) {
 
 // makeFullName converts b to a protoreflect.FullName,
 // where b must start with a leading dot.
-func makeFullName(sb *strs.Builder, b []byte) protoreflect.FullName {
+func makeFullName(sb *strs.Builder, b []byte) pref.FullName {
 	if len(b) == 0 || b[0] != '.' {
 		panic("name reference must be fully qualified")
 	}
-	return protoreflect.FullName(sb.MakeString(b[1:]))
+	return pref.FullName(sb.MakeString(b[1:]))
 }
 
-func appendFullName(sb *strs.Builder, prefix protoreflect.FullName, suffix []byte) protoreflect.FullName {
-	return sb.AppendFullName(prefix, protoreflect.Name(strs.UnsafeString(suffix)))
+func appendFullName(sb *strs.Builder, prefix pref.FullName, suffix []byte) pref.FullName {
+	return sb.AppendFullName(prefix, pref.Name(strs.UnsafeString(suffix)))
 }

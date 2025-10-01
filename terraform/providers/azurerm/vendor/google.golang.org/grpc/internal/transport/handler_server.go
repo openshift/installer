@@ -39,7 +39,6 @@ import (
 	"golang.org/x/net/http2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/internal/grpcutil"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/stats"
@@ -49,7 +48,7 @@ import (
 // NewServerHandlerTransport returns a ServerTransport handling gRPC
 // from inside an http.Handler. It requires that the http Server
 // supports HTTP/2.
-func NewServerHandlerTransport(w http.ResponseWriter, r *http.Request, stats []stats.Handler) (ServerTransport, error) {
+func NewServerHandlerTransport(w http.ResponseWriter, r *http.Request, stats stats.Handler) (ServerTransport, error) {
 	if r.ProtoMajor != 2 {
 		return nil, errors.New("gRPC requires HTTP/2")
 	}
@@ -58,7 +57,7 @@ func NewServerHandlerTransport(w http.ResponseWriter, r *http.Request, stats []s
 	}
 	contentType := r.Header.Get("Content-Type")
 	// TODO: do we assume contentType is lowercase? we did before
-	contentSubtype, validContentType := grpcutil.ContentSubtype(contentType)
+	contentSubtype, validContentType := contentSubtype(contentType)
 	if !validContentType {
 		return nil, errors.New("invalid gRPC request content-type")
 	}
@@ -138,11 +137,12 @@ type serverHandlerTransport struct {
 	// TODO make sure this is consistent across handler_server and http2_server
 	contentSubtype string
 
-	stats []stats.Handler
+	stats stats.Handler
 }
 
-func (ht *serverHandlerTransport) Close() {
+func (ht *serverHandlerTransport) Close() error {
 	ht.closeOnce.Do(ht.closeCloseChanOnce)
+	return nil
 }
 
 func (ht *serverHandlerTransport) closeCloseChanOnce() { close(ht.closedCh) }
@@ -228,10 +228,10 @@ func (ht *serverHandlerTransport) WriteStatus(s *Stream, st *status.Status) erro
 	})
 
 	if err == nil { // transport has not been closed
-		// Note: The trailer fields are compressed with hpack after this call returns.
-		// No WireLength field is set here.
-		for _, sh := range ht.stats {
-			sh.HandleRPC(s.Context(), &stats.OutTrailer{
+		if ht.stats != nil {
+			// Note: The trailer fields are compressed with hpack after this call returns.
+			// No WireLength field is set here.
+			ht.stats.HandleRPC(s.Context(), &stats.OutTrailer{
 				Trailer: s.trailer.Copy(),
 			})
 		}
@@ -314,10 +314,10 @@ func (ht *serverHandlerTransport) WriteHeader(s *Stream, md metadata.MD) error {
 	})
 
 	if err == nil {
-		for _, sh := range ht.stats {
+		if ht.stats != nil {
 			// Note: The header fields are compressed with hpack after this call returns.
 			// No WireLength field is set here.
-			sh.HandleRPC(s.Context(), &stats.OutHeader{
+			ht.stats.HandleRPC(s.Context(), &stats.OutHeader{
 				Header:      md.Copy(),
 				Compression: s.sendCompress,
 			})
@@ -369,14 +369,14 @@ func (ht *serverHandlerTransport) HandleStreams(startStream func(*Stream), trace
 	}
 	ctx = metadata.NewIncomingContext(ctx, ht.headerMD)
 	s.ctx = peer.NewContext(ctx, pr)
-	for _, sh := range ht.stats {
-		s.ctx = sh.TagRPC(s.ctx, &stats.RPCTagInfo{FullMethodName: s.method})
+	if ht.stats != nil {
+		s.ctx = ht.stats.TagRPC(s.ctx, &stats.RPCTagInfo{FullMethodName: s.method})
 		inHeader := &stats.InHeader{
 			FullMethod:  s.method,
 			RemoteAddr:  ht.RemoteAddr(),
 			Compression: s.recvCompress,
 		}
-		sh.HandleRPC(s.ctx, inHeader)
+		ht.stats.HandleRPC(s.ctx, inHeader)
 	}
 	s.trReader = &transportReader{
 		reader:        &recvBufferReader{ctx: s.ctx, ctxDone: s.ctx.Done(), recv: s.buf, freeBuffer: func(*bytes.Buffer) {}},
@@ -442,10 +442,10 @@ func (ht *serverHandlerTransport) Drain() {
 // mapRecvMsgError returns the non-nil err into the appropriate
 // error value as expected by callers of *grpc.parser.recvMsg.
 // In particular, in can only be:
-//   - io.EOF
-//   - io.ErrUnexpectedEOF
-//   - of type transport.ConnectionError
-//   - an error from the status package
+//   * io.EOF
+//   * io.ErrUnexpectedEOF
+//   * of type transport.ConnectionError
+//   * an error from the status package
 func mapRecvMsgError(err error) error {
 	if err == io.EOF || err == io.ErrUnexpectedEOF {
 		return err

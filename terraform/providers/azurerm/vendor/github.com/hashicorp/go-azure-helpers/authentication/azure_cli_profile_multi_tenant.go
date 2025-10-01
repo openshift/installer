@@ -1,39 +1,25 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package authentication
 
 import (
 	"strings"
 
 	"github.com/Azure/go-autorest/autorest/azure/cli"
-	"github.com/hashicorp/go-version"
 )
 
 type azureCLIProfileMultiTenant struct {
 	profile cli.Profile
 
+	clientId           string
 	environment        string
 	subscriptionId     string
 	tenantId           string
 	auxiliaryTenantIDs []string
-
-	azVersion version.Version
 }
 
 func (a *azureCLIProfileMultiTenant) populateFields() error {
-	// Ensure we know the Subscription ID - since it's needed for everything else
+	// ensure we know the Subscription ID - since it's needed for everything else
 	if a.subscriptionId == "" {
 		err := a.populateSubscriptionID()
-		if err != nil {
-			return err
-		}
-	}
-
-	// Ensure we know the Tenant ID - since it's needed for everything else
-	// Note that order matters that subscription id should be populated first, and then tenant id.
-	if a.tenantId == "" {
-		err := a.populateTenantID()
 		if err != nil {
 			return err
 		}

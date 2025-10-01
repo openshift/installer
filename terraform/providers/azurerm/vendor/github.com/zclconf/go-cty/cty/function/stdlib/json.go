@@ -7,13 +7,11 @@ import (
 )
 
 var JSONEncodeFunc = function.New(&function.Spec{
-	Description: `Returns a string containing a JSON representation of the given value.`,
 	Params: []function.Parameter{
 		{
 			Name:             "val",
 			Type:             cty.DynamicPseudoType,
 			AllowDynamicType: true,
-			AllowNull:        true,
 		},
 	},
 	Type: function.StaticReturnType(cty.String),
@@ -26,10 +24,6 @@ var JSONEncodeFunc = function.New(&function.Spec{
 			return cty.UnknownVal(retType), nil
 		}
 
-		if val.IsNull() {
-			return cty.StringVal("null"), nil
-		}
-
 		buf, err := json.Marshal(val, val.Type())
 		if err != nil {
 			return cty.NilVal, err
@@ -40,7 +34,6 @@ var JSONEncodeFunc = function.New(&function.Spec{
 })
 
 var JSONDecodeFunc = function.New(&function.Spec{
-	Description: `Parses the given string as JSON and returns a value corresponding to what the JSON document describes.`,
 	Params: []function.Parameter{
 		{
 			Name: "str",

@@ -13,10 +13,7 @@
 // golang.org/x/crypto/chacha20poly1305).
 package cast5 // import "golang.org/x/crypto/cast5"
 
-import (
-	"errors"
-	"math/bits"
-)
+import "errors"
 
 const BlockSize = 8
 const KeySize = 16
@@ -244,19 +241,19 @@ func (c *Cipher) keySchedule(in []byte) {
 // These are the three 'f' functions. See RFC 2144, section 2.2.
 func f1(d, m uint32, r uint8) uint32 {
 	t := m + d
-	I := bits.RotateLeft32(t, int(r))
+	I := (t << r) | (t >> (32 - r))
 	return ((sBox[0][I>>24] ^ sBox[1][(I>>16)&0xff]) - sBox[2][(I>>8)&0xff]) + sBox[3][I&0xff]
 }
 
 func f2(d, m uint32, r uint8) uint32 {
 	t := m ^ d
-	I := bits.RotateLeft32(t, int(r))
+	I := (t << r) | (t >> (32 - r))
 	return ((sBox[0][I>>24] - sBox[1][(I>>16)&0xff]) + sBox[2][(I>>8)&0xff]) ^ sBox[3][I&0xff]
 }
 
 func f3(d, m uint32, r uint8) uint32 {
 	t := m - d
-	I := bits.RotateLeft32(t, int(r))
+	I := (t << r) | (t >> (32 - r))
 	return ((sBox[0][I>>24] + sBox[1][(I>>16)&0xff]) ^ sBox[2][(I>>8)&0xff]) - sBox[3][I&0xff]
 }
 

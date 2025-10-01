@@ -22,7 +22,7 @@
 package roundrobin
 
 import (
-	"sync/atomic"
+	"sync"
 
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
@@ -32,8 +32,6 @@ import (
 
 // Name is the name of round_robin balancer.
 const Name = "round_robin"
-
-var logger = grpclog.Component("roundrobin")
 
 // newBuilder creates a new roundrobin balancer builder.
 func newBuilder() balancer.Builder {
@@ -47,11 +45,11 @@ func init() {
 type rrPickerBuilder struct{}
 
 func (*rrPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
-	logger.Infof("roundrobinPicker: Build called with info: %v", info)
+	grpclog.Infof("roundrobinPicker: newPicker called with info: %v", info)
 	if len(info.ReadySCs) == 0 {
 		return base.NewErrPicker(balancer.ErrNoSubConnAvailable)
 	}
-	scs := make([]balancer.SubConn, 0, len(info.ReadySCs))
+	var scs []balancer.SubConn
 	for sc := range info.ReadySCs {
 		scs = append(scs, sc)
 	}
@@ -60,7 +58,7 @@ func (*rrPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 		// Start at a random index, as the same RR balancer rebuilds a new
 		// picker when SubConn states change, and we don't want to apply excess
 		// load to the first server in the list.
-		next: uint32(grpcrand.Intn(len(scs))),
+		next: grpcrand.Intn(len(scs)),
 	}
 }
 
@@ -69,13 +67,15 @@ type rrPicker struct {
 	// created. The slice is immutable. Each Get() will do a round robin
 	// selection from it and return the selected SubConn.
 	subConns []balancer.SubConn
-	next     uint32
+
+	mu   sync.Mutex
+	next int
 }
 
 func (p *rrPicker) Pick(balancer.PickInfo) (balancer.PickResult, error) {
-	subConnsLen := uint32(len(p.subConns))
-	nextIndex := atomic.AddUint32(&p.next, 1)
-
-	sc := p.subConns[nextIndex%subConnsLen]
+	p.mu.Lock()
+	sc := p.subConns[p.next]
+	p.next = (p.next + 1) % len(p.subConns)
+	p.mu.Unlock()
 	return balancer.PickResult{SubConn: sc}, nil
 }

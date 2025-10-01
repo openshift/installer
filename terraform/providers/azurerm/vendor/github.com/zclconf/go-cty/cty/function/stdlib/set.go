@@ -10,7 +10,6 @@ import (
 )
 
 var SetHasElementFunc = function.New(&function.Spec{
-	Description: `Returns true if the given set contains the given element, or false otherwise.`,
 	Params: []function.Parameter{
 		{
 			Name:             "set",
@@ -30,7 +29,6 @@ var SetHasElementFunc = function.New(&function.Spec{
 })
 
 var SetUnionFunc = function.New(&function.Spec{
-	Description: `Returns the union of all given sets.`,
 	Params: []function.Parameter{
 		{
 			Name:             "first_set",
@@ -46,11 +44,10 @@ var SetUnionFunc = function.New(&function.Spec{
 	Type: setOperationReturnType,
 	Impl: setOperationImpl(func(s1, s2 cty.ValueSet) cty.ValueSet {
 		return s1.Union(s2)
-	}, true),
+	}),
 })
 
 var SetIntersectionFunc = function.New(&function.Spec{
-	Description: `Returns the intersection of all given sets.`,
 	Params: []function.Parameter{
 		{
 			Name:             "first_set",
@@ -66,11 +63,10 @@ var SetIntersectionFunc = function.New(&function.Spec{
 	Type: setOperationReturnType,
 	Impl: setOperationImpl(func(s1, s2 cty.ValueSet) cty.ValueSet {
 		return s1.Intersection(s2)
-	}, false),
+	}),
 })
 
 var SetSubtractFunc = function.New(&function.Spec{
-	Description: `Returns the relative complement of the two given sets.`,
 	Params: []function.Parameter{
 		{
 			Name:             "a",
@@ -86,11 +82,10 @@ var SetSubtractFunc = function.New(&function.Spec{
 	Type: setOperationReturnType,
 	Impl: setOperationImpl(func(s1, s2 cty.ValueSet) cty.ValueSet {
 		return s1.Subtract(s2)
-	}, false),
+	}),
 })
 
 var SetSymmetricDifferenceFunc = function.New(&function.Spec{
-	Description: `Returns the symmetric difference of the two given sets.`,
 	Params: []function.Parameter{
 		{
 			Name:             "first_set",
@@ -105,8 +100,8 @@ var SetSymmetricDifferenceFunc = function.New(&function.Spec{
 	},
 	Type: setOperationReturnType,
 	Impl: setOperationImpl(func(s1, s2 cty.ValueSet) cty.ValueSet {
-		return s1.SymmetricDifference(s2)
-	}, false),
+		return s1.Subtract(s2)
+	}),
 })
 
 // SetHasElement determines whether the given set contains the given value as an
@@ -168,23 +163,8 @@ func SetSymmetricDifference(sets ...cty.Value) (cty.Value, error) {
 func setOperationReturnType(args []cty.Value) (ret cty.Type, err error) {
 	var etys []cty.Type
 	for _, arg := range args {
-		ty := arg.Type().ElementType()
-
-		// Do not unify types for empty dynamic pseudo typed collections. These
-		// will always convert to any other concrete type.
-		if arg.IsKnown() && arg.LengthInt() == 0 && ty.Equals(cty.DynamicPseudoType) {
-			continue
-		}
-
-		etys = append(etys, ty)
+		etys = append(etys, arg.Type().ElementType())
 	}
-
-	// If all element types were skipped (due to being empty dynamic collections),
-	// the return type should also be a set of dynamic pseudo type.
-	if len(etys) == 0 {
-		return cty.Set(cty.DynamicPseudoType), nil
-	}
-
 	newEty, _ := convert.UnifyUnsafe(etys)
 	if newEty == cty.NilType {
 		return cty.NilType, fmt.Errorf("given sets must all have compatible element types")
@@ -192,20 +172,12 @@ func setOperationReturnType(args []cty.Value) (ret cty.Type, err error) {
 	return cty.Set(newEty), nil
 }
 
-func setOperationImpl(f func(s1, s2 cty.ValueSet) cty.ValueSet, allowUnknowns bool) function.ImplFunc {
+func setOperationImpl(f func(s1, s2 cty.ValueSet) cty.ValueSet) function.ImplFunc {
 	return func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		first := args[0]
 		first, err = convert.Convert(first, retType)
 		if err != nil {
 			return cty.NilVal, function.NewArgError(0, err)
-		}
-		if !allowUnknowns && !first.IsWhollyKnown() {
-			// This set function can produce a correct result only when all
-			// elements are known, because eventually knowing the unknown
-			// values may cause the result to have fewer known elements, or
-			// might cause a result with no unknown elements at all to become
-			// one with a different length.
-			return cty.UnknownVal(retType), nil
 		}
 
 		set := first.AsValueSet()
@@ -213,10 +185,6 @@ func setOperationImpl(f func(s1, s2 cty.ValueSet) cty.ValueSet, allowUnknowns bo
 			arg, err := convert.Convert(arg, retType)
 			if err != nil {
 				return cty.NilVal, function.NewArgError(i+1, err)
-			}
-			if !allowUnknowns && !arg.IsWhollyKnown() {
-				// (For the same reason as we did this check for "first" above.)
-				return cty.UnknownVal(retType), nil
 			}
 
 			argSet := arg.AsValueSet()

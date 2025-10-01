@@ -107,8 +107,8 @@ func decodeSliceValue(d *Decoder, v reflect.Value) error {
 		if i >= v.Len() {
 			v.Set(growSliceValue(v, n))
 		}
-		elem := v.Index(i)
-		if err := d.DecodeValue(elem); err != nil {
+		sv := v.Index(i)
+		if err := d.DecodeValue(sv); err != nil {
 			return err
 		}
 	}

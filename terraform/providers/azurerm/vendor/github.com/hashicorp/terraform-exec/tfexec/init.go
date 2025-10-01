@@ -52,10 +52,6 @@ func (opt *DirOption) configureInit(conf *initConfig) {
 	conf.dir = opt.path
 }
 
-func (opt *ForceCopyOption) configureInit(conf *initConfig) {
-	conf.forceCopy = opt.forceCopy
-}
-
 func (opt *FromModuleOption) configureInit(conf *initConfig) {
 	conf.fromModule = opt.source
 }
@@ -102,55 +98,33 @@ func (tf *Terraform) Init(ctx context.Context, opts ...InitOption) error {
 	if err != nil {
 		return err
 	}
-	return tf.runTerraformCmd(ctx, cmd)
+	return tf.runTerraformCmd(cmd)
 }
 
 func (tf *Terraform) initCmd(ctx context.Context, opts ...InitOption) (*exec.Cmd, error) {
 	c := defaultInitOptions
 
 	for _, o := range opts {
-		switch o.(type) {
-		case *LockOption, *LockTimeoutOption, *VerifyPluginsOption, *GetPluginsOption:
-			err := tf.compatible(ctx, nil, tf0_15_0)
-			if err != nil {
-				return nil, fmt.Errorf("-lock, -lock-timeout, -verify-plugins, and -get-plugins options are no longer available as of Terraform 0.15: %w", err)
-			}
-		}
-
 		o.configureInit(&c)
 	}
 
-	args := []string{"init", "-no-color", "-input=false"}
+	args := []string{"init", "-no-color", "-force-copy", "-input=false"}
 
 	// string opts: only pass if set
 	if c.fromModule != "" {
 		args = append(args, "-from-module="+c.fromModule)
 	}
-
-	// string opts removed in 0.15: pass if set and <0.15
-	err := tf.compatible(ctx, nil, tf0_15_0)
-	if err == nil {
-		if c.lockTimeout != "" {
-			args = append(args, "-lock-timeout="+c.lockTimeout)
-		}
+	if c.lockTimeout != "" {
+		args = append(args, "-lock-timeout="+c.lockTimeout)
 	}
 
 	// boolean opts: always pass
 	args = append(args, "-backend="+fmt.Sprint(c.backend))
 	args = append(args, "-get="+fmt.Sprint(c.get))
+	args = append(args, "-get-plugins="+fmt.Sprint(c.getPlugins))
+	args = append(args, "-lock="+fmt.Sprint(c.lock))
 	args = append(args, "-upgrade="+fmt.Sprint(c.upgrade))
-
-	// boolean opts removed in 0.15: pass if <0.15
-	err = tf.compatible(ctx, nil, tf0_15_0)
-	if err == nil {
-		args = append(args, "-lock="+fmt.Sprint(c.lock))
-		args = append(args, "-get-plugins="+fmt.Sprint(c.getPlugins))
-		args = append(args, "-verify-plugins="+fmt.Sprint(c.verifyPlugins))
-	}
-
-	if c.forceCopy {
-		args = append(args, "-force-copy")
-	}
+	args = append(args, "-verify-plugins="+fmt.Sprint(c.verifyPlugins))
 
 	// unary flags: pass if true
 	if c.reconfigure {

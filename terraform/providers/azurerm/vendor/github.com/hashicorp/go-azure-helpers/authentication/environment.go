@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package authentication
 
 import (
@@ -13,9 +10,10 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure"
 )
 
-var sdkEnvironmentLookupMap = map[string]azure.Environment{
+var environmentTranslationMap = map[string]azure.Environment{
 	"public":       azure.PublicCloud,
 	"usgovernment": azure.USGovernmentCloud,
+	"german":       azure.GermanCloud,
 	"china":        azure.ChinaCloud,
 }
 
@@ -59,7 +57,7 @@ func DetermineEnvironment(name string) (*azure.Environment, error) {
 	env, envErr := azure.EnvironmentFromName(name)
 
 	if envErr != nil {
-		// try again with wrapped value to support readable values like china instead of AZURECHINACLOUD
+		// try again with wrapped value to support readable values like german instead of AZUREGERMANCLOUD
 		wrapped := fmt.Sprintf("AZURE%sCLOUD", name)
 		env, envErr = azure.EnvironmentFromName(wrapped)
 		if envErr != nil {
@@ -101,7 +99,7 @@ func normalizeEnvironmentName(input string) string {
 
 // AzureEnvironmentByName returns a specific Azure Environment from the specified endpoint
 func AzureEnvironmentByNameFromEndpoint(ctx context.Context, endpoint string, environmentName string) (*azure.Environment, error) {
-	if env, ok := sdkEnvironmentLookupMap[strings.ToLower(environmentName)]; ok {
+	if env, ok := environmentTranslationMap[strings.ToLower(environmentName)]; ok {
 		return &env, nil
 	}
 
@@ -116,17 +114,11 @@ func AzureEnvironmentByNameFromEndpoint(ctx context.Context, endpoint string, en
 
 	// while the array contains values
 	for _, env := range environments {
-		if strings.EqualFold(env.Name, environmentName) || (environmentName == "" && len(environments) == 1) {
-			// if resourceManager endpoint is empty, assume it's the provided endpoint
-			if env.ResourceManager == "" {
-				env.ResourceManager = fmt.Sprintf("https://%s/", endpoint)
-			}
-
+		if strings.EqualFold(env.Name, environmentName) {
 			aEnv, err := buildAzureEnvironment(env)
 			if err != nil {
 				return nil, err
 			}
-
 			return aEnv, nil
 		}
 	}
@@ -136,7 +128,7 @@ func AzureEnvironmentByNameFromEndpoint(ctx context.Context, endpoint string, en
 
 // IsEnvironmentAzureStack returns whether a specific Azure Environment is an Azure Stack environment
 func IsEnvironmentAzureStack(ctx context.Context, endpoint string, environmentName string) (bool, error) {
-	if _, ok := sdkEnvironmentLookupMap[strings.ToLower(environmentName)]; ok {
+	if _, ok := environmentTranslationMap[strings.ToLower(environmentName)]; ok {
 		return false, nil
 	}
 
@@ -163,7 +155,7 @@ func IsEnvironmentAzureStack(ctx context.Context, endpoint string, environmentNa
 
 func getSupportedEnvironments(ctx context.Context, endpoint string) ([]Environment, error) {
 	uri := fmt.Sprintf("https://%s/metadata/endpoints?api-version=2020-06-01", endpoint)
-	client := &http.Client{
+	client := http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 		},
@@ -200,14 +192,11 @@ func buildAzureEnvironment(env Environment) (*azure.Environment, error) {
 		ContainerRegistryDNSSuffix: env.Suffixes.AcrLoginServer,
 		ResourceIdentifiers: azure.ResourceIdentifier{
 			// This isn't returned from the metadata url and is universal across all environments
-			Storage:             "https://storage.azure.com/",
-			Graph:               env.Graph,
-			KeyVault:            fmt.Sprintf("https://%s/", env.Suffixes.KeyVaultDns),
-			Datalake:            env.ActiveDirectoryDataLake,
-			Batch:               env.Batch,
-			Synapse:             azure.NotAvailable,
-			ServiceBus:          azure.NotAvailable,
-			OperationalInsights: azure.NotAvailable,
+			Storage:  "https://storage.azure.com/",
+			Graph:    env.Graph,
+			KeyVault: fmt.Sprintf("https://%s/", env.Suffixes.KeyVaultDns),
+			Datalake: env.ActiveDirectoryDataLake,
+			Batch:    env.Batch,
 		},
 	}
 

@@ -1,15 +1,15 @@
 package set
 
-type Iterator[T any] struct {
-	vals []T
+type Iterator struct {
+	vals []interface{}
 	idx  int
 }
 
-func (it *Iterator[T]) Value() T {
+func (it *Iterator) Value() interface{} {
 	return it.vals[it.idx]
 }
 
-func (it *Iterator[T]) Next() bool {
+func (it *Iterator) Next() bool {
 	it.idx++
 	return it.idx < len(it.vals)
 }

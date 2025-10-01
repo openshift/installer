@@ -17,8 +17,7 @@ import (
 const debugTransport = false
 
 const (
-	gcm128CipherID = "aes128-gcm@openssh.com"
-	gcm256CipherID = "aes256-gcm@openssh.com"
+	gcmCipherID    = "aes128-gcm@openssh.com"
 	aes128cbcID    = "aes128-cbc"
 	tripledescbcID = "3des-cbc"
 )
@@ -239,19 +238,15 @@ var (
 // (to setup server->client keys) or clientKeys (for client->server keys).
 func newPacketCipher(d direction, algs directionAlgorithms, kex *kexResult) (packetCipher, error) {
 	cipherMode := cipherModes[algs.Cipher]
+	macMode := macModes[algs.MAC]
 
 	iv := make([]byte, cipherMode.ivSize)
 	key := make([]byte, cipherMode.keySize)
+	macKey := make([]byte, macMode.keySize)
 
 	generateKeyMaterial(iv, d.ivTag, kex)
 	generateKeyMaterial(key, d.keyTag, kex)
-
-	var macKey []byte
-	if !aeadCiphers[algs.Cipher] {
-		macMode := macModes[algs.MAC]
-		macKey = make([]byte, macMode.keySize)
-		generateKeyMaterial(macKey, d.macKeyTag, kex)
-	}
+	generateKeyMaterial(macKey, d.macKeyTag, kex)
 
 	return cipherModes[algs.Cipher].create(key, iv, macKey, algs)
 }

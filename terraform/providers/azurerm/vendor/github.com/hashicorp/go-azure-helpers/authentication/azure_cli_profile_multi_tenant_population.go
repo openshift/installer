@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package authentication
 
 import (
@@ -27,6 +24,29 @@ func (a *azureCLIProfileMultiTenant) populateTenantID() error {
 	}
 
 	a.tenantId = subscription.TenantID
+	return nil
+}
+
+func (a *azureCLIProfileMultiTenant) populateClientId() error {
+	// we can now pull out the ClientID and the Access Token to use from the Access Token
+	tokensPath, err := cli.AccessTokensPath()
+	if err != nil {
+		return fmt.Errorf("Error loading the Tokens Path from the Azure CLI: %+v", err)
+	}
+
+	tokens, err := cli.LoadTokens(tokensPath)
+	if err != nil {
+		return fmt.Errorf("No Authorization Tokens were found - please ensure the Azure CLI is installed and then log-in with `az login`.")
+	}
+
+	validToken, err := findValidAccessTokenForTenant(tokens, a.tenantId)
+	if err != nil {
+		return fmt.Errorf("No Authorization Tokens were found - please re-authenticate using `az login`.")
+	}
+
+	token := *validToken
+	a.clientId = token.ClientID
+
 	return nil
 }
 

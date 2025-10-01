@@ -206,7 +206,7 @@ func (d *Decoder) DecodeMap() (interface{}, error) {
 		return nil, err
 	}
 
-	if codes.IsString(code) || codes.IsBin(code) {
+	if codes.IsString(code) {
 		return d.decodeMapStringInterfaceSize(size)
 	}
 
@@ -222,7 +222,6 @@ func (d *Decoder) DecodeMap() (interface{}, error) {
 
 	keyType := reflect.TypeOf(key)
 	valueType := reflect.TypeOf(value)
-
 	mapType := reflect.MapOf(keyType, valueType)
 	mapValue := reflect.MakeMap(mapType)
 

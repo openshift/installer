@@ -3,9 +3,8 @@
 `go-plugin` is a Go (golang) plugin system over RPC. It is the plugin system
 that has been in use by HashiCorp tooling for over 4 years. While initially
 created for [Packer](https://www.packer.io), it is additionally in use by
-[Terraform](https://www.terraform.io), [Nomad](https://www.nomadproject.io),
-[Vault](https://www.vaultproject.io), and
-[Boundary](https://www.boundaryproject.io).
+[Terraform](https://www.terraform.io), [Nomad](https://www.nomadproject.io), and
+[Vault](https://www.vaultproject.io).
 
 While the plugin system is over RPC, it is currently only designed to work
 over a local [reliable] network. Plugins over a real network are not supported

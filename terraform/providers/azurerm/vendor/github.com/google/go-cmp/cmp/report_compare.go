@@ -1,12 +1,14 @@
 // Copyright 2019, The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// license that can be found in the LICENSE.md file.
 
 package cmp
 
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/google/go-cmp/cmp/internal/value"
 )
 
 // numContextRecords is the number of surrounding equal records to print.
@@ -77,7 +79,7 @@ func (opts formatOptions) verbosity() uint {
 	}
 }
 
-const maxVerbosityPreset = 6
+const maxVerbosityPreset = 3
 
 // verbosityPreset modifies the verbosity settings given an index
 // between 0 and maxVerbosityPreset, inclusive.
@@ -98,7 +100,7 @@ func verbosityPreset(opts formatOptions, i int) formatOptions {
 func (opts formatOptions) FormatDiff(v *valueNode, ptrs *pointerReferences) (out textNode) {
 	if opts.DiffMode == diffIdentical {
 		opts = opts.WithVerbosity(1)
-	} else if opts.verbosity() < 3 {
+	} else {
 		opts = opts.WithVerbosity(3)
 	}
 
@@ -114,10 +116,7 @@ func (opts formatOptions) FormatDiff(v *valueNode, ptrs *pointerReferences) (out
 	}
 
 	// For leaf nodes, format the value based on the reflect.Values alone.
-	// As a special case, treat equal []byte as a leaf nodes.
-	isBytes := v.Type.Kind() == reflect.Slice && v.Type.Elem() == byteType
-	isEqualBytes := isBytes && v.NumDiff+v.NumIgnored+v.NumTransformed == 0
-	if v.MaxDepth == 0 || isEqualBytes {
+	if v.MaxDepth == 0 {
 		switch opts.DiffMode {
 		case diffUnknown, diffIdentical:
 			// Format Equal.
@@ -246,11 +245,11 @@ func (opts formatOptions) formatDiffList(recs []reportRecord, k reflect.Kind, pt
 				var isZero bool
 				switch opts.DiffMode {
 				case diffIdentical:
-					isZero = r.Value.ValueX.IsZero() || r.Value.ValueY.IsZero()
+					isZero = value.IsZero(r.Value.ValueX) || value.IsZero(r.Value.ValueY)
 				case diffRemoved:
-					isZero = r.Value.ValueX.IsZero()
+					isZero = value.IsZero(r.Value.ValueX)
 				case diffInserted:
-					isZero = r.Value.ValueY.IsZero()
+					isZero = value.IsZero(r.Value.ValueY)
 				}
 				if isZero {
 					continue

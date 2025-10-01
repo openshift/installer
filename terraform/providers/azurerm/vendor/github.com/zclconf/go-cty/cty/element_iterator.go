@@ -66,7 +66,7 @@ func elementIterator(val Value) ElementIterator {
 			idx:  -1,
 		}
 	case val.ty.IsSetType():
-		rawSet := val.v.(set.Set[interface{}])
+		rawSet := val.v.(set.Set)
 		return &setElementIterator{
 			ety:   val.ty.ElementType(),
 			setIt: rawSet.Iterator(),
@@ -139,7 +139,7 @@ func (it *mapElementIterator) Next() bool {
 
 type setElementIterator struct {
 	ety   Type
-	setIt *set.Iterator[interface{}]
+	setIt *set.Iterator
 }
 
 func (it *setElementIterator) Element() (Value, Value) {

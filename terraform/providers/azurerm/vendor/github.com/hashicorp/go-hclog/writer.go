@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MIT
-
 package hclog
 
 import (
@@ -9,27 +6,19 @@ import (
 )
 
 type writer struct {
-	b     bytes.Buffer
-	w     io.Writer
-	color ColorOption
+	b bytes.Buffer
+	w io.Writer
 }
 
-func newWriter(w io.Writer, color ColorOption) *writer {
-	return &writer{w: w, color: color}
+func newWriter(w io.Writer) *writer {
+	return &writer{w: w}
 }
 
 func (w *writer) Flush(level Level) (err error) {
-	var unwritten = w.b.Bytes()
-
-	if w.color != ColorOff {
-		color := _levelToColor[level]
-		unwritten = []byte(color.Sprintf("%s", unwritten))
-	}
-
 	if lw, ok := w.w.(LevelWriter); ok {
-		_, err = lw.LevelWrite(level, unwritten)
+		_, err = lw.LevelWrite(level, w.b.Bytes())
 	} else {
-		_, err = w.w.Write(unwritten)
+		_, err = w.w.Write(w.b.Bytes())
 	}
 	w.b.Reset()
 	return err

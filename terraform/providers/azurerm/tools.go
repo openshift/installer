@@ -1,5 +1,5 @@
 package main
 
 import (
-	_ "github.com/hashicorp/terraform-provider-azurerm"
+	_ "github.com/terraform-providers/terraform-provider-azurerm"
 )

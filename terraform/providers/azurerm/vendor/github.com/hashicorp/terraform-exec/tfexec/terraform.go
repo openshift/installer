@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/hashicorp/go-version"
@@ -21,12 +22,6 @@ type printfer interface {
 // Typically this is constructed against the root module of a Terraform configuration
 // but you can override paths used in some commands depending on the available
 // options.
-//
-// All functions that execute CLI commands take a context.Context. It should be noted that
-// exec.Cmd.Run will not return context.DeadlineExceeded or context.Canceled by default, we
-// have augmented our wrapped errors to respond true to errors.Is for context.DeadlineExceeded
-// and context.Canceled if those are present on the context when the error is parsed. See
-// https://github.com/golang/go/issues/21880 for more about the Go limitations.
 //
 // By default, the instance inherits the environment from the calling code (using os.Environ)
 // but it ignores certain environment variables that are managed within the code and prohibits
@@ -48,21 +43,10 @@ type Terraform struct {
 	skipProviderVerify bool
 	env                map[string]string
 
-	stdout io.Writer
-	stderr io.Writer
-	logger printfer
-
-	// TF_LOG environment variable, defaults to TRACE if logPath is set.
-	log string
-
-	// TF_LOG_CORE environment variable
-	logCore string
-
-	// TF_LOG_PATH environment variable
+	stdout  io.Writer
+	stderr  io.Writer
+	logger  printfer
 	logPath string
-
-	// TF_LOG_PROVIDER environment variable
-	logProvider string
 
 	versionLock  sync.Mutex
 	execVersion  *version.Version
@@ -70,8 +54,8 @@ type Terraform struct {
 }
 
 // NewTerraform returns a Terraform struct with default values for all fields.
-// If a blank execPath is supplied, NewTerraform will error.
-// Use hc-install or output from os.LookPath to get a desirable execPath.
+// If a blank execPath is supplied, NewTerraform will attempt to locate an
+// appropriate binary on the system PATH.
 func NewTerraform(workingDir string, execPath string) (*Terraform, error) {
 	if workingDir == "" {
 		return nil, fmt.Errorf("Terraform cannot be initialised with empty workdir")
@@ -82,10 +66,9 @@ func NewTerraform(workingDir string, execPath string) (*Terraform, error) {
 	}
 
 	if execPath == "" {
-		err := fmt.Errorf("NewTerraform: please supply the path to a Terraform executable using execPath, e.g. using the github.com/hashicorp/hc-install module.")
-		return nil, &ErrNoSuitableBinary{
-			err: err,
-		}
+		err := fmt.Errorf("NewTerraform: please supply the path to a Terraform executable using execPath, e.g. using the tfinstall package.")
+		return nil, &ErrNoSuitableBinary{err: err}
+
 	}
 	tf := Terraform{
 		execPath:   execPath,
@@ -102,10 +85,15 @@ func NewTerraform(workingDir string, execPath string) (*Terraform, error) {
 // from os.Environ. Attempting to set environment variables that should be managed manually will
 // result in ErrManualEnvVar being returned.
 func (tf *Terraform) SetEnv(env map[string]string) error {
-	prohibited := ProhibitedEnv(env)
-	if len(prohibited) > 0 {
-		// just error on the first instance
-		return &ErrManualEnvVar{prohibited[0]}
+	for k := range env {
+		if strings.HasPrefix(k, varEnvVarPrefix) {
+			return fmt.Errorf("variables should be passed using the Var option: %w", &ErrManualEnvVar{k})
+		}
+		for _, p := range prohibitedEnvVars {
+			if p == k {
+				return &ErrManualEnvVar{k}
+			}
+		}
 	}
 
 	tf.env = env
@@ -133,58 +121,10 @@ func (tf *Terraform) SetStderr(w io.Writer) {
 	tf.stderr = w
 }
 
-// SetLog sets the TF_LOG environment variable for Terraform CLI execution.
-// This must be combined with a call to SetLogPath to take effect.
-//
-// This is only compatible with Terraform CLI 0.15.0 or later as setting the
-// log level was unreliable in earlier versions. It will default to TRACE when
-// SetLogPath is called on versions 0.14.11 and earlier, or if SetLogCore and
-// SetLogProvider have not been called before SetLogPath on versions 0.15.0 and
-// later.
-func (tf *Terraform) SetLog(log string) error {
-	err := tf.compatible(context.Background(), tf0_15_0, nil)
-	if err != nil {
-		return err
-	}
-	tf.log = log
-	return nil
-}
-
-// SetLogCore sets the TF_LOG_CORE environment variable for Terraform CLI
-// execution. This must be combined with a call to SetLogPath to take effect.
-//
-// This is only compatible with Terraform CLI 0.15.0 or later.
-func (tf *Terraform) SetLogCore(logCore string) error {
-	err := tf.compatible(context.Background(), tf0_15_0, nil)
-	if err != nil {
-		return err
-	}
-	tf.logCore = logCore
-	return nil
-}
-
 // SetLogPath sets the TF_LOG_PATH environment variable for Terraform CLI
 // execution.
 func (tf *Terraform) SetLogPath(path string) error {
 	tf.logPath = path
-	// Prevent setting the log path without enabling logging
-	if tf.log == "" && tf.logCore == "" && tf.logProvider == "" {
-		tf.log = "TRACE"
-	}
-	return nil
-}
-
-// SetLogProvider sets the TF_LOG_PROVIDER environment variable for Terraform
-// CLI execution. This must be combined with a call to SetLogPath to take
-// effect.
-//
-// This is only compatible with Terraform CLI 0.15.0 or later.
-func (tf *Terraform) SetLogProvider(logProvider string) error {
-	err := tf.compatible(context.Background(), tf0_15_0, nil)
-	if err != nil {
-		return err
-	}
-	tf.logProvider = logProvider
 	return nil
 }
 

@@ -20,17 +20,13 @@ package transport
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"runtime"
-	"strconv"
 	"sync"
 	"sync/atomic"
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"
-	"google.golang.org/grpc/internal/grpcutil"
-	"google.golang.org/grpc/status"
 )
 
 var updateHeaderTblSize = func(e *hpack.Encoder, v uint32) {
@@ -131,16 +127,6 @@ type cleanupStream struct {
 }
 
 func (c *cleanupStream) isTransportResponseFrame() bool { return c.rst } // Results in a RST_STREAM
-
-type earlyAbortStream struct {
-	httpStatus     uint32
-	streamID       uint32
-	contentSubtype string
-	status         *status.Status
-	rst            bool
-}
-
-func (*earlyAbortStream) isTransportResponseFrame() bool { return false }
 
 type dataFrame struct {
 	streamID  uint32
@@ -298,7 +284,7 @@ type controlBuffer struct {
 	// closed and nilled when transportResponseFrames drops below the
 	// threshold.  Both fields are protected by mu.
 	transportResponseFrames int
-	trfChan                 atomic.Value // chan struct{}
+	trfChan                 atomic.Value // *chan struct{}
 }
 
 func newControlBuffer(done <-chan struct{}) *controlBuffer {
@@ -312,10 +298,10 @@ func newControlBuffer(done <-chan struct{}) *controlBuffer {
 // throttle blocks if there are too many incomingSettings/cleanupStreams in the
 // controlbuf.
 func (c *controlBuffer) throttle() {
-	ch, _ := c.trfChan.Load().(chan struct{})
+	ch, _ := c.trfChan.Load().(*chan struct{})
 	if ch != nil {
 		select {
-		case <-ch:
+		case <-*ch:
 		case <-c.done:
 		}
 	}
@@ -349,7 +335,8 @@ func (c *controlBuffer) executeAndPut(f func(it interface{}) bool, it cbItem) (b
 		if c.transportResponseFrames == maxQueuedTransportResponseFrames {
 			// We are adding the frame that puts us over the threshold; create
 			// a throttling channel.
-			c.trfChan.Store(make(chan struct{}))
+			ch := make(chan struct{})
+			c.trfChan.Store(&ch)
 		}
 	}
 	c.mu.Unlock()
@@ -390,9 +377,9 @@ func (c *controlBuffer) get(block bool) (interface{}, error) {
 				if c.transportResponseFrames == maxQueuedTransportResponseFrames {
 					// We are removing the frame that put us over the
 					// threshold; close and clear the throttling channel.
-					ch := c.trfChan.Load().(chan struct{})
-					close(ch)
-					c.trfChan.Store((chan struct{})(nil))
+					ch := c.trfChan.Load().(*chan struct{})
+					close(*ch)
+					c.trfChan.Store((*chan struct{})(nil))
 				}
 				c.transportResponseFrames--
 			}
@@ -408,6 +395,7 @@ func (c *controlBuffer) get(block bool) (interface{}, error) {
 		select {
 		case <-c.ch:
 		case <-c.done:
+			c.finish()
 			return nil, ErrConnClosing
 		}
 	}
@@ -432,14 +420,6 @@ func (c *controlBuffer) finish() {
 			hdr.onOrphaned(ErrConnClosing)
 		}
 	}
-	// In case throttle() is currently in flight, it needs to be unblocked.
-	// Otherwise, the transport may not close, since the transport is closed by
-	// the reader encountering the connection error.
-	ch, _ := c.trfChan.Load().(chan struct{})
-	if ch != nil {
-		close(ch)
-	}
-	c.trfChan.Store((chan struct{})(nil))
 	c.mu.Unlock()
 }
 
@@ -525,9 +505,7 @@ func (l *loopyWriter) run() (err error) {
 			// 1. When the connection is closed by some other known issue.
 			// 2. User closed the connection.
 			// 3. A graceful close of connection.
-			if logger.V(logLevel) {
-				logger.Infof("transport: loopyWriter.run returning. %v", err)
-			}
+			infof("transport: loopyWriter.run returning. %v", err)
 			err = nil
 		}
 	}()
@@ -627,9 +605,7 @@ func (l *loopyWriter) headerHandler(h *headerFrame) error {
 	if l.side == serverSide {
 		str, ok := l.estdStreams[h.streamID]
 		if !ok {
-			if logger.V(logLevel) {
-				logger.Warningf("transport: loopy doesn't recognize the stream: %d", h.streamID)
-			}
+			warningf("transport: loopy doesn't recognize the stream: %d", h.streamID)
 			return nil
 		}
 		// Case 1.A: Server is responding back with headers.
@@ -682,9 +658,7 @@ func (l *loopyWriter) writeHeader(streamID uint32, endStream bool, hf []hpack.He
 	l.hBuf.Reset()
 	for _, f := range hf {
 		if err := l.hEnc.WriteField(f); err != nil {
-			if logger.V(logLevel) {
-				logger.Warningf("transport: loopyWriter.writeHeader encountered error while encoding headers: %v", err)
-			}
+			warningf("transport: loopyWriter.writeHeader encountered error while encoding headers:", err)
 		}
 	}
 	var (
@@ -769,32 +743,6 @@ func (l *loopyWriter) cleanupStreamHandler(c *cleanupStream) error {
 	return nil
 }
 
-func (l *loopyWriter) earlyAbortStreamHandler(eas *earlyAbortStream) error {
-	if l.side == clientSide {
-		return errors.New("earlyAbortStream not handled on client")
-	}
-	// In case the caller forgets to set the http status, default to 200.
-	if eas.httpStatus == 0 {
-		eas.httpStatus = 200
-	}
-	headerFields := []hpack.HeaderField{
-		{Name: ":status", Value: strconv.Itoa(int(eas.httpStatus))},
-		{Name: "content-type", Value: grpcutil.ContentType(eas.contentSubtype)},
-		{Name: "grpc-status", Value: strconv.Itoa(int(eas.status.Code()))},
-		{Name: "grpc-message", Value: encodeGrpcMessage(eas.status.Message())},
-	}
-
-	if err := l.writeHeader(eas.streamID, true, headerFields, nil); err != nil {
-		return err
-	}
-	if eas.rst {
-		if err := l.framer.fr.WriteRSTStream(eas.streamID, http2.ErrCodeNo); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (l *loopyWriter) incomingGoAwayHandler(*incomingGoAway) error {
 	if l.side == clientSide {
 		l.draining = true
@@ -833,8 +781,6 @@ func (l *loopyWriter) handle(i interface{}) error {
 		return l.registerStreamHandler(i)
 	case *cleanupStream:
 		return l.cleanupStreamHandler(i)
-	case *earlyAbortStream:
-		return l.earlyAbortStreamHandler(i)
 	case *incomingGoAway:
 		return l.incomingGoAwayHandler(i)
 	case *dataFrame:
@@ -886,9 +832,9 @@ func (l *loopyWriter) processData() (bool, error) {
 	dataItem := str.itl.peek().(*dataFrame) // Peek at the first data item this stream.
 	// A data item is represented by a dataFrame, since it later translates into
 	// multiple HTTP2 data frames.
-	// Every dataFrame has two buffers; h that keeps grpc-message header and d that is actual data.
+	// Every dataFrame has two buffers; h that keeps grpc-message header and d that is acutal data.
 	// As an optimization to keep wire traffic low, data from d is copied to h to make as big as the
-	// maximum possible HTTP2 frame size.
+	// maximum possilbe HTTP2 frame size.
 
 	if len(dataItem.h) == 0 && len(dataItem.d) == 0 { // Empty data frame
 		// Client sends out empty data frame with endStream = true

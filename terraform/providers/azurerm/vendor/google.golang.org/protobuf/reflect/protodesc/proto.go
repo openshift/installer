@@ -9,22 +9,19 @@ import (
 	"strings"
 
 	"google.golang.org/protobuf/internal/encoding/defval"
-	"google.golang.org/protobuf/internal/strs"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-// ToFileDescriptorProto copies a [protoreflect.FileDescriptor] into a
+// ToFileDescriptorProto copies a protoreflect.FileDescriptor into a
 // google.protobuf.FileDescriptorProto message.
 func ToFileDescriptorProto(file protoreflect.FileDescriptor) *descriptorpb.FileDescriptorProto {
 	p := &descriptorpb.FileDescriptorProto{
 		Name:    proto.String(file.Path()),
+		Package: proto.String(string(file.Package())),
 		Options: proto.Clone(file.Options()).(*descriptorpb.FileOptions),
-	}
-	if file.Package() != "" {
-		p.Package = proto.String(string(file.Package()))
 	}
 	for i, imports := 0, file.Imports(); i < imports.Len(); i++ {
 		imp := imports.Get(i)
@@ -70,13 +67,13 @@ func ToFileDescriptorProto(file protoreflect.FileDescriptor) *descriptorpb.FileD
 	for i, exts := 0, file.Extensions(); i < exts.Len(); i++ {
 		p.Extension = append(p.Extension, ToFieldDescriptorProto(exts.Get(i)))
 	}
-	if syntax := file.Syntax(); syntax != protoreflect.Proto2 && syntax.IsValid() {
+	if syntax := file.Syntax(); syntax != protoreflect.Proto2 {
 		p.Syntax = proto.String(file.Syntax().String())
 	}
 	return p
 }
 
-// ToDescriptorProto copies a [protoreflect.MessageDescriptor] into a
+// ToDescriptorProto copies a protoreflect.MessageDescriptor into a
 // google.protobuf.DescriptorProto message.
 func ToDescriptorProto(message protoreflect.MessageDescriptor) *descriptorpb.DescriptorProto {
 	p := &descriptorpb.DescriptorProto{
@@ -119,7 +116,7 @@ func ToDescriptorProto(message protoreflect.MessageDescriptor) *descriptorpb.Des
 	return p
 }
 
-// ToFieldDescriptorProto copies a [protoreflect.FieldDescriptor] into a
+// ToFieldDescriptorProto copies a protoreflect.FieldDescriptor into a
 // google.protobuf.FieldDescriptorProto message.
 func ToFieldDescriptorProto(field protoreflect.FieldDescriptor) *descriptorpb.FieldDescriptorProto {
 	p := &descriptorpb.FieldDescriptorProto{
@@ -141,14 +138,7 @@ func ToFieldDescriptorProto(field protoreflect.FieldDescriptor) *descriptorpb.Fi
 		p.TypeName = fullNameOf(field.Message())
 	}
 	if field.HasJSONName() {
-		// A bug in older versions of protoc would always populate the
-		// "json_name" option for extensions when it is meaningless.
-		// When it did so, it would always use the camel-cased field name.
-		if field.IsExtension() {
-			p.JsonName = proto.String(strs.JSONCamelCase(string(field.Name())))
-		} else {
-			p.JsonName = proto.String(field.JSONName())
-		}
+		p.JsonName = proto.String(field.JSONName())
 	}
 	if field.Syntax() == protoreflect.Proto3 && field.HasOptionalKeyword() {
 		p.Proto3Optional = proto.Bool(true)
@@ -168,7 +158,7 @@ func ToFieldDescriptorProto(field protoreflect.FieldDescriptor) *descriptorpb.Fi
 	return p
 }
 
-// ToOneofDescriptorProto copies a [protoreflect.OneofDescriptor] into a
+// ToOneofDescriptorProto copies a protoreflect.OneofDescriptor into a
 // google.protobuf.OneofDescriptorProto message.
 func ToOneofDescriptorProto(oneof protoreflect.OneofDescriptor) *descriptorpb.OneofDescriptorProto {
 	return &descriptorpb.OneofDescriptorProto{
@@ -177,7 +167,7 @@ func ToOneofDescriptorProto(oneof protoreflect.OneofDescriptor) *descriptorpb.On
 	}
 }
 
-// ToEnumDescriptorProto copies a [protoreflect.EnumDescriptor] into a
+// ToEnumDescriptorProto copies a protoreflect.EnumDescriptor into a
 // google.protobuf.EnumDescriptorProto message.
 func ToEnumDescriptorProto(enum protoreflect.EnumDescriptor) *descriptorpb.EnumDescriptorProto {
 	p := &descriptorpb.EnumDescriptorProto{
@@ -200,7 +190,7 @@ func ToEnumDescriptorProto(enum protoreflect.EnumDescriptor) *descriptorpb.EnumD
 	return p
 }
 
-// ToEnumValueDescriptorProto copies a [protoreflect.EnumValueDescriptor] into a
+// ToEnumValueDescriptorProto copies a protoreflect.EnumValueDescriptor into a
 // google.protobuf.EnumValueDescriptorProto message.
 func ToEnumValueDescriptorProto(value protoreflect.EnumValueDescriptor) *descriptorpb.EnumValueDescriptorProto {
 	return &descriptorpb.EnumValueDescriptorProto{
@@ -210,7 +200,7 @@ func ToEnumValueDescriptorProto(value protoreflect.EnumValueDescriptor) *descrip
 	}
 }
 
-// ToServiceDescriptorProto copies a [protoreflect.ServiceDescriptor] into a
+// ToServiceDescriptorProto copies a protoreflect.ServiceDescriptor into a
 // google.protobuf.ServiceDescriptorProto message.
 func ToServiceDescriptorProto(service protoreflect.ServiceDescriptor) *descriptorpb.ServiceDescriptorProto {
 	p := &descriptorpb.ServiceDescriptorProto{
@@ -223,7 +213,7 @@ func ToServiceDescriptorProto(service protoreflect.ServiceDescriptor) *descripto
 	return p
 }
 
-// ToMethodDescriptorProto copies a [protoreflect.MethodDescriptor] into a
+// ToMethodDescriptorProto copies a protoreflect.MethodDescriptor into a
 // google.protobuf.MethodDescriptorProto message.
 func ToMethodDescriptorProto(method protoreflect.MethodDescriptor) *descriptorpb.MethodDescriptorProto {
 	p := &descriptorpb.MethodDescriptorProto{

@@ -154,10 +154,8 @@ func unmarshalValueAddr(d *Decoder, v reflect.Value) error {
 }
 
 func unmarshalValue(d *Decoder, v reflect.Value) error {
-	if d.extLen == 0 || d.extLen == 1 {
-		if d.hasNilCode() {
-			return d.decodeNilValue(v)
-		}
+	if d.hasNilCode() {
+		return d.decodeNilValue(v)
 	}
 
 	if v.IsNil() {

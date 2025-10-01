@@ -80,7 +80,7 @@ type Session struct {
 // or to directly send a header
 type sendReady struct {
 	Hdr  []byte
-	Body []byte
+	Body io.Reader
 	Err  chan error
 }
 
@@ -184,10 +184,6 @@ GET_ID:
 	s.inflight[id] = struct{}{}
 	s.streamLock.Unlock()
 
-	if s.config.StreamOpenTimeout > 0 {
-		go s.setOpenTimeout(stream)
-	}
-
 	// Send the window update to create
 	if err := stream.sendWindowUpdate(); err != nil {
 		select {
@@ -198,27 +194,6 @@ GET_ID:
 		return nil, err
 	}
 	return stream, nil
-}
-
-// setOpenTimeout implements a timeout for streams that are opened but not established.
-// If the StreamOpenTimeout is exceeded we assume the peer is unable to ACK,
-// and close the session.
-// The number of running timers is bounded by the capacity of the synCh.
-func (s *Session) setOpenTimeout(stream *Stream) {
-	timer := time.NewTimer(s.config.StreamOpenTimeout)
-	defer timer.Stop()
-
-	select {
-	case <-stream.establishCh:
-		return
-	case <-s.shutdownCh:
-		return
-	case <-timer.C:
-		// Timeout reached while waiting for ACK.
-		// Close the session to force connection re-establishment.
-		s.logger.Printf("[ERR] yamux: aborted stream open (destination=%s): %v", s.RemoteAddr().String(), ErrTimeout.err)
-		s.Close()
-	}
 }
 
 // Accept is used to block until the next available stream
@@ -352,7 +327,7 @@ func (s *Session) keepalive() {
 }
 
 // waitForSendErr waits to send a header, checking for a potential shutdown
-func (s *Session) waitForSend(hdr header, body []byte) error {
+func (s *Session) waitForSend(hdr header, body io.Reader) error {
 	errCh := make(chan error, 1)
 	return s.waitForSendErr(hdr, body, errCh)
 }
@@ -360,7 +335,7 @@ func (s *Session) waitForSend(hdr header, body []byte) error {
 // waitForSendErr waits to send a header with optional data, checking for a
 // potential shutdown. Since there's the expectation that sends can happen
 // in a timely manner, we enforce the connection write timeout here.
-func (s *Session) waitForSendErr(hdr header, body []byte, errCh chan error) error {
+func (s *Session) waitForSendErr(hdr header, body io.Reader, errCh chan error) error {
 	t := timerPool.Get()
 	timer := t.(*time.Timer)
 	timer.Reset(s.config.ConnectionWriteTimeout)
@@ -440,7 +415,7 @@ func (s *Session) send() {
 
 			// Send data from a body if given
 			if ready.Body != nil {
-				_, err := s.conn.Write(ready.Body)
+				_, err := io.Copy(s.conn, ready.Body)
 				if err != nil {
 					s.logger.Printf("[ERR] yamux: Failed to write body: %v", err)
 					asyncSendErr(ready.Err, err)

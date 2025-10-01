@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MIT
-
 package hclog
 
 import (
@@ -17,8 +14,6 @@ func NewNullLogger() Logger {
 }
 
 type nullLogger struct{}
-
-func (l *nullLogger) Log(level Level, msg string, args ...interface{}) {}
 
 func (l *nullLogger) Trace(msg string, args ...interface{}) {}
 
@@ -40,19 +35,13 @@ func (l *nullLogger) IsWarn() bool { return false }
 
 func (l *nullLogger) IsError() bool { return false }
 
-func (l *nullLogger) ImpliedArgs() []interface{} { return []interface{}{} }
-
 func (l *nullLogger) With(args ...interface{}) Logger { return l }
-
-func (l *nullLogger) Name() string { return "" }
 
 func (l *nullLogger) Named(name string) Logger { return l }
 
 func (l *nullLogger) ResetNamed(name string) Logger { return l }
 
 func (l *nullLogger) SetLevel(level Level) {}
-
-func (l *nullLogger) GetLevel() Level { return NoLevel }
 
 func (l *nullLogger) StandardLogger(opts *StandardLoggerOptions) *log.Logger {
 	return log.New(l.StandardWriter(opts), "", log.LstdFlags)

@@ -19,17 +19,12 @@
 // Package encoding defines the interface for the compressor and codec, and
 // functions to register and retrieve compressors and codecs.
 //
-// # Experimental
-//
-// Notice: This package is EXPERIMENTAL and may be changed or removed in a
-// later release.
+// This package is EXPERIMENTAL.
 package encoding
 
 import (
 	"io"
 	"strings"
-
-	"google.golang.org/grpc/internal/grpcutil"
 )
 
 // Identity specifies the optional encoding for uncompressed streams.
@@ -51,15 +46,10 @@ type Compressor interface {
 	// coding header.  The result must be static; the result cannot change
 	// between calls.
 	Name() string
-	// If a Compressor implements
+	// EXPERIMENTAL: if a Compressor implements
 	// DecompressedSize(compressedBytes []byte) int, gRPC will call it
 	// to determine the size of the buffer allocated for the result of decompression.
 	// Return -1 to indicate unknown size.
-	//
-	// Experimental
-	//
-	// Notice: This API is EXPERIMENTAL and may be changed or removed in a
-	// later release.
 }
 
 var registeredCompressor = make(map[string]Compressor)
@@ -75,7 +65,6 @@ var registeredCompressor = make(map[string]Compressor)
 // registered with the same name, the one registered last will take effect.
 func RegisterCompressor(c Compressor) {
 	registeredCompressor[c.Name()] = c
-	grpcutil.RegisteredCompressorNames = append(grpcutil.RegisteredCompressorNames, c.Name())
 }
 
 // GetCompressor returns Compressor for the given compressor name.
@@ -111,7 +100,7 @@ var registeredCodecs = make(map[string]Codec)
 // more details.
 //
 // NOTE: this function must only be called during initialization time (i.e. in
-// an init() function), and is not thread-safe.  If multiple Codecs are
+// an init() function), and is not thread-safe.  If multiple Compressors are
 // registered with the same name, the one registered last will take effect.
 func RegisterCodec(codec Codec) {
 	if codec == nil {

@@ -19,20 +19,20 @@ import (
 // Set operations are not optimized to minimize memory pressure. Mutating
 // a set will generally create garbage and so should perhaps be avoided in
 // tight loops where memory pressure is a concern.
-type Set[T any] struct {
-	vals  map[int][]T
-	rules Rules[T]
+type Set struct {
+	vals  map[int][]interface{}
+	rules Rules
 }
 
 // NewSet returns an empty set with the membership rules given.
-func NewSet[T any](rules Rules[T]) Set[T] {
-	return Set[T]{
-		vals:  map[int][]T{},
+func NewSet(rules Rules) Set {
+	return Set{
+		vals:  map[int][]interface{}{},
 		rules: rules,
 	}
 }
 
-func NewSetFromSlice[T any](rules Rules[T], vals []T) Set[T] {
+func NewSetFromSlice(rules Rules, vals []interface{}) Set {
 	s := NewSet(rules)
 	for _, v := range vals {
 		s.Add(v)
@@ -40,11 +40,11 @@ func NewSetFromSlice[T any](rules Rules[T], vals []T) Set[T] {
 	return s
 }
 
-func sameRules[T any](s1 Set[T], s2 Set[T]) bool {
-	return s1.rules.SameRules(s2.rules)
+func sameRules(s1 Set, s2 Set) bool {
+	return s1.rules == s2.rules
 }
 
-func mustHaveSameRules[T any](s1 Set[T], s2 Set[T]) {
+func mustHaveSameRules(s1 Set, s2 Set) {
 	if !sameRules(s1, s2) {
 		panic(fmt.Errorf("incompatible set rules: %#v, %#v", s1.rules, s2.rules))
 	}
@@ -52,11 +52,11 @@ func mustHaveSameRules[T any](s1 Set[T], s2 Set[T]) {
 
 // HasRules returns true if and only if the receiving set has the given rules
 // instance as its rules.
-func (s Set[T]) HasRules(rules Rules[T]) bool {
-	return s.rules.SameRules(rules)
+func (s Set) HasRules(rules Rules) bool {
+	return s.rules == rules
 }
 
 // Rules returns the receiving set's rules instance.
-func (s Set[T]) Rules() Rules[T] {
+func (s Set) Rules() Rules {
 	return s.rules
 }

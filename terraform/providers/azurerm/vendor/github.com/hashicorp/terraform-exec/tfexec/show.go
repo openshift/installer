@@ -1,10 +1,10 @@
 package tfexec
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
-	"strings"
 
 	tfjson "github.com/hashicorp/terraform-json"
 )
@@ -49,8 +49,7 @@ func (tf *Terraform) Show(ctx context.Context, opts ...ShowOption) (*tfjson.Stat
 	showCmd := tf.showCmd(ctx, true, mergeEnv)
 
 	var ret tfjson.State
-	ret.UseJSONNumber(true)
-	err = tf.runTerraformCmdJSON(ctx, showCmd, &ret)
+	err = tf.runTerraformCmdJSON(showCmd, &ret)
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +91,7 @@ func (tf *Terraform) ShowStateFile(ctx context.Context, statePath string, opts .
 	showCmd := tf.showCmd(ctx, true, mergeEnv, statePath)
 
 	var ret tfjson.State
-	ret.UseJSONNumber(true)
-	err = tf.runTerraformCmdJSON(ctx, showCmd, &ret)
+	err = tf.runTerraformCmdJSON(showCmd, &ret)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +133,7 @@ func (tf *Terraform) ShowPlanFile(ctx context.Context, planPath string, opts ...
 	showCmd := tf.showCmd(ctx, true, mergeEnv, planPath)
 
 	var ret tfjson.Plan
-	err = tf.runTerraformCmdJSON(ctx, showCmd, &ret)
+	err = tf.runTerraformCmdJSON(showCmd, &ret)
 	if err != nil {
 		return nil, err
 	}
@@ -173,14 +171,14 @@ func (tf *Terraform) ShowPlanFileRaw(ctx context.Context, planPath string, opts 
 
 	showCmd := tf.showCmd(ctx, false, mergeEnv, planPath)
 
-	var outBuf strings.Builder
-	showCmd.Stdout = &outBuf
-	err := tf.runTerraformCmd(ctx, showCmd)
+	var ret bytes.Buffer
+	showCmd.Stdout = &ret
+	err := tf.runTerraformCmd(showCmd)
 	if err != nil {
 		return "", err
 	}
 
-	return outBuf.String(), nil
+	return ret.String(), nil
 
 }
 

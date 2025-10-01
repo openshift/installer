@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/apparentlymart/go-textseg/v13/textseg"
+	"github.com/apparentlymart/go-textseg/textseg"
 
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
@@ -18,7 +18,6 @@ import (
 //go:generate gofmt -w format_fsm.go
 
 var FormatFunc = function.New(&function.Spec{
-	Description: `Constructs a string by applying formatting verbs to a series of arguments, using a similar syntax to the C function \"printf\".`,
 	Params: []function.Parameter{
 		{
 			Name: "format",
@@ -46,7 +45,6 @@ var FormatFunc = function.New(&function.Spec{
 })
 
 var FormatListFunc = function.New(&function.Spec{
-	Description: `Constructs a list of strings by applying formatting verbs to a series of arguments, using a similar syntax to the C function \"printf\".`,
 	Params: []function.Parameter{
 		{
 			Name: "format",
@@ -87,7 +85,7 @@ var FormatListFunc = function.New(&function.Spec{
 			argTy := arg.Type()
 			switch {
 			case (argTy.IsListType() || argTy.IsSetType() || argTy.IsTupleType()) && !arg.IsNull():
-				if !argTy.IsTupleType() && !(arg.IsKnown() && arg.Length().IsKnown()) {
+				if !argTy.IsTupleType() && !arg.IsKnown() {
 					// We can't iterate this one at all yet then, so we can't
 					// yet produce a result.
 					unknowns[i] = true
@@ -116,8 +114,6 @@ var FormatListFunc = function.New(&function.Spec{
 					continue
 				}
 				iterators[i] = arg.ElementIterator()
-			case arg == cty.DynamicVal:
-				unknowns[i] = true
 			default:
 				singleVals[i] = arg
 			}
