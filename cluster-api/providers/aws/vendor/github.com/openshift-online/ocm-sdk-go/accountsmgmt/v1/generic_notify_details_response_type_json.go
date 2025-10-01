@@ -29,7 +29,7 @@ import (
 // MarshalGenericNotifyDetailsResponse writes a value of the 'generic_notify_details_response' type to the given writer.
 func MarshalGenericNotifyDetailsResponse(object *GenericNotifyDetailsResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGenericNotifyDetailsResponse(object, stream)
+	WriteGenericNotifyDetailsResponse(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGenericNotifyDetailsResponse(object *GenericNotifyDetailsResponse, w
 	return stream.Error
 }
 
-// writeGenericNotifyDetailsResponse writes a value of the 'generic_notify_details_response' type to the given stream.
-func writeGenericNotifyDetailsResponse(object *GenericNotifyDetailsResponse, stream *jsoniter.Stream) {
+// WriteGenericNotifyDetailsResponse writes a value of the 'generic_notify_details_response' type to the given stream.
+func WriteGenericNotifyDetailsResponse(object *GenericNotifyDetailsResponse, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func writeGenericNotifyDetailsResponse(object *GenericNotifyDetailsResponse, str
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("associates")
-		writeStringList(object.associates, stream)
+		WriteStringList(object.associates, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.items != nil
@@ -80,7 +80,7 @@ func writeGenericNotifyDetailsResponse(object *GenericNotifyDetailsResponse, str
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("items")
-		writeNotificationDetailsResponseList(object.items, stream)
+		WriteNotificationDetailsResponseList(object.items, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0 && object.recipients != nil
@@ -89,7 +89,7 @@ func writeGenericNotifyDetailsResponse(object *GenericNotifyDetailsResponse, str
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("recipients")
-		writeStringList(object.recipients, stream)
+		WriteStringList(object.recipients, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -101,13 +101,13 @@ func UnmarshalGenericNotifyDetailsResponse(source interface{}) (object *GenericN
 	if err != nil {
 		return
 	}
-	object = readGenericNotifyDetailsResponse(iterator)
+	object = ReadGenericNotifyDetailsResponse(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGenericNotifyDetailsResponse reads a value of the 'generic_notify_details_response' type from the given iterator.
-func readGenericNotifyDetailsResponse(iterator *jsoniter.Iterator) *GenericNotifyDetailsResponse {
+// ReadGenericNotifyDetailsResponse reads a value of the 'generic_notify_details_response' type from the given iterator.
+func ReadGenericNotifyDetailsResponse(iterator *jsoniter.Iterator) *GenericNotifyDetailsResponse {
 	object := &GenericNotifyDetailsResponse{}
 	for {
 		field := iterator.ReadObject()
@@ -127,15 +127,15 @@ func readGenericNotifyDetailsResponse(iterator *jsoniter.Iterator) *GenericNotif
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "associates":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.associates = value
 			object.bitmap_ |= 8
 		case "items":
-			value := readNotificationDetailsResponseList(iterator)
+			value := ReadNotificationDetailsResponseList(iterator)
 			object.items = value
 			object.bitmap_ |= 16
 		case "recipients":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.recipients = value
 			object.bitmap_ |= 32
 		default:

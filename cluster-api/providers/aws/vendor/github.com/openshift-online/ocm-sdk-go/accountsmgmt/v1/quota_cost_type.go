@@ -196,6 +196,29 @@ func (l *QuotaCostList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *QuotaCostList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *QuotaCostList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *QuotaCostList) SetItems(items []*QuotaCost) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *QuotaCostList) Items() []*QuotaCost {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *QuotaCostList) Empty() bool {
 	return l == nil || len(l.items) == 0

@@ -17,9 +17,10 @@ limitations under the License.
 package v1beta1
 
 import (
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 // ConvertTo converts the v1beta1 AWSMachine receiver to a v1beta2 AWSMachine.
@@ -43,6 +44,9 @@ func (src *AWSMachine) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.SecurityGroupOverrides = restored.Spec.SecurityGroupOverrides
 	dst.Spec.CapacityReservationID = restored.Spec.CapacityReservationID
 	dst.Spec.MarketType = restored.Spec.MarketType
+	dst.Spec.HostID = restored.Spec.HostID
+	dst.Spec.HostAffinity = restored.Spec.HostAffinity
+	dst.Spec.CapacityReservationPreference = restored.Spec.CapacityReservationPreference
 	dst.Spec.NetworkInterfaceType = restored.Spec.NetworkInterfaceType
 	if restored.Spec.ElasticIPPool != nil {
 		if dst.Spec.ElasticIPPool == nil {
@@ -107,6 +111,9 @@ func (r *AWSMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Template.Spec.SecurityGroupOverrides = restored.Spec.Template.Spec.SecurityGroupOverrides
 	dst.Spec.Template.Spec.CapacityReservationID = restored.Spec.Template.Spec.CapacityReservationID
 	dst.Spec.Template.Spec.MarketType = restored.Spec.Template.Spec.MarketType
+	dst.Spec.Template.Spec.HostID = restored.Spec.Template.Spec.HostID
+	dst.Spec.Template.Spec.HostAffinity = restored.Spec.Template.Spec.HostAffinity
+	dst.Spec.Template.Spec.CapacityReservationPreference = restored.Spec.Template.Spec.CapacityReservationPreference
 	dst.Spec.Template.Spec.NetworkInterfaceType = restored.Spec.Template.Spec.NetworkInterfaceType
 	if restored.Spec.Template.Spec.ElasticIPPool != nil {
 		if dst.Spec.Template.Spec.ElasticIPPool == nil {

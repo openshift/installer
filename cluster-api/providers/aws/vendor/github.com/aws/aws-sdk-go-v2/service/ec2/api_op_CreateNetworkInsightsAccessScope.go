@@ -11,12 +11,14 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates a Network Access Scope. Amazon Web Services Network Access Analyzer
-// enables cloud networking and cloud operations teams to verify that their
-// networks on Amazon Web Services conform to their network security and governance
-// objectives. For more information, see the Amazon Web Services Network Access
-// Analyzer Guide (https://docs.aws.amazon.com/vpc/latest/network-access-analyzer/)
+// Creates a Network Access Scope.
+//
+// Amazon Web Services Network Access Analyzer enables cloud networking and cloud
+// operations teams to verify that their networks on Amazon Web Services conform to
+// their network security and governance objectives. For more information, see the [Amazon Web Services Network Access Analyzer Guide]
 // .
+//
+// [Amazon Web Services Network Access Analyzer Guide]: https://docs.aws.amazon.com/vpc/latest/network-access-analyzer/
 func (c *Client) CreateNetworkInsightsAccessScope(ctx context.Context, params *CreateNetworkInsightsAccessScopeInput, optFns ...func(*Options)) (*CreateNetworkInsightsAccessScopeOutput, error) {
 	if params == nil {
 		params = &CreateNetworkInsightsAccessScopeInput{}
@@ -35,8 +37,9 @@ func (c *Client) CreateNetworkInsightsAccessScope(ctx context.Context, params *C
 type CreateNetworkInsightsAccessScopeInput struct {
 
 	// Unique, case-sensitive identifier that you provide to ensure the idempotency of
-	// the request. For more information, see How to ensure idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
-	// .
+	// the request. For more information, see [How to ensure idempotency].
+	//
+	// [How to ensure idempotency]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-api-idempotency.html
 	//
 	// This member is required.
 	ClientToken *string
@@ -116,6 +119,9 @@ func (c *Client) addOperationCreateNetworkInsightsAccessScopeMiddlewares(stack *
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +132,15 @@ func (c *Client) addOperationCreateNetworkInsightsAccessScopeMiddlewares(stack *
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opCreateNetworkInsightsAccessScopeMiddleware(stack, options); err != nil {
@@ -150,6 +165,18 @@ func (c *Client) addOperationCreateNetworkInsightsAccessScopeMiddlewares(stack *
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

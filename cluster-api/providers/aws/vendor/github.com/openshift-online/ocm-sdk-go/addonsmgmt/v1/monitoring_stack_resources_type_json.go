@@ -29,7 +29,7 @@ import (
 // MarshalMonitoringStackResources writes a value of the 'monitoring_stack_resources' type to the given writer.
 func MarshalMonitoringStackResources(object *MonitoringStackResources, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeMonitoringStackResources(object, stream)
+	WriteMonitoringStackResources(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalMonitoringStackResources(object *MonitoringStackResources, writer io
 	return stream.Error
 }
 
-// writeMonitoringStackResources writes a value of the 'monitoring_stack_resources' type to the given stream.
-func writeMonitoringStackResources(object *MonitoringStackResources, stream *jsoniter.Stream) {
+// WriteMonitoringStackResources writes a value of the 'monitoring_stack_resources' type to the given stream.
+func WriteMonitoringStackResources(object *MonitoringStackResources, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeMonitoringStackResources(object *MonitoringStackResources, stream *jso
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("limits")
-		writeMonitoringStackResource(object.limits, stream)
+		WriteMonitoringStackResource(object.limits, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0 && object.requests != nil
@@ -57,7 +57,7 @@ func writeMonitoringStackResources(object *MonitoringStackResources, stream *jso
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("requests")
-		writeMonitoringStackResource(object.requests, stream)
+		WriteMonitoringStackResource(object.requests, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -69,13 +69,13 @@ func UnmarshalMonitoringStackResources(source interface{}) (object *MonitoringSt
 	if err != nil {
 		return
 	}
-	object = readMonitoringStackResources(iterator)
+	object = ReadMonitoringStackResources(iterator)
 	err = iterator.Error
 	return
 }
 
-// readMonitoringStackResources reads a value of the 'monitoring_stack_resources' type from the given iterator.
-func readMonitoringStackResources(iterator *jsoniter.Iterator) *MonitoringStackResources {
+// ReadMonitoringStackResources reads a value of the 'monitoring_stack_resources' type from the given iterator.
+func ReadMonitoringStackResources(iterator *jsoniter.Iterator) *MonitoringStackResources {
 	object := &MonitoringStackResources{}
 	for {
 		field := iterator.ReadObject()
@@ -84,11 +84,11 @@ func readMonitoringStackResources(iterator *jsoniter.Iterator) *MonitoringStackR
 		}
 		switch field {
 		case "limits":
-			value := readMonitoringStackResource(iterator)
+			value := ReadMonitoringStackResource(iterator)
 			object.limits = value
 			object.bitmap_ |= 1
 		case "requests":
-			value := readMonitoringStackResource(iterator)
+			value := ReadMonitoringStackResource(iterator)
 			object.requests = value
 			object.bitmap_ |= 2
 		default:

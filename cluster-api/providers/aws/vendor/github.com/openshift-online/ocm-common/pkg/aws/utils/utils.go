@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"fmt"
+	"github.com/openshift-online/ocm-common/pkg/log"
+	"path"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
@@ -24,4 +27,10 @@ func GetPathFromArn(arnStr string) (string, error) {
 
 func TruncateRoleName(name string) string {
 	return commonUtils.Truncate(name, commonUtils.MaxByteSize)
+}
+
+func GetPrivateKeyName(privateKeyPath string, keypairName string) string {
+	privateKeyName := fmt.Sprintf("%s-%s", path.Join(privateKeyPath, keypairName), "keyPair.pem")
+	log.LogInfo("Get private key name finished.")
+	return privateKeyName
 }

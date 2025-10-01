@@ -36,8 +36,11 @@ type DescribeSnapshotTierStatusInput struct {
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - snapshot-id - The snapshot ID.
+	//
 	//   - volume-id - The ID of the volume the snapshot is for.
+	//
 	//   - last-tiering-operation - The state of the last archive or restore action. (
 	//   archival-in-progress | archival-completed | archival-failed |
 	//   permanent-restore-in-progress | permanent-restore-completed |
@@ -47,8 +50,9 @@ type DescribeSnapshotTierStatusInput struct {
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -116,6 +120,9 @@ func (c *Client) addOperationDescribeSnapshotTierStatusMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +133,15 @@ func (c *Client) addOperationDescribeSnapshotTierStatusMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeSnapshotTierStatus(options.Region), middleware.Before); err != nil {
@@ -146,24 +162,29 @@ func (c *Client) addOperationDescribeSnapshotTierStatusMiddlewares(stack *middle
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeSnapshotTierStatusAPIClient is a client that implements the
-// DescribeSnapshotTierStatus operation.
-type DescribeSnapshotTierStatusAPIClient interface {
-	DescribeSnapshotTierStatus(context.Context, *DescribeSnapshotTierStatusInput, ...func(*Options)) (*DescribeSnapshotTierStatusOutput, error)
-}
-
-var _ DescribeSnapshotTierStatusAPIClient = (*Client)(nil)
 
 // DescribeSnapshotTierStatusPaginatorOptions is the paginator options for
 // DescribeSnapshotTierStatus
 type DescribeSnapshotTierStatusPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -226,6 +247,9 @@ func (p *DescribeSnapshotTierStatusPaginator) NextPage(ctx context.Context, optF
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeSnapshotTierStatus(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -244,6 +268,14 @@ func (p *DescribeSnapshotTierStatusPaginator) NextPage(ctx context.Context, optF
 
 	return result, nil
 }
+
+// DescribeSnapshotTierStatusAPIClient is a client that implements the
+// DescribeSnapshotTierStatus operation.
+type DescribeSnapshotTierStatusAPIClient interface {
+	DescribeSnapshotTierStatus(context.Context, *DescribeSnapshotTierStatusInput, ...func(*Options)) (*DescribeSnapshotTierStatusOutput, error)
+}
+
+var _ DescribeSnapshotTierStatusAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeSnapshotTierStatus(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

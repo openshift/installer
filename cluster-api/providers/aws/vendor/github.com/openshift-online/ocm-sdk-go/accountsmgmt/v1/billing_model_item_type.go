@@ -55,7 +55,7 @@ func (o *BillingModelItem) Kind() string {
 	return BillingModelItemKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *BillingModelItem) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -252,6 +252,29 @@ func (l *BillingModelItemList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *BillingModelItemList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *BillingModelItemList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *BillingModelItemList) SetItems(items []*BillingModelItem) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *BillingModelItemList) Items() []*BillingModelItem {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

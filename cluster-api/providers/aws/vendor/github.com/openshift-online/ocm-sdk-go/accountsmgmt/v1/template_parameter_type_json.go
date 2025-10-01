@@ -29,7 +29,7 @@ import (
 // MarshalTemplateParameter writes a value of the 'template_parameter' type to the given writer.
 func MarshalTemplateParameter(object *TemplateParameter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTemplateParameter(object, stream)
+	WriteTemplateParameter(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalTemplateParameter(object *TemplateParameter, writer io.Writer) error
 	return stream.Error
 }
 
-// writeTemplateParameter writes a value of the 'template_parameter' type to the given stream.
-func writeTemplateParameter(object *TemplateParameter, stream *jsoniter.Stream) {
+// WriteTemplateParameter writes a value of the 'template_parameter' type to the given stream.
+func WriteTemplateParameter(object *TemplateParameter, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalTemplateParameter(source interface{}) (object *TemplateParameter, 
 	if err != nil {
 		return
 	}
-	object = readTemplateParameter(iterator)
+	object = ReadTemplateParameter(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTemplateParameter reads a value of the 'template_parameter' type from the given iterator.
-func readTemplateParameter(iterator *jsoniter.Iterator) *TemplateParameter {
+// ReadTemplateParameter reads a value of the 'template_parameter' type from the given iterator.
+func ReadTemplateParameter(iterator *jsoniter.Iterator) *TemplateParameter {
 	object := &TemplateParameter{}
 	for {
 		field := iterator.ReadObject()

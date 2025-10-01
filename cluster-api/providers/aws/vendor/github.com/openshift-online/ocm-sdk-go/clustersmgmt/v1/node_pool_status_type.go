@@ -40,6 +40,7 @@ type NodePoolStatus struct {
 	href            string
 	currentReplicas int
 	message         string
+	state           *NodePoolState
 }
 
 // Kind returns the name of the type of the object.
@@ -53,7 +54,7 @@ func (o *NodePoolStatus) Kind() string {
 	return NodePoolStatusKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *NodePoolStatus) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -145,6 +146,29 @@ func (o *NodePoolStatus) GetMessage() (value string, ok bool) {
 	return
 }
 
+// State returns the value of the 'state' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The current state of the node pool
+func (o *NodePoolStatus) State() *NodePoolState {
+	if o != nil && o.bitmap_&32 != 0 {
+		return o.state
+	}
+	return nil
+}
+
+// GetState returns the value of the 'state' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The current state of the node pool
+func (o *NodePoolStatus) GetState() (value *NodePoolState, ok bool) {
+	ok = o != nil && o.bitmap_&32 != 0
+	if ok {
+		value = o.state
+	}
+	return
+}
+
 // NodePoolStatusListKind is the name of the type used to represent list of objects of
 // type 'node_pool_status'.
 const NodePoolStatusListKind = "NodePoolStatusList"
@@ -204,6 +228,29 @@ func (l *NodePoolStatusList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *NodePoolStatusList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *NodePoolStatusList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *NodePoolStatusList) SetItems(items []*NodePoolStatus) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *NodePoolStatusList) Items() []*NodePoolStatus {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

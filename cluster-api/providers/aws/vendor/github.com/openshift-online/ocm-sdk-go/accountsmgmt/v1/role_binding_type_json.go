@@ -30,7 +30,7 @@ import (
 // MarshalRoleBinding writes a value of the 'role_binding' type to the given writer.
 func MarshalRoleBinding(object *RoleBinding, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeRoleBinding(object, stream)
+	WriteRoleBinding(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalRoleBinding(object *RoleBinding, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeRoleBinding writes a value of the 'role_binding' type to the given stream.
-func writeRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
+// WriteRoleBinding writes a value of the 'role_binding' type to the given stream.
+func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func writeRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("account")
-		writeAccount(object.account, stream)
+		WriteAccount(object.account, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -117,7 +117,7 @@ func writeRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("organization")
-		writeOrganization(object.organization, stream)
+		WriteOrganization(object.organization, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0
@@ -135,7 +135,7 @@ func writeRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("role")
-		writeRole(object.role, stream)
+		WriteRole(object.role, stream)
 		count++
 	}
 	present_ = object.bitmap_&2048 != 0
@@ -153,7 +153,7 @@ func writeRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("subscription")
-		writeSubscription(object.subscription, stream)
+		WriteSubscription(object.subscription, stream)
 		count++
 	}
 	present_ = object.bitmap_&8192 != 0
@@ -192,13 +192,13 @@ func UnmarshalRoleBinding(source interface{}) (object *RoleBinding, err error) {
 	if err != nil {
 		return
 	}
-	object = readRoleBinding(iterator)
+	object = ReadRoleBinding(iterator)
 	err = iterator.Error
 	return
 }
 
-// readRoleBinding reads a value of the 'role_binding' type from the given iterator.
-func readRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
+// ReadRoleBinding reads a value of the 'role_binding' type from the given iterator.
+func ReadRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 	object := &RoleBinding{}
 	for {
 		field := iterator.ReadObject()
@@ -218,7 +218,7 @@ func readRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "account":
-			value := readAccount(iterator)
+			value := ReadAccount(iterator)
 			object.account = value
 			object.bitmap_ |= 8
 		case "account_id":
@@ -242,7 +242,7 @@ func readRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 			object.managedBy = value
 			object.bitmap_ |= 128
 		case "organization":
-			value := readOrganization(iterator)
+			value := ReadOrganization(iterator)
 			object.organization = value
 			object.bitmap_ |= 256
 		case "organization_id":
@@ -250,7 +250,7 @@ func readRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 			object.organizationID = value
 			object.bitmap_ |= 512
 		case "role":
-			value := readRole(iterator)
+			value := ReadRole(iterator)
 			object.role = value
 			object.bitmap_ |= 1024
 		case "role_id":
@@ -258,7 +258,7 @@ func readRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 			object.roleID = value
 			object.bitmap_ |= 2048
 		case "subscription":
-			value := readSubscription(iterator)
+			value := ReadSubscription(iterator)
 			object.subscription = value
 			object.bitmap_ |= 4096
 		case "subscription_id":

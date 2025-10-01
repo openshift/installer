@@ -29,7 +29,7 @@ import (
 // MarshalStorageQuota writes a value of the 'storage_quota' type to the given writer.
 func MarshalStorageQuota(object *StorageQuota, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeStorageQuota(object, stream)
+	WriteStorageQuota(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalStorageQuota(object *StorageQuota, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeStorageQuota writes a value of the 'storage_quota' type to the given stream.
-func writeStorageQuota(object *StorageQuota, stream *jsoniter.Stream) {
+// WriteStorageQuota writes a value of the 'storage_quota' type to the given stream.
+func WriteStorageQuota(object *StorageQuota, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalStorageQuota(source interface{}) (object *StorageQuota, err error)
 	if err != nil {
 		return
 	}
-	object = readStorageQuota(iterator)
+	object = ReadStorageQuota(iterator)
 	err = iterator.Error
 	return
 }
 
-// readStorageQuota reads a value of the 'storage_quota' type from the given iterator.
-func readStorageQuota(iterator *jsoniter.Iterator) *StorageQuota {
+// ReadStorageQuota reads a value of the 'storage_quota' type from the given iterator.
+func ReadStorageQuota(iterator *jsoniter.Iterator) *StorageQuota {
 	object := &StorageQuota{}
 	for {
 		field := iterator.ReadObject()

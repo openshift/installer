@@ -13,9 +13,10 @@ import (
 
 // Accept a VPC peering connection request. To accept a request, the VPC peering
 // connection must be in the pending-acceptance state, and you must be the owner
-// of the peer VPC. Use DescribeVpcPeeringConnections to view your outstanding VPC
-// peering connection requests. For an inter-Region VPC peering connection request,
-// you must accept the VPC peering connection in the Region of the accepter VPC.
+// of the peer VPC. Use DescribeVpcPeeringConnectionsto view your outstanding VPC peering connection requests.
+//
+// For an inter-Region VPC peering connection request, you must accept the VPC
+// peering connection in the Region of the accepter VPC.
 func (c *Client) AcceptVpcPeeringConnection(ctx context.Context, params *AcceptVpcPeeringConnectionInput, optFns ...func(*Options)) (*AcceptVpcPeeringConnectionOutput, error) {
 	if params == nil {
 		params = &AcceptVpcPeeringConnectionInput{}
@@ -102,6 +103,9 @@ func (c *Client) addOperationAcceptVpcPeeringConnectionMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,6 +116,15 @@ func (c *Client) addOperationAcceptVpcPeeringConnectionMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAcceptVpcPeeringConnectionValidationMiddleware(stack); err != nil {
@@ -133,6 +146,18 @@ func (c *Client) addOperationAcceptVpcPeeringConnectionMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

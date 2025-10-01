@@ -96,6 +96,29 @@ func (l *WifSecretRefList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *WifSecretRefList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *WifSecretRefList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *WifSecretRefList) SetItems(items []*WifSecretRef) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *WifSecretRefList) Items() []*WifSecretRef {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *WifSecretRefList) Empty() bool {
 	return l == nil || len(l.items) == 0

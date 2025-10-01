@@ -72,11 +72,33 @@ type IgnitionInput struct {
 	RootCA           *tls.RootCA
 }
 
+// SetIgnFromOutput set the ignition data for input from an output.
+// This is used to chain multiple ignition editions.
+func (ignIn *IgnitionInput) SetIgnFromOutput(outIgn *IgnitionOutput) {
+	if ignIn == nil || outIgn == nil {
+		return
+	}
+	ignIn.BootstrapIgnData = outIgn.UpdatedBootstrapIgn
+	ignIn.MasterIgnData = outIgn.UpdatedMasterIgn
+	ignIn.WorkerIgnData = outIgn.UpdatedWorkerIgn
+}
+
 // IgnitionOutput collects updated Ignition Data for Bootstrap, Master and Worker nodes.
 type IgnitionOutput struct {
 	UpdatedBootstrapIgn []byte
 	UpdatedMasterIgn    []byte
 	UpdatedWorkerIgn    []byte
+}
+
+// Set set the ignition data from another output.
+// This is used for chained multiple ignition editions.
+func (ignOut *IgnitionOutput) Set(other *IgnitionOutput) {
+	if ignOut == nil || other == nil {
+		return
+	}
+	ignOut.UpdatedBootstrapIgn = other.UpdatedBootstrapIgn
+	ignOut.UpdatedMasterIgn = other.UpdatedMasterIgn
+	ignOut.UpdatedWorkerIgn = other.UpdatedWorkerIgn
 }
 
 // InfraReadyProvider defines the InfraReady hook, which is

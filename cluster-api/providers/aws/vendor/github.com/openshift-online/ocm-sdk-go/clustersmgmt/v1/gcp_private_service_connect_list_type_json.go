@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGcpPrivateServiceConnectList(list []*GcpPrivateServiceConnect, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGcpPrivateServiceConnectList(list, stream)
+	WriteGcpPrivateServiceConnectList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGcpPrivateServiceConnectList(list []*GcpPrivateServiceConnect, write
 	return stream.Error
 }
 
-// writeGcpPrivateServiceConnectList writes a list of value of the 'gcp_private_service_connect' type to
+// WriteGcpPrivateServiceConnectList writes a list of value of the 'gcp_private_service_connect' type to
 // the given stream.
-func writeGcpPrivateServiceConnectList(list []*GcpPrivateServiceConnect, stream *jsoniter.Stream) {
+func WriteGcpPrivateServiceConnectList(list []*GcpPrivateServiceConnect, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeGcpPrivateServiceConnect(value, stream)
+		WriteGcpPrivateServiceConnect(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGcpPrivateServiceConnectList(source interface{}) (items []*GcpPriv
 	if err != nil {
 		return
 	}
-	items = readGcpPrivateServiceConnectList(iterator)
+	items = ReadGcpPrivateServiceConnectList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGcpPrivateServiceConnectList reads list of values of the ”gcp_private_service_connect' type from
+// ReadGcpPrivateServiceConnectList reads list of values of the ”gcp_private_service_connect' type from
 // the given iterator.
-func readGcpPrivateServiceConnectList(iterator *jsoniter.Iterator) []*GcpPrivateServiceConnect {
+func ReadGcpPrivateServiceConnectList(iterator *jsoniter.Iterator) []*GcpPrivateServiceConnect {
 	list := []*GcpPrivateServiceConnect{}
 	for iterator.ReadArray() {
-		item := readGcpPrivateServiceConnect(iterator)
+		item := ReadGcpPrivateServiceConnect(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGCPVolumeList(list []*GCPVolume, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGCPVolumeList(list, stream)
+	WriteGCPVolumeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGCPVolumeList(list []*GCPVolume, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeGCPVolumeList writes a list of value of the 'GCP_volume' type to
+// WriteGCPVolumeList writes a list of value of the 'GCP_volume' type to
 // the given stream.
-func writeGCPVolumeList(list []*GCPVolume, stream *jsoniter.Stream) {
+func WriteGCPVolumeList(list []*GCPVolume, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeGCPVolume(value, stream)
+		WriteGCPVolume(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGCPVolumeList(source interface{}) (items []*GCPVolume, err error) 
 	if err != nil {
 		return
 	}
-	items = readGCPVolumeList(iterator)
+	items = ReadGCPVolumeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGCPVolumeList reads list of values of the ”GCP_volume' type from
+// ReadGCPVolumeList reads list of values of the ”GCP_volume' type from
 // the given iterator.
-func readGCPVolumeList(iterator *jsoniter.Iterator) []*GCPVolume {
+func ReadGCPVolumeList(iterator *jsoniter.Iterator) []*GCPVolume {
 	list := []*GCPVolume{}
 	for iterator.ReadArray() {
-		item := readGCPVolume(iterator)
+		item := ReadGCPVolume(iterator)
 		list = append(list, item)
 	}
 	return list

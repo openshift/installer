@@ -29,7 +29,7 @@ import (
 // MarshalClientComponent writes a value of the 'client_component' type to the given writer.
 func MarshalClientComponent(object *ClientComponent, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClientComponent(object, stream)
+	WriteClientComponent(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClientComponent(object *ClientComponent, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeClientComponent writes a value of the 'client_component' type to the given stream.
-func writeClientComponent(object *ClientComponent, stream *jsoniter.Stream) {
+// WriteClientComponent writes a value of the 'client_component' type to the given stream.
+func WriteClientComponent(object *ClientComponent, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalClientComponent(source interface{}) (object *ClientComponent, err 
 	if err != nil {
 		return
 	}
-	object = readClientComponent(iterator)
+	object = ReadClientComponent(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClientComponent reads a value of the 'client_component' type from the given iterator.
-func readClientComponent(iterator *jsoniter.Iterator) *ClientComponent {
+// ReadClientComponent reads a value of the 'client_component' type from the given iterator.
+func ReadClientComponent(iterator *jsoniter.Iterator) *ClientComponent {
 	object := &ClientComponent{}
 	for {
 		field := iterator.ReadObject()

@@ -11,8 +11,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Get information about your IPAM pools. For more information, see What is IPAM? (https://docs.aws.amazon.com/vpc/latest/ipam/what-is-it-ipam.html)
-// in the Amazon VPC IPAM User Guide.
+// Get information about your IPAM pools.
+//
+// For more information, see [What is IPAM?] in the Amazon VPC IPAM User Guide.
+//
+// [What is IPAM?]: https://docs.aws.amazon.com/vpc/latest/ipam/what-is-it-ipam.html
 func (c *Client) DescribeIpams(ctx context.Context, params *DescribeIpamsInput, optFns ...func(*Options)) (*DescribeIpamsOutput, error) {
 	if params == nil {
 		params = &DescribeIpamsInput{}
@@ -36,9 +39,9 @@ type DescribeIpamsInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
-	// One or more filters for the request. For more information about filtering, see
-	// Filtering CLI output (https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-filter.html)
-	// .
+	// One or more filters for the request. For more information about filtering, see [Filtering CLI output].
+	//
+	// [Filtering CLI output]: https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-filter.html
 	Filters []types.Filter
 
 	// The IDs of the IPAMs you want information on.
@@ -111,6 +114,9 @@ func (c *Client) addOperationDescribeIpamsMiddlewares(stack *middleware.Stack, o
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -121,6 +127,15 @@ func (c *Client) addOperationDescribeIpamsMiddlewares(stack *middleware.Stack, o
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeIpams(options.Region), middleware.Before); err != nil {
@@ -141,15 +156,20 @@ func (c *Client) addOperationDescribeIpamsMiddlewares(stack *middleware.Stack, o
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeIpamsAPIClient is a client that implements the DescribeIpams operation.
-type DescribeIpamsAPIClient interface {
-	DescribeIpams(context.Context, *DescribeIpamsInput, ...func(*Options)) (*DescribeIpamsOutput, error)
-}
-
-var _ DescribeIpamsAPIClient = (*Client)(nil)
 
 // DescribeIpamsPaginatorOptions is the paginator options for DescribeIpams
 type DescribeIpamsPaginatorOptions struct {
@@ -214,6 +234,9 @@ func (p *DescribeIpamsPaginator) NextPage(ctx context.Context, optFns ...func(*O
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeIpams(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -232,6 +255,13 @@ func (p *DescribeIpamsPaginator) NextPage(ctx context.Context, optFns ...func(*O
 
 	return result, nil
 }
+
+// DescribeIpamsAPIClient is a client that implements the DescribeIpams operation.
+type DescribeIpamsAPIClient interface {
+	DescribeIpams(context.Context, *DescribeIpamsInput, ...func(*Options)) (*DescribeIpamsOutput, error)
+}
+
+var _ DescribeIpamsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeIpams(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

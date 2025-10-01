@@ -29,7 +29,7 @@ import (
 // MarshalClusterConsole writes a value of the 'cluster_console' type to the given writer.
 func MarshalClusterConsole(object *ClusterConsole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterConsole(object, stream)
+	WriteClusterConsole(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterConsole(object *ClusterConsole, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeClusterConsole writes a value of the 'cluster_console' type to the given stream.
-func writeClusterConsole(object *ClusterConsole, stream *jsoniter.Stream) {
+// WriteClusterConsole writes a value of the 'cluster_console' type to the given stream.
+func WriteClusterConsole(object *ClusterConsole, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalClusterConsole(source interface{}) (object *ClusterConsole, err er
 	if err != nil {
 		return
 	}
-	object = readClusterConsole(iterator)
+	object = ReadClusterConsole(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterConsole reads a value of the 'cluster_console' type from the given iterator.
-func readClusterConsole(iterator *jsoniter.Iterator) *ClusterConsole {
+// ReadClusterConsole reads a value of the 'cluster_console' type from the given iterator.
+func ReadClusterConsole(iterator *jsoniter.Iterator) *ClusterConsole {
 	object := &ClusterConsole{}
 	for {
 		field := iterator.ReadObject()

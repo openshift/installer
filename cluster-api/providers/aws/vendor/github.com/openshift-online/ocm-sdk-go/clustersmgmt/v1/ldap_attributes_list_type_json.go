@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalLDAPAttributesList(list []*LDAPAttributes, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLDAPAttributesList(list, stream)
+	WriteLDAPAttributesList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalLDAPAttributesList(list []*LDAPAttributes, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeLDAPAttributesList writes a list of value of the 'LDAP_attributes' type to
+// WriteLDAPAttributesList writes a list of value of the 'LDAP_attributes' type to
 // the given stream.
-func writeLDAPAttributesList(list []*LDAPAttributes, stream *jsoniter.Stream) {
+func WriteLDAPAttributesList(list []*LDAPAttributes, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeLDAPAttributes(value, stream)
+		WriteLDAPAttributes(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalLDAPAttributesList(source interface{}) (items []*LDAPAttributes, e
 	if err != nil {
 		return
 	}
-	items = readLDAPAttributesList(iterator)
+	items = ReadLDAPAttributesList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLDAPAttributesList reads list of values of the ”LDAP_attributes' type from
+// ReadLDAPAttributesList reads list of values of the ”LDAP_attributes' type from
 // the given iterator.
-func readLDAPAttributesList(iterator *jsoniter.Iterator) []*LDAPAttributes {
+func ReadLDAPAttributesList(iterator *jsoniter.Iterator) []*LDAPAttributes {
 	list := []*LDAPAttributes{}
 	for iterator.ReadArray() {
-		item := readLDAPAttributes(iterator)
+		item := ReadLDAPAttributes(iterator)
 		list = append(list, item)
 	}
 	return list

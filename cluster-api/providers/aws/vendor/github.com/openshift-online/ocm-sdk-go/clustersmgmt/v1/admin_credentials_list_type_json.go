@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAdminCredentialsList(list []*AdminCredentials, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAdminCredentialsList(list, stream)
+	WriteAdminCredentialsList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAdminCredentialsList(list []*AdminCredentials, writer io.Writer) err
 	return stream.Error
 }
 
-// writeAdminCredentialsList writes a list of value of the 'admin_credentials' type to
+// WriteAdminCredentialsList writes a list of value of the 'admin_credentials' type to
 // the given stream.
-func writeAdminCredentialsList(list []*AdminCredentials, stream *jsoniter.Stream) {
+func WriteAdminCredentialsList(list []*AdminCredentials, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAdminCredentials(value, stream)
+		WriteAdminCredentials(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAdminCredentialsList(source interface{}) (items []*AdminCredential
 	if err != nil {
 		return
 	}
-	items = readAdminCredentialsList(iterator)
+	items = ReadAdminCredentialsList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAdminCredentialsList reads list of values of the ”admin_credentials' type from
+// ReadAdminCredentialsList reads list of values of the ”admin_credentials' type from
 // the given iterator.
-func readAdminCredentialsList(iterator *jsoniter.Iterator) []*AdminCredentials {
+func ReadAdminCredentialsList(iterator *jsoniter.Iterator) []*AdminCredentials {
 	list := []*AdminCredentials{}
 	for iterator.ReadArray() {
-		item := readAdminCredentials(iterator)
+		item := ReadAdminCredentials(iterator)
 		list = append(list, item)
 	}
 	return list

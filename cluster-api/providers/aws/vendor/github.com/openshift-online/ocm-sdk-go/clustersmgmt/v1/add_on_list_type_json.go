@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddOnList(list []*AddOn, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnList(list, stream)
+	WriteAddOnList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddOnList(list []*AddOn, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddOnList writes a list of value of the 'add_on' type to
+// WriteAddOnList writes a list of value of the 'add_on' type to
 // the given stream.
-func writeAddOnList(list []*AddOn, stream *jsoniter.Stream) {
+func WriteAddOnList(list []*AddOn, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAddOn(value, stream)
+		WriteAddOn(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddOnList(source interface{}) (items []*AddOn, err error) {
 	if err != nil {
 		return
 	}
-	items = readAddOnList(iterator)
+	items = ReadAddOnList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnList reads list of values of the ”add_on' type from
+// ReadAddOnList reads list of values of the ”add_on' type from
 // the given iterator.
-func readAddOnList(iterator *jsoniter.Iterator) []*AddOn {
+func ReadAddOnList(iterator *jsoniter.Iterator) []*AddOn {
 	list := []*AddOn{}
 	for iterator.ReadArray() {
-		item := readAddOn(iterator)
+		item := ReadAddOn(iterator)
 		list = append(list, item)
 	}
 	return list

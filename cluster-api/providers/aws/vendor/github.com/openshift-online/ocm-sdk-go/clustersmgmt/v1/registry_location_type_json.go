@@ -29,7 +29,7 @@ import (
 // MarshalRegistryLocation writes a value of the 'registry_location' type to the given writer.
 func MarshalRegistryLocation(object *RegistryLocation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeRegistryLocation(object, stream)
+	WriteRegistryLocation(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalRegistryLocation(object *RegistryLocation, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeRegistryLocation writes a value of the 'registry_location' type to the given stream.
-func writeRegistryLocation(object *RegistryLocation, stream *jsoniter.Stream) {
+// WriteRegistryLocation writes a value of the 'registry_location' type to the given stream.
+func WriteRegistryLocation(object *RegistryLocation, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalRegistryLocation(source interface{}) (object *RegistryLocation, er
 	if err != nil {
 		return
 	}
-	object = readRegistryLocation(iterator)
+	object = ReadRegistryLocation(iterator)
 	err = iterator.Error
 	return
 }
 
-// readRegistryLocation reads a value of the 'registry_location' type from the given iterator.
-func readRegistryLocation(iterator *jsoniter.Iterator) *RegistryLocation {
+// ReadRegistryLocation reads a value of the 'registry_location' type from the given iterator.
+func ReadRegistryLocation(iterator *jsoniter.Iterator) *RegistryLocation {
 	object := &RegistryLocation{}
 	for {
 		field := iterator.ReadObject()

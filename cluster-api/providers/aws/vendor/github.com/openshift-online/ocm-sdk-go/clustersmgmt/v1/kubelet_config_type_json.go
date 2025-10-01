@@ -29,7 +29,7 @@ import (
 // MarshalKubeletConfig writes a value of the 'kubelet_config' type to the given writer.
 func MarshalKubeletConfig(object *KubeletConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeKubeletConfig(object, stream)
+	WriteKubeletConfig(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalKubeletConfig(object *KubeletConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeKubeletConfig writes a value of the 'kubelet_config' type to the given stream.
-func writeKubeletConfig(object *KubeletConfig, stream *jsoniter.Stream) {
+// WriteKubeletConfig writes a value of the 'kubelet_config' type to the given stream.
+func WriteKubeletConfig(object *KubeletConfig, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalKubeletConfig(source interface{}) (object *KubeletConfig, err erro
 	if err != nil {
 		return
 	}
-	object = readKubeletConfig(iterator)
+	object = ReadKubeletConfig(iterator)
 	err = iterator.Error
 	return
 }
 
-// readKubeletConfig reads a value of the 'kubelet_config' type from the given iterator.
-func readKubeletConfig(iterator *jsoniter.Iterator) *KubeletConfig {
+// ReadKubeletConfig reads a value of the 'kubelet_config' type from the given iterator.
+func ReadKubeletConfig(iterator *jsoniter.Iterator) *KubeletConfig {
 	object := &KubeletConfig{}
 	for {
 		field := iterator.ReadObject()

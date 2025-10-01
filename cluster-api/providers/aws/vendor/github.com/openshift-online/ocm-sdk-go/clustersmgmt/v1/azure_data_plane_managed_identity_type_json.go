@@ -29,7 +29,7 @@ import (
 // MarshalAzureDataPlaneManagedIdentity writes a value of the 'azure_data_plane_managed_identity' type to the given writer.
 func MarshalAzureDataPlaneManagedIdentity(object *AzureDataPlaneManagedIdentity, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAzureDataPlaneManagedIdentity(object, stream)
+	WriteAzureDataPlaneManagedIdentity(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAzureDataPlaneManagedIdentity(object *AzureDataPlaneManagedIdentity,
 	return stream.Error
 }
 
-// writeAzureDataPlaneManagedIdentity writes a value of the 'azure_data_plane_managed_identity' type to the given stream.
-func writeAzureDataPlaneManagedIdentity(object *AzureDataPlaneManagedIdentity, stream *jsoniter.Stream) {
+// WriteAzureDataPlaneManagedIdentity writes a value of the 'azure_data_plane_managed_identity' type to the given stream.
+func WriteAzureDataPlaneManagedIdentity(object *AzureDataPlaneManagedIdentity, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalAzureDataPlaneManagedIdentity(source interface{}) (object *AzureDa
 	if err != nil {
 		return
 	}
-	object = readAzureDataPlaneManagedIdentity(iterator)
+	object = ReadAzureDataPlaneManagedIdentity(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAzureDataPlaneManagedIdentity reads a value of the 'azure_data_plane_managed_identity' type from the given iterator.
-func readAzureDataPlaneManagedIdentity(iterator *jsoniter.Iterator) *AzureDataPlaneManagedIdentity {
+// ReadAzureDataPlaneManagedIdentity reads a value of the 'azure_data_plane_managed_identity' type from the given iterator.
+func ReadAzureDataPlaneManagedIdentity(iterator *jsoniter.Iterator) *AzureDataPlaneManagedIdentity {
 	object := &AzureDataPlaneManagedIdentity{}
 	for {
 		field := iterator.ReadObject()

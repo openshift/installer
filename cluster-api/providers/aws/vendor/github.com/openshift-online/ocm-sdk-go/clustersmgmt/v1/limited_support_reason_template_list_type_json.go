@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalLimitedSupportReasonTemplateList(list []*LimitedSupportReasonTemplate, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLimitedSupportReasonTemplateList(list, stream)
+	WriteLimitedSupportReasonTemplateList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalLimitedSupportReasonTemplateList(list []*LimitedSupportReasonTemplat
 	return stream.Error
 }
 
-// writeLimitedSupportReasonTemplateList writes a list of value of the 'limited_support_reason_template' type to
+// WriteLimitedSupportReasonTemplateList writes a list of value of the 'limited_support_reason_template' type to
 // the given stream.
-func writeLimitedSupportReasonTemplateList(list []*LimitedSupportReasonTemplate, stream *jsoniter.Stream) {
+func WriteLimitedSupportReasonTemplateList(list []*LimitedSupportReasonTemplate, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeLimitedSupportReasonTemplate(value, stream)
+		WriteLimitedSupportReasonTemplate(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalLimitedSupportReasonTemplateList(source interface{}) (items []*Lim
 	if err != nil {
 		return
 	}
-	items = readLimitedSupportReasonTemplateList(iterator)
+	items = ReadLimitedSupportReasonTemplateList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLimitedSupportReasonTemplateList reads list of values of the ”limited_support_reason_template' type from
+// ReadLimitedSupportReasonTemplateList reads list of values of the ”limited_support_reason_template' type from
 // the given iterator.
-func readLimitedSupportReasonTemplateList(iterator *jsoniter.Iterator) []*LimitedSupportReasonTemplate {
+func ReadLimitedSupportReasonTemplateList(iterator *jsoniter.Iterator) []*LimitedSupportReasonTemplate {
 	list := []*LimitedSupportReasonTemplate{}
 	for iterator.ReadArray() {
-		item := readLimitedSupportReasonTemplate(iterator)
+		item := ReadLimitedSupportReasonTemplate(iterator)
 		list = append(list, item)
 	}
 	return list

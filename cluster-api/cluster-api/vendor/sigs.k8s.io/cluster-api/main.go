@@ -37,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	cliflag "k8s.io/component-base/cli/flag"
@@ -44,20 +45,21 @@ import (
 	logsv1 "k8s.io/component-base/logs/api/v1"
 	_ "k8s.io/component-base/logs/json/register"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/api/v1beta1/index"
 	"sigs.k8s.io/cluster-api/controllers"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
+	"sigs.k8s.io/cluster-api/controllers/crdmigrator"
 	"sigs.k8s.io/cluster-api/controllers/remote"
-	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
-	addonscontrollers "sigs.k8s.io/cluster-api/exp/addons/controllers"
-	addonswebhooks "sigs.k8s.io/cluster-api/exp/addons/webhooks"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	expcontrollers "sigs.k8s.io/cluster-api/exp/controllers"
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
@@ -69,8 +71,8 @@ import (
 	runtimehooksv1 "sigs.k8s.io/cluster-api/exp/runtime/hooks/api/v1alpha1"
 	expwebhooks "sigs.k8s.io/cluster-api/exp/webhooks"
 	"sigs.k8s.io/cluster-api/feature"
-	addonsv1alpha3 "sigs.k8s.io/cluster-api/internal/apis/core/exp/addons/v1alpha3"
-	addonsv1alpha4 "sigs.k8s.io/cluster-api/internal/apis/core/exp/addons/v1alpha4"
+	addonsv1alpha3 "sigs.k8s.io/cluster-api/internal/apis/addons/v1alpha3"
+	addonsv1alpha4 "sigs.k8s.io/cluster-api/internal/apis/addons/v1alpha4"
 	expv1alpha3 "sigs.k8s.io/cluster-api/internal/apis/core/exp/v1alpha3"
 	expv1alpha4 "sigs.k8s.io/cluster-api/internal/apis/core/exp/v1alpha4"
 	clusterv1alpha3 "sigs.k8s.io/cluster-api/internal/apis/core/v1alpha3"
@@ -112,21 +114,23 @@ var (
 	managerOptions              = flags.ManagerOptions{}
 	logOptions                  = logs.NewOptions()
 	// core Cluster API specific flags.
-	remoteConnectionGracePeriod     time.Duration
-	remoteConditionsGracePeriod     time.Duration
-	clusterTopologyConcurrency      int
-	clusterCacheConcurrency         int
-	clusterClassConcurrency         int
-	clusterConcurrency              int
-	extensionConfigConcurrency      int
-	machineConcurrency              int
-	machineSetConcurrency           int
-	machineDeploymentConcurrency    int
-	machinePoolConcurrency          int
-	clusterResourceSetConcurrency   int
-	machineHealthCheckConcurrency   int
-	useDeprecatedInfraMachineNaming bool
-	additionalSyncMachineLabels     []string
+	remoteConnectionGracePeriod      time.Duration
+	remoteConditionsGracePeriod      time.Duration
+	clusterTopologyConcurrency       int
+	clusterCacheConcurrency          int
+	clusterClassConcurrency          int
+	clusterConcurrency               int
+	extensionConfigConcurrency       int
+	machineConcurrency               int
+	machineSetConcurrency            int
+	machineDeploymentConcurrency     int
+	machinePoolConcurrency           int
+	clusterResourceSetConcurrency    int
+	machineHealthCheckConcurrency    int
+	machineSetPreflightChecks        []string
+	skipCRDMigrationPhases           []string
+	additionalSyncMachineLabels      []string
+	additionalSyncMachineAnnotations []string
 )
 
 func init() {
@@ -138,13 +142,13 @@ func init() {
 	_ = clusterv1alpha4.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
 
-	_ = expv1alpha3.AddToScheme(scheme)
-	_ = expv1alpha4.AddToScheme(scheme)
-	_ = expv1.AddToScheme(scheme)
-
 	_ = addonsv1alpha3.AddToScheme(scheme)
 	_ = addonsv1alpha4.AddToScheme(scheme)
 	_ = addonsv1.AddToScheme(scheme)
+
+	_ = expv1alpha3.AddToScheme(scheme)
+	_ = expv1alpha4.AddToScheme(scheme)
+	_ = expv1.AddToScheme(scheme)
 
 	_ = runtimev1.AddToScheme(scheme)
 
@@ -223,6 +227,16 @@ func InitFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&machineHealthCheckConcurrency, "machinehealthcheck-concurrency", 10,
 		"Number of machine health checks to process simultaneously")
 
+	fs.StringSliceVar(&machineSetPreflightChecks, "machineset-preflight-checks", []string{
+		string(clusterv1.MachineSetPreflightCheckAll)},
+		"List of MachineSet preflight checks that should be run. Per default all of them are enabled."+
+			"Set this flag to only enable a subset of them. The MachineSet preflight checks can be then also disabled"+
+			"on MachineSets via the 'machineset.cluster.x-k8s.io/skip-preflight-checks' annotation."+
+			"Valid values are: All or a list of KubeadmVersionSkew, KubernetesVersionSkew, ControlPlaneIsStable, ControlPlaneVersionSkew")
+
+	fs.StringSliceVar(&skipCRDMigrationPhases, "skip-crd-migration-phases", []string{},
+		"List of CRD migration phases to skip. Valid values are: StorageVersionMigration, CleanupManagedFields.")
+
 	fs.DurationVar(&syncPeriod, "sync-period", 10*time.Minute,
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
 
@@ -253,12 +267,11 @@ func InitFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&healthAddr, "health-addr", ":9440",
 		"The address the health endpoint binds to.")
 
-	fs.StringArrayVar(&additionalSyncMachineLabels, "additional-sync-machine-labels", []string{},
-		"List of regexes to select the additional set of labels to sync from the Machine to the Node. A label will be synced as long as it matches at least one of the regexes.")
+	fs.StringSliceVar(&additionalSyncMachineLabels, "additional-sync-machine-labels", []string{},
+		"List of regexes to select an additional set of labels to sync from a Machine to its associated Node. A label will be synced as long as it matches at least one of the regexes.")
 
-	fs.BoolVar(&useDeprecatedInfraMachineNaming, "use-deprecated-infra-machine-naming", false,
-		"Use deprecated infrastructure machine naming")
-	_ = fs.MarkDeprecated("use-deprecated-infra-machine-naming", "This flag will be removed in v1.9.")
+	fs.StringSliceVar(&additionalSyncMachineAnnotations, "additional-sync-machine-annotations", []string{},
+		"List of regexes to select an additional set of labels to sync from a Machine to its associated Node. An annotation will be synced as long as it matches at least one of the regexes.")
 
 	flags.AddManagerOptions(fs, &managerOptions)
 
@@ -268,8 +281,17 @@ func InitFlags(fs *pflag.FlagSet) {
 // Add RBAC for the authorized diagnostics endpoint.
 // +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
 // +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
+// ADD CRD RBAC for CRD Migrator.
+// +kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
+// +kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions;customresourcedefinitions/status,verbs=update;patch,resourceNames=clusterclasses.cluster.x-k8s.io;clusterresourcesetbindings.addons.cluster.x-k8s.io;clusterresourcesets.addons.cluster.x-k8s.io;clusters.cluster.x-k8s.io;extensionconfigs.runtime.cluster.x-k8s.io;ipaddressclaims.ipam.cluster.x-k8s.io;ipaddresses.ipam.cluster.x-k8s.io;machinedeployments.cluster.x-k8s.io;machinedrainrules.cluster.x-k8s.io;machinehealthchecks.cluster.x-k8s.io;machinepools.cluster.x-k8s.io;machines.cluster.x-k8s.io;machinesets.cluster.x-k8s.io
+// ADD CR RBAC for CRD Migrator.
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=ipaddresses;ipaddressclaims,verbs=get;list;watch;patch;update
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=ipaddressclaims/status,verbs=patch;update
+// +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machinedrainrules,verbs=get;list;watch;patch;update
 
 func main() {
+	setupLog.Info(fmt.Sprintf("Version: %+v", version.Get().String()))
+
 	InitFlags(pflag.CommandLine)
 	pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -338,6 +360,9 @@ func main() {
 	clusterSecretCacheSelector := labels.NewSelector().Add(*req)
 
 	ctrlOptions := ctrl.Options{
+		Controller: config.Controller{
+			UsePriorityQueue: ptr.To[bool](feature.Gates.Enabled(feature.PriorityQueue)),
+		},
 		Scheme:                     scheme,
 		LeaderElection:             enableLeaderElection,
 		LeaderElectionID:           "controller-leader-election-capi",
@@ -463,6 +488,45 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 		os.Exit(1)
 	}
 
+	// Note: The kubebuilder RBAC markers above has to be kept in sync
+	// with the CRDs that should be migrated by this provider.
+	crdMigratorConfig := map[client.Object]crdmigrator.ByObjectConfig{
+		&addonsv1.ClusterResourceSetBinding{}: {UseCache: true},
+		&addonsv1.ClusterResourceSet{}:        {UseCache: true, UseStatusForStorageVersionMigration: true},
+		&clusterv1.Cluster{}:                  {UseCache: true, UseStatusForStorageVersionMigration: true},
+		&clusterv1.MachineDeployment{}:        {UseCache: true, UseStatusForStorageVersionMigration: true},
+		&clusterv1.MachineDrainRule{}:         {UseCache: true},
+		&clusterv1.MachineHealthCheck{}:       {UseCache: true, UseStatusForStorageVersionMigration: true},
+		&clusterv1.Machine{}:                  {UseCache: true, UseStatusForStorageVersionMigration: true},
+		&clusterv1.MachineSet{}:               {UseCache: true, UseStatusForStorageVersionMigration: true},
+		&ipamv1.IPAddress{}:                   {UseCache: false},
+		&ipamv1.IPAddressClaim{}:              {UseCache: false, UseStatusForStorageVersionMigration: true},
+	}
+	if feature.Gates.Enabled(feature.ClusterTopology) {
+		crdMigratorConfig[&clusterv1.ClusterClass{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+	}
+	if feature.Gates.Enabled(feature.RuntimeSDK) {
+		crdMigratorConfig[&runtimev1.ExtensionConfig{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+	}
+	if feature.Gates.Enabled(feature.MachinePool) {
+		crdMigratorConfig[&expv1.MachinePool{}] = crdmigrator.ByObjectConfig{UseCache: true, UseStatusForStorageVersionMigration: true}
+	}
+	crdMigratorSkipPhases := []crdmigrator.Phase{}
+	for _, p := range skipCRDMigrationPhases {
+		crdMigratorSkipPhases = append(crdMigratorSkipPhases, crdmigrator.Phase(p))
+	}
+	if err := (&crdmigrator.CRDMigrator{
+		Client:                 mgr.GetClient(),
+		APIReader:              mgr.GetAPIReader(),
+		SkipCRDMigrationPhases: crdMigratorSkipPhases,
+		Config:                 crdMigratorConfig,
+		// The CRDMigrator is run with only concurrency 1 to ensure we don't overwhelm the apiserver by patching a
+		// lot of CRs concurrently.
+	}).SetupWithManager(ctx, mgr, concurrency(1)); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "CRDMigrator")
+		os.Exit(1)
+	}
+
 	var runtimeClient runtimeclient.Client
 	if feature.Gates.Enabled(feature.RuntimeSDK) {
 		// This is the creation of the runtimeClient for the controllers, embedding a shared catalog and registry instance.
@@ -567,7 +631,7 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 	}
 
 	var errs []error
-	var additionalSyncMachineLabelRegexes []*regexp.Regexp
+	var additionalSyncMachineLabelRegexes, additionalSyncMachineAnnotationRegexes []*regexp.Regexp
 	for _, re := range additionalSyncMachineLabels {
 		reg, err := regexp.Compile(re)
 		if err != nil {
@@ -580,23 +644,55 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 		setupLog.Error(fmt.Errorf("at least one of --additional-sync-machine-labels regexes is invalid: %w", kerrors.NewAggregate(errs)), "Unable to start manager")
 		os.Exit(1)
 	}
+	for _, re := range additionalSyncMachineAnnotations {
+		reg, err := regexp.Compile(re)
+		if err != nil {
+			errs = append(errs, err)
+		} else {
+			additionalSyncMachineAnnotationRegexes = append(additionalSyncMachineAnnotationRegexes, reg)
+		}
+	}
+	if len(errs) > 0 {
+		setupLog.Error(fmt.Errorf("at least one of --additional-sync-machine-annotations regexes is invalid: %w", kerrors.NewAggregate(errs)), "Unable to start manager")
+		os.Exit(1)
+	}
 	if err := (&controllers.MachineReconciler{
-		Client:                      mgr.GetClient(),
-		APIReader:                   mgr.GetAPIReader(),
-		ClusterCache:                clusterCache,
-		WatchFilterValue:            watchFilterValue,
-		RemoteConditionsGracePeriod: remoteConditionsGracePeriod,
-		AdditionalSyncMachineLabels: additionalSyncMachineLabelRegexes,
+		Client:                           mgr.GetClient(),
+		APIReader:                        mgr.GetAPIReader(),
+		ClusterCache:                     clusterCache,
+		WatchFilterValue:                 watchFilterValue,
+		RemoteConditionsGracePeriod:      remoteConditionsGracePeriod,
+		AdditionalSyncMachineLabels:      additionalSyncMachineLabelRegexes,
+		AdditionalSyncMachineAnnotations: additionalSyncMachineAnnotationRegexes,
 	}).SetupWithManager(ctx, mgr, concurrency(machineConcurrency)); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "Machine")
 		os.Exit(1)
 	}
+	machineSetPreflightChecksSet := sets.Set[clusterv1.MachineSetPreflightCheck]{}
+	supportedMachineSetPreflightChecks := sets.New[clusterv1.MachineSetPreflightCheck](
+		clusterv1.MachineSetPreflightCheckAll,
+		clusterv1.MachineSetPreflightCheckKubeadmVersionSkew,
+		clusterv1.MachineSetPreflightCheckKubernetesVersionSkew,
+		clusterv1.MachineSetPreflightCheckControlPlaneIsStable,
+		clusterv1.MachineSetPreflightCheckControlPlaneVersionSkew,
+	)
+	for _, c := range machineSetPreflightChecks {
+		if c == "" {
+			continue
+		}
+		preflightCheck := clusterv1.MachineSetPreflightCheck(c)
+		if !supportedMachineSetPreflightChecks.Has(preflightCheck) {
+			setupLog.Error(err, "Unable to create controller: invalid preflight check configured via --machineset-preflight-checks", "controller", "MachineSet")
+			os.Exit(1)
+		}
+		machineSetPreflightChecksSet.Insert(preflightCheck)
+	}
 	if err := (&controllers.MachineSetReconciler{
-		Client:                       mgr.GetClient(),
-		APIReader:                    mgr.GetAPIReader(),
-		ClusterCache:                 clusterCache,
-		WatchFilterValue:             watchFilterValue,
-		DeprecatedInfraMachineNaming: useDeprecatedInfraMachineNaming,
+		Client:           mgr.GetClient(),
+		APIReader:        mgr.GetAPIReader(),
+		ClusterCache:     clusterCache,
+		PreflightChecks:  machineSetPreflightChecksSet,
+		WatchFilterValue: watchFilterValue,
 	}).SetupWithManager(ctx, mgr, concurrency(machineSetConcurrency)); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "MachineSet")
 		os.Exit(1)
@@ -623,7 +719,7 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 	}
 
 	if feature.Gates.Enabled(feature.ClusterResourceSet) {
-		if err := (&addonscontrollers.ClusterResourceSetReconciler{
+		if err := (&controllers.ClusterResourceSetReconciler{
 			Client:           mgr.GetClient(),
 			ClusterCache:     clusterCache,
 			WatchFilterValue: watchFilterValue,
@@ -631,7 +727,7 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 			setupLog.Error(err, "Unable to create controller", "controller", "ClusterResourceSet")
 			os.Exit(1)
 		}
-		if err := (&addonscontrollers.ClusterResourceSetBindingReconciler{
+		if err := (&controllers.ClusterResourceSetBindingReconciler{
 			Client:           mgr.GetClient(),
 			WatchFilterValue: watchFilterValue,
 		}).SetupWithManager(ctx, mgr, concurrency(clusterResourceSetConcurrency)); err != nil {
@@ -696,13 +792,13 @@ func setupWebhooks(mgr ctrl.Manager, clusterCacheReader webhooks.ClusterCacheRea
 
 	// NOTE: ClusterResourceSet is behind ClusterResourceSet feature gate flag; the webhook
 	// is going to prevent creating or updating new objects in case the feature flag is disabled
-	if err := (&addonswebhooks.ClusterResourceSet{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.ClusterResourceSet{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create webhook", "webhook", "ClusterResourceSet")
 		os.Exit(1)
 	}
 	// NOTE: ClusterResourceSetBinding is behind ClusterResourceSet feature gate flag; the webhook
 	// is going to prevent creating or updating new objects in case the feature flag is disabled
-	if err := (&addonswebhooks.ClusterResourceSetBinding{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.ClusterResourceSetBinding{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create webhook", "webhook", "ClusterResourceSetBinding")
 		os.Exit(1)
 	}

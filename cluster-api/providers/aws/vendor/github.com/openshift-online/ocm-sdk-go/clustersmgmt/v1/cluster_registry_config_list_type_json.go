@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterRegistryConfigList(list []*ClusterRegistryConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterRegistryConfigList(list, stream)
+	WriteClusterRegistryConfigList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterRegistryConfigList(list []*ClusterRegistryConfig, writer io.W
 	return stream.Error
 }
 
-// writeClusterRegistryConfigList writes a list of value of the 'cluster_registry_config' type to
+// WriteClusterRegistryConfigList writes a list of value of the 'cluster_registry_config' type to
 // the given stream.
-func writeClusterRegistryConfigList(list []*ClusterRegistryConfig, stream *jsoniter.Stream) {
+func WriteClusterRegistryConfigList(list []*ClusterRegistryConfig, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeClusterRegistryConfig(value, stream)
+		WriteClusterRegistryConfig(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterRegistryConfigList(source interface{}) (items []*ClusterReg
 	if err != nil {
 		return
 	}
-	items = readClusterRegistryConfigList(iterator)
+	items = ReadClusterRegistryConfigList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterRegistryConfigList reads list of values of the ”cluster_registry_config' type from
+// ReadClusterRegistryConfigList reads list of values of the ”cluster_registry_config' type from
 // the given iterator.
-func readClusterRegistryConfigList(iterator *jsoniter.Iterator) []*ClusterRegistryConfig {
+func ReadClusterRegistryConfigList(iterator *jsoniter.Iterator) []*ClusterRegistryConfig {
 	list := []*ClusterRegistryConfig{}
 	for iterator.ReadArray() {
-		item := readClusterRegistryConfig(iterator)
+		item := ReadClusterRegistryConfig(iterator)
 		list = append(list, item)
 	}
 	return list

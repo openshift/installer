@@ -57,7 +57,7 @@ func readUpgradePoliciesListResponse(response *UpgradePoliciesListResponse, read
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readUpgradePolicyList(iterator)
+			items := ReadUpgradePolicyList(iterator)
 			response.items = &UpgradePolicyList{
 				items: items,
 			}

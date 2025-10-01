@@ -29,7 +29,7 @@ import (
 // MarshalNodePoolStatus writes a value of the 'node_pool_status' type to the given writer.
 func MarshalNodePoolStatus(object *NodePoolStatus, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeNodePoolStatus(object, stream)
+	WriteNodePoolStatus(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalNodePoolStatus(object *NodePoolStatus, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeNodePoolStatus writes a value of the 'node_pool_status' type to the given stream.
-func writeNodePoolStatus(object *NodePoolStatus, stream *jsoniter.Stream) {
+// WriteNodePoolStatus writes a value of the 'node_pool_status' type to the given stream.
+func WriteNodePoolStatus(object *NodePoolStatus, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -81,6 +81,15 @@ func writeNodePoolStatus(object *NodePoolStatus, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("message")
 		stream.WriteString(object.message)
+		count++
+	}
+	present_ = object.bitmap_&32 != 0 && object.state != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("state")
+		WriteNodePoolState(object.state, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -92,13 +101,13 @@ func UnmarshalNodePoolStatus(source interface{}) (object *NodePoolStatus, err er
 	if err != nil {
 		return
 	}
-	object = readNodePoolStatus(iterator)
+	object = ReadNodePoolStatus(iterator)
 	err = iterator.Error
 	return
 }
 
-// readNodePoolStatus reads a value of the 'node_pool_status' type from the given iterator.
-func readNodePoolStatus(iterator *jsoniter.Iterator) *NodePoolStatus {
+// ReadNodePoolStatus reads a value of the 'node_pool_status' type from the given iterator.
+func ReadNodePoolStatus(iterator *jsoniter.Iterator) *NodePoolStatus {
 	object := &NodePoolStatus{}
 	for {
 		field := iterator.ReadObject()
@@ -125,6 +134,10 @@ func readNodePoolStatus(iterator *jsoniter.Iterator) *NodePoolStatus {
 			value := iterator.ReadString()
 			object.message = value
 			object.bitmap_ |= 16
+		case "state":
+			value := ReadNodePoolState(iterator)
+			object.state = value
+			object.bitmap_ |= 32
 		default:
 			iterator.ReadAny()
 		}

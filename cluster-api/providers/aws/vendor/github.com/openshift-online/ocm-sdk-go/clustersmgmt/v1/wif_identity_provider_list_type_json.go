@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalWifIdentityProviderList(list []*WifIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifIdentityProviderList(list, stream)
+	WriteWifIdentityProviderList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalWifIdentityProviderList(list []*WifIdentityProvider, writer io.Write
 	return stream.Error
 }
 
-// writeWifIdentityProviderList writes a list of value of the 'wif_identity_provider' type to
+// WriteWifIdentityProviderList writes a list of value of the 'wif_identity_provider' type to
 // the given stream.
-func writeWifIdentityProviderList(list []*WifIdentityProvider, stream *jsoniter.Stream) {
+func WriteWifIdentityProviderList(list []*WifIdentityProvider, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeWifIdentityProvider(value, stream)
+		WriteWifIdentityProvider(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalWifIdentityProviderList(source interface{}) (items []*WifIdentityP
 	if err != nil {
 		return
 	}
-	items = readWifIdentityProviderList(iterator)
+	items = ReadWifIdentityProviderList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifIdentityProviderList reads list of values of the ”wif_identity_provider' type from
+// ReadWifIdentityProviderList reads list of values of the ”wif_identity_provider' type from
 // the given iterator.
-func readWifIdentityProviderList(iterator *jsoniter.Iterator) []*WifIdentityProvider {
+func ReadWifIdentityProviderList(iterator *jsoniter.Iterator) []*WifIdentityProvider {
 	list := []*WifIdentityProvider{}
 	for iterator.ReadArray() {
-		item := readWifIdentityProvider(iterator)
+		item := ReadWifIdentityProvider(iterator)
 		list = append(list, item)
 	}
 	return list

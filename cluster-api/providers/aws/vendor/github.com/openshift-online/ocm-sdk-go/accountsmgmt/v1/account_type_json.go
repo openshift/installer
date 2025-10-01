@@ -30,7 +30,7 @@ import (
 // MarshalAccount writes a value of the 'account' type to the given writer.
 func MarshalAccount(object *Account, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAccount(object, stream)
+	WriteAccount(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAccount(object *Account, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAccount writes a value of the 'account' type to the given stream.
-func writeAccount(object *Account, stream *jsoniter.Stream) {
+// WriteAccount writes a value of the 'account' type to the given stream.
+func WriteAccount(object *Account, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -99,7 +99,7 @@ func writeAccount(object *Account, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("capabilities")
-		writeCapabilityList(object.capabilities, stream)
+		WriteCapabilityList(object.capabilities, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -135,7 +135,7 @@ func writeAccount(object *Account, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("labels")
-		writeLabelList(object.labels, stream)
+		WriteLabelList(object.labels, stream)
 		count++
 	}
 	present_ = object.bitmap_&2048 != 0
@@ -153,7 +153,7 @@ func writeAccount(object *Account, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("organization")
-		writeOrganization(object.organization, stream)
+		WriteOrganization(object.organization, stream)
 		count++
 	}
 	present_ = object.bitmap_&8192 != 0
@@ -210,13 +210,13 @@ func UnmarshalAccount(source interface{}) (object *Account, err error) {
 	if err != nil {
 		return
 	}
-	object = readAccount(iterator)
+	object = ReadAccount(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAccount reads a value of the 'account' type from the given iterator.
-func readAccount(iterator *jsoniter.Iterator) *Account {
+// ReadAccount reads a value of the 'account' type from the given iterator.
+func ReadAccount(iterator *jsoniter.Iterator) *Account {
 	object := &Account{}
 	for {
 		field := iterator.ReadObject()
@@ -248,7 +248,7 @@ func readAccount(iterator *jsoniter.Iterator) *Account {
 			object.banned = value
 			object.bitmap_ |= 32
 		case "capabilities":
-			value := readCapabilityList(iterator)
+			value := ReadCapabilityList(iterator)
 			object.capabilities = value
 			object.bitmap_ |= 64
 		case "created_at":
@@ -268,7 +268,7 @@ func readAccount(iterator *jsoniter.Iterator) *Account {
 			object.firstName = value
 			object.bitmap_ |= 512
 		case "labels":
-			value := readLabelList(iterator)
+			value := ReadLabelList(iterator)
 			object.labels = value
 			object.bitmap_ |= 1024
 		case "last_name":
@@ -276,7 +276,7 @@ func readAccount(iterator *jsoniter.Iterator) *Account {
 			object.lastName = value
 			object.bitmap_ |= 2048
 		case "organization":
-			value := readOrganization(iterator)
+			value := ReadOrganization(iterator)
 			object.organization = value
 			object.bitmap_ |= 4096
 		case "rhit_account_id":

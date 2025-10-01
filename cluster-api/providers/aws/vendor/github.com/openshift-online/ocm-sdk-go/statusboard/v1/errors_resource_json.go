@@ -49,7 +49,7 @@ func readErrorsListResponse(response *ErrorsListResponse, reader io.Reader) erro
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readErrorList(iterator)
+			items := ReadErrorList(iterator)
 			response.items = &ErrorList{
 				items: items,
 			}

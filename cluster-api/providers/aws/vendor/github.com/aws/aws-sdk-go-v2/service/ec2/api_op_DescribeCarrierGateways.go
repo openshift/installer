@@ -39,17 +39,23 @@ type DescribeCarrierGatewaysInput struct {
 	DryRun *bool
 
 	// One or more filters.
+	//
 	//   - carrier-gateway-id - The ID of the carrier gateway.
+	//
 	//   - state - The state of the carrier gateway ( pending | failed | available |
 	//   deleting | deleted ).
+	//
 	//   - owner-id - The Amazon Web Services account ID of the owner of the carrier
 	//   gateway.
+	//
 	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
+	//
 	//   - tag-key - The key of a tag assigned to the resource. Use this filter to find
 	//   all resources assigned a tag with a specific key, regardless of the tag value.
+	//
 	//   - vpc-id - The ID of the VPC associated with the carrier gateway.
 	Filters []types.Filter
 
@@ -121,6 +127,9 @@ func (c *Client) addOperationDescribeCarrierGatewaysMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -131,6 +140,15 @@ func (c *Client) addOperationDescribeCarrierGatewaysMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeCarrierGateways(options.Region), middleware.Before); err != nil {
@@ -151,16 +169,20 @@ func (c *Client) addOperationDescribeCarrierGatewaysMiddlewares(stack *middlewar
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeCarrierGatewaysAPIClient is a client that implements the
-// DescribeCarrierGateways operation.
-type DescribeCarrierGatewaysAPIClient interface {
-	DescribeCarrierGateways(context.Context, *DescribeCarrierGatewaysInput, ...func(*Options)) (*DescribeCarrierGatewaysOutput, error)
-}
-
-var _ DescribeCarrierGatewaysAPIClient = (*Client)(nil)
 
 // DescribeCarrierGatewaysPaginatorOptions is the paginator options for
 // DescribeCarrierGateways
@@ -228,6 +250,9 @@ func (p *DescribeCarrierGatewaysPaginator) NextPage(ctx context.Context, optFns 
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeCarrierGateways(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -246,6 +271,14 @@ func (p *DescribeCarrierGatewaysPaginator) NextPage(ctx context.Context, optFns 
 
 	return result, nil
 }
+
+// DescribeCarrierGatewaysAPIClient is a client that implements the
+// DescribeCarrierGateways operation.
+type DescribeCarrierGatewaysAPIClient interface {
+	DescribeCarrierGateways(context.Context, *DescribeCarrierGatewaysInput, ...func(*Options)) (*DescribeCarrierGatewaysOutput, error)
+}
+
+var _ DescribeCarrierGatewaysAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeCarrierGateways(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

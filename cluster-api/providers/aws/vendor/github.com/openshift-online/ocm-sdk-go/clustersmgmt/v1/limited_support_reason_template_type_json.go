@@ -29,7 +29,7 @@ import (
 // MarshalLimitedSupportReasonTemplate writes a value of the 'limited_support_reason_template' type to the given writer.
 func MarshalLimitedSupportReasonTemplate(object *LimitedSupportReasonTemplate, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLimitedSupportReasonTemplate(object, stream)
+	WriteLimitedSupportReasonTemplate(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalLimitedSupportReasonTemplate(object *LimitedSupportReasonTemplate, w
 	return stream.Error
 }
 
-// writeLimitedSupportReasonTemplate writes a value of the 'limited_support_reason_template' type to the given stream.
-func writeLimitedSupportReasonTemplate(object *LimitedSupportReasonTemplate, stream *jsoniter.Stream) {
+// WriteLimitedSupportReasonTemplate writes a value of the 'limited_support_reason_template' type to the given stream.
+func WriteLimitedSupportReasonTemplate(object *LimitedSupportReasonTemplate, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalLimitedSupportReasonTemplate(source interface{}) (object *LimitedS
 	if err != nil {
 		return
 	}
-	object = readLimitedSupportReasonTemplate(iterator)
+	object = ReadLimitedSupportReasonTemplate(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLimitedSupportReasonTemplate reads a value of the 'limited_support_reason_template' type from the given iterator.
-func readLimitedSupportReasonTemplate(iterator *jsoniter.Iterator) *LimitedSupportReasonTemplate {
+// ReadLimitedSupportReasonTemplate reads a value of the 'limited_support_reason_template' type from the given iterator.
+func ReadLimitedSupportReasonTemplate(iterator *jsoniter.Iterator) *LimitedSupportReasonTemplate {
 	object := &LimitedSupportReasonTemplate{}
 	for {
 		field := iterator.ReadObject()

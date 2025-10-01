@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalContractList(list []*Contract, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeContractList(list, stream)
+	WriteContractList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalContractList(list []*Contract, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeContractList writes a list of value of the 'contract' type to
+// WriteContractList writes a list of value of the 'contract' type to
 // the given stream.
-func writeContractList(list []*Contract, stream *jsoniter.Stream) {
+func WriteContractList(list []*Contract, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeContract(value, stream)
+		WriteContract(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalContractList(source interface{}) (items []*Contract, err error) {
 	if err != nil {
 		return
 	}
-	items = readContractList(iterator)
+	items = ReadContractList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readContractList reads list of values of the ”contract' type from
+// ReadContractList reads list of values of the ”contract' type from
 // the given iterator.
-func readContractList(iterator *jsoniter.Iterator) []*Contract {
+func ReadContractList(iterator *jsoniter.Iterator) []*Contract {
 	list := []*Contract{}
 	for iterator.ReadArray() {
-		item := readContract(iterator)
+		item := ReadContract(iterator)
 		list = append(list, item)
 	}
 	return list

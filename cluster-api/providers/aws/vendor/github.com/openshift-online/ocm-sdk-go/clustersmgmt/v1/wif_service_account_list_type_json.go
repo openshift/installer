@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalWifServiceAccountList(list []*WifServiceAccount, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifServiceAccountList(list, stream)
+	WriteWifServiceAccountList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalWifServiceAccountList(list []*WifServiceAccount, writer io.Writer) e
 	return stream.Error
 }
 
-// writeWifServiceAccountList writes a list of value of the 'wif_service_account' type to
+// WriteWifServiceAccountList writes a list of value of the 'wif_service_account' type to
 // the given stream.
-func writeWifServiceAccountList(list []*WifServiceAccount, stream *jsoniter.Stream) {
+func WriteWifServiceAccountList(list []*WifServiceAccount, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeWifServiceAccount(value, stream)
+		WriteWifServiceAccount(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalWifServiceAccountList(source interface{}) (items []*WifServiceAcco
 	if err != nil {
 		return
 	}
-	items = readWifServiceAccountList(iterator)
+	items = ReadWifServiceAccountList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifServiceAccountList reads list of values of the ”wif_service_account' type from
+// ReadWifServiceAccountList reads list of values of the ”wif_service_account' type from
 // the given iterator.
-func readWifServiceAccountList(iterator *jsoniter.Iterator) []*WifServiceAccount {
+func ReadWifServiceAccountList(iterator *jsoniter.Iterator) []*WifServiceAccount {
 	list := []*WifServiceAccount{}
 	for iterator.ReadArray() {
-		item := readWifServiceAccount(iterator)
+		item := ReadWifServiceAccount(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSubscriptionMetricsList(list []*SubscriptionMetrics, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSubscriptionMetricsList(list, stream)
+	WriteSubscriptionMetricsList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSubscriptionMetricsList(list []*SubscriptionMetrics, writer io.Write
 	return stream.Error
 }
 
-// writeSubscriptionMetricsList writes a list of value of the 'subscription_metrics' type to
+// WriteSubscriptionMetricsList writes a list of value of the 'subscription_metrics' type to
 // the given stream.
-func writeSubscriptionMetricsList(list []*SubscriptionMetrics, stream *jsoniter.Stream) {
+func WriteSubscriptionMetricsList(list []*SubscriptionMetrics, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeSubscriptionMetrics(value, stream)
+		WriteSubscriptionMetrics(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSubscriptionMetricsList(source interface{}) (items []*Subscription
 	if err != nil {
 		return
 	}
-	items = readSubscriptionMetricsList(iterator)
+	items = ReadSubscriptionMetricsList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSubscriptionMetricsList reads list of values of the ”subscription_metrics' type from
+// ReadSubscriptionMetricsList reads list of values of the ”subscription_metrics' type from
 // the given iterator.
-func readSubscriptionMetricsList(iterator *jsoniter.Iterator) []*SubscriptionMetrics {
+func ReadSubscriptionMetricsList(iterator *jsoniter.Iterator) []*SubscriptionMetrics {
 	list := []*SubscriptionMetrics{}
 	for iterator.ReadArray() {
-		item := readSubscriptionMetrics(iterator)
+		item := ReadSubscriptionMetrics(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -11,10 +11,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Rejects a request to attach a VPC to a transit gateway. The VPC attachment must
-// be in the pendingAcceptance state. Use DescribeTransitGatewayVpcAttachments to
-// view your pending VPC attachment requests. Use AcceptTransitGatewayVpcAttachment
-// to accept a VPC attachment request.
+// Rejects a request to attach a VPC to a transit gateway.
+//
+// The VPC attachment must be in the pendingAcceptance state. Use DescribeTransitGatewayVpcAttachments to view your
+// pending VPC attachment requests. Use AcceptTransitGatewayVpcAttachmentto accept a VPC attachment request.
 func (c *Client) RejectTransitGatewayVpcAttachment(ctx context.Context, params *RejectTransitGatewayVpcAttachmentInput, optFns ...func(*Options)) (*RejectTransitGatewayVpcAttachmentOutput, error) {
 	if params == nil {
 		params = &RejectTransitGatewayVpcAttachmentInput{}
@@ -100,6 +100,9 @@ func (c *Client) addOperationRejectTransitGatewayVpcAttachmentMiddlewares(stack 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -110,6 +113,15 @@ func (c *Client) addOperationRejectTransitGatewayVpcAttachmentMiddlewares(stack 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRejectTransitGatewayVpcAttachmentValidationMiddleware(stack); err != nil {
@@ -131,6 +143,18 @@ func (c *Client) addOperationRejectTransitGatewayVpcAttachmentMiddlewares(stack 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

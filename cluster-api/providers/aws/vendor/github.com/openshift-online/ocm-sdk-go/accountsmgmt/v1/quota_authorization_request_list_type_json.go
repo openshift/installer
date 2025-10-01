@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalQuotaAuthorizationRequestList(list []*QuotaAuthorizationRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeQuotaAuthorizationRequestList(list, stream)
+	WriteQuotaAuthorizationRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalQuotaAuthorizationRequestList(list []*QuotaAuthorizationRequest, wri
 	return stream.Error
 }
 
-// writeQuotaAuthorizationRequestList writes a list of value of the 'quota_authorization_request' type to
+// WriteQuotaAuthorizationRequestList writes a list of value of the 'quota_authorization_request' type to
 // the given stream.
-func writeQuotaAuthorizationRequestList(list []*QuotaAuthorizationRequest, stream *jsoniter.Stream) {
+func WriteQuotaAuthorizationRequestList(list []*QuotaAuthorizationRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeQuotaAuthorizationRequest(value, stream)
+		WriteQuotaAuthorizationRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalQuotaAuthorizationRequestList(source interface{}) (items []*QuotaA
 	if err != nil {
 		return
 	}
-	items = readQuotaAuthorizationRequestList(iterator)
+	items = ReadQuotaAuthorizationRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readQuotaAuthorizationRequestList reads list of values of the ”quota_authorization_request' type from
+// ReadQuotaAuthorizationRequestList reads list of values of the ”quota_authorization_request' type from
 // the given iterator.
-func readQuotaAuthorizationRequestList(iterator *jsoniter.Iterator) []*QuotaAuthorizationRequest {
+func ReadQuotaAuthorizationRequestList(iterator *jsoniter.Iterator) []*QuotaAuthorizationRequest {
 	list := []*QuotaAuthorizationRequest{}
 	for iterator.ReadArray() {
-		item := readQuotaAuthorizationRequest(iterator)
+		item := ReadQuotaAuthorizationRequest(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -4,11 +4,15 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	elbv2types "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,11 +22,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	clientwatch "k8s.io/client-go/tools/watch"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
@@ -63,6 +69,12 @@ var SkipPasswordPrintFlag bool
 // WaitForInstallComplete waits for cluster to complete installation, checks for operator stability
 // and logs cluster information when successful.
 func WaitForInstallComplete(ctx context.Context, config *rest.Config, assetstore asset.Store) error {
+	// FIXME: Register the worker nodes to target group of ingress LB.
+	// Remove after CCM support dualstack NLB.
+	if err := waitForWorkerNodesAvailability(ctx, config, assetstore); err != nil {
+		return err
+	}
+
 	if err := waitForInitializedCluster(ctx, config, assetstore); err != nil {
 		return err
 	}
@@ -81,6 +93,158 @@ func WaitForInstallComplete(ctx context.Context, config *rest.Config, assetstore
 	}
 
 	return logComplete(RootOpts.Dir, consoleURL)
+}
+
+// waitForWorkerNodesAvailability waits for worker nodes to be running and register them with the TargetGroup of the ingress NLB.
+// NOTE: This should be handled by the CCM, not the installer.
+func waitForWorkerNodesAvailability(ctx context.Context, config *rest.Config, assetstore asset.Store) error {
+	timer.StartTimer("CCM: Worker nodes Available")
+	icAsset, err := assetstore.Load(&installconfig.InstallConfig{})
+	if err != nil {
+		return fmt.Errorf("failed to load installconfig: %w", err)
+	}
+	if icAsset == nil {
+		return fmt.Errorf("failed to installconfig: received nil")
+	}
+
+	ic := icAsset.(*installconfig.InstallConfig).Config
+	// Nothing to do!
+	if ic.Platform.AWS == nil || !ic.IsDualStackInfra() {
+		return nil
+	}
+
+	region := ic.Platform.AWS.Region
+
+	// FIXME: Ignore edge compute pool
+	numOfNodes := ptr.Deref(ic.Compute[0].Replicas, 0) + ptr.Deref(ic.ControlPlane.Replicas, 0)
+	if numOfNodes == 0 {
+		// nothing to do
+		return nil
+	}
+
+	nodeCheckDuration := 10 * time.Minute
+	nodeContext, cancel := context.WithTimeout(ctx, nodeCheckDuration)
+	defer cancel()
+
+	untilTime := time.Now().Add(nodeCheckDuration)
+	timezone, _ := untilTime.Zone()
+	logrus.Infof("CCM: Waiting up to %v (until %v %s) to ensure worker nodes are available and registered with ingress LB...",
+		nodeCheckDuration, untilTime.Format(time.Kitchen), timezone)
+
+	cc, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create a config client: %w", err)
+	}
+	configInformers := informers.NewSharedInformerFactory(cc, 0)
+	nodeInformer := configInformers.Core().V1().Nodes().Informer()
+	nodeLister := configInformers.Core().V1().Nodes().Lister()
+	configInformers.Start(ctx.Done())
+	if !cache.WaitForCacheSync(ctx.Done(), nodeInformer.HasSynced) {
+		return fmt.Errorf("informers never started")
+	}
+
+	// Create clients to call AWS API
+	// FIXME: Let's ignore the custom endpoints for now
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(region))
+	if err != nil {
+		return fmt.Errorf("failed to load AWS config: %w", err)
+	}
+	elbv2Client := elbv2.NewFromConfig(cfg)
+
+	waitErr := wait.PollUntilContextCancel(nodeContext, 1*time.Second, true, func(ctx context.Context) (done bool, err error) {
+		// If the expected number of nodes are running, proceed.
+		// Otherwise, requeue.
+		nodes, err := nodeLister.List(labels.Everything())
+		if err != nil {
+			return false, fmt.Errorf("failed to get nodes: %w", err)
+		}
+		if len(nodes) < int(numOfNodes) {
+			return false, nil
+		}
+
+		// Convert nodes to EC2 instance IDs
+		var instanceIDs []string
+		for _, node := range nodes {
+			url, err := url.Parse(node.Spec.ProviderID)
+			if err != nil {
+				return false, fmt.Errorf("invalid node provider ID (%s): %w", node.Spec.ProviderID, err)
+			}
+			if url.Scheme != "aws" {
+				return false, fmt.Errorf("invalid scheme for AWS instance (%s)", node.Spec.ProviderID)
+			}
+
+			awsID := ""
+			tokens := strings.Split(strings.Trim(url.Path, "/"), "/")
+			// last token in the providerID is the aws resource ID for both EC2 and Fargate nodes
+			if len(tokens) > 0 {
+				awsID = tokens[len(tokens)-1]
+			}
+			instanceIDs = append(instanceIDs, awsID)
+		}
+
+		// Get the NodePort service for default ingress
+		// Reference: oc -n openshift-ingress get svc router-nodeport-default -o=wide
+		svc, err := cc.CoreV1().Services("openshift-ingress").Get(nodeContext, "router-nodeport-default", metav1.GetOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to get service openshift-ingress/router-nodeport-default: %w", err)
+		}
+
+		// Check if nodes are already registered. If true, nothing to do.
+		targetGrp, err := elbv2Client.DescribeTargetGroups(nodeContext, &elbv2.DescribeTargetGroupsInput{
+			Names: []string{"ingress-secure", "ingress-insecure"},
+		})
+		if err != nil {
+			return false, fmt.Errorf("failed to describe target group: %w", err)
+		}
+
+		for _, tg := range targetGrp.TargetGroups {
+			// Get registered targets by querying target health API.
+			targetDesc, err := elbv2Client.DescribeTargetHealth(nodeContext, &elbv2.DescribeTargetHealthInput{
+				TargetGroupArn: tg.TargetGroupArn,
+			})
+			if err != nil {
+				return false, fmt.Errorf("failed to get target health for target group %s: %w", *tg.TargetGroupArn, err)
+			}
+
+			// No targets found. We will register nodes as targets.
+			if len(targetDesc.TargetHealthDescriptions) == 0 {
+				var nodeport int32
+				for _, port := range svc.Spec.Ports {
+					if port.Port == *tg.Port {
+						nodeport = port.NodePort
+						break
+					}
+				}
+
+				var targets []elbv2types.TargetDescription
+				for _, instanceID := range instanceIDs {
+					targets = append(targets, elbv2types.TargetDescription{
+						Port: &nodeport,
+						Id:   &instanceID,
+					})
+				}
+
+				// Register them and controlplane nodes with TargetGroup of ingres NLB.
+				_, err = elbv2Client.RegisterTargets(nodeContext, &elbv2.RegisterTargetsInput{
+					TargetGroupArn: tg.TargetGroupArn,
+					Targets:        targets,
+				})
+				if err != nil {
+					return false, fmt.Errorf("failed to register nodes to ingress LB: %w", err)
+				}
+			}
+		}
+
+		return true, nil
+	})
+	if waitErr != nil {
+		return fmt.Errorf("failed to wait for worker node availability: %w", waitErr)
+	}
+
+	timer.StopTimer("CCM: Worker nodes Available")
+
+	logrus.Info("CCM: Worker nodes are available and registered with ingress LB")
+	return nil
 }
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation

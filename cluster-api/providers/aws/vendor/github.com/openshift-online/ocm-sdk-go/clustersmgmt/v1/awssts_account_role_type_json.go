@@ -29,7 +29,7 @@ import (
 // MarshalAWSSTSAccountRole writes a value of the 'AWSSTS_account_role' type to the given writer.
 func MarshalAWSSTSAccountRole(object *AWSSTSAccountRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAWSSTSAccountRole(object, stream)
+	WriteAWSSTSAccountRole(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAWSSTSAccountRole(object *AWSSTSAccountRole, writer io.Writer) error
 	return stream.Error
 }
 
-// writeAWSSTSAccountRole writes a value of the 'AWSSTS_account_role' type to the given stream.
-func writeAWSSTSAccountRole(object *AWSSTSAccountRole, stream *jsoniter.Stream) {
+// WriteAWSSTSAccountRole writes a value of the 'AWSSTS_account_role' type to the given stream.
+func WriteAWSSTSAccountRole(object *AWSSTSAccountRole, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeAWSSTSAccountRole(object *AWSSTSAccountRole, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("items")
-		writeAWSSTSRoleList(object.items, stream)
+		WriteAWSSTSRoleList(object.items, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -69,13 +69,13 @@ func UnmarshalAWSSTSAccountRole(source interface{}) (object *AWSSTSAccountRole, 
 	if err != nil {
 		return
 	}
-	object = readAWSSTSAccountRole(iterator)
+	object = ReadAWSSTSAccountRole(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAWSSTSAccountRole reads a value of the 'AWSSTS_account_role' type from the given iterator.
-func readAWSSTSAccountRole(iterator *jsoniter.Iterator) *AWSSTSAccountRole {
+// ReadAWSSTSAccountRole reads a value of the 'AWSSTS_account_role' type from the given iterator.
+func ReadAWSSTSAccountRole(iterator *jsoniter.Iterator) *AWSSTSAccountRole {
 	object := &AWSSTSAccountRole{}
 	for {
 		field := iterator.ReadObject()
@@ -84,7 +84,7 @@ func readAWSSTSAccountRole(iterator *jsoniter.Iterator) *AWSSTSAccountRole {
 		}
 		switch field {
 		case "items":
-			value := readAWSSTSRoleList(iterator)
+			value := ReadAWSSTSRoleList(iterator)
 			object.items = value
 			object.bitmap_ |= 1
 		case "prefix":

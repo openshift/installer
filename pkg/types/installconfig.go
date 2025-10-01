@@ -7,9 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	utilnet "k8s.io/utils/net"
 
 	configv1 "github.com/openshift/api/config/v1"
 	features "github.com/openshift/api/features"
+	machinev1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -646,4 +648,66 @@ func (c *InstallConfig) PublicIngress() bool {
 		return true
 	}
 	return false
+}
+
+// InfraStack returns the network stack of the cluster infrastructure.
+func (c *InstallConfig) InfraStack() machinev1.IPFamiliesType {
+	// If the platform defines the infra stack type, return it.
+	// Otherwise, the installer figures it stack type from the machineNetwork field.
+	p := c.Platform
+	switch {
+	case p.AWS != nil && p.AWS.InfraStack != "":
+		return p.AWS.InfraStack
+	}
+
+	hasIPv4, hasIPv6, preferIpv6 := false, false, false
+	for i, machineNetwork := range c.MachineNetwork {
+		if utilnet.IsIPv4CIDR(&machineNetwork.CIDR.IPNet) {
+			hasIPv4 = true
+		} else if utilnet.IsIPv6CIDR(&machineNetwork.CIDR.IPNet) {
+			hasIPv6 = true
+			// We indicate the prefered family by machineNetwork order.
+			if i == 0 {
+				preferIpv6 = true
+			}
+		}
+	}
+	if hasIPv4 && hasIPv6 {
+		if preferIpv6 {
+			return machinev1.IPFamiliesDualStackIPv6Primary
+		}
+		return machinev1.IPFamiliesDualStack
+	}
+	if hasIPv6 {
+		return machinev1.IPFamiliesIPv6
+	}
+	return machinev1.IPFamiliesIPv4
+}
+
+// IsDualStackInfra returns whether the network infrastructure is dualstack.
+func (c *InstallConfig) IsDualStackInfra() bool {
+	stackType := c.InfraStack()
+	return stackType == machinev1.IPFamiliesDualStack || stackType == machinev1.IPFamiliesDualStackIPv6Primary
+}
+
+// IPv4MachineNetworks returns machine network entries of IPv4 family.
+func (c *InstallConfig) IPv4MachineNetworks() []MachineNetworkEntry {
+	var machineNetworks []MachineNetworkEntry
+	for _, network := range c.MachineNetwork {
+		if utilnet.IsIPv4CIDR(&network.CIDR.IPNet) {
+			machineNetworks = append(machineNetworks, network)
+		}
+	}
+	return machineNetworks
+}
+
+// IPv6MachineNetworks returns machine network entries of IPv6 family.
+func (c *InstallConfig) IPv6MachineNetworks() []MachineNetworkEntry {
+	var machineNetworks []MachineNetworkEntry
+	for _, network := range c.MachineNetwork {
+		if utilnet.IsIPv6CIDR(&network.CIDR.IPNet) {
+			machineNetworks = append(machineNetworks, network)
+		}
+	}
+	return machineNetworks
 }

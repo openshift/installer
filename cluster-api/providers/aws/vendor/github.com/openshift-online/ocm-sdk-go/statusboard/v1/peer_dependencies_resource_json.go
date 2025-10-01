@@ -57,7 +57,7 @@ func readPeerDependenciesListResponse(response *PeerDependenciesListResponse, re
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readPeerDependencyList(iterator)
+			items := ReadPeerDependencyList(iterator)
 			response.items = &PeerDependencyList{
 				items: items,
 			}
