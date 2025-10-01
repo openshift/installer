@@ -241,6 +241,20 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		if err := createDNSRecords(ctx, client, in.InstallConfig, in.InfraID, apiIPAddress, apiIntIPAddress); err != nil {
 			return fmt.Errorf("failed to create DNS records: %w", err)
 		}
+
+		// Create the private zone for private service connect
+		// TODO: should this be independent of the custom DNS solution?
+		if err := createPrivateServiceConnectZone(ctx, in.InstallConfig, in.InfraID, *gcpCluster.Status.Network.SelfLink); err != nil {
+			return fmt.Errorf("failed to create the private managed zone for private service connect: %w", err)
+		}
+
+		// Create the records for the PSC Private zone
+		if err := createPSCRecords(ctx, in.InstallConfig, in.InfraID); err != nil {
+			return fmt.Errorf("failed to create PSC records: %w", err)
+		}
+		// TODO: Remove me
+		//logrus.Warnf("Killing the process here")
+		//os.Exit(1)
 	}
 
 	return nil

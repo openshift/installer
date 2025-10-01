@@ -5835,6 +5835,10 @@ spec:
                         - name
                         type: object
                     type: object
+                  endpoint:
+                    description: Endpoint is the private service connect endpoint
+                      name.
+                    type: string
                   network:
                     description: |-
                       Network specifies an existing VPC where the cluster should be created

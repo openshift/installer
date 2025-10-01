@@ -115,12 +115,12 @@ func GetComputeService(ctx context.Context, serviceEndpoints []configv1.GCPServi
 		return nil, fmt.Errorf("failed to get compute service options: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameCompute {
-			formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
-			genOptions = append(genOptions, option.WithEndpoint(formattedURL))
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameCompute {
+	//		formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
+	//		genOptions = append(genOptions, option.WithEndpoint(formattedURL))
+	//	}
+	//}
 
 	options = append(options, genOptions...)
 	svc, err := compute.NewService(ctx, options...)
@@ -139,12 +139,12 @@ func GetDNSService(ctx context.Context, serviceEndpoints []configv1.GCPServiceEn
 		return nil, fmt.Errorf("failed to get dns service options: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameDNS {
-			formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
-			genOptions = append(genOptions, option.WithEndpoint(formattedURL))
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameDNS {
+	//		formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
+	//		genOptions = append(genOptions, option.WithEndpoint(formattedURL))
+	//	}
+	//}
 
 	options = append(options, genOptions...)
 	svc, err := dns.NewService(ctx, options...)
@@ -163,12 +163,12 @@ func GetCloudResourceService(ctx context.Context, serviceEndpoints []configv1.GC
 		return nil, fmt.Errorf("failed to get cloud resource service options: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameCloudResource {
-			formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
-			genOptions = append(genOptions, option.WithEndpoint(formattedURL))
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameCloudResource {
+	//		formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
+	//		genOptions = append(genOptions, option.WithEndpoint(formattedURL))
+	//	}
+	//}
 
 	options = append(options, genOptions...)
 	svc, err := cloudresourcemanager.NewService(ctx, options...)
@@ -187,12 +187,12 @@ func GetServiceUsageService(ctx context.Context, serviceEndpoints []configv1.GCP
 		return nil, fmt.Errorf("failed to get service usage service options: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameServiceUsage {
-			formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
-			genOptions = append(genOptions, option.WithEndpoint(formattedURL))
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameServiceUsage {
+	//		formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
+	//		genOptions = append(genOptions, option.WithEndpoint(formattedURL))
+	//	}
+	//}
 
 	options = append(options, genOptions...)
 	svc, err := serviceusage.NewService(ctx, options...)
@@ -211,12 +211,12 @@ func GetIAMService(ctx context.Context, serviceEndpoints []configv1.GCPServiceEn
 		return nil, fmt.Errorf("failed to get IAM service options: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameIAM {
-			formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
-			genOptions = append(genOptions, option.WithEndpoint(formattedURL))
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameIAM {
+	//		formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
+	//		genOptions = append(genOptions, option.WithEndpoint(formattedURL))
+	//	}
+	//}
 
 	options = append(options, genOptions...)
 	svc, err := iam.NewService(ctx, options...)
@@ -235,12 +235,12 @@ func GetStorageService(ctx context.Context, serviceEndpoints []configv1.GCPServi
 		return nil, fmt.Errorf("failed to get storage service options: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameStorage {
-			formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
-			genOptions = append(genOptions, option.WithEndpoint(formattedURL))
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameStorage {
+	//		formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
+	//		genOptions = append(genOptions, option.WithEndpoint(formattedURL))
+	//	}
+	//}
 
 	options = append(options, genOptions...)
 	svc, err := storage.NewClient(ctx, options...)
@@ -258,12 +258,12 @@ func GetFileService(ctx context.Context, serviceEndpoints []configv1.GCPServiceE
 		return nil, fmt.Errorf("failed to get file service options: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameFile {
-			formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
-			genOptions = append(genOptions, option.WithEndpoint(formattedURL))
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameFile {
+	//		formattedURL := FormatGCPEndpoint(endpoint.Name, endpoint.URL, FormatGCPEndpointInput{SkipPath: false})
+	//		genOptions = append(genOptions, option.WithEndpoint(formattedURL))
+	//	}
+	//}
 
 	options = append(options, genOptions...)
 	svc, err := file.NewService(ctx, options...)

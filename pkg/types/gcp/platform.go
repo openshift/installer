@@ -86,6 +86,10 @@ type Platform struct {
 	// +optional
 	ServiceEndpoints []configv1.GCPServiceEndpoint `json:"serviceEndpoints,omitempty"`
 
+	// Endpoint is the private service connect endpoint name.
+	// +optional
+	Endpoint string `json:"endpoint,omitempty"`
+
 	// DNS contains the dns zone information for the cluster. The DNS information can
 	// only be supplied during Shared VPC (XPN) installs.
 	// +optional
