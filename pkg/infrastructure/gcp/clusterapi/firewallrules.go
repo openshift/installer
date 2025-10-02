@@ -233,7 +233,7 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	if in.InstallConfig.Config.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.GCP.NetworkProjectID
 
-		createFwRules, err := hasFirewallPermission(ctx, projectID, in.InstallConfig.Config.GCP.ServiceEndpoints)
+		createFwRules, err := hasFirewallPermission(ctx, projectID, []configv1.GCPServiceEndpoint{})
 		if err != nil {
 			return fmt.Errorf("failed to create cluster firewall rules: %w", err)
 		}
@@ -242,7 +242,7 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 		}
 	}
 
-	svc, err := gcpconfig.GetComputeService(ctx, in.InstallConfig.Config.GCP.ServiceEndpoints)
+	svc, err := gcpconfig.GetComputeService(ctx, []configv1.GCPServiceEndpoint{})
 	if err != nil {
 		return fmt.Errorf("failed to get copmute service for firewall rule creation: %w", err)
 	}
@@ -321,7 +321,7 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 	if in.InstallConfig.Config.Platform.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.Platform.GCP.NetworkProjectID
 
-		createFwRules, err := hasFirewallPermission(ctx, projectID, in.InstallConfig.Config.GCP.ServiceEndpoints)
+		createFwRules, err := hasFirewallPermission(ctx, projectID, []configv1.GCPServiceEndpoint{})
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap firewall rules: %w", err)
 		}
@@ -330,7 +330,7 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 		}
 	}
 
-	svc, err := gcpconfig.GetComputeService(ctx, in.InstallConfig.Config.GCP.ServiceEndpoints)
+	svc, err := gcpconfig.GetComputeService(ctx, []configv1.GCPServiceEndpoint{})
 	if err != nil {
 		return fmt.Errorf("failed to get compute service for bootstrap firewall rule creation: %w", err)
 	}

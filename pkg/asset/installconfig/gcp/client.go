@@ -75,7 +75,8 @@ func NewClient(ctx context.Context, endpoints []configv1.GCPServiceEndpoint) (*C
 		return nil, errors.Wrap(err, "failed to get session")
 	}
 
-	modifiedEndpoints := FormatGCPEndpointList(endpoints, FormatGCPEndpointInput{SkipPath: false})
+	//modifiedEndpoints := FormatGCPEndpointList(endpoints, FormatGCPEndpointInput{SkipPath: false})
+	modifiedEndpoints := []configv1.GCPServiceEndpoint{}
 
 	client := &Client{
 		ssn:       ssn,

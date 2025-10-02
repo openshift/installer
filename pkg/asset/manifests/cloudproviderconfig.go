@@ -12,11 +12,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
-	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
@@ -182,18 +180,18 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 
 		apiEndpoint := ""
 		containerAPIEndpoint := ""
-		for _, endpoint := range installConfig.Config.GCP.ServiceEndpoints {
-			// the installconfig should only allow one service endpoint for each
-			// name, otherwise this would take the last one.
-			switch endpoint.Name {
-			case configv1.GCPServiceEndpointNameCompute:
-				formattedURL := gcp.FormatGCPEndpoint(endpoint.Name, endpoint.URL, gcp.FormatGCPEndpointInput{SkipPath: false})
-				apiEndpoint = formattedURL
-			case configv1.GCPServiceEndpointNameContainer:
-				formattedURL := gcp.FormatGCPEndpoint(endpoint.Name, endpoint.URL, gcp.FormatGCPEndpointInput{SkipPath: false})
-				containerAPIEndpoint = formattedURL
-			}
-		}
+		//for _, endpoint := range installConfig.Config.GCP.ServiceEndpoints {
+		//	// the installconfig should only allow one service endpoint for each
+		//	// name, otherwise this would take the last one.
+		//	switch endpoint.Name {
+		//	case configv1.GCPServiceEndpointNameCompute:
+		//		formattedURL := gcp.FormatGCPEndpoint(endpoint.Name, endpoint.URL, gcp.FormatGCPEndpointInput{SkipPath: false})
+		//		apiEndpoint = formattedURL
+		//	case configv1.GCPServiceEndpointNameContainer:
+		//		formattedURL := gcp.FormatGCPEndpoint(endpoint.Name, endpoint.URL, gcp.FormatGCPEndpointInput{SkipPath: false})
+		//		containerAPIEndpoint = formattedURL
+		//	}
+		//}
 
 		gcpConfig, err := gcpmanifests.CloudProviderConfig(
 			clusterID.InfraID,

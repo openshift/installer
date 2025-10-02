@@ -133,7 +133,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		capgLoadBalancerType = capg.Internal
 	}
 
-	formattedEndpoints := gcpic.FormatGCPEndpointList(installConfig.Config.GCP.ServiceEndpoints, gcpic.FormatGCPEndpointInput{SkipPath: false})
+	//formattedEndpoints := gcpic.FormatGCPEndpointList(installConfig.Config.GCP.ServiceEndpoints, gcpic.FormatGCPEndpointInput{SkipPath: false})
 
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -158,7 +158,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				LoadBalancerType:                  ptr.To(capgLoadBalancerType),
 			},
 			ResourceManagerTags: GetTagsFromInstallConfig(installConfig),
-			ServiceEndpoints:    convertServiceEndpointsToCAPG(formattedEndpoints),
+			//ServiceEndpoints:    convertServiceEndpointsToCAPG(formattedEndpoints),
 		},
 	}
 	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))

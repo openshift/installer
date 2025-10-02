@@ -17,6 +17,18 @@ type DNS struct {
 	PrivateZone *DNSZone `json:"privateZone,omitempty"`
 }
 
+// PSCEndpoint contains the information to describe a Private Service Connect
+// endpoint.
+type PSCEndpoint struct {
+	// Name contains the name of the private service connect endpoint.
+	Name string `json:"name"`
+
+	// Region is the region where the endpoint resides.
+	// When the region is empty, the location is assumed to be global.
+	// +optional
+	Region string `json:"region,omitempty"`
+}
+
 // DNSZone contains the information about a specific DNS public or private zone.
 type DNSZone struct {
 	// ProjectID is the project where the zone resides.
@@ -86,9 +98,9 @@ type Platform struct {
 	// +optional
 	ServiceEndpoints []configv1.GCPServiceEndpoint `json:"serviceEndpoints,omitempty"`
 
-	// Endpoint is the private service connect endpoint name.
+	// Endpoint is the private service connect endpoint.
 	// +optional
-	Endpoint string `json:"endpoint,omitempty"`
+	Endpoint *PSCEndpoint `json:"endpoint,omitempty"`
 
 	// DNS contains the dns zone information for the cluster. The DNS information can
 	// only be supplied during Shared VPC (XPN) installs.

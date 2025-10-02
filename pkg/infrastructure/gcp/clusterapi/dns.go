@@ -26,7 +26,7 @@ func getDNSZoneName(ctx context.Context, ic *installconfig.InstallConfig, cluste
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
 	defer cancel()
 
-	client, err := gcpic.NewClient(ctx, ic.Config.GCP.ServiceEndpoints)
+	client, err := gcpic.NewClient(ctx, []configv1.GCPServiceEndpoint{})
 	if err != nil {
 		return "", fmt.Errorf("failed to create new client: %w", err)
 	}
@@ -124,7 +124,7 @@ func createRecordSets(ctx context.Context, client *gcpic.Client, ic *installconf
 // createDNSRecords will get the list of records to be created and execute their creation through the gcp dns api.
 func createDNSRecords(ctx context.Context, client *gcpic.Client, ic *installconfig.InstallConfig, clusterID, apiIP, apiIntIP string) error {
 	// TODO: use the opts for the service to restrict scopes see google.golang.org/api/option.WithScopes
-	dnsService, err := gcpic.GetDNSService(ctx, ic.Config.GCP.ServiceEndpoints)
+	dnsService, err := gcpic.GetDNSService(ctx, []configv1.GCPServiceEndpoint{})
 	if err != nil {
 		return fmt.Errorf("failed to create the gcp dns service: %w", err)
 	}
@@ -155,17 +155,20 @@ func findPSCEndpointAddress(ctx context.Context, ic *installconfig.InstallConfig
 		return pscEndpointAddress, fmt.Errorf("failed to create Compute service: %w", err)
 	}
 
-	// List forwarding rules in the specified region
-	// TODO: Currently only global is allowed, but this could be region (in that case the ForwardingRules.List() is used.
-	call := svc.GlobalForwardingRules.List(ic.Config.GCP.ProjectID)
-	forwardingRules, err := call.Do()
-	if err != nil {
-		return pscEndpointAddress, fmt.Errorf("failed to list forwarding rules: %w", err)
+	var forwardingRules *compute.ForwardingRuleList
+	var forwardingRuleErr error
+	if ic.Config.GCP.Endpoint.Region != "" {
+		forwardingRules, forwardingRuleErr = svc.ForwardingRules.List(ic.Config.GCP.ProjectID, ic.Config.GCP.Endpoint.Region).Do()
+	} else {
+		forwardingRules, forwardingRuleErr = svc.GlobalForwardingRules.List(ic.Config.GCP.ProjectID).Do()
+	}
+	if forwardingRuleErr != nil {
+		return pscEndpointAddress, fmt.Errorf("failed to list forwarding rules: %w", forwardingRuleErr)
 	}
 
 	// Iterate through forwarding rules to find the PSC endpoint
 	for _, rule := range forwardingRules.Items {
-		if rule.Name == ic.Config.GCP.Endpoint {
+		if rule.Name == ic.Config.GCP.Endpoint.Name {
 			pscEndpointAddress = rule.IPAddress
 			break
 		}
@@ -260,7 +263,7 @@ func createPrivateServiceConnectZone(ctx context.Context, ic *installconfig.Inst
 // createPrivateManagedZone will create a private managed zone in the GCP project specified in the install config. The
 // private managed zone should only be created when one is not specified in the install config.
 func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConfig, clusterID, network string) error {
-	client, err := gcpic.NewClient(ctx, ic.Config.GCP.ServiceEndpoints)
+	client, err := gcpic.NewClient(ctx, []configv1.GCPServiceEndpoint{})
 	if err != nil {
 		return err
 	}
@@ -284,7 +287,7 @@ func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConf
 	logrus.Debugf("creating private zone %s", params.Name)
 
 	// TODO: use the opts for the service to restrict scopes see google.golang.org/api/option.WithScopes
-	dnsService, err := gcpic.GetDNSService(ctx, ic.Config.GCP.ServiceEndpoints)
+	dnsService, err := gcpic.GetDNSService(ctx, []configv1.GCPServiceEndpoint{})
 	if err != nil {
 		return fmt.Errorf("failed to create the gcp dns service: %w", err)
 	}

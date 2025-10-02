@@ -3,6 +3,7 @@ package clusterapi
 import (
 	"context"
 	"fmt"
+	configv1 "github.com/openshift/api/config/v1"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -36,7 +37,7 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 		return nil, fmt.Errorf("failed to get GCP cluster: %w", err)
 	}
 
-	svc, err := gcpconfig.GetComputeService(ctx, in.InstallConfig.Config.GCP.ServiceEndpoints)
+	svc, err := gcpconfig.GetComputeService(ctx, []configv1.GCPServiceEndpoint{})
 	if err != nil {
 		return nil, err
 	}

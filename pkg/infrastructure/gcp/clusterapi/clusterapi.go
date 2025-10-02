@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	configv1 "github.com/openshift/api/config/v1"
 	"path"
 	"strings"
 
@@ -62,11 +63,11 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	} else {
 		// Create ServiceAccount for control plane nodes
 		logrus.Debugf("Creating ServiceAccount for control plane nodes")
-		masterSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "master", in.InstallConfig.Config.GCP.ServiceEndpoints)
+		masterSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "master", []configv1.GCPServiceEndpoint{})
 		if err != nil {
 			return fmt.Errorf("failed to create master serviceAccount: %w", err)
 		}
-		if err = AddServiceAccountRoles(ctx, projectID, masterSA, GetMasterRoles(), in.InstallConfig.Config.GCP.ServiceEndpoints); err != nil {
+		if err = AddServiceAccountRoles(ctx, projectID, masterSA, GetMasterRoles(), []configv1.GCPServiceEndpoint{}); err != nil {
 			return fmt.Errorf("failed to add master roles: %w", err)
 		}
 
@@ -75,7 +76,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 			projID := in.InstallConfig.Config.Platform.GCP.NetworkProjectID
 			// Add roles needed for creating firewalls
 			roles := GetSharedVPCRoles()
-			if err = AddServiceAccountRoles(ctx, projID, masterSA, roles, in.InstallConfig.Config.GCP.ServiceEndpoints); err != nil {
+			if err = AddServiceAccountRoles(ctx, projID, masterSA, roles, []configv1.GCPServiceEndpoint{}); err != nil {
 				return fmt.Errorf("failed to add roles for shared VPC: %w", err)
 			}
 		}
@@ -92,11 +93,11 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	if createSA {
 		// Create ServiceAccount for workers
 		logrus.Debugf("Creating ServiceAccount for compute nodes")
-		workerSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "worker", in.InstallConfig.Config.GCP.ServiceEndpoints)
+		workerSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "worker", []configv1.GCPServiceEndpoint{})
 		if err != nil {
 			return fmt.Errorf("failed to create worker serviceAccount: %w", err)
 		}
-		if err = AddServiceAccountRoles(ctx, projectID, workerSA, GetWorkerRoles(), in.InstallConfig.Config.GCP.ServiceEndpoints); err != nil {
+		if err = AddServiceAccountRoles(ctx, projectID, workerSA, GetWorkerRoles(), []configv1.GCPServiceEndpoint{}); err != nil {
 			return fmt.Errorf("failed to add worker roles: %w", err)
 		}
 	}
@@ -112,7 +113,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	// Create the bucket and presigned url. The url is generated using a known/expected name so that the
 	// url can be retrieved from the api by this name.
 	bucketName := gcp.GetBootstrapStorageName(in.InfraID)
-	storageClient, err := icgcp.GetStorageService(ctx, in.InstallConfig.Config.GCP.ServiceEndpoints)
+	storageClient, err := icgcp.GetStorageService(ctx, []configv1.GCPServiceEndpoint{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage client: %w", err)
 	}
@@ -181,7 +182,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to add bootstrap firewall rule: %w", err)
 	}
 
-	client, err := icgcp.NewClient(context.TODO(), in.InstallConfig.Config.GCP.ServiceEndpoints)
+	client, err := icgcp.NewClient(context.TODO(), []configv1.GCPServiceEndpoint{})
 	if err != nil {
 		return err
 	}
@@ -232,7 +233,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 			return fmt.Errorf("failed to create the private managed zone: %w", err)
 		}
 
-		apiIntIPAddress, err := getInternalLBAddress(ctx, in.InstallConfig.Config.GCP.ProjectID, in.InstallConfig.Config.GCP.Region, getAPIAddressName(in.InfraID), in.InstallConfig.Config.GCP.ServiceEndpoints)
+		apiIntIPAddress, err := getInternalLBAddress(ctx, in.InstallConfig.Config.GCP.ProjectID, in.InstallConfig.Config.GCP.Region, getAPIAddressName(in.InfraID), []configv1.GCPServiceEndpoint{})
 		if err != nil {
 			return fmt.Errorf("failed to get the internal load balancer address: %w", err)
 		}
@@ -242,20 +243,15 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 			return fmt.Errorf("failed to create DNS records: %w", err)
 		}
 
-		if in.InstallConfig.Config.GCP.Endpoint != "" {
+		if endpoint := in.InstallConfig.Config.GCP.Endpoint; endpoint != nil && endpoint.Name != "" {
 			// Create the private zone for private service connect
-			// TODO: should this be independent of the custom DNS solution?
 			if err := createPrivateServiceConnectZone(ctx, in.InstallConfig, in.InfraID, *gcpCluster.Status.Network.SelfLink); err != nil {
 				return fmt.Errorf("failed to create the private managed zone for private service connect: %w", err)
 			}
-
 			// Create the records for the PSC Private zone
 			if err := createPSCRecords(ctx, in.InstallConfig, in.InfraID); err != nil {
 				return fmt.Errorf("failed to create PSC records: %w", err)
 			}
-			// TODO: Remove me
-			//logrus.Warnf("Killing the process here")
-			//os.Exit(1)
 		}
 	}
 
