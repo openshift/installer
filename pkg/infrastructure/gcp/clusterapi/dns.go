@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"
+	"google.golang.org/api/option"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -141,6 +143,118 @@ func createDNSRecords(ctx context.Context, client *gcpic.Client, ic *installconf
 		}
 	}
 
+	return nil
+}
+
+// findPSCEndpointAddress finds the ip address for the Private Service Connect Endpoint.
+func findPSCEndpointAddress(ctx context.Context, ic *installconfig.InstallConfig) (string, error) {
+	pscEndpointAddress := ""
+	svc, err := gcpic.GetComputeService(ctx, ic.Config.GCP.ServiceEndpoints, option.WithScopes(compute.ComputeScope))
+	if err != nil {
+		return pscEndpointAddress, fmt.Errorf("failed to create Compute service: %w", err)
+	}
+
+	var forwardingRules *compute.ForwardingRuleList
+	var forwardingRuleErr error
+	if ic.Config.GCP.Endpoint.Region != "" {
+		forwardingRules, forwardingRuleErr = svc.ForwardingRules.List(ic.Config.GCP.ProjectID, ic.Config.GCP.Endpoint.Region).Do()
+	} else {
+		forwardingRules, forwardingRuleErr = svc.GlobalForwardingRules.List(ic.Config.GCP.ProjectID).Do()
+	}
+	if forwardingRuleErr != nil {
+		return pscEndpointAddress, fmt.Errorf("failed to list forwarding rules: %w", forwardingRuleErr)
+	}
+
+	// Iterate through forwarding rules to find the PSC endpoint
+	for _, rule := range forwardingRules.Items {
+		if rule.Name == ic.Config.GCP.Endpoint.Name {
+			pscEndpointAddress = rule.IPAddress
+			break
+		}
+	}
+	logrus.Warnf("psc endpoint address: %s", pscEndpointAddress)
+	return pscEndpointAddress, nil
+}
+
+// createPSCRecords will create and publish the records for the private service connect managed zone.
+func createPSCRecords(ctx context.Context, ic *installconfig.InstallConfig, clusterID string) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*2) // 1 minute for each record below
+	defer cancel()
+
+	pscIPAddress, err := findPSCEndpointAddress(ctx, ic)
+	if err != nil {
+		return fmt.Errorf("failed to find psc endpoint address: %w", err)
+	}
+
+	records := []recordSet{
+		{
+			// "A" record to forward all googleapis.com traffic to the Private Service Connect Endpoint IP Address.
+			projectID: ic.Config.GCP.ProjectID,
+			zoneName:  fmt.Sprintf("%s-psc-zone", clusterID),
+			record: &dns.ResourceRecordSet{
+				Name:    "googleapis.com.",
+				Type:    "A",
+				Ttl:     60,
+				Rrdatas: []string{pscIPAddress},
+			},
+		},
+		{
+			// A CNAME record that will associate all *.googleapis.com traffic with googleapis.com
+			projectID: ic.Config.GCP.ProjectID,
+			zoneName:  fmt.Sprintf("%s-psc-zone", clusterID),
+			record: &dns.ResourceRecordSet{
+				Name:    "*.googleapis.com.",
+				Type:    "CNAME",
+				Ttl:     60,
+				Rrdatas: []string{"googleapis.com."},
+			},
+		},
+	}
+
+	dnsService, err := gcpic.GetDNSService(ctx, ic.Config.GCP.ServiceEndpoints)
+	if err != nil {
+		return fmt.Errorf("failed to create the gcp dns service: %w", err)
+	}
+
+	for _, record := range records {
+		if _, err := dnsService.ResourceRecordSets.Create(record.projectID, record.zoneName, record.record).Context(ctx).Do(); err != nil {
+			return fmt.Errorf("failed to create psc record set %s: %w", record.record.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// createPrivateServiceConnectZone creates a new private zone when a private service connect endpoint is provided.
+// The zone is used to forward all traffic intended for the default googleapis endpoints to the IP address
+// associated with the Private Service Connect Endpoint.
+func createPrivateServiceConnectZone(ctx context.Context, ic *installconfig.InstallConfig, clusterID, network string) error {
+	dnsService, err := gcpic.GetDNSService(ctx, ic.Config.GCP.ServiceEndpoints)
+	if err != nil {
+		return fmt.Errorf("failed to create the gcp dns service: %w", err)
+	}
+
+	managedZone := &dns.ManagedZone{
+		Name:        fmt.Sprintf("%s-psc-zone", clusterID),
+		Description: "Private Service Connect Private Zone Created By OpenShift Installer",
+		DnsName:     "googleapis.com.",
+		Visibility:  "private",
+		Labels:      mergeLabels(ic, clusterID, ownedLabelValue),
+		PrivateVisibilityConfig: &dns.ManagedZonePrivateVisibilityConfig{
+			Networks: []*dns.ManagedZonePrivateVisibilityConfigNetwork{
+				{
+					NetworkUrl: network,
+				},
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	defer cancel()
+
+	if _, err = dnsService.ManagedZones.Create(ic.Config.GCP.ProjectID, managedZone).Context(ctx).Do(); err != nil {
+		return fmt.Errorf("failed to create private service connect managed zone: %w", err)
+	}
 	return nil
 }
 
