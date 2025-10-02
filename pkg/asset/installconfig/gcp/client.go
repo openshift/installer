@@ -60,6 +60,7 @@ type API interface {
 	GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*cloudresourcemanager.TagValue, error)
 	GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference) (*kmspb.KeyRing, error)
 	UpdateDNSPrivateZoneLabels(ctx context.Context, baseDomain, project, zoneName string, labels map[string]string) error
+	GetPrivateServiceConnectEndpoint(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint) (*compute.ForwardingRule, error)
 }
 
 // Client makes calls to the GCP API.
@@ -739,4 +740,38 @@ func (c *Client) GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyRefer
 		}
 	}
 	return nil, fmt.Errorf("failed to find kms key ring with name %s", keyRingName)
+}
+
+// GetPrivateServiceConnectEndpoint finds the GCP compute forwarding rule that is associated with the endpoint.
+func GetPrivateServiceConnectEndpoint(client *compute.Service, project string, endpoint *gcptypes.PSCEndpoint) (*compute.ForwardingRule, error) {
+	if endpoint == nil {
+		return nil, nil
+	}
+
+	var forwardingRules *compute.ForwardingRuleList
+	var forwardingRuleErr error
+	if endpoint.Region != "" {
+		forwardingRules, forwardingRuleErr = client.ForwardingRules.List(project, endpoint.Region).Do()
+	} else {
+		forwardingRules, forwardingRuleErr = client.GlobalForwardingRules.List(project).Do()
+	}
+	if forwardingRuleErr != nil {
+		return nil, fmt.Errorf("failed to list forwarding rules: %w", forwardingRuleErr)
+	}
+
+	// Iterate through forwarding rules to find the PSC endpoint
+	for _, rule := range forwardingRules.Items {
+		if rule.Name == endpoint.Name {
+			return rule, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to find forwarding rule for private service connect endpoint %s", endpoint.Name)
+}
+
+func (c *Client) GetPrivateServiceConnectEndpoint(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint) (*compute.ForwardingRule, error) {
+	svc, err := c.getComputeService(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Compute service: %w", err)
+	}
+	return GetPrivateServiceConnectEndpoint(svc, project, endpoint)
 }

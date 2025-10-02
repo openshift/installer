@@ -6,8 +6,9 @@ import (
 	"net/url"
 	"strings"
 
-	"cloud.google.com/go/storage"
 	"github.com/sirupsen/logrus"
+
+	"cloud.google.com/go/storage"
 	"google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"

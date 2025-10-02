@@ -11,9 +11,18 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 	gcpValidation "github.com/openshift/installer/pkg/types/gcp/validation"
 )
+
+// EndpointName returns the name of the endpoint override if it exists.
+func EndpointName(ic *types.InstallConfig) string {
+	if ic.GCP.Endpoint != nil {
+		return ic.GCP.Endpoint.Name
+	}
+	return ""
+}
 
 // Platform collects GCP-specific configuration.
 func Platform() (*gcp.Platform, error) {

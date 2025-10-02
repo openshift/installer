@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"
+	"google.golang.org/api/option"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -141,6 +143,96 @@ func createDNSRecords(ctx context.Context, client *gcpic.Client, ic *installconf
 		}
 	}
 
+	return nil
+}
+
+// createPSCRecords will create and publish the records for the private service connect managed zone.
+func createPSCRecords(ctx context.Context, ic *installconfig.InstallConfig, clusterID string) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*2) // 1 minute for each record below
+	defer cancel()
+
+	computeService, err := gcpic.GetComputeService(ctx, ic.Config.GCP.ServiceEndpoints, option.WithScopes(compute.ComputeScope))
+	if err != nil {
+		return fmt.Errorf("failed to create Compute service: %w", err)
+	}
+
+	endpoint, err := gcpic.GetPrivateServiceConnectEndpoint(computeService, ic.Config.GCP.ProjectID, ic.Config.GCP.Endpoint)
+	if err != nil {
+		return fmt.Errorf("failed to find private service connect endpoint: %w", err)
+	}
+	if endpoint == nil {
+		return fmt.Errorf("private service connect endpoint is nil")
+	}
+
+	records := []recordSet{
+		{
+			// "A" record to forward all googleapis.com traffic to the Private Service Connect Endpoint IP Address.
+			projectID: ic.Config.GCP.ProjectID,
+			zoneName:  fmt.Sprintf("%s-psc-zone", clusterID),
+			record: &dns.ResourceRecordSet{
+				Name:    "googleapis.com.",
+				Type:    "A",
+				Ttl:     60,
+				Rrdatas: []string{endpoint.IPAddress},
+			},
+		},
+		{
+			// A CNAME record that will associate all *.googleapis.com traffic with googleapis.com
+			projectID: ic.Config.GCP.ProjectID,
+			zoneName:  fmt.Sprintf("%s-psc-zone", clusterID),
+			record: &dns.ResourceRecordSet{
+				Name:    "*.googleapis.com.",
+				Type:    "CNAME",
+				Ttl:     60,
+				Rrdatas: []string{"googleapis.com."},
+			},
+		},
+	}
+
+	dnsService, err := gcpic.GetDNSService(ctx, ic.Config.GCP.ServiceEndpoints)
+	if err != nil {
+		return fmt.Errorf("failed to create the gcp dns service: %w", err)
+	}
+
+	for _, record := range records {
+		if _, err := dnsService.ResourceRecordSets.Create(record.projectID, record.zoneName, record.record).Context(ctx).Do(); err != nil {
+			return fmt.Errorf("failed to create private service connect record set %s: %w", record.record.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// createPrivateServiceConnectZone creates a new private zone when a private service connect endpoint is provided.
+// The zone is used to forward all traffic intended for the default googleapis endpoints to the IP address
+// associated with the Private Service Connect Endpoint.
+func createPrivateServiceConnectZone(ctx context.Context, ic *installconfig.InstallConfig, clusterID, network string) error {
+	dnsService, err := gcpic.GetDNSService(ctx, ic.Config.GCP.ServiceEndpoints)
+	if err != nil {
+		return fmt.Errorf("failed to create the gcp dns service: %w", err)
+	}
+
+	managedZone := &dns.ManagedZone{
+		Name:        fmt.Sprintf("%s-psc-zone", clusterID),
+		Description: "Private Service Connect Private Zone Created By OpenShift Installer",
+		DnsName:     "googleapis.com.",
+		Visibility:  "private",
+		Labels:      mergeLabels(ic, clusterID, ownedLabelValue),
+		PrivateVisibilityConfig: &dns.ManagedZonePrivateVisibilityConfig{
+			Networks: []*dns.ManagedZonePrivateVisibilityConfigNetwork{
+				{
+					NetworkUrl: network,
+				},
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	defer cancel()
+
+	if _, err = dnsService.ManagedZones.Create(ic.Config.GCP.ProjectID, managedZone).Context(ctx).Do(); err != nil {
+		return fmt.Errorf("failed to create private service connect managed zone: %w", err)
+	}
 	return nil
 }
 
