@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"google.golang.org/api/compute/v1"
+	"google.golang.org/api/option"
 
-	configv1 "github.com/openshift/api/config/v1"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/types"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 const (
@@ -209,8 +210,8 @@ func deleteFirewallRule(ctx context.Context, svc *compute.Service, name, project
 	return nil
 }
 
-func hasFirewallPermission(ctx context.Context, projectID string, permissions []string, endpoints []configv1.GCPServiceEndpoint) (bool, error) {
-	client, err := gcpconfig.NewClient(ctx, endpoints)
+func hasFirewallPermission(ctx context.Context, projectID string, permissions []string, endpoint *gcptypes.PSCEndpoint) (bool, error) {
+	client, err := gcpconfig.NewClient(ctx, endpoint)
 	if err != nil {
 		return false, fmt.Errorf("failed to create client during firewall permission check: %w", err)
 	}
@@ -235,7 +236,7 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	if in.InstallConfig.Config.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.GCP.NetworkProjectID
 
-		createFwRules, err := hasFirewallPermission(ctx, projectID, []string{gcpCreateFirewallPermission}, in.InstallConfig.Config.GCP.ServiceEndpoints)
+		createFwRules, err := hasFirewallPermission(ctx, projectID, []string{gcpCreateFirewallPermission}, in.InstallConfig.Config.GCP.Endpoint)
 		if err != nil {
 			return fmt.Errorf("failed to create cluster firewall rules: %w", err)
 		}
@@ -243,8 +244,11 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 			return nil
 		}
 	}
-
-	svc, err := gcpconfig.GetComputeService(ctx, in.InstallConfig.Config.GCP.ServiceEndpoints)
+	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
+	if in.InstallConfig.Config.GCP.Endpoint != nil && !in.InstallConfig.Config.GCP.Endpoint.ClusterUseOnly {
+		opts = append(opts, gcpconfig.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, gcpconfig.ServiceNameGCPCompute))
+	}
+	svc, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to get copmute service for firewall rule creation: %w", err)
 	}
@@ -323,7 +327,7 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 	if in.InstallConfig.Config.Platform.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.Platform.GCP.NetworkProjectID
 
-		createFwRules, err := hasFirewallPermission(ctx, projectID, []string{gcpCreateFirewallPermission}, in.InstallConfig.Config.GCP.ServiceEndpoints)
+		createFwRules, err := hasFirewallPermission(ctx, projectID, []string{gcpCreateFirewallPermission}, in.InstallConfig.Config.GCP.Endpoint)
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap firewall rules: %w", err)
 		}
@@ -332,7 +336,11 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 		}
 	}
 
-	svc, err := gcpconfig.GetComputeService(ctx, in.InstallConfig.Config.GCP.ServiceEndpoints)
+	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
+	if in.InstallConfig.Config.GCP.Endpoint != nil && !in.InstallConfig.Config.GCP.Endpoint.ClusterUseOnly {
+		opts = append(opts, gcpconfig.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, gcpconfig.ServiceNameGCPCompute))
+	}
+	svc, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to get compute service for bootstrap firewall rule creation: %w", err)
 	}
@@ -352,8 +360,12 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 }
 
 // removeBootstrapFirewallRules removes the rules created for the bootstrap node.
-func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string, endpoints []configv1.GCPServiceEndpoint) error {
-	svc, err := gcpconfig.GetComputeService(ctx, endpoints)
+func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string, endpoint *gcptypes.PSCEndpoint) error {
+	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
+	if endpoint != nil && !endpoint.ClusterUseOnly {
+		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
+	}
+	svc, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {
 		return err
 	}
@@ -363,8 +375,12 @@ func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string
 }
 
 // removeCAPGFirewallRules removes the overly permissive firewall rules created by cluster-api-provider-gcp.
-func removeCAPGFirewallRules(ctx context.Context, infraID, projectID string, endpoints []configv1.GCPServiceEndpoint) error {
-	svc, err := gcpconfig.GetComputeService(ctx, endpoints)
+func removeCAPGFirewallRules(ctx context.Context, infraID, projectID string, endpoint *gcptypes.PSCEndpoint) error {
+	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
+	if endpoint != nil && !endpoint.ClusterUseOnly {
+		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
+	}
+	svc, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {
 		return err
 	}

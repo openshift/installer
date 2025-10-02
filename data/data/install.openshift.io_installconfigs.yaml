@@ -5838,6 +5838,13 @@ spec:
                   endpoint:
                     description: Endpoint is the private service connect endpoint.
                     properties:
+                      clusterUseOnly:
+                        description: |-
+                          ClusterUseOnly should be set to true when the installer should use
+                          the public api endpoints and all cluster operators should use the
+                          api endpoint overrides. The value should be false when the installer
+                          and cluster operators should use the api endpoint overrides.
+                        type: boolean
                       name:
                         description: Name contains the name of the private service
                           connect endpoint.
