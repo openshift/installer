@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package iotcentral
 
 import (
@@ -37,6 +40,7 @@ func (r Registration) DataSources() []sdk.DataSource {
 func (r Registration) Resources() []sdk.Resource {
 	return []sdk.Resource{
 		IotCentralApplicationNetworkRuleSetResource{},
+		IotCentralOrganizationResource{},
 	}
 }
 

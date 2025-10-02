@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package compute
 
 import (
@@ -6,12 +9,13 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-11-01/dedicatedhostgroups"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-11-01/dedicatedhosts"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2024-03-01/dedicatedhosts"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
@@ -29,7 +33,7 @@ func resourceDedicatedHost() *pluginsdk.Resource {
 		Delete: resourceDedicatedHostDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := dedicatedhosts.ParseHostID(id)
+			_, err := commonids.ParseDedicatedHostID(id)
 			return err
 		}),
 
@@ -52,7 +56,7 @@ func resourceDedicatedHost() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: dedicatedhostgroups.ValidateHostGroupID,
+				ValidateFunc: commonids.ValidateDedicatedHostGroupID,
 			},
 
 			"location": commonschema.Location(),
@@ -144,12 +148,12 @@ func resourceDedicatedHostCreate(d *pluginsdk.ResourceData, meta interface{}) er
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	hostGroupId, err := dedicatedhostgroups.ParseHostGroupID(d.Get("dedicated_host_group_id").(string))
+	hostGroupId, err := commonids.ParseDedicatedHostGroupID(d.Get("dedicated_host_group_id").(string))
 	if err != nil {
 		return err
 	}
 
-	id := dedicatedhosts.NewHostID(hostGroupId.SubscriptionId, hostGroupId.ResourceGroupName, hostGroupId.HostGroupName, d.Get("name").(string))
+	id := commonids.NewDedicatedHostID(hostGroupId.SubscriptionId, hostGroupId.ResourceGroupName, hostGroupId.HostGroupName, d.Get("name").(string))
 	if d.IsNewResource() {
 		existing, err := client.Get(ctx, id, dedicatedhosts.DefaultGetOperationOptions())
 		if err != nil {
@@ -189,7 +193,7 @@ func resourceDedicatedHostRead(d *pluginsdk.ResourceData, meta interface{}) erro
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := dedicatedhosts.ParseHostID(d.Id())
+	id, err := commonids.ParseDedicatedHostID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -206,14 +210,14 @@ func resourceDedicatedHostRead(d *pluginsdk.ResourceData, meta interface{}) erro
 	}
 
 	d.Set("name", id.HostName)
-	d.Set("dedicated_host_group_id", dedicatedhostgroups.NewHostGroupID(id.SubscriptionId, id.ResourceGroupName, id.HostGroupName).ID())
+	d.Set("dedicated_host_group_id", commonids.NewDedicatedHostGroupID(id.SubscriptionId, id.ResourceGroupName, id.HostGroupName).ID())
 
 	if model := resp.Model; model != nil {
 		d.Set("location", location.Normalize(model.Location))
 		d.Set("sku_name", model.Sku.Name)
 		if props := model.Properties; props != nil {
 			d.Set("auto_replace_on_failure", props.AutoReplaceOnFailure)
-			d.Set("license_type", props.LicenseType)
+			d.Set("license_type", string(pointer.From(props.LicenseType)))
 
 			platformFaultDomain := 0
 			if props.PlatformFaultDomain != nil {
@@ -235,7 +239,7 @@ func resourceDedicatedHostUpdate(d *pluginsdk.ResourceData, meta interface{}) er
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := dedicatedhosts.ParseHostID(d.Id())
+	id, err := commonids.ParseDedicatedHostID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -269,7 +273,7 @@ func resourceDedicatedHostDelete(d *pluginsdk.ResourceData, meta interface{}) er
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := dedicatedhosts.ParseHostID(d.Id())
+	id, err := commonids.ParseDedicatedHostID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -296,7 +300,7 @@ func resourceDedicatedHostDelete(d *pluginsdk.ResourceData, meta interface{}) er
 	return nil
 }
 
-func dedicatedHostDeletedRefreshFunc(ctx context.Context, client *dedicatedhosts.DedicatedHostsClient, id dedicatedhosts.HostId) pluginsdk.StateRefreshFunc {
+func dedicatedHostDeletedRefreshFunc(ctx context.Context, client *dedicatedhosts.DedicatedHostsClient, id commonids.DedicatedHostId) pluginsdk.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		res, err := client.Get(ctx, id, dedicatedhosts.DefaultGetOperationOptions())
 		if err != nil {

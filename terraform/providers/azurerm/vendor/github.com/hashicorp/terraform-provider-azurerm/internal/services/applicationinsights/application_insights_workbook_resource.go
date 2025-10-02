@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package applicationinsights
 
 import (
@@ -152,7 +155,7 @@ func (r ApplicationInsightsWorkbookResource) Create() sdk.ResourceFunc {
 			properties := &workbooks.Workbook{
 				Identity: identityValue,
 				Kind:     &kindValue,
-				Location: utils.String(location.Normalize(model.Location)),
+				Location: location.Normalize(model.Location),
 				Properties: &workbooks.WorkbookProperties{
 					Category:       model.Category,
 					DisplayName:    model.DisplayName,
@@ -203,7 +206,7 @@ func (r ApplicationInsightsWorkbookResource) Update() sdk.ResourceFunc {
 			}
 
 			properties := resp.Model
-			if properties == nil {
+			if properties == nil || properties.Properties == nil {
 				return fmt.Errorf("retrieving %s: properties was nil", id)
 			}
 
@@ -217,6 +220,9 @@ func (r ApplicationInsightsWorkbookResource) Update() sdk.ResourceFunc {
 
 			if metadata.ResourceData.HasChange("display_name") {
 				properties.Properties.DisplayName = model.DisplayName
+				if properties.Tags != nil {
+					delete(*properties.Tags, "hidden-title")
+				}
 			}
 
 			if metadata.ResourceData.HasChange("data_json") {
@@ -264,7 +270,7 @@ func (r ApplicationInsightsWorkbookResource) Read() sdk.ResourceFunc {
 			state := ApplicationInsightsWorkbookModel{
 				Name:              id.WorkbookName,
 				ResourceGroupName: id.ResourceGroupName,
-				Location:          location.NormalizeNilable(model.Location),
+				Location:          location.Normalize(model.Location),
 			}
 
 			identityValue, err := identity.FlattenLegacySystemAndUserAssignedMap(model.Identity)

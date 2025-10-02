@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package validate
 
 import (
@@ -38,7 +41,6 @@ func friendlyInvalidRedisEnterpriseClusterZoneLocations() []string {
 		"Australia Southeast",
 		"East Asia",
 		"UK West",
-		"Central India",
 		"South India",
 	}
 }

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package mysql
 
 import (
@@ -5,11 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/mysql/2021-05-01/servers"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/mysql/2022-01-01/servers"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/mysql/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -135,6 +139,10 @@ func dataSourceMysqlFlexibleServer() *pluginsdk.Resource {
 							Type:     pluginsdk.TypeInt,
 							Computed: true,
 						},
+						"io_scaling_enabled": {
+							Type:     pluginsdk.TypeBool,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -167,7 +175,7 @@ func dataSourceMysqlFlexibleServer() *pluginsdk.Resource {
 }
 
 func dataSourceMysqlFlexibleServerRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).MySQL.FlexibleServerClient
+	client := meta.(*clients.Client).MySQL.FlexibleServers.Servers
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
@@ -191,7 +199,7 @@ func dataSourceMysqlFlexibleServerRead(d *pluginsdk.ResourceData, meta interface
 		if props := model.Properties; props != nil {
 			d.Set("administrator_login", props.AdministratorLogin)
 			d.Set("zone", props.AvailabilityZone)
-			d.Set("version", props.Version)
+			d.Set("version", string(pointer.From(props.Version)))
 			d.Set("fqdn", props.FullyQualifiedDomainName)
 
 			if network := props.Network; network != nil {
@@ -216,7 +224,7 @@ func dataSourceMysqlFlexibleServerRead(d *pluginsdk.ResourceData, meta interface
 			if err := d.Set("high_availability", flattenDataSourceFlexibleServerHighAvailability(props.HighAvailability)); err != nil {
 				return fmt.Errorf("setting `high_availability`: %+v", err)
 			}
-			d.Set("replication_role", props.ReplicationRole)
+			d.Set("replication_role", string(pointer.From(props.ReplicationRole)))
 			d.Set("replica_capacity", props.ReplicaCapacity)
 		}
 
@@ -248,9 +256,10 @@ func flattenDataSourceArmServerStorage(storage *servers.Storage) []interface{} {
 
 	return []interface{}{
 		map[string]interface{}{
-			"size_gb":           size,
-			"iops":              iops,
-			"auto_grow_enabled": *storage.AutoGrow == servers.EnableStatusEnumEnabled,
+			"size_gb":            size,
+			"iops":               iops,
+			"auto_grow_enabled":  *storage.AutoGrow == servers.EnableStatusEnumEnabled,
+			"io_scaling_enabled": *storage.AutoIoScaling == servers.EnableStatusEnumEnabled,
 		},
 	}
 }

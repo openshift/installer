@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package common
 
 import (
@@ -6,46 +9,78 @@ import (
 	"strings"
 
 	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/hashicorp/go-azure-helpers/sender"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
+	"github.com/hashicorp/go-azure-sdk/sdk/auth"
+	"github.com/hashicorp/go-azure-sdk/sdk/client"
+	"github.com/hashicorp/go-azure-sdk/sdk/environments"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/version"
 )
 
-type EndpointTokenFunc func(endpoint string) (autorest.Authorizer, error)
+type Authorizers struct {
+	BatchManagement auth.Authorizer
+	KeyVault        auth.Authorizer
+	ManagedHSM      auth.Authorizer
+	ResourceManager auth.Authorizer
+	Storage         auth.Authorizer
+	Synapse         auth.Authorizer
+
+	// Some data-plane APIs require a token scoped for a specific endpoint
+	AuthorizerFunc ApiAuthorizerFunc
+}
+
+type ApiAuthorizerFunc func(api environments.Api) (auth.Authorizer, error)
 
 type ClientOptions struct {
+	Authorizers *Authorizers
+	AuthConfig  *auth.Credentials
+	Environment environments.Environment
+	Features    features.UserFeatures
+
 	SubscriptionId   string
-	TenantID         string
+	TenantId         string
 	PartnerId        string
 	TerraformVersion string
 
-	KeyVaultAuthorizer        autorest.Authorizer
-	ResourceManagerAuthorizer autorest.Authorizer
-	ResourceManagerEndpoint   string
-	StorageAuthorizer         autorest.Authorizer
-	SynapseAuthorizer         autorest.Authorizer
-	BatchManagementAuthorizer autorest.Authorizer
-
-	SkipProviderReg             bool
 	CustomCorrelationRequestID  string
 	DisableCorrelationRequestID bool
-	DisableTerraformPartnerID   bool
-	Environment                 azure.Environment
-	Features                    features.UserFeatures
-	StorageUseAzureAD           bool
 
-	// Some Dataplane APIs require a token scoped for a specific endpoint
-	TokenFunc EndpointTokenFunc
+	DisableTerraformPartnerID bool
+	StorageUseAzureAD         bool
 
-	// TODO: remove graph configuration in v3.0
-	GraphAuthorizer autorest.Authorizer
-	GraphEndpoint   string
+	ResourceManagerEndpoint string
+
+	// Legacy authorizers for go-autorest
+	BatchManagementAuthorizer autorest.Authorizer
+	KeyVaultAuthorizer        autorest.Authorizer
+	ManagedHSMAuthorizer      autorest.Authorizer
+	ResourceManagerAuthorizer autorest.Authorizer
+	SynapseAuthorizer         autorest.Authorizer
+
+	// TODO: Remove when all go-autorest clients are gone
+	SkipProviderReg bool
 }
 
+// Configure set up a resourcemanager.Client using an auth.Authorizer from hashicorp/go-azure-sdk
+func (o ClientOptions) Configure(c client.BaseClient, authorizer auth.Authorizer) {
+	c.SetAuthorizer(authorizer)
+	c.SetUserAgent(userAgent(c.GetUserAgent(), o.TerraformVersion, o.PartnerId, o.DisableTerraformPartnerID))
+
+	if !o.DisableCorrelationRequestID {
+		id := o.CustomCorrelationRequestID
+		if id == "" {
+			id = correlationRequestID()
+		}
+		c.AppendRequestMiddleware(correlationRequestIDMiddleware(id))
+	}
+
+	c.AppendRequestMiddleware(requestLoggerMiddleware("AzureRM"))
+	c.AppendResponseMiddleware(responseLoggerMiddleware("AzureRM"))
+}
+
+// ConfigureClient sets up an autorest.Client using an autorest.Authorizer
 func (o ClientOptions) ConfigureClient(c *autorest.Client, authorizer autorest.Authorizer) {
-	setUserAgent(c, o.TerraformVersion, o.PartnerId, o.DisableTerraformPartnerID)
+	c.UserAgent = userAgent(c.UserAgent, o.TerraformVersion, o.PartnerId, o.DisableTerraformPartnerID)
 
 	c.Authorizer = authorizer
 	c.Sender = sender.BuildSender("AzureRM")
@@ -59,18 +94,18 @@ func (o ClientOptions) ConfigureClient(c *autorest.Client, authorizer autorest.A
 	}
 }
 
-func setUserAgent(client *autorest.Client, tfVersion, partnerID string, disableTerraformPartnerID bool) {
-	tfUserAgent := fmt.Sprintf("HashiCorp Terraform/%s (+https://www.terraform.io) Terraform Plugin SDK/%s", tfVersion, meta.SDKVersionString())
+func userAgent(userAgent, tfVersion, partnerID string, disableTerraformPartnerID bool) string {
+	tfUserAgent := fmt.Sprintf("HashiCorp Terraform/%s (+https://www.terraform.io)", tfVersion)
 
 	providerUserAgent := fmt.Sprintf("%s terraform-provider-azurerm/%s", tfUserAgent, version.ProviderVersion)
 	if features.FourPointOhBeta() {
 		providerUserAgent = fmt.Sprintf("%s terraform-provider-azurerm/%s+4.0-beta", tfUserAgent, version.ProviderVersion)
 	}
-	client.UserAgent = strings.TrimSpace(fmt.Sprintf("%s %s", client.UserAgent, providerUserAgent))
+	userAgent = strings.TrimSpace(fmt.Sprintf("%s %s", userAgent, providerUserAgent))
 
 	// append the CloudShell version to the user agent if it exists
 	if azureAgent := os.Getenv("AZURE_HTTP_USER_AGENT"); azureAgent != "" {
-		client.UserAgent = fmt.Sprintf("%s %s", client.UserAgent, azureAgent)
+		userAgent = fmt.Sprintf("%s %s", userAgent, azureAgent)
 	}
 
 	// only one pid can be interpreted currently
@@ -83,6 +118,8 @@ func setUserAgent(client *autorest.Client, tfVersion, partnerID string, disableT
 
 	if partnerID != "" {
 		// Tolerate partnerID UUIDs without the "pid-" prefix
-		client.UserAgent = fmt.Sprintf("%s pid-%s", client.UserAgent, strings.TrimPrefix(partnerID, "pid-"))
+		userAgent = fmt.Sprintf("%s pid-%s", userAgent, strings.TrimPrefix(partnerID, "pid-"))
 	}
+
+	return userAgent
 }

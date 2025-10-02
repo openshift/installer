@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package monitor
 
 import (
@@ -9,6 +12,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	authRuleParse "github.com/hashicorp/go-azure-sdk/resource-manager/eventhub/2021-11-01/authorizationrulesnamespaces"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2021-05-01-preview/diagnosticsettings"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/workspaces"
@@ -18,8 +22,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	eventhubValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/eventhub/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/monitor/validate"
-	storageParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/parse"
-	storageValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -83,7 +85,7 @@ func resourceMonitorDiagnosticSetting() *pluginsdk.Resource {
 			"storage_account_id": {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
-				ValidateFunc: storageValidate.StorageAccountID,
+				ValidateFunc: commonids.ValidateStorageAccountID,
 				AtLeastOneOf: []string{"eventhub_authorization_rule_id", "log_analytics_workspace_id", "storage_account_id", "partner_solution_id"},
 			},
 
@@ -98,7 +100,7 @@ func resourceMonitorDiagnosticSetting() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
 				ForceNew: false,
-				Default:  "AzureDiagnostics",
+				Computed: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"Dedicated",
 					"AzureDiagnostics", // Not documented in azure API, but some resource has skew. See: https://github.com/Azure/azure-rest-api-specs/issues/9281
@@ -106,27 +108,29 @@ func resourceMonitorDiagnosticSetting() *pluginsdk.Resource {
 			},
 
 			"enabled_log": {
-				Type:          pluginsdk.TypeSet,
-				Optional:      true,
-				Computed:      !features.FourPointOhBeta(),
-				ConflictsWith: []string{"log"},
-				AtLeastOneOf:  []string{"enabled_log", "log", "metric"},
+				Type:         pluginsdk.TypeSet,
+				Optional:     true,
+				Computed:     !features.FourPointOhBeta(),
+				AtLeastOneOf: []string{"enabled_log", "metric"},
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
 						"category": {
-							Type:     pluginsdk.TypeString,
-							Optional: true,
+							Type:         pluginsdk.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringIsNotEmpty,
 						},
 
 						"category_group": {
-							Type:     pluginsdk.TypeString,
-							Optional: true,
+							Type:         pluginsdk.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringIsNotEmpty,
 						},
 
 						"retention_policy": {
-							Type:     pluginsdk.TypeList,
-							Optional: true,
-							MaxItems: 1,
+							Type:       pluginsdk.TypeList,
+							Optional:   true,
+							MaxItems:   1,
+							Deprecated: "`retention_policy` has been deprecated in favor of `azurerm_storage_management_policy` resource - to learn more https://aka.ms/diagnostic_settings_log_retention",
 							Elem: &pluginsdk.Resource{
 								Schema: map[string]*pluginsdk.Schema{
 									"enabled": {
@@ -150,12 +154,13 @@ func resourceMonitorDiagnosticSetting() *pluginsdk.Resource {
 			"metric": {
 				Type:         pluginsdk.TypeSet,
 				Optional:     true,
-				AtLeastOneOf: []string{"enabled_log", "log", "metric"},
+				AtLeastOneOf: []string{"enabled_log", "metric"},
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
 						"category": {
-							Type:     pluginsdk.TypeString,
-							Required: true,
+							Type:         pluginsdk.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringIsNotEmpty,
 						},
 
 						"enabled": {
@@ -165,9 +170,10 @@ func resourceMonitorDiagnosticSetting() *pluginsdk.Resource {
 						},
 
 						"retention_policy": {
-							Type:     pluginsdk.TypeList,
-							Optional: true,
-							MaxItems: 1,
+							Type:       pluginsdk.TypeList,
+							Optional:   true,
+							MaxItems:   1,
+							Deprecated: "`retention_policy` has been deprecated in favor of `azurerm_storage_management_policy` resource - to learn more https://aka.ms/diagnostic_settings_log_retention",
 							Elem: &pluginsdk.Resource{
 								Schema: map[string]*pluginsdk.Schema{
 									"enabled": {
@@ -199,13 +205,15 @@ func resourceMonitorDiagnosticSetting() *pluginsdk.Resource {
 			Elem: &pluginsdk.Resource{
 				Schema: map[string]*pluginsdk.Schema{
 					"category": {
-						Type:     pluginsdk.TypeString,
-						Optional: true,
+						Type:         pluginsdk.TypeString,
+						Optional:     true,
+						ValidateFunc: validation.StringIsNotEmpty,
 					},
 
 					"category_group": {
-						Type:     pluginsdk.TypeString,
-						Optional: true,
+						Type:         pluginsdk.TypeString,
+						Optional:     true,
+						ValidateFunc: validation.StringIsNotEmpty,
 					},
 
 					"enabled": {
@@ -215,9 +223,10 @@ func resourceMonitorDiagnosticSetting() *pluginsdk.Resource {
 					},
 
 					"retention_policy": {
-						Type:     pluginsdk.TypeList,
-						Optional: true,
-						MaxItems: 1,
+						Type:       pluginsdk.TypeList,
+						Optional:   true,
+						MaxItems:   1,
+						Deprecated: "`retention_policy` has been deprecated in favor of `azurerm_storage_management_policy` resource - to learn more https://aka.ms/diagnostic_settings_log_retention",
 						Elem: &pluginsdk.Resource{
 							Schema: map[string]*pluginsdk.Schema{
 								"enabled": {
@@ -237,6 +246,10 @@ func resourceMonitorDiagnosticSetting() *pluginsdk.Resource {
 			},
 			Set: resourceMonitorDiagnosticLogSettingHash,
 		}
+
+		resource.Schema["metric"].AtLeastOneOf = []string{"enabled_log", "log", "metric"}
+		resource.Schema["enabled_log"].AtLeastOneOf = []string{"enabled_log", "log", "metric"}
+		resource.Schema["enabled_log"].ConflictsWith = []string{"log"}
 	}
 
 	return resource
@@ -270,7 +283,11 @@ func resourceMonitorDiagnosticSettingCreate(d *pluginsdk.ResourceData, meta inte
 	if !features.FourPointOhBeta() {
 		logsRaw, ok := d.GetOk("log")
 		if ok && len(logsRaw.(*pluginsdk.Set).List()) > 0 {
-			logs = expandMonitorDiagnosticsSettingsLogs(logsRaw.(*pluginsdk.Set).List())
+			expendLogs, err := expandMonitorDiagnosticsSettingsLogs(logsRaw.(*pluginsdk.Set).List())
+			if err != nil {
+				return fmt.Errorf("expanding log: %+v", err)
+			}
+			logs = *expendLogs
 			for _, v := range logs {
 				if v.Enabled {
 					hasEnabledLogs = true
@@ -283,7 +300,11 @@ func resourceMonitorDiagnosticSettingCreate(d *pluginsdk.ResourceData, meta inte
 	if enabledLogs, ok := d.GetOk("enabled_log"); ok {
 		enabledLogsList := enabledLogs.(*pluginsdk.Set).List()
 		if len(enabledLogsList) > 0 {
-			logs = expandMonitorDiagnosticsSettingsEnabledLogs(enabledLogsList)
+			expandEnabledLogs, err := expandMonitorDiagnosticsSettingsEnabledLogs(enabledLogsList)
+			if err != nil {
+				return fmt.Errorf("expanding enabled_log: %+v", err)
+			}
+			logs = *expandEnabledLogs
 			hasEnabledLogs = true
 		}
 	}
@@ -340,6 +361,26 @@ func resourceMonitorDiagnosticSettingCreate(d *pluginsdk.ResourceData, meta inte
 		return fmt.Errorf("creating Monitor Diagnostics Setting %q for Resource %q: %+v", id.DiagnosticSettingName, id.ResourceUri, err)
 	}
 
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return fmt.Errorf("internal error: could not retrieve context deadline for %s", id.ID())
+	}
+
+	// https://github.com/Azure/azure-rest-api-specs/issues/30249
+	log.Printf("[DEBUG] Waiting for Monitor Diagnostic Setting %q for Resource %q to become ready", id.DiagnosticSettingName, id.ResourceUri)
+	stateConf := &pluginsdk.StateChangeConf{
+		Pending:                   []string{"NotFound"},
+		Target:                    []string{"Exists"},
+		Refresh:                   monitorDiagnosticSettingRefreshFunc(ctx, client, id),
+		MinTimeout:                5 * time.Second,
+		ContinuousTargetOccurence: 3,
+		Timeout:                   time.Until(deadline),
+	}
+
+	if _, err = stateConf.WaitForStateContext(ctx); err != nil {
+		return fmt.Errorf("waiting for Monitor Diagnostic Setting %q for Resource %q to become ready: %s", id.DiagnosticSettingName, id.ResourceUri, err)
+	}
+
 	d.SetId(resourceId)
 
 	return resourceMonitorDiagnosticSettingRead(d, meta)
@@ -374,7 +415,11 @@ func resourceMonitorDiagnosticSettingUpdate(d *pluginsdk.ResourceData, meta inte
 		if d.HasChange("log") {
 			logChanged = true
 			logsRaw := d.Get("log").(*pluginsdk.Set).List()
-			logs = expandMonitorDiagnosticsSettingsLogs(logsRaw)
+			expandLogs, err := expandMonitorDiagnosticsSettingsLogs(logsRaw)
+			if err != nil {
+				return fmt.Errorf("expanding log: %+v", err)
+			}
+			logs = *expandLogs
 			for _, v := range logs {
 				if v.Enabled {
 					hasEnabledLogs = true
@@ -387,7 +432,11 @@ func resourceMonitorDiagnosticSettingUpdate(d *pluginsdk.ResourceData, meta inte
 	if d.HasChange("enabled_log") {
 		enabledLogs := d.Get("enabled_log").(*pluginsdk.Set).List()
 		if len(enabledLogs) > 0 {
-			logs = expandMonitorDiagnosticsSettingsEnabledLogs(enabledLogs)
+			expandEnabledLogs, err := expandMonitorDiagnosticsSettingsEnabledLogs(enabledLogs)
+			if err != nil {
+				return fmt.Errorf("expanding enabled_log: %+v", err)
+			}
+			logs = *expandEnabledLogs
 			hasEnabledLogs = true
 		}
 	} else if !logChanged && existing.Model != nil && existing.Model.Properties != nil && existing.Model.Properties.Logs != nil {
@@ -412,52 +461,6 @@ func resourceMonitorDiagnosticSettingUpdate(d *pluginsdk.ResourceData, meta inte
 
 	if !hasEnabledMetrics && !hasEnabledLogs {
 		return fmt.Errorf("at least one type of Log or Metric must be enabled")
-	}
-
-	if d.HasChange("enabled_log") {
-		oldEnabledLogs, newEnabledLogs := d.GetChange("enabled_log")
-
-		for _, oldLog := range oldEnabledLogs.(*pluginsdk.Set).List() {
-			logRemoved := true
-			oldLogMap := oldLog.(map[string]interface{})
-
-			for _, newLog := range newEnabledLogs.(*pluginsdk.Set).List() {
-				newLogMap := newLog.(map[string]interface{})
-
-				// check if an enabled_log has been removed from config and if so, set to disabled
-				if (oldLogMap["category"].(string) != "" && strings.EqualFold(oldLogMap["category"].(string), newLogMap["category"].(string))) || (oldLogMap["category_group"].(string) != "" && strings.EqualFold(oldLogMap["category_group"].(string), newLogMap["category_group"].(string))) {
-					logRemoved = false
-					break
-				}
-			}
-
-			if logRemoved {
-
-				disabledLog := diagnosticsettings.LogSettings{
-					Category:      utils.String(oldLogMap["category"].(string)),
-					CategoryGroup: utils.String(oldLogMap["category_group"].(string)),
-					Enabled:       false,
-				}
-
-				retentionPolicy := diagnosticsettings.RetentionPolicy{}
-				if v, ok := oldLogMap["retention_policy"].([]interface{}); ok {
-					if len(v) > 0 {
-
-						policyMap := v[0].(map[string]interface{})
-						if days, ok := policyMap["days"].(int); ok {
-							retentionPolicy.Days = int64(days)
-						}
-
-						if enabled, ok := policyMap["enabled"].(bool); ok {
-							retentionPolicy.Enabled = enabled
-						}
-					}
-				}
-				disabledLog.RetentionPolicy = &retentionPolicy
-
-				logs = append(logs, disabledLog)
-			}
-		}
 	}
 
 	parameters := diagnosticsettings.DiagnosticSettingsResource{
@@ -521,7 +524,11 @@ func resourceMonitorDiagnosticSettingRead(d *pluginsdk.ResourceData, meta interf
 	}
 
 	d.Set("name", id.DiagnosticSettingName)
-	d.Set("target_resource_id", id.ResourceUri)
+	resourceUri := id.ResourceUri
+	if v, err := commonids.ParseKustoClusterIDInsensitively(resourceUri); err == nil {
+		resourceUri = v.ID()
+	}
+	d.Set("target_resource_id", resourceUri)
 
 	if model := resp.Model; model != nil {
 		if props := model.Properties; props != nil {
@@ -550,7 +557,7 @@ func resourceMonitorDiagnosticSettingRead(d *pluginsdk.ResourceData, meta interf
 
 			storageAccountId := ""
 			if props.StorageAccountId != nil && *props.StorageAccountId != "" {
-				parsedId, err := storageParse.StorageAccountID(*props.StorageAccountId)
+				parsedId, err := commonids.ParseStorageAccountIDInsensitively(*props.StorageAccountId)
 				if err != nil {
 					return err
 				}
@@ -565,7 +572,11 @@ func resourceMonitorDiagnosticSettingRead(d *pluginsdk.ResourceData, meta interf
 				d.Set("partner_solution_id", partnerSolutionId)
 			}
 
-			d.Set("log_analytics_destination_type", resp.Model.Properties.LogAnalyticsDestinationType)
+			logAnalyticsDestinationType := ""
+			if resp.Model.Properties.LogAnalyticsDestinationType != nil && *resp.Model.Properties.LogAnalyticsDestinationType != "" {
+				logAnalyticsDestinationType = *resp.Model.Properties.LogAnalyticsDestinationType
+			}
+			d.Set("log_analytics_destination_type", logAnalyticsDestinationType)
 
 			enabledLogs := flattenMonitorDiagnosticEnabledLogs(resp.Model.Properties.Logs)
 			if err = d.Set("enabled_log", enabledLogs); err != nil {
@@ -604,39 +615,44 @@ func resourceMonitorDiagnosticSettingDelete(d *pluginsdk.ResourceData, meta inte
 		}
 	}
 
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return fmt.Errorf("internal error: could not retrieve context deadline for %s", id.ID())
+	}
+
 	// API appears to be eventually consistent (identified during tainting this resource)
 	log.Printf("[DEBUG] Waiting for Monitor Diagnostic Setting %q for Resource %q to disappear", id.DiagnosticSettingName, id.ResourceUri)
 	stateConf := &pluginsdk.StateChangeConf{
 		Pending:                   []string{"Exists"},
 		Target:                    []string{"NotFound"},
-		Refresh:                   monitorDiagnosticSettingDeletedRefreshFunc(ctx, client, *id),
+		Refresh:                   monitorDiagnosticSettingRefreshFunc(ctx, client, *id),
 		MinTimeout:                15 * time.Second,
 		ContinuousTargetOccurence: 5,
-		Timeout:                   d.Timeout(pluginsdk.TimeoutDelete),
+		Timeout:                   time.Until(deadline),
 	}
 
 	if _, err = stateConf.WaitForStateContext(ctx); err != nil {
-		return fmt.Errorf("waiting for Monitor Diagnostic Setting %q for Resource %q to become available: %s", id.DiagnosticSettingName, id.ResourceUri, err)
+		return fmt.Errorf("waiting for Monitor Diagnostic Setting %q for Resource %q to disappear: %s", id.DiagnosticSettingName, id.ResourceUri, err)
 	}
 
 	return nil
 }
 
-func monitorDiagnosticSettingDeletedRefreshFunc(ctx context.Context, client *diagnosticsettings.DiagnosticSettingsClient, targetResourceId diagnosticsettings.ScopedDiagnosticSettingId) pluginsdk.StateRefreshFunc {
+func monitorDiagnosticSettingRefreshFunc(ctx context.Context, client *diagnosticsettings.DiagnosticSettingsClient, targetResourceId diagnosticsettings.ScopedDiagnosticSettingId) pluginsdk.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		res, err := client.Get(ctx, targetResourceId)
 		if err != nil {
 			if response.WasNotFound(res.HttpResponse) {
 				return "NotFound", "NotFound", nil
 			}
-			return nil, "", fmt.Errorf("issuing read request in monitorDiagnosticSettingDeletedRefreshFunc: %s", err)
+			return nil, "", fmt.Errorf("issuing read request in monitorDiagnosticSettingRefreshFunc: %s", err)
 		}
 
 		return res, "Exists", nil
 	}
 }
 
-func expandMonitorDiagnosticsSettingsLogs(input []interface{}) []diagnosticsettings.LogSettings {
+func expandMonitorDiagnosticsSettingsLogs(input []interface{}) (*[]diagnosticsettings.LogSettings, error) {
 	results := make([]diagnosticsettings.LogSettings, 0)
 
 	for _, raw := range input {
@@ -661,19 +677,22 @@ func expandMonitorDiagnosticsSettingsLogs(input []interface{}) []diagnosticsetti
 			Enabled:         enabled,
 			RetentionPolicy: retentionPolicy,
 		}
-		if category != "" {
+		switch {
+		case category != "":
 			output.Category = utils.String(category)
-		} else {
+		case categoryGroup != "":
 			output.CategoryGroup = utils.String(categoryGroup)
+		default:
+			return nil, fmt.Errorf("exactly one of `category` or `category_group` must be specified")
 		}
 
 		results = append(results, output)
 	}
 
-	return results
+	return &results, nil
 }
 
-func expandMonitorDiagnosticsSettingsEnabledLogs(input []interface{}) []diagnosticsettings.LogSettings {
+func expandMonitorDiagnosticsSettingsEnabledLogs(input []interface{}) (*[]diagnosticsettings.LogSettings, error) {
 	results := make([]diagnosticsettings.LogSettings, 0)
 
 	for _, raw := range input {
@@ -697,16 +716,20 @@ func expandMonitorDiagnosticsSettingsEnabledLogs(input []interface{}) []diagnost
 			Enabled:         true,
 			RetentionPolicy: retentionPolicy,
 		}
-		if category != "" {
+
+		switch {
+		case category != "":
 			output.Category = utils.String(category)
-		} else {
+		case categoryGroup != "":
 			output.CategoryGroup = utils.String(categoryGroup)
+		default:
+			return nil, fmt.Errorf("exactly one of `category` or `category_group` must be specified")
 		}
 
 		results = append(results, output)
 	}
 
-	return results
+	return &results, nil
 }
 
 func flattenMonitorDiagnosticLogs(input *[]diagnosticsettings.LogSettings) []interface{} {
@@ -865,10 +888,8 @@ func ParseMonitorDiagnosticId(monitorId string) (*diagnosticsettings.ScopedDiagn
 		return nil, fmt.Errorf("expected the Monitor Diagnostics ID to be in the format `{resourceId}|{name}` but got %d segments", len(v))
 	}
 
-	identifier := diagnosticsettings.ScopedDiagnosticSettingId{
-		ResourceUri:           v[0],
-		DiagnosticSettingName: v[1],
-	}
+	// TODO: this can become a Composite Resource ID once https://github.com/hashicorp/go-azure-helpers/pull/208 is released
+	identifier := diagnosticsettings.NewScopedDiagnosticSettingID(v[0], v[1])
 	return &identifier, nil
 }
 

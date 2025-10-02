@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package sentinel
 
 import (
@@ -23,7 +26,6 @@ type DataConnectorMicrosoftThreatIntelligenceModel struct {
 	Name                                    string `tfschema:"name"`
 	WorkspaceId                             string `tfschema:"log_analytics_workspace_id"`
 	TenantId                                string `tfschema:"tenant_id"`
-	BingSafetyPhishingUrlLookBackDate       string `tfschema:"bing_safety_phishing_url_lookback_date"`
 	MicrosoftEmergingThreatFeedLookBackDate string `tfschema:"microsoft_emerging_threat_feed_lookback_date"`
 }
 
@@ -56,20 +58,12 @@ func (s DataConnectorMicrosoftThreatIntelligenceResource) Arguments() map[string
 			ValidateFunc: validation.IsUUID,
 		},
 
-		"bing_safety_phishing_url_lookback_date": {
-			Type:         pluginsdk.TypeString,
-			Optional:     true,
-			ForceNew:     true,
-			ValidateFunc: validation.IsRFC3339Time,
-			AtLeastOneOf: []string{"bing_safety_phishing_url_lookback_date", "microsoft_emerging_threat_feed_lookback_date"},
-		},
-
+		//lintignore: S013
 		"microsoft_emerging_threat_feed_lookback_date": {
 			Type:         pluginsdk.TypeString,
 			ForceNew:     true,
-			Optional:     true,
+			Required:     true,
 			ValidateFunc: validation.IsRFC3339Time,
-			AtLeastOneOf: []string{"bing_safety_phishing_url_lookback_date", "microsoft_emerging_threat_feed_lookback_date"},
 		},
 	}
 }
@@ -122,7 +116,6 @@ func (s DataConnectorMicrosoftThreatIntelligenceResource) Create() sdk.ResourceF
 				Kind: securityinsight.KindBasicDataConnectorKindMicrosoftThreatIntelligence,
 				MSTIDataConnectorProperties: &securityinsight.MSTIDataConnectorProperties{
 					DataTypes: &securityinsight.MSTIDataConnectorDataTypes{
-						BingSafetyPhishingURL:       expandSentinelDataConnectorMicrosoftThreatIntelligenceBingSafetyPhishingUrl(metaModel),
 						MicrosoftEmergingThreatFeed: expandSentinelDataConnectorMicrosoftThreatIntelligenceMicrosoftEmergingThreatFeed(metaModel),
 					},
 					TenantID: &tenantId,
@@ -175,14 +168,6 @@ func (s DataConnectorMicrosoftThreatIntelligenceResource) Read() sdk.ResourceFun
 			}
 
 			if dt := dc.DataTypes; dt != nil {
-				if dt.BingSafetyPhishingURL != nil {
-					if strings.EqualFold(string(dt.BingSafetyPhishingURL.State), string(securityinsight.DataTypeStateEnabled)) {
-						state.BingSafetyPhishingUrlLookBackDate, err = flattenSentinelDataConnectorMicrosoftThreatIntelligenceTime(*dt.BingSafetyPhishingURL.LookbackPeriod)
-						if err != nil {
-							return fmt.Errorf("flattening `bing_safety_phishing_url`: %+v", err)
-						}
-					}
-				}
 				if dt.MicrosoftEmergingThreatFeed != nil {
 					if strings.EqualFold(string(dt.MicrosoftEmergingThreatFeed.State), string(securityinsight.DataTypeStateEnabled)) {
 						state.MicrosoftEmergingThreatFeedLookBackDate, err = flattenSentinelDataConnectorMicrosoftThreatIntelligenceTime(*dt.MicrosoftEmergingThreatFeed.LookbackPeriod)
@@ -220,20 +205,6 @@ func (s DataConnectorMicrosoftThreatIntelligenceResource) Delete() sdk.ResourceF
 
 func (s DataConnectorMicrosoftThreatIntelligenceResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
 	return validate.DataConnectorID
-}
-
-func expandSentinelDataConnectorMicrosoftThreatIntelligenceBingSafetyPhishingUrl(input DataConnectorMicrosoftThreatIntelligenceModel) *securityinsight.MSTIDataConnectorDataTypesBingSafetyPhishingURL {
-	if input.BingSafetyPhishingUrlLookBackDate == "" {
-		return &securityinsight.MSTIDataConnectorDataTypesBingSafetyPhishingURL{
-			LookbackPeriod: utils.String(""),
-			State:          securityinsight.DataTypeStateDisabled,
-		}
-	}
-
-	return &securityinsight.MSTIDataConnectorDataTypesBingSafetyPhishingURL{
-		LookbackPeriod: utils.String(input.BingSafetyPhishingUrlLookBackDate),
-		State:          securityinsight.DataTypeStateEnabled,
-	}
 }
 
 func expandSentinelDataConnectorMicrosoftThreatIntelligenceMicrosoftEmergingThreatFeed(input DataConnectorMicrosoftThreatIntelligenceModel) *securityinsight.MSTIDataConnectorDataTypesMicrosoftEmergingThreatFeed {

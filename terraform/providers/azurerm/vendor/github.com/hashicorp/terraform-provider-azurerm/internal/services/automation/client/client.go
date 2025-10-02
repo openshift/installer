@@ -1,123 +1,67 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package client
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/preview/automation/mgmt/2020-01-13-preview/automation" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2019-06-01/runbook"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2021-06-22/automationaccount"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2021-06-22/hybridrunbookworker"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2021-06-22/hybridrunbookworkergroup"
+	"fmt"
+
+	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2015-10-31/webhook"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2019-06-01/agentregistrationinformation"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2019-06-01/softwareupdateconfiguration"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/watcher"
+	automation_2023_11_01 "github.com/hashicorp/go-azure-sdk/resource-manager/automation/2023-11-01"
+	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
 type Client struct {
-	AccountClient               *automationaccount.AutomationAccountClient
-	AgentRegistrationInfoClient *automation.AgentRegistrationInformationClient
-	CertificateClient           *automation.CertificateClient
-	ConnectionClient            *automation.ConnectionClient
-	ConnectionTypeClient        *automation.ConnectionTypeClient
-	CredentialClient            *automation.CredentialClient
-	DscConfigurationClient      *automation.DscConfigurationClient
-	DscNodeConfigurationClient  *automation.DscNodeConfigurationClient
-	JobScheduleClient           *automation.JobScheduleClient
-	ModuleClient                *automation.ModuleClient
-	RunbookClient               *runbook.RunbookClient
-	RunbookClientHack           *automation.RunbookClient
-	RunbookDraftClient          *automation.RunbookDraftClient
-	RunBookWgClient             *hybridrunbookworkergroup.HybridRunbookWorkerGroupClient
-	RunbookWorkerClient         *hybridrunbookworker.HybridRunbookWorkerClient
-	ScheduleClient              *automation.ScheduleClient
-	SoftwareUpdateConfigClient  *automation.SoftwareUpdateConfigurationsClient
-	SourceControlClient         *automation.SourceControlClient
-	VariableClient              *automation.VariableClient
-	WatcherClient               *automation.WatcherClient
-	WebhookClient               *automation.WebhookClient
+	*automation_2023_11_01.Client
+
+	AgentRegistrationInfoClient *agentregistrationinformation.AgentRegistrationInformationClient
+	SoftwareUpdateConfigClient  *softwareupdateconfiguration.SoftwareUpdateConfigurationClient
+	WebhookClient               *webhook.WebhookClient
+	WatcherClient               *watcher.WatcherClient
 }
 
-func NewClient(o *common.ClientOptions) *Client {
-	accountClient := automationaccount.NewAutomationAccountClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&accountClient.Client, o.ResourceManagerAuthorizer)
+func NewClient(o *common.ClientOptions) (*Client, error) {
+	metaClient, err := automation_2023_11_01.NewClientWithBaseURI(o.Environment.ResourceManager, func(c *resourcemanager.Client) {
+		o.Configure(c, o.Authorizers.ResourceManager)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("building Automation client: %+v", err)
+	}
 
-	agentRegistrationInfoClient := automation.NewAgentRegistrationInformationClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&agentRegistrationInfoClient.Client, o.ResourceManagerAuthorizer)
+	agentRegistrationInfoClient, err := agentregistrationinformation.NewAgentRegistrationInformationClientWithBaseURI(o.Environment.ResourceManager)
+	if err != nil {
+		return nil, fmt.Errorf("building Agent Registration Info client : %+v", err)
+	}
+	o.Configure(agentRegistrationInfoClient.Client, o.Authorizers.ResourceManager)
 
-	certificateClient := automation.NewCertificateClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&certificateClient.Client, o.ResourceManagerAuthorizer)
+	softUpClient, err := softwareupdateconfiguration.NewSoftwareUpdateConfigurationClientWithBaseURI(o.Environment.ResourceManager)
+	if err != nil {
+		return nil, fmt.Errorf("building Soft Up client : %+v", err)
+	}
+	o.Configure(softUpClient.Client, o.Authorizers.ResourceManager)
 
-	connectionClient := automation.NewConnectionClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&connectionClient.Client, o.ResourceManagerAuthorizer)
+	watcherClient, err := watcher.NewWatcherClientWithBaseURI(o.Environment.ResourceManager)
+	if err != nil {
+		return nil, fmt.Errorf("building Watcher client : %+v", err)
+	}
+	o.Configure(watcherClient.Client, o.Authorizers.ResourceManager)
 
-	connectionTypeClient := automation.NewConnectionTypeClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&connectionTypeClient.Client, o.ResourceManagerAuthorizer)
-
-	credentialClient := automation.NewCredentialClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&credentialClient.Client, o.ResourceManagerAuthorizer)
-
-	dscConfigurationClient := automation.NewDscConfigurationClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&dscConfigurationClient.Client, o.ResourceManagerAuthorizer)
-
-	dscNodeConfigurationClient := automation.NewDscNodeConfigurationClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&dscNodeConfigurationClient.Client, o.ResourceManagerAuthorizer)
-
-	jobScheduleClient := automation.NewJobScheduleClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&jobScheduleClient.Client, o.ResourceManagerAuthorizer)
-
-	moduleClient := automation.NewModuleClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&moduleClient.Client, o.ResourceManagerAuthorizer)
-
-	runbookClient2 := automation.NewRunbookClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&runbookClient2.Client, o.ResourceManagerAuthorizer)
-
-	runbookClient := runbook.NewRunbookClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&runbookClient.Client, o.ResourceManagerAuthorizer)
-
-	runbookDraftClient := automation.NewRunbookDraftClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&runbookDraftClient.Client, o.ResourceManagerAuthorizer)
-
-	runbookWgClient := hybridrunbookworkergroup.NewHybridRunbookWorkerGroupClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&runbookWgClient.Client, o.ResourceManagerAuthorizer)
-
-	runbookWorkerClient := hybridrunbookworker.NewHybridRunbookWorkerClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&runbookWorkerClient.Client, o.ResourceManagerAuthorizer)
-
-	sourceCtlClient := automation.NewSourceControlClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&sourceCtlClient.Client, o.ResourceManagerAuthorizer)
-
-	scheduleClient := automation.NewScheduleClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&scheduleClient.Client, o.ResourceManagerAuthorizer)
-
-	softUpClient := automation.NewSoftwareUpdateConfigurationsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&softUpClient.Client, o.ResourceManagerAuthorizer)
-
-	variableClient := automation.NewVariableClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&variableClient.Client, o.ResourceManagerAuthorizer)
-
-	watcherClient := automation.NewWatcherClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&watcherClient.Client, o.ResourceManagerAuthorizer)
-
-	webhookClient := automation.NewWebhookClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&webhookClient.Client, o.ResourceManagerAuthorizer)
+	webhookClient, err := webhook.NewWebhookClientWithBaseURI(o.Environment.ResourceManager)
+	if err != nil {
+		return nil, fmt.Errorf("building Webhook client : %+v", err)
+	}
+	o.Configure(webhookClient.Client, o.Authorizers.ResourceManager)
 
 	return &Client{
-		AccountClient:               &accountClient,
-		AgentRegistrationInfoClient: &agentRegistrationInfoClient,
-		CertificateClient:           &certificateClient,
-		ConnectionClient:            &connectionClient,
-		ConnectionTypeClient:        &connectionTypeClient,
-		CredentialClient:            &credentialClient,
-		DscConfigurationClient:      &dscConfigurationClient,
-		DscNodeConfigurationClient:  &dscNodeConfigurationClient,
-		JobScheduleClient:           &jobScheduleClient,
-		ModuleClient:                &moduleClient,
-		RunbookClient:               &runbookClient,
-		RunbookClientHack:           &runbookClient2,
-		RunbookDraftClient:          &runbookDraftClient,
-		RunBookWgClient:             &runbookWgClient,
-		RunbookWorkerClient:         &runbookWorkerClient,
-		ScheduleClient:              &scheduleClient,
-		SoftwareUpdateConfigClient:  &softUpClient,
-		SourceControlClient:         &sourceCtlClient,
-		VariableClient:              &variableClient,
-		WatcherClient:               &watcherClient,
-		WebhookClient:               &webhookClient,
-	}
+		Client: metaClient,
+
+		AgentRegistrationInfoClient: agentRegistrationInfoClient,
+		SoftwareUpdateConfigClient:  softUpClient,
+		WatcherClient:               watcherClient,
+		WebhookClient:               webhookClient,
+	}, nil
 }

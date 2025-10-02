@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package kusto
 
 import (
@@ -5,14 +8,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/kusto/mgmt/2022-02-01/kusto" // nolint: staticcheck
+	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/kusto/2023-08-15/scripts"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/kusto/migration"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/kusto/parse"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/kusto/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -39,7 +42,7 @@ func resourceKustoDatabaseScript() *pluginsdk.Resource {
 		}),
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := parse.ScriptID(id)
+			_, err := scripts.ParseScriptID(id)
 			return err
 		}),
 
@@ -54,7 +57,7 @@ func resourceKustoDatabaseScript() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.DatabaseID,
+				ValidateFunc: commonids.ValidateKustoDatabaseID,
 			},
 
 			"continue_on_errors_enabled": {
@@ -104,21 +107,24 @@ func resourceKustoDatabaseScriptCreateUpdate(d *pluginsdk.ResourceData, meta int
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	databaseId, _ := parse.DatabaseID(d.Get("database_id").(string))
-	id := parse.NewScriptID(databaseId.SubscriptionId, databaseId.ResourceGroup, databaseId.ClusterName, databaseId.Name, d.Get("name").(string))
+	databaseId, err := commonids.ParseKustoDatabaseID(d.Get("database_id").(string))
+	if err != nil {
+		return err
+	}
+	id := scripts.NewScriptID(databaseId.SubscriptionId, databaseId.ResourceGroupName, databaseId.KustoClusterName, databaseId.KustoDatabaseName, d.Get("name").(string))
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id.ResourceGroup, id.ClusterName, id.DatabaseName, id.Name)
+		existing, err := client.Get(ctx, id)
 		if err != nil {
-			if !utils.ResponseWasNotFound(existing.Response) {
+			if !response.WasNotFound(existing.HttpResponse) {
 				return fmt.Errorf("checking for existing %q: %+v", id, err)
 			}
 		}
-		if !utils.ResponseWasNotFound(existing.Response) {
+		if !response.WasNotFound(existing.HttpResponse) {
 			return tf.ImportAsExistsError("azurerm_kusto_script", id.ID())
 		}
 	}
 
-	clusterId := parse.NewClusterID(databaseId.SubscriptionId, databaseId.ResourceGroup, databaseId.ClusterName)
+	clusterId := commonids.NewKustoClusterID(databaseId.SubscriptionId, databaseId.ResourceGroupName, databaseId.KustoClusterName)
 	locks.ByID(clusterId.ID())
 	defer locks.UnlockByID(clusterId.ID())
 
@@ -127,32 +133,27 @@ func resourceKustoDatabaseScriptCreateUpdate(d *pluginsdk.ResourceData, meta int
 		forceUpdateTag, _ = uuid.GenerateUUID()
 	}
 
-	parameters := kusto.Script{
-		ScriptProperties: &kusto.ScriptProperties{
+	parameters := scripts.Script{
+		Properties: &scripts.ScriptProperties{
 			ContinueOnErrors: utils.Bool(d.Get("continue_on_errors_enabled").(bool)),
 			ForceUpdateTag:   utils.String(forceUpdateTag),
 		},
 	}
 
 	if scriptURL, ok := d.GetOk("url"); ok {
-		parameters.ScriptURL = utils.String(scriptURL.(string))
+		parameters.Properties.ScriptUrl = utils.String(scriptURL.(string))
 	}
 
 	if scriptURLSasToken, ok := d.GetOk("sas_token"); ok {
-		parameters.ScriptURLSasToken = utils.String(scriptURLSasToken.(string))
+		parameters.Properties.ScriptUrlSasToken = utils.String(scriptURLSasToken.(string))
 	}
 
 	if scriptContent, ok := d.GetOk("script_content"); ok {
-		parameters.ScriptContent = utils.String(scriptContent.(string))
+		parameters.Properties.ScriptContent = utils.String(scriptContent.(string))
 	}
 
-	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.ClusterName, id.DatabaseName, id.Name, parameters)
-	if err != nil {
+	if err := client.CreateOrUpdateThenPoll(ctx, id, parameters); err != nil {
 		return fmt.Errorf("creating %q: %+v", id, err)
-	}
-
-	if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
-		return fmt.Errorf("waiting for creation of %q: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -164,26 +165,29 @@ func resourceKustoDatabaseScriptRead(d *pluginsdk.ResourceData, meta interface{}
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := parse.ScriptID(d.Id())
+	id, err := scripts.ParseScriptID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, id.ResourceGroup, id.ClusterName, id.DatabaseName, id.Name)
+	resp, err := client.Get(ctx, *id)
 	if err != nil {
-		if utils.ResponseWasNotFound(resp.Response) {
+		if response.WasNotFound(resp.HttpResponse) {
 			log.Printf("[INFO] %s does not exist - removing from state", *id)
 			d.SetId("")
 			return nil
 		}
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
-	d.Set("name", id.Name)
-	d.Set("database_id", parse.NewDatabaseID(id.SubscriptionId, id.ResourceGroup, id.ClusterName, id.DatabaseName).ID())
-	if props := resp.ScriptProperties; props != nil {
-		d.Set("continue_on_errors_enabled", props.ContinueOnErrors)
-		d.Set("force_an_update_when_value_changed", props.ForceUpdateTag)
-		d.Set("url", props.ScriptURL)
+	d.Set("name", id.ScriptName)
+	d.Set("database_id", commonids.NewKustoDatabaseID(id.SubscriptionId, id.ResourceGroupName, id.ClusterName, id.DatabaseName).ID())
+
+	if resp.Model != nil {
+		if props := resp.Model.Properties; props != nil {
+			d.Set("continue_on_errors_enabled", props.ContinueOnErrors)
+			d.Set("force_an_update_when_value_changed", props.ForceUpdateTag)
+			d.Set("url", props.ScriptUrl)
+		}
 	}
 	return nil
 }
@@ -193,18 +197,19 @@ func resourceKustoDatabaseScriptDelete(d *pluginsdk.ResourceData, meta interface
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := parse.ScriptID(d.Id())
+	id, err := scripts.ParseScriptID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	future, err := client.Delete(ctx, id.ResourceGroup, id.ClusterName, id.DatabaseName, id.Name)
+	// DELETE operation for script does not support running concurrently at cluster level
+	locks.ByName(id.ClusterName, "azurerm_kusto_cluster")
+	defer locks.UnlockByName(id.ClusterName, "azurerm_kusto_cluster")
+
+	err = client.DeleteThenPoll(ctx, *id)
 	if err != nil {
 		return fmt.Errorf("deleting %q: %+v", id, err)
 	}
 
-	if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
-		return fmt.Errorf("waiting for deletion of %q: %+v", id, err)
-	}
 	return nil
 }

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package sdk
 
 import (
@@ -84,8 +87,8 @@ func (rw *ResourceWrapper) Resource() (*schema.Resource, error) {
 			}
 			if len(errors) > 0 {
 				out := ""
-				for _, error := range errors {
-					out += error.Error()
+				for _, err := range errors {
+					out += err.Error()
 				}
 				return fmt.Errorf(out)
 			}
@@ -95,6 +98,8 @@ func (rw *ResourceWrapper) Resource() (*schema.Resource, error) {
 			if v, ok := rw.resource.(ResourceWithCustomImporter); ok {
 				metaData := runArgs(d, meta, rw.logger)
 
+				ctx, cancel := context.WithTimeout(ctx, rw.resource.Read().Timeout)
+				defer cancel()
 				err := v.CustomImporter()(ctx, metaData)
 				if err != nil {
 					return nil, err
@@ -128,6 +133,8 @@ func (rw *ResourceWrapper) Resource() (*schema.Resource, error) {
 	if v, ok := rw.resource.(ResourceWithCustomizeDiff); ok {
 		resource.CustomizeDiff = func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
 			client := meta.(*clients.Client)
+			ctx, cancel := context.WithTimeout(ctx, v.CustomizeDiff().Timeout)
+			defer cancel()
 			metaData := ResourceMetaData{
 				Client:                   client,
 				Logger:                   rw.logger,

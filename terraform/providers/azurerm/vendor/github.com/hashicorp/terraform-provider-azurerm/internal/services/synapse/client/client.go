@@ -1,13 +1,16 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package client
 
 import (
 	"fmt"
 
-	"github.com/Azure/azure-sdk-for-go/services/preview/synapse/2019-06-01-preview/managedvirtualnetwork"
-	"github.com/Azure/azure-sdk-for-go/services/preview/synapse/2020-08-01-preview/accesscontrol"
 	"github.com/Azure/azure-sdk-for-go/services/preview/synapse/mgmt/v2.0/synapse" // nolint: staticcheck
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
+	managedvirtualnetwork "github.com/tombuildsstuff/kermit/sdk/synapse/2019-06-01-preview/synapse"
+	accesscontrol "github.com/tombuildsstuff/kermit/sdk/synapse/2020-08-01-preview/synapse"
 	artifacts "github.com/tombuildsstuff/kermit/sdk/synapse/2021-06-01-preview/synapse"
 )
 
@@ -28,6 +31,7 @@ type Client struct {
 	SQLPoolWorkloadClassifierClient                   *synapse.SQLPoolWorkloadClassifierClient
 	SQLPoolWorkloadGroupClient                        *synapse.SQLPoolWorkloadGroupClient
 	WorkspaceAadAdminsClient                          *synapse.WorkspaceAadAdminsClient
+	WorkspaceAzureADOnlyAuthenticationsClient         *synapse.AzureADOnlyAuthenticationsClient
 	WorkspaceClient                                   *synapse.WorkspacesClient
 	WorkspaceExtendedBlobAuditingPoliciesClient       *synapse.WorkspaceManagedSQLServerExtendedBlobAuditingPoliciesClient
 	WorkspaceManagedIdentitySQLControlSettingsClient  *synapse.WorkspaceManagedIdentitySQLControlSettingsClient
@@ -88,6 +92,9 @@ func NewClient(o *common.ClientOptions) *Client {
 	workspaceAadAdminsClient := synapse.NewWorkspaceAadAdminsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&workspaceAadAdminsClient.Client, o.ResourceManagerAuthorizer)
 
+	workspaceAzureADOnlyAuthenticationsClient := synapse.NewAzureADOnlyAuthenticationsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&workspaceAzureADOnlyAuthenticationsClient.Client, o.ResourceManagerAuthorizer)
+
 	workspaceClient := synapse.NewWorkspacesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&workspaceClient.Client, o.ResourceManagerAuthorizer)
 
@@ -122,6 +129,7 @@ func NewClient(o *common.ClientOptions) *Client {
 		SQLPoolVulnerabilityAssessmentRuleBaselinesClient: &sqlPoolVulnerabilityAssessmentRuleBaselinesClient,
 		SQLPoolWorkloadClassifierClient:                   &sqlPoolWorkloadClassifierClient,
 		SQLPoolWorkloadGroupClient:                        &sqlPoolWorkloadGroupClient,
+		WorkspaceAzureADOnlyAuthenticationsClient:         &workspaceAzureADOnlyAuthenticationsClient,
 		WorkspaceAadAdminsClient:                          &workspaceAadAdminsClient,
 		WorkspaceClient:                                   &workspaceClient,
 		WorkspaceExtendedBlobAuditingPoliciesClient:       &workspaceExtendedBlobAuditingPoliciesClient,

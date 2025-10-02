@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package web
 
 import (
@@ -6,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web" // nolint: staticcheck
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
@@ -478,7 +482,11 @@ func resourceAppServiceSlotRead(d *pluginsdk.ResourceData, meta interface{}) err
 	}
 
 	if props := resp.SiteProperties; props != nil {
-		d.Set("app_service_plan_id", props.ServerFarmID)
+		servicePlan, err := commonids.ParseAppServicePlanIDInsensitively(pointer.From(props.ServerFarmID))
+		if err != nil {
+			return err
+		}
+		d.Set("app_service_plan_id", servicePlan.ID())
 		d.Set("client_affinity_enabled", props.ClientAffinityEnabled)
 		d.Set("default_site_hostname", props.DefaultHostName)
 		d.Set("enabled", props.Enabled)

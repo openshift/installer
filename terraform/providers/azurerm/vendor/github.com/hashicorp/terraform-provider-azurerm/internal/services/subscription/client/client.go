@@ -1,30 +1,33 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package client
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2021-01-01/subscriptions"                     // nolint: staticcheck
-	subscriptionAlias "github.com/Azure/azure-sdk-for-go/services/subscription/mgmt/2020-09-01/subscription" // nolint: staticcheck
+	"fmt"
+
+	"github.com/hashicorp/go-azure-sdk/resource-manager/resources/2022-12-01/subscriptions"
+	subscriptionAlias "github.com/hashicorp/go-azure-sdk/resource-manager/subscription/2021-10-01/subscriptions"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
 type Client struct {
-	Client             *subscriptions.Client
-	AliasClient        *subscriptionAlias.AliasClient
-	SubscriptionClient *subscriptionAlias.Client
+	AliasClient         *subscriptionAlias.SubscriptionsClient
+	SubscriptionsClient *subscriptions.SubscriptionsClient
 }
 
-func NewClient(o *common.ClientOptions) *Client {
-	client := subscriptions.NewClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&client.Client, o.ResourceManagerAuthorizer)
-
-	aliasClient := subscriptionAlias.NewAliasClientWithBaseURI(o.ResourceManagerEndpoint)
+func NewClient(o *common.ClientOptions) (*Client, error) {
+	aliasClient := subscriptionAlias.NewSubscriptionsClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&aliasClient.Client, o.ResourceManagerAuthorizer)
 
-	subscriptionClient := subscriptionAlias.NewClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&subscriptionClient.Client, o.ResourceManagerAuthorizer)
+	subscriptionsClient, err := subscriptions.NewSubscriptionsClientWithBaseURI(o.Environment.ResourceManager)
+	if err != nil {
+		return nil, fmt.Errorf("building Subscriptions client: %+v", err)
+	}
+	o.Configure(subscriptionsClient.Client, o.Authorizers.ResourceManager)
 
 	return &Client{
-		AliasClient:        &aliasClient,
-		Client:             &client,
-		SubscriptionClient: &subscriptionClient,
-	}
+		AliasClient:         &aliasClient,
+		SubscriptionsClient: subscriptionsClient,
+	}, nil
 }

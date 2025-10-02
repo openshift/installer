@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package iothub
 
 import (
@@ -18,9 +21,7 @@ import (
 
 type IotHubDeviceUpdateAccountResource struct{}
 
-var (
-	_ sdk.ResourceWithUpdate = IotHubDeviceUpdateAccountResource{}
-)
+var _ sdk.ResourceWithUpdate = IotHubDeviceUpdateAccountResource{}
 
 type IotHubDeviceUpdateAccountModel struct {
 	Name                       string            `tfschema:"name"`
@@ -55,6 +56,7 @@ func (r IotHubDeviceUpdateAccountResource) Arguments() map[string]*pluginsdk.Sch
 
 		"sku": {
 			Type:     pluginsdk.TypeString,
+			ForceNew: true,
 			Optional: true,
 			Default:  deviceupdates.SKUStandard,
 			ValidateFunc: validation.StringInSlice([]string{
@@ -81,7 +83,7 @@ func (r IotHubDeviceUpdateAccountResource) ResourceType() string {
 }
 
 func (r IotHubDeviceUpdateAccountResource) ModelObject() interface{} {
-	return &IotHubDeviceUpdateInstanceModel{}
+	return &IotHubDeviceUpdateAccountModel{}
 }
 
 func (r IotHubDeviceUpdateAccountResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
@@ -252,16 +254,9 @@ func (r IotHubDeviceUpdateAccountResource) Update() sdk.ResourceFunc {
 				existing.Properties.PublicNetworkAccess = &publicNetworkAccess
 			}
 
-			if metadata.ResourceData.HasChange("sku") {
-				existing.Properties.Sku = &model.Sku
-			}
-
 			if metadata.ResourceData.HasChange("tags") {
 				existing.Tags = &model.Tags
 			}
-
-			// todo remove this when https://github.com/hashicorp/pandora/issues/1096 is fixed
-			existing.SystemData = nil
 
 			if err := client.AccountsCreateThenPoll(ctx, *id, *existing); err != nil {
 				return fmt.Errorf("updating %s: %+v", *id, err)

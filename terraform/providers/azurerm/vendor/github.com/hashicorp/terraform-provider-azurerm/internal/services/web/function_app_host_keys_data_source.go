@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package web
 
 import (
@@ -46,6 +49,12 @@ func dataSourceFunctionAppHostKeys() *pluginsdk.Resource {
 				Sensitive: true,
 			},
 
+			"event_grid_extension_key": {
+				Type:      pluginsdk.TypeString,
+				Computed:  true,
+				Sensitive: true,
+			},
+
 			"signalr_extension_key": {
 				Type:      pluginsdk.TypeString,
 				Computed:  true,
@@ -59,6 +68,12 @@ func dataSourceFunctionAppHostKeys() *pluginsdk.Resource {
 			},
 
 			"webpubsub_extension_key": {
+				Type:      pluginsdk.TypeString,
+				Computed:  true,
+				Sensitive: true,
+			},
+
+			"blobs_extension_key": {
 				Type:      pluginsdk.TypeString,
 				Computed:  true,
 				Sensitive: true,
@@ -103,9 +118,15 @@ func dataSourceFunctionAppHostKeysRead(d *pluginsdk.ResourceData, meta interface
 		}
 		d.Set("default_function_key", defaultFunctionKey)
 
+		// The name of the EventGrid System Key has changed from version 1.x to version 2.x:
+		// https://learn.microsoft.com/en-us/azure/azure-functions/event-grid-how-tos?tabs=v2%2Cportal#system-key
+		// This block accommodates both keys.
 		eventGridExtensionConfigKey := ""
-		if v, ok := res.SystemKeys["eventgridextensionconfig_extension"]; ok {
-			eventGridExtensionConfigKey = *v
+		for _, key := range []string{"eventgridextensionconfig_extension", "eventgrid_extension"} {
+			if v, ok := res.SystemKeys[key]; ok {
+				eventGridExtensionConfigKey = *v
+				break
+			}
 		}
 		d.Set("event_grid_extension_config_key", eventGridExtensionConfigKey)
 
@@ -126,6 +147,12 @@ func dataSourceFunctionAppHostKeysRead(d *pluginsdk.ResourceData, meta interface
 			webPubSubExtensionKey = *v
 		}
 		d.Set("webpubsub_extension_key", webPubSubExtensionKey)
+
+		blobsExtensionKey := ""
+		if v, ok := res.SystemKeys["blobs_extension"]; ok {
+			blobsExtensionKey = *v
+		}
+		d.Set("blobs_extension_key", blobsExtensionKey)
 
 		return nil
 	})

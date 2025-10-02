@@ -3,23 +3,39 @@ package clients
 // NOTE: this file is generated - manual changes will be overwritten.
 
 import (
-	containerservice_v2022_09_02_preview "github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2022-09-02-preview"
-	loadtestservice_v2021_12_01_preview "github.com/hashicorp/go-azure-sdk/resource-manager/loadtestservice/2021-12-01-preview"
-	managedidentity_v2022_01_31_preview "github.com/hashicorp/go-azure-sdk/resource-manager/managedidentity/2022-01-31-preview"
+	"fmt"
+
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
+	chaosstudio "github.com/hashicorp/terraform-provider-azurerm/internal/services/chaosstudio/client"
 	containers "github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/client"
-	loadtestservice "github.com/hashicorp/terraform-provider-azurerm/internal/services/loadtestservice/client"
+	devcenter "github.com/hashicorp/terraform-provider-azurerm/internal/services/devcenter/client"
 	managedidentity "github.com/hashicorp/terraform-provider-azurerm/internal/services/managedidentity/client"
 )
 
 type autoClient struct {
-	ContainerService *containerservice_v2022_09_02_preview.Client
-	LoadTestService  *loadtestservice_v2021_12_01_preview.Client
-	ManagedIdentity  *managedidentity_v2022_01_31_preview.Client
+	ChaosStudio      *chaosstudio.AutoClient
+	ContainerService *containers.AutoClient
+	DevCenter        *devcenter.AutoClient
+	ManagedIdentity  *managedidentity.AutoClient
 }
 
-func buildAutoClients(client *autoClient, o *common.ClientOptions) {
-	client.ContainerService = containers.NewClient(o)
-	client.LoadTestService = loadtestservice.NewClient(o)
-	client.ManagedIdentity = managedidentity.NewClient(o)
+func buildAutoClients(client *autoClient, o *common.ClientOptions) (err error) {
+
+	if client.ChaosStudio, err = chaosstudio.NewClient(o); err != nil {
+		return fmt.Errorf("building client for ChaosStudio: %+v", err)
+	}
+
+	if client.ContainerService, err = containers.NewClient(o); err != nil {
+		return fmt.Errorf("building client for ContainerService: %+v", err)
+	}
+
+	if client.DevCenter, err = devcenter.NewClient(o); err != nil {
+		return fmt.Errorf("building client for DevCenter: %+v", err)
+	}
+
+	if client.ManagedIdentity, err = managedidentity.NewClient(o); err != nil {
+		return fmt.Errorf("building client for ManagedIdentity: %+v", err)
+	}
+
+	return nil
 }

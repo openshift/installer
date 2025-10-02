@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package redis
 
 import (
@@ -10,21 +13,21 @@ import (
 
 	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/zones"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2021-06-01/patchschedules"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2021-06-01/redis"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2024-03-01/patchschedules"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2024-03-01/redis"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	azValidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network"
-	networkParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
-	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/redis/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/redis/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -41,7 +44,7 @@ var skuWeight = map[string]int8{
 }
 
 func resourceRedisCache() *pluginsdk.Resource {
-	return &pluginsdk.Resource{
+	resource := &pluginsdk.Resource{
 		Create: resourceRedisCacheCreate,
 		Read:   resourceRedisCacheRead,
 		Update: resourceRedisCacheUpdate,
@@ -52,10 +55,10 @@ func resourceRedisCache() *pluginsdk.Resource {
 		}),
 
 		Timeouts: &pluginsdk.ResourceTimeout{
-			Create: pluginsdk.DefaultTimeout(90 * time.Minute),
+			Create: pluginsdk.DefaultTimeout(180 * time.Minute),
 			Read:   pluginsdk.DefaultTimeout(5 * time.Minute),
-			Update: pluginsdk.DefaultTimeout(90 * time.Minute),
-			Delete: pluginsdk.DefaultTimeout(90 * time.Minute),
+			Update: pluginsdk.DefaultTimeout(180 * time.Minute),
+			Delete: pluginsdk.DefaultTimeout(180 * time.Minute),
 		},
 
 		StateUpgraders: pluginsdk.StateUpgrades(map[int]pluginsdk.StateUpgrade{
@@ -82,11 +85,9 @@ func resourceRedisCache() *pluginsdk.Resource {
 			},
 
 			"family": {
-				Type:     pluginsdk.TypeString,
-				Required: true,
-				// TODO: this should become case-sensitive in v4.0 (true -> false and remove DiffSupressFunc)
-				ValidateFunc:     validation.StringInSlice(redis.PossibleValuesForSkuFamily(), true),
-				DiffSuppressFunc: suppress.CaseDifference,
+				Type:         pluginsdk.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice(redis.PossibleValuesForSkuFamily(), false),
 			},
 
 			"sku_name": {
@@ -115,8 +116,7 @@ func resourceRedisCache() *pluginsdk.Resource {
 				Optional: true,
 			},
 
-			// TODO 4.0: change this from enable_* to *_enabled
-			"enable_non_ssl_port": {
+			"non_ssl_port_enabled": {
 				Type:     pluginsdk.TypeBool,
 				Default:  false,
 				Optional: true,
@@ -126,12 +126,13 @@ func resourceRedisCache() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: networkValidate.SubnetID,
+				ValidateFunc: commonids.ValidateSubnetID,
 			},
 
 			"private_static_ip_address": {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
+				// NOTE O+C: in some cases this gets a default value if omitted. This can remain o+c as it is ForceNew and cannot be updated
 				Computed: true,
 				ForceNew: true,
 			},
@@ -143,6 +144,10 @@ func resourceRedisCache() *pluginsdk.Resource {
 				MaxItems: 1,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
+						"active_directory_authentication_enabled": {
+							Type:     pluginsdk.TypeBool,
+							Optional: true,
+						},
 						"maxclients": {
 							Type:     pluginsdk.TypeInt,
 							Computed: true,
@@ -151,12 +156,14 @@ func resourceRedisCache() *pluginsdk.Resource {
 						"maxmemory_delta": {
 							Type:     pluginsdk.TypeInt,
 							Optional: true,
+							// Note: O+C this gets a variable default based on the cache's total memory. This can remain O+C as it can be updated without issue
 							Computed: true,
 						},
 
 						"maxmemory_reserved": {
 							Type:     pluginsdk.TypeInt,
 							Optional: true,
+							// Note: O+C this gets a variable default based on the cache's total memory. This can remain O+C as it can be updated without issue
 							Computed: true,
 						},
 
@@ -170,7 +177,17 @@ func resourceRedisCache() *pluginsdk.Resource {
 						"maxfragmentationmemory_reserved": {
 							Type:     pluginsdk.TypeInt,
 							Optional: true,
+							// Note: O+C this gets a variable default based on the cache's total memory. This can remain O+C as it can be updated without issue
 							Computed: true,
+						},
+
+						"data_persistence_authentication_method": {
+							Type:     pluginsdk.TypeString,
+							Optional: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"SAS",
+								"ManagedIdentity",
+							}, false),
 						},
 
 						"rdb_backup_enabled": {
@@ -216,11 +233,15 @@ func resourceRedisCache() *pluginsdk.Resource {
 							Optional:  true,
 							Sensitive: true,
 						},
-						// TODO 4.0: change this from enable_* to *_enabled
-						"enable_authentication": {
+						"authentication_enabled": {
 							Type:     pluginsdk.TypeBool,
 							Optional: true,
 							Default:  true,
+						},
+						"storage_account_subscription_id": {
+							Type:         pluginsdk.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.IsUUID,
 						},
 					},
 				},
@@ -304,6 +325,7 @@ func resourceRedisCache() *pluginsdk.Resource {
 			"replicas_per_master": {
 				Type:     pluginsdk.TypeInt,
 				Optional: true,
+				// NOTE: O+C returns a value when `replicas_per_primary` is set - this can remain as there is no issue updating it
 				Computed: true,
 				// Can't make more than 3 replicas in portal, assuming it's a limitation
 				ValidateFunc: validation.IntBetween(1, 3),
@@ -312,8 +334,9 @@ func resourceRedisCache() *pluginsdk.Resource {
 			"identity": commonschema.SystemAssignedUserAssignedIdentityOptional(),
 
 			"replicas_per_primary": {
-				Type:         pluginsdk.TypeInt,
-				Optional:     true,
+				Type:     pluginsdk.TypeInt,
+				Optional: true,
+				// NOTE: O+C returns a value when `replicas_per_master` is set - this can remain as there is no issue updating it
 				Computed:     true,
 				ValidateFunc: validation.IntBetween(1, 3),
 			},
@@ -329,7 +352,7 @@ func resourceRedisCache() *pluginsdk.Resource {
 			"redis_version": {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
-				Computed:     true,
+				Default:      6,
 				ValidateFunc: validation.StringInSlice([]string{"4", "6"}, false),
 				DiffSuppressFunc: func(_, old, new string, _ *pluginsdk.ResourceData) bool {
 					n := strings.Split(old, ".")
@@ -339,6 +362,12 @@ func resourceRedisCache() *pluginsdk.Resource {
 					}
 					return false
 				},
+			},
+
+			"access_keys_authentication_enabled": {
+				Type:     pluginsdk.TypeBool,
+				Optional: true,
+				Default:  true,
 			},
 
 			"tags": commonschema.Tags(),
@@ -352,8 +381,100 @@ func resourceRedisCache() *pluginsdk.Resource {
 				}
 				return false
 			}),
+			pluginsdk.CustomizeDiffShim(func(ctx context.Context, diff *pluginsdk.ResourceDiff, v interface{}) error {
+				// Entra (AD) auth has to be set to disable access keys auth
+				// https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-azure-active-directory-for-authentication
+
+				accessKeysAuthenticationEnabled := diff.Get("access_keys_authentication_enabled").(bool)
+				activeDirectoryAuthenticationEnabled := diff.Get("redis_configuration.0.active_directory_authentication_enabled").(bool)
+
+				log.Printf("[DEBUG] CustomizeDiff: access_keys_authentication_enabled: %v, active_directory_authentication_enabled: %v", accessKeysAuthenticationEnabled, activeDirectoryAuthenticationEnabled)
+
+				if !accessKeysAuthenticationEnabled && !activeDirectoryAuthenticationEnabled {
+					return fmt.Errorf("`active_directory_authentication_enabled` must be enabled in order to disable `access_keys_authentication_enabled`")
+				}
+
+				return nil
+			}),
 		),
 	}
+
+	if !features.FourPointOhBeta() {
+		resource.Schema["family"] = &pluginsdk.Schema{
+			Type:             pluginsdk.TypeString,
+			Required:         true,
+			ValidateFunc:     validation.StringInSlice(redis.PossibleValuesForSkuFamily(), true),
+			DiffSuppressFunc: suppress.CaseDifference,
+		}
+
+		resource.Schema["enable_non_ssl_port"] = &pluginsdk.Schema{
+			Type:          pluginsdk.TypeBool,
+			Default:       false,
+			Optional:      true,
+			ConflictsWith: []string{"non_ssl_port_enabled"},
+			Deprecated:    "`enable_non_ssl_port` will be removed in favour of the property `non_ssl_port_enabled` in version 4.0 of the AzureRM Provider.",
+		}
+
+		resource.Schema["non_ssl_port_enabled"] = &pluginsdk.Schema{
+			Type:          pluginsdk.TypeBool,
+			Computed:      true,
+			Optional:      true,
+			ConflictsWith: []string{"enable_non_ssl_port"},
+		}
+
+		resource.Schema["redis_configuration"].Elem.(*pluginsdk.Resource).Schema["enable_authentication"] = &pluginsdk.Schema{
+			Type:          pluginsdk.TypeBool,
+			Optional:      true,
+			Default:       true,
+			ConflictsWith: []string{"redis_configuration.0.authentication_enabled"},
+			Deprecated:    "`enable_authentication` will be removed in favour of the property `authentication_enabled` in version 4.0 of the AzureRM Provider.",
+		}
+
+		resource.Schema["redis_configuration"].Elem.(*pluginsdk.Resource).Schema["authentication_enabled"] = &pluginsdk.Schema{
+			Type:          pluginsdk.TypeBool,
+			Optional:      true,
+			Computed:      true,
+			ConflictsWith: []string{"redis_configuration.0.enable_authentication"},
+		}
+
+		resource.Schema["non_ssl_port_enabled"] = &pluginsdk.Schema{
+			Type:     pluginsdk.TypeBool,
+			Computed: true,
+			Optional: true,
+		}
+
+		resource.Schema["replicas_per_master"] = &pluginsdk.Schema{
+			Type:     pluginsdk.TypeInt,
+			Optional: true,
+			Computed: true,
+			// Can't make more than 3 replicas in portal, assuming it's a limitation
+			ValidateFunc: validation.IntBetween(1, 3),
+		}
+
+		resource.Schema["replicas_per_primary"] = &pluginsdk.Schema{
+			Type:         pluginsdk.TypeInt,
+			Optional:     true,
+			Computed:     true,
+			ValidateFunc: validation.IntBetween(1, 3),
+		}
+
+		resource.Schema["redis_version"] = &pluginsdk.Schema{
+			Type:         pluginsdk.TypeString,
+			Optional:     true,
+			Computed:     true,
+			ValidateFunc: validation.StringInSlice([]string{"4", "6"}, false),
+			DiffSuppressFunc: func(_, old, new string, _ *pluginsdk.ResourceData) bool {
+				n := strings.Split(old, ".")
+				if len(n) >= 1 {
+					newMajor := n[0]
+					return new == newMajor
+				}
+				return false
+			},
+		}
+	}
+
+	return resource
 }
 
 func resourceRedisCacheCreate(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -390,10 +511,16 @@ func resourceRedisCacheCreate(d *pluginsdk.ResourceData, meta interface{}) error
 		return fmt.Errorf(`expanding "identity": %v`, err)
 	}
 
+	enableNonSslPort := d.Get("non_ssl_port_enabled")
+	if v, ok := d.GetOk("enable_non_ssl_port"); ok && !features.FourPointOhBeta() {
+		enableNonSslPort = v
+	}
+
 	parameters := redis.RedisCreateParameters{
 		Location: location.Normalize(d.Get("location").(string)),
 		Properties: redis.RedisCreateProperties{
-			EnableNonSslPort: pointer.To(d.Get("enable_non_ssl_port").(bool)),
+			DisableAccessKeyAuthentication: pointer.To(!(d.Get("access_keys_authentication_enabled").(bool))),
+			EnableNonSslPort:               pointer.To(enableNonSslPort.(bool)),
 			Sku: redis.Sku{
 				Capacity: int64(d.Get("capacity").(int)),
 				Family:   redis.SkuFamily(d.Get("family").(string)),
@@ -433,7 +560,7 @@ func resourceRedisCacheCreate(d *pluginsdk.ResourceData, meta interface{}) error
 	}
 
 	if v, ok := d.GetOk("subnet_id"); ok {
-		parsed, parseErr := networkParse.SubnetID(v.(string))
+		parsed, parseErr := commonids.ParseSubnetID(v.(string))
 		if parseErr != nil {
 			return err
 		}
@@ -441,8 +568,8 @@ func resourceRedisCacheCreate(d *pluginsdk.ResourceData, meta interface{}) error
 		locks.ByName(parsed.VirtualNetworkName, network.VirtualNetworkResourceName)
 		defer locks.UnlockByName(parsed.VirtualNetworkName, network.VirtualNetworkResourceName)
 
-		locks.ByName(parsed.Name, network.SubnetResourceName)
-		defer locks.UnlockByName(parsed.Name, network.SubnetResourceName)
+		locks.ByName(parsed.SubnetName, network.SubnetResourceName)
+		defer locks.UnlockByName(parsed.SubnetName, network.SubnetResourceName)
 
 		parameters.Properties.SubnetId = utils.String(v.(string))
 	}
@@ -464,7 +591,7 @@ func resourceRedisCacheCreate(d *pluginsdk.ResourceData, meta interface{}) error
 		return fmt.Errorf("internal-error: context had no deadline")
 	}
 	stateConf := &pluginsdk.StateChangeConf{
-		Pending:    []string{"Scaling", "Updating", "Creating"},
+		Pending:    []string{"Scaling", "Updating", "Creating", "ConfiguringAAD"},
 		Target:     []string{"Succeeded"},
 		Refresh:    redisStateRefreshFunc(ctx, client, id),
 		MinTimeout: 15 * time.Second,
@@ -497,15 +624,19 @@ func resourceRedisCacheUpdate(d *pluginsdk.ResourceData, meta interface{}) error
 		return err
 	}
 
-	enableNonSSLPort := d.Get("enable_non_ssl_port").(bool)
+	enableNonSslPort := d.Get("non_ssl_port_enabled")
+	if v, ok := d.GetOk("enable_non_ssl_port"); ok && !features.FourPointOhBeta() {
+		enableNonSslPort = v
+	}
 
 	t := d.Get("tags").(map[string]interface{})
 	expandedTags := tags.Expand(t)
 
 	parameters := redis.RedisUpdateParameters{
 		Properties: &redis.RedisUpdateProperties{
-			MinimumTlsVersion: pointer.To(redis.TlsVersion(d.Get("minimum_tls_version").(string))),
-			EnableNonSslPort:  utils.Bool(enableNonSSLPort),
+			DisableAccessKeyAuthentication: pointer.To(!(d.Get("access_keys_authentication_enabled").(bool))),
+			MinimumTlsVersion:              pointer.To(redis.TlsVersion(d.Get("minimum_tls_version").(string))),
+			EnableNonSslPort:               pointer.To(enableNonSslPort.(bool)),
 			Sku: &redis.Sku{
 				Capacity: int64(d.Get("capacity").(int)),
 				Family:   redis.SkuFamily(d.Get("family").(string)),
@@ -568,7 +699,7 @@ func resourceRedisCacheUpdate(d *pluginsdk.ResourceData, meta interface{}) error
 
 	log.Printf("[DEBUG] Waiting for %s to become available", *id)
 	stateConf := &pluginsdk.StateChangeConf{
-		Pending:    []string{"Scaling", "Updating", "Creating", "UpgradingRedisServerVersion"},
+		Pending:    []string{"Scaling", "Updating", "Creating", "UpgradingRedisServerVersion", "ConfiguringAAD", "UpdatingManagedIdentity"},
 		Target:     []string{"Succeeded"},
 		Refresh:    redisStateRefreshFunc(ctx, client, *id),
 		MinTimeout: 15 * time.Second,
@@ -599,18 +730,20 @@ func resourceRedisCacheUpdate(d *pluginsdk.ResourceData, meta interface{}) error
 		}
 	}
 
-	patchSchedule := expandRedisPatchSchedule(d)
+	if d.HasChange("patch_schedule") {
+		patchSchedule := expandRedisPatchSchedule(d)
 
-	patchSchedulesRedisId := patchschedules.NewRediID(id.SubscriptionId, id.ResourceGroupName, id.RedisName)
-	if patchSchedule == nil || len(patchSchedule.Properties.ScheduleEntries) == 0 {
-		_, err = patchClient.Delete(ctx, patchSchedulesRedisId)
-		if err != nil {
-			return fmt.Errorf("deleting Patch Schedule for %s: %+v", *id, err)
-		}
-	} else {
-		_, err = patchClient.CreateOrUpdate(ctx, patchSchedulesRedisId, *patchSchedule)
-		if err != nil {
-			return fmt.Errorf("setting Patch Schedule for %s: %+v", *id, err)
+		patchSchedulesRedisId := patchschedules.NewRediID(id.SubscriptionId, id.ResourceGroupName, id.RedisName)
+		if patchSchedule == nil || len(patchSchedule.Properties.ScheduleEntries) == 0 {
+			_, err = patchClient.Delete(ctx, patchSchedulesRedisId)
+			if err != nil {
+				return fmt.Errorf("deleting Patch Schedule for %s: %+v", *id, err)
+			}
+		} else {
+			_, err = patchClient.CreateOrUpdate(ctx, patchSchedulesRedisId, *patchSchedule)
+			if err != nil {
+				return fmt.Errorf("setting Patch Schedule for %s: %+v", *id, err)
+			}
 		}
 	}
 
@@ -679,7 +812,12 @@ func resourceRedisCacheRead(d *pluginsdk.ResourceData, meta interface{}) error {
 		}
 		d.Set("minimum_tls_version", minimumTlsVersion)
 		d.Set("port", props.Port)
-		d.Set("enable_non_ssl_port", props.EnableNonSslPort)
+
+		d.Set("non_ssl_port_enabled", props.EnableNonSslPort)
+		if !features.FourPointOhBeta() {
+			d.Set("enable_non_ssl_port", props.EnableNonSslPort)
+		}
+
 		shardCount := 0
 		if props.ShardCount != nil {
 			shardCount = int(*props.ShardCount)
@@ -689,7 +827,7 @@ func resourceRedisCacheRead(d *pluginsdk.ResourceData, meta interface{}) error {
 
 		subnetId := ""
 		if props.SubnetId != nil {
-			parsed, err := networkParse.SubnetIDInsensitively(*props.SubnetId)
+			parsed, err := commonids.ParseSubnetIDInsensitively(*props.SubnetId)
 			if err != nil {
 				return err
 			}
@@ -716,11 +854,11 @@ func resourceRedisCacheRead(d *pluginsdk.ResourceData, meta interface{}) error {
 			return fmt.Errorf("setting `redis_configuration`: %+v", err)
 		}
 
-		enableSslPort := !*props.EnableNonSslPort
-		d.Set("primary_connection_string", getRedisConnectionString(*props.HostName, *props.SslPort, *keysResp.Model.PrimaryKey, enableSslPort))
-		d.Set("secondary_connection_string", getRedisConnectionString(*props.HostName, *props.SslPort, *keysResp.Model.SecondaryKey, enableSslPort))
+		d.Set("primary_connection_string", getRedisConnectionString(*props.HostName, *props.SslPort, *keysResp.Model.PrimaryKey, true))
+		d.Set("secondary_connection_string", getRedisConnectionString(*props.HostName, *props.SslPort, *keysResp.Model.SecondaryKey, true))
 		d.Set("primary_access_key", keysResp.Model.PrimaryKey)
 		d.Set("secondary_access_key", keysResp.Model.SecondaryKey)
+		d.Set("access_keys_authentication_enabled", !pointer.From(props.DisableAccessKeyAuthentication))
 
 		if err := tags.FlattenAndSet(d, model.Tags); err != nil {
 			return fmt.Errorf("setting `tags`: %+v", err)
@@ -748,7 +886,7 @@ func resourceRedisCacheDelete(d *pluginsdk.ResourceData, meta interface{}) error
 		return fmt.Errorf("retrieving %s: `model` was nil", *id)
 	}
 	if subnetID := read.Model.Properties.SubnetId; subnetID != nil {
-		parsed, parseErr := networkParse.SubnetIDInsensitively(*subnetID)
+		parsed, parseErr := commonids.ParseSubnetIDInsensitively(*subnetID)
 		if parseErr != nil {
 			return err
 		}
@@ -756,8 +894,8 @@ func resourceRedisCacheDelete(d *pluginsdk.ResourceData, meta interface{}) error
 		locks.ByName(parsed.VirtualNetworkName, network.VirtualNetworkResourceName)
 		defer locks.UnlockByName(parsed.VirtualNetworkName, network.VirtualNetworkResourceName)
 
-		locks.ByName(parsed.Name, network.SubnetResourceName)
-		defer locks.UnlockByName(parsed.Name, network.SubnetResourceName)
+		locks.ByName(parsed.SubnetName, network.SubnetResourceName)
+		defer locks.UnlockByName(parsed.SubnetName, network.SubnetResourceName)
 	}
 
 	if err := client.DeleteThenPoll(ctx, *id); err != nil {
@@ -794,6 +932,7 @@ func expandRedisConfiguration(d *pluginsdk.ResourceData) (*redis.RedisCommonProp
 		return output, nil
 	}
 	raw := input[0].(map[string]interface{})
+	skuName := d.Get("sku_name").(string)
 
 	if v := raw["maxclients"].(int); v > 0 {
 		output.Maxclients = utils.String(strconv.Itoa(v))
@@ -817,12 +956,35 @@ func expandRedisConfiguration(d *pluginsdk.ResourceData) (*redis.RedisCommonProp
 		output.MaxmemoryPolicy = utils.String(v)
 	}
 
+	if v := raw["data_persistence_authentication_method"].(string); v != "" {
+		output.PreferredDataPersistenceAuthMethod = utils.String(v)
+	}
+
+	// AAD/Entra support
+	// nolint : staticcheck
+	v, valExists := d.GetOkExists("redis_configuration.0.active_directory_authentication_enabled")
+	if valExists {
+		entraEnabled := v.(bool)
+		output.AadEnabled = utils.String(strconv.FormatBool(entraEnabled))
+	}
+
 	// RDB Backup
-	if v := raw["rdb_backup_enabled"].(bool); v {
-		if connStr := raw["rdb_storage_connection_string"].(string); connStr == "" {
-			return nil, fmt.Errorf("The rdb_storage_connection_string property must be set when rdb_backup_enabled is true")
+	// nolint : staticcheck
+	v, valExists = d.GetOkExists("redis_configuration.0.rdb_backup_enabled")
+	if valExists {
+		rdbBackupEnabled := v.(bool)
+
+		// rdb_backup_enabled is available when SKU is Premium
+		if strings.EqualFold(skuName, string(redis.SkuNamePremium)) {
+			if rdbBackupEnabled {
+				if connStr := raw["rdb_storage_connection_string"].(string); connStr == "" {
+					return nil, fmt.Errorf("the rdb_storage_connection_string property must be set when rdb_backup_enabled is true")
+				}
+			}
+			output.RdbBackupEnabled = utils.String(strconv.FormatBool(rdbBackupEnabled))
+		} else if rdbBackupEnabled && !strings.EqualFold(skuName, string(redis.SkuNamePremium)) {
+			return nil, fmt.Errorf("the `rdb_backup_enabled` property requires a `Premium` sku to be set")
 		}
-		output.RdbBackupEnabled = utils.String(strconv.FormatBool(v))
 	}
 
 	if v := raw["rdb_backup_frequency"].(int); v > 0 {
@@ -838,12 +1000,17 @@ func expandRedisConfiguration(d *pluginsdk.ResourceData) (*redis.RedisCommonProp
 	}
 
 	if v := raw["notify_keyspace_events"].(string); v != "" {
-		output.NotifyKeyspaceEvents = utils.String(v)
+		output.NotifyKeyspaceEvents = pointer.To(v)
 	}
 
 	// AOF Backup
-	if v := raw["aof_backup_enabled"].(bool); v {
-		output.AofBackupEnabled = utils.String(strconv.FormatBool(v))
+	// nolint : staticcheck
+	v, valExists = d.GetOkExists("redis_configuration.0.aof_backup_enabled")
+	if valExists {
+		// aof_backup_enabled is available when SKU is Premium
+		if strings.EqualFold(skuName, string(redis.SkuNamePremium)) {
+			output.AofBackupEnabled = utils.String(strconv.FormatBool(v.(bool)))
+		}
 	}
 
 	if v := raw["aof_storage_connection_string_0"].(string); v != "" {
@@ -854,15 +1021,23 @@ func expandRedisConfiguration(d *pluginsdk.ResourceData) (*redis.RedisCommonProp
 		output.AofStorageConnectionString1 = utils.String(v)
 	}
 
-	authEnabled := raw["enable_authentication"].(bool)
+	authEnabled := raw["authentication_enabled"].(bool)
+	if v, ok := raw["enable_authentication"]; ok && !features.FourPointOhBeta() {
+		authEnabled = v.(bool)
+	}
+
 	// Redis authentication can only be disabled if it is launched inside a VNET.
 	if _, isPrivate := d.GetOk("subnet_id"); !isPrivate {
 		if !authEnabled {
-			return nil, fmt.Errorf("Cannot set `enable_authentication` to `false` when `subnet_id` is not set")
+			return nil, fmt.Errorf("cannot set `authentication_enabled` or `enable_authentication` to `false` when `subnet_id` is not set")
 		}
 	} else {
 		value := isAuthNotRequiredAsString(authEnabled)
 		output.Authnotrequired = utils.String(value)
+	}
+
+	if v := raw["storage_account_subscription_id"].(string); v != "" {
+		output.StorageSubscriptionId = pointer.To(v)
 	}
 	return output, nil
 }
@@ -920,6 +1095,14 @@ func flattenTenantSettings(input *map[string]string) map[string]string {
 func flattenRedisConfiguration(input *redis.RedisCommonPropertiesRedisConfiguration) ([]interface{}, error) {
 	outputs := make(map[string]interface{})
 
+	if input.AadEnabled != nil {
+		a, err := strconv.ParseBool(*input.AadEnabled)
+		if err != nil {
+			return nil, fmt.Errorf("parsing `aad-enabled` %q: %+v", *input.AadEnabled, err)
+		}
+		outputs["active_directory_authentication_enabled"] = a
+	}
+
 	if input.Maxclients != nil {
 		i, err := strconv.Atoi(*input.Maxclients)
 		if err != nil {
@@ -943,6 +1126,10 @@ func flattenRedisConfiguration(input *redis.RedisCommonPropertiesRedisConfigurat
 	}
 	if input.MaxmemoryPolicy != nil {
 		outputs["maxmemory_policy"] = *input.MaxmemoryPolicy
+	}
+
+	if input.PreferredDataPersistenceAuthMethod != nil {
+		outputs["data_persistence_authentication_method"] = *input.PreferredDataPersistenceAuthMethod
 	}
 
 	if input.MaxfragmentationmemoryReserved != nil {
@@ -978,9 +1165,7 @@ func flattenRedisConfiguration(input *redis.RedisCommonPropertiesRedisConfigurat
 	if input.RdbStorageConnectionString != nil {
 		outputs["rdb_storage_connection_string"] = *input.RdbStorageConnectionString
 	}
-	if v := input.NotifyKeyspaceEvents; v != nil {
-		outputs["notify_keyspace_events"] = v
-	}
+	outputs["notify_keyspace_events"] = pointer.From(input.NotifyKeyspaceEvents)
 
 	if v := input.AofBackupEnabled; v != nil {
 		b, err := strconv.ParseBool(*v)
@@ -997,10 +1182,20 @@ func flattenRedisConfiguration(input *redis.RedisCommonPropertiesRedisConfigurat
 	}
 
 	// `authnotrequired` is not set for instances launched outside a VNET
-	outputs["enable_authentication"] = true
+	outputs["authentication_enabled"] = true
 	if v := input.Authnotrequired; v != nil {
-		outputs["enable_authentication"] = isAuthRequiredAsBool(*v)
+		outputs["authentication_enabled"] = isAuthRequiredAsBool(*v)
 	}
+
+	if !features.FourPointOhBeta() {
+		// `authnotrequired` is not set for instances launched outside a VNET
+		outputs["enable_authentication"] = true
+		if v := input.Authnotrequired; v != nil {
+			outputs["enable_authentication"] = isAuthRequiredAsBool(*v)
+		}
+	}
+
+	outputs["storage_account_subscription_id"] = pointer.From(input.StorageSubscriptionId)
 
 	return []interface{}{outputs}, nil
 }

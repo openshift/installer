@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package monitor
 
 import (
@@ -8,7 +11,7 @@ import (
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2021-04-01/datacollectionendpoints"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2022-06-01/datacollectionendpoints"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -42,6 +45,11 @@ func (d DataCollectionEndpointDataSource) Arguments() map[string]*pluginsdk.Sche
 func (d DataCollectionEndpointDataSource) Attributes() map[string]*pluginsdk.Schema {
 	return map[string]*pluginsdk.Schema{
 		"configuration_access_endpoint": {
+			Type:     pluginsdk.TypeString,
+			Computed: true,
+		},
+
+		"immutable_id": {
 			Type:     pluginsdk.TypeString,
 			Computed: true,
 		},
@@ -87,14 +95,13 @@ func (d DataCollectionEndpointDataSource) Read() sdk.ResourceFunc {
 			resp, err := client.Get(ctx, id)
 			if err != nil {
 				if response.WasNotFound(resp.HttpResponse) {
-					metadata.Logger.Infof("%s was not found - removing from state!", id)
-					return metadata.MarkAsGone(id)
+					return fmt.Errorf("%s was not found", id)
 				}
 				return fmt.Errorf("retrieving %s: %+v", id, err)
 			}
 
 			var enablePublicNetWorkAccess bool
-			var description, kind, location, configurationAccessEndpoint, logsIngestionEndpoint string
+			var description, kind, location, configurationAccessEndpoint, logsIngestionEndpoint, immutableId string
 			var tag map[string]interface{}
 			if model := resp.Model; model != nil {
 				kind = flattenDataCollectionEndpointKind(model.Kind)
@@ -113,6 +120,10 @@ func (d DataCollectionEndpointDataSource) Read() sdk.ResourceFunc {
 					if prop.LogsIngestion != nil && prop.LogsIngestion.Endpoint != nil {
 						logsIngestionEndpoint = *prop.LogsIngestion.Endpoint
 					}
+
+					if prop.ImmutableId != nil {
+						immutableId = *prop.ImmutableId
+					}
 				}
 			}
 
@@ -122,6 +133,7 @@ func (d DataCollectionEndpointDataSource) Read() sdk.ResourceFunc {
 				ConfigurationAccessEndpoint: configurationAccessEndpoint,
 				Description:                 description,
 				Kind:                        kind,
+				ImmutableId:                 immutableId,
 				Location:                    location,
 				LogsIngestionEndpoint:       logsIngestionEndpoint,
 				Name:                        id.DataCollectionEndpointName,

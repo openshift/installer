@@ -1,8 +1,10 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package pluginsdk
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -28,8 +30,15 @@ func ImporterValidatingResourceIdThen(validateFunc IDValidationFunc, thenFunc Im
 		StateContext: func(ctx context.Context, d *ResourceData, meta interface{}) ([]*ResourceData, error) {
 			log.Printf("[DEBUG] Importing Resource - parsing %q", d.Id())
 
+			if _, ok := ctx.Deadline(); !ok {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(ctx, d.Timeout(schema.TimeoutRead))
+				defer cancel()
+			}
+
 			if err := validateFunc(d.Id()); err != nil {
-				return []*ResourceData{d}, fmt.Errorf("parsing Resource ID %q: %+v", d.Id(), err)
+				// NOTE: we're intentionally not wrapping this error, since it's prefixed with `parsing %q:`
+				return []*ResourceData{d}, err
 			}
 
 			return thenFunc(ctx, d, meta)

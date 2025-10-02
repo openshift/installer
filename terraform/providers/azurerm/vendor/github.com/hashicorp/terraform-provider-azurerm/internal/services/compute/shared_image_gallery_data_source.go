@@ -1,18 +1,22 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package compute
 
 import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleries"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
-	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func dataSourceSharedImageGallery() *pluginsdk.Resource {
@@ -39,45 +43,73 @@ func dataSourceSharedImageGallery() *pluginsdk.Resource {
 				Computed: true,
 			},
 
+			"image_names": {
+				Type:     pluginsdk.TypeList,
+				Computed: true,
+				Elem:     &pluginsdk.Schema{Type: pluginsdk.TypeString},
+			},
+
 			"unique_name": {
 				Type:     pluginsdk.TypeString,
 				Computed: true,
 			},
 
-			"tags": tags.SchemaDataSource(),
+			"tags": commonschema.TagsDataSource(),
 		},
 	}
 }
 
 func dataSourceSharedImageGalleryRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Compute.GalleriesClient
+	imagesClient := meta.(*clients.Client).Compute.GalleryImagesClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := parse.NewSharedImageGalleryID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
-
-	resp, err := client.Get(ctx, id.ResourceGroup, id.GalleryName, "", "")
+	id := commonids.NewSharedImageGalleryID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	resp, err := client.Get(ctx, id, galleries.DefaultGetOperationOptions())
 	if err != nil {
-		if utils.ResponseWasNotFound(resp.Response) {
+		if response.WasNotFound(resp.HttpResponse) {
 			return fmt.Errorf("%s was not found", id)
 		}
 
-		return fmt.Errorf("making Read request on %s: %+v", id, err)
+		return fmt.Errorf("retrieving %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
 	d.Set("name", id.GalleryName)
-	d.Set("resource_group_name", id.ResourceGroup)
+	d.Set("resource_group_name", id.ResourceGroupName)
 
-	d.Set("location", location.NormalizeNilable(resp.Location))
+	if model := resp.Model; model != nil {
+		d.Set("location", location.Normalize(model.Location))
 
-	if props := resp.GalleryProperties; props != nil {
-		d.Set("description", props.Description)
-		if identifier := props.Identifier; identifier != nil {
-			d.Set("unique_name", identifier.UniqueName)
+		if props := model.Properties; props != nil {
+			d.Set("description", props.Description)
+			uniqueName := ""
+			if props.Identifier != nil && props.Identifier.UniqueName != nil {
+				uniqueName = *props.Identifier.UniqueName
+			}
+			d.Set("unique_name", uniqueName)
+		}
+
+		if err := tags.FlattenAndSet(d, model.Tags); err != nil {
+			return fmt.Errorf("setting `tags`: %+v", err)
 		}
 	}
 
-	return tags.FlattenAndSet(d, resp.Tags)
+	imagesResp, err := imagesClient.ListByGalleryComplete(ctx, id)
+	if err != nil {
+		return fmt.Errorf("retrieving %s: %+v", id, err)
+	}
+
+	imageNames := make([]string, 0)
+	for _, image := range imagesResp.Items {
+		if image.Name != nil {
+			imageNames = append(imageNames, *image.Name)
+		}
+	}
+
+	d.Set("image_names", imageNames)
+
+	return nil
 }

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package postgres
 
 import (
@@ -8,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
@@ -72,7 +76,10 @@ func resourcePostgreSQLServer() *pluginsdk.Resource {
 				return []*pluginsdk.ResourceData{d}, err
 			}
 
-			resp, err := client.Get(ctx, *id)
+			timeout, cancel := context.WithTimeout(ctx, d.Timeout(pluginsdk.TimeoutRead))
+			defer cancel()
+
+			resp, err := client.Get(timeout, *id)
 			if err != nil {
 				return []*pluginsdk.ResourceData{d}, fmt.Errorf("reading %s: %+v", id, err)
 			}
@@ -505,7 +512,7 @@ func resourcePostgreSQLServerCreate(d *pluginsdk.ResourceData, meta interface{})
 		alert := expandSecurityAlertPolicy(v)
 		if alert != nil {
 			if err = securityClient.CreateOrUpdateThenPoll(ctx, securityAlertId, *alert); err != nil {
-				return fmt.Errorf("updataing security alert policy for %s: %v", id, err)
+				return fmt.Errorf("updating security alert policy for %s: %v", id, err)
 			}
 		}
 	}
@@ -728,7 +735,7 @@ func resourcePostgreSQLServerRead(d *pluginsdk.ResourceData, meta interface{}) e
 
 		if props := model.Properties; props != nil {
 			d.Set("administrator_login", props.AdministratorLogin)
-			d.Set("ssl_minimal_tls_version_enforced", props.MinimalTlsVersion)
+			d.Set("ssl_minimal_tls_version_enforced", string(pointer.From(props.MinimalTlsVersion)))
 
 			version := ""
 			if props.Version != nil {

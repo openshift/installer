@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -12,20 +15,20 @@ import (
 type AppServicePlanId struct {
 	SubscriptionId string
 	ResourceGroup  string
-	ServerfarmName string
+	ServerFarmName string
 }
 
-func NewAppServicePlanID(subscriptionId, resourceGroup, serverfarmName string) AppServicePlanId {
+func NewAppServicePlanID(subscriptionId, resourceGroup, serverFarmName string) AppServicePlanId {
 	return AppServicePlanId{
 		SubscriptionId: subscriptionId,
 		ResourceGroup:  resourceGroup,
-		ServerfarmName: serverfarmName,
+		ServerFarmName: serverFarmName,
 	}
 }
 
 func (id AppServicePlanId) String() string {
 	segments := []string{
-		fmt.Sprintf("Serverfarm Name %q", id.ServerfarmName),
+		fmt.Sprintf("Server Farm Name %q", id.ServerFarmName),
 		fmt.Sprintf("Resource Group %q", id.ResourceGroup),
 	}
 	segmentsStr := strings.Join(segments, " / ")
@@ -33,15 +36,15 @@ func (id AppServicePlanId) String() string {
 }
 
 func (id AppServicePlanId) ID() string {
-	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Web/serverfarms/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.ServerfarmName)
+	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Web/serverFarms/%s"
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.ServerFarmName)
 }
 
 // AppServicePlanID parses a AppServicePlan ID into an AppServicePlanId struct
 func AppServicePlanID(input string) (*AppServicePlanId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing %q as an AppServicePlan ID: %+v", input, err)
 	}
 
 	resourceId := AppServicePlanId{
@@ -57,7 +60,7 @@ func AppServicePlanID(input string) (*AppServicePlanId, error) {
 		return nil, fmt.Errorf("ID was missing the 'resourceGroups' element")
 	}
 
-	if resourceId.ServerfarmName, err = id.PopSegment("serverfarms"); err != nil {
+	if resourceId.ServerFarmName, err = id.PopSegment("serverFarms"); err != nil {
 		return nil, err
 	}
 

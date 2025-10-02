@@ -1,19 +1,22 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package containers
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2022-09-02-preview/managedclusters"
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2024-05-01/managedclusters"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/network/2023-11-01/applicationgateways"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/workspaces"
+	"github.com/hashicorp/go-azure-sdk/sdk/environments"
 	commonValidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	containerValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/validate"
-	applicationGatewayValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
-	subnetValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
-	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 const (
@@ -34,11 +37,11 @@ const (
 // the list of unsupported addons in the defined region - e.g. by being
 // omitted from this list an addon/environment combination will be supported
 var unsupportedAddonsForEnvironment = map[string][]string{
-	azure.ChinaCloud.Name: {
+	environments.AzureChinaCloud: {
 		aciConnectorKey,           // https://github.com/hashicorp/terraform-provider-azurerm/issues/5510
 		httpApplicationRoutingKey, // https://github.com/hashicorp/terraform-provider-azurerm/issues/5960
 	},
-	azure.USGovernmentCloud.Name: {
+	environments.AzureUSGovernmentCloud: {
 		httpApplicationRoutingKey, // https://github.com/hashicorp/terraform-provider-azurerm/issues/5960
 	},
 }
@@ -115,6 +118,10 @@ func schemaKubernetesAddOns() map[string]*pluginsdk.Schema {
 						Required:     true,
 						ValidateFunc: workspaces.ValidateWorkspaceID,
 					},
+					"msi_auth_for_monitoring_enabled": {
+						Type:     pluginsdk.TypeBool,
+						Optional: true,
+					},
 					"oms_agent_identity": {
 						Type:     pluginsdk.TypeList,
 						Computed: true,
@@ -156,7 +163,7 @@ func schemaKubernetesAddOns() map[string]*pluginsdk.Schema {
 							"ingress_application_gateway.0.subnet_cidr",
 							"ingress_application_gateway.0.subnet_id",
 						},
-						ValidateFunc: applicationGatewayValidate.ApplicationGatewayID,
+						ValidateFunc: applicationgateways.ValidateApplicationGatewayID,
 					},
 					"gateway_name": {
 						Type:         pluginsdk.TypeString,
@@ -189,7 +196,7 @@ func schemaKubernetesAddOns() map[string]*pluginsdk.Schema {
 							"ingress_application_gateway.0.subnet_cidr",
 							"ingress_application_gateway.0.subnet_id",
 						},
-						ValidateFunc: subnetValidate.SubnetID,
+						ValidateFunc: commonids.ValidateSubnetID,
 					},
 					"effective_gateway_id": {
 						Type:     pluginsdk.TypeString,
@@ -275,7 +282,7 @@ func schemaKubernetesAddOns() map[string]*pluginsdk.Schema {
 	return out
 }
 
-func expandKubernetesAddOns(d *pluginsdk.ResourceData, input map[string]interface{}, env azure.Environment) (*map[string]managedclusters.ManagedClusterAddonProfile, error) {
+func expandKubernetesAddOns(d *pluginsdk.ResourceData, input map[string]interface{}, env environments.Environment) (*map[string]managedclusters.ManagedClusterAddonProfile, error) {
 	disabled := managedclusters.ManagedClusterAddonProfile{
 		Enabled: false,
 	}
@@ -311,11 +318,15 @@ func expandKubernetesAddOns(d *pluginsdk.ResourceData, input map[string]interfac
 		config := make(map[string]string)
 
 		if workspaceID, ok := value["log_analytics_workspace_id"]; ok && workspaceID != "" {
-			lawid, err := workspaces.ParseWorkspaceID(workspaceID.(string))
+			lawid, err := workspaces.ParseWorkspaceIDInsensitively(workspaceID.(string))
 			if err != nil {
 				return nil, fmt.Errorf("parsing Log Analytics Workspace ID: %+v", err)
 			}
 			config["logAnalyticsWorkspaceResourceID"] = lawid.ID()
+		}
+
+		if useAADAuth, ok := value["msi_auth_for_monitoring_enabled"].(bool); ok {
+			config["useAADAuth"] = fmt.Sprintf("%t", useAADAuth)
 		}
 
 		addonProfiles[omsAgentKey] = managedclusters.ManagedClusterAddonProfile{
@@ -347,7 +358,7 @@ func expandKubernetesAddOns(d *pluginsdk.ResourceData, input map[string]interfac
 		v := input["azure_policy_enabled"].(bool)
 		props := managedclusters.ManagedClusterAddonProfile{
 			Enabled: v,
-			Config: utils.ToPtr(map[string]string{
+			Config: pointer.To(map[string]string{
 				"version": "v2",
 			}),
 		}
@@ -410,7 +421,7 @@ func expandKubernetesAddOns(d *pluginsdk.ResourceData, input map[string]interfac
 	return filterUnsupportedKubernetesAddOns(addonProfiles, env)
 }
 
-func filterUnsupportedKubernetesAddOns(input map[string]managedclusters.ManagedClusterAddonProfile, env azure.Environment) (*map[string]managedclusters.ManagedClusterAddonProfile, error) {
+func filterUnsupportedKubernetesAddOns(input map[string]managedclusters.ManagedClusterAddonProfile, env environments.Environment) (*map[string]managedclusters.ManagedClusterAddonProfile, error) {
 	filter := func(input map[string]managedclusters.ManagedClusterAddonProfile, key string) (map[string]managedclusters.ManagedClusterAddonProfile, error) {
 		output := input
 		if v, ok := output[key]; ok {
@@ -489,17 +500,24 @@ func flattenKubernetesAddOns(profile map[string]managedclusters.ManagedClusterAd
 	omsAgent := kubernetesAddonProfileLocate(profile, omsAgentKey)
 	if enabled := omsAgent.Enabled; enabled {
 		workspaceID := ""
+		useAADAuth := false
+
 		if v := kubernetesAddonProfilelocateInConfig(omsAgent.Config, "logAnalyticsWorkspaceResourceID"); v != "" {
 			if lawid, err := workspaces.ParseWorkspaceID(v); err == nil {
 				workspaceID = lawid.ID()
 			}
 		}
 
+		if v := kubernetesAddonProfilelocateInConfig(omsAgent.Config, "useAADAuth"); v != "false" && v != "" {
+			useAADAuth = true
+		}
+
 		omsAgentIdentity := flattenKubernetesClusterAddOnIdentityProfile(omsAgent.Identity)
 
 		omsAgents = append(omsAgents, map[string]interface{}{
-			"log_analytics_workspace_id": workspaceID,
-			"oms_agent_identity":         omsAgentIdentity,
+			"log_analytics_workspace_id":      workspaceID,
+			"msi_auth_for_monitoring_enabled": useAADAuth,
+			"oms_agent_identity":              omsAgentIdentity,
 		})
 	}
 

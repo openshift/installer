@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package datafactory
 
 import (
@@ -5,15 +8,17 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/datafactory/mgmt/2018-06-01/datafactory" // nolint: staticcheck
+	"github.com/hashicorp/go-azure-sdk/resource-manager/datafactory/2018-06-01/factories"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/datafactory/azuresdkhacks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/datafactory/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/datafactory/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	"github.com/tombuildsstuff/kermit/sdk/datafactory/2018-06-01/datafactory" // nolint: staticcheck
 )
 
 func resourceDataFactoryPipeline() *pluginsdk.Resource {
@@ -47,7 +52,7 @@ func resourceDataFactoryPipeline() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.DataFactoryID,
+				ValidateFunc: factories.ValidateFactoryID,
 			},
 
 			"parameters": {
@@ -108,19 +113,22 @@ func resourceDataFactoryPipeline() *pluginsdk.Resource {
 
 func resourceDataFactoryPipelineCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).DataFactory.PipelinesClient
+	hackClient := azuresdkhacks.PipelinesClient{
+		OriginalClient: client,
+	}
 	subscriptionId := meta.(*clients.Client).DataFactory.PipelinesClient.SubscriptionID
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	dataFactoryId, err := parse.DataFactoryID(d.Get("data_factory_id").(string))
+	dataFactoryId, err := factories.ParseFactoryID(d.Get("data_factory_id").(string))
 	if err != nil {
 		return err
 	}
 
-	id := parse.NewPipelineID(subscriptionId, dataFactoryId.ResourceGroup, dataFactoryId.FactoryName, d.Get("name").(string))
+	id := parse.NewPipelineID(subscriptionId, dataFactoryId.ResourceGroupName, dataFactoryId.FactoryName, d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id.ResourceGroup, id.FactoryName, id.Name, "")
+		existing, err := hackClient.Get(ctx, id.ResourceGroup, id.FactoryName, id.Name, "")
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
@@ -132,7 +140,7 @@ func resourceDataFactoryPipelineCreateUpdate(d *pluginsdk.ResourceData, meta int
 		}
 	}
 
-	pipeline := &datafactory.Pipeline{
+	pipeline := &azuresdkhacks.Pipeline{
 		Parameters:  expandDataFactoryParameters(d.Get("parameters").(map[string]interface{})),
 		Variables:   expandDataFactoryVariables(d.Get("variables").(map[string]interface{})),
 		Description: utils.String(d.Get("description").(string)),
@@ -173,11 +181,11 @@ func resourceDataFactoryPipelineCreateUpdate(d *pluginsdk.ResourceData, meta int
 		}
 	}
 
-	config := datafactory.PipelineResource{
+	config := azuresdkhacks.PipelineResource{
 		Pipeline: pipeline,
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.FactoryName, id.Name, config, ""); err != nil {
+	if _, err := hackClient.CreateOrUpdate(ctx, id.ResourceGroup, id.FactoryName, id.Name, config, ""); err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
 	}
 
@@ -188,6 +196,9 @@ func resourceDataFactoryPipelineCreateUpdate(d *pluginsdk.ResourceData, meta int
 
 func resourceDataFactoryPipelineRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).DataFactory.PipelinesClient
+	hackClient := azuresdkhacks.PipelinesClient{
+		OriginalClient: client,
+	}
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -196,9 +207,9 @@ func resourceDataFactoryPipelineRead(d *pluginsdk.ResourceData, meta interface{}
 		return err
 	}
 
-	dataFactoryId := parse.NewDataFactoryID(id.SubscriptionId, id.ResourceGroup, id.FactoryName)
+	dataFactoryId := factories.NewFactoryID(id.SubscriptionId, id.ResourceGroup, id.FactoryName)
 
-	resp, err := client.Get(ctx, id.ResourceGroup, id.FactoryName, id.Name, "")
+	resp, err := hackClient.Get(ctx, id.ResourceGroup, id.FactoryName, id.Name, "")
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")

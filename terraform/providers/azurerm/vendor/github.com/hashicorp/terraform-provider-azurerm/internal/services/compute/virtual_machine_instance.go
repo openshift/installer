@@ -1,17 +1,20 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package compute
 
 import (
 	"strings"
 
-	"github.com/tombuildsstuff/kermit/sdk/compute/2022-08-01/compute"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2024-03-01/virtualmachines"
 )
 
 // virtualMachineShouldBeStarted determines if the Virtual Machine should be started after
 // the Virtual Machine has been shut down for maintenance. This means that Virtual Machines
 // which are already stopped can be updated but will not be started
 // nolint: deadcode unused
-func virtualMachineShouldBeStarted(instanceView compute.VirtualMachineInstanceView) bool {
-	if instanceView.Statuses != nil {
+func virtualMachineShouldBeStarted(instanceView *virtualmachines.VirtualMachineInstanceView) bool {
+	if instanceView != nil && instanceView.Statuses != nil {
 		for _, status := range *instanceView.Statuses {
 			if status.Code == nil {
 				continue
