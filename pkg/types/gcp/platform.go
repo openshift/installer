@@ -37,6 +37,14 @@ type PSCEndpoint struct {
 	// When the region is empty, the location is assumed to be global.
 	// +optional
 	Region string `json:"region,omitempty"`
+
+	// ClusterUseOnly should be set to true when the installer should use
+	// the public api endpoints and all cluster operators should use the
+	// api endpoint overrides. The value should be false when the installer
+	// and cluster operators should use the api endpoint overrides; that is,
+	// the installer is being run in the same network as the cluster.
+	// +optional
+	ClusterUseOnly *bool `json:"clusterUseOnly,omitempty"`
 }
 
 // Platform stores all the global configuration that all machinesets
@@ -166,4 +174,10 @@ func GetConfiguredServiceAccount(platform *Platform, mpool *MachinePool) string 
 // The default should be used when an existing service account is not configured.
 func GetDefaultServiceAccount(platform *Platform, clusterID string, role string) string {
 	return fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID)
+}
+
+// ShouldUseEndpointForInstaller returns true when the endpoint should be used for GCP api endpoint overrides in the
+// installer.
+func ShouldUseEndpointForInstaller(endpoint *PSCEndpoint) bool {
+	return endpoint != nil && endpoint.ClusterUseOnly != nil && !(*endpoint.ClusterUseOnly)
 }
