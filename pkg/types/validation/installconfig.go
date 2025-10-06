@@ -761,7 +761,9 @@ func validateControlPlane(installConfig *types.InstallConfig, fldPath *field.Pat
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
 	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
-	allErrs = append(allErrs, validateFencingCredentials(installConfig)...)
+	if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica) {
+		allErrs = append(allErrs, validateFencingCredentials(installConfig)...)
+	}
 	return allErrs
 }
 
