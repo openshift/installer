@@ -9,7 +9,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
-	"github.com/openshift/assisted-service/pkg/validations"
+	modelvalidations "github.com/openshift/assisted-service/models/validations"
 )
 
 // DomainResolutionRequestDomain is a struct to hold the domain resolution request domain
@@ -32,12 +32,12 @@ func (m *DomainResolutionRequestDomain) Validate(formats strfmt.Registry) error 
 
 // validateDomainName ensures that the required DomainName field exists and that the
 // DomainName is valid
-func (m *DomainResolutionRequestDomain) validateDomainName(formats strfmt.Registry) error {
+func (m *DomainResolutionRequestDomain) validateDomainName(_ strfmt.Registry) error {
 	if err := validate.Required("domain_name", "body", m.DomainName); err != nil {
 		return err
 	}
 
-	if _, err := validations.ValidateDomainNameFormat(*m.DomainName); err != nil {
+	if _, err := modelvalidations.ValidateDomainNameFormat(*m.DomainName); err != nil {
 		return err
 	}
 

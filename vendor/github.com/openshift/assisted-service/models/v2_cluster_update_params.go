@@ -45,6 +45,9 @@ type V2ClusterUpdateParams struct {
 	// Cluster networks that are associated with this cluster.
 	ClusterNetworks []*ClusterNetwork `json:"cluster_networks"`
 
+	// Specifies the required number of control plane nodes that should be part of the cluster.
+	ControlPlaneCount *int64 `json:"control_plane_count,omitempty"`
+
 	// Installation disks encryption mode and host roles to be applied.
 	DiskEncryption *DiskEncryption `json:"disk_encryption,omitempty" gorm:"embedded;embeddedPrefix:disk_encryption_"`
 
@@ -58,8 +61,8 @@ type V2ClusterUpdateParams struct {
 	//
 	HTTPSProxy *string `json:"https_proxy,omitempty"`
 
-	// Enable/disable hyperthreading on master nodes, worker nodes, or all nodes.
-	// Enum: [masters workers all none]
+	// Enable/disable hyperthreading on master nodes, arbiter nodes, worker nodes, or a combination of them.
+	// Enum: [none masters arbiters workers masters,arbiters masters,workers arbiters,workers masters,arbiters,workers all]
 	Hyperthreading *string `json:"hyperthreading,omitempty"`
 
 	// Explicit ignition endpoint overrides the default ignition endpoint.
@@ -67,6 +70,9 @@ type V2ClusterUpdateParams struct {
 
 	// The virtual IPs used for cluster ingress traffic. Enter one IP address for single-stack clusters, or up to two for dual-stack clusters (at most one IP address per IP stack used). The order of stacks should be the same as order of subnets in Cluster Networks, Service Networks, and Machine Networks.
 	IngressVips []*IngressVip `json:"ingress_vips"`
+
+	// load balancer
+	LoadBalancer *LoadBalancer `json:"load_balancer,omitempty" gorm:"embedded;embeddedPrefix:load_balancer_"`
 
 	// A CIDR that all hosts belonging to the cluster should have an interfaces with IP address that belongs to this CIDR. The api_vip belongs to this CIDR.
 	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/(?:(?:[0-9])|(?:[1-2][0-9])|(?:3[0-2])))|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,})/(?:(?:[0-9])|(?:[1-9][0-9])|(?:1[0-1][0-9])|(?:12[0-8])))$
@@ -88,6 +94,8 @@ type V2ClusterUpdateParams struct {
 	NoProxy *string `json:"no_proxy,omitempty"`
 
 	// List of OLM operators to be installed.
+	// For the full list of supported operators, check the endpoint `/v2/supported-operators`:
+	//
 	OlmOperators []*OperatorCreateParams `json:"olm_operators"`
 
 	// platform
@@ -152,6 +160,10 @@ func (m *V2ClusterUpdateParams) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateIngressVips(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateLoadBalancer(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -296,7 +308,7 @@ var v2ClusterUpdateParamsTypeHyperthreadingPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["masters","workers","all","none"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["none","masters","arbiters","workers","masters,arbiters","masters,workers","arbiters,workers","masters,arbiters,workers","all"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -306,17 +318,32 @@ func init() {
 
 const (
 
+	// V2ClusterUpdateParamsHyperthreadingNone captures enum value "none"
+	V2ClusterUpdateParamsHyperthreadingNone string = "none"
+
 	// V2ClusterUpdateParamsHyperthreadingMasters captures enum value "masters"
 	V2ClusterUpdateParamsHyperthreadingMasters string = "masters"
+
+	// V2ClusterUpdateParamsHyperthreadingArbiters captures enum value "arbiters"
+	V2ClusterUpdateParamsHyperthreadingArbiters string = "arbiters"
 
 	// V2ClusterUpdateParamsHyperthreadingWorkers captures enum value "workers"
 	V2ClusterUpdateParamsHyperthreadingWorkers string = "workers"
 
+	// V2ClusterUpdateParamsHyperthreadingMastersArbiters captures enum value "masters,arbiters"
+	V2ClusterUpdateParamsHyperthreadingMastersArbiters string = "masters,arbiters"
+
+	// V2ClusterUpdateParamsHyperthreadingMastersWorkers captures enum value "masters,workers"
+	V2ClusterUpdateParamsHyperthreadingMastersWorkers string = "masters,workers"
+
+	// V2ClusterUpdateParamsHyperthreadingArbitersWorkers captures enum value "arbiters,workers"
+	V2ClusterUpdateParamsHyperthreadingArbitersWorkers string = "arbiters,workers"
+
+	// V2ClusterUpdateParamsHyperthreadingMastersArbitersWorkers captures enum value "masters,arbiters,workers"
+	V2ClusterUpdateParamsHyperthreadingMastersArbitersWorkers string = "masters,arbiters,workers"
+
 	// V2ClusterUpdateParamsHyperthreadingAll captures enum value "all"
 	V2ClusterUpdateParamsHyperthreadingAll string = "all"
-
-	// V2ClusterUpdateParamsHyperthreadingNone captures enum value "none"
-	V2ClusterUpdateParamsHyperthreadingNone string = "none"
 )
 
 // prop value enum
@@ -380,6 +407,25 @@ func (m *V2ClusterUpdateParams) validateIngressVips(formats strfmt.Registry) err
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *V2ClusterUpdateParams) validateLoadBalancer(formats strfmt.Registry) error {
+	if swag.IsZero(m.LoadBalancer) { // not required
+		return nil
+	}
+
+	if m.LoadBalancer != nil {
+		if err := m.LoadBalancer.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("load_balancer")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("load_balancer")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -588,6 +634,10 @@ func (m *V2ClusterUpdateParams) ContextValidate(ctx context.Context, formats str
 		res = append(res, err)
 	}
 
+	if err := m.contextValidateLoadBalancer(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateMachineNetworks(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -697,6 +747,22 @@ func (m *V2ClusterUpdateParams) contextValidateIngressVips(ctx context.Context, 
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *V2ClusterUpdateParams) contextValidateLoadBalancer(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.LoadBalancer != nil {
+		if err := m.LoadBalancer.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("load_balancer")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("load_balancer")
+			}
+			return err
+		}
 	}
 
 	return nil

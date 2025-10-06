@@ -32,6 +32,9 @@ type API interface {
 	   GetClusterSupportedPlatforms A list of platforms that this cluster can support in its current configuration.*/
 	GetClusterSupportedPlatforms(ctx context.Context, params *GetClusterSupportedPlatformsParams) (*GetClusterSupportedPlatformsOK, error)
 	/*
+	   GetDetailedSupportedFeatures Retrieves detailed features information including support level, incompatibilities, and operator dependencies.*/
+	GetDetailedSupportedFeatures(ctx context.Context, params *GetDetailedSupportedFeaturesParams) (*GetDetailedSupportedFeaturesOK, error)
+	/*
 	   GetInfraEnv Retrieves the details of the infra-env.*/
 	GetInfraEnv(ctx context.Context, params *GetInfraEnvParams) (*GetInfraEnvOK, error)
 	/*
@@ -163,6 +166,9 @@ type API interface {
 	/*
 	   V2RegisterCluster Creates a new OpenShift cluster definition.*/
 	V2RegisterCluster(ctx context.Context, params *V2RegisterClusterParams) (*V2RegisterClusterCreated, error)
+	/*
+	   V2RegisterDisconnectedCluster Create a disconnected OpenShift cluster for offline installation with embedded ignition*/
+	V2RegisterDisconnectedCluster(ctx context.Context, params *V2RegisterDisconnectedClusterParams) (*V2RegisterDisconnectedClusterCreated, error)
 	/*
 	   V2RegisterHost Registers a new OpenShift agent.*/
 	V2RegisterHost(ctx context.Context, params *V2RegisterHostParams) (*V2RegisterHostCreated, error)
@@ -330,6 +336,31 @@ func (a *Client) GetClusterSupportedPlatforms(ctx context.Context, params *GetCl
 		return nil, err
 	}
 	return result.(*GetClusterSupportedPlatformsOK), nil
+
+}
+
+/*
+GetDetailedSupportedFeatures Retrieves detailed features information including support level, incompatibilities, and operator dependencies.
+*/
+func (a *Client) GetDetailedSupportedFeatures(ctx context.Context, params *GetDetailedSupportedFeaturesParams) (*GetDetailedSupportedFeaturesOK, error) {
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "GetDetailedSupportedFeatures",
+		Method:             "GET",
+		PathPattern:        "/v2/support-levels/features/detailed",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetDetailedSupportedFeaturesReader{formats: a.formats},
+		AuthInfo:           a.authInfo,
+		Context:            ctx,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*GetDetailedSupportedFeaturesOK), nil
 
 }
 
@@ -1430,6 +1461,31 @@ func (a *Client) V2RegisterCluster(ctx context.Context, params *V2RegisterCluste
 		return nil, err
 	}
 	return result.(*V2RegisterClusterCreated), nil
+
+}
+
+/*
+V2RegisterDisconnectedCluster Create a disconnected OpenShift cluster for offline installation with embedded ignition
+*/
+func (a *Client) V2RegisterDisconnectedCluster(ctx context.Context, params *V2RegisterDisconnectedClusterParams) (*V2RegisterDisconnectedClusterCreated, error) {
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "v2RegisterDisconnectedCluster",
+		Method:             "POST",
+		PathPattern:        "/v2/clusters/disconnected",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &V2RegisterDisconnectedClusterReader{formats: a.formats},
+		AuthInfo:           a.authInfo,
+		Context:            ctx,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*V2RegisterDisconnectedClusterCreated), nil
 
 }
 
