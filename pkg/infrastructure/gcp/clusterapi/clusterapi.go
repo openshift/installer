@@ -170,6 +170,20 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to get GCP cluster: %w", err)
 	}
 
+	if in.InstallConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
+		if in.InstallConfig.Config.GCP.Endpoint != nil {
+			// Create the private zone for private service connect
+			if err := createPrivateServiceConnectZone(ctx, in.InstallConfig, in.InfraID, *gcpCluster.Status.Network.SelfLink); err != nil {
+				return fmt.Errorf("failed to create the private managed zone for private service connect: %w", err)
+			}
+
+			// Create the records for the PSC Private zone
+			if err := createPSCRecords(ctx, in.InstallConfig, in.InfraID); err != nil {
+				return fmt.Errorf("failed to create PSC records: %w", err)
+			}
+		}
+	}
+
 	// public load balancer is created by CAPG. The health check for this load balancer is also created by
 	// the CAPG.
 	apiIPAddress := gcpCluster.Spec.ControlPlaneEndpoint.Host
@@ -240,18 +254,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		// Create the public (optional) and private dns records
 		if err := createDNSRecords(ctx, client, in.InstallConfig, in.InfraID, apiIPAddress, apiIntIPAddress); err != nil {
 			return fmt.Errorf("failed to create DNS records: %w", err)
-		}
-
-		if in.InstallConfig.Config.GCP.Endpoint != nil {
-			// Create the private zone for private service connect
-			if err := createPrivateServiceConnectZone(ctx, in.InstallConfig, in.InfraID, *gcpCluster.Status.Network.SelfLink); err != nil {
-				return fmt.Errorf("failed to create the private managed zone for private service connect: %w", err)
-			}
-
-			// Create the records for the PSC Private zone
-			if err := createPSCRecords(ctx, in.InstallConfig, in.InfraID); err != nil {
-				return fmt.Errorf("failed to create PSC records: %w", err)
-			}
 		}
 	}
 

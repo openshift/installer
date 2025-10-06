@@ -6,12 +6,12 @@ import (
 	"sort"
 	"time"
 
+	configv1 "github.com/openshift/api/config/v1"
+
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
 	"google.golang.org/api/googleapi"
-
-	configv1 "github.com/openshift/api/config/v1"
 )
 
 // GetBaseDomain returns a base domain chosen from among the project's public DNS zones.

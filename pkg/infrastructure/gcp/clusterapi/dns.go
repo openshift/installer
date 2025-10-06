@@ -181,9 +181,18 @@ func createPSCRecords(ctx context.Context, ic *installconfig.InstallConfig, clus
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*2) // 1 minute for each record below
 	defer cancel()
 
-	pscIPAddress, err := findPSCEndpointAddress(ctx, ic)
+	computeService, err := gcpic.GetComputeService(ctx, ic.Config.GCP.ServiceEndpoints, option.WithScopes(compute.ComputeScope))
 	if err != nil {
-		return fmt.Errorf("failed to find psc endpoint address: %w", err)
+		return fmt.Errorf("failed to create Compute service: %w", err)
+	}
+
+	endpointRegion := ""
+	if ic.Config.GCP.Endpoint.Region != "" {
+		endpointRegion = ic.Config.GCP.Endpoint.Region
+	}
+	pscIPAddress, err := gcpic.GetEndpointAddress(computeService, ic.Config.GCP.ProjectID, ic.Config.GCP.Endpoint.Name, endpointRegion)
+	if err != nil {
+		return fmt.Errorf("failed to find private service connect endpoint address: %w", err)
 	}
 
 	records := []recordSet{
@@ -218,7 +227,7 @@ func createPSCRecords(ctx context.Context, ic *installconfig.InstallConfig, clus
 
 	for _, record := range records {
 		if _, err := dnsService.ResourceRecordSets.Create(record.projectID, record.zoneName, record.record).Context(ctx).Do(); err != nil {
-			return fmt.Errorf("failed to create psc record set %s: %w", record.record.Name, err)
+			return fmt.Errorf("failed to create private service connect record set %s: %w", record.record.Name, err)
 		}
 	}
 

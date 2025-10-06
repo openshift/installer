@@ -163,6 +163,15 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))
 
+	if installConfig.Config.GCP.Endpoint != nil {
+		gcpCluster.Spec.ServiceEndpoints = &capg.ServiceEndpoints{
+			ComputeServiceEndpoint:         fmt.Sprintf("https://compute-%s.p.googleapis.com/compute/v1/", installConfig.Config.GCP.Endpoint.Name),
+			ContainerServiceEndpoint:       fmt.Sprintf("https://container-%s.p.googleapis.com/container/v1/", installConfig.Config.GCP.Endpoint.Name),
+			IAMServiceEndpoint:             fmt.Sprintf("https://iam-%s.p.googleapis.com/", installConfig.Config.GCP.Endpoint.Name),
+			ResourceManagerServiceEndpoint: fmt.Sprintf("https://cloudresourcemanager-%s.p.googleapis.com/", installConfig.Config.GCP.Endpoint.Name),
+		}
+	}
+
 	// Set the network project during shared vpc installs
 	if installConfig.Config.GCP.NetworkProjectID != "" {
 		gcpCluster.Spec.Network.HostProject = ptr.To(installConfig.Config.GCP.NetworkProjectID)
