@@ -627,3 +627,11 @@ const (
 	IncludedUserTypesMember IncludedUserTypes = "member"
 	IncludedUserTypesGuest  IncludedUserTypes = "guest"
 )
+
+type UserflowAttributeDataType = string
+
+const (
+	UserflowAttributeDataTypeString  UserflowAttributeDataType = "string"
+	UserflowAttributeDataTypeBoolean UserflowAttributeDataType = "boolean"
+	UserflowAttributeDataTypeInt64   UserflowAttributeDataType = "int64"
+)

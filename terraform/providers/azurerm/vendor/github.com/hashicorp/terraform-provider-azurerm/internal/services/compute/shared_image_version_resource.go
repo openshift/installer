@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
 	"github.com/Azure/go-autorest/autorest/date"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	"github.com/tombuildsstuff/kermit/sdk/compute/2023-03-01/compute"
 )
 
 func resourceSharedImageVersion() *pluginsdk.Resource {
@@ -64,9 +65,9 @@ func resourceSharedImageVersion() *pluginsdk.Resource {
 				ValidateFunc: validate.SharedImageName,
 			},
 
-			"location": azure.SchemaLocation(),
+			"location": commonschema.Location(),
 
-			"resource_group_name": azure.SchemaResourceGroupName(),
+			"resource_group_name": commonschema.ResourceGroupName(),
 
 			"target_region": {
 				// This needs to be a `TypeList` due to the `StateFunc` on the nested property `name`
@@ -230,14 +231,14 @@ func resourceSharedImageVersionCreateUpdate(d *pluginsdk.ResourceData, meta inte
 	}
 
 	if v, ok := d.GetOk("managed_image_id"); ok {
-		version.GalleryImageVersionProperties.StorageProfile.Source = &compute.GalleryArtifactVersionSource{
+		version.GalleryImageVersionProperties.StorageProfile.Source = &compute.GalleryArtifactVersionFullSource{
 			ID: utils.String(v.(string)),
 		}
 	}
 
 	if v, ok := d.GetOk("os_disk_snapshot_id"); ok {
 		version.GalleryImageVersionProperties.StorageProfile.OsDiskImage = &compute.GalleryOSDiskImage{
-			Source: &compute.GalleryArtifactVersionSource{
+			Source: &compute.GalleryDiskImageSource{
 				ID: utils.String(v.(string)),
 			},
 		}
@@ -245,9 +246,9 @@ func resourceSharedImageVersionCreateUpdate(d *pluginsdk.ResourceData, meta inte
 
 	if v, ok := d.GetOk("blob_uri"); ok {
 		version.GalleryImageVersionProperties.StorageProfile.OsDiskImage = &compute.GalleryOSDiskImage{
-			Source: &compute.GalleryArtifactVersionSource{
-				ID:  utils.String(d.Get("storage_account_id").(string)),
-				URI: utils.String(v.(string)),
+			Source: &compute.GalleryDiskImageSource{
+				StorageAccountID: utils.String(d.Get("storage_account_id").(string)),
+				URI:              utils.String(v.(string)),
 			},
 		}
 	}
@@ -327,8 +328,17 @@ func resourceSharedImageVersionRead(d *pluginsdk.ResourceData, meta interface{})
 
 			osDiskSnapShotID := ""
 			storageAccountID := ""
-			if profile.OsDiskImage != nil && profile.OsDiskImage.Source != nil && profile.OsDiskImage.Source.ID != nil {
-				sourceID := *profile.OsDiskImage.Source.ID
+
+			if profile.OsDiskImage != nil && profile.OsDiskImage.Source != nil {
+				sourceID := ""
+				if profile.OsDiskImage.Source.ID != nil {
+					sourceID = *profile.OsDiskImage.Source.ID
+				}
+
+				if profile.OsDiskImage.Source.StorageAccountID != nil {
+					sourceID = *profile.OsDiskImage.Source.StorageAccountID
+				}
+
 				if blobURI == "" {
 					osDiskSnapShotID = sourceID
 				} else {
