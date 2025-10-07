@@ -172,6 +172,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 
 	if in.InstallConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
 		if in.InstallConfig.Config.GCP.Endpoint != nil {
+			logrus.Warnf("Attempting to create PSC Private Zone")
 			// Create the private zone for private service connect
 			if err := createPrivateServiceConnectZone(ctx, in.InstallConfig, in.InfraID, *gcpCluster.Status.Network.SelfLink); err != nil {
 				return fmt.Errorf("failed to create the private managed zone for private service connect: %w", err)
