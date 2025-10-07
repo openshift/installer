@@ -4,10 +4,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/recaser"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-var _ resourceids.ResourceId = OutputId{}
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
+
+func init() {
+	recaser.RegisterResourceId(&OutputId{})
+}
+
+var _ resourceids.ResourceId = &OutputId{}
 
 // OutputId is a struct representing the Resource ID for a Output
 type OutputId struct {
@@ -29,29 +37,15 @@ func NewOutputID(subscriptionId string, resourceGroupName string, streamingJobNa
 
 // ParseOutputID parses 'input' into a OutputId
 func ParseOutputID(input string) (*OutputId, error) {
-	parser := resourceids.NewParserFromResourceIdType(OutputId{})
+	parser := resourceids.NewParserFromResourceIdType(&OutputId{})
 	parsed, err := parser.Parse(input, false)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := OutputId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.StreamingJobName, ok = parsed.Parsed["streamingJobName"]; !ok {
-		return nil, fmt.Errorf("the segment 'streamingJobName' was not found in the resource id %q", input)
-	}
-
-	if id.OutputName, ok = parsed.Parsed["outputName"]; !ok {
-		return nil, fmt.Errorf("the segment 'outputName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
@@ -60,32 +54,40 @@ func ParseOutputID(input string) (*OutputId, error) {
 // ParseOutputIDInsensitively parses 'input' case-insensitively into a OutputId
 // note: this method should only be used for API response data and not user input
 func ParseOutputIDInsensitively(input string) (*OutputId, error) {
-	parser := resourceids.NewParserFromResourceIdType(OutputId{})
+	parser := resourceids.NewParserFromResourceIdType(&OutputId{})
 	parsed, err := parser.Parse(input, true)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := OutputId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.StreamingJobName, ok = parsed.Parsed["streamingJobName"]; !ok {
-		return nil, fmt.Errorf("the segment 'streamingJobName' was not found in the resource id %q", input)
-	}
-
-	if id.OutputName, ok = parsed.Parsed["outputName"]; !ok {
-		return nil, fmt.Errorf("the segment 'outputName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
+}
+
+func (id *OutputId) FromParseResult(input resourceids.ParseResult) error {
+	var ok bool
+
+	if id.SubscriptionId, ok = input.Parsed["subscriptionId"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", input)
+	}
+
+	if id.ResourceGroupName, ok = input.Parsed["resourceGroupName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", input)
+	}
+
+	if id.StreamingJobName, ok = input.Parsed["streamingJobName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "streamingJobName", input)
+	}
+
+	if id.OutputName, ok = input.Parsed["outputName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "outputName", input)
+	}
+
+	return nil
 }
 
 // ValidateOutputID checks that 'input' can be parsed as a Output ID

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package resource
 
 import (
@@ -229,6 +232,10 @@ func tenantTemplateDeploymentResourceUpdate(d *pluginsdk.ResourceData, meta inte
 	if d.HasChange("template_spec_version_id") {
 		deployment.Properties.TemplateLink = &resources.TemplateLink{
 			ID: utils.String(d.Get("template_spec_version_id").(string)),
+		}
+
+		if d.Get("template_spec_version_id").(string) != "" {
+			deployment.Properties.Template = nil
 		}
 	}
 

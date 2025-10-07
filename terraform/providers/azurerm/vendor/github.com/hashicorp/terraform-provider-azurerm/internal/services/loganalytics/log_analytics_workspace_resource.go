@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package loganalytics
 
 import (
@@ -8,13 +11,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2022-06-01/datacollectionrules"
 	sharedKeyWorkspaces "github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/workspaces"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2022-10-01/workspaces"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
@@ -25,7 +32,7 @@ import (
 )
 
 func resourceLogAnalyticsWorkspace() *pluginsdk.Resource {
-	return &pluginsdk.Resource{
+	resource := &pluginsdk.Resource{
 		Create: resourceLogAnalyticsWorkspaceCreateUpdate,
 		Read:   resourceLogAnalyticsWorkspaceRead,
 		Update: resourceLogAnalyticsWorkspaceCreateUpdate,
@@ -81,6 +88,8 @@ func resourceLogAnalyticsWorkspace() *pluginsdk.Resource {
 				Optional: true,
 			},
 
+			"identity": commonschema.SystemOrUserAssignedIdentityOptional(),
+
 			"internet_ingestion_enabled": {
 				Type:     pluginsdk.TypeBool,
 				Optional: true,
@@ -99,7 +108,6 @@ func resourceLogAnalyticsWorkspace() *pluginsdk.Resource {
 				Optional: true,
 				Computed: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(workspaces.WorkspaceSkuNameEnumFree),
 					string(workspaces.WorkspaceSkuNameEnumPerGBTwoZeroOneEight),
 					string(workspaces.WorkspaceSkuNameEnumPerNode),
 					string(workspaces.WorkspaceSkuNameEnumPremium),
@@ -113,7 +121,6 @@ func resourceLogAnalyticsWorkspace() *pluginsdk.Resource {
 			"reservation_capacity_in_gb_per_day": {
 				Type:     pluginsdk.TypeInt,
 				Optional: true,
-				Computed: true,
 				ValidateFunc: validation.IntInSlice([]int{
 					int(workspaces.CapacityReservationLevelOneHundred),
 					int(workspaces.CapacityReservationLevelTwoHundred),
@@ -141,6 +148,17 @@ func resourceLogAnalyticsWorkspace() *pluginsdk.Resource {
 				ValidateFunc:     validation.FloatAtLeast(-1.0),
 			},
 
+			"data_collection_rule_id": {
+				Type:         pluginsdk.TypeString,
+				Optional:     true,
+				ValidateFunc: datacollectionrules.ValidateDataCollectionRuleID,
+			},
+
+			"immediate_data_purge_on_30_days_enabled": {
+				Type:     pluginsdk.TypeBool,
+				Optional: true,
+			},
+
 			"workspace_id": {
 				Type:     pluginsdk.TypeString,
 				Computed: true,
@@ -161,6 +179,25 @@ func resourceLogAnalyticsWorkspace() *pluginsdk.Resource {
 			"tags": commonschema.Tags(),
 		},
 	}
+
+	if !features.FourPointOhBeta() {
+		resource.Schema["sku"] = &pluginsdk.Schema{
+			Type:     pluginsdk.TypeString,
+			Optional: true,
+			Computed: true,
+			ValidateFunc: validation.StringInSlice([]string{
+				string(workspaces.WorkspaceSkuNameEnumFree),
+				string(workspaces.WorkspaceSkuNameEnumPerGBTwoZeroOneEight),
+				string(workspaces.WorkspaceSkuNameEnumPerNode),
+				string(workspaces.WorkspaceSkuNameEnumPremium),
+				string(workspaces.WorkspaceSkuNameEnumStandalone),
+				string(workspaces.WorkspaceSkuNameEnumStandard),
+				string(workspaces.WorkspaceSkuNameEnumCapacityReservation),
+				"Unlimited", // TODO check if this is actually no longer valid, removed in v28.0.0 of the SDK
+			}, false),
+		}
+	}
+	return resource
 }
 
 func resourceLogAnalyticsWorkspaceCustomDiff(ctx context.Context, d *pluginsdk.ResourceDiff, _ interface{}) error {
@@ -168,14 +205,18 @@ func resourceLogAnalyticsWorkspaceCustomDiff(ctx context.Context, d *pluginsdk.R
 	// custom diff here because when you link the workspace to a cluster the
 	// cluster changes the sku to LACluster, so we need to ignore the change
 	// if it is LACluster else invoke the ForceNew as before...
-	//
-	// NOTE: Since LACluster is not in our enum the value is returned as ""
+
 	if d.HasChange("sku") {
 		old, new := d.GetChange("sku")
 		log.Printf("[INFO] Log Analytics Workspace SKU: OLD: %q, NEW: %q", old, new)
 		// If the old value is not LACluster(e.g. "") return ForceNew because they are
 		// really changing the sku...
-		if !strings.EqualFold(old.(string), "") {
+		changingFromLACluster := strings.EqualFold(old.(string), string(workspaces.WorkspaceSkuNameEnumLACluster)) || strings.EqualFold(old.(string), "")
+		// changing from capacity reservation to perGB does not force new when the last sku update date is more than 31-days ago.
+		// to let users do the change, we do not force new in this case and let the API error out.
+		changingFromCapacityReservationToPerGB := strings.EqualFold(old.(string), string(workspaces.WorkspaceSkuNameEnumCapacityReservation)) && strings.EqualFold(new.(string), string(workspaces.WorkspaceSkuNameEnumPerGBTwoZeroOneEight))
+		changingFromPerGBToCapacityReservation := strings.EqualFold(old.(string), string(workspaces.WorkspaceSkuNameEnumPerGBTwoZeroOneEight)) && strings.EqualFold(new.(string), string(workspaces.WorkspaceSkuNameEnumCapacityReservation))
+		if !changingFromCapacityReservationToPerGB && !changingFromLACluster && !changingFromPerGBToCapacityReservation {
 			d.ForceNew("sku")
 		}
 	}
@@ -222,7 +263,7 @@ func resourceLogAnalyticsWorkspaceCreateUpdate(d *pluginsdk.ResourceData, meta i
 		if err == nil {
 			if resp.Model != nil && resp.Model.Properties != nil {
 				if azSku := resp.Model.Properties.Sku; azSku != nil {
-					if strings.EqualFold(string(azSku.Name), "lacluster") {
+					if strings.EqualFold(string(azSku.Name), string(workspaces.WorkspaceSkuNameEnumLACluster)) {
 						isLACluster = true
 						log.Printf("[INFO] Log Analytics Workspace %q (Resource Group %q): SKU is linked to Log Analytics cluster", name, resourceGroup)
 					}
@@ -245,7 +286,7 @@ func resourceLogAnalyticsWorkspaceCreateUpdate(d *pluginsdk.ResourceData, meta i
 	t := d.Get("tags").(map[string]interface{})
 
 	if isLACluster {
-		sku.Name = "lacluster"
+		sku.Name = workspaces.WorkspaceSkuNameEnumLACluster
 	} else if skuName == "" {
 		// Default value if sku is not defined
 		sku.Name = workspaces.WorkspaceSkuNameEnumPerGBTwoZeroOneEight
@@ -284,6 +325,12 @@ func resourceLogAnalyticsWorkspaceCreateUpdate(d *pluginsdk.ResourceData, meta i
 		}
 	}
 
+	// The `ImmediatePurgeDataOn30Days` are not returned before it has been set
+	// nolint : staticcheck
+	if v, ok := d.GetOkExists("immediate_data_purge_on_30_days_enabled"); ok {
+		parameters.Properties.Features.ImmediatePurgeDataOn30Days = utils.Bool(v.(bool))
+	}
+
 	propName := "reservation_capacity_in_gb_per_day"
 	capacityReservationLevel, ok := d.GetOk(propName)
 	if ok {
@@ -299,9 +346,23 @@ func resourceLogAnalyticsWorkspaceCreateUpdate(d *pluginsdk.ResourceData, meta i
 		}
 	}
 
+	if v, ok := d.GetOk("identity"); ok {
+		expanded, err := identity.ExpandSystemOrUserAssignedMap(v.([]interface{}))
+		if err != nil {
+			return fmt.Errorf("expanding identity: %+v", err)
+		}
+		parameters.Identity = expanded
+	}
+
 	err := client.CreateOrUpdateThenPoll(ctx, id, parameters)
 	if err != nil {
 		return err
+	}
+
+	// `data_collection_rule_id` also needs an additional update.
+	// error message: Default dcr is not applicable on workspace creation, please provide it on update.
+	if v, ok := d.GetOk("data_collection_rule_id"); ok {
+		parameters.Properties.DefaultDataCollectionRuleResourceId = pointer.To(v.(string))
 	}
 
 	// `allow_resource_only_permissions` needs an additional update, tacked on https://github.com/Azure/azure-rest-api-specs/issues/21591
@@ -361,6 +422,14 @@ func resourceLogAnalyticsWorkspaceRead(d *pluginsdk.ResourceData, meta interface
 	d.Set("resource_group_name", id.ResourceGroupName)
 
 	if model := resp.Model; model != nil {
+		if model.Identity != nil {
+			flattenIdentity, err := identity.FlattenSystemOrUserAssignedMap(model.Identity)
+			if err != nil {
+				return fmt.Errorf("flattening identity: %+v", err)
+			}
+			d.Set("identity", flattenIdentity)
+		}
+
 		if props := model.Properties; props != nil {
 			internetIngestionEnabled := true
 			if props.PublicNetworkAccessForIngestion != nil {
@@ -389,7 +458,7 @@ func resourceLogAnalyticsWorkspaceRead(d *pluginsdk.ResourceData, meta interface
 					}
 				}
 				if capacityReservationLevel := sku.CapacityReservationLevel; capacityReservationLevel != nil {
-					d.Set("reservation_capacity_in_gb_per_day", capacityReservationLevel)
+					d.Set("reservation_capacity_in_gb_per_day", int64(pointer.From(capacityReservationLevel)))
 				}
 			}
 			d.Set("sku", skuName)
@@ -411,31 +480,35 @@ func resourceLogAnalyticsWorkspaceRead(d *pluginsdk.ResourceData, meta interface
 				// Special case for "Free" tier
 				d.Set("daily_quota_gb", utils.Float(0.5))
 			case props.WorkspaceCapping != nil && props.WorkspaceCapping.DailyQuotaGb != nil:
-				d.Set("daily_quota_gb", *props.WorkspaceCapping.DailyQuotaGb)
+				d.Set("daily_quota_gb", props.WorkspaceCapping.DailyQuotaGb)
 			default:
 				d.Set("daily_quota_gb", utils.Float(-1))
 			}
 
 			allowResourceOnlyPermissions := true
 			disableLocalAuth := false
+			purgeDataOnThirtyDays := false
 			if features := props.Features; features != nil {
-				v := features.EnableLogAccessUsingOnlyResourcePermissions
-				if v != nil {
-					allowResourceOnlyPermissions = *v
-				}
-				d := features.DisableLocalAuth
-				if d != nil {
-					disableLocalAuth = *d
-				}
+				allowResourceOnlyPermissions = pointer.From(features.EnableLogAccessUsingOnlyResourcePermissions)
+				disableLocalAuth = pointer.From(features.DisableLocalAuth)
+				purgeDataOnThirtyDays = pointer.From(features.ImmediatePurgeDataOn30Days)
 			}
 			d.Set("allow_resource_only_permissions", allowResourceOnlyPermissions)
 			d.Set("local_authentication_disabled", disableLocalAuth)
+			d.Set("immediate_data_purge_on_30_days_enabled", purgeDataOnThirtyDays)
 
-			sharedKeyId := sharedKeyWorkspaces.WorkspaceId{
-				SubscriptionId:    id.SubscriptionId,
-				ResourceGroupName: id.ResourceGroupName,
-				WorkspaceName:     id.WorkspaceName,
+			defaultDataCollectionRuleResourceId := ""
+			if props.DefaultDataCollectionRuleResourceId != nil {
+				dataCollectionId, err := datacollectionrules.ParseDataCollectionRuleID(*props.DefaultDataCollectionRuleResourceId)
+				if err != nil {
+					return err
+				}
+
+				defaultDataCollectionRuleResourceId = dataCollectionId.ID()
 			}
+			d.Set("data_collection_rule_id", defaultDataCollectionRuleResourceId)
+
+			sharedKeyId := sharedKeyWorkspaces.NewWorkspaceID(id.SubscriptionId, id.ResourceGroupName, id.WorkspaceName)
 			sharedKeysResp, err := sharedKeyClient.SharedKeysGetSharedKeys(ctx, sharedKeyId)
 			if err != nil {
 				log.Printf("[ERROR] Unable to List Shared keys for Log Analytics workspaces %s: %+v", id.WorkspaceName, err)
@@ -471,17 +544,13 @@ func resourceLogAnalyticsWorkspaceDelete(d *pluginsdk.ResourceData, meta interfa
 	defer cancel()
 
 	id, err := workspaces.ParseWorkspaceID(d.Id())
-	sharedKeyId := sharedKeyWorkspaces.WorkspaceId{
-		SubscriptionId:    id.SubscriptionId,
-		ResourceGroupName: id.ResourceGroupName,
-		WorkspaceName:     id.WorkspaceName,
-	}
+	sharedKeyId := sharedKeyWorkspaces.NewWorkspaceID(id.SubscriptionId, id.ResourceGroupName, id.WorkspaceName)
 	if err != nil {
 		return err
 	}
 
-	PermanentlyDeleteOnDestroy := meta.(*clients.Client).Features.LogAnalyticsWorkspace.PermanentlyDeleteOnDestroy
-	err = client.DeleteThenPoll(ctx, sharedKeyId, sharedKeyWorkspaces.DeleteOperationOptions{Force: utils.Bool(PermanentlyDeleteOnDestroy)})
+	permanentlyDeleteOnDestroy := meta.(*clients.Client).Features.LogAnalyticsWorkspace.PermanentlyDeleteOnDestroy
+	err = client.DeleteThenPoll(ctx, sharedKeyId, sharedKeyWorkspaces.DeleteOperationOptions{Force: utils.Bool(permanentlyDeleteOnDestroy)})
 	if err != nil {
 		return fmt.Errorf("issuing AzureRM delete request for Log Analytics Workspaces '%s': %+v", id.WorkspaceName, err)
 	}

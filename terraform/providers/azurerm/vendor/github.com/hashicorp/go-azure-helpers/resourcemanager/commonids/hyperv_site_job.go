@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package commonids
 
 import (
@@ -7,7 +10,7 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-var _ resourceids.ResourceId = HyperVSiteJobId{}
+var _ resourceids.ResourceId = &HyperVSiteJobId{}
 
 // HyperVSiteJobId is a struct representing the Resource ID for a Hyper V Site Job
 type HyperVSiteJobId struct {
@@ -29,29 +32,15 @@ func NewHyperVSiteJobID(subscriptionId string, resourceGroupName string, hyperVS
 
 // ParseHyperVSiteJobID parses 'input' into a HyperVSiteJobId
 func ParseHyperVSiteJobID(input string) (*HyperVSiteJobId, error) {
-	parser := resourceids.NewParserFromResourceIdType(HyperVSiteJobId{})
+	parser := resourceids.NewParserFromResourceIdType(&HyperVSiteJobId{})
 	parsed, err := parser.Parse(input, false)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := HyperVSiteJobId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.HyperVSiteName, ok = parsed.Parsed["hyperVSiteName"]; !ok {
-		return nil, fmt.Errorf("the segment 'hyperVSiteName' was not found in the resource id %q", input)
-	}
-
-	if id.JobName, ok = parsed.Parsed["jobName"]; !ok {
-		return nil, fmt.Errorf("the segment 'jobName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
@@ -60,32 +49,40 @@ func ParseHyperVSiteJobID(input string) (*HyperVSiteJobId, error) {
 // ParseHyperVSiteJobIDInsensitively parses 'input' case-insensitively into a HyperVSiteJobId
 // note: this method should only be used for API response data and not user input
 func ParseHyperVSiteJobIDInsensitively(input string) (*HyperVSiteJobId, error) {
-	parser := resourceids.NewParserFromResourceIdType(HyperVSiteJobId{})
+	parser := resourceids.NewParserFromResourceIdType(&HyperVSiteJobId{})
 	parsed, err := parser.Parse(input, true)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := HyperVSiteJobId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.HyperVSiteName, ok = parsed.Parsed["hyperVSiteName"]; !ok {
-		return nil, fmt.Errorf("the segment 'hyperVSiteName' was not found in the resource id %q", input)
-	}
-
-	if id.JobName, ok = parsed.Parsed["jobName"]; !ok {
-		return nil, fmt.Errorf("the segment 'jobName' was not found in the resource id %q", input)
+	if err = id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
+}
+
+func (id *HyperVSiteJobId) FromParseResult(input resourceids.ParseResult) error {
+	var ok bool
+
+	if id.SubscriptionId, ok = input.Parsed["subscriptionId"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", input)
+	}
+
+	if id.ResourceGroupName, ok = input.Parsed["resourceGroupName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", input)
+	}
+
+	if id.HyperVSiteName, ok = input.Parsed["hyperVSiteName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "hyperVSiteName", input)
+	}
+
+	if id.JobName, ok = input.Parsed["jobName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "jobName", input)
+	}
+
+	return nil
 }
 
 // ValidateHyperVSiteJobID checks that 'input' can be parsed as a Hyper V Site Job ID

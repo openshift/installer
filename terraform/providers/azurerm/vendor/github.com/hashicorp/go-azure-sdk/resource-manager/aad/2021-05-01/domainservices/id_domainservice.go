@@ -4,10 +4,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/recaser"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-var _ resourceids.ResourceId = DomainServiceId{}
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
+
+func init() {
+	recaser.RegisterResourceId(&DomainServiceId{})
+}
+
+var _ resourceids.ResourceId = &DomainServiceId{}
 
 // DomainServiceId is a struct representing the Resource ID for a Domain Service
 type DomainServiceId struct {
@@ -27,25 +35,15 @@ func NewDomainServiceID(subscriptionId string, resourceGroupName string, domainS
 
 // ParseDomainServiceID parses 'input' into a DomainServiceId
 func ParseDomainServiceID(input string) (*DomainServiceId, error) {
-	parser := resourceids.NewParserFromResourceIdType(DomainServiceId{})
+	parser := resourceids.NewParserFromResourceIdType(&DomainServiceId{})
 	parsed, err := parser.Parse(input, false)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := DomainServiceId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.DomainServiceName, ok = parsed.Parsed["domainServiceName"]; !ok {
-		return nil, fmt.Errorf("the segment 'domainServiceName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
@@ -54,28 +52,36 @@ func ParseDomainServiceID(input string) (*DomainServiceId, error) {
 // ParseDomainServiceIDInsensitively parses 'input' case-insensitively into a DomainServiceId
 // note: this method should only be used for API response data and not user input
 func ParseDomainServiceIDInsensitively(input string) (*DomainServiceId, error) {
-	parser := resourceids.NewParserFromResourceIdType(DomainServiceId{})
+	parser := resourceids.NewParserFromResourceIdType(&DomainServiceId{})
 	parsed, err := parser.Parse(input, true)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := DomainServiceId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.DomainServiceName, ok = parsed.Parsed["domainServiceName"]; !ok {
-		return nil, fmt.Errorf("the segment 'domainServiceName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
+}
+
+func (id *DomainServiceId) FromParseResult(input resourceids.ParseResult) error {
+	var ok bool
+
+	if id.SubscriptionId, ok = input.Parsed["subscriptionId"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", input)
+	}
+
+	if id.ResourceGroupName, ok = input.Parsed["resourceGroupName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", input)
+	}
+
+	if id.DomainServiceName, ok = input.Parsed["domainServiceName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "domainServiceName", input)
+	}
+
+	return nil
 }
 
 // ValidateDomainServiceID checks that 'input' can be parsed as a Domain Service ID

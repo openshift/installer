@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package resource
 
 import (
@@ -8,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources" // nolint: staticcheck
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
@@ -15,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/resource/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
@@ -43,6 +48,12 @@ func resourceResourceGroup() *pluginsdk.Resource {
 			"location": commonschema.Location(),
 
 			"tags": tags.Schema(),
+
+			"managed_by": {
+				Type:         pluginsdk.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
 		},
 	}
 }
@@ -74,8 +85,57 @@ func resourceResourceGroupCreateUpdate(d *pluginsdk.ResourceData, meta interface
 		Tags:     tags.Expand(t),
 	}
 
+	if v := d.Get("managed_by").(string); v != "" {
+		parameters.ManagedBy = pointer.To(v)
+	}
+
 	if _, err := client.CreateOrUpdate(ctx, name, parameters); err != nil {
 		return fmt.Errorf("creating Resource Group %q: %+v", name, err)
+	}
+
+	// TODO: remove this once ARM team confirms the issue is fixed on their end
+	//
+	// @favoretti: Working around a race condition in ARM eventually consistent backend data storage
+	// Sporadically, the ARM api will return successful creation response, following by a 404 to a
+	// subsequent `Get()`. Usually, seconds later, the storage is reconciled and following terraform
+	// run fails with `RequiresImport`.
+	//
+	// Snippet from MSFT support:
+	// The issue is related to replication of ARM data among regions. For example, another customer
+	// has some requests going to East US and other requests to East US 2, and during the time it takes
+	// to replicate between the two, they get 404's. The database account is a multi-master account with
+	// session consistency - so, write operations will be replicated across regions asynchronously.
+	// Session consistency only guarantees read-you-write guarantees within the scope of a session which
+	// is either defined by the application (ARM) or by the SDK (in which case the session spans only
+	// a single CosmosClient instance) - and given that several of the reads returning 404 after the
+	// creation of the resource group were done not only from a different ARM FD machine but even from
+	// a different region, they were made outside of the session scope - so, effectively eventually
+	// consistent. ARM team has worked in the past to make the multi-master model work transparently,
+	// and I assume they will continue this work as will our other teams working on the problem.
+	if d.IsNewResource() {
+		stateConf := &pluginsdk.StateChangeConf{ //nolint:staticcheck
+			Pending:                   []string{"Waiting"},
+			Target:                    []string{"Done"},
+			Timeout:                   10 * time.Minute,
+			MinTimeout:                4 * time.Second,
+			ContinuousTargetOccurence: 3,
+			Refresh: func() (interface{}, string, error) {
+				rg, err := client.Get(ctx, name)
+				if err != nil {
+					if utils.ResponseWasNotFound(rg.Response) {
+						return false, "Waiting", nil
+					}
+					return nil, "Error", fmt.Errorf("retrieving Resource Group: %+v", err)
+				}
+
+				return true, "Done", nil
+
+			},
+		}
+
+		if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+			return fmt.Errorf("waiting for Resource Group %s to become available: %+v", name, err)
+		}
 	}
 
 	resp, err := client.Get(ctx, name)
@@ -114,6 +174,7 @@ func resourceResourceGroupRead(d *pluginsdk.ResourceData, meta interface{}) erro
 
 	d.Set("name", resp.Name)
 	d.Set("location", location.NormalizeNilable(resp.Location))
+	d.Set("managed_by", pointer.From(resp.ManagedBy))
 	return tags.FlattenAndSet(d, resp.Tags)
 }
 
@@ -205,7 +266,7 @@ When that feature flag is set, Terraform will skip checking for any Resources wi
 delete this using the Azure API directly (which will clear up any nested resources).
 
 More information on the 'features' block can be found in the documentation:
-https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs#features
+https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/features-block
 `, name, strings.Join(formattedResourceUris, "\n"))
 	return fmt.Errorf(strings.ReplaceAll(message, "'", "`"))
 }

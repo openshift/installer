@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vmware
 
 import (
@@ -6,11 +9,12 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/vmware/2020-03-20/privateclouds"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/vmware/2022-05-01/privateclouds"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -59,7 +63,10 @@ func resourceVmwarePrivateCloud() *pluginsdk.Resource {
 					"av36",
 					"av36t",
 					"av36p",
+					"av36pt",
 					"av52",
+					"av52t",
+					"av64",
 				}, false),
 			},
 
@@ -216,13 +223,13 @@ func resourceVmwarePrivateCloudCreate(d *pluginsdk.ResourceData, meta interface{
 	}
 
 	privateCloud := privateclouds.PrivateCloud{
-		Location: location.Normalize(d.Get("location").(string)),
+		Location: pointer.To(location.Normalize(d.Get("location").(string))),
 		Sku: privateclouds.Sku{
 			Name: d.Get("sku_name").(string),
 		},
-		Properties: privateclouds.PrivateCloudProperties{
-			ManagementCluster: privateclouds.ManagementCluster{
-				ClusterSize: int64(d.Get("management_cluster.0.size").(int)),
+		Properties: &privateclouds.PrivateCloudProperties{
+			ManagementCluster: &privateclouds.CommonClusterProperties{
+				ClusterSize: pointer.To(int64(d.Get("management_cluster.0.size").(int))),
 			},
 			NetworkBlock:    d.Get("network_subnet_cidr").(string),
 			Internet:        &internet,
@@ -236,12 +243,16 @@ func resourceVmwarePrivateCloudCreate(d *pluginsdk.ResourceData, meta interface{
 		return fmt.Errorf("creating %s: %+v", id, err)
 	}
 
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return fmt.Errorf("internal-error: context had no deadline")
+	}
 	stateConf := &pluginsdk.StateChangeConf{
 		Pending:    []string{string(privateclouds.PrivateCloudProvisioningStateBuilding)},
 		Target:     []string{string(privateclouds.PrivateCloudProvisioningStateSucceeded)},
 		Refresh:    privateCloudStateRefreshFunc(ctx, client, id),
 		MinTimeout: 15 * time.Second,
-		Timeout:    d.Timeout(pluginsdk.TimeoutCreate),
+		Timeout:    time.Until(deadline),
 	}
 
 	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
@@ -276,7 +287,7 @@ func resourceVmwarePrivateCloudRead(d *pluginsdk.ResourceData, meta interface{})
 	d.Set("resource_group_name", id.ResourceGroupName)
 
 	if model := resp.Model; model != nil {
-		d.Set("location", location.Normalize(model.Location))
+		d.Set("location", location.NormalizeNilable(model.Location))
 		props := model.Properties
 
 		if err := d.Set("management_cluster", flattenPrivateCloudManagementCluster(props.ManagementCluster)); err != nil {
@@ -331,8 +342,8 @@ func resourceVmwarePrivateCloudUpdate(d *pluginsdk.ResourceData, meta interface{
 	}
 
 	if d.HasChange("management_cluster") {
-		privateCloudUpdate.Properties.ManagementCluster = &privateclouds.ManagementCluster{
-			ClusterSize: int64(d.Get("management_cluster.0.size").(int)),
+		privateCloudUpdate.Properties.ManagementCluster = &privateclouds.CommonClusterProperties{
+			ClusterSize: pointer.To(int64(d.Get("management_cluster.0.size").(int))),
 		}
 	}
 

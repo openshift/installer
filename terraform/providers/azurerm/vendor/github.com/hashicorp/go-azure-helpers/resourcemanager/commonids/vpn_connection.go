@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-var _ resourceids.ResourceId = VPNConnectionId{}
+var _ resourceids.ResourceId = &VPNConnectionId{}
 
 // VPNConnectionId is a struct representing the Resource ID for a V P N Connection
 type VPNConnectionId struct {
@@ -32,29 +32,15 @@ func NewVPNConnectionID(subscriptionId string, resourceGroupName string, gateway
 
 // ParseVPNConnectionID parses 'input' into a VPNConnectionId
 func ParseVPNConnectionID(input string) (*VPNConnectionId, error) {
-	parser := resourceids.NewParserFromResourceIdType(VPNConnectionId{})
+	parser := resourceids.NewParserFromResourceIdType(&VPNConnectionId{})
 	parsed, err := parser.Parse(input, false)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := VPNConnectionId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.GatewayName, ok = parsed.Parsed["gatewayName"]; !ok {
-		return nil, fmt.Errorf("the segment 'gatewayName' was not found in the resource id %q", input)
-	}
-
-	if id.ConnectionName, ok = parsed.Parsed["connectionName"]; !ok {
-		return nil, fmt.Errorf("the segment 'connectionName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
@@ -63,32 +49,40 @@ func ParseVPNConnectionID(input string) (*VPNConnectionId, error) {
 // ParseVPNConnectionIDInsensitively parses 'input' case-insensitively into a VPNConnectionId
 // note: this method should only be used for API response data and not user input
 func ParseVPNConnectionIDInsensitively(input string) (*VPNConnectionId, error) {
-	parser := resourceids.NewParserFromResourceIdType(VPNConnectionId{})
+	parser := resourceids.NewParserFromResourceIdType(&VPNConnectionId{})
 	parsed, err := parser.Parse(input, true)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := VPNConnectionId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.GatewayName, ok = parsed.Parsed["gatewayName"]; !ok {
-		return nil, fmt.Errorf("the segment 'gatewayName' was not found in the resource id %q", input)
-	}
-
-	if id.ConnectionName, ok = parsed.Parsed["connectionName"]; !ok {
-		return nil, fmt.Errorf("the segment 'connectionName' was not found in the resource id %q", input)
+	if err = id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
+}
+
+func (id *VPNConnectionId) FromParseResult(input resourceids.ParseResult) error {
+	var ok bool
+
+	if id.SubscriptionId, ok = input.Parsed["subscriptionId"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", input)
+	}
+
+	if id.ResourceGroupName, ok = input.Parsed["resourceGroupName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", input)
+	}
+
+	if id.GatewayName, ok = input.Parsed["gatewayName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "gatewayName", input)
+	}
+
+	if id.ConnectionName, ok = input.Parsed["connectionName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "connectionName", input)
+	}
+
+	return nil
 }
 
 // ValidateVPNConnectionID checks that 'input' can be parsed as a V P N Connection ID

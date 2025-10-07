@@ -1,11 +1,16 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package helpers
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-03-01/web" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/lang/pointer"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/web/2023-01-01/webapps"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	apimValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/apimanagement/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -13,39 +18,40 @@ import (
 )
 
 type SiteConfigLinuxWebAppSlot struct {
-	AlwaysOn                bool                    `tfschema:"always_on"`
-	ApiManagementConfigId   string                  `tfschema:"api_management_api_id"`
-	ApiDefinition           string                  `tfschema:"api_definition_url"`
-	AppCommandLine          string                  `tfschema:"app_command_line"`
-	AutoHeal                bool                    `tfschema:"auto_heal_enabled"`
-	AutoHealSettings        []AutoHealSettingLinux  `tfschema:"auto_heal_setting"`
-	AutoSwapSlotName        string                  `tfschema:"auto_swap_slot_name"`
-	UseManagedIdentityACR   bool                    `tfschema:"container_registry_use_managed_identity"`
-	ContainerRegistryMSI    string                  `tfschema:"container_registry_managed_identity_client_id"`
-	DefaultDocuments        []string                `tfschema:"default_documents"`
-	Http2Enabled            bool                    `tfschema:"http2_enabled"`
-	IpRestriction           []IpRestriction         `tfschema:"ip_restriction"`
-	ScmUseMainIpRestriction bool                    `tfschema:"scm_use_main_ip_restriction"`
-	ScmIpRestriction        []IpRestriction         `tfschema:"scm_ip_restriction"`
-	LoadBalancing           string                  `tfschema:"load_balancing_mode"`
-	LocalMysql              bool                    `tfschema:"local_mysql_enabled"`
-	ManagedPipelineMode     string                  `tfschema:"managed_pipeline_mode"`
-	RemoteDebugging         bool                    `tfschema:"remote_debugging_enabled"`
-	RemoteDebuggingVersion  string                  `tfschema:"remote_debugging_version"`
-	ScmType                 string                  `tfschema:"scm_type"`
-	Use32BitWorker          bool                    `tfschema:"use_32_bit_worker"`
-	WebSockets              bool                    `tfschema:"websockets_enabled"`
-	FtpsState               string                  `tfschema:"ftps_state"`
-	HealthCheckPath         string                  `tfschema:"health_check_path"`
-	HealthCheckEvictionTime int                     `tfschema:"health_check_eviction_time_in_min"`
-	WorkerCount             int                     `tfschema:"worker_count"`
-	ApplicationStack        []ApplicationStackLinux `tfschema:"application_stack"`
-	MinTlsVersion           string                  `tfschema:"minimum_tls_version"`
-	ScmMinTlsVersion        string                  `tfschema:"scm_minimum_tls_version"`
-	Cors                    []CorsSetting           `tfschema:"cors"`
-	DetailedErrorLogging    bool                    `tfschema:"detailed_error_logging_enabled"`
-	LinuxFxVersion          string                  `tfschema:"linux_fx_version"`
-	VnetRouteAllEnabled     bool                    `tfschema:"vnet_route_all_enabled"`
+	AlwaysOn                      bool                    `tfschema:"always_on"`
+	ApiManagementConfigId         string                  `tfschema:"api_management_api_id"`
+	ApiDefinition                 string                  `tfschema:"api_definition_url"`
+	AppCommandLine                string                  `tfschema:"app_command_line"`
+	AutoHealSettings              []AutoHealSettingLinux  `tfschema:"auto_heal_setting"`
+	AutoSwapSlotName              string                  `tfschema:"auto_swap_slot_name"`
+	UseManagedIdentityACR         bool                    `tfschema:"container_registry_use_managed_identity"`
+	ContainerRegistryMSI          string                  `tfschema:"container_registry_managed_identity_client_id"`
+	DefaultDocuments              []string                `tfschema:"default_documents"`
+	Http2Enabled                  bool                    `tfschema:"http2_enabled"`
+	IpRestriction                 []IpRestriction         `tfschema:"ip_restriction"`
+	IpRestrictionDefaultAction    string                  `tfschema:"ip_restriction_default_action"`
+	ScmUseMainIpRestriction       bool                    `tfschema:"scm_use_main_ip_restriction"`
+	ScmIpRestriction              []IpRestriction         `tfschema:"scm_ip_restriction"`
+	ScmIpRestrictionDefaultAction string                  `tfschema:"scm_ip_restriction_default_action"`
+	LoadBalancing                 string                  `tfschema:"load_balancing_mode"`
+	LocalMysql                    bool                    `tfschema:"local_mysql_enabled"`
+	ManagedPipelineMode           string                  `tfschema:"managed_pipeline_mode"`
+	RemoteDebugging               bool                    `tfschema:"remote_debugging_enabled"`
+	RemoteDebuggingVersion        string                  `tfschema:"remote_debugging_version"`
+	ScmType                       string                  `tfschema:"scm_type"`
+	Use32BitWorker                bool                    `tfschema:"use_32_bit_worker"`
+	WebSockets                    bool                    `tfschema:"websockets_enabled"`
+	FtpsState                     string                  `tfschema:"ftps_state"`
+	HealthCheckPath               string                  `tfschema:"health_check_path"`
+	HealthCheckEvictionTime       int64                   `tfschema:"health_check_eviction_time_in_min"`
+	WorkerCount                   int64                   `tfschema:"worker_count"`
+	ApplicationStack              []ApplicationStackLinux `tfschema:"application_stack"`
+	MinTlsVersion                 string                  `tfschema:"minimum_tls_version"`
+	ScmMinTlsVersion              string                  `tfschema:"scm_minimum_tls_version"`
+	Cors                          []CorsSetting           `tfschema:"cors"`
+	DetailedErrorLogging          bool                    `tfschema:"detailed_error_logging_enabled"`
+	LinuxFxVersion                string                  `tfschema:"linux_fx_version"`
+	VnetRouteAllEnabled           bool                    `tfschema:"vnet_route_all_enabled"`
 	// SiteLimits []SiteLimitsSettings `tfschema:"site_limits"` // TODO - New block to (possibly) support? No way to configure this in the portal?
 }
 
@@ -81,14 +87,6 @@ func SiteConfigSchemaLinuxWebAppSlot() *pluginsdk.Schema {
 
 				"application_stack": linuxApplicationStackSchema(),
 
-				"auto_heal_enabled": {
-					Type:     pluginsdk.TypeBool,
-					Optional: true,
-					RequiredWith: []string{
-						"site_config.0.auto_heal_setting",
-					},
-				},
-
 				"auto_heal_setting": autoHealSettingSchemaLinux(),
 
 				"container_registry_use_managed_identity": {
@@ -121,6 +119,13 @@ func SiteConfigSchemaLinuxWebAppSlot() *pluginsdk.Schema {
 
 				"ip_restriction": IpRestrictionSchema(),
 
+				"ip_restriction_default_action": {
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      webapps.DefaultActionAllow,
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForDefaultAction(), false),
+				},
+
 				"scm_use_main_ip_restriction": {
 					Type:     pluginsdk.TypeBool,
 					Optional: true,
@@ -129,6 +134,13 @@ func SiteConfigSchemaLinuxWebAppSlot() *pluginsdk.Schema {
 
 				"scm_ip_restriction": IpRestrictionSchema(),
 
+				"scm_ip_restriction_default_action": {
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      webapps.DefaultActionAllow,
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForDefaultAction(), false),
+				},
+
 				"local_mysql_enabled": {
 					Type:     pluginsdk.TypeBool,
 					Optional: true,
@@ -136,27 +148,17 @@ func SiteConfigSchemaLinuxWebAppSlot() *pluginsdk.Schema {
 				},
 
 				"load_balancing_mode": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Default:  "LeastRequests",
-					ValidateFunc: validation.StringInSlice([]string{
-						"LeastRequests", // Service default
-						"WeightedRoundRobin",
-						"LeastResponseTime",
-						"WeightedTotalTraffic",
-						"RequestHash",
-						"PerSiteRoundRobin",
-					}, false),
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      "LeastRequests",
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForSiteLoadBalancing(), false),
 				},
 
 				"managed_pipeline_mode": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Default:  string(web.ManagedPipelineModeIntegrated),
-					ValidateFunc: validation.StringInSlice([]string{
-						string(web.ManagedPipelineModeClassic),
-						string(web.ManagedPipelineModeIntegrated),
-					}, false),
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      string(webapps.ManagedPipelineModeIntegrated),
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForManagedPipelineMode(), false),
 				},
 
 				"remote_debugging_enabled": {
@@ -172,6 +174,7 @@ func SiteConfigSchemaLinuxWebAppSlot() *pluginsdk.Schema {
 					ValidateFunc: validation.StringInSlice([]string{
 						"VS2017",
 						"VS2019",
+						"VS2022",
 					}, false),
 				},
 
@@ -193,27 +196,35 @@ func SiteConfigSchemaLinuxWebAppSlot() *pluginsdk.Schema {
 				},
 
 				"ftps_state": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Default:  string(web.FtpsStateDisabled),
-					ValidateFunc: validation.StringInSlice([]string{
-						string(web.FtpsStateAllAllowed),
-						string(web.FtpsStateDisabled),
-						string(web.FtpsStateFtpsOnly),
-					}, false),
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      string(webapps.FtpsStateDisabled),
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForFtpsState(), false),
 				},
 
 				"health_check_path": {
 					Type:     pluginsdk.TypeString,
 					Optional: true,
+					RequiredWith: func() []string {
+						if features.FourPointOhBeta() {
+							return []string{"site_config.0.health_check_eviction_time_in_min"}
+						}
+						return []string{}
+					}(),
 				},
 
 				"health_check_eviction_time_in_min": {
 					Type:         pluginsdk.TypeInt,
 					Optional:     true,
-					Computed:     true,
+					Computed:     !features.FourPointOhBeta(),
 					ValidateFunc: validation.IntBetween(2, 10),
-					Description:  "The amount of time in minutes that a node is unhealthy before being removed from the load balancer. Possible values are between `2` and `10`. Defaults to `10`. Only valid in conjunction with `health_check_path`",
+					RequiredWith: func() []string {
+						if features.FourPointOhBeta() {
+							return []string{"site_config.0.health_check_path"}
+						}
+						return []string{}
+					}(),
+					Description: "The amount of time in minutes that a node is unhealthy before being removed from the load balancer. Possible values are between `2` and `10`. Only valid in conjunction with `health_check_path`",
 				},
 
 				"worker_count": {
@@ -224,25 +235,17 @@ func SiteConfigSchemaLinuxWebAppSlot() *pluginsdk.Schema {
 				},
 
 				"minimum_tls_version": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Default:  string(web.SupportedTLSVersionsOneFullStopTwo),
-					ValidateFunc: validation.StringInSlice([]string{
-						string(web.SupportedTLSVersionsOneFullStopZero),
-						string(web.SupportedTLSVersionsOneFullStopOne),
-						string(web.SupportedTLSVersionsOneFullStopTwo),
-					}, false),
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      string(webapps.SupportedTlsVersionsOnePointTwo),
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForSupportedTlsVersions(), false),
 				},
 
 				"scm_minimum_tls_version": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Default:  string(web.SupportedTLSVersionsOneFullStopTwo),
-					ValidateFunc: validation.StringInSlice([]string{
-						string(web.SupportedTLSVersionsOneFullStopZero),
-						string(web.SupportedTLSVersionsOneFullStopOne),
-						string(web.SupportedTLSVersionsOneFullStopTwo),
-					}, false),
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      string(webapps.SupportedTlsVersionsOnePointTwo),
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForSupportedTlsVersions(), false),
 				},
 
 				"cors": CorsSettingsSchema(),
@@ -275,40 +278,42 @@ func SiteConfigSchemaLinuxWebAppSlot() *pluginsdk.Schema {
 }
 
 type SiteConfigWindowsWebAppSlot struct {
-	AlwaysOn                 bool                      `tfschema:"always_on"`
-	ApiManagementConfigId    string                    `tfschema:"api_management_api_id"`
-	ApiDefinition            string                    `tfschema:"api_definition_url"`
-	ApplicationStack         []ApplicationStackWindows `tfschema:"application_stack"`
-	AppCommandLine           string                    `tfschema:"app_command_line"`
-	AutoHeal                 bool                      `tfschema:"auto_heal_enabled"`
-	AutoHealSettings         []AutoHealSettingWindows  `tfschema:"auto_heal_setting"`
-	AutoSwapSlotName         string                    `tfschema:"auto_swap_slot_name"`
-	UseManagedIdentityACR    bool                      `tfschema:"container_registry_use_managed_identity"`
-	ContainerRegistryUserMSI string                    `tfschema:"container_registry_managed_identity_client_id"`
-	DefaultDocuments         []string                  `tfschema:"default_documents"`
-	Http2Enabled             bool                      `tfschema:"http2_enabled"`
-	IpRestriction            []IpRestriction           `tfschema:"ip_restriction"`
-	ScmUseMainIpRestriction  bool                      `tfschema:"scm_use_main_ip_restriction"`
-	ScmIpRestriction         []IpRestriction           `tfschema:"scm_ip_restriction"`
-	LoadBalancing            string                    `tfschema:"load_balancing_mode"`
-	LocalMysql               bool                      `tfschema:"local_mysql_enabled"`
-	ManagedPipelineMode      string                    `tfschema:"managed_pipeline_mode"`
-	RemoteDebugging          bool                      `tfschema:"remote_debugging_enabled"`
-	RemoteDebuggingVersion   string                    `tfschema:"remote_debugging_version"`
-	ScmType                  string                    `tfschema:"scm_type"`
-	Use32BitWorker           bool                      `tfschema:"use_32_bit_worker"`
-	WebSockets               bool                      `tfschema:"websockets_enabled"`
-	FtpsState                string                    `tfschema:"ftps_state"`
-	HealthCheckPath          string                    `tfschema:"health_check_path"`
-	HealthCheckEvictionTime  int                       `tfschema:"health_check_eviction_time_in_min"`
-	WorkerCount              int                       `tfschema:"worker_count"`
-	VirtualApplications      []VirtualApplication      `tfschema:"virtual_application"`
-	MinTlsVersion            string                    `tfschema:"minimum_tls_version"`
-	ScmMinTlsVersion         string                    `tfschema:"scm_minimum_tls_version"`
-	Cors                     []CorsSetting             `tfschema:"cors"`
-	DetailedErrorLogging     bool                      `tfschema:"detailed_error_logging_enabled"`
-	WindowsFxVersion         string                    `tfschema:"windows_fx_version"`
-	VnetRouteAllEnabled      bool                      `tfschema:"vnet_route_all_enabled"`
+	AlwaysOn                      bool                      `tfschema:"always_on"`
+	ApiManagementConfigId         string                    `tfschema:"api_management_api_id"`
+	ApiDefinition                 string                    `tfschema:"api_definition_url"`
+	ApplicationStack              []ApplicationStackWindows `tfschema:"application_stack"`
+	AppCommandLine                string                    `tfschema:"app_command_line"`
+	AutoHealSettings              []AutoHealSettingWindows  `tfschema:"auto_heal_setting"`
+	AutoSwapSlotName              string                    `tfschema:"auto_swap_slot_name"`
+	UseManagedIdentityACR         bool                      `tfschema:"container_registry_use_managed_identity"`
+	ContainerRegistryUserMSI      string                    `tfschema:"container_registry_managed_identity_client_id"`
+	DefaultDocuments              []string                  `tfschema:"default_documents"`
+	Http2Enabled                  bool                      `tfschema:"http2_enabled"`
+	IpRestriction                 []IpRestriction           `tfschema:"ip_restriction"`
+	IpRestrictionDefaultAction    string                    `tfschema:"ip_restriction_default_action"`
+	ScmUseMainIpRestriction       bool                      `tfschema:"scm_use_main_ip_restriction"`
+	ScmIpRestriction              []IpRestriction           `tfschema:"scm_ip_restriction"`
+	ScmIpRestrictionDefaultAction string                    `tfschema:"scm_ip_restriction_default_action"`
+	LoadBalancing                 string                    `tfschema:"load_balancing_mode"`
+	LocalMysql                    bool                      `tfschema:"local_mysql_enabled"`
+	ManagedPipelineMode           string                    `tfschema:"managed_pipeline_mode"`
+	RemoteDebugging               bool                      `tfschema:"remote_debugging_enabled"`
+	RemoteDebuggingVersion        string                    `tfschema:"remote_debugging_version"`
+	ScmType                       string                    `tfschema:"scm_type"`
+	Use32BitWorker                bool                      `tfschema:"use_32_bit_worker"`
+	WebSockets                    bool                      `tfschema:"websockets_enabled"`
+	FtpsState                     string                    `tfschema:"ftps_state"`
+	HealthCheckPath               string                    `tfschema:"health_check_path"`
+	HealthCheckEvictionTime       int64                     `tfschema:"health_check_eviction_time_in_min"`
+	WorkerCount                   int64                     `tfschema:"worker_count"`
+	HandlerMapping                []HandlerMappings         `tfschema:"handler_mapping"`
+	VirtualApplications           []VirtualApplication      `tfschema:"virtual_application"`
+	MinTlsVersion                 string                    `tfschema:"minimum_tls_version"`
+	ScmMinTlsVersion              string                    `tfschema:"scm_minimum_tls_version"`
+	Cors                          []CorsSetting             `tfschema:"cors"`
+	DetailedErrorLogging          bool                      `tfschema:"detailed_error_logging_enabled"`
+	WindowsFxVersion              string                    `tfschema:"windows_fx_version"`
+	VnetRouteAllEnabled           bool                      `tfschema:"vnet_route_all_enabled"`
 }
 
 func SiteConfigSchemaWindowsWebAppSlot() *pluginsdk.Schema {
@@ -341,15 +346,6 @@ func SiteConfigSchemaWindowsWebAppSlot() *pluginsdk.Schema {
 				"app_command_line": {
 					Type:     pluginsdk.TypeString,
 					Optional: true,
-				},
-
-				"auto_heal_enabled": {
-					Type:     pluginsdk.TypeBool,
-					Optional: true,
-					Default:  false,
-					RequiredWith: []string{
-						"site_config.0.auto_heal_setting",
-					},
 				},
 
 				"auto_heal_setting": autoHealSettingSchemaWindows(),
@@ -389,6 +385,13 @@ func SiteConfigSchemaWindowsWebAppSlot() *pluginsdk.Schema {
 
 				"ip_restriction": IpRestrictionSchema(),
 
+				"ip_restriction_default_action": {
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      webapps.DefaultActionAllow,
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForDefaultAction(), false),
+				},
+
 				"scm_use_main_ip_restriction": {
 					Type:     pluginsdk.TypeBool,
 					Optional: true,
@@ -397,6 +400,13 @@ func SiteConfigSchemaWindowsWebAppSlot() *pluginsdk.Schema {
 
 				"scm_ip_restriction": IpRestrictionSchema(),
 
+				"scm_ip_restriction_default_action": {
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      webapps.DefaultActionAllow,
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForDefaultAction(), false),
+				},
+
 				"local_mysql_enabled": {
 					Type:     pluginsdk.TypeBool,
 					Optional: true,
@@ -404,27 +414,17 @@ func SiteConfigSchemaWindowsWebAppSlot() *pluginsdk.Schema {
 				},
 
 				"load_balancing_mode": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Default:  string(web.SiteLoadBalancingLeastRequests),
-					ValidateFunc: validation.StringInSlice([]string{
-						string(web.SiteLoadBalancingLeastRequests),
-						string(web.SiteLoadBalancingWeightedRoundRobin),
-						string(web.SiteLoadBalancingLeastResponseTime),
-						string(web.SiteLoadBalancingWeightedTotalTraffic),
-						string(web.SiteLoadBalancingRequestHash),
-						string(web.SiteLoadBalancingPerSiteRoundRobin),
-					}, false),
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      string(webapps.SiteLoadBalancingLeastRequests),
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForSiteLoadBalancing(), false),
 				},
 
 				"managed_pipeline_mode": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Default:  string(web.ManagedPipelineModeIntegrated),
-					ValidateFunc: validation.StringInSlice([]string{
-						string(web.ManagedPipelineModeClassic),
-						string(web.ManagedPipelineModeIntegrated),
-					}, false),
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      string(webapps.ManagedPipelineModeIntegrated),
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForManagedPipelineMode(), false),
 				},
 
 				"remote_debugging_enabled": {
@@ -440,6 +440,7 @@ func SiteConfigSchemaWindowsWebAppSlot() *pluginsdk.Schema {
 					ValidateFunc: validation.StringInSlice([]string{
 						"VS2017",
 						"VS2019",
+						"VS2022",
 					}, false),
 				},
 
@@ -461,27 +462,35 @@ func SiteConfigSchemaWindowsWebAppSlot() *pluginsdk.Schema {
 				},
 
 				"ftps_state": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Default:  string(web.FtpsStateDisabled),
-					ValidateFunc: validation.StringInSlice([]string{
-						string(web.FtpsStateAllAllowed),
-						string(web.FtpsStateDisabled),
-						string(web.FtpsStateFtpsOnly),
-					}, false),
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      string(webapps.FtpsStateDisabled),
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForFtpsState(), false),
 				},
 
 				"health_check_path": {
 					Type:     pluginsdk.TypeString,
 					Optional: true,
+					RequiredWith: func() []string {
+						if features.FourPointOhBeta() {
+							return []string{"site_config.0.health_check_eviction_time_in_min"}
+						}
+						return []string{}
+					}(),
 				},
 
 				"health_check_eviction_time_in_min": {
 					Type:         pluginsdk.TypeInt,
 					Optional:     true,
-					Computed:     true,
+					Computed:     !features.FourPointOhBeta(),
 					ValidateFunc: validation.IntBetween(2, 10),
-					Description:  "The amount of time in minutes that a node is unhealthy before being removed from the load balancer. Possible values are between `2` and `10`. Defaults to `10`. Only valid in conjunction with `health_check_path`",
+					RequiredWith: func() []string {
+						if features.FourPointOhBeta() {
+							return []string{"site_config.0.health_check_path"}
+						}
+						return []string{}
+					}(),
+					Description: "The amount of time in minutes that a node is unhealthy before being removed from the load balancer. Possible values are between `2` and `10`. Only valid in conjunction with `health_check_path`",
 				},
 
 				"worker_count": {
@@ -492,28 +501,22 @@ func SiteConfigSchemaWindowsWebAppSlot() *pluginsdk.Schema {
 				},
 
 				"minimum_tls_version": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Default:  string(web.SupportedTLSVersionsOneFullStopTwo),
-					ValidateFunc: validation.StringInSlice([]string{
-						string(web.SupportedTLSVersionsOneFullStopZero),
-						string(web.SupportedTLSVersionsOneFullStopOne),
-						string(web.SupportedTLSVersionsOneFullStopTwo),
-					}, false),
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      string(webapps.SupportedTlsVersionsOnePointTwo),
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForSupportedTlsVersions(), false),
 				},
 
 				"scm_minimum_tls_version": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Default:  string(web.SupportedTLSVersionsOneFullStopTwo),
-					ValidateFunc: validation.StringInSlice([]string{
-						string(web.SupportedTLSVersionsOneFullStopZero),
-						string(web.SupportedTLSVersionsOneFullStopOne),
-						string(web.SupportedTLSVersionsOneFullStopTwo),
-					}, false),
+					Type:         pluginsdk.TypeString,
+					Optional:     true,
+					Default:      string(webapps.SupportedTlsVersionsOnePointTwo),
+					ValidateFunc: validation.StringInSlice(webapps.PossibleValuesForSupportedTlsVersions(), false),
 				},
 
 				"cors": CorsSettingsSchema(),
+
+				"handler_mapping": HandlerMappingSchema(),
 
 				"virtual_application": virtualApplicationsSchema(),
 
@@ -538,359 +541,523 @@ func SiteConfigSchemaWindowsWebAppSlot() *pluginsdk.Schema {
 	}
 }
 
-func ExpandSiteConfigLinuxWebAppSlot(siteConfig []SiteConfigLinuxWebAppSlot, existing *web.SiteConfig, metadata sdk.ResourceMetaData) (*web.SiteConfig, error) {
-	if len(siteConfig) == 0 {
-		return nil, nil
-	}
-	expanded := &web.SiteConfig{}
-	if existing != nil {
-		expanded = existing
+func (s *SiteConfigLinuxWebAppSlot) ExpandForCreate(appSettings map[string]string) (*webapps.SiteConfig, error) {
+	expanded := &webapps.SiteConfig{}
+	expanded.AlwaysOn = pointer.To(s.AlwaysOn)
+	expanded.AcrUseManagedIdentityCreds = pointer.To(s.UseManagedIdentityACR)
+	expanded.HTTP20Enabled = pointer.To(s.Http2Enabled)
+	expanded.ScmIPSecurityRestrictionsUseMain = pointer.To(s.ScmUseMainIpRestriction)
+	expanded.LocalMySqlEnabled = pointer.To(s.LocalMysql)
+	expanded.LoadBalancing = pointer.To(webapps.SiteLoadBalancing(s.LoadBalancing))
+	expanded.ManagedPipelineMode = pointer.To(webapps.ManagedPipelineMode(s.ManagedPipelineMode))
+	expanded.RemoteDebuggingEnabled = pointer.To(s.RemoteDebugging)
+	expanded.Use32BitWorkerProcess = pointer.To(s.Use32BitWorker)
+	expanded.WebSocketsEnabled = pointer.To(s.WebSockets)
+	expanded.FtpsState = pointer.To(webapps.FtpsState(s.FtpsState))
+	expanded.MinTlsVersion = pointer.To(webapps.SupportedTlsVersions(s.MinTlsVersion))
+	expanded.ScmMinTlsVersion = pointer.To(webapps.SupportedTlsVersions(s.ScmMinTlsVersion))
+	expanded.AutoHealEnabled = pointer.To(false)
+	expanded.VnetRouteAllEnabled = pointer.To(s.VnetRouteAllEnabled)
+	expanded.IPSecurityRestrictionsDefaultAction = pointer.To(webapps.DefaultAction(s.IpRestrictionDefaultAction))
+	expanded.ScmIPSecurityRestrictionsDefaultAction = pointer.To(webapps.DefaultAction(s.ScmIpRestrictionDefaultAction))
+
+	if s.ApiManagementConfigId != "" {
+		expanded.ApiManagementConfig = &webapps.ApiManagementConfig{
+			Id: pointer.To(s.ApiManagementConfigId),
+		}
 	}
 
-	linuxSlotSiteConfig := siteConfig[0]
-
-	if metadata.ResourceData.HasChange("site_config.0.always_on") {
-		expanded.AlwaysOn = pointer.To(linuxSlotSiteConfig.AlwaysOn)
+	if s.ApiDefinition != "" {
+		expanded.ApiDefinition = &webapps.ApiDefinitionInfo{
+			Url: pointer.To(s.ApiDefinition),
+		}
 	}
+
+	if s.AppCommandLine != "" {
+		expanded.AppCommandLine = pointer.To(s.AppCommandLine)
+	}
+
+	if len(s.ApplicationStack) == 1 {
+		linuxAppStack := s.ApplicationStack[0]
+		if linuxAppStack.NetFrameworkVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("DOTNETCORE|%s", linuxAppStack.NetFrameworkVersion))
+		}
+
+		if linuxAppStack.GoVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("GO|%s", linuxAppStack.GoVersion))
+		}
+
+		if linuxAppStack.PhpVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("PHP|%s", linuxAppStack.PhpVersion))
+		}
+
+		if linuxAppStack.NodeVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("NODE|%s", linuxAppStack.NodeVersion))
+		}
+
+		if linuxAppStack.RubyVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("RUBY|%s", linuxAppStack.RubyVersion))
+		}
+
+		if linuxAppStack.PythonVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("PYTHON|%s", linuxAppStack.PythonVersion))
+		}
+
+		if linuxAppStack.JavaServer != "" {
+			javaString, err := JavaLinuxFxStringBuilder(linuxAppStack.JavaVersion, linuxAppStack.JavaServer, linuxAppStack.JavaServerVersion)
+			if err != nil {
+				return nil, fmt.Errorf("could not build linuxFxVersion string: %+v", err)
+			}
+			expanded.LinuxFxVersion = javaString
+		}
+
+		if !features.FourPointOhBeta() {
+			if linuxAppStack.DockerImage != "" {
+				expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("DOCKER|%s:%s", linuxAppStack.DockerImage, linuxAppStack.DockerImageTag))
+			}
+		}
+
+		if linuxAppStack.DockerImageName != "" {
+			expanded.LinuxFxVersion = pointer.To(EncodeDockerFxString(linuxAppStack.DockerImageName, linuxAppStack.DockerRegistryUrl))
+
+			if appSettings == nil {
+				appSettings = make(map[string]string)
+			}
+
+			appSettings["DOCKER_REGISTRY_SERVER_URL"] = linuxAppStack.DockerRegistryUrl
+			appSettings["DOCKER_REGISTRY_SERVER_USERNAME"] = linuxAppStack.DockerRegistryUsername
+			appSettings["DOCKER_REGISTRY_SERVER_PASSWORD"] = linuxAppStack.DockerRegistryPassword
+		}
+	}
+
+	expanded.AppSettings = ExpandAppSettingsForCreate(appSettings)
+
+	if s.AutoSwapSlotName != "" {
+		expanded.AutoSwapSlotName = pointer.To(s.AutoSwapSlotName)
+	}
+
+	if s.ContainerRegistryMSI != "" {
+		expanded.AcrUserManagedIdentityID = pointer.To(s.ContainerRegistryMSI)
+	}
+
+	if len(s.DefaultDocuments) != 0 {
+		expanded.DefaultDocuments = pointer.To(s.DefaultDocuments)
+	}
+
+	if len(s.IpRestriction) != 0 {
+		ipRestrictions, err := ExpandIpRestrictions(s.IpRestriction)
+		if err != nil {
+			return nil, err
+		}
+
+		expanded.IPSecurityRestrictions = ipRestrictions
+	}
+
+	if len(s.ScmIpRestriction) != 0 {
+		ipRestrictions, err := ExpandIpRestrictions(s.ScmIpRestriction)
+		if err != nil {
+			return nil, err
+		}
+
+		expanded.ScmIPSecurityRestrictions = ipRestrictions
+	}
+
+	if s.RemoteDebuggingVersion != "" {
+		expanded.RemoteDebuggingVersion = pointer.To(s.RemoteDebuggingVersion)
+	}
+
+	if s.WorkerCount != 0 {
+		expanded.NumberOfWorkers = pointer.To(s.WorkerCount)
+	}
+
+	if s.HealthCheckPath != "" {
+		expanded.HealthCheckPath = pointer.To(s.HealthCheckPath)
+	}
+
+	if len(s.Cors) != 0 {
+		expanded.Cors = ExpandCorsSettings(s.Cors)
+	}
+
+	if len(s.AutoHealSettings) == 1 {
+		expanded.AutoHealEnabled = pointer.To(true)
+		expanded.AutoHealRules = expandAutoHealSettingsLinux(s.AutoHealSettings)
+	}
+
+	return expanded, nil
+}
+
+func (s *SiteConfigLinuxWebAppSlot) ExpandForUpdate(metadata sdk.ResourceMetaData, existing *webapps.SiteConfig, appSettings map[string]string) (*webapps.SiteConfig, error) {
+	expanded := *existing
+
+	expanded.AlwaysOn = pointer.To(s.AlwaysOn)
+	expanded.AcrUseManagedIdentityCreds = pointer.To(s.UseManagedIdentityACR)
+	expanded.HTTP20Enabled = pointer.To(s.Http2Enabled)
+	expanded.LocalMySqlEnabled = pointer.To(s.LocalMysql)
+	expanded.RemoteDebuggingEnabled = pointer.To(s.RemoteDebugging)
+	expanded.ScmIPSecurityRestrictionsUseMain = pointer.To(s.ScmUseMainIpRestriction)
+	expanded.Use32BitWorkerProcess = pointer.To(s.Use32BitWorker)
+	expanded.WebSocketsEnabled = pointer.To(s.WebSockets)
+	expanded.VnetRouteAllEnabled = pointer.To(s.VnetRouteAllEnabled)
 
 	if metadata.ResourceData.HasChange("site_config.0.api_management_api_id") {
-		expanded.APIManagementConfig = &web.APIManagementConfig{
-			ID: pointer.To(linuxSlotSiteConfig.ApiManagementConfigId),
+		expanded.ApiManagementConfig = &webapps.ApiManagementConfig{
+			Id: pointer.To(s.ApiManagementConfigId),
 		}
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.api_definition_url") {
-		expanded.APIDefinition = &web.APIDefinitionInfo{
-			URL: pointer.To(linuxSlotSiteConfig.ApiDefinition),
+		expanded.ApiDefinition = &webapps.ApiDefinitionInfo{
+			Url: pointer.To(s.ApiDefinition),
 		}
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.app_command_line") {
-		expanded.AppCommandLine = pointer.To(linuxSlotSiteConfig.AppCommandLine)
+		expanded.AppCommandLine = pointer.To(s.AppCommandLine)
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.application_stack") {
-		if len(linuxSlotSiteConfig.ApplicationStack) == 1 {
-			linuxAppStack := linuxSlotSiteConfig.ApplicationStack[0]
-			if linuxAppStack.NetFrameworkVersion != "" {
-				expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("DOTNETCORE|%s", linuxAppStack.NetFrameworkVersion))
-			}
+	if len(s.ApplicationStack) == 1 {
+		linuxAppStack := s.ApplicationStack[0]
+		if linuxAppStack.NetFrameworkVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("DOTNETCORE|%s", linuxAppStack.NetFrameworkVersion))
+		}
 
-			if linuxAppStack.PhpVersion != "" {
-				expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("PHP|%s", linuxAppStack.PhpVersion))
-			}
+		if linuxAppStack.GoVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("GO|%s", linuxAppStack.GoVersion))
+		}
 
-			if linuxAppStack.NodeVersion != "" {
-				expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("NODE|%s", linuxAppStack.NodeVersion))
-			}
+		if linuxAppStack.PhpVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("PHP|%s", linuxAppStack.PhpVersion))
+		}
 
-			if linuxAppStack.PythonVersion != "" {
-				expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("PYTHON|%s", linuxAppStack.PythonVersion))
-			}
+		if linuxAppStack.NodeVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("NODE|%s", linuxAppStack.NodeVersion))
+		}
 
-			if linuxAppStack.RubyVersion != "" {
-				expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("RUBY|%s", linuxAppStack.RubyVersion))
-			}
+		if linuxAppStack.RubyVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("RUBY|%s", linuxAppStack.RubyVersion))
+		}
 
-			if linuxAppStack.JavaServer != "" {
-				javaString, err := JavaLinuxFxStringBuilder(linuxAppStack.JavaVersion, linuxAppStack.JavaServer, linuxAppStack.JavaServerVersion)
-				if err != nil {
-					return nil, fmt.Errorf("could not build linuxFxVersion string: %+v", err)
-				}
-				expanded.LinuxFxVersion = javaString
-			}
+		if linuxAppStack.PythonVersion != "" {
+			expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("PYTHON|%s", linuxAppStack.PythonVersion))
+		}
 
+		if linuxAppStack.JavaServer != "" {
+			javaString, err := JavaLinuxFxStringBuilder(linuxAppStack.JavaVersion, linuxAppStack.JavaServer, linuxAppStack.JavaServerVersion)
+			if err != nil {
+				return nil, fmt.Errorf("could not build linuxFxVersion string: %+v", err)
+			}
+			expanded.LinuxFxVersion = javaString
+		}
+
+		if !features.FourPointOhBeta() {
 			if linuxAppStack.DockerImage != "" {
 				expanded.LinuxFxVersion = pointer.To(fmt.Sprintf("DOCKER|%s:%s", linuxAppStack.DockerImage, linuxAppStack.DockerImageTag))
 			}
-		} else {
-			expanded.LinuxFxVersion = pointer.To("")
 		}
+
+		if linuxAppStack.DockerImageName != "" {
+			expanded.LinuxFxVersion = pointer.To(EncodeDockerFxString(linuxAppStack.DockerImageName, linuxAppStack.DockerRegistryUrl))
+
+			if appSettings == nil {
+				appSettings = make(map[string]string)
+			}
+
+			appSettings["DOCKER_REGISTRY_SERVER_URL"] = linuxAppStack.DockerRegistryUrl
+			appSettings["DOCKER_REGISTRY_SERVER_USERNAME"] = linuxAppStack.DockerRegistryUsername
+			appSettings["DOCKER_REGISTRY_SERVER_PASSWORD"] = linuxAppStack.DockerRegistryPassword
+		}
+	} else {
+		expanded.LinuxFxVersion = pointer.To("")
 	}
 
-	expanded.AcrUseManagedIdentityCreds = pointer.To(linuxSlotSiteConfig.UseManagedIdentityACR)
+	expanded.AppSettings = ExpandAppSettingsForCreate(appSettings)
+
+	if metadata.ResourceData.HasChange("site_config.0.auto_swap_slot_name") {
+		expanded.AutoSwapSlotName = pointer.To(s.AutoSwapSlotName)
+	}
 
 	if metadata.ResourceData.HasChange("site_config.0.container_registry_managed_identity_client_id") {
-		expanded.AcrUserManagedIdentityID = pointer.To(linuxSlotSiteConfig.ContainerRegistryMSI)
+		expanded.AcrUserManagedIdentityID = pointer.To(s.ContainerRegistryMSI)
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.default_documents") {
-		expanded.DefaultDocuments = &linuxSlotSiteConfig.DefaultDocuments
-	}
-
-	if metadata.ResourceData.HasChange("site_config.0.http2_enabled") {
-		expanded.HTTP20Enabled = pointer.To(linuxSlotSiteConfig.Http2Enabled)
+		expanded.DefaultDocuments = &s.DefaultDocuments
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.ip_restriction") {
-		ipRestrictions, err := ExpandIpRestrictions(linuxSlotSiteConfig.IpRestriction)
+		ipRestrictions, err := ExpandIpRestrictions(s.IpRestriction)
 		if err != nil {
 			return nil, err
 		}
 		expanded.IPSecurityRestrictions = ipRestrictions
 	}
 
-	expanded.ScmIPSecurityRestrictionsUseMain = pointer.To(linuxSlotSiteConfig.ScmUseMainIpRestriction)
+	if metadata.ResourceData.HasChange("site_config.0.ip_restriction_default_action") {
+		expanded.IPSecurityRestrictionsDefaultAction = pointer.To(webapps.DefaultAction(s.IpRestrictionDefaultAction))
+	}
 
 	if metadata.ResourceData.HasChange("site_config.0.scm_ip_restriction") {
-		scmIpRestrictions, err := ExpandIpRestrictions(linuxSlotSiteConfig.ScmIpRestriction)
+		scmIpRestrictions, err := ExpandIpRestrictions(s.ScmIpRestriction)
 		if err != nil {
 			return nil, err
 		}
 		expanded.ScmIPSecurityRestrictions = scmIpRestrictions
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.local_mysql_enabled") {
-		expanded.LocalMySQLEnabled = pointer.To(linuxSlotSiteConfig.LocalMysql)
+	if metadata.ResourceData.HasChange("site_config.0.scm_ip_restriction_default_action") {
+		expanded.ScmIPSecurityRestrictionsDefaultAction = pointer.To(webapps.DefaultAction(s.ScmIpRestrictionDefaultAction))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.load_balancing_mode") {
-		expanded.LoadBalancing = web.SiteLoadBalancing(linuxSlotSiteConfig.LoadBalancing)
+		expanded.LoadBalancing = pointer.To(webapps.SiteLoadBalancing(s.LoadBalancing))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.managed_pipeline_mode") {
-		expanded.ManagedPipelineMode = web.ManagedPipelineMode(linuxSlotSiteConfig.ManagedPipelineMode)
-	}
-
-	if metadata.ResourceData.HasChange("site_config.0.remote_debugging_enabled") {
-		expanded.RemoteDebuggingEnabled = pointer.To(linuxSlotSiteConfig.RemoteDebugging)
+		expanded.ManagedPipelineMode = pointer.To(webapps.ManagedPipelineMode(s.ManagedPipelineMode))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.remote_debugging_version") {
-		expanded.RemoteDebuggingVersion = pointer.To(linuxSlotSiteConfig.RemoteDebuggingVersion)
-	}
-
-	expanded.Use32BitWorkerProcess = pointer.To(linuxSlotSiteConfig.Use32BitWorker)
-
-	if metadata.ResourceData.HasChange("site_config.0.websockets_enabled") {
-		expanded.WebSocketsEnabled = pointer.To(linuxSlotSiteConfig.WebSockets)
+		expanded.RemoteDebuggingVersion = pointer.To(s.RemoteDebuggingVersion)
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.ftps_state") {
-		expanded.FtpsState = web.FtpsState(linuxSlotSiteConfig.FtpsState)
+		expanded.FtpsState = pointer.To(webapps.FtpsState(s.FtpsState))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.health_check_path") {
-		expanded.HealthCheckPath = pointer.To(linuxSlotSiteConfig.HealthCheckPath)
+		expanded.HealthCheckPath = pointer.To(s.HealthCheckPath)
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.worker_count") {
-		expanded.NumberOfWorkers = pointer.To(int32(linuxSlotSiteConfig.WorkerCount))
+		expanded.NumberOfWorkers = pointer.To(s.WorkerCount)
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.minimum_tls_version") {
-		expanded.MinTLSVersion = web.SupportedTLSVersions(linuxSlotSiteConfig.MinTlsVersion)
+		expanded.MinTlsVersion = pointer.To(webapps.SupportedTlsVersions(s.MinTlsVersion))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.scm_minimum_tls_version") {
-		expanded.ScmMinTLSVersion = web.SupportedTLSVersions(linuxSlotSiteConfig.ScmMinTlsVersion)
-	}
-
-	if metadata.ResourceData.HasChange("site_config.0.auto_swap_slot_name") {
-		expanded.AutoSwapSlotName = pointer.To(linuxSlotSiteConfig.AutoSwapSlotName)
+		expanded.ScmMinTlsVersion = pointer.To(webapps.SupportedTlsVersions(s.ScmMinTlsVersion))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.cors") {
-		cors := ExpandCorsSettings(linuxSlotSiteConfig.Cors)
+		cors := ExpandCorsSettings(s.Cors)
 		if cors == nil {
-			cors = &web.CorsSettings{
+			cors = &webapps.CorsSettings{
 				AllowedOrigins: &[]string{},
 			}
 		}
 		expanded.Cors = cors
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.auto_heal_enabled") {
-		expanded.AutoHealEnabled = pointer.To(linuxSlotSiteConfig.AutoHeal)
-	}
-
 	if metadata.ResourceData.HasChange("site_config.0.auto_heal_setting") {
-		expanded.AutoHealRules = expandAutoHealSettingsLinux(linuxSlotSiteConfig.AutoHealSettings)
+		expanded.AutoHealEnabled = pointer.To(false)
+		if len(s.AutoHealSettings) != 0 {
+			expanded.AutoHealEnabled = pointer.To(true)
+		}
+		expanded.AutoHealRules = expandAutoHealSettingsLinux(s.AutoHealSettings)
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.vnet_route_all_enabled") {
-		expanded.VnetRouteAllEnabled = pointer.To(linuxSlotSiteConfig.VnetRouteAllEnabled)
-	}
-
-	return expanded, nil
+	return &expanded, nil
 }
 
-func FlattenSiteConfigLinuxWebAppSlot(appSiteSlotConfig *web.SiteConfig, healthCheckCount *int) []SiteConfigLinuxWebAppSlot {
-	if appSiteSlotConfig == nil {
-		return nil
+func (s *SiteConfigLinuxWebAppSlot) Flatten(appSiteSlotConfig *webapps.SiteConfig) {
+	s.AlwaysOn = pointer.From(appSiteSlotConfig.AlwaysOn)
+	s.AppCommandLine = pointer.From(appSiteSlotConfig.AppCommandLine)
+	s.AutoHealSettings = flattenAutoHealSettingsLinux(appSiteSlotConfig.AutoHealRules)
+	s.AutoSwapSlotName = pointer.From(appSiteSlotConfig.AutoSwapSlotName)
+	s.ContainerRegistryMSI = pointer.From(appSiteSlotConfig.AcrUserManagedIdentityID)
+	s.Cors = FlattenCorsSettings(appSiteSlotConfig.Cors)
+	s.DetailedErrorLogging = pointer.From(appSiteSlotConfig.DetailedErrorLoggingEnabled)
+	s.Http2Enabled = pointer.From(appSiteSlotConfig.HTTP20Enabled)
+	s.IpRestriction = FlattenIpRestrictions(appSiteSlotConfig.IPSecurityRestrictions)
+	s.ManagedPipelineMode = string(pointer.From(appSiteSlotConfig.ManagedPipelineMode))
+	s.ScmType = string(pointer.From(appSiteSlotConfig.ScmType))
+	s.FtpsState = string(pointer.From(appSiteSlotConfig.FtpsState))
+	s.HealthCheckPath = pointer.From(appSiteSlotConfig.HealthCheckPath)
+	s.LoadBalancing = string(pointer.From(appSiteSlotConfig.LoadBalancing))
+	s.LocalMysql = pointer.From(appSiteSlotConfig.LocalMySqlEnabled)
+	s.MinTlsVersion = string(pointer.From(appSiteSlotConfig.MinTlsVersion))
+	s.WorkerCount = pointer.From(appSiteSlotConfig.NumberOfWorkers)
+	s.RemoteDebugging = pointer.From(appSiteSlotConfig.RemoteDebuggingEnabled)
+	s.RemoteDebuggingVersion = strings.ToUpper(pointer.From(appSiteSlotConfig.RemoteDebuggingVersion))
+	s.ScmIpRestriction = FlattenIpRestrictions(appSiteSlotConfig.ScmIPSecurityRestrictions)
+	s.ScmMinTlsVersion = string(pointer.From(appSiteSlotConfig.ScmMinTlsVersion))
+	s.ScmUseMainIpRestriction = pointer.From(appSiteSlotConfig.ScmIPSecurityRestrictionsUseMain)
+	s.Use32BitWorker = pointer.From(appSiteSlotConfig.Use32BitWorkerProcess)
+	s.UseManagedIdentityACR = pointer.From(appSiteSlotConfig.AcrUseManagedIdentityCreds)
+	s.WebSockets = pointer.From(appSiteSlotConfig.WebSocketsEnabled)
+	s.VnetRouteAllEnabled = pointer.From(appSiteSlotConfig.VnetRouteAllEnabled)
+	s.IpRestrictionDefaultAction = string(pointer.From(appSiteSlotConfig.IPSecurityRestrictionsDefaultAction))
+	s.ScmIpRestrictionDefaultAction = string(pointer.From(appSiteSlotConfig.ScmIPSecurityRestrictionsDefaultAction))
+
+	if appSiteSlotConfig.ApiManagementConfig != nil && appSiteSlotConfig.ApiManagementConfig.Id != nil {
+		s.ApiManagementConfigId = *appSiteSlotConfig.ApiManagementConfig.Id
 	}
 
-	siteConfig := SiteConfigLinuxWebAppSlot{
-		AlwaysOn:                pointer.From(appSiteSlotConfig.AlwaysOn),
-		AppCommandLine:          pointer.From(appSiteSlotConfig.AppCommandLine),
-		AutoHeal:                pointer.From(appSiteSlotConfig.AutoHealEnabled),
-		AutoHealSettings:        flattenAutoHealSettingsLinux(appSiteSlotConfig.AutoHealRules),
-		AutoSwapSlotName:        pointer.From(appSiteSlotConfig.AutoSwapSlotName),
-		ContainerRegistryMSI:    pointer.From(appSiteSlotConfig.AcrUserManagedIdentityID),
-		DetailedErrorLogging:    pointer.From(appSiteSlotConfig.DetailedErrorLoggingEnabled),
-		Http2Enabled:            pointer.From(appSiteSlotConfig.HTTP20Enabled),
-		IpRestriction:           FlattenIpRestrictions(appSiteSlotConfig.IPSecurityRestrictions),
-		ManagedPipelineMode:     string(appSiteSlotConfig.ManagedPipelineMode),
-		ScmType:                 string(appSiteSlotConfig.ScmType),
-		FtpsState:               string(appSiteSlotConfig.FtpsState),
-		HealthCheckPath:         pointer.From(appSiteSlotConfig.HealthCheckPath),
-		HealthCheckEvictionTime: pointer.From(healthCheckCount),
-		LoadBalancing:           string(appSiteSlotConfig.LoadBalancing),
-		LocalMysql:              pointer.From(appSiteSlotConfig.LocalMySQLEnabled),
-		MinTlsVersion:           string(appSiteSlotConfig.MinTLSVersion),
-		WorkerCount:             int(pointer.From(appSiteSlotConfig.NumberOfWorkers)),
-		RemoteDebugging:         pointer.From(appSiteSlotConfig.RemoteDebuggingEnabled),
-		RemoteDebuggingVersion:  strings.ToUpper(pointer.From(appSiteSlotConfig.RemoteDebuggingVersion)),
-		ScmIpRestriction:        FlattenIpRestrictions(appSiteSlotConfig.ScmIPSecurityRestrictions),
-		ScmMinTlsVersion:        string(appSiteSlotConfig.ScmMinTLSVersion),
-		ScmUseMainIpRestriction: pointer.From(appSiteSlotConfig.ScmIPSecurityRestrictionsUseMain),
-		Use32BitWorker:          pointer.From(appSiteSlotConfig.Use32BitWorkerProcess),
-		UseManagedIdentityACR:   pointer.From(appSiteSlotConfig.AcrUseManagedIdentityCreds),
-		WebSockets:              pointer.From(appSiteSlotConfig.WebSocketsEnabled),
-		VnetRouteAllEnabled:     pointer.From(appSiteSlotConfig.VnetRouteAllEnabled),
-	}
-
-	if appSiteSlotConfig.APIManagementConfig != nil && appSiteSlotConfig.APIManagementConfig.ID != nil {
-		siteConfig.ApiManagementConfigId = *appSiteSlotConfig.APIManagementConfig.ID
-	}
-
-	if appSiteSlotConfig.APIDefinition != nil && appSiteSlotConfig.APIDefinition.URL != nil {
-		siteConfig.ApiDefinition = *appSiteSlotConfig.APIDefinition.URL
+	if appSiteSlotConfig.ApiDefinition != nil && appSiteSlotConfig.ApiDefinition.Url != nil {
+		s.ApiDefinition = *appSiteSlotConfig.ApiDefinition.Url
 	}
 
 	if appSiteSlotConfig.DefaultDocuments != nil {
-		siteConfig.DefaultDocuments = *appSiteSlotConfig.DefaultDocuments
+		s.DefaultDocuments = *appSiteSlotConfig.DefaultDocuments
 	}
 
 	if appSiteSlotConfig.LinuxFxVersion != nil {
 		var linuxAppStack ApplicationStackLinux
-		siteConfig.LinuxFxVersion = *appSiteSlotConfig.LinuxFxVersion
+		s.LinuxFxVersion = *appSiteSlotConfig.LinuxFxVersion
 		// Decode the string to docker values
-		linuxAppStack = decodeApplicationStackLinux(siteConfig.LinuxFxVersion)
-		siteConfig.ApplicationStack = []ApplicationStackLinux{linuxAppStack}
+		linuxAppStack = decodeApplicationStackLinux(s.LinuxFxVersion)
+		s.ApplicationStack = []ApplicationStackLinux{linuxAppStack}
 	}
 
-	if appSiteSlotConfig.Cors != nil {
-		corsEmpty := false
-		corsSettings := appSiteSlotConfig.Cors
-		cors := CorsSetting{}
-		if corsSettings.SupportCredentials != nil {
-			cors.SupportCredentials = *corsSettings.SupportCredentials
-		}
-
-		if corsSettings.AllowedOrigins != nil {
-			if len(*corsSettings.AllowedOrigins) > 0 {
-				cors.AllowedOrigins = *corsSettings.AllowedOrigins
-			} else if !cors.SupportCredentials {
-				corsEmpty = true
-			}
-		}
-
-		if !corsEmpty {
-			siteConfig.Cors = []CorsSetting{cors}
-		}
-	}
-
-	return []SiteConfigLinuxWebAppSlot{siteConfig}
 }
 
-func ExpandSiteConfigWindowsWebAppSlot(siteConfig []SiteConfigWindowsWebAppSlot, existing *web.SiteConfig, metadata sdk.ResourceMetaData) (*web.SiteConfig, *string, error) {
-	if len(siteConfig) == 0 {
-		return nil, nil, nil
+func (s *SiteConfigLinuxWebAppSlot) SetHealthCheckEvictionTime(input map[string]string) {
+	if v, ok := input["WEBSITE_HEALTHCHECK_MAXPINGFAILURES"]; ok && v != "" {
+		// Discarding the error here as an invalid value should result in `0`
+		evictionTime, _ := strconv.Atoi(v)
+		s.HealthCheckEvictionTime = int64(evictionTime)
+	}
+}
+
+func (s *SiteConfigLinuxWebAppSlot) DecodeDockerAppStack(input map[string]string) {
+	applicationStack := ApplicationStackLinux{}
+	if len(s.ApplicationStack) == 1 {
+		applicationStack = s.ApplicationStack[0]
 	}
 
-	expanded := &web.SiteConfig{}
-	if existing != nil {
-		expanded = existing
+	if v, ok := input["DOCKER_REGISTRY_SERVER_URL"]; ok {
+		applicationStack.DockerRegistryUrl = v
 	}
 
-	winSlotSiteConfig := siteConfig[0]
-
-	currentStack := ""
-
-	if len(winSlotSiteConfig.ApplicationStack) == 1 {
-		winAppStack := winSlotSiteConfig.ApplicationStack[0]
-		currentStack = winAppStack.CurrentStack
+	if v, ok := input["DOCKER_REGISTRY_SERVER_USERNAME"]; ok {
+		applicationStack.DockerRegistryUsername = v
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.always_on") {
-		expanded.AlwaysOn = pointer.To(winSlotSiteConfig.AlwaysOn)
+	if v, ok := input["DOCKER_REGISTRY_SERVER_PASSWORD"]; ok {
+		applicationStack.DockerRegistryPassword = v
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.api_management_api_id") {
-		expanded.APIManagementConfig = &web.APIManagementConfig{
-			ID: pointer.To(winSlotSiteConfig.ApiManagementConfigId),
+	registryHost := trimURLScheme(applicationStack.DockerRegistryUrl)
+	dockerString := strings.TrimPrefix(s.LinuxFxVersion, "DOCKER|")
+	applicationStack.DockerImageName = strings.TrimPrefix(dockerString, registryHost+"/")
+
+	s.ApplicationStack = []ApplicationStackLinux{applicationStack}
+}
+
+func (s *SiteConfigLinuxWebAppSlot) DecodeDockerDeprecatedAppStack(input map[string]string, usesDeprecated bool) {
+	applicationStack := ApplicationStackLinux{}
+	if len(s.ApplicationStack) == 1 {
+		applicationStack = s.ApplicationStack[0]
+	}
+	if !usesDeprecated {
+
+		if v, ok := input["DOCKER_REGISTRY_SERVER_URL"]; ok {
+			applicationStack.DockerRegistryUrl = v
+		}
+
+		if v, ok := input["DOCKER_REGISTRY_SERVER_USERNAME"]; ok {
+			applicationStack.DockerRegistryUsername = v
+		}
+
+		if v, ok := input["DOCKER_REGISTRY_SERVER_PASSWORD"]; ok {
+			applicationStack.DockerRegistryPassword = v
+		}
+
+		registryHost := trimURLScheme(applicationStack.DockerRegistryUrl)
+		dockerString := strings.TrimPrefix(s.LinuxFxVersion, "DOCKER|")
+		applicationStack.DockerImageName = strings.TrimPrefix(dockerString, registryHost+"/")
+	} else {
+		parts := strings.Split(s.LinuxFxVersion, "|")
+		if dockerParts := strings.Split(parts[1], ":"); len(dockerParts) == 2 {
+			applicationStack.DockerImage = dockerParts[0]
+			applicationStack.DockerImageTag = dockerParts[1]
 		}
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.api_definition_url") {
-		expanded.APIDefinition = &web.APIDefinitionInfo{
-			URL: pointer.To(winSlotSiteConfig.ApiDefinition),
+	s.ApplicationStack = []ApplicationStackLinux{applicationStack}
+}
+
+func (s *SiteConfigWindowsWebAppSlot) ExpandForCreate(appSettings map[string]string) (*webapps.SiteConfig, error) {
+	expanded := &webapps.SiteConfig{}
+
+	expanded.AlwaysOn = pointer.To(s.AlwaysOn)
+	expanded.AcrUseManagedIdentityCreds = pointer.To(s.UseManagedIdentityACR)
+	expanded.AutoHealEnabled = pointer.To(false)
+	expanded.FtpsState = pointer.To(webapps.FtpsState(s.FtpsState))
+	expanded.HTTP20Enabled = pointer.To(s.Http2Enabled)
+	expanded.LoadBalancing = pointer.To(webapps.SiteLoadBalancing(s.LoadBalancing))
+	expanded.LocalMySqlEnabled = pointer.To(s.LocalMysql)
+	expanded.ManagedPipelineMode = pointer.To(webapps.ManagedPipelineMode(s.ManagedPipelineMode))
+	expanded.MinTlsVersion = pointer.To(webapps.SupportedTlsVersions(s.MinTlsVersion))
+	expanded.RemoteDebuggingEnabled = pointer.To(s.RemoteDebugging)
+	expanded.ScmIPSecurityRestrictionsUseMain = pointer.To(s.ScmUseMainIpRestriction)
+	expanded.ScmMinTlsVersion = pointer.To(webapps.SupportedTlsVersions(s.ScmMinTlsVersion))
+	expanded.Use32BitWorkerProcess = pointer.To(s.Use32BitWorker)
+	expanded.WebSocketsEnabled = pointer.To(s.WebSockets)
+	expanded.HandlerMappings = expandHandlerMapping(s.HandlerMapping)
+	expanded.VirtualApplications = expandVirtualApplications(s.VirtualApplications)
+	expanded.VnetRouteAllEnabled = pointer.To(s.VnetRouteAllEnabled)
+	expanded.IPSecurityRestrictionsDefaultAction = pointer.To(webapps.DefaultAction(s.IpRestrictionDefaultAction))
+	expanded.ScmIPSecurityRestrictionsDefaultAction = pointer.To(webapps.DefaultAction(s.ScmIpRestrictionDefaultAction))
+
+	if s.ApiManagementConfigId != "" {
+		expanded.ApiManagementConfig = &webapps.ApiManagementConfig{
+			Id: pointer.To(s.ApiManagementConfigId),
 		}
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.app_command_line") {
-		expanded.AppCommandLine = pointer.To(winSlotSiteConfig.AppCommandLine)
+	if s.ApiDefinition != "" {
+		expanded.ApiDefinition = &webapps.ApiDefinitionInfo{
+			Url: pointer.To(s.ApiDefinition),
+		}
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.application_stack") {
-		if len(winSlotSiteConfig.ApplicationStack) == 1 {
-			winAppStack := winSlotSiteConfig.ApplicationStack[0]
+	if s.AppCommandLine != "" {
+		expanded.AppCommandLine = pointer.To(s.AppCommandLine)
+	}
 
-			if winAppStack.NetFrameworkVersion != "" {
-				expanded.NetFrameworkVersion = pointer.To(winAppStack.NetFrameworkVersion)
-				if currentStack == "" {
-					currentStack = CurrentStackDotNet
-				}
+	if len(s.ApplicationStack) == 1 {
+		winAppStack := s.ApplicationStack[0]
+		if winAppStack.NodeVersion != "" {
+			if appSettings == nil {
+				appSettings = make(map[string]string)
 			}
-			if winAppStack.NetCoreVersion != "" {
-				expanded.NetFrameworkVersion = pointer.To(winAppStack.NetCoreVersion)
-				if currentStack == "" {
-					currentStack = CurrentStackDotNetCore
-				}
+			appSettings["WEBSITE_NODE_DEFAULT_VERSION"] = winAppStack.NodeVersion
+		}
+		if winAppStack.NetFrameworkVersion != "" {
+			expanded.NetFrameworkVersion = pointer.To(winAppStack.NetFrameworkVersion)
+		}
+		if winAppStack.NetCoreVersion != "" {
+			expanded.NetFrameworkVersion = pointer.To(winAppStack.NetCoreVersion)
+		}
+		if winAppStack.PhpVersion != "" {
+			if winAppStack.PhpVersion != PhpVersionOff {
+				expanded.PhpVersion = pointer.To(winAppStack.PhpVersion)
+			} else {
+				expanded.PhpVersion = pointer.To("")
 			}
-			if winAppStack.NodeVersion != "" {
-				// Note: node version is now exclusively controlled via app_setting.WEBSITE_NODE_DEFAULT_VERSION
-				if currentStack == "" {
-					currentStack = CurrentStackNode
-				}
+		}
+		if winAppStack.PythonVersion != "" || winAppStack.Python {
+			expanded.PythonVersion = pointer.To(winAppStack.PythonVersion)
+		}
+		if winAppStack.JavaVersion != "" {
+			expanded.JavaVersion = pointer.To(winAppStack.JavaVersion)
+			switch {
+			case winAppStack.JavaEmbeddedServer:
+				expanded.JavaContainer = pointer.To(JavaContainerEmbeddedServer)
+				expanded.JavaContainerVersion = pointer.To(JavaContainerEmbeddedServerVersion)
+			case winAppStack.TomcatVersion != "":
+				expanded.JavaContainer = pointer.To(JavaContainerTomcat)
+				expanded.JavaContainerVersion = pointer.To(winAppStack.TomcatVersion)
+			case winAppStack.JavaContainer != "":
+				expanded.JavaContainer = pointer.To(winAppStack.JavaContainer)
+				expanded.JavaContainerVersion = pointer.To(winAppStack.JavaContainerVersion)
 			}
-			if winAppStack.PhpVersion != "" {
-				if winAppStack.PhpVersion != PhpVersionOff {
-					expanded.PhpVersion = pointer.To(winAppStack.PhpVersion)
-				} else {
-					expanded.PhpVersion = pointer.To("")
-				}
-				if currentStack == "" {
-					currentStack = CurrentStackPhp
-				}
-			}
-			if winAppStack.PythonVersion != "" || winAppStack.Python {
-				expanded.PythonVersion = pointer.To(winAppStack.PythonVersion)
-				if currentStack == "" {
-					currentStack = CurrentStackPython
-				}
-			}
-			if winAppStack.JavaVersion != "" {
-				expanded.JavaVersion = pointer.To(winAppStack.JavaVersion)
-				switch {
-				case winAppStack.JavaEmbeddedServer:
-					expanded.JavaContainer = pointer.To(JavaContainerEmbeddedServer)
-					expanded.JavaContainerVersion = pointer.To(JavaContainerEmbeddedServerVersion)
+		}
 
-				case winAppStack.TomcatVersion != "":
-					expanded.JavaContainer = pointer.To(JavaContainerTomcat)
-					expanded.JavaContainerVersion = pointer.To(winAppStack.TomcatVersion)
-
-				case winAppStack.JavaContainer != "":
-					expanded.JavaContainer = pointer.To(winAppStack.JavaContainer)
-					expanded.JavaContainerVersion = pointer.To(winAppStack.JavaContainerVersion)
-				}
-
-				if currentStack == "" {
-					currentStack = CurrentStackJava
-				}
-			}
+		if !features.FourPointOhBeta() {
 			if winAppStack.DockerContainerName != "" || winAppStack.DockerContainerRegistry != "" || winAppStack.DockerContainerTag != "" {
 				if winAppStack.DockerContainerRegistry != "" {
 					expanded.WindowsFxVersion = pointer.To(fmt.Sprintf("DOCKER|%s/%s:%s", winAppStack.DockerContainerRegistry, winAppStack.DockerContainerName, winAppStack.DockerContainerTag))
@@ -898,179 +1065,330 @@ func ExpandSiteConfigWindowsWebAppSlot(siteConfig []SiteConfigWindowsWebAppSlot,
 					expanded.WindowsFxVersion = pointer.To(fmt.Sprintf("DOCKER|%s:%s", winAppStack.DockerContainerName, winAppStack.DockerContainerTag))
 				}
 			}
-
-		} else {
-			expanded.WindowsFxVersion = pointer.To("")
 		}
-	}
 
-	if metadata.ResourceData.HasChange("site_config.0.virtual_application") {
-		expanded.VirtualApplications = expandVirtualApplicationsForUpdate(winSlotSiteConfig.VirtualApplications)
+		if winAppStack.DockerImageName != "" {
+			expanded.WindowsFxVersion = pointer.To(EncodeDockerFxStringWindows(winAppStack.DockerImageName, winAppStack.DockerRegistryUrl))
+
+			if appSettings == nil {
+				appSettings = make(map[string]string)
+			}
+
+			appSettings["DOCKER_REGISTRY_SERVER_URL"] = winAppStack.DockerRegistryUrl
+			appSettings["DOCKER_REGISTRY_SERVER_USERNAME"] = winAppStack.DockerRegistryUsername
+			appSettings["DOCKER_REGISTRY_SERVER_PASSWORD"] = winAppStack.DockerRegistryPassword
+		}
 	} else {
-		expanded.VirtualApplications = expandVirtualApplications(winSlotSiteConfig.VirtualApplications)
+		expanded.WindowsFxVersion = pointer.To("")
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.container_registry_use_managed_identity") {
-		expanded.AcrUseManagedIdentityCreds = pointer.To(winSlotSiteConfig.UseManagedIdentityACR)
+	expanded.AppSettings = ExpandAppSettingsForCreate(appSettings)
+
+	if s.AutoSwapSlotName != "" {
+		expanded.AutoSwapSlotName = pointer.To(s.AutoSwapSlotName)
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.container_registry_managed_identity_client_id") {
-		expanded.AcrUserManagedIdentityID = pointer.To(winSlotSiteConfig.ContainerRegistryUserMSI)
+	if s.ContainerRegistryUserMSI != "" {
+		expanded.AcrUserManagedIdentityID = pointer.To(s.ContainerRegistryUserMSI)
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.default_documents") {
-		expanded.DefaultDocuments = &winSlotSiteConfig.DefaultDocuments
+	if len(s.DefaultDocuments) != 0 {
+		expanded.DefaultDocuments = pointer.To(s.DefaultDocuments)
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.http2_enabled") {
-		expanded.HTTP20Enabled = pointer.To(winSlotSiteConfig.Http2Enabled)
-	}
-
-	if metadata.ResourceData.HasChange("site_config.0.ip_restriction") {
-		ipRestrictions, err := ExpandIpRestrictions(winSlotSiteConfig.IpRestriction)
+	if len(s.IpRestriction) != 0 {
+		ipRestrictions, err := ExpandIpRestrictions(s.IpRestriction)
 		if err != nil {
-			return nil, nil, err
+			return nil, fmt.Errorf("expanding IP Restrictions: %+v", err)
 		}
 		expanded.IPSecurityRestrictions = ipRestrictions
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.scm_use_main_ip_restriction") {
-		expanded.ScmIPSecurityRestrictionsUseMain = pointer.To(winSlotSiteConfig.ScmUseMainIpRestriction)
-	}
-
-	if metadata.ResourceData.HasChange("site_config.0.scm_ip_restriction") {
-		scmIpRestrictions, err := ExpandIpRestrictions(winSlotSiteConfig.ScmIpRestriction)
+	if len(s.ScmIpRestriction) != 0 {
+		scmIpRestrictions, err := ExpandIpRestrictions(s.ScmIpRestriction)
 		if err != nil {
-			return nil, nil, err
+			return nil, fmt.Errorf("expanding SCM IP Restrictions: %+v", err)
 		}
 		expanded.ScmIPSecurityRestrictions = scmIpRestrictions
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.local_mysql_enabled") {
-		expanded.LocalMySQLEnabled = pointer.To(winSlotSiteConfig.LocalMysql)
+	if s.RemoteDebuggingVersion != "" {
+		expanded.RemoteDebuggingVersion = pointer.To(s.RemoteDebuggingVersion)
+	}
+
+	if s.HealthCheckPath != "" {
+		expanded.HealthCheckPath = pointer.To(s.HealthCheckPath)
+	}
+
+	if s.WorkerCount != 0 {
+		expanded.NumberOfWorkers = pointer.To(s.WorkerCount)
+	}
+
+	if len(s.Cors) != 0 {
+		expanded.Cors = ExpandCorsSettings(s.Cors)
+	}
+
+	if len(s.AutoHealSettings) != 0 {
+		expanded.AutoHealEnabled = pointer.To(true)
+		expanded.AutoHealRules = expandAutoHealSettingsWindows(s.AutoHealSettings)
+	}
+	return expanded, nil
+}
+
+func (s *SiteConfigWindowsWebAppSlot) ExpandForUpdate(metadata sdk.ResourceMetaData, existing *webapps.SiteConfig, appSettings map[string]string) (*webapps.SiteConfig, error) {
+	expanded := webapps.SiteConfig{}
+	if existing != nil {
+		expanded = *existing
+	}
+
+	expanded.AlwaysOn = pointer.To(s.AlwaysOn)
+	expanded.AcrUseManagedIdentityCreds = pointer.To(s.UseManagedIdentityACR)
+	expanded.HTTP20Enabled = pointer.To(s.Http2Enabled)
+	expanded.ScmIPSecurityRestrictionsUseMain = pointer.To(s.ScmUseMainIpRestriction)
+	expanded.LocalMySqlEnabled = pointer.To(s.LocalMysql)
+	expanded.RemoteDebuggingEnabled = pointer.To(s.RemoteDebugging)
+	expanded.Use32BitWorkerProcess = pointer.To(s.Use32BitWorker)
+	expanded.WebSocketsEnabled = pointer.To(s.WebSockets)
+
+	if metadata.ResourceData.HasChange("site_config.0.api_management_api_id") {
+		expanded.ApiManagementConfig = &webapps.ApiManagementConfig{
+			Id: pointer.To(s.ApiManagementConfigId),
+		}
+	}
+
+	if metadata.ResourceData.HasChange("site_config.0.api_definition_url") {
+		expanded.ApiDefinition = &webapps.ApiDefinitionInfo{
+			Url: pointer.To(s.ApiDefinition),
+		}
+	}
+
+	if metadata.ResourceData.HasChange("site_config.0.app_command_line") {
+		expanded.AppCommandLine = pointer.To(s.AppCommandLine)
+	}
+
+	if len(s.ApplicationStack) == 1 {
+		winAppStack := s.ApplicationStack[0]
+
+		if metadata.ResourceData.HasChange("site_config.0.application_stack.0.node_version") || winAppStack.NodeVersion != "" {
+			if appSettings == nil {
+				appSettings = make(map[string]string)
+			}
+			appSettings["WEBSITE_NODE_DEFAULT_VERSION"] = winAppStack.NodeVersion
+		}
+		if winAppStack.NetFrameworkVersion != "" {
+			expanded.NetFrameworkVersion = pointer.To(winAppStack.NetFrameworkVersion)
+		}
+		if winAppStack.NetCoreVersion != "" {
+			expanded.NetFrameworkVersion = pointer.To(winAppStack.NetCoreVersion)
+		}
+		if winAppStack.PhpVersion != "" {
+			if winAppStack.PhpVersion != PhpVersionOff {
+				expanded.PhpVersion = pointer.To(winAppStack.PhpVersion)
+			} else {
+				expanded.PhpVersion = pointer.To("")
+			}
+		}
+		if winAppStack.PythonVersion != "" || winAppStack.Python {
+			expanded.PythonVersion = pointer.To(winAppStack.PythonVersion)
+		}
+		if winAppStack.JavaVersion != "" {
+			expanded.JavaVersion = pointer.To(winAppStack.JavaVersion)
+			switch {
+			case winAppStack.JavaEmbeddedServer:
+				expanded.JavaContainer = pointer.To(JavaContainerEmbeddedServer)
+				expanded.JavaContainerVersion = pointer.To(JavaContainerEmbeddedServerVersion)
+			case winAppStack.TomcatVersion != "":
+				expanded.JavaContainer = pointer.To(JavaContainerTomcat)
+				expanded.JavaContainerVersion = pointer.To(winAppStack.TomcatVersion)
+			case winAppStack.JavaContainer != "":
+				expanded.JavaContainer = pointer.To(winAppStack.JavaContainer)
+				expanded.JavaContainerVersion = pointer.To(winAppStack.JavaContainerVersion)
+			}
+		}
+		if !features.FourPointOhBeta() {
+			if winAppStack.DockerContainerName != "" || winAppStack.DockerContainerRegistry != "" || winAppStack.DockerContainerTag != "" {
+				if winAppStack.DockerContainerRegistry != "" {
+					expanded.WindowsFxVersion = pointer.To(fmt.Sprintf("DOCKER|%s/%s:%s", winAppStack.DockerContainerRegistry, winAppStack.DockerContainerName, winAppStack.DockerContainerTag))
+				} else {
+					expanded.WindowsFxVersion = pointer.To(fmt.Sprintf("DOCKER|%s:%s", winAppStack.DockerContainerName, winAppStack.DockerContainerTag))
+				}
+			}
+		}
+
+		if winAppStack.DockerImageName != "" {
+			expanded.WindowsFxVersion = pointer.To(EncodeDockerFxStringWindows(winAppStack.DockerImageName, winAppStack.DockerRegistryUrl))
+
+			if appSettings == nil {
+				appSettings = make(map[string]string)
+			}
+
+			appSettings["DOCKER_REGISTRY_SERVER_URL"] = winAppStack.DockerRegistryUrl
+			appSettings["DOCKER_REGISTRY_SERVER_USERNAME"] = winAppStack.DockerRegistryUsername
+			appSettings["DOCKER_REGISTRY_SERVER_PASSWORD"] = winAppStack.DockerRegistryPassword
+		}
+
+	} else {
+		expanded.WindowsFxVersion = pointer.To("")
+	}
+
+	expanded.AppSettings = ExpandAppSettingsForCreate(appSettings)
+
+	if metadata.ResourceData.HasChange("site_config.0.auto_swap_slot_name") {
+		expanded.AutoSwapSlotName = pointer.To(s.AutoSwapSlotName)
+	}
+
+	if metadata.ResourceData.HasChange("site_config.0.handler_mapping") {
+		expanded.HandlerMappings = expandHandlerMappingForUpdate(s.HandlerMapping)
+	} else {
+		expanded.HandlerMappings = expandHandlerMapping(s.HandlerMapping)
+	}
+
+	if metadata.ResourceData.HasChange("site_config.0.virtual_application") {
+		expanded.VirtualApplications = expandVirtualApplicationsForUpdate(s.VirtualApplications)
+	} else {
+		expanded.VirtualApplications = expandVirtualApplications(s.VirtualApplications)
+	}
+
+	if metadata.ResourceData.HasChange("site_config.0.container_registry_managed_identity_client_id") {
+		expanded.AcrUserManagedIdentityID = pointer.To(s.ContainerRegistryUserMSI)
+	}
+
+	if metadata.ResourceData.HasChange("site_config.0.default_documents") {
+		expanded.DefaultDocuments = pointer.To(s.DefaultDocuments)
+	}
+
+	if metadata.ResourceData.HasChange("site_config.0.ip_restriction") {
+		ipRestrictions, err := ExpandIpRestrictions(s.IpRestriction)
+		if err != nil {
+			return nil, err
+		}
+
+		expanded.IPSecurityRestrictions = ipRestrictions
+	}
+
+	if metadata.ResourceData.HasChange("site_config.0.ip_restriction_default_action") {
+		expanded.IPSecurityRestrictionsDefaultAction = pointer.To(webapps.DefaultAction(s.IpRestrictionDefaultAction))
+	}
+
+	if metadata.ResourceData.HasChange("site_config.0.scm_ip_restriction") {
+		scmIpRestrictions, err := ExpandIpRestrictions(s.ScmIpRestriction)
+		if err != nil {
+			return nil, err
+		}
+		expanded.ScmIPSecurityRestrictions = scmIpRestrictions
+	}
+
+	if metadata.ResourceData.HasChange("site_config.0.scm_ip_restriction_default_action") {
+		expanded.ScmIPSecurityRestrictionsDefaultAction = pointer.To(webapps.DefaultAction(s.ScmIpRestrictionDefaultAction))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.load_balancing_mode") {
-		expanded.LoadBalancing = web.SiteLoadBalancing(winSlotSiteConfig.LoadBalancing)
+		expanded.LoadBalancing = pointer.To(webapps.SiteLoadBalancing(s.LoadBalancing))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.managed_pipeline_mode") {
-		expanded.ManagedPipelineMode = web.ManagedPipelineMode(winSlotSiteConfig.ManagedPipelineMode)
-	}
-
-	if metadata.ResourceData.HasChange("site_config.0.remote_debugging_enabled") {
-		expanded.RemoteDebuggingEnabled = pointer.To(winSlotSiteConfig.RemoteDebugging)
+		expanded.ManagedPipelineMode = pointer.To(webapps.ManagedPipelineMode(s.ManagedPipelineMode))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.remote_debugging_version") {
-		expanded.RemoteDebuggingVersion = pointer.To(winSlotSiteConfig.RemoteDebuggingVersion)
-	}
-
-	expanded.Use32BitWorkerProcess = pointer.To(winSlotSiteConfig.Use32BitWorker)
-
-	if metadata.ResourceData.HasChange("site_config.0.websockets_enabled") {
-		expanded.WebSocketsEnabled = pointer.To(winSlotSiteConfig.WebSockets)
+		expanded.RemoteDebuggingVersion = pointer.To(s.RemoteDebuggingVersion)
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.ftps_state") {
-		expanded.FtpsState = web.FtpsState(winSlotSiteConfig.FtpsState)
+		expanded.FtpsState = pointer.To(webapps.FtpsState(s.FtpsState))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.health_check_path") {
-		expanded.HealthCheckPath = pointer.To(winSlotSiteConfig.HealthCheckPath)
+		expanded.HealthCheckPath = pointer.To(s.HealthCheckPath)
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.worker_count") {
-		expanded.NumberOfWorkers = pointer.To(int32(winSlotSiteConfig.WorkerCount))
+		expanded.NumberOfWorkers = pointer.To(s.WorkerCount)
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.minimum_tls_version") {
-		expanded.MinTLSVersion = web.SupportedTLSVersions(winSlotSiteConfig.MinTlsVersion)
+		expanded.MinTlsVersion = pointer.To(webapps.SupportedTlsVersions(s.MinTlsVersion))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.scm_minimum_tls_version") {
-		expanded.ScmMinTLSVersion = web.SupportedTLSVersions(winSlotSiteConfig.ScmMinTlsVersion)
-	}
-
-	if metadata.ResourceData.HasChange("site_config.0.auto_swap_slot_name") {
-		expanded.AutoSwapSlotName = pointer.To(winSlotSiteConfig.AutoSwapSlotName)
+		expanded.ScmMinTlsVersion = pointer.To(webapps.SupportedTlsVersions(s.ScmMinTlsVersion))
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.cors") {
-		cors := ExpandCorsSettings(winSlotSiteConfig.Cors)
+		cors := ExpandCorsSettings(s.Cors)
 		if cors == nil {
-			cors = &web.CorsSettings{
+			cors = &webapps.CorsSettings{
 				AllowedOrigins: &[]string{},
 			}
 		}
 		expanded.Cors = cors
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.auto_heal_enabled") {
-		expanded.AutoHealEnabled = pointer.To(winSlotSiteConfig.AutoHeal)
-	}
-
 	if metadata.ResourceData.HasChange("site_config.0.auto_heal_setting") {
-		expanded.AutoHealRules = expandAutoHealSettingsWindows(winSlotSiteConfig.AutoHealSettings)
+		expanded.AutoHealEnabled = pointer.To(false)
+		if len(s.AutoHealSettings) != 0 {
+			expanded.AutoHealEnabled = pointer.To(true)
+		}
+		expanded.AutoHealRules = expandAutoHealSettingsWindows(s.AutoHealSettings)
 	}
 
 	if metadata.ResourceData.HasChange("site_config.0.vnet_route_all_enabled") {
-		expanded.VnetRouteAllEnabled = pointer.To(winSlotSiteConfig.VnetRouteAllEnabled)
+		expanded.VnetRouteAllEnabled = pointer.To(s.VnetRouteAllEnabled)
 	}
 
-	return expanded, &currentStack, nil
+	return &expanded, nil
 }
 
-func FlattenSiteConfigWindowsAppSlot(appSiteSlotConfig *web.SiteConfig, currentStack string, healthCheckCount *int) []SiteConfigWindowsWebAppSlot {
+func (s *SiteConfigWindowsWebAppSlot) Flatten(appSiteSlotConfig *webapps.SiteConfig, currentStack string) {
 	if appSiteSlotConfig == nil {
-		return nil
+		return
 	}
 
-	siteConfig := SiteConfigWindowsWebAppSlot{
-		AlwaysOn:                 pointer.From(appSiteSlotConfig.AlwaysOn),
-		AppCommandLine:           pointer.From(appSiteSlotConfig.AppCommandLine),
-		AutoHeal:                 pointer.From(appSiteSlotConfig.AutoHealEnabled),
-		AutoHealSettings:         flattenAutoHealSettingsWindows(appSiteSlotConfig.AutoHealRules),
-		AutoSwapSlotName:         pointer.From(appSiteSlotConfig.AutoSwapSlotName),
-		ContainerRegistryUserMSI: pointer.From(appSiteSlotConfig.AcrUserManagedIdentityID),
-		DetailedErrorLogging:     pointer.From(appSiteSlotConfig.DetailedErrorLoggingEnabled),
-		FtpsState:                string(appSiteSlotConfig.FtpsState),
-		HealthCheckPath:          pointer.From(appSiteSlotConfig.HealthCheckPath),
-		HealthCheckEvictionTime:  pointer.From(healthCheckCount),
-		Http2Enabled:             pointer.From(appSiteSlotConfig.HTTP20Enabled),
-		IpRestriction:            FlattenIpRestrictions(appSiteSlotConfig.IPSecurityRestrictions),
-		LoadBalancing:            string(appSiteSlotConfig.LoadBalancing),
-		LocalMysql:               pointer.From(appSiteSlotConfig.LocalMySQLEnabled),
-		ManagedPipelineMode:      string(appSiteSlotConfig.ManagedPipelineMode),
-		MinTlsVersion:            string(appSiteSlotConfig.MinTLSVersion),
-		WorkerCount:              int(pointer.From(appSiteSlotConfig.NumberOfWorkers)),
-		RemoteDebugging:          pointer.From(appSiteSlotConfig.RemoteDebuggingEnabled),
-		RemoteDebuggingVersion:   strings.ToUpper(pointer.From(appSiteSlotConfig.RemoteDebuggingVersion)),
-		ScmIpRestriction:         FlattenIpRestrictions(appSiteSlotConfig.ScmIPSecurityRestrictions),
-		ScmMinTlsVersion:         string(appSiteSlotConfig.ScmMinTLSVersion),
-		ScmType:                  string(appSiteSlotConfig.ScmType),
-		ScmUseMainIpRestriction:  pointer.From(appSiteSlotConfig.ScmIPSecurityRestrictionsUseMain),
-		Use32BitWorker:           pointer.From(appSiteSlotConfig.Use32BitWorkerProcess),
-		UseManagedIdentityACR:    pointer.From(appSiteSlotConfig.AcrUseManagedIdentityCreds),
-		VirtualApplications:      flattenVirtualApplications(appSiteSlotConfig.VirtualApplications),
-		WebSockets:               pointer.From(appSiteSlotConfig.WebSocketsEnabled),
-		VnetRouteAllEnabled:      pointer.From(appSiteSlotConfig.VnetRouteAllEnabled),
+	s.AlwaysOn = pointer.From(appSiteSlotConfig.AlwaysOn)
+	s.AppCommandLine = pointer.From(appSiteSlotConfig.AppCommandLine)
+	s.AutoHealSettings = flattenAutoHealSettingsWindows(appSiteSlotConfig.AutoHealRules)
+	s.AutoSwapSlotName = pointer.From(appSiteSlotConfig.AutoSwapSlotName)
+	s.ContainerRegistryUserMSI = pointer.From(appSiteSlotConfig.AcrUserManagedIdentityID)
+	s.Cors = FlattenCorsSettings(appSiteSlotConfig.Cors)
+	s.DetailedErrorLogging = pointer.From(appSiteSlotConfig.DetailedErrorLoggingEnabled)
+	s.FtpsState = string(pointer.From(appSiteSlotConfig.FtpsState))
+	s.HealthCheckPath = pointer.From(appSiteSlotConfig.HealthCheckPath)
+	s.Http2Enabled = pointer.From(appSiteSlotConfig.HTTP20Enabled)
+	s.IpRestriction = FlattenIpRestrictions(appSiteSlotConfig.IPSecurityRestrictions)
+	s.LoadBalancing = string(pointer.From(appSiteSlotConfig.LoadBalancing))
+	s.LocalMysql = pointer.From(appSiteSlotConfig.LocalMySqlEnabled)
+	s.ManagedPipelineMode = string(pointer.From(appSiteSlotConfig.ManagedPipelineMode))
+	s.MinTlsVersion = string(pointer.From(appSiteSlotConfig.MinTlsVersion))
+	s.WorkerCount = pointer.From(appSiteSlotConfig.NumberOfWorkers)
+	s.RemoteDebugging = pointer.From(appSiteSlotConfig.RemoteDebuggingEnabled)
+	s.RemoteDebuggingVersion = strings.ToUpper(pointer.From(appSiteSlotConfig.RemoteDebuggingVersion))
+	s.ScmIpRestriction = FlattenIpRestrictions(appSiteSlotConfig.ScmIPSecurityRestrictions)
+	s.ScmMinTlsVersion = string(pointer.From(appSiteSlotConfig.ScmMinTlsVersion))
+	s.ScmType = string(pointer.From(appSiteSlotConfig.ScmType))
+	s.ScmUseMainIpRestriction = pointer.From(appSiteSlotConfig.ScmIPSecurityRestrictionsUseMain)
+	s.Use32BitWorker = pointer.From(appSiteSlotConfig.Use32BitWorkerProcess)
+	s.UseManagedIdentityACR = pointer.From(appSiteSlotConfig.AcrUseManagedIdentityCreds)
+	s.HandlerMapping = flattenHandlerMapping(appSiteSlotConfig.HandlerMappings)
+	s.VirtualApplications = flattenVirtualApplications(appSiteSlotConfig.VirtualApplications)
+	s.WebSockets = pointer.From(appSiteSlotConfig.WebSocketsEnabled)
+	s.VnetRouteAllEnabled = pointer.From(appSiteSlotConfig.VnetRouteAllEnabled)
+	s.IpRestrictionDefaultAction = string(pointer.From(appSiteSlotConfig.IPSecurityRestrictionsDefaultAction))
+	s.ScmIpRestrictionDefaultAction = string(pointer.From(appSiteSlotConfig.ScmIPSecurityRestrictionsDefaultAction))
+
+	if appSiteSlotConfig.ApiManagementConfig != nil && appSiteSlotConfig.ApiManagementConfig.Id != nil {
+		s.ApiManagementConfigId = *appSiteSlotConfig.ApiManagementConfig.Id
 	}
 
-	if appSiteSlotConfig.APIManagementConfig != nil && appSiteSlotConfig.APIManagementConfig.ID != nil {
-		siteConfig.ApiManagementConfigId = *appSiteSlotConfig.APIManagementConfig.ID
-	}
-
-	if appSiteSlotConfig.APIDefinition != nil && appSiteSlotConfig.APIDefinition.URL != nil {
-		siteConfig.ApiDefinition = *appSiteSlotConfig.APIDefinition.URL
+	if appSiteSlotConfig.ApiDefinition != nil && appSiteSlotConfig.ApiDefinition.Url != nil {
+		s.ApiDefinition = *appSiteSlotConfig.ApiDefinition.Url
 	}
 
 	if appSiteSlotConfig.DefaultDocuments != nil {
-		siteConfig.DefaultDocuments = *appSiteSlotConfig.DefaultDocuments
+		s.DefaultDocuments = *appSiteSlotConfig.DefaultDocuments
 	}
 
 	if appSiteSlotConfig.NumberOfWorkers != nil {
-		siteConfig.WorkerCount = int(*appSiteSlotConfig.NumberOfWorkers)
+		s.WorkerCount = *appSiteSlotConfig.NumberOfWorkers
 	}
 
 	winAppStack := ApplicationStackWindows{}
@@ -1093,44 +1411,94 @@ func FlattenSiteConfigWindowsAppSlot(appSiteSlotConfig *web.SiteConfig, currentS
 		winAppStack.JavaEmbeddedServer = true
 	}
 
-	siteConfig.WindowsFxVersion = pointer.From(appSiteSlotConfig.WindowsFxVersion)
-	if siteConfig.WindowsFxVersion != "" {
-		// Decode the string to docker values
-		parts := strings.Split(strings.TrimPrefix(siteConfig.WindowsFxVersion, "DOCKER|"), ":")
-		if len(parts) == 2 {
-			winAppStack.DockerContainerTag = parts[1]
-			path := strings.Split(parts[0], "/")
-			if len(path) > 1 {
-				winAppStack.DockerContainerRegistry = path[0]
-				winAppStack.DockerContainerName = strings.TrimPrefix(parts[0], fmt.Sprintf("%s/", path[0]))
-			} else {
-				winAppStack.DockerContainerName = path[0]
-			}
-		}
-	}
+	s.WindowsFxVersion = pointer.From(appSiteSlotConfig.WindowsFxVersion)
 	winAppStack.CurrentStack = currentStack
 
-	siteConfig.ApplicationStack = []ApplicationStackWindows{winAppStack}
+	s.ApplicationStack = []ApplicationStackWindows{winAppStack}
 
-	if appSiteSlotConfig.Cors != nil {
-		corsEmpty := false
-		corsSettings := appSiteSlotConfig.Cors
-		cors := CorsSetting{}
-		if corsSettings.SupportCredentials != nil {
-			cors.SupportCredentials = *corsSettings.SupportCredentials
+}
+
+func (s *SiteConfigWindowsWebAppSlot) SetHealthCheckEvictionTime(input map[string]string) {
+	if v, ok := input["WEBSITE_HEALTHCHECK_MAXPINGFAILURES"]; ok && v != "" {
+		// Discarding the error here as an invalid value should result in `0`
+		evictionTime, _ := strconv.Atoi(v)
+		s.HealthCheckEvictionTime = int64(evictionTime)
+	}
+}
+
+func (s *SiteConfigWindowsWebAppSlot) ParseNodeVersion(input map[string]string) map[string]string {
+	if nodeVer, ok := input["WEBSITE_NODE_DEFAULT_VERSION"]; ok && nodeVer != "6.9.1" {
+		if s.ApplicationStack == nil {
+			s.ApplicationStack = make([]ApplicationStackWindows, 0)
+		}
+		s.ApplicationStack[0].NodeVersion = nodeVer
+	}
+	delete(input, "WEBSITE_NODE_DEFAULT_VERSION")
+
+	return input
+}
+
+func (s *SiteConfigWindowsWebAppSlot) DecodeDockerAppStack(input map[string]string) {
+	applicationStack := ApplicationStackWindows{}
+	if len(s.ApplicationStack) == 1 {
+		applicationStack = s.ApplicationStack[0]
+	}
+
+	if v, ok := input["DOCKER_REGISTRY_SERVER_URL"]; ok {
+		applicationStack.DockerRegistryUrl = v
+	}
+
+	if v, ok := input["DOCKER_REGISTRY_SERVER_USERNAME"]; ok {
+		applicationStack.DockerRegistryUsername = v
+	}
+
+	if v, ok := input["DOCKER_REGISTRY_SERVER_PASSWORD"]; ok {
+		applicationStack.DockerRegistryPassword = v
+	}
+
+	registryHost := trimURLScheme(applicationStack.DockerRegistryUrl)
+	dockerString := strings.TrimPrefix(s.WindowsFxVersion, "DOCKER|")
+	applicationStack.DockerImageName = strings.TrimPrefix(dockerString, registryHost+"/")
+
+	s.ApplicationStack = []ApplicationStackWindows{applicationStack}
+}
+
+func (s *SiteConfigWindowsWebAppSlot) DecodeDockerDeprecatedAppStack(input map[string]string, usesDeprecated bool) {
+	applicationStack := ApplicationStackWindows{}
+	if len(s.ApplicationStack) == 1 {
+		applicationStack = s.ApplicationStack[0]
+	}
+
+	if !usesDeprecated {
+		if v, ok := input["DOCKER_REGISTRY_SERVER_URL"]; ok {
+			applicationStack.DockerRegistryUrl = v
 		}
 
-		if corsSettings.AllowedOrigins != nil {
-			if len(*corsSettings.AllowedOrigins) > 0 {
-				cors.AllowedOrigins = *corsSettings.AllowedOrigins
-			} else if !cors.SupportCredentials {
-				corsEmpty = true
+		if v, ok := input["DOCKER_REGISTRY_SERVER_USERNAME"]; ok {
+			applicationStack.DockerRegistryUsername = v
+		}
+
+		if v, ok := input["DOCKER_REGISTRY_SERVER_PASSWORD"]; ok {
+			applicationStack.DockerRegistryPassword = v
+		}
+
+		registryHost := trimURLScheme(applicationStack.DockerRegistryUrl)
+		dockerString := strings.TrimPrefix(s.WindowsFxVersion, "DOCKER|")
+		dockerString = strings.TrimPrefix(dockerString, registryHost)
+		applicationStack.DockerImageName = strings.TrimPrefix(dockerString, "/")
+	} else {
+		parts := strings.Split(strings.TrimPrefix(s.WindowsFxVersion, "DOCKER|"), ":")
+		if len(parts) == 2 {
+			applicationStack.DockerContainerTag = parts[1]
+			path := strings.Split(parts[0], "/")
+			if len(path) > 1 {
+				applicationStack.DockerContainerRegistry = path[0]
+				applicationStack.DockerContainerName = strings.TrimPrefix(parts[0], fmt.Sprintf("%s/", path[0]))
+			} else {
+				applicationStack.DockerContainerName = path[0]
 			}
-		}
-		if !corsEmpty {
-			siteConfig.Cors = []CorsSetting{cors}
 		}
 	}
 
-	return []SiteConfigWindowsWebAppSlot{siteConfig}
+	s.ApplicationStack = []ApplicationStackWindows{applicationStack}
 }

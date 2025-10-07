@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package CdnFrontDoorsecretparams
 
 import (
@@ -5,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/services/cdn/mgmt/2021-06-01/cdn" // nolint: staticcheck
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	keyVaultParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
@@ -63,7 +67,8 @@ func ExpandCdnFrontDoorCustomerCertificateParameters(ctx context.Context, input 
 		useLatest = true
 	}
 
-	keyVaultBaseId, err := clients.KeyVault.KeyVaultIDFromBaseUrl(ctx, clients.Resource, certificateId.KeyVaultBaseUrl)
+	subscriptionId := commonids.NewSubscriptionID(clients.Account.SubscriptionId)
+	keyVaultBaseId, err := clients.KeyVault.KeyVaultIDFromBaseUrl(ctx, subscriptionId, certificateId.KeyVaultBaseUrl)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving the Key Vault Resource ID from the Key Vault Base URL %q: %s", certificateId.KeyVaultBaseUrl, err)
 	}
@@ -72,12 +77,12 @@ func ExpandCdnFrontDoorCustomerCertificateParameters(ctx context.Context, input 
 		return nil, fmt.Errorf("unexpected nil Key Vault Resource ID retrieved from the Key Vault Base URL %q", certificateId.KeyVaultBaseUrl)
 	}
 
-	keyVaultId, err := keyVaultParse.VaultID(*keyVaultBaseId)
+	keyVaultId, err := commonids.ParseKeyVaultID(*keyVaultBaseId)
 	if err != nil {
 		return nil, err
 	}
 
-	secretSource := keyVaultParse.NewSecretVersionlessID(keyVaultId.SubscriptionId, keyVaultId.ResourceGroup, keyVaultId.Name, certificateId.Name)
+	secretSource := keyVaultParse.NewSecretVersionlessID(keyVaultId.SubscriptionId, keyVaultId.ResourceGroupName, keyVaultId.VaultName, certificateId.Name)
 
 	customerCertificate := &cdn.CustomerCertificateParameters{
 		Type: m.CustomerCertificate.TypeName,

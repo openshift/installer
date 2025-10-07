@@ -1,10 +1,14 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package keyvault
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
@@ -22,11 +26,7 @@ func dataSourceKeyVaultCertificateIssuer() *pluginsdk.Resource {
 		},
 
 		Schema: map[string]*pluginsdk.Schema{
-			"key_vault_id": {
-				Type:         pluginsdk.TypeString,
-				Required:     true,
-				ValidateFunc: azure.ValidateResourceID,
-			},
+			"key_vault_id": commonschema.ResourceIDReferenceRequired(&commonids.KeyVaultId{}),
 
 			"name": {
 				Type:         pluginsdk.TypeString,
@@ -84,7 +84,7 @@ func dataSourceKeyVaultCertificateIssuerRead(d *pluginsdk.ResourceData, meta int
 	defer cancel()
 
 	name := d.Get("name").(string)
-	keyVaultId, err := parse.VaultID(d.Get("key_vault_id").(string))
+	keyVaultId, err := commonids.ParseKeyVaultID(d.Get("key_vault_id").(string))
 	if err != nil {
 		return err
 	}
@@ -94,6 +94,7 @@ func dataSourceKeyVaultCertificateIssuerRead(d *pluginsdk.ResourceData, meta int
 		return fmt.Errorf("looking up Base URI for Certificate Issuer %q in %s: %+v", name, *keyVaultId, err)
 	}
 
+	id := parse.NewIssuerID(*keyVaultBaseUri, name)
 	resp, err := client.GetCertificateIssuer(ctx, *keyVaultBaseUri, name)
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
@@ -101,10 +102,7 @@ func dataSourceKeyVaultCertificateIssuerRead(d *pluginsdk.ResourceData, meta int
 		}
 		return fmt.Errorf("failed making Read request on Azure KeyVault Certificate Issuer %s: %+v", name, err)
 	}
-	if resp.ID == nil || *resp.ID == "" {
-		return fmt.Errorf("failure reading Key Vault Certificate Issuer ID for %q", name)
-	}
-	d.SetId(*resp.ID)
+	d.SetId(id.ID())
 
 	d.Set("provider_name", resp.Provider)
 	if resp.OrganizationDetails != nil {

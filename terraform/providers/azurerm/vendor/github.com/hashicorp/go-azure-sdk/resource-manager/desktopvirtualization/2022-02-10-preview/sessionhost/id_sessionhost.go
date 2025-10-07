@@ -4,10 +4,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/recaser"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-var _ resourceids.ResourceId = SessionHostId{}
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
+
+func init() {
+	recaser.RegisterResourceId(&SessionHostId{})
+}
+
+var _ resourceids.ResourceId = &SessionHostId{}
 
 // SessionHostId is a struct representing the Resource ID for a Session Host
 type SessionHostId struct {
@@ -29,29 +37,15 @@ func NewSessionHostID(subscriptionId string, resourceGroupName string, hostPoolN
 
 // ParseSessionHostID parses 'input' into a SessionHostId
 func ParseSessionHostID(input string) (*SessionHostId, error) {
-	parser := resourceids.NewParserFromResourceIdType(SessionHostId{})
+	parser := resourceids.NewParserFromResourceIdType(&SessionHostId{})
 	parsed, err := parser.Parse(input, false)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := SessionHostId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.HostPoolName, ok = parsed.Parsed["hostPoolName"]; !ok {
-		return nil, fmt.Errorf("the segment 'hostPoolName' was not found in the resource id %q", input)
-	}
-
-	if id.SessionHostName, ok = parsed.Parsed["sessionHostName"]; !ok {
-		return nil, fmt.Errorf("the segment 'sessionHostName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
@@ -60,32 +54,40 @@ func ParseSessionHostID(input string) (*SessionHostId, error) {
 // ParseSessionHostIDInsensitively parses 'input' case-insensitively into a SessionHostId
 // note: this method should only be used for API response data and not user input
 func ParseSessionHostIDInsensitively(input string) (*SessionHostId, error) {
-	parser := resourceids.NewParserFromResourceIdType(SessionHostId{})
+	parser := resourceids.NewParserFromResourceIdType(&SessionHostId{})
 	parsed, err := parser.Parse(input, true)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := SessionHostId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.HostPoolName, ok = parsed.Parsed["hostPoolName"]; !ok {
-		return nil, fmt.Errorf("the segment 'hostPoolName' was not found in the resource id %q", input)
-	}
-
-	if id.SessionHostName, ok = parsed.Parsed["sessionHostName"]; !ok {
-		return nil, fmt.Errorf("the segment 'sessionHostName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
+}
+
+func (id *SessionHostId) FromParseResult(input resourceids.ParseResult) error {
+	var ok bool
+
+	if id.SubscriptionId, ok = input.Parsed["subscriptionId"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", input)
+	}
+
+	if id.ResourceGroupName, ok = input.Parsed["resourceGroupName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", input)
+	}
+
+	if id.HostPoolName, ok = input.Parsed["hostPoolName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "hostPoolName", input)
+	}
+
+	if id.SessionHostName, ok = input.Parsed["sessionHostName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "sessionHostName", input)
+	}
+
+	return nil
 }
 
 // ValidateSessionHostID checks that 'input' can be parsed as a Session Host ID

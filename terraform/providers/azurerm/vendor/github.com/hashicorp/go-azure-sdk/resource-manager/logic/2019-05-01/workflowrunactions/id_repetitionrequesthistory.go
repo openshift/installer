@@ -4,10 +4,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/recaser"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-var _ resourceids.ResourceId = RepetitionRequestHistoryId{}
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
+
+func init() {
+	recaser.RegisterResourceId(&RepetitionRequestHistoryId{})
+}
+
+var _ resourceids.ResourceId = &RepetitionRequestHistoryId{}
 
 // RepetitionRequestHistoryId is a struct representing the Resource ID for a Repetition Request History
 type RepetitionRequestHistoryId struct {
@@ -35,41 +43,15 @@ func NewRepetitionRequestHistoryID(subscriptionId string, resourceGroupName stri
 
 // ParseRepetitionRequestHistoryID parses 'input' into a RepetitionRequestHistoryId
 func ParseRepetitionRequestHistoryID(input string) (*RepetitionRequestHistoryId, error) {
-	parser := resourceids.NewParserFromResourceIdType(RepetitionRequestHistoryId{})
+	parser := resourceids.NewParserFromResourceIdType(&RepetitionRequestHistoryId{})
 	parsed, err := parser.Parse(input, false)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := RepetitionRequestHistoryId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.WorkflowName, ok = parsed.Parsed["workflowName"]; !ok {
-		return nil, fmt.Errorf("the segment 'workflowName' was not found in the resource id %q", input)
-	}
-
-	if id.RunName, ok = parsed.Parsed["runName"]; !ok {
-		return nil, fmt.Errorf("the segment 'runName' was not found in the resource id %q", input)
-	}
-
-	if id.ActionName, ok = parsed.Parsed["actionName"]; !ok {
-		return nil, fmt.Errorf("the segment 'actionName' was not found in the resource id %q", input)
-	}
-
-	if id.RepetitionName, ok = parsed.Parsed["repetitionName"]; !ok {
-		return nil, fmt.Errorf("the segment 'repetitionName' was not found in the resource id %q", input)
-	}
-
-	if id.RequestHistoryName, ok = parsed.Parsed["requestHistoryName"]; !ok {
-		return nil, fmt.Errorf("the segment 'requestHistoryName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
@@ -78,44 +60,52 @@ func ParseRepetitionRequestHistoryID(input string) (*RepetitionRequestHistoryId,
 // ParseRepetitionRequestHistoryIDInsensitively parses 'input' case-insensitively into a RepetitionRequestHistoryId
 // note: this method should only be used for API response data and not user input
 func ParseRepetitionRequestHistoryIDInsensitively(input string) (*RepetitionRequestHistoryId, error) {
-	parser := resourceids.NewParserFromResourceIdType(RepetitionRequestHistoryId{})
+	parser := resourceids.NewParserFromResourceIdType(&RepetitionRequestHistoryId{})
 	parsed, err := parser.Parse(input, true)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := RepetitionRequestHistoryId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.WorkflowName, ok = parsed.Parsed["workflowName"]; !ok {
-		return nil, fmt.Errorf("the segment 'workflowName' was not found in the resource id %q", input)
-	}
-
-	if id.RunName, ok = parsed.Parsed["runName"]; !ok {
-		return nil, fmt.Errorf("the segment 'runName' was not found in the resource id %q", input)
-	}
-
-	if id.ActionName, ok = parsed.Parsed["actionName"]; !ok {
-		return nil, fmt.Errorf("the segment 'actionName' was not found in the resource id %q", input)
-	}
-
-	if id.RepetitionName, ok = parsed.Parsed["repetitionName"]; !ok {
-		return nil, fmt.Errorf("the segment 'repetitionName' was not found in the resource id %q", input)
-	}
-
-	if id.RequestHistoryName, ok = parsed.Parsed["requestHistoryName"]; !ok {
-		return nil, fmt.Errorf("the segment 'requestHistoryName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
+}
+
+func (id *RepetitionRequestHistoryId) FromParseResult(input resourceids.ParseResult) error {
+	var ok bool
+
+	if id.SubscriptionId, ok = input.Parsed["subscriptionId"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", input)
+	}
+
+	if id.ResourceGroupName, ok = input.Parsed["resourceGroupName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", input)
+	}
+
+	if id.WorkflowName, ok = input.Parsed["workflowName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "workflowName", input)
+	}
+
+	if id.RunName, ok = input.Parsed["runName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "runName", input)
+	}
+
+	if id.ActionName, ok = input.Parsed["actionName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "actionName", input)
+	}
+
+	if id.RepetitionName, ok = input.Parsed["repetitionName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "repetitionName", input)
+	}
+
+	if id.RequestHistoryName, ok = input.Parsed["requestHistoryName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "requestHistoryName", input)
+	}
+
+	return nil
 }
 
 // ValidateRepetitionRequestHistoryID checks that 'input' can be parsed as a Repetition Request History ID

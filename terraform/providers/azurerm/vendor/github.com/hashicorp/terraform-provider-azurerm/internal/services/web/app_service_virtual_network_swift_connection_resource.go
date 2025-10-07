@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package web
 
 import (
@@ -5,17 +8,18 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web" // nolint: staticcheck
-	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/network/2023-11-01/subnets"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network"
-	networkParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	azureNetwork "github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func resourceAppServiceVirtualNetworkSwiftConnection() *pluginsdk.Resource {
@@ -42,12 +46,12 @@ func resourceAppServiceVirtualNetworkSwiftConnection() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: azure.ValidateResourceID,
+				ValidateFunc: validate.AppServiceID,
 			},
 			"subnet_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
-				ValidateFunc: azure.ValidateResourceID,
+				ValidateFunc: commonids.ValidateSubnetID,
 			},
 		},
 	}
@@ -55,8 +59,8 @@ func resourceAppServiceVirtualNetworkSwiftConnection() *pluginsdk.Resource {
 
 func resourceAppServiceVirtualNetworkSwiftConnectionCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Web.AppServicesClient
-	subnetClient := meta.(*clients.Client).Network.SubnetsClient
-	vnetClient := meta.(*clients.Client).Network.VnetClient
+	subnetClient := meta.(*clients.Client).Network.Client.Subnets
+	vnetClient := meta.(*clients.Client).Network.VirtualNetworks
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -65,14 +69,14 @@ func resourceAppServiceVirtualNetworkSwiftConnectionCreateUpdate(d *pluginsdk.Re
 		return fmt.Errorf("parsing App Service Resource ID %q", appID)
 	}
 
-	subnetID, err := networkParse.SubnetID(d.Get("subnet_id").(string))
+	subnetID, err := commonids.ParseSubnetID(d.Get("subnet_id").(string))
 	if err != nil {
 		return fmt.Errorf("parsing Subnet Resource ID %q", subnetID)
 	}
 
 	resourceGroup := appID.ResourceGroup
 	name := appID.SiteName
-	subnetName := subnetID.Name
+	subnetName := subnetID.SubnetName
 	virtualNetworkName := subnetID.VirtualNetworkName
 
 	if d.IsNewResource() {
@@ -114,8 +118,8 @@ func resourceAppServiceVirtualNetworkSwiftConnectionCreateUpdate(d *pluginsdk.Re
 	timeout, _ := ctx.Deadline()
 
 	stateConf := &pluginsdk.StateChangeConf{
-		Pending:    []string{string(azureNetwork.ProvisioningStateUpdating)},
-		Target:     []string{string(azureNetwork.ProvisioningStateSucceeded)},
+		Pending:    []string{string(subnets.ProvisioningStateUpdating)},
+		Target:     []string{string(subnets.ProvisioningStateSucceeded)},
 		Refresh:    network.SubnetProvisioningStateRefreshFunc(ctx, subnetClient, *subnetID),
 		MinTimeout: 1 * time.Minute,
 		Timeout:    time.Until(timeout),
@@ -124,10 +128,10 @@ func resourceAppServiceVirtualNetworkSwiftConnectionCreateUpdate(d *pluginsdk.Re
 		return fmt.Errorf("waiting for provisioning state of subnet for App Service VNet association between %q (Resource Group %q) and Virtual Network %q: %s", name, resourceGroup, virtualNetworkName, err)
 	}
 
-	vnetId := networkParse.NewVirtualNetworkID(subnetID.SubscriptionId, subnetID.ResourceGroup, subnetID.VirtualNetworkName)
+	vnetId := commonids.NewVirtualNetworkID(subnetID.SubscriptionId, subnetID.ResourceGroupName, subnetID.VirtualNetworkName)
 	vnetStateConf := &pluginsdk.StateChangeConf{
-		Pending:    []string{string(azureNetwork.ProvisioningStateUpdating)},
-		Target:     []string{string(azureNetwork.ProvisioningStateSucceeded)},
+		Pending:    []string{string(subnets.ProvisioningStateUpdating)},
+		Target:     []string{string(subnets.ProvisioningStateSucceeded)},
 		Refresh:    network.VirtualNetworkProvisioningStateRefreshFunc(ctx, vnetClient, vnetId),
 		MinTimeout: 1 * time.Minute,
 		Timeout:    time.Until(timeout),
@@ -140,7 +144,11 @@ func resourceAppServiceVirtualNetworkSwiftConnectionCreateUpdate(d *pluginsdk.Re
 	if err != nil {
 		return fmt.Errorf("retrieving App Service VNet association between %q (Resource Group %q) and Virtual Network %q: %s", name, resourceGroup, virtualNetworkName, err)
 	}
-	d.SetId(*read.ID)
+	swiftVirtualNetworkId, err := parse.VirtualNetworkSwiftConnectionID(*read.ID)
+	if err != nil {
+		return err
+	}
+	d.SetId(swiftVirtualNetworkId.ID())
 
 	return resourceAppServiceVirtualNetworkSwiftConnectionRead(d, meta)
 }
@@ -196,19 +204,6 @@ func resourceAppServiceVirtualNetworkSwiftConnectionDelete(d *pluginsdk.Resource
 		return err
 	}
 
-	subnetID, err := networkParse.SubnetID(d.Get("subnet_id").(string))
-	if err != nil {
-		return fmt.Errorf("parsing Subnet Resource ID %q", subnetID)
-	}
-	subnetName := subnetID.Name
-	virtualNetworkName := subnetID.VirtualNetworkName
-
-	locks.ByName(virtualNetworkName, network.VirtualNetworkResourceName)
-	defer locks.UnlockByName(virtualNetworkName, network.VirtualNetworkResourceName)
-
-	locks.ByName(subnetName, network.SubnetResourceName)
-	defer locks.UnlockByName(subnetName, network.SubnetResourceName)
-
 	read, err := client.GetSwiftVirtualNetworkConnection(ctx, id.ResourceGroup, id.SiteName)
 	if err != nil {
 		return fmt.Errorf("making read request on virtual network properties (App Service %q / Resource Group %q): %+v", id.SiteName, id.ResourceGroup, err)
@@ -222,6 +217,19 @@ func resourceAppServiceVirtualNetworkSwiftConnectionDelete(d *pluginsdk.Resource
 		// assume deleted
 		return nil
 	}
+
+	subnetID, err := commonids.ParseSubnetID(pointer.From(subnet))
+	if err != nil {
+		return fmt.Errorf("parsing Subnet Resource ID %q", subnetID)
+	}
+	subnetName := subnetID.SubnetName
+	virtualNetworkName := subnetID.VirtualNetworkName
+
+	locks.ByName(virtualNetworkName, network.VirtualNetworkResourceName)
+	defer locks.UnlockByName(virtualNetworkName, network.VirtualNetworkResourceName)
+
+	locks.ByName(subnetName, network.SubnetResourceName)
+	defer locks.UnlockByName(subnetName, network.SubnetResourceName)
 
 	resp, err := client.DeleteSwiftVirtualNetwork(ctx, id.ResourceGroup, id.SiteName)
 	if err != nil {

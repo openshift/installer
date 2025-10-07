@@ -4,10 +4,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/recaser"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-var _ resourceids.ResourceId = WorkbookId{}
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
+
+func init() {
+	recaser.RegisterResourceId(&WorkbookId{})
+}
+
+var _ resourceids.ResourceId = &WorkbookId{}
 
 // WorkbookId is a struct representing the Resource ID for a Workbook
 type WorkbookId struct {
@@ -27,25 +35,15 @@ func NewWorkbookID(subscriptionId string, resourceGroupName string, workbookName
 
 // ParseWorkbookID parses 'input' into a WorkbookId
 func ParseWorkbookID(input string) (*WorkbookId, error) {
-	parser := resourceids.NewParserFromResourceIdType(WorkbookId{})
+	parser := resourceids.NewParserFromResourceIdType(&WorkbookId{})
 	parsed, err := parser.Parse(input, false)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := WorkbookId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.WorkbookName, ok = parsed.Parsed["workbookName"]; !ok {
-		return nil, fmt.Errorf("the segment 'workbookName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
@@ -54,28 +52,36 @@ func ParseWorkbookID(input string) (*WorkbookId, error) {
 // ParseWorkbookIDInsensitively parses 'input' case-insensitively into a WorkbookId
 // note: this method should only be used for API response data and not user input
 func ParseWorkbookIDInsensitively(input string) (*WorkbookId, error) {
-	parser := resourceids.NewParserFromResourceIdType(WorkbookId{})
+	parser := resourceids.NewParserFromResourceIdType(&WorkbookId{})
 	parsed, err := parser.Parse(input, true)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := WorkbookId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.WorkbookName, ok = parsed.Parsed["workbookName"]; !ok {
-		return nil, fmt.Errorf("the segment 'workbookName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
+}
+
+func (id *WorkbookId) FromParseResult(input resourceids.ParseResult) error {
+	var ok bool
+
+	if id.SubscriptionId, ok = input.Parsed["subscriptionId"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", input)
+	}
+
+	if id.ResourceGroupName, ok = input.Parsed["resourceGroupName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", input)
+	}
+
+	if id.WorkbookName, ok = input.Parsed["workbookName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "workbookName", input)
+	}
+
+	return nil
 }
 
 // ValidateWorkbookID checks that 'input' can be parsed as a Workbook ID

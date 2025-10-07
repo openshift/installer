@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package logic
 
 import (
@@ -6,9 +9,9 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/workflows"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/workflowtriggers"
-	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 )
@@ -43,7 +46,7 @@ func resourceLogicAppTriggerCustom() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: azure.ValidateResourceID,
+				ValidateFunc: workflows.ValidateWorkflowID,
 			},
 
 			"body": {
@@ -51,6 +54,10 @@ func resourceLogicAppTriggerCustom() *pluginsdk.Resource {
 				Required:         true,
 				ValidateFunc:     validation.StringIsJSON,
 				DiffSuppressFunc: pluginsdk.SuppressJsonDiff,
+			},
+			"callback_url": {
+				Type:     pluginsdk.TypeString,
+				Computed: true,
 			},
 		},
 	}
@@ -86,9 +93,7 @@ func resourceLogicAppTriggerCustomRead(d *pluginsdk.ResourceData, meta interface
 		return err
 	}
 
-	workflowId := workflows.NewWorkflowID(id.SubscriptionId, id.ResourceGroupName, id.WorkflowName)
-
-	t, app, err := retrieveLogicAppTrigger(d, meta, workflowId, id.TriggerName)
+	t, app, url, err := retrieveLogicAppTrigger(d, meta, *id)
 	if err != nil {
 		return err
 	}
@@ -99,16 +104,17 @@ func resourceLogicAppTriggerCustomRead(d *pluginsdk.ResourceData, meta interface
 		return nil
 	}
 
-	action := *t
+	trigger := *t
 
 	d.Set("name", id.TriggerName)
 	d.Set("logic_app_id", app.Id)
+	d.Set("callback_url", pointer.From(url))
 
 	// Azure returns an additional field called evaluatedRecurrence in the trigger body which
 	// is a copy of the recurrence specified in the body property and breaks the diff suppress logic
-	delete(action, "evaluatedRecurrence")
+	delete(trigger, "evaluatedRecurrence")
 
-	body, err := json.Marshal(action)
+	body, err := json.Marshal(trigger)
 	if err != nil {
 		return fmt.Errorf("serializing `body` for %s: %+v", id.ID(), err)
 	}

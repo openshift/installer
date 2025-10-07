@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package web
 
 import (
@@ -9,13 +12,14 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/network/2023-11-01/virtualnetworks"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	helpersValidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	networkParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
-	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
@@ -31,10 +35,11 @@ const (
 
 func resourceAppServiceEnvironment() *pluginsdk.Resource {
 	return &pluginsdk.Resource{
-		Create: resourceAppServiceEnvironmentCreate,
-		Read:   resourceAppServiceEnvironmentRead,
-		Update: resourceAppServiceEnvironmentUpdate,
-		Delete: resourceAppServiceEnvironmentDelete,
+		DeprecationMessage: "This resource is deprecated due to the [retirement of v1 and v2 App Service Environments](https://azure.microsoft.com/en-gb/updates/app-service-environment-v1-and-v2-retirement-announcement/) and will be removed inv4.0 of the provider. Please use `azurerm_app_service_environment_v3` instead.",
+		Create:             resourceAppServiceEnvironmentCreate,
+		Read:               resourceAppServiceEnvironmentRead,
+		Update:             resourceAppServiceEnvironmentUpdate,
+		Delete:             resourceAppServiceEnvironmentDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
 			_, err := parse.AppServiceEnvironmentID(id)
 			return err
@@ -54,7 +59,7 @@ func resourceAppServiceEnvironment() *pluginsdk.Resource {
 
 func resourceAppServiceEnvironmentCreate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Web.AppServiceEnvironmentsClient
-	networksClient := meta.(*clients.Client).Network.VnetClient
+	networksClient := meta.(*clients.Client).Network.VirtualNetworks
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
@@ -69,7 +74,7 @@ func resourceAppServiceEnvironmentCreate(d *pluginsdk.ResourceData, meta interfa
 	}
 
 	subnetId := d.Get("subnet_id").(string)
-	subnet, err := networkParse.SubnetID(subnetId)
+	subnet, err := commonids.ParseSubnetID(subnetId)
 	if err != nil {
 		return err
 	}
@@ -79,23 +84,27 @@ func resourceAppServiceEnvironmentCreate(d *pluginsdk.ResourceData, meta interfa
 	// compatibility, we still allow user to use the resource group of Subnet to be the one for
 	// ASE implicitly. While allow user to explicitly specify the resource group, which takes higher
 	// precedence.
-	resourceGroup := subnet.ResourceGroup
+	resourceGroup := subnet.ResourceGroupName
 	if v, ok := d.GetOk("resource_group_name"); ok {
 		resourceGroup = v.(string)
 	}
 	id := parse.NewAppServiceEnvironmentID(subscriptionId, resourceGroup, d.Get("name").(string))
 
-	vnet, err := networksClient.Get(ctx, subnet.ResourceGroup, subnet.VirtualNetworkName, "")
+	vnetId := commonids.NewVirtualNetworkID(subnet.SubscriptionId, subnet.ResourceGroupName, subnet.VirtualNetworkName)
+	vnet, err := networksClient.Get(ctx, vnetId, virtualnetworks.DefaultGetOperationOptions())
 	if err != nil {
-		return fmt.Errorf("retrieving Virtual Network %q (Resource Group %q): %+v", subnet.VirtualNetworkName, subnet.ResourceGroup, err)
+		return fmt.Errorf("retrieving %s: %+v", vnetId, err)
+	}
+	if vnet.Model == nil {
+		return fmt.Errorf("retrieving %s: `model` was nil", vnetId)
 	}
 
 	// the App Service Environment has to be in the same location as the Virtual Network
-	var location string
-	if loc := vnet.Location; loc != nil {
-		location = azure.NormalizeLocation(*loc)
+	var loc string
+	if vnet.Model.Location != nil {
+		loc = location.NormalizeNilable(vnet.Model.Location)
 	} else {
-		return fmt.Errorf("determining Location from Virtual Network %q (Resource Group %q): `location` was nil", subnet.VirtualNetworkName, subnet.ResourceGroup)
+		return fmt.Errorf("determining Location from %s: `location` was nil", vnetId)
 	}
 
 	existing, err := client.Get(ctx, id.ResourceGroup, id.HostingEnvironmentName)
@@ -113,7 +122,7 @@ func resourceAppServiceEnvironmentCreate(d *pluginsdk.ResourceData, meta interfa
 	pricingTier := d.Get("pricing_tier").(string)
 
 	envelope := web.AppServiceEnvironmentResource{
-		Location: utils.String(location),
+		Location: utils.String(loc),
 		Kind:     utils.String("ASEV2"),
 		AppServiceEnvironment: &web.AppServiceEnvironment{
 			InternalLoadBalancingMode: web.LoadBalancingMode(internalLoadBalancingMode),
@@ -121,7 +130,7 @@ func resourceAppServiceEnvironmentCreate(d *pluginsdk.ResourceData, meta interfa
 			MultiSize:                 utils.String(convertFromIsolatedSKU(pricingTier)),
 			VirtualNetwork: &web.VirtualNetworkProfile{
 				ID:     utils.String(subnetId),
-				Subnet: utils.String(subnet.Name),
+				Subnet: utils.String(subnet.SubnetName),
 			},
 			UserWhitelistedIPRanges: utils.ExpandStringSlice(userWhitelistedIPRangesRaw),
 		},
@@ -425,7 +434,7 @@ func resourceAppServiceEnvironmentSchema() map[string]*pluginsdk.Schema {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: networkValidate.SubnetID,
+			ValidateFunc: commonids.ValidateSubnetID,
 		},
 
 		"cluster_setting": {

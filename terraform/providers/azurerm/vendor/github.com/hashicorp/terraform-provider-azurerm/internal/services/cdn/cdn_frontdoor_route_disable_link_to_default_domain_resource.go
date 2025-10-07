@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package cdn
 
 import (
@@ -38,20 +41,19 @@ func resourceCdnFrontDoorRouteDisableLinkToDefaultDomain() *pluginsdk.Resource {
 			return nil
 		}),
 
+		DeprecationMessage: "The `azurerm_cdn_frontdoor_route_disable_link_to_default_domain` resource has been deprecated and will be removed in v4.0 of the AzureRM provider in favour of the 'link_to_default_domain' property in the `azurerm_cdn_frontdoor_route` resource.",
+
 		Schema: map[string]*pluginsdk.Schema{
 			"cdn_frontdoor_route_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Deprecated:   "the 'cdn_frontdoor_route_disable_link_to_default_domain' resource has been deprecated and will be removed from the 4.0 AzureRM provider. Please use the 'link_to_default_domain' field in the 'cdn_frontdoor_route' resource to control this value",
 				ValidateFunc: validate.FrontDoorRouteID,
 			},
 
 			"cdn_frontdoor_custom_domain_ids": {
-				Type:       pluginsdk.TypeList,
-				Required:   true,
-				Deprecated: "the 'cdn_frontdoor_route_disable_link_to_default_domain' resource has been deprecated and will be removed from the 4.0 AzureRM provider. Please use the 'link_to_default_domain' field in the 'cdn_frontdoor_route' resource to control this value",
-
+				Type:     pluginsdk.TypeList,
+				Required: true,
 				Elem: &pluginsdk.Schema{
 					Type:         pluginsdk.TypeString,
 					ValidateFunc: validate.FrontDoorCustomDomainID,
@@ -184,7 +186,8 @@ func resourceCdnFrontDoorRouteDisableLinkToDefaultDomainRead(d *pluginsdk.Resour
 	existing, err := routeClient.Get(routeCtx, routeId.ResourceGroup, routeId.ProfileName, routeId.AfdEndpointName, routeId.RouteName)
 	if err != nil {
 		if utils.ResponseWasNotFound(existing.Response) {
-			return fmt.Errorf("creating %s: %s was not found", id, routeId)
+			d.SetId("")
+			return nil
 		}
 
 		return fmt.Errorf("retrieving existing %s: %+v", *routeId, err)

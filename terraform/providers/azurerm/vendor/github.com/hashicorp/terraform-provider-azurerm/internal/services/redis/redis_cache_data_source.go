@@ -1,24 +1,29 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package redis
 
 import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/zones"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2021-06-01/patchschedules"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2021-06-01/redis"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2024-03-01/patchschedules"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2024-03-01/redis"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	networkParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 )
 
 func dataSourceRedisCache() *pluginsdk.Resource {
-	return &pluginsdk.Resource{
+	resource := &pluginsdk.Resource{
 		Read: dataSourceRedisCacheRead,
 
 		Timeouts: &pluginsdk.ResourceTimeout{
@@ -62,8 +67,7 @@ func dataSourceRedisCache() *pluginsdk.Resource {
 				Computed: true,
 			},
 
-			// TODO 4.0: change this from enable_* to *_enabled
-			"enable_non_ssl_port": {
+			"non_ssl_port_enabled": {
 				Type:     pluginsdk.TypeBool,
 				Computed: true,
 			},
@@ -83,6 +87,10 @@ func dataSourceRedisCache() *pluginsdk.Resource {
 				Computed: true,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
+						"active_directory_authentication_enabled": {
+							Type:     pluginsdk.TypeBool,
+							Computed: true,
+						},
 						"maxclients": {
 							Type:     pluginsdk.TypeInt,
 							Computed: true,
@@ -150,9 +158,16 @@ func dataSourceRedisCache() *pluginsdk.Resource {
 							Computed:  true,
 							Sensitive: true,
 						},
-						// TODO 4.0: change this from enable_* to *_enabled
-						"enable_authentication": {
+						"authentication_enabled": {
 							Type:     pluginsdk.TypeBool,
+							Computed: true,
+						},
+						"storage_account_subscription_id": {
+							Type:     pluginsdk.TypeString,
+							Computed: true,
+						},
+						"data_persistence_authentication_method": {
+							Type:     pluginsdk.TypeString,
 							Computed: true,
 						},
 					},
@@ -221,9 +236,30 @@ func dataSourceRedisCache() *pluginsdk.Resource {
 				Sensitive: true,
 			},
 
+			"access_keys_authentication_enabled": {
+				Type:     pluginsdk.TypeBool,
+				Computed: true,
+			},
+
 			"tags": commonschema.TagsDataSource(),
 		},
 	}
+
+	if !features.FourPointOhBeta() {
+		resource.Schema["enable_non_ssl_port"] = &pluginsdk.Schema{
+			Type:       pluginsdk.TypeBool,
+			Computed:   true,
+			Deprecated: "`enable_non_ssl_port` will be removed in favour of the property `non_ssl_port_enabled` in version 4.0 of the AzureRM Provider.",
+		}
+		resource.Schema["redis_configuration"].Elem.(*pluginsdk.Resource).Schema["enable_authentication"] = &pluginsdk.Schema{
+			Type:       pluginsdk.TypeBool,
+			Optional:   true,
+			Default:    true,
+			Deprecated: "`enable_authentication` will be removed in favour of the property `authentication_enabled` in version 4.0 of the AzureRM Provider.",
+		}
+	}
+
+	return resource
 }
 
 func dataSourceRedisCacheRead(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -245,7 +281,9 @@ func dataSourceRedisCacheRead(d *pluginsdk.ResourceData, meta interface{}) error
 	patchScheduleRedisId := patchschedules.NewRediID(id.SubscriptionId, id.ResourceGroupName, id.RedisName)
 	schedule, err := patchSchedulesClient.Get(ctx, patchScheduleRedisId)
 	if err != nil {
-		return fmt.Errorf("obtaining patch schedules for %s: %+v", id, err)
+		if !response.WasNotFound(schedule.HttpResponse) {
+			return fmt.Errorf("obtaining patch schedules for %s: %+v", id, err)
+		}
 	}
 	var patchSchedule []interface{}
 	if model := schedule.Model; model != nil {
@@ -277,7 +315,12 @@ func dataSourceRedisCacheRead(d *pluginsdk.ResourceData, meta interface{}) error
 		}
 		d.Set("minimum_tls_version", minimumTlsVersion)
 		d.Set("port", props.Port)
-		d.Set("enable_non_ssl_port", props.EnableNonSslPort)
+		d.Set("non_ssl_port_enabled", props.EnableNonSslPort)
+
+		if !features.FourPointOhBeta() {
+			d.Set("enable_non_ssl_port", props.EnableNonSslPort)
+		}
+
 		shardCount := 0
 		if props.ShardCount != nil {
 			shardCount = int(*props.ShardCount)
@@ -286,7 +329,7 @@ func dataSourceRedisCacheRead(d *pluginsdk.ResourceData, meta interface{}) error
 		d.Set("private_static_ip_address", props.StaticIP)
 		subnetId := ""
 		if props.SubnetId != nil {
-			parsed, err := networkParse.SubnetIDInsensitively(*props.SubnetId)
+			parsed, err := commonids.ParseSubnetIDInsensitively(*props.SubnetId)
 			if err != nil {
 				return err
 			}
@@ -306,6 +349,7 @@ func dataSourceRedisCacheRead(d *pluginsdk.ResourceData, meta interface{}) error
 		enableSslPort := !*props.EnableNonSslPort
 		d.Set("primary_connection_string", getRedisConnectionString(*props.HostName, *props.SslPort, *keys.Model.PrimaryKey, enableSslPort))
 		d.Set("secondary_connection_string", getRedisConnectionString(*props.HostName, *props.SslPort, *keys.Model.SecondaryKey, enableSslPort))
+		d.Set("access_keys_authentication_enabled", !pointer.From(props.DisableAccessKeyAuthentication))
 
 		if err := tags.FlattenAndSet(d, model.Tags); err != nil {
 			return fmt.Errorf("setting `tags`: %+v", err)

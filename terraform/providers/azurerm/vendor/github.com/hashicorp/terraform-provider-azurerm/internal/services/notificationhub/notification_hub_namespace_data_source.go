@@ -1,14 +1,18 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package notificationhub
 
 import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/notificationhubs/2017-04-01/namespaces"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/notificationhubs/2023-09-01/namespaces"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -86,15 +90,15 @@ func resourceArmDataSourceNotificationHubNamespaceRead(d *pluginsdk.ResourceData
 	d.Set("resource_group_name", id.ResourceGroupName)
 
 	if model := resp.Model; model != nil {
-		d.Set("location", location.NormalizeNilable(model.Location))
-		sku := flattenNotificationHubDataSourceNamespacesSku(model.Sku)
+		d.Set("location", location.NormalizeNilable(&model.Location))
+		sku := flattenNotificationHubDataSourceNamespacesSku(&model.Sku)
 		if err := d.Set("sku", sku); err != nil {
 			return fmt.Errorf("setting `sku`: %+v", err)
 		}
 
 		if props := model.Properties; props != nil {
 			d.Set("enabled", props.Enabled)
-			d.Set("namespace_type", props.NamespaceType)
+			d.Set("namespace_type", string(pointer.From(props.NamespaceType)))
 			d.Set("servicebus_endpoint", props.ServiceBusEndpoint)
 		}
 

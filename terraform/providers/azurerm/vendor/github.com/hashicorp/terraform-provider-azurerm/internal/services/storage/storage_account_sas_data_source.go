@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package storage
 
 import (
@@ -7,6 +10,7 @@ import (
 
 	"github.com/hashicorp/go-azure-helpers/storage"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 )
@@ -14,12 +18,16 @@ import (
 const (
 	connStringAccountKeyKey  = "AccountKey"
 	connStringAccountNameKey = "AccountName"
-	sasSignedVersion         = "2017-07-29"
 )
 
 // This is an ACCOUNT SAS : https://docs.microsoft.com/en-us/rest/api/storageservices/Constructing-an-Account-SAS
 // not Service SAS
 func dataSourceStorageAccountSharedAccessSignature() *pluginsdk.Resource {
+	var sasSignedVersion = "2017-07-29"
+	if features.FourPointOhBeta() {
+		// TODO: Update the document as well
+		sasSignedVersion = "2022-11-02"
+	}
 	return &pluginsdk.Resource{
 		Read: dataSourceStorageAccountSasRead,
 
@@ -222,8 +230,11 @@ func dataSourceStorageAccountSasRead(d *pluginsdk.ResourceData, _ interface{}) e
 		signedProtocol = "https"
 	}
 
+	// TODO: implement support for signedEncryptionScope
+	signedEncryptionScope := ""
+
 	sasToken, err := storage.ComputeAccountSASToken(accountName, accountKey, permissions, services, resourceTypes,
-		start, expiry, signedProtocol, ipAddresses, signedVersion)
+		start, expiry, signedProtocol, ipAddresses, signedVersion, signedEncryptionScope)
 	if err != nil {
 		return err
 	}

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package digitaltwins
 
 import (
@@ -6,9 +9,10 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/digitaltwins/2022-10-31/timeseriesdatabaseconnections"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/digitaltwins/2023-01-31/timeseriesdatabaseconnections"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/eventhub/2021-11-01/eventhubs"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/kusto/2022-07-07/clusters"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/digitaltwins/validate"
 	eventhubValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/eventhub/validate"
@@ -34,7 +38,7 @@ type TimeSeriesDatabaseConnectionModel struct {
 type TimeSeriesDatabaseConnectionResource struct{}
 
 func (m TimeSeriesDatabaseConnectionResource) Arguments() map[string]*pluginsdk.Schema {
-	return map[string]*pluginsdk.Schema{
+	resource := map[string]*pluginsdk.Schema{
 		"name": {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
@@ -74,7 +78,7 @@ func (m TimeSeriesDatabaseConnectionResource) Arguments() map[string]*pluginsdk.
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: clusters.ValidateClusterID,
+			ValidateFunc: commonids.ValidateKustoClusterID,
 		},
 
 		"kusto_cluster_uri": {
@@ -102,11 +106,23 @@ func (m TimeSeriesDatabaseConnectionResource) Arguments() map[string]*pluginsdk.
 		"kusto_table_name": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
-			Computed:     true,
+			Default:      "AdtPropertyEvents",
 			ForceNew:     true,
 			ValidateFunc: kustoValidate.EntityName,
 		},
 	}
+
+	if !features.FourPointOhBeta() {
+		resource["kusto_table_name"] = &pluginsdk.Schema{
+			Type:         pluginsdk.TypeString,
+			Optional:     true,
+			Computed:     true,
+			ForceNew:     true,
+			ValidateFunc: kustoValidate.EntityName,
+		}
+	}
+
+	return resource
 }
 
 func (m TimeSeriesDatabaseConnectionResource) Attributes() map[string]*pluginsdk.Schema {
@@ -194,6 +210,9 @@ func (m TimeSeriesDatabaseConnectionResource) Read() sdk.ResourceFunc {
 			client := meta.Client.DigitalTwins.TimeSeriesDatabaseConnectionsClient
 			result, err := client.Get(ctx, *id)
 			if err != nil {
+				if response.WasNotFound(result.HttpResponse) {
+					return meta.MarkAsGone(id)
+				}
 				return err
 			}
 
@@ -209,7 +228,13 @@ func (m TimeSeriesDatabaseConnectionResource) Read() sdk.ResourceFunc {
 				output.EventhubName = properties.EventHubEntityPath
 				output.EventhubNamespaceEndpointUri = properties.EventHubEndpointUri
 				output.EventhubNamespaceId = properties.EventHubNamespaceResourceId
-				output.KustoClusterId = properties.AdxResourceId
+
+				kustoClusterId, err := commonids.ParseKustoClusterIDInsensitively(properties.AdxResourceId)
+				if err != nil {
+					return fmt.Errorf("parsing `kusto_cluster_uri`: %+v", err)
+				}
+				output.KustoClusterId = kustoClusterId.ID()
+
 				output.KustoClusterUri = properties.AdxEndpointUri
 				output.KustoDatabaseName = properties.AdxDatabaseName
 
@@ -241,7 +266,7 @@ func (m TimeSeriesDatabaseConnectionResource) Delete() sdk.ResourceFunc {
 			}
 
 			client := meta.Client.DigitalTwins.TimeSeriesDatabaseConnectionsClient
-			if err = client.DeleteThenPoll(ctx, *id); err != nil {
+			if err = client.DeleteThenPoll(ctx, *id, timeseriesdatabaseconnections.DefaultDeleteOperationOptions()); err != nil {
 				return fmt.Errorf("deleting %s: %+v", id, err)
 			}
 			return nil

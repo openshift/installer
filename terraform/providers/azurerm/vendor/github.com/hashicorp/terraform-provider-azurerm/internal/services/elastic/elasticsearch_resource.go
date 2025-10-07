@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package elastic
 
 import (
@@ -9,10 +12,11 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/elastic/2020-07-01/monitorsresource"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/elastic/2020-07-01/rules"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/elastic/2023-06-01/monitorsresource"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/elastic/2023-06-01/rules"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/elastic/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -40,7 +44,6 @@ func resourceElasticsearch() *pluginsdk.Resource {
 		}),
 
 		Schema: map[string]*pluginsdk.Schema{
-			// Required
 			"name": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
@@ -65,7 +68,6 @@ func resourceElasticsearch() *pluginsdk.Resource {
 				ValidateFunc: validate.ElasticEmailAddress,
 			},
 
-			// Optional
 			"monitoring_enabled": {
 				Type:     pluginsdk.TypeBool,
 				Optional: true,
@@ -76,7 +78,7 @@ func resourceElasticsearch() *pluginsdk.Resource {
 			"logs": {
 				Type:     pluginsdk.TypeList,
 				Optional: true,
-				Computed: true,
+				Computed: !features.FourPointOhBeta(),
 				MaxItems: 1,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
@@ -130,7 +132,6 @@ func resourceElasticsearch() *pluginsdk.Resource {
 
 			"tags": commonschema.Tags(),
 
-			// Computed
 			"elastic_cloud_deployment_id": {
 				Type:     pluginsdk.TypeString,
 				Computed: true,

@@ -1,6 +1,10 @@
 package servers
 
-import "strings"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -17,6 +21,19 @@ func PossibleValuesForConnectionMode() []string {
 		string(ConnectionModeAll),
 		string(ConnectionModeReadOnly),
 	}
+}
+
+func (s *ConnectionMode) UnmarshalJSON(bytes []byte) error {
+	var decoded string
+	if err := json.Unmarshal(bytes, &decoded); err != nil {
+		return fmt.Errorf("unmarshaling: %+v", err)
+	}
+	out, err := parseConnectionMode(decoded)
+	if err != nil {
+		return fmt.Errorf("parsing %q: %+v", decoded, err)
+	}
+	*s = *out
+	return nil
 }
 
 func parseConnectionMode(input string) (*ConnectionMode, error) {
@@ -45,20 +62,6 @@ func PossibleValuesForManagedMode() []int64 {
 		int64(ManagedModeOne),
 		int64(ManagedModeZero),
 	}
-}
-
-func parseManagedMode(input int64) (*ManagedMode, error) {
-	vals := map[int64]ManagedMode{
-		1: ManagedModeOne,
-		0: ManagedModeZero,
-	}
-	if v, ok := vals[input]; ok {
-		return &v, nil
-	}
-
-	// otherwise presume it's an undefined value and best-effort it
-	out := ManagedMode(input)
-	return &out, nil
 }
 
 type ProvisioningState string
@@ -93,6 +96,19 @@ func PossibleValuesForProvisioningState() []string {
 		string(ProvisioningStateSuspending),
 		string(ProvisioningStateUpdating),
 	}
+}
+
+func (s *ProvisioningState) UnmarshalJSON(bytes []byte) error {
+	var decoded string
+	if err := json.Unmarshal(bytes, &decoded); err != nil {
+		return fmt.Errorf("unmarshaling: %+v", err)
+	}
+	out, err := parseProvisioningState(decoded)
+	if err != nil {
+		return fmt.Errorf("parsing %q: %+v", decoded, err)
+	}
+	*s = *out
+	return nil
 }
 
 func parseProvisioningState(input string) (*ProvisioningState, error) {
@@ -133,20 +149,6 @@ func PossibleValuesForServerMonitorMode() []int64 {
 	}
 }
 
-func parseServerMonitorMode(input int64) (*ServerMonitorMode, error) {
-	vals := map[int64]ServerMonitorMode{
-		1: ServerMonitorModeOne,
-		0: ServerMonitorModeZero,
-	}
-	if v, ok := vals[input]; ok {
-		return &v, nil
-	}
-
-	// otherwise presume it's an undefined value and best-effort it
-	out := ServerMonitorMode(input)
-	return &out, nil
-}
-
 type SkuTier string
 
 const (
@@ -161,6 +163,19 @@ func PossibleValuesForSkuTier() []string {
 		string(SkuTierDevelopment),
 		string(SkuTierStandard),
 	}
+}
+
+func (s *SkuTier) UnmarshalJSON(bytes []byte) error {
+	var decoded string
+	if err := json.Unmarshal(bytes, &decoded); err != nil {
+		return fmt.Errorf("unmarshaling: %+v", err)
+	}
+	out, err := parseSkuTier(decoded)
+	if err != nil {
+		return fmt.Errorf("parsing %q: %+v", decoded, err)
+	}
+	*s = *out
+	return nil
 }
 
 func parseSkuTier(input string) (*SkuTier, error) {
@@ -212,6 +227,19 @@ func PossibleValuesForState() []string {
 	}
 }
 
+func (s *State) UnmarshalJSON(bytes []byte) error {
+	var decoded string
+	if err := json.Unmarshal(bytes, &decoded); err != nil {
+		return fmt.Errorf("unmarshaling: %+v", err)
+	}
+	out, err := parseState(decoded)
+	if err != nil {
+		return fmt.Errorf("parsing %q: %+v", decoded, err)
+	}
+	*s = *out
+	return nil
+}
+
 func parseState(input string) (*State, error) {
 	vals := map[string]State{
 		"deleting":     StateDeleting,
@@ -246,17 +274,4 @@ func PossibleValuesForStatus() []int64 {
 	return []int64{
 		int64(StatusZero),
 	}
-}
-
-func parseStatus(input int64) (*Status, error) {
-	vals := map[int64]Status{
-		0: StatusZero,
-	}
-	if v, ok := vals[input]; ok {
-		return &v, nil
-	}
-
-	// otherwise presume it's an undefined value and best-effort it
-	out := Status(input)
-	return &out, nil
 }

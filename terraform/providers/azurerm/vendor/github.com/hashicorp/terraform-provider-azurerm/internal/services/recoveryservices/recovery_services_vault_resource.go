@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package recoveryservices
 
 import (
@@ -7,15 +10,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservices/2022-10-01/vaults"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2021-12-01/backupresourcestorageconfigsnoncrr"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2021-12-01/backupresourcevaultconfigs"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservices/2024-01-01/vaults"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2023-02-01/backupprotecteditems"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2023-02-01/backupresourcevaultconfigs"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2023-02-01/protecteditems"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicessiterecovery/2024-04-01/replicationvaultsetting"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	keyvaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
@@ -121,11 +127,11 @@ func resourceRecoveryServicesVault() *pluginsdk.Resource {
 			"storage_mode_type": {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
-				Default:  backupresourcestorageconfigsnoncrr.StorageTypeGeoRedundant,
+				Default:  vaults.StandardTierStorageRedundancyGeoRedundant,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(backupresourcestorageconfigsnoncrr.StorageTypeGeoRedundant),
-					string(backupresourcestorageconfigsnoncrr.StorageTypeLocallyRedundant),
-					string(backupresourcestorageconfigsnoncrr.StorageTypeZoneRedundant),
+					string(vaults.StandardTierStorageRedundancyGeoRedundant),
+					string(vaults.StandardTierStorageRedundancyLocallyRedundant),
+					string(vaults.StandardTierStorageRedundancyZoneRedundant),
 				}, false),
 			},
 
@@ -140,35 +146,62 @@ func resourceRecoveryServicesVault() *pluginsdk.Resource {
 				Optional: true,
 				Default:  true,
 			},
+
+			"monitoring": {
+				Type:     pluginsdk.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &pluginsdk.Resource{
+					Schema: map[string]*pluginsdk.Schema{
+						"alerts_for_all_job_failures_enabled": {
+							Type:     pluginsdk.TypeBool,
+							Optional: true,
+							Default:  true,
+						},
+
+						"alerts_for_critical_operation_failures_enabled": {
+							Type:     pluginsdk.TypeBool,
+							Optional: true,
+							Default:  true,
+						},
+					},
+				},
+			},
+
+			"classic_vmware_replication_enabled": {
+				Type:     pluginsdk.TypeBool,
+				Optional: true,
+				ForceNew: true,
+			},
 		},
+
+		CustomizeDiff: pluginsdk.CustomDiffWithAll(
+			pluginsdk.ForceNewIfChange("cross_region_restore_enabled", func(ctx context.Context, old, new, meta interface{}) bool {
+				return old.(bool) && !new.(bool)
+			}),
+			pluginsdk.ForceNewIfChange("immutability", func(ctx context.Context, old, new, meta interface{}) bool {
+				return old.(string) == string(vaults.ImmutabilityStateLocked)
+			}),
+		),
 	}
 }
 
 func resourceRecoveryServicesVaultCreate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).RecoveryServices.VaultsClient
 	cfgsClient := meta.(*clients.Client).RecoveryServices.VaultsConfigsClient
-	storageCfgsClient := meta.(*clients.Client).RecoveryServices.StorageConfigsClient
+	settingsClient := meta.(*clients.Client).RecoveryServices.VaultsSettingsClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
 	id := vaults.NewVaultID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
-	storageId := backupresourcestorageconfigsnoncrr.VaultId{
-		SubscriptionId:    id.SubscriptionId,
-		ResourceGroupName: id.ResourceGroupName,
-		VaultName:         id.VaultName,
-	}
-	cfgId := backupresourcevaultconfigs.VaultId{
-		SubscriptionId:    id.SubscriptionId,
-		ResourceGroupName: id.ResourceGroupName,
-		VaultName:         id.VaultName,
-	}
+	cfgId := backupresourcevaultconfigs.NewVaultID(id.SubscriptionId, id.ResourceGroupName, id.VaultName)
 
 	storageMode := d.Get("storage_mode_type").(string)
 	crossRegionRestore := d.Get("cross_region_restore_enabled").(bool)
 
-	if crossRegionRestore && storageMode != string(backupresourcestorageconfigsnoncrr.StorageTypeGeoRedundant) {
-		return fmt.Errorf("cannot enable cross region restore when storage mode type is not %s. %s", string(backupresourcestorageconfigsnoncrr.StorageTypeGeoRedundant), id.String())
+	if crossRegionRestore && storageMode != string(vaults.StandardTierStorageRedundancyGeoRedundant) {
+		return fmt.Errorf("cannot enable cross region restore when storage mode type is not %s. %s", string(vaults.StandardTierStorageRedundancyGeoRedundant), id.String())
 	}
 
 	location := d.Get("location").(string)
@@ -192,6 +225,11 @@ func resourceRecoveryServicesVaultCreate(d *pluginsdk.ResourceData, meta interfa
 	}
 
 	sku := d.Get("sku").(string)
+	crossRegionRestoreEnabled := vaults.CrossRegionRestoreDisabled
+	if d.Get("cross_region_restore_enabled").(bool) {
+		crossRegionRestoreEnabled = vaults.CrossRegionRestoreEnabled
+	}
+
 	vault := vaults.Vault{
 		Location: location,
 		Tags:     tags.Expand(t),
@@ -201,6 +239,11 @@ func resourceRecoveryServicesVaultCreate(d *pluginsdk.ResourceData, meta interfa
 		},
 		Properties: &vaults.VaultProperties{
 			PublicNetworkAccess: expandRecoveryServicesVaultPublicNetworkAccess(d.Get("public_network_access_enabled").(bool)),
+			MonitoringSettings:  expandRecoveryServicesVaultMonitorSettings(d.Get("monitoring").([]interface{})),
+			RedundancySettings: &vaults.VaultPropertiesRedundancySettings{
+				CrossRegionRestore:            &crossRegionRestoreEnabled,
+				StandardTierStorageRedundancy: pointer.To(vaults.StandardTierStorageRedundancy(d.Get("storage_mode_type").(string))),
+			},
 		},
 	}
 
@@ -208,8 +251,41 @@ func resourceRecoveryServicesVaultCreate(d *pluginsdk.ResourceData, meta interfa
 		vault.Sku.Tier = utils.String("Standard")
 	}
 
+	if _, ok := d.GetOk("encryption"); ok {
+		encryption, err := expandEncryption(d)
+		if err != nil {
+			return err
+		}
+		vault.Properties.Encryption = encryption
+	}
+
+	requireAdditionalUpdate := false
+	updatePatch := vaults.PatchVault{
+		Properties: &vaults.VaultProperties{},
+	}
 	if immutability, ok := d.GetOk("immutability"); ok {
+		// The API doesn't allow to set the immutability to "Locked" on creation.
+		// Here we firstly make it "Unlocked", and once created, we will update it to "Locked".
+		// Note: The `immutability` could be transitioned only in the limited directions.
+		// Locked <- Unlocked <-> Disabled
+		if immutability == string(vaults.ImmutabilityStateLocked) {
+			updatePatch.Properties.SecuritySettings = expandRecoveryServicesVaultSecuritySettings(immutability)
+			requireAdditionalUpdate = true
+			immutability = string(vaults.ImmutabilityStateUnlocked)
+		}
 		vault.Properties.SecuritySettings = expandRecoveryServicesVaultSecuritySettings(immutability)
+	}
+
+	// Async Operaation of creation with `UserAssigned` identity is returned with 404
+	// Tracked on https://github.com/Azure/azure-rest-api-specs/issues/27869
+	// `SystemAssigned, UserAssigned` Identity require an additional update to work
+	// Trakced on https://github.com/Azure/azure-rest-api-specs/issues/27851
+	if expandedIdentity.Type == identity.TypeUserAssigned || expandedIdentity.Type == identity.TypeSystemAssignedUserAssigned {
+		requireAdditionalUpdate = true
+		updatePatch.Identity = expandedIdentity
+		vault.Identity = &identity.SystemAndUserAssignedMap{
+			Type: identity.TypeNone,
+		}
 	}
 
 	err = client.CreateOrUpdateThenPoll(ctx, id, vault)
@@ -217,65 +293,13 @@ func resourceRecoveryServicesVaultCreate(d *pluginsdk.ResourceData, meta interfa
 		return fmt.Errorf("creating %s: %+v", id.String(), err)
 	}
 
-	storageType := backupresourcestorageconfigsnoncrr.StorageType(d.Get("storage_mode_type").(string))
-	storageCfg := backupresourcestorageconfigsnoncrr.BackupResourceConfigResource{
-		Properties: &backupresourcestorageconfigsnoncrr.BackupResourceConfig{
-			StorageModelType:       &storageType,
-			CrossRegionRestoreFlag: utils.Bool(d.Get("cross_region_restore_enabled").(bool)),
-		},
-	}
-
-	err = pluginsdk.Retry(d.Timeout(pluginsdk.TimeoutCreate), func() *pluginsdk.RetryError {
-		if resp, err := storageCfgsClient.Update(ctx, storageId, storageCfg); err != nil {
-			if response.WasNotFound(resp.HttpResponse) {
-				return pluginsdk.RetryableError(fmt.Errorf("updating Recovery Service Storage Cfg %s: %+v", id.String(), err))
-			}
-
-			return pluginsdk.NonRetryableError(err)
-		}
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("creating %s: %+v", id, err)
-	}
-
-	// storage type is not updated instantaneously, so we wait until storage type is correct
-	err = pluginsdk.Retry(d.Timeout(pluginsdk.TimeoutCreate), func() *pluginsdk.RetryError {
-		if resp, err := storageCfgsClient.Get(ctx, storageId); err == nil {
-			if resp.Model == nil {
-				return pluginsdk.NonRetryableError(fmt.Errorf("updating %s Storage Config: `model` was nil", id))
-			}
-			if resp.Model.Properties == nil {
-				return pluginsdk.NonRetryableError(fmt.Errorf("updating %s Storage Config: `properties` was nil", id))
-			}
-			if *resp.Model.Properties.StorageType != *storageCfg.Properties.StorageModelType {
-				return pluginsdk.RetryableError(fmt.Errorf("updating Storage Config: %+v", err))
-			}
-			if *resp.Model.Properties.CrossRegionRestoreFlag != *storageCfg.Properties.CrossRegionRestoreFlag {
-				return pluginsdk.RetryableError(fmt.Errorf("updating Storage Config: %+v", err))
-			}
-		} else {
-			return pluginsdk.NonRetryableError(err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("creating %s: %+v", id, err)
-	}
-
-	// recovery vault's encryption config cannot be set while creation, so a standalone update is required.
-	if _, ok := d.GetOk("encryption"); ok {
-		err = client.UpdateThenPoll(ctx, id, vaults.PatchVault{
-			Properties: &vaults.VaultProperties{
-				Encryption: expandEncryption(d),
-			},
-		})
+	if requireAdditionalUpdate {
+		err := client.UpdateThenPoll(ctx, id, updatePatch)
 		if err != nil {
-			return fmt.Errorf("updating Recovery Service Encryption %s: %+v, but recovery vault was created, a manually import might be required", id.String(), err)
+			return fmt.Errorf("updating Recovery Service %s: %+v, but recovery vault was created, a manually import might be required", id.String(), err)
 		}
-	}
 
+	}
 	// an update on the vault will reset the vault config to default, so we handle it at last.
 	enhancedSecurityState := backupresourcevaultconfigs.EnhancedSecurityStateEnabled
 	cfg := backupresourcevaultconfigs.BackupResourceVaultConfigResource{
@@ -318,6 +342,18 @@ func resourceRecoveryServicesVaultCreate(d *pluginsdk.ResourceData, meta interfa
 		return fmt.Errorf("waiting for on update for Recovery Service %s: %+v", id.String(), err)
 	}
 
+	if d.Get("classic_vmware_replication_enabled").(bool) {
+		settingsId := replicationvaultsetting.NewReplicationVaultSettingID(id.SubscriptionId, id.ResourceGroupName, id.VaultName, "default")
+		settingsInput := replicationvaultsetting.VaultSettingCreationInput{
+			Properties: replicationvaultsetting.VaultSettingCreationInputProperties{
+				VMwareToAzureProviderType: utils.String("Vmware"),
+			},
+		}
+		if err := settingsClient.CreateThenPoll(ctx, settingsId, settingsInput); err != nil {
+			return fmt.Errorf("creating %s: %+v", settingsId, err)
+		}
+	}
+
 	d.SetId(id.ID())
 	return resourceRecoveryServicesVaultRead(d, meta)
 }
@@ -325,24 +361,17 @@ func resourceRecoveryServicesVaultCreate(d *pluginsdk.ResourceData, meta interfa
 func resourceRecoveryServicesVaultUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).RecoveryServices.VaultsClient
 	cfgsClient := meta.(*clients.Client).RecoveryServices.VaultsConfigsClient
-	storageCfgsClient := meta.(*clients.Client).RecoveryServices.StorageConfigsClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
 	id := vaults.NewVaultID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
-	storageId := backupresourcestorageconfigsnoncrr.VaultId{
-		SubscriptionId:    id.SubscriptionId,
-		ResourceGroupName: id.ResourceGroupName,
-		VaultName:         id.VaultName,
-	}
-	cfgId := backupresourcevaultconfigs.VaultId{
-		SubscriptionId:    id.SubscriptionId,
-		ResourceGroupName: id.ResourceGroupName,
-		VaultName:         id.VaultName,
-	}
+	cfgId := backupresourcevaultconfigs.NewVaultID(id.SubscriptionId, id.ResourceGroupName, id.VaultName)
 
-	encryption := expandEncryption(d)
+	encryption, err := expandEncryption(d)
+	if err != nil {
+		return err
+	}
 	existing, err := client.Get(ctx, id)
 	if err != nil {
 		return fmt.Errorf("checking for presence of existing Recovery Service %s: %+v", id.String(), err)
@@ -376,14 +405,14 @@ func resourceRecoveryServicesVaultUpdate(d *pluginsdk.ResourceData, meta interfa
 	}
 
 	if model.Identity != nil && !validateIdentityUpdate(*existing.Model.Identity, *expandedIdentity) {
-		return fmt.Errorf("`Once `identity` sepcified, the managed identity must not be disabled (even temporarily). Disabling the managed identity may lead to inconsistent behavior. Details could be found on https://learn.microsoft.com/en-us/azure/backup/encryption-at-rest-with-cmk?tabs=portal#enable-system-assigned-managed-identity-for-the-vault")
+		return fmt.Errorf("`Once `identity` specified, the managed identity must not be disabled (even temporarily). Disabling the managed identity may lead to inconsistent behavior. Details could be found on https://learn.microsoft.com/en-us/azure/backup/encryption-at-rest-with-cmk?tabs=portal#enable-system-assigned-managed-identity-for-the-vault")
 	}
 
 	storageMode := d.Get("storage_mode_type").(string)
 	crossRegionRestore := d.Get("cross_region_restore_enabled").(bool)
 
-	if crossRegionRestore && storageMode != string(backupresourcestorageconfigsnoncrr.StorageTypeGeoRedundant) {
-		return fmt.Errorf("cannot enable cross region restore when storage mode type is not %s. %s", string(backupresourcestorageconfigsnoncrr.StorageTypeGeoRedundant), id.String())
+	if crossRegionRestore && storageMode != string(vaults.StandardTierStorageRedundancyGeoRedundant) {
+		return fmt.Errorf("cannot enable cross region restore when storage mode type is not %s. %s", string(vaults.StandardTierStorageRedundancyGeoRedundant), id.String())
 	}
 
 	enhanchedSecurityState := backupresourcevaultconfigs.EnhancedSecurityStateEnabled
@@ -391,58 +420,6 @@ func resourceRecoveryServicesVaultUpdate(d *pluginsdk.ResourceData, meta interfa
 		Properties: &backupresourcevaultconfigs.BackupResourceVaultConfig{
 			EnhancedSecurityState: &enhanchedSecurityState, // always enabled
 		},
-	}
-
-	if d.HasChanges("storage_mode_type", "cross_region_restore_enabled") {
-		storageType := backupresourcestorageconfigsnoncrr.StorageType(storageMode)
-		storageCfg := backupresourcestorageconfigsnoncrr.BackupResourceConfigResource{
-			Properties: &backupresourcestorageconfigsnoncrr.BackupResourceConfig{
-				StorageModelType:       &storageType,
-				CrossRegionRestoreFlag: utils.Bool(crossRegionRestore),
-			},
-		}
-
-		err = pluginsdk.Retry(d.Timeout(pluginsdk.TimeoutUpdate), func() *pluginsdk.RetryError {
-			if resp, err := storageCfgsClient.Update(ctx, storageId, storageCfg); err != nil {
-				if response.WasNotFound(resp.HttpResponse) {
-					return pluginsdk.RetryableError(fmt.Errorf("updating Recovery Service Storage Cfg %s: %+v", id.String(), err))
-				}
-				if response.WasBadRequest(resp.HttpResponse) {
-					return pluginsdk.RetryableError(fmt.Errorf("updating Recovery Service Storage Cfg %s: %+v", id.String(), err))
-				}
-
-				return pluginsdk.NonRetryableError(err)
-			}
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("updating %s: %+v", id, err)
-		}
-
-		// storage type is not updated instantaneously, so we wait until storage type is correct
-		err = pluginsdk.Retry(d.Timeout(pluginsdk.TimeoutUpdate), func() *pluginsdk.RetryError {
-			if resp, err := storageCfgsClient.Get(ctx, storageId); err == nil {
-				if resp.Model == nil {
-					return pluginsdk.NonRetryableError(fmt.Errorf("updating %s Storage Config: `model` was nil", id))
-				}
-				if resp.Model.Properties == nil {
-					return pluginsdk.NonRetryableError(fmt.Errorf("updating %s Storage Config: `properties` was nil", id))
-				}
-				if *resp.Model.Properties.StorageType != *storageCfg.Properties.StorageModelType {
-					return pluginsdk.RetryableError(fmt.Errorf("updating Storage Config: %+v", err))
-				}
-				if *resp.Model.Properties.CrossRegionRestoreFlag != *storageCfg.Properties.CrossRegionRestoreFlag {
-					return pluginsdk.RetryableError(fmt.Errorf("updating Storage Config: %+v", err))
-				}
-			} else {
-				return pluginsdk.NonRetryableError(err)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("updating %s: %+v", id, err)
-		}
 	}
 
 	// `sku` can only be updated by `CreateOrUpdate` but not `Update`, so use `CreateOrUpdate` with required and unchangeable properties
@@ -456,6 +433,7 @@ func resourceRecoveryServicesVaultUpdate(d *pluginsdk.ResourceData, meta interfa
 			},
 			Properties: &vaults.VaultProperties{
 				PublicNetworkAccess: expandRecoveryServicesVaultPublicNetworkAccess(d.Get("public_network_access_enabled").(bool)), // It's required to call CreateOrUpdate.
+				MonitoringSettings:  expandRecoveryServicesVaultMonitorSettings(d.Get("monitoring").([]interface{})),
 			},
 		}
 
@@ -469,12 +447,20 @@ func resourceRecoveryServicesVaultUpdate(d *pluginsdk.ResourceData, meta interfa
 		}
 	}
 
+	requireAdditionalUpdate := false
+	additionalUpdatePatch := vaults.PatchVault{
+		Properties: &vaults.VaultProperties{},
+	}
 	vault := vaults.PatchVault{
 		Properties: &vaults.VaultProperties{},
 	}
 
 	if d.HasChange("public_network_access_enabled") {
 		vault.Properties.PublicNetworkAccess = expandRecoveryServicesVaultPublicNetworkAccess(d.Get("public_network_access_enabled").(bool))
+	}
+
+	if d.HasChanges("monitoring") {
+		vault.Properties.MonitoringSettings = expandRecoveryServicesVaultMonitorSettings(d.Get("monitoring").([]interface{}))
 	}
 
 	if d.HasChange("identity") {
@@ -490,12 +476,47 @@ func resourceRecoveryServicesVaultUpdate(d *pluginsdk.ResourceData, meta interfa
 	}
 
 	if d.HasChange("immutability") {
-		vault.Properties.SecuritySettings = expandRecoveryServicesVaultSecuritySettings(d.Get("immutability"))
+		// The API does not allow to set the immutability from `Disabled` to `Locked` directly,
+		// Hence we firstly make it `Unlocked`, and once created, we will update it to `Locked`.
+		// Note: The `immutability` could be transitioned only in the limited directions.
+		// Locked <- Unlocked <-> Disabled
+
+		// When the service returns `null`, it equals `disabled`
+		currentImmutability := pointer.To(vaults.ImmutabilityStateDisabled)
+		if model.Properties != nil && model.Properties.SecuritySettings != nil && model.Properties.SecuritySettings.ImmutabilitySettings != nil && model.Properties.SecuritySettings.ImmutabilitySettings.State != nil {
+			currentImmutability = model.Properties.SecuritySettings.ImmutabilitySettings.State
+		}
+		immutability := d.Get("immutability")
+		if string(*currentImmutability) == string(vaults.ImmutabilityStateDisabled) && immutability == string(vaults.ImmutabilityStateLocked) {
+			additionalUpdatePatch.Properties.SecuritySettings = expandRecoveryServicesVaultSecuritySettings(immutability)
+			requireAdditionalUpdate = true
+			immutability = string(vaults.ImmutabilityStateUnlocked)
+		}
+		vault.Properties.SecuritySettings = expandRecoveryServicesVaultSecuritySettings(immutability)
+	}
+
+	crossRegionRestoreEnabled := vaults.CrossRegionRestoreDisabled
+	if crossRegionRestore {
+		crossRegionRestoreEnabled = vaults.CrossRegionRestoreEnabled
+	}
+
+	if d.HasChanges("storage_mode_type", "cross_region_restore_enabled") {
+		vault.Properties.RedundancySettings = &vaults.VaultPropertiesRedundancySettings{
+			CrossRegionRestore:            &crossRegionRestoreEnabled,
+			StandardTierStorageRedundancy: pointer.To(vaults.StandardTierStorageRedundancy(storageMode)),
+		}
 	}
 
 	err = client.UpdateThenPoll(ctx, id, vault)
 	if err != nil {
 		return fmt.Errorf("updating  %s: %+v", id, err)
+	}
+
+	if requireAdditionalUpdate {
+		err := client.UpdateThenPoll(ctx, id, additionalUpdatePatch)
+		if err != nil {
+			return fmt.Errorf("updating Recovery Service %s: %+v, but recovery vault was created, a manually import might be required", id.String(), err)
+		}
 	}
 
 	// an update on vault will cause the vault config reset to default, so whether the config has change or not, it needs to be updated.
@@ -541,7 +562,7 @@ func resourceRecoveryServicesVaultUpdate(d *pluginsdk.ResourceData, meta interfa
 func resourceRecoveryServicesVaultRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).RecoveryServices.VaultsClient
 	cfgsClient := meta.(*clients.Client).RecoveryServices.VaultsConfigsClient
-	storageCfgsClient := meta.(*clients.Client).RecoveryServices.StorageConfigsClient
+	vaultSettingsClient := meta.(*clients.Client).RecoveryServices.VaultsSettingsClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -549,18 +570,8 @@ func resourceRecoveryServicesVaultRead(d *pluginsdk.ResourceData, meta interface
 	if err != nil {
 		return err
 	}
-	storageId := backupresourcestorageconfigsnoncrr.VaultId{
-		SubscriptionId:    id.SubscriptionId,
-		ResourceGroupName: id.ResourceGroupName,
-		VaultName:         id.VaultName,
-	}
-	cfgId := backupresourcevaultconfigs.VaultId{
-		SubscriptionId:    id.SubscriptionId,
-		ResourceGroupName: id.ResourceGroupName,
-		VaultName:         id.VaultName,
-	}
 
-	log.Printf("[DEBUG] Reading Recovery Service %s", id.String())
+	cfgId := backupresourcevaultconfigs.NewVaultID(id.SubscriptionId, id.ResourceGroupName, id.VaultName)
 
 	resp, err := client.Get(ctx, *id)
 	if err != nil {
@@ -569,68 +580,93 @@ func resourceRecoveryServicesVaultRead(d *pluginsdk.ResourceData, meta interface
 			return nil
 		}
 
-		return fmt.Errorf("making Read request on Recovery Service %s: %+v", id.String(), err)
+		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
-
-	if resp.Model == nil {
-		return fmt.Errorf("recovery Service Vault response %q : model is nil", id.ID())
-	}
-	model := resp.Model
 
 	d.Set("name", id.VaultName)
 	d.Set("resource_group_name", id.ResourceGroupName)
-	d.Set("location", location.Normalize(model.Location))
 
-	if sku := model.Sku; sku != nil {
-		d.Set("sku", string(sku.Name))
+	if model := resp.Model; model != nil {
+		d.Set("location", location.Normalize(model.Location))
+
+		if sku := model.Sku; sku != nil {
+			d.Set("sku", string(sku.Name))
+		}
+
+		if prop := model.Properties; prop != nil {
+
+			immutability := vaults.ImmutabilityStateDisabled
+			if prop.SecuritySettings != nil && prop.SecuritySettings.ImmutabilitySettings != nil {
+				immutability = pointer.From(prop.SecuritySettings.ImmutabilitySettings.State)
+			}
+			d.Set("immutability", string(immutability))
+
+			d.Set("public_network_access_enabled", flattenRecoveryServicesVaultPublicNetworkAccess(model.Properties.PublicNetworkAccess))
+
+			d.Set("monitoring", flattenRecoveryServicesVaultMonitorSettings(prop.MonitoringSettings))
+
+			storageModeType := vaults.StandardTierStorageRedundancyInvalid
+			crossRegionRestoreEnabled := false
+			if prop.RedundancySettings != nil {
+				storageModeType = pointer.From(prop.RedundancySettings.StandardTierStorageRedundancy)
+				if prop.RedundancySettings.CrossRegionRestore != nil {
+					crossRegionRestoreEnabled = *prop.RedundancySettings.CrossRegionRestore == vaults.CrossRegionRestoreEnabled
+				}
+			}
+			d.Set("cross_region_restore_enabled", crossRegionRestoreEnabled)
+			d.Set("storage_mode_type", string(storageModeType))
+		}
+
+		cfg, err := cfgsClient.Get(ctx, cfgId)
+		if err != nil {
+			return fmt.Errorf("retrieving %s: %+v", cfgId, err)
+		}
+
+		softDeleteEnabled := false
+		if cfg.Model != nil && cfg.Model.Properties != nil && cfg.Model.Properties.SoftDeleteFeatureState != nil {
+			softDeleteEnabled = *cfg.Model.Properties.SoftDeleteFeatureState == backupresourcevaultconfigs.SoftDeleteFeatureStateEnabled
+		}
+
+		d.Set("soft_delete_enabled", softDeleteEnabled)
+
+		flattenIdentity, err := identity.FlattenSystemAndUserAssignedMap(model.Identity)
+		if err != nil {
+			return fmt.Errorf("flattening `identity`: %+v", err)
+		}
+		if err := d.Set("identity", flattenIdentity); err != nil {
+			return fmt.Errorf("setting `identity`: %+v", err)
+		}
+
+		encryption := flattenVaultEncryption(*model)
+		if encryption != nil {
+			d.Set("encryption", []interface{}{encryption})
+		}
+
+		vaultSettingsId := replicationvaultsetting.NewReplicationVaultSettingID(id.SubscriptionId, id.ResourceGroupName, id.VaultName, "default")
+		vaultSetting, err := vaultSettingsClient.Get(ctx, vaultSettingsId)
+		if err != nil {
+			return fmt.Errorf("reading Recovery Service Vault Setting %s: %+v", id.String(), err)
+		}
+
+		classicVmwareReplicationEnabled := false
+		if vaultSetting.Model != nil && vaultSetting.Model.Properties != nil {
+			if v := vaultSetting.Model.Properties.VMwareToAzureProviderType; v != nil {
+				classicVmwareReplicationEnabled = strings.EqualFold(*v, "vmware")
+			}
+		}
+		d.Set("classic_vmware_replication_enabled", classicVmwareReplicationEnabled)
+
+		return tags.FlattenAndSet(d, model.Tags)
 	}
 
-	if model.Properties != nil && model.Properties.SecuritySettings != nil && model.Properties.SecuritySettings.ImmutabilitySettings != nil {
-		d.Set("immutability", *model.Properties.SecuritySettings.ImmutabilitySettings.State)
-	}
-
-	if model.Properties != nil && model.Properties.PublicNetworkAccess != nil {
-		d.Set("public_network_access_enabled", flattenRecoveryServicesVaultPublicNetworkAccess(model.Properties.PublicNetworkAccess))
-	}
-
-	cfg, err := cfgsClient.Get(ctx, cfgId)
-	if err != nil {
-		return fmt.Errorf("reading Recovery Service Vault Cfg %s: %+v", id.String(), err)
-	}
-
-	if cfg.Model != nil && cfg.Model.Properties != nil && cfg.Model.Properties.SoftDeleteFeatureState != nil {
-		d.Set("soft_delete_enabled", *cfg.Model.Properties.SoftDeleteFeatureState == backupresourcevaultconfigs.SoftDeleteFeatureStateEnabled)
-	}
-
-	storageCfg, err := storageCfgsClient.Get(ctx, storageId)
-	if err != nil {
-		return fmt.Errorf("reading Recovery Service storage Cfg %s: %+v", id.String(), err)
-	}
-
-	if storageCfg.Model != nil && storageCfg.Model.Properties != nil {
-		props := storageCfg.Model.Properties
-		d.Set("storage_mode_type", props.StorageModelType)
-		d.Set("cross_region_restore_enabled", props.CrossRegionRestoreFlag)
-	}
-
-	flattenIdentity, err := identity.FlattenSystemAndUserAssignedMap(model.Identity)
-	if err != nil {
-		return fmt.Errorf("flattening `identity`: %+v", err)
-	}
-	if err := d.Set("identity", flattenIdentity); err != nil {
-		return fmt.Errorf("setting `identity`: %+v", err)
-	}
-
-	encryption := flattenVaultEncryption(*model)
-	if encryption != nil {
-		d.Set("encryption", []interface{}{encryption})
-	}
-
-	return tags.FlattenAndSet(d, model.Tags)
+	return nil
 }
 
 func resourceRecoveryServicesVaultDelete(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).RecoveryServices.VaultsClient
+	protectedItemsClient := meta.(*clients.Client).RecoveryServices.ProtectedItemsGroupClient
+	protectedItemClient := meta.(*clients.Client).RecoveryServices.ProtectedItemsClient
+	opResultClient := meta.(*clients.Client).RecoveryServices.BackupOperationResultsClient
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -639,10 +675,45 @@ func resourceRecoveryServicesVaultDelete(d *pluginsdk.ResourceData, meta interfa
 		return err
 	}
 
-	log.Printf("[DEBUG] Deleting Recovery Service  %s", id.String())
+	if meta.(*clients.Client).Features.RecoveryService.PurgeProtectedItemsFromVaultOnDestroy {
+		log.Printf("[DEBUG] Purging Protected Items from %s", id.String())
 
-	_, err = client.Delete(ctx, *id)
-	if err != nil {
+		vaultId := backupprotecteditems.NewVaultID(id.SubscriptionId, id.ResourceGroupName, id.VaultName)
+
+		protectedItems, err := protectedItemsClient.ListComplete(ctx, vaultId, backupprotecteditems.ListOperationOptions{})
+		if err != nil {
+			return fmt.Errorf("listing protected items in %s: %+v", id, err)
+		}
+
+		for _, item := range protectedItems.Items {
+			if item.Id != nil {
+				protectedItemId, err := protecteditems.ParseProtectedItemID(pointer.From(item.Id))
+				if err != nil {
+					return err
+				}
+
+				log.Printf("[DEBUG] Purging %s from %s", protectedItemId, id)
+
+				resp, err := protectedItemClient.Delete(ctx, *protectedItemId)
+				if err != nil {
+					if !response.WasNotFound(resp.HttpResponse) {
+						return fmt.Errorf("issuing delete request for %s: %+v", protectedItemId, err)
+					}
+				}
+
+				operationId, err := parseBackupOperationId(resp.HttpResponse)
+				if err != nil {
+					return fmt.Errorf("purging %s from %s: %+v", protectedItemId, id, err)
+				}
+
+				if err = resourceRecoveryServicesBackupProtectedVMWaitForDeletion(ctx, protectedItemClient, opResultClient, *protectedItemId, operationId); err != nil {
+					return fmt.Errorf("waiting for %s to be purged from %s: %+v", protectedItemId, id, err)
+				}
+			}
+		}
+	}
+
+	if _, err = client.Delete(ctx, *id); err != nil {
 		return fmt.Errorf("deleting %s: %+v", id.String(), err)
 	}
 
@@ -684,14 +755,14 @@ func validateIdentityUpdate(origin identity.SystemAndUserAssignedMap, target ide
 	return true
 }
 
-func expandEncryption(d *pluginsdk.ResourceData) *vaults.VaultPropertiesEncryption {
+func expandEncryption(d *pluginsdk.ResourceData) (*vaults.VaultPropertiesEncryption, error) {
 	encryptionRaw := d.Get("encryption")
 	if encryptionRaw == nil {
-		return nil
+		return nil, nil
 	}
 	settings := encryptionRaw.([]interface{})
 	if len(settings) == 0 {
-		return nil
+		return nil, nil
 	}
 	encryptionMap := settings[0].(map[string]interface{})
 	keyUri := encryptionMap["key_id"].(string)
@@ -710,9 +781,12 @@ func expandEncryption(d *pluginsdk.ResourceData) *vaults.VaultPropertiesEncrypti
 		InfrastructureEncryption: &infraEncryptionState,
 	}
 	if v, ok := encryptionMap["user_assigned_identity_id"].(string); ok && v != "" {
+		if *encryption.KekIdentity.UseSystemAssignedIdentity {
+			return nil, fmt.Errorf(" `use_system_assigned_identity` must be disabled when `user_assigned_identity_id` is set.")
+		}
 		encryption.KekIdentity.UserAssignedIdentity = utils.String(v)
 	}
-	return encryption
+	return encryption, nil
 }
 
 func flattenVaultEncryption(model vaults.Vault) interface{} {
@@ -727,7 +801,6 @@ func flattenVaultEncryption(model vaults.Vault) interface{} {
 		return nil
 	}
 	encryptionMap := make(map[string]interface{})
-
 	encryptionMap["key_id"] = encryption.KeyVaultProperties.KeyUri
 	encryptionMap["use_system_assigned_identity"] = *encryption.KekIdentity.UseSystemAssignedIdentity
 	encryptionMap["infrastructure_encryption_enabled"] = *encryption.InfrastructureEncryption == vaults.InfrastructureEncryptionStateEnabled
@@ -762,6 +835,58 @@ func flattenRecoveryServicesVaultPublicNetworkAccess(input *vaults.PublicNetwork
 		return false
 	}
 	return *input == vaults.PublicNetworkAccessEnabled
+}
+
+func expandRecoveryServicesVaultMonitorSettings(input []interface{}) *vaults.MonitoringSettings {
+	if len(input) == 0 {
+		return nil
+	}
+
+	v := input[0].(map[string]interface{})
+
+	allJobAlert := vaults.AlertsStateDisabled
+	if v["alerts_for_all_job_failures_enabled"].(bool) {
+		allJobAlert = vaults.AlertsStateEnabled
+	}
+
+	criticalOperation := vaults.AlertsStateDisabled
+	if v["alerts_for_critical_operation_failures_enabled"].(bool) {
+		criticalOperation = vaults.AlertsStateEnabled
+	}
+
+	return pointer.To(vaults.MonitoringSettings{
+		AzureMonitorAlertSettings: pointer.To(vaults.AzureMonitorAlertSettings{
+			AlertsForAllJobFailures: pointer.To(allJobAlert),
+		}),
+		ClassicAlertSettings: pointer.To(vaults.ClassicAlertSettings{
+			AlertsForCriticalOperations: pointer.To(criticalOperation),
+		}),
+	})
+}
+
+func flattenRecoveryServicesVaultMonitorSettings(input *vaults.MonitoringSettings) []interface{} {
+	// `Monitor` is an optional parameters, and won't be returned from API if it has not been specified.
+	if input == nil {
+		return []interface{}{}
+	}
+	allJobAlert := false
+	criticalAlert := false
+
+	if input != nil {
+		if input.AzureMonitorAlertSettings != nil && input.AzureMonitorAlertSettings.AlertsForAllJobFailures != nil {
+			allJobAlert = *input.AzureMonitorAlertSettings.AlertsForAllJobFailures == vaults.AlertsStateEnabled
+		}
+		if input.ClassicAlertSettings != nil && input.ClassicAlertSettings.AlertsForCriticalOperations != nil {
+			criticalAlert = *input.ClassicAlertSettings.AlertsForCriticalOperations == vaults.AlertsStateEnabled
+		}
+	}
+
+	return []interface{}{
+		map[string]interface{}{
+			"alerts_for_all_job_failures_enabled":            allJobAlert,
+			"alerts_for_critical_operation_failures_enabled": criticalAlert,
+		},
+	}
 }
 
 func resourceRecoveryServicesVaultSoftDeleteRefreshFunc(ctx context.Context, cfgsClient *backupresourcevaultconfigs.BackupResourceVaultConfigsClient, id backupresourcevaultconfigs.VaultId) pluginsdk.StateRefreshFunc {

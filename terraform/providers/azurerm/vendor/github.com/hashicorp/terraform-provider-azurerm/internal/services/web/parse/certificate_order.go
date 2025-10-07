@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -33,7 +36,7 @@ func (id CertificateOrderId) String() string {
 }
 
 func (id CertificateOrderId) ID() string {
-	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Web/certificateOrders/%s"
+	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.CertificateRegistration/certificateOrders/%s"
 	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.Name)
 }
 
@@ -41,7 +44,7 @@ func (id CertificateOrderId) ID() string {
 func CertificateOrderID(input string) (*CertificateOrderId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing %q as an CertificateOrder ID: %+v", input, err)
 	}
 
 	resourceId := CertificateOrderId{

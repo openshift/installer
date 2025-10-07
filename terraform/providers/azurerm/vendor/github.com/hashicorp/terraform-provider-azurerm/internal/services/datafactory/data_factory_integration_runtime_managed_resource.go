@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package datafactory
 
 import (
@@ -5,17 +8,19 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/datafactory/mgmt/2018-06-01/datafactory" // nolint: staticcheck
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/datafactory/2018-06-01/factories"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/datafactory/parse"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/datafactory/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	"github.com/tombuildsstuff/kermit/sdk/datafactory/2018-06-01/datafactory" // nolint: staticcheck
 )
 
 func resourceDataFactoryIntegrationRuntimeManaged() *pluginsdk.Resource {
@@ -30,7 +35,7 @@ func resourceDataFactoryIntegrationRuntimeManaged() *pluginsdk.Resource {
 			return err
 		}),
 
-		DeprecationMessage: "The resource 'azurerm_data_factory_integration_runtime_managed' has been superseded by the 'azurerm_data_factory_integration_runtime_azure_ssis'.",
+		DeprecationMessage: "The resource 'azurerm_data_factory_integration_runtime_managed' has been superseded by the 'azurerm_data_factory_integration_runtime_azure_ssis' resource and will be removed in v4.0 of the AzureRM Provider.",
 
 		Timeouts: &pluginsdk.ResourceTimeout{
 			Create: pluginsdk.DefaultTimeout(30 * time.Minute),
@@ -59,7 +64,7 @@ func resourceDataFactoryIntegrationRuntimeManaged() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.DataFactoryID,
+				ValidateFunc: factories.ValidateFactoryID,
 			},
 
 			"location": commonschema.Location(),
@@ -129,10 +134,11 @@ func resourceDataFactoryIntegrationRuntimeManaged() *pluginsdk.Resource {
 				MaxItems: 1,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
+						// TODO: 4.0 - this should become `virtual_network_id` or `subnet_id` - are these ForceNew?!
 						"vnet_id": {
 							Type:         pluginsdk.TypeString,
 							Required:     true,
-							ValidateFunc: azure.ValidateResourceID,
+							ValidateFunc: commonids.ValidateVirtualNetworkID,
 						},
 						"subnet_name": {
 							Type:         pluginsdk.TypeString,
@@ -200,6 +206,12 @@ func resourceDataFactoryIntegrationRuntimeManaged() *pluginsdk.Resource {
 					},
 				},
 			},
+
+			"credential_name": {
+				Type:         pluginsdk.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
 		},
 	}
 }
@@ -210,12 +222,12 @@ func resourceDataFactoryIntegrationRuntimeManagedCreateUpdate(d *pluginsdk.Resou
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	dataFactoryId, err := parse.DataFactoryID(d.Get("data_factory_id").(string))
+	dataFactoryId, err := factories.ParseFactoryID(d.Get("data_factory_id").(string))
 	if err != nil {
 		return err
 	}
 
-	id := parse.NewIntegrationRuntimeID(subscriptionId, dataFactoryId.ResourceGroup, dataFactoryId.FactoryName, d.Get("name").(string))
+	id := parse.NewIntegrationRuntimeID(subscriptionId, dataFactoryId.ResourceGroupName, dataFactoryId.FactoryName, d.Get("name").(string))
 
 	if d.IsNewResource() {
 		existing, err := client.Get(ctx, id.ResourceGroup, id.FactoryName, id.Name, "")
@@ -266,7 +278,7 @@ func resourceDataFactoryIntegrationRuntimeManagedRead(d *pluginsdk.ResourceData,
 		return err
 	}
 
-	dataFactoryId := parse.NewDataFactoryID(id.SubscriptionId, id.ResourceGroup, id.FactoryName)
+	dataFactoryId := factories.NewFactoryID(id.SubscriptionId, id.ResourceGroup, id.FactoryName)
 
 	resp, err := client.Get(ctx, id.ResourceGroup, id.FactoryName, id.Name, "")
 	if err != nil {
@@ -322,6 +334,10 @@ func resourceDataFactoryIntegrationRuntimeManagedRead(d *pluginsdk.ResourceData,
 
 		if err := d.Set("custom_setup_script", flattenDataFactoryIntegrationRuntimeManagedSsisCustomSetupScript(ssisProps.CustomSetupScriptProperties, d)); err != nil {
 			return fmt.Errorf("setting `vnet_integration`: %+v", err)
+		}
+
+		if ssisProps.Credential != nil {
+			d.Set("credential_name", pointer.From(ssisProps.Credential.ReferenceName))
 		}
 	}
 
@@ -405,6 +421,12 @@ func expandDataFactoryIntegrationRuntimeManagedSsisProperties(d *pluginsdk.Resou
 		ssisProperties.CustomSetupScriptProperties = &datafactory.IntegrationRuntimeCustomSetupScriptProperties{
 			BlobContainerURI: utils.String(customSetupScript["blob_container_uri"].(string)),
 			SasToken:         sasToken,
+		}
+	}
+
+	if credentialName := d.Get("credential_name").(string); credentialName != "" {
+		ssisProperties.Credential = &datafactory.CredentialReference{
+			ReferenceName: pointer.To(credentialName),
 		}
 	}
 

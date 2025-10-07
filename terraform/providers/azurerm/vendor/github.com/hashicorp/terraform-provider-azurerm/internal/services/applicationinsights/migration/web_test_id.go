@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package migration
 
 import (
@@ -5,7 +8,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/applicationinsights/parse"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/applicationinsights/2022-06-15/webtestsapis"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 )
@@ -25,7 +28,7 @@ func (WebTestUpgradeV0ToV1) UpgradeFunc() pluginsdk.StateUpgraderFunc {
 		// new:
 		// 	/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/webTests/test1
 		oldIdRaw := rawState["id"].(string)
-		id, err := parse.WebTestIDInsensitively(oldIdRaw)
+		id, err := webtestsapis.ParseWebTestIDInsensitively(oldIdRaw)
 		if err != nil {
 			return rawState, err
 		}

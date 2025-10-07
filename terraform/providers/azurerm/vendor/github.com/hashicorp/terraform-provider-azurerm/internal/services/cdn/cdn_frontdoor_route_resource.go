@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package cdn
 
 import (
@@ -452,11 +455,12 @@ func resourceCdnFrontDoorRouteUpdate(d *pluginsdk.ResourceData, meta interface{}
 		}
 	}
 
-	// NOTE: You need to always pass these two on update else you will
-	// disable your cache and disassociate your custom domains...
+	// NOTE: You need to always pass these three on update else you will
+	// disable your cache, disassociate your custom domains or remove your origin path...
 	updateProps := azuresdkhacks.RouteUpdatePropertiesParameters{
 		CustomDomains:      existing.RouteProperties.CustomDomains,
 		CacheConfiguration: existing.RouteProperties.CacheConfiguration,
+		OriginPath:         existing.RouteProperties.OriginPath,
 	}
 
 	if d.HasChange("cache") {
@@ -488,7 +492,12 @@ func resourceCdnFrontDoorRouteUpdate(d *pluginsdk.ResourceData, meta interface{}
 	}
 
 	if d.HasChange("cdn_frontdoor_origin_path") {
-		updateProps.OriginPath = utils.String(d.Get("cdn_frontdoor_origin_path").(string))
+		updateProps.OriginPath = nil
+
+		originPath := d.Get("cdn_frontdoor_origin_path").(string)
+		if originPath != "" {
+			updateProps.OriginPath = utils.String(originPath)
+		}
 	}
 
 	if d.HasChange("patterns_to_match") {

@@ -1,20 +1,26 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package containers
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/zones"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2022-09-02-preview/managedclusters"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2024-05-01/managedclusters"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/workspaces"
-	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/kubernetes"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -82,8 +88,7 @@ func dataSourceKubernetesCluster() *pluginsdk.Resource {
 							Computed: true,
 						},
 
-						// TODO 4.0: change this from enable_* to *_enabled
-						"enable_auto_scaling": {
+						"auto_scaling_enabled": {
 							Type:     pluginsdk.TypeBool,
 							Computed: true,
 						},
@@ -134,8 +139,7 @@ func dataSourceKubernetesCluster() *pluginsdk.Resource {
 							Elem:     &pluginsdk.Schema{Type: pluginsdk.TypeString},
 						},
 
-						// TODO 4.0: change this from enable_* to *_enabled
-						"enable_node_public_ip": {
+						"node_public_ip_enabled": {
 							Type:     pluginsdk.TypeBool,
 							Computed: true,
 						},
@@ -157,23 +161,8 @@ func dataSourceKubernetesCluster() *pluginsdk.Resource {
 				Computed: true,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
-						"client_app_id": {
-							Type:     pluginsdk.TypeString,
-							Computed: true,
-						},
-
-						"server_app_id": {
-							Type:     pluginsdk.TypeString,
-							Computed: true,
-						},
-
 						"tenant_id": {
 							Type:     pluginsdk.TypeString,
-							Computed: true,
-						},
-
-						"managed": {
-							Type:     pluginsdk.TypeBool,
 							Computed: true,
 						},
 
@@ -195,6 +184,11 @@ func dataSourceKubernetesCluster() *pluginsdk.Resource {
 
 			"azure_policy_enabled": {
 				Type:     pluginsdk.TypeBool,
+				Computed: true,
+			},
+
+			"current_kubernetes_version": {
+				Type:     pluginsdk.TypeString,
 				Computed: true,
 			},
 
@@ -337,6 +331,10 @@ func dataSourceKubernetesCluster() *pluginsdk.Resource {
 					Schema: map[string]*pluginsdk.Schema{
 						"log_analytics_workspace_id": {
 							Type:     pluginsdk.TypeString,
+							Computed: true,
+						},
+						"msi_auth_for_monitoring_enabled": {
+							Type:     pluginsdk.TypeBool,
 							Computed: true,
 						},
 						"oms_agent_identity": {
@@ -602,6 +600,11 @@ func dataSourceKubernetesCluster() *pluginsdk.Resource {
 				Computed: true,
 			},
 
+			"node_resource_group_id": {
+				Type:     pluginsdk.TypeString,
+				Computed: true,
+			},
+
 			"oidc_issuer_enabled": {
 				Type:     pluginsdk.TypeBool,
 				Computed: true,
@@ -635,17 +638,12 @@ func dataSourceKubernetesCluster() *pluginsdk.Resource {
 				Computed: true,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
-
 						"blob_driver_enabled": {
 							Type:     pluginsdk.TypeBool,
 							Computed: true,
 						},
 						"disk_driver_enabled": {
 							Type:     pluginsdk.TypeBool,
-							Computed: true,
-						},
-						"disk_driver_version": {
-							Type:     pluginsdk.TypeString,
 							Computed: true,
 						},
 						"file_driver_enabled": {
@@ -660,8 +658,135 @@ func dataSourceKubernetesCluster() *pluginsdk.Resource {
 				},
 			},
 
+			"service_mesh_profile": {
+				Type:     pluginsdk.TypeList,
+				Computed: true,
+				Elem: &pluginsdk.Resource{
+					Schema: map[string]*pluginsdk.Schema{
+						"mode": {
+							Type:     pluginsdk.TypeString,
+							Computed: true,
+						},
+						"internal_ingress_gateway_enabled": {
+							Type:     pluginsdk.TypeBool,
+							Computed: true,
+						},
+						"external_ingress_gateway_enabled": {
+							Type:     pluginsdk.TypeBool,
+							Computed: true,
+						},
+						"certificate_authority": {
+							Type:     pluginsdk.TypeList,
+							Computed: true,
+							Elem: &pluginsdk.Resource{
+								Schema: map[string]*pluginsdk.Schema{
+									"key_vault_id": {
+										Type:     pluginsdk.TypeString,
+										Computed: true,
+									},
+									"root_cert_object_name": {
+										Type:     pluginsdk.TypeString,
+										Computed: true,
+									},
+									"cert_chain_object_name": {
+										Type:     pluginsdk.TypeString,
+										Computed: true,
+									},
+									"cert_object_name": {
+										Type:     pluginsdk.TypeString,
+										Computed: true,
+									},
+									"key_object_name": {
+										Type:     pluginsdk.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
+						"revisions": {
+							Type:     pluginsdk.TypeList,
+							Computed: true,
+							Elem: &pluginsdk.Schema{
+								Type: pluginsdk.TypeString,
+							},
+						},
+					},
+				},
+			},
+
 			"tags": commonschema.TagsDataSource(),
 		},
+	}
+
+	if !features.FourPointOhBeta() {
+		// adding revisions to the resource is a breaking change, MSFT would like the corresponding change in data source to happen at the same time
+		serviceMeshProfile := resource.Schema["service_mesh_profile"].Elem.(*pluginsdk.Resource).SchemaMap()
+		delete(serviceMeshProfile, "revisions")
+
+		resource.Schema["agent_pool_profile"].Elem.(*pluginsdk.Resource).Schema["enable_auto_scaling"] = &pluginsdk.Schema{
+			Type:       pluginsdk.TypeBool,
+			Computed:   true,
+			Deprecated: "This property is deprecated and will be removed in v4.0 of the AzureRM Provider in favour of the `auto_scaling_enabled` property.",
+		}
+		resource.Schema["agent_pool_profile"].Elem.(*pluginsdk.Resource).Schema["enable_node_public_ip"] = &pluginsdk.Schema{
+			Type:       pluginsdk.TypeBool,
+			Computed:   true,
+			Deprecated: "This property is deprecated and will be removed in v4.0 of the AzureRM Provider in favour of the `node_public_ip_enabled` property.",
+		}
+		resource.Schema["storage_profile"].Elem.(*pluginsdk.Resource).Schema["disk_driver_version"] = &pluginsdk.Schema{
+			Deprecated: "This property is not available in the stable API and will be removed in v4.0 of the Azure Provider. Please see https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/4.0-upgrade-guide#aks-migration-to-stable-api for more details.",
+			Type:       pluginsdk.TypeString,
+			Computed:   true,
+		}
+
+		resource.Schema["custom_ca_trust_certificates_base64"] = &pluginsdk.Schema{
+			Deprecated: "This property is not available in the stable API and will be removed in v4.0 of the Azure Provider. Please see https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/4.0-upgrade-guide#aks-migration-to-stable-api for more details.",
+			Type:       pluginsdk.TypeList,
+			Computed:   true,
+			Elem: &pluginsdk.Schema{
+				Type: pluginsdk.TypeString,
+			},
+		}
+
+		resource.Schema["azure_active_directory_role_based_access_control"] = &pluginsdk.Schema{
+			Type:     pluginsdk.TypeList,
+			Computed: true,
+			Elem: &pluginsdk.Resource{
+				Schema: map[string]*pluginsdk.Schema{
+					"client_app_id": {
+						Type:       pluginsdk.TypeString,
+						Computed:   true,
+						Deprecated: "This property is deprecated and will be removed in v4.0 of the AzureRM Provider.",
+					},
+					"server_app_id": {
+						Type:       pluginsdk.TypeString,
+						Computed:   true,
+						Deprecated: "This property is deprecated and will be removed in v4.0 of the AzureRM Provider.",
+					},
+					"tenant_id": {
+						Type:     pluginsdk.TypeString,
+						Computed: true,
+					},
+					"managed": {
+						Type:       pluginsdk.TypeBool,
+						Computed:   true,
+						Deprecated: "This property is deprecated and will be removed in v4.0 of the AzureRM Provider.",
+					},
+					"azure_rbac_enabled": {
+						Type:     pluginsdk.TypeBool,
+						Computed: true,
+					},
+					"admin_group_object_ids": {
+						Type:     pluginsdk.TypeList,
+						Computed: true,
+						Elem: &pluginsdk.Schema{
+							Type: pluginsdk.TypeString,
+						},
+					},
+				},
+			},
+		}
+
 	}
 
 	return resource
@@ -673,7 +798,7 @@ func dataSourceKubernetesClusterRead(d *pluginsdk.ResourceData, meta interface{}
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := managedclusters.NewManagedClusterID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := commonids.NewKubernetesClusterID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 	resp, err := client.Get(ctx, id)
 	if err != nil {
 		if response.WasNotFound(resp.HttpResponse) {
@@ -683,31 +808,34 @@ func dataSourceKubernetesClusterRead(d *pluginsdk.ResourceData, meta interface{}
 		return fmt.Errorf("retrieving %s: %+v", id, err)
 	}
 
-	profileId := managedclusters.NewAccessProfileID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string), "clusterUser")
-	profile, err := client.GetAccessProfile(ctx, profileId)
-	if err != nil {
-		return fmt.Errorf("retrieving Access Profile for %s: %+v", id, err)
+	userCredentialsResp, err := client.ListClusterUserCredentials(ctx, id, managedclusters.ListClusterUserCredentialsOperationOptions{})
+	// only raise the error if it's not a limited permissions error, since this is the Data Source
+	if err != nil && !response.WasStatusCode(userCredentialsResp.HttpResponse, http.StatusForbidden) {
+		return fmt.Errorf("retrieving User Credentials for %s: %+v", id, err)
 	}
-	if profile.Model == nil {
-		return fmt.Errorf("retrieving Access Profile for %s: payload is empty", id)
-	}
-	profileModel := profile.Model
 
 	d.SetId(id.ID())
 	if model := resp.Model; model != nil {
-		d.Set("name", model.Name)
+		d.Set("name", id.ManagedClusterName)
 		d.Set("resource_group_name", id.ResourceGroupName)
-		if location := model.Location; location != "" {
-			d.Set("location", azure.NormalizeLocation(location))
-		}
+		d.Set("location", location.Normalize(model.Location))
 
 		if props := model.Properties; props != nil {
-			d.Set("dns_prefix", props.DnsPrefix)
-			d.Set("fqdn", props.Fqdn)
-			d.Set("disk_encryption_set_id", props.DiskEncryptionSetID)
-			d.Set("private_fqdn", props.PrivateFQDN)
-			d.Set("kubernetes_version", props.KubernetesVersion)
-			d.Set("node_resource_group", props.NodeResourceGroup)
+			d.Set("dns_prefix", pointer.From(props.DnsPrefix))
+			d.Set("fqdn", pointer.From(props.Fqdn))
+			d.Set("disk_encryption_set_id", pointer.From(props.DiskEncryptionSetID))
+			d.Set("private_fqdn", pointer.From(props.PrivateFQDN))
+			d.Set("kubernetes_version", pointer.From(props.KubernetesVersion))
+			d.Set("current_kubernetes_version", pointer.From(props.CurrentKubernetesVersion))
+
+			nodeResourceGroup := ""
+			if v := props.NodeResourceGroup; v != nil {
+				nodeResourceGroup = *props.NodeResourceGroup
+			}
+			d.Set("node_resource_group", nodeResourceGroup)
+
+			nodeResourceGroupId := commonids.NewResourceGroupID(id.SubscriptionId, nodeResourceGroup)
+			d.Set("node_resource_group_id", nodeResourceGroupId.ID())
 
 			if accessProfile := props.ApiServerAccessProfile; accessProfile != nil {
 				apiServerAuthorizedIPRanges := utils.FlattenStringSlice(accessProfile.AuthorizedIPRanges)
@@ -735,9 +863,14 @@ func dataSourceKubernetesClusterRead(d *pluginsdk.ResourceData, meta interface{}
 				return fmt.Errorf("setting `agent_pool_profile`: %+v", err)
 			}
 
-			azureKeyVaultKms := flattenKubernetesClusterDataSourceKeyVaultKms(props.SecurityProfile.AzureKeyVaultKms)
+			azureKeyVaultKms := flattenKubernetesClusterDataSourceKeyVaultKms(props.SecurityProfile)
 			if err := d.Set("key_management_service", azureKeyVaultKms); err != nil {
 				return fmt.Errorf("setting `key_management_service`: %+v", err)
+			}
+
+			serviceMeshProfile := flattenKubernetesClusterAzureServiceMeshProfile(props.ServiceMeshProfile)
+			if err := d.Set("service_mesh_profile", serviceMeshProfile); err != nil {
+				return fmt.Errorf("setting `service_mesh_profile`: %+v", err)
 			}
 
 			kubeletIdentity, err := flattenKubernetesClusterDataSourceIdentityProfile(props.IdentityProfile)
@@ -808,23 +941,20 @@ func dataSourceKubernetesClusterRead(d *pluginsdk.ResourceData, meta interface{}
 			}
 
 			// adminProfile is only available for RBAC enabled clusters with AAD and without local accounts disabled
+			adminKubeConfig := make([]interface{}, 0)
+			var adminKubeConfigRaw *string
 			if props.AadProfile != nil && (props.DisableLocalAccounts == nil || !*props.DisableLocalAccounts) {
-				profileId := managedclusters.NewAccessProfileID(subscriptionId, id.ResourceGroupName, id.ManagedClusterName, "clusterAdmin")
-				adminProfile, err := client.GetAccessProfile(ctx, profileId)
-				if err != nil {
-					return fmt.Errorf("retrieving Admin Access Profile for %s: %+v", id, err)
+				adminCredentialsResp, err := client.ListClusterAdminCredentials(ctx, id, managedclusters.ListClusterAdminCredentialsOperationOptions{})
+				// only raise the error if it's not a limited permissions error, since this is the Data Source
+				if err != nil && !response.WasStatusCode(adminCredentialsResp.HttpResponse, http.StatusForbidden) {
+					return fmt.Errorf("retrieving Admin Credentials for %s: %+v", id, err)
 				}
 
-				if adminProfileModel := adminProfile.Model; adminProfileModel != nil {
-					adminKubeConfigRaw, adminKubeConfig := flattenKubernetesClusterAccessProfile(*adminProfileModel)
-					d.Set("kube_admin_config_raw", adminKubeConfigRaw)
-					if err := d.Set("kube_admin_config", adminKubeConfig); err != nil {
-						return fmt.Errorf("setting `kube_admin_config`: %+v", err)
-					}
-				}
-			} else {
-				d.Set("kube_admin_config_raw", "")
-				d.Set("kube_admin_config", []interface{}{})
+				adminKubeConfigRaw, adminKubeConfig = flattenKubernetesClusterCredentials(adminCredentialsResp.Model, "clusterAdmin")
+			}
+			d.Set("kube_admin_config_raw", adminKubeConfigRaw)
+			if err := d.Set("kube_admin_config", adminKubeConfig); err != nil {
+				return fmt.Errorf("setting `kube_admin_config`: %+v", err)
 			}
 		}
 
@@ -837,7 +967,7 @@ func dataSourceKubernetesClusterRead(d *pluginsdk.ResourceData, meta interface{}
 			return fmt.Errorf("setting `identity`: %+v", err)
 		}
 
-		kubeConfigRaw, kubeConfig := flattenKubernetesClusterDataSourceAccessProfile(*profileModel)
+		kubeConfigRaw, kubeConfig := flattenKubernetesClusterCredentials(userCredentialsResp.Model, "clusterUser")
 		d.Set("kube_config_raw", kubeConfigRaw)
 		if err := d.Set("kube_config", kubeConfig); err != nil {
 			return fmt.Errorf("setting `kube_config`: %+v", err)
@@ -849,17 +979,17 @@ func dataSourceKubernetesClusterRead(d *pluginsdk.ResourceData, meta interface{}
 	return nil
 }
 
-func flattenKubernetesClusterDataSourceKeyVaultKms(input *managedclusters.AzureKeyVaultKms) []interface{} {
+func flattenKubernetesClusterDataSourceKeyVaultKms(input *managedclusters.ManagedClusterSecurityProfile) []interface{} {
 	azureKeyVaultKms := make([]interface{}, 0)
 
-	if input != nil && input.Enabled != nil && *input.Enabled {
+	if input != nil && input.AzureKeyVaultKms != nil && input.AzureKeyVaultKms.Enabled != nil && *input.AzureKeyVaultKms.Enabled {
 		keyId := ""
-		if v := input.KeyId; v != nil {
+		if v := input.AzureKeyVaultKms.KeyId; v != nil {
 			keyId = *v
 		}
 
 		networkAccess := ""
-		if v := input.KeyVaultNetworkAccess; v != nil {
+		if v := input.AzureKeyVaultKms.KeyVaultNetworkAccess; v != nil {
 			networkAccess = string(*v)
 		}
 
@@ -877,34 +1007,28 @@ func flattenKubernetesClusterDataSourceStorageProfile(input *managedclusters.Man
 
 	if input != nil {
 		blobEnabled := false
-		if input.BlobCSIDriver != nil {
+		if input.BlobCSIDriver != nil && input.BlobCSIDriver.Enabled != nil {
 			blobEnabled = *input.BlobCSIDriver.Enabled
 		}
 
 		diskEnabled := true
-		if input.DiskCSIDriver != nil {
+		if input.DiskCSIDriver != nil && input.DiskCSIDriver.Enabled != nil {
 			diskEnabled = *input.DiskCSIDriver.Enabled
 		}
 
-		diskVersion := ""
-		if input.FileCSIDriver != nil {
-			diskVersion = *input.DiskCSIDriver.Version
-		}
-
 		fileEnabled := true
-		if input.DiskCSIDriver != nil {
+		if input.FileCSIDriver != nil && input.FileCSIDriver.Enabled != nil {
 			fileEnabled = *input.FileCSIDriver.Enabled
 		}
 
 		snapshotController := true
-		if input.SnapshotController != nil {
+		if input.SnapshotController != nil && input.SnapshotController.Enabled != nil {
 			snapshotController = *input.SnapshotController.Enabled
 		}
 
 		storageProfile = append(storageProfile, map[string]interface{}{
 			"blob_driver_enabled":         blobEnabled,
 			"disk_driver_enabled":         diskEnabled,
-			"disk_driver_version":         diskVersion,
 			"file_driver_enabled":         fileEnabled,
 			"snapshot_controller_enabled": snapshotController,
 		})
@@ -913,36 +1037,41 @@ func flattenKubernetesClusterDataSourceStorageProfile(input *managedclusters.Man
 	return storageProfile
 }
 
-func flattenKubernetesClusterDataSourceAccessProfile(profile managedclusters.ManagedClusterAccessProfile) (*string, []interface{}) {
-	if profile.Properties == nil {
+func flattenKubernetesClusterCredentials(model *managedclusters.CredentialResults, configName string) (*string, []interface{}) {
+	if model == nil || model.Kubeconfigs == nil || len(*model.Kubeconfigs) < 1 {
 		return nil, []interface{}{}
 	}
 
-	if kubeConfigRaw := profile.Properties.KubeConfig; kubeConfigRaw != nil {
-		rawConfig := *kubeConfigRaw
-		if base64IsEncoded(*kubeConfigRaw) {
-			rawConfig = base64Decode(*kubeConfigRaw)
+	for _, c := range *model.Kubeconfigs {
+		if c.Name == nil || *c.Name != configName {
+			continue
 		}
-
-		var flattenedKubeConfig []interface{}
-
-		if strings.Contains(rawConfig, "apiserver-id:") || strings.Contains(rawConfig, "exec") {
-			kubeConfigAAD, err := kubernetes.ParseKubeConfigAAD(rawConfig)
-			if err != nil {
-				return utils.String(rawConfig), []interface{}{}
+		if kubeConfigRaw := c.Value; kubeConfigRaw != nil {
+			rawConfig := *kubeConfigRaw
+			if base64IsEncoded(*kubeConfigRaw) {
+				rawConfig = base64Decode(*kubeConfigRaw)
 			}
 
-			flattenedKubeConfig = flattenKubernetesClusterDataSourceKubeConfigAAD(*kubeConfigAAD)
-		} else {
-			kubeConfig, err := kubernetes.ParseKubeConfig(rawConfig)
-			if err != nil {
-				return utils.String(rawConfig), []interface{}{}
+			var flattenedKubeConfig []interface{}
+
+			if strings.Contains(rawConfig, "apiserver-id:") || strings.Contains(rawConfig, "exec") {
+				kubeConfigAAD, err := kubernetes.ParseKubeConfigAAD(rawConfig)
+				if err != nil {
+					return utils.String(rawConfig), []interface{}{}
+				}
+
+				flattenedKubeConfig = flattenKubernetesClusterDataSourceKubeConfigAAD(*kubeConfigAAD)
+			} else {
+				kubeConfig, err := kubernetes.ParseKubeConfig(rawConfig)
+				if err != nil {
+					return utils.String(rawConfig), []interface{}{}
+				}
+
+				flattenedKubeConfig = flattenKubernetesClusterDataSourceKubeConfig(*kubeConfig)
 			}
 
-			flattenedKubeConfig = flattenKubernetesClusterDataSourceKubeConfig(*kubeConfig)
+			return utils.String(rawConfig), flattenedKubeConfig
 		}
-
-		return utils.String(rawConfig), flattenedKubeConfig
 	}
 
 	return nil, []interface{}{}
@@ -983,17 +1112,24 @@ func flattenKubernetesClusterDataSourceAddOns(profile map[string]managedclusters
 	omsAgent := kubernetesAddonProfileLocate(profile, omsAgentKey)
 	if enabled := omsAgent.Enabled; enabled {
 		workspaceID := ""
+		useAADAuth := false
+
 		if v := kubernetesAddonProfilelocateInConfig(omsAgent.Config, "logAnalyticsWorkspaceResourceID"); v != "" {
 			if lawid, err := workspaces.ParseWorkspaceID(v); err == nil {
 				workspaceID = lawid.ID()
 			}
 		}
 
+		if v := kubernetesAddonProfilelocateInConfig(omsAgent.Config, "useAADAuth"); v != "false" && v != "" {
+			useAADAuth = true
+		}
+
 		omsAgentIdentity := flattenKubernetesClusterAddOnIdentityProfile(omsAgent.Identity)
 
 		omsAgents = append(omsAgents, map[string]interface{}{
-			"log_analytics_workspace_id": workspaceID,
-			"oms_agent_identity":         omsAgentIdentity,
+			"log_analytics_workspace_id":      workspaceID,
+			"msi_auth_for_monitoring_enabled": useAADAuth,
+			"oms_agent_identity":              omsAgentIdentity,
 		})
 	}
 
@@ -1154,8 +1290,8 @@ func flattenKubernetesClusterDataSourceAgentPoolProfiles(input *[]managedcluster
 
 		out := map[string]interface{}{
 			"count":                    count,
-			"enable_auto_scaling":      enableAutoScaling,
-			"enable_node_public_ip":    enableNodePublicIP,
+			"auto_scaling_enabled":     enableAutoScaling,
+			"node_public_ip_enabled":   enableNodePublicIP,
 			"max_count":                maxCount,
 			"max_pods":                 maxPods,
 			"min_count":                minCount,
@@ -1172,6 +1308,11 @@ func flattenKubernetesClusterDataSourceAgentPoolProfiles(input *[]managedcluster
 			"vm_size":                  vmSize,
 			"vnet_subnet_id":           vnetSubnetId,
 			"zones":                    zones.FlattenUntyped(profile.AvailabilityZones),
+		}
+
+		if !features.FourPointOhBeta() {
+			out["enable_auto_scaling"] = enableAutoScaling
+			out["enable_node_public_ip"] = enableNodePublicIP
 		}
 		agentPoolProfiles = append(agentPoolProfiles, out)
 	}
@@ -1209,14 +1350,19 @@ func flattenKubernetesClusterDataSourceAzureActiveDirectoryRoleBasedAccessContro
 			tenantId = *profile.TenantID
 		}
 
-		results = append(results, map[string]interface{}{
+		result := map[string]interface{}{
 			"admin_group_object_ids": adminGroupObjectIds,
-			"client_app_id":          clientAppId,
-			"managed":                managed,
-			"server_app_id":          serverAppId,
 			"tenant_id":              tenantId,
 			"azure_rbac_enabled":     azureRbacEnabled,
-		})
+		}
+
+		if !features.FourPointOhBeta() {
+			result["client_app_id"] = clientAppId
+			result["managed"] = managed
+			result["server_app_id"] = serverAppId
+		}
+
+		results = append(results, result)
 	}
 
 	return results
@@ -1313,10 +1459,6 @@ func flattenKubernetesClusterDataSourceNetworkProfile(profile *managedclusters.C
 		values["dns_service_ip"] = *profile.DnsServiceIP
 	}
 
-	if profile.DockerBridgeCidr != nil {
-		values["docker_bridge_cidr"] = *profile.DockerBridgeCidr
-	}
-
 	if profile.PodCidr != nil {
 		values["pod_cidr"] = *profile.PodCidr
 	}
@@ -1399,18 +1541,23 @@ func flattenKubernetesClusterDataSourceMicrosoftDefender(input *managedclusters.
 }
 
 func flattenKubernetesClusterDataSourceUpgradeSettings(input *managedclusters.AgentPoolUpgradeSettings) []interface{} {
-	maxSurge := ""
-	if input != nil && input.MaxSurge != nil {
-		maxSurge = *input.MaxSurge
-	}
-
-	if maxSurge == "" {
+	if input == nil {
 		return []interface{}{}
 	}
 
-	return []interface{}{
-		map[string]interface{}{
-			"max_surge": maxSurge,
-		},
+	values := make(map[string]interface{})
+
+	if input.MaxSurge != nil {
+		values["max_surge"] = *input.MaxSurge
 	}
+
+	if input.DrainTimeoutInMinutes != nil {
+		values["drain_timeout_in_minutes"] = *input.DrainTimeoutInMinutes
+	}
+
+	if input.NodeSoakDurationInMinutes != nil {
+		values["node_soak_duration_in_minutes"] = *input.NodeSoakDurationInMinutes
+	}
+
+	return []interface{}{values}
 }

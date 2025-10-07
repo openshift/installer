@@ -4,10 +4,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/recaser"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-var _ resourceids.ResourceId = ManagedClusterId{}
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
+
+func init() {
+	recaser.RegisterResourceId(&ManagedClusterId{})
+}
+
+var _ resourceids.ResourceId = &ManagedClusterId{}
 
 // ManagedClusterId is a struct representing the Resource ID for a Managed Cluster
 type ManagedClusterId struct {
@@ -27,25 +35,15 @@ func NewManagedClusterID(subscriptionId string, resourceGroupName string, manage
 
 // ParseManagedClusterID parses 'input' into a ManagedClusterId
 func ParseManagedClusterID(input string) (*ManagedClusterId, error) {
-	parser := resourceids.NewParserFromResourceIdType(ManagedClusterId{})
+	parser := resourceids.NewParserFromResourceIdType(&ManagedClusterId{})
 	parsed, err := parser.Parse(input, false)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := ManagedClusterId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.ManagedClusterName, ok = parsed.Parsed["managedClusterName"]; !ok {
-		return nil, fmt.Errorf("the segment 'managedClusterName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
@@ -54,28 +52,36 @@ func ParseManagedClusterID(input string) (*ManagedClusterId, error) {
 // ParseManagedClusterIDInsensitively parses 'input' case-insensitively into a ManagedClusterId
 // note: this method should only be used for API response data and not user input
 func ParseManagedClusterIDInsensitively(input string) (*ManagedClusterId, error) {
-	parser := resourceids.NewParserFromResourceIdType(ManagedClusterId{})
+	parser := resourceids.NewParserFromResourceIdType(&ManagedClusterId{})
 	parsed, err := parser.Parse(input, true)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %q: %+v", input, err)
 	}
 
-	var ok bool
 	id := ManagedClusterId{}
-
-	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
-	}
-
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
-	}
-
-	if id.ManagedClusterName, ok = parsed.Parsed["managedClusterName"]; !ok {
-		return nil, fmt.Errorf("the segment 'managedClusterName' was not found in the resource id %q", input)
+	if err := id.FromParseResult(*parsed); err != nil {
+		return nil, err
 	}
 
 	return &id, nil
+}
+
+func (id *ManagedClusterId) FromParseResult(input resourceids.ParseResult) error {
+	var ok bool
+
+	if id.SubscriptionId, ok = input.Parsed["subscriptionId"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", input)
+	}
+
+	if id.ResourceGroupName, ok = input.Parsed["resourceGroupName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", input)
+	}
+
+	if id.ManagedClusterName, ok = input.Parsed["managedClusterName"]; !ok {
+		return resourceids.NewSegmentNotSpecifiedError(id, "managedClusterName", input)
+	}
+
+	return nil
 }
 
 // ValidateManagedClusterID checks that 'input' can be parsed as a Managed Cluster ID

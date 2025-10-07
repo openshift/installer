@@ -1,18 +1,21 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package compute
 
 import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
-	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/compute/2022-08-01/compute"
 )
 
 func dataSourceSharedImageVersions() *pluginsdk.Resource {
@@ -38,13 +41,18 @@ func dataSourceSharedImageVersions() *pluginsdk.Resource {
 
 			"resource_group_name": commonschema.ResourceGroupNameForDataSource(),
 
-			"tags_filter": tags.Schema(),
+			"tags_filter": commonschema.Tags(),
 
 			"images": {
 				Type:     pluginsdk.TypeList,
 				Computed: true,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
+						"id": {
+							Type:     pluginsdk.TypeString,
+							Computed: true,
+						},
+
 						"name": {
 							Type:     pluginsdk.TypeString,
 							Computed: true,
@@ -85,7 +93,7 @@ func dataSourceSharedImageVersions() *pluginsdk.Resource {
 							Computed: true,
 						},
 
-						"tags": tags.SchemaDataSource(),
+						"tags": commonschema.TagsDataSource(),
 					},
 				},
 			},
@@ -95,40 +103,31 @@ func dataSourceSharedImageVersions() *pluginsdk.Resource {
 
 func dataSourceSharedImageVersionsRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Compute.GalleryImageVersionsClient
+	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	imageName := d.Get("image_name").(string)
-	galleryName := d.Get("gallery_name").(string)
-	resourceGroup := d.Get("resource_group_name").(string)
+	id := galleryimageversions.NewGalleryImageID(subscriptionId, d.Get("resource_group_name").(string), d.Get("gallery_name").(string), d.Get("image_name").(string))
 	filterTags := tags.Expand(d.Get("tags_filter").(map[string]interface{}))
 
-	resp, err := client.ListByGalleryImageComplete(ctx, resourceGroup, galleryName, imageName)
+	resp, err := client.ListByGalleryImageComplete(ctx, id)
 	if err != nil {
-		if utils.ResponseWasNotFound(resp.Response().Response) {
-			return fmt.Errorf("No Versions were found for Shared Image %q / Gallery %q / Resource Group %q", imageName, galleryName, resourceGroup)
+		if response.WasNotFound(resp.LatestHttpResponse) {
+			return fmt.Errorf("no versions were found for %s", id)
 		}
-		return fmt.Errorf("retrieving Shared Image Versions (Image %q / Gallery %q / Resource Group %q): %+v", imageName, galleryName, resourceGroup, err)
+		return fmt.Errorf("retrieving %s: %+v", id, err)
 	}
 
-	images := make([]compute.GalleryImageVersion, 0)
-	for resp.NotDone() {
-		images = append(images, resp.Value())
-		if err := resp.NextWithContext(ctx); err != nil {
-			return fmt.Errorf("listing next page of images for Shared Image %q / Gallery %q / Resource Group %q: %+v", imageName, galleryName, resourceGroup, err)
-		}
-	}
-
-	flattenedImages := flattenSharedImageVersions(images, filterTags)
+	flattenedImages := flattenSharedImageVersions(resp.Items, filterTags)
 	if len(flattenedImages) == 0 {
 		return fmt.Errorf("unable to find any images")
 	}
 
-	d.SetId(fmt.Sprintf("%s-%s-%s", imageName, galleryName, resourceGroup))
+	d.SetId(fmt.Sprintf("%s-%s-%s", id.ImageName, id.GalleryName, id.ResourceGroupName))
 
-	d.Set("image_name", imageName)
-	d.Set("gallery_name", galleryName)
-	d.Set("resource_group_name", resourceGroup)
+	d.Set("image_name", id.ImageName)
+	d.Set("gallery_name", id.GalleryName)
+	d.Set("resource_group_name", id.ResourceGroupName)
 
 	if err := d.Set("images", flattenedImages); err != nil {
 		return fmt.Errorf("setting `images`: %+v", err)
@@ -137,46 +136,53 @@ func dataSourceSharedImageVersionsRead(d *pluginsdk.ResourceData, meta interface
 	return nil
 }
 
-func flattenSharedImageVersions(input []compute.GalleryImageVersion, filterTags map[string]*string) []interface{} {
+func flattenSharedImageVersions(input []galleryimageversions.GalleryImageVersion, filterTags *map[string]string) []interface{} {
 	results := make([]interface{}, 0)
 
+	if len(input) == 0 {
+		return results
+	}
+
 	for _, imageVersion := range input {
-		flattenedIPAddress := flattenSharedImageVersion(imageVersion)
+		flattenedImageVersion := flattenSharedImageVersion(imageVersion)
 		found := true
 		// Loop through our filter tags and see if they match
-		for k, v := range filterTags {
-			if v != nil {
-				// If the tags don't match, return false
-				if imageVersion.Tags[k] == nil || *v != *imageVersion.Tags[k] {
-					found = false
+		if filterTags != nil {
+			for k, v := range *filterTags {
+				if imageVersion.Tags != nil {
+					// If the tags don't match, return false
+					if v != (*imageVersion.Tags)[k] {
+						found = false
+						break
+					}
 				}
 			}
+
 		}
 
 		if found {
-			results = append(results, flattenedIPAddress)
+			results = append(results, flattenedImageVersion)
 		}
 	}
 
 	return results
 }
 
-func flattenSharedImageVersion(input compute.GalleryImageVersion) map[string]interface{} {
+func flattenSharedImageVersion(input galleryimageversions.GalleryImageVersion) map[string]interface{} {
 	output := make(map[string]interface{})
 
+	output["id"] = input.Id
 	output["name"] = input.Name
-	output["location"] = location.NormalizeNilable(input.Location)
+	output["location"] = location.Normalize(input.Location)
 
-	if props := input.GalleryImageVersionProperties; props != nil {
+	if props := input.Properties; props != nil {
 		if profile := props.PublishingProfile; profile != nil {
 			output["exclude_from_latest"] = profile.ExcludeFromLatest
 			output["target_region"] = flattenSharedImageVersionDataSourceTargetRegions(profile.TargetRegions)
 		}
 
-		if profile := props.StorageProfile; profile != nil {
-			if source := profile.Source; source != nil {
-				output["managed_image_id"] = source.ID
-			}
+		if source := props.StorageProfile.Source; source != nil {
+			output["managed_image_id"] = source.Id
 		}
 	}
 

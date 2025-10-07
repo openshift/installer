@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package logic
 
 import (
@@ -8,22 +11,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationserviceenvironments"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/network/2023-11-01/virtualnetworks"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/validate"
-	networkParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
-	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func resourceIntegrationServiceEnvironment() *pluginsdk.Resource {
@@ -96,7 +99,7 @@ func resourceIntegrationServiceEnvironment() *pluginsdk.Resource {
 				ForceNew: true, // The network configuration subnets cannot be updated after integration service environment is created.
 				Elem: &pluginsdk.Schema{
 					Type:         pluginsdk.TypeString,
-					ValidateFunc: networkValidate.SubnetID,
+					ValidateFunc: commonids.ValidateSubnetID,
 				},
 				MinItems: 4,
 				MaxItems: 4,
@@ -229,7 +232,7 @@ func resourceIntegrationServiceEnvironmentRead(d *pluginsdk.ResourceData, meta i
 		if props := model.Properties; props != nil {
 			if netCfg := props.NetworkConfiguration; netCfg != nil {
 				if accessEndpoint := netCfg.AccessEndpoint; accessEndpoint != nil {
-					d.Set("access_endpoint_type", accessEndpoint.Type)
+					d.Set("access_endpoint_type", string(pointer.From(accessEndpoint.Type)))
 				}
 
 				d.Set("virtual_network_subnet_ids", flattenSubnetResourceID(netCfg.Subnets))
@@ -421,7 +424,7 @@ func linkExists(ctx context.Context, client *clients.Client, iseID string, subne
 		id := *(subnetID.(*string))
 		log.Printf("Checking links on subnetID: %q\n", id)
 
-		hasLink, err := serviceAssociationLinkExists(ctx, client.Network.ServiceAssociationLinkClient, iseID, id)
+		hasLink, err := serviceAssociationLinkExists(ctx, client.Network.VirtualNetworks, iseID, id)
 		if err != nil {
 			return false, err
 		}
@@ -429,7 +432,7 @@ func linkExists(ctx context.Context, client *clients.Client, iseID string, subne
 		if hasLink {
 			return true, nil
 		} else {
-			hasLink, err := resourceNavigationLinkExists(ctx, client.Network.ResourceNavigationLinkClient, id)
+			hasLink, err := resourceNavigationLinkExists(ctx, client.Network.VirtualNetworks, id)
 			if err != nil {
 				return false, err
 			}
@@ -443,25 +446,25 @@ func linkExists(ctx context.Context, client *clients.Client, iseID string, subne
 	return false, nil
 }
 
-func serviceAssociationLinkExists(ctx context.Context, client *network.ServiceAssociationLinksClient, iseID string, subnetID string) (bool, error) {
-	id, err := networkParse.SubnetID(subnetID)
+func serviceAssociationLinkExists(ctx context.Context, client *virtualnetworks.VirtualNetworksClient, iseID string, subnetID string) (bool, error) {
+	id, err := commonids.ParseSubnetID(subnetID)
 	if err != nil {
 		return false, err
 	}
 
-	resp, err := client.List(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name)
+	resp, err := client.ServiceAssociationLinksList(ctx, *id)
 	if err != nil {
-		if utils.ResponseWasNotFound(resp.Response) {
+		if response.WasNotFound(resp.HttpResponse) {
 			return false, nil
 		}
-		return false, fmt.Errorf("retrieving Service Association Links from Virtual Network %q, subnet %q (Resource Group %q): %+v", id.VirtualNetworkName, id.Name, id.ResourceGroup, err)
+		return false, fmt.Errorf("retrieving Service Association Links from Virtual Network %q, subnet %q (Resource Group %q): %+v", id.VirtualNetworkName, id.SubscriptionId, id.ResourceGroupName, err)
 	}
 
-	if resp.Value != nil {
-		for _, link := range *resp.Value {
-			if link.ServiceAssociationLinkPropertiesFormat != nil && link.ServiceAssociationLinkPropertiesFormat.Link != nil {
-				if strings.EqualFold(iseID, *link.ServiceAssociationLinkPropertiesFormat.Link) {
-					log.Printf("Has Service Association Link: %q\n", *link.ID)
+	if model := resp.Model; model != nil {
+		for _, link := range *model {
+			if link.Properties != nil && link.Properties.Link != nil {
+				if strings.EqualFold(iseID, *link.Properties.Link) {
+					log.Printf("Has Service Association Link: %q\n", *link.Id)
 					return true, nil
 				}
 			}
@@ -471,23 +474,23 @@ func serviceAssociationLinkExists(ctx context.Context, client *network.ServiceAs
 	return false, nil
 }
 
-func resourceNavigationLinkExists(ctx context.Context, client *network.ResourceNavigationLinksClient, subnetID string) (bool, error) {
-	id, err := networkParse.SubnetID(subnetID)
+func resourceNavigationLinkExists(ctx context.Context, client *virtualnetworks.VirtualNetworksClient, subnetID string) (bool, error) {
+	id, err := commonids.ParseSubnetID(subnetID)
 	if err != nil {
 		return false, err
 	}
 
-	resp, err := client.List(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name)
+	resp, err := client.ResourceNavigationLinksList(ctx, *id)
 	if err != nil {
-		if utils.ResponseWasNotFound(resp.Response) {
+		if response.WasNotFound(resp.HttpResponse) {
 			return false, nil
 		}
-		return false, fmt.Errorf("retrieving Resource Navigation Links from Virtual Network %q, subnet %q (Resource Group %q): %+v", id.VirtualNetworkName, id.Name, id.ResourceGroup, err)
+		return false, fmt.Errorf("retrieving Resource Navigation Links from Virtual Network %q, subnet %q (Resource Group %q): %+v", id.VirtualNetworkName, id.SubnetName, id.ResourceGroupName, err)
 	}
 
-	if resp.Value != nil {
-		for _, link := range *resp.Value {
-			log.Printf("Has Resource Navigation Link: %q\n", *link.ID)
+	if model := resp.Model; model != nil {
+		for _, link := range *model {
+			log.Printf("Has Resource Navigation Link: %q\n", *link.Id)
 			return true, nil
 		}
 	}

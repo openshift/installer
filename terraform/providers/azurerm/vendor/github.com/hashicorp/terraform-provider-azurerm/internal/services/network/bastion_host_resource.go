@@ -1,34 +1,44 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package network
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/network/2024-01-01/bastionhosts"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
-	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
+
+var skuWeight = map[string]int8{
+	"Developer": 1,
+	"Basic":     2,
+	"Standard":  3,
+}
 
 func resourceBastionHost() *pluginsdk.Resource {
 	return &pluginsdk.Resource{
-		Create: resourceBastionHostCreateUpdate,
+		Create: resourceBastionHostCreate,
 		Read:   resourceBastionHostRead,
-		Update: resourceBastionHostCreateUpdate,
+		Update: resourceBastionHostUpdate,
 		Delete: resourceBastionHostDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := parse.BastionHostID(id)
+			_, err := bastionhosts.ParseBastionHostID(id)
 			return err
 		}),
 
@@ -86,13 +96,19 @@ func resourceBastionHost() *pluginsdk.Resource {
 							Type:         pluginsdk.TypeString,
 							Required:     true,
 							ForceNew:     true,
-							ValidateFunc: azure.ValidateResourceID,
+							ValidateFunc: commonids.ValidatePublicIPAddressID,
 						},
 					},
 				},
 			},
 
 			"ip_connect_enabled": {
+				Type:     pluginsdk.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+
+			"kerberos_enabled": {
 				Type:     pluginsdk.TypeBool,
 				Optional: true,
 				Default:  false,
@@ -112,13 +128,10 @@ func resourceBastionHost() *pluginsdk.Resource {
 			},
 
 			"sku": {
-				Type:     pluginsdk.TypeString,
-				Optional: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					string(network.BastionHostSkuNameBasic),
-					string(network.BastionHostSkuNameStandard),
-				}, false),
-				Default: string(network.BastionHostSkuNameBasic),
+				Type:         pluginsdk.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice(bastionhosts.PossibleValuesForBastionHostSkuName(), false),
+				Default:      string(bastionhosts.BastionHostSkuNameBasic),
 			},
 
 			"tunneling_enabled": {
@@ -127,91 +140,226 @@ func resourceBastionHost() *pluginsdk.Resource {
 				Default:  false,
 			},
 
+			"virtual_network_id": {
+				Type:         pluginsdk.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: commonids.ValidateVirtualNetworkID,
+			},
+
 			"dns_name": {
 				Type:     pluginsdk.TypeString,
 				Computed: true,
 			},
 
-			"tags": tags.Schema(),
+			"tags": commonschema.Tags(),
 		},
+
+		CustomizeDiff: pluginsdk.CustomDiffWithAll(
+			pluginsdk.ForceNewIfChange("sku", func(ctx context.Context, old, new, meta interface{}) bool {
+				// downgrade the SKU is not supported, recreate the resource
+				if old.(string) != "" && new.(string) != "" {
+					return skuWeight[old.(string)] > skuWeight[new.(string)]
+				}
+				return false
+			}),
+		),
 	}
 }
 
-func resourceBastionHostCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
+func resourceBastionHostCreate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Network.BastionHostsClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
-	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
+	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
 	log.Println("[INFO] preparing arguments for Azure Bastion Host creation.")
 
-	id := parse.NewBastionHostID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
-	location := azure.NormalizeLocation(d.Get("location").(string))
-	t := d.Get("tags").(map[string]interface{})
+	id := bastionhosts.NewBastionHostID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+
 	scaleUnits := d.Get("scale_units").(int)
-	sku := d.Get("sku").(string)
+	sku := bastionhosts.BastionHostSkuName(d.Get("sku").(string))
 	fileCopyEnabled := d.Get("file_copy_enabled").(bool)
 	ipConnectEnabled := d.Get("ip_connect_enabled").(bool)
+	kerberosEnabled := d.Get("kerberos_enabled").(bool)
 	shareableLinkEnabled := d.Get("shareable_link_enabled").(bool)
 	tunnelingEnabled := d.Get("tunneling_enabled").(bool)
 
-	if scaleUnits > 2 && sku == string(network.BastionHostSkuNameBasic) {
+	if scaleUnits > 2 && sku == bastionhosts.BastionHostSkuNameBasic {
 		return fmt.Errorf("`scale_units` only can be changed when `sku` is `Standard`. `scale_units` is always `2` when `sku` is `Basic`")
 	}
 
-	if fileCopyEnabled && sku == string(network.BastionHostSkuNameBasic) {
+	if fileCopyEnabled && sku == bastionhosts.BastionHostSkuNameBasic {
 		return fmt.Errorf("`file_copy_enabled` is only supported when `sku` is `Standard`")
 	}
 
-	if ipConnectEnabled && sku == string(network.BastionHostSkuNameBasic) {
+	if ipConnectEnabled && sku == bastionhosts.BastionHostSkuNameBasic {
 		return fmt.Errorf("`ip_connect_enabled` is only supported when `sku` is `Standard`")
 	}
 
-	if shareableLinkEnabled && sku == string(network.BastionHostSkuNameBasic) {
+	if kerberosEnabled && sku == bastionhosts.BastionHostSkuNameBasic {
+		return fmt.Errorf("`kerberos_enabled` is only supported when `sku` is `Standard`")
+	}
+
+	if shareableLinkEnabled && sku == bastionhosts.BastionHostSkuNameBasic {
 		return fmt.Errorf("`shareable_link_enabled` is only supported when `sku` is `Standard`")
 	}
 
-	if tunnelingEnabled && sku == string(network.BastionHostSkuNameBasic) {
+	if tunnelingEnabled && sku == bastionhosts.BastionHostSkuNameBasic {
 		return fmt.Errorf("`tunneling_enabled` is only supported when `sku` is `Standard`")
 	}
 
-	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id.ResourceGroup, id.Name)
-		if err != nil {
-			if !utils.ResponseWasNotFound(existing.Response) {
-				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
-			}
-		}
-
-		if !utils.ResponseWasNotFound(existing.Response) {
-			return tf.ImportAsExistsError("azurerm_bastion_host", id.ID())
-		}
-	}
-
-	parameters := network.BastionHost{
-		Location: &location,
-		BastionHostPropertiesFormat: &network.BastionHostPropertiesFormat{
-			DisableCopyPaste:    utils.Bool(!d.Get("copy_paste_enabled").(bool)),
-			EnableFileCopy:      utils.Bool(fileCopyEnabled),
-			EnableIPConnect:     utils.Bool(ipConnectEnabled),
-			EnableShareableLink: utils.Bool(shareableLinkEnabled),
-			EnableTunneling:     utils.Bool(tunnelingEnabled),
-			IPConfigurations:    expandBastionHostIPConfiguration(d.Get("ip_configuration").([]interface{})),
-			ScaleUnits:          utils.Int32(int32(d.Get("scale_units").(int))),
-		},
-		Sku: &network.Sku{
-			Name: network.BastionHostSkuName(sku),
-		},
-		Tags: tags.Expand(t),
-	}
-
-	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.Name, parameters)
+	existing, err := client.Get(ctx, id)
 	if err != nil {
-		return fmt.Errorf("creating/updating %s: %+v", id, err)
+		if !response.WasNotFound(existing.HttpResponse) {
+			return fmt.Errorf("checking for presence of existing %s: %s", id, err)
+		}
 	}
 
-	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
-		return fmt.Errorf("waiting for creation/update of %s: %+v", id, err)
+	if !response.WasNotFound(existing.HttpResponse) {
+		return tf.ImportAsExistsError("azurerm_bastion_host", id.ID())
+	}
+
+	parameters := bastionhosts.BastionHost{
+		Location: pointer.To(location.Normalize(d.Get("location").(string))),
+		Properties: &bastionhosts.BastionHostPropertiesFormat{
+			IPConfigurations: expandBastionHostIPConfiguration(d.Get("ip_configuration").([]interface{})),
+			ScaleUnits:       pointer.To(int64(d.Get("scale_units").(int))),
+		},
+		Sku: &bastionhosts.Sku{
+			Name: pointer.To(sku),
+		},
+		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
+	}
+
+	if v := !d.Get("copy_paste_enabled").(bool); v {
+		parameters.Properties.DisableCopyPaste = pointer.To(v)
+	}
+
+	if fileCopyEnabled {
+		parameters.Properties.EnableFileCopy = pointer.To(fileCopyEnabled)
+	}
+
+	if ipConnectEnabled {
+		parameters.Properties.EnableIPConnect = pointer.To(ipConnectEnabled)
+	}
+
+	if kerberosEnabled {
+		parameters.Properties.EnableKerberos = pointer.To(kerberosEnabled)
+	}
+
+	if shareableLinkEnabled {
+		parameters.Properties.EnableShareableLink = pointer.To(shareableLinkEnabled)
+	}
+
+	if tunnelingEnabled {
+		parameters.Properties.EnableTunneling = pointer.To(tunnelingEnabled)
+	}
+
+	if v, ok := d.GetOk("virtual_network_id"); ok {
+		if sku != bastionhosts.BastionHostSkuNameDeveloper {
+			return fmt.Errorf("`virtual_network_id` is only supported when `sku` is `Developer`")
+		}
+
+		parameters.Properties.VirtualNetwork = &bastionhosts.SubResource{
+			Id: pointer.To(v.(string)),
+		}
+	} else if sku == bastionhosts.BastionHostSkuNameDeveloper {
+		return fmt.Errorf("`virtual_network_id` is required when `sku` is `Developer`")
+	}
+
+	if err := client.CreateOrUpdateThenPoll(ctx, id, parameters); err != nil {
+		return fmt.Errorf("creating %s: %+v", id, err)
+	}
+
+	d.SetId(id.ID())
+
+	return resourceBastionHostRead(d, meta)
+}
+
+func resourceBastionHostUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
+	client := meta.(*clients.Client).Network.BastionHostsClient
+	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
+	defer cancel()
+
+	id, err := bastionhosts.ParseBastionHostID(d.Id())
+	if err != nil {
+		return err
+	}
+
+	existing, err := client.Get(ctx, *id)
+	if err != nil {
+		return fmt.Errorf("retrieving %s: %+v", id, err)
+	}
+
+	if existing.Model == nil {
+		return fmt.Errorf("retrieving %s: `model` was nil", id)
+	}
+	if existing.Model.Properties == nil {
+		return fmt.Errorf("retrieving %s: `properties` was nil", id)
+	}
+
+	payload := existing.Model
+
+	sku := bastionhosts.BastionHostSkuName(d.Get("sku").(string))
+
+	if d.HasChange("sku") {
+		payload.Sku = &bastionhosts.Sku{
+			Name: pointer.To(sku),
+		}
+	}
+
+	if d.HasChange("copy_paste_enabled") {
+		payload.Properties.DisableCopyPaste = pointer.To(!d.Get("copy_paste_enabled").(bool))
+	}
+
+	if d.HasChange("file_copy_enabled") {
+		fileCopyEnabled := d.Get("file_copy_enabled").(bool)
+		if fileCopyEnabled && sku == bastionhosts.BastionHostSkuNameBasic {
+			return fmt.Errorf("`file_copy_enabled` is only supported when `sku` is `Standard`")
+		}
+		payload.Properties.EnableFileCopy = pointer.To(fileCopyEnabled)
+	}
+
+	if d.HasChange("ip_connect_enabled") {
+		ipConnectEnabled := d.Get("ip_connect_enabled").(bool)
+		if ipConnectEnabled && sku == bastionhosts.BastionHostSkuNameBasic {
+			return fmt.Errorf("`ip_connect_enabled` is only supported when `sku` is `Standard`")
+		}
+		payload.Properties.EnableIPConnect = pointer.To(ipConnectEnabled)
+	}
+
+	if d.HasChange("scale_units") {
+		scaleUnits := d.Get("scale_units").(int)
+		if scaleUnits > 2 && sku == bastionhosts.BastionHostSkuNameBasic {
+			return fmt.Errorf("`scale_units` only can be changed when `sku` is `Standard`. `scale_units` is always `2` when `sku` is `Basic`")
+		}
+		payload.Properties.ScaleUnits = pointer.To(int64(scaleUnits))
+	}
+
+	if d.HasChange("shareable_link_enabled") {
+		shareableLinkEnabled := d.Get("shareable_link_enabled").(bool)
+		if shareableLinkEnabled && sku == bastionhosts.BastionHostSkuNameBasic {
+			return fmt.Errorf("`shareable_link_enabled` is only supported when `sku` is `Standard`")
+		}
+		payload.Properties.EnableShareableLink = pointer.To(shareableLinkEnabled)
+	}
+
+	if d.HasChange("tunneling_enabled") {
+		tunnelingEnabled := d.Get("tunneling_enabled").(bool)
+		if tunnelingEnabled && sku == bastionhosts.BastionHostSkuNameBasic {
+			return fmt.Errorf("`tunneling_enabled` is only supported when `sku` is `Standard`")
+		}
+		payload.Properties.EnableTunneling = pointer.To(tunnelingEnabled)
+	}
+
+	if d.HasChange("tags") {
+		payload.Tags = tags.Expand(d.Get("tags").(map[string]interface{}))
+
+	}
+
+	if err := client.CreateOrUpdateThenPoll(ctx, *id, *payload); err != nil {
+		return fmt.Errorf("updating %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -224,14 +372,14 @@ func resourceBastionHostRead(d *pluginsdk.ResourceData, meta interface{}) error 
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := parse.BastionHostID(d.Id())
+	id, err := bastionhosts.ParseBastionHostID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
+	resp, err := client.Get(ctx, *id)
 	if err != nil {
-		if utils.ResponseWasNotFound(resp.Response) {
+		if response.WasNotFound(resp.HttpResponse) {
 			d.SetId("")
 			log.Printf("[DEBUG] %s was not found - removing from state!", *id)
 			return nil
@@ -239,39 +387,52 @@ func resourceBastionHostRead(d *pluginsdk.ResourceData, meta interface{}) error 
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	d.Set("name", id.Name)
-	d.Set("resource_group_name", id.ResourceGroup)
+	d.Set("name", id.BastionHostName)
+	d.Set("resource_group_name", id.ResourceGroupName)
 
-	if location := resp.Location; location != nil {
-		d.Set("location", azure.NormalizeLocation(*location))
-	}
+	if model := resp.Model; model != nil {
+		d.Set("location", location.NormalizeNilable(model.Location))
 
-	if sku := resp.Sku; sku != nil {
-		d.Set("sku", sku.Name)
-	}
-
-	if props := resp.BastionHostPropertiesFormat; props != nil {
-		d.Set("dns_name", props.DNSName)
-		d.Set("scale_units", props.ScaleUnits)
-		d.Set("file_copy_enabled", props.EnableFileCopy)
-		d.Set("ip_connect_enabled", props.EnableIPConnect)
-		d.Set("shareable_link_enabled", props.EnableShareableLink)
-		d.Set("tunneling_enabled", props.EnableTunneling)
-
-		copyPasteEnabled := true
-		if props.DisableCopyPaste != nil {
-			copyPasteEnabled = !*props.DisableCopyPaste
+		if sku := model.Sku; sku != nil {
+			d.Set("sku", string(*sku.Name))
 		}
-		d.Set("copy_paste_enabled", copyPasteEnabled)
 
-		if ipConfigs := props.IPConfigurations; ipConfigs != nil {
-			if err := d.Set("ip_configuration", flattenBastionHostIPConfiguration(ipConfigs)); err != nil {
-				return fmt.Errorf("flattening `ip_configuration`: %+v", err)
+		if props := model.Properties; props != nil {
+			d.Set("dns_name", props.DnsName)
+			d.Set("scale_units", props.ScaleUnits)
+			d.Set("file_copy_enabled", props.EnableFileCopy)
+			d.Set("ip_connect_enabled", props.EnableIPConnect)
+			d.Set("kerberos_enabled", props.EnableKerberos)
+			d.Set("shareable_link_enabled", props.EnableShareableLink)
+			d.Set("tunneling_enabled", props.EnableTunneling)
+
+			virtualNetworkId := ""
+			if vnet := props.VirtualNetwork; vnet != nil {
+				vnetId, err := commonids.ParseVirtualNetworkID(pointer.From(vnet.Id))
+				if err != nil {
+					return err
+				}
+				virtualNetworkId = vnetId.ID()
+			}
+			d.Set("virtual_network_id", virtualNetworkId)
+
+			copyPasteEnabled := true
+			if props.DisableCopyPaste != nil {
+				copyPasteEnabled = !*props.DisableCopyPaste
+			}
+			d.Set("copy_paste_enabled", copyPasteEnabled)
+
+			if ipConfigs := props.IPConfigurations; ipConfigs != nil {
+				if err := d.Set("ip_configuration", flattenBastionHostIPConfiguration(ipConfigs)); err != nil {
+					return fmt.Errorf("flattening `ip_configuration`: %+v", err)
+				}
 			}
 		}
+
+		return tags.FlattenAndSet(d, model.Tags)
 	}
 
-	return tags.FlattenAndSet(d, resp.Tags)
+	return nil
 }
 
 func resourceBastionHostDelete(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -279,26 +440,19 @@ func resourceBastionHostDelete(d *pluginsdk.ResourceData, meta interface{}) erro
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := parse.BastionHostID(d.Id())
+	id, err := bastionhosts.ParseBastionHostID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	future, err := client.Delete(ctx, id.ResourceGroup, id.Name)
-	if err != nil {
+	if err = client.DeleteThenPoll(ctx, *id); err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
-	}
-
-	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
-		if !response.WasNotFound(future.Response()) {
-			return fmt.Errorf("waiting for deletion of %s: %+v", *id, err)
-		}
 	}
 
 	return nil
 }
 
-func expandBastionHostIPConfiguration(input []interface{}) (ipConfigs *[]network.BastionHostIPConfiguration) {
+func expandBastionHostIPConfiguration(input []interface{}) (ipConfigs *[]bastionhosts.BastionHostIPConfiguration) {
 	if len(input) == 0 {
 		return nil
 	}
@@ -308,22 +462,22 @@ func expandBastionHostIPConfiguration(input []interface{}) (ipConfigs *[]network
 	subID := property["subnet_id"].(string)
 	pipID := property["public_ip_address_id"].(string)
 
-	return &[]network.BastionHostIPConfiguration{
+	return &[]bastionhosts.BastionHostIPConfiguration{
 		{
 			Name: &ipConfName,
-			BastionHostIPConfigurationPropertiesFormat: &network.BastionHostIPConfigurationPropertiesFormat{
-				Subnet: &network.SubResource{
-					ID: &subID,
+			Properties: &bastionhosts.BastionHostIPConfigurationPropertiesFormat{
+				Subnet: bastionhosts.SubResource{
+					Id: &subID,
 				},
-				PublicIPAddress: &network.SubResource{
-					ID: &pipID,
+				PublicIPAddress: bastionhosts.SubResource{
+					Id: &pipID,
 				},
 			},
 		},
 	}
 }
 
-func flattenBastionHostIPConfiguration(ipConfigs *[]network.BastionHostIPConfiguration) []interface{} {
+func flattenBastionHostIPConfiguration(ipConfigs *[]bastionhosts.BastionHostIPConfiguration) []interface{} {
 	result := make([]interface{}, 0)
 	if ipConfigs == nil {
 		return result
@@ -336,14 +490,18 @@ func flattenBastionHostIPConfiguration(ipConfigs *[]network.BastionHostIPConfigu
 			ipConfig["name"] = *config.Name
 		}
 
-		if props := config.BastionHostIPConfigurationPropertiesFormat; props != nil {
-			if subnet := props.Subnet; subnet != nil {
-				ipConfig["subnet_id"] = *subnet.ID
+		if props := config.Properties; props != nil {
+			subnetId := ""
+			if subnet := props.Subnet; subnet.Id != nil {
+				subnetId = *subnet.Id
 			}
+			ipConfig["subnet_id"] = subnetId
 
-			if pip := props.PublicIPAddress; pip != nil {
-				ipConfig["public_ip_address_id"] = *pip.ID
+			publicIpId := ""
+			if pip := props.PublicIPAddress; pip.Id != nil {
+				publicIpId = *pip.Id
 			}
+			ipConfig["public_ip_address_id"] = publicIpId
 		}
 
 		result = append(result, ipConfig)

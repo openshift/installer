@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package resource
 
 import (
@@ -40,7 +43,7 @@ func resourceTemplateDeployment() *pluginsdk.Resource {
 			0: migration.TemplateDeploymentV0ToV1{},
 		}),
 
-		DeprecationMessage: "The resource 'azurerm_template_deployment' has been superseded by the 'azurerm_resource_group_template_deployment' resource.",
+		DeprecationMessage: "The resource 'azurerm_template_deployment' has been superseded by the 'azurerm_resource_group_template_deployment' resource and will be removed in v4.0 of the AzureRM Provider.",
 
 		Schema: map[string]*pluginsdk.Schema{
 			"name": {
@@ -303,7 +306,7 @@ func waitForTemplateDeploymentToBeDeleted(ctx context.Context, client *resources
 	// we can't use the Waiter here since the API returns a 200 once it's deleted which is considered a polling status code..
 	deadline, ok := ctx.Deadline()
 	if !ok {
-		return fmt.Errorf("context had no deadline")
+		return fmt.Errorf("internal-error: context had no deadline")
 	}
 
 	log.Printf("[DEBUG] Waiting for %s to be deleted", id)

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package managementgroup
 
 import (
@@ -38,6 +41,11 @@ func dataSourceManagementGroup() *pluginsdk.Resource {
 				ExactlyOneOf: []string{"name", "display_name"},
 			},
 
+			"tenant_scoped_id": {
+				Type:     pluginsdk.TypeString,
+				Computed: true,
+			},
+
 			"parent_management_group_id": {
 				Type:     pluginsdk.TypeString,
 				Computed: true,
@@ -72,6 +80,7 @@ func dataSourceManagementGroup() *pluginsdk.Resource {
 
 func dataSourceManagementGroupRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).ManagementGroups.GroupsClient
+	accountClient := meta.(*clients.Client)
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -103,6 +112,10 @@ func dataSourceManagementGroupRead(d *pluginsdk.ResourceData, meta interface{}) 
 	id := parse.NewManagementGroupId(groupName)
 	d.SetId(id.ID())
 	d.Set("name", groupName)
+
+	tenantID := accountClient.Account.TenantId
+	tenantScopedID := parse.NewTenantScopedManagementGroupID(tenantID, id.Name)
+	d.Set("tenant_scoped_id", tenantScopedID.TenantScopedID())
 
 	if props := resp.Properties; props != nil {
 		d.Set("display_name", props.DisplayName)

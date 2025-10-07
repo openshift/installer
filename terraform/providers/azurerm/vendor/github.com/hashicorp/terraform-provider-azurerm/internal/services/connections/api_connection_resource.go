@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package connections
 
 import (
@@ -14,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -21,7 +25,7 @@ import (
 )
 
 func resourceConnection() *pluginsdk.Resource {
-	return &pluginsdk.Resource{
+	resource := &pluginsdk.Resource{
 		Create: resourceConnectionCreate,
 		Read:   resourceConnectionRead,
 		Update: resourceConnectionUpdate,
@@ -59,7 +63,7 @@ func resourceConnection() *pluginsdk.Resource {
 			"display_name": {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
-				Computed: true,
+				Default:  "Service Bus",
 				// @tombuildsstuff: this can't be patched in API version 2016-06-01 and there isn't Swagger for
 				// API version 2018-07-01-preview, so I guess this is ForceNew for now
 				//
@@ -87,6 +91,17 @@ func resourceConnection() *pluginsdk.Resource {
 			"tags": commonschema.Tags(),
 		},
 	}
+
+	if !features.FourPointOhBeta() {
+		resource.Schema["display_name"] = &pluginsdk.Schema{
+			Type:     pluginsdk.TypeString,
+			Optional: true,
+			Computed: true,
+			ForceNew: true,
+		}
+	}
+
+	return resource
 }
 
 func resourceConnectionCreate(d *schema.ResourceData, meta interface{}) error {

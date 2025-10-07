@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package dns
 
 import (
@@ -70,7 +73,7 @@ func resourceDnsTxtRecord() *pluginsdk.Resource {
 						"value": {
 							Type:         pluginsdk.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringLenBetween(1, 1024),
+							ValidateFunc: validation.StringLenBetween(1, 4096),
 						},
 					},
 				},

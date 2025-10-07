@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package netapp
 
 import (
@@ -7,13 +10,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/netapp/2022-05-01/capacitypools"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/netapp/2023-05-01/capacitypools"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/netapp/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -22,7 +27,7 @@ import (
 )
 
 func resourceNetAppPool() *pluginsdk.Resource {
-	return &pluginsdk.Resource{
+	resource := &pluginsdk.Resource{
 		Create: resourceNetAppPoolCreate,
 		Read:   resourceNetAppPoolRead,
 		Update: resourceNetAppPoolUpdate,
@@ -72,22 +77,47 @@ func resourceNetAppPool() *pluginsdk.Resource {
 			"size_in_tb": {
 				Type:         pluginsdk.TypeInt,
 				Required:     true,
-				ValidateFunc: validation.IntBetween(4, 500),
+				ValidateFunc: validation.IntBetween(1, 2048),
 			},
 
 			"qos_type": {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
-				Computed: true,
+				Default:  string(capacitypools.QosTypeAuto),
 				ValidateFunc: validation.StringInSlice([]string{
 					string(capacitypools.QosTypeAuto),
 					string(capacitypools.QosTypeManual),
 				}, false),
 			},
 
+			"encryption_type": {
+				Type:     pluginsdk.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  capacitypools.EncryptionTypeSingle,
+				ValidateFunc: validation.StringInSlice([]string{
+					string(capacitypools.EncryptionTypeSingle),
+					string(capacitypools.EncryptionTypeDouble),
+				}, false),
+			},
+
 			"tags": commonschema.Tags(),
 		},
 	}
+
+	if !features.FourPointOhBeta() {
+		resource.Schema["qos_type"] = &pluginsdk.Schema{
+			Type:     pluginsdk.TypeString,
+			Optional: true,
+			Computed: true,
+			ValidateFunc: validation.StringInSlice([]string{
+				string(capacitypools.QosTypeAuto),
+				string(capacitypools.QosTypeManual),
+			}, false),
+		}
+	}
+
+	return resource
 }
 
 func resourceNetAppPoolCreate(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -113,11 +143,14 @@ func resourceNetAppPoolCreate(d *pluginsdk.ResourceData, meta interface{}) error
 	sizeInMB := sizeInTB * 1024 * 1024
 	sizeInBytes := sizeInMB * 1024 * 1024
 
+	encryptionType := capacitypools.EncryptionType(d.Get("encryption_type").(string))
+
 	capacityPoolParameters := capacitypools.CapacityPool{
 		Location: azure.NormalizeLocation(d.Get("location").(string)),
 		Properties: capacitypools.PoolProperties{
-			ServiceLevel: capacitypools.ServiceLevel(d.Get("service_level").(string)),
-			Size:         sizeInBytes,
+			ServiceLevel:   capacitypools.ServiceLevel(d.Get("service_level").(string)),
+			Size:           sizeInBytes,
+			EncryptionType: &encryptionType,
 		},
 		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
 	}
@@ -231,6 +264,7 @@ func resourceNetAppPoolRead(d *pluginsdk.ResourceData, meta interface{}) error {
 			qosType = string(*poolProperties.QosType)
 		}
 		d.Set("qos_type", qosType)
+		d.Set("encryption_type", string(pointer.From(poolProperties.EncryptionType)))
 
 		return tags.FlattenAndSet(d, model.Tags)
 	}
@@ -288,14 +322,18 @@ func netappPoolDeleteStateRefreshFunc(ctx context.Context, client *capacitypools
 			}
 		}
 
-		return res, strconv.Itoa(res.HttpResponse.StatusCode), nil
+		statusCode := "dropped connection"
+		if res.HttpResponse != nil {
+			statusCode = strconv.Itoa(res.HttpResponse.StatusCode)
+		}
+		return res, statusCode, nil
 	}
 }
 
 func waitForPoolCreateOrUpdate(ctx context.Context, client *capacitypools.CapacityPoolsClient, id capacitypools.CapacityPoolId) error {
 	deadline, ok := ctx.Deadline()
 	if !ok {
-		return fmt.Errorf("context had no deadline")
+		return fmt.Errorf("internal-error: context had no deadline")
 	}
 	stateConf := &pluginsdk.StateChangeConf{
 		ContinuousTargetOccurence: 5,
@@ -323,6 +361,10 @@ func netappPoolStateRefreshFunc(ctx context.Context, client *capacitypools.Capac
 			}
 		}
 
-		return res, strconv.Itoa(res.HttpResponse.StatusCode), nil
+		statusCode := "dropped connection"
+		if res.HttpResponse != nil {
+			statusCode = strconv.Itoa(res.HttpResponse.StatusCode)
+		}
+		return res, statusCode, nil
 	}
 }

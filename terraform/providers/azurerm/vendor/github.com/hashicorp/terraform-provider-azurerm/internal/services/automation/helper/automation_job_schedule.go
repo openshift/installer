@@ -1,103 +1,70 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package helper
 
 import (
 	"bytes"
 	"fmt"
+	"sort"
+	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/services/preview/automation/mgmt/2020-01-13-preview/automation" // nolint: staticcheck
 	"github.com/gofrs/uuid"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/validate"
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2023-11-01/jobschedule"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
-func JobScheduleSchema() *pluginsdk.Schema {
-	return &pluginsdk.Schema{
-		Type:       pluginsdk.TypeSet,
-		Optional:   true,
-		Computed:   true,
-		ConfigMode: pluginsdk.SchemaConfigModeAttr,
-		Elem: &pluginsdk.Resource{
-			Schema: map[string]*pluginsdk.Schema{
-				"schedule_name": {
-					Type:         pluginsdk.TypeString,
-					Required:     true,
-					ValidateFunc: validate.ScheduleName(),
-				},
-
-				"parameters": {
-					Type:     pluginsdk.TypeMap,
-					Optional: true,
-					Elem: &pluginsdk.Schema{
-						Type: pluginsdk.TypeString,
-					},
-					ValidateFunc: validate.ParameterNames,
-				},
-
-				"run_on": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-				},
-
-				"job_schedule_id": {
-					Type:     pluginsdk.TypeString,
-					Computed: true,
-				},
-			},
-		},
-		Set: resourceAutomationJobScheduleHash,
-	}
-}
-
-func ExpandAutomationJobSchedule(input []interface{}, runBookName string) (*map[uuid.UUID]automation.JobScheduleCreateParameters, error) {
-	res := make(map[uuid.UUID]automation.JobScheduleCreateParameters)
+func ExpandAutomationJobSchedule(input []interface{}, runBookName string) (*map[string]jobschedule.JobScheduleCreateParameters, error) {
+	res := make(map[string]jobschedule.JobScheduleCreateParameters)
 	if len(input) == 0 || input[0] == nil {
 		return &res, nil
 	}
 
 	for _, v := range input {
 		js := v.(map[string]interface{})
-		jobScheduleCreateParameters := automation.JobScheduleCreateParameters{
-			JobScheduleCreateProperties: &automation.JobScheduleCreateProperties{
-				Schedule: &automation.ScheduleAssociationProperty{
+		// skip SDK v2 bug: https://github.com/hashicorp/terraform-plugin-sdk/issues/1248
+		if js["schedule_name"] == "" {
+			continue
+		}
+		jobScheduleCreateParameters := jobschedule.JobScheduleCreateParameters{
+			Properties: jobschedule.JobScheduleCreateProperties{
+				Schedule: jobschedule.ScheduleAssociationProperty{
 					Name: utils.String(js["schedule_name"].(string)),
 				},
-				Runbook: &automation.RunbookAssociationProperty{
+				Runbook: jobschedule.RunbookAssociationProperty{
 					Name: utils.String(runBookName),
 				},
 			},
 		}
 
 		if v, ok := js["parameters"]; ok {
-			jsParameters := make(map[string]*string)
+			jsParameters := make(map[string]string)
 			for k, v := range v.(map[string]interface{}) {
 				value := v.(string)
-				jsParameters[k] = &value
+				jsParameters[k] = value
 			}
-			jobScheduleCreateParameters.JobScheduleCreateProperties.Parameters = jsParameters
+			jobScheduleCreateParameters.Properties.Parameters = &jsParameters
 		}
 
 		if v, ok := js["run_on"]; ok && v.(string) != "" {
 			value := v.(string)
-			jobScheduleCreateParameters.JobScheduleCreateProperties.RunOn = &value
+			jobScheduleCreateParameters.Properties.RunOn = &value
 		}
-		jobScheduleUUID, err := uuid.NewV4()
-		if err != nil {
-			return nil, err
-		}
-		res[jobScheduleUUID] = jobScheduleCreateParameters
+		res[ResourceAutomationJobScheduleDigest(jobScheduleCreateParameters.Properties)] = jobScheduleCreateParameters
 	}
 
 	return &res, nil
 }
 
-func FlattenAutomationJobSchedule(jsMap map[uuid.UUID]automation.JobScheduleProperties) *pluginsdk.Set {
+func FlattenAutomationJobSchedule(jsMap map[uuid.UUID]jobschedule.JobScheduleProperties) *pluginsdk.Set {
 	res := &pluginsdk.Set{
-		F: resourceAutomationJobScheduleHash,
+		F: ResourceAutomationJobScheduleHash,
 	}
 	for jsId, js := range jsMap {
 		var scheduleName, runOn string
-		if js.Schedule.Name != nil {
+		if js.Schedule != nil && js.Schedule.Name != nil {
 			scheduleName = *js.Schedule.Name
 		}
 
@@ -105,9 +72,17 @@ func FlattenAutomationJobSchedule(jsMap map[uuid.UUID]automation.JobScheduleProp
 			runOn = *js.RunOn
 		}
 
+		// for API casing issue: https://github.com/Azure/azure-sdk-for-go/issues/4780
+		parameters := map[string]string{}
+		if js.Parameters != nil {
+			for key, value := range *js.Parameters {
+				parameters[strings.ToLower(key)] = value
+			}
+		}
+
 		res.Add(map[string]interface{}{
 			"schedule_name":   scheduleName,
-			"parameters":      utils.FlattenMapStringPtrString(js.Parameters),
+			"parameters":      parameters,
 			"run_on":          runOn,
 			"job_schedule_id": jsId.String(),
 		})
@@ -116,21 +91,46 @@ func FlattenAutomationJobSchedule(jsMap map[uuid.UUID]automation.JobScheduleProp
 	return res
 }
 
-func resourceAutomationJobScheduleHash(v interface{}) int {
+func ResourceAutomationJobScheduleDigest(v interface{}) string {
 	var buf bytes.Buffer
-
-	if m, ok := v.(automation.JobScheduleProperties); ok {
-		var scheduleName, runOn string
-		if m.Schedule.Name != nil {
-			scheduleName = *m.Schedule.Name
+	var paramString map[string]string
+	var scheduleName, runOn string
+	switch job := v.(type) {
+	case map[string]interface{}:
+		scheduleName = job["schedule_name"].(string)
+		runOn = job["run_on"].(string)
+		switch param := job["parameters"].(type) {
+		case map[string]string:
+			paramString = param
+		case map[string]interface{}:
+			paramString = map[string]string{}
+			for k, v := range param {
+				paramString[k] = fmt.Sprintf("%v", v)
+			}
 		}
-
-		if m.RunOn != nil {
-			runOn = *m.RunOn
-		}
-
-		buf.WriteString(fmt.Sprintf("%s-%s-%s-%s", scheduleName, utils.FlattenMapStringPtrString(m.Parameters), runOn, *m.JobScheduleID))
+	case jobschedule.JobScheduleCreateProperties:
+		scheduleName = pointer.From(job.Schedule.Name)
+		runOn = pointer.From(job.Runbook.Name)
+		paramString = pointer.From(job.Parameters)
+	case *jobschedule.JobScheduleProperties:
+		scheduleName = pointer.From(pointer.From(job.Schedule).Name)
+		runOn = pointer.From(pointer.From(job.Runbook).Name)
+		paramString = pointer.From(job.Parameters)
 	}
+	buf.WriteString(fmt.Sprintf("%s-%s-", scheduleName, runOn))
 
-	return pluginsdk.HashString(buf.String())
+	var keys []string
+	for k := range paramString {
+		// params key will be returned as title-cased even created with lower-case
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		buf.WriteString(fmt.Sprintf("%s:%v;", strings.ToLower(k), paramString[k]))
+	}
+	return buf.String()
+}
+
+func ResourceAutomationJobScheduleHash(v interface{}) int {
+	return pluginsdk.HashString(ResourceAutomationJobScheduleDigest(v))
 }

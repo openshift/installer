@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package recoveryservices
 
 import (
@@ -18,6 +21,7 @@ func (r Registration) AssociatedGitHubLabel() string {
 
 func (r Registration) DataSources() []sdk.DataSource {
 	return []sdk.DataSource{
+		SiteRecoveryRecoveryVaultDataSource{},
 		SiteRecoveryReplicationRecoveryPlanDataSource{},
 	}
 }
@@ -26,6 +30,14 @@ func (r Registration) Resources() []sdk.Resource {
 	return []sdk.Resource{
 		BackupProtectionPolicyVMWorkloadResource{},
 		SiteRecoveryReplicationRecoveryPlanResource{},
+		ReplicationPolicyHyperVResource{},
+		HyperVSiteResource{},
+		HyperVReplicationPolicyAssociationResource{},
+		HyperVNetworkMappingResource{},
+		VMWareReplicationPolicyResource{},
+		VMWareReplicationPolicyAssociationResource{},
+		VaultGuardProxyResource{},
+		VMWareReplicatedVmResource{},
 	}
 }
 
@@ -44,7 +56,6 @@ func (r Registration) WebsiteCategories() []string {
 // SupportedDataSources returns the supported Data Sources supported by this Service
 func (r Registration) SupportedDataSources() map[string]*pluginsdk.Resource {
 	return map[string]*pluginsdk.Resource{
-		"azurerm_recovery_services_vault":            dataSourceRecoveryServicesVault(),
 		"azurerm_site_recovery_fabric":               dataSourceSiteRecoveryFabric(),
 		"azurerm_site_recovery_protection_container": dataSourceSiteRecoveryProtectionContainer(),
 		"azurerm_backup_policy_vm":                   dataSourceBackupPolicyVm(),

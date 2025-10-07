@@ -1,6 +1,10 @@
 package workspaces
 
-import "strings"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -31,26 +35,6 @@ func PossibleValuesForCapacityReservationLevel() []int64 {
 	}
 }
 
-func parseCapacityReservationLevel(input int64) (*CapacityReservationLevel, error) {
-	vals := map[int64]CapacityReservationLevel{
-		500:  CapacityReservationLevelFiveHundred,
-		5000: CapacityReservationLevelFiveThousand,
-		400:  CapacityReservationLevelFourHundred,
-		100:  CapacityReservationLevelOneHundred,
-		1000: CapacityReservationLevelOneThousand,
-		300:  CapacityReservationLevelThreeHundred,
-		200:  CapacityReservationLevelTwoHundred,
-		2000: CapacityReservationLevelTwoThousand,
-	}
-	if v, ok := vals[input]; ok {
-		return &v, nil
-	}
-
-	// otherwise presume it's an undefined value and best-effort it
-	out := CapacityReservationLevel(input)
-	return &out, nil
-}
-
 type DataIngestionStatus string
 
 const (
@@ -71,6 +55,19 @@ func PossibleValuesForDataIngestionStatus() []string {
 		string(DataIngestionStatusRespectQuota),
 		string(DataIngestionStatusSubscriptionSuspended),
 	}
+}
+
+func (s *DataIngestionStatus) UnmarshalJSON(bytes []byte) error {
+	var decoded string
+	if err := json.Unmarshal(bytes, &decoded); err != nil {
+		return fmt.Errorf("unmarshaling: %+v", err)
+	}
+	out, err := parseDataIngestionStatus(decoded)
+	if err != nil {
+		return fmt.Errorf("parsing %q: %+v", decoded, err)
+	}
+	*s = *out
+	return nil
 }
 
 func parseDataIngestionStatus(input string) (*DataIngestionStatus, error) {
@@ -103,6 +100,19 @@ func PossibleValuesForPublicNetworkAccessType() []string {
 		string(PublicNetworkAccessTypeDisabled),
 		string(PublicNetworkAccessTypeEnabled),
 	}
+}
+
+func (s *PublicNetworkAccessType) UnmarshalJSON(bytes []byte) error {
+	var decoded string
+	if err := json.Unmarshal(bytes, &decoded); err != nil {
+		return fmt.Errorf("unmarshaling: %+v", err)
+	}
+	out, err := parsePublicNetworkAccessType(decoded)
+	if err != nil {
+		return fmt.Errorf("parsing %q: %+v", decoded, err)
+	}
+	*s = *out
+	return nil
 }
 
 func parsePublicNetworkAccessType(input string) (*PublicNetworkAccessType, error) {
@@ -141,6 +151,19 @@ func PossibleValuesForWorkspaceEntityStatus() []string {
 		string(WorkspaceEntityStatusSucceeded),
 		string(WorkspaceEntityStatusUpdating),
 	}
+}
+
+func (s *WorkspaceEntityStatus) UnmarshalJSON(bytes []byte) error {
+	var decoded string
+	if err := json.Unmarshal(bytes, &decoded); err != nil {
+		return fmt.Errorf("unmarshaling: %+v", err)
+	}
+	out, err := parseWorkspaceEntityStatus(decoded)
+	if err != nil {
+		return fmt.Errorf("parsing %q: %+v", decoded, err)
+	}
+	*s = *out
+	return nil
 }
 
 func parseWorkspaceEntityStatus(input string) (*WorkspaceEntityStatus, error) {
@@ -186,6 +209,19 @@ func PossibleValuesForWorkspaceSkuNameEnum() []string {
 		string(WorkspaceSkuNameEnumStandalone),
 		string(WorkspaceSkuNameEnumStandard),
 	}
+}
+
+func (s *WorkspaceSkuNameEnum) UnmarshalJSON(bytes []byte) error {
+	var decoded string
+	if err := json.Unmarshal(bytes, &decoded); err != nil {
+		return fmt.Errorf("unmarshaling: %+v", err)
+	}
+	out, err := parseWorkspaceSkuNameEnum(decoded)
+	if err != nil {
+		return fmt.Errorf("parsing %q: %+v", decoded, err)
+	}
+	*s = *out
+	return nil
 }
 
 func parseWorkspaceSkuNameEnum(input string) (*WorkspaceSkuNameEnum, error) {
