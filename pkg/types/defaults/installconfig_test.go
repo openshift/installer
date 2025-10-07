@@ -20,6 +20,7 @@ import (
 )
 
 func defaultInstallConfig() *types.InstallConfig {
+	observabilityEnabled := true
 	return &types.InstallConfig{
 		AdditionalTrustBundlePolicy: defaultAdditionalTrustBundlePolicy(),
 		Networking: &types.Networking{
@@ -34,6 +35,7 @@ func defaultInstallConfig() *types.InstallConfig {
 					HostPrefix: int32(defaultHostPrefix),
 				},
 			},
+			ObservabilityEnabled: &observabilityEnabled,
 		},
 		ControlPlane: defaultMachinePool("master"),
 		Compute:      []types.MachinePool{*defaultMachinePool("worker")},
@@ -282,6 +284,32 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultNoneInstallConfig()
+				return c
+			}(),
+		},
+		{
+			name: "ObservabilityEnabled nil",
+			config: &types.InstallConfig{
+				Networking: &types.Networking{
+					ObservabilityEnabled: nil,
+				},
+			},
+			expected: func() *types.InstallConfig {
+				c := defaultInstallConfig()
+				return c
+			}(),
+		},
+		{
+			name: "ObservabilityEnabled false",
+			config: &types.InstallConfig{
+				Networking: &types.Networking{
+					ObservabilityEnabled: func() *bool { b := false; return &b }(),
+				},
+			},
+			expected: func() *types.InstallConfig {
+				c := defaultInstallConfig()
+				observabilityEnabled := false
+				c.Networking.ObservabilityEnabled = &observabilityEnabled
 				return c
 			}(),
 		},

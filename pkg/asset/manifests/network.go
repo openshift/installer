@@ -70,6 +70,21 @@ func (no *Networking) Generate(_ context.Context, dependencies asset.Parents) er
 		serviceNet = append(serviceNet, sn.String())
 	}
 
+	networkSpec := configv1.NetworkSpec{
+		ClusterNetwork: clusterNet,
+		ServiceNetwork: serviceNet,
+		NetworkType:    netConfig.NetworkType,
+		// Block all Service.ExternalIPs by default
+		ExternalIP: &configv1.ExternalIPConfig{
+			Policy: &configv1.ExternalIPPolicy{},
+		},
+	}
+
+	// Set observabilityEnabled if it's true in the install config
+	if netConfig.ObservabilityEnabled != nil && *netConfig.ObservabilityEnabled {
+		networkSpec.ObservabilityEnabled = true
+	}
+
 	no.Config = &configv1.Network{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.SchemeGroupVersion.String(),
@@ -79,15 +94,7 @@ func (no *Networking) Generate(_ context.Context, dependencies asset.Parents) er
 			Name: "cluster",
 			// not namespaced
 		},
-		Spec: configv1.NetworkSpec{
-			ClusterNetwork: clusterNet,
-			ServiceNetwork: serviceNet,
-			NetworkType:    netConfig.NetworkType,
-			// Block all Service.ExternalIPs by default
-			ExternalIP: &configv1.ExternalIPConfig{
-				Policy: &configv1.ExternalIPPolicy{},
-			},
-		},
+		Spec: networkSpec,
 	}
 
 	configData, err := yaml.Marshal(no.Config)
