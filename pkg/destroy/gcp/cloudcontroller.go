@@ -25,8 +25,7 @@ func (o *ClusterUninstaller) createLoadBalancerFilterFunc(loadBalancerName strin
 // https://github.com/openshift/kubernetes/blob/1e5983903742f64bca36a464582178c940353e9a/pkg/cloudprovider/providers/gce/gce_clusterid.go#L210-L238
 func (o *ClusterUninstaller) listCloudControllerInstanceGroups(ctx context.Context) ([]cloudResource, error) {
 	return o.listInstanceGroupsWithFilter(ctx, "items/*/instanceGroups(name,selfLink,zone),nextPageToken", func(itemName string) bool {
-		// TODO: Why does this have an extra - ??
-		return itemName == fmt.Sprintf("k8s-ig--%s", o.cloudControllerUID)
+		return itemName == fmt.Sprintf("k8s-ig-%s", o.cloudControllerUID)
 	})
 }
 
