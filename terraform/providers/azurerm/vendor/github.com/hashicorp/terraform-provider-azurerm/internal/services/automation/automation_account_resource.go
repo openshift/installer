@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package automation
 
 import (
@@ -5,19 +8,20 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2021-06-22/automationaccount"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2022-08-08/automationaccount"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/validate"
 	keyVaultParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	keyVaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -65,7 +69,6 @@ func resourceAutomationAccount() *pluginsdk.Resource {
 			"encryption": {
 				Type:     pluginsdk.TypeList,
 				Optional: true,
-				Computed: true,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*schema.Schema{
 						"user_assigned_identity_id": {
@@ -75,11 +78,14 @@ func resourceAutomationAccount() *pluginsdk.Resource {
 						},
 
 						"key_source": {
-							Type:     pluginsdk.TypeString,
-							Optional: true,
-							Computed: true,
+							Type:       pluginsdk.TypeString,
+							Optional:   true,
+							Deprecated: "This field is now ignored and will be removed in the next major version of the Azure Provider, the `encryption` block can be omitted to disable encryption",
 							ValidateFunc: validation.StringInSlice(
-								automationaccount.PossibleValuesForEncryptionKeySourceType(),
+								[]string{
+									string(automationaccount.EncryptionKeySourceTypeMicrosoftPointAutomation),
+									string(automationaccount.EncryptionKeySourceTypeMicrosoftPointKeyvault),
+								},
 								false,
 							),
 						},
@@ -99,7 +105,7 @@ func resourceAutomationAccount() *pluginsdk.Resource {
 				Default:  true,
 			},
 
-			"tags": tags.Schema(),
+			"tags": commonschema.Tags(),
 
 			"dsc_server_endpoint": {
 				Type:     pluginsdk.TypeString,
@@ -151,7 +157,7 @@ func resourceAutomationAccount() *pluginsdk.Resource {
 }
 
 func resourceAutomationAccountCreate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Automation.AccountClient
+	client := meta.(*clients.Client).Automation.AutomationAccount
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
@@ -172,31 +178,30 @@ func resourceAutomationAccountCreate(d *pluginsdk.ResourceData, meta interface{}
 	if err != nil {
 		return fmt.Errorf("expanding `identity`: %+v", err)
 	}
+
+	enc, err := expandEncryption(d.Get("encryption").([]interface{}))
+	if err != nil {
+		return fmt.Errorf("expanding `encryption`: %v", err)
+	}
+
 	parameters := automationaccount.AutomationAccountCreateOrUpdateParameters{
+		Location: utils.String(location.Normalize(d.Get("location").(string))),
 		Properties: &automationaccount.AutomationAccountCreateOrUpdateProperties{
+			Encryption: enc,
 			Sku: &automationaccount.Sku{
 				Name: automationaccount.SkuNameEnum(d.Get("sku_name").(string)),
 			},
 			PublicNetworkAccess: utils.Bool(d.Get("public_network_access_enabled").(bool)),
 		},
-		Location: utils.String(location.Normalize(d.Get("location").(string))),
 	}
 
-	if localAuth := d.Get("local_authentication_enabled").(bool); !localAuth {
-		parameters.Properties.DisableLocalAuth = utils.Bool(true)
-	}
-	if encryption := d.Get("encryption").([]interface{}); len(encryption) > 0 {
-		enc, err := expandEncryption(encryption[0].(map[string]interface{}))
-		if err != nil {
-			return fmt.Errorf("expanding `encryption`: %v", err)
-		}
-		parameters.Properties.Encryption = enc
-	}
+	parameters.Properties.DisableLocalAuth = utils.Bool(!d.Get("local_authentication_enabled").(bool))
+
 	// for create account do not set identity property (even TypeNone is not allowed), or api will response error
 	if identityVal.Type != identity.TypeNone {
 		parameters.Identity = identityVal
 	}
-	if tagsVal := expandTags(d.Get("tags").(map[string]interface{})); tagsVal != nil {
+	if tagsVal := expandStringInterfaceMap(d.Get("tags").(map[string]interface{})); tagsVal != nil {
 		parameters.Tags = &tagsVal
 	}
 
@@ -209,7 +214,7 @@ func resourceAutomationAccountCreate(d *pluginsdk.ResourceData, meta interface{}
 }
 
 func resourceAutomationAccountUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Automation.AccountClient
+	client := meta.(*clients.Client).Automation.AutomationAccount
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -217,35 +222,35 @@ func resourceAutomationAccountUpdate(d *pluginsdk.ResourceData, meta interface{}
 	if err != nil {
 		return err
 	}
+
 	identity, err := identity.ExpandSystemAndUserAssignedMap(d.Get("identity").([]interface{}))
 	if err != nil {
 		return fmt.Errorf("expanding `identity`: %+v", err)
 	}
+
+	enc, err := expandEncryption(d.Get("encryption").([]interface{}))
+	if err != nil {
+		return fmt.Errorf("expanding `encryption`: %v", err)
+	}
+
 	parameters := automationaccount.AutomationAccountUpdateParameters{
+		Location: utils.String(location.Normalize(d.Get("location").(string))),
+		Identity: identity,
 		Properties: &automationaccount.AutomationAccountUpdateProperties{
 			Sku: &automationaccount.Sku{
 				Name: automationaccount.SkuNameEnum(d.Get("sku_name").(string)),
 			},
 			PublicNetworkAccess: utils.Bool(d.Get("public_network_access_enabled").(bool)),
+			Encryption:          enc,
 		},
-		Location: utils.String(location.Normalize(d.Get("location").(string))),
-		Identity: identity,
 	}
 
-	if localAuth := d.Get("local_authentication_enabled").(bool); !localAuth {
-		parameters.Properties.DisableLocalAuth = utils.Bool(true)
+	if d.HasChange("local_authentication_enabled") {
+		parameters.Properties.DisableLocalAuth = utils.Bool(!d.Get("local_authentication_enabled").(bool))
 	}
 
-	if encryption := d.Get("encryption").([]interface{}); len(encryption) > 0 {
-		enc, err := expandEncryption(encryption[0].(map[string]interface{}))
-		if err != nil {
-			return fmt.Errorf("expanding `encryption`: %v", err)
-		}
-		parameters.Properties.Encryption = enc
-	}
-
-	if tagsVal := expandTags(d.Get("tags").(map[string]interface{})); tagsVal != nil {
-		parameters.Tags = &tagsVal
+	if tagsVal := tags.Expand(d.Get("tags").(map[string]interface{})); tagsVal != nil {
+		parameters.Tags = tagsVal
 	}
 
 	if _, err := client.Update(ctx, *id, parameters); err != nil {
@@ -256,7 +261,7 @@ func resourceAutomationAccountUpdate(d *pluginsdk.ResourceData, meta interface{}
 }
 
 func resourceAutomationAccountRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Automation.AccountClient
+	client := meta.(*clients.Client).Automation.AutomationAccount
 	registrationClient := meta.(*clients.Client).Automation.AgentRegistrationInfoClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
@@ -344,7 +349,7 @@ func resourceAutomationAccountRead(d *pluginsdk.ResourceData, meta interface{}) 
 }
 
 func resourceAutomationAccountDelete(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Automation.AccountClient
+	client := meta.(*clients.Client).Automation.AutomationAccount
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -365,9 +370,17 @@ func resourceAutomationAccountDelete(d *pluginsdk.ResourceData, meta interface{}
 	return nil
 }
 
-func expandEncryption(encMap map[string]interface{}) (*automationaccount.EncryptionProperties, error) {
+func expandEncryption(input []interface{}) (*automationaccount.EncryptionProperties, error) {
+	if len(input) == 0 {
+		return &automationaccount.EncryptionProperties{
+			KeySource: pointer.To(automationaccount.EncryptionKeySourceTypeMicrosoftPointAutomation),
+		}, nil
+	}
+
+	v := input[0].(map[string]interface{})
+
 	var id interface{}
-	id, ok := encMap["user_assigned_identity_id"].(string)
+	id, ok := v["user_assigned_identity_id"].(string)
 	if !ok {
 		return nil, fmt.Errorf("read encryption user identity id error")
 	}
@@ -375,11 +388,9 @@ func expandEncryption(encMap map[string]interface{}) (*automationaccount.Encrypt
 		Identity: &automationaccount.EncryptionPropertiesIdentity{
 			UserAssignedIdentity: &id,
 		},
+		KeySource: pointer.To(automationaccount.EncryptionKeySourceTypeMicrosoftPointKeyvault),
 	}
-	if val, ok := encMap["key_source"].(string); ok && val != "" {
-		prop.KeySource = (*automationaccount.EncryptionKeySourceType)(&val)
-	}
-	if keyIdStr := encMap["key_vault_key_id"].(string); keyIdStr != "" {
+	if keyIdStr := v["key_vault_key_id"].(string); keyIdStr != "" {
 		keyId, err := keyVaultParse.ParseOptionallyVersionedNestedItemID(keyIdStr)
 		if err != nil {
 			return nil, err
@@ -393,22 +404,37 @@ func expandEncryption(encMap map[string]interface{}) (*automationaccount.Encrypt
 	return prop, nil
 }
 
-func flattenEncryption(encryption *automationaccount.EncryptionProperties) (res []interface{}) {
-	if encryption == nil {
-		return
+func flattenEncryption(encryption *automationaccount.EncryptionProperties) []interface{} {
+	if encryption == nil || encryption.KeySource == nil || *encryption.KeySource != automationaccount.EncryptionKeySourceTypeMicrosoftPointKeyvault {
+		return []interface{}{}
 	}
-	item := map[string]interface{}{}
-	if encryption.KeySource != nil {
-		item["key_source"] = (string)(*encryption.KeySource)
-	}
-	if encryption.Identity != nil && encryption.Identity.UserAssignedIdentity != nil {
-		item["user_assigned_identity_id"] = (*encryption.Identity.UserAssignedIdentity).(string)
-	}
+
+	keyVaultKeyId := ""
+	userAssignedIdentityId := ""
+
 	if keyProp := encryption.KeyVaultProperties; keyProp != nil {
-		keyVaultKeyId, err := keyVaultParse.NewNestedItemID(*keyProp.KeyvaultUri, "keys", *keyProp.KeyName, *keyProp.KeyVersion)
+		keyId, err := keyVaultParse.NewNestedItemID(*keyProp.KeyvaultUri, keyVaultParse.NestedItemTypeKey, *keyProp.KeyName, *keyProp.KeyVersion)
 		if err == nil {
-			item["key_vault_key_id"] = keyVaultKeyId.ID()
+			keyVaultKeyId = keyId.ID()
 		}
 	}
-	return []interface{}{item}
+
+	if encryption.Identity != nil && encryption.Identity.UserAssignedIdentity != nil {
+		userAssignedIdentityIdRaw := (*encryption.Identity.UserAssignedIdentity).(string)
+		if userAssignedIdentityIdRaw != "" {
+			uaiId, err := commonids.ParseUserAssignedIdentityIDInsensitively(userAssignedIdentityIdRaw)
+			if err == nil {
+				userAssignedIdentityId = uaiId.ID()
+			}
+		}
+	}
+	return []interface{}{
+		map[string]interface{}{
+			"key_vault_key_id":          keyVaultKeyId,
+			"user_assigned_identity_id": userAssignedIdentityId,
+
+			// TODO: remove this field in 4.x
+			"key_source": "",
+		},
+	}
 }

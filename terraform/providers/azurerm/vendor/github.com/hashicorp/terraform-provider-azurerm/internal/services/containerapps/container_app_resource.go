@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package containerapps
 
 import (
@@ -12,8 +15,8 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerapps/2022-03-01/containerapps"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerapps/2022-03-01/managedenvironments"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/containerapps/2023-05-01/containerapps"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/containerapps/2023-05-01/managedenvironments"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containerapps/helpers"
@@ -102,7 +105,7 @@ func (r ContainerAppResource) Arguments() map[string]*pluginsdk.Schema {
 
 		"dapr": helpers.ContainerDaprSchema(),
 
-		"identity": commonschema.SystemOrUserAssignedIdentityOptional(),
+		"identity": commonschema.SystemAssignedUserAssignedIdentityOptional(),
 
 		"tags": commonschema.Tags(),
 	}
@@ -177,6 +180,11 @@ func (r ContainerAppResource) Create() sdk.ResourceFunc {
 				return fmt.Errorf("reading %s for %s: %+v", *envId, id, err)
 			}
 
+			registries, err := helpers.ExpandContainerAppRegistries(app.Registries)
+			if err != nil {
+				return fmt.Errorf("invalid registry config for %s: %+v", id, err)
+			}
+
 			containerApp := containerapps.ContainerApp{
 				Location: location.Normalize(env.Model.Location),
 				Properties: &containerapps.ContainerAppProperties{
@@ -184,7 +192,7 @@ func (r ContainerAppResource) Create() sdk.ResourceFunc {
 						Ingress:    helpers.ExpandContainerAppIngress(app.Ingress, id.ContainerAppName),
 						Dapr:       helpers.ExpandContainerAppDapr(app.Dapr),
 						Secrets:    helpers.ExpandContainerSecrets(app.Secrets),
-						Registries: helpers.ExpandContainerAppRegistries(app.Registries),
+						Registries: registries,
 					},
 					ManagedEnvironmentId: pointer.To(app.ManagedEnvironmentId),
 					Template:             helpers.ExpandContainerAppTemplate(app.Template, metadata),
@@ -332,7 +340,7 @@ func (r ContainerAppResource) Update() sdk.ResourceFunc {
 			// Delta-updates need the secrets back from the list API, or we'll end up removing them or erroring out.
 			secretsResp, err := client.ListSecrets(ctx, *id)
 			if err != nil || secretsResp.Model == nil {
-				if secretsResp.HttpResponse == nil || secretsResp.HttpResponse.StatusCode != http.StatusNoContent {
+				if !response.WasStatusCode(secretsResp.HttpResponse, http.StatusNoContent) {
 					return fmt.Errorf("retrieving secrets for update for %s: %+v", *id, err)
 				}
 			}
@@ -347,8 +355,10 @@ func (r ContainerAppResource) Update() sdk.ResourceFunc {
 			}
 
 			if metadata.ResourceData.HasChange("registry") {
-				model.Properties.Configuration.Registries = helpers.ExpandContainerAppRegistries(state.Registries)
-
+				model.Properties.Configuration.Registries, err = helpers.ExpandContainerAppRegistries(state.Registries)
+				if err != nil {
+					return fmt.Errorf("invalid registry config for %s: %+v", id, err)
+				}
 			}
 
 			if metadata.ResourceData.HasChange("dapr") {

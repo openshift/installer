@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package costmanagement
 
 import (
@@ -5,12 +8,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/costmanagement/2021-10-01/exports"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
-	storageParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/parse"
-	storageValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
@@ -59,7 +62,7 @@ func (br costManagementExportBaseResource) arguments(fields map[string]*pluginsd
 						Type:         pluginsdk.TypeString,
 						Required:     true,
 						ForceNew:     true,
-						ValidateFunc: storageValidate.StorageContainerResourceManagerID,
+						ValidateFunc: commonids.ValidateStorageContainerID,
 					},
 					"root_folder_path": {
 						Type:         pluginsdk.TypeString,
@@ -97,6 +100,8 @@ func (br costManagementExportBaseResource) arguments(fields map[string]*pluginsd
 							string(exports.TimeframeTypeTheLastMonth),
 							string(exports.TimeframeTypeWeekToDate),
 							string(exports.TimeframeTypeMonthToDate),
+							// TODO Use value from SDK after https://github.com/Azure/azure-rest-api-specs/issues/23707 is fixed
+							"TheLast7Days",
 						}, false),
 					},
 				},
@@ -177,7 +182,7 @@ func (br costManagementExportBaseResource) readFunc(scopeFieldName string) sdk.R
 						status := *schedule.Status == exports.StatusTypeActive
 
 						metadata.ResourceData.Set("active", status)
-						metadata.ResourceData.Set("recurrence_type", schedule.Recurrence)
+						metadata.ResourceData.Set("recurrence_type", string(pointer.From(schedule.Recurrence)))
 					}
 
 					exportDeliveryInfo, err := flattenExportDataStorageLocation(&props.DeliveryInfo)
@@ -292,12 +297,12 @@ func expandExportDataStorageLocation(input []interface{}) (*exports.ExportDelive
 	}
 	attrs := input[0].(map[string]interface{})
 
-	containerId, err := storageParse.StorageContainerResourceManagerID(attrs["container_id"].(string))
+	containerId, err := commonids.ParseStorageContainerID(attrs["container_id"].(string))
 	if err != nil {
 		return nil, err
 	}
 
-	storageId := storageParse.NewStorageAccountID(containerId.SubscriptionId, containerId.ResourceGroup, containerId.StorageAccountName)
+	storageId := commonids.NewStorageAccountID(containerId.SubscriptionId, containerId.ResourceGroupName, containerId.StorageAccountName)
 
 	deliveryInfo := &exports.ExportDeliveryInfo{
 		Destination: exports.ExportDeliveryDestination{
@@ -331,10 +336,10 @@ func flattenExportDataStorageLocation(input *exports.ExportDeliveryInfo) ([]inte
 
 	destination := input.Destination
 	var err error
-	var storageAccountId *storageParse.StorageAccountId
+	var storageAccountId *commonids.StorageAccountId
 
 	if v := destination.ResourceId; v != nil {
-		storageAccountId, err = storageParse.StorageAccountID(*v)
+		storageAccountId, err = commonids.ParseStorageAccountIDInsensitively(*v)
 		if err != nil {
 			return nil, err
 		}
@@ -342,7 +347,7 @@ func flattenExportDataStorageLocation(input *exports.ExportDeliveryInfo) ([]inte
 
 	containerId := ""
 	if v := destination.Container; v != "" && storageAccountId != nil {
-		containerId = storageParse.NewStorageContainerResourceManagerID(storageAccountId.SubscriptionId, storageAccountId.ResourceGroup, storageAccountId.Name, "default", v).ID()
+		containerId = commonids.NewStorageContainerID(storageAccountId.SubscriptionId, storageAccountId.ResourceGroupName, storageAccountId.StorageAccountName, v).ID()
 	}
 
 	rootFolderPath := ""

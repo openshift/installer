@@ -1,19 +1,27 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package client
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/advisor/mgmt/2020-01-01/advisor" // nolint: staticcheck
+	"fmt"
+
+	"github.com/hashicorp/go-azure-sdk/resource-manager/advisor/2020-01-01/getrecommendations"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
 type Client struct {
-	RecommendationsClient *advisor.RecommendationsClient
+	RecommendationsClient *getrecommendations.GetRecommendationsClient
 }
 
-func NewClient(o *common.ClientOptions) *Client {
-	recommendationsClient := advisor.NewRecommendationsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&recommendationsClient.Client, o.ResourceManagerAuthorizer)
+func NewClient(o *common.ClientOptions) (*Client, error) {
+	recommendationsClient, err := getrecommendations.NewGetRecommendationsClientWithBaseURI(o.Environment.ResourceManager)
+	if err != nil {
+		return nil, fmt.Errorf("building Recommendations client: %+v", err)
+	}
+	o.Configure(recommendationsClient.Client, o.Authorizers.ResourceManager)
 
 	return &Client{
-		RecommendationsClient: &recommendationsClient,
-	}
+		RecommendationsClient: recommendationsClient,
+	}, nil
 }

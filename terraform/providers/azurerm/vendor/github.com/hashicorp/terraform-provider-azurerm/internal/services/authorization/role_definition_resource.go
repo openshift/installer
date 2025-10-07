@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package authorization
 
 import (
@@ -340,7 +343,7 @@ func resourceArmRoleDefinitionDelete(d *pluginsdk.ResourceData, meta interface{}
 		},
 		Refresh:                   roleDefinitionDeleteStateRefreshFunc(ctx, client, id.ResourceID),
 		MinTimeout:                10 * time.Second,
-		ContinuousTargetOccurence: 10,
+		ContinuousTargetOccurence: 20,
 		Timeout:                   d.Timeout(pluginsdk.TimeoutDelete),
 	}
 
@@ -466,7 +469,9 @@ func expandRoleDefinitionAssignableScopes(d *pluginsdk.ResourceData) []string {
 		scopes = append(scopes, assignedScope)
 	} else {
 		for _, scope := range assignableScopes {
-			scopes = append(scopes, scope.(string))
+			if s, ok := scope.(string); ok {
+				scopes = append(scopes, s)
+			}
 		}
 	}
 

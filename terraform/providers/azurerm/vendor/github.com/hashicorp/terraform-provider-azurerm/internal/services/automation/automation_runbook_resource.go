@@ -1,23 +1,25 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package automation
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/preview/automation/mgmt/2020-01-13-preview/automation" // nolint: staticcheck
 	"github.com/gofrs/uuid"
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2019-06-01/runbook"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2022-08-08/jobschedule"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2022-08-08/runbook"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2022-08-08/runbookdraft"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/helper"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -85,7 +87,7 @@ func resourceAutomationRunbook() *pluginsdk.Resource {
 		Delete: resourceAutomationRunbookDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := parse.RunbookID(id)
+			_, err := runbook.ParseRunbookID(id)
 			return err
 		}),
 
@@ -244,8 +246,8 @@ func resourceAutomationRunbook() *pluginsdk.Resource {
 
 func resourceAutomationRunbookCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	autoCli := meta.(*clients.Client).Automation
-	client := autoCli.RunbookClient
-	jsClient := autoCli.JobScheduleClient
+	client := autoCli.Runbook
+	jsClient := autoCli.JobSchedule
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -286,7 +288,7 @@ func resourceAutomationRunbookCreateUpdate(d *pluginsdk.ResourceData, meta inter
 
 		Location: &location,
 	}
-	if tagsVal := expandTags(t); tagsVal != nil {
+	if tagsVal := expandStringInterfaceMap(t); tagsVal != nil {
 		parameters.Tags = &tagsVal
 	}
 
@@ -306,45 +308,33 @@ func resourceAutomationRunbookCreateUpdate(d *pluginsdk.ResourceData, meta inter
 
 	if v, ok := d.GetOk("content"); ok {
 		content := v.(string)
-		reader := io.NopCloser(bytes.NewBufferString(content))
-
-		// need to use preview version DraftClient
-		// move to stable RunbookDraftClient once this issue fixed: https://github.com/Azure/azure-sdk-for-go/issues/17591#issuecomment-1233676539
-		_, err := autoCli.RunbookDraftClient.ReplaceContent(ctx, id.ResourceGroupName, id.AutomationAccountName, id.RunbookName, reader)
-		if err != nil {
+		draftRunbookID := runbookdraft.NewRunbookID(id.SubscriptionId, id.ResourceGroupName, id.AutomationAccountName, id.RunbookName)
+		if err := autoCli.RunbookDraft.ReplaceContentThenPoll(ctx, draftRunbookID, []byte(content)); err != nil {
 			return fmt.Errorf("setting the draft for %s: %+v", id, err)
 		}
-		// Uncomment below once https://github.com/Azure/azure-sdk-for-go/issues/17196 is resolved.
-		// if err := f1.WaitForCompletionRef(ctx, draftClient.Client); err != nil {
-		// 	return fmt.Errorf("waiting for set the draft for %s: %+v", id, err)
-		// }
 
-		f2, err := client.Publish(ctx, id)
-		if err != nil {
+		if err := autoCli.Runbook.PublishThenPoll(ctx, id); err != nil {
 			return fmt.Errorf("publishing the updated %s: %+v", id, err)
-		}
-		if err := f2.Poller.PollUntilDone(); err != nil {
-			return fmt.Errorf("waiting for publish the updated %s: %+v", id, err)
 		}
 	}
 
 	d.SetId(id.ID())
 
-	for jsIterator, err := jsClient.ListByAutomationAccountComplete(ctx, id.ResourceGroupName, id.AutomationAccountName, ""); jsIterator.NotDone(); err = jsIterator.NextWithContext(ctx) {
-		if err != nil {
-			return fmt.Errorf("loading %s Job Schedule List: %+v", id, err)
-		}
-		if props := jsIterator.Value().JobScheduleProperties; props != nil {
-			if props.Runbook.Name != nil && *props.Runbook.Name == id.RunbookName {
-				if jsIterator.Value().JobScheduleID == nil || *jsIterator.Value().JobScheduleID == "" {
+	automationAccountId := jobschedule.NewAutomationAccountID(subscriptionID, id.ResourceGroupName, id.AutomationAccountName)
+	jsIterator, err := jsClient.ListByAutomationAccountComplete(ctx, automationAccountId, jobschedule.ListByAutomationAccountOperationOptions{})
+	if err != nil {
+		return fmt.Errorf("loading Automation Account %q Job Schedule List: %+v", id.AutomationAccountName, err)
+	}
+
+	for _, item := range jsIterator.Items {
+		if itemProps := item.Properties; itemProps != nil {
+			if itemProps.Runbook != nil && itemProps.Runbook.Name != nil && *itemProps.Runbook.Name == id.RunbookName {
+				if itemProps.JobScheduleId == nil || *itemProps.JobScheduleId == "" {
 					return fmt.Errorf("job schedule Id is nil or empty listed by %s Job Schedule List: %+v", id, err)
 				}
-				jsId, err := uuid.FromString(*jsIterator.Value().JobScheduleID)
-				if err != nil {
-					return fmt.Errorf("parsing job schedule Id listed by %s Job Schedule List:%v", id, err)
-				}
-				if resp, err := jsClient.Delete(ctx, id.ResourceGroupName, id.AutomationAccountName, jsId); err != nil {
-					if !utils.ResponseWasNotFound(resp) {
+				parsedId := jobschedule.NewJobScheduleID(subscriptionID, id.ResourceGroupName, id.AutomationAccountName, *itemProps.JobScheduleId)
+				if resp, err := jsClient.Delete(ctx, parsedId); err != nil {
+					if !response.WasNotFound(resp.HttpResponse) {
 						return fmt.Errorf("deleting job schedule Id listed by %s Job Schedule List:%v", id, err)
 					}
 				}
@@ -358,7 +348,8 @@ func resourceAutomationRunbookCreateUpdate(d *pluginsdk.ResourceData, meta inter
 			return err
 		}
 		for jsuuid, js := range *jsMap {
-			if _, err := jsClient.Create(ctx, id.ResourceGroupName, id.AutomationAccountName, jsuuid, js); err != nil {
+			jsId := jobschedule.NewJobScheduleID(subscriptionID, id.ResourceGroupName, id.AutomationAccountName, jsuuid.String())
+			if _, err := jsClient.Create(ctx, jsId, js); err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
 			}
 		}
@@ -369,8 +360,8 @@ func resourceAutomationRunbookCreateUpdate(d *pluginsdk.ResourceData, meta inter
 
 func resourceAutomationRunbookRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	autoCli := meta.(*clients.Client).Automation
-	client := autoCli.RunbookClient
-	jsClient := autoCli.JobScheduleClient
+	client := autoCli.Runbook
+	jsClient := autoCli.JobSchedule
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -400,46 +391,44 @@ func resourceAutomationRunbookRead(d *pluginsdk.ResourceData, meta interface{}) 
 	if props := model.Properties; props != nil {
 		d.Set("log_verbose", props.LogVerbose)
 		d.Set("log_progress", props.LogProgress)
-		d.Set("runbook_type", props.RunbookType)
+		d.Set("runbook_type", string(pointer.From(props.RunbookType)))
 		d.Set("description", props.Description)
 		d.Set("log_activity_trace_level", props.LogActivityTrace)
 	}
 
 	// GetContent need to use preview version client RunbookClientHack
-	// move to stable RunbookClient once this issue fixed: https://github.com/Azure/azure-sdk-for-go/issues/17591#issuecomment-1233676539
-	contentResp, err := autoCli.RunbookClientHack.GetContent(ctx, id.ResourceGroupName, id.AutomationAccountName, id.RunbookName)
+	// move to stable Runbook once this issue fixed: https://github.com/Azure/azure-sdk-for-go/issues/17591#issuecomment-1233676539
+	contentResp, err := autoCli.Runbook.GetContent(ctx, *id)
 	if err != nil {
-		if utils.ResponseWasNotFound(contentResp.Response) {
+		if response.WasNotFound(contentResp.HttpResponse) {
 			d.Set("content", "")
 		} else {
 			return fmt.Errorf("retrieving content for Automation Runbook %s: %+v", id, err)
 		}
 	}
 
-	if v := contentResp.Value; v != nil && *v != nil {
-		buf := new(bytes.Buffer)
-		if _, err := buf.ReadFrom(*v); err != nil {
-			return fmt.Errorf("reading from Automation Runbook buffer %q: %+v", id.RunbookName, err)
-		}
-		content := buf.String()
-		d.Set("content", content)
+	if v := contentResp.Model; v != nil && *v != nil {
+		d.Set("content", string(*v))
 	}
 
-	jsMap := make(map[uuid.UUID]automation.JobScheduleProperties)
-	for jsIterator, err := jsClient.ListByAutomationAccountComplete(ctx, id.ResourceGroupName, id.AutomationAccountName, ""); jsIterator.NotDone(); err = jsIterator.NextWithContext(ctx) {
-		if err != nil {
-			return fmt.Errorf("loading Automation Account %q Job Schedule List: %+v", id.AutomationAccountName, err)
-		}
-		if props := jsIterator.Value().JobScheduleProperties; props != nil {
-			if props.Runbook.Name != nil && *props.Runbook.Name == id.RunbookName {
-				if jsIterator.Value().JobScheduleID == nil || *jsIterator.Value().JobScheduleID == "" {
+	jsMap := make(map[uuid.UUID]jobschedule.JobScheduleProperties)
+	automationAccountId := jobschedule.NewAutomationAccountID(id.SubscriptionId, id.ResourceGroupName, id.AutomationAccountName)
+
+	jsIterator, err := jsClient.ListByAutomationAccountComplete(ctx, automationAccountId, jobschedule.ListByAutomationAccountOperationOptions{})
+	if err != nil {
+		return fmt.Errorf("loading Automation Account %q Job Schedule List: %+v", id.AutomationAccountName, err)
+	}
+	for _, item := range jsIterator.Items {
+		if itemProps := item.Properties; itemProps != nil {
+			if itemProps.Runbook != nil && itemProps.Runbook.Name != nil && *itemProps.Runbook.Name == id.RunbookName {
+				if itemProps.JobScheduleId == nil || *itemProps.JobScheduleId == "" {
 					return fmt.Errorf("job schedule Id is nil or empty listed by Automation Account %q Job Schedule List: %+v", id.AutomationAccountName, err)
 				}
-				jsId, err := uuid.FromString(*jsIterator.Value().JobScheduleID)
+				jsId, err := uuid.FromString(*itemProps.JobScheduleId)
 				if err != nil {
 					return fmt.Errorf("parsing job schedule Id listed by Automation Account %q Job Schedule List:%v", id.AutomationAccountName, err)
 				}
-				jsMap[jsId] = *props
+				jsMap[jsId] = *itemProps
 			}
 		}
 	}
@@ -457,7 +446,7 @@ func resourceAutomationRunbookRead(d *pluginsdk.ResourceData, meta interface{}) 
 }
 
 func resourceAutomationRunbookDelete(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Automation.RunbookClient
+	client := meta.(*clients.Client).Automation.Runbook
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 

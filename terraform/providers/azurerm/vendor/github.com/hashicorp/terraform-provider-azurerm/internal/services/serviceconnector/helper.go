@@ -1,8 +1,12 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package serviceconnector
 
 import (
 	"fmt"
 
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/servicelinker/2022-05-01/servicelinker"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/parse"
@@ -19,6 +23,27 @@ type AuthInfoModel struct {
 	PrincipalId    string `tfschema:"principal_id"`
 	SubscriptionId string `tfschema:"subscription_id"`
 	Certificate    string `tfschema:"certificate"`
+}
+
+type SecretStoreModel struct {
+	KeyVaultId string `tfschema:"key_vault_id"`
+}
+
+func secretStoreSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*schema.Schema{
+				"key_vault_id": {
+					Type:         pluginsdk.TypeString,
+					Required:     true,
+					ValidateFunc: validation.StringIsNotEmpty,
+				},
+			},
+		},
+	}
 }
 
 func authInfoSchema() *pluginsdk.Schema {
@@ -80,6 +105,18 @@ func authInfoSchema() *pluginsdk.Schema {
 				},
 			},
 		},
+	}
+}
+
+func expandSecretStore(input []SecretStoreModel) *servicelinker.SecretStore {
+	if len(input) == 0 {
+		return nil
+	}
+	v := input[0]
+
+	keyVaultId := v.KeyVaultId
+	return &servicelinker.SecretStore{
+		KeyVaultId: utils.String(keyVaultId),
 	}
 }
 
@@ -243,7 +280,7 @@ func flattenServiceConnectorAuthInfo(input servicelinker.AuthInfoBase, pwd strin
 		authType = string(servicelinker.AuthTypeServicePrincipalSecret)
 		clientId = value.ClientId
 		principalId = value.PrincipalId
-		secret = value.Secret
+		secret = pwd
 	}
 
 	if value, ok := input.(servicelinker.ServicePrincipalCertificateAuthInfo); ok {
@@ -274,15 +311,24 @@ func flattenTargetService(input servicelinker.TargetServiceBase) string {
 		if value.Id != nil {
 			targetServiceId = *value.Id
 			if parsedId, err := parse.StorageAccountDefaultBlobID(targetServiceId); err == nil {
-				storageAccountId := parse.StorageAccountId{
-					SubscriptionId: parsedId.SubscriptionId,
-					ResourceGroup:  parsedId.ResourceGroup,
-					Name:           parsedId.StorageAccountName,
-				}
+				storageAccountId := commonids.NewStorageAccountID(parsedId.SubscriptionId, parsedId.ResourceGroup, parsedId.StorageAccountName)
 				targetServiceId = storageAccountId.ID()
 			}
 		}
 	}
 
 	return targetServiceId
+}
+
+func flattenSecretStore(input servicelinker.SecretStore) []SecretStoreModel {
+	var keyVaultId string
+	if input.KeyVaultId != nil {
+		keyVaultId = *input.KeyVaultId
+	}
+
+	return []SecretStoreModel{
+		{
+			KeyVaultId: keyVaultId,
+		},
+	}
 }

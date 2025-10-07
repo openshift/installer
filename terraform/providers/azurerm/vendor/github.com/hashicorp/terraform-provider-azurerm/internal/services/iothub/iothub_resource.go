@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package iothub
 
 import (
@@ -16,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	eventhubValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/eventhub/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/iothub/migration"
@@ -24,7 +28,6 @@ import (
 	servicebusValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/servicebus/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/suppress"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
@@ -108,9 +111,8 @@ func resourceIotHub() *pluginsdk.Resource {
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
 						"name": {
-							Type:             pluginsdk.TypeString,
-							Required:         true,
-							DiffSuppressFunc: suppress.CaseDifference,
+							Type:     pluginsdk.TypeString,
+							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
 								string(devices.IotHubSkuB1),
 								string(devices.IotHubSkuB2),
@@ -215,20 +217,38 @@ func resourceIotHub() *pluginsdk.Resource {
 						"sas_ttl": {
 							Type:         pluginsdk.TypeString,
 							Optional:     true,
-							Computed:     true,
+							Computed:     !features.FourPointOhBeta(),
 							ValidateFunc: validate.ISO8601Duration,
+							Default: func() interface{} {
+								if !features.FourPointOhBeta() {
+									return nil
+								}
+								return "PT1H"
+							}(),
 						},
 						"default_ttl": {
 							Type:         pluginsdk.TypeString,
 							Optional:     true,
-							Computed:     true,
+							Computed:     !features.FourPointOhBeta(),
 							ValidateFunc: validate.ISO8601Duration,
+							Default: func() interface{} {
+								if !features.FourPointOhBeta() {
+									return nil
+								}
+								return "PT1H"
+							}(),
 						},
 						"lock_duration": {
 							Type:         pluginsdk.TypeString,
 							Optional:     true,
-							Computed:     true,
+							Computed:     !features.FourPointOhBeta(),
 							ValidateFunc: validate.ISO8601Duration,
+							Default: func() interface{} {
+								if !features.FourPointOhBeta() {
+									return nil
+								}
+								return "PT1M"
+							}(),
 						},
 					},
 				},
@@ -582,6 +602,12 @@ func resourceIotHub() *pluginsdk.Resource {
 				},
 			},
 
+			"local_authentication_enabled": {
+				Type:     pluginsdk.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
+
 			"min_tls_version": {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
@@ -759,6 +785,8 @@ func resourceIotHubCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) err
 		}
 	}
 
+	props.Properties.DisableLocalAuth = utils.Bool(!d.Get("local_authentication_enabled").(bool))
+
 	if v, ok := d.GetOk("min_tls_version"); ok {
 		props.Properties.MinTLSVersion = utils.String(v.(string))
 	}
@@ -874,6 +902,12 @@ func resourceIotHubRead(d *pluginsdk.ResourceData, meta interface{}) error {
 		}
 
 		d.Set("min_tls_version", properties.MinTLSVersion)
+
+		localAuthenticationEnabled := true
+		if properties.DisableLocalAuth != nil {
+			localAuthenticationEnabled = !*properties.DisableLocalAuth
+		}
+		d.Set("local_authentication_enabled", localAuthenticationEnabled)
 	}
 
 	identity, err := flattenIotHubIdentity(hub.Identity)
@@ -993,10 +1027,13 @@ func expandIoTHubFileUpload(d *pluginsdk.ResourceData) (map[string]*devices.Stor
 		lockDuration := fileUploadMap["lock_duration"].(string)
 
 		storageEndpointProperties["$default"] = &devices.StorageEndpointProperties{
-			SasTTLAsIso8601:    &sasTTL,
 			AuthenticationType: authenticationType,
 			ConnectionString:   &connectionStr,
 			ContainerName:      &containerName,
+		}
+
+		if sasTTL != "" {
+			storageEndpointProperties["$default"].SasTTLAsIso8601 = &sasTTL
 		}
 
 		if identityId != "" {

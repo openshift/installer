@@ -1,18 +1,26 @@
 package streamingpoliciesandstreaminglocators
 
-import "github.com/Azure/go-autorest/autorest"
+import (
+	"fmt"
+
+	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
+	sdkEnv "github.com/hashicorp/go-azure-sdk/sdk/environments"
+)
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
 
 type StreamingPoliciesAndStreamingLocatorsClient struct {
-	Client  autorest.Client
-	baseUri string
+	Client *resourcemanager.Client
 }
 
-func NewStreamingPoliciesAndStreamingLocatorsClientWithBaseURI(endpoint string) StreamingPoliciesAndStreamingLocatorsClient {
-	return StreamingPoliciesAndStreamingLocatorsClient{
-		Client:  autorest.NewClientWithUserAgent(userAgent()),
-		baseUri: endpoint,
+func NewStreamingPoliciesAndStreamingLocatorsClientWithBaseURI(sdkApi sdkEnv.Api) (*StreamingPoliciesAndStreamingLocatorsClient, error) {
+	client, err := resourcemanager.NewResourceManagerClient(sdkApi, "streamingpoliciesandstreaminglocators", defaultApiVersion)
+	if err != nil {
+		return nil, fmt.Errorf("instantiating StreamingPoliciesAndStreamingLocatorsClient: %+v", err)
 	}
+
+	return &StreamingPoliciesAndStreamingLocatorsClient{
+		Client: client,
+	}, nil
 }
