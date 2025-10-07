@@ -872,7 +872,7 @@ func validatePlatformKMSKeys(client API, ic *types.InstallConfig, fieldPath *fie
 	return allErrs
 }
 
-// validateServiceEndpointOverride validates the endpoint that is provided by the user
+// validateServiceEndpointOverride validates the endpoint that is provided by the user.
 func validateServiceEndpointOverride(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if ic.GCP.Endpoint == nil {

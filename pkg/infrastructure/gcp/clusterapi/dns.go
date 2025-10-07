@@ -146,36 +146,6 @@ func createDNSRecords(ctx context.Context, client *gcpic.Client, ic *installconf
 	return nil
 }
 
-// findPSCEndpointAddress finds the ip address for the Private Service Connect Endpoint.
-func findPSCEndpointAddress(ctx context.Context, ic *installconfig.InstallConfig) (string, error) {
-	pscEndpointAddress := ""
-	svc, err := gcpic.GetComputeService(ctx, ic.Config.GCP.ServiceEndpoints, option.WithScopes(compute.ComputeScope))
-	if err != nil {
-		return pscEndpointAddress, fmt.Errorf("failed to create Compute service: %w", err)
-	}
-
-	var forwardingRules *compute.ForwardingRuleList
-	var forwardingRuleErr error
-	if ic.Config.GCP.Endpoint.Region != "" {
-		forwardingRules, forwardingRuleErr = svc.ForwardingRules.List(ic.Config.GCP.ProjectID, ic.Config.GCP.Endpoint.Region).Do()
-	} else {
-		forwardingRules, forwardingRuleErr = svc.GlobalForwardingRules.List(ic.Config.GCP.ProjectID).Do()
-	}
-	if forwardingRuleErr != nil {
-		return pscEndpointAddress, fmt.Errorf("failed to list forwarding rules: %w", forwardingRuleErr)
-	}
-
-	// Iterate through forwarding rules to find the PSC endpoint
-	for _, rule := range forwardingRules.Items {
-		if rule.Name == ic.Config.GCP.Endpoint.Name {
-			pscEndpointAddress = rule.IPAddress
-			break
-		}
-	}
-	logrus.Warnf("psc endpoint address: %s", pscEndpointAddress)
-	return pscEndpointAddress, nil
-}
-
 // createPSCRecords will create and publish the records for the private service connect managed zone.
 func createPSCRecords(ctx context.Context, ic *installconfig.InstallConfig, clusterID string) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*2) // 1 minute for each record below
