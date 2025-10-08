@@ -40,7 +40,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				"pre-network-manager-config.service": false,
 				"oci-eval-user-data.service":         true,
 				"agent-check-config-image.service":   true,
-				"agent-extract-tui.service":          false},
+				"agent-extract-tui.service":          true},
 		},
 		{
 			name: "interactive-disconnected-workflow-should-have-agent-extract-tui-service-enabled",
@@ -218,6 +218,7 @@ func generatedFilesUnconfiguredIgnition(otherFiles ...string) []string {
 		"/etc/assisted/manifests/pull-secret.yaml",
 		"/etc/assisted/manifests/cluster-image-set.yaml",
 		"/etc/assisted/manifests/infraenv.yaml",
+		"/etc/assisted/rendezvous-host.env.template",
 	}
 	unconfiguredIgnitionFiles = append(unconfiguredIgnitionFiles, otherFiles...)
 	return append(unconfiguredIgnitionFiles, commonFiles()...)
