@@ -110,8 +110,8 @@
     shell: |
       python -c 'import yaml
       path = "inventory.yaml"
-      ipv4 = "{{ item.ip_address|ipv4 }}"
-      ipv6 = "{{ item.ip_address|ipv6 }}"
+      ipv4 = "{{ item.ip_address|ansible.utils.ipv4 }}"
+      ipv6 = "{{ item.ip_address|ansible.utils.ipv6 }}"
       if ipv4 != "False":
         key = "os_apiVIP"
         ip = ipv4
@@ -129,8 +129,8 @@
     shell: |
       python -c 'import yaml
       path = "inventory.yaml"
-      ipv4 = "{{ item.ip_address|ipv4 }}"
-      ipv6 = "{{ item.ip_address|ipv6 }}"
+      ipv4 = "{{ item.ip_address|ansible.utils.ipv4 }}"
+      ipv6 = "{{ item.ip_address|ansible.utils.ipv6 }}"
       if ipv4 != "False":
         key = "os_ingressVIP"
         ip = ipv4
