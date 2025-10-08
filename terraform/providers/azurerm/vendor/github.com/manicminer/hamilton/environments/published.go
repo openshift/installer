@@ -75,6 +75,8 @@ var PublishedApis = map[string]ApiAppId{
 	"MileIqRestService":                 "b692184e-b47f-4706-b352-84b288d2d9ee",
 	"MixedReality":                      "c7ddd9b4-5172-4e28-bd29-1e0792947d18",
 	"MicrosoftAzureCli":                 "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+	"MicrosoftAzureFrontDoor":           "ad0e1c7e-6d38-4ba4-9efd-0bc77ba9f037",
+	"MicrosoftAzureFrontDoorCdn":        "205478c0-bd83-4e1b-a9d6-db63a3e1e1c8",
 	"Microsoft365DataAtRestEncryption":  "c066d759-24ae-40e7-a56f-027002b5d3e4",
 	"MicrosoftGraph":                    "00000003-0000-0000-c000-000000000000",
 	"MicrosoftInvoicing":                "b6b84568-6c01-4981-a80f-09da9a20bbed",
