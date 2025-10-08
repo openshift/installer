@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package labservice
 
 import (
@@ -6,14 +9,14 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleries"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/labservices/2022-08-01/labplan"
 	azValidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
-	computeValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/labservice/validate"
-	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
@@ -179,13 +182,13 @@ func (r LabServicePlanResource) Arguments() map[string]*pluginsdk.Schema {
 		"default_network_subnet_id": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
-			ValidateFunc: networkValidate.SubnetID,
+			ValidateFunc: commonids.ValidateSubnetID,
 		},
 
 		"shared_gallery_id": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
-			ValidateFunc: computeValidate.SharedImageGalleryID,
+			ValidateFunc: galleries.ValidateGalleryID,
 		},
 
 		"support": {
@@ -385,8 +388,8 @@ func (r LabServicePlanResource) Read() sdk.ResourceFunc {
 				state.AllowedRegions = *normalizeAllowedRegions(*properties.AllowedRegions)
 			}
 
-			if properties.SharedGalleryId != nil {
-				state.SharedGalleryId = *properties.SharedGalleryId
+			if galleryId := properties.SharedGalleryId; galleryId != nil {
+				state.SharedGalleryId = *galleryId
 			}
 
 			if model.Tags != nil {

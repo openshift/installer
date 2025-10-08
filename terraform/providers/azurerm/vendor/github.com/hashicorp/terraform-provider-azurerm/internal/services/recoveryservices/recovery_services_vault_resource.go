@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package recoveryservices
 
 import (
@@ -7,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
@@ -14,8 +18,9 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservices/2022-10-01/vaults"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2021-12-01/backupresourcestorageconfigsnoncrr"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2021-12-01/backupresourcevaultconfigs"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2023-02-01/backupresourcestorageconfigsnoncrr"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicesbackup/2023-02-01/backupresourcevaultconfigs"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/recoveryservicessiterecovery/2022-10-01/replicationvaultsetting"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	keyvaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
@@ -140,7 +145,41 @@ func resourceRecoveryServicesVault() *pluginsdk.Resource {
 				Optional: true,
 				Default:  true,
 			},
+
+			"monitoring": {
+				Type:     pluginsdk.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &pluginsdk.Resource{
+					Schema: map[string]*pluginsdk.Schema{
+						"alerts_for_all_job_failures_enabled": {
+							Type:     pluginsdk.TypeBool,
+							Optional: true,
+							Default:  true,
+						},
+
+						"alerts_for_critical_operation_failures_enabled": {
+							Type:     pluginsdk.TypeBool,
+							Optional: true,
+							Default:  true,
+						},
+					},
+				},
+			},
+
+			"classic_vmware_replication_enabled": {
+				Type:     pluginsdk.TypeBool,
+				Optional: true,
+				Computed: true, // the service always return even if not set.
+				ForceNew: true,
+			},
 		},
+
+		CustomizeDiff: pluginsdk.CustomDiffWithAll(
+			pluginsdk.ForceNewIfChange("cross_region_restore_enabled", func(ctx context.Context, old, new, meta interface{}) bool {
+				return old.(bool) && !new.(bool)
+			}),
+		),
 	}
 }
 
@@ -148,6 +187,7 @@ func resourceRecoveryServicesVaultCreate(d *pluginsdk.ResourceData, meta interfa
 	client := meta.(*clients.Client).RecoveryServices.VaultsClient
 	cfgsClient := meta.(*clients.Client).RecoveryServices.VaultsConfigsClient
 	storageCfgsClient := meta.(*clients.Client).RecoveryServices.StorageConfigsClient
+	settingsClient := meta.(*clients.Client).RecoveryServices.VaultsSettingsClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
@@ -201,6 +241,7 @@ func resourceRecoveryServicesVaultCreate(d *pluginsdk.ResourceData, meta interfa
 		},
 		Properties: &vaults.VaultProperties{
 			PublicNetworkAccess: expandRecoveryServicesVaultPublicNetworkAccess(d.Get("public_network_access_enabled").(bool)),
+			MonitoringSettings:  expandRecoveryServicesVaultMonitorSettings(d.Get("monitoring").([]interface{})),
 		},
 	}
 
@@ -316,6 +357,18 @@ func resourceRecoveryServicesVaultCreate(d *pluginsdk.ResourceData, meta interfa
 
 	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		return fmt.Errorf("waiting for on update for Recovery Service %s: %+v", id.String(), err)
+	}
+
+	if d.Get("classic_vmware_replication_enabled").(bool) {
+		settingsId := replicationvaultsetting.NewReplicationVaultSettingID(id.SubscriptionId, id.ResourceGroupName, id.VaultName, "default")
+		settingsInput := replicationvaultsetting.VaultSettingCreationInput{
+			Properties: replicationvaultsetting.VaultSettingCreationInputProperties{
+				VMwareToAzureProviderType: utils.String("Vmware"),
+			},
+		}
+		if err := settingsClient.CreateThenPoll(ctx, settingsId, settingsInput); err != nil {
+			return fmt.Errorf("creating %s: %+v", settingsId, err)
+		}
 	}
 
 	d.SetId(id.ID())
@@ -456,6 +509,7 @@ func resourceRecoveryServicesVaultUpdate(d *pluginsdk.ResourceData, meta interfa
 			},
 			Properties: &vaults.VaultProperties{
 				PublicNetworkAccess: expandRecoveryServicesVaultPublicNetworkAccess(d.Get("public_network_access_enabled").(bool)), // It's required to call CreateOrUpdate.
+				MonitoringSettings:  expandRecoveryServicesVaultMonitorSettings(d.Get("monitoring").([]interface{})),
 			},
 		}
 
@@ -475,6 +529,10 @@ func resourceRecoveryServicesVaultUpdate(d *pluginsdk.ResourceData, meta interfa
 
 	if d.HasChange("public_network_access_enabled") {
 		vault.Properties.PublicNetworkAccess = expandRecoveryServicesVaultPublicNetworkAccess(d.Get("public_network_access_enabled").(bool))
+	}
+
+	if d.HasChanges("monitoring") {
+		vault.Properties.MonitoringSettings = expandRecoveryServicesVaultMonitorSettings(d.Get("monitoring").([]interface{}))
 	}
 
 	if d.HasChange("identity") {
@@ -542,6 +600,7 @@ func resourceRecoveryServicesVaultRead(d *pluginsdk.ResourceData, meta interface
 	client := meta.(*clients.Client).RecoveryServices.VaultsClient
 	cfgsClient := meta.(*clients.Client).RecoveryServices.VaultsConfigsClient
 	storageCfgsClient := meta.(*clients.Client).RecoveryServices.StorageConfigsClient
+	vaultSettingsClient := meta.(*clients.Client).RecoveryServices.VaultsSettingsClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -586,16 +645,20 @@ func resourceRecoveryServicesVaultRead(d *pluginsdk.ResourceData, meta interface
 	}
 
 	if model.Properties != nil && model.Properties.SecuritySettings != nil && model.Properties.SecuritySettings.ImmutabilitySettings != nil {
-		d.Set("immutability", *model.Properties.SecuritySettings.ImmutabilitySettings.State)
+		d.Set("immutability", string(pointer.From(model.Properties.SecuritySettings.ImmutabilitySettings.State)))
 	}
 
 	if model.Properties != nil && model.Properties.PublicNetworkAccess != nil {
 		d.Set("public_network_access_enabled", flattenRecoveryServicesVaultPublicNetworkAccess(model.Properties.PublicNetworkAccess))
 	}
 
+	if model.Properties != nil && model.Properties.MonitoringSettings != nil {
+		d.Set("monitoring", flattenRecoveryServicesVaultMonitorSettings(*model.Properties.MonitoringSettings))
+	}
+
 	cfg, err := cfgsClient.Get(ctx, cfgId)
 	if err != nil {
-		return fmt.Errorf("reading Recovery Service Vault Cfg %s: %+v", id.String(), err)
+		return fmt.Errorf("retrieving %s: %+v", cfgId, err)
 	}
 
 	if cfg.Model != nil && cfg.Model.Properties != nil && cfg.Model.Properties.SoftDeleteFeatureState != nil {
@@ -609,7 +672,7 @@ func resourceRecoveryServicesVaultRead(d *pluginsdk.ResourceData, meta interface
 
 	if storageCfg.Model != nil && storageCfg.Model.Properties != nil {
 		props := storageCfg.Model.Properties
-		d.Set("storage_mode_type", props.StorageModelType)
+		d.Set("storage_mode_type", string(pointer.From(props.StorageModelType)))
 		d.Set("cross_region_restore_enabled", props.CrossRegionRestoreFlag)
 	}
 
@@ -624,6 +687,18 @@ func resourceRecoveryServicesVaultRead(d *pluginsdk.ResourceData, meta interface
 	encryption := flattenVaultEncryption(*model)
 	if encryption != nil {
 		d.Set("encryption", []interface{}{encryption})
+	}
+
+	vaultSettingsId := replicationvaultsetting.NewReplicationVaultSettingID(id.SubscriptionId, id.ResourceGroupName, id.VaultName, "default")
+	vaultSetting, err := vaultSettingsClient.Get(ctx, vaultSettingsId)
+	if err != nil {
+		return fmt.Errorf("reading Recovery Service Vault Setting %s: %+v", id.String(), err)
+	}
+
+	if vaultSetting.Model != nil && vaultSetting.Model.Properties != nil {
+		if v := vaultSetting.Model.Properties.VMwareToAzureProviderType; v != nil {
+			d.Set("classic_vmware_replication_enabled", strings.EqualFold(*v, "vmware"))
+		}
 	}
 
 	return tags.FlattenAndSet(d, model.Tags)
@@ -762,6 +837,52 @@ func flattenRecoveryServicesVaultPublicNetworkAccess(input *vaults.PublicNetwork
 		return false
 	}
 	return *input == vaults.PublicNetworkAccessEnabled
+}
+
+func expandRecoveryServicesVaultMonitorSettings(input []interface{}) *vaults.MonitoringSettings {
+	if len(input) == 0 {
+		return nil
+	}
+
+	v := input[0].(map[string]interface{})
+
+	allJobAlert := vaults.AlertsStateDisabled
+	if v["alerts_for_all_job_failures_enabled"].(bool) {
+		allJobAlert = vaults.AlertsStateEnabled
+	}
+
+	criticalOperation := vaults.AlertsStateDisabled
+	if v["alerts_for_critical_operation_failures_enabled"].(bool) {
+		criticalOperation = vaults.AlertsStateEnabled
+	}
+
+	return pointer.To(vaults.MonitoringSettings{
+		AzureMonitorAlertSettings: pointer.To(vaults.AzureMonitorAlertSettings{
+			AlertsForAllJobFailures: pointer.To(allJobAlert),
+		}),
+		ClassicAlertSettings: pointer.To(vaults.ClassicAlertSettings{
+			AlertsForCriticalOperations: pointer.To(criticalOperation),
+		}),
+	})
+}
+
+func flattenRecoveryServicesVaultMonitorSettings(input vaults.MonitoringSettings) []interface{} {
+	allJobAlert := false
+	if input.AzureMonitorAlertSettings != nil && input.AzureMonitorAlertSettings.AlertsForAllJobFailures != nil {
+		allJobAlert = *input.AzureMonitorAlertSettings.AlertsForAllJobFailures == vaults.AlertsStateEnabled
+	}
+
+	criticalAlert := false
+	if input.ClassicAlertSettings != nil && input.ClassicAlertSettings.AlertsForCriticalOperations != nil {
+		criticalAlert = *input.ClassicAlertSettings.AlertsForCriticalOperations == vaults.AlertsStateEnabled
+	}
+
+	return []interface{}{
+		map[string]interface{}{
+			"alerts_for_all_job_failures_enabled":            allJobAlert,
+			"alerts_for_critical_operation_failures_enabled": criticalAlert,
+		},
+	}
 }
 
 func resourceRecoveryServicesVaultSoftDeleteRefreshFunc(ctx context.Context, cfgsClient *backupresourcevaultconfigs.BackupResourceVaultConfigsClient, id backupresourcevaultconfigs.VaultId) pluginsdk.StateRefreshFunc {

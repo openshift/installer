@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package batch
 
 import (
@@ -7,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2022-01-01/pool"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2023-05-01/pool"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
@@ -369,8 +372,8 @@ func flattenBatchPoolMountConfig(d *pluginsdk.ResourceData, config *pool.MountCo
 		cifsMountConfigList := make([]interface{}, 0)
 		cifsMountConfig := make(map[string]interface{})
 
-		cifsMountConfig["user_name"] = config.CifsMountConfiguration.Username
-		cifsMountConfig["password"] = findSensitiveInfoForMountConfig("password", "user_name", config.CifsMountConfiguration.Username, "cifs_mount", d)
+		cifsMountConfig["user_name"] = config.CifsMountConfiguration.UserName
+		cifsMountConfig["password"] = findSensitiveInfoForMountConfig("password", "user_name", config.CifsMountConfiguration.UserName, "cifs_mount", d)
 		cifsMountConfig["source"] = config.CifsMountConfiguration.Source
 		cifsMountConfig["relative_mount_path"] = config.CifsMountConfiguration.RelativeMountPath
 
@@ -716,8 +719,8 @@ func ExpandBatchPoolStartTask(list []interface{}) (*pool.StartTask, error) {
 			if containerRunOptions, ok := settingMap["run_options"]; ok {
 				containerSettings.ContainerRunOptions = utils.String(containerRunOptions.(string))
 			}
-			if settingMap["registry"].([]interface{})[0] != nil {
-				containerRegMap := settingMap["registry"].([]interface{})[0].(map[string]interface{})
+			if registries, ok := settingMap["registry"].([]interface{}); ok && len(registries) > 0 && registries[0] != nil {
+				containerRegMap := registries[0].(map[string]interface{})
 				if containerRegistryRef, err := expandBatchPoolContainerRegistry(containerRegMap); err == nil {
 					containerSettings.Registry = containerRegistryRef
 				}
@@ -854,6 +857,10 @@ func expandBatchPoolExtension(ref map[string]interface{}) (*pool.VmExtension, er
 
 	if autoUpgradeMinorVersion, ok := ref["auto_upgrade_minor_version"]; ok {
 		result.AutoUpgradeMinorVersion = utils.Bool(autoUpgradeMinorVersion.(bool))
+	}
+
+	if autoUpgradeEnabled, ok := ref["automatic_upgrade_enabled"]; ok {
+		result.EnableAutomaticUpgrade = utils.Bool(autoUpgradeEnabled.(bool))
 	}
 
 	if typeHandlerVersion, ok := ref["type_handler_version"]; ok {
@@ -1014,9 +1021,9 @@ func expandBatchPoolAzureBlobFileSystemConfiguration(list []interface{}) (*pool.
 		RelativeMountPath: configMap["relative_mount_path"].(string),
 	}
 
-	if accountKey, ok := configMap["account_key"]; ok {
+	if accountKey, ok := configMap["account_key"]; ok && accountKey != "" {
 		result.AccountKey = utils.String(accountKey.(string))
-	} else if sasKey, ok := configMap["sas_key"]; ok {
+	} else if sasKey, ok := configMap["sas_key"]; ok && sasKey != "" {
 		result.SasKey = utils.String(sasKey.(string))
 	} else if computedIDRef, err := expandBatchPoolIdentityReference(configMap); err == nil {
 		result.IdentityReference = computedIDRef
@@ -1055,7 +1062,7 @@ func expandBatchPoolCIFSMountConfiguration(list []interface{}) (*pool.CIFSMountC
 
 	configMap := list[0].(map[string]interface{})
 	result := pool.CIFSMountConfiguration{
-		Username:          configMap["user_name"].(string),
+		UserName:          configMap["user_name"].(string),
 		Source:            configMap["source"].(string),
 		Password:          configMap["password"].(string),
 		RelativeMountPath: configMap["relative_mount_path"].(string),
@@ -1104,7 +1111,11 @@ func ExpandBatchPoolNetworkConfiguration(list []interface{}) (*pool.NetworkConfi
 	networkConfiguration := &pool.NetworkConfiguration{}
 
 	if v, ok := networkConfigValue["dynamic_vnet_assignment_scope"]; ok {
-		networkConfiguration.DynamicVNetAssignmentScope = pointer.To(pool.DynamicVNetAssignmentScope(v.(string)))
+		networkConfiguration.DynamicVnetAssignmentScope = pointer.To(pool.DynamicVNetAssignmentScope(v.(string)))
+	}
+
+	if v, ok := networkConfigValue["accelerated_networking_enabled"]; ok {
+		networkConfiguration.EnableAcceleratedNetworking = pointer.FromBool(v.(bool))
 	}
 
 	if v, ok := networkConfigValue["subnet_id"]; ok {
@@ -1297,13 +1308,14 @@ func flattenBatchPoolNetworkConfiguration(input *pool.NetworkConfiguration) []in
 	}
 
 	dynamicVNetAssignmentScope := ""
-	if input.DynamicVNetAssignmentScope != nil {
-		dynamicVNetAssignmentScope = string(*input.DynamicVNetAssignmentScope)
+	if input.DynamicVnetAssignmentScope != nil {
+		dynamicVNetAssignmentScope = string(*input.DynamicVnetAssignmentScope)
 	}
 
 	return []interface{}{
 		map[string]interface{}{
 			"dynamic_vnet_assignment_scope":    dynamicVNetAssignmentScope,
+			"accelerated_networking_enabled":   pointer.From(input.EnableAcceleratedNetworking),
 			"endpoint_configuration":           endpointConfigs,
 			"public_address_provisioning_type": publicAddressProvisioningType,
 			"public_ips":                       pluginsdk.NewSet(pluginsdk.HashString, publicIPAddressIds),

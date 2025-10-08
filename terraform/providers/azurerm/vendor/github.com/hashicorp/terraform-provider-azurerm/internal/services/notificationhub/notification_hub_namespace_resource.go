@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package notificationhub
 
 import (
@@ -212,8 +215,8 @@ func resourceNotificationHubNamespaceDelete(d *pluginsdk.ResourceData, meta inte
 		}
 	}
 
-	if err := future.Poller.PollUntilDone(); err != nil {
-		if !response.WasNotFound(future.Poller.HttpResponse) {
+	if err := future.Poller.PollUntilDone(ctx); err != nil {
+		if !response.WasNotFound(future.HttpResponse) {
 			return fmt.Errorf("waiting for deletion of %s: %+v", *id, err)
 		}
 	}
@@ -224,14 +227,19 @@ func resourceNotificationHubNamespaceDelete(d *pluginsdk.ResourceData, meta inte
 func notificationHubNamespaceStateRefreshFunc(ctx context.Context, client *namespaces.NamespacesClient, id namespaces.NamespaceId) pluginsdk.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		resp, err := client.Get(ctx, id)
+		statusCode := "dropped connection"
+		if resp.HttpResponse != nil {
+			statusCode = strconv.Itoa(resp.HttpResponse.StatusCode)
+		}
+
 		if err != nil {
 			if response.WasNotFound(resp.HttpResponse) {
-				return nil, "404", nil
+				return nil, statusCode, nil
 			}
 
 			return nil, "", fmt.Errorf("retrieving %s: %+v", id, err)
 		}
 
-		return resp, strconv.Itoa(resp.HttpResponse.StatusCode), nil
+		return resp, statusCode, nil
 	}
 }

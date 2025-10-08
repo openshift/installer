@@ -21,6 +21,7 @@ provider "azurerm" {
   tenant_id                   = var.azure_tenant_id
   use_msi                     = var.azure_use_msi
   environment                 = var.azure_environment
+  skip_provider_registration  = true
 }
 
 resource "azurerm_resource_group" "main" {
