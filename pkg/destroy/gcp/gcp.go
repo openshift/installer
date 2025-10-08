@@ -67,6 +67,7 @@ type ClusterUninstaller struct {
 	globalOpSvc *compute.GlobalOperationsService
 	zonalOpSvc  *compute.ZoneOperationsService
 
+	endpoint         *gcptypes.PSCEndpoint
 	serviceEndpoints []configv1.GCPServiceEndpoint
 
 	// cpusByMachineType caches the number of CPUs per machine type, used in quota
@@ -102,7 +103,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		cloudControllerUID:   gcptypes.CloudControllerUID(metadata.InfraID),
 		requestIDTracker:     newRequestIDTracker(),
 		pendingItemTracker:   newPendingItemTracker(),
-		serviceEndpoints:     metadata.ClusterPlatformMetadata.GCP.ServiceEndpoints,
+		endpoint:             metadata.ClusterPlatformMetadata.GCP.Endpoint,
 	}, nil
 }
 
@@ -110,12 +111,24 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	ctx := context.Background()
 
-	options := []option.ClientOption{
-		option.WithUserAgent(fmt.Sprintf("OpenShift/4.x Destroyer/%s", version.Raw)),
+	agentOption := option.WithUserAgent(fmt.Sprintf("OpenShift/4.x Destroyer/%s", version.Raw))
+	computeOpts := []option.ClientOption{agentOption}
+	iamOpts := []option.ClientOption{agentOption}
+	dnsOpts := []option.ClientOption{agentOption}
+	storageOpts := []option.ClientOption{agentOption}
+	crmOpts := []option.ClientOption{agentOption}
+	fileOpts := []option.ClientOption{agentOption}
+	if o.endpoint != nil {
+		computeOpts = append(computeOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameCompute))
+		iamOpts = append(iamOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameIAM))
+		dnsOpts = append(dnsOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameDNS))
+		storageOpts = append(storageOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameStorage))
+		crmOpts = append(crmOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameCloudResource))
+		fileOpts = append(fileOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameFile))
 	}
 
 	var err error
-	o.computeSvc, err = gcpconfig.GetComputeService(ctx, o.serviceEndpoints, options...)
+	o.computeSvc, err = gcpconfig.GetComputeService(ctx, computeOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create compute service")
 	}
@@ -140,27 +153,27 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		return nil, errors.Wrap(err, "failed to cache machine types")
 	}
 
-	o.iamSvc, err = gcpconfig.GetIAMService(ctx, o.serviceEndpoints, options...)
+	o.iamSvc, err = gcpconfig.GetIAMService(ctx, iamOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create iam service")
 	}
 
-	o.dnsSvc, err = gcpconfig.GetDNSService(ctx, o.serviceEndpoints, options...)
+	o.dnsSvc, err = gcpconfig.GetDNSService(ctx, dnsOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create dns service")
 	}
 
-	o.storageSvc, err = gcpconfig.GetStorageService(ctx, o.serviceEndpoints, options...)
+	o.storageSvc, err = gcpconfig.GetStorageService(ctx, storageOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create storage service")
 	}
 
-	o.rmSvc, err = gcpconfig.GetCloudResourceService(ctx, o.serviceEndpoints, options...)
+	o.rmSvc, err = gcpconfig.GetCloudResourceService(ctx, crmOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create resourcemanager service")
 	}
 
-	o.fileSvc, err = gcpconfig.GetFileService(ctx, o.serviceEndpoints, options...)
+	o.fileSvc, err = gcpconfig.GetFileService(ctx, fileOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create filestore service: %w", err)
 	}
