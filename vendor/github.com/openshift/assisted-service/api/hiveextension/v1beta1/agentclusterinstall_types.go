@@ -151,6 +151,11 @@ type AgentClusterInstallSpec struct {
 	// +optional
 	Compute []AgentMachinePool `json:"compute,omitempty"`
 
+	// Arbiter is the configuration for the machines that have the
+	// arbiter role.
+	// +optional
+	Arbiter *AgentMachinePool `json:"arbiter,omitempty"`
+
 	// APIVIP is the virtual IP used to reach the OpenShift cluster's API.
 	// +optional
 	APIVIP string `json:"apiVIP,omitempty"`
@@ -393,8 +398,9 @@ const (
 )
 
 const (
-	MasterAgentMachinePool string = "master"
-	WorkerAgentMachinePool string = "worker"
+	MasterAgentMachinePool  string = "master"
+	ArbiterAgentMachinePool string = "arbiter"
+	WorkerAgentMachinePool  string = "worker"
 )
 
 // PlatformType is a specific supported infrastructure provider.
@@ -468,7 +474,7 @@ type DiskEncryption struct {
 	// Enable/disable disk encryption on master nodes, worker nodes, or all nodes.
 	//
 	// +kubebuilder:default=none
-	// +kubebuilder:validation:Enum=none;all;masters;workers
+	// +kubebuilder:validation:Enum=none;all;masters;arbiters;workers;"masters,arbiters";"masters,workers";"arbiters,workers";"masters,arbiters,workers"
 	EnableOn *string `json:"enableOn,omitempty"`
 
 	// The disk encryption mode to use.

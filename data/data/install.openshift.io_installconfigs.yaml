@@ -5835,6 +5835,21 @@ spec:
                         - name
                         type: object
                     type: object
+                  endpoint:
+                    description: Endpoint is the private service connect endpoint.
+                    properties:
+                      name:
+                        description: Name contains the name of the private service
+                          connect endpoint.
+                        type: string
+                      region:
+                        description: |-
+                          Region is the region where the endpoint resides.
+                          When the region is empty, the location is assumed to be global.
+                        type: string
+                    required:
+                    - name
+                    type: object
                   network:
                     description: |-
                       Network specifies an existing VPC where the cluster should be created
@@ -7837,11 +7852,13 @@ spec:
             default: External
             description: |-
               Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+              A "Mixed" strategy only applies to the "azure" platform, and requires "operatorPublishingStrategy" to be configured.
               When no strategy is specified, the strategy is "External".
             enum:
             - ""
             - External
             - Internal
+            - Mixed
             type: string
           pullSecret:
             description: PullSecret is the secret to use when pulling images.

@@ -363,7 +363,10 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		case p.Ovirt != nil:
 		case p.Nutanix != nil:
 		case p.None != nil:
+			// DualStack IPv6 Primary is supported both on None and external platforms
+			allowV6Primary = true
 		case p.External != nil:
+			allowV6Primary = true
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", "dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address"))
 		}

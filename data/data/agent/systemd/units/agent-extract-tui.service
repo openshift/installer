@@ -8,7 +8,7 @@ ConditionPathExists=/etc/assisted/interactive-ui
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/agent-extract-tui.sh
-TimeoutStartSec=5m
+TimeoutStartSec=300s
 
 [Install]
 WantedBy=getty@tty1.service
