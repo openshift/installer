@@ -29,5 +29,6 @@ func Metadata(config *types.InstallConfig) *gcp.Metadata {
 		PrivateZoneDomain:    privateZoneDomain,
 		PrivateZoneProjectID: privateZoneProject,
 		ServiceEndpoints:     config.Platform.GCP.ServiceEndpoints,
+		Endpoint:             config.Platform.GCP.Endpoint,
 	}
 }

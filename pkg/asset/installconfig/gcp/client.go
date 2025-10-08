@@ -21,7 +21,6 @@ import (
 	serviceusage "google.golang.org/api/serviceusage/v1beta1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	configv1 "github.com/openshift/api/config/v1"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
@@ -66,28 +65,35 @@ type API interface {
 
 // Client makes calls to the GCP API.
 type Client struct {
-	ssn       *Session
-	endpoints []configv1.GCPServiceEndpoint
+	ssn          *Session
+	endpointName string
 }
 
 // NewClient initializes a client with a session.
-func NewClient(ctx context.Context, endpoints []configv1.GCPServiceEndpoint) (*Client, error) {
+func NewClient(ctx context.Context, endpoint *gcptypes.PSCEndpoint) (*Client, error) {
 	ssn, err := GetSession(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session")
 	}
 
-	modifiedEndpoints := FormatGCPEndpointList(endpoints, FormatGCPEndpointInput{SkipPath: false})
+	endpointName := ""
+	if endpoint != nil {
+		endpointName = endpoint.Name
+	}
 
 	client := &Client{
-		ssn:       ssn,
-		endpoints: modifiedEndpoints,
+		ssn:          ssn,
+		endpointName: endpointName,
 	}
 	return client, nil
 }
 
 func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error) {
-	svc, err := GetComputeService(ctx, c.endpoints)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, GCPServiceNameCompute))
+	}
+	svc, err := GetComputeService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("client failed to create compute service: %w", err)
 	}
@@ -95,7 +101,11 @@ func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error
 }
 
 func (c *Client) getDNSService(ctx context.Context) (*dns.Service, error) {
-	svc, err := GetDNSService(ctx, c.endpoints)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, GCPServiceNameDNS))
+	}
+	svc, err := GetDNSService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("client failed to create dns service: %w", err)
 	}
@@ -103,7 +113,11 @@ func (c *Client) getDNSService(ctx context.Context) (*dns.Service, error) {
 }
 
 func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourcemanager.Service, error) {
-	svc, err := GetCloudResourceService(ctx, c.endpoints)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, GCPServiceNameCloudResource))
+	}
+	svc, err := GetCloudResourceService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("client failed to create cloud resource service: %w", err)
 	}
@@ -111,7 +125,11 @@ func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourceman
 }
 
 func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.APIService, error) {
-	svc, err := GetServiceUsageService(ctx, c.endpoints)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, GCPServiceNameServiceUsage))
+	}
+	svc, err := GetServiceUsageService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("client failed to create service usage service: %w", err)
 	}
@@ -578,7 +596,11 @@ func (c *Client) GetEnabledServices(ctx context.Context, project string) ([]stri
 
 // GetServiceAccount retrieves a service account from a project if it exists.
 func (c *Client) GetServiceAccount(ctx context.Context, project, serviceAccount string) (string, error) {
-	svc, err := GetIAMService(ctx, c.endpoints)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, GCPServiceNameIAM))
+	}
+	svc, err := GetIAMService(ctx, opts...)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed create IAM service")
 	}
