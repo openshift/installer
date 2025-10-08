@@ -1,9 +1,9 @@
 [Unit]
 Description=Customized Machine OS Image Server
 BindsTo=ironic-volume.service
-Requires=build-ironic-env.service extract-machine-os.service
+Requires=build-ironic-env.service
 PartOf=ironic.service
-Wants=network-online.target
+Wants=network-online.target extract-machine-os.service
 After=network-online.target ironic-volume.service build-ironic-env.service extract-machine-os.service
 
 [Container]

@@ -1,15 +1,15 @@
 [Unit]
 Description=Ironic baremetal deployment service
 BindsTo=ironic-volume.service
-Requires=build-ironic-env.service wait-iptables-init.service image-customization.service
+Requires=build-ironic-env.service
 {{ if .PlatformData.BareMetal.ProvisioningIP }}
 Requires=provisioning-interface.service
 {{ end }}
 {{ if .PlatformData.BareMetal.ProvisioningDNSMasq }}
 Wants=ironic-dnsmasq.service
 {{ end }}
-Wants=network-online.target ironic-httpd.service ironic-ramdisk-logs.service
-After=network-online.target ironic-volume.service build-ironic-env.service wait-iptables-init.service provisioning-interface.service ironic-dnsmasq.service image-customization.service
+Wants=network-online.target ironic-httpd.service ironic-ramdisk-logs.service extract-machine-os.service
+After=network-online.target ironic-volume.service build-ironic-env.service provisioning-interface.service ironic-dnsmasq.service extract-machine-os.service
 
 [Container]
 ContainerName=ironic
