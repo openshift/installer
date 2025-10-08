@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package recoveryservices
 
 import (
@@ -26,6 +29,13 @@ func (r Registration) Resources() []sdk.Resource {
 	return []sdk.Resource{
 		BackupProtectionPolicyVMWorkloadResource{},
 		SiteRecoveryReplicationRecoveryPlanResource{},
+		ReplicationPolicyHyperVResource{},
+		HyperVSiteResource{},
+		HyperVReplicationPolicyAssociationResource{},
+		HyperVNetworkMappingResource{},
+		VMWareReplicationPolicyResource{},
+		VMWareReplicationPolicyAssociationResource{},
+		VaultGuardProxyResource{},
 	}
 }
 

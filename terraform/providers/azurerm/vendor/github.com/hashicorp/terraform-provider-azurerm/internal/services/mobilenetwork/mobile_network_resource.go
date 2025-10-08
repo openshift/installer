@@ -1,8 +1,12 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package mobilenetwork
 
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"time"
 
@@ -15,7 +19,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 )
 
-type MobileNetworkModel struct {
+type MobileNetworkResourceModel struct {
 	Name              string            `tfschema:"name"`
 	ResourceGroupName string            `tfschema:"resource_group_name"`
 	Location          string            `tfschema:"location"`
@@ -34,7 +38,7 @@ func (r MobileNetworkResource) ResourceType() string {
 }
 
 func (r MobileNetworkResource) ModelObject() interface{} {
-	return &MobileNetworkModel{}
+	return &MobileNetworkResourceModel{}
 }
 
 func (r MobileNetworkResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
@@ -89,7 +93,7 @@ func (r MobileNetworkResource) Create() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 180 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			var model MobileNetworkModel
+			var model MobileNetworkResourceModel
 			if err := metadata.Decode(&model); err != nil {
 				return fmt.Errorf("decoding: %+v", err)
 			}
@@ -107,7 +111,7 @@ func (r MobileNetworkResource) Create() sdk.ResourceFunc {
 				return metadata.ResourceRequiresImport(r.ResourceType(), id)
 			}
 
-			properties := &mobilenetwork.MobileNetwork{
+			payload := mobilenetwork.MobileNetwork{
 				Location: location.Normalize(model.Location),
 				Properties: mobilenetwork.MobileNetworkPropertiesFormat{
 					PublicLandMobileNetworkIdentifier: mobilenetwork.PlmnId{
@@ -118,7 +122,7 @@ func (r MobileNetworkResource) Create() sdk.ResourceFunc {
 				Tags: &model.Tags,
 			}
 
-			if err := client.CreateOrUpdateThenPoll(ctx, id, *properties); err != nil {
+			if err := client.CreateOrUpdateThenPoll(ctx, id, payload); err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
 			}
 
@@ -139,8 +143,8 @@ func (r MobileNetworkResource) Update() sdk.ResourceFunc {
 				return err
 			}
 
-			var model MobileNetworkModel
-			if err := metadata.Decode(&model); err != nil {
+			var state MobileNetworkResourceModel
+			if err := metadata.Decode(&state); err != nil {
 				return fmt.Errorf("decoding: %+v", err)
 			}
 
@@ -149,25 +153,23 @@ func (r MobileNetworkResource) Update() sdk.ResourceFunc {
 				return fmt.Errorf("retrieving %s: %+v", *id, err)
 			}
 
-			properties := resp.Model
-			if properties == nil {
-				return fmt.Errorf("retrieving %s: properties was nil", id)
+			model := resp.Model
+			if model == nil {
+				return fmt.Errorf("retrieving %s: model was nil", id)
 			}
 
 			if metadata.ResourceData.HasChange("mobile_country_code") || metadata.ResourceData.HasChange("mobile_network_code") {
-				properties.Properties.PublicLandMobileNetworkIdentifier = mobilenetwork.PlmnId{
-					Mcc: model.MobileCountryCode,
-					Mnc: model.MobileNetworkCode,
+				model.Properties.PublicLandMobileNetworkIdentifier = mobilenetwork.PlmnId{
+					Mcc: state.MobileCountryCode,
+					Mnc: state.MobileNetworkCode,
 				}
 			}
 
-			properties.SystemData = nil
-
 			if metadata.ResourceData.HasChange("tags") {
-				properties.Tags = &model.Tags
+				model.Tags = &state.Tags
 			}
 
-			if err := client.CreateOrUpdateThenPoll(ctx, *id, *properties); err != nil {
+			if err := client.CreateOrUpdateThenPoll(ctx, *id, *model); err != nil {
 				return fmt.Errorf("updating %s: %+v", *id, err)
 			}
 
@@ -196,25 +198,23 @@ func (r MobileNetworkResource) Read() sdk.ResourceFunc {
 				return fmt.Errorf("retrieving %s: %+v", *id, err)
 			}
 
-			model := resp.Model
-			if model == nil {
-				return fmt.Errorf("retrieving %s: model was nil", id)
-			}
-
-			state := MobileNetworkModel{
+			state := MobileNetworkResourceModel{
 				Name:              id.MobileNetworkName,
 				ResourceGroupName: id.ResourceGroupName,
-				Location:          location.Normalize(model.Location),
-				MobileCountryCode: model.Properties.PublicLandMobileNetworkIdentifier.Mcc,
-				MobileNetworkCode: model.Properties.PublicLandMobileNetworkIdentifier.Mnc,
 			}
 
-			if model.Properties.ServiceKey != nil {
-				state.ServiceKey = *model.Properties.ServiceKey
-			}
+			if model := resp.Model; model != nil {
+				state.Location = location.Normalize(model.Location)
+				state.MobileCountryCode = model.Properties.PublicLandMobileNetworkIdentifier.Mcc
+				state.MobileNetworkCode = model.Properties.PublicLandMobileNetworkIdentifier.Mnc
 
-			if model.Tags != nil {
-				state.Tags = *model.Tags
+				if model.Properties.ServiceKey != nil {
+					state.ServiceKey = *model.Properties.ServiceKey
+				}
+
+				if model.Tags != nil {
+					state.Tags = *model.Tags
+				}
 			}
 
 			return metadata.Encode(&state)
@@ -233,8 +233,38 @@ func (r MobileNetworkResource) Delete() sdk.ResourceFunc {
 				return err
 			}
 
-			if err := client.DeleteThenPoll(ctx, *id); err != nil {
-				return fmt.Errorf("deleting %s: %+v", id, err)
+			// a workaround for that some child resources may still exist for seconds before it fully deleted.
+			// tracked on https://github.com/Azure/azure-rest-api-specs/issues/22691
+			// it will cause the error "Can not delete resource before nested resources are deleted."
+			deadline, ok := ctx.Deadline()
+			if !ok {
+				return fmt.Errorf("could not retrieve context deadline for %s", id.ID())
+			}
+			stateConf := &pluginsdk.StateChangeConf{
+				Delay:   5 * time.Minute,
+				Pending: []string{"409"},
+				Target:  []string{"200", "202"},
+				Refresh: func() (result interface{}, state string, err error) {
+					resp, err := client.Delete(ctx, *id)
+					if err != nil {
+						if resp.HttpResponse.StatusCode == http.StatusConflict {
+							return nil, "409", nil
+						}
+						return nil, "", err
+					}
+					return resp, "200", nil
+				},
+				MinTimeout: 15 * time.Second,
+				Timeout:    time.Until(deadline),
+			}
+
+			if future, err := stateConf.WaitForStateContext(ctx); err != nil {
+				return fmt.Errorf("waiting for deleting of %s: %+v", id, err)
+			} else {
+				poller := future.(mobilenetwork.DeleteOperationResponse).Poller
+				if err := poller.PollUntilDone(ctx); err != nil {
+					return fmt.Errorf("deleting %s: %+v", id, err)
+				}
 			}
 
 			return nil
