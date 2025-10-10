@@ -19,12 +19,13 @@ func (autoRegistration) DataSources() []sdk.DataSource {
 
 func (autoRegistration) Resources() []sdk.Resource {
 	return []sdk.Resource{
+		KubernetesClusterTrustedAccessRoleBindingResource{},
 		KubernetesFleetManagerResource{},
 	}
 }
 
 func (autoRegistration) WebsiteCategories() []string {
 	return []string{
-		"Containers",
+		"Container",
 	}
 }

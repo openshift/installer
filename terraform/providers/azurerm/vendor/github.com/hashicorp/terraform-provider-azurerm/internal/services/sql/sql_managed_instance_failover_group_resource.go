@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package sql
 
 import (
@@ -325,7 +328,7 @@ func flattenSqlInstanceFailoverGroupPrimaryInstance(input *[]sql.ManagedInstance
 		}
 	}
 
-	managedInstanceId, err := parse.ManagedInstanceID(id)
+	managedInstanceId, err := parse.ManagedInstanceIDInsensitively(id)
 	if err != nil {
 		return "", err
 	}

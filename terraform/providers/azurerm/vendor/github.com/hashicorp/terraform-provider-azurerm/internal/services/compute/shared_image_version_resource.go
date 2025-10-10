@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package compute
 
 import (
@@ -7,21 +10,23 @@ import (
 	"time"
 
 	"github.com/Azure/go-autorest/autorest/date"
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
+	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
-	storageValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/suppress"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/compute/2022-08-01/compute"
+	"github.com/tombuildsstuff/kermit/sdk/compute/2023-03-01/compute"
 )
 
 func resourceSharedImageVersion() *pluginsdk.Resource {
@@ -95,6 +100,12 @@ func resourceSharedImageVersion() *pluginsdk.Resource {
 							ValidateFunc: validate.DiskEncryptionSetID,
 						},
 
+						"exclude_from_latest_enabled": {
+							Type:     pluginsdk.TypeBool,
+							Optional: true,
+							Default:  false,
+						},
+
 						// The Service API doesn't support to update `storage_account_type`. So it has to recreate the resource for updating `storage_account_type`.
 						// However, `ForceNew` cannot be used since resource would be recreated while adding or removing `target_region`.
 						// And `CustomizeDiff` also cannot be used since it doesn't support in a `Set`.
@@ -127,7 +138,7 @@ func resourceSharedImageVersion() *pluginsdk.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				RequiredWith: []string{"blob_uri"},
-				ValidateFunc: storageValidate.StorageAccountID,
+				ValidateFunc: commonids.ValidateStorageAccountID,
 			},
 
 			"end_of_life_date": {
@@ -150,8 +161,8 @@ func resourceSharedImageVersion() *pluginsdk.Resource {
 				Optional: true,
 				ForceNew: true,
 				ValidateFunc: validation.Any(
-					validate.ImageID,
-					validate.VirtualMachineID,
+					images.ValidateImageID,
+					commonids.ValidateVirtualMachineID,
 				),
 				ExactlyOneOf: []string{"blob_uri", "os_disk_snapshot_id", "managed_image_id"},
 			},
@@ -170,6 +181,13 @@ func resourceSharedImageVersion() *pluginsdk.Resource {
 			"exclude_from_latest": {
 				Type:     pluginsdk.TypeBool,
 				Optional: true,
+				Default:  false,
+			},
+
+			"deletion_of_replicated_locations_enabled": {
+				Type:     pluginsdk.TypeBool,
+				Optional: true,
+				ForceNew: true,
 				Default:  false,
 			},
 
@@ -218,6 +236,9 @@ func resourceSharedImageVersionCreateUpdate(d *pluginsdk.ResourceData, meta inte
 				ReplicationMode:   compute.ReplicationMode(d.Get("replication_mode").(string)),
 				TargetRegions:     targetRegions,
 			},
+			SafetyProfile: &compute.GalleryImageVersionSafetyProfile{
+				AllowDeletionOfReplicatedLocations: utils.Bool(d.Get("deletion_of_replicated_locations_enabled").(bool)),
+			},
 			StorageProfile: &compute.GalleryImageVersionStorageProfile{},
 		},
 		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
@@ -231,24 +252,25 @@ func resourceSharedImageVersionCreateUpdate(d *pluginsdk.ResourceData, meta inte
 	}
 
 	if v, ok := d.GetOk("managed_image_id"); ok {
-		version.GalleryImageVersionProperties.StorageProfile.Source = &compute.GalleryArtifactVersionSource{
+		version.GalleryImageVersionProperties.StorageProfile.Source = &compute.GalleryArtifactVersionFullSource{
 			ID: utils.String(v.(string)),
 		}
 	}
 
 	if v, ok := d.GetOk("os_disk_snapshot_id"); ok {
 		version.GalleryImageVersionProperties.StorageProfile.OsDiskImage = &compute.GalleryOSDiskImage{
-			Source: &compute.GalleryArtifactVersionSource{
+			Source: &compute.GalleryDiskImageSource{
 				ID: utils.String(v.(string)),
 			},
 		}
 	}
 
 	if v, ok := d.GetOk("blob_uri"); ok {
+
 		version.GalleryImageVersionProperties.StorageProfile.OsDiskImage = &compute.GalleryOSDiskImage{
-			Source: &compute.GalleryArtifactVersionSource{
-				ID:  utils.String(d.Get("storage_account_id").(string)),
-				URI: utils.String(v.(string)),
+			Source: &compute.GalleryDiskImageSource{
+				StorageAccountID: utils.String(d.Get("storage_account_id").(string)),
+				URI:              utils.String(v.(string)),
 			},
 		}
 	}
@@ -329,7 +351,16 @@ func resourceSharedImageVersionRead(d *pluginsdk.ResourceData, meta interface{})
 			osDiskSnapShotID := ""
 			storageAccountID := ""
 			if profile.OsDiskImage != nil && profile.OsDiskImage.Source != nil && profile.OsDiskImage.Source.ID != nil {
-				sourceID := *profile.OsDiskImage.Source.ID
+
+				sourceID := ""
+				if profile.OsDiskImage.Source.ID != nil {
+					sourceID = *profile.OsDiskImage.Source.ID
+				}
+
+				if profile.OsDiskImage.Source.StorageAccountID != nil {
+					sourceID = *profile.OsDiskImage.Source.StorageAccountID
+				}
+
 				if blobURI == "" {
 					osDiskSnapShotID = sourceID
 				} else {
@@ -338,6 +369,10 @@ func resourceSharedImageVersionRead(d *pluginsdk.ResourceData, meta interface{})
 			}
 			d.Set("os_disk_snapshot_id", osDiskSnapShotID)
 			d.Set("storage_account_id", storageAccountID)
+		}
+
+		if safetyProfile := props.SafetyProfile; safetyProfile != nil {
+			d.Set("deletion_of_replicated_locations_enabled", pointer.From(safetyProfile.AllowDeletionOfReplicatedLocations))
 		}
 	}
 
@@ -411,9 +446,11 @@ func expandSharedImageVersionTargetRegions(d *pluginsdk.ResourceData) (*[]comput
 		regionalReplicaCount := input["regional_replica_count"].(int)
 		storageAccountType := input["storage_account_type"].(string)
 		diskEncryptionSetId := input["disk_encryption_set_id"].(string)
+		excludeFromLatest := input["exclude_from_latest_enabled"].(bool)
 
 		output := compute.TargetRegion{
 			Name:                 utils.String(name),
+			ExcludeFromLatest:    utils.Bool(excludeFromLatest),
 			RegionalReplicaCount: utils.Int32(int32(regionalReplicaCount)),
 			StorageAccountType:   compute.StorageAccountType(storageAccountType),
 		}
@@ -458,6 +495,8 @@ func flattenSharedImageVersionTargetRegions(input *[]compute.TargetRegion) []int
 				diskEncryptionSetId = *v.Encryption.OsDiskImage.DiskEncryptionSetID
 			}
 			output["disk_encryption_set_id"] = diskEncryptionSetId
+
+			output["exclude_from_latest_enabled"] = pointer.From(v.ExcludeFromLatest)
 
 			results = append(results, output)
 		}

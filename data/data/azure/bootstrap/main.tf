@@ -14,6 +14,7 @@ provider "azurerm" {
   tenant_id                   = var.azure_tenant_id
   environment                 = var.azure_environment
   use_msi                     = var.azure_use_msi
+  skip_provider_registration  = true
 }
 
 data "azurerm_storage_account" "storage_account" {
