@@ -82,8 +82,8 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 		return fmt.Errorf("failed to parse ovf: %w", err)
 	}
 
-	// The fcos ova enables secure boot by default, this causes
-	// scos to fail once
+	// Some OVAs enable secure boot by default, this can cause
+	// issues with certain configurations
 	secureBoot := checkOvaSecureBoot(ovfEnvelope)
 
 	// The RHCOS OVA only has one network defined by default
