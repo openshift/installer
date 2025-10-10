@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -155,6 +156,9 @@ type MachinePoolPlatform struct {
 
 	// Ovirt is the configuration used when installing on oVirt.
 	Ovirt *ovirt.MachinePool `json:"ovirt,omitempty"`
+
+	// PowerVC is the configuration used when installing on IBM Power VC.
+	PowerVC *powervc.MachinePool `json:"powervc,omitempty"`
 
 	// PowerVS is the configuration used when installing on IBM Power VS.
 	PowerVS *powervs.MachinePool `json:"powervs,omitempty"`
