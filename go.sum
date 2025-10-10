@@ -182,8 +182,6 @@ github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.3 h1:ZV2XK2L3HBq9sCKQiQ/MdhZJppH/
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.3/go.mod h1:b9F9tk2HdHpbf3xbN7rUZcfmJI26N6NcJu/8OsBFI/0=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.233.0 h1:VxmOsv7MswuKQcSEIurxe4RK9tC6zYnosw9vBvv74lA=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.233.0/go.mod h1:35jGWx7ECvCwTsApqicFYzZ7JFEnBc6oHUuOQ3xIS54=
-github.com/aws/aws-sdk-go-v2/service/efs v1.40.5 h1:iOfTDjU/S2b0BSWCqv7fDbT4uKo0e3jdtnRHVwXXggI=
-github.com/aws/aws-sdk-go-v2/service/efs v1.40.5/go.mod h1:gnXK8cQKVDpkqG7lCZ2NYx32B9WbTIZsGiAFRXxpX70=
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing v1.32.0 h1:FO6LzHczDXByBf8+WJ5cswxaGy1EOjDVXA3NQa97Bh8=
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing v1.32.0/go.mod h1:q2K5uszrJv1SBxKYp5M9KUf7XR/Xnu38vSCiQ/wwhfI=
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.49.0 h1:2VJj7fSoDawAjQ91u/DtrrUDOGsuMaWxcbe9Ok/O27w=
@@ -791,8 +789,8 @@ github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQ
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/openshift/api v0.0.0-20250806102053-6a7223edb2fc h1:kAiInOGnd0+nsDcwl5YVceHfbT8Xk7tJq1vlYDVBonA=
-github.com/openshift/api v0.0.0-20250806102053-6a7223edb2fc/go.mod h1:SPLf21TYPipzCO67BURkCfK6dcIIxx0oNRVWaOyRcXM=
+github.com/openshift/api v0.0.0-20251009093019-7837a801e8c1 h1:YDyN6zwe8H/bdYAp3kQekpjknSAGK4CjKOfYtk3261M=
+github.com/openshift/api v0.0.0-20251009093019-7837a801e8c1/go.mod h1:SPLf21TYPipzCO67BURkCfK6dcIIxx0oNRVWaOyRcXM=
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6 h1:U6ve+dnHlHhAELoxX+rdFOHVhoaYl0l9qtxwYtsO6C0=
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6/go.mod h1:o2H5VwQhUD8P6XsK6dRmKpCCJqVvv12KJQZBXmcCXCU=
 github.com/openshift/assisted-service/api v0.0.0-20250922204150-a52b83145bea h1:YhJ9iHKKT5ooAdVr8qq3BdudhTxP/WF0XYDT5gzi1ak=
