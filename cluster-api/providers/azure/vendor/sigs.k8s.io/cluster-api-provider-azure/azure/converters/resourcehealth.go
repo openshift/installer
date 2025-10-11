@@ -67,5 +67,5 @@ func SDKAvailabilityStatusToCondition(availStatus armresourcehealth.Availability
 		message = *availStatus.Properties.Summary
 	}
 
-	return conditions.FalseCondition(infrav1.AzureResourceAvailableCondition, reason.String(), severity, message)
+	return conditions.FalseCondition(infrav1.AzureResourceAvailableCondition, reason.String(), severity, "%s", message)
 }

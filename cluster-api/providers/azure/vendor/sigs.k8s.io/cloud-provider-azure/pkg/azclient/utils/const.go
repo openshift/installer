@@ -22,3 +22,7 @@ const (
 	AzureFederatedTokenFile = "AZURE_FEDERATED_TOKEN_FILE"
 	AzureTenantID           = "AZURE_TENANT_ID"
 )
+
+const (
+	AzureStackCloudName = "AZURESTACKCLOUD"
+)

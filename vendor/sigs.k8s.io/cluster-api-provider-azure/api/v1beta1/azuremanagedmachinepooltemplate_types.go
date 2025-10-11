@@ -28,6 +28,7 @@ type AzureManagedMachinePoolTemplateSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=azuremanagedmachinepooltemplates,scope=Namespaced,categories=cluster-api,shortName=ammpt
 // +kubebuilder:storageversion
+// +kubebuilder:deprecatedversion:warning="AzureManagedMachinePoolTemplate and the AzureManaged API are deprecated. Please migrate to infrastructure.cluster.x-k8s.io/v1beta1 AzureASOManagedMachinePoolTemplate and related AzureASOManaged resources instead."
 
 // AzureManagedMachinePoolTemplate is the Schema for the AzureManagedMachinePoolTemplates API.
 type AzureManagedMachinePoolTemplate struct {

@@ -18,22 +18,24 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
 	"k8s.io/klog/v2"
 
-	"sigs.k8s.io/cloud-provider-azure/pkg/azureclients/diskclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient"
 )
 
 const (
 	maxLUN                 = 64 // max number of LUNs per VM
 	errStatusCode400       = "statuscode=400"
 	errInvalidParameter    = `code="invalidparameter"`
-	errTargetInstanceIds   = `target="instanceids"`
+	errTargetInstanceIDs   = `target="instanceids"`
 	sourceSnapshot         = "snapshot"
 	sourceVolume           = "volume"
 	attachDiskMapKeySuffix = "attachdiskmap"
@@ -52,20 +54,20 @@ type ExtendedLocation struct {
 	Type string `json:"type,omitempty"`
 }
 
-func FilterNonExistingDisks(ctx context.Context, diskClient diskclient.Interface, unfilteredDisks []compute.DataDisk) []compute.DataDisk {
-	filteredDisks := []compute.DataDisk{}
+func FilterNonExistingDisks(ctx context.Context, clientFactory azclient.ClientFactory, unfilteredDisks []*armcompute.DataDisk) []*armcompute.DataDisk {
+	filteredDisks := []*armcompute.DataDisk{}
 	for _, disk := range unfilteredDisks {
 		filter := false
 		if disk.ManagedDisk != nil && disk.ManagedDisk.ID != nil {
-			diskURI := *disk.ManagedDisk.ID
-			exist, err := checkDiskExists(ctx, diskClient, diskURI)
+			diSKURI := *disk.ManagedDisk.ID
+			exist, err := checkDiskExists(ctx, clientFactory, diSKURI)
 			if err != nil {
-				klog.Errorf("checkDiskExists(%s) failed with error: %v", diskURI, err)
+				klog.Errorf("checkDiskExists(%s) failed with error: %v", diSKURI, err)
 			} else {
 				// only filter disk when checkDiskExists returns <false, nil>
 				filter = !exist
 				if filter {
-					klog.Errorf("disk(%s) does not exist, removed from data disk list", diskURI)
+					klog.Errorf("disk(%s) does not exist, removed from data disk list", diSKURI)
 				}
 			}
 		}
@@ -77,18 +79,26 @@ func FilterNonExistingDisks(ctx context.Context, diskClient diskclient.Interface
 	return filteredDisks
 }
 
-func checkDiskExists(ctx context.Context, diskClient diskclient.Interface, diskURI string) (bool, error) {
-	diskName := path.Base(diskURI)
-	resourceGroup, subsID, err := getInfoFromDiskURI(diskURI)
+func checkDiskExists(ctx context.Context, clientFactory azclient.ClientFactory, diSKURI string) (bool, error) {
+	diskName := path.Base(diSKURI)
+	resourceGroup, subsID, err := getInfoFromDiSKURI(diSKURI)
+	if err != nil {
+		return false, err
+	}
+	diskClient, err := clientFactory.GetDiskClientForSub(subsID)
 	if err != nil {
 		return false, err
 	}
 
-	if _, rerr := diskClient.Get(ctx, subsID, resourceGroup, diskName); rerr != nil {
-		if rerr.HTTPStatusCode == http.StatusNotFound {
-			return false, nil
+	_, err = diskClient.Get(ctx, resourceGroup, diskName)
+	if err != nil {
+		rerr := &azcore.ResponseError{}
+		if errors.As(err, &rerr) {
+			if rerr.StatusCode == http.StatusNotFound {
+				return false, nil
+			}
 		}
-		return false, rerr.Error()
+		return false, err
 	}
 
 	return true, nil
@@ -97,10 +107,10 @@ func checkDiskExists(ctx context.Context, diskClient diskclient.Interface, diskU
 // get resource group name, subs id from a managed disk URI, e.g. return {group-name}, {sub-id} according to
 // /subscriptions/{sub-id}/resourcegroups/{group-name}/providers/microsoft.compute/disks/{disk-id}
 // according to https://docs.microsoft.com/en-us/rest/api/compute/disks/get
-func getInfoFromDiskURI(diskURI string) (string, string, error) {
-	fields := strings.Split(diskURI, "/")
+func getInfoFromDiSKURI(diSKURI string) (string, string, error) {
+	fields := strings.Split(diSKURI, "/")
 	if len(fields) != 9 || strings.ToLower(fields[3]) != "resourcegroups" {
-		return "", "", fmt.Errorf("invalid disk URI: %s", diskURI)
+		return "", "", fmt.Errorf("invalid disk URI: %s", diSKURI)
 	}
 	return fields[4], fields[2], nil
 }

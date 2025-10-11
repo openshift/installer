@@ -44,8 +44,8 @@ var (
 	errNodeNotInitialized = fmt.Errorf("providerID is empty, the node is not initialized yet")
 )
 
-func (az *Cloud) addressGetter(nodeName types.NodeName) ([]v1.NodeAddress, error) {
-	ip, publicIP, err := az.getIPForMachine(nodeName)
+func (az *Cloud) addressGetter(ctx context.Context, nodeName types.NodeName) ([]v1.NodeAddress, error) {
+	ip, publicIP, err := az.getIPForMachine(ctx, nodeName)
 	if err != nil {
 		klog.V(2).Infof("NodeAddresses(%s) abort backoff: %v", nodeName, err)
 		return nil, err
@@ -65,7 +65,7 @@ func (az *Cloud) addressGetter(nodeName types.NodeName) ([]v1.NodeAddress, error
 }
 
 // NodeAddresses returns the addresses of the specified instance.
-func (az *Cloud) NodeAddresses(_ context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
+func (az *Cloud) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
 	// Returns nil for unmanaged nodes because azure cloud provider couldn't fetch information for them.
 	unmanaged, err := az.IsNodeUnmanaged(string(name))
 	if err != nil {
@@ -77,7 +77,7 @@ func (az *Cloud) NodeAddresses(_ context.Context, name types.NodeName) ([]v1.Nod
 	}
 
 	if az.UseInstanceMetadata {
-		metadata, err := az.Metadata.GetMetadata(azcache.CacheReadTypeDefault)
+		metadata, err := az.Metadata.GetMetadata(ctx, azcache.CacheReadTypeDefault)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +94,7 @@ func (az *Cloud) NodeAddresses(_ context.Context, name types.NodeName) ([]v1.Nod
 		// Not local instance, get addresses from Azure ARM API.
 		if !isLocalInstance {
 			if az.VMSet != nil {
-				return az.addressGetter(name)
+				return az.addressGetter(ctx, name)
 			}
 
 			// vmSet == nil indicates credentials are not provided.
@@ -104,10 +104,10 @@ func (az *Cloud) NodeAddresses(_ context.Context, name types.NodeName) ([]v1.Nod
 		return az.getLocalInstanceNodeAddresses(metadata.Network.Interface, string(name))
 	}
 
-	return az.addressGetter(name)
+	return az.addressGetter(ctx, name)
 }
 
-func (az *Cloud) getLocalInstanceNodeAddresses(netInterfaces []NetworkInterface, nodeName string) ([]v1.NodeAddress, error) {
+func (az *Cloud) getLocalInstanceNodeAddresses(netInterfaces []*NetworkInterface, nodeName string) ([]v1.NodeAddress, error) {
 	if len(netInterfaces) == 0 {
 		return nil, fmt.Errorf("no interface is found for the instance")
 	}
@@ -171,7 +171,7 @@ func (az *Cloud) NodeAddressesByProviderID(ctx context.Context, providerID strin
 		return nil, fmt.Errorf("no credentials provided for Azure cloud provider")
 	}
 
-	name, err := az.VMSet.GetNodeNameByProviderID(providerID)
+	name, err := az.VMSet.GetNodeNameByProviderID(ctx, providerID)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func (az *Cloud) InstanceExistsByProviderID(ctx context.Context, providerID stri
 		return false, fmt.Errorf("no credentials provided for Azure cloud provider")
 	}
 
-	name, err := az.VMSet.GetNodeNameByProviderID(providerID)
+	name, err := az.VMSet.GetNodeNameByProviderID(ctx, providerID)
 	if err != nil {
 		if errors.Is(err, cloudprovider.InstanceNotFound) {
 			return false, nil
@@ -217,7 +217,7 @@ func (az *Cloud) InstanceExistsByProviderID(ctx context.Context, providerID stri
 }
 
 // InstanceShutdownByProviderID returns true if the instance is in safe state to detach volumes
-func (az *Cloud) InstanceShutdownByProviderID(_ context.Context, providerID string) (bool, error) {
+func (az *Cloud) InstanceShutdownByProviderID(ctx context.Context, providerID string) (bool, error) {
 	if providerID == "" {
 		return false, nil
 	}
@@ -226,7 +226,7 @@ func (az *Cloud) InstanceShutdownByProviderID(_ context.Context, providerID stri
 		return false, fmt.Errorf("no credentials provided for Azure cloud provider")
 	}
 
-	nodeName, err := az.VMSet.GetNodeNameByProviderID(providerID)
+	nodeName, err := az.VMSet.GetNodeNameByProviderID(ctx, providerID)
 	if err != nil {
 		// Returns false, so the controller manager will continue to check InstanceExistsByProviderID().
 		if errors.Is(err, cloudprovider.InstanceNotFound) {
@@ -236,7 +236,7 @@ func (az *Cloud) InstanceShutdownByProviderID(_ context.Context, providerID stri
 		return false, err
 	}
 
-	powerStatus, err := az.VMSet.GetPowerStatusByNodeName(string(nodeName))
+	powerStatus, err := az.VMSet.GetPowerStatusByNodeName(ctx, string(nodeName))
 	if err != nil {
 		// Returns false, so the controller manager will continue to check InstanceExistsByProviderID().
 		if errors.Is(err, cloudprovider.InstanceNotFound) {
@@ -247,7 +247,7 @@ func (az *Cloud) InstanceShutdownByProviderID(_ context.Context, providerID stri
 	}
 	klog.V(3).Infof("InstanceShutdownByProviderID gets power status %q for node %q", powerStatus, nodeName)
 
-	provisioningState, err := az.VMSet.GetProvisioningStateByNodeName(string(nodeName))
+	provisioningState, err := az.VMSet.GetProvisioningStateByNodeName(ctx, string(nodeName))
 	if err != nil {
 		// Returns false, so the controller manager will continue to check InstanceExistsByProviderID().
 		if errors.Is(err, cloudprovider.InstanceNotFound) {
@@ -287,7 +287,7 @@ func (az *Cloud) isCurrentInstance(name types.NodeName, metadataVMName string) (
 
 // InstanceID returns the cloud provider ID of the specified instance.
 // Note that if the instance does not exist or is no longer running, we must return ("", cloudprovider.InstanceNotFound)
-func (az *Cloud) InstanceID(_ context.Context, name types.NodeName) (string, error) {
+func (az *Cloud) InstanceID(ctx context.Context, name types.NodeName) (string, error) {
 	nodeName := mapNodeNameToVMName(name)
 	unmanaged, err := az.IsNodeUnmanaged(nodeName)
 	if err != nil {
@@ -300,7 +300,7 @@ func (az *Cloud) InstanceID(_ context.Context, name types.NodeName) (string, err
 	}
 
 	if az.UseInstanceMetadata {
-		metadata, err := az.Metadata.GetMetadata(azcache.CacheReadTypeDefault)
+		metadata, err := az.Metadata.GetMetadata(ctx, azcache.CacheReadTypeDefault)
 		if err != nil {
 			return "", err
 		}
@@ -317,7 +317,7 @@ func (az *Cloud) InstanceID(_ context.Context, name types.NodeName) (string, err
 		// Not local instance, get instanceID from Azure ARM API.
 		if !isLocalInstance {
 			if az.VMSet != nil {
-				return az.VMSet.GetInstanceIDByNodeName(nodeName)
+				return az.VMSet.GetInstanceIDByNodeName(ctx, nodeName)
 			}
 
 			// vmSet == nil indicates credentials are not provided.
@@ -326,7 +326,7 @@ func (az *Cloud) InstanceID(_ context.Context, name types.NodeName) (string, err
 		return az.getLocalInstanceProviderID(metadata, nodeName)
 	}
 
-	return az.VMSet.GetInstanceIDByNodeName(nodeName)
+	return az.VMSet.GetInstanceIDByNodeName(ctx, nodeName)
 }
 
 func (az *Cloud) getLocalInstanceProviderID(metadata *InstanceMetadata, _ string) (string, error) {
@@ -365,7 +365,7 @@ func (az *Cloud) InstanceTypeByProviderID(ctx context.Context, providerID string
 		return "", fmt.Errorf("no credentials provided for Azure cloud provider")
 	}
 
-	name, err := az.VMSet.GetNodeNameByProviderID(providerID)
+	name, err := az.VMSet.GetNodeNameByProviderID(ctx, providerID)
 	if err != nil {
 		return "", err
 	}
@@ -377,7 +377,7 @@ func (az *Cloud) InstanceTypeByProviderID(ctx context.Context, providerID string
 // Note that if the instance does not exist or is no longer running, we must return ("", cloudprovider.InstanceNotFound)
 // (Implementer Note): This is used by kubelet. Kubelet will label the node. Real log from kubelet:
 // Adding node label from cloud provider: beta.kubernetes.io/instance-type=[value]
-func (az *Cloud) InstanceType(_ context.Context, name types.NodeName) (string, error) {
+func (az *Cloud) InstanceType(ctx context.Context, name types.NodeName) (string, error) {
 	// Returns "" for unmanaged nodes because azure cloud provider couldn't fetch information for them.
 	unmanaged, err := az.IsNodeUnmanaged(string(name))
 	if err != nil {
@@ -389,7 +389,7 @@ func (az *Cloud) InstanceType(_ context.Context, name types.NodeName) (string, e
 	}
 
 	if az.UseInstanceMetadata {
-		metadata, err := az.Metadata.GetMetadata(azcache.CacheReadTypeDefault)
+		metadata, err := az.Metadata.GetMetadata(ctx, azcache.CacheReadTypeDefault)
 		if err != nil {
 			return "", err
 		}
@@ -404,7 +404,7 @@ func (az *Cloud) InstanceType(_ context.Context, name types.NodeName) (string, e
 		}
 		if !isLocalInstance {
 			if az.VMSet != nil {
-				return az.VMSet.GetInstanceTypeByNodeName(string(name))
+				return az.VMSet.GetInstanceTypeByNodeName(ctx, string(name))
 			}
 
 			// vmSet == nil indicates credentials are not provided.
@@ -421,7 +421,7 @@ func (az *Cloud) InstanceType(_ context.Context, name types.NodeName) (string, e
 		return "", fmt.Errorf("no credentials provided for Azure cloud provider")
 	}
 
-	return az.VMSet.GetInstanceTypeByNodeName(string(name))
+	return az.VMSet.GetInstanceTypeByNodeName(ctx, string(name))
 }
 
 // AddSSHKeyToAllInstances adds an SSH public key as a legal identity for all instances

@@ -11,7 +11,11 @@ CONFORMANCE_E2E_ARGS += $(E2E_ARGS)
 
 .PHONY: test-conformance
 test-conformance: ## Run conformance test on workload cluster.
+ifeq ($(MANAGER_IMAGE),)
 	$(MAKE) test-e2e-skip-push GINKGO_FOCUS="Conformance" E2E_ARGS='$(CONFORMANCE_E2E_ARGS)' CONFORMANCE_FLAVOR='$(CONFORMANCE_FLAVOR)'
+else ## If MANAGER_IMAGE is set, use it for the conformance test (test-e2e-skip-push overwrites it).
+	$(MAKE) test-e2e-custom-image GINKGO_FOCUS="Conformance" E2E_ARGS='$(CONFORMANCE_E2E_ARGS)' CONFORMANCE_FLAVOR='$(CONFORMANCE_FLAVOR)'
+endif
 
 test-conformance-fast: ## Run conformance test on workload cluster using a subset of the conformance suite in parallel.
 	$(MAKE) test-conformance CONFORMANCE_E2E_ARGS="-kubetest.config-file=$(KUBETEST_FAST_CONF_PATH) -kubetest.ginkgo-nodes=5 $(E2E_ARGS)"

@@ -23,8 +23,9 @@ import (
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/utils"
 )
 
-// +azure:client:verbs=get;createorupdate,resource=PrivateZone,subResource=VirtualNetworkLink,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns,packageAlias=armprivatedns,clientName=VirtualNetworkLinksClient,expand=false,rateLimitKey=virtualNetworkRateLimit
+// +azure:client:verbs=get;createorupdate;delete,resource=PrivateZone,subResource=VirtualNetworkLink,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns,packageAlias=armprivatedns,clientName=VirtualNetworkLinksClient,expand=false,rateLimitKey=virtualNetworkRateLimit
 type Interface interface {
 	utils.SubResourceGetFunc[armprivatedns.VirtualNetworkLink]
 	utils.SubResourceCreateOrUpdateFunc[armprivatedns.VirtualNetworkLink]
+	utils.SubResourceDeleteFunc[armprivatedns.VirtualNetworkLink]
 }

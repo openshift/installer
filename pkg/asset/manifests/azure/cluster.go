@@ -178,25 +178,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	azEnv := string(installConfig.Azure.CloudName)
-
-	computeSubnetSpec := capz.SubnetSpec{
-		ID: nodeSubnetID,
-		SubnetClassSpec: capz.SubnetClassSpec{
-			Name: computeSubnet,
-			Role: capz.SubnetNode,
-			CIDRBlocks: []string{
-				subnets[1].String(),
-			},
-		},
-		SecurityGroup: securityGroup,
-	}
-
-	if installConfig.Config.Azure.OutboundType == azure.NATGatewaySingleZoneOutboundType {
-		computeSubnetSpec.NatGateway = capz.NatGateway{
-			NatGatewayClassSpec: capz.NatGatewayClassSpec{Name: fmt.Sprintf("%s-natgw", clusterID.InfraID)},
-		}
-	}
-
+	subnetSpec := getSubnetSpec(installConfig, controlPlaneSubnet, computeSubnet, securityGroup, subnets, nodeSubnetID, clusterID.InfraID)
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -236,19 +218,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				},
 				APIServerLB:            &apiServerLB,
 				ControlPlaneOutboundLB: controlPlaneOutboundLB,
-				Subnets: capz.Subnets{
-					{
-						SubnetClassSpec: capz.SubnetClassSpec{
-							Name: controlPlaneSubnet,
-							Role: capz.SubnetControlPlane,
-							CIDRBlocks: []string{
-								subnets[0].String(),
-							},
-						},
-						SecurityGroup: securityGroup,
-					},
-					computeSubnetSpec,
-				},
+				Subnets:                subnetSpec,
 			},
 		},
 	}
@@ -328,7 +298,91 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 	}, nil
 }
+func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubnet, computeSubnet string, securityGroup capz.SecurityGroup, subnets []*net.IPNet, nodeSubnetID string, infraID string) []capz.SubnetSpec {
+	// Set default control plane subnets for default installs.
+	defaultControlPlaneSubnet := capz.Subnets{
+		{
+			SubnetClassSpec: capz.SubnetClassSpec{
+				Name: controlPlaneSubnet,
+				Role: capz.SubnetControlPlane,
+				CIDRBlocks: []string{
+					subnets[0].String(),
+				},
+			},
+			SecurityGroup: securityGroup,
+		},
+	}
+	defaultComputeSubnetSpec := capz.SubnetSpec{
+		ID: nodeSubnetID,
+		SubnetClassSpec: capz.SubnetClassSpec{
+			Name: computeSubnet,
+			Role: capz.SubnetNode,
+			CIDRBlocks: []string{
+				subnets[1].String(),
+			},
+		},
+		SecurityGroup: securityGroup,
+	}
 
+	subnetSpec := []capz.SubnetSpec{}
+	hasControlPlaneSubnet := false
+	hasComputePlaneSubnet := false
+
+	// Add the user specified subnets to the spec.
+	// For single zone, alter the compute subnet to have a NATGateway and add default control plane subnet
+	// configuration.
+	for index, spec := range installConfig.Config.Azure.Subnets {
+		specGen := capz.SubnetSpec{
+			ID: "UNKNOWN",
+			SubnetClassSpec: capz.SubnetClassSpec{
+				Name: spec.Name,
+				Role: spec.Role,
+			},
+			SecurityGroup: securityGroup,
+		}
+		// The CIDR information is optional since it could be a byo subnet.
+		if len(spec.SubnetCIDR) != 0 {
+			specGen.CIDRBlocks = spec.SubnetCIDR
+		}
+		// If role is compute node and outbound type is single node, add a NAT gateway to the subnet.
+		// Only adding a NAT gateway to the first subnet.
+		if !hasComputePlaneSubnet && spec.Role == capz.SubnetNode && installConfig.Config.Azure.OutboundType == azure.NATGatewaySingleZoneOutboundType {
+			specGen.NatGateway = capz.NatGateway{
+				NatGatewayClassSpec: capz.NatGatewayClassSpec{Name: fmt.Sprintf("%s-natgw", infraID)},
+			}
+		} else if installConfig.Config.Azure.OutboundType == azure.NATGatewayMultiZoneOutboundType {
+			if spec.NatGatewayName != "" {
+				specGen.NatGateway = capz.NatGateway{
+					NatGatewayIP: capz.PublicIPSpec{
+						Name: fmt.Sprintf("%s-natgw-public-ip-%d", infraID, index),
+					},
+					NatGatewayClassSpec: capz.NatGatewayClassSpec{Name: spec.NatGatewayName},
+				}
+				if spec.Zone != "" {
+					specGen.NatGateway.Zones = []string{spec.Zone}
+				}
+			}
+		}
+		hasControlPlaneSubnet = hasControlPlaneSubnet || spec.Role == capz.SubnetControlPlane
+		hasComputePlaneSubnet = hasComputePlaneSubnet || spec.Role == capz.SubnetNode
+		subnetSpec = append(subnetSpec, specGen)
+	}
+	// Make sure there's at least one subnet for compute and control plane.
+	// Ordinary installs will get the default setup.
+	if !hasComputePlaneSubnet {
+		// For single zone, add a NAT gateway to the default value.
+		if installConfig.Config.Azure.OutboundType == azure.NATGatewaySingleZoneOutboundType {
+			defaultComputeSubnetSpec.NatGateway = capz.NatGateway{
+				NatGatewayClassSpec: capz.NatGatewayClassSpec{Name: fmt.Sprintf("%s-natgw", infraID)},
+			}
+		}
+		subnetSpec = append(subnetSpec, defaultComputeSubnetSpec)
+	}
+	if !hasControlPlaneSubnet {
+		subnetSpec = append(subnetSpec, defaultControlPlaneSubnet...)
+	}
+	return subnetSpec
+}
 func getIPWithinCIDR(subnets []*net.IPNet, ip string) string {
 	if subnets == nil || ip == "" {
 		return ""

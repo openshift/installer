@@ -269,6 +269,11 @@ func (in *AzureMachinePoolMachineTemplate) DeepCopyInto(out *AzureMachinePoolMac
 		*out = new(bool)
 		**out = **in
 	}
+	if in.AdditionalCapabilities != nil {
+		in, out := &in.AdditionalCapabilities, &out.AdditionalCapabilities
+		*out = new(apiv1beta1.AdditionalCapabilities)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Diagnostics != nil {
 		in, out := &in.Diagnostics, &out.Diagnostics
 		*out = new(apiv1beta1.Diagnostics)

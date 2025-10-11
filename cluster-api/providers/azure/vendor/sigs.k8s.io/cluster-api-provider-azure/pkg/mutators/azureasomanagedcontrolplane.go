@@ -38,7 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
@@ -52,7 +52,7 @@ var (
 )
 
 // SetManagedClusterDefaults propagates values defined by Cluster API to an ASO ManagedCluster.
-func SetManagedClusterDefaults(ctrlClient client.Client, asoManagedControlPlane *infrav1alpha.AzureASOManagedControlPlane, cluster *clusterv1.Cluster) ResourcesMutator {
+func SetManagedClusterDefaults(ctrlClient client.Client, asoManagedControlPlane *infrav1.AzureASOManagedControlPlane, cluster *clusterv1.Cluster) ResourcesMutator {
 	return func(ctx context.Context, us []*unstructured.Unstructured) error {
 		ctx, _, done := tele.StartSpanWithLogger(ctx, "mutators.SetManagedClusterDefaults")
 		defer done()
@@ -95,7 +95,7 @@ func SetManagedClusterDefaults(ctrlClient client.Client, asoManagedControlPlane 
 	}
 }
 
-func setManagedClusterKubernetesVersion(ctx context.Context, asoManagedControlPlane *infrav1alpha.AzureASOManagedControlPlane, managedClusterPath string, managedCluster *unstructured.Unstructured) error {
+func setManagedClusterKubernetesVersion(ctx context.Context, asoManagedControlPlane *infrav1.AzureASOManagedControlPlane, managedClusterPath string, managedCluster *unstructured.Unstructured) error {
 	_, log, done := tele.StartSpanWithLogger(ctx, "mutators.setManagedClusterKubernetesVersion")
 	defer done()
 
@@ -253,7 +253,7 @@ func agentPoolsFromManagedMachinePools(ctx context.Context, ctrlClient client.Cl
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "mutators.agentPoolsFromManagedMachinePools")
 	defer done()
 
-	asoManagedMachinePools := &infrav1alpha.AzureASOManagedMachinePoolList{}
+	asoManagedMachinePools := &infrav1.AzureASOManagedMachinePoolList{}
 	err := ctrlClient.List(ctx, asoManagedMachinePools,
 		client.InNamespace(namespace),
 		client.MatchingLabels{

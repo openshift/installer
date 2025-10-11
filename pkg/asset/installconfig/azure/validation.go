@@ -71,6 +71,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	}
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 	allErrs = append(allErrs, validateBootDiagnostics(client, ic)...)
+	// allErrs = append(allErrs, validateCustomSubnetsAndNatGateways(client, ic.Azure)...)
 	return allErrs.ToAggregate()
 }
 
