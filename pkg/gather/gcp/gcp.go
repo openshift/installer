@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	googleoauth "golang.org/x/oauth2/google"
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/option"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -19,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/gather"
 	"github.com/openshift/installer/pkg/gather/providers"
 	"github.com/openshift/installer/pkg/types"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 // Gather holds options for resources we want to gather.
@@ -32,6 +34,7 @@ type Gather struct {
 	bootstrap        string
 	masters          []string
 	directory        string
+	endpoint         *gcptypes.PSCEndpoint
 	serviceEndpoints []configv1.GCPServiceEndpoint
 }
 
@@ -55,6 +58,7 @@ func New(logger logrus.FieldLogger, serialLogBundle string, bootstrap string, ma
 		bootstrap:        bootstrap,
 		masters:          masters,
 		directory:        filepath.Dir(serialLogBundle),
+		endpoint:         metadata.GCP.Endpoint,
 		serviceEndpoints: metadata.ClusterPlatformMetadata.GCP.ServiceEndpoints,
 	}, nil
 }
@@ -64,7 +68,11 @@ func (g *Gather) Run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	svc, err := gcpsession.GetComputeService(ctx, g.serviceEndpoints)
+	opts := []option.ClientOption{}
+	if g.endpoint != nil {
+		opts = append(opts, gcpsession.CreateEndpointOption(g.endpoint.Name, gcpsession.GCPServiceNameCompute))
+	}
+	svc, err := gcpsession.GetComputeService(ctx, opts...)
 	if err != nil {
 		return err
 	}

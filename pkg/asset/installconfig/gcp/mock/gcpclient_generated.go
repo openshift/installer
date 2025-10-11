@@ -121,6 +121,21 @@ func (mr *MockAPIMockRecorder) GetEnabledServices(ctx, project any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnabledServices", reflect.TypeOf((*MockAPI)(nil).GetEnabledServices), ctx, project)
 }
 
+// GetEndpointAddress mocks base method.
+func (m *MockAPI) GetEndpointAddress(ctx context.Context, project, endpointName, endpointRegion string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEndpointAddress", ctx, project, endpointName, endpointRegion)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEndpointAddress indicates an expected call of GetEndpointAddress.
+func (mr *MockAPIMockRecorder) GetEndpointAddress(ctx, project, endpointName, endpointRegion any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEndpointAddress", reflect.TypeOf((*MockAPI)(nil).GetEndpointAddress), ctx, project, endpointName, endpointRegion)
+}
+
 // GetImage mocks base method.
 func (m *MockAPI) GetImage(ctx context.Context, name, project string) (*compute.Image, error) {
 	m.ctrl.T.Helper()
