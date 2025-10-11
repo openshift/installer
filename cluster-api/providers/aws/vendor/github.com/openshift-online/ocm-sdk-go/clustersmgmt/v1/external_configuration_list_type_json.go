@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalExternalConfigurationList(list []*ExternalConfiguration, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeExternalConfigurationList(list, stream)
+	WriteExternalConfigurationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalExternalConfigurationList(list []*ExternalConfiguration, writer io.W
 	return stream.Error
 }
 
-// writeExternalConfigurationList writes a list of value of the 'external_configuration' type to
+// WriteExternalConfigurationList writes a list of value of the 'external_configuration' type to
 // the given stream.
-func writeExternalConfigurationList(list []*ExternalConfiguration, stream *jsoniter.Stream) {
+func WriteExternalConfigurationList(list []*ExternalConfiguration, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeExternalConfiguration(value, stream)
+		WriteExternalConfiguration(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalExternalConfigurationList(source interface{}) (items []*ExternalCo
 	if err != nil {
 		return
 	}
-	items = readExternalConfigurationList(iterator)
+	items = ReadExternalConfigurationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readExternalConfigurationList reads list of values of the ”external_configuration' type from
+// ReadExternalConfigurationList reads list of values of the ”external_configuration' type from
 // the given iterator.
-func readExternalConfigurationList(iterator *jsoniter.Iterator) []*ExternalConfiguration {
+func ReadExternalConfigurationList(iterator *jsoniter.Iterator) []*ExternalConfiguration {
 	list := []*ExternalConfiguration{}
 	for iterator.ReadArray() {
-		item := readExternalConfiguration(iterator)
+		item := ReadExternalConfiguration(iterator)
 		list = append(list, item)
 	}
 	return list

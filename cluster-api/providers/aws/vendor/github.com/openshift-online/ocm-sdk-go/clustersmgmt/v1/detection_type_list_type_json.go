@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalDetectionTypeList(list []DetectionType, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDetectionTypeList(list, stream)
+	WriteDetectionTypeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalDetectionTypeList(list []DetectionType, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeDetectionTypeList writes a list of value of the 'detection_type' type to
+// WriteDetectionTypeList writes a list of value of the 'detection_type' type to
 // the given stream.
-func writeDetectionTypeList(list []DetectionType, stream *jsoniter.Stream) {
+func WriteDetectionTypeList(list []DetectionType, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalDetectionTypeList(source interface{}) (items []DetectionType, err 
 	if err != nil {
 		return
 	}
-	items = readDetectionTypeList(iterator)
+	items = ReadDetectionTypeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDetectionTypeList reads list of values of the ”detection_type' type from
+// ReadDetectionTypeList reads list of values of the ”detection_type' type from
 // the given iterator.
-func readDetectionTypeList(iterator *jsoniter.Iterator) []DetectionType {
+func ReadDetectionTypeList(iterator *jsoniter.Iterator) []DetectionType {
 	list := []DetectionType{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

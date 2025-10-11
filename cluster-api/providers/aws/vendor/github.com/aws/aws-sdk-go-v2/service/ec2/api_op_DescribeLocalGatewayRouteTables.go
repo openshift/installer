@@ -37,13 +37,19 @@ type DescribeLocalGatewayRouteTablesInput struct {
 	DryRun *bool
 
 	// One or more filters.
+	//
 	//   - local-gateway-id - The ID of a local gateway.
+	//
 	//   - local-gateway-route-table-arn - The Amazon Resource Name (ARN) of the local
 	//   gateway route table.
+	//
 	//   - local-gateway-route-table-id - The ID of a local gateway route table.
+	//
 	//   - outpost-arn - The Amazon Resource Name (ARN) of the Outpost.
+	//
 	//   - owner-id - The ID of the Amazon Web Services account that owns the local
 	//   gateway route table.
+	//
 	//   - state - The state of the local gateway route table.
 	Filters []types.Filter
 
@@ -118,6 +124,9 @@ func (c *Client) addOperationDescribeLocalGatewayRouteTablesMiddlewares(stack *m
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -128,6 +137,15 @@ func (c *Client) addOperationDescribeLocalGatewayRouteTablesMiddlewares(stack *m
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeLocalGatewayRouteTables(options.Region), middleware.Before); err != nil {
@@ -148,16 +166,20 @@ func (c *Client) addOperationDescribeLocalGatewayRouteTablesMiddlewares(stack *m
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeLocalGatewayRouteTablesAPIClient is a client that implements the
-// DescribeLocalGatewayRouteTables operation.
-type DescribeLocalGatewayRouteTablesAPIClient interface {
-	DescribeLocalGatewayRouteTables(context.Context, *DescribeLocalGatewayRouteTablesInput, ...func(*Options)) (*DescribeLocalGatewayRouteTablesOutput, error)
-}
-
-var _ DescribeLocalGatewayRouteTablesAPIClient = (*Client)(nil)
 
 // DescribeLocalGatewayRouteTablesPaginatorOptions is the paginator options for
 // DescribeLocalGatewayRouteTables
@@ -226,6 +248,9 @@ func (p *DescribeLocalGatewayRouteTablesPaginator) NextPage(ctx context.Context,
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeLocalGatewayRouteTables(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -244,6 +269,14 @@ func (p *DescribeLocalGatewayRouteTablesPaginator) NextPage(ctx context.Context,
 
 	return result, nil
 }
+
+// DescribeLocalGatewayRouteTablesAPIClient is a client that implements the
+// DescribeLocalGatewayRouteTables operation.
+type DescribeLocalGatewayRouteTablesAPIClient interface {
+	DescribeLocalGatewayRouteTables(context.Context, *DescribeLocalGatewayRouteTablesInput, ...func(*Options)) (*DescribeLocalGatewayRouteTablesOutput, error)
+}
+
+var _ DescribeLocalGatewayRouteTablesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeLocalGatewayRouteTables(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

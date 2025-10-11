@@ -27,6 +27,7 @@ type MachinePoolBuilder struct {
 	id                   string
 	href                 string
 	aws                  *AWSMachinePoolBuilder
+	gcp                  *GCPMachinePoolBuilder
 	autoscaling          *MachinePoolAutoscalingBuilder
 	availabilityZones    []string
 	instanceType         string
@@ -81,11 +82,11 @@ func (b *MachinePoolBuilder) AWS(value *AWSMachinePoolBuilder) *MachinePoolBuild
 	return b
 }
 
-// Autoscaling sets the value of the 'autoscaling' attribute to the given value.
+// GCP sets the value of the 'GCP' attribute to the given value.
 //
-// Representation of a autoscaling in a machine pool.
-func (b *MachinePoolBuilder) Autoscaling(value *MachinePoolAutoscalingBuilder) *MachinePoolBuilder {
-	b.autoscaling = value
+// Representation of gcp machine pool specific parameters.
+func (b *MachinePoolBuilder) GCP(value *GCPMachinePoolBuilder) *MachinePoolBuilder {
+	b.gcp = value
 	if value != nil {
 		b.bitmap_ |= 16
 	} else {
@@ -94,18 +95,31 @@ func (b *MachinePoolBuilder) Autoscaling(value *MachinePoolAutoscalingBuilder) *
 	return b
 }
 
+// Autoscaling sets the value of the 'autoscaling' attribute to the given value.
+//
+// Representation of a autoscaling in a machine pool.
+func (b *MachinePoolBuilder) Autoscaling(value *MachinePoolAutoscalingBuilder) *MachinePoolBuilder {
+	b.autoscaling = value
+	if value != nil {
+		b.bitmap_ |= 32
+	} else {
+		b.bitmap_ &^= 32
+	}
+	return b
+}
+
 // AvailabilityZones sets the value of the 'availability_zones' attribute to the given values.
 func (b *MachinePoolBuilder) AvailabilityZones(values ...string) *MachinePoolBuilder {
 	b.availabilityZones = make([]string, len(values))
 	copy(b.availabilityZones, values)
-	b.bitmap_ |= 32
+	b.bitmap_ |= 64
 	return b
 }
 
 // InstanceType sets the value of the 'instance_type' attribute to the given value.
 func (b *MachinePoolBuilder) InstanceType(value string) *MachinePoolBuilder {
 	b.instanceType = value
-	b.bitmap_ |= 64
+	b.bitmap_ |= 128
 	return b
 }
 
@@ -113,9 +127,9 @@ func (b *MachinePoolBuilder) InstanceType(value string) *MachinePoolBuilder {
 func (b *MachinePoolBuilder) Labels(value map[string]string) *MachinePoolBuilder {
 	b.labels = value
 	if value != nil {
-		b.bitmap_ |= 128
+		b.bitmap_ |= 256
 	} else {
-		b.bitmap_ &^= 128
+		b.bitmap_ &^= 256
 	}
 	return b
 }
@@ -123,7 +137,7 @@ func (b *MachinePoolBuilder) Labels(value map[string]string) *MachinePoolBuilder
 // Replicas sets the value of the 'replicas' attribute to the given value.
 func (b *MachinePoolBuilder) Replicas(value int) *MachinePoolBuilder {
 	b.replicas = value
-	b.bitmap_ |= 256
+	b.bitmap_ |= 512
 	return b
 }
 
@@ -133,9 +147,9 @@ func (b *MachinePoolBuilder) Replicas(value int) *MachinePoolBuilder {
 func (b *MachinePoolBuilder) RootVolume(value *RootVolumeBuilder) *MachinePoolBuilder {
 	b.rootVolume = value
 	if value != nil {
-		b.bitmap_ |= 512
+		b.bitmap_ |= 1024
 	} else {
-		b.bitmap_ &^= 512
+		b.bitmap_ &^= 1024
 	}
 	return b
 }
@@ -144,7 +158,7 @@ func (b *MachinePoolBuilder) RootVolume(value *RootVolumeBuilder) *MachinePoolBu
 func (b *MachinePoolBuilder) SecurityGroupFilters(values ...*MachinePoolSecurityGroupFilterBuilder) *MachinePoolBuilder {
 	b.securityGroupFilters = make([]*MachinePoolSecurityGroupFilterBuilder, len(values))
 	copy(b.securityGroupFilters, values)
-	b.bitmap_ |= 1024
+	b.bitmap_ |= 2048
 	return b
 }
 
@@ -152,7 +166,7 @@ func (b *MachinePoolBuilder) SecurityGroupFilters(values ...*MachinePoolSecurity
 func (b *MachinePoolBuilder) Subnets(values ...string) *MachinePoolBuilder {
 	b.subnets = make([]string, len(values))
 	copy(b.subnets, values)
-	b.bitmap_ |= 2048
+	b.bitmap_ |= 4096
 	return b
 }
 
@@ -160,7 +174,7 @@ func (b *MachinePoolBuilder) Subnets(values ...string) *MachinePoolBuilder {
 func (b *MachinePoolBuilder) Taints(values ...*TaintBuilder) *MachinePoolBuilder {
 	b.taints = make([]*TaintBuilder, len(values))
 	copy(b.taints, values)
-	b.bitmap_ |= 4096
+	b.bitmap_ |= 8192
 	return b
 }
 
@@ -176,6 +190,11 @@ func (b *MachinePoolBuilder) Copy(object *MachinePool) *MachinePoolBuilder {
 		b.aws = NewAWSMachinePool().Copy(object.aws)
 	} else {
 		b.aws = nil
+	}
+	if object.gcp != nil {
+		b.gcp = NewGCPMachinePool().Copy(object.gcp)
+	} else {
+		b.gcp = nil
 	}
 	if object.autoscaling != nil {
 		b.autoscaling = NewMachinePoolAutoscaling().Copy(object.autoscaling)
@@ -236,6 +255,12 @@ func (b *MachinePoolBuilder) Build() (object *MachinePool, err error) {
 	object.bitmap_ = b.bitmap_
 	if b.aws != nil {
 		object.aws, err = b.aws.Build()
+		if err != nil {
+			return
+		}
+	}
+	if b.gcp != nil {
+		object.gcp, err = b.gcp.Build()
 		if err != nil {
 			return
 		}

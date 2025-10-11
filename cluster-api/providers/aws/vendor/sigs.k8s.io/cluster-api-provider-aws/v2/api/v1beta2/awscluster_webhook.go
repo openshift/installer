@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta2
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
@@ -42,21 +43,31 @@ const (
 var _ = ctrl.Log.WithName("awscluster-resource")
 
 func (r *AWSCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(awsClusterWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(w).
+		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-awscluster,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsclusters,versions=v1beta2,name=validation.awscluster.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-awscluster,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsclusters,versions=v1beta2,name=default.awscluster.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
+type awsClusterWebhook struct{}
+
 var (
-	_ webhook.Validator = &AWSCluster{}
-	_ webhook.Defaulter = &AWSCluster{}
+	_ webhook.CustomValidator = &awsClusterWebhook{}
+	_ webhook.CustomDefaulter = &awsClusterWebhook{}
 )
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *AWSCluster) ValidateCreate() (admission.Warnings, error) {
+func (*awsClusterWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	r, ok := obj.(*AWSCluster)
+	if !ok {
+		return nil, fmt.Errorf("expected an AWSCluster object but got %T", r)
+	}
+
 	var allErrs field.ErrorList
 	var allWarnings admission.Warnings
 
@@ -78,20 +89,25 @@ func (r *AWSCluster) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *AWSCluster) ValidateDelete() (admission.Warnings, error) {
+func (*awsClusterWebhook) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *AWSCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (*awsClusterWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	r, ok := newObj.(*AWSCluster)
+	if !ok {
+		return nil, fmt.Errorf("expected an AWSCluster object but got %T", r)
+	}
+
 	var allErrs field.ErrorList
 	var allWarnings admission.Warnings
 
 	allErrs = append(allErrs, r.validateGCTasksAnnotation()...)
 
-	oldC, ok := old.(*AWSCluster)
+	oldC, ok := oldObj.(*AWSCluster)
 	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an AWSCluster but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an AWSCluster but got a %T", oldObj))
 	}
 
 	if r.Spec.Region != oldC.Spec.Region {
@@ -228,6 +244,17 @@ func (r *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *AWSLoa
 }
 
 // Default satisfies the defaulting webhook interface.
+func (*awsClusterWebhook) Default(_ context.Context, obj runtime.Object) error {
+	r, ok := obj.(*AWSCluster)
+	if !ok {
+		return fmt.Errorf("expected an AWSCluster object but got %T", r)
+	}
+
+	r.Default()
+	return nil
+}
+
+// Default satisfies the defaulting webhook interface.
 func (r *AWSCluster) Default() {
 	SetObjectDefaults_AWSCluster(r)
 }
@@ -296,9 +323,8 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("ipamPool"), r.Spec.NetworkSpec.VPC.IPAMPool, "ipamPool must have either id or name"))
 	}
 
-	for _, rule := range r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {
-		allErrs = append(allErrs, r.validateIngressRule(rule)...)
-	}
+	allErrs = append(allErrs, r.validateIngressRules(field.NewPath("spec", "network", "additionalControlPlaneIngressRules"), r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules)...)
+	allErrs = append(allErrs, r.validateIngressRules(field.NewPath("spec", "network", "additionalNodeIngressRules"), r.Spec.NetworkSpec.AdditionalNodeIngressRules)...)
 
 	for cidrBlockIndex, cidrBlock := range r.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks {
 		if _, _, err := net.ParseCIDR(cidrBlock); err != nil {
@@ -374,18 +400,11 @@ func (r *AWSCluster) validateControlPlaneLBs() (admission.Warnings, field.ErrorL
 
 	// Additional listeners are only supported for NLBs.
 	// Validate the control plane load balancers.
-	loadBalancers := []*AWSLoadBalancerSpec{
-		r.Spec.ControlPlaneLoadBalancer,
-		r.Spec.SecondaryControlPlaneLoadBalancer,
+	if r.Spec.ControlPlaneLoadBalancer != nil {
+		allErrs = append(allErrs, r.validateIngressRules(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules)...)
 	}
-	for _, cp := range loadBalancers {
-		if cp == nil {
-			continue
-		}
-
-		for _, rule := range cp.IngressRules {
-			allErrs = append(allErrs, r.validateIngressRule(rule)...)
-		}
+	if r.Spec.SecondaryControlPlaneLoadBalancer != nil {
+		allErrs = append(allErrs, r.validateIngressRules(field.NewPath("spec", "secondaryControlPlaneLoadBalancer", "ingressRules"), r.Spec.SecondaryControlPlaneLoadBalancer.IngressRules)...)
 	}
 
 	if r.Spec.ControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeDisabled {
@@ -429,15 +448,18 @@ func (r *AWSCluster) validateControlPlaneLBs() (admission.Warnings, field.ErrorL
 	return allWarnings, allErrs
 }
 
-func (r *AWSCluster) validateIngressRule(rule IngressRule) field.ErrorList {
+func (r *AWSCluster) validateIngressRules(path *field.Path, rules []IngressRule) field.ErrorList {
 	var allErrs field.ErrorList
-	if rule.NatGatewaysIPsSource {
-		if rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil || rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalControlPlaneIngressRules"), r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
-		}
-	} else {
-		if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
+	for ruleIndex, rule := range rules {
+		rulePath := path.Index(ruleIndex)
+		if rule.NatGatewaysIPsSource {
+			if rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil || rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil {
+				allErrs = append(allErrs, field.Invalid(rulePath, rules, "natGatewaysIPsSource cannot be used together with CIDR blocks, security group IDs or security group roles"))
+			}
+		} else {
+			if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
+				allErrs = append(allErrs, field.Invalid(rulePath, rules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
+			}
 		}
 	}
 	return allErrs

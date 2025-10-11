@@ -53,7 +53,7 @@ func (o *ImageOverrides) Kind() string {
 	return ImageOverridesKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *ImageOverrides) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -196,6 +196,29 @@ func (l *ImageOverridesList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ImageOverridesList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ImageOverridesList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ImageOverridesList) SetItems(items []*ImageOverrides) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ImageOverridesList) Items() []*ImageOverrides {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

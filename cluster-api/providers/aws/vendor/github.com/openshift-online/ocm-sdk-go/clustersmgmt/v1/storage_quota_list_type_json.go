@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalStorageQuotaList(list []*StorageQuota, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeStorageQuotaList(list, stream)
+	WriteStorageQuotaList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalStorageQuotaList(list []*StorageQuota, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeStorageQuotaList writes a list of value of the 'storage_quota' type to
+// WriteStorageQuotaList writes a list of value of the 'storage_quota' type to
 // the given stream.
-func writeStorageQuotaList(list []*StorageQuota, stream *jsoniter.Stream) {
+func WriteStorageQuotaList(list []*StorageQuota, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeStorageQuota(value, stream)
+		WriteStorageQuota(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalStorageQuotaList(source interface{}) (items []*StorageQuota, err e
 	if err != nil {
 		return
 	}
-	items = readStorageQuotaList(iterator)
+	items = ReadStorageQuotaList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readStorageQuotaList reads list of values of the ”storage_quota' type from
+// ReadStorageQuotaList reads list of values of the ”storage_quota' type from
 // the given iterator.
-func readStorageQuotaList(iterator *jsoniter.Iterator) []*StorageQuota {
+func ReadStorageQuotaList(iterator *jsoniter.Iterator) []*StorageQuota {
 	list := []*StorageQuota{}
 	for iterator.ReadArray() {
-		item := readStorageQuota(iterator)
+		item := ReadStorageQuota(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -57,7 +57,7 @@ func readApplicationDependenciesListResponse(response *ApplicationDependenciesLi
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readApplicationDependencyList(iterator)
+			items := ReadApplicationDependencyList(iterator)
 			response.items = &ApplicationDependencyList{
 				items: items,
 			}

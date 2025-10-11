@@ -29,7 +29,7 @@ import (
 // MarshalTokenClaimMappings writes a value of the 'token_claim_mappings' type to the given writer.
 func MarshalTokenClaimMappings(object *TokenClaimMappings, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTokenClaimMappings(object, stream)
+	WriteTokenClaimMappings(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalTokenClaimMappings(object *TokenClaimMappings, writer io.Writer) err
 	return stream.Error
 }
 
-// writeTokenClaimMappings writes a value of the 'token_claim_mappings' type to the given stream.
-func writeTokenClaimMappings(object *TokenClaimMappings, stream *jsoniter.Stream) {
+// WriteTokenClaimMappings writes a value of the 'token_claim_mappings' type to the given stream.
+func WriteTokenClaimMappings(object *TokenClaimMappings, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeTokenClaimMappings(object *TokenClaimMappings, stream *jsoniter.Stream
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("groups")
-		writeGroupsClaim(object.groups, stream)
+		WriteGroupsClaim(object.groups, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0 && object.userName != nil
@@ -57,7 +57,7 @@ func writeTokenClaimMappings(object *TokenClaimMappings, stream *jsoniter.Stream
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("username")
-		writeUsernameClaim(object.userName, stream)
+		WriteUsernameClaim(object.userName, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -69,13 +69,13 @@ func UnmarshalTokenClaimMappings(source interface{}) (object *TokenClaimMappings
 	if err != nil {
 		return
 	}
-	object = readTokenClaimMappings(iterator)
+	object = ReadTokenClaimMappings(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTokenClaimMappings reads a value of the 'token_claim_mappings' type from the given iterator.
-func readTokenClaimMappings(iterator *jsoniter.Iterator) *TokenClaimMappings {
+// ReadTokenClaimMappings reads a value of the 'token_claim_mappings' type from the given iterator.
+func ReadTokenClaimMappings(iterator *jsoniter.Iterator) *TokenClaimMappings {
 	object := &TokenClaimMappings{}
 	for {
 		field := iterator.ReadObject()
@@ -84,11 +84,11 @@ func readTokenClaimMappings(iterator *jsoniter.Iterator) *TokenClaimMappings {
 		}
 		switch field {
 		case "groups":
-			value := readGroupsClaim(iterator)
+			value := ReadGroupsClaim(iterator)
 			object.groups = value
 			object.bitmap_ |= 1
 		case "username":
-			value := readUsernameClaim(iterator)
+			value := ReadUsernameClaim(iterator)
 			object.userName = value
 			object.bitmap_ |= 2
 		default:

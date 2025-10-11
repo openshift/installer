@@ -33,6 +33,7 @@ type ClusterAuthorizationRequest struct {
 	productCategory   string
 	quotaVersion      string
 	resources         []*ReservedResource
+	rhRegionID        string
 	scope             string
 	byoc              bool
 	disconnected      bool
@@ -330,10 +331,29 @@ func (o *ClusterAuthorizationRequest) GetResources() (value []*ReservedResource,
 	return
 }
 
+// RhRegionID returns the value of the 'rh_region_ID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+func (o *ClusterAuthorizationRequest) RhRegionID() string {
+	if o != nil && o.bitmap_&32768 != 0 {
+		return o.rhRegionID
+	}
+	return ""
+}
+
+// GetRhRegionID returns the value of the 'rh_region_ID' attribute and
+// a flag indicating if the attribute has a value.
+func (o *ClusterAuthorizationRequest) GetRhRegionID() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&32768 != 0
+	if ok {
+		value = o.rhRegionID
+	}
+	return
+}
+
 // Scope returns the value of the 'scope' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *ClusterAuthorizationRequest) Scope() string {
-	if o != nil && o.bitmap_&32768 != 0 {
+	if o != nil && o.bitmap_&65536 != 0 {
 		return o.scope
 	}
 	return ""
@@ -342,7 +362,7 @@ func (o *ClusterAuthorizationRequest) Scope() string {
 // GetScope returns the value of the 'scope' attribute and
 // a flag indicating if the attribute has a value.
 func (o *ClusterAuthorizationRequest) GetScope() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&32768 != 0
+	ok = o != nil && o.bitmap_&65536 != 0
 	if ok {
 		value = o.scope
 	}
@@ -374,6 +394,29 @@ func (l *ClusterAuthorizationRequestList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ClusterAuthorizationRequestList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ClusterAuthorizationRequestList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ClusterAuthorizationRequestList) SetItems(items []*ClusterAuthorizationRequest) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ClusterAuthorizationRequestList) Items() []*ClusterAuthorizationRequest {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

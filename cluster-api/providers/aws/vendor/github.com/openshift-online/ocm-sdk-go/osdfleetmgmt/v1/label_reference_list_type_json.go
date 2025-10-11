@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalLabelReferenceList(list []*LabelReference, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLabelReferenceList(list, stream)
+	WriteLabelReferenceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalLabelReferenceList(list []*LabelReference, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeLabelReferenceList writes a list of value of the 'label_reference' type to
+// WriteLabelReferenceList writes a list of value of the 'label_reference' type to
 // the given stream.
-func writeLabelReferenceList(list []*LabelReference, stream *jsoniter.Stream) {
+func WriteLabelReferenceList(list []*LabelReference, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeLabelReference(value, stream)
+		WriteLabelReference(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalLabelReferenceList(source interface{}) (items []*LabelReference, e
 	if err != nil {
 		return
 	}
-	items = readLabelReferenceList(iterator)
+	items = ReadLabelReferenceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLabelReferenceList reads list of values of the ”label_reference' type from
+// ReadLabelReferenceList reads list of values of the ”label_reference' type from
 // the given iterator.
-func readLabelReferenceList(iterator *jsoniter.Iterator) []*LabelReference {
+func ReadLabelReferenceList(iterator *jsoniter.Iterator) []*LabelReference {
 	list := []*LabelReference{}
 	for iterator.ReadArray() {
-		item := readLabelReference(iterator)
+		item := ReadLabelReference(iterator)
 		list = append(list, item)
 	}
 	return list

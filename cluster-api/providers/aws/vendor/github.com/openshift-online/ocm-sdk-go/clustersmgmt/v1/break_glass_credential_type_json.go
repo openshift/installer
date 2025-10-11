@@ -30,7 +30,7 @@ import (
 // MarshalBreakGlassCredential writes a value of the 'break_glass_credential' type to the given writer.
 func MarshalBreakGlassCredential(object *BreakGlassCredential, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeBreakGlassCredential(object, stream)
+	WriteBreakGlassCredential(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalBreakGlassCredential(object *BreakGlassCredential, writer io.Writer)
 	return stream.Error
 }
 
-// writeBreakGlassCredential writes a value of the 'break_glass_credential' type to the given stream.
-func writeBreakGlassCredential(object *BreakGlassCredential, stream *jsoniter.Stream) {
+// WriteBreakGlassCredential writes a value of the 'break_glass_credential' type to the given stream.
+func WriteBreakGlassCredential(object *BreakGlassCredential, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -120,13 +120,13 @@ func UnmarshalBreakGlassCredential(source interface{}) (object *BreakGlassCreden
 	if err != nil {
 		return
 	}
-	object = readBreakGlassCredential(iterator)
+	object = ReadBreakGlassCredential(iterator)
 	err = iterator.Error
 	return
 }
 
-// readBreakGlassCredential reads a value of the 'break_glass_credential' type from the given iterator.
-func readBreakGlassCredential(iterator *jsoniter.Iterator) *BreakGlassCredential {
+// ReadBreakGlassCredential reads a value of the 'break_glass_credential' type from the given iterator.
+func ReadBreakGlassCredential(iterator *jsoniter.Iterator) *BreakGlassCredential {
 	object := &BreakGlassCredential{}
 	for {
 		field := iterator.ReadObject()

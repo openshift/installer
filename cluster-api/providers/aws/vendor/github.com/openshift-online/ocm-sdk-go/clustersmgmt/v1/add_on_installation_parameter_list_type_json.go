@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddOnInstallationParameterList(list []*AddOnInstallationParameter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnInstallationParameterList(list, stream)
+	WriteAddOnInstallationParameterList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddOnInstallationParameterList(list []*AddOnInstallationParameter, w
 	return stream.Error
 }
 
-// writeAddOnInstallationParameterList writes a list of value of the 'add_on_installation_parameter' type to
+// WriteAddOnInstallationParameterList writes a list of value of the 'add_on_installation_parameter' type to
 // the given stream.
-func writeAddOnInstallationParameterList(list []*AddOnInstallationParameter, stream *jsoniter.Stream) {
+func WriteAddOnInstallationParameterList(list []*AddOnInstallationParameter, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAddOnInstallationParameter(value, stream)
+		WriteAddOnInstallationParameter(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddOnInstallationParameterList(source interface{}) (items []*AddOn
 	if err != nil {
 		return
 	}
-	items = readAddOnInstallationParameterList(iterator)
+	items = ReadAddOnInstallationParameterList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnInstallationParameterList reads list of values of the ”add_on_installation_parameter' type from
+// ReadAddOnInstallationParameterList reads list of values of the ”add_on_installation_parameter' type from
 // the given iterator.
-func readAddOnInstallationParameterList(iterator *jsoniter.Iterator) []*AddOnInstallationParameter {
+func ReadAddOnInstallationParameterList(iterator *jsoniter.Iterator) []*AddOnInstallationParameter {
 	list := []*AddOnInstallationParameter{}
 	for iterator.ReadArray() {
-		item := readAddOnInstallationParameter(iterator)
+		item := ReadAddOnInstallationParameter(iterator)
 		list = append(list, item)
 	}
 	return list

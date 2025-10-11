@@ -29,7 +29,7 @@ import (
 // MarshalAddOnConfig writes a value of the 'add_on_config' type to the given writer.
 func MarshalAddOnConfig(object *AddOnConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnConfig(object, stream)
+	WriteAddOnConfig(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddOnConfig(object *AddOnConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddOnConfig writes a value of the 'add_on_config' type to the given stream.
-func writeAddOnConfig(object *AddOnConfig, stream *jsoniter.Stream) {
+// WriteAddOnConfig writes a value of the 'add_on_config' type to the given stream.
+func WriteAddOnConfig(object *AddOnConfig, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func writeAddOnConfig(object *AddOnConfig, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("add_on_environment_variables")
-		writeAddOnEnvironmentVariableList(object.addOnEnvironmentVariables, stream)
+		WriteAddOnEnvironmentVariableList(object.addOnEnvironmentVariables, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.secretPropagations != nil
@@ -80,7 +80,7 @@ func writeAddOnConfig(object *AddOnConfig, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("secret_propagations")
-		writeAddOnSecretPropagationList(object.secretPropagations, stream)
+		WriteAddOnSecretPropagationList(object.secretPropagations, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -92,13 +92,13 @@ func UnmarshalAddOnConfig(source interface{}) (object *AddOnConfig, err error) {
 	if err != nil {
 		return
 	}
-	object = readAddOnConfig(iterator)
+	object = ReadAddOnConfig(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnConfig reads a value of the 'add_on_config' type from the given iterator.
-func readAddOnConfig(iterator *jsoniter.Iterator) *AddOnConfig {
+// ReadAddOnConfig reads a value of the 'add_on_config' type from the given iterator.
+func ReadAddOnConfig(iterator *jsoniter.Iterator) *AddOnConfig {
 	object := &AddOnConfig{}
 	for {
 		field := iterator.ReadObject()
@@ -118,11 +118,11 @@ func readAddOnConfig(iterator *jsoniter.Iterator) *AddOnConfig {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "add_on_environment_variables":
-			value := readAddOnEnvironmentVariableList(iterator)
+			value := ReadAddOnEnvironmentVariableList(iterator)
 			object.addOnEnvironmentVariables = value
 			object.bitmap_ |= 8
 		case "secret_propagations":
-			value := readAddOnSecretPropagationList(iterator)
+			value := ReadAddOnSecretPropagationList(iterator)
 			object.secretPropagations = value
 			object.bitmap_ |= 16
 		default:

@@ -57,7 +57,7 @@ func readNodePoolsListResponse(response *NodePoolsListResponse, reader io.Reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readNodePoolList(iterator)
+			items := ReadNodePoolList(iterator)
 			response.items = &NodePoolList{
 				items: items,
 			}

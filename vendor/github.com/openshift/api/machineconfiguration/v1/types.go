@@ -636,6 +636,10 @@ const (
 	// MachineConfigPoolRenderDegraded means the rendered configuration for the pool cannot be generated because of an error
 	MachineConfigPoolRenderDegraded MachineConfigPoolConditionType = "RenderDegraded"
 
+	// MachineConfigPoolImageBuildDegraded means the image build for the pool was not successful
+	// This condition is only used when Image Mode is enabled for the pool
+	MachineConfigPoolImageBuildDegraded MachineConfigPoolConditionType = "ImageBuildDegraded"
+
 	// MachineConfigPoolPinnedImageSetsDegraded means the pinned image sets for the pool cannot be populated because of an error
 	// +openshift:enable:FeatureGate=PinnedImages
 	MachineConfigPoolPinnedImageSetsDegraded MachineConfigPoolConditionType = "PinnedImageSetsDegraded"
@@ -644,7 +648,7 @@ const (
 	// +openshift:enable:FeatureGate=PinnedImages
 	MachineConfigPoolSynchronizerDegraded MachineConfigPoolConditionType = "PoolSynchronizerDegraded"
 
-	// MachineConfigPoolDegraded is the overall status of the pool based, today, on whether we fail with NodeDegraded or RenderDegraded
+	// MachineConfigPoolDegraded is the overall status of the pool based, today, on whether we fail with NodeDegraded, RenderDegraded, or ImageBuildDegraded
 	MachineConfigPoolDegraded MachineConfigPoolConditionType = "Degraded"
 
 	MachineConfigPoolBuildPending MachineConfigPoolConditionType = "BuildPending"

@@ -29,7 +29,7 @@ import (
 // MarshalAddonEnvironmentVariable writes a value of the 'addon_environment_variable' type to the given writer.
 func MarshalAddonEnvironmentVariable(object *AddonEnvironmentVariable, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonEnvironmentVariable(object, stream)
+	WriteAddonEnvironmentVariable(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddonEnvironmentVariable(object *AddonEnvironmentVariable, writer io
 	return stream.Error
 }
 
-// writeAddonEnvironmentVariable writes a value of the 'addon_environment_variable' type to the given stream.
-func writeAddonEnvironmentVariable(object *AddonEnvironmentVariable, stream *jsoniter.Stream) {
+// WriteAddonEnvironmentVariable writes a value of the 'addon_environment_variable' type to the given stream.
+func WriteAddonEnvironmentVariable(object *AddonEnvironmentVariable, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalAddonEnvironmentVariable(source interface{}) (object *AddonEnviron
 	if err != nil {
 		return
 	}
-	object = readAddonEnvironmentVariable(iterator)
+	object = ReadAddonEnvironmentVariable(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonEnvironmentVariable reads a value of the 'addon_environment_variable' type from the given iterator.
-func readAddonEnvironmentVariable(iterator *jsoniter.Iterator) *AddonEnvironmentVariable {
+// ReadAddonEnvironmentVariable reads a value of the 'addon_environment_variable' type from the given iterator.
+func ReadAddonEnvironmentVariable(iterator *jsoniter.Iterator) *AddonEnvironmentVariable {
 	object := &AddonEnvironmentVariable{}
 	for {
 		field := iterator.ReadObject()

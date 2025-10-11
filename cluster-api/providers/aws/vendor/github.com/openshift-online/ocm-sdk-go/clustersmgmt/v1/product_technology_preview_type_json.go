@@ -30,7 +30,7 @@ import (
 // MarshalProductTechnologyPreview writes a value of the 'product_technology_preview' type to the given writer.
 func MarshalProductTechnologyPreview(object *ProductTechnologyPreview, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeProductTechnologyPreview(object, stream)
+	WriteProductTechnologyPreview(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalProductTechnologyPreview(object *ProductTechnologyPreview, writer io
 	return stream.Error
 }
 
-// writeProductTechnologyPreview writes a value of the 'product_technology_preview' type to the given stream.
-func writeProductTechnologyPreview(object *ProductTechnologyPreview, stream *jsoniter.Stream) {
+// WriteProductTechnologyPreview writes a value of the 'product_technology_preview' type to the given stream.
+func WriteProductTechnologyPreview(object *ProductTechnologyPreview, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -102,13 +102,13 @@ func UnmarshalProductTechnologyPreview(source interface{}) (object *ProductTechn
 	if err != nil {
 		return
 	}
-	object = readProductTechnologyPreview(iterator)
+	object = ReadProductTechnologyPreview(iterator)
 	err = iterator.Error
 	return
 }
 
-// readProductTechnologyPreview reads a value of the 'product_technology_preview' type from the given iterator.
-func readProductTechnologyPreview(iterator *jsoniter.Iterator) *ProductTechnologyPreview {
+// ReadProductTechnologyPreview reads a value of the 'product_technology_preview' type from the given iterator.
+func ReadProductTechnologyPreview(iterator *jsoniter.Iterator) *ProductTechnologyPreview {
 	object := &ProductTechnologyPreview{}
 	for {
 		field := iterator.ReadObject()

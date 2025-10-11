@@ -29,7 +29,7 @@ import (
 // MarshalFeatureReviewResponse writes a value of the 'feature_review_response' type to the given writer.
 func MarshalFeatureReviewResponse(object *FeatureReviewResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeFeatureReviewResponse(object, stream)
+	WriteFeatureReviewResponse(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalFeatureReviewResponse(object *FeatureReviewResponse, writer io.Write
 	return stream.Error
 }
 
-// writeFeatureReviewResponse writes a value of the 'feature_review_response' type to the given stream.
-func writeFeatureReviewResponse(object *FeatureReviewResponse, stream *jsoniter.Stream) {
+// WriteFeatureReviewResponse writes a value of the 'feature_review_response' type to the given stream.
+func WriteFeatureReviewResponse(object *FeatureReviewResponse, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalFeatureReviewResponse(source interface{}) (object *FeatureReviewRe
 	if err != nil {
 		return
 	}
-	object = readFeatureReviewResponse(iterator)
+	object = ReadFeatureReviewResponse(iterator)
 	err = iterator.Error
 	return
 }
 
-// readFeatureReviewResponse reads a value of the 'feature_review_response' type from the given iterator.
-func readFeatureReviewResponse(iterator *jsoniter.Iterator) *FeatureReviewResponse {
+// ReadFeatureReviewResponse reads a value of the 'feature_review_response' type from the given iterator.
+func ReadFeatureReviewResponse(iterator *jsoniter.Iterator) *FeatureReviewResponse {
 	object := &FeatureReviewResponse{}
 	for {
 		field := iterator.ReadObject()

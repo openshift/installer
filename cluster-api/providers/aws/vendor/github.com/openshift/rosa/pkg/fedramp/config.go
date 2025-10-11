@@ -32,6 +32,15 @@ func IsGovRegion(region string) bool {
 	return false
 }
 
+func IsValidEnv(env string) bool {
+	for urlAlias := range URLAliases {
+		if urlAlias == env {
+			return true
+		}
+	}
+	return false
+}
+
 // JumpAccounts are the various of AWS accounts used for the installer jump role in the various OCM environments
 var JumpAccounts = map[string]string{
 	"production":  "448648337690",

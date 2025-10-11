@@ -29,7 +29,7 @@ import (
 // MarshalAddOnEnvironmentVariable writes a value of the 'add_on_environment_variable' type to the given writer.
 func MarshalAddOnEnvironmentVariable(object *AddOnEnvironmentVariable, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddOnEnvironmentVariable(object, stream)
+	WriteAddOnEnvironmentVariable(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddOnEnvironmentVariable(object *AddOnEnvironmentVariable, writer io
 	return stream.Error
 }
 
-// writeAddOnEnvironmentVariable writes a value of the 'add_on_environment_variable' type to the given stream.
-func writeAddOnEnvironmentVariable(object *AddOnEnvironmentVariable, stream *jsoniter.Stream) {
+// WriteAddOnEnvironmentVariable writes a value of the 'add_on_environment_variable' type to the given stream.
+func WriteAddOnEnvironmentVariable(object *AddOnEnvironmentVariable, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalAddOnEnvironmentVariable(source interface{}) (object *AddOnEnviron
 	if err != nil {
 		return
 	}
-	object = readAddOnEnvironmentVariable(iterator)
+	object = ReadAddOnEnvironmentVariable(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddOnEnvironmentVariable reads a value of the 'add_on_environment_variable' type from the given iterator.
-func readAddOnEnvironmentVariable(iterator *jsoniter.Iterator) *AddOnEnvironmentVariable {
+// ReadAddOnEnvironmentVariable reads a value of the 'add_on_environment_variable' type from the given iterator.
+func ReadAddOnEnvironmentVariable(iterator *jsoniter.Iterator) *AddOnEnvironmentVariable {
 	object := &AddOnEnvironmentVariable{}
 	for {
 		field := iterator.ReadObject()

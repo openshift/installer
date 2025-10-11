@@ -13,10 +13,12 @@ import (
 
 // Creates a connection notification for a specified VPC endpoint or VPC endpoint
 // service. A connection notification notifies you of specific endpoint events. You
-// must create an SNS topic to receive notifications. For more information, see
-// Create a Topic (https://docs.aws.amazon.com/sns/latest/dg/CreateTopic.html) in
-// the Amazon Simple Notification Service Developer Guide. You can create a
-// connection notification for interface endpoints only.
+// must create an SNS topic to receive notifications. For more information, see [Creating an Amazon SNS topic]in
+// the Amazon SNS Developer Guide.
+//
+// You can create a connection notification for interface endpoints only.
+//
+// [Creating an Amazon SNS topic]: https://docs.aws.amazon.com/sns/latest/dg/CreateTopic.html
 func (c *Client) CreateVpcEndpointConnectionNotification(ctx context.Context, params *CreateVpcEndpointConnectionNotificationInput, optFns ...func(*Options)) (*CreateVpcEndpointConnectionNotificationOutput, error) {
 	if params == nil {
 		params = &CreateVpcEndpointConnectionNotificationInput{}
@@ -46,8 +48,9 @@ type CreateVpcEndpointConnectionNotificationInput struct {
 	ConnectionNotificationArn *string
 
 	// Unique, case-sensitive identifier that you provide to ensure the idempotency of
-	// the request. For more information, see How to ensure idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
-	// .
+	// the request. For more information, see [How to ensure idempotency].
+	//
+	// [How to ensure idempotency]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-api-idempotency.html
 	ClientToken *string
 
 	// Checks whether you have the required permissions for the action, without
@@ -123,6 +126,9 @@ func (c *Client) addOperationCreateVpcEndpointConnectionNotificationMiddlewares(
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -133,6 +139,15 @@ func (c *Client) addOperationCreateVpcEndpointConnectionNotificationMiddlewares(
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateVpcEndpointConnectionNotificationValidationMiddleware(stack); err != nil {
@@ -154,6 +169,18 @@ func (c *Client) addOperationCreateVpcEndpointConnectionNotificationMiddlewares(
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -29,7 +29,7 @@ import (
 // MarshalWifRole writes a value of the 'wif_role' type to the given writer.
 func MarshalWifRole(object *WifRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifRole(object, stream)
+	WriteWifRole(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalWifRole(object *WifRole, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeWifRole writes a value of the 'wif_role' type to the given stream.
-func writeWifRole(object *WifRole, stream *jsoniter.Stream) {
+// WriteWifRole writes a value of the 'wif_role' type to the given stream.
+func WriteWifRole(object *WifRole, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeWifRole(object *WifRole, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("permissions")
-		writeStringList(object.permissions, stream)
+		WriteStringList(object.permissions, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -78,13 +78,13 @@ func UnmarshalWifRole(source interface{}) (object *WifRole, err error) {
 	if err != nil {
 		return
 	}
-	object = readWifRole(iterator)
+	object = ReadWifRole(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifRole reads a value of the 'wif_role' type from the given iterator.
-func readWifRole(iterator *jsoniter.Iterator) *WifRole {
+// ReadWifRole reads a value of the 'wif_role' type from the given iterator.
+func ReadWifRole(iterator *jsoniter.Iterator) *WifRole {
 	object := &WifRole{}
 	for {
 		field := iterator.ReadObject()
@@ -93,7 +93,7 @@ func readWifRole(iterator *jsoniter.Iterator) *WifRole {
 		}
 		switch field {
 		case "permissions":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.permissions = value
 			object.bitmap_ |= 1
 		case "predefined":

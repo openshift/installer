@@ -53,6 +53,7 @@ func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *fi
 	}
 
 	allErrs = append(allErrs, validateSecurityGroups(platform, p, fldPath)...)
+	allErrs = append(allErrs, ValidateCPUOptions(p, fldPath)...)
 
 	return allErrs
 }
@@ -131,5 +132,42 @@ func ValidateMachinePoolArchitecture(pool *types.MachinePool, fldPath *field.Pat
 	if !validArchitectures[pool.Architecture] {
 		allErrs = append(allErrs, field.NotSupported(fldPath, pool.Architecture, validArchitectureValues))
 	}
+	return allErrs
+}
+
+func ValidateCPUOptions(p *aws.MachinePool, fldPath *field.Path) field.ErrorList {
+	if p.CPUOptions == nil {
+		return nil
+	}
+
+	allErrs := field.ErrorList{}
+
+	if *p.CPUOptions == (aws.CPUOptions{}) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(
+				fldPath.Child("cpuOptions"),
+				"{}",
+				"At least one field must be set if cpuOptions is provided",
+			),
+		)
+	}
+
+	if p.CPUOptions.ConfidentialCompute != nil {
+		switch *p.CPUOptions.ConfidentialCompute {
+		case aws.AWSConfidentialComputePolicyDisabled, aws.AWSConfidentialComputePolicySEVSNP:
+			// Valid values
+		default:
+			allErrs = append(
+				allErrs,
+				field.Invalid(
+					fldPath.Child("confidentialCompute"),
+					p.CPUOptions.ConfidentialCompute,
+					fmt.Sprintf("Allowed values are %s, %s and omitted", aws.AWSConfidentialComputePolicyDisabled, aws.AWSConfidentialComputePolicySEVSNP),
+				),
+			)
+		}
+	}
+
 	return allErrs
 }

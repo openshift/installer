@@ -29,7 +29,7 @@ import (
 // MarshalServerConfig writes a value of the 'server_config' type to the given writer.
 func MarshalServerConfig(object *ServerConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeServerConfig(object, stream)
+	WriteServerConfig(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalServerConfig(object *ServerConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeServerConfig writes a value of the 'server_config' type to the given stream.
-func writeServerConfig(object *ServerConfig, stream *jsoniter.Stream) {
+// WriteServerConfig writes a value of the 'server_config' type to the given stream.
+func WriteServerConfig(object *ServerConfig, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func writeServerConfig(object *ServerConfig, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("aws_shard")
-		writeAWSShard(object.awsShard, stream)
+		WriteAWSShard(object.awsShard, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -110,13 +110,13 @@ func UnmarshalServerConfig(source interface{}) (object *ServerConfig, err error)
 	if err != nil {
 		return
 	}
-	object = readServerConfig(iterator)
+	object = ReadServerConfig(iterator)
 	err = iterator.Error
 	return
 }
 
-// readServerConfig reads a value of the 'server_config' type from the given iterator.
-func readServerConfig(iterator *jsoniter.Iterator) *ServerConfig {
+// ReadServerConfig reads a value of the 'server_config' type from the given iterator.
+func ReadServerConfig(iterator *jsoniter.Iterator) *ServerConfig {
 	object := &ServerConfig{}
 	for {
 		field := iterator.ReadObject()
@@ -136,7 +136,7 @@ func readServerConfig(iterator *jsoniter.Iterator) *ServerConfig {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "aws_shard":
-			value := readAWSShard(iterator)
+			value := ReadAWSShard(iterator)
 			object.awsShard = value
 			object.bitmap_ |= 8
 		case "kubeconfig":

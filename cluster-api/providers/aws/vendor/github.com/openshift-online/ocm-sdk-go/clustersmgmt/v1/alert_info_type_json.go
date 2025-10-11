@@ -29,7 +29,7 @@ import (
 // MarshalAlertInfo writes a value of the 'alert_info' type to the given writer.
 func MarshalAlertInfo(object *AlertInfo, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAlertInfo(object, stream)
+	WriteAlertInfo(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAlertInfo(object *AlertInfo, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAlertInfo writes a value of the 'alert_info' type to the given stream.
-func writeAlertInfo(object *AlertInfo, stream *jsoniter.Stream) {
+// WriteAlertInfo writes a value of the 'alert_info' type to the given stream.
+func WriteAlertInfo(object *AlertInfo, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalAlertInfo(source interface{}) (object *AlertInfo, err error) {
 	if err != nil {
 		return
 	}
-	object = readAlertInfo(iterator)
+	object = ReadAlertInfo(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAlertInfo reads a value of the 'alert_info' type from the given iterator.
-func readAlertInfo(iterator *jsoniter.Iterator) *AlertInfo {
+// ReadAlertInfo reads a value of the 'alert_info' type from the given iterator.
+func ReadAlertInfo(iterator *jsoniter.Iterator) *AlertInfo {
 	object := &AlertInfo{}
 	for {
 		field := iterator.ReadObject()

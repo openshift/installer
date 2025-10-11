@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSubnetworkList(list []*Subnetwork, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSubnetworkList(list, stream)
+	WriteSubnetworkList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSubnetworkList(list []*Subnetwork, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeSubnetworkList writes a list of value of the 'subnetwork' type to
+// WriteSubnetworkList writes a list of value of the 'subnetwork' type to
 // the given stream.
-func writeSubnetworkList(list []*Subnetwork, stream *jsoniter.Stream) {
+func WriteSubnetworkList(list []*Subnetwork, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeSubnetwork(value, stream)
+		WriteSubnetwork(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSubnetworkList(source interface{}) (items []*Subnetwork, err error
 	if err != nil {
 		return
 	}
-	items = readSubnetworkList(iterator)
+	items = ReadSubnetworkList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSubnetworkList reads list of values of the ”subnetwork' type from
+// ReadSubnetworkList reads list of values of the ”subnetwork' type from
 // the given iterator.
-func readSubnetworkList(iterator *jsoniter.Iterator) []*Subnetwork {
+func ReadSubnetworkList(iterator *jsoniter.Iterator) []*Subnetwork {
 	list := []*Subnetwork{}
 	for iterator.ReadArray() {
-		item := readSubnetwork(iterator)
+		item := ReadSubnetwork(iterator)
 		list = append(list, item)
 	}
 	return list

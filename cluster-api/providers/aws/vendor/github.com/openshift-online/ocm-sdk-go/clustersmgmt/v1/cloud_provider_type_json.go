@@ -29,7 +29,7 @@ import (
 // MarshalCloudProvider writes a value of the 'cloud_provider' type to the given writer.
 func MarshalCloudProvider(object *CloudProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeCloudProvider(object, stream)
+	WriteCloudProvider(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalCloudProvider(object *CloudProvider, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeCloudProvider writes a value of the 'cloud_provider' type to the given stream.
-func writeCloudProvider(object *CloudProvider, stream *jsoniter.Stream) {
+// WriteCloudProvider writes a value of the 'cloud_provider' type to the given stream.
+func WriteCloudProvider(object *CloudProvider, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -89,7 +89,7 @@ func writeCloudProvider(object *CloudProvider, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("regions")
-		writeCloudRegionList(object.regions, stream)
+		WriteCloudRegionList(object.regions, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -101,13 +101,13 @@ func UnmarshalCloudProvider(source interface{}) (object *CloudProvider, err erro
 	if err != nil {
 		return
 	}
-	object = readCloudProvider(iterator)
+	object = ReadCloudProvider(iterator)
 	err = iterator.Error
 	return
 }
 
-// readCloudProvider reads a value of the 'cloud_provider' type from the given iterator.
-func readCloudProvider(iterator *jsoniter.Iterator) *CloudProvider {
+// ReadCloudProvider reads a value of the 'cloud_provider' type from the given iterator.
+func ReadCloudProvider(iterator *jsoniter.Iterator) *CloudProvider {
 	object := &CloudProvider{}
 	for {
 		field := iterator.ReadObject()
@@ -135,7 +135,7 @@ func readCloudProvider(iterator *jsoniter.Iterator) *CloudProvider {
 			object.name = value
 			object.bitmap_ |= 16
 		case "regions":
-			value := readCloudRegionList(iterator)
+			value := ReadCloudRegionList(iterator)
 			object.regions = value
 			object.bitmap_ |= 32
 		default:

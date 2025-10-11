@@ -161,6 +161,29 @@ func (l *AzureServiceManagedIdentityList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AzureServiceManagedIdentityList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AzureServiceManagedIdentityList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AzureServiceManagedIdentityList) SetItems(items []*AzureServiceManagedIdentity) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AzureServiceManagedIdentityList) Items() []*AzureServiceManagedIdentity {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AzureServiceManagedIdentityList) Empty() bool {
 	return l == nil || len(l.items) == 0

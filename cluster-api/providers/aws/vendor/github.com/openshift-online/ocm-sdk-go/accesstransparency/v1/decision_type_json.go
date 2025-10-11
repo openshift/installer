@@ -30,7 +30,7 @@ import (
 // MarshalDecision writes a value of the 'decision' type to the given writer.
 func MarshalDecision(object *Decision, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDecision(object, stream)
+	WriteDecision(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalDecision(object *Decision, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeDecision writes a value of the 'decision' type to the given stream.
-func writeDecision(object *Decision, stream *jsoniter.Stream) {
+// WriteDecision writes a value of the 'decision' type to the given stream.
+func WriteDecision(object *Decision, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -120,13 +120,13 @@ func UnmarshalDecision(source interface{}) (object *Decision, err error) {
 	if err != nil {
 		return
 	}
-	object = readDecision(iterator)
+	object = ReadDecision(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDecision reads a value of the 'decision' type from the given iterator.
-func readDecision(iterator *jsoniter.Iterator) *Decision {
+// ReadDecision reads a value of the 'decision' type from the given iterator.
+func ReadDecision(iterator *jsoniter.Iterator) *Decision {
 	object := &Decision{}
 	for {
 		field := iterator.ReadObject()

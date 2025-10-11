@@ -29,7 +29,7 @@ import (
 // MarshalSecurityGroup writes a value of the 'security_group' type to the given writer.
 func MarshalSecurityGroup(object *SecurityGroup, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSecurityGroup(object, stream)
+	WriteSecurityGroup(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSecurityGroup(object *SecurityGroup, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeSecurityGroup writes a value of the 'security_group' type to the given stream.
-func writeSecurityGroup(object *SecurityGroup, stream *jsoniter.Stream) {
+// WriteSecurityGroup writes a value of the 'security_group' type to the given stream.
+func WriteSecurityGroup(object *SecurityGroup, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalSecurityGroup(source interface{}) (object *SecurityGroup, err erro
 	if err != nil {
 		return
 	}
-	object = readSecurityGroup(iterator)
+	object = ReadSecurityGroup(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSecurityGroup reads a value of the 'security_group' type from the given iterator.
-func readSecurityGroup(iterator *jsoniter.Iterator) *SecurityGroup {
+// ReadSecurityGroup reads a value of the 'security_group' type from the given iterator.
+func ReadSecurityGroup(iterator *jsoniter.Iterator) *SecurityGroup {
 	object := &SecurityGroup{}
 	for {
 		field := iterator.ReadObject()

@@ -20,8 +20,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/pkg/errors"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -58,7 +59,7 @@ func (s *Service) reconcileEgressOnlyInternetGateways() error {
 		if err != nil {
 			return err
 		}
-		eigws = []*ec2.EgressOnlyInternetGateway{ig}
+		eigws = []types.EgressOnlyInternetGateway{*ig}
 	} else if err != nil {
 		return err
 	}
@@ -105,7 +106,7 @@ func (s *Service) deleteEgressOnlyInternetGateways() error {
 			EgressOnlyInternetGatewayId: ig.EgressOnlyInternetGatewayId,
 		}
 
-		if _, err = s.EC2Client.DeleteEgressOnlyInternetGatewayWithContext(context.TODO(), deleteReq); err != nil {
+		if _, err = s.EC2Client.DeleteEgressOnlyInternetGateway(context.TODO(), deleteReq); err != nil {
 			record.Warnf(s.scope.InfraCluster(), "FailedDeleteEgressOnlyInternetGateway", "Failed to delete Egress Only Internet Gateway %q previously attached to VPC %q: %v", *ig.EgressOnlyInternetGatewayId, s.scope.VPC().ID, err)
 			return errors.Wrapf(err, "failed to delete egress only internet gateway %q", *ig.EgressOnlyInternetGatewayId)
 		}
@@ -117,10 +118,10 @@ func (s *Service) deleteEgressOnlyInternetGateways() error {
 	return nil
 }
 
-func (s *Service) createEgressOnlyInternetGateway() (*ec2.EgressOnlyInternetGateway, error) {
-	ig, err := s.EC2Client.CreateEgressOnlyInternetGatewayWithContext(context.TODO(), &ec2.CreateEgressOnlyInternetGatewayInput{
-		TagSpecifications: []*ec2.TagSpecification{
-			tags.BuildParamsToTagSpecification(ec2.ResourceTypeEgressOnlyInternetGateway, s.getEgressOnlyGatewayTagParams(services.TemporaryResourceID)),
+func (s *Service) createEgressOnlyInternetGateway() (*types.EgressOnlyInternetGateway, error) {
+	ig, err := s.EC2Client.CreateEgressOnlyInternetGateway(context.TODO(), &ec2.CreateEgressOnlyInternetGatewayInput{
+		TagSpecifications: []types.TagSpecification{
+			tags.BuildParamsToTagSpecification(types.ResourceTypeEgressOnlyInternetGateway, s.getEgressOnlyGatewayTagParams(services.TemporaryResourceID)),
 		},
 		VpcId: aws.String(s.scope.VPC().ID),
 	})
@@ -134,9 +135,9 @@ func (s *Service) createEgressOnlyInternetGateway() (*ec2.EgressOnlyInternetGate
 	return ig.EgressOnlyInternetGateway, nil
 }
 
-func (s *Service) describeEgressOnlyVpcInternetGateways() ([]*ec2.EgressOnlyInternetGateway, error) {
-	out, err := s.EC2Client.DescribeEgressOnlyInternetGatewaysWithContext(context.TODO(), &ec2.DescribeEgressOnlyInternetGatewaysInput{
-		Filters: []*ec2.Filter{
+func (s *Service) describeEgressOnlyVpcInternetGateways() ([]types.EgressOnlyInternetGateway, error) {
+	out, err := s.EC2Client.DescribeEgressOnlyInternetGateways(context.TODO(), &ec2.DescribeEgressOnlyInternetGatewaysInput{
+		Filters: []types.Filter{
 			filter.EC2.VPCAttachment(s.scope.VPC().ID),
 		},
 	})

@@ -30,7 +30,7 @@ import (
 // MarshalSubnetNetworkVerification writes a value of the 'subnet_network_verification' type to the given writer.
 func MarshalSubnetNetworkVerification(object *SubnetNetworkVerification, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSubnetNetworkVerification(object, stream)
+	WriteSubnetNetworkVerification(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalSubnetNetworkVerification(object *SubnetNetworkVerification, writer 
 	return stream.Error
 }
 
-// writeSubnetNetworkVerification writes a value of the 'subnet_network_verification' type to the given stream.
-func writeSubnetNetworkVerification(object *SubnetNetworkVerification, stream *jsoniter.Stream) {
+// WriteSubnetNetworkVerification writes a value of the 'subnet_network_verification' type to the given stream.
+func WriteSubnetNetworkVerification(object *SubnetNetworkVerification, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func writeSubnetNetworkVerification(object *SubnetNetworkVerification, stream *j
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("details")
-		writeStringList(object.details, stream)
+		WriteStringList(object.details, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -131,13 +131,13 @@ func UnmarshalSubnetNetworkVerification(source interface{}) (object *SubnetNetwo
 	if err != nil {
 		return
 	}
-	object = readSubnetNetworkVerification(iterator)
+	object = ReadSubnetNetworkVerification(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSubnetNetworkVerification reads a value of the 'subnet_network_verification' type from the given iterator.
-func readSubnetNetworkVerification(iterator *jsoniter.Iterator) *SubnetNetworkVerification {
+// ReadSubnetNetworkVerification reads a value of the 'subnet_network_verification' type from the given iterator.
+func ReadSubnetNetworkVerification(iterator *jsoniter.Iterator) *SubnetNetworkVerification {
 	object := &SubnetNetworkVerification{}
 	for {
 		field := iterator.ReadObject()
@@ -157,7 +157,7 @@ func readSubnetNetworkVerification(iterator *jsoniter.Iterator) *SubnetNetworkVe
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "details":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.details = value
 			object.bitmap_ |= 8
 		case "platform":

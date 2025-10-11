@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalProductList(list []*Product, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeProductList(list, stream)
+	WriteProductList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalProductList(list []*Product, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeProductList writes a list of value of the 'product' type to
+// WriteProductList writes a list of value of the 'product' type to
 // the given stream.
-func writeProductList(list []*Product, stream *jsoniter.Stream) {
+func WriteProductList(list []*Product, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeProduct(value, stream)
+		WriteProduct(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalProductList(source interface{}) (items []*Product, err error) {
 	if err != nil {
 		return
 	}
-	items = readProductList(iterator)
+	items = ReadProductList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readProductList reads list of values of the ”product' type from
+// ReadProductList reads list of values of the ”product' type from
 // the given iterator.
-func readProductList(iterator *jsoniter.Iterator) []*Product {
+func ReadProductList(iterator *jsoniter.Iterator) []*Product {
 	list := []*Product{}
 	for iterator.ReadArray() {
-		item := readProduct(iterator)
+		item := ReadProduct(iterator)
 		list = append(list, item)
 	}
 	return list

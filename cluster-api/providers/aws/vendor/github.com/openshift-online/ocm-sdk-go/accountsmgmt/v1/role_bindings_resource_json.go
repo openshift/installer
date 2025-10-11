@@ -57,7 +57,7 @@ func readRoleBindingsListResponse(response *RoleBindingsListResponse, reader io.
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readRoleBindingList(iterator)
+			items := ReadRoleBindingList(iterator)
 			response.items = &RoleBindingList{
 				items: items,
 			}

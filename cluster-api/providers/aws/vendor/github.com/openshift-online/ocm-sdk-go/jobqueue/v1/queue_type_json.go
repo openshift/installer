@@ -30,7 +30,7 @@ import (
 // MarshalQueue writes a value of the 'queue' type to the given writer.
 func MarshalQueue(object *Queue, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeQueue(object, stream)
+	WriteQueue(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalQueue(object *Queue, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeQueue writes a value of the 'queue' type to the given stream.
-func writeQueue(object *Queue, stream *jsoniter.Stream) {
+// WriteQueue writes a value of the 'queue' type to the given stream.
+func WriteQueue(object *Queue, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -120,13 +120,13 @@ func UnmarshalQueue(source interface{}) (object *Queue, err error) {
 	if err != nil {
 		return
 	}
-	object = readQueue(iterator)
+	object = ReadQueue(iterator)
 	err = iterator.Error
 	return
 }
 
-// readQueue reads a value of the 'queue' type from the given iterator.
-func readQueue(iterator *jsoniter.Iterator) *Queue {
+// ReadQueue reads a value of the 'queue' type from the given iterator.
+func ReadQueue(iterator *jsoniter.Iterator) *Queue {
 	object := &Queue{}
 	for {
 		field := iterator.ReadObject()

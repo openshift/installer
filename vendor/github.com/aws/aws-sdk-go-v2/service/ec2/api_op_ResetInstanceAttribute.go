@@ -13,11 +13,14 @@ import (
 
 // Resets an attribute of an instance to its default value. To reset the kernel or
 // ramdisk , the instance must be in a stopped state. To reset the sourceDestCheck
-// , the instance can be either running or stopped. The sourceDestCheck attribute
-// controls whether source/destination checking is enabled. The default value is
-// true , which means checking is enabled. This value must be false for a NAT
-// instance to perform NAT. For more information, see NAT Instances (https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_NAT_Instance.html)
-// in the Amazon VPC User Guide.
+// , the instance can be either running or stopped.
+//
+// The sourceDestCheck attribute controls whether source/destination checking is
+// enabled. The default value is true , which means checking is enabled. This value
+// must be false for a NAT instance to perform NAT. For more information, see [NAT instances] in
+// the Amazon VPC User Guide.
+//
+// [NAT instances]: https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_NAT_Instance.html
 func (c *Client) ResetInstanceAttribute(ctx context.Context, params *ResetInstanceAttributeInput, optFns ...func(*Options)) (*ResetInstanceAttributeOutput, error) {
 	if params == nil {
 		params = &ResetInstanceAttributeInput{}
@@ -35,8 +38,9 @@ func (c *Client) ResetInstanceAttribute(ctx context.Context, params *ResetInstan
 
 type ResetInstanceAttributeInput struct {
 
-	// The attribute to reset. You can only reset the following attributes: kernel |
-	// ramdisk | sourceDestCheck .
+	// The attribute to reset.
+	//
+	// You can only reset the following attributes: kernel | ramdisk | sourceDestCheck .
 	//
 	// This member is required.
 	Attribute types.InstanceAttributeName
@@ -46,7 +50,7 @@ type ResetInstanceAttributeInput struct {
 	// This member is required.
 	InstanceId *string
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
@@ -105,6 +109,9 @@ func (c *Client) addOperationResetInstanceAttributeMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +122,15 @@ func (c *Client) addOperationResetInstanceAttributeMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpResetInstanceAttributeValidationMiddleware(stack); err != nil {
@@ -136,6 +152,18 @@ func (c *Client) addOperationResetInstanceAttributeMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -29,7 +29,7 @@ import (
 // MarshalGcpSecurity writes a value of the 'gcp_security' type to the given writer.
 func MarshalGcpSecurity(object *GcpSecurity, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGcpSecurity(object, stream)
+	WriteGcpSecurity(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGcpSecurity(object *GcpSecurity, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeGcpSecurity writes a value of the 'gcp_security' type to the given stream.
-func writeGcpSecurity(object *GcpSecurity, stream *jsoniter.Stream) {
+// WriteGcpSecurity writes a value of the 'gcp_security' type to the given stream.
+func WriteGcpSecurity(object *GcpSecurity, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalGcpSecurity(source interface{}) (object *GcpSecurity, err error) {
 	if err != nil {
 		return
 	}
-	object = readGcpSecurity(iterator)
+	object = ReadGcpSecurity(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGcpSecurity reads a value of the 'gcp_security' type from the given iterator.
-func readGcpSecurity(iterator *jsoniter.Iterator) *GcpSecurity {
+// ReadGcpSecurity reads a value of the 'gcp_security' type from the given iterator.
+func ReadGcpSecurity(iterator *jsoniter.Iterator) *GcpSecurity {
 	object := &GcpSecurity{}
 	for {
 		field := iterator.ReadObject()

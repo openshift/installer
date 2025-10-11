@@ -76,6 +76,29 @@ func (l *ExportControlReviewResponseList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ExportControlReviewResponseList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ExportControlReviewResponseList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ExportControlReviewResponseList) SetItems(items []*ExportControlReviewResponse) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ExportControlReviewResponseList) Items() []*ExportControlReviewResponse {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ExportControlReviewResponseList) Empty() bool {
 	return l == nil || len(l.items) == 0

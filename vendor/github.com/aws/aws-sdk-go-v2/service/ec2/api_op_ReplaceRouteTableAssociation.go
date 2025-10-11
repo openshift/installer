@@ -14,10 +14,13 @@ import (
 // Changes the route table associated with a given subnet, internet gateway, or
 // virtual private gateway in a VPC. After the operation completes, the subnet or
 // gateway uses the routes in the new route table. For more information about route
-// tables, see Route tables (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
-// in the Amazon VPC User Guide. You can also use this operation to change which
-// table is the main route table in the VPC. Specify the main route table's
-// association ID and the route table ID of the new main route table.
+// tables, see [Route tables]in the Amazon VPC User Guide.
+//
+// You can also use this operation to change which table is the main route table
+// in the VPC. Specify the main route table's association ID and the route table ID
+// of the new main route table.
+//
+// [Route tables]: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html
 func (c *Client) ReplaceRouteTableAssociation(ctx context.Context, params *ReplaceRouteTableAssociationInput, optFns ...func(*Options)) (*ReplaceRouteTableAssociationOutput, error) {
 	if params == nil {
 		params = &ReplaceRouteTableAssociationInput{}
@@ -111,6 +114,9 @@ func (c *Client) addOperationReplaceRouteTableAssociationMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -121,6 +127,15 @@ func (c *Client) addOperationReplaceRouteTableAssociationMiddlewares(stack *midd
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpReplaceRouteTableAssociationValidationMiddleware(stack); err != nil {
@@ -142,6 +157,18 @@ func (c *Client) addOperationReplaceRouteTableAssociationMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

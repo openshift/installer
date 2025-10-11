@@ -14,9 +14,11 @@ import (
 // Create an IPAM. Amazon VPC IP Address Manager (IPAM) is a VPC feature that you
 // can use to automate your IP address management workflows including assigning,
 // tracking, troubleshooting, and auditing IP addresses across Amazon Web Services
-// Regions and accounts throughout your Amazon Web Services Organization. For more
-// information, see Create an IPAM (https://docs.aws.amazon.com/vpc/latest/ipam/create-ipam.html)
-// in the Amazon VPC IPAM User Guide.
+// Regions and accounts throughout your Amazon Web Services Organization.
+//
+// For more information, see [Create an IPAM] in the Amazon VPC IPAM User Guide.
+//
+// [Create an IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/create-ipam.html
 func (c *Client) CreateIpam(ctx context.Context, params *CreateIpamInput, optFns ...func(*Options)) (*CreateIpamOutput, error) {
 	if params == nil {
 		params = &CreateIpamInput{}
@@ -35,8 +37,9 @@ func (c *Client) CreateIpam(ctx context.Context, params *CreateIpamInput, optFns
 type CreateIpamInput struct {
 
 	// A unique, case-sensitive identifier that you provide to ensure the idempotency
-	// of the request. For more information, see Ensuring Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
-	// .
+	// of the request. For more information, see [Ensuring idempotency].
+	//
+	// [Ensuring idempotency]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-api-idempotency.html
 	ClientToken *string
 
 	// A description for the IPAM.
@@ -48,12 +51,34 @@ type CreateIpamInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
+	// Enable this option to use your own GUA ranges as private IPv6 addresses. This
+	// option is disabled by default.
+	EnablePrivateGua *bool
+
+	// A metered account is an Amazon Web Services account that is charged for active
+	// IP addresses managed in IPAM. For more information, see [Enable cost distribution]in the Amazon VPC IPAM
+	// User Guide.
+	//
+	// Possible values:
+	//
+	//   - ipam-owner (default): The Amazon Web Services account which owns the IPAM is
+	//   charged for all active IP addresses managed in IPAM.
+	//
+	//   - resource-owner : The Amazon Web Services account that owns the IP address is
+	//   charged for the active IP address.
+	//
+	// [Enable cost distribution]: https://docs.aws.amazon.com/vpc/latest/ipam/ipam-enable-cost-distro.html
+	MeteredAccount types.IpamMeteredAccount
+
 	// The operating Regions for the IPAM. Operating Regions are Amazon Web Services
 	// Regions where the IPAM is allowed to manage IP address CIDRs. IPAM only
 	// discovers and monitors resources in the Amazon Web Services Regions you select
-	// as operating Regions. For more information about operating Regions, see Create
-	// an IPAM (https://docs.aws.amazon.com/vpc/latest/ipam/create-ipam.html) in the
-	// Amazon VPC IPAM User Guide.
+	// as operating Regions.
+	//
+	// For more information about operating Regions, see [Create an IPAM] in the Amazon VPC IPAM User
+	// Guide.
+	//
+	// [Create an IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/create-ipam.html
 	OperatingRegions []types.AddIpamOperatingRegion
 
 	// The key/value combination of a tag assigned to the resource. Use the tag key in
@@ -64,7 +89,9 @@ type CreateIpamInput struct {
 
 	// IPAM is offered in a Free Tier and an Advanced Tier. For more information about
 	// the features available in each tier and the costs associated with the tiers, see
-	// Amazon VPC pricing > IPAM tab (http://aws.amazon.com/vpc/pricing/) .
+	// [Amazon VPC pricing > IPAM tab].
+	//
+	// [Amazon VPC pricing > IPAM tab]: http://aws.amazon.com/vpc/pricing/
 	Tier types.IpamTier
 
 	noSmithyDocumentSerde
@@ -124,6 +151,9 @@ func (c *Client) addOperationCreateIpamMiddlewares(stack *middleware.Stack, opti
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -134,6 +164,15 @@ func (c *Client) addOperationCreateIpamMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opCreateIpamMiddleware(stack, options); err != nil {
@@ -155,6 +194,18 @@ func (c *Client) addOperationCreateIpamMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

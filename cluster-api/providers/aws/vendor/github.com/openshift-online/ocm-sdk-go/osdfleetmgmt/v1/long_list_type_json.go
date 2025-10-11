@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalLongList(list []int64, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLongList(list, stream)
+	WriteLongList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalLongList(list []int64, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeLongList writes a list of value of the 'long' type to
+// WriteLongList writes a list of value of the 'long' type to
 // the given stream.
-func writeLongList(list []int64, stream *jsoniter.Stream) {
+func WriteLongList(list []int64, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalLongList(source interface{}) (items []int64, err error) {
 	if err != nil {
 		return
 	}
-	items = readLongList(iterator)
+	items = ReadLongList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLongList reads list of values of the ”long' type from
+// ReadLongList reads list of values of the ”long' type from
 // the given iterator.
-func readLongList(iterator *jsoniter.Iterator) []int64 {
+func ReadLongList(iterator *jsoniter.Iterator) []int64 {
 	list := []int64{}
 	for iterator.ReadArray() {
 		item := iterator.ReadInt64()

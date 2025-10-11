@@ -30,7 +30,7 @@ import (
 // MarshalProvisionShard writes a value of the 'provision_shard' type to the given writer.
 func MarshalProvisionShard(object *ProvisionShard, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeProvisionShard(object, stream)
+	WriteProvisionShard(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalProvisionShard(object *ProvisionShard, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeProvisionShard writes a value of the 'provision_shard' type to the given stream.
-func writeProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
+// WriteProvisionShard writes a value of the 'provision_shard' type to the given stream.
+func WriteProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func writeProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("aws_account_operator_config")
-		writeServerConfig(object.awsAccountOperatorConfig, stream)
+		WriteServerConfig(object.awsAccountOperatorConfig, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -99,7 +99,7 @@ func writeProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("gcp_project_operator")
-		writeServerConfig(object.gcpProjectOperator, stream)
+		WriteServerConfig(object.gcpProjectOperator, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0 && object.cloudProvider != nil
@@ -108,7 +108,7 @@ func writeProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cloud_provider")
-		writeCloudProvider(object.cloudProvider, stream)
+		WriteCloudProvider(object.cloudProvider, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0
@@ -126,7 +126,7 @@ func writeProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("hive_config")
-		writeServerConfig(object.hiveConfig, stream)
+		WriteServerConfig(object.hiveConfig, stream)
 		count++
 	}
 	present_ = object.bitmap_&1024 != 0 && object.hypershiftConfig != nil
@@ -135,7 +135,7 @@ func writeProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("hypershift_config")
-		writeServerConfig(object.hypershiftConfig, stream)
+		WriteServerConfig(object.hypershiftConfig, stream)
 		count++
 	}
 	present_ = object.bitmap_&2048 != 0
@@ -162,7 +162,7 @@ func writeProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("region")
-		writeCloudRegion(object.region, stream)
+		WriteCloudRegion(object.region, stream)
 		count++
 	}
 	present_ = object.bitmap_&16384 != 0
@@ -183,13 +183,13 @@ func UnmarshalProvisionShard(source interface{}) (object *ProvisionShard, err er
 	if err != nil {
 		return
 	}
-	object = readProvisionShard(iterator)
+	object = ReadProvisionShard(iterator)
 	err = iterator.Error
 	return
 }
 
-// readProvisionShard reads a value of the 'provision_shard' type from the given iterator.
-func readProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
+// ReadProvisionShard reads a value of the 'provision_shard' type from the given iterator.
+func ReadProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 	object := &ProvisionShard{}
 	for {
 		field := iterator.ReadObject()
@@ -209,7 +209,7 @@ func readProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "aws_account_operator_config":
-			value := readServerConfig(iterator)
+			value := ReadServerConfig(iterator)
 			object.awsAccountOperatorConfig = value
 			object.bitmap_ |= 8
 		case "aws_base_domain":
@@ -221,11 +221,11 @@ func readProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 			object.gcpBaseDomain = value
 			object.bitmap_ |= 32
 		case "gcp_project_operator":
-			value := readServerConfig(iterator)
+			value := ReadServerConfig(iterator)
 			object.gcpProjectOperator = value
 			object.bitmap_ |= 64
 		case "cloud_provider":
-			value := readCloudProvider(iterator)
+			value := ReadCloudProvider(iterator)
 			object.cloudProvider = value
 			object.bitmap_ |= 128
 		case "creation_timestamp":
@@ -237,11 +237,11 @@ func readProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 			object.creationTimestamp = value
 			object.bitmap_ |= 256
 		case "hive_config":
-			value := readServerConfig(iterator)
+			value := ReadServerConfig(iterator)
 			object.hiveConfig = value
 			object.bitmap_ |= 512
 		case "hypershift_config":
-			value := readServerConfig(iterator)
+			value := ReadServerConfig(iterator)
 			object.hypershiftConfig = value
 			object.bitmap_ |= 1024
 		case "last_update_timestamp":
@@ -257,7 +257,7 @@ func readProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 			object.managementCluster = value
 			object.bitmap_ |= 4096
 		case "region":
-			value := readCloudRegion(iterator)
+			value := ReadCloudRegion(iterator)
 			object.region = value
 			object.bitmap_ |= 8192
 		case "status":

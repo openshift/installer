@@ -37,14 +37,21 @@ type DescribeLocalGatewayRouteTableVpcAssociationsInput struct {
 	DryRun *bool
 
 	// One or more filters.
+	//
 	//   - local-gateway-id - The ID of a local gateway.
+	//
 	//   - local-gateway-route-table-arn - The Amazon Resource Name (ARN) of the local
 	//   gateway route table for the association.
+	//
 	//   - local-gateway-route-table-id - The ID of the local gateway route table.
+	//
 	//   - local-gateway-route-table-vpc-association-id - The ID of the association.
+	//
 	//   - owner-id - The ID of the Amazon Web Services account that owns the local
 	//   gateway route table for the association.
+	//
 	//   - state - The state of the association.
+	//
 	//   - vpc-id - The ID of the VPC.
 	Filters []types.Filter
 
@@ -119,6 +126,9 @@ func (c *Client) addOperationDescribeLocalGatewayRouteTableVpcAssociationsMiddle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -129,6 +139,15 @@ func (c *Client) addOperationDescribeLocalGatewayRouteTableVpcAssociationsMiddle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeLocalGatewayRouteTableVpcAssociations(options.Region), middleware.Before); err != nil {
@@ -149,16 +168,20 @@ func (c *Client) addOperationDescribeLocalGatewayRouteTableVpcAssociationsMiddle
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeLocalGatewayRouteTableVpcAssociationsAPIClient is a client that
-// implements the DescribeLocalGatewayRouteTableVpcAssociations operation.
-type DescribeLocalGatewayRouteTableVpcAssociationsAPIClient interface {
-	DescribeLocalGatewayRouteTableVpcAssociations(context.Context, *DescribeLocalGatewayRouteTableVpcAssociationsInput, ...func(*Options)) (*DescribeLocalGatewayRouteTableVpcAssociationsOutput, error)
-}
-
-var _ DescribeLocalGatewayRouteTableVpcAssociationsAPIClient = (*Client)(nil)
 
 // DescribeLocalGatewayRouteTableVpcAssociationsPaginatorOptions is the paginator
 // options for DescribeLocalGatewayRouteTableVpcAssociations
@@ -227,6 +250,9 @@ func (p *DescribeLocalGatewayRouteTableVpcAssociationsPaginator) NextPage(ctx co
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeLocalGatewayRouteTableVpcAssociations(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -245,6 +271,14 @@ func (p *DescribeLocalGatewayRouteTableVpcAssociationsPaginator) NextPage(ctx co
 
 	return result, nil
 }
+
+// DescribeLocalGatewayRouteTableVpcAssociationsAPIClient is a client that
+// implements the DescribeLocalGatewayRouteTableVpcAssociations operation.
+type DescribeLocalGatewayRouteTableVpcAssociationsAPIClient interface {
+	DescribeLocalGatewayRouteTableVpcAssociations(context.Context, *DescribeLocalGatewayRouteTableVpcAssociationsInput, ...func(*Options)) (*DescribeLocalGatewayRouteTableVpcAssociationsOutput, error)
+}
+
+var _ DescribeLocalGatewayRouteTableVpcAssociationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeLocalGatewayRouteTableVpcAssociations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

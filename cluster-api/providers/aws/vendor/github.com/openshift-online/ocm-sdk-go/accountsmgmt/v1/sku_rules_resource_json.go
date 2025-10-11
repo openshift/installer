@@ -49,7 +49,7 @@ func readSkuRulesListResponse(response *SkuRulesListResponse, reader io.Reader) 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readSkuRuleList(iterator)
+			items := ReadSkuRuleList(iterator)
 			response.items = &SkuRuleList{
 				items: items,
 			}

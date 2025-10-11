@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAzureNodePoolList(list []*AzureNodePool, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAzureNodePoolList(list, stream)
+	WriteAzureNodePoolList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAzureNodePoolList(list []*AzureNodePool, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAzureNodePoolList writes a list of value of the 'azure_node_pool' type to
+// WriteAzureNodePoolList writes a list of value of the 'azure_node_pool' type to
 // the given stream.
-func writeAzureNodePoolList(list []*AzureNodePool, stream *jsoniter.Stream) {
+func WriteAzureNodePoolList(list []*AzureNodePool, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAzureNodePool(value, stream)
+		WriteAzureNodePool(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAzureNodePoolList(source interface{}) (items []*AzureNodePool, err
 	if err != nil {
 		return
 	}
-	items = readAzureNodePoolList(iterator)
+	items = ReadAzureNodePoolList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAzureNodePoolList reads list of values of the ”azure_node_pool' type from
+// ReadAzureNodePoolList reads list of values of the ”azure_node_pool' type from
 // the given iterator.
-func readAzureNodePoolList(iterator *jsoniter.Iterator) []*AzureNodePool {
+func ReadAzureNodePoolList(iterator *jsoniter.Iterator) []*AzureNodePool {
 	list := []*AzureNodePool{}
 	for iterator.ReadArray() {
-		item := readAzureNodePool(iterator)
+		item := ReadAzureNodePool(iterator)
 		list = append(list, item)
 	}
 	return list

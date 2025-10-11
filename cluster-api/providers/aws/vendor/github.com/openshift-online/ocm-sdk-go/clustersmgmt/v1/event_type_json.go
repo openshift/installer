@@ -30,7 +30,7 @@ import (
 // MarshalEvent writes a value of the 'event' type to the given writer.
 func MarshalEvent(object *Event, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeEvent(object, stream)
+	WriteEvent(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalEvent(object *Event, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeEvent writes a value of the 'event' type to the given stream.
-func writeEvent(object *Event, stream *jsoniter.Stream) {
+// WriteEvent writes a value of the 'event' type to the given stream.
+func WriteEvent(object *Event, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -90,13 +90,13 @@ func UnmarshalEvent(source interface{}) (object *Event, err error) {
 	if err != nil {
 		return
 	}
-	object = readEvent(iterator)
+	object = ReadEvent(iterator)
 	err = iterator.Error
 	return
 }
 
-// readEvent reads a value of the 'event' type from the given iterator.
-func readEvent(iterator *jsoniter.Iterator) *Event {
+// ReadEvent reads a value of the 'event' type from the given iterator.
+func ReadEvent(iterator *jsoniter.Iterator) *Event {
 	object := &Event{}
 	for {
 		field := iterator.ReadObject()

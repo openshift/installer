@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalServiceClusterRequestPayloadList(list []*ServiceClusterRequestPayload, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeServiceClusterRequestPayloadList(list, stream)
+	WriteServiceClusterRequestPayloadList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalServiceClusterRequestPayloadList(list []*ServiceClusterRequestPayloa
 	return stream.Error
 }
 
-// writeServiceClusterRequestPayloadList writes a list of value of the 'service_cluster_request_payload' type to
+// WriteServiceClusterRequestPayloadList writes a list of value of the 'service_cluster_request_payload' type to
 // the given stream.
-func writeServiceClusterRequestPayloadList(list []*ServiceClusterRequestPayload, stream *jsoniter.Stream) {
+func WriteServiceClusterRequestPayloadList(list []*ServiceClusterRequestPayload, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeServiceClusterRequestPayload(value, stream)
+		WriteServiceClusterRequestPayload(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalServiceClusterRequestPayloadList(source interface{}) (items []*Ser
 	if err != nil {
 		return
 	}
-	items = readServiceClusterRequestPayloadList(iterator)
+	items = ReadServiceClusterRequestPayloadList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readServiceClusterRequestPayloadList reads list of values of the ”service_cluster_request_payload' type from
+// ReadServiceClusterRequestPayloadList reads list of values of the ”service_cluster_request_payload' type from
 // the given iterator.
-func readServiceClusterRequestPayloadList(iterator *jsoniter.Iterator) []*ServiceClusterRequestPayload {
+func ReadServiceClusterRequestPayloadList(iterator *jsoniter.Iterator) []*ServiceClusterRequestPayload {
 	list := []*ServiceClusterRequestPayload{}
 	for iterator.ReadArray() {
-		item := readServiceClusterRequestPayload(iterator)
+		item := ReadServiceClusterRequestPayload(iterator)
 		list = append(list, item)
 	}
 	return list

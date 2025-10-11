@@ -11,11 +11,13 @@ import (
 )
 
 // Resets the default KMS key for EBS encryption for your account in this Region
-// to the Amazon Web Services managed KMS key for EBS. After resetting the default
-// KMS key to the Amazon Web Services managed KMS key, you can continue to encrypt
-// by a customer managed KMS key by specifying it when you create the volume. For
-// more information, see Amazon EBS encryption (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html)
-// in the Amazon EBS User Guide.
+// to the Amazon Web Services managed KMS key for EBS.
+//
+// After resetting the default KMS key to the Amazon Web Services managed KMS key,
+// you can continue to encrypt by a customer managed KMS key by specifying it when
+// you create the volume. For more information, see [Amazon EBS encryption]in the Amazon EBS User Guide.
+//
+// [Amazon EBS encryption]: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html
 func (c *Client) ResetEbsDefaultKmsKeyId(ctx context.Context, params *ResetEbsDefaultKmsKeyIdInput, optFns ...func(*Options)) (*ResetEbsDefaultKmsKeyIdOutput, error) {
 	if params == nil {
 		params = &ResetEbsDefaultKmsKeyIdInput{}
@@ -97,6 +99,9 @@ func (c *Client) addOperationResetEbsDefaultKmsKeyIdMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -107,6 +112,15 @@ func (c *Client) addOperationResetEbsDefaultKmsKeyIdMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opResetEbsDefaultKmsKeyId(options.Region), middleware.Before); err != nil {
@@ -125,6 +139,18 @@ func (c *Client) addOperationResetEbsDefaultKmsKeyIdMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

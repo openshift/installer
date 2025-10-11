@@ -61,7 +61,7 @@ func (o *PeerDependency) Kind() string {
 	return PeerDependencyKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *PeerDependency) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -304,6 +304,29 @@ func (l *PeerDependencyList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *PeerDependencyList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *PeerDependencyList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *PeerDependencyList) SetItems(items []*PeerDependency) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *PeerDependencyList) Items() []*PeerDependency {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

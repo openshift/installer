@@ -120,6 +120,29 @@ func (l *ContractList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ContractList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ContractList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ContractList) SetItems(items []*Contract) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ContractList) Items() []*Contract {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ContractList) Empty() bool {
 	return l == nil || len(l.items) == 0

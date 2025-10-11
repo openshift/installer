@@ -85,7 +85,7 @@ func (o *DeletedSubscription) Kind() string {
 	return DeletedSubscriptionKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *DeletedSubscription) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -798,6 +798,29 @@ func (l *DeletedSubscriptionList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *DeletedSubscriptionList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *DeletedSubscriptionList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *DeletedSubscriptionList) SetItems(items []*DeletedSubscription) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *DeletedSubscriptionList) Items() []*DeletedSubscription {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

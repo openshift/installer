@@ -130,6 +130,29 @@ func (l *FeatureReviewRequestList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *FeatureReviewRequestList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *FeatureReviewRequestList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *FeatureReviewRequestList) SetItems(items []*FeatureReviewRequest) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *FeatureReviewRequestList) Items() []*FeatureReviewRequest {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *FeatureReviewRequestList) Empty() bool {
 	return l == nil || len(l.items) == 0
