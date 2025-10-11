@@ -650,7 +650,18 @@ func deleteEC2Snapshot(ctx context.Context, client *ec2v2.Client, id string, log
 		SnapshotId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidSnapshot.NotFound" {
+		errCode := HandleErrorCode(err)
+		switch errCode {
+		case "InvalidSnapshot.NotFound":
+			return nil
+		case "InvalidParameterValue":
+			// Snapshots, managed by the AWS Backup service, cannot be deleted via EC2 APIs. When attempting to delete, the following error is returned:
+			//
+			// InvalidParameterValue: This snapshot is managed by the AWS Backup service and cannot be deleted via EC2 APIs.
+			// If you wish to delete this snapshot, please do so via the Backup console.
+			//
+			// The installer should not try to delete these backup snapshots, but leave it to the users to clean them up.
+			logrus.Infof("Skipping snapshot (id: %q) as it is managed by the AWS Backup service. If you wish to delete this snapshot, please do so via the Backup console", id)
 			return nil
 		}
 		return err
