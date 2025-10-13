@@ -21,7 +21,6 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	configv1 "github.com/openshift/api/config/v1"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/destroy/providers"
@@ -67,8 +66,8 @@ type ClusterUninstaller struct {
 	globalOpSvc *compute.GlobalOperationsService
 	zonalOpSvc  *compute.ZoneOperationsService
 
-	endpoint         *gcptypes.PSCEndpoint
-	serviceEndpoints []configv1.GCPServiceEndpoint
+	// endpoint contains the private service connect endpoint information.
+	endpoint *gcptypes.PSCEndpoint
 
 	// cpusByMachineType caches the number of CPUs per machine type, used in quota
 	// calculations on deletion
@@ -119,12 +118,12 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	crmOpts := []option.ClientOption{agentOption}
 	fileOpts := []option.ClientOption{agentOption}
 	if o.endpoint != nil {
-		computeOpts = append(computeOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameCompute))
-		iamOpts = append(iamOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameIAM))
-		dnsOpts = append(dnsOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameDNS))
-		storageOpts = append(storageOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameStorage))
-		crmOpts = append(crmOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameCloudResource))
-		fileOpts = append(fileOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.GCPServiceNameFile))
+		computeOpts = append(computeOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPCompute))
+		iamOpts = append(iamOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPIAM))
+		dnsOpts = append(dnsOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPDNS))
+		storageOpts = append(storageOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPStorage))
+		crmOpts = append(crmOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPCloudResource))
+		fileOpts = append(fileOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPFile))
 	}
 
 	var err error

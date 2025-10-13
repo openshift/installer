@@ -880,7 +880,7 @@ func validateServiceEndpointOverride(client API, ic *types.InstallConfig, fieldP
 	}
 
 	if ic.GCP.Network == "" {
-		return append(allErrs, field.Required(fieldPath.Child("network"), fmt.Sprintf("a network must be specified when an endpoint override is set")))
+		return append(allErrs, field.Required(fieldPath.Child("network"), "a network must be specified when an endpoint override is set"))
 	}
 
 	endpoint, err := client.GetPrivateServiceConnectEndpoint(context.Background(), ic.GCP.ProjectID, ic.GCP.Endpoint)

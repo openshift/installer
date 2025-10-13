@@ -14,40 +14,40 @@ import (
 	serviceusage "google.golang.org/api/serviceusage/v1beta1"
 )
 
-// GCPServiceName is the name of the GCP Service.
-type GCPServiceName string
+// ServiceNameGCP is the name of the GCP Service.
+type ServiceNameGCP string
 
 const (
-	// GCPServiceNameCompute is the name used for the GCP Compute Service endpoint.
-	GCPServiceNameCompute GCPServiceName = "compute"
+	// ServiceNameGCPCompute is the name used for the GCP Compute Service endpoint.
+	ServiceNameGCPCompute ServiceNameGCP = "compute"
 
-	// GCPServiceNameContainer is the name used for the GCP Container Service endpoint.
-	GCPServiceNameContainer GCPServiceName = "container"
+	// ServiceNameGCPContainer is the name used for the GCP Container Service endpoint.
+	ServiceNameGCPContainer ServiceNameGCP = "container"
 
-	// GCPServiceNameCloudResource is the name used for the GCP Resource Manager Service endpoint.
-	GCPServiceNameCloudResource GCPServiceName = "cloudresourcemanager"
+	// ServiceNameGCPCloudResource is the name used for the GCP Resource Manager Service endpoint.
+	ServiceNameGCPCloudResource ServiceNameGCP = "cloudresourcemanager"
 
-	// GCPServiceNameDNS is the name used for the GCP DNS Service endpoint.
-	GCPServiceNameDNS GCPServiceName = "dns"
+	// ServiceNameGCPDNS is the name used for the GCP DNS Service endpoint.
+	ServiceNameGCPDNS ServiceNameGCP = "dns"
 
-	// GCPServiceNameFile is the name used for the GCP File Service endpoint.
-	GCPServiceNameFile GCPServiceName = "file"
+	// ServiceNameGCPFile is the name used for the GCP File Service endpoint.
+	ServiceNameGCPFile ServiceNameGCP = "file"
 
-	// GCPServiceNameIAM is the name used for the GCP IAM Service endpoint.
-	GCPServiceNameIAM GCPServiceName = "iam"
+	// ServiceNameGCPIAM is the name used for the GCP IAM Service endpoint.
+	ServiceNameGCPIAM ServiceNameGCP = "iam"
 
-	// GCPServiceNameServiceUsage is the name used for the GCP Service Usage Service endpoint.
-	GCPServiceNameServiceUsage GCPServiceName = "serviceusage"
+	// ServiceNameGCPServiceUsage is the name used for the GCP Service Usage Service endpoint.
+	ServiceNameGCPServiceUsage ServiceNameGCP = "serviceusage"
 
-	// GCPServiceNameStorage is the name used for the GCP Storage Service endpoint.
-	GCPServiceNameStorage GCPServiceName = "storage"
+	// ServiceNameGCPStorage is the name used for the GCP Storage Service endpoint.
+	ServiceNameGCPStorage ServiceNameGCP = "storage"
 )
 
 // CreateEndpointOption creates an Endpoint Option for a service, overriding the base/default endpoint.
-func CreateEndpointOption(endpointName string, service GCPServiceName) option.ClientOption {
+func CreateEndpointOption(endpointName string, service ServiceNameGCP) option.ClientOption {
 	baseEndpoint := fmt.Sprintf("https://%s-%s.p.googleapis.com/", string(service), endpointName)
 	switch service {
-	case GCPServiceNameCompute, GCPServiceNameContainer, GCPServiceNameStorage:
+	case ServiceNameGCPCompute, ServiceNameGCPContainer, ServiceNameGCPStorage:
 		baseEndpoint = fmt.Sprintf("%s%s/v1/", baseEndpoint, string(service))
 	}
 	return option.WithEndpoint(baseEndpoint)

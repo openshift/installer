@@ -115,7 +115,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	bucketName := gcp.GetBootstrapStorageName(in.InfraID)
 	storageOpts := []option.ClientOption{}
 	if in.InstallConfig.Config.GCP.Endpoint != nil && in.InstallConfig.Config.GCP.Network != "" {
-		storageOpts = append(storageOpts, icgcp.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, icgcp.GCPServiceNameStorage))
+		storageOpts = append(storageOpts, icgcp.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, icgcp.ServiceNameGCPStorage))
 	}
 	storageClient, err := icgcp.GetStorageService(ctx, storageOpts...)
 	if err != nil {
@@ -270,7 +270,7 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 	logrus.Warnf("Destroying GCP Bootstrap Resources")
 	storageOpts := []option.ClientOption{}
 	if in.Metadata.GCP.Endpoint != nil {
-		storageOpts = append(storageOpts, icgcp.CreateEndpointOption(in.Metadata.GCP.Endpoint.Name, icgcp.GCPServiceNameStorage))
+		storageOpts = append(storageOpts, icgcp.CreateEndpointOption(in.Metadata.GCP.Endpoint.Name, icgcp.ServiceNameGCPStorage))
 	}
 	storageClient, err := icgcp.GetStorageService(ctx, storageOpts...)
 	if err != nil {

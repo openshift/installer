@@ -70,7 +70,7 @@ func (g *Gather) Run() error {
 
 	opts := []option.ClientOption{}
 	if g.endpoint != nil {
-		opts = append(opts, gcpsession.CreateEndpointOption(g.endpoint.Name, gcpsession.GCPServiceNameCompute))
+		opts = append(opts, gcpsession.CreateEndpointOption(g.endpoint.Name, gcpsession.ServiceNameGCPCompute))
 	}
 	svc, err := gcpsession.GetComputeService(ctx, opts...)
 	if err != nil {

@@ -124,7 +124,7 @@ func createRecordSets(ctx context.Context, client *gcpic.Client, ic *installconf
 func createDNSRecords(ctx context.Context, client *gcpic.Client, ic *installconfig.InstallConfig, clusterID, apiIP, apiIntIP string) error {
 	opts := []option.ClientOption{option.WithScopes(dns.CloudPlatformScope)}
 	if ic.Config.GCP.Endpoint != nil {
-		opts = append(opts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.GCPServiceNameDNS))
+		opts = append(opts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.ServiceNameGCPDNS))
 	}
 	dnsService, err := gcpic.GetDNSService(ctx, opts...)
 	if err != nil {
@@ -157,8 +157,8 @@ func createPSCRecords(ctx context.Context, ic *installconfig.InstallConfig, clus
 	computeOpts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
 	dnsOpts := []option.ClientOption{option.WithScopes(dns.CloudPlatformScope)}
 	if ic.Config.GCP.Endpoint != nil {
-		computeOpts = append(computeOpts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.GCPServiceNameCompute))
-		dnsOpts = append(dnsOpts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.GCPServiceNameDNS))
+		computeOpts = append(computeOpts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.ServiceNameGCPCompute))
+		dnsOpts = append(dnsOpts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.ServiceNameGCPDNS))
 	}
 
 	computeService, err := gcpic.GetComputeService(ctx, computeOpts...)
@@ -219,7 +219,7 @@ func createPSCRecords(ctx context.Context, ic *installconfig.InstallConfig, clus
 func createPrivateServiceConnectZone(ctx context.Context, ic *installconfig.InstallConfig, clusterID, network string) error {
 	opts := []option.ClientOption{option.WithScopes(dns.CloudPlatformScope)}
 	if ic.Config.GCP.Endpoint != nil {
-		opts = append(opts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.GCPServiceNameDNS))
+		opts = append(opts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.ServiceNameGCPDNS))
 	}
 	dnsService, err := gcpic.GetDNSService(ctx, opts...)
 	if err != nil {
@@ -278,7 +278,7 @@ func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConf
 
 	opts := []option.ClientOption{option.WithScopes(dns.CloudPlatformScope)}
 	if ic.Config.GCP.Endpoint != nil {
-		opts = append(opts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.GCPServiceNameDNS))
+		opts = append(opts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.ServiceNameGCPDNS))
 	}
 	dnsService, err := gcpic.GetDNSService(ctx, opts...)
 	if err != nil {

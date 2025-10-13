@@ -241,7 +241,7 @@ func getSubnet(ctx context.Context, project, region, subnetName string, endpoint
 
 	opts := []option.ClientOption{}
 	if endpoint != nil {
-		opts = append(opts, gcpic.CreateEndpointOption(endpoint.Name, gcpic.GCPServiceNameCompute))
+		opts = append(opts, gcpic.CreateEndpointOption(endpoint.Name, gcpic.ServiceNameGCPCompute))
 	}
 	computeService, err := gcpic.GetComputeService(ctx, opts...)
 	if err != nil {

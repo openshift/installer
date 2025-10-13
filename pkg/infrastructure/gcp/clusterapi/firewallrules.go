@@ -246,7 +246,7 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	}
 	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
 	if in.InstallConfig.Config.GCP.Endpoint != nil {
-		opts = append(opts, gcpconfig.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, gcpconfig.GCPServiceNameCompute))
+		opts = append(opts, gcpconfig.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {
@@ -338,7 +338,7 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 
 	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
 	if in.InstallConfig.Config.GCP.Endpoint != nil {
-		opts = append(opts, gcpconfig.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, gcpconfig.GCPServiceNameCompute))
+		opts = append(opts, gcpconfig.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {
@@ -363,7 +363,7 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string, endpoint *gcptypes.PSCEndpoint) error {
 	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
 	if endpoint != nil {
-		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.GCPServiceNameCompute))
+		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {
@@ -378,7 +378,7 @@ func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string
 func removeCAPGFirewallRules(ctx context.Context, infraID, projectID string, endpoint *gcptypes.PSCEndpoint) error {
 	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
 	if endpoint != nil {
-		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.GCPServiceNameCompute))
+		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {

@@ -19,7 +19,7 @@ import (
 func ZonesForInstanceType(project, region, instanceType string, endpoint *gcptypes.PSCEndpoint) ([]string, error) {
 	opts := []option.ClientOption{}
 	if endpoint != nil {
-		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.GCPServiceNameCompute))
+		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(context.Background(), opts...)
 	if err != nil {

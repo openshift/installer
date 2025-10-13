@@ -90,7 +90,7 @@ func NewClient(ctx context.Context, endpoint *gcptypes.PSCEndpoint) (*Client, er
 func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error) {
 	opts := []option.ClientOption{}
 	if c.endpointName != "" {
-		opts = append(opts, CreateEndpointOption(c.endpointName, GCPServiceNameCompute))
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPCompute))
 	}
 	svc, err := GetComputeService(ctx, opts...)
 	if err != nil {
@@ -102,7 +102,7 @@ func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error
 func (c *Client) getDNSService(ctx context.Context) (*dns.Service, error) {
 	opts := []option.ClientOption{}
 	if c.endpointName != "" {
-		opts = append(opts, CreateEndpointOption(c.endpointName, GCPServiceNameDNS))
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPDNS))
 	}
 	svc, err := GetDNSService(ctx, opts...)
 	if err != nil {
@@ -114,7 +114,7 @@ func (c *Client) getDNSService(ctx context.Context) (*dns.Service, error) {
 func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourcemanager.Service, error) {
 	opts := []option.ClientOption{}
 	if c.endpointName != "" {
-		opts = append(opts, CreateEndpointOption(c.endpointName, GCPServiceNameCloudResource))
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPCloudResource))
 	}
 	svc, err := GetCloudResourceService(ctx, opts...)
 	if err != nil {
@@ -126,7 +126,7 @@ func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourceman
 func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.APIService, error) {
 	opts := []option.ClientOption{}
 	if c.endpointName != "" {
-		opts = append(opts, CreateEndpointOption(c.endpointName, GCPServiceNameServiceUsage))
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPServiceUsage))
 	}
 	svc, err := GetServiceUsageService(ctx, opts...)
 	if err != nil {
@@ -597,7 +597,7 @@ func (c *Client) GetEnabledServices(ctx context.Context, project string) ([]stri
 func (c *Client) GetServiceAccount(ctx context.Context, project, serviceAccount string) (string, error) {
 	opts := []option.ClientOption{}
 	if c.endpointName != "" {
-		opts = append(opts, CreateEndpointOption(c.endpointName, GCPServiceNameIAM))
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPIAM))
 	}
 	svc, err := GetIAMService(ctx, opts...)
 	if err != nil {
@@ -790,6 +790,7 @@ func GetPrivateServiceConnectEndpoint(client *compute.Service, project string, e
 	return nil, fmt.Errorf("failed to find forwarding rule for private service connect endpoint %s", endpoint.Name)
 }
 
+// GetPrivateServiceConnectEndpoint will get the forwarding rule associated with a private service connect endpoint.
 func (c *Client) GetPrivateServiceConnectEndpoint(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint) (*compute.ForwardingRule, error) {
 	svc, err := c.getComputeService(ctx)
 	if err != nil {

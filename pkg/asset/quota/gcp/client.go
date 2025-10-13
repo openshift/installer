@@ -26,7 +26,7 @@ type Client struct {
 func NewClient(ctx context.Context, projectID, endpointName string) (*Client, error) {
 	opts := []option.ClientOption{}
 	if endpointName != "" {
-		opts = append(opts, gcpconfig.CreateEndpointOption(endpointName, gcpconfig.GCPServiceNameCompute))
+		opts = append(opts, gcpconfig.CreateEndpointOption(endpointName, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {

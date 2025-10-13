@@ -530,7 +530,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 
 		opts := []option.ClientOption{}
 		if installConfig.Config.GCP.Endpoint != nil {
-			opts = append(opts, gcpconfig.CreateEndpointOption(installConfig.Config.GCP.Endpoint.Name, gcpconfig.GCPServiceNameStorage))
+			opts = append(opts, gcpconfig.CreateEndpointOption(installConfig.Config.GCP.Endpoint.Name, gcpconfig.ServiceNameGCPStorage))
 		}
 
 		storageClient, err := gcpconfig.GetStorageService(ctx, opts...)

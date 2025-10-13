@@ -17,7 +17,7 @@ func getAPIAddressName(infraID string) string {
 func getInternalLBAddress(ctx context.Context, project, region, name string, endpoint *gcptypes.PSCEndpoint) (string, error) {
 	opts := []option.ClientOption{}
 	if endpoint != nil {
-		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.GCPServiceNameCompute))
+		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	service, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {
