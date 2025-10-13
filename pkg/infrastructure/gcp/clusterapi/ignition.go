@@ -38,7 +38,7 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 	}
 
 	opts := []option.ClientOption{}
-	if in.InstallConfig.Config.GCP.Endpoint != nil {
+	if in.InstallConfig.Config.GCP.Endpoint != nil && !in.InstallConfig.Config.GCP.Endpoint.ClusterUseOnly {
 		opts = append(opts, gcpconfig.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(ctx, opts...)

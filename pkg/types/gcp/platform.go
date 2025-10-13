@@ -37,6 +37,13 @@ type PSCEndpoint struct {
 	// When the region is empty, the location is assumed to be global.
 	// +optional
 	Region string `json:"region,omitempty"`
+
+	// ClusterUseOnly should be set to true when the installer should use
+	// the public api endpoints and all cluster operators should use the
+	// api endpoint overrides. The value should be false when the installer
+	// and cluster operators should use the api endpoint overrides.
+	// +optional
+	ClusterUseOnly bool `json:"clusterUseOnly,omitempty"`
 }
 
 // Platform stores all the global configuration that all machinesets

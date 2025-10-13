@@ -240,7 +240,7 @@ func getSubnet(ctx context.Context, project, region, subnetName string, endpoint
 	defer cancel()
 
 	opts := []option.ClientOption{}
-	if endpoint != nil {
+	if endpoint != nil && !endpoint.ClusterUseOnly {
 		opts = append(opts, gcpic.CreateEndpointOption(endpoint.Name, gcpic.ServiceNameGCPCompute))
 	}
 	computeService, err := gcpic.GetComputeService(ctx, opts...)

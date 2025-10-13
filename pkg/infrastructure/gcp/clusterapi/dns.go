@@ -123,7 +123,7 @@ func createRecordSets(ctx context.Context, client *gcpic.Client, ic *installconf
 // createDNSRecords will get the list of records to be created and execute their creation through the gcp dns api.
 func createDNSRecords(ctx context.Context, client *gcpic.Client, ic *installconfig.InstallConfig, clusterID, apiIP, apiIntIP string) error {
 	opts := []option.ClientOption{option.WithScopes(dns.CloudPlatformScope)}
-	if ic.Config.GCP.Endpoint != nil {
+	if ic.Config.GCP.Endpoint != nil && !ic.Config.GCP.Endpoint.ClusterUseOnly {
 		opts = append(opts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.ServiceNameGCPDNS))
 	}
 	dnsService, err := gcpic.GetDNSService(ctx, opts...)
@@ -156,7 +156,7 @@ func createPSCRecords(ctx context.Context, ic *installconfig.InstallConfig, clus
 
 	computeOpts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
 	dnsOpts := []option.ClientOption{option.WithScopes(dns.CloudPlatformScope)}
-	if ic.Config.GCP.Endpoint != nil {
+	if ic.Config.GCP.Endpoint != nil && !ic.Config.GCP.Endpoint.ClusterUseOnly {
 		computeOpts = append(computeOpts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.ServiceNameGCPCompute))
 		dnsOpts = append(dnsOpts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.ServiceNameGCPDNS))
 	}
@@ -218,7 +218,7 @@ func createPSCRecords(ctx context.Context, ic *installconfig.InstallConfig, clus
 // associated with the Private Service Connect Endpoint.
 func createPrivateServiceConnectZone(ctx context.Context, ic *installconfig.InstallConfig, clusterID, network string) error {
 	opts := []option.ClientOption{option.WithScopes(dns.CloudPlatformScope)}
-	if ic.Config.GCP.Endpoint != nil {
+	if ic.Config.GCP.Endpoint != nil && !ic.Config.GCP.Endpoint.ClusterUseOnly {
 		opts = append(opts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.ServiceNameGCPDNS))
 	}
 	dnsService, err := gcpic.GetDNSService(ctx, opts...)
@@ -277,7 +277,7 @@ func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConf
 	logrus.Debugf("creating private zone %s", params.Name)
 
 	opts := []option.ClientOption{option.WithScopes(dns.CloudPlatformScope)}
-	if ic.Config.GCP.Endpoint != nil {
+	if ic.Config.GCP.Endpoint != nil && !ic.Config.GCP.Endpoint.ClusterUseOnly {
 		opts = append(opts, gcpic.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcpic.ServiceNameGCPDNS))
 	}
 	dnsService, err := gcpic.GetDNSService(ctx, opts...)

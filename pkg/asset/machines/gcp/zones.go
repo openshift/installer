@@ -18,7 +18,7 @@ import (
 // availability zones.
 func ZonesForInstanceType(project, region, instanceType string, endpoint *gcptypes.PSCEndpoint) ([]string, error) {
 	opts := []option.ClientOption{}
-	if endpoint != nil {
+	if endpoint != nil && !endpoint.ClusterUseOnly {
 		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(context.Background(), opts...)

@@ -245,7 +245,7 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 		}
 	}
 	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
-	if in.InstallConfig.Config.GCP.Endpoint != nil {
+	if in.InstallConfig.Config.GCP.Endpoint != nil && !in.InstallConfig.Config.GCP.Endpoint.ClusterUseOnly {
 		opts = append(opts, gcpconfig.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(ctx, opts...)
@@ -337,7 +337,7 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 	}
 
 	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
-	if in.InstallConfig.Config.GCP.Endpoint != nil {
+	if in.InstallConfig.Config.GCP.Endpoint != nil && !in.InstallConfig.Config.GCP.Endpoint.ClusterUseOnly {
 		opts = append(opts, gcpconfig.CreateEndpointOption(in.InstallConfig.Config.GCP.Endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(ctx, opts...)
@@ -362,7 +362,7 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 // removeBootstrapFirewallRules removes the rules created for the bootstrap node.
 func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string, endpoint *gcptypes.PSCEndpoint) error {
 	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
-	if endpoint != nil {
+	if endpoint != nil && !endpoint.ClusterUseOnly {
 		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(ctx, opts...)
@@ -377,7 +377,7 @@ func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string
 // removeCAPGFirewallRules removes the overly permissive firewall rules created by cluster-api-provider-gcp.
 func removeCAPGFirewallRules(ctx context.Context, infraID, projectID string, endpoint *gcptypes.PSCEndpoint) error {
 	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
-	if endpoint != nil {
+	if endpoint != nil && !endpoint.ClusterUseOnly {
 		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 	}
 	svc, err := gcpconfig.GetComputeService(ctx, opts...)

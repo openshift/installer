@@ -529,7 +529,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		defer cancel()
 
 		opts := []option.ClientOption{}
-		if installConfig.Config.GCP.Endpoint != nil {
+		if installConfig.Config.GCP.Endpoint != nil && !installConfig.Config.GCP.Endpoint.ClusterUseOnly {
 			opts = append(opts, gcpconfig.CreateEndpointOption(installConfig.Config.GCP.Endpoint.Name, gcpconfig.ServiceNameGCPStorage))
 		}
 

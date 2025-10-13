@@ -117,7 +117,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	storageOpts := []option.ClientOption{agentOption}
 	crmOpts := []option.ClientOption{agentOption}
 	fileOpts := []option.ClientOption{agentOption}
-	if o.endpoint != nil {
+	if o.endpoint != nil && !o.endpoint.ClusterUseOnly {
 		computeOpts = append(computeOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPCompute))
 		iamOpts = append(iamOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPIAM))
 		dnsOpts = append(dnsOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPDNS))

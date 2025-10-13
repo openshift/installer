@@ -76,7 +76,7 @@ func NewClient(ctx context.Context, endpoint *gcptypes.PSCEndpoint) (*Client, er
 	}
 
 	endpointName := ""
-	if endpoint != nil {
+	if endpoint != nil && !endpoint.ClusterUseOnly {
 		endpointName = endpoint.Name
 	}
 

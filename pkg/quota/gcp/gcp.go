@@ -28,7 +28,7 @@ func Load(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint, s
 	}
 
 	serviceUsageOpts := []option.ClientOption{}
-	if endpoint != nil {
+	if endpoint != nil && !endpoint.ClusterUseOnly {
 		serviceUsageOpts = append(serviceUsageOpts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPServiceUsage))
 	}
 	servicesSvc, err := gcpconfig.GetServiceUsageService(ctx, serviceUsageOpts...)

@@ -64,7 +64,7 @@ func CreateServiceAccount(ctx context.Context, infraID, projectID, role string, 
 	defer cancel()
 
 	opts := []option.ClientOption{}
-	if endpoint != nil {
+	if endpoint != nil && !endpoint.ClusterUseOnly {
 		opts = append(opts, gcp.CreateEndpointOption(endpoint.Name, gcp.ServiceNameGCPIAM))
 	}
 	service, err := gcp.GetIAMService(ctx, opts...)
@@ -109,7 +109,7 @@ func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID str
 	defer cancel()
 
 	opts := []option.ClientOption{}
-	if endpoint != nil {
+	if endpoint != nil && !endpoint.ClusterUseOnly {
 		opts = append(opts, gcp.CreateEndpointOption(endpoint.Name, gcp.ServiceNameGCPCloudResource))
 	}
 
