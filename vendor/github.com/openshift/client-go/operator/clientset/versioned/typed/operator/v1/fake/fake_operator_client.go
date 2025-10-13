@@ -13,95 +13,95 @@ type FakeOperatorV1 struct {
 }
 
 func (c *FakeOperatorV1) Authentications() v1.AuthenticationInterface {
-	return &FakeAuthentications{c}
+	return newFakeAuthentications(c)
 }
 
 func (c *FakeOperatorV1) CSISnapshotControllers() v1.CSISnapshotControllerInterface {
-	return &FakeCSISnapshotControllers{c}
+	return newFakeCSISnapshotControllers(c)
 }
 
 func (c *FakeOperatorV1) CloudCredentials() v1.CloudCredentialInterface {
-	return &FakeCloudCredentials{c}
+	return newFakeCloudCredentials(c)
 }
 
 func (c *FakeOperatorV1) ClusterCSIDrivers() v1.ClusterCSIDriverInterface {
-	return &FakeClusterCSIDrivers{c}
+	return newFakeClusterCSIDrivers(c)
 }
 
 func (c *FakeOperatorV1) Configs() v1.ConfigInterface {
-	return &FakeConfigs{c}
+	return newFakeConfigs(c)
 }
 
 func (c *FakeOperatorV1) Consoles() v1.ConsoleInterface {
-	return &FakeConsoles{c}
+	return newFakeConsoles(c)
 }
 
 func (c *FakeOperatorV1) DNSes() v1.DNSInterface {
-	return &FakeDNSes{c}
+	return newFakeDNSes(c)
 }
 
 func (c *FakeOperatorV1) Etcds() v1.EtcdInterface {
-	return &FakeEtcds{c}
+	return newFakeEtcds(c)
 }
 
 func (c *FakeOperatorV1) IngressControllers(namespace string) v1.IngressControllerInterface {
-	return &FakeIngressControllers{c, namespace}
+	return newFakeIngressControllers(c, namespace)
 }
 
 func (c *FakeOperatorV1) InsightsOperators() v1.InsightsOperatorInterface {
-	return &FakeInsightsOperators{c}
+	return newFakeInsightsOperators(c)
 }
 
 func (c *FakeOperatorV1) KubeAPIServers() v1.KubeAPIServerInterface {
-	return &FakeKubeAPIServers{c}
+	return newFakeKubeAPIServers(c)
 }
 
 func (c *FakeOperatorV1) KubeControllerManagers() v1.KubeControllerManagerInterface {
-	return &FakeKubeControllerManagers{c}
+	return newFakeKubeControllerManagers(c)
 }
 
 func (c *FakeOperatorV1) KubeSchedulers() v1.KubeSchedulerInterface {
-	return &FakeKubeSchedulers{c}
+	return newFakeKubeSchedulers(c)
 }
 
 func (c *FakeOperatorV1) KubeStorageVersionMigrators() v1.KubeStorageVersionMigratorInterface {
-	return &FakeKubeStorageVersionMigrators{c}
+	return newFakeKubeStorageVersionMigrators(c)
 }
 
 func (c *FakeOperatorV1) MachineConfigurations() v1.MachineConfigurationInterface {
-	return &FakeMachineConfigurations{c}
+	return newFakeMachineConfigurations(c)
 }
 
 func (c *FakeOperatorV1) Networks() v1.NetworkInterface {
-	return &FakeNetworks{c}
+	return newFakeNetworks(c)
 }
 
 func (c *FakeOperatorV1) OLMs() v1.OLMInterface {
-	return &FakeOLMs{c}
+	return newFakeOLMs(c)
 }
 
 func (c *FakeOperatorV1) OpenShiftAPIServers() v1.OpenShiftAPIServerInterface {
-	return &FakeOpenShiftAPIServers{c}
+	return newFakeOpenShiftAPIServers(c)
 }
 
 func (c *FakeOperatorV1) OpenShiftControllerManagers() v1.OpenShiftControllerManagerInterface {
-	return &FakeOpenShiftControllerManagers{c}
+	return newFakeOpenShiftControllerManagers(c)
 }
 
 func (c *FakeOperatorV1) ServiceCAs() v1.ServiceCAInterface {
-	return &FakeServiceCAs{c}
+	return newFakeServiceCAs(c)
 }
 
 func (c *FakeOperatorV1) ServiceCatalogAPIServers() v1.ServiceCatalogAPIServerInterface {
-	return &FakeServiceCatalogAPIServers{c}
+	return newFakeServiceCatalogAPIServers(c)
 }
 
 func (c *FakeOperatorV1) ServiceCatalogControllerManagers() v1.ServiceCatalogControllerManagerInterface {
-	return &FakeServiceCatalogControllerManagers{c}
+	return newFakeServiceCatalogControllerManagers(c)
 }
 
 func (c *FakeOperatorV1) Storages() v1.StorageInterface {
-	return &FakeStorages{c}
+	return newFakeStorages(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

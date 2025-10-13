@@ -9,9 +9,9 @@ import (
 // UsernameClaimMappingApplyConfiguration represents a declarative configuration of the UsernameClaimMapping type for use
 // with apply.
 type UsernameClaimMappingApplyConfiguration struct {
-	TokenClaimMappingApplyConfiguration `json:",inline"`
-	PrefixPolicy                        *configv1.UsernamePrefixPolicy    `json:"prefixPolicy,omitempty"`
-	Prefix                              *UsernamePrefixApplyConfiguration `json:"prefix,omitempty"`
+	Claim        *string                           `json:"claim,omitempty"`
+	PrefixPolicy *configv1.UsernamePrefixPolicy    `json:"prefixPolicy,omitempty"`
+	Prefix       *UsernamePrefixApplyConfiguration `json:"prefix,omitempty"`
 }
 
 // UsernameClaimMappingApplyConfiguration constructs a declarative configuration of the UsernameClaimMapping type for use with
