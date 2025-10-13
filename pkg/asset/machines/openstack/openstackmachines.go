@@ -16,14 +16,15 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/powervc"
 )
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
 func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role string) ([]*asset.RuntimeFile, error) {
-	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
+	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name && configPlatform != powervc.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
-	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name {
+	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name && poolPlatform != powervc.Name {
 		return nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
 
@@ -43,7 +44,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 		failureDomain := failureDomains[uint(idx)%uint(len(failureDomains))]
 		machineSpec, err := generateMachineSpec(
 			clusterID,
-			config.Platform.OpenStack,
+			config,
 			mpool,
 			osImage,
 			role,
@@ -113,7 +114,9 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 	return result, nil
 }
 
-func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role string, failureDomain machinev1.OpenStackFailureDomain, configDrive *bool) (*capo.OpenStackMachineSpec, error) {
+func generateMachineSpec(clusterID string, config *types.InstallConfig, mpool *openstack.MachinePool, osImage string, role string, failureDomain machinev1.OpenStackFailureDomain, configDrive *bool) (*capo.OpenStackMachineSpec, error) {
+	platform := config.Platform.OpenStack
+
 	port := capo.PortOpts{}
 
 	addressPairs := populateAllowedAddressPairs(platform)
@@ -174,6 +177,10 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 
 	for i := range mpool.AdditionalSecurityGroupIDs {
 		securityGroups = append(securityGroups, capo.SecurityGroupParam{ID: &mpool.AdditionalSecurityGroupIDs[i]})
+	}
+
+	if config.Platform.Name() == powervc.Name {
+		securityGroups = nil
 	}
 
 	spec := capo.OpenStackMachineSpec{
