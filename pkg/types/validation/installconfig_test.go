@@ -3079,11 +3079,11 @@ func TestValidateTNF(t *testing.T) {
 				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
 					Credential(
-						c1().FencingCredentialAddress("ipmi://192.168.111.1"),
-						c2().FencingCredentialAddress("ipmi://192.168.111.1"))).
+						c1().FencingCredentialAddress("redfish+https://192.168.111.1/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("redfish+https://192.168.111.1/redfish/v1/Systems/1"))).
 				CpReplicas(2).build(),
 			name:     "fencing_credential_address_not_unique",
-			expected: "controlPlane.fencing.credentials\\[1\\].address: Duplicate value: \"ipmi://192.168.111.1\"",
+			expected: "controlPlane.fencing.credentials\\[1\\].address: Duplicate value: \"redfish\\+https://192.168.111.1/redfish/v1/Systems/1\"",
 		},
 		{
 			config: installConfig().
@@ -3111,6 +3111,17 @@ func TestValidateTNF(t *testing.T) {
 				CpReplicas(2).build(),
 			name:     "fencing_credential_password_required",
 			expected: "controlPlane.fencing.credentials\\[0\\].password: Required value: missing Password",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("ipmi://192.168.111.1"),
+						c2().FencingCredentialAddress("ipmi://192.168.111.2"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_ipmi_not_supported",
+			expected: "controlPlane.fencing.credentials\\[0\\].address: Invalid value: \"ipmi://192.168.111.1\": fencing only supports redfish-compatible BMC addresses, IPMI is not supported",
 		},
 		{
 			config: installConfig().
@@ -3212,7 +3223,7 @@ func c1() *credentialBuilder {
 			HostName: "host1",
 			Username: "root",
 			Password: "password",
-			Address:  "ipmi://192.168.111.1",
+			Address:  "redfish+https://192.168.111.1/redfish/v1/Systems/1",
 		},
 	}
 }
@@ -3223,7 +3234,7 @@ func c2() *credentialBuilder {
 			HostName: "host2",
 			Username: "root",
 			Password: "password",
-			Address:  "ipmi://192.168.111.2",
+			Address:  "redfish+https://192.168.111.2/redfish/v1/Systems/1",
 		},
 	}
 }
@@ -3234,7 +3245,7 @@ func c3() *credentialBuilder {
 			HostName: "host3",
 			Username: "root",
 			Password: "password",
-			Address:  "ipmi://192.168.111.3",
+			Address:  "redfish+https://192.168.111.3/redfish/v1/Systems/1",
 		},
 	}
 }
