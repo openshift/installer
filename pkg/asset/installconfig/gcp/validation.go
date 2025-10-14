@@ -887,8 +887,12 @@ func validateServiceEndpointOverride(client API, ic *types.InstallConfig, fieldP
 	if err != nil || endpoint == nil {
 		return append(allErrs, field.NotFound(fieldPath.Child("endpoint").Child("name"), ic.GCP.Endpoint.Name))
 	}
-	if strings.HasSuffix(endpoint.Network, ic.GCP.Network) {
-		errMsg := fmt.Sprintf("psc endpoint %s is on the %s network, but user supplied %s", endpoint.Name, endpoint.Network, ic.GCP.Network)
+	network := ""
+	if parts := strings.Split(endpoint.Network, "/"); len(parts) > 0 {
+		network = parts[len(parts)-1]
+	}
+	if network != ic.GCP.Network {
+		errMsg := fmt.Sprintf("psc endpoint %s is on the %s network, but user supplied %s", endpoint.Name, network, ic.GCP.Network)
 		return append(allErrs, field.Invalid(fieldPath.Child("endpoint").Child("name"), ic.GCP.Endpoint.Name, errMsg))
 	}
 
