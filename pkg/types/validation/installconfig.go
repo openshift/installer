@@ -1619,6 +1619,7 @@ func validateFencingCredentials(installConfig *types.InstallConfig) (errors fiel
 			if len(credential.CertificateVerification) > 0 && credential.CertificateVerification != types.CertificateVerificationDisabled && credential.CertificateVerification != types.CertificateVerificationEnabled {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("credentials").Index(i).Key("CertificateVerification"), installConfig.ControlPlane.Fencing.Credentials[i].CertificateVerification, fmt.Sprintf("invalid certificate verification; %q should set to one of the following: ['Enabled' (default), 'Disabled']", credential.CertificateVerification)))
 			}
+			allErrs = append(allErrs, validateFencingCredentialAddress(credential.Address, fldPath.Child("credentials").Index(i).Child("address"))...)
 		}
 	}
 	allErrs = append(allErrs, validateCredentialsNumber(installConfig, fencingCredentials, fldPath.Child("credentials"))...)
@@ -1634,6 +1635,28 @@ func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path
 	default:
 		errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("fencing is only supported on baremetal, external or none platforms, instead %s platform was found", config.Platform.Name())))
 	}
+	return errs
+}
+
+func validateFencingCredentialAddress(address string, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if address == "" {
+		return errs
+	}
+
+	// Parse the URL to extract the scheme
+	parsedURL, err := url.Parse(address)
+	if err != nil {
+		// Let the common validation handle malformed URLs
+		return errs
+	}
+
+	// Check if the scheme is IPMI-based
+	scheme := parsedURL.Scheme
+	if scheme == "ipmi" || scheme == "libvirt" {
+		errs = append(errs, field.Invalid(fldPath, address, "fencing only supports redfish-compatible BMC addresses, IPMI is not supported"))
+	}
+
 	return errs
 }
 
