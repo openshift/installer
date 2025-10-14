@@ -1644,16 +1644,15 @@ func validateFencingCredentialAddress(address string, fldPath *field.Path) field
 		return errs
 	}
 
-	// Parse the URL to extract the scheme
-	parsedURL, err := url.Parse(address)
+	// Parse the URL to ensure it's a valid URL
+	_, err := url.Parse(address)
 	if err != nil {
-		// Let the common validation handle malformed URLs
+		errs = append(errs, field.Invalid(fldPath, address, fmt.Sprintf("invalid URL format: %v", err)))
 		return errs
 	}
 
-	// Check if the scheme is IPMI-based
-	scheme := parsedURL.Scheme
-	if scheme == "ipmi" || scheme == "libvirt" {
+	// Check if the address contains "redfish"
+	if !strings.Contains(address, "redfish") {
 		errs = append(errs, field.Invalid(fldPath, address, "fencing only supports redfish-compatible BMC addresses, IPMI is not supported"))
 	}
 

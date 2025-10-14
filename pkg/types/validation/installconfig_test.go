@@ -2997,6 +2997,39 @@ func TestValidateTNF(t *testing.T) {
 			config: installConfig().
 				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("idrac-redfish://192.168.111.1/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("ilo5-redfish+https://192.168.111.2/redfish/v1/Systems/1"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_various_redfish_addresses",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("not a valid url at all"),
+						c2())).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_invalid_url",
+			expected: "controlPlane.fencing.credentials\\[0\\].address: Invalid value: \"not a valid url at all\": fencing only supports redfish-compatible BMC addresses, IPMI is not supported",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("https://192.168.111.1:8000/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("https://192.168.111.2:8000/redfish/v1/Systems/2"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_https_with_redfish_path",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
 					Architecture(types.ArchitectureAMD64).
 					Credential(c1(), c2())).
 				MachinePoolCompute(
