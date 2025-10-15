@@ -457,6 +457,54 @@ extraPartitionStart: ""
 			expectedFound: false,
 			expectedError: "invalid Image-based Installation ISO Config: ExtraPartitionStart: Required value: partition start sector cannot be empty",
 		},
+		{
+			name: "valid-architecture-amd64",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+architecture: amd64
+`,
+
+			expectedFound: true,
+			expectedError: "",
+		},
+		{
+			name: "valid-architecture-arm64",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+architecture: arm64
+`,
+
+			expectedFound: true,
+			expectedError: "",
+		},
+		{
+			name: "invalid-architecture-random-string",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+architecture: "invalid"
+`,
+
+			expectedFound: false,
+			expectedError: "invalid Image-based Installation ISO Config: architecture: Invalid value: \"invalid\": architecture must be one of [amd64 arm64]",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -540,6 +588,11 @@ func (icb *ImageBasedInstallationConfigBuilder) imageDigestSources(ids []types.I
 
 func (icb *ImageBasedInstallationConfigBuilder) ignitionConfigOverride(ignitionConfigOverride string) *ImageBasedInstallationConfigBuilder {
 	icb.InstallationConfig.IgnitionConfigOverride = ignitionConfigOverride
+	return icb
+}
+
+func (icb *ImageBasedInstallationConfigBuilder) architecture(architecture string) *ImageBasedInstallationConfigBuilder {
+	icb.InstallationConfig.Architecture = architecture
 	return icb
 }
 
