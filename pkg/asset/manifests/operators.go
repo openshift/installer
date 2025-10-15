@@ -171,7 +171,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		RootCaCert:            string(rootCA.Cert()),
 		RootCACertBase64:      base64.StdEncoding.EncodeToString(rootCA.Cert()),
 		RootCASignerKeyBase64: base64.StdEncoding.EncodeToString(rootCA.Key()),
-		IsFCOS:                installConfig.Config.IsFCOS(),
 		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
 	}

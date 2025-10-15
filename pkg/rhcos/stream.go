@@ -1,4 +1,4 @@
-//go:build !(okd || fcos || scos)
+//go:build !(okd || scos)
 
 package rhcos
 

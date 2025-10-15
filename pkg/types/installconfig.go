@@ -56,8 +56,6 @@ var (
 		none.Name,
 	}
 
-	// FCOS is a setting to enable Fedora CoreOS-only modifications
-	FCOS = false
 	// SCOS is a setting to enable CentOS Stream CoreOS-only modifications
 	SCOS = false
 )
@@ -233,11 +231,6 @@ func (c *InstallConfig) ClusterDomain() string {
 	return fmt.Sprintf("%s.%s", c.ObjectMeta.Name, strings.TrimSuffix(c.BaseDomain, "."))
 }
 
-// IsFCOS returns true if Fedora CoreOS-only modifications are enabled
-func (c *InstallConfig) IsFCOS() bool {
-	return FCOS
-}
-
 // IsSCOS returns true if CentOs Stream CoreOS-only modifications are enabled
 func (c *InstallConfig) IsSCOS() bool {
 	return SCOS
@@ -245,7 +238,7 @@ func (c *InstallConfig) IsSCOS() bool {
 
 // IsOKD returns true if community-only modifications are enabled
 func (c *InstallConfig) IsOKD() bool {
-	return c.IsFCOS() || c.IsSCOS()
+	return c.IsSCOS()
 }
 
 // IsSingleNodeOpenShift returns true if the install-config has been configured for
