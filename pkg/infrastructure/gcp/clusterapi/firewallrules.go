@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/api/compute/v1"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -220,13 +221,15 @@ func hasFirewallPermission(ctx context.Context, projectID string, permissions []
 		return false, fmt.Errorf("failed to find project permissions during firewall permission check: %w", err)
 	}
 
+	permissionsValid := true
 	for _, permission := range permissions {
 		if hasPermission := foundPermissions.Has(permission); !hasPermission {
-			return false, fmt.Errorf("failed to find firewall permission %s", permission)
+			logrus.Warnf("failed to find permission %s, skipping firewall rule creation", permission)
+			permissionsValid = false
 		}
 	}
 
-	return true, nil
+	return permissionsValid, nil
 }
 
 // createFirewallRules creates the rules needed between the worker and master nodes.
