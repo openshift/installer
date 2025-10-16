@@ -307,6 +307,11 @@ func (in *GCPManagedControlPlaneSpec) DeepCopyInto(out *GCPManagedControlPlaneSp
 		*out = new(string)
 		**out = **in
 	}
+	if in.Version != nil {
+		in, out := &in.Version, &out.Version
+		*out = new(string)
+		**out = **in
+	}
 	out.Endpoint = in.Endpoint
 	if in.MasterAuthorizedNetworksConfig != nil {
 		in, out := &in.MasterAuthorizedNetworksConfig, &out.MasterAuthorizedNetworksConfig
@@ -344,6 +349,11 @@ func (in *GCPManagedControlPlaneStatus) DeepCopyInto(out *GCPManagedControlPlane
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.Version != nil {
+		in, out := &in.Version, &out.Version
+		*out = new(string)
+		**out = **in
 	}
 }
 
