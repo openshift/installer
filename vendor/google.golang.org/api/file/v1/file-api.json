@@ -143,15 +143,16 @@
                 "name"
               ],
               "parameters": {
+                "extraLocationTypes": {
+                  "description": "Optional. A list of extra location types that should be used as conditions for controlling the visibility of the locations.",
+                  "location": "query",
+                  "repeated": true,
+                  "type": "string"
+                },
                 "filter": {
                   "description": "A filter to narrow down results to a preferred subset. The filtering language accepts strings like `\"displayName=tokyo\"`, and is documented in more detail in [AIP-160](https://google.aip.dev/160).",
                   "location": "query",
                   "type": "string"
-                },
-                "includeUnrevealedLocations": {
-                  "description": "If true, the returned list will include locations which are not yet revealed.",
-                  "location": "query",
-                  "type": "boolean"
                 },
                 "name": {
                   "description": "The resource that owns the locations collection, if applicable.",
@@ -907,7 +908,7 @@
       }
     }
   },
-  "revision": "20241204",
+  "revision": "20250421",
   "rootUrl": "https://file.googleapis.com/",
   "schemas": {
     "Backup": {
@@ -1163,6 +1164,10 @@
       "properties": {
         "consumerDefinedName": {
           "description": "consumer_defined_name is the name of the instance set by the service consumers. Generally this is different from the `name` field which reperesents the system-assigned id of the instance which the service consumers do not recognize. This is a required field for tenants onboarding to Maintenance Window notifications (go/slm-rollout-maintenance-policies#prerequisites).",
+          "type": "string"
+        },
+        "consumerProjectNumber": {
+          "description": "Optional. The consumer_project_number associated with this Apigee instance. This field is added specifically to support Apigee integration with SLM Rollout and UMM. It represents the numerical project ID of the GCP project that consumes this Apigee instance. It is used for SLM rollout notifications and UMM integration, enabling proper mapping to customer projects and log delivery for Apigee instances. This field complements consumer_project_id and may be used for specific Apigee scenarios where the numerical ID is required.",
           "type": "string"
         },
         "createTime": {
@@ -1448,16 +1453,16 @@
       "description": "A Filestore instance.",
       "id": "Instance",
       "properties": {
-        "configurablePerformanceEnabled": {
-          "description": "Output only. Indicates whether this instance's performance is configurable. If enabled, adjust it using the 'performance_config' field.",
-          "readOnly": true,
-          "type": "boolean"
-        },
         "createTime": {
           "description": "Output only. The time when the instance was created.",
           "format": "google-datetime",
           "readOnly": true,
           "type": "string"
+        },
+        "customPerformanceSupported": {
+          "description": "Output only. Indicates whether this instance supports configuring its performance. If true, the user can configure the instance's performance by using the 'performance_config' field.",
+          "readOnly": true,
+          "type": "boolean"
         },
         "deletionProtectionEnabled": {
           "description": "Optional. Indicates whether the instance is protected against deletion.",
@@ -2035,7 +2040,7 @@
         },
         "iopsPerTb": {
           "$ref": "IOPSPerTB",
-          "description": "Provision IOPS dynamically based on the capacity of the instance. Provisioned read IOPS will be calculated by multiplying the capacity of the instance in TiB by the `iops_per_tb` value. For example, for a 2 TiB instance with an `iops_per_tb` value of 17000 the provisioned read IOPS will be 34000. If the calculated value is outside the supported range for the instance's capacity during instance creation, instance creation will fail with an `InvalidArgument` error. Similarly, if an instance capacity update would result in a value outside the supported range, the update will fail with an `InvalidArgument` error."
+          "description": "Provision IOPS dynamically based on the capacity of the instance. Provisioned IOPS will be calculated by multiplying the capacity of the instance in TiB by the `iops_per_tb` value. For example, for a 2 TiB instance with an `iops_per_tb` value of 17000 the provisioned IOPS will be 34000. If the calculated value is outside the supported range for the instance's capacity during instance creation, instance creation will fail with an `InvalidArgument` error. Similarly, if an instance capacity update would result in a value outside the supported range, the update will fail with an `InvalidArgument` error."
         }
       },
       "type": "object"
@@ -2044,6 +2049,12 @@
       "description": "The enforced performance limits, calculated from the instance's performance configuration.",
       "id": "PerformanceLimits",
       "properties": {
+        "maxIops": {
+          "description": "Output only. The max IOPS.",
+          "format": "int64",
+          "readOnly": true,
+          "type": "string"
+        },
         "maxReadIops": {
           "description": "Output only. The max read IOPS.",
           "format": "int64",
@@ -2074,7 +2085,12 @@
     "PromoteReplicaRequest": {
       "description": "PromoteReplicaRequest promotes a Filestore standby instance (replica).",
       "id": "PromoteReplicaRequest",
-      "properties": {},
+      "properties": {
+        "peerInstance": {
+          "description": "Optional. The resource name of the peer instance to promote, in the format `projects/{project_id}/locations/{location_id}/instances/{instance_id}`. The peer instance is required if the operation is called on an active instance.",
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "ReplicaConfig": {
@@ -2115,11 +2131,13 @@
           "items": {
             "enum": [
               "STATE_REASON_UNSPECIFIED",
-              "PEER_INSTANCE_UNREACHABLE"
+              "PEER_INSTANCE_UNREACHABLE",
+              "REMOVE_FAILED"
             ],
             "enumDescriptions": [
               "Reason not specified.",
-              "The peer instance is unreachable."
+              "The peer instance is unreachable.",
+              "The remove replica peer instance operation failed."
             ],
             "type": "string"
           },
