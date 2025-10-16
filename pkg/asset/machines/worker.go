@@ -634,7 +634,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.GCP)
 			if len(mpool.Zones) == 0 {
-				azs, err := gcp.ZonesForInstanceType(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, mpool.InstanceType, ic.Platform.GCP.ServiceEndpoints)
+				azs, err := gcp.ZonesForInstanceType(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, mpool.InstanceType, ic.Platform.GCP.Endpoint)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
