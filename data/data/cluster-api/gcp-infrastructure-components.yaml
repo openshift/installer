@@ -10,7 +10,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.17.1
+    controller-gen.kubebuilder.io/version: v0.17.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -92,10 +92,11 @@ spec:
                   communicate with the control plane.
                 properties:
                   host:
-                    description: The hostname on which the API server is serving.
+                    description: host is the hostname on which the API server is serving.
+                    maxLength: 512
                     type: string
                   port:
-                    description: The port on which the API server is serving.
+                    description: port is the port on which the API server is serving.
                     format: int32
                     type: integer
                 required:
@@ -143,6 +144,21 @@ spec:
                     description: InternalLoadBalancer is the configuration for an
                       Internal Passthrough Network Load Balancer.
                     properties:
+                      internalAccess:
+                        default: Regional
+                        description: |-
+                          InternalAccess defines the access for the Internal Passthrough Load Balancer.
+                          It determines whether the load balancer allows global access,
+                          or restricts traffic to clients within the same region as the load balancer.
+                          If unspecified, the value defaults to "Regional".
+
+                          Possible values:
+                            "Regional" - Only clients in the same region as the load balancer can access it.
+                            "Global" - Clients from any region can access the load balancer.
+                        enum:
+                        - Regional
+                        - Global
+                        type: string
                       name:
                         description: |-
                           Name is the name of the Load Balancer. If not set a default name
@@ -178,6 +194,26 @@ spec:
 
                       Defaults to true.
                     type: boolean
+                  firewall:
+                    description: Firewall configuration.
+                    properties:
+                      defaultRulesManagement:
+                        default: Managed
+                        description: |-
+                          DefaultRulesManagement determines the management policy for the default firewall rules
+                          created by the controller. DefaultRulesManagement has no effect on user specified firewall
+                          rules. DefaultRulesManagement has no effect when a HostProject is specified.
+                          "Managed": The controller will create and manage firewall rules.
+                          "Unmanaged": The controller will not create or modify any firewall rules. If
+                          the RulesManagement is changed from Managed to Unmanaged after the firewall rules
+                          have been created, then the firewall rules will not be deleted.
+
+                          Defaults to "Managed".
+                        enum:
+                        - Managed
+                        - Unmanaged
+                        type: string
+                    type: object
                   hostProject:
                     description: HostProject is the name of the project hosting the
                       shared VPC network resources.
@@ -353,18 +389,26 @@ spec:
                   compute:
                     description: ComputeServiceEndpoint is the custom endpoint url
                       for the Compute Service
+                    format: uri
+                    pattern: ^https://
                     type: string
                   container:
                     description: ContainerServiceEndpoint is the custom endpoint url
                       for the Container Service
+                    format: uri
+                    pattern: ^https://
                     type: string
                   iam:
                     description: IAMServiceEndpoint is the custom endpoint url for
                       the IAM Service
+                    format: uri
+                    pattern: ^https://
                     type: string
                   resourceManager:
                     description: ResourceManagerServiceEndpoint is the custom endpoint
                       url for the Resource Manager Service
+                    format: uri
+                    pattern: ^https://
                     type: string
                 type: object
             required:
@@ -481,7 +525,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.17.1
+    controller-gen.kubebuilder.io/version: v0.17.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -557,7 +601,7 @@ spec:
                         additionalProperties:
                           type: string
                         description: |-
-                          Map of string keys and values that can be used to organize and categorize
+                          labels is a map of string keys and values that can be used to organize and categorize
                           (scope and select) objects. May match selectors of replication controllers
                           and services.
                           More info: http://kubernetes.io/docs/user-guide/labels
@@ -578,10 +622,13 @@ spec:
                           used to communicate with the control plane.
                         properties:
                           host:
-                            description: The hostname on which the API server is serving.
+                            description: host is the hostname on which the API server
+                              is serving.
+                            maxLength: 512
                             type: string
                           port:
-                            description: The port on which the API server is serving.
+                            description: port is the port on which the API server
+                              is serving.
                             format: int32
                             type: integer
                         required:
@@ -630,6 +677,21 @@ spec:
                             description: InternalLoadBalancer is the configuration
                               for an Internal Passthrough Network Load Balancer.
                             properties:
+                              internalAccess:
+                                default: Regional
+                                description: |-
+                                  InternalAccess defines the access for the Internal Passthrough Load Balancer.
+                                  It determines whether the load balancer allows global access,
+                                  or restricts traffic to clients within the same region as the load balancer.
+                                  If unspecified, the value defaults to "Regional".
+
+                                  Possible values:
+                                    "Regional" - Only clients in the same region as the load balancer can access it.
+                                    "Global" - Clients from any region can access the load balancer.
+                                enum:
+                                - Regional
+                                - Global
+                                type: string
                               name:
                                 description: |-
                                   Name is the name of the Load Balancer. If not set a default name
@@ -666,6 +728,26 @@ spec:
 
                               Defaults to true.
                             type: boolean
+                          firewall:
+                            description: Firewall configuration.
+                            properties:
+                              defaultRulesManagement:
+                                default: Managed
+                                description: |-
+                                  DefaultRulesManagement determines the management policy for the default firewall rules
+                                  created by the controller. DefaultRulesManagement has no effect on user specified firewall
+                                  rules. DefaultRulesManagement has no effect when a HostProject is specified.
+                                  "Managed": The controller will create and manage firewall rules.
+                                  "Unmanaged": The controller will not create or modify any firewall rules. If
+                                  the RulesManagement is changed from Managed to Unmanaged after the firewall rules
+                                  have been created, then the firewall rules will not be deleted.
+
+                                  Defaults to "Managed".
+                                enum:
+                                - Managed
+                                - Unmanaged
+                                type: string
+                            type: object
                           hostProject:
                             description: HostProject is the name of the project hosting
                               the shared VPC network resources.
@@ -841,18 +923,26 @@ spec:
                           compute:
                             description: ComputeServiceEndpoint is the custom endpoint
                               url for the Compute Service
+                            format: uri
+                            pattern: ^https://
                             type: string
                           container:
                             description: ContainerServiceEndpoint is the custom endpoint
                               url for the Container Service
+                            format: uri
+                            pattern: ^https://
                             type: string
                           iam:
                             description: IAMServiceEndpoint is the custom endpoint
                               url for the IAM Service
+                            format: uri
+                            pattern: ^https://
                             type: string
                           resourceManager:
                             description: ResourceManagerServiceEndpoint is the custom
                               endpoint url for the Resource Manager Service
+                            format: uri
+                            pattern: ^https://
                             type: string
                         type: object
                     required:
@@ -874,7 +964,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.17.1
+    controller-gen.kubebuilder.io/version: v0.17.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1408,7 +1498,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.17.1
+    controller-gen.kubebuilder.io/version: v0.17.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1483,7 +1573,7 @@ spec:
                         additionalProperties:
                           type: string
                         description: |-
-                          Map of string keys and values that can be used to organize and categorize
+                          labels is a map of string keys and values that can be used to organize and categorize
                           (scope and select) objects. May match selectors of replication controllers
                           and services.
                           More info: http://kubernetes.io/docs/user-guide/labels
@@ -1896,7 +1986,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.17.1
+    controller-gen.kubebuilder.io/version: v0.17.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1969,10 +2059,11 @@ spec:
                   communicate with the control plane.
                 properties:
                   host:
-                    description: The hostname on which the API server is serving.
+                    description: host is the hostname on which the API server is serving.
+                    maxLength: 512
                     type: string
                   port:
-                    description: The port on which the API server is serving.
+                    description: port is the port on which the API server is serving.
                     format: int32
                     type: integer
                 required:
@@ -2013,6 +2104,21 @@ spec:
                     description: InternalLoadBalancer is the configuration for an
                       Internal Passthrough Network Load Balancer.
                     properties:
+                      internalAccess:
+                        default: Regional
+                        description: |-
+                          InternalAccess defines the access for the Internal Passthrough Load Balancer.
+                          It determines whether the load balancer allows global access,
+                          or restricts traffic to clients within the same region as the load balancer.
+                          If unspecified, the value defaults to "Regional".
+
+                          Possible values:
+                            "Regional" - Only clients in the same region as the load balancer can access it.
+                            "Global" - Clients from any region can access the load balancer.
+                        enum:
+                        - Regional
+                        - Global
+                        type: string
                       name:
                         description: |-
                           Name is the name of the Load Balancer. If not set a default name
@@ -2049,6 +2155,26 @@ spec:
 
                       Defaults to true.
                     type: boolean
+                  firewall:
+                    description: Firewall configuration.
+                    properties:
+                      defaultRulesManagement:
+                        default: Managed
+                        description: |-
+                          DefaultRulesManagement determines the management policy for the default firewall rules
+                          created by the controller. DefaultRulesManagement has no effect on user specified firewall
+                          rules. DefaultRulesManagement has no effect when a HostProject is specified.
+                          "Managed": The controller will create and manage firewall rules.
+                          "Unmanaged": The controller will not create or modify any firewall rules. If
+                          the RulesManagement is changed from Managed to Unmanaged after the firewall rules
+                          have been created, then the firewall rules will not be deleted.
+
+                          Defaults to "Managed".
+                        enum:
+                        - Managed
+                        - Unmanaged
+                        type: string
+                    type: object
                   hostProject:
                     description: HostProject is the name of the project hosting the
                       shared VPC network resources.
@@ -2224,18 +2350,26 @@ spec:
                   compute:
                     description: ComputeServiceEndpoint is the custom endpoint url
                       for the Compute Service
+                    format: uri
+                    pattern: ^https://
                     type: string
                   container:
                     description: ContainerServiceEndpoint is the custom endpoint url
                       for the Container Service
+                    format: uri
+                    pattern: ^https://
                     type: string
                   iam:
                     description: IAMServiceEndpoint is the custom endpoint url for
                       the IAM Service
+                    format: uri
+                    pattern: ^https://
                     type: string
                   resourceManager:
                     description: ResourceManagerServiceEndpoint is the custom endpoint
                       url for the Resource Manager Service
+                    format: uri
+                    pattern: ^https://
                     type: string
                 type: object
             required:
@@ -2254,27 +2388,32 @@ spec:
                   properties:
                     lastTransitionTime:
                       description: |-
-                        Last time the condition transitioned from one status to another.
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
                         This should be when the underlying condition changed. If that is not known, then using the time when
                         the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
                       description: |-
-                        A human readable message indicating details about the transition.
+                        message is a human readable message indicating details about the transition.
                         This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
                       type: string
                     reason:
                       description: |-
-                        The reason for the condition's last transition in CamelCase.
+                        reason is the reason for the condition's last transition in CamelCase.
                         The specific API may choose whether or not this field is considered a guaranteed API.
                         This field may be empty.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                     severity:
                       description: |-
                         severity provides an explicit classification of Reason code, so the users or machines can immediately
                         understand the current situation and act accordingly.
                         The Severity field MUST be set only when Status=False.
+                      maxLength: 32
                       type: string
                     status:
                       description: status of the condition, one of True, False, Unknown.
@@ -2284,6 +2423,8 @@ spec:
                         type of condition in CamelCase or in foo.example.com/CamelCase.
                         Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
                         can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                   required:
                   - lastTransitionTime
@@ -2396,7 +2537,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.17.1
+    controller-gen.kubebuilder.io/version: v0.17.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2552,10 +2693,11 @@ spec:
                   with the control plane.
                 properties:
                   host:
-                    description: The hostname on which the API server is serving.
+                    description: host is the hostname on which the API server is serving.
+                    maxLength: 512
                     type: string
                   port:
-                    description: The port on which the API server is serving.
+                    description: port is the port on which the API server is serving.
                     format: int32
                     type: integer
                 required:
@@ -2642,27 +2784,32 @@ spec:
                   properties:
                     lastTransitionTime:
                       description: |-
-                        Last time the condition transitioned from one status to another.
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
                         This should be when the underlying condition changed. If that is not known, then using the time when
                         the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
                       description: |-
-                        A human readable message indicating details about the transition.
+                        message is a human readable message indicating details about the transition.
                         This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
                       type: string
                     reason:
                       description: |-
-                        The reason for the condition's last transition in CamelCase.
+                        reason is the reason for the condition's last transition in CamelCase.
                         The specific API may choose whether or not this field is considered a guaranteed API.
                         This field may be empty.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                     severity:
                       description: |-
                         severity provides an explicit classification of Reason code, so the users or machines can immediately
                         understand the current situation and act accordingly.
                         The Severity field MUST be set only when Status=False.
+                      maxLength: 32
                       type: string
                     status:
                       description: status of the condition, one of True, False, Unknown.
@@ -2672,6 +2819,8 @@ spec:
                         type of condition in CamelCase or in foo.example.com/CamelCase.
                         Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
                         can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                   required:
                   - lastTransitionTime
@@ -2712,7 +2861,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.17.1
+    controller-gen.kubebuilder.io/version: v0.17.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -3010,27 +3159,32 @@ spec:
                   properties:
                     lastTransitionTime:
                       description: |-
-                        Last time the condition transitioned from one status to another.
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
                         This should be when the underlying condition changed. If that is not known, then using the time when
                         the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
                       description: |-
-                        A human readable message indicating details about the transition.
+                        message is a human readable message indicating details about the transition.
                         This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
                       type: string
                     reason:
                       description: |-
-                        The reason for the condition's last transition in CamelCase.
+                        reason is the reason for the condition's last transition in CamelCase.
                         The specific API may choose whether or not this field is considered a guaranteed API.
                         This field may be empty.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                     severity:
                       description: |-
                         severity provides an explicit classification of Reason code, so the users or machines can immediately
                         understand the current situation and act accordingly.
                         The Severity field MUST be set only when Status=False.
+                      maxLength: 32
                       type: string
                     status:
                       description: status of the condition, one of True, False, Unknown.
@@ -3040,6 +3194,8 @@ spec:
                         type of condition in CamelCase or in foo.example.com/CamelCase.
                         Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
                         can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
                       type: string
                   required:
                   - lastTransitionTime
