@@ -152,6 +152,15 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
+		// once AgentWorkflowTypeInstallInteractiveDisconnected is reomved, the default workflow
+		// will be AgentWorkflowTypeInstall and then the registryconf asset should just return empty
+		// as its not needed.
+		// The thought here is in OVE, install config won't be supplied 
+		// ( but could cause issues when UI is introduced for regular cases)
+		// To Do:
+		if !installConfig.Supplied {
+			return nil
+		}
 		if installConfig.Supplied {
 			imageDigestSources = installConfig.Config.ImageDigestSources
 			deprecatedImageContentSources = installConfig.Config.DeprecatedImageContentSources
@@ -162,10 +171,6 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 		imageDigestSources = clusterInfo.ImageDigestSources
 		deprecatedImageContentSources = clusterInfo.DeprecatedImageContentSources
 		image = clusterInfo.ReleaseImage
-
-	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
-		// Not required
-		return nil
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
