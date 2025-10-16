@@ -237,3 +237,14 @@ func (s *ManagedControlPlaneScope) SetEndpoint(host string) {
 func (s *ManagedControlPlaneScope) IsAutopilotCluster() bool {
 	return s.GCPManagedControlPlane.Spec.EnableAutopilot
 }
+
+// GetControlPlaneVersion returns the control plane version from the specification.
+func (s *ManagedControlPlaneScope) GetControlPlaneVersion() *string {
+	if s.GCPManagedControlPlane.Spec.Version != nil {
+		return s.GCPManagedControlPlane.Spec.Version
+	}
+	if s.GCPManagedControlPlane.Spec.ControlPlaneVersion != nil {
+		return s.GCPManagedControlPlane.Spec.ControlPlaneVersion
+	}
+	return nil
+}

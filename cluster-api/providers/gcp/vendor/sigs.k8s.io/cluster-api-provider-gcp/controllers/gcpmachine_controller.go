@@ -173,7 +173,7 @@ func (r *GCPMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		Namespace: gcpMachine.Namespace,
 		Name:      cluster.Spec.InfrastructureRef.Name,
 	}
-	if err := r.Client.Get(ctx, gcpClusterKey, gcpCluster); err != nil {
+	if err := r.Get(ctx, gcpClusterKey, gcpCluster); err != nil {
 		log.Info("GCPCluster is not available yet")
 		return ctrl.Result{}, nil
 	}
@@ -207,7 +207,7 @@ func (r *GCPMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}()
 
 	// Handle deleted machines
-	if !gcpMachine.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !gcpMachine.DeletionTimestamp.IsZero() {
 		return ctrl.Result{}, r.reconcileDelete(ctx, machineScope)
 	}
 
@@ -245,7 +245,7 @@ func (r *GCPMachineReconciler) reconcile(ctx context.Context, machineScope *scop
 	default:
 		machineScope.SetFailureReason("UpdateError")
 		machineScope.SetFailureMessage(errors.Errorf("GCPMachine instance state %s is unexpected", instanceState))
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
 	}
 }
 

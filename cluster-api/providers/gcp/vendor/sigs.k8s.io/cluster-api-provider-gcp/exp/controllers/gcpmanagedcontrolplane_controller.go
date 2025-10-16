@@ -92,11 +92,11 @@ func (r *GCPManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 
 	// Get the control plane instance
 	gcpManagedControlPlane := &infrav1exp.GCPManagedControlPlane{}
-	if err := r.Client.Get(ctx, req.NamespacedName, gcpManagedControlPlane); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, gcpManagedControlPlane); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{}, fmt.Errorf("getting GCPManagedControlPlane: %w", err)
 	}
 
 	// Get the cluster
@@ -121,7 +121,7 @@ func (r *GCPManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 		Namespace: gcpManagedControlPlane.Namespace,
 		Name:      cluster.Spec.InfrastructureRef.Name,
 	}
-	if err := r.Client.Get(ctx, key, managedCluster); err != nil {
+	if err := r.Get(ctx, key, managedCluster); err != nil {
 		log.Error(err, "Failed to retrieve GCPManagedCluster from the API Server")
 		return ctrl.Result{}, err
 	}
@@ -181,10 +181,6 @@ func (r *GCPManagedControlPlaneReconciler) reconcile(ctx context.Context, manage
 			log.V(4).Info("Reconciler requested requeueAfter", "reconciler", name, "after", res.RequeueAfter)
 			return res, nil
 		}
-		if res.Requeue {
-			log.V(4).Info("Reconciler requested requeue", "reconciler", name)
-			return res, nil
-		}
 	}
 
 	return ctrl.Result{}, nil
@@ -209,13 +205,10 @@ func (r *GCPManagedControlPlaneReconciler) reconcileDelete(ctx context.Context, 
 			log.V(4).Info("Reconciler requested requeueAfter", "reconciler", name, "after", res.RequeueAfter)
 			return res, nil
 		}
-		if res.Requeue {
-			log.V(4).Info("Reconciler requested requeue", "reconciler", name)
-			return res, nil
-		}
 	}
 
-	if conditions.Get(managedControlPlaneScope.GCPManagedControlPlane, infrav1exp.GKEControlPlaneDeletingCondition).Reason == infrav1exp.GKEControlPlaneDeletedReason {
+	if managedControlPlaneScope.GCPManagedControlPlane != nil &&
+		conditions.Get(managedControlPlaneScope.GCPManagedControlPlane, infrav1exp.GKEControlPlaneDeletingCondition).Reason == infrav1exp.GKEControlPlaneDeletedReason {
 		controllerutil.RemoveFinalizer(managedControlPlaneScope.GCPManagedControlPlane, infrav1exp.ManagedControlPlaneFinalizer)
 	}
 

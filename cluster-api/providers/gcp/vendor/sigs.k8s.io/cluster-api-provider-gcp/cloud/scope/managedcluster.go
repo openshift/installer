@@ -51,13 +51,13 @@ func NewManagedClusterScope(ctx context.Context, params ManagedClusterScopeParam
 		return nil, errors.New("failed to generate new scope from nil GCPManagedCluster")
 	}
 
-	if params.GCPServices.Compute == nil {
+	if params.Compute == nil {
 		computeSvc, err := newComputeService(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client, params.GCPManagedCluster.Spec.ServiceEndpoints)
 		if err != nil {
 			return nil, errors.Errorf("failed to create gcp compute client: %v", err)
 		}
 
-		params.GCPServices.Compute = computeSvc
+		params.Compute = computeSvc
 	}
 
 	helper, err := patch.NewHelper(params.GCPManagedCluster, params.Client)
@@ -127,6 +127,14 @@ func (s *ManagedClusterScope) NetworkName() string {
 // The network project defaults to the Project when one is not supplied.
 func (s *ManagedClusterScope) NetworkProject() string {
 	return ptr.Deref(s.GCPManagedCluster.Spec.Network.HostProject, s.Project())
+}
+
+// SkipFirewallRuleCreation returns whether the spec indicates that firewall rules
+// should be created or not. If the RulesManagement for the default firewall rules is
+// set to unmanaged or when the cluster will include a shared VPC, the default firewall
+// rule creation will be skipped.
+func (s *ManagedClusterScope) SkipFirewallRuleCreation() bool {
+	return (s.GCPManagedCluster.Spec.Network.Firewall.DefaultRulesManagement == infrav1.RulesManagementUnmanaged) || s.IsSharedVpc()
 }
 
 // IsSharedVpc returns true If sharedVPC used else , returns false.
