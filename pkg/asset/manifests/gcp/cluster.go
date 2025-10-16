@@ -145,7 +145,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if createFwRules {
 		firewallRulesManagementPolicy = capg.RulesManagementManaged
 	}
-	
+
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,

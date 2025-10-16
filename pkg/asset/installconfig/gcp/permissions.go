@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	
+
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 

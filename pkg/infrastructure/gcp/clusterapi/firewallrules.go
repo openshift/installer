@@ -205,15 +205,15 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
 	if in.InstallConfig.Config.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.GCP.NetworkProjectID
-
-		createFwRules, err := gcpconfig.HasPermissions(ctx, projectID, []string{gcpconfig.CreateGCPFirewallPermission}, in.InstallConfig.Config.GCP.Endpoint)
-		if err != nil {
-			return fmt.Errorf("failed to create cluster firewall rules: %w", err)
-		}
-		if !createFwRules {
-			return nil
-		}
 	}
+	createFwRules, err := gcpconfig.HasPermissions(ctx, projectID, []string{gcpconfig.CreateGCPFirewallPermission}, in.InstallConfig.Config.GCP.Endpoint)
+	if err != nil {
+		return fmt.Errorf("failed to create cluster firewall rules: %w", err)
+	}
+	if !createFwRules {
+		return nil
+	}
+
 	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
 	pscEndpoint := in.InstallConfig.Config.GCP.Endpoint
 	if gcptypes.ShouldUseEndpointForInstaller(pscEndpoint) {
@@ -297,13 +297,13 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
 	if in.InstallConfig.Config.Platform.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.Platform.GCP.NetworkProjectID
-		createFwRules, err := gcpconfig.HasPermissions(ctx, projectID, []string{gcpconfig.CreateGCPFirewallPermission}, in.InstallConfig.Config.GCP.Endpoint)
-		if err != nil {
-			return fmt.Errorf("failed to create bootstrap firewall rules: %w", err)
-		}
-		if !createFwRules {
-			return nil
-		}
+	}
+	createFwRules, err := gcpconfig.HasPermissions(ctx, projectID, []string{gcpconfig.CreateGCPFirewallPermission}, in.InstallConfig.Config.GCP.Endpoint)
+	if err != nil {
+		return fmt.Errorf("failed to create bootstrap firewall rules: %w", err)
+	}
+	if !createFwRules {
+		return nil
 	}
 
 	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
