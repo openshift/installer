@@ -19,30 +19,32 @@ package addons
 
 import (
 	"context"
+	"time"
 
-	"github.com/aws/aws-sdk-go/service/eks"
-	"github.com/aws/aws-sdk-go/service/eks/eksiface"
+	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/eks"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/planner"
 )
 
 // NewPlan creates a new Plan to manage EKS addons.
-func NewPlan(clusterName string, desiredAddons, installedAddons []*EKSAddon, client eksiface.EKSAPI) planner.Plan {
+func NewPlan(clusterName string, desiredAddons, installedAddons []*EKSAddon, client eks.Client, maxWait time.Duration) planner.Plan {
 	return &plan{
-		installedAddons: installedAddons,
-		desiredAddons:   desiredAddons,
-		eksClient:       client,
-		clusterName:     clusterName,
+		installedAddons:           installedAddons,
+		desiredAddons:             desiredAddons,
+		eksClient:                 client,
+		clusterName:               clusterName,
+		maxWaitActiveUpdateDelete: maxWait,
 	}
 }
 
 // Plan is a plan that will manage EKS addons.
 type plan struct {
-	installedAddons []*EKSAddon
-	desiredAddons   []*EKSAddon
-	eksClient       eksiface.EKSAPI
-	clusterName     string
+	installedAddons           []*EKSAddon
+	desiredAddons             []*EKSAddon
+	eksClient                 eks.Client
+	clusterName               string
+	maxWaitActiveUpdateDelete time.Duration
 }
 
 // Create will create the plan (i.e. list of procedures) for managing EKS addons.
@@ -71,7 +73,7 @@ func (a *plan) Create(_ context.Context) ([]planner.Procedure, error) {
 					&UpdateAddonProcedure{plan: a, name: *installed.Name},
 					&WaitAddonActiveProcedure{plan: a, name: *desired.Name, includeDegraded: true},
 				)
-			} else if *installed.Status != eks.AddonStatusActive {
+			} else if *installed.Status != string(ekstypes.AddonStatusActive) {
 				// If the desired and installed are the same make sure its active
 				procedures = append(procedures, &WaitAddonActiveProcedure{plan: a, name: *desired.Name, includeDegraded: true})
 			}
@@ -83,7 +85,7 @@ func (a *plan) Create(_ context.Context) ([]planner.Procedure, error) {
 		installed := a.installedAddons[i]
 		desired := a.getDesired(*installed.Name)
 		if desired == nil {
-			if *installed.Status != eks.AddonStatusDeleting {
+			if *installed.Status != string(ekstypes.AddonStatusDeleting) {
 				procedures = append(procedures, &DeleteAddonProcedure{plan: a, name: *installed.Name})
 			}
 			procedures = append(procedures, &WaitAddonDeleteProcedure{plan: a, name: *installed.Name})
@@ -113,15 +115,4 @@ func (a *plan) getDesired(name string) *EKSAddon {
 	}
 
 	return nil
-}
-
-func convertTags(tags infrav1.Tags) map[string]*string {
-	converted := map[string]*string{}
-
-	for k, v := range tags {
-		copiedVal := v
-		converted[k] = &copiedVal
-	}
-
-	return converted
 }

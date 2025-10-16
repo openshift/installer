@@ -226,6 +226,29 @@ func (l *AWSList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AWSList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AWSList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AWSList) SetItems(items []*AWS) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AWSList) Items() []*AWS {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AWSList) Empty() bool {
 	return l == nil || len(l.items) == 0

@@ -206,6 +206,29 @@ func (l *GCPFlavourList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *GCPFlavourList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *GCPFlavourList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *GCPFlavourList) SetItems(items []*GCPFlavour) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *GCPFlavourList) Items() []*GCPFlavour {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *GCPFlavourList) Empty() bool {
 	return l == nil || len(l.items) == 0

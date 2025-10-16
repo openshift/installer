@@ -29,7 +29,7 @@ import (
 // MarshalClusterAutoscaler writes a value of the 'cluster_autoscaler' type to the given writer.
 func MarshalClusterAutoscaler(object *ClusterAutoscaler, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterAutoscaler(object, stream)
+	WriteClusterAutoscaler(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterAutoscaler(object *ClusterAutoscaler, writer io.Writer) error
 	return stream.Error
 }
 
-// writeClusterAutoscaler writes a value of the 'cluster_autoscaler' type to the given stream.
-func writeClusterAutoscaler(object *ClusterAutoscaler, stream *jsoniter.Stream) {
+// WriteClusterAutoscaler writes a value of the 'cluster_autoscaler' type to the given stream.
+func WriteClusterAutoscaler(object *ClusterAutoscaler, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -80,7 +80,7 @@ func writeClusterAutoscaler(object *ClusterAutoscaler, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("balancing_ignored_labels")
-		writeStringList(object.balancingIgnoredLabels, stream)
+		WriteStringList(object.balancingIgnoredLabels, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0
@@ -134,7 +134,7 @@ func writeClusterAutoscaler(object *ClusterAutoscaler, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("resource_limits")
-		writeAutoscalerResourceLimits(object.resourceLimits, stream)
+		WriteAutoscalerResourceLimits(object.resourceLimits, stream)
 		count++
 	}
 	present_ = object.bitmap_&2048 != 0 && object.scaleDown != nil
@@ -143,7 +143,7 @@ func writeClusterAutoscaler(object *ClusterAutoscaler, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("scale_down")
-		writeAutoscalerScaleDownConfig(object.scaleDown, stream)
+		WriteAutoscalerScaleDownConfig(object.scaleDown, stream)
 		count++
 	}
 	present_ = object.bitmap_&4096 != 0
@@ -164,13 +164,13 @@ func UnmarshalClusterAutoscaler(source interface{}) (object *ClusterAutoscaler, 
 	if err != nil {
 		return
 	}
-	object = readClusterAutoscaler(iterator)
+	object = ReadClusterAutoscaler(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterAutoscaler reads a value of the 'cluster_autoscaler' type from the given iterator.
-func readClusterAutoscaler(iterator *jsoniter.Iterator) *ClusterAutoscaler {
+// ReadClusterAutoscaler reads a value of the 'cluster_autoscaler' type from the given iterator.
+func ReadClusterAutoscaler(iterator *jsoniter.Iterator) *ClusterAutoscaler {
 	object := &ClusterAutoscaler{}
 	for {
 		field := iterator.ReadObject()
@@ -194,7 +194,7 @@ func readClusterAutoscaler(iterator *jsoniter.Iterator) *ClusterAutoscaler {
 			object.balanceSimilarNodeGroups = value
 			object.bitmap_ |= 8
 		case "balancing_ignored_labels":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.balancingIgnoredLabels = value
 			object.bitmap_ |= 16
 		case "ignore_daemonsets_utilization":
@@ -218,11 +218,11 @@ func readClusterAutoscaler(iterator *jsoniter.Iterator) *ClusterAutoscaler {
 			object.podPriorityThreshold = value
 			object.bitmap_ |= 512
 		case "resource_limits":
-			value := readAutoscalerResourceLimits(iterator)
+			value := ReadAutoscalerResourceLimits(iterator)
 			object.resourceLimits = value
 			object.bitmap_ |= 1024
 		case "scale_down":
-			value := readAutoscalerScaleDownConfig(iterator)
+			value := ReadAutoscalerScaleDownConfig(iterator)
 			object.scaleDown = value
 			object.bitmap_ |= 2048
 		case "skip_nodes_with_local_storage":

@@ -30,7 +30,7 @@ import (
 // MarshalAddon writes a value of the 'addon' type to the given writer.
 func MarshalAddon(object *Addon, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddon(object, stream)
+	WriteAddon(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAddon(object *Addon, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddon writes a value of the 'addon' type to the given stream.
-func writeAddon(object *Addon, stream *jsoniter.Stream) {
+// WriteAddon writes a value of the 'addon' type to the given stream.
+func WriteAddon(object *Addon, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -130,7 +130,7 @@ func writeAddon(object *Addon, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("config")
-		writeAddonConfig(object.config, stream)
+		WriteAddonConfig(object.config, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0 && object.credentialsRequests != nil
@@ -139,7 +139,7 @@ func writeAddon(object *Addon, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("credentials_requests")
-		writeCredentialRequestList(object.credentialsRequests, stream)
+		WriteCredentialRequestList(object.credentialsRequests, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -238,7 +238,7 @@ func writeAddon(object *Addon, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("namespaces")
-		writeAddonNamespaceList(object.namespaces, stream)
+		WriteAddonNamespaceList(object.namespaces, stream)
 		count++
 	}
 	present_ = object.bitmap_&262144 != 0
@@ -258,7 +258,7 @@ func writeAddon(object *Addon, stream *jsoniter.Stream) {
 		stream.WriteObjectField("parameters")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		writeAddonParameterList(object.parameters.items, stream)
+		WriteAddonParameterList(object.parameters.Items(), stream)
 		stream.WriteObjectEnd()
 		count++
 	}
@@ -268,7 +268,7 @@ func writeAddon(object *Addon, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("requirements")
-		writeAddonRequirementList(object.requirements, stream)
+		WriteAddonRequirementList(object.requirements, stream)
 		count++
 	}
 	present_ = object.bitmap_&2097152 != 0
@@ -295,7 +295,7 @@ func writeAddon(object *Addon, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("sub_operators")
-		writeAddonSubOperatorList(object.subOperators, stream)
+		WriteAddonSubOperatorList(object.subOperators, stream)
 		count++
 	}
 	present_ = object.bitmap_&16777216 != 0
@@ -313,7 +313,7 @@ func writeAddon(object *Addon, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("version")
-		writeAddonVersion(object.version, stream)
+		WriteAddonVersion(object.version, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -325,13 +325,13 @@ func UnmarshalAddon(source interface{}) (object *Addon, err error) {
 	if err != nil {
 		return
 	}
-	object = readAddon(iterator)
+	object = ReadAddon(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddon reads a value of the 'addon' type from the given iterator.
-func readAddon(iterator *jsoniter.Iterator) *Addon {
+// ReadAddon reads a value of the 'addon' type from the given iterator.
+func ReadAddon(iterator *jsoniter.Iterator) *Addon {
 	object := &Addon{}
 	for {
 		field := iterator.ReadObject()
@@ -375,11 +375,11 @@ func readAddon(iterator *jsoniter.Iterator) *Addon {
 			object.commonLabels = value
 			object.bitmap_ |= 16
 		case "config":
-			value := readAddonConfig(iterator)
+			value := ReadAddonConfig(iterator)
 			object.config = value
 			object.bitmap_ |= 32
 		case "credentials_requests":
-			value := readCredentialRequestList(iterator)
+			value := ReadCredentialRequestList(iterator)
 			object.credentialsRequests = value
 			object.bitmap_ |= 64
 		case "description":
@@ -424,7 +424,7 @@ func readAddon(iterator *jsoniter.Iterator) *Addon {
 			object.name = value
 			object.bitmap_ |= 65536
 		case "namespaces":
-			value := readAddonNamespaceList(iterator)
+			value := ReadAddonNamespaceList(iterator)
 			object.namespaces = value
 			object.bitmap_ |= 131072
 		case "operator_name":
@@ -441,11 +441,11 @@ func readAddon(iterator *jsoniter.Iterator) *Addon {
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.link = text == AddonParameterListLinkKind
+					value.SetLink(text == AddonParameterListLinkKind)
 				case "href":
-					value.href = iterator.ReadString()
+					value.SetHREF(iterator.ReadString())
 				case "items":
-					value.items = readAddonParameterList(iterator)
+					value.SetItems(ReadAddonParameterList(iterator))
 				default:
 					iterator.ReadAny()
 				}
@@ -453,7 +453,7 @@ func readAddon(iterator *jsoniter.Iterator) *Addon {
 			object.parameters = value
 			object.bitmap_ |= 524288
 		case "requirements":
-			value := readAddonRequirementList(iterator)
+			value := ReadAddonRequirementList(iterator)
 			object.requirements = value
 			object.bitmap_ |= 1048576
 		case "resource_cost":
@@ -465,7 +465,7 @@ func readAddon(iterator *jsoniter.Iterator) *Addon {
 			object.resourceName = value
 			object.bitmap_ |= 4194304
 		case "sub_operators":
-			value := readAddonSubOperatorList(iterator)
+			value := ReadAddonSubOperatorList(iterator)
 			object.subOperators = value
 			object.bitmap_ |= 8388608
 		case "target_namespace":
@@ -473,7 +473,7 @@ func readAddon(iterator *jsoniter.Iterator) *Addon {
 			object.targetNamespace = value
 			object.bitmap_ |= 16777216
 		case "version":
-			value := readAddonVersion(iterator)
+			value := ReadAddonVersion(iterator)
 			object.version = value
 			object.bitmap_ |= 33554432
 		default:

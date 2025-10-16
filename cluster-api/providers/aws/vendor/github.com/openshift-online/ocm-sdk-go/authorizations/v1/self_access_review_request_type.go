@@ -204,6 +204,29 @@ func (l *SelfAccessReviewRequestList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *SelfAccessReviewRequestList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SelfAccessReviewRequestList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SelfAccessReviewRequestList) SetItems(items []*SelfAccessReviewRequest) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SelfAccessReviewRequestList) Items() []*SelfAccessReviewRequest {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *SelfAccessReviewRequestList) Empty() bool {
 	return l == nil || len(l.items) == 0

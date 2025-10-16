@@ -106,6 +106,29 @@ func (l *AddOnRequirementStatusList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AddOnRequirementStatusList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddOnRequirementStatusList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddOnRequirementStatusList) SetItems(items []*AddOnRequirementStatus) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddOnRequirementStatusList) Items() []*AddOnRequirementStatus {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AddOnRequirementStatusList) Empty() bool {
 	return l == nil || len(l.items) == 0

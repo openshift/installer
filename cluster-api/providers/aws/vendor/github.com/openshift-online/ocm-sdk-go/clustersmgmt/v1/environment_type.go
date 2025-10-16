@@ -158,6 +158,29 @@ func (l *EnvironmentList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *EnvironmentList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *EnvironmentList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *EnvironmentList) SetItems(items []*Environment) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *EnvironmentList) Items() []*Environment {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *EnvironmentList) Empty() bool {
 	return l == nil || len(l.items) == 0

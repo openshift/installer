@@ -106,6 +106,29 @@ func (l *TokenClaimValidationRuleList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *TokenClaimValidationRuleList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *TokenClaimValidationRuleList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *TokenClaimValidationRuleList) SetItems(items []*TokenClaimValidationRule) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *TokenClaimValidationRuleList) Items() []*TokenClaimValidationRule {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *TokenClaimValidationRuleList) Empty() bool {
 	return l == nil || len(l.items) == 0

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalCloudVPCList(list []*CloudVPC, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeCloudVPCList(list, stream)
+	WriteCloudVPCList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalCloudVPCList(list []*CloudVPC, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeCloudVPCList writes a list of value of the 'cloud_VPC' type to
+// WriteCloudVPCList writes a list of value of the 'cloud_VPC' type to
 // the given stream.
-func writeCloudVPCList(list []*CloudVPC, stream *jsoniter.Stream) {
+func WriteCloudVPCList(list []*CloudVPC, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeCloudVPC(value, stream)
+		WriteCloudVPC(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalCloudVPCList(source interface{}) (items []*CloudVPC, err error) {
 	if err != nil {
 		return
 	}
-	items = readCloudVPCList(iterator)
+	items = ReadCloudVPCList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readCloudVPCList reads list of values of the ”cloud_VPC' type from
+// ReadCloudVPCList reads list of values of the ”cloud_VPC' type from
 // the given iterator.
-func readCloudVPCList(iterator *jsoniter.Iterator) []*CloudVPC {
+func ReadCloudVPCList(iterator *jsoniter.Iterator) []*CloudVPC {
 	list := []*CloudVPC{}
 	for iterator.ReadArray() {
-		item := readCloudVPC(iterator)
+		item := ReadCloudVPC(iterator)
 		list = append(list, item)
 	}
 	return list

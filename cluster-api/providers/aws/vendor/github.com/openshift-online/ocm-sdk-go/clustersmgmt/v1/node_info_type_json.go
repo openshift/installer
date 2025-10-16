@@ -29,7 +29,7 @@ import (
 // MarshalNodeInfo writes a value of the 'node_info' type to the given writer.
 func MarshalNodeInfo(object *NodeInfo, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeNodeInfo(object, stream)
+	WriteNodeInfo(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalNodeInfo(object *NodeInfo, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeNodeInfo writes a value of the 'node_info' type to the given stream.
-func writeNodeInfo(object *NodeInfo, stream *jsoniter.Stream) {
+// WriteNodeInfo writes a value of the 'node_info' type to the given stream.
+func WriteNodeInfo(object *NodeInfo, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalNodeInfo(source interface{}) (object *NodeInfo, err error) {
 	if err != nil {
 		return
 	}
-	object = readNodeInfo(iterator)
+	object = ReadNodeInfo(iterator)
 	err = iterator.Error
 	return
 }
 
-// readNodeInfo reads a value of the 'node_info' type from the given iterator.
-func readNodeInfo(iterator *jsoniter.Iterator) *NodeInfo {
+// ReadNodeInfo reads a value of the 'node_info' type from the given iterator.
+func ReadNodeInfo(iterator *jsoniter.Iterator) *NodeInfo {
 	object := &NodeInfo{}
 	for {
 		field := iterator.ReadObject()

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalResourceReviewRequestList(list []*ResourceReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeResourceReviewRequestList(list, stream)
+	WriteResourceReviewRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalResourceReviewRequestList(list []*ResourceReviewRequest, writer io.W
 	return stream.Error
 }
 
-// writeResourceReviewRequestList writes a list of value of the 'resource_review_request' type to
+// WriteResourceReviewRequestList writes a list of value of the 'resource_review_request' type to
 // the given stream.
-func writeResourceReviewRequestList(list []*ResourceReviewRequest, stream *jsoniter.Stream) {
+func WriteResourceReviewRequestList(list []*ResourceReviewRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeResourceReviewRequest(value, stream)
+		WriteResourceReviewRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalResourceReviewRequestList(source interface{}) (items []*ResourceRe
 	if err != nil {
 		return
 	}
-	items = readResourceReviewRequestList(iterator)
+	items = ReadResourceReviewRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readResourceReviewRequestList reads list of values of the ”resource_review_request' type from
+// ReadResourceReviewRequestList reads list of values of the ”resource_review_request' type from
 // the given iterator.
-func readResourceReviewRequestList(iterator *jsoniter.Iterator) []*ResourceReviewRequest {
+func ReadResourceReviewRequestList(iterator *jsoniter.Iterator) []*ResourceReviewRequest {
 	list := []*ResourceReviewRequest{}
 	for iterator.ReadArray() {
-		item := readResourceReviewRequest(iterator)
+		item := ReadResourceReviewRequest(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -4,6 +4,7 @@ import (
 	"os"
 
 	configv1 "github.com/openshift/api/config/v1"
+	machinev1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
@@ -126,6 +127,11 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+
+	// InfraStack indicates the network stack of the cluster infrastructure.
+	// If left empty, the installer will figure it out from the machineNetwork.
+	// +optional
+	InfraStack machinev1.IPFamiliesType `json:"infraStack,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to

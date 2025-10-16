@@ -43,7 +43,7 @@ type ClusterSpec struct {
 	// +optional
 	Paused bool `json:"paused,omitempty"`
 
-	// Cluster network configuration.
+	// clusterNetwork is the cluster network configuration.
 	// +optional
 	ClusterNetwork *ClusterNetwork `json:"clusterNetwork,omitempty"`
 
@@ -61,7 +61,7 @@ type ClusterSpec struct {
 	// +optional
 	InfrastructureRef *corev1.ObjectReference `json:"infrastructureRef,omitempty"`
 
-	// This encapsulates the topology for the cluster.
+	// topology encapsulates the topology for the cluster.
 	// NOTE: It is required to enable the ClusterTopology
 	// feature gate flag to activate managed topologies support;
 	// this feature is highly experimental, and parts of it might still be not implemented.
@@ -71,10 +71,10 @@ type ClusterSpec struct {
 
 // Topology encapsulates the information of the managed resources.
 type Topology struct {
-	// The name of the ClusterClass object to create the topology.
+	// class is the name of the ClusterClass object to create the topology.
 	Class string `json:"class"`
 
-	// The Kubernetes version of the cluster.
+	// version is the Kubernetes version of the cluster.
 	Version string `json:"version"`
 
 	// rolloutAfter performs a rollout of the entire cluster one component at a time,
@@ -153,15 +153,15 @@ type ClusterNetwork struct {
 	// +optional
 	APIServerPort *int32 `json:"apiServerPort,omitempty"`
 
-	// The network ranges from which service VIPs are allocated.
+	// services is the network ranges from which service VIPs are allocated.
 	// +optional
 	Services *NetworkRanges `json:"services,omitempty"`
 
-	// The network ranges from which Pod networks are allocated.
+	// pods is the network ranges from which Pod networks are allocated.
 	// +optional
 	Pods *NetworkRanges `json:"pods,omitempty"`
 
-	// Domain name for services.
+	// serviceDomain is the domain name for services.
 	// +optional
 	ServiceDomain string `json:"serviceDomain,omitempty"`
 }
@@ -172,6 +172,7 @@ type ClusterNetwork struct {
 
 // NetworkRanges represents ranges of network addresses.
 type NetworkRanges struct {
+	// cidrBlocks is a list of CIDR blocks.
 	CIDRBlocks []string `json:"cidrBlocks"`
 }
 
@@ -251,10 +252,10 @@ func (c *ClusterStatus) GetTypedPhase() ClusterPhase {
 
 // APIEndpoint represents a reachable Kubernetes API endpoint.
 type APIEndpoint struct {
-	// The hostname on which the API server is serving.
+	// host is the hostname on which the API server is serving.
 	Host string `json:"host"`
 
-	// The port on which the API server is serving.
+	// port is the port on which the API server is serving.
 	Port int32 `json:"port"`
 }
 
@@ -287,10 +288,14 @@ func (v APIEndpoint) String() string {
 //
 // Deprecated: This type will be removed in one of the next releases.
 type Cluster struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterSpec   `json:"spec,omitempty"`
+	// spec is the desired state of Cluster.
+	Spec ClusterSpec `json:"spec,omitempty"`
+	// status is the observed state of Cluster.
 	Status ClusterStatus `json:"status,omitempty"`
 }
 
@@ -395,8 +400,11 @@ func (f ClusterIPFamily) String() string {
 // Deprecated: This type will be removed in one of the next releases.
 type ClusterList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Cluster `json:"items"`
+	// items is the list of Clusters.
+	Items []Cluster `json:"items"`
 }
 
 func init() {

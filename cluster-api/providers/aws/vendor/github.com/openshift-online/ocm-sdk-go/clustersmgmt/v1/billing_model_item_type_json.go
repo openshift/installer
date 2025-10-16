@@ -29,7 +29,7 @@ import (
 // MarshalBillingModelItem writes a value of the 'billing_model_item' type to the given writer.
 func MarshalBillingModelItem(object *BillingModelItem, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeBillingModelItem(object, stream)
+	WriteBillingModelItem(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalBillingModelItem(object *BillingModelItem, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeBillingModelItem writes a value of the 'billing_model_item' type to the given stream.
-func writeBillingModelItem(object *BillingModelItem, stream *jsoniter.Stream) {
+// WriteBillingModelItem writes a value of the 'billing_model_item' type to the given stream.
+func WriteBillingModelItem(object *BillingModelItem, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -110,13 +110,13 @@ func UnmarshalBillingModelItem(source interface{}) (object *BillingModelItem, er
 	if err != nil {
 		return
 	}
-	object = readBillingModelItem(iterator)
+	object = ReadBillingModelItem(iterator)
 	err = iterator.Error
 	return
 }
 
-// readBillingModelItem reads a value of the 'billing_model_item' type from the given iterator.
-func readBillingModelItem(iterator *jsoniter.Iterator) *BillingModelItem {
+// ReadBillingModelItem reads a value of the 'billing_model_item' type from the given iterator.
+func ReadBillingModelItem(iterator *jsoniter.Iterator) *BillingModelItem {
 	object := &BillingModelItem{}
 	for {
 		field := iterator.ReadObject()

@@ -57,7 +57,7 @@ func readResourceQuotasListResponse(response *ResourceQuotasListResponse, reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readResourceQuotaList(iterator)
+			items := ReadResourceQuotaList(iterator)
 			response.items = &ResourceQuotaList{
 				items: items,
 			}

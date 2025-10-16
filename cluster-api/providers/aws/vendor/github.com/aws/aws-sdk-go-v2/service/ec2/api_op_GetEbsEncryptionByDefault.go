@@ -12,8 +12,11 @@ import (
 )
 
 // Describes whether EBS encryption by default is enabled for your account in the
-// current Region. For more information, see Amazon EBS encryption (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html)
-// in the Amazon EBS User Guide.
+// current Region.
+//
+// For more information, see [Amazon EBS encryption] in the Amazon EBS User Guide.
+//
+// [Amazon EBS encryption]: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html
 func (c *Client) GetEbsEncryptionByDefault(ctx context.Context, params *GetEbsEncryptionByDefaultInput, optFns ...func(*Options)) (*GetEbsEncryptionByDefaultOutput, error) {
 	if params == nil {
 		params = &GetEbsEncryptionByDefaultInput{}
@@ -97,6 +100,9 @@ func (c *Client) addOperationGetEbsEncryptionByDefaultMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -107,6 +113,15 @@ func (c *Client) addOperationGetEbsEncryptionByDefaultMiddlewares(stack *middlew
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetEbsEncryptionByDefault(options.Region), middleware.Before); err != nil {
@@ -125,6 +140,18 @@ func (c *Client) addOperationGetEbsEncryptionByDefaultMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -30,7 +30,7 @@ import (
 // MarshalOidcConfig writes a value of the 'oidc_config' type to the given writer.
 func MarshalOidcConfig(object *OidcConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeOidcConfig(object, stream)
+	WriteOidcConfig(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalOidcConfig(object *OidcConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeOidcConfig writes a value of the 'oidc_config' type to the given stream.
-func writeOidcConfig(object *OidcConfig, stream *jsoniter.Stream) {
+// WriteOidcConfig writes a value of the 'oidc_config' type to the given stream.
+func WriteOidcConfig(object *OidcConfig, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -151,13 +151,13 @@ func UnmarshalOidcConfig(source interface{}) (object *OidcConfig, err error) {
 	if err != nil {
 		return
 	}
-	object = readOidcConfig(iterator)
+	object = ReadOidcConfig(iterator)
 	err = iterator.Error
 	return
 }
 
-// readOidcConfig reads a value of the 'oidc_config' type from the given iterator.
-func readOidcConfig(iterator *jsoniter.Iterator) *OidcConfig {
+// ReadOidcConfig reads a value of the 'oidc_config' type from the given iterator.
+func ReadOidcConfig(iterator *jsoniter.Iterator) *OidcConfig {
 	object := &OidcConfig{}
 	for {
 		field := iterator.ReadObject()

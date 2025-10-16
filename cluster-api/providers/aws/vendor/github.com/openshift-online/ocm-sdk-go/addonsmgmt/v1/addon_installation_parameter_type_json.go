@@ -29,7 +29,7 @@ import (
 // MarshalAddonInstallationParameter writes a value of the 'addon_installation_parameter' type to the given writer.
 func MarshalAddonInstallationParameter(object *AddonInstallationParameter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonInstallationParameter(object, stream)
+	WriteAddonInstallationParameter(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddonInstallationParameter(object *AddonInstallationParameter, write
 	return stream.Error
 }
 
-// writeAddonInstallationParameter writes a value of the 'addon_installation_parameter' type to the given stream.
-func writeAddonInstallationParameter(object *AddonInstallationParameter, stream *jsoniter.Stream) {
+// WriteAddonInstallationParameter writes a value of the 'addon_installation_parameter' type to the given stream.
+func WriteAddonInstallationParameter(object *AddonInstallationParameter, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalAddonInstallationParameter(source interface{}) (object *AddonInsta
 	if err != nil {
 		return
 	}
-	object = readAddonInstallationParameter(iterator)
+	object = ReadAddonInstallationParameter(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonInstallationParameter reads a value of the 'addon_installation_parameter' type from the given iterator.
-func readAddonInstallationParameter(iterator *jsoniter.Iterator) *AddonInstallationParameter {
+// ReadAddonInstallationParameter reads a value of the 'addon_installation_parameter' type from the given iterator.
+func ReadAddonInstallationParameter(iterator *jsoniter.Iterator) *AddonInstallationParameter {
 	object := &AddonInstallationParameter{}
 	for {
 		field := iterator.ReadObject()

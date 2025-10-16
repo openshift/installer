@@ -53,7 +53,7 @@ func (o *TuningConfig) Kind() string {
 	return TuningConfigKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *TuningConfig) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -204,6 +204,29 @@ func (l *TuningConfigList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *TuningConfigList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *TuningConfigList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *TuningConfigList) SetItems(items []*TuningConfig) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *TuningConfigList) Items() []*TuningConfig {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

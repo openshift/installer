@@ -58,7 +58,7 @@ func (o *RegistryAllowlist) Kind() string {
 	return RegistryAllowlistKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *RegistryAllowlist) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -232,6 +232,29 @@ func (l *RegistryAllowlistList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *RegistryAllowlistList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *RegistryAllowlistList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *RegistryAllowlistList) SetItems(items []*RegistryAllowlist) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *RegistryAllowlistList) Items() []*RegistryAllowlist {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

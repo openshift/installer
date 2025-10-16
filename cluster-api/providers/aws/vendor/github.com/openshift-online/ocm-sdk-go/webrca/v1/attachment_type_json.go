@@ -30,7 +30,7 @@ import (
 // MarshalAttachment writes a value of the 'attachment' type to the given writer.
 func MarshalAttachment(object *Attachment, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAttachment(object, stream)
+	WriteAttachment(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAttachment(object *Attachment, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAttachment writes a value of the 'attachment' type to the given stream.
-func writeAttachment(object *Attachment, stream *jsoniter.Stream) {
+// WriteAttachment writes a value of the 'attachment' type to the given stream.
+func WriteAttachment(object *Attachment, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -90,7 +90,7 @@ func writeAttachment(object *Attachment, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("creator")
-		writeUser(object.creator, stream)
+		WriteUser(object.creator, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -108,7 +108,7 @@ func writeAttachment(object *Attachment, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("event")
-		writeEvent(object.event, stream)
+		WriteEvent(object.event, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0
@@ -147,13 +147,13 @@ func UnmarshalAttachment(source interface{}) (object *Attachment, err error) {
 	if err != nil {
 		return
 	}
-	object = readAttachment(iterator)
+	object = ReadAttachment(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAttachment reads a value of the 'attachment' type from the given iterator.
-func readAttachment(iterator *jsoniter.Iterator) *Attachment {
+// ReadAttachment reads a value of the 'attachment' type from the given iterator.
+func ReadAttachment(iterator *jsoniter.Iterator) *Attachment {
 	object := &Attachment{}
 	for {
 		field := iterator.ReadObject()
@@ -185,7 +185,7 @@ func readAttachment(iterator *jsoniter.Iterator) *Attachment {
 			object.createdAt = value
 			object.bitmap_ |= 16
 		case "creator":
-			value := readUser(iterator)
+			value := ReadUser(iterator)
 			object.creator = value
 			object.bitmap_ |= 32
 		case "deleted_at":
@@ -197,7 +197,7 @@ func readAttachment(iterator *jsoniter.Iterator) *Attachment {
 			object.deletedAt = value
 			object.bitmap_ |= 64
 		case "event":
-			value := readEvent(iterator)
+			value := ReadEvent(iterator)
 			object.event = value
 			object.bitmap_ |= 128
 		case "file_size":

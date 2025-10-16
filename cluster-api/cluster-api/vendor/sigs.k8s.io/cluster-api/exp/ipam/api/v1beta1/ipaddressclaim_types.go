@@ -27,9 +27,12 @@ import (
 type IPAddressClaimSpec struct {
 	// clusterName is the name of the Cluster this object belongs to.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
 	ClusterName string `json:"clusterName,omitempty"`
 
 	// poolRef is a reference to the pool from which an IP address should be created.
+	// +required
 	PoolRef corev1.TypedLocalObjectReference `json:"poolRef"`
 }
 
@@ -42,6 +45,21 @@ type IPAddressClaimStatus struct {
 	// conditions summarises the current state of the IPAddressClaim
 	// +optional
 	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+
+	// v1beta2 groups all the fields that will be added or modified in IPAddressClaim's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *IPAddressClaimV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// IPAddressClaimV1Beta2Status groups all the fields that will be added or modified in IPAddressClaimStatus with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type IPAddressClaimV1Beta2Status struct {
+	// conditions represents the observations of a IPAddressClaim's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -54,10 +72,17 @@ type IPAddressClaimStatus struct {
 
 // IPAddressClaim is the Schema for the ipaddressclaim API.
 type IPAddressClaim struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   IPAddressClaimSpec   `json:"spec,omitempty"`
+	// spec is the desired state of IPAddressClaim.
+	// +optional
+	Spec IPAddressClaimSpec `json:"spec,omitempty"`
+	// status is the observed state of IPAddressClaim.
+	// +optional
 	Status IPAddressClaimStatus `json:"status,omitempty"`
 }
 
@@ -71,13 +96,33 @@ func (m *IPAddressClaim) SetConditions(conditions clusterv1.Conditions) {
 	m.Status.Conditions = conditions
 }
 
+// GetV1Beta2Conditions returns the set of conditions for this object.
+func (m *IPAddressClaim) GetV1Beta2Conditions() []metav1.Condition {
+	if m.Status.V1Beta2 == nil {
+		return nil
+	}
+	return m.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for an API object.
+func (m *IPAddressClaim) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if m.Status.V1Beta2 == nil {
+		m.Status.V1Beta2 = &IPAddressClaimV1Beta2Status{}
+	}
+	m.Status.V1Beta2.Conditions = conditions
+}
+
 // +kubebuilder:object:root=true
 
 // IPAddressClaimList is a list of IPAddressClaims.
 type IPAddressClaimList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
+	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []IPAddressClaim `json:"items"`
+	// items is the list of IPAddressClaims.
+	Items []IPAddressClaim `json:"items"`
 }
 
 func init() {

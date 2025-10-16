@@ -76,6 +76,29 @@ func (l *FeatureToggleQueryRequestList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *FeatureToggleQueryRequestList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *FeatureToggleQueryRequestList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *FeatureToggleQueryRequestList) SetItems(items []*FeatureToggleQueryRequest) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *FeatureToggleQueryRequestList) Items() []*FeatureToggleQueryRequest {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *FeatureToggleQueryRequestList) Empty() bool {
 	return l == nil || len(l.items) == 0

@@ -87,6 +87,29 @@ func (l *AzureOperatorsAuthenticationList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AzureOperatorsAuthenticationList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AzureOperatorsAuthenticationList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AzureOperatorsAuthenticationList) SetItems(items []*AzureOperatorsAuthentication) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AzureOperatorsAuthenticationList) Items() []*AzureOperatorsAuthentication {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AzureOperatorsAuthenticationList) Empty() bool {
 	return l == nil || len(l.items) == 0

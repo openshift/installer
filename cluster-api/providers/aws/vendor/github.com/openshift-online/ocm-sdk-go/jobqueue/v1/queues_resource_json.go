@@ -49,7 +49,7 @@ func readQueuesListResponse(response *QueuesListResponse, reader io.Reader) erro
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readQueueList(iterator)
+			items := ReadQueueList(iterator)
 			response.items = &QueueList{
 				items: items,
 			}

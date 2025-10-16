@@ -76,6 +76,29 @@ func (l *PullSecretsRequestList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *PullSecretsRequestList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *PullSecretsRequestList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *PullSecretsRequestList) SetItems(items []*PullSecretsRequest) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *PullSecretsRequestList) Items() []*PullSecretsRequest {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *PullSecretsRequestList) Empty() bool {
 	return l == nil || len(l.items) == 0

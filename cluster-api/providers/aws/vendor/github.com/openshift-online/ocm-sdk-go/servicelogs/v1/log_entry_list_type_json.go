@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalLogEntryList(list []*LogEntry, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLogEntryList(list, stream)
+	WriteLogEntryList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalLogEntryList(list []*LogEntry, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeLogEntryList writes a list of value of the 'log_entry' type to
+// WriteLogEntryList writes a list of value of the 'log_entry' type to
 // the given stream.
-func writeLogEntryList(list []*LogEntry, stream *jsoniter.Stream) {
+func WriteLogEntryList(list []*LogEntry, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeLogEntry(value, stream)
+		WriteLogEntry(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalLogEntryList(source interface{}) (items []*LogEntry, err error) {
 	if err != nil {
 		return
 	}
-	items = readLogEntryList(iterator)
+	items = ReadLogEntryList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLogEntryList reads list of values of the ”log_entry' type from
+// ReadLogEntryList reads list of values of the ”log_entry' type from
 // the given iterator.
-func readLogEntryList(iterator *jsoniter.Iterator) []*LogEntry {
+func ReadLogEntryList(iterator *jsoniter.Iterator) []*LogEntry {
 	list := []*LogEntry{}
 	for iterator.ReadArray() {
-		item := readLogEntry(iterator)
+		item := ReadLogEntry(iterator)
 		list = append(list, item)
 	}
 	return list

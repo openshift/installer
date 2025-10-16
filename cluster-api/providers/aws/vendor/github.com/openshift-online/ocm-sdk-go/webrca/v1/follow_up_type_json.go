@@ -30,7 +30,7 @@ import (
 // MarshalFollowUp writes a value of the 'follow_up' type to the given writer.
 func MarshalFollowUp(object *FollowUp, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeFollowUp(object, stream)
+	WriteFollowUp(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalFollowUp(object *FollowUp, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeFollowUp writes a value of the 'follow_up' type to the given stream.
-func writeFollowUp(object *FollowUp, stream *jsoniter.Stream) {
+// WriteFollowUp writes a value of the 'follow_up' type to the given stream.
+func WriteFollowUp(object *FollowUp, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -117,7 +117,7 @@ func writeFollowUp(object *FollowUp, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("incident")
-		writeIncident(object.incident, stream)
+		WriteIncident(object.incident, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0
@@ -192,13 +192,13 @@ func UnmarshalFollowUp(source interface{}) (object *FollowUp, err error) {
 	if err != nil {
 		return
 	}
-	object = readFollowUp(iterator)
+	object = ReadFollowUp(iterator)
 	err = iterator.Error
 	return
 }
 
-// readFollowUp reads a value of the 'follow_up' type from the given iterator.
-func readFollowUp(iterator *jsoniter.Iterator) *FollowUp {
+// ReadFollowUp reads a value of the 'follow_up' type from the given iterator.
+func ReadFollowUp(iterator *jsoniter.Iterator) *FollowUp {
 	object := &FollowUp{}
 	for {
 		field := iterator.ReadObject()
@@ -246,7 +246,7 @@ func readFollowUp(iterator *jsoniter.Iterator) *FollowUp {
 			object.followUpType = value
 			object.bitmap_ |= 128
 		case "incident":
-			value := readIncident(iterator)
+			value := ReadIncident(iterator)
 			object.incident = value
 			object.bitmap_ |= 256
 		case "owner":

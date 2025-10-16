@@ -4641,6 +4641,11 @@ spec:
                       different account than the rest of the cluster resources.
                       If HostedZoneRole is set, HostedZone must also be set.
                     type: string
+                  infraStack:
+                    description: |-
+                      InfraStack indicates the network stack of the cluster infrastructure.
+                      If left empty, the installer will figure it out from the machineNetwork.
+                    type: string
                   lbType:
                     description: |-
                       LBType is an optional field to specify a load balancer type.

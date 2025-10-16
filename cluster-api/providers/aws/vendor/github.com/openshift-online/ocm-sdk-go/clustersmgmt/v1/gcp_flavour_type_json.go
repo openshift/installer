@@ -29,7 +29,7 @@ import (
 // MarshalGCPFlavour writes a value of the 'GCP_flavour' type to the given writer.
 func MarshalGCPFlavour(object *GCPFlavour, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGCPFlavour(object, stream)
+	WriteGCPFlavour(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGCPFlavour(object *GCPFlavour, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeGCPFlavour writes a value of the 'GCP_flavour' type to the given stream.
-func writeGCPFlavour(object *GCPFlavour, stream *jsoniter.Stream) {
+// WriteGCPFlavour writes a value of the 'GCP_flavour' type to the given stream.
+func WriteGCPFlavour(object *GCPFlavour, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -66,7 +66,7 @@ func writeGCPFlavour(object *GCPFlavour, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("infra_volume")
-		writeGCPVolume(object.infraVolume, stream)
+		WriteGCPVolume(object.infraVolume, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0
@@ -84,7 +84,7 @@ func writeGCPFlavour(object *GCPFlavour, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("master_volume")
-		writeGCPVolume(object.masterVolume, stream)
+		WriteGCPVolume(object.masterVolume, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0 && object.workerVolume != nil
@@ -93,7 +93,7 @@ func writeGCPFlavour(object *GCPFlavour, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("worker_volume")
-		writeGCPVolume(object.workerVolume, stream)
+		WriteGCPVolume(object.workerVolume, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -105,13 +105,13 @@ func UnmarshalGCPFlavour(source interface{}) (object *GCPFlavour, err error) {
 	if err != nil {
 		return
 	}
-	object = readGCPFlavour(iterator)
+	object = ReadGCPFlavour(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGCPFlavour reads a value of the 'GCP_flavour' type from the given iterator.
-func readGCPFlavour(iterator *jsoniter.Iterator) *GCPFlavour {
+// ReadGCPFlavour reads a value of the 'GCP_flavour' type from the given iterator.
+func ReadGCPFlavour(iterator *jsoniter.Iterator) *GCPFlavour {
 	object := &GCPFlavour{}
 	for {
 		field := iterator.ReadObject()
@@ -128,7 +128,7 @@ func readGCPFlavour(iterator *jsoniter.Iterator) *GCPFlavour {
 			object.infraInstanceType = value
 			object.bitmap_ |= 2
 		case "infra_volume":
-			value := readGCPVolume(iterator)
+			value := ReadGCPVolume(iterator)
 			object.infraVolume = value
 			object.bitmap_ |= 4
 		case "master_instance_type":
@@ -136,11 +136,11 @@ func readGCPFlavour(iterator *jsoniter.Iterator) *GCPFlavour {
 			object.masterInstanceType = value
 			object.bitmap_ |= 8
 		case "master_volume":
-			value := readGCPVolume(iterator)
+			value := ReadGCPVolume(iterator)
 			object.masterVolume = value
 			object.bitmap_ |= 16
 		case "worker_volume":
-			value := readGCPVolume(iterator)
+			value := ReadGCPVolume(iterator)
 			object.workerVolume = value
 			object.bitmap_ |= 32
 		default:

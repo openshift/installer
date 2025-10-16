@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAlertsInfoList(list []*AlertsInfo, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAlertsInfoList(list, stream)
+	WriteAlertsInfoList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAlertsInfoList(list []*AlertsInfo, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAlertsInfoList writes a list of value of the 'alerts_info' type to
+// WriteAlertsInfoList writes a list of value of the 'alerts_info' type to
 // the given stream.
-func writeAlertsInfoList(list []*AlertsInfo, stream *jsoniter.Stream) {
+func WriteAlertsInfoList(list []*AlertsInfo, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAlertsInfo(value, stream)
+		WriteAlertsInfo(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAlertsInfoList(source interface{}) (items []*AlertsInfo, err error
 	if err != nil {
 		return
 	}
-	items = readAlertsInfoList(iterator)
+	items = ReadAlertsInfoList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAlertsInfoList reads list of values of the ”alerts_info' type from
+// ReadAlertsInfoList reads list of values of the ”alerts_info' type from
 // the given iterator.
-func readAlertsInfoList(iterator *jsoniter.Iterator) []*AlertsInfo {
+func ReadAlertsInfoList(iterator *jsoniter.Iterator) []*AlertsInfo {
 	list := []*AlertsInfo{}
 	for iterator.ReadArray() {
-		item := readAlertsInfo(iterator)
+		item := ReadAlertsInfo(iterator)
 		list = append(list, item)
 	}
 	return list

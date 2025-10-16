@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalExportControlReviewResponseList(list []*ExportControlReviewResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeExportControlReviewResponseList(list, stream)
+	WriteExportControlReviewResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalExportControlReviewResponseList(list []*ExportControlReviewResponse,
 	return stream.Error
 }
 
-// writeExportControlReviewResponseList writes a list of value of the 'export_control_review_response' type to
+// WriteExportControlReviewResponseList writes a list of value of the 'export_control_review_response' type to
 // the given stream.
-func writeExportControlReviewResponseList(list []*ExportControlReviewResponse, stream *jsoniter.Stream) {
+func WriteExportControlReviewResponseList(list []*ExportControlReviewResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeExportControlReviewResponse(value, stream)
+		WriteExportControlReviewResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalExportControlReviewResponseList(source interface{}) (items []*Expo
 	if err != nil {
 		return
 	}
-	items = readExportControlReviewResponseList(iterator)
+	items = ReadExportControlReviewResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readExportControlReviewResponseList reads list of values of the ”export_control_review_response' type from
+// ReadExportControlReviewResponseList reads list of values of the ”export_control_review_response' type from
 // the given iterator.
-func readExportControlReviewResponseList(iterator *jsoniter.Iterator) []*ExportControlReviewResponse {
+func ReadExportControlReviewResponseList(iterator *jsoniter.Iterator) []*ExportControlReviewResponse {
 	list := []*ExportControlReviewResponse{}
 	for iterator.ReadArray() {
-		item := readExportControlReviewResponse(iterator)
+		item := ReadExportControlReviewResponse(iterator)
 		list = append(list, item)
 	}
 	return list

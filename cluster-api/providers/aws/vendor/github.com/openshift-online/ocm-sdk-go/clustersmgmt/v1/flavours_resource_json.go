@@ -49,7 +49,7 @@ func readFlavoursListResponse(response *FlavoursListResponse, reader io.Reader) 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readFlavourList(iterator)
+			items := ReadFlavourList(iterator)
 			response.items = &FlavourList{
 				items: items,
 			}

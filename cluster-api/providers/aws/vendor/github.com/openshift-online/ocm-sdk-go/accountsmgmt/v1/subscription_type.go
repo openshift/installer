@@ -64,6 +64,7 @@ type Subscription struct {
 	productBundle             string
 	provenance                string
 	regionID                  string
+	rhRegionID                string
 	serviceLevel              string
 	socketTotal               int
 	status                    string
@@ -87,7 +88,7 @@ func (o *Subscription) Kind() string {
 	return SubscriptionKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Subscription) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -655,10 +656,29 @@ func (o *Subscription) GetReleased() (value bool, ok bool) {
 	return
 }
 
+// RhRegionID returns the value of the 'rh_region_ID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+func (o *Subscription) RhRegionID() string {
+	if o != nil && o.bitmap_&536870912 != 0 {
+		return o.rhRegionID
+	}
+	return ""
+}
+
+// GetRhRegionID returns the value of the 'rh_region_ID' attribute and
+// a flag indicating if the attribute has a value.
+func (o *Subscription) GetRhRegionID() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&536870912 != 0
+	if ok {
+		value = o.rhRegionID
+	}
+	return
+}
+
 // ServiceLevel returns the value of the 'service_level' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *Subscription) ServiceLevel() string {
-	if o != nil && o.bitmap_&536870912 != 0 {
+	if o != nil && o.bitmap_&1073741824 != 0 {
 		return o.serviceLevel
 	}
 	return ""
@@ -667,7 +687,7 @@ func (o *Subscription) ServiceLevel() string {
 // GetServiceLevel returns the value of the 'service_level' attribute and
 // a flag indicating if the attribute has a value.
 func (o *Subscription) GetServiceLevel() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&536870912 != 0
+	ok = o != nil && o.bitmap_&1073741824 != 0
 	if ok {
 		value = o.serviceLevel
 	}
@@ -677,7 +697,7 @@ func (o *Subscription) GetServiceLevel() (value string, ok bool) {
 // SocketTotal returns the value of the 'socket_total' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *Subscription) SocketTotal() int {
-	if o != nil && o.bitmap_&1073741824 != 0 {
+	if o != nil && o.bitmap_&2147483648 != 0 {
 		return o.socketTotal
 	}
 	return 0
@@ -686,7 +706,7 @@ func (o *Subscription) SocketTotal() int {
 // GetSocketTotal returns the value of the 'socket_total' attribute and
 // a flag indicating if the attribute has a value.
 func (o *Subscription) GetSocketTotal() (value int, ok bool) {
-	ok = o != nil && o.bitmap_&1073741824 != 0
+	ok = o != nil && o.bitmap_&2147483648 != 0
 	if ok {
 		value = o.socketTotal
 	}
@@ -696,7 +716,7 @@ func (o *Subscription) GetSocketTotal() (value int, ok bool) {
 // Status returns the value of the 'status' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *Subscription) Status() string {
-	if o != nil && o.bitmap_&2147483648 != 0 {
+	if o != nil && o.bitmap_&4294967296 != 0 {
 		return o.status
 	}
 	return ""
@@ -705,7 +725,7 @@ func (o *Subscription) Status() string {
 // GetStatus returns the value of the 'status' attribute and
 // a flag indicating if the attribute has a value.
 func (o *Subscription) GetStatus() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&2147483648 != 0
+	ok = o != nil && o.bitmap_&4294967296 != 0
 	if ok {
 		value = o.status
 	}
@@ -715,7 +735,7 @@ func (o *Subscription) GetStatus() (value string, ok bool) {
 // SupportLevel returns the value of the 'support_level' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *Subscription) SupportLevel() string {
-	if o != nil && o.bitmap_&4294967296 != 0 {
+	if o != nil && o.bitmap_&8589934592 != 0 {
 		return o.supportLevel
 	}
 	return ""
@@ -724,7 +744,7 @@ func (o *Subscription) SupportLevel() string {
 // GetSupportLevel returns the value of the 'support_level' attribute and
 // a flag indicating if the attribute has a value.
 func (o *Subscription) GetSupportLevel() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&4294967296 != 0
+	ok = o != nil && o.bitmap_&8589934592 != 0
 	if ok {
 		value = o.supportLevel
 	}
@@ -734,7 +754,7 @@ func (o *Subscription) GetSupportLevel() (value string, ok bool) {
 // SystemUnits returns the value of the 'system_units' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *Subscription) SystemUnits() string {
-	if o != nil && o.bitmap_&8589934592 != 0 {
+	if o != nil && o.bitmap_&17179869184 != 0 {
 		return o.systemUnits
 	}
 	return ""
@@ -743,7 +763,7 @@ func (o *Subscription) SystemUnits() string {
 // GetSystemUnits returns the value of the 'system_units' attribute and
 // a flag indicating if the attribute has a value.
 func (o *Subscription) GetSystemUnits() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&8589934592 != 0
+	ok = o != nil && o.bitmap_&17179869184 != 0
 	if ok {
 		value = o.systemUnits
 	}
@@ -755,7 +775,7 @@ func (o *Subscription) GetSystemUnits() (value string, ok bool) {
 //
 // If the subscription is a trial, date the trial ends.
 func (o *Subscription) TrialEndDate() time.Time {
-	if o != nil && o.bitmap_&17179869184 != 0 {
+	if o != nil && o.bitmap_&34359738368 != 0 {
 		return o.trialEndDate
 	}
 	return time.Time{}
@@ -766,7 +786,7 @@ func (o *Subscription) TrialEndDate() time.Time {
 //
 // If the subscription is a trial, date the trial ends.
 func (o *Subscription) GetTrialEndDate() (value time.Time, ok bool) {
-	ok = o != nil && o.bitmap_&17179869184 != 0
+	ok = o != nil && o.bitmap_&34359738368 != 0
 	if ok {
 		value = o.trialEndDate
 	}
@@ -776,7 +796,7 @@ func (o *Subscription) GetTrialEndDate() (value time.Time, ok bool) {
 // UpdatedAt returns the value of the 'updated_at' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *Subscription) UpdatedAt() time.Time {
-	if o != nil && o.bitmap_&34359738368 != 0 {
+	if o != nil && o.bitmap_&68719476736 != 0 {
 		return o.updatedAt
 	}
 	return time.Time{}
@@ -785,7 +805,7 @@ func (o *Subscription) UpdatedAt() time.Time {
 // GetUpdatedAt returns the value of the 'updated_at' attribute and
 // a flag indicating if the attribute has a value.
 func (o *Subscription) GetUpdatedAt() (value time.Time, ok bool) {
-	ok = o != nil && o.bitmap_&34359738368 != 0
+	ok = o != nil && o.bitmap_&68719476736 != 0
 	if ok {
 		value = o.updatedAt
 	}
@@ -795,7 +815,7 @@ func (o *Subscription) GetUpdatedAt() (value time.Time, ok bool) {
 // Usage returns the value of the 'usage' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *Subscription) Usage() string {
-	if o != nil && o.bitmap_&68719476736 != 0 {
+	if o != nil && o.bitmap_&137438953472 != 0 {
 		return o.usage
 	}
 	return ""
@@ -804,7 +824,7 @@ func (o *Subscription) Usage() string {
 // GetUsage returns the value of the 'usage' attribute and
 // a flag indicating if the attribute has a value.
 func (o *Subscription) GetUsage() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&68719476736 != 0
+	ok = o != nil && o.bitmap_&137438953472 != 0
 	if ok {
 		value = o.usage
 	}
@@ -870,6 +890,29 @@ func (l *SubscriptionList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *SubscriptionList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SubscriptionList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SubscriptionList) SetItems(items []*Subscription) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SubscriptionList) Items() []*Subscription {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

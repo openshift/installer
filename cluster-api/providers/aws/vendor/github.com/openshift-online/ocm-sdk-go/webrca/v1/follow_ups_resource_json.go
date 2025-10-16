@@ -49,7 +49,7 @@ func readFollowUpsListResponse(response *FollowUpsListResponse, reader io.Reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readFollowUpList(iterator)
+			items := ReadFollowUpList(iterator)
 			response.items = &FollowUpList{
 				items: items,
 			}

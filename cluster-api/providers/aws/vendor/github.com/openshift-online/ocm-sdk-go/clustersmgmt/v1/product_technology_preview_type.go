@@ -58,7 +58,7 @@ func (o *ProductTechnologyPreview) Kind() string {
 	return ProductTechnologyPreviewKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *ProductTechnologyPreview) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -232,6 +232,29 @@ func (l *ProductTechnologyPreviewList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ProductTechnologyPreviewList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ProductTechnologyPreviewList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ProductTechnologyPreviewList) SetItems(items []*ProductTechnologyPreview) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ProductTechnologyPreviewList) Items() []*ProductTechnologyPreview {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

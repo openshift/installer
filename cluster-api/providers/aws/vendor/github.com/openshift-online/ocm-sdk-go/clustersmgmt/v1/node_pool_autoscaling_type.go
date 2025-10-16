@@ -53,7 +53,7 @@ func (o *NodePoolAutoscaling) Kind() string {
 	return NodePoolAutoscalingKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *NodePoolAutoscaling) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -204,6 +204,29 @@ func (l *NodePoolAutoscalingList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *NodePoolAutoscalingList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *NodePoolAutoscalingList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *NodePoolAutoscalingList) SetItems(items []*NodePoolAutoscaling) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *NodePoolAutoscalingList) Items() []*NodePoolAutoscaling {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

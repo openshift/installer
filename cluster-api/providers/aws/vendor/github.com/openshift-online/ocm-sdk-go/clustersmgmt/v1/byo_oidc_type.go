@@ -92,6 +92,29 @@ func (l *ByoOidcList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ByoOidcList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ByoOidcList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ByoOidcList) SetItems(items []*ByoOidc) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ByoOidcList) Items() []*ByoOidc {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ByoOidcList) Empty() bool {
 	return l == nil || len(l.items) == 0

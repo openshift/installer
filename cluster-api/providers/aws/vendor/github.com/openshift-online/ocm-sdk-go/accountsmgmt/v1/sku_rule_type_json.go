@@ -29,7 +29,7 @@ import (
 // MarshalSkuRule writes a value of the 'sku_rule' type to the given writer.
 func MarshalSkuRule(object *SkuRule, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSkuRule(object, stream)
+	WriteSkuRule(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSkuRule(object *SkuRule, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeSkuRule writes a value of the 'sku_rule' type to the given stream.
-func writeSkuRule(object *SkuRule, stream *jsoniter.Stream) {
+// WriteSkuRule writes a value of the 'sku_rule' type to the given stream.
+func WriteSkuRule(object *SkuRule, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -101,13 +101,13 @@ func UnmarshalSkuRule(source interface{}) (object *SkuRule, err error) {
 	if err != nil {
 		return
 	}
-	object = readSkuRule(iterator)
+	object = ReadSkuRule(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSkuRule reads a value of the 'sku_rule' type from the given iterator.
-func readSkuRule(iterator *jsoniter.Iterator) *SkuRule {
+// ReadSkuRule reads a value of the 'sku_rule' type from the given iterator.
+func ReadSkuRule(iterator *jsoniter.Iterator) *SkuRule {
 	object := &SkuRule{}
 	for {
 		field := iterator.ReadObject()

@@ -11,10 +11,12 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This action is deprecated. Restores an Elastic IP address that was previously
-// moved to the EC2-VPC platform back to the EC2-Classic platform. You cannot move
-// an Elastic IP address that was originally allocated for use in EC2-VPC. The
-// Elastic IP address must not be associated with an instance or network interface.
+// This action is deprecated.
+//
+// Restores an Elastic IP address that was previously moved to the EC2-VPC
+// platform back to the EC2-Classic platform. You cannot move an Elastic IP address
+// that was originally allocated for use in EC2-VPC. The Elastic IP address must
+// not be associated with an instance or network interface.
 func (c *Client) RestoreAddressToClassic(ctx context.Context, params *RestoreAddressToClassicInput, optFns ...func(*Options)) (*RestoreAddressToClassicOutput, error) {
 	if params == nil {
 		params = &RestoreAddressToClassicInput{}
@@ -103,6 +105,9 @@ func (c *Client) addOperationRestoreAddressToClassicMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -113,6 +118,15 @@ func (c *Client) addOperationRestoreAddressToClassicMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRestoreAddressToClassicValidationMiddleware(stack); err != nil {
@@ -134,6 +148,18 @@ func (c *Client) addOperationRestoreAddressToClassicMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

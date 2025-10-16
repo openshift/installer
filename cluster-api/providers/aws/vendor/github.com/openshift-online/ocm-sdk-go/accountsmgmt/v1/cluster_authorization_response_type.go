@@ -116,6 +116,29 @@ func (l *ClusterAuthorizationResponseList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ClusterAuthorizationResponseList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ClusterAuthorizationResponseList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ClusterAuthorizationResponseList) SetItems(items []*ClusterAuthorizationResponse) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ClusterAuthorizationResponseList) Items() []*ClusterAuthorizationResponse {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ClusterAuthorizationResponseList) Empty() bool {
 	return l == nil || len(l.items) == 0

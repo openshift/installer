@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalTermsReviewRequestList(list []*TermsReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTermsReviewRequestList(list, stream)
+	WriteTermsReviewRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalTermsReviewRequestList(list []*TermsReviewRequest, writer io.Writer)
 	return stream.Error
 }
 
-// writeTermsReviewRequestList writes a list of value of the 'terms_review_request' type to
+// WriteTermsReviewRequestList writes a list of value of the 'terms_review_request' type to
 // the given stream.
-func writeTermsReviewRequestList(list []*TermsReviewRequest, stream *jsoniter.Stream) {
+func WriteTermsReviewRequestList(list []*TermsReviewRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeTermsReviewRequest(value, stream)
+		WriteTermsReviewRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalTermsReviewRequestList(source interface{}) (items []*TermsReviewRe
 	if err != nil {
 		return
 	}
-	items = readTermsReviewRequestList(iterator)
+	items = ReadTermsReviewRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTermsReviewRequestList reads list of values of the ”terms_review_request' type from
+// ReadTermsReviewRequestList reads list of values of the ”terms_review_request' type from
 // the given iterator.
-func readTermsReviewRequestList(iterator *jsoniter.Iterator) []*TermsReviewRequest {
+func ReadTermsReviewRequestList(iterator *jsoniter.Iterator) []*TermsReviewRequest {
 	list := []*TermsReviewRequest{}
 	for iterator.ReadArray() {
-		item := readTermsReviewRequest(iterator)
+		item := ReadTermsReviewRequest(iterator)
 		list = append(list, item)
 	}
 	return list

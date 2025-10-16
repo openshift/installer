@@ -29,7 +29,7 @@ import (
 // MarshalSummarySample writes a value of the 'summary_sample' type to the given writer.
 func MarshalSummarySample(object *SummarySample, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSummarySample(object, stream)
+	WriteSummarySample(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSummarySample(object *SummarySample, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeSummarySample writes a value of the 'summary_sample' type to the given stream.
-func writeSummarySample(object *SummarySample, stream *jsoniter.Stream) {
+// WriteSummarySample writes a value of the 'summary_sample' type to the given stream.
+func WriteSummarySample(object *SummarySample, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalSummarySample(source interface{}) (object *SummarySample, err erro
 	if err != nil {
 		return
 	}
-	object = readSummarySample(iterator)
+	object = ReadSummarySample(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSummarySample reads a value of the 'summary_sample' type from the given iterator.
-func readSummarySample(iterator *jsoniter.Iterator) *SummarySample {
+// ReadSummarySample reads a value of the 'summary_sample' type from the given iterator.
+func ReadSummarySample(iterator *jsoniter.Iterator) *SummarySample {
 	object := &SummarySample{}
 	for {
 		field := iterator.ReadObject()

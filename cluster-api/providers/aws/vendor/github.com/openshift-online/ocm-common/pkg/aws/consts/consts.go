@@ -41,9 +41,11 @@ const (
 	TCPProtocol = "tcp"
 	UDPProtocol = "udp"
 
+	BastionSecurityGroupName                  = "bastion-sg"
 	ProxySecurityGroupName                    = "proxy-sg"
 	AdditionalSecurityGroupName               = "ocm-additional-sg"
 	ProxySecurityGroupDescription             = "security group for proxy"
+	BastionSecurityGroupDescription           = "security group for bastion"
 	DefaultAdditionalSecurityGroupDescription = "This security group is created for OCM testing"
 
 	QEFlagKey = "ocm_ci_flag"
@@ -53,18 +55,16 @@ const (
 	InstanceKeyNamePrefix = "ocm-ci"
 	AWSInstanceUser       = "ec2-user"
 	BastionName           = "ocm-bastion"
+
+	SSHPort = "22"
+
+	// Squid related
+	SquidConfigFilePath   = "/etc/squid/squid.conf"
+	SquidPasswordFilePath = "/etc/squid/passwords"
+	SquidProxyPort        = "3128"
 )
 
-var PublicImageName = "al2023-ami-2023.5.20241001.1-kernel-6.1-x86_64"
-
-var BastionImageMap = map[string]string{
-	"us-east-1":      "ami-01c647eace872fc02",
-	"us-east-2":      "ami-00a9282ce3b5ddfb1",
-	"us-west-1":      "ami-0f1ee917b10382dea",
-	"ap-southeast-1": "ami-0db1894e055420bc0",
-	"us-west-2":      "ami-0b2b4f610e654d9ac",
-	"ap-northeast-1": "ami-0a21e01face015dd9",
-}
+var AmazonName = "amazon"
 
 const (
 	PublicSubNetTagKey   = "PublicSubnet"

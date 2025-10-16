@@ -11,14 +11,14 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Imports the public key from an RSA or ED25519 key pair that you created with a
-// third-party tool. Compare this with CreateKeyPair , in which Amazon Web Services
-// creates the key pair and gives the keys to you (Amazon Web Services keeps a copy
-// of the public key). With ImportKeyPair, you create the key pair and give Amazon
-// Web Services just the public key. The private key is never transferred between
-// you and Amazon Web Services. For more information about key pairs, see Amazon
-// EC2 key pairs (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
-// in the Amazon Elastic Compute Cloud User Guide.
+// Imports the public key from an RSA or ED25519 key pair that you created using a
+// third-party tool. You give Amazon Web Services only the public key. The private
+// key is never transferred between you and Amazon Web Services.
+//
+// For more information about the requirements for importing a key pair, see [Create a key pair and import the public key to Amazon EC2] in
+// the Amazon EC2 User Guide.
+//
+// [Create a key pair and import the public key to Amazon EC2]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html#how-to-generate-your-own-key-and-import-it-to-aws
 func (c *Client) ImportKeyPair(ctx context.Context, params *ImportKeyPairInput, optFns ...func(*Options)) (*ImportKeyPairOutput, error) {
 	if params == nil {
 		params = &ImportKeyPairInput{}
@@ -41,8 +41,7 @@ type ImportKeyPairInput struct {
 	// This member is required.
 	KeyName *string
 
-	// The public key. For API calls, the text must be base64-encoded. For command
-	// line tools, base64 encoding is performed for you.
+	// The public key.
 	//
 	// This member is required.
 	PublicKeyMaterial []byte
@@ -63,9 +62,11 @@ type ImportKeyPairOutput struct {
 
 	//   - For RSA key pairs, the key fingerprint is the MD5 public key fingerprint as
 	//   specified in section 4 of RFC 4716.
+	//
 	//   - For ED25519 key pairs, the key fingerprint is the base64-encoded SHA-256
-	//   digest, which is the default for OpenSSH, starting with OpenSSH 6.8 (http://www.openssh.com/txt/release-6.8)
-	//   .
+	//   digest, which is the default for OpenSSH, starting with [OpenSSH 6.8].
+	//
+	// [OpenSSH 6.8]: http://www.openssh.com/txt/release-6.8
 	KeyFingerprint *string
 
 	// The key pair name that you provided.
@@ -126,6 +127,9 @@ func (c *Client) addOperationImportKeyPairMiddlewares(stack *middleware.Stack, o
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -136,6 +140,15 @@ func (c *Client) addOperationImportKeyPairMiddlewares(stack *middleware.Stack, o
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpImportKeyPairValidationMiddleware(stack); err != nil {
@@ -157,6 +170,18 @@ func (c *Client) addOperationImportKeyPairMiddlewares(stack *middleware.Stack, o
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -11,9 +11,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Disables Elastic IP address transfer. For more information, see Transfer
-// Elastic IP addresses (https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html#transfer-EIPs-intro)
-// in the Amazon Virtual Private Cloud User Guide.
+// Disables Elastic IP address transfer. For more information, see [Transfer Elastic IP addresses] in the Amazon
+// VPC User Guide.
+//
+// [Transfer Elastic IP addresses]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html#transfer-EIPs-intro
 func (c *Client) DisableAddressTransfer(ctx context.Context, params *DisableAddressTransferInput, optFns ...func(*Options)) (*DisableAddressTransferOutput, error) {
 	if params == nil {
 		params = &DisableAddressTransferInput{}
@@ -99,6 +100,9 @@ func (c *Client) addOperationDisableAddressTransferMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -109,6 +113,15 @@ func (c *Client) addOperationDisableAddressTransferMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDisableAddressTransferValidationMiddleware(stack); err != nil {
@@ -130,6 +143,18 @@ func (c *Client) addOperationDisableAddressTransferMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

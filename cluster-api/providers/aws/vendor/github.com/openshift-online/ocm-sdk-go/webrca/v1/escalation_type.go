@@ -59,7 +59,7 @@ func (o *Escalation) Kind() string {
 	return EscalationKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Escalation) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -252,6 +252,29 @@ func (l *EscalationList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *EscalationList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *EscalationList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *EscalationList) SetItems(items []*Escalation) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *EscalationList) Items() []*Escalation {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

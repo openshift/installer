@@ -65,7 +65,7 @@ func (o *AddonVersion) Kind() string {
 	return AddonVersionKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *AddonVersion) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -492,6 +492,29 @@ func (l *AddonVersionList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *AddonVersionList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddonVersionList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddonVersionList) SetItems(items []*AddonVersion) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddonVersionList) Items() []*AddonVersion {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

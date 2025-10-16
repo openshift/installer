@@ -60,7 +60,7 @@ func (o *Organization) Kind() string {
 	return OrganizationKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Organization) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -298,6 +298,29 @@ func (l *OrganizationList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *OrganizationList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *OrganizationList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *OrganizationList) SetItems(items []*Organization) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *OrganizationList) Items() []*Organization {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

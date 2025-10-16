@@ -57,7 +57,7 @@ func readWifConfigsListResponse(response *WifConfigsListResponse, reader io.Read
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readWifConfigList(iterator)
+			items := ReadWifConfigList(iterator)
 			response.items = &WifConfigList{
 				items: items,
 			}

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalCapabilityReviewRequestList(list []*CapabilityReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeCapabilityReviewRequestList(list, stream)
+	WriteCapabilityReviewRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalCapabilityReviewRequestList(list []*CapabilityReviewRequest, writer 
 	return stream.Error
 }
 
-// writeCapabilityReviewRequestList writes a list of value of the 'capability_review_request' type to
+// WriteCapabilityReviewRequestList writes a list of value of the 'capability_review_request' type to
 // the given stream.
-func writeCapabilityReviewRequestList(list []*CapabilityReviewRequest, stream *jsoniter.Stream) {
+func WriteCapabilityReviewRequestList(list []*CapabilityReviewRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeCapabilityReviewRequest(value, stream)
+		WriteCapabilityReviewRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalCapabilityReviewRequestList(source interface{}) (items []*Capabili
 	if err != nil {
 		return
 	}
-	items = readCapabilityReviewRequestList(iterator)
+	items = ReadCapabilityReviewRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readCapabilityReviewRequestList reads list of values of the ”capability_review_request' type from
+// ReadCapabilityReviewRequestList reads list of values of the ”capability_review_request' type from
 // the given iterator.
-func readCapabilityReviewRequestList(iterator *jsoniter.Iterator) []*CapabilityReviewRequest {
+func ReadCapabilityReviewRequestList(iterator *jsoniter.Iterator) []*CapabilityReviewRequest {
 	list := []*CapabilityReviewRequest{}
 	for iterator.ReadArray() {
-		item := readCapabilityReviewRequest(iterator)
+		item := ReadCapabilityReviewRequest(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -61,7 +61,7 @@ func (o *LimitedSupportReason) Kind() string {
 	return LimitedSupportReasonKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *LimitedSupportReason) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -306,6 +306,29 @@ func (l *LimitedSupportReasonList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *LimitedSupportReasonList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *LimitedSupportReasonList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *LimitedSupportReasonList) SetItems(items []*LimitedSupportReason) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *LimitedSupportReasonList) Items() []*LimitedSupportReason {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

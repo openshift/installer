@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAwsEtcdEncryptionList(list []*AwsEtcdEncryption, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAwsEtcdEncryptionList(list, stream)
+	WriteAwsEtcdEncryptionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAwsEtcdEncryptionList(list []*AwsEtcdEncryption, writer io.Writer) e
 	return stream.Error
 }
 
-// writeAwsEtcdEncryptionList writes a list of value of the 'aws_etcd_encryption' type to
+// WriteAwsEtcdEncryptionList writes a list of value of the 'aws_etcd_encryption' type to
 // the given stream.
-func writeAwsEtcdEncryptionList(list []*AwsEtcdEncryption, stream *jsoniter.Stream) {
+func WriteAwsEtcdEncryptionList(list []*AwsEtcdEncryption, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAwsEtcdEncryption(value, stream)
+		WriteAwsEtcdEncryption(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAwsEtcdEncryptionList(source interface{}) (items []*AwsEtcdEncrypt
 	if err != nil {
 		return
 	}
-	items = readAwsEtcdEncryptionList(iterator)
+	items = ReadAwsEtcdEncryptionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAwsEtcdEncryptionList reads list of values of the ”aws_etcd_encryption' type from
+// ReadAwsEtcdEncryptionList reads list of values of the ”aws_etcd_encryption' type from
 // the given iterator.
-func readAwsEtcdEncryptionList(iterator *jsoniter.Iterator) []*AwsEtcdEncryption {
+func ReadAwsEtcdEncryptionList(iterator *jsoniter.Iterator) []*AwsEtcdEncryption {
 	list := []*AwsEtcdEncryption{}
 	for iterator.ReadArray() {
-		item := readAwsEtcdEncryption(iterator)
+		item := ReadAwsEtcdEncryption(iterator)
 		list = append(list, item)
 	}
 	return list

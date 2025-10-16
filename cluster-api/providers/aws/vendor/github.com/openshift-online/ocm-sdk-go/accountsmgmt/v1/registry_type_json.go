@@ -30,7 +30,7 @@ import (
 // MarshalRegistry writes a value of the 'registry' type to the given writer.
 func MarshalRegistry(object *Registry, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeRegistry(object, stream)
+	WriteRegistry(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalRegistry(object *Registry, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeRegistry writes a value of the 'registry' type to the given stream.
-func writeRegistry(object *Registry, stream *jsoniter.Stream) {
+// WriteRegistry writes a value of the 'registry' type to the given stream.
+func WriteRegistry(object *Registry, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -147,13 +147,13 @@ func UnmarshalRegistry(source interface{}) (object *Registry, err error) {
 	if err != nil {
 		return
 	}
-	object = readRegistry(iterator)
+	object = ReadRegistry(iterator)
 	err = iterator.Error
 	return
 }
 
-// readRegistry reads a value of the 'registry' type from the given iterator.
-func readRegistry(iterator *jsoniter.Iterator) *Registry {
+// ReadRegistry reads a value of the 'registry' type from the given iterator.
+func ReadRegistry(iterator *jsoniter.Iterator) *Registry {
 	object := &Registry{}
 	for {
 		field := iterator.ReadObject()
