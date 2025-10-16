@@ -18,7 +18,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
-	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -84,13 +83,13 @@ func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 		&manifests.AgentPullSecret{},
 		&manifests.ClusterImageSet{},
 		&manifests.NMStateConfig{},
-		&mirror.RegistriesConf{},
-		&mirror.CaBundle{},
 		&common.InfraEnvID{},
 	}
 }
 
 // Generate generates the agent installer unconfigured ignition.
+// The appliance embeds both registries.conf and CA certificates in the image's
+// system ignition for the bootstrap phase. After first reboot, MCO manages these.
 func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	infraEnvAsset := &manifests.InfraEnvFile{}
@@ -100,6 +99,10 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	nmStateConfigs := &manifests.NMStateConfig{}
 	agentConfig := &agentconfig.AgentConfig{}
 	dependencies.Get(agentWorkflow, infraEnvAsset, clusterImageSetAsset, pullSecretAsset, nmStateConfigs, infraEnvIDAsset, agentConfig)
+
+	if agentWorkflow.Workflow != workflow.AgentWorkflowTypeInstall {
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
+	}
 
 	infraEnv := infraEnvAsset.Config
 	clusterImageSet := clusterImageSetAsset.Config
@@ -133,10 +136,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		return err
 	}
 
-	registriesConfig := &mirror.RegistriesConf{}
-	registryCABundle := &mirror.CaBundle{}
-	dependencies.Get(registriesConfig, registryCABundle)
-
 	infraEnvID := infraEnvIDAsset.ID
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
@@ -155,9 +154,9 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		PullSecret:                pullSecretAsset.GetPullSecretData(),
 		ReleaseImages:             releaseImageList,
 		ReleaseImage:              clusterImageSet.Spec.ReleaseImage,
-		ReleaseImageMirror:        mirror.GetMirrorFromRelease(clusterImageSet.Spec.ReleaseImage, registriesConfig),
-		HaveMirrorConfig:          len(registriesConfig.MirrorConfig) > 0,
-		PublicContainerRegistries: getPublicContainerRegistries(registriesConfig),
+		ReleaseImageMirror:        "",
+		HaveMirrorConfig:          true,
+		PublicContainerRegistries: "",
 		InfraEnvID:                infraEnvID,
 		OSImage:                   osImage,
 		Proxy:                     infraEnv.Spec.Proxy,
@@ -180,27 +179,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 	}
 
-	switch agentWorkflow.Workflow {
-	case workflow.AgentWorkflowTypeInstall:
-		agentTemplateData.ConfigImageFiles = strings.Join(GetConfigImageFiles(), ",")
-
-	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
-		// Add the rendezvous host file. Agent TUI will interact with that file in case
-		// the rendezvous IP wasn't previously configured, by managing it as a template file.
-		if rendezvousIP == "" {
-			rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostTemplateData)
-			config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
-		}
-
-		// Explicitly disable the load-config-iso service, not required in the current flow
-		// (even though disabled by default, the udev rule may require it).
-		config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/etc/assisted/no-config-image", "root", 0644, ""))
-
-		// Enable the UI service.
-		interactiveUIFile := ignition.FileFromString("/etc/assisted/interactive-ui", "root", 0644, "")
-		config.Storage.Files = append(config.Storage.Files, interactiveUIFile)
-
-	}
+	agentTemplateData.ConfigImageFiles = strings.Join(GetConfigImageFiles(), ",")
 
 	// Required by assisted-service.
 	a.ignAddFolders(&config, "/opt/agent/tls")
@@ -248,8 +227,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	if err != nil {
 		return err
 	}
-
-	addMirrorData(&config, registriesConfig, registryCABundle)
 
 	a.Config = &config
 

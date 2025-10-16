@@ -53,13 +53,13 @@ so no connectivity checks to the release image is needed.
 
 ----
 
-## Interactive workflow (unconfigured ignition --interactive)
+## Install workflow with OpenShift Virtualizaton Engine (OVE)
 
-![Interactive workflow](./agent_installer_services-interactive.svg)
+OpenShift Virtualization Engine (OVE) is a standalone OpenShift deployment for virtualization workloads, distributed as a pre-built appliance image. This allows the user to install a cluster by using the assisted UI running on the rendezvous node. The agent-tui is also used interactively to configure which node will be the rendezvous host, and to configure accordingly the other nodes.  
 
-The interactive workflow allows the user to install a cluster by using the assisted UI running on the rendezvous node. In this workflow
-the agent-tui is also used interactively to configure which node will be the rendezvous host, and to configure accordingly the other nodes.
+The installer detects the `/etc/assisted/interactive-ui` sentinel file embedded in the appliance's system ignition to enable interactive installation, which provides:
 
 * agent-extract-tui - extracts agent-tui and nmstate libraries from the agent-installer-utils image during boot
 * agent-ui - runs the assisted UI on the rendezvous node
 
+The appliance embeds this sentinel file during image creation. After first reboot, MCO manages registry and certificate configuration.

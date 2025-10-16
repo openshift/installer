@@ -90,10 +90,6 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 			}
 		}
 
-	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
-		// Not required
-		return nil
-
 	case workflow.AgentWorkflowTypeAddNodes:
 		a.Hosts = append(a.Hosts, addNodesConfig.Config.Hosts...)
 
