@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
+	aztypes "github.com/openshift/installer/pkg/types/azure"
 	"k8s.io/utils/ptr"
 )
 
@@ -15,7 +16,7 @@ type lbInput struct {
 	loadBalancerName       string
 	infraID                string
 	region                 string
-	resourceGroup          string
+	resourceGroupName      string
 	subscriptionID         string
 	frontendIPConfigName   string
 	backendAddressPoolName string
@@ -25,17 +26,18 @@ type lbInput struct {
 }
 
 type pipInput struct {
-	infraID       string
-	name          string
-	region        string
-	resourceGroup string
-	pipClient     *armnetwork.PublicIPAddressesClient
-	tags          map[string]*string
+	infraID           string
+	name              string
+	region            string
+	resourceGroupName string
+	stackType         aztypes.StackType
+	pipClient         *armnetwork.PublicIPAddressesClient
+	tags              map[string]*string
 }
 
 type vmInput struct {
 	infraID             string
-	resourceGroup       string
+	resourceGroupName   string
 	ids                 []string
 	backendAddressPools []*armnetwork.BackendAddressPool
 	vmClient            *armcompute.VirtualMachinesClient
@@ -63,9 +65,14 @@ type inboundNatRuleInput struct {
 }
 
 func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddress, error) {
+	publicIPAddressVersion := armnetwork.IPVersionIPv4
+	if in.stackType == aztypes.StackTypeIPv6 {
+		publicIPAddressVersion = armnetwork.IPVersionIPv6
+	}
+
 	pollerResp, err := in.pipClient.BeginCreateOrUpdate(
 		ctx,
-		in.resourceGroup,
+		in.resourceGroupName,
 		in.name,
 		armnetwork.PublicIPAddress{
 			Name:     to.Ptr(in.name),
@@ -75,10 +82,11 @@ func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddr
 				Tier: to.Ptr(armnetwork.PublicIPAddressSKUTierRegional),
 			},
 			Properties: &armnetwork.PublicIPAddressPropertiesFormat{
-				PublicIPAddressVersion:   to.Ptr(armnetwork.IPVersionIPv4),
+				PublicIPAddressVersion:   to.Ptr(publicIPAddressVersion),
 				PublicIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodStatic),
 				DNSSettings: &armnetwork.PublicIPAddressDNSSettings{
-					DomainNameLabel: to.Ptr(in.infraID),
+					DomainNameLabel: to.Ptr(in.name),
+					//DomainNameLabel: to.Ptr(in.infraID),
 				},
 			},
 			Tags: in.tags,
@@ -100,7 +108,7 @@ func createAPILoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress,
 	probeName := "api-probe"
 
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
-		in.resourceGroup,
+		in.resourceGroupName,
 		in.loadBalancerName,
 		armnetwork.LoadBalancer{
 			Location: to.Ptr(in.region),
@@ -176,7 +184,7 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armne
 	probeName := "api-probe"
 
 	// Get the CAPI-created outbound load balancer so we can modify it.
-	extLB, err := in.lbClient.Get(ctx, in.resourceGroup, in.loadBalancerName, nil)
+	extLB, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get external load balancer: %w", err)
 	}
@@ -200,7 +208,7 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armne
 		})
 
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
-		in.resourceGroup,
+		in.resourceGroupName,
 		in.loadBalancerName,
 		armnetwork.LoadBalancer{
 			Location: to.Ptr(in.region),
@@ -265,7 +273,7 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 	mcsProbeName := "sint-probe"
 
 	// Get the CAPI-created internal load balancer so we can modify it.
-	lbResp, err := in.lbClient.Get(ctx, in.resourceGroup, in.loadBalancerName, nil)
+	lbResp, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not get internal load balancer: %w", err)
 	}
@@ -312,7 +320,7 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 	intLB.Properties.Probes = append(intLB.Properties.Probes, mcsProbe)
 	intLB.Properties.LoadBalancingRules = append(intLB.Properties.LoadBalancingRules, mcsRule)
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
-		in.resourceGroup,
+		in.resourceGroupName,
 		in.loadBalancerName,
 		intLB,
 		nil)
@@ -330,7 +338,7 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 	for _, id := range in.ids {
 		vmName := path.Base(id)
-		vm, err := in.vmClient.Get(ctx, in.resourceGroup, vmName, nil)
+		vm, err := in.vmClient.Get(ctx, in.resourceGroupName, vmName, nil)
 		if err != nil {
 			return fmt.Errorf("failed to get vm %s: %w", vmName, err)
 		}
@@ -339,7 +347,7 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 			nicRef := nics[0]
 
 			nicName := path.Base(*nicRef.ID)
-			nic, err := in.nicClient.Get(ctx, in.resourceGroup, nicName, nil)
+			nic, err := in.nicClient.Get(ctx, in.resourceGroupName, nicName, nil)
 			if err != nil {
 				return fmt.Errorf("failed to get nic for vm %s: %w", vmName, err)
 			}
@@ -349,7 +357,7 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 				}
 				ipconfig.Properties.LoadBalancerBackendAddressPools = append(ipconfig.Properties.LoadBalancerBackendAddressPools, in.backendAddressPools...)
 			}
-			pollerResp, err := in.nicClient.BeginCreateOrUpdate(ctx, in.resourceGroup, nicName, nic.Interface, nil)
+			pollerResp, err := in.nicClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, nicName, nic.Interface, nil)
 			if err != nil {
 				return fmt.Errorf("failed to update nic for %s: %w", vmName, err)
 			}

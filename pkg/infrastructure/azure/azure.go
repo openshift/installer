@@ -54,6 +54,8 @@ type Provider struct {
 	ResourceGroupName     string
 	StorageAccountName    string
 	StorageURL            string
+	DualStack             bool
+	StackType             aztypes.StackType
 	StorageAccount        *armstorage.Account
 	StorageClientFactory  *armstorage.ClientFactory
 	StorageAccountKeys    []armstorage.AccountKey
@@ -416,7 +418,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		loadBalancerName:       fmt.Sprintf("%s-internal", in.InfraID),
 		infraID:                in.InfraID,
 		region:                 platform.Region,
-		resourceGroup:          resourceGroupName,
+		resourceGroupName:      resourceGroupName,
 		subscriptionID:         session.Credentials.SubscriptionID,
 		frontendIPConfigName:   "public-lb-ip-v4",
 		backendAddressPoolName: fmt.Sprintf("%s-internal", in.InfraID),
@@ -438,30 +440,31 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	var extLBFQDN string
 	var pubIPAddress string
 	if in.InstallConfig.Config.PublicAPI() {
-		publicIP, err := createPublicIP(ctx, &pipInput{
-			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
-			infraID:       in.InfraID,
-			region:        in.InstallConfig.Config.Azure.Region,
-			resourceGroup: resourceGroupName,
-			pipClient:     networkClientFactory.NewPublicIPAddressesClient(),
-			tags:          p.Tags,
+		publicIPv4, err := createPublicIP(ctx, &pipInput{
+			name:              fmt.Sprintf("%s-pip-v4", in.InfraID),
+			infraID:           in.InfraID,
+			region:            in.InstallConfig.Config.Azure.Region,
+			stackType:         aztypes.StackTypeIPv4,
+			resourceGroupName: resourceGroupName,
+			pipClient:         networkClientFactory.NewPublicIPAddressesClient(),
+			tags:              p.Tags,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create public ip: %w", err)
+			return fmt.Errorf("failed to create public ipv4 address: %w", err)
 		}
-		logrus.Debugf("created public ip: %s", *publicIP.ID)
+		logrus.Debugf("created public ipv4 address: %s", *publicIPv4.ID)
 
 		lbInput.loadBalancerName = in.InfraID
 		lbInput.backendAddressPoolName = in.InfraID
 
 		var loadBalancer *armnetwork.LoadBalancer
 		if platform.OutboundType == aztypes.UserDefinedRoutingOutboundType {
-			loadBalancer, err = createAPILoadBalancer(ctx, publicIP, lbInput)
+			loadBalancer, err = createAPILoadBalancer(ctx, publicIPv4, lbInput)
 			if err != nil {
 				return fmt.Errorf("failed to create API load balancer: %w", err)
 			}
 		} else {
-			loadBalancer, err = updateOutboundLoadBalancerToAPILoadBalancer(ctx, publicIP, lbInput)
+			loadBalancer, err = updateOutboundLoadBalancerToAPILoadBalancer(ctx, publicIPv4, lbInput)
 			if err != nil {
 				return fmt.Errorf("failed to update external load balancer: %w", err)
 			}
@@ -469,8 +472,26 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 		logrus.Debugf("updated external load balancer: %s", *loadBalancer.ID)
 		lbBaps = loadBalancer.Properties.BackendAddressPools
-		extLBFQDN = *publicIP.Properties.DNSSettings.Fqdn
-		pubIPAddress = *publicIP.Properties.IPAddress
+		extLBFQDN = *publicIPv4.Properties.DNSSettings.Fqdn
+		pubIPAddress = *publicIPv4.Properties.IPAddress
+
+		/*
+			if installConfig.Networking.IsDualStack() {
+				publicIPv6, err := createPublicIP(ctx, &pipInput{
+					name:              fmt.Sprintf("%s-pip-v6", in.InfraID),
+					infraID:           in.InfraID,
+					region:            in.InstallConfig.Config.Azure.Region,
+					stackType:         aztypes.StackTypeIPv6,
+					resourceGroupName: resourceGroupName,
+					pipClient:         networkClientFactory.NewPublicIPAddressesClient(),
+					tags:              p.Tags,
+				})
+				if err != nil {
+					return fmt.Errorf("failed to create public ipv6 address: %w", err)
+				}
+				logrus.Debugf("created public ipv6 address: %s", *publicIPv6.ID)
+			}
+		*/
 	}
 
 	// Save context for other hooks
@@ -512,7 +533,7 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 
 		vmInput := &vmInput{
 			infraID:             in.InfraID,
-			resourceGroup:       p.ResourceGroupName,
+			resourceGroupName:   p.ResourceGroupName,
 			vmClient:            vmClient,
 			nicClient:           p.NetworkClientFactory.NewInterfacesClient(),
 			ids:                 vmIDs,
