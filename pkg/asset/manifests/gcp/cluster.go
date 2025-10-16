@@ -133,6 +133,19 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		capgLoadBalancerType = capg.Internal
 	}
 
+	firewallRulesManagementPolicy := capg.RulesManagementUnmanaged
+	projectID := installConfig.Config.GCP.ProjectID
+	if installConfig.Config.GCP.NetworkProjectID != "" {
+		projectID = installConfig.Config.GCP.NetworkProjectID
+	}
+	createFwRules, err := gcpic.HasPermissions(context.TODO(), projectID, []string{gcpic.CreateGCPFirewallPermission}, installConfig.Config.GCP.Endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify firewall rules: %w", err)
+	}
+	if createFwRules {
+		firewallRulesManagementPolicy = capg.RulesManagementManaged
+	}
+	
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -148,6 +161,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Name:                  ptr.To(networkName),
 				Subnets:               subnets,
 				AutoCreateSubnetworks: ptr.To(autoCreateSubnets),
+				Firewall: capg.FirewallSpec{
+					DefaultRulesManagement: firewallRulesManagementPolicy,
+				},
 			},
 			AdditionalLabels: labels,
 			FailureDomains:   findFailureDomains(installConfig),
