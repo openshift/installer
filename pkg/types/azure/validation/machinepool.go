@@ -288,18 +288,21 @@ func validateDataDiskSecurityProfiles(p *azure.MachinePool, poolName string, fld
 	// https://github.com/kubernetes-sigs/cluster-api-provider-azure/blob/cc24323ded8947bef736f90bf73fdb7ff3bb54e4/api/v1beta1/types.go#L693
 	// Can only be set on Confidential VMs
 	if poolName == "master" || poolName == "" { // empty poolName means default machine pool (control plane)
-		for i, dataDisk := range p.DataDisks {
-			if dataDisk.ManagedDisk != nil && dataDisk.ManagedDisk.DiskEncryptionSet != nil {
+		/*
+			for i, dataDisk := range p.DataDisks {
+					if dataDisk.ManagedDisk != nil && dataDisk.ManagedDisk.DiskEncryptionSet != nil {
 
-				if p.Settings != nil && p.Settings.SecurityType != azure.SecurityTypesConfidentialVM {
-					allErrs = append(allErrs, field.Invalid(
-						fldPath.Index(i).Child("managedDisk").Child("diskEncryptionSet"),
-						dataDisk.ManagedDisk.SecurityProfile,
-						"data disk encryption set must be used with confidential VMs"))
-				}
+						if p.Settings != nil && p.Settings.SecurityType != azure.SecurityTypesConfidentialVM {
+							allErrs = append(allErrs, field.Invalid(
+								fldPath.Index(i).Child("managedDisk").Child("diskEncryptionSet"),
+								dataDisk.ManagedDisk.SecurityProfile,
+								"data disk encryption set must be used with confidential VMs"))
+						}
+
+					}
 
 			}
-		}
+		*/
 
 		return allErrs
 	}
