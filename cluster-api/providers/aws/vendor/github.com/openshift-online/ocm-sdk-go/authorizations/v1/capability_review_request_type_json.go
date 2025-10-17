@@ -29,7 +29,7 @@ import (
 // MarshalCapabilityReviewRequest writes a value of the 'capability_review_request' type to the given writer.
 func MarshalCapabilityReviewRequest(object *CapabilityReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeCapabilityReviewRequest(object, stream)
+	WriteCapabilityReviewRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalCapabilityReviewRequest(object *CapabilityReviewRequest, writer io.W
 	return stream.Error
 }
 
-// writeCapabilityReviewRequest writes a value of the 'capability_review_request' type to the given stream.
-func writeCapabilityReviewRequest(object *CapabilityReviewRequest, stream *jsoniter.Stream) {
+// WriteCapabilityReviewRequest writes a value of the 'capability_review_request' type to the given stream.
+func WriteCapabilityReviewRequest(object *CapabilityReviewRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -114,13 +114,13 @@ func UnmarshalCapabilityReviewRequest(source interface{}) (object *CapabilityRev
 	if err != nil {
 		return
 	}
-	object = readCapabilityReviewRequest(iterator)
+	object = ReadCapabilityReviewRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readCapabilityReviewRequest reads a value of the 'capability_review_request' type from the given iterator.
-func readCapabilityReviewRequest(iterator *jsoniter.Iterator) *CapabilityReviewRequest {
+// ReadCapabilityReviewRequest reads a value of the 'capability_review_request' type from the given iterator.
+func ReadCapabilityReviewRequest(iterator *jsoniter.Iterator) *CapabilityReviewRequest {
 	object := &CapabilityReviewRequest{}
 	for {
 		field := iterator.ReadObject()

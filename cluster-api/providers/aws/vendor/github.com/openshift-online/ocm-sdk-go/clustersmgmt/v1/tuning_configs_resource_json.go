@@ -57,7 +57,7 @@ func readTuningConfigsListResponse(response *TuningConfigsListResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readTuningConfigList(iterator)
+			items := ReadTuningConfigList(iterator)
 			response.items = &TuningConfigList{
 				items: items,
 			}

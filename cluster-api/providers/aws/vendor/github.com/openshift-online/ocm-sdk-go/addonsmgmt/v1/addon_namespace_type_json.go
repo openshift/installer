@@ -30,7 +30,7 @@ import (
 // MarshalAddonNamespace writes a value of the 'addon_namespace' type to the given writer.
 func MarshalAddonNamespace(object *AddonNamespace, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonNamespace(object, stream)
+	WriteAddonNamespace(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAddonNamespace(object *AddonNamespace, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddonNamespace writes a value of the 'addon_namespace' type to the given stream.
-func writeAddonNamespace(object *AddonNamespace, stream *jsoniter.Stream) {
+// WriteAddonNamespace writes a value of the 'addon_namespace' type to the given stream.
+func WriteAddonNamespace(object *AddonNamespace, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -128,13 +128,13 @@ func UnmarshalAddonNamespace(source interface{}) (object *AddonNamespace, err er
 	if err != nil {
 		return
 	}
-	object = readAddonNamespace(iterator)
+	object = ReadAddonNamespace(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonNamespace reads a value of the 'addon_namespace' type from the given iterator.
-func readAddonNamespace(iterator *jsoniter.Iterator) *AddonNamespace {
+// ReadAddonNamespace reads a value of the 'addon_namespace' type from the given iterator.
+func ReadAddonNamespace(iterator *jsoniter.Iterator) *AddonNamespace {
 	object := &AddonNamespace{}
 	for {
 		field := iterator.ReadObject()

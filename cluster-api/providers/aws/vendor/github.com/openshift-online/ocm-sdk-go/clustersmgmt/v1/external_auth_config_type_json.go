@@ -29,7 +29,7 @@ import (
 // MarshalExternalAuthConfig writes a value of the 'external_auth_config' type to the given writer.
 func MarshalExternalAuthConfig(object *ExternalAuthConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeExternalAuthConfig(object, stream)
+	WriteExternalAuthConfig(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalExternalAuthConfig(object *ExternalAuthConfig, writer io.Writer) err
 	return stream.Error
 }
 
-// writeExternalAuthConfig writes a value of the 'external_auth_config' type to the given stream.
-func writeExternalAuthConfig(object *ExternalAuthConfig, stream *jsoniter.Stream) {
+// WriteExternalAuthConfig writes a value of the 'external_auth_config' type to the given stream.
+func WriteExternalAuthConfig(object *ExternalAuthConfig, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -59,7 +59,7 @@ func writeExternalAuthConfig(object *ExternalAuthConfig, stream *jsoniter.Stream
 		stream.WriteObjectField("external_auths")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		writeExternalAuthList(object.externalAuths.items, stream)
+		WriteExternalAuthList(object.externalAuths.Items(), stream)
 		stream.WriteObjectEnd()
 	}
 	stream.WriteObjectEnd()
@@ -72,13 +72,13 @@ func UnmarshalExternalAuthConfig(source interface{}) (object *ExternalAuthConfig
 	if err != nil {
 		return
 	}
-	object = readExternalAuthConfig(iterator)
+	object = ReadExternalAuthConfig(iterator)
 	err = iterator.Error
 	return
 }
 
-// readExternalAuthConfig reads a value of the 'external_auth_config' type from the given iterator.
-func readExternalAuthConfig(iterator *jsoniter.Iterator) *ExternalAuthConfig {
+// ReadExternalAuthConfig reads a value of the 'external_auth_config' type from the given iterator.
+func ReadExternalAuthConfig(iterator *jsoniter.Iterator) *ExternalAuthConfig {
 	object := &ExternalAuthConfig{}
 	for {
 		field := iterator.ReadObject()
@@ -100,11 +100,11 @@ func readExternalAuthConfig(iterator *jsoniter.Iterator) *ExternalAuthConfig {
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.link = text == ExternalAuthListLinkKind
+					value.SetLink(text == ExternalAuthListLinkKind)
 				case "href":
-					value.href = iterator.ReadString()
+					value.SetHREF(iterator.ReadString())
 				case "items":
-					value.items = readExternalAuthList(iterator)
+					value.SetItems(ReadExternalAuthList(iterator))
 				default:
 					iterator.ReadAny()
 				}

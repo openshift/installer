@@ -29,7 +29,7 @@ import (
 // MarshalAddonStatus writes a value of the 'addon_status' type to the given writer.
 func MarshalAddonStatus(object *AddonStatus, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonStatus(object, stream)
+	WriteAddonStatus(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddonStatus(object *AddonStatus, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddonStatus writes a value of the 'addon_status' type to the given stream.
-func writeAddonStatus(object *AddonStatus, stream *jsoniter.Stream) {
+// WriteAddonStatus writes a value of the 'addon_status' type to the given stream.
+func WriteAddonStatus(object *AddonStatus, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -89,7 +89,7 @@ func writeAddonStatus(object *AddonStatus, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("status_conditions")
-		writeAddonStatusConditionList(object.statusConditions, stream)
+		WriteAddonStatusConditionList(object.statusConditions, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -110,13 +110,13 @@ func UnmarshalAddonStatus(source interface{}) (object *AddonStatus, err error) {
 	if err != nil {
 		return
 	}
-	object = readAddonStatus(iterator)
+	object = ReadAddonStatus(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonStatus reads a value of the 'addon_status' type from the given iterator.
-func readAddonStatus(iterator *jsoniter.Iterator) *AddonStatus {
+// ReadAddonStatus reads a value of the 'addon_status' type from the given iterator.
+func ReadAddonStatus(iterator *jsoniter.Iterator) *AddonStatus {
 	object := &AddonStatus{}
 	for {
 		field := iterator.ReadObject()
@@ -144,7 +144,7 @@ func readAddonStatus(iterator *jsoniter.Iterator) *AddonStatus {
 			object.correlationID = value
 			object.bitmap_ |= 16
 		case "status_conditions":
-			value := readAddonStatusConditionList(iterator)
+			value := ReadAddonStatusConditionList(iterator)
 			object.statusConditions = value
 			object.bitmap_ |= 32
 		case "version":

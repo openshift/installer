@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSummaryDashboardList(list []*SummaryDashboard, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSummaryDashboardList(list, stream)
+	WriteSummaryDashboardList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSummaryDashboardList(list []*SummaryDashboard, writer io.Writer) err
 	return stream.Error
 }
 
-// writeSummaryDashboardList writes a list of value of the 'summary_dashboard' type to
+// WriteSummaryDashboardList writes a list of value of the 'summary_dashboard' type to
 // the given stream.
-func writeSummaryDashboardList(list []*SummaryDashboard, stream *jsoniter.Stream) {
+func WriteSummaryDashboardList(list []*SummaryDashboard, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeSummaryDashboard(value, stream)
+		WriteSummaryDashboard(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSummaryDashboardList(source interface{}) (items []*SummaryDashboar
 	if err != nil {
 		return
 	}
-	items = readSummaryDashboardList(iterator)
+	items = ReadSummaryDashboardList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSummaryDashboardList reads list of values of the ”summary_dashboard' type from
+// ReadSummaryDashboardList reads list of values of the ”summary_dashboard' type from
 // the given iterator.
-func readSummaryDashboardList(iterator *jsoniter.Iterator) []*SummaryDashboard {
+func ReadSummaryDashboardList(iterator *jsoniter.Iterator) []*SummaryDashboard {
 	list := []*SummaryDashboard{}
 	for iterator.ReadArray() {
-		item := readSummaryDashboard(iterator)
+		item := ReadSummaryDashboard(iterator)
 		list = append(list, item)
 	}
 	return list

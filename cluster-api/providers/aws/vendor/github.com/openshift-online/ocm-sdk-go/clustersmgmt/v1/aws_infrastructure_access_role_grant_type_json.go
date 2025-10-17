@@ -29,7 +29,7 @@ import (
 // MarshalAWSInfrastructureAccessRoleGrant writes a value of the 'AWS_infrastructure_access_role_grant' type to the given writer.
 func MarshalAWSInfrastructureAccessRoleGrant(object *AWSInfrastructureAccessRoleGrant, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAWSInfrastructureAccessRoleGrant(object, stream)
+	WriteAWSInfrastructureAccessRoleGrant(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAWSInfrastructureAccessRoleGrant(object *AWSInfrastructureAccessRole
 	return stream.Error
 }
 
-// writeAWSInfrastructureAccessRoleGrant writes a value of the 'AWS_infrastructure_access_role_grant' type to the given stream.
-func writeAWSInfrastructureAccessRoleGrant(object *AWSInfrastructureAccessRoleGrant, stream *jsoniter.Stream) {
+// WriteAWSInfrastructureAccessRoleGrant writes a value of the 'AWS_infrastructure_access_role_grant' type to the given stream.
+func WriteAWSInfrastructureAccessRoleGrant(object *AWSInfrastructureAccessRoleGrant, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -80,7 +80,7 @@ func writeAWSInfrastructureAccessRoleGrant(object *AWSInfrastructureAccessRoleGr
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("role")
-		writeAWSInfrastructureAccessRole(object.role, stream)
+		WriteAWSInfrastructureAccessRole(object.role, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0
@@ -119,13 +119,13 @@ func UnmarshalAWSInfrastructureAccessRoleGrant(source interface{}) (object *AWSI
 	if err != nil {
 		return
 	}
-	object = readAWSInfrastructureAccessRoleGrant(iterator)
+	object = ReadAWSInfrastructureAccessRoleGrant(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAWSInfrastructureAccessRoleGrant reads a value of the 'AWS_infrastructure_access_role_grant' type from the given iterator.
-func readAWSInfrastructureAccessRoleGrant(iterator *jsoniter.Iterator) *AWSInfrastructureAccessRoleGrant {
+// ReadAWSInfrastructureAccessRoleGrant reads a value of the 'AWS_infrastructure_access_role_grant' type from the given iterator.
+func ReadAWSInfrastructureAccessRoleGrant(iterator *jsoniter.Iterator) *AWSInfrastructureAccessRoleGrant {
 	object := &AWSInfrastructureAccessRoleGrant{}
 	for {
 		field := iterator.ReadObject()
@@ -149,7 +149,7 @@ func readAWSInfrastructureAccessRoleGrant(iterator *jsoniter.Iterator) *AWSInfra
 			object.consoleURL = value
 			object.bitmap_ |= 8
 		case "role":
-			value := readAWSInfrastructureAccessRole(iterator)
+			value := ReadAWSInfrastructureAccessRole(iterator)
 			object.role = value
 			object.bitmap_ |= 16
 		case "state":

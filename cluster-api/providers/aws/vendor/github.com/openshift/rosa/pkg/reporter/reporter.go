@@ -25,6 +25,23 @@ import (
 	"github.com/openshift/rosa/pkg/debug"
 )
 
+type Logger interface {
+	// Debugf logs a debug message with formatted arguments.
+	Debugf(format string, args ...interface{})
+
+	// Errorf logs an error message with formatted arguments and returns an error.
+	Errorf(format string, args ...interface{}) error
+
+	// Infof logs an info message with formatted arguments.
+	Infof(format string, args ...interface{})
+
+	// IsTerminal checks if the output is a terminal.
+	IsTerminal() bool
+
+	// Warnf logs a warning message with formatted arguments.
+	Warnf(format string, args ...interface{})
+}
+
 // Object is the reported object used by the tool. It prints the messages to the standard output or
 // error streams.
 type Object struct {
@@ -61,6 +78,8 @@ func (r *Object) Warnf(format string, args ...interface{}) {
 // Errorf prints an error message with the given format and arguments. It also return an error
 // containing the same information, which will be usually discarded, except when the caller needs to
 // report the error and also return it.
+//
+//nolint:errcheck
 func (r *Object) Errorf(format string, args ...interface{}) error {
 	message := fmt.Sprintf(format, args...)
 	if color.UseColor() {

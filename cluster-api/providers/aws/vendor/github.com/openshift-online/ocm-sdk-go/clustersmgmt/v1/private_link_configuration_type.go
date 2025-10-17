@@ -82,6 +82,29 @@ func (l *PrivateLinkConfigurationList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *PrivateLinkConfigurationList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *PrivateLinkConfigurationList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *PrivateLinkConfigurationList) SetItems(items []*PrivateLinkConfiguration) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *PrivateLinkConfigurationList) Items() []*PrivateLinkConfiguration {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *PrivateLinkConfigurationList) Empty() bool {
 	return l == nil || len(l.items) == 0

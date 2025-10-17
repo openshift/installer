@@ -29,7 +29,7 @@ import (
 // MarshalNodePoolAutoscaling writes a value of the 'node_pool_autoscaling' type to the given writer.
 func MarshalNodePoolAutoscaling(object *NodePoolAutoscaling, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeNodePoolAutoscaling(object, stream)
+	WriteNodePoolAutoscaling(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalNodePoolAutoscaling(object *NodePoolAutoscaling, writer io.Writer) e
 	return stream.Error
 }
 
-// writeNodePoolAutoscaling writes a value of the 'node_pool_autoscaling' type to the given stream.
-func writeNodePoolAutoscaling(object *NodePoolAutoscaling, stream *jsoniter.Stream) {
+// WriteNodePoolAutoscaling writes a value of the 'node_pool_autoscaling' type to the given stream.
+func WriteNodePoolAutoscaling(object *NodePoolAutoscaling, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalNodePoolAutoscaling(source interface{}) (object *NodePoolAutoscali
 	if err != nil {
 		return
 	}
-	object = readNodePoolAutoscaling(iterator)
+	object = ReadNodePoolAutoscaling(iterator)
 	err = iterator.Error
 	return
 }
 
-// readNodePoolAutoscaling reads a value of the 'node_pool_autoscaling' type from the given iterator.
-func readNodePoolAutoscaling(iterator *jsoniter.Iterator) *NodePoolAutoscaling {
+// ReadNodePoolAutoscaling reads a value of the 'node_pool_autoscaling' type from the given iterator.
+func ReadNodePoolAutoscaling(iterator *jsoniter.Iterator) *NodePoolAutoscaling {
 	object := &NodePoolAutoscaling{}
 	for {
 		field := iterator.ReadObject()

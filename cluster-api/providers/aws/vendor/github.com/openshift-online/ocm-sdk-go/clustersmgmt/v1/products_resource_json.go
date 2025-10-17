@@ -49,7 +49,7 @@ func readProductsListResponse(response *ProductsListResponse, reader io.Reader) 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readProductList(iterator)
+			items := ReadProductList(iterator)
 			response.items = &ProductList{
 				items: items,
 			}

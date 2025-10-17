@@ -14,32 +14,42 @@ import (
 
 // Creates a snapshot of an EBS volume and stores it in Amazon S3. You can use
 // snapshots for backups, to make copies of EBS volumes, and to save data before
-// shutting down an instance. You can create snapshots of volumes in a Region and
-// volumes on an Outpost. If you create a snapshot of a volume in a Region, the
-// snapshot must be stored in the same Region as the volume. If you create a
-// snapshot of a volume on an Outpost, the snapshot can be stored on the same
-// Outpost as the volume, or in the Region for that Outpost. When a snapshot is
-// created, any Amazon Web Services Marketplace product codes that are associated
-// with the source volume are propagated to the snapshot. You can take a snapshot
-// of an attached volume that is in use. However, snapshots only capture data that
-// has been written to your Amazon EBS volume at the time the snapshot command is
-// issued; this might exclude any data that has been cached by any applications or
-// the operating system. If you can pause any file systems on the volume long
-// enough to take a snapshot, your snapshot should be complete. However, if you
-// cannot pause all file writes to the volume, you should unmount the volume from
-// within the instance, issue the snapshot command, and then remount the volume to
-// ensure a consistent and complete snapshot. You may remount and use your volume
-// while the snapshot status is pending . When you create a snapshot for an EBS
-// volume that serves as a root device, we recommend that you stop the instance
-// before taking the snapshot. Snapshots that are taken from encrypted volumes are
-// automatically encrypted. Volumes that are created from encrypted snapshots are
-// also automatically encrypted. Your encrypted volumes and any associated
-// snapshots always remain protected. You can tag your snapshots during creation.
-// For more information, see Tag your Amazon EC2 resources (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html)
-// in the Amazon Elastic Compute Cloud User Guide. For more information, see
-// Amazon Elastic Block Store (https://docs.aws.amazon.com/ebs/latest/userguide/what-is-ebs.html)
-// and Amazon EBS encryption (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html)
-// in the Amazon EBS User Guide.
+// shutting down an instance.
+//
+// The location of the source EBS volume determines where you can create the
+// snapshot.
+//
+//   - If the source volume is in a Region, you must create the snapshot in the
+//     same Region as the volume.
+//
+//   - If the source volume is in a Local Zone, you can create the snapshot in the
+//     same Local Zone or in its parent Amazon Web Services Region.
+//
+//   - If the source volume is on an Outpost, you can create the snapshot on the
+//     same Outpost or in its parent Amazon Web Services Region.
+//
+// When a snapshot is created, any Amazon Web Services Marketplace product codes
+// that are associated with the source volume are propagated to the snapshot.
+//
+// You can take a snapshot of an attached volume that is in use. However,
+// snapshots only capture data that has been written to your Amazon EBS volume at
+// the time the snapshot command is issued; this might exclude any data that has
+// been cached by any applications or the operating system. If you can pause any
+// file systems on the volume long enough to take a snapshot, your snapshot should
+// be complete. However, if you cannot pause all file writes to the volume, you
+// should unmount the volume from within the instance, issue the snapshot command,
+// and then remount the volume to ensure a consistent and complete snapshot. You
+// may remount and use your volume while the snapshot status is pending .
+//
+// When you create a snapshot for an EBS volume that serves as a root device, we
+// recommend that you stop the instance before taking the snapshot.
+//
+// Snapshots that are taken from encrypted volumes are automatically encrypted.
+// Volumes that are created from encrypted snapshots are also automatically
+// encrypted. Your encrypted volumes and any associated snapshots always remain
+// protected. For more information, see [Amazon EBS encryption]in the Amazon EBS User Guide.
+//
+// [Amazon EBS encryption]: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html
 func (c *Client) CreateSnapshot(ctx context.Context, params *CreateSnapshotInput, optFns ...func(*Options)) (*CreateSnapshotOutput, error) {
 	if params == nil {
 		params = &CreateSnapshotInput{}
@@ -71,18 +81,31 @@ type CreateSnapshotInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
-	// The Amazon Resource Name (ARN) of the Outpost on which to create a local
-	// snapshot.
-	//   - To create a snapshot of a volume in a Region, omit this parameter. The
-	//   snapshot is created in the same Region as the volume.
-	//   - To create a snapshot of a volume on an Outpost and store the snapshot in
-	//   the Region, omit this parameter. The snapshot is created in the Region for the
-	//   Outpost.
-	//   - To create a snapshot of a volume on an Outpost and store the snapshot on an
-	//   Outpost, specify the ARN of the destination Outpost. The snapshot must be
-	//   created on the same Outpost as the volume.
-	// For more information, see Create local snapshots from volumes on an Outpost (https://docs.aws.amazon.com/ebs/latest/userguide/snapshots-outposts.html#create-snapshot)
-	// in the Amazon EBS User Guide.
+	// Only supported for volumes in Local Zones. If the source volume is not in a
+	// Local Zone, omit this parameter.
+	//
+	//   - To create a local snapshot in the same Local Zone as the source volume,
+	//   specify local .
+	//
+	//   - To create a regional snapshot in the parent Region of the Local Zone,
+	//   specify regional or omit this parameter.
+	//
+	// Default value: regional
+	Location types.SnapshotLocationEnum
+
+	// Only supported for volumes on Outposts. If the source volume is not on an
+	// Outpost, omit this parameter.
+	//
+	//   - To create the snapshot on the same Outpost as the source volume, specify
+	//   the ARN of that Outpost. The snapshot must be created on the same Outpost as the
+	//   volume.
+	//
+	//   - To create the snapshot in the parent Region of the Outpost, omit this
+	//   parameter.
+	//
+	// For more information, see [Create local snapshots from volumes on an Outpost] in the Amazon EBS User Guide.
+	//
+	// [Create local snapshots from volumes on an Outpost]: https://docs.aws.amazon.com/ebs/latest/userguide/snapshots-outposts.html#create-snapshot
 	OutpostArn *string
 
 	// The tags to apply to the snapshot during creation.
@@ -94,12 +117,24 @@ type CreateSnapshotInput struct {
 // Describes a snapshot.
 type CreateSnapshotOutput struct {
 
+	// The Availability Zone or Local Zone of the snapshot. For example, us-west-1a
+	// (Availability Zone) or us-west-2-lax-1a (Local Zone).
+	AvailabilityZone *string
+
+	// Only for snapshot copies created with time-based snapshot copy operations.
+	//
+	// The completion duration requested for the time-based snapshot copy operation.
+	CompletionDurationMinutes *int32
+
+	// The time stamp when the snapshot was completed.
+	CompletionTime *time.Time
+
 	// The data encryption key identifier for the snapshot. This value is a unique
 	// identifier that corresponds to the data encryption key that was used to encrypt
 	// the original volume or snapshot copy. Because data encryption keys are inherited
 	// by volumes created from snapshots, and vice versa, if snapshots share the same
 	// data encryption key identifier, then they belong to the same volume/snapshot
-	// lineage. This parameter is only returned by DescribeSnapshots .
+	// lineage. This parameter is only returned by DescribeSnapshots.
 	DataEncryptionKeyId *string
 
 	// The description for the snapshot.
@@ -108,13 +143,21 @@ type CreateSnapshotOutput struct {
 	// Indicates whether the snapshot is encrypted.
 	Encrypted *bool
 
-	// The Amazon Resource Name (ARN) of the Key Management Service (KMS) KMS key that
-	// was used to protect the volume encryption key for the parent volume.
+	// The full size of the snapshot, in bytes.
+	//
+	// This is not the incremental size of the snapshot. This is the full snapshot
+	// size and represents the size of all the blocks that were written to the source
+	// volume at the time the snapshot was created.
+	FullSnapshotSizeInBytes *int64
+
+	// The Amazon Resource Name (ARN) of the KMS key that was used to protect the
+	// volume encryption key for the parent volume.
 	KmsKeyId *string
 
 	// The ARN of the Outpost on which the snapshot is stored. For more information,
-	// see Amazon EBS local snapshots on Outposts (https://docs.aws.amazon.com/ebs/latest/userguide/snapshots-outposts.html)
-	// in the Amazon EBS User Guide.
+	// see [Amazon EBS local snapshots on Outposts]in the Amazon EBS User Guide.
+	//
+	// [Amazon EBS local snapshots on Outposts]: https://docs.aws.amazon.com/ebs/latest/userguide/snapshots-outposts.html
 	OutpostArn *string
 
 	// The Amazon Web Services owner alias, from an Amazon-maintained list ( amazon ).
@@ -146,10 +189,9 @@ type CreateSnapshotOutput struct {
 	State types.SnapshotState
 
 	// Encrypted Amazon EBS snapshots are copied asynchronously. If a snapshot copy
-	// operation fails (for example, if the proper Key Management Service (KMS)
-	// permissions are not obtained) this field displays error state details to help
-	// you diagnose why the error occurred. This parameter is only returned by
-	// DescribeSnapshots .
+	// operation fails (for example, if the proper KMS permissions are not obtained)
+	// this field displays error state details to help you diagnose why the error
+	// occurred. This parameter is only returned by DescribeSnapshots.
 	StateMessage *string
 
 	// The storage tier in which the snapshot is stored. standard indicates that the
@@ -161,9 +203,22 @@ type CreateSnapshotOutput struct {
 	// Any tags assigned to the snapshot.
 	Tags []types.Tag
 
+	// Only for snapshot copies.
+	//
+	// Indicates whether the snapshot copy was created with a standard or time-based
+	// snapshot copy operation. Time-based snapshot copy operations complete within the
+	// completion duration specified in the request. Standard snapshot copy operations
+	// are completed on a best-effort basis.
+	//
+	//   - standard - The snapshot copy was created with a standard snapshot copy
+	//   operation.
+	//
+	//   - time-based - The snapshot copy was created with a time-based snapshot copy
+	//   operation.
+	TransferType types.TransferType
+
 	// The ID of the volume that was used to create the snapshot. Snapshots created by
-	// the CopySnapshot action have an arbitrary volume ID that should not be used for
-	// any purpose.
+	// the CopySnapshotaction have an arbitrary volume ID that should not be used for any purpose.
 	VolumeId *string
 
 	// The size of the volume, in GiB.
@@ -218,6 +273,9 @@ func (c *Client) addOperationCreateSnapshotMiddlewares(stack *middleware.Stack, 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -228,6 +286,15 @@ func (c *Client) addOperationCreateSnapshotMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateSnapshotValidationMiddleware(stack); err != nil {
@@ -249,6 +316,18 @@ func (c *Client) addOperationCreateSnapshotMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

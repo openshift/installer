@@ -29,7 +29,7 @@ import (
 // MarshalLabelReference writes a value of the 'label_reference' type to the given writer.
 func MarshalLabelReference(object *LabelReference, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeLabelReference(object, stream)
+	WriteLabelReference(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalLabelReference(object *LabelReference, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeLabelReference writes a value of the 'label_reference' type to the given stream.
-func writeLabelReference(object *LabelReference, stream *jsoniter.Stream) {
+// WriteLabelReference writes a value of the 'label_reference' type to the given stream.
+func WriteLabelReference(object *LabelReference, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalLabelReference(source interface{}) (object *LabelReference, err er
 	if err != nil {
 		return
 	}
-	object = readLabelReference(iterator)
+	object = ReadLabelReference(iterator)
 	err = iterator.Error
 	return
 }
 
-// readLabelReference reads a value of the 'label_reference' type from the given iterator.
-func readLabelReference(iterator *jsoniter.Iterator) *LabelReference {
+// ReadLabelReference reads a value of the 'label_reference' type from the given iterator.
+func ReadLabelReference(iterator *jsoniter.Iterator) *LabelReference {
 	object := &LabelReference{}
 	for {
 		field := iterator.ReadObject()

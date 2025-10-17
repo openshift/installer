@@ -10,4 +10,12 @@ type KubeletConfigExpansion interface{}
 
 type MachineConfigExpansion interface{}
 
+type MachineConfigNodeExpansion interface{}
+
 type MachineConfigPoolExpansion interface{}
+
+type MachineOSBuildExpansion interface{}
+
+type MachineOSConfigExpansion interface{}
+
+type PinnedImageSetExpansion interface{}

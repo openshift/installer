@@ -30,7 +30,7 @@ import (
 // MarshalServiceDependency writes a value of the 'service_dependency' type to the given writer.
 func MarshalServiceDependency(object *ServiceDependency, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeServiceDependency(object, stream)
+	WriteServiceDependency(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalServiceDependency(object *ServiceDependency, writer io.Writer) error
 	return stream.Error
 }
 
-// writeServiceDependency writes a value of the 'service_dependency' type to the given stream.
-func writeServiceDependency(object *ServiceDependency, stream *jsoniter.Stream) {
+// WriteServiceDependency writes a value of the 'service_dependency' type to the given stream.
+func WriteServiceDependency(object *ServiceDependency, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func writeServiceDependency(object *ServiceDependency, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("child_service")
-		writeService(object.childService, stream)
+		WriteService(object.childService, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -108,7 +108,7 @@ func writeServiceDependency(object *ServiceDependency, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("owners")
-		writeOwnerList(object.owners, stream)
+		WriteOwnerList(object.owners, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0 && object.parentService != nil
@@ -117,7 +117,7 @@ func writeServiceDependency(object *ServiceDependency, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("parent_service")
-		writeService(object.parentService, stream)
+		WriteService(object.parentService, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0
@@ -147,13 +147,13 @@ func UnmarshalServiceDependency(source interface{}) (object *ServiceDependency, 
 	if err != nil {
 		return
 	}
-	object = readServiceDependency(iterator)
+	object = ReadServiceDependency(iterator)
 	err = iterator.Error
 	return
 }
 
-// readServiceDependency reads a value of the 'service_dependency' type from the given iterator.
-func readServiceDependency(iterator *jsoniter.Iterator) *ServiceDependency {
+// ReadServiceDependency reads a value of the 'service_dependency' type from the given iterator.
+func ReadServiceDependency(iterator *jsoniter.Iterator) *ServiceDependency {
 	object := &ServiceDependency{}
 	for {
 		field := iterator.ReadObject()
@@ -173,7 +173,7 @@ func readServiceDependency(iterator *jsoniter.Iterator) *ServiceDependency {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "child_service":
-			value := readService(iterator)
+			value := ReadService(iterator)
 			object.childService = value
 			object.bitmap_ |= 8
 		case "created_at":
@@ -194,11 +194,11 @@ func readServiceDependency(iterator *jsoniter.Iterator) *ServiceDependency {
 			object.name = value
 			object.bitmap_ |= 64
 		case "owners":
-			value := readOwnerList(iterator)
+			value := ReadOwnerList(iterator)
 			object.owners = value
 			object.bitmap_ |= 128
 		case "parent_service":
-			value := readService(iterator)
+			value := ReadService(iterator)
 			object.parentService = value
 			object.bitmap_ |= 256
 		case "type":

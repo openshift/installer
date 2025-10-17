@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalBreakGlassCredentialStatusList(list []BreakGlassCredentialStatus, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeBreakGlassCredentialStatusList(list, stream)
+	WriteBreakGlassCredentialStatusList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalBreakGlassCredentialStatusList(list []BreakGlassCredentialStatus, wr
 	return stream.Error
 }
 
-// writeBreakGlassCredentialStatusList writes a list of value of the 'break_glass_credential_status' type to
+// WriteBreakGlassCredentialStatusList writes a list of value of the 'break_glass_credential_status' type to
 // the given stream.
-func writeBreakGlassCredentialStatusList(list []BreakGlassCredentialStatus, stream *jsoniter.Stream) {
+func WriteBreakGlassCredentialStatusList(list []BreakGlassCredentialStatus, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalBreakGlassCredentialStatusList(source interface{}) (items []BreakG
 	if err != nil {
 		return
 	}
-	items = readBreakGlassCredentialStatusList(iterator)
+	items = ReadBreakGlassCredentialStatusList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readBreakGlassCredentialStatusList reads list of values of the ”break_glass_credential_status' type from
+// ReadBreakGlassCredentialStatusList reads list of values of the ”break_glass_credential_status' type from
 // the given iterator.
-func readBreakGlassCredentialStatusList(iterator *jsoniter.Iterator) []BreakGlassCredentialStatus {
+func ReadBreakGlassCredentialStatusList(iterator *jsoniter.Iterator) []BreakGlassCredentialStatus {
 	list := []BreakGlassCredentialStatus{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

@@ -29,7 +29,7 @@ import (
 // MarshalClusterDeployment writes a value of the 'cluster_deployment' type to the given writer.
 func MarshalClusterDeployment(object *ClusterDeployment, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterDeployment(object, stream)
+	WriteClusterDeployment(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterDeployment(object *ClusterDeployment, writer io.Writer) error
 	return stream.Error
 }
 
-// writeClusterDeployment writes a value of the 'cluster_deployment' type to the given stream.
-func writeClusterDeployment(object *ClusterDeployment, stream *jsoniter.Stream) {
+// WriteClusterDeployment writes a value of the 'cluster_deployment' type to the given stream.
+func WriteClusterDeployment(object *ClusterDeployment, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -83,13 +83,13 @@ func UnmarshalClusterDeployment(source interface{}) (object *ClusterDeployment, 
 	if err != nil {
 		return
 	}
-	object = readClusterDeployment(iterator)
+	object = ReadClusterDeployment(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterDeployment reads a value of the 'cluster_deployment' type from the given iterator.
-func readClusterDeployment(iterator *jsoniter.Iterator) *ClusterDeployment {
+// ReadClusterDeployment reads a value of the 'cluster_deployment' type from the given iterator.
+func ReadClusterDeployment(iterator *jsoniter.Iterator) *ClusterDeployment {
 	object := &ClusterDeployment{}
 	for {
 		field := iterator.ReadObject()

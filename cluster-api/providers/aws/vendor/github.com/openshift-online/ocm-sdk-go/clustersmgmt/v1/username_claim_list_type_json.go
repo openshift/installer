@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalUsernameClaimList(list []*UsernameClaim, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeUsernameClaimList(list, stream)
+	WriteUsernameClaimList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalUsernameClaimList(list []*UsernameClaim, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeUsernameClaimList writes a list of value of the 'username_claim' type to
+// WriteUsernameClaimList writes a list of value of the 'username_claim' type to
 // the given stream.
-func writeUsernameClaimList(list []*UsernameClaim, stream *jsoniter.Stream) {
+func WriteUsernameClaimList(list []*UsernameClaim, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeUsernameClaim(value, stream)
+		WriteUsernameClaim(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalUsernameClaimList(source interface{}) (items []*UsernameClaim, err
 	if err != nil {
 		return
 	}
-	items = readUsernameClaimList(iterator)
+	items = ReadUsernameClaimList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readUsernameClaimList reads list of values of the ”username_claim' type from
+// ReadUsernameClaimList reads list of values of the ”username_claim' type from
 // the given iterator.
-func readUsernameClaimList(iterator *jsoniter.Iterator) []*UsernameClaim {
+func ReadUsernameClaimList(iterator *jsoniter.Iterator) []*UsernameClaim {
 	list := []*UsernameClaim{}
 	for iterator.ReadArray() {
-		item := readUsernameClaim(iterator)
+		item := ReadUsernameClaim(iterator)
 		list = append(list, item)
 	}
 	return list

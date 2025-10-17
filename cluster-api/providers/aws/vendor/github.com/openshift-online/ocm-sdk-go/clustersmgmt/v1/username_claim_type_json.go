@@ -29,7 +29,7 @@ import (
 // MarshalUsernameClaim writes a value of the 'username_claim' type to the given writer.
 func MarshalUsernameClaim(object *UsernameClaim, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeUsernameClaim(object, stream)
+	WriteUsernameClaim(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalUsernameClaim(object *UsernameClaim, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeUsernameClaim writes a value of the 'username_claim' type to the given stream.
-func writeUsernameClaim(object *UsernameClaim, stream *jsoniter.Stream) {
+// WriteUsernameClaim writes a value of the 'username_claim' type to the given stream.
+func WriteUsernameClaim(object *UsernameClaim, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalUsernameClaim(source interface{}) (object *UsernameClaim, err erro
 	if err != nil {
 		return
 	}
-	object = readUsernameClaim(iterator)
+	object = ReadUsernameClaim(iterator)
 	err = iterator.Error
 	return
 }
 
-// readUsernameClaim reads a value of the 'username_claim' type from the given iterator.
-func readUsernameClaim(iterator *jsoniter.Iterator) *UsernameClaim {
+// ReadUsernameClaim reads a value of the 'username_claim' type from the given iterator.
+func ReadUsernameClaim(iterator *jsoniter.Iterator) *UsernameClaim {
 	object := &UsernameClaim{}
 	for {
 		field := iterator.ReadObject()

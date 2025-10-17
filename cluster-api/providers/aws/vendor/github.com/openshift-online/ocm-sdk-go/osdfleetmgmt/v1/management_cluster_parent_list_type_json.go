@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalManagementClusterParentList(list []*ManagementClusterParent, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeManagementClusterParentList(list, stream)
+	WriteManagementClusterParentList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalManagementClusterParentList(list []*ManagementClusterParent, writer 
 	return stream.Error
 }
 
-// writeManagementClusterParentList writes a list of value of the 'management_cluster_parent' type to
+// WriteManagementClusterParentList writes a list of value of the 'management_cluster_parent' type to
 // the given stream.
-func writeManagementClusterParentList(list []*ManagementClusterParent, stream *jsoniter.Stream) {
+func WriteManagementClusterParentList(list []*ManagementClusterParent, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeManagementClusterParent(value, stream)
+		WriteManagementClusterParent(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalManagementClusterParentList(source interface{}) (items []*Manageme
 	if err != nil {
 		return
 	}
-	items = readManagementClusterParentList(iterator)
+	items = ReadManagementClusterParentList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readManagementClusterParentList reads list of values of the ”management_cluster_parent' type from
+// ReadManagementClusterParentList reads list of values of the ”management_cluster_parent' type from
 // the given iterator.
-func readManagementClusterParentList(iterator *jsoniter.Iterator) []*ManagementClusterParent {
+func ReadManagementClusterParentList(iterator *jsoniter.Iterator) []*ManagementClusterParent {
 	list := []*ManagementClusterParent{}
 	for iterator.ReadArray() {
-		item := readManagementClusterParent(iterator)
+		item := ReadManagementClusterParent(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -41,15 +41,20 @@ type DetachNetworkInterfaceInput struct {
 	DryRun *bool
 
 	// Specifies whether to force a detachment.
+	//
 	//   - Use the Force parameter only as a last resort to detach a network interface
 	//   from a failed instance.
+	//
 	//   - If you use the Force parameter to detach a network interface, you might not
 	//   be able to attach a different network interface to the same index on the
 	//   instance without first stopping and starting the instance.
-	//   - If you force the detachment of a network interface, the instance metadata (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)
-	//   might not get updated. This means that the attributes associated with the
-	//   detached network interface might still be visible. The instance metadata will
-	//   get updated when you stop and start the instance.
+	//
+	//   - If you force the detachment of a network interface, the [instance metadata]might not get
+	//   updated. This means that the attributes associated with the detached network
+	//   interface might still be visible. The instance metadata will get updated when
+	//   you stop and start the instance.
+	//
+	// [instance metadata]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 	Force *bool
 
 	noSmithyDocumentSerde
@@ -105,6 +110,9 @@ func (c *Client) addOperationDetachNetworkInterfaceMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +123,15 @@ func (c *Client) addOperationDetachNetworkInterfaceMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDetachNetworkInterfaceValidationMiddleware(stack); err != nil {
@@ -136,6 +153,18 @@ func (c *Client) addOperationDetachNetworkInterfaceMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

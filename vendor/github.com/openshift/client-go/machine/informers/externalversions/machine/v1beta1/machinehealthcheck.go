@@ -3,13 +3,13 @@
 package v1beta1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
+	apimachinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	versioned "github.com/openshift/client-go/machine/clientset/versioned"
 	internalinterfaces "github.com/openshift/client-go/machine/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/openshift/client-go/machine/listers/machine/v1beta1"
+	machinev1beta1 "github.com/openshift/client-go/machine/listers/machine/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -20,7 +20,7 @@ import (
 // MachineHealthChecks.
 type MachineHealthCheckInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1beta1.MachineHealthCheckLister
+	Lister() machinev1beta1.MachineHealthCheckLister
 }
 
 type machineHealthCheckInformer struct {
@@ -46,16 +46,28 @@ func NewFilteredMachineHealthCheckInformer(client versioned.Interface, namespace
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.MachineV1beta1().MachineHealthChecks(namespace).List(context.TODO(), options)
+				return client.MachineV1beta1().MachineHealthChecks(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.MachineV1beta1().MachineHealthChecks(namespace).Watch(context.TODO(), options)
+				return client.MachineV1beta1().MachineHealthChecks(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.MachineV1beta1().MachineHealthChecks(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.MachineV1beta1().MachineHealthChecks(namespace).Watch(ctx, options)
 			},
 		},
-		&machinev1beta1.MachineHealthCheck{},
+		&apimachinev1beta1.MachineHealthCheck{},
 		resyncPeriod,
 		indexers,
 	)
@@ -66,9 +78,9 @@ func (f *machineHealthCheckInformer) defaultInformer(client versioned.Interface,
 }
 
 func (f *machineHealthCheckInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&machinev1beta1.MachineHealthCheck{}, f.defaultInformer)
+	return f.factory.InformerFor(&apimachinev1beta1.MachineHealthCheck{}, f.defaultInformer)
 }
 
-func (f *machineHealthCheckInformer) Lister() v1beta1.MachineHealthCheckLister {
-	return v1beta1.NewMachineHealthCheckLister(f.Informer().GetIndexer())
+func (f *machineHealthCheckInformer) Lister() machinev1beta1.MachineHealthCheckLister {
+	return machinev1beta1.NewMachineHealthCheckLister(f.Informer().GetIndexer())
 }

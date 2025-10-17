@@ -29,7 +29,7 @@ import (
 // MarshalManagementClusterRequestPayload writes a value of the 'management_cluster_request_payload' type to the given writer.
 func MarshalManagementClusterRequestPayload(object *ManagementClusterRequestPayload, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeManagementClusterRequestPayload(object, stream)
+	WriteManagementClusterRequestPayload(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalManagementClusterRequestPayload(object *ManagementClusterRequestPayl
 	return stream.Error
 }
 
-// writeManagementClusterRequestPayload writes a value of the 'management_cluster_request_payload' type to the given stream.
-func writeManagementClusterRequestPayload(object *ManagementClusterRequestPayload, stream *jsoniter.Stream) {
+// WriteManagementClusterRequestPayload writes a value of the 'management_cluster_request_payload' type to the given stream.
+func WriteManagementClusterRequestPayload(object *ManagementClusterRequestPayload, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalManagementClusterRequestPayload(source interface{}) (object *Manag
 	if err != nil {
 		return
 	}
-	object = readManagementClusterRequestPayload(iterator)
+	object = ReadManagementClusterRequestPayload(iterator)
 	err = iterator.Error
 	return
 }
 
-// readManagementClusterRequestPayload reads a value of the 'management_cluster_request_payload' type from the given iterator.
-func readManagementClusterRequestPayload(iterator *jsoniter.Iterator) *ManagementClusterRequestPayload {
+// ReadManagementClusterRequestPayload reads a value of the 'management_cluster_request_payload' type from the given iterator.
+func ReadManagementClusterRequestPayload(iterator *jsoniter.Iterator) *ManagementClusterRequestPayload {
 	object := &ManagementClusterRequestPayload{}
 	for {
 		field := iterator.ReadObject()

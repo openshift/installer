@@ -14,9 +14,13 @@ import (
 // used for instance launches, appears in describe operations, and can be shared.
 // Amazon Web Services accounts, organizations, and Organizational Units that lost
 // access to the AMI when it was disabled do not regain access automatically. Once
-// the AMI is available, it can be shared with them again. Only the AMI owner can
-// re-enable a disabled AMI. For more information, see Disable an AMI (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/disable-an-ami.html)
-// in the Amazon EC2 User Guide.
+// the AMI is available, it can be shared with them again.
+//
+// Only the AMI owner can re-enable a disabled AMI.
+//
+// For more information, see [Disable an Amazon EC2 AMI] in the Amazon EC2 User Guide.
+//
+// [Disable an Amazon EC2 AMI]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/disable-an-ami.html
 func (c *Client) EnableImage(ctx context.Context, params *EnableImageInput, optFns ...func(*Options)) (*EnableImageOutput, error) {
 	if params == nil {
 		params = &EnableImageInput{}
@@ -102,6 +106,9 @@ func (c *Client) addOperationEnableImageMiddlewares(stack *middleware.Stack, opt
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,6 +119,15 @@ func (c *Client) addOperationEnableImageMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpEnableImageValidationMiddleware(stack); err != nil {
@@ -133,6 +149,18 @@ func (c *Client) addOperationEnableImageMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

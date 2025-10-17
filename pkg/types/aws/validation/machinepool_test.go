@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/types/aws"
 )
@@ -242,6 +243,56 @@ func Test_validateAMIID(t *testing.T) {
 	for _, test := range cases {
 		t.Run("", func(t *testing.T) {
 			err := ValidateAMIID(test.platform, test.pool, field.NewPath("test-path")).ToAggregate()
+			if test.err == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, test.err, err)
+			}
+		})
+	}
+}
+
+func Test_validateCPUOptions(t *testing.T) {
+	cases := []struct {
+		platform *aws.Platform
+		pool     *aws.MachinePool
+
+		err string
+	}{{
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				ConfidentialCompute: ptr.To(aws.AWSConfidentialComputePolicySEVSNP),
+			},
+		},
+	}, {
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				ConfidentialCompute: ptr.To(aws.AWSConfidentialComputePolicyDisabled),
+			},
+		},
+	}, {
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				ConfidentialCompute: ptr.To(aws.AWSConfidentialComputePolicy("")),
+			},
+		},
+		err: `^test-path.confidentialCompute: Invalid value: "": Allowed values are Disabled, AMDEncryptedVirtualizationNestedPaging and omitted$`,
+	}, {
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				ConfidentialCompute: ptr.To(aws.AWSConfidentialComputePolicy("invalid")),
+			},
+		},
+		err: `^test-path.confidentialCompute: Invalid value: "invalid": Allowed values are Disabled, AMDEncryptedVirtualizationNestedPaging and omitted$`,
+	}, {
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{},
+		},
+		err: `^test-path.cpuOptions: Invalid value: "{}": At least one field must be set if cpuOptions is provided$`,
+	}}
+	for _, test := range cases {
+		t.Run("", func(t *testing.T) {
+			err := ValidateCPUOptions(test.pool, field.NewPath("test-path")).ToAggregate()
 			if test.err == "" {
 				assert.NoError(t, err)
 			} else {

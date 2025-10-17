@@ -37,6 +37,8 @@ const boolType string = "bool"
 const regionFlagName = "region"
 const regionDeprecationMessage = "Region flag will be removed from this command in future versions"
 
+const MustUseBothFlagsErrorMessage = "Must supply '%s' flag when using the '%s' flag"
+
 var hasUnknownFlags bool
 
 var DisableRegionDeprecationFlagName = "disable-region-deprecation" // Temporary for region deprecation

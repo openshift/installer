@@ -62,7 +62,7 @@ func (o *User) Kind() string {
 	return UserKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *User) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -312,6 +312,29 @@ func (l *UserList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *UserList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *UserList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *UserList) SetItems(items []*User) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *UserList) Items() []*User {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

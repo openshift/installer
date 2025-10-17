@@ -49,7 +49,7 @@ func readStorageQuotaValuesListResponse(response *StorageQuotaValuesListResponse
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readStorageQuotaList(iterator)
+			items := ReadStorageQuotaList(iterator)
 			response.items = &StorageQuotaList{
 				items: items,
 			}

@@ -96,6 +96,29 @@ func (l *ClusterRegistrationRequestList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ClusterRegistrationRequestList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ClusterRegistrationRequestList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ClusterRegistrationRequestList) SetItems(items []*ClusterRegistrationRequest) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ClusterRegistrationRequestList) Items() []*ClusterRegistrationRequest {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ClusterRegistrationRequestList) Empty() bool {
 	return l == nil || len(l.items) == 0

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClientComponentList(list []*ClientComponent, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClientComponentList(list, stream)
+	WriteClientComponentList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClientComponentList(list []*ClientComponent, writer io.Writer) error
 	return stream.Error
 }
 
-// writeClientComponentList writes a list of value of the 'client_component' type to
+// WriteClientComponentList writes a list of value of the 'client_component' type to
 // the given stream.
-func writeClientComponentList(list []*ClientComponent, stream *jsoniter.Stream) {
+func WriteClientComponentList(list []*ClientComponent, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeClientComponent(value, stream)
+		WriteClientComponent(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClientComponentList(source interface{}) (items []*ClientComponent,
 	if err != nil {
 		return
 	}
-	items = readClientComponentList(iterator)
+	items = ReadClientComponentList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClientComponentList reads list of values of the ”client_component' type from
+// ReadClientComponentList reads list of values of the ”client_component' type from
 // the given iterator.
-func readClientComponentList(iterator *jsoniter.Iterator) []*ClientComponent {
+func ReadClientComponentList(iterator *jsoniter.Iterator) []*ClientComponent {
 	list := []*ClientComponent{}
 	for iterator.ReadArray() {
-		item := readClientComponent(iterator)
+		item := ReadClientComponent(iterator)
 		list = append(list, item)
 	}
 	return list

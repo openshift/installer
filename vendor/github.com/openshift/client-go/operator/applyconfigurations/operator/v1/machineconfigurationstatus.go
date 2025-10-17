@@ -3,15 +3,16 @@
 package v1
 
 import (
-	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
+	metav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
 // MachineConfigurationStatusApplyConfiguration represents a declarative configuration of the MachineConfigurationStatus type for use
 // with apply.
 type MachineConfigurationStatusApplyConfiguration struct {
 	ObservedGeneration         *int64                                        `json:"observedGeneration,omitempty"`
-	Conditions                 []v1.ConditionApplyConfiguration              `json:"conditions,omitempty"`
+	Conditions                 []metav1.ConditionApplyConfiguration          `json:"conditions,omitempty"`
 	NodeDisruptionPolicyStatus *NodeDisruptionPolicyStatusApplyConfiguration `json:"nodeDisruptionPolicyStatus,omitempty"`
+	ManagedBootImagesStatus    *ManagedBootImagesApplyConfiguration          `json:"managedBootImagesStatus,omitempty"`
 }
 
 // MachineConfigurationStatusApplyConfiguration constructs a declarative configuration of the MachineConfigurationStatus type for use with
@@ -31,7 +32,7 @@ func (b *MachineConfigurationStatusApplyConfiguration) WithObservedGeneration(va
 // WithConditions adds the given value to the Conditions field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Conditions field.
-func (b *MachineConfigurationStatusApplyConfiguration) WithConditions(values ...*v1.ConditionApplyConfiguration) *MachineConfigurationStatusApplyConfiguration {
+func (b *MachineConfigurationStatusApplyConfiguration) WithConditions(values ...*metav1.ConditionApplyConfiguration) *MachineConfigurationStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithConditions")
@@ -46,5 +47,13 @@ func (b *MachineConfigurationStatusApplyConfiguration) WithConditions(values ...
 // If called multiple times, the NodeDisruptionPolicyStatus field is set to the value of the last call.
 func (b *MachineConfigurationStatusApplyConfiguration) WithNodeDisruptionPolicyStatus(value *NodeDisruptionPolicyStatusApplyConfiguration) *MachineConfigurationStatusApplyConfiguration {
 	b.NodeDisruptionPolicyStatus = value
+	return b
+}
+
+// WithManagedBootImagesStatus sets the ManagedBootImagesStatus field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ManagedBootImagesStatus field is set to the value of the last call.
+func (b *MachineConfigurationStatusApplyConfiguration) WithManagedBootImagesStatus(value *ManagedBootImagesApplyConfiguration) *MachineConfigurationStatusApplyConfiguration {
+	b.ManagedBootImagesStatus = value
 	return b
 }

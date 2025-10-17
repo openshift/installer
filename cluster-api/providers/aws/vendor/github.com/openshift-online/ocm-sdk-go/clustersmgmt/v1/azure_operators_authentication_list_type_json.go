@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAzureOperatorsAuthenticationList(list []*AzureOperatorsAuthentication, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAzureOperatorsAuthenticationList(list, stream)
+	WriteAzureOperatorsAuthenticationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAzureOperatorsAuthenticationList(list []*AzureOperatorsAuthenticatio
 	return stream.Error
 }
 
-// writeAzureOperatorsAuthenticationList writes a list of value of the 'azure_operators_authentication' type to
+// WriteAzureOperatorsAuthenticationList writes a list of value of the 'azure_operators_authentication' type to
 // the given stream.
-func writeAzureOperatorsAuthenticationList(list []*AzureOperatorsAuthentication, stream *jsoniter.Stream) {
+func WriteAzureOperatorsAuthenticationList(list []*AzureOperatorsAuthentication, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAzureOperatorsAuthentication(value, stream)
+		WriteAzureOperatorsAuthentication(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAzureOperatorsAuthenticationList(source interface{}) (items []*Azu
 	if err != nil {
 		return
 	}
-	items = readAzureOperatorsAuthenticationList(iterator)
+	items = ReadAzureOperatorsAuthenticationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAzureOperatorsAuthenticationList reads list of values of the ”azure_operators_authentication' type from
+// ReadAzureOperatorsAuthenticationList reads list of values of the ”azure_operators_authentication' type from
 // the given iterator.
-func readAzureOperatorsAuthenticationList(iterator *jsoniter.Iterator) []*AzureOperatorsAuthentication {
+func ReadAzureOperatorsAuthenticationList(iterator *jsoniter.Iterator) []*AzureOperatorsAuthentication {
 	list := []*AzureOperatorsAuthentication{}
 	for iterator.ReadArray() {
-		item := readAzureOperatorsAuthentication(iterator)
+		item := ReadAzureOperatorsAuthentication(iterator)
 		list = append(list, item)
 	}
 	return list

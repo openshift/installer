@@ -60,7 +60,7 @@ func (o *BreakGlassCredential) Kind() string {
 	return BreakGlassCredentialKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *BreakGlassCredential) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -280,6 +280,29 @@ func (l *BreakGlassCredentialList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *BreakGlassCredentialList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *BreakGlassCredentialList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *BreakGlassCredentialList) SetItems(items []*BreakGlassCredential) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *BreakGlassCredentialList) Items() []*BreakGlassCredential {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

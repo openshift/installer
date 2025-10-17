@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSocketTotalsNodeRoleOSMetricNodeList(list []*SocketTotalsNodeRoleOSMetricNode, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSocketTotalsNodeRoleOSMetricNodeList(list, stream)
+	WriteSocketTotalsNodeRoleOSMetricNodeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSocketTotalsNodeRoleOSMetricNodeList(list []*SocketTotalsNodeRoleOSM
 	return stream.Error
 }
 
-// writeSocketTotalsNodeRoleOSMetricNodeList writes a list of value of the 'socket_totals_node_role_OS_metric_node' type to
+// WriteSocketTotalsNodeRoleOSMetricNodeList writes a list of value of the 'socket_totals_node_role_OS_metric_node' type to
 // the given stream.
-func writeSocketTotalsNodeRoleOSMetricNodeList(list []*SocketTotalsNodeRoleOSMetricNode, stream *jsoniter.Stream) {
+func WriteSocketTotalsNodeRoleOSMetricNodeList(list []*SocketTotalsNodeRoleOSMetricNode, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeSocketTotalsNodeRoleOSMetricNode(value, stream)
+		WriteSocketTotalsNodeRoleOSMetricNode(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSocketTotalsNodeRoleOSMetricNodeList(source interface{}) (items []
 	if err != nil {
 		return
 	}
-	items = readSocketTotalsNodeRoleOSMetricNodeList(iterator)
+	items = ReadSocketTotalsNodeRoleOSMetricNodeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSocketTotalsNodeRoleOSMetricNodeList reads list of values of the ”socket_totals_node_role_OS_metric_node' type from
+// ReadSocketTotalsNodeRoleOSMetricNodeList reads list of values of the ”socket_totals_node_role_OS_metric_node' type from
 // the given iterator.
-func readSocketTotalsNodeRoleOSMetricNodeList(iterator *jsoniter.Iterator) []*SocketTotalsNodeRoleOSMetricNode {
+func ReadSocketTotalsNodeRoleOSMetricNodeList(iterator *jsoniter.Iterator) []*SocketTotalsNodeRoleOSMetricNode {
 	list := []*SocketTotalsNodeRoleOSMetricNode{}
 	for iterator.ReadArray() {
-		item := readSocketTotalsNodeRoleOSMetricNode(iterator)
+		item := ReadSocketTotalsNodeRoleOSMetricNode(iterator)
 		list = append(list, item)
 	}
 	return list

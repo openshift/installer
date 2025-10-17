@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalErrorList(list []*Error, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeErrorList(list, stream)
+	WriteErrorList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalErrorList(list []*Error, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeErrorList writes a list of value of the 'error' type to
+// WriteErrorList writes a list of value of the 'error' type to
 // the given stream.
-func writeErrorList(list []*Error, stream *jsoniter.Stream) {
+func WriteErrorList(list []*Error, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeError(value, stream)
+		WriteError(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalErrorList(source interface{}) (items []*Error, err error) {
 	if err != nil {
 		return
 	}
-	items = readErrorList(iterator)
+	items = ReadErrorList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readErrorList reads list of values of the ”error' type from
+// ReadErrorList reads list of values of the ”error' type from
 // the given iterator.
-func readErrorList(iterator *jsoniter.Iterator) []*Error {
+func ReadErrorList(iterator *jsoniter.Iterator) []*Error {
 	list := []*Error{}
 	for iterator.ReadArray() {
-		item := readError(iterator)
+		item := ReadError(iterator)
 		list = append(list, item)
 	}
 	return list

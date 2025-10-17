@@ -30,7 +30,7 @@ import (
 // MarshalEscalation writes a value of the 'escalation' type to the given writer.
 func MarshalEscalation(object *Escalation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeEscalation(object, stream)
+	WriteEscalation(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalEscalation(object *Escalation, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeEscalation writes a value of the 'escalation' type to the given stream.
-func writeEscalation(object *Escalation, stream *jsoniter.Stream) {
+// WriteEscalation writes a value of the 'escalation' type to the given stream.
+func WriteEscalation(object *Escalation, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -99,7 +99,7 @@ func writeEscalation(object *Escalation, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("user")
-		writeUser(object.user, stream)
+		WriteUser(object.user, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -111,13 +111,13 @@ func UnmarshalEscalation(source interface{}) (object *Escalation, err error) {
 	if err != nil {
 		return
 	}
-	object = readEscalation(iterator)
+	object = ReadEscalation(iterator)
 	err = iterator.Error
 	return
 }
 
-// readEscalation reads a value of the 'escalation' type from the given iterator.
-func readEscalation(iterator *jsoniter.Iterator) *Escalation {
+// ReadEscalation reads a value of the 'escalation' type from the given iterator.
+func ReadEscalation(iterator *jsoniter.Iterator) *Escalation {
 	object := &Escalation{}
 	for {
 		field := iterator.ReadObject()
@@ -161,7 +161,7 @@ func readEscalation(iterator *jsoniter.Iterator) *Escalation {
 			object.updatedAt = value
 			object.bitmap_ |= 32
 		case "user":
-			value := readUser(iterator)
+			value := ReadUser(iterator)
 			object.user = value
 			object.bitmap_ |= 64
 		default:

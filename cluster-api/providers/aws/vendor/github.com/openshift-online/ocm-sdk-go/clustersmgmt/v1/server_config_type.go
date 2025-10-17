@@ -55,7 +55,7 @@ func (o *ServerConfig) Kind() string {
 	return ServerConfigKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *ServerConfig) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -252,6 +252,29 @@ func (l *ServerConfigList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ServerConfigList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ServerConfigList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ServerConfigList) SetItems(items []*ServerConfig) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ServerConfigList) Items() []*ServerConfig {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

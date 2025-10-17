@@ -33,6 +33,7 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/accesstransparency"
 	"github.com/openshift-online/ocm-sdk-go/accountsmgmt"
 	"github.com/openshift-online/ocm-sdk-go/addonsmgmt"
+	"github.com/openshift-online/ocm-sdk-go/arohcp"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"github.com/openshift-online/ocm-sdk-go/authorizations"
 	"github.com/openshift-online/ocm-sdk-go/clustersmgmt"
@@ -1016,6 +1017,11 @@ func (c *Connection) AddonsMgmt() *addonsmgmt.Client {
 // ClustersMgmt returns the client for the clusters management service.
 func (c *Connection) ClustersMgmt() *clustersmgmt.Client {
 	return clustersmgmt.NewClient(c, "/api/clusters_mgmt")
+}
+
+// AroHCP returns the client for the ARO-HCP clusters management service.
+func (c *Connection) AroHCP() *arohcp.Client {
+	return arohcp.NewClient(c, "/api/aro_hcp")
 }
 
 // OSDFleetMgmt returns the client for the OSD management service.

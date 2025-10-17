@@ -18,10 +18,9 @@ limitations under the License.
 package securitygroup
 
 import (
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/common"
 )
 
 // Service holds a collection of interfaces.
@@ -30,7 +29,7 @@ import (
 type Service struct {
 	scope     scope.SGScope
 	roles     []infrav1.SecurityGroupRole
-	EC2Client ec2iface.EC2API
+	EC2Client common.EC2API
 }
 
 // NewService returns a new service given the api clients with a defined

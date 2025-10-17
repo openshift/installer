@@ -52,7 +52,7 @@ func (o *AddOnNamespace) Kind() string {
 	return AddOnNamespaceKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *AddOnNamespace) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -226,6 +226,29 @@ func (l *AddOnNamespaceList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *AddOnNamespaceList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddOnNamespaceList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddOnNamespaceList) SetItems(items []*AddOnNamespace) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddOnNamespaceList) Items() []*AddOnNamespace {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

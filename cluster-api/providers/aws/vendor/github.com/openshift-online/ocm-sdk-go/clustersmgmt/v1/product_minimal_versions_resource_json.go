@@ -49,7 +49,7 @@ func readProductMinimalVersionsListResponse(response *ProductMinimalVersionsList
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readProductMinimalVersionList(iterator)
+			items := ReadProductMinimalVersionList(iterator)
 			response.items = &ProductMinimalVersionList{
 				items: items,
 			}

@@ -49,7 +49,7 @@ func readServiceClustersListResponse(response *ServiceClustersListResponse, read
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readServiceClusterList(iterator)
+			items := ReadServiceClusterList(iterator)
 			response.items = &ServiceClusterList{
 				items: items,
 			}

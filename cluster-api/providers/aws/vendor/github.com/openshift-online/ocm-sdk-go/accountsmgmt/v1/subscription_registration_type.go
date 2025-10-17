@@ -178,6 +178,29 @@ func (l *SubscriptionRegistrationList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *SubscriptionRegistrationList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SubscriptionRegistrationList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SubscriptionRegistrationList) SetItems(items []*SubscriptionRegistration) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SubscriptionRegistrationList) Items() []*SubscriptionRegistration {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *SubscriptionRegistrationList) Empty() bool {
 	return l == nil || len(l.items) == 0

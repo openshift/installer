@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGcpSecurityList(list []*GcpSecurity, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGcpSecurityList(list, stream)
+	WriteGcpSecurityList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGcpSecurityList(list []*GcpSecurity, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeGcpSecurityList writes a list of value of the 'gcp_security' type to
+// WriteGcpSecurityList writes a list of value of the 'gcp_security' type to
 // the given stream.
-func writeGcpSecurityList(list []*GcpSecurity, stream *jsoniter.Stream) {
+func WriteGcpSecurityList(list []*GcpSecurity, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeGcpSecurity(value, stream)
+		WriteGcpSecurity(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGcpSecurityList(source interface{}) (items []*GcpSecurity, err err
 	if err != nil {
 		return
 	}
-	items = readGcpSecurityList(iterator)
+	items = ReadGcpSecurityList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGcpSecurityList reads list of values of the ”gcp_security' type from
+// ReadGcpSecurityList reads list of values of the ”gcp_security' type from
 // the given iterator.
-func readGcpSecurityList(iterator *jsoniter.Iterator) []*GcpSecurity {
+func ReadGcpSecurityList(iterator *jsoniter.Iterator) []*GcpSecurity {
 	list := []*GcpSecurity{}
 	for iterator.ReadArray() {
-		item := readGcpSecurity(iterator)
+		item := ReadGcpSecurity(iterator)
 		list = append(list, item)
 	}
 	return list

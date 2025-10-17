@@ -30,7 +30,7 @@ import (
 // MarshalAccessRequest writes a value of the 'access_request' type to the given writer.
 func MarshalAccessRequest(object *AccessRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAccessRequest(object, stream)
+	WriteAccessRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAccessRequest(object *AccessRequest, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAccessRequest writes a value of the 'access_request' type to the given stream.
-func writeAccessRequest(object *AccessRequest, stream *jsoniter.Stream) {
+// WriteAccessRequest writes a value of the 'access_request' type to the given stream.
+func WriteAccessRequest(object *AccessRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -108,7 +108,7 @@ func writeAccessRequest(object *AccessRequest, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("decisions")
-		writeDecisionList(object.decisions, stream)
+		WriteDecisionList(object.decisions, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0
@@ -162,7 +162,7 @@ func writeAccessRequest(object *AccessRequest, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("status")
-		writeAccessRequestStatus(object.status, stream)
+		WriteAccessRequestStatus(object.status, stream)
 		count++
 	}
 	present_ = object.bitmap_&16384 != 0
@@ -201,13 +201,13 @@ func UnmarshalAccessRequest(source interface{}) (object *AccessRequest, err erro
 	if err != nil {
 		return
 	}
-	object = readAccessRequest(iterator)
+	object = ReadAccessRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAccessRequest reads a value of the 'access_request' type from the given iterator.
-func readAccessRequest(iterator *jsoniter.Iterator) *AccessRequest {
+// ReadAccessRequest reads a value of the 'access_request' type from the given iterator.
+func ReadAccessRequest(iterator *jsoniter.Iterator) *AccessRequest {
 	object := &AccessRequest{}
 	for {
 		field := iterator.ReadObject()
@@ -251,7 +251,7 @@ func readAccessRequest(iterator *jsoniter.Iterator) *AccessRequest {
 			object.deadlineAt = value
 			object.bitmap_ |= 64
 		case "decisions":
-			value := readDecisionList(iterator)
+			value := ReadDecisionList(iterator)
 			object.decisions = value
 			object.bitmap_ |= 128
 		case "duration":
@@ -275,7 +275,7 @@ func readAccessRequest(iterator *jsoniter.Iterator) *AccessRequest {
 			object.requestedBy = value
 			object.bitmap_ |= 4096
 		case "status":
-			value := readAccessRequestStatus(iterator)
+			value := ReadAccessRequestStatus(iterator)
 			object.status = value
 			object.bitmap_ |= 8192
 		case "subscription_id":

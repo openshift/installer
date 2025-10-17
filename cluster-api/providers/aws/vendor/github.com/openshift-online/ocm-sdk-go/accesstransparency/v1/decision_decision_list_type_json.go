@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalDecisionDecisionList(list []DecisionDecision, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDecisionDecisionList(list, stream)
+	WriteDecisionDecisionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalDecisionDecisionList(list []DecisionDecision, writer io.Writer) erro
 	return stream.Error
 }
 
-// writeDecisionDecisionList writes a list of value of the 'decision_decision' type to
+// WriteDecisionDecisionList writes a list of value of the 'decision_decision' type to
 // the given stream.
-func writeDecisionDecisionList(list []DecisionDecision, stream *jsoniter.Stream) {
+func WriteDecisionDecisionList(list []DecisionDecision, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalDecisionDecisionList(source interface{}) (items []DecisionDecision
 	if err != nil {
 		return
 	}
-	items = readDecisionDecisionList(iterator)
+	items = ReadDecisionDecisionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDecisionDecisionList reads list of values of the ”decision_decision' type from
+// ReadDecisionDecisionList reads list of values of the ”decision_decision' type from
 // the given iterator.
-func readDecisionDecisionList(iterator *jsoniter.Iterator) []DecisionDecision {
+func ReadDecisionDecisionList(iterator *jsoniter.Iterator) []DecisionDecision {
 	list := []DecisionDecision{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

@@ -29,7 +29,7 @@ import (
 // MarshalError writes a value of the 'error' type to the given writer.
 func MarshalError(object *Error, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeError(object, stream)
+	WriteError(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalError(object *Error, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeError writes a value of the 'error' type to the given stream.
-func writeError(object *Error, stream *jsoniter.Stream) {
+// WriteError writes a value of the 'error' type to the given stream.
+func WriteError(object *Error, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalError(source interface{}) (object *Error, err error) {
 	if err != nil {
 		return
 	}
-	object = readError(iterator)
+	object = ReadError(iterator)
 	err = iterator.Error
 	return
 }
 
-// readError reads a value of the 'error' type from the given iterator.
-func readError(iterator *jsoniter.Iterator) *Error {
+// ReadError reads a value of the 'error' type from the given iterator.
+func ReadError(iterator *jsoniter.Iterator) *Error {
 	object := &Error{}
 	for {
 		field := iterator.ReadObject()

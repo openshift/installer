@@ -29,7 +29,7 @@ import (
 // MarshalClusterAPI writes a value of the 'cluster_API' type to the given writer.
 func MarshalClusterAPI(object *ClusterAPI, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterAPI(object, stream)
+	WriteClusterAPI(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterAPI(object *ClusterAPI, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeClusterAPI writes a value of the 'cluster_API' type to the given stream.
-func writeClusterAPI(object *ClusterAPI, stream *jsoniter.Stream) {
+// WriteClusterAPI writes a value of the 'cluster_API' type to the given stream.
+func WriteClusterAPI(object *ClusterAPI, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalClusterAPI(source interface{}) (object *ClusterAPI, err error) {
 	if err != nil {
 		return
 	}
-	object = readClusterAPI(iterator)
+	object = ReadClusterAPI(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterAPI reads a value of the 'cluster_API' type from the given iterator.
-func readClusterAPI(iterator *jsoniter.Iterator) *ClusterAPI {
+// ReadClusterAPI reads a value of the 'cluster_API' type from the given iterator.
+func ReadClusterAPI(iterator *jsoniter.Iterator) *ClusterAPI {
 	object := &ClusterAPI{}
 	for {
 		field := iterator.ReadObject()

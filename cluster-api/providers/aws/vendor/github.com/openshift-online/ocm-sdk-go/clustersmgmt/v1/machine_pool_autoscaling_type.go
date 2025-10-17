@@ -53,7 +53,7 @@ func (o *MachinePoolAutoscaling) Kind() string {
 	return MachinePoolAutoscalingKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *MachinePoolAutoscaling) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -204,6 +204,29 @@ func (l *MachinePoolAutoscalingList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *MachinePoolAutoscalingList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *MachinePoolAutoscalingList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *MachinePoolAutoscalingList) SetItems(items []*MachinePoolAutoscaling) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *MachinePoolAutoscalingList) Items() []*MachinePoolAutoscaling {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

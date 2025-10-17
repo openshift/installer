@@ -29,7 +29,7 @@ import (
 // MarshalMonitoringStack writes a value of the 'monitoring_stack' type to the given writer.
 func MarshalMonitoringStack(object *MonitoringStack, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeMonitoringStack(object, stream)
+	WriteMonitoringStack(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalMonitoringStack(object *MonitoringStack, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeMonitoringStack writes a value of the 'monitoring_stack' type to the given stream.
-func writeMonitoringStack(object *MonitoringStack, stream *jsoniter.Stream) {
+// WriteMonitoringStack writes a value of the 'monitoring_stack' type to the given stream.
+func WriteMonitoringStack(object *MonitoringStack, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func writeMonitoringStack(object *MonitoringStack, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("resources")
-		writeMonitoringStackResources(object.resources, stream)
+		WriteMonitoringStackResources(object.resources, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -69,13 +69,13 @@ func UnmarshalMonitoringStack(source interface{}) (object *MonitoringStack, err 
 	if err != nil {
 		return
 	}
-	object = readMonitoringStack(iterator)
+	object = ReadMonitoringStack(iterator)
 	err = iterator.Error
 	return
 }
 
-// readMonitoringStack reads a value of the 'monitoring_stack' type from the given iterator.
-func readMonitoringStack(iterator *jsoniter.Iterator) *MonitoringStack {
+// ReadMonitoringStack reads a value of the 'monitoring_stack' type from the given iterator.
+func ReadMonitoringStack(iterator *jsoniter.Iterator) *MonitoringStack {
 	object := &MonitoringStack{}
 	for {
 		field := iterator.ReadObject()
@@ -88,7 +88,7 @@ func readMonitoringStack(iterator *jsoniter.Iterator) *MonitoringStack {
 			object.enabled = value
 			object.bitmap_ |= 1
 		case "resources":
-			value := readMonitoringStackResources(iterator)
+			value := ReadMonitoringStackResources(iterator)
 			object.resources = value
 			object.bitmap_ |= 2
 		default:

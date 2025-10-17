@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterRegistrationList(list []*ClusterRegistration, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterRegistrationList(list, stream)
+	WriteClusterRegistrationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterRegistrationList(list []*ClusterRegistration, writer io.Write
 	return stream.Error
 }
 
-// writeClusterRegistrationList writes a list of value of the 'cluster_registration' type to
+// WriteClusterRegistrationList writes a list of value of the 'cluster_registration' type to
 // the given stream.
-func writeClusterRegistrationList(list []*ClusterRegistration, stream *jsoniter.Stream) {
+func WriteClusterRegistrationList(list []*ClusterRegistration, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeClusterRegistration(value, stream)
+		WriteClusterRegistration(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterRegistrationList(source interface{}) (items []*ClusterRegis
 	if err != nil {
 		return
 	}
-	items = readClusterRegistrationList(iterator)
+	items = ReadClusterRegistrationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterRegistrationList reads list of values of the ”cluster_registration' type from
+// ReadClusterRegistrationList reads list of values of the ”cluster_registration' type from
 // the given iterator.
-func readClusterRegistrationList(iterator *jsoniter.Iterator) []*ClusterRegistration {
+func ReadClusterRegistrationList(iterator *jsoniter.Iterator) []*ClusterRegistration {
 	list := []*ClusterRegistration{}
 	for iterator.ReadArray() {
-		item := readClusterRegistration(iterator)
+		item := ReadClusterRegistration(iterator)
 		list = append(list, item)
 	}
 	return list

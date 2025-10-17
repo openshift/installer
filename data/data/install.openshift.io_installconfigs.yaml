@@ -171,6 +171,38 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      cpuOptions:
+                        description: |-
+                          CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                          When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                          More info:
+                          https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                          https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                        minProperties: 1
+                        properties:
+                          confidentialCompute:
+                            allOf:
+                            - enum:
+                              - Disabled
+                              - AMDEncryptedVirtualizationNestedPaging
+                            - enum:
+                              - Disabled
+                              - AMDEncryptedVirtualizationNestedPaging
+                            description: |-
+                              ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                              and, if so, which confidential computing technology to use.
+                              Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                              When set to Disabled, confidential computing will be disabled for the instance.
+                              When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                              In this case, ensure the following conditions are met:
+                              1) The selected instance type supports AMD SEV-SNP.
+                              2) The selected AWS region supports AMD SEV-SNP.
+                              3) The selected AMI supports AMD SEV-SNP.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                            type: string
+                        type: object
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -1611,6 +1643,38 @@ spec:
                             AMIID is the AMI that should be used to boot the ec2 instance.
                             If set, the AMI should belong to the same region as the cluster.
                           type: string
+                        cpuOptions:
+                          description: |-
+                            CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                            When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                            More info:
+                            https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                            https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                          minProperties: 1
+                          properties:
+                            confidentialCompute:
+                              allOf:
+                              - enum:
+                                - Disabled
+                                - AMDEncryptedVirtualizationNestedPaging
+                              - enum:
+                                - Disabled
+                                - AMDEncryptedVirtualizationNestedPaging
+                              description: |-
+                                ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                                and, if so, which confidential computing technology to use.
+                                Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                                When set to Disabled, confidential computing will be disabled for the instance.
+                                When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                                In this case, ensure the following conditions are met:
+                                1) The selected instance type supports AMD SEV-SNP.
+                                2) The selected AWS region supports AMD SEV-SNP.
+                                3) The selected AMI supports AMD SEV-SNP.
+                                More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                                When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                                which is subject to change without notice. The current default is Disabled.
+                              type: string
+                          type: object
                         iamProfile:
                           description: |-
                             IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -2991,6 +3055,38 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      cpuOptions:
+                        description: |-
+                          CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                          When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                          More info:
+                          https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                          https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                        minProperties: 1
+                        properties:
+                          confidentialCompute:
+                            allOf:
+                            - enum:
+                              - Disabled
+                              - AMDEncryptedVirtualizationNestedPaging
+                            - enum:
+                              - Disabled
+                              - AMDEncryptedVirtualizationNestedPaging
+                            description: |-
+                              ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                              and, if so, which confidential computing technology to use.
+                              Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                              When set to Disabled, confidential computing will be disabled for the instance.
+                              When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                              In this case, ensure the following conditions are met:
+                              1) The selected instance type supports AMD SEV-SNP.
+                              2) The selected AWS region supports AMD SEV-SNP.
+                              3) The selected AMI supports AMD SEV-SNP.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                            type: string
+                        type: object
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -4555,6 +4651,38 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      cpuOptions:
+                        description: |-
+                          CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                          When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                          More info:
+                          https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                          https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                        minProperties: 1
+                        properties:
+                          confidentialCompute:
+                            allOf:
+                            - enum:
+                              - Disabled
+                              - AMDEncryptedVirtualizationNestedPaging
+                            - enum:
+                              - Disabled
+                              - AMDEncryptedVirtualizationNestedPaging
+                            description: |-
+                              ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                              and, if so, which confidential computing technology to use.
+                              Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                              When set to Disabled, confidential computing will be disabled for the instance.
+                              When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                              In this case, ensure the following conditions are met:
+                              1) The selected instance type supports AMD SEV-SNP.
+                              2) The selected AWS region supports AMD SEV-SNP.
+                              3) The selected AMI supports AMD SEV-SNP.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                            type: string
+                        type: object
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -5896,8 +6024,11 @@ spec:
                           - DNS
                           - File
                           - IAM
+                          - IAMCredentials
+                          - OAuth
                           - ServiceUsage
                           - Storage
+                          - STS
                           type: string
                         url:
                           description: |-

@@ -29,7 +29,7 @@ import (
 // MarshalClusterStatus writes a value of the 'cluster_status' type to the given writer.
 func MarshalClusterStatus(object *ClusterStatus, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterStatus(object, stream)
+	WriteClusterStatus(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterStatus(object *ClusterStatus, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeClusterStatus writes a value of the 'cluster_status' type to the given stream.
-func writeClusterStatus(object *ClusterStatus, stream *jsoniter.Stream) {
+// WriteClusterStatus writes a value of the 'cluster_status' type to the given stream.
+func WriteClusterStatus(object *ClusterStatus, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -155,13 +155,13 @@ func UnmarshalClusterStatus(source interface{}) (object *ClusterStatus, err erro
 	if err != nil {
 		return
 	}
-	object = readClusterStatus(iterator)
+	object = ReadClusterStatus(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterStatus reads a value of the 'cluster_status' type from the given iterator.
-func readClusterStatus(iterator *jsoniter.Iterator) *ClusterStatus {
+// ReadClusterStatus reads a value of the 'cluster_status' type from the given iterator.
+func ReadClusterStatus(iterator *jsoniter.Iterator) *ClusterStatus {
 	object := &ClusterStatus{}
 	for {
 		field := iterator.ReadObject()

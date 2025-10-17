@@ -59,7 +59,7 @@ func (o *AWSNodePool) Kind() string {
 	return AWSNodePoolKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *AWSNodePool) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -362,6 +362,29 @@ func (l *AWSNodePoolList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *AWSNodePoolList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AWSNodePoolList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AWSNodePoolList) SetItems(items []*AWSNodePool) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AWSNodePoolList) Items() []*AWSNodePool {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

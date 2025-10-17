@@ -57,7 +57,7 @@ func readRegistryAllowlistsListResponse(response *RegistryAllowlistsListResponse
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readRegistryAllowlistList(iterator)
+			items := ReadRegistryAllowlistList(iterator)
 			response.items = &RegistryAllowlistList{
 				items: items,
 			}

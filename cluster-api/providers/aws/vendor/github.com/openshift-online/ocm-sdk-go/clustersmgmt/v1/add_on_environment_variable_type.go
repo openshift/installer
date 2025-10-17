@@ -53,7 +53,7 @@ func (o *AddOnEnvironmentVariable) Kind() string {
 	return AddOnEnvironmentVariableKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *AddOnEnvironmentVariable) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -204,6 +204,29 @@ func (l *AddOnEnvironmentVariableList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *AddOnEnvironmentVariableList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddOnEnvironmentVariableList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddOnEnvironmentVariableList) SetItems(items []*AddOnEnvironmentVariable) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddOnEnvironmentVariableList) Items() []*AddOnEnvironmentVariable {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.
