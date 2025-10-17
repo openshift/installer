@@ -37,15 +37,17 @@ func Metadata(clusterID, infraID string, config *types.InstallConfig) *awstypes.
 // PreTerraform performs any infrastructure initialization which must
 // happen before Terraform creates the remaining infrastructure.
 func PreTerraform(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
-	if err := tagSharedVPCResources(ctx, clusterID, installConfig); err != nil {
-		return err
-	}
+	//if err := tagSharedVPCResources(ctx, clusterID, installConfig); err != nil {
+	//	return err
+	//}
+	//
+	//if err := tagSharedIAMRoles(ctx, clusterID, installConfig); err != nil {
+	//	return err
+	//}
+	//
+	//return tagSharedIAMProfiles(ctx, clusterID, installConfig)
 
-	if err := tagSharedIAMRoles(ctx, clusterID, installConfig); err != nil {
-		return err
-	}
-
-	return tagSharedIAMProfiles(ctx, clusterID, installConfig)
+	return nil
 }
 
 func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
