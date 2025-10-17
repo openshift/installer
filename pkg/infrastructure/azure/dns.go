@@ -37,14 +37,14 @@ type recordPrivateList struct {
 }
 
 // Create DNS entries for azure.
-func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN, publicIP, resourceGroup string, opts *arm.ClientOptions) error {
+func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN, publicIP, resourceGroupName string, opts *arm.ClientOptions) error {
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
 	apiExternalName := fmt.Sprintf("api.%s", in.InstallConfig.Config.ObjectMeta.Name)
 
 	if in.InstallConfig.Config.Azure.ResourceGroupName != "" {
-		resourceGroup = in.InstallConfig.Config.Azure.ResourceGroupName
+		resourceGroupName = in.InstallConfig.Config.Azure.ResourceGroupName
 	}
 	azureTags := make(map[string]*string)
 	for k, v := range in.InstallConfig.Config.Azure.UserTags {
@@ -136,7 +136,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	}
 
 	for _, record := range privateRecords {
-		_, err = privateRecordSetClient.CreateOrUpdate(ctx, resourceGroup, privatezone, record.RecordType, record.Name, record.RecordSet, nil)
+		_, err = privateRecordSetClient.CreateOrUpdate(ctx, resourceGroupName, privatezone, record.RecordType, record.Name, record.RecordSet, nil)
 		if err != nil {
 			return fmt.Errorf("failed to create private record set: %w", err)
 		}
