@@ -29,14 +29,14 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
-// azureClient contains the Azure go-sdk Client.
-type azureClient struct {
+// AzureClient contains the Azure go-sdk Client.
+type AzureClient struct {
 	interfaces     *armnetwork.InterfacesClient
 	apiCallTimeout time.Duration
 }
 
 // NewClient creates a new network interfaces client from an authorizer.
-func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) { //nolint:revive // leave it as is
+func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*AzureClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create networkinterfaces client options")
@@ -45,11 +45,11 @@ func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClien
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armnetwork client factory")
 	}
-	return &azureClient{factory.NewInterfacesClient(), apiCallTimeout}, nil
+	return &AzureClient{factory.NewInterfacesClient(), apiCallTimeout}, nil
 }
 
 // Get gets the specified network interface.
-func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error) {
+func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "networkinterfaces.AzureClient.Get")
 	defer done()
 
@@ -63,7 +63,7 @@ func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 // CreateOrUpdateAsync creates or updates a network interface asynchronously.
 // It sends a PUT request to Azure and if accepted without error, the func will return a poller which can be used to track the ongoing
 // progress of the operation.
-func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armnetwork.InterfacesClientCreateOrUpdateResponse], err error) {
+func (ac *AzureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armnetwork.InterfacesClientCreateOrUpdateResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "networkinterfaces.AzureClient.CreateOrUpdateAsync")
 	defer done()
 
@@ -96,7 +96,7 @@ func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.Resou
 // DeleteAsync deletes a network interface asynchronously. DeleteAsync sends a DELETE
 // request to Azure and if accepted without error, the func will return a poller which can be used to track the ongoing
 // progress of the operation.
-func (ac *azureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string) (poller *runtime.Poller[armnetwork.InterfacesClientDeleteResponse], err error) {
+func (ac *AzureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string) (poller *runtime.Poller[armnetwork.InterfacesClientDeleteResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "networkinterfaces.AzureClient.DeleteAsync")
 	defer done()
 

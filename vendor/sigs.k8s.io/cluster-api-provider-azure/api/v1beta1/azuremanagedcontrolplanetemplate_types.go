@@ -28,6 +28,7 @@ type AzureManagedControlPlaneTemplateSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=azuremanagedcontrolplanetemplates,scope=Namespaced,categories=cluster-api,shortName=amcpt
 // +kubebuilder:storageversion
+// +kubebuilder:deprecatedversion:warning="AzureManagedControlPlaneTemplate and the AzureManaged API are deprecated. Please migrate to infrastructure.cluster.x-k8s.io/v1beta1 AzureASOManagedControlPlaneTemplate and related AzureASOManaged resources instead."
 
 // AzureManagedControlPlaneTemplate is the Schema for the AzureManagedControlPlaneTemplates API.
 type AzureManagedControlPlaneTemplate struct {

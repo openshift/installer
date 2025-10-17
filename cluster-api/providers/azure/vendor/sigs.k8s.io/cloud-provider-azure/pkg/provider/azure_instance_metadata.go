@@ -17,12 +17,14 @@ limitations under the License.
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"k8s.io/klog/v2"
 
@@ -32,7 +34,7 @@ import (
 
 // NetworkMetadata contains metadata about an instance's network
 type NetworkMetadata struct {
-	Interface []NetworkInterface `json:"interface"`
+	Interface []*NetworkInterface `json:"interface"`
 }
 
 // NetworkInterface represents an instances network interface.
@@ -42,7 +44,7 @@ type NetworkInterface struct {
 	MAC  string      `json:"macAddress"`
 }
 
-// NetworkData contains IP information for a network.
+// NetworkData contains IP information for a armnetwork.
 type NetworkData struct {
 	IPAddress []IPAddress `json:"ipAddress"`
 	Subnet    []Subnet    `json:"subnet"`
@@ -63,7 +65,7 @@ type Subnet struct {
 // ComputeMetadata represents compute information
 type ComputeMetadata struct {
 	Environment            string `json:"azEnvironment,omitempty"`
-	SKU                    string `json:"sku,omitempty"`
+	SKU                    string `json:"SKU,omitempty"`
 	Name                   string `json:"name,omitempty"`
 	Zone                   string `json:"zone,omitempty"`
 	VMSize                 string `json:"vmSize,omitempty"`
@@ -148,7 +150,7 @@ func fillNetInterfacePublicIPs(publicIPs []PublicIPMetadata, netInterface *Netwo
 	}
 }
 
-func (ims *InstanceMetadataService) getMetadata(key string) (interface{}, error) {
+func (ims *InstanceMetadataService) getMetadata(_ context.Context, key string) (interface{}, error) {
 	instanceMetadata, err := ims.getInstanceMetadata(key)
 	if err != nil {
 		return nil, err
@@ -171,7 +173,7 @@ func (ims *InstanceMetadataService) getMetadata(key string) (interface{}, error)
 		}
 
 		publicIPs := loadBalancerMetadata.LoadBalancer.PublicIPAddresses
-		fillNetInterfacePublicIPs(publicIPs, &netInterface)
+		fillNetInterfacePublicIPs(publicIPs, netInterface)
 	}
 
 	return instanceMetadata, nil
@@ -190,7 +192,7 @@ func (ims *InstanceMetadataService) getInstanceMetadata(_ string) (*InstanceMeta
 	q.Add("api-version", consts.ImdsInstanceAPIVersion)
 	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: time.Minute}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -228,7 +230,7 @@ func (ims *InstanceMetadataService) getLoadBalancerMetadata() (*LoadBalancerMeta
 	q.Add("api-version", consts.ImdsLoadBalancerAPIVersion)
 	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: time.Minute}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -255,8 +257,8 @@ func (ims *InstanceMetadataService) getLoadBalancerMetadata() (*LoadBalancerMeta
 
 // GetMetadata gets instance metadata from cache.
 // crt determines if we can get data from stalled cache/need fresh if cache expired.
-func (ims *InstanceMetadataService) GetMetadata(crt azcache.AzureCacheReadType) (*InstanceMetadata, error) {
-	cache, err := ims.imsCache.Get(consts.MetadataCacheKey, crt)
+func (ims *InstanceMetadataService) GetMetadata(ctx context.Context, crt azcache.AzureCacheReadType) (*InstanceMetadata, error) {
+	cache, err := ims.imsCache.Get(ctx, consts.MetadataCacheKey, crt)
 	if err != nil {
 		return nil, err
 	}
@@ -274,9 +276,9 @@ func (ims *InstanceMetadataService) GetMetadata(crt azcache.AzureCacheReadType) 
 }
 
 // GetPlatformSubFaultDomain returns the PlatformSubFaultDomain from IMDS if set.
-func (az *Cloud) GetPlatformSubFaultDomain() (string, error) {
+func (az *Cloud) GetPlatformSubFaultDomain(ctx context.Context) (string, error) {
 	if az.UseInstanceMetadata {
-		metadata, err := az.Metadata.GetMetadata(azcache.CacheReadTypeUnsafe)
+		metadata, err := az.Metadata.GetMetadata(ctx, azcache.CacheReadTypeUnsafe)
 		if err != nil {
 			klog.Errorf("GetPlatformSubFaultDomain: failed to GetMetadata: %s", err.Error())
 			return "", err

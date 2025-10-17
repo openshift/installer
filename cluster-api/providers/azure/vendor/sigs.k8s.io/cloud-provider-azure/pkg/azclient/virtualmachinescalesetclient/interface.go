@@ -20,12 +20,12 @@ package virtualmachinescalesetclient
 import (
 	"context"
 
-	armcompute "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	armcompute "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/utils"
 )
 
-// +azure:client:verbs=createorupdate;delete;list,resource=VirtualMachineScaleSet,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5,packageAlias=armcompute,clientName=VirtualMachineScaleSetsClient,expand=true,rateLimitKey=virtualMachineSizesRateLimit
+// +azure:client:verbs=createorupdate;delete;list,resource=VirtualMachineScaleSet,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6,packageAlias=armcompute,clientName=VirtualMachineScaleSetsClient,expand=true,rateLimitKey=virtualMachineScaleSetRateLimit,azureStackCloudAPIVersion="2019-07-01",etag=true
 type Interface interface {
 	Get(ctx context.Context, resourceGroupName string, resourceName string, expand *armcompute.ExpandTypesForGetVMScaleSets) (result *armcompute.VirtualMachineScaleSet, rerr error)
 	utils.CreateOrUpdateFunc[armcompute.VirtualMachineScaleSet]

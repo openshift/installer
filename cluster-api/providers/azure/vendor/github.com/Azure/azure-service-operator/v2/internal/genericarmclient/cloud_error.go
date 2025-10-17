@@ -8,7 +8,7 @@ package genericarmclient
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 )
@@ -47,12 +47,12 @@ func NewTestCloudError(code string, message string) *CloudError {
 
 // Error implements the error interface for type CloudError.
 // The contents of the error text are not contractual and subject to change.
-func (e CloudError) Error() string {
+func (e *CloudError) Error() string {
 	return e.error.Error()
 }
 
 // Code returns the error code from the message, if present, or UnknownErrorCode if not.
-func (e CloudError) Code() string {
+func (e *CloudError) Code() string {
 	if e.code != nil && *e.code != "" {
 		return *e.code
 	}
@@ -61,7 +61,7 @@ func (e CloudError) Code() string {
 }
 
 // Message returns the message from the error, if present, or UnknownErrorMessage if not.
-func (e CloudError) Message() string {
+func (e *CloudError) Message() string {
 	if e.message != nil && *e.message != "" {
 		return *e.message
 	}
@@ -70,7 +70,7 @@ func (e CloudError) Message() string {
 }
 
 // Target returns the target of the error, if present, or an empty string if not.
-func (e CloudError) Target() string {
+func (e *CloudError) Target() string {
 	if e.target != nil && *e.target != "" {
 		return *e.target
 	}
@@ -79,7 +79,7 @@ func (e CloudError) Target() string {
 }
 
 // Details returns the details of the error, if present, or an empty slice if not
-func (e CloudError) Details() []*ErrorResponse {
+func (e *CloudError) Details() []*ErrorResponse {
 	return e.details
 }
 
@@ -99,7 +99,7 @@ func (e *CloudError) UnmarshalJSON(data []byte) error {
 
 	err := json.Unmarshal(data, &content)
 	if err != nil {
-		return errors.Wrap(err, "unmarshalling JSON for CloudError")
+		return eris.Wrap(err, "unmarshalling JSON for CloudError")
 	}
 
 	if content.InnerError != nil {
@@ -117,6 +117,6 @@ func (e *CloudError) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (e CloudError) Unwrap() error {
+func (e *CloudError) Unwrap() error {
 	return e.error
 }

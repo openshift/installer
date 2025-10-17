@@ -3,6 +3,7 @@ package dataplane
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 	"sync"
@@ -13,13 +14,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-logr/logr"
-)
-
-const (
-	// Errors returned when reloading credentials
-	errCreateFileWatcher = "failed to create file watcher"
-	errAddFileToWatcher  = "failed to add credentialFile to file watcher"
-	errLoadCredentials   = "failed to load credentials from file"
 )
 
 type reloadingCredential struct {
@@ -81,7 +75,9 @@ func NewUserAssignedIdentityCredential(ctx context.Context, credentialPath strin
 		return nil, err
 	}
 	// start the process of watching - the caller can cancel ctx if they want to stop
-	credential.start(ctx, credentialPath)
+	if err := credential.start(ctx, credentialPath); err != nil {
+		return nil, err
+	}
 	return credential, nil
 }
 
@@ -94,23 +90,28 @@ func (r *reloadingCredential) GetToken(ctx context.Context, options policy.Token
 	return r.currentValue.GetToken(ctx, options)
 }
 
-func (r *reloadingCredential) start(ctx context.Context, credentialFile string) {
+func (r *reloadingCredential) start(ctx context.Context, credentialFile string) error {
 	// set up the file watcher, call load() when we see events or on some timer in case no events are delivered
 	fileWatcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		r.logger.Error(err, errCreateFileWatcher)
+		return fmt.Errorf("failed to create file watcher: %w", err)
 	}
 	// we close the file watcher if adding the file to watch fails.
 	// this will also close the new go routine created to watch the file
 	err = fileWatcher.Add(credentialFile)
 	if err != nil {
-		fileWatcher.Close()
-		r.logger.Error(err, errAddFileToWatcher)
-		return
+		if closeErr := fileWatcher.Close(); closeErr != nil {
+			r.logger.Error(err, "failed to close file watcher")
+		}
+		return fmt.Errorf("failed to add credential file to file watcher: %w", err)
 	}
 
 	go func() {
-		defer fileWatcher.Close()
+		defer func() {
+			if err := fileWatcher.Close(); err != nil {
+				r.logger.Error(err, "failed to close file watcher")
+			}
+		}()
 		defer r.ticker.Stop()
 		for {
 			select {
@@ -121,43 +122,44 @@ func (r *reloadingCredential) start(ctx context.Context, credentialFile string) 
 				}
 				if event.Op.Has(fsnotify.Write) {
 					if err := r.load(credentialFile); err != nil {
-						r.logger.Error(err, errLoadCredentials)
+						r.logger.Error(err, "failed to reload credential after file event")
 					}
 				}
 			case <-r.ticker.C:
 				if err := r.load(credentialFile); err != nil {
-					r.logger.Error(err, errLoadCredentials)
+					r.logger.Error(err, "failed to reload credential periodically")
 				}
 			case err, ok := <-fileWatcher.Errors:
 				if !ok {
 					r.logger.Info("stopping credential reloader since file watcher has no events")
 					return
 				}
-				r.logger.Error(err, errLoadCredentials)
+				r.logger.Error(err, "recieved an error from the file watcher")
 			case <-ctx.Done():
 				r.logger.Info("user signaled context cancel, stopping credential reloader")
 				return
 			}
 		}
 	}()
+	return nil
 }
 
 func (r *reloadingCredential) load(credentialFile string) error {
 	// read the file from the filesystem and update the current value we're holding on to if the certificate we read is newer, making sure to not step on the toes of anyone calling GetToken()
 	byteValue, err := os.ReadFile(credentialFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read credential file %s: %w", credentialFile, err)
 	}
 
 	var credentials UserAssignedIdentityCredentials
 	if err := json.Unmarshal(byteValue, &credentials); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal credential file %s: %w", credentialFile, err)
 	}
 
 	var newCertValue *azidentity.ClientCertificateCredential
 	newCertValue, err = GetCredential(r.clientOpts, credentials)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get client certificate credential: %w", err)
 	}
 
 	r.lock.Lock()
@@ -165,7 +167,7 @@ func (r *reloadingCredential) load(credentialFile string) error {
 	if r.notBefore != "" {
 		err, ok := isLoadedCredentialNewer(*credentials.NotBefore, r.notBefore)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to determine not_before for credential: %w", err)
 		}
 		if !ok {
 			return nil

@@ -35,6 +35,7 @@ Fleet_STATUS: Object (8 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 Fleet_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -42,6 +43,7 @@ Fleet_Spec: Object (4 properties)
 │   └── HubProfile: *Object (1 property)
 │       └── DnsPrefix: *string
 └── Tags: map[string]string
+
 FleetsMember_STATUS: Object (6 properties)
 ├── ETag: *string
 ├── Id: *string
@@ -72,11 +74,13 @@ FleetsMember_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 FleetsMember_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── ClusterResourceId: *string
     └── Group: *string
+
 FleetsUpdateRun_STATUS: Object (6 properties)
 ├── ETag: *string
 ├── Id: *string
@@ -245,6 +249,7 @@ FleetsUpdateRun_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 FleetsUpdateRun_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
@@ -260,3 +265,4 @@ FleetsUpdateRun_Spec: Object (2 properties)
             ├── Groups: Object (1 property)[]
             │   └── Name: *string
             └── Name: *string
+

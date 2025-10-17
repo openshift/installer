@@ -19,8 +19,7 @@ package vm
 import (
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute"
-
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 
@@ -29,16 +28,15 @@ import (
 )
 
 // GetVMPowerState returns the power state of the VM
-func GetVMPowerState(vmName string, vmStatuses *[]compute.InstanceViewStatus) string {
+func GetVMPowerState(vmName string, vmStatuses []*armcompute.InstanceViewStatus) string {
 	logger := klog.Background().WithName("getVMSSVMPowerState").WithValues("vmName", vmName)
-	if vmStatuses != nil {
-		for _, status := range *vmStatuses {
-			state := ptr.Deref(status.Code, "")
-			if stringutils.HasPrefixCaseInsensitive(state, consts.VMPowerStatePrefix) {
-				return strings.TrimPrefix(state, consts.VMPowerStatePrefix)
-			}
+	for _, status := range vmStatuses {
+		state := ptr.Deref(status.Code, "")
+		if stringutils.HasPrefixCaseInsensitive(state, consts.VMPowerStatePrefix) {
+			return strings.TrimPrefix(state, consts.VMPowerStatePrefix)
 		}
 	}
+
 	logger.V(3).Info("vm status is nil in the instance view or there is no power state in the status")
 	return consts.VMPowerStateUnknown
 }

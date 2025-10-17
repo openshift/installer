@@ -10,7 +10,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -116,6 +116,10 @@ func (policy *WebApplicationFirewallPolicy) NewEmptyStatus() genruntime.Converti
 
 // Owner returns the ResourceReference of the owner
 func (policy *WebApplicationFirewallPolicy) Owner() *genruntime.ResourceReference {
+	if policy.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(policy.Spec)
 	return policy.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -132,7 +136,7 @@ func (policy *WebApplicationFirewallPolicy) SetStatus(status genruntime.Converti
 	var st WebApplicationFirewallPolicy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	policy.Status = st
@@ -188,7 +192,7 @@ var _ genruntime.ConvertibleSpec = &WebApplicationFirewallPolicy_Spec{}
 // ConvertSpecFrom populates our WebApplicationFirewallPolicy_Spec from the provided source
 func (policy *WebApplicationFirewallPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(policy)
@@ -197,7 +201,7 @@ func (policy *WebApplicationFirewallPolicy_Spec) ConvertSpecFrom(source genrunti
 // ConvertSpecTo populates the provided destination from our WebApplicationFirewallPolicy_Spec
 func (policy *WebApplicationFirewallPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(policy)
@@ -228,7 +232,7 @@ var _ genruntime.ConvertibleStatus = &WebApplicationFirewallPolicy_STATUS{}
 // ConvertStatusFrom populates our WebApplicationFirewallPolicy_STATUS from the provided source
 func (policy *WebApplicationFirewallPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(policy)
@@ -237,7 +241,7 @@ func (policy *WebApplicationFirewallPolicy_STATUS) ConvertStatusFrom(source genr
 // ConvertStatusTo populates the provided destination from our WebApplicationFirewallPolicy_STATUS
 func (policy *WebApplicationFirewallPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(policy)
@@ -329,7 +333,7 @@ func (resource *SubResource_STATUS) AssignProperties_From_SubResource_STATUS(sou
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -357,7 +361,7 @@ func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(desti
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

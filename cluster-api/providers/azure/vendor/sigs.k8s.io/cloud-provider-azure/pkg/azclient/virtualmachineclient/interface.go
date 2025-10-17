@@ -21,12 +21,12 @@ import (
 	"context"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
-	armcompute "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	armcompute "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/utils"
 )
 
-// +azure:client:verbs=createorupdate;delete;list,resource=VirtualMachine,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5,packageAlias=armcompute,clientName=VirtualMachinesClient,expand=true,rateLimitKey=virtualMachineRateLimit
+// +azure:client:verbs=createorupdate;delete;list,resource=VirtualMachine,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6,packageAlias=armcompute,clientName=VirtualMachinesClient,expand=true,rateLimitKey=virtualMachineRateLimit,azureStackCloudAPIVersion="2017-12-01",etag=true
 type Interface interface {
 	utils.GetWithExpandFunc[armcompute.VirtualMachine]
 	utils.CreateOrUpdateFunc[armcompute.VirtualMachine]
@@ -34,6 +34,8 @@ type Interface interface {
 	utils.ListFunc[armcompute.VirtualMachine]
 	InstanceView(ctx context.Context, resourceGroupName string, vmName string) (*armcompute.VirtualMachineInstanceView, error)
 	ListVMInstanceView(ctx context.Context, resourceGroupName string) (result []*armcompute.VirtualMachine, rerr error)
+	ListVmssFlexVMsWithOnlyInstanceView(ctx context.Context, resourceGroupName string, virtualMachineScaleSetID string) (result []*armcompute.VirtualMachine, rerr error)
+	ListVmssFlexVMsWithOutInstanceView(ctx context.Context, resourceGroupName string, virtualMachineScaleSetID string) (result []*armcompute.VirtualMachine, rerr error)
 	BeginAttachDetachDataDisks(ctx context.Context, resourceGroupName string, vmName string, parameters armcompute.AttachDetachDataDisksRequest, options *armcompute.VirtualMachinesClientBeginAttachDetachDataDisksOptions) (*runtime.Poller[armcompute.VirtualMachinesClientAttachDetachDataDisksResponse], error)
 	BeginUpdate(ctx context.Context, resourceGroupName string, vmName string, parameters armcompute.VirtualMachineUpdate, options *armcompute.VirtualMachinesClientBeginUpdateOptions) (*runtime.Poller[armcompute.VirtualMachinesClientUpdateResponse], error)
 }

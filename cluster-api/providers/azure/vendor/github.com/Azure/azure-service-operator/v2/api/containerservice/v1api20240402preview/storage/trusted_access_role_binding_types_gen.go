@@ -11,7 +11,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -55,12 +55,12 @@ func (binding *TrustedAccessRoleBinding) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = binding.AssignProperties_From_TrustedAccessRoleBinding(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to binding")
+		return eris.Wrap(err, "converting from source to binding")
 	}
 
 	return nil
@@ -72,11 +72,11 @@ func (binding *TrustedAccessRoleBinding) ConvertTo(hub conversion.Hub) error {
 	var destination v20231001s.TrustedAccessRoleBinding
 	err := binding.AssignProperties_To_TrustedAccessRoleBinding(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from binding")
+		return eris.Wrap(err, "converting to destination from binding")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
@@ -150,6 +150,10 @@ func (binding *TrustedAccessRoleBinding) NewEmptyStatus() genruntime.Convertible
 
 // Owner returns the ResourceReference of the owner
 func (binding *TrustedAccessRoleBinding) Owner() *genruntime.ResourceReference {
+	if binding.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(binding.Spec)
 	return binding.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -166,7 +170,7 @@ func (binding *TrustedAccessRoleBinding) SetStatus(status genruntime.Convertible
 	var st TrustedAccessRoleBinding_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	binding.Status = st
@@ -183,7 +187,7 @@ func (binding *TrustedAccessRoleBinding) AssignProperties_From_TrustedAccessRole
 	var spec TrustedAccessRoleBinding_Spec
 	err := spec.AssignProperties_From_TrustedAccessRoleBinding_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_TrustedAccessRoleBinding_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_TrustedAccessRoleBinding_Spec() to populate field Spec")
 	}
 	binding.Spec = spec
 
@@ -191,7 +195,7 @@ func (binding *TrustedAccessRoleBinding) AssignProperties_From_TrustedAccessRole
 	var status TrustedAccessRoleBinding_STATUS
 	err = status.AssignProperties_From_TrustedAccessRoleBinding_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_TrustedAccessRoleBinding_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_TrustedAccessRoleBinding_STATUS() to populate field Status")
 	}
 	binding.Status = status
 
@@ -200,7 +204,7 @@ func (binding *TrustedAccessRoleBinding) AssignProperties_From_TrustedAccessRole
 	if augmentedBinding, ok := bindingAsAny.(augmentConversionForTrustedAccessRoleBinding); ok {
 		err := augmentedBinding.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -218,7 +222,7 @@ func (binding *TrustedAccessRoleBinding) AssignProperties_To_TrustedAccessRoleBi
 	var spec v20231001s.TrustedAccessRoleBinding_Spec
 	err := binding.Spec.AssignProperties_To_TrustedAccessRoleBinding_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_TrustedAccessRoleBinding_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_TrustedAccessRoleBinding_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -226,7 +230,7 @@ func (binding *TrustedAccessRoleBinding) AssignProperties_To_TrustedAccessRoleBi
 	var status v20231001s.TrustedAccessRoleBinding_STATUS
 	err = binding.Status.AssignProperties_To_TrustedAccessRoleBinding_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_TrustedAccessRoleBinding_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_TrustedAccessRoleBinding_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -235,7 +239,7 @@ func (binding *TrustedAccessRoleBinding) AssignProperties_To_TrustedAccessRoleBi
 	if augmentedBinding, ok := bindingAsAny.(augmentConversionForTrustedAccessRoleBinding); ok {
 		err := augmentedBinding.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -303,13 +307,13 @@ func (binding *TrustedAccessRoleBinding_Spec) ConvertSpecFrom(source genruntime.
 	src = &v20231001s.TrustedAccessRoleBinding_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = binding.AssignProperties_From_TrustedAccessRoleBinding_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -327,13 +331,13 @@ func (binding *TrustedAccessRoleBinding_Spec) ConvertSpecTo(destination genrunti
 	dst = &v20231001s.TrustedAccessRoleBinding_Spec{}
 	err := binding.AssignProperties_To_TrustedAccessRoleBinding_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -352,7 +356,7 @@ func (binding *TrustedAccessRoleBinding_Spec) AssignProperties_From_TrustedAcces
 		var operatorSpec TrustedAccessRoleBindingOperatorSpec
 		err := operatorSpec.AssignProperties_From_TrustedAccessRoleBindingOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_TrustedAccessRoleBindingOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_TrustedAccessRoleBindingOperatorSpec() to populate field OperatorSpec")
 		}
 		binding.OperatorSpec = &operatorSpec
 	} else {
@@ -393,7 +397,7 @@ func (binding *TrustedAccessRoleBinding_Spec) AssignProperties_From_TrustedAcces
 	if augmentedBinding, ok := bindingAsAny.(augmentConversionForTrustedAccessRoleBinding_Spec); ok {
 		err := augmentedBinding.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -414,7 +418,7 @@ func (binding *TrustedAccessRoleBinding_Spec) AssignProperties_To_TrustedAccessR
 		var operatorSpec v20231001s.TrustedAccessRoleBindingOperatorSpec
 		err := binding.OperatorSpec.AssignProperties_To_TrustedAccessRoleBindingOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_TrustedAccessRoleBindingOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_TrustedAccessRoleBindingOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -455,7 +459,7 @@ func (binding *TrustedAccessRoleBinding_Spec) AssignProperties_To_TrustedAccessR
 	if augmentedBinding, ok := bindingAsAny.(augmentConversionForTrustedAccessRoleBinding_Spec); ok {
 		err := augmentedBinding.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -490,13 +494,13 @@ func (binding *TrustedAccessRoleBinding_STATUS) ConvertStatusFrom(source genrunt
 	src = &v20231001s.TrustedAccessRoleBinding_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = binding.AssignProperties_From_TrustedAccessRoleBinding_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -514,13 +518,13 @@ func (binding *TrustedAccessRoleBinding_STATUS) ConvertStatusTo(destination genr
 	dst = &v20231001s.TrustedAccessRoleBinding_STATUS{}
 	err := binding.AssignProperties_To_TrustedAccessRoleBinding_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -554,12 +558,12 @@ func (binding *TrustedAccessRoleBinding_STATUS) AssignProperties_From_TrustedAcc
 		var systemDataSTATUSStash v20231102ps.SystemData_STATUS
 		err := systemDataSTATUSStash.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData_STATUSStash from SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData_STATUSStash from SystemData")
 		}
 		var systemDatum SystemData_STATUS
 		err = systemDatum.AssignProperties_From_SystemData_STATUS(&systemDataSTATUSStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData from SystemData_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData from SystemData_STATUSStash")
 		}
 		binding.SystemData = &systemDatum
 	} else {
@@ -581,7 +585,7 @@ func (binding *TrustedAccessRoleBinding_STATUS) AssignProperties_From_TrustedAcc
 	if augmentedBinding, ok := bindingAsAny.(augmentConversionForTrustedAccessRoleBinding_STATUS); ok {
 		err := augmentedBinding.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -617,12 +621,12 @@ func (binding *TrustedAccessRoleBinding_STATUS) AssignProperties_To_TrustedAcces
 		var systemDataSTATUSStash v20231102ps.SystemData_STATUS
 		err := binding.SystemData.AssignProperties_To_SystemData_STATUS(&systemDataSTATUSStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData_STATUSStash from SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData_STATUSStash from SystemData")
 		}
 		var systemDatum v20231001s.SystemData_STATUS
 		err = systemDataSTATUSStash.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData from SystemData_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData from SystemData_STATUSStash")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -644,7 +648,7 @@ func (binding *TrustedAccessRoleBinding_STATUS) AssignProperties_To_TrustedAcces
 	if augmentedBinding, ok := bindingAsAny.(augmentConversionForTrustedAccessRoleBinding_STATUS); ok {
 		err := augmentedBinding.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -723,7 +727,7 @@ func (operator *TrustedAccessRoleBindingOperatorSpec) AssignProperties_From_Trus
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForTrustedAccessRoleBindingOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -784,7 +788,7 @@ func (operator *TrustedAccessRoleBindingOperatorSpec) AssignProperties_To_Truste
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForTrustedAccessRoleBindingOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
