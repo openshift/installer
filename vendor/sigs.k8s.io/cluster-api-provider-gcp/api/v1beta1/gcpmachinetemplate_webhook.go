@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -36,29 +38,47 @@ import (
 var _ = logf.Log.WithName("gcpmachinetemplate-resource")
 
 func (r *GCPMachineTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(gcpMachineTemplateWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(w).
+		WithDefaulter(w).
 		Complete()
 }
 
-var _ webhook.Validator = &GCPMachineTemplate{}
+type gcpMachineTemplateWebhook struct{}
+
+var (
+	_ webhook.CustomValidator = &gcpMachineTemplateWebhook{}
+	_ webhook.CustomDefaulter = &gcpMachineTemplateWebhook{}
+)
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *GCPMachineTemplate) ValidateCreate() (admission.Warnings, error) {
+func (*gcpMachineTemplateWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	r, ok := obj.(*GCPMachineTemplate)
+	if !ok {
+		return nil, fmt.Errorf("expected an GCPMachineTemplate object but got %T", r)
+	}
+
 	clusterlog.Info("validate create", "name", r.Name)
 
 	return nil, validateConfidentialCompute(r.Spec.Template.Spec)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *GCPMachineTemplate) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (*gcpMachineTemplateWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	r, ok := newObj.(*GCPMachineTemplate)
+	if !ok {
+		return nil, fmt.Errorf("expected an GCPMachineTemplate object but got %T", r)
+	}
+
 	newGCPMachineTemplate, err := runtime.DefaultUnstructuredConverter.ToUnstructured(r)
 	if err != nil {
 		return nil, apierrors.NewInvalid(GroupVersion.WithKind("GCPMachineTemplate").GroupKind(), r.Name, field.ErrorList{
 			field.InternalError(nil, errors.Wrap(err, "failed to convert new GCPMachineTemplate to unstructured object")),
 		})
 	}
-	oldGCPMachineTemplate, err := runtime.DefaultUnstructuredConverter.ToUnstructured(old)
+	oldGCPMachineTemplate, err := runtime.DefaultUnstructuredConverter.ToUnstructured(oldObj)
 	if err != nil {
 		return nil, apierrors.NewInvalid(GroupVersion.WithKind("GCPMachineTemplate").GroupKind(), r.Name, field.ErrorList{
 			field.InternalError(nil, errors.Wrap(err, "failed to convert old GCPMachineTemplate to unstructured object")),
@@ -90,13 +110,11 @@ func (r *GCPMachineTemplate) ValidateUpdate(old runtime.Object) (admission.Warni
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *GCPMachineTemplate) ValidateDelete() (admission.Warnings, error) {
-	clusterlog.Info("validate delete", "name", r.Name)
-
+func (*gcpMachineTemplateWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // Default implements webhookutil.defaulter so a webhook will be registered for the type.
-func (r *GCPMachineTemplate) Default() {
-	clusterlog.Info("default", "name", r.Name)
+func (*gcpMachineTemplateWebhook) Default(_ context.Context, _ runtime.Object) error {
+	return nil
 }

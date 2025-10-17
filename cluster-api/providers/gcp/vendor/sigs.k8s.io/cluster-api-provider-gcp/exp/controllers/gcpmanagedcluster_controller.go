@@ -228,6 +228,17 @@ func (r *GCPManagedClusterReconciler) reconcileDelete(ctx context.Context, clust
 	log := log.FromContext(ctx).WithValues("controller", "gcpmanagedcluster", "action", "delete")
 	log.Info("Reconciling Delete GCPManagedCluster")
 
+	numDependencies, err := r.dependencyCount(ctx, clusterScope)
+	if err != nil {
+		log.Error(err, "error getting cluster dependencies", "namespace", clusterScope.GCPManagedCluster.Namespace, "name", clusterScope.GCPManagedCluster.Name)
+		return ctrl.Result{}, err
+	}
+	if numDependencies > 0 {
+		log.V(4).Info("GKE cluster still has dependencies - requeue needed", "dependencyCount", numDependencies)
+		return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
+	}
+	log.V(4).Info("GKE cluster has no dependencies")
+
 	if clusterScope.GCPManagedControlPlane != nil {
 		log.Info("GCPManagedControlPlane not deleted yet, retry later")
 		return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
@@ -264,7 +275,7 @@ func (r *GCPManagedClusterReconciler) managedControlPlaneMapper() handler.MapFun
 
 		log = log.WithValues("objectMapper", "cpTomc", "gcpmanagedcontrolplane", klog.KRef(gcpManagedControlPlane.Namespace, gcpManagedControlPlane.Name))
 
-		if !gcpManagedControlPlane.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !gcpManagedControlPlane.DeletionTimestamp.IsZero() {
 			log.Info("GCPManagedControlPlane has a deletion timestamp, skipping mapping")
 			return nil
 		}
@@ -294,4 +305,23 @@ func (r *GCPManagedClusterReconciler) managedControlPlaneMapper() handler.MapFun
 			},
 		}
 	}
+}
+
+func (r *GCPManagedClusterReconciler) dependencyCount(ctx context.Context, clusterScope *scope.ManagedClusterScope) (int, error) {
+	log := log.FromContext(ctx)
+
+	clusterName, clusterNamespace := clusterScope.GCPManagedCluster.Name, clusterScope.GCPManagedCluster.Namespace
+	log.Info("looking for GKE cluster dependencies", "cluster", klog.KRef(clusterNamespace, clusterName))
+
+	listOptions := []client.ListOption{
+		client.InNamespace(clusterNamespace),
+		client.MatchingLabels(map[string]string{clusterv1.ClusterNameLabel: clusterName}),
+	}
+
+	managedMachinePools := &infrav1exp.GCPManagedMachinePoolList{}
+	if err := r.List(ctx, managedMachinePools, listOptions...); err != nil {
+		return 0, fmt.Errorf("failed to list managed machine pools for cluster %s/%s: %w", clusterNamespace, clusterName, err)
+	}
+
+	return len(managedMachinePools.Items), nil
 }

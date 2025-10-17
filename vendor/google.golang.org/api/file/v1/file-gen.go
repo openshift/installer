@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC.
+// Copyright 2025 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -120,9 +120,6 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	}
 	s := &Service{client: client, BasePath: basePath, logger: internaloption.GetLogger(opts)}
 	s.Projects = NewProjectsService(s)
-	if err != nil {
-		return nil, err
-	}
 	if endpoint != "" {
 		s.BasePath = endpoint
 	}
@@ -138,7 +135,7 @@ func New(client *http.Client) (*Service, error) {
 	if client == nil {
 		return nil, errors.New("client is nil")
 	}
-	return NewService(context.Background(), option.WithHTTPClient(client))
+	return NewService(context.TODO(), option.WithHTTPClient(client))
 }
 
 type Service struct {
@@ -531,6 +528,15 @@ type GoogleCloudSaasacceleratorManagementProvidersV1Instance struct {
 	// to Maintenance Window notifications
 	// (go/slm-rollout-maintenance-policies#prerequisites).
 	ConsumerDefinedName string `json:"consumerDefinedName,omitempty"`
+	// ConsumerProjectNumber: Optional. The consumer_project_number associated with
+	// this Apigee instance. This field is added specifically to support Apigee
+	// integration with SLM Rollout and UMM. It represents the numerical project ID
+	// of the GCP project that consumes this Apigee instance. It is used for SLM
+	// rollout notifications and UMM integration, enabling proper mapping to
+	// customer projects and log delivery for Apigee instances. This field
+	// complements consumer_project_id and may be used for specific Apigee
+	// scenarios where the numerical ID is required.
+	ConsumerProjectNumber string `json:"consumerProjectNumber,omitempty"`
 	// CreateTime: Output only. Timestamp when the resource was created.
 	CreateTime string `json:"createTime,omitempty"`
 	// InstanceType: Optional. The instance_type of this instance of format:
@@ -906,12 +912,12 @@ func (s IOPSPerTB) MarshalJSON() ([]byte, error) {
 
 // Instance: A Filestore instance.
 type Instance struct {
-	// ConfigurablePerformanceEnabled: Output only. Indicates whether this
-	// instance's performance is configurable. If enabled, adjust it using the
-	// 'performance_config' field.
-	ConfigurablePerformanceEnabled bool `json:"configurablePerformanceEnabled,omitempty"`
 	// CreateTime: Output only. The time when the instance was created.
 	CreateTime string `json:"createTime,omitempty"`
+	// CustomPerformanceSupported: Output only. Indicates whether this instance
+	// supports configuring its performance. If true, the user can configure the
+	// instance's performance by using the 'performance_config' field.
+	CustomPerformanceSupported bool `json:"customPerformanceSupported,omitempty"`
 	// DeletionProtectionEnabled: Optional. Indicates whether the instance is
 	// protected against deletion.
 	DeletionProtectionEnabled bool `json:"deletionProtectionEnabled,omitempty"`
@@ -1021,16 +1027,15 @@ type Instance struct {
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
-	// ForceSendFields is a list of field names (e.g.
-	// "ConfigurablePerformanceEnabled") to unconditionally include in API
-	// requests. By default, fields with empty or default values are omitted from
-	// API requests. See
+	// ForceSendFields is a list of field names (e.g. "CreateTime") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
 	// details.
 	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "ConfigurablePerformanceEnabled")
-	// to include in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. See
+	// NullFields is a list of field names (e.g. "CreateTime") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
 	NullFields []string `json:"-"`
 }
@@ -1524,10 +1529,10 @@ type PerformanceConfig struct {
 	// with an `InvalidArgument` error.
 	FixedIops *FixedIOPS `json:"fixedIops,omitempty"`
 	// IopsPerTb: Provision IOPS dynamically based on the capacity of the instance.
-	// Provisioned read IOPS will be calculated by multiplying the capacity of the
+	// Provisioned IOPS will be calculated by multiplying the capacity of the
 	// instance in TiB by the `iops_per_tb` value. For example, for a 2 TiB
-	// instance with an `iops_per_tb` value of 17000 the provisioned read IOPS will
-	// be 34000. If the calculated value is outside the supported range for the
+	// instance with an `iops_per_tb` value of 17000 the provisioned IOPS will be
+	// 34000. If the calculated value is outside the supported range for the
 	// instance's capacity during instance creation, instance creation will fail
 	// with an `InvalidArgument` error. Similarly, if an instance capacity update
 	// would result in a value outside the supported range, the update will fail
@@ -1554,6 +1559,8 @@ func (s PerformanceConfig) MarshalJSON() ([]byte, error) {
 // PerformanceLimits: The enforced performance limits, calculated from the
 // instance's performance configuration.
 type PerformanceLimits struct {
+	// MaxIops: Output only. The max IOPS.
+	MaxIops int64 `json:"maxIops,omitempty,string"`
 	// MaxReadIops: Output only. The max read IOPS.
 	MaxReadIops int64 `json:"maxReadIops,omitempty,string"`
 	// MaxReadThroughputBps: Output only. The max read throughput in bytes per
@@ -1564,13 +1571,13 @@ type PerformanceLimits struct {
 	// MaxWriteThroughputBps: Output only. The max write throughput in bytes per
 	// second.
 	MaxWriteThroughputBps int64 `json:"maxWriteThroughputBps,omitempty,string"`
-	// ForceSendFields is a list of field names (e.g. "MaxReadIops") to
-	// unconditionally include in API requests. By default, fields with empty or
-	// default values are omitted from API requests. See
+	// ForceSendFields is a list of field names (e.g. "MaxIops") to unconditionally
+	// include in API requests. By default, fields with empty or default values are
+	// omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
 	// details.
 	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "MaxReadIops") to include in API
+	// NullFields is a list of field names (e.g. "MaxIops") to include in API
 	// requests with the JSON null value. By default, fields with empty values are
 	// omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
@@ -1585,6 +1592,27 @@ func (s PerformanceLimits) MarshalJSON() ([]byte, error) {
 // PromoteReplicaRequest: PromoteReplicaRequest promotes a Filestore standby
 // instance (replica).
 type PromoteReplicaRequest struct {
+	// PeerInstance: Optional. The resource name of the peer instance to promote,
+	// in the format
+	// `projects/{project_id}/locations/{location_id}/instances/{instance_id}`. The
+	// peer instance is required if the operation is called on an active instance.
+	PeerInstance string `json:"peerInstance,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "PeerInstance") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "PeerInstance") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s PromoteReplicaRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod PromoteReplicaRequest
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ReplicaConfig: Replica configuration for the instance.
@@ -1611,6 +1639,7 @@ type ReplicaConfig struct {
 	// Possible values:
 	//   "STATE_REASON_UNSPECIFIED" - Reason not specified.
 	//   "PEER_INSTANCE_UNREACHABLE" - The peer instance is unreachable.
+	//   "REMOVE_FAILED" - The remove replica peer instance operation failed.
 	StateReasons []string `json:"stateReasons,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "LastActiveSyncTime") to
 	// unconditionally include in API requests. By default, fields with empty or
@@ -2073,20 +2102,20 @@ func (r *ProjectsLocationsService) List(name string) *ProjectsLocationsListCall 
 	return c
 }
 
+// ExtraLocationTypes sets the optional parameter "extraLocationTypes": A list
+// of extra location types that should be used as conditions for controlling
+// the visibility of the locations.
+func (c *ProjectsLocationsListCall) ExtraLocationTypes(extraLocationTypes ...string) *ProjectsLocationsListCall {
+	c.urlParams_.SetMulti("extraLocationTypes", append([]string{}, extraLocationTypes...))
+	return c
+}
+
 // Filter sets the optional parameter "filter": A filter to narrow down results
 // to a preferred subset. The filtering language accepts strings like
 // "displayName=tokyo", and is documented in more detail in AIP-160
 // (https://google.aip.dev/160).
 func (c *ProjectsLocationsListCall) Filter(filter string) *ProjectsLocationsListCall {
 	c.urlParams_.Set("filter", filter)
-	return c
-}
-
-// IncludeUnrevealedLocations sets the optional parameter
-// "includeUnrevealedLocations": If true, the returned list will include
-// locations which are not yet revealed.
-func (c *ProjectsLocationsListCall) IncludeUnrevealedLocations(includeUnrevealedLocations bool) *ProjectsLocationsListCall {
-	c.urlParams_.Set("includeUnrevealedLocations", fmt.Sprint(includeUnrevealedLocations))
 	return c
 }
 
