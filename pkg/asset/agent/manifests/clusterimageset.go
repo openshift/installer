@@ -57,7 +57,7 @@ func (a *ClusterImageSet) Generate(ctx context.Context, dependencies asset.Paren
 	dependencies.Get(releaseImage, installConfig, agentWorkflow, clusterInfo)
 
 	switch agentWorkflow.Workflow {
-	case workflow.AgentWorkflowTypeInstall:
+	case workflow.AgentWorkflowTypeInstall, workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
 		currentVersion, err := version.Version()
 		if err != nil {
 			return err
@@ -181,7 +181,7 @@ func (a *ClusterImageSet) validateReleaseVersion(ctx context.Context, workflowTy
 
 	var allErrs field.ErrorList
 
-	fieldPath := field.NewPath("Spec", "ReleaseImage")
+	fieldPath := field.NewPath("spec", "releaseImage")
 
 	releaseImage := &releaseimage.Image{}
 	if err := releaseImage.Generate(ctx, asset.Parents{}); err != nil {

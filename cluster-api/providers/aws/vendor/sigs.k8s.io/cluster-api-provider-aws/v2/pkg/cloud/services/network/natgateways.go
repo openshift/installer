@@ -41,6 +41,10 @@ import (
 func (s *Service) reconcileNatGateways() error {
 	if s.scope.VPC().IsUnmanaged(s.scope.Name()) {
 		s.scope.Trace("Skipping NAT gateway reconcile in unmanaged mode")
+		_, err := s.updateNatGatewayIPs(s.scope.TagUnmanagedNetworkResources())
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -66,43 +70,10 @@ func (s *Service) reconcileNatGateways() error {
 		return nil
 	}
 
-	existing, err := s.describeNatGatewaysBySubnet()
+	subnetIDs, err := s.updateNatGatewayIPs(true)
 	if err != nil {
 		return err
 	}
-
-	natGatewaysIPs := []string{}
-	subnetIDs := []string{}
-
-	for _, sn := range s.scope.Subnets().FilterPublic().FilterNonCni() {
-		if sn.GetResourceID() == "" {
-			continue
-		}
-
-		if ngw, ok := existing[sn.GetResourceID()]; ok {
-			if len(ngw.NatGatewayAddresses) > 0 && ngw.NatGatewayAddresses[0].PublicIp != nil {
-				natGatewaysIPs = append(natGatewaysIPs, *ngw.NatGatewayAddresses[0].PublicIp)
-			}
-			// Make sure tags are up to date.
-			if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-				buildParams := s.getNatGatewayTagParams(*ngw.NatGatewayId)
-				tagsBuilder := tags.New(&buildParams, tags.WithEC2(s.EC2Client))
-				if err := tagsBuilder.Ensure(converters.TagsToMap(ngw.Tags)); err != nil {
-					return false, err
-				}
-				return true, nil
-			}, awserrors.ResourceNotFound); err != nil {
-				record.Warnf(s.scope.InfraCluster(), "FailedTagNATGateway", "Failed to tag managed NAT Gateway %q: %v", *ngw.NatGatewayId, err)
-				return errors.Wrapf(err, "failed to tag nat gateway %q", *ngw.NatGatewayId)
-			}
-
-			continue
-		}
-
-		subnetIDs = append(subnetIDs, sn.GetResourceID())
-	}
-
-	s.scope.SetNatGatewaysIPs(natGatewaysIPs)
 
 	// Batch the creation of NAT gateways
 	if len(subnetIDs) > 0 {
@@ -131,6 +102,49 @@ func (s *Service) reconcileNatGateways() error {
 	}
 
 	return nil
+}
+
+func (s *Service) updateNatGatewayIPs(updateTags bool) ([]string, error) {
+	existing, err := s.describeNatGatewaysBySubnet()
+	if err != nil {
+		return nil, err
+	}
+
+	natGatewaysIPs := []string{}
+	subnetIDs := []string{}
+
+	for _, sn := range s.scope.Subnets().FilterPublic().FilterNonCni() {
+		if sn.GetResourceID() == "" {
+			continue
+		}
+
+		if ngw, ok := existing[sn.GetResourceID()]; ok {
+			if len(ngw.NatGatewayAddresses) > 0 && ngw.NatGatewayAddresses[0].PublicIp != nil {
+				natGatewaysIPs = append(natGatewaysIPs, *ngw.NatGatewayAddresses[0].PublicIp)
+			}
+			if updateTags {
+				// Make sure tags are up to date.
+				if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
+					buildParams := s.getNatGatewayTagParams(*ngw.NatGatewayId)
+					tagsBuilder := tags.New(&buildParams, tags.WithEC2(s.EC2Client))
+					if err := tagsBuilder.Ensure(converters.TagsToMap(ngw.Tags)); err != nil {
+						return false, err
+					}
+					return true, nil
+				}, awserrors.ResourceNotFound); err != nil {
+					record.Warnf(s.scope.InfraCluster(), "FailedTagNATGateway", "Failed to tag managed NAT Gateway %q: %v", *ngw.NatGatewayId, err)
+					return nil, errors.Wrapf(err, "failed to tag nat gateway %q", *ngw.NatGatewayId)
+				}
+			}
+
+			continue
+		}
+
+		subnetIDs = append(subnetIDs, sn.GetResourceID())
+	}
+
+	s.scope.SetNatGatewaysIPs(natGatewaysIPs)
+	return subnetIDs, nil
 }
 
 func (s *Service) deleteNatGateways() error {
@@ -173,7 +187,7 @@ func (s *Service) deleteNatGateways() error {
 		}(c, ngID)
 	}
 
-	for i := 0; i < len(ngIDs); i++ {
+	for range ngIDs {
 		ngwErr := <-c
 		if ngwErr != nil {
 			errs = append(errs, ngwErr)
@@ -239,7 +253,7 @@ func (s *Service) createNatGateways(subnetIDs []string) (natgateways []*ec2.NatG
 		}(c, sn, eips[i])
 	}
 
-	for i := 0; i < len(subnetIDs); i++ {
+	for range subnetIDs {
 		ngwResult := <-c
 		if ngwResult.error != nil {
 			return nil, err

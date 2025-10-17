@@ -7,14 +7,15 @@ import (
 	"testing"
 
 	"github.com/go-openapi/swag"
-	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	operv1 "github.com/openshift/api/operator/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -54,6 +55,9 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodProxyACI := getGoodACI()
 	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, &machineNetwork, "192.168.122.2"))
 
+	installConfigWithNoProxyMachineNetwork := getValidOptionalInstallConfig()
+	installConfigWithNoProxyMachineNetwork.Config.Proxy = (*types.Proxy)(getProxy(getProxyWithMachineNetworkNoProxy().Config.Proxy, &machineNetwork, "192.168.122.2"))
+
 	goodACIDualStackVIPs := getGoodACIDualStack()
 	goodACIDualStackVIPs.Spec.APIVIPs = []string{"192.168.122.10", "2001:db8:1111:2222:ffff:ffff:ffff:cafe"}
 	goodACIDualStackVIPs.Spec.IngressVIPs = []string{"192.168.122.11", "2001:db8:1111:2222:ffff:ffff:ffff:dead"}
@@ -76,7 +80,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 
 	goodNetworkOverrideACI := getGoodACI()
 	goodNetworkOverrideACI.SetAnnotations(map[string]string{
-		installConfigOverrides: `{"networking":{"networkType":"CustomNetworkType","machineNetwork":[{"cidr":"10.10.11.0/24"}],"clusterNetwork":[{"cidr":"192.168.111.0/24","hostPrefix":23}],"serviceNetwork":["172.30.0.0/16"]}}`,
+		installConfigOverrides: `{"networking":{"networkType":"CustomNetworkType","machineNetwork":[{"cidr":"10.10.11.0/24"}],"clusterNetwork":[{"cidr":"192.168.96.0/20","hostPrefix":23}],"serviceNetwork":["172.30.0.0/16"]}}`,
 	})
 
 	installConfigWithCPUPartitioning := getValidOptionalInstallConfig()
@@ -147,6 +151,11 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		installConfigOverrides: `{"additionalTrustBundlePolicy":"Always"}`,
 	})
 
+	installConfigWithArbiter := getValidOptionalInstallConfigArbiter()
+	goodArbiterACI := getGoodACI()
+	goodArbiterACI.Spec.ProvisionRequirements.ArbiterAgents = 1
+	goodArbiterACI.Spec.ProvisionRequirements.WorkerAgents = 0
+
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -198,6 +207,16 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			dependencies: []asset.Asset{
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithProxy,
+				&agentconfig.AgentHosts{},
+				getValidAgentConfig(),
+			},
+			expectedConfig: goodProxyACI,
+		},
+		{
+			name: "valid configuration with proxy and no NOPROXY duplicates",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithNoProxyMachineNetwork,
 				&agentconfig.AgentHosts{},
 				getValidAgentConfig(),
 			},
@@ -293,6 +312,16 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			},
 			expectedConfig: goodTrustBundlePolicyACI,
 		},
+		{
+			name: "valid configuration with ArbiterAgents",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithArbiter,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodArbiterACI,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -340,6 +369,9 @@ metadata:
 spec:
   apiVIP: 192.168.111.5
   ingressVIP: 192.168.111.4
+  diskEncryption:
+    enableOn: workers
+    mode: tpmv2
   platformType: BareMetal
   clusterDeploymentRef:
     name: ostest
@@ -366,8 +398,12 @@ spec:
 					Namespace: "cluster0",
 				},
 				Spec: hiveext.AgentClusterInstallSpec{
-					APIVIP:       "192.168.111.5",
-					IngressVIP:   "192.168.111.4",
+					APIVIP:     "192.168.111.5",
+					IngressVIP: "192.168.111.4",
+					DiskEncryption: &hiveext.DiskEncryption{
+						EnableOn: swag.String("workers"),
+						Mode:     swag.String("tpmv2"),
+					},
 					PlatformType: hiveext.BareMetalPlatformType,
 					ClusterDeploymentRef: corev1.LocalObjectReference{
 						Name: "ostest",
@@ -396,6 +432,86 @@ spec:
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
 						WorkerAgents:       2,
+					},
+					SSHPublicKey: "ssh-rsa AAAAmyKey",
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "valid-config-file-with-arbiter",
+			data: `
+metadata:
+  name: test-agent-cluster-install
+  namespace: cluster0
+spec:
+  apiVIP: 192.168.111.5
+  ingressVIP: 192.168.111.4
+  diskEncryption:
+    enableOn: workers
+    mode: tpmv2
+  platformType: BareMetal
+  clusterDeploymentRef:
+    name: ostest
+  imageSetRef:
+    name: openshift-v4.10.0
+  networking:
+    machineNetwork:
+    - cidr: 10.10.11.0/24
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    serviceNetwork:
+    - 172.30.0.0/16
+    networkType: OVNKubernetes
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 2
+    arbiterAgents: 1
+  sshPublicKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedFound: true,
+			expectedConfig: &hiveext.AgentClusterInstall{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-agent-cluster-install",
+					Namespace: "cluster0",
+				},
+				Spec: hiveext.AgentClusterInstallSpec{
+					APIVIP:     "192.168.111.5",
+					IngressVIP: "192.168.111.4",
+					DiskEncryption: &hiveext.DiskEncryption{
+						EnableOn: swag.String("workers"),
+						Mode:     swag.String("tpmv2"),
+					},
+					PlatformType: hiveext.BareMetalPlatformType,
+					ClusterDeploymentRef: corev1.LocalObjectReference{
+						Name: "ostest",
+					},
+					ImageSetRef: &hivev1.ClusterImageSetReference{
+						Name: "openshift-v4.10.0",
+					},
+					Networking: hiveext.Networking{
+						MachineNetwork: []hiveext.MachineNetworkEntry{
+							{
+								CIDR: "10.10.11.0/24",
+							},
+						},
+						ClusterNetwork: []hiveext.ClusterNetworkEntry{
+							{
+								CIDR:       "10.128.0.0/14",
+								HostPrefix: 23,
+							},
+						},
+						ServiceNetwork: []string{
+							"172.30.0.0/16",
+						},
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
+					},
+					ProvisionRequirements: hiveext.ProvisionRequirements{
+						ControlPlaneAgents: 3,
+						WorkerAgents:       2,
+						ArbiterAgents:      1,
 					},
 					SSHPublicKey: "ssh-rsa AAAAmyKey",
 				},
@@ -698,7 +814,7 @@ spec:
     clusterNetwork:
     - cidr: 10.128.0.0/14
       hostPrefix: 23
-    - cidr: 2001:db8:1111:2222::/64
+    - cidr: 2001:db8:1111::/48
       hostPrefix: 64
     serviceNetwork:
     - 172.30.0.0/16
@@ -738,7 +854,7 @@ spec:
 								HostPrefix: 23,
 							},
 							{
-								CIDR:       "2001:db8:1111:2222::/64",
+								CIDR:       "2001:db8:1111::/48",
 								HostPrefix: 64,
 							},
 						},
@@ -852,7 +968,41 @@ spec:
   sshPublicKey: |
     ssh-rsa AAAAmyKey`,
 			expectedFound: false,
-			expectedError: "invalid PlatformType configured: spec.platformType: Unsupported value: \"aws\": supported values: \"BareMetal\", \"VSphere\", \"None\", \"External\"",
+			expectedError: "invalid PlatformType configured: spec.platformType: Unsupported value: \"aws\": supported values: \"BareMetal\", \"VSphere\", \"Nutanix\", \"None\", \"External\"",
+		},
+		{
+			name: "invalid-disk-encryption",
+			data: `
+metadata:
+  name: test-agent-cluster-install
+  namespace: cluster0
+spec:
+  apiVIP: 192.168.111.5
+  ingressVIP: 192.168.111.4
+  platformType: baremetal
+  clusterDeploymentRef:
+    name: ostest
+  diskEncryption:
+    enableOn: worker
+    mode: tmpv2
+  imageSetRef:
+    name: openshift-v4.10.0
+  networking:
+    machineNetwork:
+    - cidr: 10.10.11.0/24
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    serviceNetwork:
+    - 172.30.0.0/16
+    networkType: OVNKubernetes
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 2
+  sshPublicKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedFound: false,
+			expectedError: "invalid DiskEncryption configured: [spec.diskEncryption.enableOn: Unsupported value: \"worker\": supported values: \"none\", \"all\", \"masters\", \"workers\", spec.diskEncryption.mode: Unsupported value: \"tmpv2\": supported values: \"tpmv2\", \"tang\"]",
 		},
 	}
 	for _, tc := range cases {
@@ -886,4 +1036,143 @@ spec:
 		})
 	}
 
+}
+
+func TestAgentClusterInstall_validateClusterNetwork(t *testing.T) {
+	cases := []struct {
+		name           string
+		clusterNetwork hiveext.ClusterNetworkEntry
+		controlPlane   int
+		workers        int
+		expectFailure  bool
+	}{
+		{
+			name: "SNO host prefix matches network",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/25",
+				HostPrefix: 25,
+			},
+			controlPlane:  1,
+			workers:       0,
+			expectFailure: false,
+		},
+		{
+			name: "compact",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/22",
+				HostPrefix: 24,
+			},
+			controlPlane:  3,
+			workers:       0,
+			expectFailure: false,
+		},
+		{
+			name: "ha",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/21",
+				HostPrefix: 24,
+			},
+			controlPlane:  3,
+			workers:       2,
+			expectFailure: false,
+		},
+		{
+			name: "ha 8 nodes",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/21",
+				HostPrefix: 24,
+			},
+			controlPlane:  3,
+			workers:       5,
+			expectFailure: false,
+		},
+		{
+			name: "sno ipv6",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "fd01::/64",
+				HostPrefix: 64,
+			},
+			controlPlane:  1,
+			workers:       0,
+			expectFailure: false,
+		},
+		{
+			name: "ha ipv6",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "fd01::/48",
+				HostPrefix: 64,
+			},
+			controlPlane:  3,
+			workers:       8,
+			expectFailure: false,
+		},
+		{
+			name: "SNO host prefix smaller than network",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/24",
+				HostPrefix: 23,
+			},
+			controlPlane:  1,
+			workers:       0,
+			expectFailure: true,
+		},
+		{
+			name: "compact too many hosts",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/23",
+				HostPrefix: 24,
+			},
+			controlPlane:  3,
+			workers:       0,
+			expectFailure: true,
+		},
+		{
+			name: "ha too many hosts",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/22",
+				HostPrefix: 24,
+			},
+			controlPlane:  3,
+			workers:       2,
+			expectFailure: true,
+		},
+		{
+			name: "host prefix too large",
+			clusterNetwork: hiveext.ClusterNetworkEntry{
+				CIDR:       "10.128.0.0/20",
+				HostPrefix: 26,
+			},
+			controlPlane:  3,
+			workers:       0,
+			expectFailure: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			aci := &AgentClusterInstall{
+				Config: &hiveext.AgentClusterInstall{
+					Spec: hiveext.AgentClusterInstallSpec{
+						Networking: hiveext.Networking{
+							NetworkType: string(operv1.NetworkTypeOVNKubernetes),
+							ClusterNetwork: []hiveext.ClusterNetworkEntry{
+								tc.clusterNetwork,
+							},
+						},
+						ProvisionRequirements: hiveext.ProvisionRequirements{
+							ControlPlaneAgents: tc.controlPlane,
+							WorkerAgents:       tc.workers,
+						},
+					},
+				},
+			}
+
+			errs := aci.validateIPAddressAndNetworkType().ToAggregate()
+			if tc.expectFailure {
+				assert.Error(t, errs)
+			} else {
+				assert.NoError(t, errs)
+			}
+		})
+	}
 }

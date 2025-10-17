@@ -142,12 +142,12 @@ func TestValidateMachinePool(t *testing.T) {
 			pool: &powervs.MachinePool{
 				SysType: "p922",
 			},
-			expected: `^test-path\.sysType: Invalid value: "p922": unknown system type specified$`,
+			expected: `^test-path\.sysType: Invalid value: "p922": unknown system type specified.*$`,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateMachinePool(tc.pool, field.NewPath("test-path")).ToAggregate()
+			err := ValidateMachinePool(validMinimalPlatform(), tc.pool, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {

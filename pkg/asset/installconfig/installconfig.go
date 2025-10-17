@@ -122,7 +122,7 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 func (a *InstallConfig) finishAWS() error {
 	// Set the Default Edge Compute pool when the subnets in AWS Local Zones are defined,
 	// when installing a cluster in existing VPC.
-	if len(a.Config.Platform.AWS.Subnets) > 0 {
+	if len(a.Config.Platform.AWS.VPC.Subnets) > 0 {
 		edgeSubnets, err := a.AWS.EdgeSubnets(context.TODO())
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("unable to load edge subnets: %v", err))
@@ -131,7 +131,7 @@ func (a *InstallConfig) finishAWS() error {
 		if totalEdgeSubnets == 0 {
 			return nil
 		}
-		if edgePool := defaults.CreateEdgeMachinePoolDefaults(a.Config.Compute, a.Config.Platform.Name(), totalEdgeSubnets); edgePool != nil {
+		if edgePool := defaults.CreateEdgeMachinePoolDefaults(a.Config.Compute, &a.Config.Platform, totalEdgeSubnets); edgePool != nil {
 			a.Config.Compute = append(a.Config.Compute, *edgePool)
 		}
 	}
@@ -140,7 +140,7 @@ func (a *InstallConfig) finishAWS() error {
 
 func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 	if a.Config.AWS != nil {
-		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.Subnets, a.Config.AWS.ServiceEndpoints)
+		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.VPC.Subnets, a.Config.AWS.ServiceEndpoints)
 		if err := a.finishAWS(); err != nil {
 			return err
 		}
@@ -172,7 +172,6 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 	if err := a.platformValidation(ctx); err != nil {
 		return err
 	}
-
 	return a.RecordFile()
 }
 
@@ -181,11 +180,6 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 // that have already been checked by validation.ValidateInstallConfig().
 func (a *InstallConfig) platformValidation(ctx context.Context) error {
 	if a.Config.Platform.Azure != nil {
-		if a.Config.Platform.Azure.IsARO() {
-			// ARO performs platform validation in the Resource Provider before
-			// the Installer is called
-			return nil
-		}
 		client, err := a.Azure.Client()
 		if err != nil {
 			return err
@@ -193,7 +187,7 @@ func (a *InstallConfig) platformValidation(ctx context.Context) error {
 		return icazure.Validate(client, a.Config)
 	}
 	if a.Config.Platform.GCP != nil {
-		client, err := icgcp.NewClient(ctx)
+		client, err := icgcp.NewClient(ctx, a.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return err
 		}

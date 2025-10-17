@@ -48,6 +48,9 @@ const (
 	DefaultTokenURL     = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
 	DefaultClientID     = "cloud-services"
 	DefaultClientSecret = ""
+
+	FedRAMPTokenURL = "https://sso.openshiftusgov.com/realms/redhat-external/protocol/openid-connect/token"
+	FedRAMPClientID = "console-dot"
 )
 
 // DefaultScopes is the ser of scopes used by default:

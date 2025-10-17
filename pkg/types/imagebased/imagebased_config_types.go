@@ -30,7 +30,8 @@ type Config struct {
 	// +optional
 	NetworkConfig *aiv1beta1.NetConfig `json:"networkConfig,omitempty"`
 
-	// ReleaseRegistry is the container registry used to host the release image of the seed cluster.
+	// ReleaseRegistry is the container registry that hosts the OpenShift
+	// release-image content of the cluster during the deployment step.
 	// +optional
 	ReleaseRegistry string `json:"releaseRegistry,omitempty"`
 
@@ -60,6 +61,11 @@ type InstallationConfig struct {
 	//
 	// +optional
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
+
+	// Architecture is the instruction set architecture for the machines
+	// that will be installed. Defaults to amd64.
+	// +optional
+	Architecture string `json:"architecture,omitempty"`
 
 	// ExtraPartitionLabel label of extra partition used for /var/lib/containers.
 	// Default is var-lib-containers
@@ -107,6 +113,12 @@ type InstallationConfig struct {
 
 	// PullSecret is the secret to use when pulling images.
 	PullSecret string `json:"pullSecret"`
+
+	// ReleaseRegistry is the container image registry that hosts the OpenShift
+	// release-image content and is used when precaching the cluster's container
+	// images during the preparation/installation step only.
+	// +optional
+	ReleaseRegistry string `json:"releaseRegistry,omitempty"`
 
 	// SeedImage is the seed image to use for the installation. This image will be
 	// used to prepare the installation disk.

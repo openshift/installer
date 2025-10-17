@@ -11,6 +11,12 @@ aliases:
     - rna-afk
     - rwsu
     - sadasu
+    - tthvo
+  splat-team:
+    - jcpowermac
+    - mtulio
+    - rvanderp3
+    - vr4manta
   libvirt-approvers:
     - praveenkumar
     - cfergeau
@@ -18,19 +24,13 @@ aliases:
     - praveenkumar
     - cfergeau
   openstack-approvers:
-    - EmilienM
-    - MaysaMacedo
     - gryf
     - mandre
-    - mdbooth
     - pierreprinetti
     - stephenfin
   openstack-reviewers:
-    - EmilienM
-    - MaysaMacedo
     - gryf
     - mandre
-    - mdbooth
     - pierreprinetti
     - stephenfin
   powervs-approvers:
@@ -66,19 +66,23 @@ aliases:
   aws-approvers:
     - mtulio
     - patrickdillon
+    - tthvo
   aws-reviewers:
     - mtulio
     - patrickdillon
+    - tthvo
   gcp-approvers:
     - patrickdillon
   gcp-reviewers:
     - patrickdillon
   azure-approvers:
     - jhixson74
-    - mtulio
+    - rna-afk
+    - sadasu
   azure-reviewers:
     - jhixson74
-    - mtulio
+    - rna-afk
+    - sadasu
   ovirt-approvers:
     - janosdebugs
     - eslutsky
@@ -100,11 +104,13 @@ aliases:
   nutanix-approvers:
     - adiantum
     - rvanderp3
+    - jcpowermac
     - thunderboltsid
     - yanhua121
   nutanix-reviewers:
     - adiantum
     - rvanderp3
+    - jcpowermac
     - thunderboltsid
     - yanhua121
   # Keep in sync with the `coreos-approvers` and `coreos-reviewers` lists in https://github.com/openshift/release/blob/master/OWNERS_ALIASES
@@ -128,6 +134,11 @@ aliases:
     - yasminvalim
     - jbtrystram
     - madhu-pillai
+    - Johan-Liebert1
+    - tlbueno
+    - joelcapitao
+    - Roshan-R
+    - PeaceRebel
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -148,6 +159,11 @@ aliases:
     - yasminvalim
     - jbtrystram
     - madhu-pillai
+    - Johan-Liebert1
+    - tlbueno
+    - joelcapitao
+    - Roshan-R
+    - PeaceRebel
   agent-reviewers:
     - andfasano
     - bfournie

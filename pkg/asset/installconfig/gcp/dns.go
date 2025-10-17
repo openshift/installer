@@ -10,11 +10,13 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
 	"google.golang.org/api/googleapi"
+
+	configv1 "github.com/openshift/api/config/v1"
 )
 
 // GetBaseDomain returns a base domain chosen from among the project's public DNS zones.
-func GetBaseDomain(project string) (string, error) {
-	client, err := NewClient(context.TODO())
+func GetBaseDomain(project string, endpoints []configv1.GCPServiceEndpoint) (string, error) {
+	client, err := NewClient(context.TODO(), endpoints)
 	if err != nil {
 		return "", err
 	}
@@ -68,6 +70,9 @@ func IsThrottled(err error) bool {
 
 // IsNotFound checks whether a response from the GPC API was not found.
 func IsNotFound(err error) bool {
-	gErr, ok := err.(*googleapi.Error)
-	return ok && gErr.Code == http.StatusNotFound
+	var gErr *googleapi.Error
+	if errors.As(err, &gErr) {
+		return gErr.Code == http.StatusNotFound
+	}
+	return false
 }

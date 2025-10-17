@@ -58,6 +58,9 @@ func (extension *FlexibleServersDatabaseExtension) Import(
 	owner *genruntime.ResourceReference,
 	next extensions.ImporterFunc,
 ) (extensions.ImportResult, error) {
+	// If this cast doesn't compile, update the `api` import to reference the now latest
+	// stable version of the dbforpostgresql group (this will happen when we import a new
+	// API version in the generator.)
 	if server, ok := rsrc.(*api.FlexibleServersDatabase); ok {
 		if server.Spec.AzureName == "azure_maintenance" {
 			return extensions.ImportSkipped("azure_maintenance database is not accessible by users"), nil

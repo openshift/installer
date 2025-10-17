@@ -3,6 +3,7 @@ package baremetal
 import (
 	"fmt"
 
+	"github.com/coreos/stream-metadata-go/arch"
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	hardware "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1/profile"
 	"github.com/pkg/errors"
@@ -116,9 +117,41 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 		return nil, fmt.Errorf("no baremetal platform in configuration")
 	}
 
+	numRequiredArbiters := replicaCount(config.Arbiter)
+	numArbiters := 0
+
 	numRequiredMasters := len(machines)
 	numMasters := 0
+
+	controlPlaneArch := ""
+	if config.ControlPlane != nil {
+		controlPlaneArch = arch.RpmArch(string(config.ControlPlane.Architecture))
+	}
+	computeArch := ""
+
+	if len(config.Compute) > 0 {
+		computeArch = arch.RpmArch(string(config.Compute[0].Architecture))
+	}
+
 	for _, host := range config.Platform.BareMetal.Hosts {
+
+		// We only infer arbiter hosts if we are in an arbiter deployment
+		if config.IsArbiterEnabled() {
+			// If we know the host is an arbiter and the role isn't an empty value (i.e. explicitly defined by user)
+			// no further investigating is needed, skip creating resources
+			if host.IsArbiter() {
+				numArbiters++
+				continue
+			}
+
+			// Infer if host is an arbiter, if we have already satisfied the number of masters
+			// the next hosts will be used for the arbiter, so skip those and allow ArbiterHosts()
+			// to configure and create those resources.
+			if numMasters == numRequiredMasters && numArbiters < numRequiredArbiters {
+				numArbiters++
+				continue
+			}
+		}
 
 		secret, bmc := createSecret(host)
 		if secret != nil {
@@ -156,11 +189,13 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 				Name:       machine.ObjectMeta.Name,
 			}
 			newHost.Spec.Online = true
+			newHost.Spec.Architecture = controlPlaneArch
 
 			// userDataSecret carries a reference to the master ignition file
 			newHost.Spec.UserData = &corev1.SecretReference{Name: userDataSecret}
 			numMasters++
 		} else {
+			newHost.Spec.Architecture = computeArch
 			// Pause workers until the real control plane is up.
 			newHost.ObjectMeta.Annotations = map[string]string{
 				"baremetalhost.metal3.io/paused": "",
@@ -171,4 +206,106 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 	}
 
 	return settings, nil
+}
+
+// ArbiterHosts returns the HostSettings with details of the hardware being
+// used to construct a cluster with an arbiter node.
+func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, userDataSecret string) (*HostSettings, error) {
+	settings := &HostSettings{}
+
+	if config.Platform.BareMetal == nil {
+		return nil, fmt.Errorf("no baremetal platform in configuration")
+	}
+
+	// If Arbiter is not enabled, nothing happens
+	if !config.IsArbiterEnabled() {
+		return nil, nil
+	}
+
+	numRequiredMasters := replicaCount(config.ControlPlane)
+	numMasters := 0
+
+	numRequiredArbiters := len(machines)
+	numArbiters := 0
+
+	arbiterArch := ""
+	if config.Arbiter != nil {
+		arbiterArch = arch.RpmArch(string(config.Arbiter.Architecture))
+	}
+
+	for _, host := range config.Platform.BareMetal.Hosts {
+		// We make sure to keep an accurate count of known masters when explicitly set
+		if host.IsMaster() {
+			numMasters++
+		}
+
+		// If we know we're not an arbiter and the role isn't an empty value
+		// no further investigating is needed, skip creation.
+		if !host.IsArbiter() && host.Role != "" {
+			continue
+		}
+
+		// In order to account for situations where we can not determine if the host is a master or an arbiter,
+		// we check if we have filled our required master count and if the host role is empty.
+		// In this scenario we increment and continue until the master count is satisfied before generating
+		// the arbiters since the masters should always be generated before arbiters.
+		if numMasters < numRequiredMasters && host.Role == "" {
+			numMasters++
+			continue
+		}
+
+		if numArbiters < numRequiredArbiters {
+			secret, bmc := createSecret(host)
+			if secret != nil {
+				settings.Secrets = append(settings.Secrets, *secret)
+			}
+			newHost := createBaremetalHost(host, bmc)
+
+			if host.NetworkConfig != nil {
+				networkConfigSecret, err := createNetworkConfigSecret(host)
+				if err != nil {
+					return nil, err
+				}
+				settings.NetworkConfigSecrets = append(settings.NetworkConfigSecrets, *networkConfigSecret)
+				newHost.Spec.PreprovisioningNetworkDataName = networkConfigSecret.Name
+			}
+
+			// Setting CustomDeploy early ensures that the
+			// corresponding Ironic node gets correctly configured
+			// from the beginning.
+			newHost.Spec.CustomDeploy = &baremetalhost.CustomDeploy{
+				Method: "install_coreos",
+			}
+
+			newHost.ObjectMeta.Labels = map[string]string{
+				"installer.openshift.io/role": "control-plane",
+			}
+
+			// Link the new host to the currently available machine
+			machine := machines[numArbiters]
+			newHost.Spec.ConsumerRef = &corev1.ObjectReference{
+				APIVersion: machine.TypeMeta.APIVersion,
+				Kind:       machine.TypeMeta.Kind,
+				Namespace:  machine.ObjectMeta.Namespace,
+				Name:       machine.ObjectMeta.Name,
+			}
+			newHost.Spec.Online = true
+			newHost.Spec.Architecture = arbiterArch
+
+			// userDataSecret carries a reference to the arbiter ignition file
+			newHost.Spec.UserData = &corev1.SecretReference{Name: userDataSecret}
+			numArbiters++
+			settings.Hosts = append(settings.Hosts, newHost)
+		}
+	}
+
+	return settings, nil
+}
+
+// replicaCount Given a machine pool, safely determine the replica count.
+func replicaCount(pool *types.MachinePool) int {
+	if pool == nil || pool.Replicas == nil {
+		return 0
+	}
+	return int(*pool.Replicas)
 }

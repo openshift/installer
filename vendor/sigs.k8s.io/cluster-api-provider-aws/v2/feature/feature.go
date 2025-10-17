@@ -54,6 +54,12 @@ const (
 	// alpha: v0.1
 	MachinePool featuregate.Feature = "MachinePool"
 
+	// MachinePoolMachines is a feature gate that enables creation of AWSMachine objects for AWSMachinePool and AWSManagedMachinePool.
+	//
+	// owner: @AndiDog
+	// alpha: v2.8
+	MachinePoolMachines featuregate.Feature = "MachinePoolMachines"
+
 	// EventBridgeInstanceState will use Event Bridge and notifications to keep instance state up-to-date
 	// owner: @gab-satchi
 	// alpha: v0.7?
@@ -102,6 +108,7 @@ var defaultCAPAFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	EKSFargate:                    {Default: false, PreRelease: featuregate.Alpha},
 	EventBridgeInstanceState:      {Default: false, PreRelease: featuregate.Alpha},
 	MachinePool:                   {Default: true, PreRelease: featuregate.Beta},
+	MachinePoolMachines:           {Default: false, PreRelease: featuregate.Alpha},
 	AutoControllerIdentityCreator: {Default: true, PreRelease: featuregate.Alpha},
 	BootstrapFormatIgnition:       {Default: false, PreRelease: featuregate.Alpha},
 	ExternalResourceGC:            {Default: false, PreRelease: featuregate.Alpha},

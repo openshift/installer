@@ -5,6 +5,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/aws/smithy-go/ptr"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -273,7 +274,33 @@ func validDualStackNetworkingConfig() *types.Networking {
 		},
 	}
 }
-
+func InvalidPrimaryV6DualStackNetworkingConfig() *types.Networking {
+	return &types.Networking{
+		NetworkType: "OVNKubernetes",
+		MachineNetwork: []types.MachineNetworkEntry{
+			{
+				CIDR: *ipnet.MustParseCIDR("ffd0::/48"),
+			},
+			{
+				CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
+			},
+		},
+		ServiceNetwork: []ipnet.IPNet{
+			*ipnet.MustParseCIDR("172.30.0.0/16"),
+			*ipnet.MustParseCIDR("ffd1::/112"),
+		},
+		ClusterNetwork: []types.ClusterNetworkEntry{
+			{
+				CIDR:       *ipnet.MustParseCIDR("ffd2::/48"),
+				HostPrefix: 64,
+			},
+			{
+				CIDR:       *ipnet.MustParseCIDR("192.168.1.0/24"),
+				HostPrefix: 28,
+			},
+		},
+	}
+}
 func TestValidateInstallConfig(t *testing.T) {
 	cases := []struct {
 		name          string
@@ -340,13 +367,31 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking: Required value: networking is required$`,
 		},
 		{
-			name: "invalid network type",
+			name: "invalid empty network type",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.NetworkType = ""
 				return c
 			}(),
 			expectedError: `^networking.networkType: Required value: network provider type required$`,
+		},
+		{
+			name: "invalid Kuryr network type",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = "Kuryr"
+				return c
+			}(),
+			expectedError: `^networking\.networkType: Invalid value: "Kuryr": networkType Kuryr is not supported on OpenShift later than 4\.14$`,
+		},
+		{
+			name: "invalid OpenShiftSDN network type",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = "OpenShiftSDN"
+				return c
+			}(),
+			expectedError: `^networking\.networkType: Invalid value: "OpenShiftSDN": networkType OpenShiftSDN is not supported, please use OVNKubernetes$`,
 		},
 		{
 			name: "missing service network",
@@ -367,27 +412,13 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.serviceNetwork\[0\]: Invalid value: "13\.0\.128\.0/16": invalid network address. got 13\.0\.128\.0/16, expecting 13\.0\.0\.0/16$`,
 		},
 		{
-			name: "overlapping service network and machine cidr",
+			name: "overlapping service network and machine network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("10.0.2.0/24")
 				return c
 			}(),
 			expectedError: `^networking\.serviceNetwork\[0\]: Invalid value: "10\.0\.2\.0/24": service network must not overlap with any of the machine networks$`,
-		},
-		{
-			name: "overlapping machine network and machine network",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
-					{CIDR: *ipnet.MustParseCIDR("13.0.0.0/16")},
-					{CIDR: *ipnet.MustParseCIDR("13.0.2.0/24")},
-				}
-
-				return c
-			}(),
-			// also triggers the only-one-machine-network validation
-			expectedError: `^networking\.machineNetwork\[1\]: Invalid value: "13\.0\.2\.0/24": machine network must not overlap with machine network 0$`,
 		},
 		{
 			name: "overlapping service network and service network",
@@ -404,7 +435,49 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^\[networking\.serviceNetwork\[1\]: Invalid value: "13\.0\.2\.0/24": service network must not overlap with service network 0, networking\.serviceNetwork: Invalid value: "13\.0\.0\.0/16, 13\.0\.2\.0/24": only one service network can be specified]$`,
 		},
 		{
-			name: "overlapping service network and IPv4 InternalJoinSubnet",
+			name: "overlapping service network and default OVNKubernetes join networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					*ipnet.MustParseCIDR("100.64.2.0/24"),
+					*ipnet.MustParseCIDR("fd98::/112"),
+				}
+				return c
+			}(),
+			expectedError: `^\[networking\.serviceNetwork\[0\]: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16, networking\.serviceNetwork\[1\]: Invalid value: "fd98::/112": must not overlap with OVNKubernetes default internal subnet fd98::/64\]$`,
+		},
+		{
+			name: "overlapping service network and default OVNKubernetes switch networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					*ipnet.MustParseCIDR("100.88.2.0/24"),
+					*ipnet.MustParseCIDR("fd97::/112"),
+				}
+				return c
+			}(),
+			expectedError: `^\[networking\.serviceNetwork\[0\]: Invalid value: "100\.88\.2\.0/24": must not overlap with OVNKubernetes default transit subnet 100\.88\.0\.0/16, networking\.serviceNetwork\[1\]: Invalid value: "fd97::/112": must not overlap with OVNKubernetes default transit subnet fd97::/64\]$`,
+		},
+		{
+			name: "overlapping service network and default OVNKubernetes masquerade networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					*ipnet.MustParseCIDR("169.254.2.0/24"),
+					*ipnet.MustParseCIDR("fd69::/112"),
+				}
+				return c
+			}(),
+			expectedError: `^\[networking\.serviceNetwork\[0\]: Invalid value: "169\.254\.2\.0/24": must not overlap with OVNKubernetes default masquerade subnet 169\.254\.0\.0/17, networking\.serviceNetwork\[1\]: Invalid value: "fd69::/112": must not overlap with OVNKubernetes default masquerade subnet fd69::/112\]$`,
+		},
+		{
+			name: "overlapping service network and user-provided IPv4 InternalJoinSubnet",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("13.0.2.0/24")
@@ -414,7 +487,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.ovnKubernetesConfig.ipv4.internalJoinSubnet: Invalid value: "13\.0\.0\.0/16": must not overlap with serviceNetwork 13\.0\.2\.0/24$`,
 		},
 		{
-			name: "overlapping machine network and IPv4 InternalJoinSubnet",
+			name: "overlapping machine network and user-provided IPv4 InternalJoinSubnet",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("10.0.2.0/24")}}
@@ -423,7 +496,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.ovnKubernetesConfig.ipv4.internalJoinSubnet: Invalid value: "10\.0\.2\.0/24": must not overlap with machineNetwork 10\.0\.0\.0/16$`,
 		},
 		{
-			name: "overlapping cluster network and IPv4 InternalJoinSubnet",
+			name: "overlapping cluster network and user-provided IPv4 InternalJoinSubnet",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("192.168.0.0/16")}}
@@ -432,7 +505,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Invalid value: "192\.168\.0\.0/16": must not overlap with clusterNetwork 192\.168\.1\.0/24$`,
 		},
 		{
-			name: "HTTPProxy overlapping with IPv4 Internal Join Subnet",
+			name: "HTTPProxy overlapping with user-provided IPv4 Internal Join Subnet",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Proxy.HTTPProxy = "http://100.64.1.2:3030"
@@ -443,7 +516,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^proxy.httpProxy: Invalid value: "http://100.64.1.2:3030": proxy value is part of the ovn-kubernetes IPv4 InternalJoinSubnet$`,
 		},
 		{
-			name: "invalid IPv4 InternalJoinSubnet",
+			name: "invalid user-provided IPv4 InternalJoinSubnet",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("192.168.2.0/16")}}
@@ -452,7 +525,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Invalid value: "192\.168\.2\.0/16": invalid network address. got 192\.168\.2\.0/16, expecting 192\.168\.0\.0/16$`,
 		},
 		{
-			name: "IPv4 InternalJoinSubnet too smal",
+			name: "user-provided IPv4 InternalJoinSubnet too small",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("100.64.0.0/24")}}
@@ -465,6 +538,21 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Invalid value: "100\.64\.0\.0/24": ipv4InternalJoinSubnet is not large enough for the maximum number of nodes which can be supported by ClusterNetwork$`,
+		},
+		{
+			name: "valid user-provided IPv4 InternalJoinSubnet but invalid hostPrefix",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("100.64.0.0/24")}}
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("10.128.0.0/24"),
+						HostPrefix: int32(23),
+					},
+				}
+				return c
+			}(),
+			expectedError: `^\[networking\.clusterNetwork\[0\]\.hostPrefix: Invalid value: 23: cluster network host subnetwork prefix must not be larger size than CIDR 10\.128\.0\.0/24, networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Internal error: cannot determine the number of nodes supported by cluster network 0 due to invalid hostPrefix\]$`,
 		},
 		{
 			name: "missing machine networks",
@@ -485,6 +573,38 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.machineNetwork\[0\]: Invalid value: "11\.0\.128\.0/16": invalid network address. got 11\.0\.128\.0/16, expecting 11\.0\.0\.0/16$`,
 		},
 		{
+			name: "overlapping machine network and machine network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("13.0.0.0/16")},
+					{CIDR: *ipnet.MustParseCIDR("13.0.2.0/24")},
+				}
+
+				return c
+			}(),
+			// also triggers the only-one-machine-network validation
+			expectedError: `^networking\.machineNetwork\[1\]: Invalid value: "13\.0\.2\.0/24": machine network must not overlap with machine network 0$`,
+		},
+		{
+			name: "overlapping machine network and default OVNKubernetes networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("100.64.2.0/24")},
+					{CIDR: *ipnet.MustParseCIDR("100.88.2.0/24")},
+					{CIDR: *ipnet.MustParseCIDR("169.254.2.0/24")},
+					{CIDR: *ipnet.MustParseCIDR("fd98::/48")},
+					{CIDR: *ipnet.MustParseCIDR("fd97::/48")},
+					{CIDR: *ipnet.MustParseCIDR("fd69::/48")},
+				}
+				return c
+			}(),
+			expectedError: `\[networking\.machineNetwork\[0\]: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16, networking\.machineNetwork\[1\]: Invalid value: "100\.88\.2\.0/24": must not overlap with OVNKubernetes default transit subnet 100\.88\.0\.0/16, networking\.machineNetwork\[2\]: Invalid value: "169\.254\.2\.0/24": must not overlap with OVNKubernetes default masquerade subnet 169\.254\.0\.0/17, networking\.machineNetwork\[3\]: Invalid value: "fd98::/48": must not overlap with OVNKubernetes default internal subnet fd98::/64, networking\.machineNetwork\[4\]: Invalid value: "fd97::/48": must not overlap with OVNKubernetes default transit subnet fd97::/64, networking\.machineNetwork\[5\]: Invalid value: "fd69::/48": must not overlap with OVNKubernetes default masquerade subnet fd69::/112\]`,
+		},
+		{
 			name: "invalid cluster network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -494,7 +614,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.clusterNetwork\[0]\.cidr: Invalid value: "12\.0\.128\.0/16": invalid network address. got 12\.0\.128\.0/16, expecting 12\.0\.0\.0/16$`,
 		},
 		{
-			name: "overlapping cluster network and machine cidr",
+			name: "overlapping cluster network and machine network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.ClusterNetwork[0].CIDR = *ipnet.MustParseCIDR("10.0.3.0/24")
@@ -522,6 +642,24 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^networking\.clusterNetwork\[1]\.cidr: Invalid value: "12\.0\.3\.0/24": cluster network must not overlap with cluster network 0$`,
+		},
+		{
+			name: "overlapping cluster network and default OVNKubernetes networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("100.64.2.0/24"), HostPrefix: 28},
+					{CIDR: *ipnet.MustParseCIDR("100.88.2.0/24"), HostPrefix: 28},
+					{CIDR: *ipnet.MustParseCIDR("169.254.2.0/24"), HostPrefix: 28},
+					{CIDR: *ipnet.MustParseCIDR("fd98::/48"), HostPrefix: 64},
+					{CIDR: *ipnet.MustParseCIDR("fd97::/48"), HostPrefix: 64},
+					{CIDR: *ipnet.MustParseCIDR("fd69::/48"), HostPrefix: 64},
+				}
+				return c
+			}(),
+			expectedError: `^\[networking\.clusterNetwork\[0\]\.cidr: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16, networking\.clusterNetwork\[1\]\.cidr: Invalid value: "100\.88\.2\.0/24": must not overlap with OVNKubernetes default transit subnet 100\.88\.0\.0/16, networking\.clusterNetwork\[2\]\.cidr: Invalid value: "169\.254\.2\.0/24": must not overlap with OVNKubernetes default masquerade subnet 169\.254\.0\.0/17, networking\.clusterNetwork\[3\]\.cidr: Invalid value: "fd98::/48": must not overlap with OVNKubernetes default internal subnet fd98::/64, networking\.clusterNetwork\[4\]\.cidr: Invalid value: "fd97::/48": must not overlap with OVNKubernetes default transit subnet fd97::/64, networking\.clusterNetwork\[5\]\.cidr: Invalid value: "fd69::/48": must not overlap with OVNKubernetes default masquerade subnet fd69::/112\]$`,
 		},
 		{
 			name: "cluster network host prefix too large",
@@ -567,19 +705,18 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "multiple cluster network host prefix different",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				// Use dual-stack config to ensure the validation only applies to IPv4 CIDRs
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
 				c.Networking.ClusterNetwork = append(c.Networking.ClusterNetwork,
 					types.ClusterNetworkEntry{
 						CIDR:       *ipnet.MustParseCIDR("192.168.2.0/24"),
 						HostPrefix: 30,
 					},
-					types.ClusterNetworkEntry{
-						CIDR:       *ipnet.MustParseCIDR("ffd2::/48"),
-						HostPrefix: 64,
-					},
 				)
 				return c
 			}(),
-			expectedError: `^networking\.clusterNetwork\[1]\.hostPrefix: Invalid value: 30: cluster network host subnetwork prefix must be the same value for IPv4 networks$`,
+			expectedError: `^networking\.clusterNetwork\[2]\.hostPrefix: Invalid value: 30: cluster network host subnetwork prefix must be the same value for IPv4 networks$`,
 		},
 		{
 			name: "networking clusterNetworkMTU - valid high limit ovn",
@@ -1428,7 +1565,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid dual-stack configuration, IPv6-primary",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Platform = types.Platform{GCP: &gcp.Platform{}}
 				c.Networking = validDualStackNetworkingConfig()
 				c.Networking.ServiceNetwork = []ipnet.IPNet{
 					c.Networking.ServiceNetwork[1],
@@ -1700,7 +1837,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"marketplace"}: platform baremetal requires the baremetal capability`,
 		},
-		//VIP tests
+		// VIP tests
 		{
 			name: "apivip_v4_not_in_machinenetwork_cidr",
 			installConfig: func() *types.InstallConfig {
@@ -2101,7 +2238,20 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.APIVIPs = []string{"ffd0::"}
 				return c
 			}(),
-			expectedError: `platform.baremetal.apiVIPs: Invalid value: "ffd0::": VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6`,
+			expectedError: `[platform.baremetal.apiVIPs: Invalid value: "ffd0::": clusterNetwork primary IP Family and primary IP family for the API VIP should match, platform.baremetal.apiVIPs: Invalid value: "ffd0::": machineNetwork primary IP Family and primary IP family for the API VIP should match, platform.baremetal.apiVIPs: Invalid value: "ffd0::": serviceNetwork primary IP Family and primary IP family for the API VIP should match]`,
+		},
+		{
+			name: "baremetal API VIP set to an incorrect IP Family with invalid primary IPv6 network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = InvalidPrimaryV6DualStackNetworkingConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIPs = []string{"ffd0::"}
+				return c
+			}(),
+			expectedError: `platform.baremetal.apiVIPs: Invalid value: "ffd0::": serviceNetwork primary IP Family and primary IP family for the API VIP should match`,
 		},
 		{
 			name: "baremetal Ingress VIP set to an incorrect IP Family",
@@ -2114,7 +2264,20 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.IngressVIPs = []string{"ffd0::"}
 				return c
 			}(),
-			expectedError: `platform.baremetal.ingressVIPs: Invalid value: "ffd0::": VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6`,
+			expectedError: `[platform.baremetal.ingressVIPs: Invalid value: "ffd0::": clusterNetwork primary IP Family and primary IP family for the Ingress VIP should match, platform.baremetal.ingressVIPs: Invalid value: "ffd0::": machineNetwork primary IP Family and primary IP family for the Ingress VIP should match, platform.baremetal.ingressVIPs: Invalid value: "ffd0::": serviceNetwork primary IP Family and primary IP family for the Ingress VIP should match]`,
+		},
+		{
+			name: "baremetal Ingress VIP set to an incorrect IP Family with invalid primary IPv6 network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = InvalidPrimaryV6DualStackNetworkingConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIPs = []string{"ffd0::"}
+				return c
+			}(),
+			expectedError: `platform.baremetal.ingressVIPs: Invalid value: "ffd0::": serviceNetwork primary IP Family and primary IP family for the Ingress VIP should match`,
 		},
 		{
 			name: "should validate vips on baremetal (required)",
@@ -2686,4 +2849,386 @@ func TestValidateReleaseArchitecture(t *testing.T) {
 			assert.Regexp(t, `^controlPlane\.architecture: Invalid value: \"amd64\": .*$`, errs.ToAggregate())
 		})
 	})
+}
+
+func TestValidateTNF(t *testing.T) {
+	cases := []struct {
+		name         string
+		config       *types.InstallConfig
+		machinePool  *types.MachinePool
+		checkCompute bool
+		expected     string
+	}{
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				CpReplicas(3).
+				build(),
+			name:     "valid_empty_credentials_for_non_tnf",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "valid_two_credentials",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().CertificateVerification(types.CertificateVerificationDisabled), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "valid_disabled_cert_verification",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().CertificateVerification("Invalid"), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "invalid_cert_verification",
+			expected: "controlPlane.fencing.credentials\\[0\\]\\[CertificateVerification\\]: Invalid value: \"Invalid\": invalid certificate verification; \"Invalid\" should set to one of the following: \\['Enabled' \\(default\\), 'Disabled'\\]",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2(), c3())).
+				CpReplicas(2).build(),
+			name:     "invalid_number_of_credentials",
+			expected: "controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 3 credentials were found",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolArbiter(machinePool()).
+				MachinePoolCP(machinePool().Credential(c1(), c2())).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "skip_number_of_credentials_validation_for_arbiter_deployment",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolArbiter(machinePool()).
+				MachinePoolCP(machinePool().Credential(c1(), c2(), c3())).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "skip_number_of_credentials_validation_for_arbiter_deployment_invalid_credentials_count",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(3).build(),
+			name:     "invalid_number_of_credentials_for_non_tnf",
+			expected: "controlPlane.fencing.credentials: Forbidden: there should not be any fencing credentials configured for a non dual replica control plane \\(Two Nodes Fencing\\) cluster, instead 2 credentials were found",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("ipmi://192.168.111.1"),
+						c2().FencingCredentialAddress("ipmi://192.168.111.1"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_address_not_unique",
+			expected: "controlPlane.fencing.credentials\\[1\\].address: Duplicate value: \"ipmi://192.168.111.1\"",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().FencingCredentialAddress(""), c2())).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_address_required",
+			expected: "controlPlane.fencing.credentials\\[0\\].address: Required value: missing Address",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2().FencingCredentialUsername(""))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_username_required",
+			expected: "controlPlane.fencing.credentials\\[1\\].username: Required value: missing Username",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().FencingCredentialPassword(""), c2())).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_password_required",
+			expected: "controlPlane.fencing.credentials\\[0\\].password: Required value: missing Password",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().HostName(""), c2())).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_host_name_required",
+			expected: "controlPlane.fencing.credentials\\[0\\].hostName: Required value: missing HostName",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Architecture(types.ArchitectureAMD64).
+					Credential(c1(), c2())).
+				MachinePoolCompute(
+					machinePool().Name("worker").
+						Hyperthreading(types.HyperthreadingDisabled).
+						Architecture(types.ArchitectureAMD64).
+						Replicas(ptr.Int64(3)).
+						Credential(c1())).
+				CpReplicas(2).build(),
+			name:         "fencing_only_valid_for_control_plane",
+			checkCompute: true,
+			expected:     `compute\[\d+\]\.fencing: Invalid value: types\.Fencing\{Credentials:\[\]\*types\.Credential\{\(\*types\.Credential\)\(\S+\)\}\}: fencing is only valid for control plane`,
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "supported_platform_bm",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformExternal().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "supported_platform_ext",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformNone().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "supported_platform_none",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformAWS().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "unsupported_platform",
+			expected: "controlPlane.fencing: Forbidden: fencing is only supported on baremetal, external or none platforms, instead aws platform was found",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Build default wrapping installConfig
+			var err error
+			if tc.checkCompute {
+				err = validateCompute(&tc.config.Platform, tc.config.ControlPlane, tc.config.Compute, field.NewPath("compute")).ToAggregate()
+			} else {
+				err = validateFencingCredentials(tc.config).ToAggregate()
+			}
+
+			if tc.expected == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.expected, err)
+			}
+		})
+	}
+}
+
+type credentialBuilder struct {
+	types.Credential
+}
+
+func (hb *credentialBuilder) build() *types.Credential {
+	return &hb.Credential
+}
+
+func c1() *credentialBuilder {
+	return &credentialBuilder{
+		types.Credential{
+			HostName: "host1",
+			Username: "root",
+			Password: "password",
+			Address:  "ipmi://192.168.111.1",
+		},
+	}
+}
+
+func c2() *credentialBuilder {
+	return &credentialBuilder{
+		types.Credential{
+			HostName: "host2",
+			Username: "root",
+			Password: "password",
+			Address:  "ipmi://192.168.111.2",
+		},
+	}
+}
+
+func c3() *credentialBuilder {
+	return &credentialBuilder{
+		types.Credential{
+			HostName: "host3",
+			Username: "root",
+			Password: "password",
+			Address:  "ipmi://192.168.111.3",
+		},
+	}
+}
+
+func (hb *credentialBuilder) HostName(value string) *credentialBuilder {
+	hb.Credential.HostName = value
+	return hb
+}
+
+func (hb *credentialBuilder) FencingCredentialAddress(value string) *credentialBuilder {
+	hb.Credential.Address = value
+	return hb
+}
+
+func (hb *credentialBuilder) FencingCredentialUsername(value string) *credentialBuilder {
+	hb.Credential.Username = value
+	return hb
+}
+
+func (hb *credentialBuilder) FencingCredentialPassword(value string) *credentialBuilder {
+	hb.Credential.Password = value
+	return hb
+}
+
+func (hb *credentialBuilder) CertificateVerification(value types.CertificateVerificationPolicy) *credentialBuilder {
+	hb.Credential.CertificateVerification = value
+	return hb
+}
+
+type machinePoolBuilder struct {
+	types.MachinePool
+}
+
+func (pb *machinePoolBuilder) build() *types.MachinePool {
+	return &pb.MachinePool
+}
+
+func machinePool() *machinePoolBuilder {
+	return &machinePoolBuilder{
+		types.MachinePool{}}
+}
+
+func (pb *machinePoolBuilder) Name(name string) *machinePoolBuilder {
+	pb.MachinePool.Name = name
+	return pb
+}
+
+func (pb *machinePoolBuilder) Replicas(replicas *int64) *machinePoolBuilder {
+	pb.MachinePool.Replicas = replicas
+	return pb
+}
+
+func (pb *machinePoolBuilder) Architecture(architecture types.Architecture) *machinePoolBuilder {
+	pb.MachinePool.Architecture = architecture
+	return pb
+}
+
+func (pb *machinePoolBuilder) Hyperthreading(hyperthreading types.HyperthreadingMode) *machinePoolBuilder {
+	pb.MachinePool.Hyperthreading = hyperthreading
+	return pb
+}
+
+func (pb *machinePoolBuilder) Credential(builders ...*credentialBuilder) *machinePoolBuilder {
+	pb.MachinePool.Fencing = &types.Fencing{}
+	for _, builder := range builders {
+		pb.MachinePool.Fencing.Credentials = append(pb.MachinePool.Fencing.Credentials, builder.build())
+	}
+	return pb
+}
+
+type installConfigBuilder struct {
+	types.InstallConfig
+}
+
+func installConfig() *installConfigBuilder {
+	return &installConfigBuilder{
+		InstallConfig: types.InstallConfig{},
+	}
+}
+
+func (icb *installConfigBuilder) PlatformAWS() *installConfigBuilder {
+	icb.InstallConfig.Platform = types.Platform{AWS: validAWSPlatform()}
+	return icb
+}
+
+func (icb *installConfigBuilder) PlatformBMWithHosts() *installConfigBuilder {
+	icb.InstallConfig.Platform = types.Platform{BareMetal: validBareMetalPlatform()}
+	return icb
+}
+
+func (icb *installConfigBuilder) PlatformNone() *installConfigBuilder {
+	icb.InstallConfig.Platform = types.Platform{None: &none.Platform{}}
+	return icb
+}
+
+func (icb *installConfigBuilder) PlatformExternal() *installConfigBuilder {
+	icb.InstallConfig.Platform = types.Platform{External: &external.Platform{}}
+	return icb
+}
+
+func (icb *installConfigBuilder) CpReplicas(numOfCpReplicas int64) *installConfigBuilder {
+	if icb.InstallConfig.ControlPlane == nil {
+		icb.InstallConfig.ControlPlane = &types.MachinePool{}
+	}
+	icb.InstallConfig.ControlPlane.Replicas = &numOfCpReplicas
+	return icb
+}
+
+func (icb *installConfigBuilder) MachinePoolCP(builder *machinePoolBuilder) *installConfigBuilder {
+	icb.InstallConfig.ControlPlane = builder.build()
+	return icb
+}
+
+func (icb *installConfigBuilder) ArbiterReplicas(numOfCpReplicas int64) *installConfigBuilder {
+	if icb.InstallConfig.Arbiter == nil {
+		icb.InstallConfig.Arbiter = &types.MachinePool{}
+	}
+	icb.InstallConfig.Arbiter.Replicas = &numOfCpReplicas
+	return icb
+}
+
+func (icb *installConfigBuilder) MachinePoolArbiter(builder *machinePoolBuilder) *installConfigBuilder {
+	icb.InstallConfig.Arbiter = builder.build()
+	return icb
+}
+
+func (icb *installConfigBuilder) MachinePoolCompute(builders ...*machinePoolBuilder) *installConfigBuilder {
+	for _, builder := range builders {
+		icb.InstallConfig.Compute = append(icb.InstallConfig.Compute, *builder.build())
+	}
+	return icb
+}
+
+func (icb *installConfigBuilder) build() *types.InstallConfig {
+	return &icb.InstallConfig
 }

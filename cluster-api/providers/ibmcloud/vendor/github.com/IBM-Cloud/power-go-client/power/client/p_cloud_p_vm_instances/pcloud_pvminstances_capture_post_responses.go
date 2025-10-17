@@ -60,6 +60,12 @@ func (o *PcloudPvminstancesCapturePostReader) ReadResponse(response runtime.Clie
 			return nil, err
 		}
 		return nil, result
+	case 409:
+		result := NewPcloudPvminstancesCapturePostConflict()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 422:
 		result := NewPcloudPvminstancesCapturePostUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -482,6 +488,76 @@ func (o *PcloudPvminstancesCapturePostNotFound) GetPayload() *models.Error {
 }
 
 func (o *PcloudPvminstancesCapturePostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesCapturePostConflict creates a PcloudPvminstancesCapturePostConflict with default headers values
+func NewPcloudPvminstancesCapturePostConflict() *PcloudPvminstancesCapturePostConflict {
+	return &PcloudPvminstancesCapturePostConflict{}
+}
+
+/*
+PcloudPvminstancesCapturePostConflict describes a response with status code 409, with default header values.
+
+Conflict
+*/
+type PcloudPvminstancesCapturePostConflict struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances capture post conflict response has a 2xx status code
+func (o *PcloudPvminstancesCapturePostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances capture post conflict response has a 3xx status code
+func (o *PcloudPvminstancesCapturePostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances capture post conflict response has a 4xx status code
+func (o *PcloudPvminstancesCapturePostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances capture post conflict response has a 5xx status code
+func (o *PcloudPvminstancesCapturePostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances capture post conflict response a status code equal to that given
+func (o *PcloudPvminstancesCapturePostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
+// Code gets the status code for the pcloud pvminstances capture post conflict response
+func (o *PcloudPvminstancesCapturePostConflict) Code() int {
+	return 409
+}
+
+func (o *PcloudPvminstancesCapturePostConflict) Error() string {
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostConflict %s", 409, payload)
+}
+
+func (o *PcloudPvminstancesCapturePostConflict) String() string {
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostConflict %s", 409, payload)
+}
+
+func (o *PcloudPvminstancesCapturePostConflict) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesCapturePostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

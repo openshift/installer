@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,6 +48,26 @@ func (alert *MetricAlert) SetConditions(conditions conditions.Conditions) {
 	alert.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &MetricAlert{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (alert *MetricAlert) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if alert.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return alert.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &MetricAlert{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (alert *MetricAlert) SecretDestinationExpressions() []*core.DestinationExpression {
+	if alert.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return alert.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &MetricAlert{}
 
 // AzureName returns the Azure name of the resource
@@ -54,7 +77,7 @@ func (alert *MetricAlert) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2018-03-01"
 func (alert MetricAlert) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2018-03-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -152,13 +175,14 @@ type MetricAlert_Spec struct {
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName           string               `json:"azureName,omitempty"`
-	Criteria            *MetricAlertCriteria `json:"criteria,omitempty"`
-	Description         *string              `json:"description,omitempty"`
-	Enabled             *bool                `json:"enabled,omitempty"`
-	EvaluationFrequency *string              `json:"evaluationFrequency,omitempty"`
-	Location            *string              `json:"location,omitempty"`
-	OriginalVersion     string               `json:"originalVersion,omitempty"`
+	AzureName           string                   `json:"azureName,omitempty"`
+	Criteria            *MetricAlertCriteria     `json:"criteria,omitempty"`
+	Description         *string                  `json:"description,omitempty"`
+	Enabled             *bool                    `json:"enabled,omitempty"`
+	EvaluationFrequency *string                  `json:"evaluationFrequency,omitempty"`
+	Location            *string                  `json:"location,omitempty"`
+	OperatorSpec        *MetricAlertOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion     string                   `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -268,6 +292,14 @@ type MetricAlertCriteria_STATUS struct {
 	MicrosoftAzureMonitorSingleResourceMultipleMetric   *MetricAlertSingleResourceMultipleMetricCriteria_STATUS   `json:"microsoftAzureMonitorSingleResourceMultipleMetricCriteria,omitempty"`
 	MicrosoftAzureMonitorWebtestLocationAvailability    *WebtestLocationAvailabilityCriteria_STATUS               `json:"microsoftAzureMonitorWebtestLocationAvailabilityCriteria,omitempty"`
 	PropertyBag                                         genruntime.PropertyBag                                    `json:"$propertyBag,omitempty"`
+}
+
+// Storage version of v1api20180301.MetricAlertOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type MetricAlertOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20180301.MetricAlertMultipleResourceMultipleMetricCriteria

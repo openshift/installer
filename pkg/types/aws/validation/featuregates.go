@@ -14,7 +14,7 @@ import (
 func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeature {
 	return []featuregates.GatedInstallConfigFeature{
 		{
-			FeatureGateName: features.FeatureGateAWSClusterHostedDNS,
+			FeatureGateName: features.FeatureGateAWSClusterHostedDNSInstall,
 			Condition:       c.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
 			Field:           field.NewPath("platform", "aws", "userProvisionedDNS"),
 		},

@@ -20,6 +20,7 @@ import (
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
 	"github.com/IBM/networking-go-sdk/dnszonesv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
+	"github.com/IBM/platform-services-go-sdk/globalcatalogv1"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
@@ -39,13 +40,21 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
+	AttachFloatingIP(ctx context.Context, instanceName string, instanceID string, region string, resourceGroupName string) (*vpcv1.FloatingIP, error)
 	CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error
 	CreateCOSInstance(ctx context.Context, cosName string, resourceGroupID string) (*resourcecontrollerv2.ResourceInstance, error)
 	CreateCOSObject(ctx context.Context, sourceData []byte, fileName string, cosInstanceID string, bucketName string, region string) error
 	CreateCISDNSRecord(ctx context.Context, cisInstanceCRN string, zoneID string, recordName string, cname string) error
 	CreateDNSServicesDNSRecord(ctx context.Context, dnsInstanceID string, zoneID string, recordName string, cname string) error
+	CreateDNSServicesPermittedNetwork(ctx context.Context, dnsInstanceID string, dnsZoneID string, vpcCRN string) error
 	CreateIAMAuthorizationPolicy(tx context.Context, sourceServiceName string, sourceServiceResourceType string, targetServiceName string, targetServiceInstanceID string, roles []string) error
 	CreateResourceGroup(ctx context.Context, rgName string) error
+	DeleteCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error
+	DeleteCOSInstance(ctx context.Context, cosInstanceID string) error
+	DeleteCOSObject(ctx context.Context, cosInstanceID string, bucketName string, objectKey string, region string) error
+	DeleteFloatingIP(ctx context.Context, floatingIPID string, region string) error
+	DeleteSecurityGroup(ctx context.Context, securityGroupID string, region string) error
+	DeleteSecurityGroupTargetBinding(ctx context.Context, securityGroupID string, targetID string, region string) error
 	GetAPIKey() string
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
@@ -59,23 +68,30 @@ type API interface {
 	GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error)
 	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]responses.DNSZoneResponse, error)
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error)
+	GetIBMCloudRegions(ctx context.Context) (map[string]string, error)
+	GetFloatingIPByName(ctx context.Context, floatingIPName string, region string) (*vpcv1.FloatingIP, error)
 	GetLoadBalancer(ctx context.Context, loadBalancerID string) (*vpcv1.LoadBalancer, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
+	GetSecurityGroupByName(ctx context.Context, sgName string, vpcID string, region string) (*vpcv1.SecurityGroup, error)
 	GetSSHKeyByPublicKey(ctx context.Context, publicKey string) (*vpcv1.Key, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
 	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
+	GetVSI(ctx context.Context, instanceID string, region string) (*vpcv1.Instance, error)
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
 	GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error)
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error)
 	GetVPCZonesForRegion(ctx context.Context, region string) ([]string, error)
+	ListCOSBuckets(ctx context.Context, cosInstanceID string, region string) (*ibms3.ListBucketsOutput, error)
+	ListCOSObjects(ctx context.Context, cosInstanceID string, bucketName string, region string) (*ibms3.ListObjectsOutput, error)
 	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 }
 
 // Client makes calls to the IBM Cloud API.
 type Client struct {
 	apiKey        string
+	catalogAPI    *globalcatalogv1.GlobalCatalogV1
 	managementAPI *resourcemanagerv2.ResourceManagerV2
 	controllerAPI *resourcecontrollerv2.ResourceControllerV2
 	vpcAPI        *vpcv1.VpcV1
@@ -163,6 +179,7 @@ func NewClient(endpoints []configv1.IBMCloudServiceEndpoint) (*Client, error) {
 
 func (c *Client) loadSDKServices() error {
 	servicesToLoad := []func() error{
+		c.loadGlobalCatalogAPI,
 		c.loadResourceManagementAPI,
 		c.loadResourceControllerAPI,
 		c.loadVPCV1API,
@@ -176,6 +193,46 @@ func (c *Client) loadSDKServices() error {
 	}
 
 	return nil
+}
+
+// AttachFloatingIP will create a new VPC Floating IP resource, attaching it to the provided instance's primary network interface.
+func (c *Client) AttachFloatingIP(ctx context.Context, instanceName string, instanceID string, region string, resourceGroupName string) (*vpcv1.FloatingIP, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(localContext, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	// Get the Resource Group ID.
+	resourceGroup, err := c.GetResourceGroup(localContext, resourceGroupName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve resource group %s for floating ip: %w", resourceGroupName, err)
+	}
+
+	// Get the Instance, for its PrimaryNetworkInterface.
+	instance, err := c.GetVSI(localContext, instanceID, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve instance %s for floating ip: %w", instanceID, err)
+	}
+
+	floatingIPPrototype := &vpcv1.FloatingIPPrototype{
+		Name: ptr.To(instanceName),
+		ResourceGroup: &vpcv1.ResourceGroupIdentity{
+			ID: resourceGroup.ID,
+		},
+		Target: &vpcv1.FloatingIPTargetPrototypeNetworkInterfaceIdentity{
+			ID: instance.PrimaryNetworkInterface.ID,
+		},
+	}
+
+	options := c.vpcAPI.NewCreateFloatingIPOptions(floatingIPPrototype)
+	floatingIPDetails, _, err := c.vpcAPI.CreateFloatingIPWithContext(localContext, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create floating ip: %w", err)
+	}
+	return floatingIPDetails, nil
 }
 
 // CreateCOSBucket will create a new COS Bucket in the COS Instance, based on the Instance ID.
@@ -270,11 +327,10 @@ func (c *Client) CreateDNSServicesDNSRecord(ctx context.Context, dnsInstanceID s
 	if err != nil {
 		return fmt.Errorf("failed to create rdata cname record for dns services dns record: %w", err)
 	}
-	recordOptions := dnsService.NewCreateResourceRecordOptions(dnsInstanceID, zoneID)
+	recordOptions := dnsService.NewCreateResourceRecordOptions(dnsInstanceID, zoneID, dnssvcsv1.CreateResourceRecordOptions_Type_Cname)
 	recordOptions.SetName(recordName)
 	recordOptions.SetRdata(cnameRecord)
 	recordOptions.SetTTL(60)
-	recordOptions.SetType("CNAME")
 
 	// Create new DNS Record.
 	logrus.Debugf("creating dns services dns record: recordName=%s, cname=%s", recordName, cname)
@@ -283,6 +339,28 @@ func (c *Client) CreateDNSServicesDNSRecord(ctx context.Context, dnsInstanceID s
 		return fmt.Errorf("failed to create dns record %s: %w", recordName, err)
 	}
 	logrus.Debugf("created new dns record: recordName=%s, recordID=%s", recordName, *recordDetails.ID)
+	return nil
+}
+
+// CreateDNSServicesPermittedNetwork will create a new VPC Permitted Network in the specified DNS Services Instance and Zone.
+func (c *Client) CreateDNSServicesPermittedNetwork(ctx context.Context, dnsInstanceID string, dnsZoneID string, vpcCRN string) error {
+	dnsServices, err := c.getDNSServicesAPI()
+	if err != nil {
+		return fmt.Errorf("failed to create dns services service to create permitted network: %w", err)
+	}
+
+	// Build the new Permitted Network options.
+	permittedNetwork := &dnssvcsv1.PermittedNetworkVpc{
+		VpcCrn: ptr.To(vpcCRN),
+	}
+	permitOptions := dnsServices.NewCreatePermittedNetworkOptions(dnsInstanceID, dnsZoneID, dnssvcsv1.CreatePermittedNetworkOptions_Type_Vpc, permittedNetwork)
+
+	// Create the new Permitted Network.
+	result, _, err := dnsServices.CreatePermittedNetworkWithContext(ctx, permitOptions)
+	if err != nil {
+		return fmt.Errorf("failed to create permitted network: %w", err)
+	}
+	logrus.Debugf("created new dns services permitted network: dnsInstanceID=%s, dnsZoneID=%s, vpcCRN=%s, permittedNetworkID=%s", dnsInstanceID, dnsZoneID, vpcCRN, *result.ID)
 	return nil
 }
 
@@ -400,6 +478,113 @@ func (c *Client) CreateResourceGroup(ctx context.Context, rgName string) error {
 	// Create the Resource Group
 	if _, _, err = c.managementAPI.CreateResourceGroupWithContext(localContext, createRGOptions); err != nil {
 		return fmt.Errorf("failed creating new resource group: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteCOSBucket deletes the specified COS Bucket within a COS Instance.
+func (c *Client) DeleteCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	cosClient := c.getCOSClient(cosInstanceID, region)
+	input := &ibms3.DeleteBucketInput{
+		Bucket: ptr.To(bucketName),
+	}
+	_, err := cosClient.DeleteBucketWithContext(localContext, input)
+	if err != nil {
+		return fmt.Errorf("failed to delete bucket %s: %w", bucketName, err)
+	}
+	return nil
+}
+
+// DeleteCOSInstance deletes the specified COS Instance by ID.
+func (c *Client) DeleteCOSInstance(ctx context.Context, cosInstanceID string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	options := c.controllerAPI.NewDeleteResourceInstanceOptions(cosInstanceID)
+	// Make sure keys, bindings, and aliases also get deleted.
+	options.SetRecursive(true)
+
+	_, err := c.controllerAPI.DeleteResourceInstanceWithContext(localContext, options)
+	if err != nil {
+		return fmt.Errorf("failed to delete cos instance %s: %w", cosInstanceID, err)
+	}
+	return nil
+}
+
+// DeleteCOSObject deletes the specified COS Object in the specified bucket and instance.
+func (c *Client) DeleteCOSObject(ctx context.Context, cosInstanceID string, bucketName string, objectKey string, region string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	cosClient := c.getCOSClient(cosInstanceID, region)
+	input := &ibms3.DeleteObjectInput{
+		Bucket: ptr.To(bucketName),
+		Key:    ptr.To(objectKey),
+	}
+
+	if _, err := cosClient.DeleteObjectWithContext(localContext, input); err != nil {
+		return fmt.Errorf("failed to delete object %s: %w", objectKey, err)
+	}
+	return nil
+}
+
+// DeleteFloatingIP deletes the specified VPC Floating IP by ID and Region.
+// Region is required to make sure the VPC API is using the correct Region, assuming that is required.
+func (c *Client) DeleteFloatingIP(ctx context.Context, floatingIPID string, region string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(localContext, region); err != nil {
+		return fmt.Errorf("failed setting vpc service region for floating ip deletion: %w", err)
+	}
+
+	options := c.vpcAPI.NewDeleteFloatingIPOptions(floatingIPID)
+	if _, err := c.vpcAPI.DeleteFloatingIPWithContext(localContext, options); err != nil {
+		return fmt.Errorf("failed to delete floating ip %s: %w", floatingIPID, err)
+	}
+	return nil
+}
+
+// DeleteSecurityGroup deletes the specified security group by ID and Region.
+// Region is required to make sure the VPC API is using the correct Region, assuming that is required.
+func (c *Client) DeleteSecurityGroup(ctx context.Context, securityGroupID string, region string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(localContext, region)
+	if err != nil {
+		return fmt.Errorf("failed setting vpc service region for security group deletion: %w", err)
+	}
+
+	deleteOptions := c.vpcAPI.NewDeleteSecurityGroupOptions(securityGroupID)
+	detailedResponse, err := c.vpcAPI.DeleteSecurityGroup(deleteOptions)
+	if err != nil {
+		if detailedResponse == nil || detailedResponse.GetStatusCode() != http.StatusNotFound {
+			return fmt.Errorf("failed to delete security group %s: %w", securityGroupID, err)
+		}
+	}
+	return nil
+}
+
+// DeleteSecurityGroupTargetBinding removes the specificied target resource attached to the specified security group.
+func (c *Client) DeleteSecurityGroupTargetBinding(ctx context.Context, securityGroupID string, targetID string, region string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(localContext, region)
+	if err != nil {
+		return fmt.Errorf("failed setting vpc service region for security group target binding deletion: %w", err)
+	}
+
+	deleteSecurityGroupTargetOptions := c.vpcAPI.NewDeleteSecurityGroupTargetBindingOptions(securityGroupID, targetID)
+	if detailedResponse, err := c.vpcAPI.DeleteSecurityGroupTargetBindingWithContext(localContext, deleteSecurityGroupTargetOptions); err != nil {
+		if detailedResponse == nil || detailedResponse.GetStatusCode() != http.StatusNotFound {
+			return fmt.Errorf("failed to delete security group target binding: %w", err)
+		}
 	}
 
 	return nil
@@ -753,6 +938,95 @@ func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*response
 	return keyResponse, nil
 }
 
+// GetIBMCloudRegions gets the Regions for IBM Cloud, mapped by shortname to descriptive name.
+func (c *Client) GetIBMCloudRegions(ctx context.Context) (map[string]string, error) {
+	regions := make(map[string]string, 0)
+	// Global Catalog is used to collect the IBM Cloud Regions, via multiple commands.
+	geographyOptions := c.catalogAPI.NewListCatalogEntriesOptions()
+	geographyOptions.SetQ("kind:geography")
+
+	geographyResult, _, err := c.catalogAPI.ListCatalogEntriesWithContext(ctx, geographyOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud georaphic regions: %w", err)
+	}
+
+	countryList, err := c.GetChildrenFromParents(ctx, geographyResult.Resources, "country")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud countrys: %w", err)
+	}
+	metroList, err := c.GetChildrenFromParents(ctx, countryList, "metro")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud metros: %w", err)
+	}
+
+	regionList, err := c.GetChildrenFromParents(ctx, metroList, "region")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud regions: %w", err)
+	}
+
+	for _, child := range regionList {
+		if child.ID == nil {
+			continue
+		}
+		var description string
+		// Attempt to collect the descriptive Region name, although this is based on language, so leaves room for improvement.
+		if _, ok := child.OverviewUI["en"]; ok {
+			description = *child.OverviewUI["en"].Description
+		}
+		regions[*child.ID] = description
+	}
+
+	return regions, nil
+}
+
+// GetChildrenFromParents fetches the children from the IBM Catalog using the given list of parents and the specified kind.
+func (c *Client) GetChildrenFromParents(ctx context.Context, parentList []globalcatalogv1.CatalogEntry, kind string) ([]globalcatalogv1.CatalogEntry, error) {
+	var childrenList []globalcatalogv1.CatalogEntry
+
+	for num, parent := range parentList {
+		if parent.ID == nil {
+			fmt.Printf("skipping parent num %d of type %s due to unexpected nil ID\n", num, kind)
+			continue
+		}
+
+		childrenOptions := c.catalogAPI.NewGetChildObjectsOptions(*parent.ID, kind)
+		childrenOptions.SetInclude("*")
+		childrenResult, _, err := c.catalogAPI.GetChildObjectsWithContext(ctx, childrenOptions)
+		if err != nil {
+			return childrenList, fmt.Errorf("failed to retrieve child entries of type %s for %s: %w", kind, *parent.ID, err)
+		}
+		childrenList = append(childrenList, childrenResult.Resources...)
+	}
+	return childrenList, nil
+}
+
+// GetFloatingIPByName gets a VPC Floating IP by name.
+func (c *Client) GetFloatingIPByName(ctx context.Context, floatingIPName string, region string) (*vpcv1.FloatingIP, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(localContext, region); err != nil {
+		return nil, fmt.Errorf("failed setting vpc service region for floating ip lookup: %w", err)
+	}
+
+	listOptions := c.vpcAPI.NewListFloatingIpsOptions()
+	pager, err := c.vpcAPI.NewFloatingIpsPager(listOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed building floating ips pager: %w", err)
+	}
+	floatingIPs, err := pager.GetAllWithContext(localContext)
+	if err != nil {
+		return nil, fmt.Errorf("failed retrieving all floating ips with pager: %w", err)
+	}
+	for _, fip := range floatingIPs {
+		if fip.Name != nil && *fip.Name == floatingIPName {
+			return ptr.To(fip), nil
+		}
+	}
+
+	return nil, &VPCResourceNotFoundError{}
+}
+
 // GetLoadBalancer gets a VPC Load Balancer by ID.
 func (c *Client) GetLoadBalancer(ctx context.Context, loadBalancerID string) (*vpcv1.LoadBalancer, error) {
 	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
@@ -799,6 +1073,36 @@ func (c *Client) GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.Res
 		return nil, err
 	}
 	return listResourceGroupsResponse.Resources, nil
+}
+
+// GetSecurityGroupByName gets a Security Group by its Name, within the specified VPC (ID) and Region.
+func (c *Client) GetSecurityGroupByName(ctx context.Context, sgName string, vpcID string, region string) (*vpcv1.SecurityGroup, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(localContext, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed setting vpc service region for security group lookup: %w", err)
+	}
+
+	listSecurityGroupOptions := c.vpcAPI.NewListSecurityGroupsOptions()
+	listSecurityGroupOptions.SetVPCID(vpcID)
+	securityGroupsPager, err := c.vpcAPI.NewSecurityGroupsPager(listSecurityGroupOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating pager for security group lookup: %w", err)
+	}
+
+	securityGroups, err := securityGroupsPager.GetAllWithContext(localContext)
+	if err != nil {
+		return nil, fmt.Errorf("failed collecting all security groups with pager: %w", err)
+	}
+	for _, securityGroup := range securityGroups {
+		if securityGroup.Name != nil && *securityGroup.Name == sgName {
+			return ptr.To(securityGroup), nil
+		}
+	}
+
+	return nil, &VPCResourceNotFoundError{}
 }
 
 // GetSSHKeyByPublicKey gets an SSH Key by its public key.
@@ -863,6 +1167,24 @@ func (c *Client) GetSubnetByName(ctx context.Context, subnetName string, region 
 		}
 	}
 	return nil, &VPCResourceNotFoundError{}
+}
+
+// GetVSI gets a VPC Virtual Service Instance with provided ID.
+func (c *Client) GetVSI(ctx context.Context, instanceID string, region string) (*vpcv1.Instance, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(localContext, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	options := c.vpcAPI.NewGetInstanceOptions(instanceID)
+	instance, _, err := c.vpcAPI.GetInstanceWithContext(localContext, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve instance %s: %w", instanceID, err)
+	}
+	return instance, nil
 }
 
 // GetVSIProfiles gets a list of all VSI profiles.
@@ -992,6 +1314,25 @@ func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
 	}
 
 	return listRegionsResponse.Regions, nil
+}
+
+func (c *Client) loadGlobalCatalogAPI() error {
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	if err != nil {
+		return fmt.Errorf("failed generating authenticator for global catalog api: %w", err)
+	}
+	options := &globalcatalogv1.GlobalCatalogV1Options{
+		Authenticator: authenticator,
+	}
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceGlobalCatalog, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
+	}
+	globalCatalogV1Service, err := globalcatalogv1.NewGlobalCatalogV1(options)
+	if err != nil {
+		return fmt.Errorf("failed creating global catalog api service: %w", err)
+	}
+	c.catalogAPI = globalCatalogV1Service
+	return nil
 }
 
 func (c *Client) loadResourceManagementAPI() error {
@@ -1187,8 +1528,42 @@ func (c *Client) getKeyServiceAPI(crn ibmcrn.CRN) (*kpclient.Client, error) {
 	return kpclient.New(clientConfig, kpclient.DefaultTransport())
 }
 
+// ListCOSBuckets lists Buckets in the specified COS Instance.
+func (c *Client) ListCOSBuckets(ctx context.Context, cosInstanceID string, region string) (*ibms3.ListBucketsOutput, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	cosClient := c.getCOSClient(cosInstanceID, region)
+
+	input := &ibms3.ListBucketsInput{
+		IBMServiceInstanceId: ptr.To(cosInstanceID),
+	}
+	return cosClient.ListBucketsWithContext(localContext, input)
+}
+
+// ListCOSObjects lists Objects in the specified COS Bucket and Instance.
+func (c *Client) ListCOSObjects(ctx context.Context, cosInstanceID string, bucketName string, region string) (*ibms3.ListObjectsOutput, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	cosClient := c.getCOSClient(cosInstanceID, region)
+
+	input := &ibms3.ListObjectsInput{
+		Bucket: ptr.To(bucketName),
+	}
+	return cosClient.ListObjectsWithContext(localContext, input)
+}
+
 // SetVPCServiceURLForRegion will set the VPC Service URL to a specific IBM Cloud Region, in order to access Region scoped resources
 func (c *Client) SetVPCServiceURLForRegion(ctx context.Context, region string) error {
+	// If an endpoint override was supplied for VPC, utilize the override.
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceVPC, c.serviceEndpoints); overrideURL != "" {
+		if err := c.vpcAPI.SetServiceURL(overrideURL); err != nil {
+			return fmt.Errorf("failed setting vpc service url to override url %s: %w", overrideURL, err)
+		}
+		return nil
+	}
+
 	regionOptions := c.vpcAPI.NewGetRegionOptions(region)
 	vpcRegion, _, err := c.vpcAPI.GetRegionWithContext(ctx, regionOptions)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -39,8 +40,11 @@ import (
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
+	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
@@ -93,29 +97,16 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 
 	switch ic.Platform.Name() {
 	case awstypes.Name:
-		subnets := map[string]string{}
-		bootstrapSubnets := map[string]string{}
-		if len(ic.Platform.AWS.Subnets) > 0 {
-			// fetch private subnets to master nodes.
-			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
-			if err != nil {
-				return err
-			}
-			for id, subnet := range subnetMeta {
-				subnets[subnet.Zone.Name] = id
-			}
-			// fetch public subnets for bootstrap, when exists, otherwise use private.
-			if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-				subnetMeta, err := installConfig.AWS.PublicSubnets(ctx)
-				if err != nil {
-					return err
-				}
-				for id, subnet := range subnetMeta {
-					bootstrapSubnets[subnet.Zone.Name] = id
-				}
-			} else {
-				bootstrapSubnets = subnets
-			}
+		// Get subnets for master machines if any.
+		subnets, err := aws.MachineSubnetsByZones(ctx, installConfig, awstypes.ClusterNodeSubnetRole)
+		if err != nil {
+			return err
+		}
+
+		// Get subnets for bootstrap machine if any.
+		bootstrapSubnets, err := aws.MachineSubnetsByZones(ctx, installConfig, awstypes.BootstrapNodeSubnetRole)
+		if err != nil {
+			return err
 		}
 
 		mpool := defaultAWSMachinePoolPlatform("master")
@@ -135,6 +126,10 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				for zone := range subnets {
 					mpool.Zones = append(mpool.Zones, zone)
 				}
+				// Since zones are extracted from map keys, order is not guaranteed.
+				// Thus, sort the zones by lexical order to ensure CAPI and MAPI machines
+				// are distributed to zones in the same order.
+				slices.Sort(mpool.Zones)
 			} else {
 				mpool.Zones, err = installConfig.AWS.AvailabilityZones(ctx)
 				if err != nil {
@@ -198,6 +193,14 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		pool := *ic.ControlPlane
 		pool.Name = "bootstrap"
 		pool.Replicas = ptr.To[int64](1)
+		// If there are dedicated subnets for the bootstrap machine (i.e. byo subnets),
+		// use AZs from those subnets.
+		if len(bootstrapSubnets) > 0 {
+			mpool.Zones = make([]string, 0)
+			for zone := range bootstrapSubnets {
+				mpool.Zones = append(mpool.Zones, zone)
+			}
+		}
 		pool.Platform.AWS = &mpool
 		bootstrapAWSMachine, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
 			Role:           "bootstrap",
@@ -213,7 +216,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		}
 		c.FileList = append(c.FileList, bootstrapAWSMachine...)
 	case azuretypes.Name:
-		mpool := defaultAzureMachinePoolPlatform()
+		mpool := defaultAzureMachinePoolPlatform(installConfig.Config.Platform.Azure.CloudName)
 		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(
 			installConfig.Config.Platform.Azure.CloudName,
 			installConfig.Config.Platform.Azure.Region,
@@ -284,16 +287,18 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		azureMachines, err := azure.GenerateMachines(clusterID.InfraID,
 			installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID),
 			session.Credentials.SubscriptionID,
+			session,
 			&azure.MachineInput{
 				Subnet:          subnet,
 				Role:            "master",
 				UserDataSecret:  "master-user-data",
 				HyperVGen:       hyperVGen,
-				UseImageGallery: false,
+				UseImageGallery: installConfig.Azure.CloudName != azuretypes.StackCloud,
 				Private:         installConfig.Config.Publish == types.InternalPublishingStrategy,
 				UserTags:        installConfig.Config.Platform.Azure.UserTags,
 				Platform:        installConfig.Config.Platform.Azure,
 				Pool:            &pool,
+				StorageSuffix:   session.Environment.StorageEndpointSuffix,
 			},
 		)
 		if err != nil {
@@ -307,7 +312,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.GCP)
 		if len(mpool.Zones) == 0 {
-			azs, err := gcp.ZonesForInstanceType(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, mpool.InstanceType)
+			azs, err := gcp.ZonesForInstanceType(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, mpool.InstanceType, ic.Platform.GCP.ServiceEndpoints)
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch availability zones")
 			}
@@ -403,9 +408,8 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		}
 
 		pool.Platform.VSphere = &mpool
-		templateName := clusterID.InfraID + "-rhcos"
 
-		c.FileList, err = vspherecapi.GenerateMachines(ctx, clusterID.InfraID, ic, &pool, templateName, "master", installConfig.VSphere)
+		c.FileList, err = vspherecapi.GenerateMachines(ctx, clusterID.InfraID, ic, &pool, "master", installConfig.VSphere)
 		if err != nil {
 			return fmt.Errorf("unable to generate CAPI machines for vSphere %w", err)
 		}
@@ -500,8 +504,10 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		if err != nil {
 			return fmt.Errorf("failed to generate IBM Cloud VPC machine manifests: %w", err)
 		}
+	case externaltypes.Name, nonetypes.Name, baremetaltypes.Name:
+		return nil
 	default:
-		// TODO: support other platforms
+		return fmt.Errorf("unrecognized platform: %q", ic.Platform.Name())
 	}
 
 	// Create the machine manifests.

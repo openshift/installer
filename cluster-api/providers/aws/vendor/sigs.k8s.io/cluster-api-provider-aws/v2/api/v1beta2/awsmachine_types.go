@@ -20,7 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/errors"
 )
 
 const (
@@ -52,6 +51,16 @@ const (
 
 	// IgnitionStorageTypeOptionUnencryptedUserData means the chosen Ignition storage type is UnencryptedUserData.
 	IgnitionStorageTypeOptionUnencryptedUserData = IgnitionStorageTypeOption("UnencryptedUserData")
+)
+
+// NetworkInterfaceType is the type of network interface.
+type NetworkInterfaceType string
+
+const (
+	// NetworkInterfaceTypeENI means the network interface type is Elastic Network Interface.
+	NetworkInterfaceTypeENI NetworkInterfaceType = NetworkInterfaceType("interface")
+	// NetworkInterfaceTypeEFAWithENAInterface means the network interface type is Elastic Fabric Adapter with Elastic Network Adapter.
+	NetworkInterfaceTypeEFAWithENAInterface NetworkInterfaceType = NetworkInterfaceType("efa")
 )
 
 // AWSMachineSpec defines the desired state of an Amazon EC2 instance.
@@ -153,6 +162,12 @@ type AWSMachineSpec struct {
 	// +kubebuilder:validation:MaxItems=2
 	NetworkInterfaces []string `json:"networkInterfaces,omitempty"`
 
+	// NetworkInterfaceType is the interface type of the primary network Interface.
+	// If not specified, AWS applies a default value.
+	// +kubebuilder:validation:Enum=interface;efa
+	// +optional
+	NetworkInterfaceType NetworkInterfaceType `json:"networkInterfaceType,omitempty"`
+
 	// UncompressedUserData specify whether the user data is gzip-compressed before it is sent to ec2 instance.
 	// cloud-init has built-in support for gzip-compressed user data
 	// user data stored in aws secret manager is always gzip-compressed.
@@ -197,6 +212,15 @@ type AWSMachineSpec struct {
 	// CapacityReservationID specifies the target Capacity Reservation into which the instance should be launched.
 	// +optional
 	CapacityReservationID *string `json:"capacityReservationId,omitempty"`
+
+	// MarketType specifies the type of market for the EC2 instance. Valid values include:
+	// "OnDemand" (default): The instance runs as a standard OnDemand instance.
+	// "Spot": The instance runs as a Spot instance. When SpotMarketOptions is provided, the marketType defaults to "Spot".
+	// "CapacityBlock": The instance utilizes pre-purchased compute capacity (capacity blocks) with AWS Capacity Reservations.
+	//  If this value is selected, CapacityReservationID must be specified to identify the target reservation.
+	// If marketType is not specified and spotMarketOptions is provided, the marketType defaults to "Spot".
+	// +optional
+	MarketType MarketType `json:"marketType,omitempty"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where
@@ -352,7 +376,7 @@ type AWSMachineStatus struct {
 	// can be added as events to the Machine object and/or logged in the
 	// controller's output.
 	// +optional
-	FailureReason *errors.MachineStatusError `json:"failureReason,omitempty"`
+	FailureReason *string `json:"failureReason,omitempty"`
 
 	// FailureMessage will be set in the event that there is a terminal problem
 	// reconciling the Machine and will contain a more verbose string suitable

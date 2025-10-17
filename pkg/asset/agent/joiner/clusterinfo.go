@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/assisted-service/models"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	machineconfigclient "github.com/openshift/client-go/machineconfiguration/clientset/versioned"
+	operatorclient "github.com/openshift/client-go/operator/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
@@ -51,6 +52,7 @@ import (
 type ClusterInfo struct {
 	Client                       kubernetes.Interface
 	OpenshiftClient              configclient.Interface
+	OpenshiftOperatorClient      operatorclient.Interface
 	OpenshiftMachineConfigClient machineconfigclient.Interface
 	addNodesConfig               AddNodesConfig
 
@@ -118,7 +120,7 @@ func (ci *ClusterInfo) Generate(ctx context.Context, dependencies asset.Parents)
 		ci.retrieveUserTrustBundle,
 		ci.retrieveArchitecture,
 		ci.retrieveImageDigestMirrorSets,
-		ci.retrieveImageContentPolicies,
+		ci.retrieveImageContentSourcePolicies,
 		ci.retrieveOsImage,
 		ci.retrieveIgnitionEndpointWorker,
 		ci.retrievePlatformType,
@@ -142,7 +144,7 @@ func (ci *ClusterInfo) Generate(ctx context.Context, dependencies asset.Parents)
 }
 
 func (ci *ClusterInfo) initClients() error {
-	if ci.Client != nil && ci.OpenshiftClient != nil {
+	if ci.Client != nil && ci.OpenshiftClient != nil && ci.OpenshiftOperatorClient != nil {
 		return nil
 	}
 
@@ -163,6 +165,12 @@ func (ci *ClusterInfo) initClients() error {
 		return err
 	}
 	ci.OpenshiftClient = openshiftClient
+
+	operatorClient, err := operatorclient.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	ci.OpenshiftOperatorClient = operatorClient
 
 	openshiftMachineConfigClient, err := machineconfigclient.NewForConfig(config)
 	if err != nil {
@@ -215,6 +223,27 @@ func (ci *ClusterInfo) retrievePullSecret() error {
 	return nil
 }
 
+// filter out certificates that were erroneously included from CoreOS in 4.15
+// installations with the agent-based installer, which make the bundle huge and
+// cause a failure to create the InfraEnv.
+func filterCaBundleData(userCaBundle string) string {
+	certs := strings.SplitAfter(userCaBundle, "-----END CERTIFICATE-----")
+	filteredCerts := []string{}
+filtering:
+	for _, c := range certs {
+		if _, match := coreOS92CaCerts[strings.TrimLeft(c, "\n")]; !match {
+			// Ignore duplicates
+			for _, fc := range filteredCerts {
+				if strings.TrimSpace(fc) == strings.TrimSpace(c) {
+					continue filtering
+				}
+			}
+			filteredCerts = append(filteredCerts, c)
+		}
+	}
+	return strings.Join(filteredCerts, "")
+}
+
 func (ci *ClusterInfo) retrieveUserTrustBundle() error {
 	userCaBundle, err := ci.Client.CoreV1().ConfigMaps("openshift-config").Get(context.Background(), "user-ca-bundle", metav1.GetOptions{})
 	if err != nil {
@@ -223,7 +252,7 @@ func (ci *ClusterInfo) retrieveUserTrustBundle() error {
 		}
 		return err
 	}
-	ci.UserCaBundle = userCaBundle.Data["ca-bundle.crt"]
+	ci.UserCaBundle = filterCaBundleData(userCaBundle.Data["ca-bundle.crt"])
 
 	return nil
 }
@@ -297,6 +326,10 @@ func (ci *ClusterInfo) retrieveSSHKey() error {
 				return err
 			}
 			ci.SSHKey = installConfig.SSHKey
+			return nil
+		}
+
+		if errors.IsNotFound(err) {
 			return nil
 		}
 		return err
@@ -404,8 +437,8 @@ func (ci *ClusterInfo) retrieveImageDigestMirrorSets() error {
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveImageContentPolicies() error {
-	imageContentPolicies, err := ci.OpenshiftClient.ConfigV1().ImageContentPolicies().List(context.Background(), metav1.ListOptions{})
+func (ci *ClusterInfo) retrieveImageContentSourcePolicies() error {
+	imageContentSourcePolicies, err := ci.OpenshiftOperatorClient.OperatorV1alpha1().ImageContentSourcePolicies().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		// Older oc client may not have sufficient permissions,
 		// falling back to previous implementation.
@@ -426,14 +459,12 @@ func (ci *ClusterInfo) retrieveImageContentPolicies() error {
 		return nil
 	}
 
-	for _, icp := range imageContentPolicies.Items {
-		for _, digestMirror := range icp.Spec.RepositoryDigestMirrors {
+	for _, icsp := range imageContentSourcePolicies.Items {
+		for _, digestMirror := range icsp.Spec.RepositoryDigestMirrors {
 			digestSource := types.ImageContentSource{
 				Source: digestMirror.Source,
 			}
-			for _, m := range digestMirror.Mirrors {
-				digestSource.Mirrors = append(digestSource.Mirrors, string(m))
-			}
+			digestSource.Mirrors = append(digestSource.Mirrors, digestMirror.Mirrors...)
 			ci.DeprecatedImageContentSources = append(ci.DeprecatedImageContentSources, digestSource)
 		}
 	}

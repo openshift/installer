@@ -157,7 +157,16 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 	allErrs := field.ErrorList{}
 	topologyFld := fldPath.Child("topology")
 	var associatedVCenter *vsphere.VCenter
+
+	zoneNames := make(map[string]string)
+
 	for index, failureDomain := range p.FailureDomains {
+		if regionName, ok := zoneNames[failureDomain.Zone]; !ok {
+			zoneNames[failureDomain.Zone] = failureDomain.Region
+		} else if regionName == failureDomain.Region {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("zone"), failureDomain.Zone, fmt.Sprintf("cannot be used more than once for the failure domain region %q", failureDomain.Region)))
+		}
+
 		if failureDomain.ZoneType == "" && failureDomain.RegionType == "" {
 			logrus.Debug("using the defaults regionType is Datacenter and zoneType is ComputeCluster")
 		}
@@ -247,12 +256,15 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 			}
 		}
 
-		if len(failureDomain.Topology.Networks) == 0 {
+		switch networkCount := len(failureDomain.Topology.Networks); {
+		case networkCount == 0:
 			if isLegacyUpi {
 				logrus.Warn("network field empty is now deprecated, in later releases this field will be required.")
 			} else {
 				allErrs = append(allErrs, field.Required(topologyFld.Child("networks"), "must specify a network"))
 			}
+		case networkCount > 10:
+			allErrs = append(allErrs, field.TooMany(topologyFld.Child("networks"), networkCount, 10))
 		}
 
 		// Folder in failuredomain is optional

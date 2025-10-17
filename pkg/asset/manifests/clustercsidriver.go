@@ -98,6 +98,7 @@ func (csi *ClusterCSIDriverConfig) Generate(_ context.Context, dependencies asse
 			return nil
 		}
 		kmsKey := platform.OSDisk.EncryptionKey.KMSKey
+
 		configData, err := gcp.ClusterCSIDriverConfig{
 			Name:      kmsKey.Name,
 			KeyRing:   kmsKey.KeyRing,

@@ -3,6 +3,7 @@ package aws
 
 import (
 	"bytes"
+	"context"
 	"encoding/pem"
 	"fmt"
 	"strings"
@@ -16,16 +17,18 @@ import (
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/aws"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 // MachineInput defines the inputs needed to generate a machine asset.
 type MachineInput struct {
 	Role           string
 	Pool           *types.MachinePool
-	Subnets        map[string]string
+	Subnets        aws.SubnetsByZone
 	Tags           capa.Tags
 	PublicIP       bool
 	PublicIpv4Pool string
@@ -34,7 +37,7 @@ type MachineInput struct {
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
 func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile, error) {
-	if poolPlatform := in.Pool.Platform.Name(); poolPlatform != aws.Name {
+	if poolPlatform := in.Pool.Platform.Name(); poolPlatform != awstypes.Name {
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
 	mpool := in.Pool.Platform.AWS
@@ -62,14 +65,14 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 
 		// BYO VPC deployments when subnet IDs are set on install-config.yaml
 		if len(in.Subnets) > 0 {
-			subnetID, ok := in.Subnets[zone]
+			subnetMeta, ok := in.Subnets[zone]
 			if len(in.Subnets) > 0 && !ok {
 				return nil, fmt.Errorf("no subnet for zone %s", zone)
 			}
-			if subnetID == "" {
+			if subnetMeta.ID == "" {
 				return nil, fmt.Errorf("invalid subnet ID for zone %s", zone)
 			}
-			subnet.ID = ptr.To(subnetID)
+			subnet.ID = ptr.To(subnetMeta.ID)
 		} else {
 			subnetInternetScope := "private"
 			if in.PublicIP {
@@ -252,4 +255,64 @@ func capaIgnitionProxy(proxy *types.Proxy) *capa.IgnitionProxy {
 		}
 	}
 	return capaProxy
+}
+
+// MachineSubnetsByZones returns a map of subnets by zones for a subnet role type
+// to place corresponding nodes in. Type must be one of: ClusterNode, EdgeNode and BootstrapNode.
+func MachineSubnetsByZones(ctx context.Context, ic *installconfig.InstallConfig, roleType awstypes.SubnetRoleType) (aws.SubnetsByZone, error) {
+	machineSubnets := make(aws.SubnetsByZone)
+
+	// If managed subnets, leave empty to use capa subnet filters.
+	if ic.Config.AWS == nil || len(ic.Config.AWS.VPC.Subnets) == 0 {
+		return machineSubnets, nil
+	}
+
+	subnetIDsByRole := make(map[awstypes.SubnetRoleType][]string)
+	for _, subnet := range ic.Config.AWS.VPC.Subnets {
+		for _, role := range subnet.Roles {
+			subnetIDsByRole[role.Type] = append(subnetIDsByRole[role.Type], string(subnet.ID))
+		}
+	}
+
+	// BYO-subnet install case and subnet roles are specified.
+	if len(subnetIDsByRole) > 0 {
+		for _, subnetID := range subnetIDsByRole[roleType] {
+			subnetMeta, err := ic.AWS.SubnetByID(ctx, subnetID)
+			if err != nil {
+				return machineSubnets, err
+			}
+			machineSubnets[subnetMeta.Zone.Name] = subnetMeta
+		}
+		return machineSubnets, nil
+	}
+
+	// BYO-subnet install case and subnet roles are not specified.
+	var subnetMeta aws.Subnets
+	var err error
+	switch roleType {
+	case awstypes.ClusterNodeSubnetRole:
+		// fetch private subnets to master nodes.
+		subnetMeta, err = ic.AWS.PrivateSubnets(ctx)
+	case awstypes.EdgeNodeSubnetRole:
+		// fetch edge subnets to edge compute nodes.
+		subnetMeta, err = ic.AWS.EdgeSubnets(ctx)
+	case awstypes.BootstrapNodeSubnetRole:
+		// fetch public subnets for bootstrap, when exists (external cluster).
+		// Otherwise, use private.
+		if ic.Config.Publish == types.ExternalPublishingStrategy {
+			subnetMeta, err = ic.AWS.PublicSubnets(ctx)
+		} else {
+			subnetMeta, err = ic.AWS.PrivateSubnets(ctx)
+		}
+	}
+
+	if err != nil {
+		return machineSubnets, err
+	}
+
+	for _, subnet := range subnetMeta {
+		machineSubnets[subnet.Zone.Name] = subnet
+	}
+
+	return machineSubnets, nil
 }

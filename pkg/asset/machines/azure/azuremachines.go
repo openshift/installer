@@ -14,9 +14,10 @@ import (
 
 	"github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/azure"
+	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
 const (
@@ -29,16 +30,17 @@ type MachineInput struct {
 	Role            string
 	UserDataSecret  string
 	HyperVGen       string
+	StorageSuffix   string
 	UseImageGallery bool
 	Private         bool
 	UserTags        map[string]string
-	Platform        *azure.Platform
+	Platform        *aztypes.Platform
 	Pool            *types.MachinePool
 }
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
-func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *MachineInput) ([]*asset.RuntimeFile, error) {
-	if poolPlatform := in.Pool.Platform.Name(); poolPlatform != azure.Name {
+func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *icazure.Session, in *MachineInput) ([]*asset.RuntimeFile, error) {
+	if poolPlatform := in.Pool.Platform.Name(); poolPlatform != aztypes.Name {
 		return nil, fmt.Errorf("non-Azure machine-pool: %q", poolPlatform)
 	}
 	mpool := in.Pool.Platform.Azure
@@ -58,8 +60,6 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
 	}
 
-	userAssignedIdentityID := fmt.Sprintf("/subscriptions/%s/resourcegroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s-identity", subscriptionID, resourceGroup, clusterID)
-
 	var image *capz.Image
 	osImage := mpool.OSImage
 	galleryName := strings.ReplaceAll(clusterID, "-", "_")
@@ -74,22 +74,20 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 					SKU:       osImage.SKU,
 				},
 				Version:         osImage.Version,
-				ThirdPartyImage: osImage.Plan != azure.ImageNoPurchasePlan,
+				ThirdPartyImage: osImage.Plan != aztypes.ImageNoPurchasePlan,
 			},
 		}
 	case in.UseImageGallery:
 		// image gallery names cannot have dashes
-		id := clusterID
-		if in.HyperVGen == "V2" {
-			id += genV2Suffix
-		}
-		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", resourceGroup, galleryName, id)
-		image = &capz.Image{ID: &imageID}
-	default:
 		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", subscriptionID, resourceGroup, galleryName, clusterID)
-		if in.HyperVGen == "V2" && in.Platform.CloudName != azure.StackCloud {
+		if in.HyperVGen == "V2" && in.Platform.CloudName != aztypes.StackCloud {
 			imageID += genV2Suffix
 		}
+		image = &capz.Image{ID: &imageID}
+	default:
+		// AzureStack is the only use for managed images & supports only Gen1 VMs:
+		// https://learn.microsoft.com/en-us/azure-stack/user/azure-stack-vm-considerations?view=azs-2501&tabs=az1%2Caz2#vm-differences
+		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/images/%s", subscriptionID, resourceGroup, clusterID)
 		image = &capz.Image{ID: &imageID}
 	}
 
@@ -144,6 +142,56 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		}
 	}
 
+	userAssignedIdentities := make([]capz.UserAssignedIdentity, len(mpool.Identity.UserAssignedIdentities))
+	for i, id := range mpool.Identity.UserAssignedIdentities {
+		userAssignedIdentities[i] = capz.UserAssignedIdentity{ProviderID: id.ProviderID()}
+	}
+
+	// If identity type is UserAssigned, but no identities are provided, the installer
+	// will create one. Populate the manifest with a reference to that identity.
+	if mpool.Identity.Type == capz.VMIdentityUserAssigned && len(userAssignedIdentities) == 0 {
+		userAssignedIdentities = []capz.UserAssignedIdentity{
+			{
+				ProviderID: fmt.Sprintf("/subscriptions/%s/resourcegroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s-identity", subscriptionID, resourceGroup, clusterID),
+			},
+		}
+	}
+
+	storageAccountName := aztypes.GetStorageAccountName(clusterID)
+
+	defaultDiag := &capz.Diagnostics{
+		Boot: &capz.BootDiagnostics{
+			StorageAccountType: capz.ManagedDiagnosticsStorage,
+		},
+	}
+
+	if in.Platform.DefaultMachinePlatform != nil && in.Platform.DefaultMachinePlatform.BootDiagnostics != nil {
+		defaultDiag.Boot.StorageAccountType = in.Platform.DefaultMachinePlatform.BootDiagnostics.Type
+		if saURI := bootDiagStorageURIBuilder(in.Platform.DefaultMachinePlatform.BootDiagnostics, session.Environment.StorageEndpointSuffix); saURI != "" {
+			defaultDiag.Boot.UserManaged = &capz.UserManagedBootDiagnostics{
+				StorageAccountURI: saURI,
+			}
+		}
+	}
+
+	var controlPlaneDiag *capz.Diagnostics
+	if mpool.BootDiagnostics != nil {
+		controlPlaneDiag = &capz.Diagnostics{
+			Boot: &capz.BootDiagnostics{
+				StorageAccountType: mpool.BootDiagnostics.Type,
+			},
+		}
+		controlPlaneDiag.Boot.StorageAccountType = mpool.BootDiagnostics.Type
+		if saURI := bootDiagStorageURIBuilder(mpool.BootDiagnostics, session.Environment.StorageEndpointSuffix); saURI != "" {
+			controlPlaneDiag.Boot.UserManaged = &capz.UserManagedBootDiagnostics{
+				StorageAccountURI: saURI,
+			}
+		}
+	}
+	if controlPlaneDiag == nil {
+		controlPlaneDiag = defaultDiag
+	}
+
 	var result []*asset.RuntimeFile
 	for idx := int64(0); idx < total; idx++ {
 		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
@@ -169,17 +217,32 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 				NetworkInterfaces: []capz.NetworkInterface{
 					{
 						SubnetName:            in.Subnet,
-						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(azure.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(azure.AcceleratedNetworkingEnabled)),
+						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(aztypes.AcceleratedNetworkingEnabled)),
 					},
 				},
-				Identity: capz.VMIdentityUserAssigned,
-				UserAssignedIdentities: []capz.UserAssignedIdentity{
-					{
-						ProviderID: userAssignedIdentityID,
-					},
-				},
+				Identity:               mpool.Identity.Type,
+				UserAssignedIdentities: userAssignedIdentities,
+				Diagnostics:            controlPlaneDiag,
+				DataDisks:              mpool.DataDisks,
 			},
 		}
+
+		if len(zone) == 0 {
+			// FailureDomain must be nil (not empty) to trigger availability set.
+			azureMachine.Spec.FailureDomain = nil
+		}
+
+		if in.Platform.CloudName == aztypes.StackCloud {
+			azureMachine.Spec.Diagnostics = &capz.Diagnostics{
+				Boot: &capz.BootDiagnostics{
+					StorageAccountType: capz.UserManagedDiagnosticsStorage,
+					UserManaged: &capz.UserManagedBootDiagnostics{
+						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+					},
+				},
+			}
+		}
+
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", azureMachine.Name)},
@@ -232,14 +295,28 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 			AllocatePublicIP:           !in.Private,
 			AdditionalCapabilities:     additionalCapabilities,
 			SecurityProfile:            securityProfile,
-			Identity:                   capz.VMIdentityUserAssigned,
-			UserAssignedIdentities: []capz.UserAssignedIdentity{
-				{
-					ProviderID: userAssignedIdentityID,
-				},
-			},
+			Identity:                   mpool.Identity.Type,
+			Diagnostics:                controlPlaneDiag,
+			UserAssignedIdentities:     userAssignedIdentities,
 		},
 	}
+
+	if len(mpool.Zones[0]) == 0 {
+		// FailureDomain must be nil (not empty) to trigger availability set.
+		bootstrapAzureMachine.Spec.FailureDomain = nil
+	}
+
+	if in.Platform.CloudName == aztypes.StackCloud {
+		bootstrapAzureMachine.Spec.Diagnostics = &capz.Diagnostics{
+			Boot: &capz.BootDiagnostics{
+				StorageAccountType: capz.UserManagedDiagnosticsStorage,
+				UserManaged: &capz.UserManagedBootDiagnostics{
+					StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+				},
+			},
+		}
+	}
+
 	bootstrapAzureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
 
 	result = append(result, &asset.RuntimeFile{
@@ -297,4 +374,12 @@ func CapzTagsFromUserTags(clusterID string, usertags map[string]string) (capz.Ta
 		tags[k] = usertags[k]
 	}
 	return tags, nil
+}
+
+func bootDiagStorageURIBuilder(diag *aztypes.BootDiagnostics, storageEndpointSuffix string) string {
+	storageAccountURI := "https://%s.blob.%s"
+	if diag.Type == capz.UserManagedDiagnosticsStorage && diag.StorageAccountName != "" {
+		return fmt.Sprintf(storageAccountURI, diag.StorageAccountName, storageEndpointSuffix)
+	}
+	return ""
 }

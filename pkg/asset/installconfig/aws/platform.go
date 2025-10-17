@@ -16,13 +16,21 @@ import (
 // Platform collects AWS-specific configuration.
 func Platform() (*aws.Platform, error) {
 	architecture := version.DefaultArch()
-	regions := knownPublicRegions(architecture)
-	longRegions := make([]string, 0, len(regions))
-	shortRegions := make([]string, 0, len(regions))
-	for id, location := range regions {
-		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
-		shortRegions = append(shortRegions, id)
+	regions, err := knownPublicRegions(architecture)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get AWS public regions: %w", err)
 	}
+	longRegions := make([]string, 0, len(aws.RegionLookupMap))
+	shortRegions := make([]string, 0, len(aws.RegionLookupMap))
+	for _, region := range regions {
+		if longName, ok := aws.RegionLookupMap[region]; ok {
+			longRegions = append(longRegions, fmt.Sprintf("%s (%s)", region, longName))
+		} else {
+			longRegions = append(longRegions, region)
+		}
+		shortRegions = append(shortRegions, region)
+	}
+
 	var regionTransform survey.Transformer = func(ans interface{}) interface{} {
 		switch v := ans.(type) {
 		case core.OptionAnswer:
@@ -34,7 +42,7 @@ func Platform() (*aws.Platform, error) {
 	}
 
 	defaultRegion := "us-east-1"
-	if !IsKnownPublicRegion(defaultRegion, architecture) {
+	if found, err := IsKnownPublicRegion(defaultRegion, architecture); !found || err != nil {
 		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
 	}
 
@@ -45,7 +53,11 @@ func Platform() (*aws.Platform, error) {
 
 	defaultRegionPointer := ssn.Config.Region
 	if defaultRegionPointer != nil && *defaultRegionPointer != "" {
-		if IsKnownPublicRegion(*defaultRegionPointer, architecture) {
+		found, err := IsKnownPublicRegion(*defaultRegionPointer, architecture)
+		if err != nil {
+			return nil, fmt.Errorf("failed to determine if region is public: %w", err)
+		}
+		if found {
 			defaultRegion = *defaultRegionPointer
 		} else {
 			logrus.Warnf("Unrecognized AWS region %q, defaulting to %s", *defaultRegionPointer, defaultRegion)
@@ -61,7 +73,7 @@ func Platform() (*aws.Platform, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The AWS region to be used for installation.",
-				Default: fmt.Sprintf("%s (%s)", defaultRegion, regions[defaultRegion]),
+				Default: fmt.Sprintf("%s (%s)", defaultRegion, aws.RegionLookupMap[defaultRegion]),
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {

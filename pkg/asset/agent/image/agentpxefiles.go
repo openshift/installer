@@ -1,7 +1,6 @@
 package image
 
 import (
-	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
@@ -82,7 +82,8 @@ func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) 
 
 // PersistToFile writes the PXE assets in the assets folder named pxe.
 func (a *AgentPXEFiles) PersistToFile(directory string) error {
-	var kernelFileType string
+	defer os.RemoveAll(a.tmpPath)
+
 	// If the imageReader is not set then it means that either one of the AgentPXEFiles
 	// dependencies or the asset itself failed for some reason
 	if a.imageReader == nil {
@@ -108,41 +109,22 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	switch a.cpuArch {
-	case arch.RpmArch(types.ArchitectureS390X):
-
-		kernelFileType = "kernel.img"
-
+	if a.cpuArch == arch.RpmArch(types.ArchitectureS390X) {
 		err = a.handleAdditionals390xArtifacts(bootArtifactsFullPath)
 		if err != nil {
 			return err
 		}
-	default:
-		kernelFileType = "vmlinuz"
 	}
 
-	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-%s", a.filePrefix, a.cpuArch, kernelFileType))
-	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", kernelFileType))
+	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-%s", a.filePrefix, a.cpuArch, "vmlinuz"))
+	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", "vmlinuz"))
 	if err != nil {
 		return err
 	}
 	defer kernelReader.Close()
-
-	if a.cpuArch == arch.RpmArch(types.ArchitectureARM64) {
-		gzipReader, err := gzip.NewReader(kernelReader)
-		if err != nil {
-			panic(err)
-		}
-		defer gzipReader.Close()
-		err = copyfile(agentVmlinuzFile, gzipReader)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = copyfile(agentVmlinuzFile, kernelReader)
-		if err != nil {
-			return err
-		}
+	err = copyfile(agentVmlinuzFile, kernelReader)
+	if err != nil {
+		return err
 	}
 
 	if a.bootArtifactsBaseURL != "" {
@@ -239,12 +221,13 @@ func getKernelArgs(filepath string) (string, error) {
 }
 
 func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath string) error {
-	// initrd is already copied and file pointer is at EOF so move it to start again.
+	// Move the imageReader pointer to the start for reading initrd again.
 	_, err := a.imageReader.Seek(0, io.SeekStart)
 	if err != nil {
 		return err
 	}
 
+	// Copy initrd.addrsize
 	agentInitrdAddrFilePath := filepath.Join(a.tmpPath, "images", "initrd.addrsize")
 	addrsizeFile, err := isoeditor.NewInitrdAddrsizeReader(agentInitrdAddrFilePath, a.imageReader)
 	if err != nil {
@@ -257,14 +240,21 @@ func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath str
 		return err
 	}
 
-	agentINSFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-generic.ins", a.filePrefix, a.cpuArch))
-	genericReader, err := os.Open(filepath.Join(a.tmpPath, "generic.ins"))
+	// Read and update generic.ins
+	genericInsPath := filepath.Join(a.tmpPath, "generic.ins")
+	data, err := os.ReadFile(genericInsPath)
 	if err != nil {
 		return err
 	}
-	defer genericReader.Close()
 
-	err = copyfile(agentINSFile, genericReader)
+	// Replace file names with dynamically generated names
+	updatedContent := strings.ReplaceAll(string(data), "kernel.img", fmt.Sprintf("%s.%s-vmlinuz", a.filePrefix, a.cpuArch))
+	updatedContent = strings.ReplaceAll(updatedContent, "initrd.img", fmt.Sprintf("%s.%s-initrd.img", a.filePrefix, a.cpuArch))
+	updatedContent = strings.ReplaceAll(updatedContent, "initrd.addrsize", fmt.Sprintf("%s.%s-initrd.addrsize", a.filePrefix, a.cpuArch))
+
+	// Write the updated content back
+	agentINSFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-generic.ins", a.filePrefix, a.cpuArch))
+	err = os.WriteFile(agentINSFile, []byte(updatedContent), 0600)
 	if err != nil {
 		return err
 	}

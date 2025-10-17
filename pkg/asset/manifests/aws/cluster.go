@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
-	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 // BootstrapSSHDescription is the description for the
@@ -77,11 +76,11 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 				},
 				IngressRules: []capa.IngressRule{
 					{
-						Description: "Machine Config Server internal traffic from cluster",
-						Protocol:    capa.SecurityGroupProtocolTCP,
-						FromPort:    22623,
-						ToPort:      22623,
-						CidrBlocks:  []string{capiutils.CIDRFromInstallConfig(ic).String()},
+						Description:              "Machine Config Server internal traffic from cluster",
+						Protocol:                 capa.SecurityGroupProtocolTCP,
+						FromPort:                 22623,
+						ToPort:                   22623,
+						SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
 					},
 				},
 			},
@@ -246,9 +245,9 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 		)
 	}
 
-	// Set the NetworkSpec.Subnets from VPC and zones (managed)
-	// or subnets (BYO VPC) based in the install-config.yaml.
-	err = setSubnets(context.TODO(), &zonesInput{
+	// Set the NetworkSpec.Subnets from VPC and zones (managed) or subnets (BYO VPC) based in the install-config.yaml.
+	// If subnet roles are assigned, set subnets for the ControlPlane LBs.
+	err = setSubnets(context.TODO(), &networkInput{
 		InstallConfig: ic,
 		ClusterID:     clusterID,
 		Cluster:       awsCluster,
@@ -263,12 +262,6 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 			PublicIpv4Pool:              ptr.To(ic.Config.Platform.AWS.PublicIpv4Pool),
 			PublicIpv4PoolFallBackOrder: ptr.To(capa.PublicIpv4PoolFallbackOrderAmazonPool),
 		}
-	}
-
-	if awstypes.IsPublicOnlySubnetsEnabled() {
-		// If we don't set the subnets for the internal LB, CAPA will try to use private subnets but there aren't any in
-		// public-only mode.
-		awsCluster.Spec.ControlPlaneLoadBalancer.Subnets = awsCluster.Spec.NetworkSpec.Subnets.IDs()
 	}
 
 	manifests = append(manifests, &asset.RuntimeFile{

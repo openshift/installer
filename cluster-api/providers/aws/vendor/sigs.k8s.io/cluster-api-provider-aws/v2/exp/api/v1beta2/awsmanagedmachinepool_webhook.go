@@ -59,18 +59,18 @@ func (r *AWSManagedMachinePool) validateScaling() field.ErrorList {
 	if r.Spec.Scaling != nil { //nolint:nestif
 		minField := field.NewPath("spec", "scaling", "minSize")
 		maxField := field.NewPath("spec", "scaling", "maxSize")
-		min := r.Spec.Scaling.MinSize
-		max := r.Spec.Scaling.MaxSize
-		if min != nil {
-			if *min < 0 {
-				allErrs = append(allErrs, field.Invalid(minField, *min, "must be greater or equal zero"))
+		minSize := r.Spec.Scaling.MinSize
+		maxSize := r.Spec.Scaling.MaxSize
+		if minSize != nil {
+			if *minSize < 0 {
+				allErrs = append(allErrs, field.Invalid(minField, *minSize, "must be greater or equal zero"))
 			}
-			if max != nil && *max < *min {
-				allErrs = append(allErrs, field.Invalid(maxField, *max, fmt.Sprintf("must be greater than field %s", minField.String())))
+			if maxSize != nil && *maxSize < *minSize {
+				allErrs = append(allErrs, field.Invalid(maxField, *maxSize, fmt.Sprintf("must be greater than field %s", minField.String())))
 			}
 		}
-		if max != nil && *max < 0 {
-			allErrs = append(allErrs, field.Invalid(maxField, *max, "must be greater than zero"))
+		if maxSize != nil && *maxSize < 0 {
+			allErrs = append(allErrs, field.Invalid(maxField, *maxSize, "must be greater than zero"))
 		}
 	}
 	if len(allErrs) == 0 {

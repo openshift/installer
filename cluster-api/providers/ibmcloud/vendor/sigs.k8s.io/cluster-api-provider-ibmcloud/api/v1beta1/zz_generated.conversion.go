@@ -29,7 +29,6 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	v1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	apiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	errors "sigs.k8s.io/cluster-api/errors"
 )
 
 func init() {
@@ -958,7 +957,7 @@ func autoConvert_v1beta1_IBMPowerVSMachineStatus_To_v1beta2_IBMPowerVSMachineSta
 	out.Health = in.Health
 	out.InstanceState = v1beta2.PowerVSInstanceState(in.InstanceState)
 	out.Fault = in.Fault
-	out.FailureReason = (*errors.MachineStatusError)(unsafe.Pointer(in.FailureReason))
+	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
 	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	out.Region = (*string)(unsafe.Pointer(in.Region))
@@ -978,7 +977,7 @@ func autoConvert_v1beta2_IBMPowerVSMachineStatus_To_v1beta1_IBMPowerVSMachineSta
 	out.Health = in.Health
 	out.InstanceState = PowerVSInstanceState(in.InstanceState)
 	out.Fault = in.Fault
-	out.FailureReason = (*errors.MachineStatusError)(unsafe.Pointer(in.FailureReason))
+	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
 	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	out.Region = (*string)(unsafe.Pointer(in.Region))

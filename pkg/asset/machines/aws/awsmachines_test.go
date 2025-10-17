@@ -12,6 +12,7 @@ import (
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
@@ -27,7 +28,7 @@ var stubMachineInputManagedVpc = &MachineInput{
 			},
 		},
 	},
-	Subnets:  make(map[string]string, 0),
+	Subnets:  make(aws.SubnetsByZone),
 	Tags:     capa.Tags{},
 	PublicIP: false,
 	Ignition: &capa.Ignition{
@@ -45,7 +46,7 @@ func stubDeepCopyMachineInput(in *MachineInput) *MachineInput {
 		*out.Pool = *in.Pool
 	}
 	if len(in.Subnets) > 0 {
-		out.Subnets = make(map[string]string, len(in.Subnets))
+		out.Subnets = make(aws.SubnetsByZone)
 		for k, v := range in.Subnets {
 			out.Subnets[k] = v
 		}
@@ -136,7 +137,7 @@ func TestGenerateMachines(t *testing.T) {
 			input: func() *MachineInput {
 				in := stubGetMachineManagedVpc()
 				in.Pool.Platform.AWS.Zones = []string{"A", "B"}
-				in.Subnets = map[string]string{"A": "subnet-id-A", "B": "subnet-id-B"}
+				in.Subnets = aws.SubnetsByZone{"A": aws.Subnet{ID: "subnet-id-A"}, "B": aws.Subnet{ID: "subnet-id-B"}}
 				return in
 			}(),
 			// generate 3 AWSMachine manifests for control plane nodes in two subnets/zones
@@ -186,6 +187,62 @@ func TestGenerateMachines(t *testing.T) {
 				return infraMachineFiles
 			}(),
 		},
+		{
+			name:      "public-only setup, managed vpc, public ip enabled",
+			clusterID: stubClusterID,
+			input: func() *MachineInput {
+				in := stubGetMachineManagedVpc()
+				in.Pool.Platform.AWS.Zones = []string{"A", "B"}
+				in.PublicIP = true
+				return in
+			}(),
+			// generate 3 AWSMachine manifests for control plane nodes using public subnets
+			wantInfraFiles: func() []*asset.RuntimeFile {
+				machineZoneMap := map[int]string{0: "A", 1: "B", 2: "A"}
+				infraMachineFiles := []*asset.RuntimeFile{}
+				for mid := 0; mid < 3; mid++ {
+					machineName := fmt.Sprintf("%s-%s-%d", stubClusterID, "master", mid)
+					machineZone := machineZoneMap[mid]
+					machine := &capa.AWSMachine{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+							Kind:       "AWSMachine",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:   machineName,
+							Labels: map[string]string{"cluster.x-k8s.io/control-plane": ""},
+						},
+						Spec: capa.AWSMachineSpec{
+							InstanceMetadataOptions: &capa.InstanceMetadataOptions{
+								HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
+								HTTPTokens:   capa.HTTPTokensStateOptional,
+							},
+							AMI: capa.AMIReference{
+								ID: ptr.To(""),
+							},
+							IAMInstanceProfile: fmt.Sprintf("%s-%s-profile", stubClusterID, "master"),
+							PublicIP:           ptr.To(true),
+							Subnet: &capa.AWSResourceReference{
+								Filters: []capa.Filter{{Name: "tag:Name", Values: []string{
+									fmt.Sprintf("%s-subnet-public-%s", stubClusterID, machineZone),
+								}}},
+							},
+							SSHKeyName:           ptr.To(""),
+							RootVolume:           &capa.Volume{Encrypted: ptr.To(true)},
+							UncompressedUserData: ptr.To(true),
+							Ignition: &capa.Ignition{
+								StorageType: capa.IgnitionStorageTypeOptionUnencryptedUserData,
+							},
+						},
+					}
+					infraMachineFiles = append(infraMachineFiles, &asset.RuntimeFile{
+						File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", machineName)},
+						Object: machine,
+					})
+				}
+				return infraMachineFiles
+			}(),
+		},
 		// Error's scenarios
 		{
 			name:      "error topology ha, byo vpc, no subnet for zones",
@@ -193,7 +250,7 @@ func TestGenerateMachines(t *testing.T) {
 			input: func() *MachineInput {
 				in := stubGetMachineManagedVpc()
 				in.Pool.Platform.AWS.Zones = []string{"A", "B"}
-				in.Subnets = map[string]string{"C": "subnet-id-C", "D": "subnet-id-D"}
+				in.Subnets = aws.SubnetsByZone{"C": aws.Subnet{ID: "subnet-id-C"}, "D": aws.Subnet{ID: "subnet-id-D"}}
 				return in
 			}(),
 			wantErr: `no subnet for zone A`,
@@ -204,7 +261,7 @@ func TestGenerateMachines(t *testing.T) {
 			input: func() *MachineInput {
 				in := stubGetMachineManagedVpc()
 				in.Pool.Platform.AWS.Zones = []string{"A", "B"}
-				in.Subnets = map[string]string{"A": "subnet-id-A", "B": ""}
+				in.Subnets = aws.SubnetsByZone{"A": aws.Subnet{ID: "subnet-id-A"}, "B": aws.Subnet{ID: ""}}
 				return in
 			}(),
 			wantErr: `invalid subnet ID for zone B`,

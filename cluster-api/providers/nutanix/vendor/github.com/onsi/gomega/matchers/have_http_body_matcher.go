@@ -11,11 +11,12 @@ import (
 )
 
 type HaveHTTPBodyMatcher struct {
-	Expected   interface{}
-	cachedBody []byte
+	Expected       any
+	cachedResponse any
+	cachedBody     []byte
 }
 
-func (matcher *HaveHTTPBodyMatcher) Match(actual interface{}) (bool, error) {
+func (matcher *HaveHTTPBodyMatcher) Match(actual any) (bool, error) {
 	body, err := matcher.body(actual)
 	if err != nil {
 		return false, err
@@ -33,7 +34,7 @@ func (matcher *HaveHTTPBodyMatcher) Match(actual interface{}) (bool, error) {
 	}
 }
 
-func (matcher *HaveHTTPBodyMatcher) FailureMessage(actual interface{}) (message string) {
+func (matcher *HaveHTTPBodyMatcher) FailureMessage(actual any) (message string) {
 	body, err := matcher.body(actual)
 	if err != nil {
 		return fmt.Sprintf("failed to read body: %s", err)
@@ -51,7 +52,7 @@ func (matcher *HaveHTTPBodyMatcher) FailureMessage(actual interface{}) (message 
 	}
 }
 
-func (matcher *HaveHTTPBodyMatcher) NegatedFailureMessage(actual interface{}) (message string) {
+func (matcher *HaveHTTPBodyMatcher) NegatedFailureMessage(actual any) (message string) {
 	body, err := matcher.body(actual)
 	if err != nil {
 		return fmt.Sprintf("failed to read body: %s", err)
@@ -72,8 +73,8 @@ func (matcher *HaveHTTPBodyMatcher) NegatedFailureMessage(actual interface{}) (m
 // body returns the body. It is cached because once we read it in Match()
 // the Reader is closed and it is not readable again in FailureMessage()
 // or NegatedFailureMessage()
-func (matcher *HaveHTTPBodyMatcher) body(actual interface{}) ([]byte, error) {
-	if matcher.cachedBody != nil {
+func (matcher *HaveHTTPBodyMatcher) body(actual any) ([]byte, error) {
+	if matcher.cachedResponse == actual && matcher.cachedBody != nil {
 		return matcher.cachedBody, nil
 	}
 
@@ -91,8 +92,10 @@ func (matcher *HaveHTTPBodyMatcher) body(actual interface{}) ([]byte, error) {
 
 	switch a := actual.(type) {
 	case *http.Response:
+		matcher.cachedResponse = a
 		return body(a)
 	case *httptest.ResponseRecorder:
+		matcher.cachedResponse = a
 		return body(a.Result())
 	default:
 		return nil, fmt.Errorf("HaveHTTPBody matcher expects *http.Response or *httptest.ResponseRecorder. Got:\n%s", format.Object(actual, 1))

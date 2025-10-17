@@ -62,6 +62,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 			ProvisionRequirements: hiveext.ProvisionRequirements{
 				ControlPlaneAgents: 3,
 				WorkerAgents:       5,
+				ArbiterAgents:      1,
 			},
 		},
 	}
@@ -96,11 +97,12 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	agentAuthToken := "agentAuthToken"
 	userAuthToken := "userAuthToken"
 	watcherAuthToken := "watcherAuthToken"
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, agentAuthToken, userAuthToken, watcherAuthToken, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, agentAuthToken, userAuthToken, watcherAuthToken, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.ArbiterAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, templateData.ControlPlaneAgents)
+	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ArbiterAgents, templateData.ArbiterAgents)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, templateData.WorkerAgents)
 	assert.Equal(t, releaseImageList, templateData.ReleaseImages)
 	assert.Equal(t, releaseImage, templateData.ReleaseImage)
@@ -379,6 +381,7 @@ func commonFiles() []string {
 		"/root/.docker/config.json",
 		"/root/assisted.te",
 		"/usr/local/bin/agent-config-image-wait.sh",
+		"/usr/local/bin/agent-extract-tui.sh",
 		"/usr/local/bin/agent-gather",
 		"/usr/local/bin/extract-agent.sh",
 		"/usr/local/bin/get-container-images.sh",
@@ -407,15 +410,20 @@ func commonFiles() []string {
 	}
 }
 
+func setupEmbeddedResources(t *testing.T) func() {
+	t.Helper()
+	workingDirectory, err := os.Getwd()
+	assert.NoError(t, err)
+	assert.NoError(t, os.Chdir(path.Join(workingDirectory, "../../../../data")))
+	return func() {
+		assert.NoError(t, os.Chdir(workingDirectory))
+	}
+}
+
 func TestIgnition_Generate(t *testing.T) {
 	skipTestIfnmstatectlIsMissing(t)
 
-	// This patch currently allows testing the Ignition asset using the embedded resources.
-	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
-	workingDirectory, err := os.Getwd()
-	assert.NoError(t, err)
-	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
-	assert.NoError(t, err)
+	defer setupEmbeddedResources(t)()
 
 	cases := []struct {
 		name                string
@@ -644,6 +652,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
 						WorkerAgents:       5,
+						ArbiterAgents:      1,
 					},
 				},
 			},

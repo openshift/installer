@@ -26,6 +26,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	"github.com/Azure/azure-sdk-for-go/sdk/tracing/azotel"
+	"go.opentelemetry.io/otel"
+
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/cluster-api-provider-azure/version"
 )
@@ -44,14 +47,12 @@ const (
 )
 
 const (
-	// DefaultImageOfferID is the default Azure Marketplace offer ID.
-	DefaultImageOfferID = "capi"
-	// DefaultWindowsImageOfferID is the default Azure Marketplace offer ID for Windows.
-	DefaultWindowsImageOfferID = "capi-windows"
-	// DefaultImagePublisherID is the default Azure Marketplace publisher ID.
-	DefaultImagePublisherID = "cncf-upstream"
-	// LatestVersion is the image version latest.
-	LatestVersion = "latest"
+	// DefaultPublicGalleryName is the default Azure compute gallery.
+	DefaultPublicGalleryName = "ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019"
+	// DefaultLinuxGalleryImageName is the default Linux community gallery image definition.
+	DefaultLinuxGalleryImageName = "capi-ubun2-2404"
+	// DefaultWindowsGalleryImageName is the default Windows community gallery image definition.
+	DefaultWindowsGalleryImageName = "capi-win-2019-containerd"
 )
 
 const (
@@ -217,6 +218,11 @@ func VMID(subscriptionID, resourceGroup, vmName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", subscriptionID, resourceGroup, vmName)
 }
 
+// VMSSID returns the azure resource ID for a given VMSS.
+func VMSSID(subscriptionID, resourceGroup, vmssName string) string {
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s", subscriptionID, resourceGroup, vmssName)
+}
+
 // VNetID returns the azure resource ID for a given VNet.
 func VNetID(subscriptionID, resourceGroup, vnetName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s", subscriptionID, resourceGroup, vnetName)
@@ -372,6 +378,8 @@ func ARMClientOptions(azureEnvironment string, extraPolicies ...policy.Policy) (
 	}
 	opts.PerCallPolicies = append(opts.PerCallPolicies, extraPolicies...)
 	opts.Retry.MaxRetries = -1 // Less than zero means one try and no retries.
+
+	opts.TracingProvider = azotel.NewTracingProvider(otel.GetTracerProvider(), nil)
 
 	return opts, nil
 }

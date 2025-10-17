@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -85,6 +87,195 @@ func TestValidateMachinePool(t *testing.T) {
 				},
 			},
 			expected: `^test-path\.diskType: Unsupported value: "LRS": supported values: "Premium_LRS", "StandardSSD_LRS", "Standard_LRS"$`,
+		},
+		{
+			name:          "multiple disk and setup missing lun id",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "etcd",
+							DiskSizeGB:  1,
+							ManagedDisk: nil,
+							Lun:         nil,
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.Lun: Required value: \"etcd\" must have lun id$`,
+		},
+		{
+			name:          "lun id must be below 64",
+			azurePlatform: azure.PublicCloud,
+
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "etcd",
+							DiskSizeGB:  1,
+							ManagedDisk: nil,
+							Lun:         ptr.To(int32(64)),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.Lun: Required value: \"etcd\" must have lun id between 0 and 63$`,
+		},
+		{
+			name:          "multiple disk and setup PlatformDiskID does not match",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "foo",
+							DiskSizeGB:  1,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+						},
+						},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.NameSuffix: Invalid value: \"foo\": does not match etcd PlatformDiskID \"etcd\"$`,
+		},
+		{
+			name:          "lun id must be above 0",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "etcd",
+							DiskSizeGB:  1,
+							ManagedDisk: nil,
+							Lun:         ptr.To(int32(-1)),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.Lun: Required value: \"etcd\" must have lun id between 0 and 63$`,
+		},
+		{
+			name:          "multiple disk size must be greater than zero",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: "etcd",
+					Etcd: &types.DiskEtcd{
+						PlatformDiskID: "etcd",
+					},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "etcd",
+							DiskSizeGB:  0,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.DiskSizeGB: Invalid value: 0: diskSizeGB must be greater than zero$`,
+		},
+		{
+			name:          "datadisks in default machine pool is invalid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name:      "",
+				DiskSetup: []types.Disk{},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "etcd",
+							DiskSizeGB:  0,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks: Invalid value: \"etcd\": not allowed on default machine pool, use dataDisks compute and controlPlane only$`,
+		},
+		{
+			name:          "lun id must be unique",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{
+					{
+						Type: "etcd",
+						Etcd: &types.DiskEtcd{
+							PlatformDiskID: "etcd",
+						},
+					},
+					{
+						Type: "user-defined",
+						UserDefined: &types.DiskUserDefined{
+							PlatformDiskID: "containers",
+							MountPath:      "/var/lib/containers",
+						},
+					},
+				},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{
+							{
+								NameSuffix:  "etcd",
+								DiskSizeGB:  1,
+								ManagedDisk: nil,
+								Lun:         pointer.Int32(0),
+								CachingType: "",
+							},
+							{
+								NameSuffix:  "containers",
+								DiskSizeGB:  1,
+								ManagedDisk: nil,
+								Lun:         pointer.Int32(0),
+								CachingType: "",
+							},
+						},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.Lun: Invalid value: \"containers\": dataDisk must have a unique lun number$`,
 		},
 		{
 			name:          "unsupported disk master",
@@ -617,11 +808,57 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path.defaultMachinePlatform.settings.securityType: Invalid value: "": securityType should be set to TrustedLaunch when uefiSettings are enabled.$`,
 		},
+		{
+			name:          "azure VM Identity is unrecognized type",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						Identity: &azure.VMIdentity{
+							Type: "unrecognized",
+						},
+					},
+				},
+			},
+			expected: `^test-path.identity.type: Unsupported value: "unrecognized": supported values: "None", "UserAssigned"$`,
+		},
+		{
+			name:          "azure VM SystemAssignedIdentity is not allowed",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						Identity: &azure.VMIdentity{
+							Type: "SystemAssigned",
+						},
+					},
+				},
+			},
+			expected: `^test-path.identity.type: Unsupported value: "SystemAssigned": supported values: "None", "UserAssigned"$`,
+		},
+		{
+			name:          "azure VM identity cannot mismatch type and field",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						Identity: &azure.VMIdentity{
+							Type:                   capz.VMIdentityNone,
+							UserAssignedIdentities: []azure.UserAssignedIdentity{},
+						},
+					},
+				},
+			},
+			expected: `^test-path.identity.type: Invalid value: "None": userAssignedIdentities may only be used with type: UserAssigned$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			azurePlatform := &azure.Platform{CloudName: tc.azurePlatform}
-			err := ValidateMachinePool(tc.pool.Platform.Azure, tc.pool.Name, azurePlatform, field.NewPath("test-path")).ToAggregate()
+			err := ValidateMachinePool(tc.pool.Platform.Azure, tc.pool.Name, azurePlatform, tc.pool, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {

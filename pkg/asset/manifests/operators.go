@@ -17,9 +17,12 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
+	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/library-go/pkg/crypto"
 )
@@ -60,6 +63,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
+		&manifests.MCO{},
 		&Ingress{},
 		&DNS{},
 		&Infrastructure{},
@@ -71,6 +75,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&ImageDigestMirrorSet{},
 		&tls.RootCA{},
 		&tls.MCSCertKey{},
+		new(rhcos.Image),
 
 		&bootkube.CVOOverrides{},
 		&bootkube.KubeCloudConfig{},
@@ -94,8 +99,9 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	imageContentSourcePolicy := &ImageContentSourcePolicy{}
 	clusterCSIDriverConfig := &ClusterCSIDriverConfig{}
 	imageDigestMirrorSet := &ImageDigestMirrorSet{}
+	mcoCfgTemplate := &manifests.MCO{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -122,6 +128,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 		},
 	}
 	m.FileList = append(m.FileList, m.generateBootKubeManifests(dependencies)...)
+	m.FileList = append(m.FileList, generateMCOManifest(installConfig.Config, mcoCfgTemplate.Files())...)
 
 	m.FileList = append(m.FileList, ingress.Files()...)
 	m.FileList = append(m.FileList, dns.Files()...)
@@ -164,7 +171,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		RootCaCert:            string(rootCA.Cert()),
 		RootCACertBase64:      base64.StdEncoding.EncodeToString(rootCA.Cert()),
 		RootCASignerKeyBase64: base64.StdEncoding.EncodeToString(rootCA.Key()),
-		IsFCOS:                installConfig.Config.IsFCOS(),
 		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
 	}
@@ -274,7 +280,8 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 	newConfig := config
 
 	newConfig.PullSecret = ""
-	if newConfig.Platform.VSphere != nil {
+	switch {
+	case newConfig.Platform.VSphere != nil:
 		p := config.VSphere
 		newVCenters := make([]vsphere.VCenter, len(p.VCenters))
 		for i, v := range p.VCenters {
@@ -302,6 +309,30 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 			FailureDomains:             p.FailureDomains,
 		}
 		newConfig.Platform.VSphere = &newVSpherePlatform
+
+	case newConfig.Platform.Nutanix != nil:
+		p := config.Nutanix
+		newPrismCentral := nutanix.PrismCentral{
+			Endpoint: p.PrismCentral.Endpoint,
+			Username: "",
+			Password: "",
+		}
+		newNutanixPlatform := nutanix.Platform{
+			PrismCentral:           newPrismCentral,
+			PrismElements:          p.PrismElements,
+			ClusterOSImage:         p.ClusterOSImage,
+			PreloadedOSImageName:   p.PreloadedOSImageName,
+			DeprecatedAPIVIP:       p.DeprecatedAPIVIP,
+			APIVIPs:                p.APIVIPs,
+			DeprecatedIngressVIP:   p.DeprecatedIngressVIP,
+			IngressVIPs:            p.IngressVIPs,
+			DefaultMachinePlatform: p.DefaultMachinePlatform,
+			SubnetUUIDs:            p.SubnetUUIDs,
+			LoadBalancer:           p.LoadBalancer,
+			FailureDomains:         p.FailureDomains,
+			PrismAPICallTimeout:    p.PrismAPICallTimeout,
+		}
+		newConfig.Platform.Nutanix = &newNutanixPlatform
 	}
 
 	return yaml.Marshal(newConfig)

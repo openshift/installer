@@ -240,6 +240,22 @@ type SubnetSpec struct {
 	// +kubebuilder:default=PRIVATE_RFC_1918
 	// +optional
 	Purpose *string `json:"purpose,omitempty"`
+
+	// StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
+	// the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+	// the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+	// IPV4_ONLY is used. This field can be both set at resource creation time and
+	// updated using patch.
+	//
+	// Possible values:
+	//   "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
+	// addresses.
+	//   "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
+	//   "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
+	// +kubebuilder:validation:Enum=IPV4_ONLY;IPV4_IPV6;IPV6_ONLY
+	// +kubebuilder:default=IPV4_ONLY
+	// +optional
+	StackType string `json:"stackType,omitempty"`
 }
 
 // String returns a string representation of the subnet.

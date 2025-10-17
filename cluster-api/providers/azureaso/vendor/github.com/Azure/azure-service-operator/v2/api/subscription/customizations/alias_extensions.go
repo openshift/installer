@@ -27,8 +27,8 @@ func (extension *AliasExtension) Delete(
 	resolver *resolver.Resolver,
 	armClient *genericarmclient.GenericClient,
 	obj genruntime.ARMMetaObject,
-	next extensions.DeleteFunc) (ctrl.Result, error) {
-
+	next extensions.DeleteFunc,
+) (ctrl.Result, error) {
 	// First cancel the subscription, then delete the alias
 	typedObj, ok := obj.(*storage.Alias)
 	if !ok {

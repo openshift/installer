@@ -21,5 +21,4 @@ func NewClientCertificateCredential(tenantID, clientID string, clientCertificate
 		return nil, err
 	}
 	return cred, nil
-
 }

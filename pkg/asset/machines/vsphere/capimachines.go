@@ -71,8 +71,8 @@ func getNetworkInventoryPath(vcenterContext vsphere.VCenterContext, networkName 
 }
 
 // GenerateMachines returns a list of capi machines.
-func GenerateMachines(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage string, role string, metadata *vsphere.Metadata) ([]*asset.RuntimeFile, error) {
-	data, err := Machines(clusterID, config, pool, osImage, role, "")
+func GenerateMachines(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, role string, metadata *vsphere.Metadata) ([]*asset.RuntimeFile, error) {
+	data, err := Machines(clusterID, config, pool, role, "")
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve machines: %w", err)
 	}
@@ -150,10 +150,14 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			},
 		}
 
-		if failureDomainName, ok := data.MachineFailureDomain[machine.Name]; ok {
-			vsphereMachine.Spec.FailureDomain = &failureDomainName
-		} else {
-			return nil, fmt.Errorf("unable to find failure domain for machine %s", machine.Name)
+		// only set failureDomainName if VMGroup is defined as vm-host group
+		// is the only scenario we create vspherefailuredomainspec and vspheredeploymentzone
+		if providerSpec.Workspace.VMGroup != "" {
+			if failureDomainName, ok := data.MachineFailureDomain[machine.Name]; ok {
+				vsphereMachine.Spec.FailureDomain = &failureDomainName
+			} else {
+				return nil, fmt.Errorf("unable to find failure domain for machine %s", machine.Name)
+			}
 		}
 
 		// If we have additional disks to add to VM, lets iterate through them and add to CAPV machine
@@ -163,6 +167,8 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				newDisk := capv.VSphereDisk{
 					Name:    disk.Name,
 					SizeGiB: disk.SizeGiB,
+					// If provisioning mode is set, set it.
+					ProvisioningMode: capv.ProvisioningMode(disk.ProvisioningMode),
 				}
 				dataDisks = append(dataDisks, newDisk)
 			}

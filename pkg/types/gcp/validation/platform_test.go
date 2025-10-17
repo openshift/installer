@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
@@ -16,6 +17,7 @@ func TestValidatePlatform(t *testing.T) {
 		name            string
 		platform        *gcp.Platform
 		credentialsMode types.CredentialsMode
+		publishStrategy types.PublishingStrategy
 		valid           bool
 	}{
 		{
@@ -153,6 +155,176 @@ func TestValidatePlatform(t *testing.T) {
 			credentialsMode: types.MintCredentialsMode,
 			valid:           false,
 		},
+		{
+			name: "GCP missing network project with private zone",
+			platform: &gcp.Platform{
+				Region:             "us-east1",
+				ProjectID:          "valid-project",
+				Network:            "valid-vpc",
+				ComputeSubnet:      "valid-compute-subnet",
+				ControlPlaneSubnet: "valid-cp-subnet",
+				DNS: &gcp.DNS{
+					PrivateZone: &gcp.DNSZone{
+						Name: "test-private-zone-name",
+					},
+				},
+			},
+			credentialsMode: types.PassthroughCredentialsMode,
+			valid:           false,
+		},
+		{
+			name: "GCP missing Zone with private zone",
+			platform: &gcp.Platform{
+				Region:             "us-east1",
+				NetworkProjectID:   "valid-network-project",
+				ProjectID:          "valid-project",
+				Network:            "valid-vpc",
+				ComputeSubnet:      "valid-compute-subnet",
+				ControlPlaneSubnet: "valid-cp-subnet",
+				DNS: &gcp.DNS{
+					PrivateZone: &gcp.DNSZone{
+						ProjectID: "valid-project",
+					},
+				},
+			},
+			credentialsMode: types.PassthroughCredentialsMode,
+			valid:           false,
+		},
+		{
+			name: "GCP valid private zone",
+			platform: &gcp.Platform{
+				Region:             "us-east1",
+				NetworkProjectID:   "valid-network-project",
+				ProjectID:          "valid-project",
+				Network:            "valid-vpc",
+				ComputeSubnet:      "valid-compute-subnet",
+				ControlPlaneSubnet: "valid-cp-subnet",
+				DNS: &gcp.DNS{
+					PrivateZone: &gcp.DNSZone{
+						ProjectID: "valid-project",
+						Name:      "test-private-zone-name",
+					},
+				},
+			},
+			credentialsMode: types.PassthroughCredentialsMode,
+			valid:           true,
+		},
+		{
+			name: "invalid gcp endpoint blank name",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
+					{
+						Name: "",
+						URL:  "https://my-custom-endpoint.example.com/copmute/v1/",
+					},
+				},
+			},
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
+		},
+		{
+			name: "invalid gcp endpoint invalid name",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
+					{
+						Name: "badname",
+						URL:  "https://my-custom-endpoint.example.com/copmute/v1/",
+					},
+				},
+			},
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
+		},
+		{
+			name: "invalid gcp endpoint duplicate name",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
+					{
+						Name: configv1.GCPServiceEndpointNameCompute,
+						URL:  "https://my-custom-endpoint.example.com/compute/v1/",
+					},
+					{
+						Name: configv1.GCPServiceEndpointNameCompute,
+						URL:  "https://my-custom-endpoint.example.com/compute/v2/",
+					},
+				},
+			},
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
+		},
+		{
+			name: "invalid gcp endpoint url blank",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
+					{
+						Name: configv1.GCPServiceEndpointNameCompute,
+						URL:  "",
+					},
+				},
+			},
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
+		},
+		{
+			name: "invalid scheme gcp endpoint url",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
+					{
+						Name: configv1.GCPServiceEndpointNameCompute,
+						URL:  "http://my-custom-endpoint.example.com/compute/v1/",
+					},
+				},
+			},
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
+		},
+		{
+			name: "valid gcp endpoint",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
+					{
+						Name: configv1.GCPServiceEndpointNameCompute,
+						URL:  "https://my-custom-endpoint.example.com/compute/v1/",
+					},
+				},
+			},
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           true,
+		},
+		{
+			name: "invalid gcp endpoint relative path",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
+					{
+						Name: configv1.GCPServiceEndpointNameCompute,
+						URL:  "/compute/v1/",
+					},
+				},
+			},
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
+		},
+		{
+			name: "valid gcp endpoint url no scheme",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
+					{
+						Name: configv1.GCPServiceEndpointNameCompute,
+						URL:  "my-custom-endpoint.example.com/compute/v1/",
+					},
+				},
+			},
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           true,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -162,9 +334,15 @@ func TestValidatePlatform(t *testing.T) {
 				credentialsMode = types.MintCredentialsMode
 			}
 
+			publishStrategy := types.ExternalPublishingStrategy
+			if tc.publishStrategy != "" {
+				publishStrategy = tc.publishStrategy
+			}
+
 			// the only item currently used is the credentialsMode
 			ic := types.InstallConfig{
 				CredentialsMode: credentialsMode,
+				Publish:         publishStrategy,
 			}
 
 			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), &ic).ToAggregate()

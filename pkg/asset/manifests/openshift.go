@@ -158,8 +158,14 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			return err
 		}
 
-		// We need to replace the local cacert path with one that is used in OpenShift
+		var caCert []byte
 		if cloud.CACertFile != "" {
+			var err error
+			caCert, err = os.ReadFile(cloud.CACertFile)
+			if err != nil {
+				return err
+			}
+			// We need to replace the local cacert path with one that is used in OpenShift
 			cloud.CACertFile = "/etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem"
 		}
 
@@ -189,11 +195,13 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 		}
 
 		credsEncoded := base64.StdEncoding.EncodeToString(marshalled)
-		credsINIEncoded := base64.StdEncoding.EncodeToString(cloudProviderConf)
+		cloudProviderConfEncoded := base64.StdEncoding.EncodeToString(cloudProviderConf)
+		caCertEncoded := base64.StdEncoding.EncodeToString(caCert)
 		cloudCreds = cloudCredsSecretData{
 			OpenStack: &OpenStackCredsSecretData{
-				Base64encodeCloudCreds:    credsEncoded,
-				Base64encodeCloudCredsINI: credsINIEncoded,
+				Base64encodeCloudsYAML: credsEncoded,
+				Base64encodeCloudsConf: cloudProviderConfEncoded,
+				Base64encodeCACert:     caCertEncoded,
 			},
 		}
 	case vspheretypes.Name:
@@ -270,37 +278,6 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			ProvisioningOSDownloadURL: rhcosImage.ControlPlane,
 		}
 		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
-	}
-
-	if platform == azuretypes.Name && installConfig.Config.Azure.IsARO() && installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
-		// config is used to created compatible secret to trigger azure cloud
-		// controller config merge behaviour
-		// https://github.com/openshift/origin/blob/90c050f5afb4c52ace82b15e126efe98fa798d88/vendor/k8s.io/legacy-cloud-providers/azure/azure_config.go#L83
-		session, err := installConfig.Azure.Session()
-		if err != nil {
-			return err
-		}
-		config := struct {
-			AADClientID     string `json:"aadClientId" yaml:"aadClientId"`
-			AADClientSecret string `json:"aadClientSecret" yaml:"aadClientSecret"`
-		}{
-			AADClientID:     session.Credentials.ClientID,
-			AADClientSecret: session.Credentials.ClientSecret,
-		}
-
-		b, err := yaml.Marshal(config)
-		if err != nil {
-			return err
-		}
-
-		azureCloudProviderSecret := &openshift.AzureCloudProviderSecret{}
-		dependencies.Get(azureCloudProviderSecret)
-		for _, f := range azureCloudProviderSecret.Files() {
-			name := strings.TrimSuffix(filepath.Base(f.Filename), ".template")
-			assetData[name] = applyTemplateData(f.Data, map[string]string{
-				"CloudConfig": string(b),
-			})
-		}
 	}
 
 	o.FileList = []*asset.File{}

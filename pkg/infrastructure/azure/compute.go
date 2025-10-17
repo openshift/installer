@@ -7,8 +7,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
@@ -18,13 +16,13 @@ import (
 // CreateImageGalleryInput contains the input parameters for creating a image
 // gallery.
 type CreateImageGalleryInput struct {
-	SubscriptionID     string
-	ResourceGroupName  string
-	GalleryName        string
-	Region             string
-	Tags               map[string]*string
-	TokenCredential    azcore.TokenCredential
-	CloudConfiguration cloud.Configuration
+	SubscriptionID    string
+	ResourceGroupName string
+	GalleryName       string
+	Region            string
+	Tags              map[string]*string
+	TokenCredential   azcore.TokenCredential
+	ClientOpts        *arm.ClientOptions
 }
 
 // CreateImageGalleryOutput contains the return values after creating a image
@@ -37,15 +35,7 @@ type CreateImageGalleryOutput struct {
 // CreateImageGallery creates a image gallery.
 func CreateImageGallery(ctx context.Context, in *CreateImageGalleryInput) (*CreateImageGalleryOutput, error) {
 	logrus.Debugf("Creating image gallery: %s", in.GalleryName)
-	computeClientFactory, err := armcompute.NewClientFactory(
-		in.SubscriptionID,
-		in.TokenCredential,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: in.CloudConfiguration,
-			},
-		},
-	)
+	computeClientFactory, err := armcompute.NewClientFactory(in.SubscriptionID, in.TokenCredential, in.ClientOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get compute client factory: %w", err)
 	}
@@ -93,7 +83,7 @@ type CreateGalleryImageInput struct {
 	SKU                  string
 	Tags                 map[string]*string
 	TokenCredential      azcore.TokenCredential
-	CloudConfiguration   cloud.Configuration
+	ClientOpts           *arm.ClientOptions
 	Architecture         armcompute.Architecture
 	OSType               armcompute.OperatingSystemTypes
 	OSState              armcompute.OperatingSystemStateTypes
@@ -119,6 +109,13 @@ func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*Crea
 		feature := armcompute.GalleryImageFeature{
 			Name:  to.Ptr("SecurityType"),
 			Value: to.Ptr(in.SecurityType),
+		}
+		features = append(features, to.Ptr(feature))
+	}
+	if in.HyperVGeneration == armcompute.HyperVGenerationV2 {
+		feature := armcompute.GalleryImageFeature{
+			Name:  to.Ptr("DiskControllerTypes"),
+			Value: to.Ptr("SCSI, NVMe"),
 		}
 		features = append(features, to.Ptr(feature))
 	}
@@ -238,4 +235,42 @@ func CreateGalleryImageVersion(ctx context.Context, in *CreateGalleryImageVersio
 	return &CreateGalleryImageVersionOutput{
 		GalleryImageVersion: to.Ptr(galleryImageVersionPollDone.GalleryImageVersion),
 	}, nil
+}
+
+// CreateManagedImageInput contains parameters for creating a managed image on Azure Stack.
+type CreateManagedImageInput struct {
+	VHDBlobURL        string
+	ResourceGroupName string
+	Region            string
+	InfraID           string
+	Tags              map[string]*string
+	Client            *armcompute.ImagesClient
+}
+
+// CreateManagedImage creates a managed image for nodes, which is only used on Azure Stack.
+func CreateManagedImage(ctx context.Context, in *CreateManagedImageInput) error {
+	params := armcompute.Image{
+		Location: to.Ptr(in.Region),
+		Tags:     in.Tags,
+		Properties: &armcompute.ImageProperties{
+			HyperVGeneration: to.Ptr(armcompute.HyperVGenerationTypesV1),
+			StorageProfile: &armcompute.ImageStorageProfile{
+				OSDisk: &armcompute.ImageOSDisk{
+					OSState: to.Ptr(armcompute.OperatingSystemStateTypesGeneralized),
+					OSType:  to.Ptr(armcompute.OperatingSystemTypesLinux),
+					BlobURI: to.Ptr(in.VHDBlobURL),
+				},
+			},
+		},
+	}
+	poll, err := in.Client.BeginCreateOrUpdate(ctx, in.ResourceGroupName, in.InfraID, params, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning managed image creation: %w", err)
+	}
+	res, err := poll.PollUntilDone(ctx, &runtime.PollUntilDoneOptions{})
+	if err != nil {
+		return fmt.Errorf("failed during managed image creation: %w", err)
+	}
+	logrus.Debugf("Successfully created managed image: %s", *res.ID)
+	return nil
 }

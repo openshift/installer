@@ -58,6 +58,7 @@ KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-kube-controller-manag
 KUBE_SCHEDULER_OPERATOR_IMAGE=$(image_for cluster-kube-scheduler-operator)
 INGRESS_OPERATOR_IMAGE=$(image_for cluster-ingress-operator)
 NODE_TUNING_OPERATOR_IMAGE=$(image_for cluster-node-tuning-operator)
+AUTH_OPERATOR_IMAGE=$(image_for cluster-authentication-operator)
 
 CLOUD_CREDENTIAL_OPERATOR_IMAGE=$(image_for cloud-credential-operator)
 
@@ -114,6 +115,43 @@ then
 	cp api-bootstrap/manifests/* manifests/
 
 	touch api-bootstrap.done
+    record_service_stage_success
+fi
+
+# The cluster-authentication-operator is going to be responsible for managing the
+# rolebindingrestrictions.authorization.openshift.io CRD as outlined in
+# https://github.com/openshift/enhancements/pull/1726
+#
+# This CRD is required for bootstrapping so that the authorization.openshift.io/RestrictSubjectBindings
+# default admission plugin on the kube-apiserver does not prevent
+# the creation of `system:*` RoleBindings.
+#
+# Because the only thing required for bootstrapping from the cluster-authentication-operator
+# is this API, and this API used to be part of the api-bootstrap process,
+# this stage is put immediately after the api-bootstrap stage.
+if [ ! -f auth-api-bootstrap.done ]
+then
+    record_service_stage_start "auth-api-bootstrap"
+	echo "Rendering auth api manifests..."
+
+	rm --recursive --force auth-api-bootstrap
+
+	CLUSTER_PROFILE_ANNOTATION="self-managed-high-availability"
+
+	bootkube_podman_run \
+		--name auth-api-render \
+		--volume "$PWD:/assets:z" \
+		"${AUTH_OPERATOR_IMAGE}" \
+		render \
+		--asset-output-dir=/assets/auth-api-bootstrap/manifests \
+		--rendered-manifest-dir=/assets/manifests \
+		--cluster-profile=${CLUSTER_PROFILE_ANNOTATION} \
+		--payload-version=$VERSION
+        
+
+	cp auth-api-bootstrap/manifests/* manifests/
+
+	touch auth-api-bootstrap.done
     record_service_stage_success
 fi
 
@@ -454,6 +492,7 @@ then
 	copy_static_resources_for vsphere
 	copy_static_resources_for nutanix
 	copy_static_resources_for gcp
+	copy_static_resources_for aws
 
 	cp mco-bootstrap/manifests/* manifests/
 

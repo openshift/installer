@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20180501 "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501"
-	v20180501s "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type DnsZonesTXTRecordExtension struct {
 func (extension *DnsZonesTXTRecordExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20180501.DnsZonesTXTRecord{},
-		&v20180501s.DnsZonesTXTRecord{}}
+		&storage.DnsZonesTXTRecord{}}
 }

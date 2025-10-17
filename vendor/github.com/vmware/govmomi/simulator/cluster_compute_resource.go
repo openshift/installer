@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2017-2023 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
@@ -66,7 +54,7 @@ func (add *addHost) Run(task *Task) (types.AnyType, types.BaseMethodFault) {
 		template.Network = cr.Network[:1] // VM Network
 	}
 
-	host := NewHostSystem(template)
+	host := NewHostSystem(task.ctx, template)
 	host.configure(task.ctx, spec, add.req.AsConnected)
 
 	task.ctx.Map.PutEntity(cr, task.ctx.Map.NewEntity(host))
@@ -81,6 +69,10 @@ func (add *addHost) Run(task *Task) (types.AnyType, types.BaseMethodFault) {
 	cr.Host = append(cr.Host, host.Reference())
 	addComputeResource(cr.Summary.GetComputeResourceSummary(), host)
 
+	if cr.vsanIsEnabled() {
+		cr.addStorageHost(task.ctx, host.Self)
+	}
+
 	return host.Reference(), nil
 }
 
@@ -92,7 +84,14 @@ func (c *ClusterComputeResource) AddHostTask(ctx *Context, add *types.AddHost_Ta
 	}
 }
 
-func (c *ClusterComputeResource) update(cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
+func (c *ClusterComputeResource) vsanIsEnabled() bool {
+	if cfg := c.ConfigurationEx.(*types.ClusterConfigInfoEx).VsanConfigInfo; cfg != nil {
+		return isTrue(cfg.Enabled)
+	}
+	return false
+}
+
+func (c *ClusterComputeResource) update(_ *Context, cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
 	if cspec.DasConfig != nil {
 		if val := cspec.DasConfig.Enabled; val != nil {
 			cfg.DasConfig.Enabled = val
@@ -113,7 +112,7 @@ func (c *ClusterComputeResource) update(cfg *types.ClusterConfigInfoEx, cspec *t
 	return nil
 }
 
-func (c *ClusterComputeResource) updateRules(cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
+func (c *ClusterComputeResource) updateRules(_ *Context, cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
 	for _, spec := range cspec.RulesSpec {
 		var i int
 		exists := false
@@ -160,7 +159,7 @@ func (c *ClusterComputeResource) updateRules(cfg *types.ClusterConfigInfoEx, csp
 	return nil
 }
 
-func (c *ClusterComputeResource) updateGroups(cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
+func (c *ClusterComputeResource) updateGroups(_ *Context, cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
 	for _, spec := range cspec.GroupSpec {
 		var i int
 		exists := false
@@ -204,7 +203,7 @@ func (c *ClusterComputeResource) updateGroups(cfg *types.ClusterConfigInfoEx, cs
 	return nil
 }
 
-func (c *ClusterComputeResource) updateOverridesDAS(cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
+func (c *ClusterComputeResource) updateOverridesDAS(_ *Context, cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
 	for _, spec := range cspec.DasVmConfigSpec {
 		var i int
 		var key types.ManagedObjectReference
@@ -255,7 +254,7 @@ func (c *ClusterComputeResource) updateOverridesDAS(cfg *types.ClusterConfigInfo
 	return nil
 }
 
-func (c *ClusterComputeResource) updateOverridesDRS(cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
+func (c *ClusterComputeResource) updateOverridesDRS(_ *Context, cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
 	for _, spec := range cspec.DrsVmConfigSpec {
 		var i int
 		var key types.ManagedObjectReference
@@ -301,7 +300,7 @@ func (c *ClusterComputeResource) updateOverridesDRS(cfg *types.ClusterConfigInfo
 	return nil
 }
 
-func (c *ClusterComputeResource) updateOverridesVmOrchestration(cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
+func (c *ClusterComputeResource) updateOverridesVmOrchestration(_ *Context, cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
 	for _, spec := range cspec.VmOrchestrationSpec {
 		var i int
 		var key types.ManagedObjectReference
@@ -347,6 +346,43 @@ func (c *ClusterComputeResource) updateOverridesVmOrchestration(cfg *types.Clust
 	return nil
 }
 
+func (c *ClusterComputeResource) addStorageHost(ctx *Context, ref types.ManagedObjectReference) types.BaseMethodFault {
+	ds := ctx.Map.Get(ref).(*HostSystem).ConfigManager.DatastoreSystem
+	hds := ctx.Map.Get(*ds).(*HostDatastoreSystem)
+	return hds.createVsanDatastore(ctx)
+}
+
+func (c *ClusterComputeResource) updateVSAN(ctx *Context, cfg *types.ClusterConfigInfoEx, cspec *types.ClusterConfigSpecEx) types.BaseMethodFault {
+	if cspec.VsanConfig == nil {
+		return nil
+	}
+
+	if cfg.VsanConfigInfo == nil {
+		cfg.VsanConfigInfo = cspec.VsanConfig
+		if cfg.VsanConfigInfo.DefaultConfig == nil {
+			cfg.VsanConfigInfo.DefaultConfig = new(types.VsanClusterConfigInfoHostDefaultInfo)
+		}
+	} else {
+		if cspec.VsanConfig.Enabled != nil {
+			cfg.VsanConfigInfo.Enabled = cspec.VsanConfig.Enabled
+		}
+	}
+
+	if cfg.VsanConfigInfo.DefaultConfig.Uuid == "" {
+		cfg.VsanConfigInfo.DefaultConfig.Uuid = uuid.NewString()
+	}
+
+	if isTrue(cfg.VsanConfigInfo.Enabled) {
+		for _, ref := range c.Host {
+			if err := c.addStorageHost(ctx, ref); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (c *ClusterComputeResource) ReconfigureComputeResourceTask(ctx *Context, req *types.ReconfigureComputeResource_Task) soap.HasFault {
 	task := CreateTask(c, "reconfigureCluster", func(*Task) (types.AnyType, types.BaseMethodFault) {
 		spec, ok := req.Spec.(*types.ClusterConfigSpecEx)
@@ -354,17 +390,18 @@ func (c *ClusterComputeResource) ReconfigureComputeResourceTask(ctx *Context, re
 			return nil, new(types.InvalidArgument)
 		}
 
-		updates := []func(*types.ClusterConfigInfoEx, *types.ClusterConfigSpecEx) types.BaseMethodFault{
+		updates := []func(*Context, *types.ClusterConfigInfoEx, *types.ClusterConfigSpecEx) types.BaseMethodFault{
 			c.update,
 			c.updateRules,
 			c.updateGroups,
 			c.updateOverridesDAS,
 			c.updateOverridesDRS,
 			c.updateOverridesVmOrchestration,
+			c.updateVSAN,
 		}
 
 		for _, update := range updates {
-			if err := update(c.ConfigurationEx.(*types.ClusterConfigInfoEx), spec); err != nil {
+			if err := update(ctx, c.ConfigurationEx.(*types.ClusterConfigInfoEx), spec); err != nil {
 				return nil, err
 			}
 		}
@@ -658,7 +695,7 @@ func CreateClusterComputeResource(ctx *Context, f *Folder, name string, spec typ
 	config.VmSwapPlacement = string(types.VirtualMachineConfigInfoSwapPlacementTypeVmDirectory)
 	config.DrsConfig.Enabled = types.NewBool(true)
 
-	pool := NewResourcePool()
+	pool := NewResourcePool(ctx)
 	ctx.Map.PutEntity(cluster, ctx.Map.NewEntity(pool))
 	cluster.ResourcePool = &pool.Self
 

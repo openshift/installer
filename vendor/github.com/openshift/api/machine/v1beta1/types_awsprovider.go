@@ -95,6 +95,18 @@ type AWSMachineProviderConfig struct {
 	// The field size should be greater than 0 and the field input must start with cr-***
 	// +optional
 	CapacityReservationID string `json:"capacityReservationId"`
+	// marketType specifies the type of market for the EC2 instance.
+	// Valid values are OnDemand, Spot, CapacityBlock and omitted.
+	//
+	// Defaults to OnDemand.
+	// When SpotMarketOptions is provided, the marketType defaults to "Spot".
+	//
+	// When set to OnDemand the instance runs as a standard OnDemand instance.
+	// When set to Spot the instance runs as a Spot instance.
+	// When set to CapacityBlock the instance utilizes pre-purchased compute capacity (capacity blocks) with AWS Capacity Reservations.
+	// If this value is selected, capacityReservationID must be specified to identify the target reservation.
+	// +optional
+	MarketType MarketType `json:"marketType,omitempty"`
 }
 
 // BlockDeviceMappingSpec describes a block device mapping
@@ -128,8 +140,10 @@ type BlockDeviceMappingSpec struct {
 // https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/EbsBlockDevice
 type EBSBlockDeviceSpec struct {
 	// Indicates whether the EBS volume is deleted on machine termination.
+	//
+	// Deprecated: setting this field has no effect.
 	// +optional
-	DeleteOnTermination *bool `json:"deleteOnTermination,omitempty"`
+	DeprecatedDeleteOnTermination *bool `json:"deleteOnTermination,omitempty"`
 	// Indicates whether the EBS volume is encrypted. Encrypted Amazon EBS volumes
 	// may only be attached to machines that support Amazon EBS encryption.
 	// +optional
@@ -318,5 +332,26 @@ type AWSMachineProviderStatus struct {
 	// conditions is a set of conditions associated with the Machine to indicate
 	// errors or other status
 	// +optional
+	// +listType=map
+	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
+
+// MarketType describes the market type of an EC2 Instance
+// +kubebuilder:validation:Enum:=OnDemand;Spot;CapacityBlock
+type MarketType string
+
+const (
+
+	// MarketTypeOnDemand is a MarketType enum value
+	// When set to OnDemand the instance runs as a standard OnDemand instance.
+	MarketTypeOnDemand MarketType = "OnDemand"
+
+	// MarketTypeSpot is a MarketType enum value
+	// When set to Spot the instance runs as a Spot instance.
+	MarketTypeSpot MarketType = "Spot"
+
+	// MarketTypeCapacityBlock is a MarketType enum value
+	// When set to CapacityBlock the instance utilizes pre-purchased compute capacity (capacity blocks) with AWS Capacity Reservations.
+	MarketTypeCapacityBlock MarketType = "CapacityBlock"
+)

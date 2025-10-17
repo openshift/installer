@@ -1,5 +1,6 @@
 CLUSTERCTL_LOG_LEVEL: 10
 EXP_CLUSTER_RESOURCE_SET: "true"
+CLUSTER_TOPOLOGY: "true"
 
 NUTANIX_ENDPOINT: ""    # IP or FQDN of Prism Central
 NUTANIX_USER: ""        # Prism Central user
@@ -8,7 +9,7 @@ NUTANIX_INSECURE: false # Set to true for when using a self-signed certificate f
 NUTANIX_PRISM_ELEMENT_CLUSTER_NAME: ""
 NUTANIX_SUBNET_NAME: ""
 
-KUBERNETES_VERSION: "v1.27.8"           # Kubernetes version, must match the version in NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME
+KUBERNETES_VERSION: "v1.33.0"           # Kubernetes version, must match the version in NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME
 NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME: "" # OS image name, must match the version in KUBERNETES_VERSION
 CONTROL_PLANE_ENDPOINT_IP: ""           # An available IP that will be used by kube-vip for the Kubernetes API Server
 NUTANIX_SSH_AUTHORIZED_KEY: ""          # Public key to use with user 'capiuser' on all Machines
@@ -16,6 +17,8 @@ WORKER_MACHINE_COUNT: 2                 # Number of Machines in the worker node 
 
 KUBEVIP_LB_ENABLE: "false"  # See https://kube-vip.io/docs/about/architecture/?query=lb_enable#control-plane-load-balancing
 KUBEVIP_SVC_ENABLE: "false" # See https://kube-vip.io/docs/about/architecture/?query=lb_enable#kubernetes-service-load-balancing
+
+CLUSTER_CLASS_NAME: "" # ClusterClass Name if any
 
 providers:
   # add a custom provider

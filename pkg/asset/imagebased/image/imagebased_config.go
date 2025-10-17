@@ -19,6 +19,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/manifests/staticnetworkconfig"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/imagebased"
 	"github.com/openshift/installer/pkg/validate"
 )
@@ -30,6 +31,7 @@ const (
 var (
 	configFilename              = "image-based-installation-config.yaml"
 	allowedFlags                = []string{"--append-karg", "--delete-karg", "--save-partlabel", "--save-partindex"}
+	allowedArchitectures        = []string{types.ArchitectureAMD64, types.ArchitectureARM64}
 	defaultExtraPartitionLabel  = "var-lib-containers"
 	defaultExtraPartitionStart  = "-40G"
 	defaultExtraPartitionNumber = uint(5)
@@ -73,6 +75,7 @@ installationDisk: /dev/vda
 pullSecret: '<your-pull-secret>'
 # networkConfig is optional and contains the network configuration for the host in NMState format.
 # See https://nmstate.io/examples.html for examples.
+# Dual-stack networking (IPv4 + IPv6) is supported - configure both address families as needed.
 # networkConfig:
 #   interfaces:
 #     - name: eth0
@@ -84,6 +87,12 @@ pullSecret: '<your-pull-secret>'
 #         address:
 #           - ip: 192.168.122.2
 #             prefix-length: 23
+#         dhcp: false
+#       ipv6:
+#         enabled: true
+#         address:
+#           - ip: 2001:db8::2
+#             prefix-length: 64
 #         dhcp: false
 `
 
@@ -171,6 +180,9 @@ func (i *ImageBasedInstallationConfig) validate() field.ErrorList {
 	if err := i.validateInstallationDisk(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
+	if err := i.validateExtraPartitionStart(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
 	if err := i.validateAdditionalTrustBundle(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
@@ -184,6 +196,9 @@ func (i *ImageBasedInstallationConfig) validate() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 	if err := i.validateCoreosInstallerArgs(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+	if err := i.validateArchitecture(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
@@ -318,6 +333,23 @@ func (i *ImageBasedInstallationConfig) validateImageDigestSources() field.ErrorL
 	return allErrs
 }
 
+func (i *ImageBasedInstallationConfig) validateArchitecture() field.ErrorList {
+	var allErrs field.ErrorList
+
+	// empty Architecture is fine
+	if i.Config.Architecture == "" {
+		return nil
+	}
+
+	architecturePath := field.NewPath("architecture")
+
+	if !funk.ContainsString(allowedArchitectures, i.Config.Architecture) {
+		allErrs = append(allErrs, field.Invalid(architecturePath, i.Config.Architecture, fmt.Sprintf("architecture must be one of %v", allowedArchitectures)))
+	}
+
+	return allErrs
+}
+
 func validateNamedRepository(r string) error {
 	ref, err := dockerref.ParseNamed(r)
 	if err != nil {
@@ -417,4 +449,32 @@ func validateURI(uri string, fldPath *field.Path, schemes []string) field.ErrorL
 		}
 	}
 	return field.ErrorList{field.NotSupported(fldPath, parsed.Scheme, schemes)}
+}
+
+func (i *ImageBasedInstallationConfig) validateExtraPartitionStart() field.ErrorList {
+	var allErrs field.ErrorList
+	extraPartitionStartPath := field.NewPath("ExtraPartitionStart")
+
+	start := i.Config.ExtraPartitionStart
+	if start == "" {
+		allErrs = append(allErrs, field.Required(extraPartitionStartPath, "partition start sector cannot be empty"))
+		return allErrs
+	}
+
+	if start == "0" {
+		return allErrs
+	}
+
+	// Matches patterns like: 10K, +10K, -20M, 1G, +1G, -2T, 3P, +3P.
+	//
+	// First group is optional: + or -.
+	// Second group is numeric value.
+	// Third group is K,M,G,T,P suffix.
+	validFormat := regexp.MustCompile(`^([+-])?(\d+)([KMGTP])$`)
+
+	if !validFormat.MatchString(start) {
+		allErrs = append(allErrs, field.Invalid(extraPartitionStartPath, start, "partition start must be '0' or match pattern [+-]?<number>[KMGTP]"))
+	}
+
+	return allErrs
 }

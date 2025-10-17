@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
+	resourcemanager "google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iam/v1"
-	"google.golang.org/api/option"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	configv1 "github.com/openshift/api/config/v1"
 	gcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 )
 
@@ -58,15 +58,11 @@ func GetSharedVPCRoles() []string {
 }
 
 // CreateServiceAccount is used to create a service account for a compute instance.
-func CreateServiceAccount(ctx context.Context, infraID, projectID, role string) (string, error) {
+func CreateServiceAccount(ctx context.Context, infraID, projectID, role string, serviceEndpoints []configv1.GCPServiceEndpoint) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
 	defer cancel()
 
-	ssn, err := gcp.GetSession(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get session: %w", err)
-	}
-	service, err := iam.NewService(ctx, option.WithCredentials(ssn.Credentials))
+	service, err := gcp.GetIAMService(ctx, serviceEndpoints)
 	if err != nil {
 		return "", fmt.Errorf("failed to create IAM service: %w", err)
 	}
@@ -101,17 +97,13 @@ func CreateServiceAccount(ctx context.Context, infraID, projectID, role string) 
 }
 
 // AddServiceAccountRoles adds predefined roles for service account.
-func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID string, roles []string) error {
+func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID string, roles []string, serviceEndpoints []configv1.GCPServiceEndpoint) error {
 	// Get cloudresourcemanager service
 	// The context timeout must be greater in time than the exponential backoff below
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
 	defer cancel()
 
-	ssn, err := gcp.GetSession(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get session: %w", err)
-	}
-	service, err := resourcemanager.NewService(ctx, option.WithCredentials(ssn.Credentials))
+	service, err := gcp.GetCloudResourceService(ctx, serviceEndpoints)
 	if err != nil {
 		return fmt.Errorf("failed to create resourcemanager service: %w", err)
 	}
@@ -173,17 +165,21 @@ func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID str
 
 // getPolicy gets the project's IAM policy.
 func getPolicy(ctx context.Context, crmService *resourcemanager.Service, projectID string) (*resourcemanager.Policy, error) {
-	logrus.Debugf("Getting policy for %s", projectID)
-	request := &resourcemanager.GetIamPolicyRequest{}
-	policy, err := crmService.Projects.GetIamPolicy(projectID, request).Context(ctx).Do()
+	request := &resourcemanager.GetIamPolicyRequest{
+		Options: &resourcemanager.GetPolicyOptions{
+			RequestedPolicyVersion: 3,
+		},
+	}
+	policy, err := crmService.Projects.GetIamPolicy(fmt.Sprintf("projects/%s", projectID), request).Context(ctx).Do()
 	return policy, err
 }
 
 // setPolicy sets the project's IAM policy.
 func setPolicy(ctx context.Context, crmService *resourcemanager.Service, projectID string, policy *resourcemanager.Policy) error {
-	request := &resourcemanager.SetIamPolicyRequest{}
-	request.Policy = policy
-	_, err := crmService.Projects.SetIamPolicy(projectID, request).Context(ctx).Do()
+	request := &resourcemanager.SetIamPolicyRequest{
+		Policy: policy,
+	}
+	_, err := crmService.Projects.SetIamPolicy(fmt.Sprintf("projects/%s", projectID), request).Context(ctx).Do()
 	return err
 }
 

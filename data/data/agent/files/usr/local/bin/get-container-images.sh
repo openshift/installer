@@ -7,10 +7,13 @@ set -euo pipefail
 . /usr/local/bin/release-image.sh
 
 # Store images in the environment file used by services and passed to assisted-service
-# The agent image will be also retrieved when its script is run
+# The agent image will be also retrieved when its script is run.
+# UI image is currently hardcoded until it will be shipped into the release payload.
 cat <<EOF >/usr/local/share/assisted-service/agent-images.env
 SERVICE_IMAGE=$(image_for agent-installer-api-server)
 CONTROLLER_IMAGE=$(image_for agent-installer-csr-approver)
 INSTALLER_IMAGE=$(image_for agent-installer-orchestrator)
 AGENT_DOCKER_IMAGE=$(image_for agent-installer-node-agent)
+AGENT_INSTALLER_UTILS_IMAGE=$(image_for agent-installer-utils)
+INSTALLER_UI_IMAGE=$(image_for agent-installer-ui)
 EOF

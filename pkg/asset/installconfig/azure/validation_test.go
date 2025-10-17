@@ -10,10 +10,11 @@ import (
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/azure/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -50,6 +51,7 @@ var (
 		"Standard_D8ps_v5":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64", "TrustedLaunchDisabled": "True"},
 		"Standard_D4ps_v5":   {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64", "TrustedLaunchDisabled": "True"},
 		"Standard_DC8ads_v5": {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64", "ConfidentialComputingType": "SNP"},
+		"Standard_DC8eds_v5": {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64", "ConfidentialComputingType": "TDX"},
 		"Standard_DC8s_v3":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64", "ConfidentialComputingType": "SGX"},
 	}
 
@@ -119,6 +121,14 @@ var (
 
 	validConfidentialVMInstanceTypes = func(ic *types.InstallConfig) {
 		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_DC8ads_v5"
+	}
+
+	validConfidentialVMSNPInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_DC8ads_v5"
+	}
+
+	validConfidentialVMTDXInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_DC8eds_v5"
 	}
 
 	invalidConfidentialVMInstanceTypes = func(ic *types.InstallConfig) {
@@ -363,6 +373,15 @@ var (
 		validOSImageCompute(ic)
 		ic.Compute[0].Platform.Azure.OSImage.SKU = erroringOSImageSKU
 	}
+	validBootDiagnosticsStorageAccount = "validstorageaccount"
+	validBootDiagnosticsResourceGroup  = "valid-resource-group"
+	validStorageAccountValues          = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.BootDiagnostics = &azure.BootDiagnostics{
+			Type:               v1beta1.UserManagedDiagnosticsStorage,
+			ResourceGroup:      validBootDiagnosticsResourceGroup,
+			StorageAccountName: validBootDiagnosticsStorageAccount,
+		}
+	}
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -514,8 +533,13 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			errorMsg: `compute\[0\].platform.azure.vmNetworkingType: Invalid value: "Accelerated": vm networking type is not supported for instance type Standard_B4ms`,
 		},
 		{
-			name:     "Supported ConfidentialVM security type",
-			edits:    editFunctions{validConfidentialVMInstanceTypes, securityTypeConfidentialVMControlPlane},
+			name:     "Supported ConfidentialVM security type SNP",
+			edits:    editFunctions{validConfidentialVMSNPInstanceTypes, securityTypeConfidentialVMControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported ConfidentialVM security type TDX",
+			edits:    editFunctions{validConfidentialVMTDXInstanceTypes, securityTypeConfidentialVMControlPlane},
 			errorMsg: "",
 		},
 		{
@@ -568,6 +592,11 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			edits:    editFunctions{validArm64InstanceTypes, invalidTrustedLaunchInstanceTypes, securityTypeTrustedLaunchDefaultMachinePlatform},
 			errorMsg: `[compute\[0\].platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_D4ps_v5,controlPlane.platform.azure.settings.securityType: Invalid valud: "ConfidentialVM": this security type is not supported for instance type Standard_D4ps_v5]`,
 		},
+		{
+			name:     "BootDiagnostics type user managed and valid storage account values",
+			edits:    editFunctions{validStorageAccountValues},
+			errorMsg: "",
+		},
 	}
 
 	mockCtrl := gomock.NewController(t)
@@ -617,6 +646,8 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]string{"1", "2", "3"}, nil).AnyTimes()
 
 	azureClient.EXPECT().GetVirtualMachineFamily(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil).AnyTimes()
+
+	azureClient.EXPECT().CheckIfExistsStorageAccount(gomock.Any(), validBootDiagnosticsResourceGroup, validBootDiagnosticsStorageAccount, validRegion).Return(nil)
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -681,10 +712,7 @@ func Test_validateResourceGroup(t *testing.T) {
 		err:       `^\Qplatform.azure.resourceGroupName: Invalid value: "valid-resource-group-conf-tags": resource group has conflicting tags kubernetes.io_cluster.test-cluster-12345\E$`,
 	}, {
 		groupName: "valid-resource-group-with-resources",
-		// ARO provisions Azure resources before resolving the asset graph,
-		// so there will always be resources in its resource group.
-		wantSkip: (&azure.Platform{}).IsARO(),
-		err:      `^\Qplatform.azure.resourceGroupName: Invalid value: "valid-resource-group-with-resources": resource group must be empty but it has 3 resources like id1, id2 ...\E$`,
+		err:       `^\Qplatform.azure.resourceGroupName: Invalid value: "valid-resource-group-with-resources": resource group must be empty but it has 3 resources like id1, id2 ...\E$`,
 	}}
 
 	mockCtrl := gomock.NewController(t)

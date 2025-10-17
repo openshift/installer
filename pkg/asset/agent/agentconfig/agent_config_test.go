@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -123,7 +123,7 @@ additionalNTPSources:
   - invalid_pool.ntp.org
 rendezvousIP: 192.168.111.80`,
 			expectedFound: false,
-			expectedError: "invalid Agent Config configuration: AdditionalNTPSources: Invalid value: \"invalid_pool.ntp.org\": NTP server is not a valid IP or domain name",
+			expectedError: "invalid Agent Config configuration: additionalNTPSources: Invalid value: \"invalid_pool.ntp.org\": NTP server is not a valid IP or domain name",
 		},
 	}
 	for _, tc := range cases {

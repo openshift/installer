@@ -157,7 +157,7 @@ func (r *GCPManagedMachinePoolReconciler) SetupWithManager(ctx context.Context, 
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1exp.GCPManagedMachinePool{}).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue)).
 		Watches(
 			&expclusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(machinePoolToInfrastructureMapFunc(gvk)),
@@ -178,10 +178,10 @@ func (r *GCPManagedMachinePoolReconciler) SetupWithManager(ctx context.Context, 
 
 	// Add a watch on clusterv1.Cluster object for unpause & ready notifications.
 	if err := c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(clusterToObjectFunc),
-		predicates.ClusterUnpausedAndInfrastructureReady(log),
-	); err != nil {
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(clusterToObjectFunc),
+			predicates.ClusterPausedTransitionsOrInfrastructureReady(mgr.GetScheme(), log),
+		)); err != nil {
 		return errors.Wrap(err, "failed adding a watch for ready clusters")
 	}
 
@@ -266,7 +266,7 @@ func (r *GCPManagedMachinePoolReconciler) Reconcile(ctx context.Context, req ctr
 		Name:      cluster.Spec.InfrastructureRef.Name,
 	}
 	gcpManagedCluster := &infrav1exp.GCPManagedCluster{}
-	if err := r.Client.Get(ctx, gcpManagedClusterKey, gcpManagedCluster); err != nil || gcpManagedCluster == nil {
+	if err := r.Client.Get(ctx, gcpManagedClusterKey, gcpManagedCluster); err != nil {
 		log.Error(err, "Failed to retrieve GCPManagedCluster from the API Server")
 		return ctrl.Result{}, err
 	}
@@ -336,11 +336,12 @@ func (r *GCPManagedMachinePoolReconciler) reconcile(ctx context.Context, managed
 			var e *apierror.APIError
 			if ok := errors.As(err, &e); ok {
 				if e.GRPCStatus().Code() == codes.FailedPrecondition {
-					log.Info("Cannot perform update when there's other operation, retry later", "reconciler", name)
+					log.Info("Cannot perform update while another operation is running, requeuing", "reconciler", name)
 					return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
 				}
 			}
 			log.Error(err, "Reconcile error", "reconciler", name)
+
 			record.Warnf(managedMachinePoolScope.GCPManagedMachinePool, "GCPManagedMachinePoolReconcile", "Reconcile error - %v", err)
 			return ctrl.Result{}, err
 		}
@@ -369,6 +370,13 @@ func (r *GCPManagedMachinePoolReconciler) reconcileDelete(ctx context.Context, m
 		log.V(4).Info("Calling reconciler delete", "reconciler", name)
 		res, err := r.Delete(ctx)
 		if err != nil {
+			var e *apierror.APIError
+			if ok := errors.As(err, &e); ok {
+				if e.GRPCStatus().Code() == codes.FailedPrecondition {
+					log.Info("Cannot perform delete while another operation is running, requeuing", "reconciler", name)
+					return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
+				}
+			}
 			log.Error(err, "Reconcile error", "reconciler", name)
 			record.Warnf(managedMachinePoolScope.GCPManagedMachinePool, "GCPManagedMachinePoolReconcile", "Reconcile error - %v", err)
 			return ctrl.Result{}, err

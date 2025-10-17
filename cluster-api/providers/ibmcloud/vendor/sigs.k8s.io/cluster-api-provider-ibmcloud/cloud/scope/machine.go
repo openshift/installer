@@ -36,10 +36,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 	"sigs.k8s.io/cluster-api/util/patch"
 
 	infrav1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/globaltagging"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/vpc"
@@ -105,8 +105,17 @@ func NewMachineScope(params MachineScopeParams) (*MachineScope, error) {
 		core.SetLoggingLevel(core.LevelDebug)
 	}
 
+	auth, err := authenticator.GetAuthenticator()
+	if err != nil {
+		return nil, fmt.Errorf("error failed to create authenticator: %w", err)
+	}
+
 	// Create Global Tagging client.
-	gtOptions := globaltagging.ServiceOptions{}
+	gtOptions := globaltagging.ServiceOptions{
+		GlobalTaggingV1Options: &globaltaggingv1.GlobalTaggingV1Options{
+			Authenticator: auth,
+		},
+	}
 	// Override the Global Tagging endpoint if provided.
 	if gtEndpoint := endpoints.FetchEndpoints(string(endpoints.GlobalTagging), params.ServiceEndpoint); gtEndpoint != "" {
 		gtOptions.URL = gtEndpoint
@@ -717,6 +726,11 @@ func (m *MachineScope) DeleteVPCLoadBalancerPoolMember() error {
 		return nil
 	}
 
+	// If the Machine has Load Balancer Pool Members defined in its Status (part of extended VPC Machine support), process the removal of those members versus the legacy single LB design.
+	if len(m.IBMVPCMachine.Status.LoadBalancerPoolMembers) > 0 {
+		return m.deleteVPCLoadBalancerPoolMembers()
+	}
+
 	loadBalancer, _, err := m.IBMVPCClient.GetLoadBalancer(&vpcv1.GetLoadBalancerOptions{
 		ID: m.IBMVPCCluster.Status.VPCEndpoint.LBID,
 	})
@@ -763,6 +777,99 @@ func (m *MachineScope) DeleteVPCLoadBalancerPoolMember() error {
 			}
 		}
 	}
+	return nil
+}
+
+// deleteVPCLoadBalancerPoolMembers provides support to delete Load Balancer Pools Members for a Machine that are tracked in the Machine's Status, which is part of the extended VPC Machine support.
+// This new support allows a Machine to have members in multiple Load Balancers, as defined by the Machine Spec, rather than defaulting (legacy) to the single Cluster Load Balancer.
+func (m *MachineScope) deleteVPCLoadBalancerPoolMembers() error {
+	// Retrieve the Instance details immediately (without them the member cannot be safely deleted).
+	instanceOptions := &vpcv1.GetInstanceOptions{
+		ID: ptr.To(m.IBMVPCMachine.Status.InstanceID),
+	}
+	instanceDetails, _, err := m.IBMVPCClient.GetInstance(instanceOptions)
+	if err != nil {
+		return fmt.Errorf("error retrieving instance for load balancer pool member deletion for machine %s: %w", m.IBMVPCMachine.Name, err)
+	}
+	// Verify the instance has a primary network interface IP address needed to delete the correct Load Balancer Pool Member.
+	if instanceDetails.PrimaryNetworkInterface == nil || instanceDetails.PrimaryNetworkInterface.PrimaryIP == nil || instanceDetails.PrimaryNetworkInterface.PrimaryIP.Address == nil {
+		return fmt.Errorf("error instance is missing the primary network interface IP address for load balancer pool member deletion for machine: %s", m.IBMVPCMachine.Name)
+	}
+	m.Logger.V(5).Info("collected instance details for load balancer pool member deletion", "machienName", m.IBMVPCMachine.Name, "instanceID", *instanceDetails.ID, "instanceIP", *instanceDetails.PrimaryNetworkInterface.PrimaryIP.Address)
+
+	cleanupIncomplete := false
+	for _, member := range m.IBMVPCMachine.Status.LoadBalancerPoolMembers {
+		// Retrieve the Load Balancer.
+		var loadBalancerDetails *vpcv1.LoadBalancer
+		if member.LoadBalancer.ID != nil {
+			loadBalancerDetails, _, err = m.IBMVPCClient.GetLoadBalancer(&vpcv1.GetLoadBalancerOptions{
+				ID: member.LoadBalancer.ID,
+			})
+		} else if member.LoadBalancer.Name != nil {
+			loadBalancerDetails, err = m.IBMVPCClient.GetLoadBalancerByName(*member.LoadBalancer.Name)
+		} else {
+			return fmt.Errorf("error load balancer has no id or name for load balancer pool member deleteion")
+		}
+		if err != nil {
+			return fmt.Errorf("error retrieving load balancer for load balancer pool member deletion for machine %s: %w", m.IBMVPCMachine.Name, err)
+		}
+		m.Logger.V(5).Info("collected load balancer for load balancer pool member deletion", "machineName", m.IBMVPCMachine.Name, "loadBalancerID", *loadBalancerDetails.ID)
+
+		// Lookup the Load Balancer Pool ID, if only name is available.
+		loadBalancerPoolID, err := m.getLoadBalancerPoolID(ptr.To(member.Pool), *loadBalancerDetails.ID)
+		if err != nil {
+			return fmt.Errorf("error retrieving load balancer pool id for load balancer pool member deletion for machine %s: %w", m.IBMVPCMachine.Name, err)
+		}
+		m.Logger.V(5).Info("collected load balancer pool id for load balancer pool member deletion", "machineName", m.IBMVPCMachine.Name, "loadBalancerPoolID", *loadBalancerPoolID)
+
+		listMembersOptions := &vpcv1.ListLoadBalancerPoolMembersOptions{
+			LoadBalancerID: loadBalancerDetails.ID,
+			PoolID:         loadBalancerPoolID,
+		}
+
+		m.Logger.V(5).Info("list load balancer pool members options", "machineName", m.IBMVPCMachine.Name, "options", *listMembersOptions)
+		poolMembers, _, err := m.IBMVPCClient.ListLoadBalancerPoolMembers(listMembersOptions)
+		if err != nil {
+			return fmt.Errorf("error retrieving load balancer pool members for load balancer pool member deletion for machine %s: %w", m.IBMVPCMachine.Name, err)
+		}
+
+		for _, poolMember := range poolMembers.Members {
+			poolMemberTarget, ok := poolMember.Target.(*vpcv1.LoadBalancerPoolMemberTarget)
+			// If the member isn't a LoadBalancerPoolMemberTarget, has no Address, or the Address doesn't match the Machine's Primary IP Address, move to the next member.
+			if !ok || poolMemberTarget.Address == nil || *poolMemberTarget.Address != *instanceDetails.PrimaryNetworkInterface.PrimaryIP.Address {
+				continue
+			}
+
+			m.Logger.V(3).Info("found load balancer pool member to delete", "machineName", m.IBMVPCMachine.Name, "poolMemberID", *poolMember.ID)
+			// Make LB status check now that it has been determined a change is required.
+			if *loadBalancerDetails.ProvisioningStatus != string(infrav1beta2.VPCLoadBalancerStateActive) {
+				m.Logger.V(5).Info("load balancer not in active status prior to load balancer pool member deletion", "machineName", m.IBMVPCMachine.Name, "loadBalancerID", *loadBalancerDetails.ID, "loadBalancerProvisioningStatus", *loadBalancerDetails.ProvisioningStatus)
+				// Set flag that some cleanup was not completed, and break out of member target loop, to try next member from Machine Status.
+				cleanupIncomplete = true
+				break
+			}
+
+			deleteOptions := &vpcv1.DeleteLoadBalancerPoolMemberOptions{
+				ID:             poolMember.ID,
+				LoadBalancerID: loadBalancerDetails.ID,
+				PoolID:         loadBalancerPoolID,
+			}
+
+			m.Logger.V(5).Info("delete load balancer pool member options", "machineName", m.IBMVPCMachine.Name, "options", *deleteOptions)
+			// Delete the matching Load Balancer Pool Member.
+			_, err := m.IBMVPCClient.DeleteLoadBalancerPoolMember(deleteOptions)
+			if err != nil {
+				return fmt.Errorf("error deleting load balancer pool member for machine: %s: %w", m.IBMVPCMachine.Name, err)
+			}
+			m.Logger.V(3).Info("deleted load balancer pool member", "machineName", m.IBMVPCMachine.Name, "loadBalancerID", *loadBalancerDetails.ID, "loadBalancerPoolID", *loadBalancerPoolID, "loadBalancerPoolMemberID", *poolMember.ID)
+		}
+	}
+
+	if cleanupIncomplete {
+		return fmt.Errorf("error load balancer pool member deletion could not complete as a load balancer was not active for machine: %s", m.IBMVPCMachine.Name)
+	}
+
+	// Assume if no errors were encountered, and if either all delete calls were successful or none were required, all Load Balancer Pool Members have been successfully deleted.
 	return nil
 }
 
@@ -957,7 +1064,7 @@ func (m *MachineScope) SetFailureMessage(message string) {
 }
 
 // SetFailureReason will set the Machine's Failure Reason.
-func (m *MachineScope) SetFailureReason(reason capierrors.MachineStatusError) {
+func (m *MachineScope) SetFailureReason(reason string) {
 	m.IBMVPCMachine.Status.FailureReason = ptr.To(reason)
 }
 
@@ -980,14 +1087,14 @@ func (m *MachineScope) SetNotReady() {
 func (m *MachineScope) SetProviderID(id *string) error {
 	// Based on the ProviderIDFormat version the providerID format will be decided.
 	if options.ProviderIDFormatType(options.ProviderIDFormat) == options.ProviderIDFormatV2 {
-		accountID, err := utils.GetAccountID()
+		accountID, err := utils.GetAccountIDWrapper()
 		if err != nil {
 			m.Logger.Error(err, "failed to get cloud account id", err.Error())
 			return err
 		}
 		m.IBMVPCMachine.Spec.ProviderID = ptr.To(fmt.Sprintf("ibm://%s///%s/%s", accountID, m.Machine.Spec.ClusterName, *id))
 	} else {
-		m.IBMVPCMachine.Spec.ProviderID = ptr.To(fmt.Sprintf("ibmvpc://%s/%s", m.Machine.Spec.ClusterName, m.IBMVPCMachine.Name))
+		return fmt.Errorf("invalid value for ProviderIDFormat")
 	}
 	return nil
 }

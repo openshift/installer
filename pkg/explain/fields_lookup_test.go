@@ -20,6 +20,7 @@ func Test_lookup(t *testing.T) {
 	}, {
 		path: []string{"publish"},
 		desc: `Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+A "Mixed" strategy only applies to the "azure" platform, and requires "operatorPublishingStrategy" to be configured.
 When no strategy is specified, the strategy is "External".`,
 	}, {
 		path: []string{"publish", "unknown"},
@@ -41,7 +42,9 @@ perform the installation.`,
 		path: []string{"platform", "aws", "subnets"},
 		desc: `Subnets specifies existing subnets (by ID) where cluster
 resources will be created.  Leave unset to have the installer
-create subnets in a new VPC on your behalf.`,
+create subnets in a new VPC on your behalf.
+
+Deprecated: use platform.aws.vpc.subnets`,
 	}, {
 		path: []string{"platform", "aws", "userTags"},
 		desc: `UserTags additional keys and values that the installer will add

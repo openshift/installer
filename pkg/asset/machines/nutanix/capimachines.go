@@ -152,7 +152,7 @@ func generateNutanixMachine(machineName string, providerSpec *machinev1.NutanixM
 			VCPUSockets:    providerSpec.VCPUSockets,
 			MemorySize:     providerSpec.MemorySize,
 			SystemDiskSize: providerSpec.SystemDiskSize,
-			Image: capnv1.NutanixResourceIdentifier{
+			Image: &capnv1.NutanixResourceIdentifier{
 				Type: capnv1.NutanixIdentifierType(providerSpec.Image.Type),
 				Name: providerSpec.Image.Name,
 				UUID: providerSpec.Image.UUID,

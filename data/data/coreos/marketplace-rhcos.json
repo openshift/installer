@@ -1,0 +1,116 @@
+{
+    "aarch64": {
+        "azure": {
+            "no-purchase-plan": {
+                "hyperVGen2": {
+                    "publisher": "azureopenshift",
+                    "offer": "aro4",
+                    "sku": "419-arm",
+                    "version": "419.6.20250523"
+                }
+            }
+        }
+    },
+    "x86_64": {
+        "azure": {
+            "no-purchase-plan": {
+                "hyperVGen1": {
+                    "publisher": "azureopenshift",
+                    "offer": "aro4",
+                    "sku": "aro_419",
+                    "version": "419.6.20250523"
+                },
+                "hyperVGen2": {
+                    "publisher": "azureopenshift",
+                    "offer": "aro4",
+                    "sku": "419-v2",
+                    "version": "419.6.20250523"
+                }
+            },
+            "ocp": {
+                "hyperVGen1": {
+                    "publisher": "redhat",
+                    "offer": "rh-ocp-worker",
+                    "sku": "rh-ocp-worker-gen1",
+                    "version": "4.18.2025031114"
+                },
+                "hyperVGen2": {
+                    "publisher": "redhat",
+                    "offer": "rh-ocp-worker",
+                    "sku": "rh-ocp-worker",
+                    "version": "4.18.2025031114"
+                }
+            },
+            "opp": {
+                "hyperVGen1": {
+                    "publisher": "redhat",
+                    "offer": "rh-opp-worker",
+                    "sku": "rh-opp-worker-gen1",
+                    "version": "4.18.2025031114"
+                },
+                "hyperVGen2": {
+                    "publisher": "redhat",
+                    "offer": "rh-opp-worker",
+                    "sku": "rh-opp-worker",
+                    "version": "4.18.2025031114"
+                }
+            },
+            "oke": {
+                "hyperVGen1": {
+                    "publisher": "redhat",
+                    "offer": "rh-oke-worker",
+                    "sku": "rh-oke-worker-gen1",
+                    "version": "4.18.2025031114"
+                },
+                "hyperVGen2": {
+                    "publisher": "redhat",
+                    "offer": "rh-oke-worker",
+                    "sku": "rh-oke-worker",
+                    "version": "4.18.2025031114"
+                }
+            },
+            "ocp-emea": {
+                "hyperVGen1": {
+                    "publisher": "redhat-limited",
+                    "offer": "rh-ocp-worker",
+                    "sku": "rh-ocp-worker-gen1",
+                    "version": "4.18.2025031114"
+                },
+                "hyperVGen2": {
+                    "publisher": "redhat-limited",
+                    "offer": "rh-ocp-worker",
+                    "sku": "rh-ocp-worker",
+                    "version": "4.18.2025031114"
+                }
+            },
+            "opp-emea": {
+                "hyperVGen1": {
+                    "publisher": "redhat-limited",
+                    "offer": "rh-opp-worker",
+                    "sku": "rh-opp-worker-gen1",
+                    "version": "4.18.2025031114"
+                },
+                "hyperVGen2": {
+                    "publisher": "redhat-limited",
+                    "offer": "rh-opp-worker",
+                    "sku": "rh-opp-worker",
+                    "version": "4.18.2025031114"
+                }
+            },
+            "oke-emea": {
+                "hyperVGen1": {
+                    "publisher": "redhat-limited",
+                    "offer": "rh-oke-worker",
+                    "sku": "rh-oke-worker-gen1",
+                    "version": "4.18.2025031114"
+                },
+                "hyperVGen2": {
+                    "publisher": "redhat-limited",
+                    "offer": "rh-oke-worker",
+                    "sku": "rh-oke-worker",
+                    "version": "4.18.2025031114"
+                }
+            }
+        }
+    }
+}

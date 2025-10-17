@@ -24,27 +24,21 @@ import (
 )
 
 // NewTestClusterCacheTracker creates a new fake ClusterCacheTracker that can be used by unit tests with fake client.
-func NewTestClusterCacheTracker(log logr.Logger, cl client.Client, scheme *runtime.Scheme, objKey client.ObjectKey, watchObjects ...string) *ClusterCacheTracker {
+//
+// Deprecated: This will be removed in Cluster API v1.10, use clustercache.NewTestClusterCacheTracker instead.
+func NewTestClusterCacheTracker(log logr.Logger, cl client.Client, remoteClient client.Client, scheme *runtime.Scheme, objKey client.ObjectKey, watchObjects ...string) *ClusterCacheTracker {
 	testCacheTracker := &ClusterCacheTracker{
 		log:              log,
 		client:           cl,
 		scheme:           scheme,
 		clusterAccessors: make(map[client.ObjectKey]*clusterAccessor),
-	}
-
-	delegatingClient, err := client.NewDelegatingClient(client.NewDelegatingClientInput{
-		CacheReader: cl,
-		Client:      cl,
-	})
-	if err != nil {
-		panic(err)
+		clusterLock:      newKeyedMutex(),
 	}
 
 	testCacheTracker.clusterAccessors[objKey] = &clusterAccessor{
-
 		cache:   nil,
-		client:  delegatingClient,
-		watches: sets.NewString(watchObjects...),
+		client:  remoteClient,
+		watches: sets.Set[string]{}.Insert(watchObjects...),
 	}
 	return testCacheTracker
 }

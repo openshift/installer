@@ -19,7 +19,8 @@ import (
 type MachineSetInput struct {
 	ClusterID                string
 	InstallConfigPlatformAWS *aws.Platform
-	Subnets                  icaws.Subnets
+	PublicSubnet             bool
+	Subnets                  icaws.SubnetsByZone
 	Zones                    icaws.Zones
 	Pool                     *types.MachinePool
 	Role                     string
@@ -49,7 +50,7 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 		nodeLabels := make(map[string]string, 3)
 		nodeTaints := []corev1.Taint{}
 		instanceType := mpool.InstanceType
-		publicSubnet := false
+		publicSubnet := in.PublicSubnet
 		subnetID := ""
 		if len(in.Subnets) > 0 {
 			subnet, ok := in.Subnets[az]

@@ -22,7 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// PodSpecApplyConfiguration represents an declarative configuration of the PodSpec type for use
+// PodSpecApplyConfiguration represents a declarative configuration of the PodSpec type for use
 // with apply.
 type PodSpecApplyConfiguration struct {
 	Volumes                       []VolumeApplyConfiguration                   `json:"volumes,omitempty"`
@@ -62,9 +62,12 @@ type PodSpecApplyConfiguration struct {
 	SetHostnameAsFQDN             *bool                                        `json:"setHostnameAsFQDN,omitempty"`
 	OS                            *PodOSApplyConfiguration                     `json:"os,omitempty"`
 	HostUsers                     *bool                                        `json:"hostUsers,omitempty"`
+	SchedulingGates               []PodSchedulingGateApplyConfiguration        `json:"schedulingGates,omitempty"`
+	ResourceClaims                []PodResourceClaimApplyConfiguration         `json:"resourceClaims,omitempty"`
+	Resources                     *ResourceRequirementsApplyConfiguration      `json:"resources,omitempty"`
 }
 
-// PodSpecApplyConfiguration constructs an declarative configuration of the PodSpec type for use with
+// PodSpecApplyConfiguration constructs a declarative configuration of the PodSpec type for use with
 // apply.
 func PodSpec() *PodSpecApplyConfiguration {
 	return &PodSpecApplyConfiguration{}
@@ -414,5 +417,39 @@ func (b *PodSpecApplyConfiguration) WithOS(value *PodOSApplyConfiguration) *PodS
 // If called multiple times, the HostUsers field is set to the value of the last call.
 func (b *PodSpecApplyConfiguration) WithHostUsers(value bool) *PodSpecApplyConfiguration {
 	b.HostUsers = &value
+	return b
+}
+
+// WithSchedulingGates adds the given value to the SchedulingGates field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the SchedulingGates field.
+func (b *PodSpecApplyConfiguration) WithSchedulingGates(values ...*PodSchedulingGateApplyConfiguration) *PodSpecApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithSchedulingGates")
+		}
+		b.SchedulingGates = append(b.SchedulingGates, *values[i])
+	}
+	return b
+}
+
+// WithResourceClaims adds the given value to the ResourceClaims field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ResourceClaims field.
+func (b *PodSpecApplyConfiguration) WithResourceClaims(values ...*PodResourceClaimApplyConfiguration) *PodSpecApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithResourceClaims")
+		}
+		b.ResourceClaims = append(b.ResourceClaims, *values[i])
+	}
+	return b
+}
+
+// WithResources sets the Resources field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Resources field is set to the value of the last call.
+func (b *PodSpecApplyConfiguration) WithResources(value *ResourceRequirementsApplyConfiguration) *PodSpecApplyConfiguration {
+	b.Resources = value
 	return b
 }

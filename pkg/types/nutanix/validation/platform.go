@@ -13,7 +13,8 @@ import (
 )
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
+// nolint:gocyclo
+func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.InstallConfig, usingAgentMethod bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(p.PrismCentral.Endpoint.Address) == 0 {
@@ -71,6 +72,11 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 	// validate subnets configuration
 	if errs := validateSubnets(fldPath.Child("subnetUUIDs"), p.SubnetUUIDs); len(errs) > 0 {
 		allErrs = append(allErrs, errs...)
+	}
+
+	// For the agent-installer, the below fields are ignored. So we do not need to validate them.
+	if usingAgentMethod {
+		return allErrs
 	}
 
 	if c.Nutanix.LoadBalancer != nil {

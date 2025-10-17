@@ -18,6 +18,16 @@ import (
 // API is the interface of the operators client
 type API interface {
 	/*
+	   V2GetBundle gets operator properties for a bundle
+
+	   Retrieves an array of operator properties for the specified bundle.*/
+	V2GetBundle(ctx context.Context, params *V2GetBundleParams) (*V2GetBundleOK, error)
+	/*
+	   V2ListBundles gets list of avaliable bundles
+
+	   Retrieves a list of avaliable bundles.*/
+	V2ListBundles(ctx context.Context, params *V2ListBundlesParams) (*V2ListBundlesOK, error)
+	/*
 	   V2ListOfClusterOperators Lists operators to be monitored for a cluster.*/
 	V2ListOfClusterOperators(ctx context.Context, params *V2ListOfClusterOperatorsParams) (*V2ListOfClusterOperatorsOK, error)
 	/*
@@ -47,6 +57,60 @@ type Client struct {
 	transport runtime.ClientTransport
 	formats   strfmt.Registry
 	authInfo  runtime.ClientAuthInfoWriter
+}
+
+/*
+V2GetBundle gets operator properties for a bundle
+
+Retrieves an array of operator properties for the specified bundle.
+*/
+func (a *Client) V2GetBundle(ctx context.Context, params *V2GetBundleParams) (*V2GetBundleOK, error) {
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "V2GetBundle",
+		Method:             "GET",
+		PathPattern:        "/v2/operators/bundles/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &V2GetBundleReader{formats: a.formats},
+		AuthInfo:           a.authInfo,
+		Context:            ctx,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*V2GetBundleOK), nil
+
+}
+
+/*
+V2ListBundles gets list of avaliable bundles
+
+Retrieves a list of avaliable bundles.
+*/
+func (a *Client) V2ListBundles(ctx context.Context, params *V2ListBundlesParams) (*V2ListBundlesOK, error) {
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "V2ListBundles",
+		Method:             "GET",
+		PathPattern:        "/v2/operators/bundles",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &V2ListBundlesReader{formats: a.formats},
+		AuthInfo:           a.authInfo,
+		Context:            ctx,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*V2ListBundlesOK), nil
+
 }
 
 /*

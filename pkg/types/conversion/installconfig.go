@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilsslice "k8s.io/utils/strings/slices"
 
@@ -95,10 +96,13 @@ func convertNetworking(config *types.InstallConfig) {
 		netconf.NetworkType = netconf.DeprecatedType
 	}
 
-	// Recognize the OpenShiftSDN network plugin name regardless of capitalization, for
+	// Recognize the network plugin name regardless of capitalization, for
 	// backward compatibility
-	if strings.ToLower(netconf.NetworkType) == strings.ToLower(string(operv1.NetworkTypeOpenShiftSDN)) {
+	if strings.EqualFold(netconf.NetworkType, string(operv1.NetworkTypeOpenShiftSDN)) {
 		netconf.NetworkType = string(operv1.NetworkTypeOpenShiftSDN)
+	}
+	if strings.EqualFold(netconf.NetworkType, string(operv1.NetworkTypeOVNKubernetes)) {
+		netconf.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
 	}
 
 	// Convert hostSubnetLength to hostPrefix
@@ -281,10 +285,6 @@ func upconvertVIP(newVIPValues *[]string, oldVIPValue, newFieldName, oldFieldNam
 
 // convertAWS upconverts deprecated fields in the AWS platform.
 func convertAWS(config *types.InstallConfig) error {
-	// Deprecated ExperimentalPropagateUserTag takes precedence when set
-	if config.Platform.AWS.ExperimentalPropagateUserTag != nil {
-		config.Platform.AWS.PropagateUserTag = *config.Platform.AWS.ExperimentalPropagateUserTag
-	}
 	// BestEffortDeleteIgnition takes precedence when set
 	if !config.AWS.BestEffortDeleteIgnition {
 		config.AWS.BestEffortDeleteIgnition = config.AWS.PreserveBootstrapIgnition
@@ -298,5 +298,21 @@ func convertAWS(config *types.InstallConfig) error {
 			config.AWS.DefaultMachinePlatform.AMIID = ami
 		}
 	}
+
+	// Subnets field is deprecated in favor of VPC.Subnets.
+	fldPath := field.NewPath("platform", "aws")
+	if len(config.AWS.DeprecatedSubnets) > 0 && len(config.AWS.VPC.Subnets) > 0 { // nolint: staticcheck
+		return field.Forbidden(fldPath.Child("subnets"), fmt.Sprintf("cannot specify %s and %s together", fldPath.Child("subnets"), fldPath.Child("vpc", "subnets")))
+	} else if len(config.AWS.DeprecatedSubnets) > 0 { // nolint: staticcheck
+		var subnets []aws.Subnet
+		for _, subnetID := range config.AWS.DeprecatedSubnets { // nolint: staticcheck
+			subnets = append(subnets, aws.Subnet{
+				ID: aws.AWSSubnetID(subnetID),
+			})
+		}
+		config.AWS.VPC.Subnets = subnets
+		logrus.Warnf("%s is deprecated. Converted to %s", fldPath.Child("subnets"), fldPath.Child("vpc", "subnets"))
+	}
+
 	return nil
 }

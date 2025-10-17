@@ -5,7 +5,6 @@ import (
 
 	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/featuregates"
 )
 
@@ -15,9 +14,9 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 	g := c.GCP
 	return []featuregates.GatedInstallConfigFeature{
 		{
-			FeatureGateName: features.FeatureGateGCPClusterHostedDNS,
-			Condition:       g.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
-			Field:           field.NewPath("platform", "gcp", "userProvisionedDNS"),
+			FeatureGateName: features.FeatureGateGCPCustomAPIEndpointsInstall,
+			Condition:       len(g.ServiceEndpoints) > 0,
+			Field:           field.NewPath("platform", "gcp", "serviceEndpoints"),
 		},
 	}
 }

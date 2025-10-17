@@ -40,7 +40,8 @@ type Route struct {
 	ParameterDocs           []*Parameter
 	ResponseErrors          map[int]ResponseError
 	DefaultResponse         *ResponseError
-	ReadSample, WriteSample interface{} // structs that model an example request or response payload
+	ReadSample, WriteSample interface{}   // structs that model an example request or response payload
+	WriteSamples            []interface{} // if more than one return types is possible (oneof) then this will contain multiple values
 
 	// Extra information used to store custom information about the route.
 	Metadata map[string]interface{}
@@ -110,6 +111,8 @@ func (r Route) matchesAccept(mimeTypesWithQuality string) bool {
 }
 
 // Return whether this Route can consume content with a type specified by mimeTypes (can be empty).
+// If the route does not specify Consumes then return true (*/*).
+// If no content type is set then return true for GET,HEAD,OPTIONS,DELETE and TRACE.
 func (r Route) matchesContentType(mimeTypes string) bool {
 
 	if len(r.Consumes) == 0 {
@@ -164,7 +167,13 @@ func tokenizePath(path string) []string {
 	if "/" == path {
 		return nil
 	}
-	return strings.Split(strings.Trim(path, "/"), "/")
+	if TrimRightSlashEnabled {
+		// 3.9.0
+		return strings.Split(strings.Trim(path, "/"), "/")
+	} else {
+		// 3.10.2
+		return strings.Split(strings.TrimLeft(path, "/"), "/")
+	}
 }
 
 // for debugging
@@ -176,3 +185,9 @@ func (r *Route) String() string {
 func (r *Route) EnableContentEncoding(enabled bool) {
 	r.contentEncodingEnabled = &enabled
 }
+
+// TrimRightSlashEnabled controls whether
+// - path on route building is using path.Join
+// - the path of the incoming request is trimmed of its slash suffux.
+// Value of true matches the behavior of <= 3.9.0
+var TrimRightSlashEnabled = true

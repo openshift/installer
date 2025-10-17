@@ -354,6 +354,7 @@ type RouteStatus struct {
 	// ingress points may contain duplicate Host or RouterName values. Routes
 	// are considered live once they are `Ready`
 	// +listType=atomic
+	// +optional
 	Ingress []RouteIngress `json:"ingress,omitempty" protobuf:"bytes,1,rep,name=ingress"`
 }
 
@@ -469,6 +470,8 @@ type TLSConfig struct {
 	// chain. Do not include a CA certificate. The secret referenced should
 	// be present in the same namespace as that of the Route.
 	// Forbidden when `certificate` is set.
+	// The router service account needs to be granted with read-only access to this secret,
+	// please refer to openshift docs for additional details.
 	//
 	// +openshift:enable:FeatureGate=RouteExternalCertificate
 	// +optional

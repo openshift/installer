@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -25,7 +26,7 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool, session *icazure.Session) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, nil, fmt.Errorf("non-Azure configuration: %q", configPlatform)
 	}
@@ -53,7 +54,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		if len(azs) > 0 {
 			azIndex = int(idx) % len(azs)
 		}
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities, useImageGallery)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities, useImageGallery, session)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -150,7 +151,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
-func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, useImageGallery bool) (*machineapi.AzureMachineProviderSpec, error) {
+func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, useImageGallery bool, session *icazure.Session) (*machineapi.AzureMachineProviderSpec, error) {
 	var az string
 	if len(mpool.Zones) > 0 && azIdx != nil {
 		az = mpool.Zones[*azIdx]
@@ -212,9 +213,12 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		publicLB = ""
 	}
 
-	managedIdentity := fmt.Sprintf("%s-identity", clusterID)
-	if platform.IsARO() || platform.CloudName == azure.StackCloud {
-		managedIdentity = ""
+	managedIdentity := ""
+	if len(mpool.Identity.UserAssignedIdentities) > 0 {
+		managedIdentity = mpool.Identity.UserAssignedIdentities[0].ProviderID()
+	} else if mpool.Identity.Type == capz.VMIdentityUserAssigned {
+		// In this case, the installer will create the user-assigned identity.
+		managedIdentity = fmt.Sprintf("%s-identity", clusterID)
 	}
 
 	var diskEncryptionSet *machineapi.DiskEncryptionSetParameters
@@ -240,6 +244,33 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	securityProfile := generateSecurityProfile(mpool)
 
 	ultraSSDCapability := machineapi.AzureUltraSSDCapabilityState(mpool.UltraSSDCapability)
+
+	dataDisks := make([]machineapi.DataDisk, 0, len(mpool.DataDisks))
+
+	for _, disk := range mpool.DataDisks {
+		dataDisk := machineapi.DataDisk{
+			NameSuffix:     disk.NameSuffix,
+			DiskSizeGB:     disk.DiskSizeGB,
+			CachingType:    machineapi.CachingTypeOption(disk.CachingType),
+			DeletionPolicy: machineapi.DiskDeletionPolicyTypeDelete,
+		}
+
+		if disk.Lun != nil {
+			dataDisk.Lun = *disk.Lun
+		}
+
+		if disk.ManagedDisk != nil {
+			dataDisk.ManagedDisk = machineapi.DataDiskManagedDiskParameters{
+				StorageAccountType: machineapi.StorageAccountType(disk.ManagedDisk.StorageAccountType),
+			}
+
+			if disk.ManagedDisk.DiskEncryptionSet != nil {
+				dataDisk.ManagedDisk.DiskEncryptionSet = (*machineapi.DiskEncryptionSetParameters)(disk.ManagedDisk.SecurityProfile.DiskEncryptionSet)
+			}
+		}
+
+		dataDisks = append(dataDisks, dataDisk)
+	}
 
 	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
@@ -271,13 +302,47 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		PublicLoadBalancer:    publicLB,
 		AcceleratedNetworking: getVMNetworkingType(mpool.VMNetworkingType),
 		Tags:                  platform.UserTags,
+		DataDisks:             dataDisks,
+	}
+	var bootDiagnostics *machineapi.AzureDiagnostics
+	if platform.DefaultMachinePlatform != nil {
+		bootDiagnostics = getBootDiagnosticObject(platform.DefaultMachinePlatform.BootDiagnostics, session.Environment.StorageEndpointSuffix, role)
+	}
+	tempDiagnostics := getBootDiagnosticObject(mpool.BootDiagnostics, session.Environment.StorageEndpointSuffix, role)
+	if tempDiagnostics != nil {
+		bootDiagnostics = tempDiagnostics
+	}
+	if bootDiagnostics != nil {
+		spec.Diagnostics.Boot = bootDiagnostics.Boot
 	}
 
 	if platform.CloudName == azure.StackCloud {
-		spec.AvailabilitySet = fmt.Sprintf("%s-cluster", clusterID)
+		spec.AvailabilitySet = fmt.Sprintf("%s_control-plane-as", clusterID)
 	}
 
 	return spec, nil
+}
+
+func getBootDiagnosticObject(diag *azure.BootDiagnostics, cloudName string, role string) *machineapi.AzureDiagnostics {
+	if diag == nil {
+		if role == "master" {
+			return &machineapi.AzureDiagnostics{Boot: &machineapi.AzureBootDiagnostics{StorageAccountType: machineapi.AzureManagedAzureDiagnosticsStorage}}
+		}
+		return nil
+	}
+	if diag.Type == capz.DisabledDiagnosticsStorage {
+		return nil
+	}
+	bootDiagnostics := &machineapi.AzureDiagnostics{Boot: &machineapi.AzureBootDiagnostics{}}
+	if diag.Type == capz.ManagedDiagnosticsStorage {
+		bootDiagnostics.Boot.StorageAccountType = machineapi.AzureManagedAzureDiagnosticsStorage
+	} else {
+		bootDiagnostics.Boot.StorageAccountType = machineapi.CustomerManagedAzureDiagnosticsStorage
+		bootDiagnostics.Boot.CustomerManaged = &machineapi.AzureCustomerManagedBootDiagnostics{
+			StorageAccountURI: bootDiagStorageURIBuilder(diag, cloudName),
+		}
+	}
+	return bootDiagnostics
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines

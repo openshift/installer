@@ -41,8 +41,8 @@ type DeleteFunc = func(
 // the provided default DeleteFunc is run by default.
 func CreateDeleter(
 	host genruntime.ResourceExtension,
-	next DeleteFunc) DeleteFunc {
-
+	next DeleteFunc,
+) DeleteFunc {
 	impl, ok := host.(Deleter)
 	if !ok {
 		return next

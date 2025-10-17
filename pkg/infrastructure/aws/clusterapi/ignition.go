@@ -3,9 +3,12 @@ package clusterapi
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/sirupsen/logrus"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -16,9 +19,12 @@ import (
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
-func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, []byte, error) {
+func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi.IgnitionOutput, error) {
 	if in.InstallConfig.Config.AWS.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
-		return in.BootstrapIgnData, in.MasterIgnData, nil
+		return &clusterapi.IgnitionOutput{
+			UpdatedBootstrapIgn: in.BootstrapIgnData,
+			UpdatedMasterIgn:    in.MasterIgnData,
+			UpdatedWorkerIgn:    in.WorkerIgnData}, nil
 	}
 
 	awsCluster := &capa.AWSCluster{}
@@ -27,31 +33,41 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, []b
 		Namespace: capiutils.Namespace,
 	}
 	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
-		return nil, nil, fmt.Errorf("failed to get AWSCluster: %w", err)
-	}
-
-	awsSession, err := in.InstallConfig.AWS.Session(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get aws session: %w", err)
+		return nil, fmt.Errorf("failed to get AWSCluster: %w", err)
 	}
 
 	// There is no direct access to load balancer IP addresses, so the security groups
 	// are used here to find the network interfaces that correspond to the load balancers.
-	securityGroupIDs := make([]*string, 0, len(awsCluster.Status.Network.SecurityGroups))
+	securityGroupIDs := make([]string, 0, len(awsCluster.Status.Network.SecurityGroups))
 	for _, securityGroup := range awsCluster.Status.Network.SecurityGroups {
-		securityGroupIDs = append(securityGroupIDs, aws.String(securityGroup.ID))
+		securityGroupIDs = append(securityGroupIDs, securityGroup.ID)
 	}
 	nicInput := ec2.DescribeNetworkInterfacesInput{
-		Filters: []*ec2.Filter{
+		Filters: []ec2types.Filter{
 			{
 				Name:   aws.String("group-id"),
 				Values: securityGroupIDs,
 			},
 		},
 	}
-	nicOutput, err := ec2.New(awsSession).DescribeNetworkInterfacesWithContext(ctx, &nicInput)
+
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(in.InstallConfig.Config.AWS.Region))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to describe network interfaces: %w", err)
+		return nil, fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	client := ec2.NewFromConfig(cfg, func(options *ec2.Options) {
+		options.Region = in.InstallConfig.Config.AWS.Region
+		for _, endpoint := range in.InstallConfig.Config.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "ec2") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	nicOutput, err := client.DescribeNetworkInterfaces(ctx, &nicInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to describe network interfaces: %w", err)
 	}
 
 	// The only network interfaces existing at this stage are those from the load balancers.
@@ -68,5 +84,10 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, []b
 			privateIPAddresses = append(privateIPAddresses, *nic.PrivateIpAddress)
 		}
 	}
+	if !in.InstallConfig.Config.PublicAPI() {
+		// For private cluster installs, the API LB IP is the same as the API-Int LB IP
+		publicIPAddresses = privateIPAddresses
+	}
+	logrus.Debugf("AWS: Editing Ignition files to start in-cluster DNS when UserProvisionedDNS is enabled")
 	return clusterapi.EditIgnition(in, awstypes.Name, publicIPAddresses, privateIPAddresses)
 }

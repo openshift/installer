@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
@@ -30,6 +18,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/vmware/govmomi/session"
+	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
@@ -82,6 +71,7 @@ func createSession(ctx *Context, name string, locale string) types.UserSession {
 			ExtensionSession: types.NewBool(false),
 		},
 		Registry: NewRegistry(),
+		Map:      ctx.Map,
 	}
 
 	ctx.SetSession(session, true)
@@ -329,12 +319,33 @@ type Context struct {
 	Map     *Registry
 }
 
+func SOAPCookie(ctx *Context) string {
+	if cookie := ctx.Header.Cookie; cookie != nil {
+		return cookie.Value
+	}
+	return ""
+}
+
+func HTTPCookie(ctx *Context) string {
+	if cookie, err := ctx.req.Cookie(soap.SessionCookieName); err == nil {
+		return cookie.Value
+	}
+	return ""
+}
+
+func (c *Context) sessionManager() *SessionManager {
+	return c.svc.sdk[vim25.Path].SessionManager()
+}
+
 // mapSession maps an HTTP cookie to a Session.
 func (c *Context) mapSession() {
-	if cookie, err := c.req.Cookie(soap.SessionCookieName); err == nil {
-		if val, ok := c.svc.sm.getSession(cookie.Value); ok {
-			c.SetSession(val, false)
-		}
+	cookie := c.Map.Cookie
+	if cookie == nil {
+		cookie = HTTPCookie
+	}
+
+	if val, ok := c.sessionManager().getSession(cookie(c)); ok {
+		c.SetSession(val, false)
 	}
 }
 
@@ -381,7 +392,8 @@ func (c *Context) SetSession(session Session, login bool) {
 	session.LastActiveTime = time.Now()
 	session.CallCount++
 
-	c.svc.sm.putSession(session)
+	m := c.sessionManager()
+	m.putSession(session)
 	c.Session = &session
 
 	if login {
@@ -399,8 +411,17 @@ func (c *Context) SetSession(session Session, login bool) {
 			Locale:    session.Locale,
 		})
 
-		SessionIdleWatch(c.Context, session.Key, c.svc.sm.expiredSession)
+		SessionIdleWatch(c.Context, session.Key, m.expiredSession)
 	}
+}
+
+// For returns a Context with Registry Map for the given path.
+// This is intended for calling into other namespaces internally,
+// such as vslm simulator methods calling vim25 methods for example.
+func (c *Context) For(path string) *Context {
+	clone := *c
+	clone.Map = c.svc.sdk[path]
+	return &clone
 }
 
 // WithLock holds a lock for the given object while the given function is run.
@@ -433,6 +454,7 @@ func (c *Context) postEvent(events ...types.BaseEvent) {
 type Session struct {
 	types.UserSession
 	*Registry
+	Map *Registry
 }
 
 func (s *Session) setReference(item mo.Reference) {
@@ -463,7 +485,7 @@ func (s *Session) Get(ref types.ManagedObjectReference) mo.Reference {
 	switch ref.Type {
 	case "SessionManager":
 		// Clone SessionManager so the PropertyCollector can properly report CurrentSession
-		m := *Map.SessionManager()
+		m := *s.Map.SessionManager()
 		m.CurrentSession = &s.UserSession
 
 		// TODO: we could maintain SessionList as part of the SessionManager singleton
@@ -475,10 +497,10 @@ func (s *Session) Get(ref types.ManagedObjectReference) mo.Reference {
 
 		return &m
 	case "PropertyCollector":
-		if ref == Map.content().PropertyCollector {
+		if ref == s.Map.content().PropertyCollector {
 			// Per-session instance of the PropertyCollector singleton.
 			// Using reflection here as PropertyCollector might be wrapped with a custom type.
-			obj = Map.Get(ref)
+			obj = s.Map.Get(ref)
 			pc := reflect.New(reflect.TypeOf(obj).Elem())
 			obj = pc.Interface().(mo.Reference)
 			s.Registry.setReference(obj, ref)
@@ -486,5 +508,5 @@ func (s *Session) Get(ref types.ManagedObjectReference) mo.Reference {
 		}
 	}
 
-	return Map.Get(ref)
+	return s.Map.Get(ref)
 }

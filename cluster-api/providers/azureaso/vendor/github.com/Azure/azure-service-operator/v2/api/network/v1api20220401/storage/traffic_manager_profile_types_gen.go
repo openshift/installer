@@ -9,6 +9,8 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,8 +35,8 @@ import (
 type TrafficManagerProfile struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Trafficmanagerprofile_Spec   `json:"spec,omitempty"`
-	Status            Trafficmanagerprofile_STATUS `json:"status,omitempty"`
+	Spec              TrafficManagerProfile_Spec   `json:"spec,omitempty"`
+	Status            TrafficManagerProfile_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &TrafficManagerProfile{}
@@ -49,10 +51,30 @@ func (profile *TrafficManagerProfile) SetConditions(conditions conditions.Condit
 	profile.Status.Conditions = conditions
 }
 
-var _ genruntime.KubernetesExporter = &TrafficManagerProfile{}
+var _ configmaps.Exporter = &TrafficManagerProfile{}
 
-// ExportKubernetesResources defines a resource which can create other resources in Kubernetes.
-func (profile *TrafficManagerProfile) ExportKubernetesResources(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (profile *TrafficManagerProfile) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if profile.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return profile.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &TrafficManagerProfile{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (profile *TrafficManagerProfile) SecretDestinationExpressions() []*core.DestinationExpression {
+	if profile.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return profile.Spec.OperatorSpec.SecretExpressions
+}
+
+var _ genruntime.KubernetesConfigExporter = &TrafficManagerProfile{}
+
+// ExportKubernetesConfigMaps defines a resource which can create ConfigMaps in Kubernetes.
+func (profile *TrafficManagerProfile) ExportKubernetesConfigMaps(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
 	collector := configmaps.NewCollector(profile.Namespace)
 	if profile.Spec.OperatorSpec != nil && profile.Spec.OperatorSpec.ConfigMaps != nil {
 		if profile.Status.DnsConfig != nil {
@@ -77,7 +99,7 @@ func (profile *TrafficManagerProfile) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-04-01"
 func (profile TrafficManagerProfile) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-04-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -111,7 +133,7 @@ func (profile *TrafficManagerProfile) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (profile *TrafficManagerProfile) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Trafficmanagerprofile_STATUS{}
+	return &TrafficManagerProfile_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -123,13 +145,13 @@ func (profile *TrafficManagerProfile) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (profile *TrafficManagerProfile) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Trafficmanagerprofile_STATUS); ok {
+	if st, ok := status.(*TrafficManagerProfile_STATUS); ok {
 		profile.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Trafficmanagerprofile_STATUS
+	var st TrafficManagerProfile_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -168,8 +190,8 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2022-04-01")
 
-// Storage version of v1api20220401.Trafficmanagerprofile_Spec
-type Trafficmanagerprofile_Spec struct {
+// Storage version of v1api20220401.TrafficManagerProfile_Spec
+type TrafficManagerProfile_Spec struct {
 	AllowedEndpointRecordTypes []string `json:"allowedEndpointRecordTypes,omitempty"`
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
@@ -195,28 +217,28 @@ type Trafficmanagerprofile_Spec struct {
 	Type                        *string                            `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Trafficmanagerprofile_Spec{}
+var _ genruntime.ConvertibleSpec = &TrafficManagerProfile_Spec{}
 
-// ConvertSpecFrom populates our Trafficmanagerprofile_Spec from the provided source
-func (trafficmanagerprofile *Trafficmanagerprofile_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == trafficmanagerprofile {
+// ConvertSpecFrom populates our TrafficManagerProfile_Spec from the provided source
+func (profile *TrafficManagerProfile_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	if source == profile {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
-	return source.ConvertSpecTo(trafficmanagerprofile)
+	return source.ConvertSpecTo(profile)
 }
 
-// ConvertSpecTo populates the provided destination from our Trafficmanagerprofile_Spec
-func (trafficmanagerprofile *Trafficmanagerprofile_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == trafficmanagerprofile {
+// ConvertSpecTo populates the provided destination from our TrafficManagerProfile_Spec
+func (profile *TrafficManagerProfile_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	if destination == profile {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
-	return destination.ConvertSpecFrom(trafficmanagerprofile)
+	return destination.ConvertSpecFrom(profile)
 }
 
-// Storage version of v1api20220401.Trafficmanagerprofile_STATUS
-type Trafficmanagerprofile_STATUS struct {
+// Storage version of v1api20220401.TrafficManagerProfile_STATUS
+type TrafficManagerProfile_STATUS struct {
 	AllowedEndpointRecordTypes  []string               `json:"allowedEndpointRecordTypes,omitempty"`
 	Conditions                  []conditions.Condition `json:"conditions,omitempty"`
 	DnsConfig                   *DnsConfig_STATUS      `json:"dnsConfig,omitempty"`
@@ -234,24 +256,24 @@ type Trafficmanagerprofile_STATUS struct {
 	Type                        *string                `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Trafficmanagerprofile_STATUS{}
+var _ genruntime.ConvertibleStatus = &TrafficManagerProfile_STATUS{}
 
-// ConvertStatusFrom populates our Trafficmanagerprofile_STATUS from the provided source
-func (trafficmanagerprofile *Trafficmanagerprofile_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == trafficmanagerprofile {
+// ConvertStatusFrom populates our TrafficManagerProfile_STATUS from the provided source
+func (profile *TrafficManagerProfile_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	if source == profile {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return source.ConvertStatusTo(trafficmanagerprofile)
+	return source.ConvertStatusTo(profile)
 }
 
-// ConvertStatusTo populates the provided destination from our Trafficmanagerprofile_STATUS
-func (trafficmanagerprofile *Trafficmanagerprofile_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == trafficmanagerprofile {
+// ConvertStatusTo populates the provided destination from our TrafficManagerProfile_STATUS
+func (profile *TrafficManagerProfile_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	if destination == profile {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return destination.ConvertStatusFrom(trafficmanagerprofile)
+	return destination.ConvertStatusFrom(profile)
 }
 
 // Storage version of v1api20220401.DnsConfig
@@ -311,8 +333,10 @@ type MonitorConfig_STATUS struct {
 // Storage version of v1api20220401.TrafficManagerProfileOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type TrafficManagerProfileOperatorSpec struct {
-	ConfigMaps  *TrafficManagerProfileOperatorConfigMaps `json:"configMaps,omitempty"`
-	PropertyBag genruntime.PropertyBag                   `json:"$propertyBag,omitempty"`
+	ConfigMapExpressions []*core.DestinationExpression            `json:"configMapExpressions,omitempty"`
+	ConfigMaps           *TrafficManagerProfileOperatorConfigMaps `json:"configMaps,omitempty"`
+	PropertyBag          genruntime.PropertyBag                   `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression            `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20220401.MonitorConfig_CustomHeaders

@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -17,11 +18,24 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
 )
+
+const (
+	// confidentialComputingTypeSNP is the AMD SEV-SNP confidential computing type.
+	confidentialComputingTypeSNP = "SNP"
+	// confidentialComputingTypeTDX is the Intel TDX confidential computing type.
+	confidentialComputingTypeTDX = "TDX"
+)
+
+var supportedConfidentialComputingTypes = []string{
+	confidentialComputingTypeSNP,
+	confidentialComputingTypeTDX,
+}
 
 type resourceRequirements struct {
 	minimumVCpus  int64
@@ -56,6 +70,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 		allErrs = append(allErrs, validateAzureStackClusterOSImage(StorageEndpointSuffix, ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
+	allErrs = append(allErrs, validateBootDiagnostics(client, ic)...)
 	return allErrs.ToAggregate()
 }
 
@@ -218,18 +233,19 @@ func validateSecurityType(fieldPath *field.Path, securityType aztypes.SecurityTy
 
 	_, hasTrustedLaunchDisabled := capabilities["TrustedLaunchDisabled"]
 	confidentialComputingType, hasConfidentialComputingType := capabilities["ConfidentialComputingType"]
-	isConfidentialComputingTypeSNP := confidentialComputingType == "SNP"
+	hasSupportedConfidentialComputingType := slices.Contains(supportedConfidentialComputingTypes, confidentialComputingType)
 
 	var reason string
 	supportedSecurityType := true
 	switch securityType {
 	case aztypes.SecurityTypesConfidentialVM:
-		supportedSecurityType = hasConfidentialComputingType && isConfidentialComputingTypeSNP
+		supportedSecurityType = hasConfidentialComputingType && hasSupportedConfidentialComputingType
 
 		if !hasConfidentialComputingType {
 			reason = "no support for Confidential Computing"
-		} else if !isConfidentialComputingTypeSNP {
-			reason = "no support for AMD-SEV SNP"
+		} else if !hasSupportedConfidentialComputingType {
+			reason = fmt.Sprintf("no support for required confidential computing type (found: %s, supported: %s)",
+				confidentialComputingType, strings.Join(supportedConfidentialComputingTypes, ", "))
 		}
 	case aztypes.SecurityTypesTrustedLaunch:
 		supportedSecurityType = !(hasTrustedLaunchDisabled || hasConfidentialComputingType)
@@ -711,18 +727,15 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group has conflicting tags %s", strings.Join(conflictingTagKeys, ", "))))
 	}
 
-	// ARO provisions Azure resources before resolving the asset graph.
-	if !platform.IsARO() {
-		ids, err := client.ListResourceIDsByGroup(context.TODO(), platform.ResourceGroupName)
-		if err != nil {
-			return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), fmt.Errorf("failed to list resources in the resource group: %w", err)))
+	ids, err := client.ListResourceIDsByGroup(context.TODO(), platform.ResourceGroupName)
+	if err != nil {
+		return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), fmt.Errorf("failed to list resources in the resource group: %w", err)))
+	}
+	if l := len(ids); l > 0 {
+		if len(ids) > 2 {
+			ids = ids[:2]
 		}
-		if l := len(ids); l > 0 {
-			if len(ids) > 2 {
-				ids = ids[:2]
-			}
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group must be empty but it has %d resources like %s ...", l, strings.Join(ids, ", "))))
-		}
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group must be empty but it has %d resources like %s ...", l, strings.Join(ids, ", "))))
 	}
 	return allErrs
 }
@@ -931,4 +944,54 @@ func validateAzureStackDiskType(_ API, installConfig *types.InstallConfig) field
 	}
 
 	return allErrs
+}
+
+func validateBootDiagnostics(client API, ic *types.InstallConfig) (allErrs field.ErrorList) {
+	if ic.Azure.DefaultMachinePlatform != nil {
+		bootDiag := ic.Azure.DefaultMachinePlatform.BootDiagnostics
+		if err := checkBootDiagnosticsURI(client, bootDiag, ic.Platform.Azure.Region); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "azure", "defaultMachinePlatform",
+				"bootDiagnostics"), bootDiag, err.Error()))
+		}
+	}
+
+	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil {
+		bootDiag := ic.ControlPlane.Platform.Azure.BootDiagnostics
+		if err := checkBootDiagnosticsURI(client, bootDiag, ic.Platform.Azure.Region); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "azure", "controlPlane",
+				"bootDiagnostics"), bootDiag, err.Error()))
+		}
+	}
+
+	if ic.Compute != nil {
+		for inx, compute := range ic.Compute {
+			if compute.Platform.Azure == nil {
+				continue
+			}
+			bootDiag := compute.Platform.Azure.BootDiagnostics
+			if err := checkBootDiagnosticsURI(client, bootDiag, ic.Platform.Azure.Region); err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "azure", fmt.Sprintf("compute[%d]", inx),
+					"bootDiagnostics"), bootDiag, err.Error()))
+			}
+		}
+	}
+	return allErrs
+}
+
+func checkBootDiagnosticsURI(client API, diag *aztypes.BootDiagnostics, region string) error {
+	missingErrorMessage := "missing %s for user managed boot diagnostics"
+	errorField := ""
+	if diag != nil && diag.Type == capz.UserManagedDiagnosticsStorage {
+		if diag.StorageAccountName != "" && diag.ResourceGroup != "" {
+			return client.CheckIfExistsStorageAccount(context.TODO(), diag.ResourceGroup, diag.StorageAccountName, region)
+		}
+		if diag.ResourceGroup == "" {
+			errorField += "resource group, "
+		}
+		if diag.StorageAccountName == "" {
+			errorField += "storage account name, "
+		}
+		return fmt.Errorf(missingErrorMessage, errorField[:len(errorField)-2])
+	}
+	return nil
 }

@@ -25,6 +25,9 @@ type PVMInstanceAddNetwork struct {
 	// ID of the network
 	// Required: true
 	NetworkID *string `json:"networkID"`
+
+	// Network security groups that the network interface is a member of. There is a limit of 1 network security group in the array. If not specified, default network security group is used.
+	NetworkSecurityGroupIDs []string `json:"networkSecurityGroupIDs"`
 }
 
 // Validate validates this p VM instance add network

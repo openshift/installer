@@ -65,7 +65,16 @@ func writeServerConfig(object *ServerConfig, stream *jsoniter.Stream) {
 		count++
 	}
 	var present_ bool
-	present_ = object.bitmap_&8 != 0
+	present_ = object.bitmap_&8 != 0 && object.awsShard != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("aws_shard")
+		writeAWSShard(object.awsShard, stream)
+		count++
+	}
+	present_ = object.bitmap_&16 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -74,7 +83,7 @@ func writeServerConfig(object *ServerConfig, stream *jsoniter.Stream) {
 		stream.WriteString(object.kubeconfig)
 		count++
 	}
-	present_ = object.bitmap_&16 != 0
+	present_ = object.bitmap_&32 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -83,7 +92,7 @@ func writeServerConfig(object *ServerConfig, stream *jsoniter.Stream) {
 		stream.WriteString(object.server)
 		count++
 	}
-	present_ = object.bitmap_&32 != 0
+	present_ = object.bitmap_&64 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -126,19 +135,23 @@ func readServerConfig(iterator *jsoniter.Iterator) *ServerConfig {
 		case "href":
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
+		case "aws_shard":
+			value := readAWSShard(iterator)
+			object.awsShard = value
+			object.bitmap_ |= 8
 		case "kubeconfig":
 			value := iterator.ReadString()
 			object.kubeconfig = value
-			object.bitmap_ |= 8
+			object.bitmap_ |= 16
 		case "server":
 			value := iterator.ReadString()
 			object.server = value
-			object.bitmap_ |= 16
+			object.bitmap_ |= 32
 		case "topology":
 			text := iterator.ReadString()
 			value := ProvisionShardTopology(text)
 			object.topology = value
-			object.bitmap_ |= 32
+			object.bitmap_ |= 64
 		default:
 			iterator.ReadAny()
 		}

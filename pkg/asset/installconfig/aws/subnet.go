@@ -3,15 +3,29 @@ package aws
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/sirupsen/logrus"
+	"k8s.io/utils/ptr"
 
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
+
+// VPC holds metadata for a VPC.
+type VPC struct {
+	// ID is the VPC's Identifier.
+	ID string
+
+	// CIDR is the VPC's CIDR block.
+	CIDR string
+
+	// Tags is the map of the VPC's tags.
+	Tags Tags
+}
 
 // Subnet holds metadata for a subnet.
 type Subnet struct {
@@ -29,105 +43,114 @@ type Subnet struct {
 
 	// Public is the flag to define the subnet public.
 	Public bool
+
+	// Tags is the map of the subnet's tags.
+	Tags Tags
+
+	// VPCID is the ID of the VPC containing the subnet.
+	VPCID string
 }
 
-// Subnets is the map for the Subnet metadata indexed by zone.
+// Subnets is the map for the Subnet metadata indexed by subnetID.
 type Subnets map[string]Subnet
+
+// IDs returns the subnet IDs (i.e. map keys) in the Subnets.
+func (sns Subnets) IDs() []string {
+	subnetIDs := make([]string, 0)
+	for id := range sns {
+		subnetIDs = append(subnetIDs, id)
+	}
+	return subnetIDs
+}
+
+// SubnetsByZone is the map for the Subnet metadata indexed by zone.
+type SubnetsByZone map[string]Subnet
 
 // SubnetGroups is the group of subnets used by installer.
 type SubnetGroups struct {
 	Public  Subnets
 	Private Subnets
 	Edge    Subnets
-	VPC     string
+	VpcID   string
 }
 
-// subnets retrieves metadata for the given subnet(s).
-func subnets(ctx context.Context, session *session.Session, region string, ids []string) (subnetGroups SubnetGroups, err error) {
-	metas := make(Subnets, len(ids))
-	zoneNames := make([]*string, len(ids))
-	availabilityZones := make(map[string]*ec2.AvailabilityZone, len(ids))
-	subnetGroups = SubnetGroups{
-		Public:  make(Subnets, len(ids)),
-		Private: make(Subnets, len(ids)),
-		Edge:    make(Subnets, len(ids)),
+// subnets retrieves metadata for the given subnet(s) or VPC.
+func subnets(ctx context.Context, client *ec2.Client, subnetIDs []string, vpcID string) (SubnetGroups, error) {
+	metas := make(Subnets, len(subnetIDs))
+	zoneNames := make([]string, 0)
+	availabilityZones := make(map[string]ec2types.AvailabilityZone, len(subnetIDs))
+	subnetGroups := SubnetGroups{
+		Public:  make(Subnets, len(subnetIDs)),
+		Private: make(Subnets, len(subnetIDs)),
+		Edge:    make(Subnets, len(subnetIDs)),
 	}
 
-	var vpcFromSubnet string
-	client := ec2.New(session, aws.NewConfig().WithRegion(region))
-
-	idPointers := make([]*string, 0, len(ids))
-	for _, id := range ids {
-		idPointers = append(idPointers, aws.String(id))
+	subnetInput := &ec2.DescribeSubnetsInput{}
+	if len(vpcID) > 0 {
+		subnetInput.Filters = append(subnetInput.Filters, ec2types.Filter{
+			Name:   ptr.To("vpc-id"),
+			Values: []string{vpcID},
+		})
+	}
+	if len(subnetIDs) > 0 {
+		subnetInput.SubnetIds = subnetIDs
 	}
 
-	var lastError error
-	err = client.DescribeSubnetsPagesWithContext(
-		ctx,
-		&ec2.DescribeSubnetsInput{SubnetIds: idPointers},
-		func(results *ec2.DescribeSubnetsOutput, lastPage bool) bool {
-			for _, subnet := range results.Subnets {
-				if subnet.SubnetId == nil {
-					continue
-				}
-				if subnet.SubnetArn == nil {
-					lastError = fmt.Errorf("%s has no ARN", *subnet.SubnetId)
-					return false
-				}
-				if subnet.VpcId == nil {
-					lastError = fmt.Errorf("%s has no VPC", *subnet.SubnetId)
-					return false
-				}
-				if subnet.AvailabilityZone == nil {
-					lastError = fmt.Errorf("%s has not availability zone", *subnet.SubnetId)
-					return false
-				}
-
-				if subnetGroups.VPC == "" {
-					subnetGroups.VPC = *subnet.VpcId
-					vpcFromSubnet = *subnet.SubnetId
-				} else if *subnet.VpcId != subnetGroups.VPC {
-					lastError = fmt.Errorf("all subnets must belong to the same VPC: %s is from %s, but %s is from %s", *subnet.SubnetId, *subnet.VpcId, vpcFromSubnet, subnetGroups.VPC)
-					return false
-				}
-				metas[aws.StringValue(subnet.SubnetId)] = Subnet{
-					ID:     aws.StringValue(subnet.SubnetId),
-					ARN:    aws.StringValue(subnet.SubnetArn),
-					Zone:   &Zone{Name: aws.StringValue(subnet.AvailabilityZone)},
-					CIDR:   aws.StringValue(subnet.CidrBlock),
-					Public: false,
-				}
-				zoneNames = append(zoneNames, subnet.AvailabilityZone)
+	err := describeSubnets(ctx, client, subnetInput, func(subnets []ec2types.Subnet) error {
+		var vpcFromSubnet string
+		for _, subnet := range subnets {
+			if subnet.SubnetId == nil {
+				continue
 			}
-			return !lastPage
-		},
-	)
-	if err == nil {
-		err = lastError
-	}
+			if len(ptr.Deref(subnet.SubnetArn, "")) == 0 {
+				return fmt.Errorf("%s has no ARN", *subnet.SubnetId)
+			}
+			if len(ptr.Deref(subnet.VpcId, "")) == 0 {
+				return fmt.Errorf("%s has no VPC", *subnet.SubnetId)
+			}
+			if len(ptr.Deref(subnet.AvailabilityZone, "")) == 0 {
+				return fmt.Errorf("%s has no availability zone", *subnet.SubnetId)
+			}
+			if subnetGroups.VpcID == "" {
+				subnetGroups.VpcID = *subnet.VpcId
+				vpcFromSubnet = *subnet.SubnetId
+			} else if *subnet.VpcId != subnetGroups.VpcID {
+				return fmt.Errorf("all subnets must belong to the same VPC: %s is from %s, but %s is from %s", *subnet.SubnetId, *subnet.VpcId, vpcFromSubnet, subnetGroups.VpcID)
+			}
+
+			// At this point, we should be safe to dereference these fields.
+			metas[*subnet.SubnetId] = Subnet{
+				ID:     *subnet.SubnetId,
+				ARN:    *subnet.SubnetArn,
+				Zone:   &Zone{Name: *subnet.AvailabilityZone},
+				CIDR:   ptr.Deref(subnet.CidrBlock, ""),
+				Public: false,
+				Tags:   FromAWSTags(subnet.Tags),
+				VPCID:  *subnet.VpcId,
+			}
+			zoneNames = append(zoneNames, *subnet.AvailabilityZone)
+		}
+		return nil
+	})
 	if err != nil {
-		return subnetGroups, fmt.Errorf("describing subnets: %w", err)
+		return subnetGroups, err
 	}
 
-	var routeTables []*ec2.RouteTable
-	err = client.DescribeRouteTablesPagesWithContext(
-		ctx,
-		&ec2.DescribeRouteTablesInput{
-			Filters: []*ec2.Filter{{
-				Name:   aws.String("vpc-id"),
-				Values: []*string{aws.String(subnetGroups.VPC)},
-			}},
-		},
-		func(results *ec2.DescribeRouteTablesOutput, lastPage bool) bool {
-			routeTables = append(routeTables, results.RouteTables...)
-			return !lastPage
-		},
-	)
+	var routeTables []ec2types.RouteTable
+	err = describeRouteTables(ctx, client, &ec2.DescribeRouteTablesInput{
+		Filters: []ec2types.Filter{{
+			Name:   ptr.To("vpc-id"),
+			Values: []string{subnetGroups.VpcID},
+		}},
+	}, func(rTables []ec2types.RouteTable) error {
+		routeTables = append(routeTables, rTables...)
+		return nil
+	})
 	if err != nil {
-		return subnetGroups, fmt.Errorf("describing route tables: %w", err)
+		return subnetGroups, err
 	}
 
-	azs, err := client.DescribeAvailabilityZonesWithContext(ctx, &ec2.DescribeAvailabilityZonesInput{ZoneNames: zoneNames})
+	azs, err := client.DescribeAvailabilityZones(ctx, &ec2.DescribeAvailabilityZonesInput{ZoneNames: zoneNames})
 	if err != nil {
 		return subnetGroups, fmt.Errorf("describing availability zones: %w", err)
 	}
@@ -136,6 +159,14 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 	}
 
 	publicOnlySubnets := typesaws.IsPublicOnlySubnetsEnabled()
+
+	var ids []string
+	if len(vpcID) > 0 {
+		ids = metas.IDs()
+	}
+	if len(subnetIDs) > 0 {
+		ids = subnetIDs
+	}
 
 	for _, id := range ids {
 		meta, ok := metas[id]
@@ -154,10 +185,10 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 			return subnetGroups, fmt.Errorf("unable to read properties of zone name %s from the list %v: %w", zoneName, zoneNames, err)
 		}
 		zone := availabilityZones[zoneName]
-		meta.Zone.Type = aws.StringValue(zone.ZoneType)
-		meta.Zone.GroupName = aws.StringValue(zone.GroupName)
+		meta.Zone.Type = ptr.Deref(zone.ZoneType, "")
+		meta.Zone.GroupName = ptr.Deref(zone.GroupName, "")
 		if availabilityZones[zoneName].ParentZoneName != nil {
-			meta.Zone.ParentZoneName = aws.StringValue(zone.ParentZoneName)
+			meta.Zone.ParentZoneName = ptr.Deref(zone.ParentZoneName, "")
 		}
 
 		// AWS Local Zones are grouped as Edge subnets
@@ -186,12 +217,12 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 }
 
 // https://github.com/kubernetes/kubernetes/blob/9f036cd43d35a9c41d7ac4ca82398a6d0bef957b/staging/src/k8s.io/legacy-cloud-providers/aws/aws.go#L3376-L3419
-func isSubnetPublic(rt []*ec2.RouteTable, subnetID string) (bool, error) {
-	var subnetTable *ec2.RouteTable
+func isSubnetPublic(rt []ec2types.RouteTable, subnetID string) (bool, error) {
+	var subnetTable *ec2types.RouteTable
 	for _, table := range rt {
 		for _, assoc := range table.Associations {
-			if aws.StringValue(assoc.SubnetId) == subnetID {
-				subnetTable = table
+			if ptr.Equal(assoc.SubnetId, &subnetID) {
+				subnetTable = &table
 				break
 			}
 		}
@@ -202,10 +233,10 @@ func isSubnetPublic(rt []*ec2.RouteTable, subnetID string) (bool, error) {
 		// associated with the VPC's main routing table.
 		for _, table := range rt {
 			for _, assoc := range table.Associations {
-				if aws.BoolValue(assoc.Main) {
+				if ptr.Deref(assoc.Main, false) {
 					logrus.Debugf("Assuming implicit use of main routing table %s for %s",
-						aws.StringValue(table.RouteTableId), subnetID)
-					subnetTable = table
+						ptr.Deref(table.RouteTableId, ""), subnetID)
+					subnetTable = &table
 					break
 				}
 			}
@@ -223,13 +254,93 @@ func isSubnetPublic(rt []*ec2.RouteTable, subnetID string) (bool, error) {
 		// from the default in-subnet route which is called "local"
 		// or other virtual gateway (starting with vgv)
 		// or vpc peering connections (starting with pcx).
-		if strings.HasPrefix(aws.StringValue(route.GatewayId), "igw") {
+		if strings.HasPrefix(ptr.Deref(route.GatewayId, ""), "igw") {
 			return true, nil
 		}
-		if strings.HasPrefix(aws.StringValue(route.CarrierGatewayId), "cagw") {
+		if strings.HasPrefix(ptr.Deref(route.CarrierGatewayId, ""), "cagw") {
 			return true, nil
 		}
 	}
 
 	return false, nil
+}
+
+// describeSubnets retrieves metadata for subnets with given filters.
+func describeSubnets(ctx context.Context, client *ec2.Client, input *ec2.DescribeSubnetsInput, fn func(subnets []ec2types.Subnet) error) error {
+	paginator := ec2.NewDescribeSubnetsPaginator(client, input)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("describing subnets: %w", err)
+		}
+
+		// If the handler returns an error, we stop early to avoid extra API calls.
+		if err = fn(page.Subnets); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// describeRouteTables retrieves metadata for route tables with given filters.
+func describeRouteTables(ctx context.Context, client *ec2.Client, input *ec2.DescribeRouteTablesInput, fn func(subnets []ec2types.RouteTable) error) error {
+	paginator := ec2.NewDescribeRouteTablesPaginator(client, input)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("describing route tables: %w", err)
+		}
+
+		// If the handler returns an error, we stop early to avoid extra API calls.
+		if err = fn(page.RouteTables); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// mergeSubnets merged two or more Subnets into a single one for convenience.
+func mergeSubnets(groups ...Subnets) Subnets {
+	subnets := make(Subnets)
+	for _, group := range groups {
+		maps.Copy(subnets, group)
+	}
+	return subnets
+}
+
+// vpc retrieves metadata for the given VPC ID.
+func vpc(ctx context.Context, client *ec2.Client, vpcID string) (VPC, error) {
+	vpcs := make([]VPC, 0)
+	input := &ec2.DescribeVpcsInput{
+		VpcIds: []string{vpcID},
+	}
+	err := describeVPCs(ctx, client, input, func(awsVPCs []ec2types.Vpc) error {
+		for _, vpc := range awsVPCs {
+			vpcs = append(vpcs, VPC{
+				ID:   aws.ToString(vpc.VpcId),
+				CIDR: aws.ToString(vpc.CidrBlock),
+				Tags: FromAWSTags(vpc.Tags),
+			})
+		}
+		return nil
+	})
+	if err != nil {
+		return VPC{}, err
+	}
+	if len(vpcs) == 0 {
+		return VPC{}, fmt.Errorf("no vpc found for vpc id %s", vpcID)
+	}
+	if len(vpcs) > 1 {
+		return VPC{}, fmt.Errorf("expected 1 vpc, but found %d: %v", len(vpcs), vpcs)
+	}
+	return vpcs[0], nil
+}
+
+// describeVPCs retrieves metadata for VPCs with given filters.
+func describeVPCs(ctx context.Context, client *ec2.Client, input *ec2.DescribeVpcsInput, fn func(vpcs []ec2types.Vpc) error) error {
+	vpcOutput, err := client.DescribeVpcs(ctx, input)
+	if err != nil {
+		return fmt.Errorf("describing vpcs: %w", err)
+	}
+	return fn(vpcOutput.Vpcs)
 }

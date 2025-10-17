@@ -221,7 +221,6 @@ var permissions = map[PermissionGroup][]string{
 	},
 	// Permissions required for deleting base cluster resources
 	PermissionDeleteBase: {
-		"autoscaling:DescribeAutoScalingGroups",
 		"ec2:DeleteNetworkInterface",
 		"ec2:DeletePlacementGroup",
 		"ec2:DeleteTags",
@@ -256,6 +255,8 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:CreateVpcEndpoint",
 		"ec2:ModifySubnetAttribute",
 		"ec2:ModifyVpcAttribute",
+		// Needed by CAPA to update outdated routes
+		"ec2:ReplaceRoute",
 	},
 	// Permissions required for deleting network resources
 	PermissionDeleteNetworking: {
@@ -324,6 +325,8 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DescribePublicIpv4Pools",
 		// Needed by terraform because of bootstrap EIP created
 		"ec2:DisassociateAddress",
+		// Needed by openshift-install destroy cluster flow.
+		"ec2:ReleaseAddress",
 	},
 	PermissionDeleteIgnitionObjects: {
 		// Needed by terraform during the bootstrap destroy stage.
@@ -480,7 +483,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 // RequiredPermissionGroups returns a set of required permissions for a given cluster configuration.
 func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 	permissionGroups := []PermissionGroup{PermissionCreateBase}
-	usingExistingVPC := len(ic.AWS.Subnets) != 0
+	usingExistingVPC := len(ic.AWS.VPC.Subnets) != 0
 	usingExistingPrivateZone := len(ic.AWS.HostedZone) != 0
 
 	if !usingExistingVPC {
@@ -496,8 +499,13 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionKMSEncryptionKeys)
 	}
 
+	isSecretRegion, err := IsSecretRegion(ic.AWS.Region)
+	if err != nil {
+		logrus.Warnf("Unable to determine if AWS region is secret: %v", err)
+		return permissionGroups
+	}
 	// Add delete permissions for non-C2S installs.
-	if !aws.IsSecretRegion(ic.AWS.Region) {
+	if !isSecretRegion {
 		permissionGroups = append(permissionGroups, PermissionDeleteBase)
 		if usingExistingVPC {
 			permissionGroups = append(permissionGroups, PermissionDeleteSharedNetworking)
@@ -722,7 +730,7 @@ func includesZones(installConfig *types.InstallConfig) bool {
 		mpool.Set(compute.Platform.AWS)
 	}
 
-	return len(mpool.Zones) > 0 || len(installConfig.AWS.Subnets) > 0
+	return len(mpool.Zones) > 0 || len(installConfig.AWS.VPC.Subnets) > 0
 }
 
 // includesAssumeRole checks if a custom IAM role is specified in the install-config.

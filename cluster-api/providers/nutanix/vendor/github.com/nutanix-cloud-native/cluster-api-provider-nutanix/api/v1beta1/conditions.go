@@ -20,17 +20,29 @@ import capiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 const (
 	DeletionFailed = "DeletionFailed"
+
+	VolumeGroupDetachFailed = "VolumeGroupDetachFailed"
 )
 
+// Conditions and Reasons releated to failure domain
 const (
-	// FailureDomainsReconciled indicates the status of the failure domain reconciliation
-	FailureDomainsReconciled capiv1.ConditionType = "FailureDomainsReconciled"
+	// FailureDomainSafeForDeletionCondition indicates whether the failure domain object is safe for deletion,
+	// ie., when it is not used or referenced by other resources
+	FailureDomainSafeForDeletionCondition capiv1.ConditionType = "FailureDomainSafeForDeletion"
 
-	// NoFailureDomainsReconciled indicates no failure domains have been defined
-	NoFailureDomainsReconciled capiv1.ConditionType = "NoFailureDomainsReconciled"
+	// FailureDomainInUseReason indicates that the failure domain is used by
+	// Machines and/or referenced by cluster
+	FailureDomainInUseReason = "FailureDomainInUse"
 
-	// FailureDomainsReconciliationFailed indicates the failure domain reconciliation failed
-	FailureDomainsReconciliationFailed = "FailureDomainsReconciliationFailed"
+	// NoFailureDomainsConfiguredCondition indicates no failure domains have been configured
+	NoFailureDomainsConfiguredCondition capiv1.ConditionType = "NoFailureDomainsConfigured"
+
+	// FailureDomainsValidatedCondition indicates whether the failure domains are configured correctly or not.
+	FailureDomainsValidatedCondition capiv1.ConditionType = "FailureDomainsValidated"
+
+	// FailureDomainsMisconfiguredReason (Severity=Warning) indicates that some of the failure domains
+	// are misconfigured.
+	FailureDomainsMisconfiguredReason = "FailureDomainsMisconfigured"
 )
 
 const (
@@ -42,9 +54,11 @@ const (
 
 const (
 	// PrismCentralClientCondition indicates the status of the client used to connect to Prism Central
-	PrismCentralClientCondition capiv1.ConditionType = "PrismClientInit"
+	PrismCentralClientCondition   capiv1.ConditionType = "PrismClientInit"
+	PrismCentralV4ClientCondition capiv1.ConditionType = "PrismClientV4Init"
 
-	PrismCentralClientInitializationFailed = "PrismClientInitFailed"
+	PrismCentralClientInitializationFailed   = "PrismClientInitFailed"
+	PrismCentralV4ClientInitializationFailed = "PrismClientV4InitFailed"
 )
 
 const (
@@ -74,5 +88,7 @@ const (
 	// CredentialRefSecretOwnerSetCondition shows the status of setting the Owner
 	CredentialRefSecretOwnerSetCondition capiv1.ConditionType = "CredentialRefSecretOwnerSet"
 
-	CredentialRefSecretOwnerSetFailed = "CredentialRefSecretOwnerSetFailed"
+	CredentialRefSecretOwnerSetFailed  = "CredentialRefSecretOwnerSetFailed"
+	TrustBundleSecretOwnerSetCondition = "TrustBundleSecretOwnerSet"
+	TrustBundleSecretOwnerSetFailed    = "TrustBundleSecretOwnerSetFailed"
 )

@@ -1,0 +1,12 @@
+# Test that dual-stack support is documented in the template
+# This test verifies that the generated template mentions dual-stack networking support
+
+exec openshift-install image-based create image-config-template --dir $WORK
+exists $WORK/image-based-installation-config.yaml
+
+# Verify template mentions dual-stack support
+grep 'Dual-stack networking.*IPv4.*IPv6.*is supported' $WORK/image-based-installation-config.yaml
+
+# Verify template has both IPv4 and IPv6 examples
+grep 'ipv4:' $WORK/image-based-installation-config.yaml
+grep 'ipv6:' $WORK/image-based-installation-config.yaml 

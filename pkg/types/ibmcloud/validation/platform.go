@@ -11,43 +11,12 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
-var (
-	// Regions is a map of IBM Cloud regions where VPCs are supported.
-	// The key of the map is the short name of the region. The value
-	// of the map is the long name of the region.
-	Regions = map[string]string{
-		// https://cloud.ibm.com/docs/vpc?topic=vpc-creating-a-vpc-in-a-different-region
-		"us-south": "US South (Dallas)",
-		"us-east":  "US East (Washington DC)",
-		"eu-gb":    "United Kindom (London)",
-		"eu-de":    "EU Germany (Frankfurt)",
-		"eu-es":    "Spain (Madrid)",
-		"jp-tok":   "Japan (Tokyo)",
-		"jp-osa":   "Japan (Osaka)",
-		"au-syd":   "Australia (Sydney)",
-		"ca-tor":   "Canada (Toronto)",
-		"br-sao":   "Brazil (Sao Paulo)",
-	}
-
-	regionShortNames = func() []string {
-		keys := make([]string, len(Regions))
-		i := 0
-		for r := range Regions {
-			keys[i] = r
-			i++
-		}
-		return keys
-	}()
-)
-
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *ibmcloud.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if p.Region == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "region must be specified"))
-	} else if _, ok := Regions[p.Region]; !ok {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, regionShortNames))
 	}
 
 	if p.VPCName != "" {
@@ -93,8 +62,8 @@ func validateServiceEndpoints(endpoints []configv1.IBMCloudServiceEndpoint, fldP
 // schemeRE is used to check whether a string starts with a scheme (URI format).
 var schemeRE = regexp.MustCompile("^([^:]+)://")
 
-// versionPath is the regexp for a trailing API version in URL path ('/v1', '/v22/', etc.)
-var versionPath = regexp.MustCompile(`(/v\d+[/]{0,1})$`)
+// versionPath is the regexp for a trailing API version in URL path ('/v1', '/v22/', /api/v1, etc.)
+var versionPath = regexp.MustCompile(`\/(api\/)?v\d+\/{0,1}`)
 
 // validateServiceURL checks that a string meets certain URI expectations.
 func validateServiceURL(uri string) error {

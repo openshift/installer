@@ -389,6 +389,15 @@ func TestValidatePlatform(t *testing.T) {
 			platform: validPlatform(),
 		},
 		{
+			name: "Multi-zone platform duplicated zone names",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Zone = "test-east-1a"
+				return p
+			}(),
+			expectedError: `^test-path.failureDomains.zone: Invalid value: "test-east-1a": cannot be used more than once for the failure domain region "test-east"`,
+		},
+		{
 			name: "Multi-zone platform missing failureDomains",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
@@ -924,6 +933,24 @@ func TestValidatePlatform(t *testing.T) {
 				},
 			},
 			expectedError: `^\[test-path.hosts: Invalid value: "control-plane": not enough hosts found \(3\) to support all the configured control plane replicas \(4\), test-path.hosts: Invalid value: "compute": not enough hosts found \(3\) to support all the configured compute replicas \(4\)]$`,
+		},
+		{
+			name: "Multi NIC - Too many NICs",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Networks = []string{"vlan_1", "vlan_2", "vlan_3", "vlan_4", "vlan_5", "vlan_6", "vlan_7", "vlan_8", "vlan_9", "vlan_10", "vlan_11"}
+				return p
+			}(),
+			expectedError: `test-path.failureDomains.topology.networks: Too many: 11: must have at most 10 items`,
+		},
+		{
+			name: "Multi NIC - Not enough NICs",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Networks = []string{}
+				return p
+			}(),
+			expectedError: `test-path.failureDomains.topology.networks: Required value: must specify a network`,
 		},
 	}
 	for _, tc := range cases {

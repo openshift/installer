@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
@@ -67,7 +68,7 @@ func (*DNS) Dependencies() []asset.Asset {
 }
 
 // Generate generates the DNS config and its CRD.
-func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
+func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { //nolint:gocyclo
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	dependencies.Get(installConfig, clusterID)
@@ -88,6 +89,13 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
+		// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
+		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
+		if installConfig.Config.AWS.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
+			config.Spec.PublicZone = nil
+			config.Spec.PrivateZone = nil
+			break
+		}
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 			sess, err := installConfig.AWS.Session(ctx)
 			if err != nil {
@@ -133,16 +141,22 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 			config.Spec.PrivateZone = &configv1.DNSZone{
 				ID: dnsConfig.GetPrivateDNSZoneID(installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID), installConfig.Config.ClusterDomain()),
 			}
+			// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
+			// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
+			if installConfig.Config.Azure.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
+				config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
+				config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
+			}
 		}
 	case gcptypes.Name:
-		// We donot want to configure cloud DNS when `UserProvisionedDNS` is enabled.
+		// We do not want to configure cloud DNS when `UserProvisionedDNS` is enabled.
 		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
 		if installConfig.Config.GCP.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
-			config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
-			config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
+			config.Spec.PublicZone = nil
+			config.Spec.PrivateZone = nil
 			break
 		}
-		client, err := icgcp.NewClient(context.Background())
+		client, err := icgcp.NewClient(context.Background(), installConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return err
 		}
@@ -157,15 +171,24 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 			if err != nil {
 				return errors.Wrapf(err, "failed to get public zone for %q", installConfig.Config.BaseDomain)
 			}
-			config.Spec.PublicZone = &configv1.DNSZone{ID: zone.Name}
+
+			publicZoneName := fmt.Sprintf("projects/%s/managedZones/%s", installConfig.Config.GCP.ProjectID, zone.Name)
+			logrus.Infof("generating GCP Public DNS Zone %s", publicZoneName)
+			config.Spec.PublicZone = &configv1.DNSZone{ID: publicZoneName}
 		}
 
-		// Set the private zone
-		privateZoneID, err := GetGCPPrivateZoneName(ctx, client, installConfig, clusterID.InfraID)
+		// Ingress operator can handle a zone with the following format:
+		// projects/{projectID}/managedZones/{zoneID}. This will allow
+		// the installer to pass the project without a new field in the
+		// DNSZone struct.
+		params, err := GetGCPPrivateZoneInfo(ctx, client, installConfig, clusterID.InfraID)
 		if err != nil {
-			return fmt.Errorf("failed to find gcp private dns zone: %w", err)
+			return fmt.Errorf("failed to get private zone info: %w", err)
 		}
-		config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
+
+		privateZoneName := fmt.Sprintf("projects/%s/managedZones/%s", params.Project, params.Name)
+		logrus.Infof("generating GCP Private DNS Zone %s", privateZoneName)
+		config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneName}
 
 	case ibmcloudtypes.Name:
 		client, err := icibmcloud.NewClient(installConfig.Config.Platform.IBMCloud.ServiceEndpoints)
@@ -230,29 +253,62 @@ func GCPNetworkName(project, network string) string {
 	return fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s", project, network)
 }
 
-// GetGCPPrivateZoneName attempts to find the name of the private zone for GCP installs. When a shared vpc install
+// GCPDefaultPrivateZoneID returns the default name for a gcp private dns zone. This zone name will be used during
+// installations where the user has not provided a private zone name (xpn installs only), no
+// preexisting private dns zone is found (xpn installs only), and default installation cases.
+func GCPDefaultPrivateZoneID(clusterID string) string {
+	return fmt.Sprintf("%s-private-zone", clusterID)
+}
+
+// GetGCPPrivateZoneInfo attempts to find the name of the private zone for GCP installs. When a shared vpc install
 // occurs, a precreated zone may be used. If a zone is found (in this instance), then the zone should be paired with
 // the network that is supplied through the install config (when applicable).
-func GetGCPPrivateZoneName(ctx context.Context, client *icgcp.Client, installConfig *installconfig.InstallConfig, clusterID string) (string, error) {
-	privateZoneID := fmt.Sprintf("%s-private-zone", clusterID)
-	if installConfig.Config.GCP.NetworkProjectID != "" {
-		zone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
-		if err != nil {
-			return "", fmt.Errorf("failed to get private zone for %q: %w", installConfig.Config.BaseDomain, err)
-		}
-		if zone != nil {
-			if installConfig.Config.GCP.Network != "" {
-				expectedNetworkURL := GCPNetworkName(installConfig.Config.GCP.NetworkProjectID, installConfig.Config.GCP.Network)
-				for _, network := range zone.PrivateVisibilityConfig.Networks {
-					if network.NetworkUrl == expectedNetworkURL {
-						privateZoneID = zone.Name
-						break
-					}
-				}
-			}
-		}
+func GetGCPPrivateZoneInfo(ctx context.Context, client *icgcp.Client, installConfig *installconfig.InstallConfig, clusterID string) (gcptypes.DNSZoneParams, error) {
+	params := gcptypes.DNSZoneParams{
+		// Force set the private zone ID to an empty string to ensure
+		// the search for DNS zones looks for ANY not a specific zone.
+		// This is required, because the user may enter no zone information
+		// but still wish to bring a private zone during xpn installs (in this
+		// case it must exist in the `projectID`).
+		Name:             "",
+		InstallerCreated: true,
+		IsPublic:         false,
+		BaseDomain:       installConfig.Config.ClusterDomain(),
+		Project:          installConfig.Config.GCP.ProjectID,
 	}
-	return privateZoneID, nil
+
+	if installConfig.Config.GCP.NetworkProjectID != "" && installConfig.Config.GCP.Network != "" {
+		icdns := installConfig.Config.GCP.DNS
+		if icdns != nil && icdns.PrivateZone != nil {
+			if icdns.PrivateZone.ProjectID != "" {
+				params.Project = icdns.PrivateZone.ProjectID
+			}
+			// Override the default with the name provided. If this zone does not exist, then
+			// this should still be returned as valid.
+			params.Name = icdns.PrivateZone.Name
+		}
+
+		zone, err := client.GetDNSZoneFromParams(ctx, params)
+		if err != nil {
+			// Currently, the only time that a private zone lookup will produce an error is if we
+			// failed to find the dns zones. That should result in an error returned here too.
+			return params, fmt.Errorf("private dns zone %s does not exist or is invalid: %w", params.Name, err)
+		}
+		if zone == nil {
+			// CORS-4012: The user may specify a zone to be created if it does not exist.
+			// Do not fail if the specified zone does not exist.
+			if params.Name == "" {
+				params.Name = GCPDefaultPrivateZoneID(clusterID)
+			}
+			return params, nil
+		}
+
+		params.Name = zone.Name
+		params.InstallerCreated = false
+	} else {
+		params.Name = GCPDefaultPrivateZoneID(clusterID)
+	}
+	return params, nil
 }
 
 // Files returns the files generated by the asset.

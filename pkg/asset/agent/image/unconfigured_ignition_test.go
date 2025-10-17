@@ -12,13 +12,17 @@ import (
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
 func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	skipTestIfnmstatectlIsMissing(t)
+
+	defer setupEmbeddedResources(t)()
 
 	nmStateConfig := getTestNMStateConfig()
 
@@ -35,7 +39,16 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service": false,
 				"oci-eval-user-data.service":         true,
-				"agent-check-config-image.service":   true},
+				"agent-check-config-image.service":   true,
+				"agent-extract-tui.service":          false},
+		},
+		{
+			name: "interactive-disconnected-workflow-should-have-agent-extract-tui-service-enabled",
+			overrideDeps: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstallInteractiveDisconnected},
+			},
+			serviceEnabledMap: map[string]bool{
+				"agent-extract-tui.service": true},
 		},
 		{
 			name: "with-mirror-configs",
@@ -114,6 +127,7 @@ func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Ass
 	clusterImageSet := getTestClusterImageSet()
 
 	return []asset.Asset{
+		&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 		&infraEnv,
 		&agentPullSecret,
 		&clusterImageSet,
@@ -121,11 +135,12 @@ func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Ass
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 		&common.InfraEnvID{},
+		&agentconfig.AgentConfig{},
 	}
 }
 
-func getTestInfraEnv() manifests.InfraEnv {
-	return manifests.InfraEnv{
+func getTestInfraEnv() manifests.InfraEnvFile {
+	return manifests.InfraEnvFile{
 		Config: &aiv1beta1.InfraEnv{
 			Spec: aiv1beta1.InfraEnvSpec{
 				SSHAuthorizedKey: "my-ssh-key",

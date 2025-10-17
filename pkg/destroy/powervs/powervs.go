@@ -69,19 +69,19 @@ type User struct {
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
-	APIKey             string
-	BaseDomain         string
-	CISInstanceCRN     string
-	ClusterName        string
-	DNSInstanceCRN     string
-	DNSZone            string
-	InfraID            string
-	Logger             logrus.FieldLogger
-	Region             string
-	ServiceGUID        string
-	VPCRegion          string
-	Zone               string
-	TransitGatewayName string
+	APIKey         string
+	BaseDomain     string
+	CISInstanceCRN string
+	ClusterName    string
+	DNSInstanceCRN string
+	DNSZone        string
+	InfraID        string
+	Logger         logrus.FieldLogger
+	Region         string
+	ServiceGUID    string
+	VPCRegion      string
+	Zone           string
+	TransitGateway string
 
 	managementSvc      *resourcemanagerv2.ResourceManagerV2
 	controllerSvc      *resourcecontrollerv2.ResourceControllerV2
@@ -103,6 +103,12 @@ type ClusterUninstaller struct {
 	cosInstanceID   string
 	dnsZoneID       string
 
+	// We should be searching by tag rather than by name.
+	searchByTag bool
+
+	// The user created the Service Instance previously.
+	siPreconfigured bool
+
 	errorTracker
 	pendingItemTracker
 }
@@ -110,9 +116,10 @@ type ClusterUninstaller struct {
 // New returns an IBMCloud destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	var (
-		bxClient *powervs.BxClient
-		APIKey   string
-		err      error
+		bxClient        *powervs.BxClient
+		APIKey          string
+		siPreconfigured bool
+		err             error
 	)
 
 	// We need to prompt for missing variables because NewPISession requires them!
@@ -134,7 +141,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = %v", metadata.ClusterPlatformMetadata.PowerVS.VPCRegion)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Zone = %v", metadata.ClusterPlatformMetadata.PowerVS.Zone)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID = %v", metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID)
-	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName = %v", metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName)
+	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.TransitGateway = %v", metadata.ClusterPlatformMetadata.PowerVS.TransitGateway)
 
 	// Handle an optional setting in install-config.yaml
 	if metadata.ClusterPlatformMetadata.PowerVS.VPCRegion == "" {
@@ -145,6 +152,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		logger.Debugf("powervs.New: PowerVS.VPCRegion is missing, derived VPCRegion = %v", derivedVPCRegion)
 		metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = derivedVPCRegion
 	}
+
+	siPreconfigured = metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID != ""
+	logger.Debugf("powervs.New: siPreconfigured = %v", siPreconfigured)
 
 	return &ClusterUninstaller{
 		APIKey:             APIKey,
@@ -160,7 +170,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		pendingItemTracker: newPendingItemTracker(),
 		resourceGroupID:    metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup,
 		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
-		TransitGatewayName: metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName,
+		TransitGateway:     metadata.ClusterPlatformMetadata.PowerVS.TransitGateway,
+		searchByTag:        false, // @TODO Enable in the future
+		siPreconfigured:    siPreconfigured,
 	}, nil
 }
 
@@ -243,7 +255,6 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "DHCPs", execute: o.destroyDHCPNetworks},
 	}, {
-		{name: "Power Subnets", execute: o.destroyPowerSubnets},
 		{name: "Images", execute: o.destroyImages},
 		{name: "VPCs", execute: o.destroyVPCs},
 	}, {
@@ -255,6 +266,8 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "DNS Records", execute: o.destroyDNSRecords},
 		{name: "DNS Resource Records", execute: o.destroyResourceRecords},
+	}, {
+		{name: "Power Subnets", execute: o.destroyPowerSubnets},
 	}, {
 		{name: "Service Instances", execute: o.destroyServiceInstances},
 	}}

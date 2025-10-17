@@ -17,19 +17,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	features "github.com/openshift/api/features"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
 const (
 	keySize = 2048
-
-	// ValidityOneDay sets the validity of a cert to 24 hours.
-	ValidityOneDay = time.Hour * 24
-
-	// ValidityOneYear sets the validity of a cert to 1 year.
-	ValidityOneYear = ValidityOneDay * 365
-
-	// ValidityTenYears sets the validity of a cert to 10 years.
-	ValidityTenYears = ValidityOneYear * 10
 )
 
 // CertCfg contains all needed fields to configure a new certificate
@@ -195,4 +189,31 @@ func GenerateSelfSignedCertificate(cfg *CertCfg) (*rsa.PrivateKey, *x509.Certifi
 		return nil, nil, errors.Wrap(err, "failed to create self-signed certificate")
 	}
 	return key, crt, nil
+}
+
+// hasShortCertRotationEnabled returns true if ShortCertRotation featuregate is enabled.
+func hasShortCertRotationEnabled(installConfig *installconfig.InstallConfig) bool {
+	fgs := installConfig.Config.EnabledFeatureGates()
+	return fgs.Enabled(features.FeatureShortCertRotation)
+}
+
+// ValidityOneDay sets the validity of a cert to 24 hours - or 1 hour when ShortRotationEnabled featuregate is enabled.
+func ValidityOneDay(installConfig *installconfig.InstallConfig) time.Duration {
+	if hasShortCertRotationEnabled(installConfig) {
+		return time.Hour * 2
+	}
+	return time.Hour * 24
+}
+
+// ValidityOneYear sets the validity of a cert to 1 year - or two hours when ShortRotationEnabled featuregate is enabled.
+func ValidityOneYear(installConfig *installconfig.InstallConfig) time.Duration {
+	if hasShortCertRotationEnabled(installConfig) {
+		return time.Hour * 4
+	}
+	return time.Hour * 24 * 365
+}
+
+// ValidityTenYears sets the validity of a cert to 10 years.
+func ValidityTenYears() time.Duration {
+	return time.Hour * 24 * 365 * 10
 }

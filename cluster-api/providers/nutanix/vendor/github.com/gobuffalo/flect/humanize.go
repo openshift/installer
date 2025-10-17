@@ -7,6 +7,7 @@ import (
 // Humanize returns first letter of sentence capitalized.
 // Common acronyms are capitalized as well.
 // Other capital letters in string are left as provided.
+//
 //	employee_salary = Employee salary
 //	employee_id = employee ID
 //	employee_mobile_number = Employee mobile number
@@ -22,13 +23,13 @@ func (i Ident) Humanize() Ident {
 		return New("")
 	}
 
-	var parts []string
-	for index, part := range i.Parts {
-		if index == 0 {
-			part = strings.Title(i.Parts[0])
-		}
+	if strings.TrimSpace(i.Original) == "" {
+		return i
+	}
 
-		parts = xappend(parts, part)
+	parts := xappend([]string{}, Titleize(i.Parts[0]))
+	if len(i.Parts) > 1 {
+		parts = xappend(parts, i.Parts[1:]...)
 	}
 
 	return New(strings.Join(parts, " "))

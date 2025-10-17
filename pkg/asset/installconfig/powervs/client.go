@@ -48,18 +48,21 @@ type API interface {
 
 	// VPC
 	GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error)
+	GetVPCByID(ctx context.Context, vpcID string, region string) (*vpcv1.VPC, error)
 	GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vpcv1.PublicGateway, error)
 	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error)
 
 	// TG
-	TransitGatewayID(ctx context.Context, name string) (string, error)
+	TransitGatewayNameToID(ctx context.Context, name string) (string, error)
+	TransitGatewayIDValid(ctx context.Context, id string) error
 	GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error)
 	GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error)
 
 	// Data Center
 	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
+	GetDatacenterSupportedSystems(ctx context.Context, region string) ([]string, error)
 
 	// API
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
@@ -304,8 +307,7 @@ func (c *Client) GetDNSCustomResolverIP(ctx context.Context, dnsID string, vpcID
 
 // CreateDNSCustomResolver creates a custom resolver associated with the specified VPC in the specified DNS zone.
 func (c *Client) CreateDNSCustomResolver(ctx context.Context, name string, dnsID string, vpcID string) (*dnssvcsv1.CustomResolver, error) {
-	createCustomResolverOptions := c.dnsServicesAPI.NewCreateCustomResolverOptions(dnsID)
-	createCustomResolverOptions.SetName(name)
+	createCustomResolverOptions := c.dnsServicesAPI.NewCreateCustomResolverOptions(dnsID, name)
 
 	subnets, err := c.GetVPCSubnets(ctx, vpcID)
 	if err != nil {
@@ -465,14 +467,12 @@ func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID stri
 
 // AddVPCToPermittedNetworks adds the specified VPC to the specified DNS zone.
 func (c *Client) AddVPCToPermittedNetworks(ctx context.Context, vpcCRN string, dnsID string, dnsZone string) error {
-	createPermittedNetworkOptions := c.dnsServicesAPI.NewCreatePermittedNetworkOptions(dnsID, dnsZone)
 	permittedNetwork, err := c.dnsServicesAPI.NewPermittedNetworkVpc(vpcCRN)
 	if err != nil {
 		return err
 	}
 
-	createPermittedNetworkOptions.SetPermittedNetwork(permittedNetwork)
-	createPermittedNetworkOptions.SetType("vpc")
+	createPermittedNetworkOptions := c.dnsServicesAPI.NewCreatePermittedNetworkOptions(dnsID, dnsZone, dnssvcsv1.CreatePermittedNetworkOptions_Type_Vpc, permittedNetwork)
 
 	_, _, err = c.dnsServicesAPI.CreatePermittedNetworkWithContext(ctx, createPermittedNetworkOptions)
 	if err != nil {
@@ -561,11 +561,10 @@ func (c *Client) createPrivateDNSRecord(ctx context.Context, crnstr string, base
 	if err != nil {
 		return fmt.Errorf("NewResourceRecordInputRdataRdataCnameRecord failed: %w", err)
 	}
-	createOptions := c.dnsServicesAPI.NewCreateResourceRecordOptions(dnsCRN.ServiceInstance, zoneID)
+	createOptions := c.dnsServicesAPI.NewCreateResourceRecordOptions(dnsCRN.ServiceInstance, zoneID, dnssvcsv1.CreateResourceRecordOptions_Type_Cname)
 	createOptions.SetRdata(rdataCnameRecord)
 	createOptions.SetTTL(120)
 	createOptions.SetName(hostname)
-	createOptions.SetType("CNAME")
 	result, resp, err := c.dnsServicesAPI.CreateResourceRecord(createOptions)
 	if err != nil {
 		logrus.Errorf("dnsRecordService.CreateResourceRecord returns %v", err)
@@ -586,13 +585,12 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to list vpc regions: %w", err)
 	}
-
+	var vpcNamesList []string
 	for _, region := range listRegionsResponse.Regions {
 		err := c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
 		if err != nil {
 			return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
 		}
-
 		vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions())
 		if err != nil {
 			if detailedResponse.GetStatusCode() != http.StatusNotFound {
@@ -600,6 +598,7 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 			}
 		} else {
 			for _, vpc := range vpcs.Vpcs {
+				vpcNamesList = append(vpcNamesList, *vpc.Name)
 				if *vpc.Name == vpcName {
 					return &vpc, nil
 				}
@@ -607,7 +606,23 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 		}
 	}
 
-	return nil, errors.New("failed to find VPC")
+	return nil, fmt.Errorf("failed to find VPC %q. Available VPCs: %v", vpcName, vpcNamesList)
+}
+
+// GetVPCByID checks if an id is a valid VPC id and, if so, returns the VPC.
+func (c *Client) GetVPCByID(ctx context.Context, vpcID string, region string) (*vpcv1.VPC, error) {
+	vpcs, err := c.GetVPCs(ctx, region)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, vpc := range vpcs {
+		if *vpc.ID == vpcID {
+			return &vpc, nil
+		}
+	}
+
+	return nil, fmt.Errorf("VPC with id (%s) does not exist in region (%s)", vpcID, region)
 }
 
 // GetPublicGatewayByVPC gets all PublicGateways in a region
@@ -1098,8 +1113,25 @@ func (c *Client) GetDatacenterCapabilities(ctx context.Context, region string) (
 	return getOk.Payload.Capabilities, nil
 }
 
-// TransitGatewayID checks to see if the name is an existing transit gateway name.
-func (c *Client) TransitGatewayID(ctx context.Context, name string) (string, error) {
+// GetDatacenterSupportedSystems retrieves the capabilities of the specified datacenter.
+func (c *Client) GetDatacenterSupportedSystems(ctx context.Context, region string) ([]string, error) {
+	var err error
+	if c.BXCli.PISession == nil {
+		err = c.BXCli.NewPISession()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize PISession in GetDatacenterSupportedSystems: %w", err)
+		}
+	}
+	params := datacenters.NewV1DatacentersGetParamsWithContext(ctx).WithDatacenterRegion(region)
+	getOk, err := c.BXCli.PISession.Power.Datacenters.V1DatacentersGet(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get datacenter supported systems: %w", err)
+	}
+	return getOk.Payload.CapabilitiesDetails.SupportedSystems.General, nil
+}
+
+// TransitGatewayNameToID checks to see if the name is an existing transit gateway name.
+func (c *Client) TransitGatewayNameToID(ctx context.Context, name string) (string, error) {
 	var (
 		gateways []transitgatewayapisv1.TransitGateway
 		gateway  transitgatewayapisv1.TransitGateway
@@ -1117,6 +1149,27 @@ func (c *Client) TransitGatewayID(ctx context.Context, name string) (string, err
 	}
 
 	return "", nil
+}
+
+// TransitGatewayIDValid checks to see if the id is an existing transit gateway id.
+func (c *Client) TransitGatewayIDValid(ctx context.Context, id string) error {
+	var (
+		gateways []transitgatewayapisv1.TransitGateway
+		gateway  transitgatewayapisv1.TransitGateway
+		err      error
+	)
+
+	gateways, err = c.getTransitGateways(ctx)
+	if err != nil {
+		return err
+	}
+	for _, gateway = range gateways {
+		if *gateway.ID == id {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("transit gateway id (%s) not found", id)
 }
 
 // GetAttachedTransitGateway finds an existing Transit Gateway attached to the provided PowerVS cloud instance.

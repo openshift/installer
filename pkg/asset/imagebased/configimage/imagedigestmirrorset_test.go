@@ -7,11 +7,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	apicfgv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -158,5 +159,5 @@ func imageDigestSources() []types.ImageDigestSource {
 }
 
 func imageDigestMirrorSet() *apicfgv1.ImageDigestMirrorSet {
-	return convertIDSToIDMS(imageDigestSources())
+	return manifests.ConvertImageDigestMirrorSet(imageDigestSources())
 }

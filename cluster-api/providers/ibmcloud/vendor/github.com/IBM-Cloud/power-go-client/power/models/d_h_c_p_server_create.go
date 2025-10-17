@@ -29,6 +29,9 @@ type DHCPServerCreate struct {
 	// Optional name of DHCP Service. Only alphanumeric characters and dashes are allowed (will be prefixed by DHCP identifier)
 	Name *string `json:"name,omitempty"`
 
+	// Optional network security groups that the DHCP server network interface is a member of. There is a limit of 1 network security group in the array. If not specified, default network security group is used.
+	NetworkSecurityGroupIDs []string `json:"networkSecurityGroupIDs"`
+
 	// Indicates if SNAT will be enabled for DHCP service
 	SnatEnabled *bool `json:"snatEnabled,omitempty"`
 }

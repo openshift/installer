@@ -36,6 +36,8 @@ type Options struct {
 	RequeueIntervalCalculator interval.Calculator
 	Config                    config.Values
 	LoggerFactory             func(obj metav1.Object) logr.Logger
+
+	PanicHandler func()
 }
 
 func RegisterWebhooks(mgr ctrl.Manager, objs []client.Object) error {
@@ -65,8 +67,8 @@ func RegisterAll(
 	kubeClient kubeclient.Client,
 	positiveConditions *conditions.PositiveConditionBuilder,
 	objs []*registration.StorageType,
-	options Options) error {
-
+	options Options,
+) error {
 	// pre-register any indexes we need
 	for _, obj := range objs {
 		for _, indexer := range obj.Indexes {
@@ -95,8 +97,8 @@ func register(
 	kubeClient kubeclient.Client,
 	positiveConditions *conditions.PositiveConditionBuilder,
 	info *registration.StorageType,
-	options Options) error {
-
+	options Options,
+) error {
 	// Use the provided GVK to construct a new runtime object of the desired concrete type.
 	gvk, err := apiutil.GVKForObject(info.Obj, mgr.GetScheme())
 	if err != nil {
@@ -126,11 +128,13 @@ func register(
 		GVK:                       gvk,
 		PositiveConditions:        positiveConditions,
 		RequeueIntervalCalculator: options.RequeueIntervalCalculator,
+		PanicHandler:              options.PanicHandler,
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(info.Obj, ctrlbuilder.WithPredicates(info.Predicate)).
 		WithOptions(options.Options)
+	builder.Named(info.Name)
 
 	for _, watch := range info.Watches {
 		builder = builder.Watches(watch.Type, watch.MakeEventHandler(kubeClient, options.LogConstructor(nil).WithName(info.Name)))

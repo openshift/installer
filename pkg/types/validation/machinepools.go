@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -75,7 +76,64 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 	if platform.AWS != nil {
 		allErrs = append(allErrs, awsvalidation.ValidateMachinePoolArchitecture(p, fldPath.Child("architecture"))...)
 	}
+
+	allErrs = append(allErrs, validateDiskSetup(p, fldPath.Child("diskSetup"))...)
+
 	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, p, fldPath.Child("platform"))...)
+	return allErrs
+}
+
+func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	foundEtcd := false
+	foundSwap := false
+	for _, ds := range p.DiskSetup {
+		// outputting the yaml to make recognizing the issue easier for the user
+		dsBytes, err := yaml.Marshal(ds)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(fldPath, err))
+		}
+		dsYaml := string(dsBytes)
+		switch ds.Type {
+		case types.UserDefined:
+			if ds.UserDefined == nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("userDefined"), dsYaml, "userDefined configuration must be created"))
+				continue
+			}
+			if len(ds.UserDefined.PlatformDiskID) > 12 {
+				userDefinedPath := fldPath.Child("userDefined")
+				allErrs = append(allErrs, field.Invalid(userDefinedPath.Child("platformDiskId"), dsYaml, "cannot be longer than 12 characters"))
+				continue
+			}
+		case types.Etcd:
+			if foundEtcd {
+				allErrs = append(allErrs, field.TooMany(fldPath.Child("etcd"), 2, 1))
+				continue
+			}
+			if ds.Etcd == nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("etcd"), dsYaml, "etcd configuration must be created"))
+				continue
+			}
+			// etcd should only be setup on control plane, not any other machine type.
+			if p.Name != "master" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("etcd"), dsYaml, "cannot specify etcd on worker machine pools"))
+				continue
+			}
+			foundEtcd = true
+		case types.Swap:
+			if foundSwap {
+				allErrs = append(allErrs, field.TooMany(fldPath.Child("swap"), 2, 1))
+				continue
+			}
+			if ds.Swap == nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("swap"), dsYaml, "swap configuration must be created"))
+				continue
+			}
+			foundSwap = true
+		}
+	}
+
 	return allErrs
 }
 
@@ -98,7 +156,7 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	}
 	if p.Azure != nil {
 		validate(azure.Name, p.Azure, func(f *field.Path) field.ErrorList {
-			return azurevalidation.ValidateMachinePool(p.Azure, pool.Name, platform.Azure, f)
+			return azurevalidation.ValidateMachinePool(p.Azure, pool.Name, platform.Azure, pool, f)
 		})
 	}
 	if p.GCP != nil {
@@ -121,7 +179,9 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 		validate(ovirt.Name, p.Ovirt, func(f *field.Path) field.ErrorList { return ovirtvalidation.ValidateMachinePool(p.Ovirt, f) })
 	}
 	if p.PowerVS != nil {
-		validate(powervs.Name, p.PowerVS, func(f *field.Path) field.ErrorList { return powervsvalidation.ValidateMachinePool(p.PowerVS, f) })
+		validate(powervs.Name, p.PowerVS, func(f *field.Path) field.ErrorList {
+			return powervsvalidation.ValidateMachinePool(platform.PowerVS, p.PowerVS, f)
+		})
 	}
 	if p.OpenStack != nil {
 		validate(openstack.Name, p.OpenStack, func(f *field.Path) field.ErrorList {

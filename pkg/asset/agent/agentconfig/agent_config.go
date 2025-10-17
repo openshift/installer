@@ -168,7 +168,7 @@ func (a *AgentConfig) validateAgent() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 
-	if err := validation.ValidateNTPServers(a.Config.AdditionalNTPSources, field.NewPath("AdditionalNTPSources")); err != nil {
+	if err := validation.ValidateNTPServers(a.Config.AdditionalNTPSources, field.NewPath("additionalNTPSources")); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 

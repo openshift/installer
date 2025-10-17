@@ -42,8 +42,11 @@ type NetworkInterface struct {
 	// Required: true
 	Name *string `json:"name"`
 
-	// ID of the Network Security Group the network interface will be added to
+	// (deprecated - replaced by networkSecurityGroupIDs) ID of the Network Security Group the network interface will be added to
 	NetworkSecurityGroupID string `json:"networkSecurityGroupID,omitempty"`
+
+	// Network security groups that the network interface is a member of.
+	NetworkSecurityGroupIDs []string `json:"networkSecurityGroupIDs"`
 
 	// The status of the network address group
 	// Required: true

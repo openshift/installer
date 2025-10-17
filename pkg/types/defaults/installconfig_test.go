@@ -63,6 +63,7 @@ func defaultAzureInstallConfig() *types.InstallConfig {
 
 func defaultOpenStackInstallConfig() *types.InstallConfig {
 	c := defaultInstallConfig()
+	c.CredentialsMode = types.PassthroughCredentialsMode
 	c.Platform.OpenStack = &openstack.Platform{}
 	openstackdefaults.SetPlatformDefaults(c.Platform.OpenStack, c.Networking)
 	return c
@@ -199,6 +200,17 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 				ControlPlane: &types.MachinePool{},
 			},
 			expected: defaultInstallConfig(),
+		},
+		{
+			name: "arbiter present",
+			config: &types.InstallConfig{
+				Arbiter: &types.MachinePool{},
+			},
+			expected: func() *types.InstallConfig {
+				c := defaultInstallConfig()
+				c.Arbiter = defaultMachinePoolWithReplicaCount("arbiter", 0)
+				return c
+			}(),
 		},
 		{
 			name: "Compute present",

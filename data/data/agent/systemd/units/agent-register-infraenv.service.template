@@ -4,6 +4,7 @@ Wants=network-online.target assisted-service.service
 PartOf=assisted-service-pod.service
 After=network-online.target assisted-service.service agent-register-cluster.service agent-import-cluster.service
 ConditionPathExists=/etc/assisted/node0
+ConditionPathExists=!/etc/assisted/interactive-ui
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -16,7 +17,7 @@ ExecStart=podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
 
-KillMode=none
+KillMode=mixed
 Type=oneshot
 Restart=on-failure
 RestartSec=30

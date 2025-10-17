@@ -4,14 +4,11 @@ metadata:
   namespace: openshift-cluster-version
   name: version
 spec:
-{{- if .IsFCOS }}
-  upstream: https://amd64.origin.releases.ci.openshift.org/graph
-  channel: stable-4
-{{- else if .IsSCOS }}
+{{- if .IsSCOS }}
   upstream: https://amd64.origin.releases.ci.openshift.org/graph
   channel: stable-scos-4
 {{- else }}
-  channel: stable-4.19
+  channel: stable-4.20
 {{- end }}
   clusterID: {{.CVOClusterID}}
 {{- if .CVOCapabilities }}

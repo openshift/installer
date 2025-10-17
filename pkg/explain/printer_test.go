@@ -37,6 +37,10 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 
+    arbiter <object>
+      Arbiter is the configuration for the machines that comprise the
+arbiter nodes.
+
     baseDomain <string> -required-
       BaseDomain is the base domain to which the cluster should belong.
 
@@ -77,13 +81,14 @@ There are three possible values for this field, but the valid values are depende
 "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest
 "Manual": CredentialsRequests must be handled manually by the user
 
-For each of the following platforms, the field can set to the specified values. For all other platforms, the
+For each of the following platforms, the field can be set to the specified values. For all other platforms, the
 field must not be set.
 AWS: "Mint", "Passthrough", "Manual"
 Azure: "Passthrough", "Manual"
 AzureStack: "Manual"
 GCP: "Mint", "Passthrough", "Manual"
 IBMCloud: "Manual"
+OpenStack: "Passthrough"
 PowerVS: "Manual"
 Nutanix: "Manual"
 
@@ -139,8 +144,9 @@ If unset, the cluster will not be configured to use a proxy.
 
     publish <string>
       Default: "External"
-      Valid Values: "","External","Internal"
+      Valid Values: "","External","Internal","Mixed"
       Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+A "Mixed" strategy only applies to the "azure" platform, and requires "operatorPublishingStrategy" to be configured.
 When no strategy is specified, the strategy is "External".
 
     pullSecret <string> -required-
@@ -209,11 +215,6 @@ deleted. Enable this functionality when there are known reasons disallowing thei
 installing on AWS for machine pools which do not define their own
 platform configuration.
 
-    experimentalPropagateUserTags <boolean>
-      The field is deprecated. ExperimentalPropagateUserTags is an experimental
-flag that directs in-cluster operators to include the specified
-user tags in the tags of the AWS resources that the operators create.
-
     hostedZone <string>
       HostedZone is the ID of an existing hosted zone into which to add DNS
 records for the cluster's internal API. An existing hosted zone can
@@ -276,6 +277,8 @@ override existing defaults of AWS Services.
 resources will be created.  Leave unset to have the installer
 create subnets in a new VPC on your behalf.
 
+Deprecated: use platform.aws.vpc.subnets
+
     userProvisionedDNS <string>
       Default: "Disabled"
       Valid Values: "Enabled","Disabled"
@@ -285,7 +288,10 @@ provisioned by the Installer.
     userTags <object>
       UserTags additional keys and values that the installer will add
 as tags to all resources that it creates. Resources created by the
-cluster itself may not include these tags.`,
+cluster itself may not include these tags.
+
+    vpc <object>
+      VPC specifies the VPC configuration for the cluster.`,
 	}, {
 		path: []string{"platform", "azure"},
 		desc: `FIELDS:
@@ -323,9 +329,8 @@ platform configuration.
 
     outboundType <string>
       Default: "Loadbalancer"
-      Valid Values: "","Loadbalancer","NatGateway","UserDefinedRouting"
+      Valid Values: "","Loadbalancer","NATGatewaySingleZone","UserDefinedRouting"
       OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
-"NatGateway" is only available in TechPreview.
 
     region <string> -required-
       Region specifies the Azure region where the cluster will be created.
@@ -337,6 +342,12 @@ ownership of all resources in the resource group. Destroying the cluster using i
 resource group.
 This resource group must be empty with no other resources when trying to use it for creating a cluster.
 If empty, a new resource group will created for the cluster.
+
+    userProvisionedDNS <string>
+      Default: "Disabled"
+      Valid Values: "Enabled","Disabled"
+      UserProvisionedDNS indicates if the customer is providing their own DNS solution in place of the default
+provisioned by the Installer.
 
     userTags <object>
       UserTags has additional keys and values that the installer will add
@@ -405,8 +416,9 @@ VERSION:  v1
 
 RESOURCE: <string>
   Default: "External"
-  Valid Values: "","External","Internal"
+  Valid Values: "","External","Internal","Mixed"
   Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+A "Mixed" strategy only applies to the "azure" platform, and requires "operatorPublishingStrategy" to be configured.
 When no strategy is specified, the strategy is "External".
 		`,
 	}, {
@@ -456,7 +468,8 @@ RESOURCE: <[]string>
   Subnets specifies existing subnets (by ID) where cluster
 resources will be created.  Leave unset to have the installer
 create subnets in a new VPC on your behalf.
-		`,
+
+Deprecated: use platform.aws.vpc.subnets`,
 	}, {
 		path: []string{"platform", "aws", "userTags"},
 		desc: `

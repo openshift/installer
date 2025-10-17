@@ -39,14 +39,27 @@ the following exceptions (highlighted in green in the previous picture):
 
 ----
 
-## Appliance flow using unconfigured ignition and config image
+## Appliance workflow (unconfigured ignition and config image)
 
-![Appliance Flow](./agent_installer_services-unconfigured_ignition_and_config_image_flow.png)
+![Appliance workflow](./agent_installer_services-unconfigured_ignition_and_config_image_flow.png)
 
-In the appliance flow, most of the cluster deployment information is included in a config image that is mounted
+In the appliance workflow, most of the cluster deployment information is included in a config image that is mounted
 onto the host running the unconfigured-ignition. The appliance flow does not include the agent-tui or the
 agent-interactive-console service because the disk images generated in the factory contains the release payload
 so no connectivity checks to the release image is needed.
 
 * load-config-iso@ - detects the config image has been mounted and copies the cluster configuration files from the config image to the host. It also enables start-cluster-installation which is disabled by default in the unconfigured-ignition. The actual service is created when the config image is mounted as a device and its name will be load-config-iso@<dev-name>.service e.g load-config-iso@-dev-sr1.service
 * agent-check-config-image - if the config image has not been mounted, it displays a message to the console asking for the config image to be mounted in order to start the cluster installation.
+
+----
+
+## Interactive workflow (unconfigured ignition --interactive)
+
+![Interactive workflow](./agent_installer_services-interactive.png)
+
+The interactive workflow allows the user to install a cluster by using the assisted UI running on the rendezvous node. In this workflow
+the agent-tui is also used interactively to configure which node will be the rendezvous host, and to configure accordingly the other nodes.
+
+* agent-extract-tui - extracts agent-tui and nmstate libraries from the agent-installer-utils image during boot
+* agent-start-ui - runs the assisted UI on the rendezvous node
+

@@ -29,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/aws"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/azure"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/vsphere"
@@ -88,7 +89,6 @@ type bootstrapTemplateData struct {
 	BootstrapInPlace      *types.BootstrapInPlace
 	UseIPv6ForNodeIP      bool
 	UseDualForNodeIP      bool
-	IsFCOS                bool
 	IsSCOS                bool
 	IsOKD                 bool
 	BootstrapNodeIP       string
@@ -103,6 +103,7 @@ type bootstrapTemplateData struct {
 // template files that are specific to one platform.
 type platformTemplateData struct {
 	AWS       *aws.TemplateData
+	Azure     *azure.TemplateData
 	BareMetal *baremetal.TemplateData
 	VSphere   *vsphere.TemplateData
 	GCP       *gcp.TemplateData
@@ -127,6 +128,7 @@ func (a *Common) Dependencies() []asset.Asset {
 		&mcign.MasterIgnitionCustomizations{},
 		&mcign.WorkerIgnitionCustomizations{},
 		&machines.Master{},
+		&machines.Arbiter{},
 		&machines.Worker{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
@@ -315,14 +317,20 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	// Generate platform-specific bootstrap data
 	var platformData platformTemplateData
 
+	controlPlaneReplicas := *installConfig.Config.ControlPlane.Replicas
+	if installConfig.Config.Arbiter != nil {
+		controlPlaneReplicas += *installConfig.Config.Arbiter.Replicas
+	}
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
 		platformData.AWS = aws.GetTemplateData(installConfig.Config.Platform.AWS)
+	case aztypes.Name:
+		platformData.Azure = azure.GetTemplateData(installConfig.Config.Platform.Azure)
 	case baremetaltypes.Name:
 		platformData.BareMetal = baremetal.GetTemplateData(
 			installConfig.Config.Platform.BareMetal,
 			installConfig.Config.MachineNetwork,
-			*installConfig.Config.ControlPlane.Replicas,
+			controlPlaneReplicas,
 			ironicCreds.Username,
 			ironicCreds.Password,
 			dependencies,
@@ -382,7 +390,6 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		BootstrapInPlace:      bootstrapInPlaceConfig,
 		UseIPv6ForNodeIP:      ipv6Primary,
 		UseDualForNodeIP:      hasIPv4 && hasIPv6,
-		IsFCOS:                installConfig.Config.IsFCOS(),
 		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
 		BootstrapNodeIP:       bootstrapNodeIP,
@@ -600,6 +607,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 		&machines.Master{},
+		&machines.Arbiter{},
 		&machines.Worker{},
 		&mcign.MasterIgnitionCustomizations{},
 		&mcign.WorkerIgnitionCustomizations{},
@@ -609,6 +617,15 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 
 		// Replace files that already exist in the slice with ones added later, otherwise append them
 		for _, file := range ignition.FilesFromAsset(rootDir, "root", 0644, asset) {
+			// We limit read access to the fencing secrets
+			match, err := machines.IsFencingCredentialsFile(file.Path)
+			if err != nil {
+				logrus.Warnf("failed regex scan for fencing secrets during ignition files creation: %s", err.Error())
+			} else if match {
+				logrus.Debugf("Setting file mode to 0600 for file: %s", file.Path)
+				file.Mode = ptr.To(0600)
+			}
+
 			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
 		}
 	}
@@ -703,12 +720,16 @@ func (a *Common) load(f asset.FileFetcher, filename string) (found bool, err err
 	}
 
 	a.File, a.Config = file, config
-	warnIfCertificatesExpired(a.Config)
-	return true, nil
+	err = warnIfCertificatesExpired(a.Config)
+	if err != nil {
+		logrus.Warnf("Please regenerate ignition configuration files in a new directory.")
+	}
+
+	return true, err
 }
 
 // warnIfCertificatesExpired checks for expired certificates and warns if so
-func warnIfCertificatesExpired(config *igntypes.Config) {
+func warnIfCertificatesExpired(config *igntypes.Config) error {
 	expiredCerts := 0
 	for _, file := range config.Storage.Files {
 		if filepath.Ext(file.Path) == ".crt" && file.Contents.Source != nil {
@@ -728,7 +749,7 @@ func warnIfCertificatesExpired(config *igntypes.Config) {
 				cert, err := x509.ParseCertificate(block.Bytes)
 				if err == nil {
 					if time.Now().UTC().After(cert.NotAfter) {
-						logrus.Warnf("Bootstrap Ignition-Config Certificate %s expired at %s.", path.Base(file.Path), cert.NotAfter.Format(time.RFC3339))
+						logrus.Errorf("Bootstrap Ignition-Config Certificate %s expired at %s.", path.Base(file.Path), cert.NotAfter.Format(time.RFC3339))
 						expiredCerts++
 					}
 				} else {
@@ -742,6 +763,7 @@ func warnIfCertificatesExpired(config *igntypes.Config) {
 	}
 
 	if expiredCerts > 0 {
-		logrus.Warnf("Bootstrap Ignition-Config: %d certificates expired. Installation attempts with the created Ignition-Configs will possibly fail.", expiredCerts)
+		return fmt.Errorf("%d certificates expired", expiredCerts)
 	}
+	return nil
 }

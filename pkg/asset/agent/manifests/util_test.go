@@ -7,7 +7,7 @@ import (
 	"github.com/go-openapi/swag"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
@@ -69,8 +69,14 @@ var (
 
 // GetValidOptionalInstallConfig returns a valid optional install config
 func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
-	_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
-	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
+	_, newCidr, err := net.ParseCIDR("192.168.96.0/20")
+	if err != nil {
+		panic(err)
+	}
+	_, machineNetCidr, err := net.ParseCIDR("10.10.11.0/24")
+	if err != nil {
+		panic(err)
+	}
 
 	return &agent.OptionalInstallConfig{
 		AssetBase: installconfig.AssetBase{
@@ -84,17 +90,17 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 				SSHKey:     testSSHKey,
 				ControlPlane: &types.MachinePool{
 					Name:     "master",
-					Replicas: pointer.Int64Ptr(3),
+					Replicas: ptr.To(int64(3)),
 					Platform: types.MachinePoolPlatform{},
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:     "worker-machine-pool-1",
-						Replicas: pointer.Int64Ptr(2),
+						Replicas: ptr.To(int64(2)),
 					},
 					{
 						Name:     "worker-machine-pool-2",
-						Replicas: pointer.Int64Ptr(3),
+						Replicas: ptr.To(int64(3)),
 					},
 				},
 				Networking: &types.Networking{
@@ -128,10 +134,22 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 
 // GetValidOptionalInstallConfigDualStack returns a valid optional install config for dual stack
 func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
-	_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
-	_, newCidrIPv6, _ := net.ParseCIDR("2001:db8:1111:2222::/64")
-	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
-	_, machineNetCidrIPv6, _ := net.ParseCIDR("2001:db8:5dd8:c956::/64")
+	_, newCidr, err := net.ParseCIDR("192.168.96.0/20")
+	if err != nil {
+		panic(err)
+	}
+	_, newCidrIPv6, err := net.ParseCIDR("2001:db8:1111::/48")
+	if err != nil {
+		panic(err)
+	}
+	_, machineNetCidr, err := net.ParseCIDR("10.10.11.0/24")
+	if err != nil {
+		panic(err)
+	}
+	_, machineNetCidrIPv6, err := net.ParseCIDR("2001:db8:5dd8:c956::/64")
+	if err != nil {
+		panic(err)
+	}
 
 	return &agent.OptionalInstallConfig{
 		AssetBase: installconfig.AssetBase{
@@ -145,17 +163,17 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 				SSHKey:     testSSHKey,
 				ControlPlane: &types.MachinePool{
 					Name:     "master",
-					Replicas: pointer.Int64Ptr(3),
+					Replicas: ptr.To(int64(3)),
 					Platform: types.MachinePoolPlatform{},
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:     "worker-machine-pool-1",
-						Replicas: pointer.Int64Ptr(2),
+						Replicas: ptr.To(int64(2)),
 					},
 					{
 						Name:     "worker-machine-pool-2",
-						Replicas: pointer.Int64Ptr(3),
+						Replicas: ptr.To(int64(3)),
 					},
 				},
 				Networking: &types.Networking{
@@ -200,6 +218,21 @@ func getValidOptionalInstallConfigDualStackDualVIPs() *agent.OptionalInstallConf
 	return installConfig
 }
 
+func getValidOptionalInstallConfigArbiter() *agent.OptionalInstallConfig {
+	installConfig := getValidOptionalInstallConfig()
+	installConfig.Config.Compute = []types.MachinePool{
+		{
+			Name:     "workers",
+			Replicas: ptr.To(int64(0)),
+		},
+	}
+	installConfig.Config.Arbiter = &types.MachinePool{
+		Name:     "arbiter",
+		Replicas: ptr.To(int64(1)),
+	}
+	return installConfig
+}
+
 // getProxyValidOptionalInstallConfig returns a valid optional install config for proxied installation
 func getProxyValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	validIC := getValidOptionalInstallConfig()
@@ -207,6 +240,17 @@ func getProxyValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 		HTTPProxy:  "http://10.10.10.11:80",
 		HTTPSProxy: "http://my-lab-proxy.org:443",
 		NoProxy:    "internal.com",
+	}
+	return validIC
+}
+
+// getProxyWithMachineNetworkNoProxy returns a valid optional install config for proxied installation with the machine network in the NoProxy.
+func getProxyWithMachineNetworkNoProxy() *agent.OptionalInstallConfig {
+	validIC := getValidOptionalInstallConfig()
+	validIC.Config.Proxy = &types.Proxy{
+		HTTPProxy:  "http://10.10.10.11:80",
+		HTTPSProxy: "http://my-lab-proxy.org:443",
+		NoProxy:    "internal.com,192.168.0.0/16",
 	}
 	return validIC
 }
@@ -516,7 +560,7 @@ func getGoodACI() *hiveext.AgentClusterInstall {
 				},
 				ClusterNetwork: []hiveext.ClusterNetworkEntry{
 					{
-						CIDR:       "192.168.111.0/24",
+						CIDR:       "192.168.96.0/20",
 						HostPrefix: 23,
 					},
 				},
@@ -565,7 +609,7 @@ func getGoodACIDualStack() *hiveext.AgentClusterInstall {
 		CIDR: "2001:db8:5dd8:c956::/64",
 	})
 	goodACI.Spec.Networking.ClusterNetwork = append(goodACI.Spec.Networking.ClusterNetwork, hiveext.ClusterNetworkEntry{
-		CIDR:       "2001:db8:1111:2222::/64",
+		CIDR:       "2001:db8:1111::/48",
 		HostPrefix: 64,
 	})
 	goodACI.Spec.Networking.ServiceNetwork = append(goodACI.Spec.Networking.ServiceNetwork, "fd02::/112")

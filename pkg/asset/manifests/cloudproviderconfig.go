@@ -6,14 +6,18 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
-	"github.com/openshift/api/features"
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -101,7 +105,11 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 	case awstypes.Name:
 		// Store the additional trust bundle in the ca-bundle.pem key if the cluster is being installed on a C2S region.
 		trustBundle := installConfig.Config.AdditionalTrustBundle
-		if trustBundle != "" && awstypes.IsSecretRegion(installConfig.Config.AWS.Region) {
+		isSecretRegion, err := awsic.IsSecretRegion(installConfig.Config.AWS.Region)
+		if err != nil {
+			return fmt.Errorf("failed to determine if AWS region is secret: %w", err)
+		}
+		if trustBundle != "" && isSecretRegion {
 			cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
 		}
 
@@ -152,7 +160,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			VirtualNetworkName:       vnet,
 			SubnetName:               subnet,
 			ResourceManagerEndpoint:  installConfig.Config.Azure.ARMEndpoint,
-			ARO:                      installConfig.Config.Azure.IsARO(),
+			UseManagedIdentity:       installConfig.Config.CreateAzureIdentity(),
 		}.JSON()
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
@@ -171,7 +179,30 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		if installConfig.Config.GCP.ComputeSubnet != "" {
 			subnet = installConfig.Config.GCP.ComputeSubnet
 		}
-		gcpConfig, err := gcpmanifests.CloudProviderConfig(clusterID.InfraID, installConfig.Config.GCP.ProjectID, subnet, installConfig.Config.GCP.NetworkProjectID)
+
+		apiEndpoint := ""
+		containerAPIEndpoint := ""
+		for _, endpoint := range installConfig.Config.GCP.ServiceEndpoints {
+			// the installconfig should only allow one service endpoint for each
+			// name, otherwise this would take the last one.
+			switch endpoint.Name {
+			case configv1.GCPServiceEndpointNameCompute:
+				formattedURL := gcp.FormatGCPEndpoint(endpoint.Name, endpoint.URL, gcp.FormatGCPEndpointInput{SkipPath: false})
+				apiEndpoint = formattedURL
+			case configv1.GCPServiceEndpointNameContainer:
+				formattedURL := gcp.FormatGCPEndpoint(endpoint.Name, endpoint.URL, gcp.FormatGCPEndpointInput{SkipPath: false})
+				containerAPIEndpoint = formattedURL
+			}
+		}
+
+		gcpConfig, err := gcpmanifests.CloudProviderConfig(
+			clusterID.InfraID,
+			installConfig.Config.GCP.ProjectID,
+			subnet,
+			installConfig.Config.GCP.NetworkProjectID,
+			apiEndpoint,
+			containerAPIEndpoint,
+		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
@@ -237,6 +268,10 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 	case powervstypes.Name:
 		var (
 			accountID, vpcRegion string
+			client               *powervsconfig.Client
+			vpcNameOrID          string
+			vpc                  *vpcv1.VPC
+			vpcExists            = false
 			err                  error
 		)
 
@@ -252,11 +287,25 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			return err
 		}
 
-		vpc := installConfig.Config.PowerVS.VPCName
+		client, err = powervsconfig.NewClient()
+		if err != nil {
+			return err
+		}
+
+		vpcNameOrID = installConfig.Config.PowerVS.VPC
+
+		if vpcNameOrID == "" {
+			vpcNameOrID = fmt.Sprintf("vpc-%s", clusterID.InfraID)
+		} else if vpc, err = client.GetVPCByID(ctx, vpcNameOrID, vpcRegion); err == nil {
+			vpcNameOrID = *vpc.Name
+			vpcExists = true
+		} else if vpc, err = client.GetVPCByName(ctx, vpcNameOrID); err == nil {
+			vpcExists = true
+		}
+
 		vpcSubnets := installConfig.Config.PowerVS.VPCSubnets
-		if vpc == "" {
-			vpc = fmt.Sprintf("vpc-%s", clusterID.InfraID)
-		} else {
+
+		if vpcExists {
 			existingSubnets, err := installConfig.PowerVS.GetVPCSubnets(ctx, vpc)
 			if err != nil {
 				return err
@@ -314,7 +363,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		powervsConfig, err := powervsmanifests.CloudProviderConfig(
 			clusterID.InfraID,
 			accountID,
-			vpc,
+			vpcNameOrID,
 			vpcRegion,
 			installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
 			vpcSubnets,
@@ -329,14 +378,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		}
 		cm.Data[cloudProviderConfigDataKey] = powervsConfig
 	case vspheretypes.Name:
-		var vsphereConfig string
-		var err error
-		// When we GA multi vcenter, we should only support yaml generation here.
-		if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateVSphereMultiVCenters) {
-			vsphereConfig, err = vspheremanifests.CloudProviderConfigYaml(clusterID.InfraID, installConfig.Config.Platform.VSphere)
-		} else {
-			vsphereConfig, err = vspheremanifests.CloudProviderConfigIni(clusterID.InfraID, installConfig.Config.Platform.VSphere)
-		}
+		vsphereConfig, err := vspheremanifests.CloudProviderConfigYaml(clusterID.InfraID, installConfig.Config.Platform.VSphere)
 
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")

@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-openapi/swag"
 	"github.com/sirupsen/logrus"
@@ -13,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -38,12 +40,13 @@ const (
 
 // SupportedInstallerPlatforms lists the supported platforms for agent installer.
 func SupportedInstallerPlatforms() []string {
-	return []string{baremetal.Name, vsphere.Name, none.Name, external.Name}
+	return []string{baremetal.Name, vsphere.Name, nutanix.Name, none.Name, external.Name}
 }
 
 var supportedHivePlatforms = []hiveext.PlatformType{
 	hiveext.BareMetalPlatformType,
 	hiveext.VSpherePlatformType,
+	hiveext.NutanixPlatformType,
 	hiveext.NonePlatformType,
 	hiveext.ExternalPlatformType,
 }
@@ -69,6 +72,8 @@ func HivePlatformType(platform types.Platform) hiveext.PlatformType {
 		return hiveext.NonePlatformType
 	case vsphere.Name:
 		return hiveext.VSpherePlatformType
+	case nutanix.Name:
+		return hiveext.NutanixPlatformType
 	}
 	return ""
 }
@@ -100,7 +105,9 @@ func DetermineReleaseImageArch(pullSecret, pullSpec string) (string, error) {
 
 	releaseArch, err := ExecuteOC(pullSecret, getReleaseArch)
 	if err != nil {
-		logrus.Errorf("Release Image arch could not be found: %s", err)
+		if strings.Contains(err.Error(), "unable to read image") {
+			logrus.Debugf("Could not get release image to check architecture in a disconnected setup")
+		}
 		return "", err
 	}
 	logrus.Debugf("Release Image arch is: %s", releaseArch)

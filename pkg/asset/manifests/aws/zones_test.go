@@ -103,7 +103,7 @@ func tSortCapaSubnetsByID(in capa.Subnets) capa.Subnets {
 
 func Test_extractZonesFromInstallConfig(t *testing.T) {
 	type args struct {
-		in *zonesInput
+		in *networkInput
 	}
 	tests := []struct {
 		name       string
@@ -114,7 +114,7 @@ func Test_extractZonesFromInstallConfig(t *testing.T) {
 		{
 			name: "no zones in config, use default from region",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					InstallConfig: func() *installconfig.InstallConfig {
 						ic := stubInstallConfig()
 						ic.Config = stubInstallConfigType()
@@ -137,7 +137,7 @@ func Test_extractZonesFromInstallConfig(t *testing.T) {
 		{
 			name: "no zones in config pools, use default from platform config",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					InstallConfig: func() *installconfig.InstallConfig {
 						ic := stubInstallConfig()
 						ic.Config = stubInstallConfigType()
@@ -160,7 +160,7 @@ func Test_extractZonesFromInstallConfig(t *testing.T) {
 		{
 			name: "custom zones control plane pool",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					InstallConfig: func() *installconfig.InstallConfig {
 						ic := stubInstallConfig()
 						ic.Config = &types.InstallConfig{
@@ -181,7 +181,7 @@ func Test_extractZonesFromInstallConfig(t *testing.T) {
 		{
 			name: "custom zones compute pool",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					InstallConfig: func() *installconfig.InstallConfig {
 						ic := stubInstallConfig()
 						ic.Config = &types.InstallConfig{
@@ -202,7 +202,7 @@ func Test_extractZonesFromInstallConfig(t *testing.T) {
 		{
 			name: "custom zones control plane and compute pools",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					InstallConfig: func() *installconfig.InstallConfig {
 						ic := stubInstallConfig()
 						ic.Config = &types.InstallConfig{
@@ -223,7 +223,7 @@ func Test_extractZonesFromInstallConfig(t *testing.T) {
 		{
 			name: "custom zones control plane, compute and edge pools",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					InstallConfig: func() *installconfig.InstallConfig {
 						ic := stubInstallConfig()
 						ic.Config = &types.InstallConfig{
@@ -245,7 +245,7 @@ func Test_extractZonesFromInstallConfig(t *testing.T) {
 		{
 			name: "unexpected empty zones on config and metadata",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					InstallConfig: func() *installconfig.InstallConfig {
 						ic := stubInstallConfig()
 						ic.Config = stubInstallConfigType()
@@ -269,7 +269,7 @@ func Test_extractZonesFromInstallConfig(t *testing.T) {
 		{
 			name: "unexpected empty zones from edge compute pool",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					InstallConfig: func() *installconfig.InstallConfig {
 						ic := stubInstallConfig()
 						ic.Config = &types.InstallConfig{
@@ -318,7 +318,7 @@ func Test_extractZonesFromInstallConfig(t *testing.T) {
 
 func Test_setSubnetsManagedVPC(t *testing.T) {
 	type args struct {
-		in *zonesInput
+		in *networkInput
 	}
 	tests := []struct {
 		name    string
@@ -329,7 +329,7 @@ func Test_setSubnetsManagedVPC(t *testing.T) {
 		{
 			name: "default availability zones in the region",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					ClusterID: stubClusterID(),
 					InstallConfig: func() *installconfig.InstallConfig {
 						ic := stubInstallConfig()
@@ -395,7 +395,7 @@ func Test_setSubnetsManagedVPC(t *testing.T) {
 		{
 			name: "default availability zones in the region and edge",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					ClusterID: stubClusterID(),
 					InstallConfig: func() *installconfig.InstallConfig {
 						ic := stubInstallConfig()
@@ -536,7 +536,7 @@ func Test_setSubnetsManagedVPC(t *testing.T) {
 
 func Test_setSubnetsBYOVPC(t *testing.T) {
 	type args struct {
-		in *zonesInput
+		in *networkInput
 	}
 	tests := []struct {
 		name    string
@@ -547,7 +547,7 @@ func Test_setSubnetsBYOVPC(t *testing.T) {
 		{
 			name: "default byo vpc",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					Cluster: &capa.AWSCluster{},
 					Subnets: &subnetsInput{
 						vpc: "vpc-id",
@@ -646,7 +646,7 @@ func Test_setSubnetsBYOVPC(t *testing.T) {
 		{
 			name: "byo vpc only private subnets",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					Cluster: &capa.AWSCluster{},
 					Subnets: &subnetsInput{
 						vpc: "vpc-id",
@@ -708,7 +708,7 @@ func Test_setSubnetsBYOVPC(t *testing.T) {
 		{
 			name: "byo vpc with edge",
 			args: args{
-				in: &zonesInput{
+				in: &networkInput{
 					Cluster: &capa.AWSCluster{},
 					Subnets: &subnetsInput{
 						vpc: "vpc-id",

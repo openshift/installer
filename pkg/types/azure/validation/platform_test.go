@@ -58,30 +58,12 @@ func TestValidatePlatform(t *testing.T) {
 		},
 		{
 			name: "invalid baseDomainResourceGroupName",
-			wantSkip: func(p *azure.Platform) bool {
-				// This test case doesn't apply to ARO
-				// so we want to skip it when run tests for ARO build
-				return p.IsARO()
-			},
 			platform: func() *azure.Platform {
 				p := validPlatform()
 				p.BaseDomainResourceGroupName = ""
 				return p
 			}(),
 			expected: `^test-path\.baseDomainResourceGroupName: Required value: baseDomainResourceGroupName is the resource group name where the azure dns zone is deployed$`,
-		},
-		{
-			name: "do not require baseDomainResourceGroupName on ARO",
-			wantSkip: func(p *azure.Platform) bool {
-				// This is a ARO-specific test case
-				// so want to skip when running non-ARO builds
-				return !p.IsARO()
-			},
-			platform: func() *azure.Platform {
-				p := validPlatform()
-				p.BaseDomainResourceGroupName = ""
-				return p
-			}(),
 		},
 		{
 			name:     "minimal",
@@ -152,7 +134,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.OutboundType = "random-egress"
 				return p
 			}(),
-			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "NatGateway", "UserDefinedRouting"$`,
+			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "NATGatewaySingleZone", "UserDefinedRouting"$`,
 		},
 		{
 			name: "invalid user defined type",
@@ -162,15 +144,6 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expected: `^test-path\.outboundType: Invalid value: "UserDefinedRouting": UserDefinedRouting is only allowed when installing to pre-existing network$`,
-		},
-		{
-			name: "invalid nat gateway",
-			platform: func() *azure.Platform {
-				p := validPlatform()
-				p.OutboundType = azure.NatGatewayOutboundType
-				return p
-			}(),
-			expected: `^test-path\.outboundType: Invalid value: "NatGateway": not supported in this feature set$`,
 		},
 		{
 			name: "missing key vault name",

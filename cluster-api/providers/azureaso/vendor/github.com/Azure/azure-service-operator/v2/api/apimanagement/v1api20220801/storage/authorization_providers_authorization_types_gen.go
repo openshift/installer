@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type AuthorizationProvidersAuthorization struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Service_AuthorizationProviders_Authorization_Spec   `json:"spec,omitempty"`
-	Status            Service_AuthorizationProviders_Authorization_STATUS `json:"status,omitempty"`
+	Spec              AuthorizationProvidersAuthorization_Spec   `json:"spec,omitempty"`
+	Status            AuthorizationProvidersAuthorization_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &AuthorizationProvidersAuthorization{}
@@ -44,6 +47,26 @@ func (authorization *AuthorizationProvidersAuthorization) SetConditions(conditio
 	authorization.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &AuthorizationProvidersAuthorization{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (authorization *AuthorizationProvidersAuthorization) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if authorization.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return authorization.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &AuthorizationProvidersAuthorization{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (authorization *AuthorizationProvidersAuthorization) SecretDestinationExpressions() []*core.DestinationExpression {
+	if authorization.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return authorization.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &AuthorizationProvidersAuthorization{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (authorization *AuthorizationProvidersAuthorization) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-08-01"
 func (authorization AuthorizationProvidersAuthorization) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-08-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +110,7 @@ func (authorization *AuthorizationProvidersAuthorization) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (authorization *AuthorizationProvidersAuthorization) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Service_AuthorizationProviders_Authorization_STATUS{}
+	return &AuthorizationProvidersAuthorization_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +122,13 @@ func (authorization *AuthorizationProvidersAuthorization) Owner() *genruntime.Re
 // SetStatus sets the status of this resource
 func (authorization *AuthorizationProvidersAuthorization) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Service_AuthorizationProviders_Authorization_STATUS); ok {
+	if st, ok := status.(*AuthorizationProvidersAuthorization_STATUS); ok {
 		authorization.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Service_AuthorizationProviders_Authorization_STATUS
+	var st AuthorizationProvidersAuthorization_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -138,15 +161,16 @@ type AuthorizationProvidersAuthorizationList struct {
 	Items           []AuthorizationProvidersAuthorization `json:"items"`
 }
 
-// Storage version of v1api20220801.Service_AuthorizationProviders_Authorization_Spec
-type Service_AuthorizationProviders_Authorization_Spec struct {
+// Storage version of v1api20220801.AuthorizationProvidersAuthorization_Spec
+type AuthorizationProvidersAuthorization_Spec struct {
 	AuthorizationType *string `json:"authorizationType,omitempty"`
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string  `json:"azureName,omitempty"`
-	Oauth2GrantType *string `json:"oauth2grantType,omitempty"`
-	OriginalVersion string  `json:"originalVersion,omitempty"`
+	AzureName       string                                           `json:"azureName,omitempty"`
+	Oauth2GrantType *string                                          `json:"oauth2grantType,omitempty"`
+	OperatorSpec    *AuthorizationProvidersAuthorizationOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                                           `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -157,10 +181,10 @@ type Service_AuthorizationProviders_Authorization_Spec struct {
 	PropertyBag genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Service_AuthorizationProviders_Authorization_Spec{}
+var _ genruntime.ConvertibleSpec = &AuthorizationProvidersAuthorization_Spec{}
 
-// ConvertSpecFrom populates our Service_AuthorizationProviders_Authorization_Spec from the provided source
-func (authorization *Service_AuthorizationProviders_Authorization_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our AuthorizationProvidersAuthorization_Spec from the provided source
+func (authorization *AuthorizationProvidersAuthorization_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == authorization {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -168,8 +192,8 @@ func (authorization *Service_AuthorizationProviders_Authorization_Spec) ConvertS
 	return source.ConvertSpecTo(authorization)
 }
 
-// ConvertSpecTo populates the provided destination from our Service_AuthorizationProviders_Authorization_Spec
-func (authorization *Service_AuthorizationProviders_Authorization_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our AuthorizationProvidersAuthorization_Spec
+func (authorization *AuthorizationProvidersAuthorization_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == authorization {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -177,8 +201,8 @@ func (authorization *Service_AuthorizationProviders_Authorization_Spec) ConvertS
 	return destination.ConvertSpecFrom(authorization)
 }
 
-// Storage version of v1api20220801.Service_AuthorizationProviders_Authorization_STATUS
-type Service_AuthorizationProviders_Authorization_STATUS struct {
+// Storage version of v1api20220801.AuthorizationProvidersAuthorization_STATUS
+type AuthorizationProvidersAuthorization_STATUS struct {
 	AuthorizationType *string                    `json:"authorizationType,omitempty"`
 	Conditions        []conditions.Condition     `json:"conditions,omitempty"`
 	Error             *AuthorizationError_STATUS `json:"error,omitempty"`
@@ -191,10 +215,10 @@ type Service_AuthorizationProviders_Authorization_STATUS struct {
 	Type              *string                    `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Service_AuthorizationProviders_Authorization_STATUS{}
+var _ genruntime.ConvertibleStatus = &AuthorizationProvidersAuthorization_STATUS{}
 
-// ConvertStatusFrom populates our Service_AuthorizationProviders_Authorization_STATUS from the provided source
-func (authorization *Service_AuthorizationProviders_Authorization_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our AuthorizationProvidersAuthorization_STATUS from the provided source
+func (authorization *AuthorizationProvidersAuthorization_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == authorization {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -202,8 +226,8 @@ func (authorization *Service_AuthorizationProviders_Authorization_STATUS) Conver
 	return source.ConvertStatusTo(authorization)
 }
 
-// ConvertStatusTo populates the provided destination from our Service_AuthorizationProviders_Authorization_STATUS
-func (authorization *Service_AuthorizationProviders_Authorization_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our AuthorizationProvidersAuthorization_STATUS
+func (authorization *AuthorizationProvidersAuthorization_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == authorization {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -217,6 +241,14 @@ type AuthorizationError_STATUS struct {
 	Code        *string                `json:"code,omitempty"`
 	Message     *string                `json:"message,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// Storage version of v1api20220801.AuthorizationProvidersAuthorizationOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type AuthorizationProvidersAuthorizationOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

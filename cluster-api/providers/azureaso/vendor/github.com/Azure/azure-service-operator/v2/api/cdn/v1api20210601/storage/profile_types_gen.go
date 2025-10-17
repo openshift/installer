@@ -5,9 +5,12 @@ package storage
 
 import (
 	"fmt"
-	v20230501s "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -47,7 +50,7 @@ var _ conversion.Convertible = &Profile{}
 
 // ConvertFrom populates our Profile from the provided hub Profile
 func (profile *Profile) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230501s.Profile)
+	source, ok := hub.(*storage.Profile)
 	if !ok {
 		return fmt.Errorf("expected cdn/v1api20230501/storage/Profile but received %T instead", hub)
 	}
@@ -57,12 +60,32 @@ func (profile *Profile) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Profile from our Profile
 func (profile *Profile) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230501s.Profile)
+	destination, ok := hub.(*storage.Profile)
 	if !ok {
 		return fmt.Errorf("expected cdn/v1api20230501/storage/Profile but received %T instead", hub)
 	}
 
 	return profile.AssignProperties_To_Profile(destination)
+}
+
+var _ configmaps.Exporter = &Profile{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (profile *Profile) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if profile.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return profile.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Profile{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (profile *Profile) SecretDestinationExpressions() []*core.DestinationExpression {
+	if profile.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return profile.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &Profile{}
@@ -74,7 +97,7 @@ func (profile *Profile) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-06-01"
 func (profile Profile) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -137,7 +160,7 @@ func (profile *Profile) SetStatus(status genruntime.ConvertibleStatus) error {
 }
 
 // AssignProperties_From_Profile populates our Profile from the provided source Profile
-func (profile *Profile) AssignProperties_From_Profile(source *v20230501s.Profile) error {
+func (profile *Profile) AssignProperties_From_Profile(source *storage.Profile) error {
 
 	// ObjectMeta
 	profile.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -172,13 +195,13 @@ func (profile *Profile) AssignProperties_From_Profile(source *v20230501s.Profile
 }
 
 // AssignProperties_To_Profile populates the provided destination Profile from our Profile
-func (profile *Profile) AssignProperties_To_Profile(destination *v20230501s.Profile) error {
+func (profile *Profile) AssignProperties_To_Profile(destination *storage.Profile) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *profile.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230501s.Profile_Spec
+	var spec storage.Profile_Spec
 	err := profile.Spec.AssignProperties_To_Profile_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Profile_Spec() to populate field Spec")
@@ -186,7 +209,7 @@ func (profile *Profile) AssignProperties_To_Profile(destination *v20230501s.Prof
 	destination.Spec = spec
 
 	// Status
-	var status v20230501s.Profile_STATUS
+	var status storage.Profile_STATUS
 	err = profile.Status.AssignProperties_To_Profile_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Profile_STATUS() to populate field Status")
@@ -233,18 +256,19 @@ type APIVersion string
 const APIVersion_Value = APIVersion("2021-06-01")
 
 type augmentConversionForProfile interface {
-	AssignPropertiesFrom(src *v20230501s.Profile) error
-	AssignPropertiesTo(dst *v20230501s.Profile) error
+	AssignPropertiesFrom(src *storage.Profile) error
+	AssignPropertiesTo(dst *storage.Profile) error
 }
 
 // Storage version of v1api20210601.Profile_Spec
 type Profile_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                    string  `json:"azureName,omitempty"`
-	Location                     *string `json:"location,omitempty"`
-	OriginResponseTimeoutSeconds *int    `json:"originResponseTimeoutSeconds,omitempty"`
-	OriginalVersion              string  `json:"originalVersion,omitempty"`
+	AzureName                    string               `json:"azureName,omitempty"`
+	Location                     *string              `json:"location,omitempty"`
+	OperatorSpec                 *ProfileOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginResponseTimeoutSeconds *int                 `json:"originResponseTimeoutSeconds,omitempty"`
+	OriginalVersion              string               `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -260,14 +284,14 @@ var _ genruntime.ConvertibleSpec = &Profile_Spec{}
 
 // ConvertSpecFrom populates our Profile_Spec from the provided source
 func (profile *Profile_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230501s.Profile_Spec)
+	src, ok := source.(*storage.Profile_Spec)
 	if ok {
 		// Populate our instance from source
 		return profile.AssignProperties_From_Profile_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230501s.Profile_Spec{}
+	src = &storage.Profile_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -284,14 +308,14 @@ func (profile *Profile_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 
 // ConvertSpecTo populates the provided destination from our Profile_Spec
 func (profile *Profile_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230501s.Profile_Spec)
+	dst, ok := destination.(*storage.Profile_Spec)
 	if ok {
 		// Populate destination from our instance
 		return profile.AssignProperties_To_Profile_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230501s.Profile_Spec{}
+	dst = &storage.Profile_Spec{}
 	err := profile.AssignProperties_To_Profile_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -307,7 +331,7 @@ func (profile *Profile_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 }
 
 // AssignProperties_From_Profile_Spec populates our Profile_Spec from the provided source Profile_Spec
-func (profile *Profile_Spec) AssignProperties_From_Profile_Spec(source *v20230501s.Profile_Spec) error {
+func (profile *Profile_Spec) AssignProperties_From_Profile_Spec(source *storage.Profile_Spec) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -323,6 +347,18 @@ func (profile *Profile_Spec) AssignProperties_From_Profile_Spec(source *v2023050
 
 	// Location
 	profile.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ProfileOperatorSpec
+		err := operatorSpec.AssignProperties_From_ProfileOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ProfileOperatorSpec() to populate field OperatorSpec")
+		}
+		profile.OperatorSpec = &operatorSpec
+	} else {
+		profile.OperatorSpec = nil
+	}
 
 	// OriginResponseTimeoutSeconds
 	profile.OriginResponseTimeoutSeconds = genruntime.ClonePointerToInt(source.OriginResponseTimeoutSeconds)
@@ -374,7 +410,7 @@ func (profile *Profile_Spec) AssignProperties_From_Profile_Spec(source *v2023050
 }
 
 // AssignProperties_To_Profile_Spec populates the provided destination Profile_Spec from our Profile_Spec
-func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *v20230501s.Profile_Spec) error {
+func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *storage.Profile_Spec) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
 
@@ -383,7 +419,7 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *v2023
 
 	// Identity
 	if propertyBag.Contains("Identity") {
-		var identity v20230501s.ManagedServiceIdentity
+		var identity storage.ManagedServiceIdentity
 		err := propertyBag.Pull("Identity", &identity)
 		if err != nil {
 			return errors.Wrap(err, "pulling 'Identity' from propertyBag")
@@ -396,6 +432,18 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *v2023
 
 	// Location
 	destination.Location = genruntime.ClonePointerToString(profile.Location)
+
+	// OperatorSpec
+	if profile.OperatorSpec != nil {
+		var operatorSpec storage.ProfileOperatorSpec
+		err := profile.OperatorSpec.AssignProperties_To_ProfileOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ProfileOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginResponseTimeoutSeconds
 	destination.OriginResponseTimeoutSeconds = genruntime.ClonePointerToInt(profile.OriginResponseTimeoutSeconds)
@@ -413,7 +461,7 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *v2023
 
 	// Sku
 	if profile.Sku != nil {
-		var sku v20230501s.Sku
+		var sku storage.Sku
 		err := profile.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
@@ -469,14 +517,14 @@ var _ genruntime.ConvertibleStatus = &Profile_STATUS{}
 
 // ConvertStatusFrom populates our Profile_STATUS from the provided source
 func (profile *Profile_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230501s.Profile_STATUS)
+	src, ok := source.(*storage.Profile_STATUS)
 	if ok {
 		// Populate our instance from source
 		return profile.AssignProperties_From_Profile_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230501s.Profile_STATUS{}
+	src = &storage.Profile_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -493,14 +541,14 @@ func (profile *Profile_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 
 // ConvertStatusTo populates the provided destination from our Profile_STATUS
 func (profile *Profile_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230501s.Profile_STATUS)
+	dst, ok := destination.(*storage.Profile_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return profile.AssignProperties_To_Profile_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230501s.Profile_STATUS{}
+	dst = &storage.Profile_STATUS{}
 	err := profile.AssignProperties_To_Profile_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -516,7 +564,7 @@ func (profile *Profile_STATUS) ConvertStatusTo(destination genruntime.Convertibl
 }
 
 // AssignProperties_From_Profile_STATUS populates our Profile_STATUS from the provided source Profile_STATUS
-func (profile *Profile_STATUS) AssignProperties_From_Profile_STATUS(source *v20230501s.Profile_STATUS) error {
+func (profile *Profile_STATUS) AssignProperties_From_Profile_STATUS(source *storage.Profile_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -612,7 +660,7 @@ func (profile *Profile_STATUS) AssignProperties_From_Profile_STATUS(source *v202
 }
 
 // AssignProperties_To_Profile_STATUS populates the provided destination Profile_STATUS from our Profile_STATUS
-func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *v20230501s.Profile_STATUS) error {
+func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *storage.Profile_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
 
@@ -640,7 +688,7 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *v
 
 	// Identity
 	if propertyBag.Contains("Identity") {
-		var identity v20230501s.ManagedServiceIdentity_STATUS
+		var identity storage.ManagedServiceIdentity_STATUS
 		err := propertyBag.Pull("Identity", &identity)
 		if err != nil {
 			return errors.Wrap(err, "pulling 'Identity' from propertyBag")
@@ -671,7 +719,7 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *v
 
 	// Sku
 	if profile.Sku != nil {
-		var sku v20230501s.Sku_STATUS
+		var sku storage.Sku_STATUS
 		err := profile.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
@@ -683,7 +731,7 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *v
 
 	// SystemData
 	if profile.SystemData != nil {
-		var systemDatum v20230501s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := profile.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -720,13 +768,143 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *v
 }
 
 type augmentConversionForProfile_Spec interface {
-	AssignPropertiesFrom(src *v20230501s.Profile_Spec) error
-	AssignPropertiesTo(dst *v20230501s.Profile_Spec) error
+	AssignPropertiesFrom(src *storage.Profile_Spec) error
+	AssignPropertiesTo(dst *storage.Profile_Spec) error
 }
 
 type augmentConversionForProfile_STATUS interface {
-	AssignPropertiesFrom(src *v20230501s.Profile_STATUS) error
-	AssignPropertiesTo(dst *v20230501s.Profile_STATUS) error
+	AssignPropertiesFrom(src *storage.Profile_STATUS) error
+	AssignPropertiesTo(dst *storage.Profile_STATUS) error
+}
+
+// Storage version of v1api20210601.ProfileOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ProfileOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ProfileOperatorSpec populates our ProfileOperatorSpec from the provided source ProfileOperatorSpec
+func (operator *ProfileOperatorSpec) AssignProperties_From_ProfileOperatorSpec(source *storage.ProfileOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForProfileOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForProfileOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ProfileOperatorSpec populates the provided destination ProfileOperatorSpec from our ProfileOperatorSpec
+func (operator *ProfileOperatorSpec) AssignProperties_To_ProfileOperatorSpec(destination *storage.ProfileOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForProfileOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForProfileOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210601.Sku
@@ -760,7 +938,7 @@ type Sku struct {
 }
 
 // AssignProperties_From_Sku populates our Sku from the provided source Sku
-func (sku *Sku) AssignProperties_From_Sku(source *v20230501s.Sku) error {
+func (sku *Sku) AssignProperties_From_Sku(source *storage.Sku) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -788,7 +966,7 @@ func (sku *Sku) AssignProperties_From_Sku(source *v20230501s.Sku) error {
 }
 
 // AssignProperties_To_Sku populates the provided destination Sku from our Sku
-func (sku *Sku) AssignProperties_To_Sku(destination *v20230501s.Sku) error {
+func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(sku.PropertyBag)
 
@@ -846,7 +1024,7 @@ type Sku_STATUS struct {
 }
 
 // AssignProperties_From_Sku_STATUS populates our Sku_STATUS from the provided source Sku_STATUS
-func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *v20230501s.Sku_STATUS) error {
+func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *storage.Sku_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -874,7 +1052,7 @@ func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *v20230501s.Sku_S
 }
 
 // AssignProperties_To_Sku_STATUS populates the provided destination Sku_STATUS from our Sku_STATUS
-func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *v20230501s.Sku_STATUS) error {
+func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(sku.PropertyBag)
 
@@ -914,7 +1092,7 @@ type SystemData_STATUS struct {
 }
 
 // AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v20230501s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -957,7 +1135,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 }
 
 // AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *v20230501s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
 
@@ -999,19 +1177,24 @@ func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination
 	return nil
 }
 
+type augmentConversionForProfileOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.ProfileOperatorSpec) error
+	AssignPropertiesTo(dst *storage.ProfileOperatorSpec) error
+}
+
 type augmentConversionForSku interface {
-	AssignPropertiesFrom(src *v20230501s.Sku) error
-	AssignPropertiesTo(dst *v20230501s.Sku) error
+	AssignPropertiesFrom(src *storage.Sku) error
+	AssignPropertiesTo(dst *storage.Sku) error
 }
 
 type augmentConversionForSku_STATUS interface {
-	AssignPropertiesFrom(src *v20230501s.Sku_STATUS) error
-	AssignPropertiesTo(dst *v20230501s.Sku_STATUS) error
+	AssignPropertiesFrom(src *storage.Sku_STATUS) error
+	AssignPropertiesTo(dst *storage.Sku_STATUS) error
 }
 
 type augmentConversionForSystemData_STATUS interface {
-	AssignPropertiesFrom(src *v20230501s.SystemData_STATUS) error
-	AssignPropertiesTo(dst *v20230501s.SystemData_STATUS) error
+	AssignPropertiesFrom(src *storage.SystemData_STATUS) error
+	AssignPropertiesTo(dst *storage.SystemData_STATUS) error
 }
 
 func init() {

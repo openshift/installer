@@ -12,26 +12,31 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	apimanagement "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 )
 
-var _ genruntime.KubernetesExporter = &SubscriptionExtension{}
+const (
+	primaryKey   = "primaryKey"
+	secondaryKey = "secondaryKey"
+)
 
-func (ext *SubscriptionExtension) ExportKubernetesResources(
+var _ genruntime.KubernetesSecretExporter = &SubscriptionExtension{}
+
+func (ext *SubscriptionExtension) ExportKubernetesSecrets(
 	ctx context.Context,
 	obj genruntime.MetaObject,
+	additionalSecrets set.Set[string],
 	armClient *genericarmclient.GenericClient,
 	log logr.Logger,
-) ([]client.Object, error) {
-
+) (*genruntime.KubernetesSecretExportResult, error) {
 	// This has to be the current hub storage version. It will need to be updated
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*apimanagement.Subscription)
@@ -43,8 +48,9 @@ func (ext *SubscriptionExtension) ExportKubernetesResources(
 	// the hub type has been changed but this extension has not
 	var _ conversion.Hub = typedObj
 
-	hasSecrets := secretsSpecified(typedObj)
-	if !hasSecrets {
+	primarySecrets := secretsSpecified(typedObj)
+	requestedSecrets := set.Union(primarySecrets, additionalSecrets)
+	if len(requestedSecrets) == 0 {
 		log.V(Debug).Info("No secrets retrieval to perform as operatorSpec is empty")
 		return nil, nil
 	}
@@ -61,7 +67,7 @@ func (ext *SubscriptionExtension) ExportKubernetesResources(
 
 	// Only bother calling ListSecrets if there are secrets to retrieve
 	var s armapimanagement.SubscriptionKeysContract
-	if hasSecrets {
+	if len(requestedSecrets) > 0 {
 		subscription := id.SubscriptionID
 		// Using armClient.ClientOptions() here ensures we share the same HTTP connection, so this is not opening a new
 		// connection each time through
@@ -80,32 +86,45 @@ func (ext *SubscriptionExtension) ExportKubernetesResources(
 		s = resp.SubscriptionKeysContract
 	}
 
+	resolvedSecrets := map[string]string{}
+	if to.Value(s.PrimaryKey) != "" {
+		resolvedSecrets[primaryKey] = to.Value(s.PrimaryKey)
+	}
+	if to.Value(s.SecondaryKey) != "" {
+		resolvedSecrets[secondaryKey] = to.Value(s.SecondaryKey)
+	}
 	secretSlice, err := secretsToWrite(typedObj, s)
 	if err != nil {
 		return nil, err
 	}
 
-	return secrets.SliceToClientObjectSlice(secretSlice), nil
+	return &genruntime.KubernetesSecretExportResult{
+		Objs:       secrets.SliceToClientObjectSlice(secretSlice),
+		RawSecrets: secrets.SelectSecrets(additionalSecrets, resolvedSecrets),
+	}, nil
 }
 
-func secretsSpecified(obj *apimanagement.Subscription) bool {
+func secretsSpecified(obj *apimanagement.Subscription) set.Set[string] {
 	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
-		return false
+		return nil
 	}
 
-	hasSecrets := false
 	secrets := obj.Spec.OperatorSpec.Secrets
-	if secrets.PrimaryKey != nil || secrets.SecondaryKey != nil {
-		hasSecrets = true
+	result := make(set.Set[string])
+	if secrets.PrimaryKey != nil {
+		result.Add(primaryKey)
+	}
+	if secrets.SecondaryKey != nil {
+		result.Add(secondaryKey)
 	}
 
-	return hasSecrets
+	return result
 }
 
 func secretsToWrite(obj *apimanagement.Subscription, s armapimanagement.SubscriptionKeysContract) ([]*v1.Secret, error) {
 	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 	if operatorSpecSecrets == nil {
-		return nil, errors.Errorf("unexpected nil operatorspec")
+		return nil, nil
 	}
 
 	collector := secrets.NewCollector(obj.Namespace)

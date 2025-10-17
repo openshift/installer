@@ -9,8 +9,7 @@ import (
 )
 
 func defaultPlatform() *nutanix.Platform {
-	timeout := nutanix.DefaultPrismAPICallTimeout
-	return &nutanix.Platform{PrismAPICallTimeout: &timeout}
+	return &nutanix.Platform{}
 }
 
 func TestSetPlatformDefaults(t *testing.T) {

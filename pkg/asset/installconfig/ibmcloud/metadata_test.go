@@ -7,8 +7,8 @@ import (
 
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/mock"
@@ -36,8 +36,10 @@ var (
 	// DNS Instance test values.
 	newDNSInstanceID       = "new-dns-instance-id"
 	newDNSInstanceCRN      = "new-dns-instance-crn"
+	newDNSZoneID           = "new-dns-zone-id"
 	existingDNSInstanceID  = "existing-dns-instance-id"
 	existingDNSInstanceCRN = "existing-dns-instance-crn"
+	existingDNSZoneID      = "existing-dns-zone-id"
 	unknownDNSInstanceID   = "unknown-dns-instance-id"
 	unknownDNSInstanceCRN  = "unknown-dns-instance-crn"
 
@@ -158,6 +160,11 @@ var (
 	noVPCComputeSubnetID        = "no-vpc-compute-subnet-id"
 	noZoneComputeSubnetID       = "no-zone-compute-subnet-id"
 
+	// VPC Names, IDss, CRN's.
+	vpcID    = "vpc-id"
+	vpcIDBad = "vpc-id-bad"
+	vpcCRN   = "vpc-crn"
+
 	// VPCReferences for Client Subnet responses.
 	vpcReferenceComputeSubnet1      = vpcv1.VPCReference{Name: &newComputeSubnet1VPCName}
 	vpcReferenceComputeSubnet2      = vpcv1.VPCReference{Name: &newComputeSubnet2VPCName}
@@ -248,11 +255,100 @@ func TestAccountID(t *testing.T) {
 	}
 }
 
+func TestAddVPCToPermittedNetworks(t *testing.T) {
+	testCases := []struct {
+		name     string
+		edits    editMetadata
+		errorMsg string
+		vpcID    string
+	}{
+		{
+			name:     "test failed to retrieve dns services instance",
+			errorMsg: "failed to retrieve dns services instance",
+		},
+		{
+			name:     "test failed to retrieve vpc crn",
+			errorMsg: "failed to retrieve vpc",
+			vpcID:    vpcIDBad,
+		},
+		{
+			name:     "test error vpc crn not set",
+			errorMsg: "error vpc crn not set for vpc",
+			vpcID:    vpcIDBad,
+		},
+		{
+			name:     "test failed to add vpc to permitted network",
+			errorMsg: fmt.Sprintf("failed to add vpc vpc-id to permitted networks of dns services zone %s and instance %s", newDNSZoneID, newDNSInstanceID),
+			vpcID:    vpcID,
+		},
+		{
+			name: "test dns instance cached for permitted network",
+			edits: editMetadata{
+				func(m *Metadata) {
+					m.dnsInstance = &DNSInstance{
+						ID:   existingDNSInstanceID,
+						CRN:  existingDNSInstanceCRN,
+						Zone: existingDNSZoneID,
+					}
+				},
+			},
+			vpcID: vpcID,
+		},
+	}
+
+	// IBM Cloud Client Mocks.
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ibmcloudClient := mock.NewMockAPI(mockCtrl)
+
+	// Mocks: test failed to retrieve dns services instance
+	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return(nil, fmt.Errorf("get dns zone failure"))
+
+	// Mocks: test failed to retrieve vpc crn
+	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return([]responses.DNSZoneResponse{{Name: goodDomain, InstanceID: newDNSInstanceID, InstanceCRN: newDNSInstanceCRN}}, nil)
+	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), vpcIDBad).Return(nil, fmt.Errorf("bad vpc id"))
+
+	// Mocks: test error vpc crn not set
+	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return([]responses.DNSZoneResponse{{Name: goodDomain, InstanceID: newDNSInstanceID, InstanceCRN: newDNSInstanceCRN}}, nil)
+	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), vpcIDBad).Return(&vpcv1.VPC{ID: ptr.To(vpcIDBad)}, nil)
+
+	// Mocks: test failed to add vpc to permitted network
+	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return([]responses.DNSZoneResponse{{Name: goodDomain, InstanceID: newDNSInstanceID, InstanceCRN: newDNSInstanceCRN, ID: newDNSZoneID}}, nil)
+	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), vpcID).Return(&vpcv1.VPC{CRN: ptr.To(vpcCRN), ID: ptr.To(vpcID)}, nil)
+	ibmcloudClient.EXPECT().CreateDNSServicesPermittedNetwork(gomock.Any(), newDNSInstanceID, newDNSZoneID, vpcCRN).Return(fmt.Errorf("create permitted network failure"))
+
+	// Mocks: test dns instance cached for permitted network
+	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), vpcID).Return(&vpcv1.VPC{CRN: ptr.To(vpcCRN), ID: ptr.To(vpcID)}, nil)
+	ibmcloudClient.EXPECT().CreateDNSServicesPermittedNetwork(gomock.Any(), existingDNSInstanceID, existingDNSZoneID, vpcCRN).Return(nil)
+
+	for _, tCase := range testCases {
+		t.Run(tCase.name, func(t *testing.T) {
+			metadata := baseMetadata()
+			// This function is only desired for DNS Services (Internal) functionality.
+			metadata.publishStrategy = types.InternalPublishingStrategy
+			metadata.client = ibmcloudClient
+			for _, edit := range tCase.edits {
+				edit(metadata)
+			}
+
+			err := metadata.AddVPCToPermittedNetworks(context.TODO(), tCase.vpcID)
+			if err != nil {
+				assert.Regexp(t, tCase.errorMsg, err)
+			} else {
+				assert.Equal(t, tCase.errorMsg, "")
+			}
+		})
+	}
+}
+
 func TestCreateDNSRecord(t *testing.T) {
+	clusterDomain := "cluster.test-domain.test"
+
 	testCases := []struct {
 		name         string
 		edits        editMetadata
 		errorMsg     string
+		recordName   string
 		loadBalancer *vpcv1.LoadBalancer
 	}{
 		{
@@ -282,34 +378,48 @@ func TestCreateDNSRecord(t *testing.T) {
 			},
 		},
 		{
-			name: "test kube public api",
+			name:       "test external kube public api",
+			recordName: fmt.Sprintf("api.%s", clusterDomain),
 			loadBalancer: &vpcv1.LoadBalancer{
 				Name:     ptr.To(fmt.Sprintf("cluster-%s", KubernetesAPIPublicSuffix)),
 				Hostname: ptr.To("lb-hostname"),
 			},
 		},
 		{
-			name: "test kube private api",
+			name:       "test external kube private api",
+			recordName: fmt.Sprintf("api-int.%s", clusterDomain),
 			loadBalancer: &vpcv1.LoadBalancer{
 				Name:     ptr.To(fmt.Sprintf("cluster-%s", KubernetesAPIPrivateSuffix)),
 				Hostname: ptr.To("lb-hostname"),
 			},
 		},
 		{
-			name: "test dns services dns record",
+			name: "test internal kube public api",
 			edits: editMetadata{
 				func(m *Metadata) {
 					m.publishStrategy = types.InternalPublishingStrategy
 				},
 			},
+			recordName: fmt.Sprintf("api.%s", clusterDomain),
 			loadBalancer: &vpcv1.LoadBalancer{
 				Name:     ptr.To(fmt.Sprintf("cluster-%s", KubernetesAPIPublicSuffix)),
 				Hostname: ptr.To("lb-hostname"),
 			},
 		},
+		{
+			name: "test internal kube private api",
+			edits: editMetadata{
+				func(m *Metadata) {
+					m.publishStrategy = types.InternalPublishingStrategy
+				},
+			},
+			recordName: fmt.Sprintf("api-int.%s", clusterDomain),
+			loadBalancer: &vpcv1.LoadBalancer{
+				Name:     ptr.To(fmt.Sprintf("cluster-%s", KubernetesAPIPrivateSuffix)),
+				Hostname: ptr.To("lb-hostname"),
+			},
+		},
 	}
-
-	clusterDomain := "cluster.test-domain.test"
 
 	// IBM Cloud Client Mocks.
 	mockCtrl := gomock.NewController(t)
@@ -327,20 +437,25 @@ func TestCreateDNSRecord(t *testing.T) {
 	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), goodDomain, types.InternalPublishingStrategy).Return("zoneID", nil)
 	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return(nil, fmt.Errorf("dns services instance not found"))
 
-	// Mocks: test kube public api
+	// Mocks: test external kube public api
 	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), goodDomain, types.ExternalPublishingStrategy).Return("zoneID", nil)
 	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.ExternalPublishingStrategy).Return([]responses.DNSZoneResponse{{Name: goodDomain, InstanceCRN: newCISCRN}}, nil)
 	ibmcloudClient.EXPECT().CreateCISDNSRecord(gomock.Any(), newCISCRN, "zoneID", fmt.Sprintf("api.%s", clusterDomain), "lb-hostname").Return(nil)
 
-	// Mocks: test kube private api
+	// Mocks: test internal kube private api
 	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), goodDomain, types.ExternalPublishingStrategy).Return("zoneID", nil)
 	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.ExternalPublishingStrategy).Return([]responses.DNSZoneResponse{{Name: goodDomain, InstanceCRN: newCISCRN}}, nil)
 	ibmcloudClient.EXPECT().CreateCISDNSRecord(gomock.Any(), newCISCRN, "zoneID", fmt.Sprintf("api-int.%s", clusterDomain), "lb-hostname").Return(nil)
 
-	// Mocks: test dns services dns record
+	// Mocks: test internal kube public api
 	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), goodDomain, types.InternalPublishingStrategy).Return("zoneID", nil)
 	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return([]responses.DNSZoneResponse{{Name: goodDomain, InstanceID: newDNSInstanceID, InstanceCRN: newDNSInstanceCRN}}, nil)
 	ibmcloudClient.EXPECT().CreateDNSServicesDNSRecord(gomock.Any(), newDNSInstanceID, "zoneID", fmt.Sprintf("api.%s", clusterDomain), "lb-hostname")
+
+	// Mocks: test internal kube private api
+	ibmcloudClient.EXPECT().GetDNSZoneIDByName(gomock.Any(), goodDomain, types.InternalPublishingStrategy).Return("zoneID", nil)
+	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return([]responses.DNSZoneResponse{{Name: goodDomain, InstanceID: newDNSInstanceID, InstanceCRN: newDNSInstanceCRN}}, nil)
+	ibmcloudClient.EXPECT().CreateDNSServicesDNSRecord(gomock.Any(), newDNSInstanceID, "zoneID", fmt.Sprintf("api-int.%s", clusterDomain), "lb-hostname")
 
 	for _, tCase := range testCases {
 		t.Run(tCase.name, func(t *testing.T) {
@@ -350,7 +465,7 @@ func TestCreateDNSRecord(t *testing.T) {
 				edit(metadata)
 			}
 
-			err := metadata.CreateDNSRecord(context.TODO(), clusterDomain, tCase.loadBalancer)
+			err := metadata.CreateDNSRecord(context.TODO(), tCase.recordName, tCase.loadBalancer)
 			if err != nil {
 				assert.Regexp(t, tCase.errorMsg, err)
 			}

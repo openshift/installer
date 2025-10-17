@@ -1,6 +1,6 @@
 ! exec openshift-install agent create image --dir $WORK
 
-stderr 'Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for platform none or external. Found 1'
+stderr 'Total number of compute replicas must be 0 when controlPlane.replicas is 1 for platform none or external. Found 1'
 
 ! exists $WORK/agent.x86_64.iso
 ! exists $WORK/auth/kubeconfig

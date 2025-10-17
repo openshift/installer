@@ -4,7 +4,7 @@ import (
 	"context"
 
 	survey "github.com/AlecAivazis/survey/v2"
-	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -46,7 +46,8 @@ func (a *baseDomain) Generate(_ context.Context, parents asset.Parents) error {
 	case aws.Name:
 		a.BaseDomain, err = awsconfig.GetBaseDomain()
 		cause := errors.Cause(err)
-		if !(awsconfig.IsForbidden(cause) || request.IsErrorThrottle(cause)) {
+		isThrottleError := retry.IsErrorThrottles(retry.DefaultThrottles).IsErrorThrottle(cause).Bool()
+		if !(awsconfig.IsForbidden(cause) || isThrottleError) {
 			return err
 		}
 	case azure.Name:
@@ -63,7 +64,7 @@ func (a *baseDomain) Generate(_ context.Context, parents asset.Parents) error {
 		a.BaseDomain = zone.Name
 		return platform.Azure.SetBaseDomain(zone.ID)
 	case gcp.Name:
-		a.BaseDomain, err = gcpconfig.GetBaseDomain(platform.GCP.ProjectID)
+		a.BaseDomain, err = gcpconfig.GetBaseDomain(platform.GCP.ProjectID, platform.GCP.ServiceEndpoints)
 
 		// We are done if success (err == nil) or an err besides forbidden/throttling
 		if !(gcpconfig.IsForbidden(err) || gcpconfig.IsThrottled(err)) {

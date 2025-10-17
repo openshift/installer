@@ -2,11 +2,14 @@ package validation
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
@@ -76,6 +79,17 @@ var (
 
 	// userLabelKeyPrefixRegex is for verifying that the label key does not contain restricted prefixes.
 	userLabelKeyPrefixRegex = regexp.MustCompile(`^(?i)(kubernetes\-io|openshift\-io)`)
+
+	supportedEndpointNames = sets.New(
+		configv1.GCPServiceEndpointNameCompute,
+		configv1.GCPServiceEndpointNameContainer,
+		configv1.GCPServiceEndpointNameCloudResource,
+		configv1.GCPServiceEndpointNameDNS,
+		configv1.GCPServiceEndpointNameFile,
+		configv1.GCPServiceEndpointNameIAM,
+		configv1.GCPServiceEndpointNameServiceUsage,
+		configv1.GCPServiceEndpointNameStorage,
+	)
 )
 
 const (
@@ -116,8 +130,21 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must provide a VPC network when supplying subnets"))
 	}
 
+	if p.DNS != nil && p.DNS.PrivateZone != nil {
+		if p.NetworkProjectID == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("dns").Child("privateZone"), "must provide a network project id when a private dns zone is specified"))
+		}
+		if p.DNS.PrivateZone.Name == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("dns").Child("privateZone").Child("name"), "must provide a zone id when a private dns zone is specified"))
+		}
+	}
+
 	// check if configured userLabels are valid.
 	allErrs = append(allErrs, validateUserLabels(p.UserLabels, fldPath.Child("userLabels"))...)
+
+	if ic.Publish == types.InternalPublishingStrategy {
+		allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
+	}
 
 	return allErrs
 }
@@ -159,5 +186,51 @@ func validateLabel(key, value string) error {
 	if userLabelKeyPrefixRegex.MatchString(key) {
 		return fmt.Errorf("label key contains restricted prefix. Label key cannot have `kubernetes-io`, `openshift-io` prefixes")
 	}
+	return nil
+}
+
+func validateServiceEndpoints(endpoints []configv1.GCPServiceEndpoint, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	tracker := map[configv1.GCPServiceEndpointName]int{}
+	for idx, e := range endpoints {
+		fldp := fldPath.Index(idx)
+		if !supportedEndpointNames.Has(e.Name) {
+			allErrs = append(allErrs, field.NotSupported(fldp.Child("name"), e.Name, sets.List(supportedEndpointNames)))
+		}
+		if _, ok := tracker[e.Name]; ok {
+			allErrs = append(allErrs, field.Duplicate(fldp.Child("name"), e.Name))
+		} else {
+			tracker[e.Name] = idx
+		}
+
+		if err := validateServiceURL(e.URL); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldp.Child("url"), e.URL, err.Error()))
+		}
+	}
+	return allErrs
+}
+
+var schemeRE = regexp.MustCompile("^([^:]+)://")
+
+func validateServiceURL(uri string) error {
+	endpoint := uri
+	if !schemeRE.MatchString(endpoint) {
+		scheme := "https"
+		endpoint = fmt.Sprintf("%s://%s", scheme, endpoint)
+	}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return err
+	}
+	if u.Hostname() == "" {
+		return fmt.Errorf("host cannot be empty, empty host provided")
+	}
+	if s := u.Scheme; s != "https" {
+		return fmt.Errorf("invalid scheme %s, only https allowed", s)
+	}
+	// Unlike AWS, the format can include a path without request parameters see
+	// https://cloud.google.com/storage/docs/request-endpoints as an example.
+
 	return nil
 }

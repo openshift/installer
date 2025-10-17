@@ -3,8 +3,41 @@ package gcp
 import (
 	"fmt"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/dns"
 )
+
+// DNS contains the gcp dns zone information for the cluster.
+type DNS struct {
+	// PrivateZone contains the information for a private DNS zone. The Private DNS Zone can
+	// only be supplied during Shared VPC (XPN) installs. The PrivateZone can exist or be
+	// created in a second service project; a project other than the one matching projectID
+	// or networkProjectID.
+	// +optional
+	PrivateZone *DNSZone `json:"privateZone,omitempty"`
+}
+
+// DNSZone contains the information about a specific DNS public or private zone.
+type DNSZone struct {
+	// ProjectID is the project where the zone resides.
+	// +optional
+	ProjectID string `json:"projectID,omitempty"`
+
+	// Name is the name of the dns-managed zone.
+	Name string `json:"name"`
+}
+
+// PSCEndpoint contains the information to describe a Private Service Connect
+// endpoint.
+type PSCEndpoint struct {
+	// Name contains the name of the private service connect endpoint.
+	Name string `json:"name"`
+
+	// Region is the region where the endpoint resides.
+	// When the region is empty, the location is assumed to be global.
+	// +optional
+	Region string `json:"region,omitempty"`
+}
 
 // Platform stores all the global configuration that all machinesets
 // use.
@@ -58,6 +91,21 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+
+	// ServiceEndpoints list contains custom endpoints which will override default
+	// service endpoint of GCP Services.
+	// There must be only one ServiceEndpoint for a service.
+	// +optional
+	ServiceEndpoints []configv1.GCPServiceEndpoint `json:"serviceEndpoints,omitempty"`
+
+	// Endpoint is the private service connect endpoint.
+	// +optional
+	Endpoint *PSCEndpoint `json:"endpoint,omitempty"`
+
+	// DNS contains the dns zone information for the cluster. The DNS information can
+	// only be supplied during Shared VPC (XPN) installs.
+	// +optional
+	DNS *DNS `json:"dns,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.

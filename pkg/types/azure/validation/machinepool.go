@@ -3,10 +3,14 @@ package validation
 import (
 	"fmt"
 	"sort"
+	"strings"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
 )
@@ -32,7 +36,8 @@ var (
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.Platform, fldPath *field.Path) field.ErrorList {
+// nolint:gocyclo
+func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if p.OSDisk.DiskSizeGB < 0 {
@@ -81,7 +86,104 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
+	if p.BootDiagnostics != nil {
+		validValues := sets.NewString(string(capz.DisabledDiagnosticsStorage), string(capz.ManagedDiagnosticsStorage), string(capz.UserManagedDiagnosticsStorage))
+		if !validValues.Has(string(p.BootDiagnostics.Type)) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("bootDiagnostics").Child("type"), p.BootDiagnostics.Type, validValues.List()))
+		}
+		if p.BootDiagnostics.Type == capz.ManagedDiagnosticsStorage && platform.CloudName == azure.StackCloud {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountURI"), p.BootDiagnostics.Type, "managed type not supported by azure stack. Use UserManaged instead."))
+		}
+		if p.BootDiagnostics.Type != capz.UserManagedDiagnosticsStorage {
+			if p.BootDiagnostics.ResourceGroup != "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("ResourceGroup"), p.BootDiagnostics.ResourceGroup, "resourceGroup can only be specified if type is set to UserManaged."))
+			}
+			if p.BootDiagnostics.StorageAccountName != "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountName"), p.BootDiagnostics.StorageAccountName, "storageAccountName can only be specified if type is set to UserManaged."))
+			}
+		} else if p.BootDiagnostics.Type == capz.UserManagedDiagnosticsStorage {
+			if p.BootDiagnostics.ResourceGroup == "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("ResourceGroup"), p.BootDiagnostics.ResourceGroup, "resourceGroup must be specified if type is set to UserManaged."))
+			}
+			if p.BootDiagnostics.StorageAccountName == "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountName"), p.BootDiagnostics.StorageAccountName, "storageAccountName must be specified if type is set to UserManaged."))
+			}
+		}
+	}
+
+	// dataDisks in defaultMachinePool is unsupported
+	if poolName == "" {
+		if len(p.DataDisks) > 0 {
+			var dataDiskNames []string
+			for _, d := range p.DataDisks {
+				dataDiskNames = append(dataDiskNames, d.NameSuffix)
+			}
+
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("dataDisks"), strings.Join(dataDiskNames, ","), "not allowed on default machine pool, use dataDisks compute and controlPlane only"))
+		}
+	}
+
+	if pool != nil {
+		if len(p.DataDisks) != 0 && len(pool.DiskSetup) != 0 {
+			allErrs = append(allErrs, validateDataDiskSetup(p, pool, fldPath.Child("dataDisks"))...)
+		}
+	}
+
 	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
+	allErrs = append(allErrs, validateIdentity(poolName, p, fldPath.Child("identity"))...)
+
+	return allErrs
+}
+
+func validateDataDiskSetup(azurePool *azure.MachinePool, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	// We could have a situation where the azure DataDisks are
+	// defined but no corresponding disk setup but we should never have
+	// more DiskSetup than DataDisks
+	if len(azurePool.DataDisks) < len(pool.DiskSetup) {
+		allErrs = append(allErrs, field.TooLong(fldPath, pool.DiskSetup, len(azurePool.DataDisks)))
+		// return early if disksetup and datadisks don't match lengths
+		return allErrs
+	}
+
+	lunNumbers := make(map[int32]interface{})
+	for i, d := range azurePool.DataDisks {
+		if d.Lun == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%q must have lun id", d.NameSuffix)))
+		} else {
+			if *(d.Lun) < 0 || *(d.Lun) > 63 {
+				allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%q must have lun id between 0 and 63", d.NameSuffix)))
+			}
+			if _, ok := lunNumbers[*d.Lun]; ok {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("Lun"), d.NameSuffix, "dataDisk must have a unique lun number"))
+			} else {
+				lunNumbers[*d.Lun] = struct{}{}
+			}
+		}
+
+		if d.DiskSizeGB <= 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("DiskSizeGB"), d.DiskSizeGB, "diskSizeGB must be greater than zero"))
+		}
+
+		if i < len(pool.DiskSetup) {
+			setup := pool.DiskSetup[i]
+			switch setup.Type {
+			case types.Etcd:
+				if setup.Etcd != nil && setup.Etcd.PlatformDiskID != d.NameSuffix {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match etcd PlatformDiskID %q", setup.Etcd.PlatformDiskID)))
+				}
+			case types.Swap:
+				if setup.Swap != nil && setup.Swap.PlatformDiskID != d.NameSuffix {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match swap PlatformDiskID %q", setup.Swap.PlatformDiskID)))
+				}
+			case types.UserDefined:
+				if setup.UserDefined != nil && setup.UserDefined.PlatformDiskID != d.NameSuffix {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match user defined PlatformDiskID %q", setup.UserDefined.PlatformDiskID)))
+				}
+			}
+		}
+	}
 
 	return allErrs
 }
@@ -210,6 +312,33 @@ func validateSecurityProfile(p *azure.MachinePool, cloudName azure.CloudEnvironm
 				fmt.Sprintf("securityType should be set to %s when uefiSettings are enabled.",
 					azure.SecurityTypesTrustedLaunch)))
 		}
+	}
+
+	return errs
+}
+
+func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path) field.ErrorList {
+	id := p.Identity
+	if id == nil {
+		return nil
+	}
+
+	var errs field.ErrorList
+	if id.Type == "" {
+		return append(errs, field.Required(fldPath.Child("type"), "type must be specified if using identity"))
+	}
+
+	if id.Type != capz.VMIdentityNone && id.Type != capz.VMIdentityUserAssigned {
+		supportedValues := []capz.VMIdentity{capz.VMIdentityNone, capz.VMIdentityUserAssigned}
+		return append(errs, field.NotSupported(fldPath.Child("type"), id.Type, supportedValues))
+	}
+
+	if id.Type == capz.VMIdentityUserAssigned && len(id.UserAssignedIdentities) == 0 {
+		logrus.Warn("Identity type is set to UserAssigned but no user-assigned identities are specified. A user-assigned identity will be created, which requires the User Access Admin role.")
+	}
+
+	if id.UserAssignedIdentities != nil && id.Type != capz.VMIdentityUserAssigned {
+		errs = append(errs, field.Invalid(fldPath.Child("type"), id.Type, "userAssignedIdentities may only be used with type: UserAssigned"))
 	}
 
 	return errs

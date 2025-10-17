@@ -20,9 +20,12 @@ The API itself is shared across multiple cloud providers allowing for true Nutan
 ## How to Deploy a Kubernetes Cluster on Nutanix Cloud Infrastucture
 Check out the [getting started guide](https://opendocs.nutanix.com/capx/latest/getting_started/) for launching a cluster on Nutanix Cloud Infrastructure.
 
-## Features
+## Compatibility with Prism Central & Prism Element
 
-## Compatibility with Cluster API and Kubernetes Versions
+| CAPX Version | Min. Prism Central Version | Min. Prism Element Version |
+|--------------|----------------------------|----------------------------|
+| 1.5.x        | pc2024.1+                  | 6.5+                       |
+| 1.6.x        | pc2024.2+                  | 6.5+                       |
 
 ## Documentation
 Visit the `Cluster API Provider: Nutanix (CAPX)` section on [opendocs.nutanix.com](https://opendocs.nutanix.com/) for all documentation related to CAPX.

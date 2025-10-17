@@ -9,14 +9,13 @@ import (
 	"net/url"
 	"sort"
 
+	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/sirupsen/logrus"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -48,9 +47,10 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	if config.Platform.AWS == nil {
 		return errors.New(field.Required(field.NewPath("platform", "aws"), "AWS validation requires an AWS platform configuration").Error())
 	}
-	allErrs = append(allErrs, validateAMI(ctx, config)...)
+
+	allErrs = append(allErrs, validateAMI(ctx, meta, config)...)
 	allErrs = append(allErrs, validatePublicIpv4Pool(ctx, meta, field.NewPath("platform", "aws", "publicIpv4PoolId"), config)...)
-	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
+	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config)...)
 
 	if awstypes.IsPublicOnlySubnetsEnabled() {
 		logrus.Warnln("Public-only subnets install. Please be warned this is not supported")
@@ -71,7 +71,7 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	for idx, compute := range config.Compute {
 		fldPath := field.NewPath("compute").Index(idx)
 		if compute.Name == types.MachinePoolEdgeRoleName {
-			if len(config.Platform.AWS.Subnets) == 0 {
+			if len(config.Platform.AWS.VPC.Subnets) == 0 {
 				if compute.Platform.AWS == nil {
 					allErrs = append(allErrs, field.Required(fldPath.Child("platform", "aws"), "edge compute pools are only supported on the AWS platform"))
 				}
@@ -98,8 +98,9 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	return allErrs.ToAggregate()
 }
 
-func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
+func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, config *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
+	platform := config.Platform.AWS
 
 	allErrs = append(allErrs, validateServiceEndpoints(fldPath.Child("serviceEndpoints"), platform.Region, platform.ServiceEndpoints)...)
 
@@ -108,10 +109,9 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 		return allErrs
 	}
 
-	if len(platform.Subnets) > 0 {
-		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.Subnets, networking, publish)...)
-	} else if awstypes.IsPublicOnlySubnetsEnabled() {
-		allErrs = append(allErrs, field.Required(fldPath.Child("subnets"), "subnets must be specified for public-only subnets clusters"))
+	if len(platform.VPC.Subnets) > 0 {
+		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("vpc").Child("subnets"), config)...)
+		allErrs = append(allErrs, validateSharedVPC(ctx, meta, fldPath.Child("vpc").Child("subnets"))...)
 	}
 	if platform.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform, controlPlaneReq, "", "")...)
@@ -119,7 +119,7 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 	return allErrs
 }
 
-func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorList {
+func validateAMI(ctx context.Context, meta *Metadata, config *types.InstallConfig) field.ErrorList {
 	// accept AMI from the rhcos stream metadata
 	if rhcos.AMIRegions(config.ControlPlane.Architecture).Has(config.Platform.AWS.Region) {
 		return nil
@@ -142,6 +142,7 @@ func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorLi
 	if config.ControlPlane != nil && config.ControlPlane.Platform.AWS != nil {
 		controlPlaneHasAMISpecified = config.ControlPlane.Platform.AWS.AMIID != ""
 	}
+
 	computesHaveAMISpecified := true
 	for _, c := range config.Compute {
 		if c.Replicas != nil && *c.Replicas == 0 {
@@ -151,13 +152,22 @@ func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorLi
 			computesHaveAMISpecified = false
 		}
 	}
+
 	if controlPlaneHasAMISpecified && computesHaveAMISpecified {
 		return nil
 	}
 
 	// accept AMI that can be copied from us-east-1 if the region is in the standard AWS partition
-	if partition, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), config.Platform.AWS.Region); partitionFound {
-		if partition.ID() == endpoints.AwsPartitionID {
+	regions, err := meta.Regions(ctx)
+	if err != nil {
+		return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to get list of regions: %w", err))}
+	}
+	if sets.New(regions...).Has(config.Platform.AWS.Region) {
+		defaultEndpoint, err := GetDefaultServiceEndpoint(ctx, ec2v2.ServiceID, EndpointOptions{Region: config.Platform.AWS.Region, UseFIPS: false})
+		if err != nil {
+			return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to resolve ec2 endpoint"))}
+		}
+		if defaultEndpoint.PartitionID == endpoints.AwsPartitionID {
 			return nil
 		}
 	}
@@ -191,8 +201,9 @@ func validatePublicIpv4Pool(ctx context.Context, meta *Metadata, fldPath *field.
 
 	sess, err := meta.Session(ctx)
 	if err != nil {
-		return append(allErrs, field.Invalid(fldPath, nil, fmt.Sprintf("unable to start a session: %s", err.Error())))
+		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err)))
 	}
+
 	publicIpv4Pool, err := DescribePublicIpv4Pool(ctx, sess, config.Platform.AWS.Region, poolID)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, poolID, err.Error()))
@@ -207,67 +218,140 @@ func validatePublicIpv4Pool(ctx context.Context, meta *Metadata, fldPath *field.
 	return nil
 }
 
-func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, subnets []string, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
-	allErrs := field.ErrorList{}
-	privateSubnets, err := meta.PrivateSubnets(ctx)
-	if err != nil {
-		return append(allErrs, field.Invalid(fldPath, subnets, err.Error()))
+// subnetData holds a subnet information collected from install config and AWS API for validations.
+type subnetData struct {
+	// The subnet index in the install config.
+	Idx int
+	// The subnet assigned roles in the install config.
+	Roles []awstypes.SubnetRole
+	// The subnet metadata from AWS API.
+	Subnet
+}
+
+// subnetDataGroups is a collection of subnet information
+// grouped by subnet type (i.e. public, private, and edge) and indexed by subnetIDs for validations.
+type subnetDataGroups struct {
+	Public  map[string]subnetData
+	Private map[string]subnetData
+	Edge    map[string]subnetData
+	// A convenient alias that contains all information for all subnets.
+	All map[string]subnetData
+}
+
+// Converts subnetGroups (i.e. provided subnets) to subnetDataGroups to include additional information
+// from the install-config such as index and roles for validations.
+func (sdg *subnetDataGroups) From(ctx context.Context, meta *Metadata, providedSubnets []awstypes.Subnet) error {
+	if sdg.Private == nil {
+		sdg.Private = make(map[string]subnetData)
 	}
-	privateSubnetsIdx := map[string]int{}
-	for idx, id := range subnets {
-		if _, ok := privateSubnets[id]; ok {
-			privateSubnetsIdx[id] = idx
-		}
+	if sdg.Public == nil {
+		sdg.Public = make(map[string]subnetData)
 	}
-	if len(privateSubnets) == 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath, subnets, "No private subnets found"))
+	if sdg.Edge == nil {
+		sdg.Edge = make(map[string]subnetData)
+	}
+	if sdg.All == nil {
+		sdg.All = make(map[string]subnetData)
 	}
 
-	publicSubnets, err := meta.PublicSubnets(ctx)
+	subnets, err := meta.Subnets(ctx)
 	if err != nil {
-		return append(allErrs, field.Invalid(fldPath, subnets, err.Error()))
+		return err
 	}
-	if publish == types.InternalPublishingStrategy && len(publicSubnets) > 0 {
-		logrus.Warnf("Public subnets should not be provided when publish is set to %s", types.InternalPublishingStrategy)
-	}
-	publicSubnetsIdx := map[string]int{}
-	for idx, id := range subnets {
-		if _, ok := publicSubnets[id]; ok {
-			publicSubnetsIdx[id] = idx
+
+	for idx, subnet := range providedSubnets {
+		var subnetDataGroup map[string]subnetData
+		var subnetMeta Subnet
+
+		if awsSubnet, ok := subnets.Private[string(subnet.ID)]; ok {
+			subnetDataGroup = sdg.Private
+			subnetMeta = awsSubnet
 		}
+
+		if awsSubnet, ok := subnets.Public[string(subnet.ID)]; ok {
+			subnetDataGroup = sdg.Public
+			subnetMeta = awsSubnet
+		}
+
+		if awsSubnet, ok := subnets.Edge[string(subnet.ID)]; ok {
+			subnetDataGroup = sdg.Edge
+			subnetMeta = awsSubnet
+		}
+
+		if subnetDataGroup == nil {
+			// Should not occur but safe against panics
+			continue
+		}
+
+		subnetData := subnetData{
+			Subnet: subnetMeta,
+			Idx:    idx,
+			Roles:  subnet.Roles,
+		}
+		subnetDataGroup[string(subnet.ID)] = subnetData
+		sdg.All[string(subnet.ID)] = subnetData
 	}
-	if len(publicSubnets) == 0 && awstypes.IsPublicOnlySubnetsEnabled() {
+
+	return nil
+}
+
+// validateSubnets ensures BYO subnets are valid.
+func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, config *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	networking := config.Networking
+	providedSubnets := config.AWS.VPC.Subnets
+	publish := config.Publish
+
+	subnetDataGroups := subnetDataGroups{}
+	if err := subnetDataGroups.From(ctx, meta, providedSubnets); err != nil {
+		return append(allErrs, field.Invalid(fldPath, providedSubnets, err.Error()))
+	}
+
+	publicOnlySubnet := awstypes.IsPublicOnlySubnetsEnabled()
+
+	if publicOnlySubnet && len(subnetDataGroups.Public) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath, "public subnets are required for a public-only subnets cluster"))
 	}
 
-	edgeSubnets, err := meta.EdgeSubnets(ctx)
-	if err != nil {
-		return append(allErrs, field.Invalid(fldPath, subnets, err.Error()))
+	if !publicOnlySubnet && len(subnetDataGroups.Private) == 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath, providedSubnets, "no private subnets found"))
 	}
-	edgeSubnetsIdx := map[string]int{}
-	for idx, id := range subnets {
-		if _, ok := edgeSubnets[id]; ok {
-			edgeSubnetsIdx[id] = idx
+
+	if publish == types.InternalPublishingStrategy && len(subnetDataGroups.Public) > 0 {
+		logrus.Warnf("public subnets should not be provided when publish is set to %s", types.InternalPublishingStrategy)
+	}
+
+	subnetsWithRole := make(map[awstypes.SubnetRoleType][]subnetData)
+	for _, subnet := range providedSubnets {
+		for _, role := range subnet.Roles {
+			subnetsWithRole[role.Type] = append(subnetsWithRole[role.Type], subnetDataGroups.All[string(subnet.ID)])
 		}
 	}
 
-	allErrs = append(allErrs, validateSubnetCIDR(fldPath, privateSubnets, privateSubnetsIdx, networking.MachineNetwork)...)
-	allErrs = append(allErrs, validateSubnetCIDR(fldPath, publicSubnets, publicSubnetsIdx, networking.MachineNetwork)...)
-	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, privateSubnets, privateSubnetsIdx, "private")...)
-	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, publicSubnets, publicSubnetsIdx, "public")...)
-	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, edgeSubnets, edgeSubnetsIdx, "edge")...)
+	allErrs = append(allErrs, validateSharedSubnets(ctx, meta, fldPath)...)
+	allErrs = append(allErrs, validateSubnetCIDR(fldPath, subnetDataGroups.Private, networking.MachineNetwork)...)
+	allErrs = append(allErrs, validateSubnetCIDR(fldPath, subnetDataGroups.Public, networking.MachineNetwork)...)
+
+	if len(subnetsWithRole) > 0 {
+		allErrs = append(allErrs, validateSubnetRoles(fldPath, subnetsWithRole, subnetDataGroups, config)...)
+	} else {
+		allErrs = append(allErrs, validateUntaggedSubnets(ctx, fldPath, meta, subnetDataGroups)...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Private, "private")...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Public, "public")...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Edge, "edge")...)
+	}
 
 	privateZones := sets.New[string]()
 	publicZones := sets.New[string]()
-	for _, subnet := range privateSubnets {
+	for _, subnet := range subnetDataGroups.Private {
 		privateZones.Insert(subnet.Zone.Name)
 	}
-	for _, subnet := range publicSubnets {
+	for _, subnet := range subnetDataGroups.Public {
 		publicZones.Insert(subnet.Zone.Name)
 	}
 	if publish == types.ExternalPublishingStrategy && !publicZones.IsSuperset(privateZones) {
 		errMsg := fmt.Sprintf("No public subnet provided for zones %s", sets.List(privateZones.Difference(publicZones)))
-		allErrs = append(allErrs, field.Invalid(fldPath, subnets, errMsg))
+		allErrs = append(allErrs, field.Invalid(fldPath, providedSubnets, errMsg))
 	}
 
 	return allErrs
@@ -282,11 +366,11 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	// - is valid when installing in existing VPC; or
 	// - is valid in new VPC when Local Zone name is defined
 	if poolName == types.MachinePoolEdgeRoleName {
-		if len(platform.Subnets) > 0 {
+		if len(platform.VPC.Subnets) > 0 {
 			edgeSubnets, err := meta.EdgeSubnets(ctx)
 			if err != nil {
 				errMsg := fmt.Sprintf("%s pool. %v", poolName, err.Error())
-				return append(allErrs, field.Invalid(field.NewPath("subnets"), platform.Subnets, errMsg))
+				return append(allErrs, field.Invalid(field.NewPath("platform", "aws", "vpc", "subnets"), platform.VPC.Subnets, errMsg))
 			}
 			if len(edgeSubnets) == 0 {
 				return append(allErrs, field.Required(fldPath, "the provided subnets must include valid subnets for the specified edge zones"))
@@ -310,7 +394,7 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	if pool.Zones != nil && len(pool.Zones) > 0 {
 		availableZones := sets.New[string]()
 		diffErrMsgPrefix := "One or more zones are unavailable"
-		if len(platform.Subnets) > 0 {
+		if len(platform.VPC.Subnets) > 0 {
 			diffErrMsgPrefix = "No subnets provided for zones"
 			var subnets Subnets
 			if poolName == types.MachinePoolEdgeRoleName {
@@ -403,13 +487,18 @@ func translateEC2Arches(arches []string) sets.Set[string] {
 func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	vpc, err := meta.VPC(ctx)
+	vpc, err := meta.VPCID(ctx)
 	if err != nil {
 		errMsg := fmt.Sprintf("could not determine cluster VPC: %s", err.Error())
 		return append(allErrs, field.Invalid(fldPath, vpc, errMsg))
 	}
 
-	securityGroups, err := DescribeSecurityGroups(ctx, meta.session, pool.AdditionalSecurityGroupIDs, platform.Region)
+	session, err := meta.Session(ctx)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err)))
+	}
+
+	securityGroups, err := DescribeSecurityGroups(ctx, session, pool.AdditionalSecurityGroupIDs, platform.Region)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, pool.AdditionalSecurityGroupIDs, err.Error()))
 	}
@@ -425,11 +514,11 @@ func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *fiel
 	return allErrs
 }
 
-func validateSubnetCIDR(fldPath *field.Path, subnets Subnets, idxMap map[string]int, networks []types.MachineNetworkEntry) field.ErrorList {
+func validateSubnetCIDR(fldPath *field.Path, subnetDataGroup map[string]subnetData, networks []types.MachineNetworkEntry) field.ErrorList {
 	allErrs := field.ErrorList{}
-	for id, v := range subnets {
-		fp := fldPath.Index(idxMap[id])
-		cidr, _, err := net.ParseCIDR(v.CIDR)
+	for id, subnetData := range subnetDataGroup {
+		fp := fldPath.Index(subnetData.Idx)
+		cidr, _, err := net.ParseCIDR(subnetData.CIDR)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fp, id, err.Error()))
 			continue
@@ -448,80 +537,287 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 	return field.ErrorList{field.Invalid(fldPath, subnetName, fmt.Sprintf("subnet's CIDR range start %s is outside of the specified machine networks", ip))}
 }
 
-func validateDuplicateSubnetZones(fldPath *field.Path, subnets Subnets, idxMap map[string]int, typ string) field.ErrorList {
-	var keys []string
-	for id := range subnets {
-		keys = append(keys, id)
+func validateDuplicateSubnetZones(fldPath *field.Path, subnetDataGroup map[string]subnetData, typ string) field.ErrorList {
+	subnetIDs := make([]string, 0)
+	for id := range subnetDataGroup {
+		subnetIDs = append(subnetIDs, id)
 	}
-	sort.Strings(keys)
+	sort.Strings(subnetIDs)
 
 	allErrs := field.ErrorList{}
 	zones := map[string]string{}
-	for _, id := range keys {
-		subnet := subnets[id]
-		if conflictingSubnet, ok := zones[subnet.Zone.Name]; ok {
-			errMsg := fmt.Sprintf("%s subnet %s is also in zone %s", typ, conflictingSubnet, subnet.Zone.Name)
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(idxMap[id]), id, errMsg))
+	for _, id := range subnetIDs {
+		subnetData := subnetDataGroup[id]
+		if conflictingSubnet, ok := zones[subnetData.Zone.Name]; ok {
+			errMsg := fmt.Sprintf("%s subnet %s is also in zone %s", typ, conflictingSubnet, subnetData.Zone.Name)
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(subnetData.Idx), id, errMsg))
 		} else {
-			zones[subnet.Zone.Name] = id
+			zones[subnetData.Zone.Name] = id
 		}
 	}
+	return allErrs
+}
+
+// validateSubnetRoles ensures BYO subnets have valid roles assigned if roles are provided.
+func validateSubnetRoles(fldPath *field.Path, subnetsWithRole map[awstypes.SubnetRoleType][]subnetData, subnetDataGroups subnetDataGroups, config *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	supportedRoles := []awstypes.SubnetRoleType{
+		awstypes.ClusterNodeSubnetRole,
+		awstypes.EdgeNodeSubnetRole,
+		awstypes.BootstrapNodeSubnetRole,
+		awstypes.IngressControllerLBSubnetRole,
+		awstypes.ControlPlaneExternalLBSubnetRole,
+		awstypes.ControlPlaneInternalLBSubnetRole,
+	}
+
+	// Subnets of the same role must be in different AZs.
+	// Especially, IngressControllerLB subnets must be in different AZs as required by AWS CCM.
+	for _, role := range supportedRoles {
+		snZones := make(map[string]string)
+		for _, subnetData := range subnetsWithRole[role] {
+			if conflictingSubnet, ok := snZones[subnetData.Zone.Name]; ok {
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(subnetData.Idx), subnetData.ID,
+					fmt.Sprintf("subnets %s and %s have role %s and are both in zone %s", conflictingSubnet, subnetData.ID, role, subnetData.Zone.Name)))
+			} else {
+				snZones[subnetData.Zone.Name] = subnetData.ID
+			}
+		}
+	}
+
+	// BootstrapNode subnets must be assigned to public subnets
+	// in external cluster.
+	for _, bstrSubnet := range subnetsWithRole[awstypes.BootstrapNodeSubnetRole] {
+		// We validate edge subnets in subsequent validations.
+		if _, ok := subnetDataGroups.Edge[bstrSubnet.ID]; ok {
+			continue
+		}
+		if config.Publish == types.ExternalPublishingStrategy && !bstrSubnet.Public {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(bstrSubnet.Idx), bstrSubnet.ID,
+				fmt.Sprintf("subnet %s has role %s, but is private, expected to be public", bstrSubnet.ID, awstypes.BootstrapNodeSubnetRole)))
+		}
+	}
+
+	// ClusterNode subnets must be assigned to private subnets
+	// unless cluster is public-only.
+	for _, cnSubnet := range subnetsWithRole[awstypes.ClusterNodeSubnetRole] {
+		// We validate edge subnets in subsequent validations.
+		if _, ok := subnetDataGroups.Edge[cnSubnet.ID]; ok {
+			continue
+		}
+		if cnSubnet.Public && !awstypes.IsPublicOnlySubnetsEnabled() {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(cnSubnet.Idx), cnSubnet.ID,
+				fmt.Sprintf("subnet %s has role %s, but is public, expected to be private", cnSubnet.ID, awstypes.ClusterNodeSubnetRole)))
+		}
+	}
+
+	// Type of ControlPlaneLB subnets must match its scope:
+	// - ControlPlaneInternalLB subnets must be private
+	// - ControlPlaneExternalLB subnets must be public.
+	// Private cluster must not have ControlPlaneExternalLB subnets (i.e. statically validated in pkg/types/aws/validation/platform.go).
+	for _, ctrlPSubnet := range subnetsWithRole[awstypes.ControlPlaneInternalLBSubnetRole] {
+		// We validate edge subnets in subsequent validations.
+		if _, ok := subnetDataGroups.Edge[ctrlPSubnet.ID]; ok {
+			continue
+		}
+		if ctrlPSubnet.Public && !awstypes.IsPublicOnlySubnetsEnabled() {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(ctrlPSubnet.Idx), ctrlPSubnet.ID,
+				fmt.Sprintf("subnet %s has role %s, but is public, expected to be private", ctrlPSubnet.ID, awstypes.ControlPlaneInternalLBSubnetRole)))
+		}
+	}
+	for _, ctrlPSubnet := range subnetsWithRole[awstypes.ControlPlaneExternalLBSubnetRole] {
+		// We validate edge subnets in subsequent validations.
+		if _, ok := subnetDataGroups.Edge[ctrlPSubnet.ID]; ok {
+			continue
+		}
+		if !ctrlPSubnet.Public {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(ctrlPSubnet.Idx), ctrlPSubnet.ID,
+				fmt.Sprintf("subnet %s has role %s, but is private, expected to be public", ctrlPSubnet.ID, awstypes.ControlPlaneExternalLBSubnetRole)))
+		}
+	}
+
+	// Type of IngressControllerLB subnets must match cluster scope:
+	// - In public cluster, only public IngressControllerLB subnets is allowed.
+	// - In private cluster, only private IngressControllerLB subnets is allowed.
+	for _, ingressSubnet := range subnetsWithRole[awstypes.IngressControllerLBSubnetRole] {
+		// We validate edge subnets in subsequent validations.
+		if _, ok := subnetDataGroups.Edge[ingressSubnet.ID]; ok {
+			continue
+		}
+
+		if ingressSubnet.Public != config.PublicIngress() {
+			subnetType := "private"
+			if ingressSubnet.Public {
+				subnetType = "public"
+			}
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(ingressSubnet.Idx), ingressSubnet.ID,
+				fmt.Sprintf("subnet %s has role %s and is %s, which is not allowed when publish is set to %s", ingressSubnet.ID, awstypes.IngressControllerLBSubnetRole, subnetType, config.Publish)))
+		}
+	}
+
+	// AZs of LB subnets match AZs of ClusterNode subnets.
+	lbRoles := []awstypes.SubnetRoleType{
+		awstypes.ControlPlaneInternalLBSubnetRole,
+		awstypes.IngressControllerLBSubnetRole,
+	}
+	if config.PublicAPI() {
+		lbRoles = append(lbRoles, awstypes.ControlPlaneExternalLBSubnetRole)
+	}
+	for _, role := range lbRoles {
+		allErrs = append(allErrs, validateLBSubnetAZMatchClusterNodeAZ(fldPath, subnetDataGroups, role, subnetsWithRole[role], subnetsWithRole[awstypes.ClusterNodeSubnetRole])...)
+	}
+
+	// EdgeNode subnets must be subnets in Local or Wavelength Zones.
+	for _, edgeSubnet := range subnetsWithRole[awstypes.EdgeNodeSubnetRole] {
+		if _, ok := subnetDataGroups.Edge[edgeSubnet.ID]; !ok {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(edgeSubnet.Idx), edgeSubnet.ID,
+				fmt.Sprintf("subnet %s has role %s, but is not in a Local or WaveLength Zone", edgeSubnet.ID, awstypes.EdgeNodeSubnetRole)))
+		}
+	}
+
+	// Subnets that are in Local or Wavelength Zones must only have EdgeNode role.
+	for _, edgeSubnet := range subnetDataGroups.Edge {
+		for _, role := range edgeSubnet.Roles {
+			if role.Type != awstypes.EdgeNodeSubnetRole {
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(edgeSubnet.Idx), edgeSubnet.ID,
+					fmt.Sprintf("subnet %s must only be assigned role %s since it is in a Local or WaveLength Zone", edgeSubnet.ID, awstypes.EdgeNodeSubnetRole)))
+				break
+			}
+		}
+	}
+
+	return allErrs
+}
+
+// validateUntaggedSubnets ensures there are no additional untagged subnets in the BYO VPC.
+// An untagged subnet is a subnet without tag kubernetes.io/cluster/<cluster-id>.
+// Untagged subnets may be selected by the CCM, leading to various bugs, RFEs, and support cases. See:
+// - https://issues.redhat.com/browse/OCPBUGS-17432.
+// - https://issues.redhat.com/browse/RFE-2816.
+func validateUntaggedSubnets(ctx context.Context, fldPath *field.Path, meta *Metadata, subnetDataGroups subnetDataGroups) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	vpcSubnets, err := meta.VPCSubnets(ctx)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, meta.ProvidedSubnets, err.Error()))
+	}
+
+	untaggedSubnetIDs := make([]string, 0)
+	for _, subnet := range mergeSubnets(vpcSubnets.Public, vpcSubnets.Private, vpcSubnets.Edge) {
+		// We only check other subnets in the VPC that are not provided in the install-config.
+		if _, ok := subnetDataGroups.All[subnet.ID]; !ok && !subnet.Tags.HasTagKeyPrefix(TagNameKubernetesClusterPrefix) {
+			untaggedSubnetIDs = append(untaggedSubnetIDs, subnet.ID)
+		}
+	}
+	sort.Strings(untaggedSubnetIDs)
+
+	if len(untaggedSubnetIDs) > 0 {
+		errMsg := fmt.Sprintf("additional subnets %v without tag prefix %s are found in vpc %s of provided subnets. %s", untaggedSubnetIDs, TagNameKubernetesClusterPrefix, vpcSubnets.VpcID,
+			fmt.Sprintf("Please add a tag %s to those subnets to exclude them from cluster installation or explicitly assign roles in the install-config to provided subnets", TagNameKubernetesUnmanaged))
+		allErrs = append(allErrs, field.Forbidden(fldPath, errMsg))
+	}
+
+	return allErrs
+}
+
+// validateSharedVPC ensures the BYO VPC can be shared to install the new cluster.
+// That is the VPC must not have have tag: kubernetes.io/cluster/<another-cluster-id>: owned.
+func validateSharedVPC(ctx context.Context, meta *Metadata, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	vpc, err := meta.VPC(ctx)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, meta.ProvidedSubnets, err.Error()))
+	}
+
+	if vpc.Tags.HasClusterOwnedTag() {
+		clusterIDs := vpc.Tags.GetOwnedClusterIDs()
+		allErrs = append(allErrs, field.Forbidden(fldPath,
+			fmt.Sprintf("VPC of subnets is owned by other clusters %v and cannot be used for new installations, another VPC must be created separately", clusterIDs)))
+	}
+
+	return allErrs
+}
+
+// validateSharedSubnets ensures the BYO subnets can be shared to install the new cluster.
+// That is the subnets must not have have tag: kubernetes.io/cluster/<another-cluster-id>: owned.
+func validateSharedSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	subnets, err := meta.Subnets(ctx)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, meta.ProvidedSubnets, err.Error()))
+	}
+
+	for id, subnet := range mergeSubnets(subnets.Private, subnets.Public, subnets.Edge) {
+		if subnet.Tags.HasClusterOwnedTag() {
+			clusterIDs := subnet.Tags.GetOwnedClusterIDs()
+			allErrs = append(allErrs, field.Forbidden(fldPath, fmt.Sprintf("subnet %s is owned by other clusters %v and cannot be used for new installations, another subnet must be created separately", id, clusterIDs)))
+		}
+	}
+
+	return allErrs
+}
+
+// validateLBSubnetAZMatchClusterNodeAZ ensures AZs of LB subnets match AZs of ClusterNode subnets.
+// AWS load balancers will NOT register a node located in an AZ that is not enabled for the load balancer.
+func validateLBSubnetAZMatchClusterNodeAZ(fldPath *field.Path, subnetDataGroups subnetDataGroups, lbType awstypes.SubnetRoleType, lbSubnets []subnetData, clusterNodeSubnets []subnetData) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	lbZoneSet := sets.New[string]()
+	for _, subnet := range lbSubnets {
+		// We validate edge subnets in another place.
+		if _, ok := subnetDataGroups.Edge[subnet.ID]; ok {
+			continue
+		}
+		lbZoneSet.Insert(subnet.Zone.Name)
+	}
+
+	nodeZoneSet := sets.New[string]()
+	for _, subnet := range clusterNodeSubnets {
+		// We validate edge subnets in another place.
+		if _, ok := subnetDataGroups.Edge[subnet.ID]; ok {
+			continue
+		}
+		nodeZoneSet.Insert(subnet.Zone.Name)
+	}
+
+	// If the nodes use an AZ that is not in load balancer enabled AZs,
+	// the router pod might be scheduled to nodes that the load balancer cannot reach.
+	if diffSet := nodeZoneSet.Difference(lbZoneSet); diffSet.Len() > 0 {
+		allErrs = append(allErrs, field.Forbidden(fldPath, fmt.Sprintf("zones %v are not enabled for %s load balancers, nodes in those zones are unreachable", sets.List(diffSet), lbType)))
+	}
+
+	// If the load balancer includes an AZ that is not in node AZs,
+	// there will be no nodes in that AZ for the load balancer to register (i.e. not in use)
+	if diffSet := lbZoneSet.Difference(nodeZoneSet); diffSet.Len() > 0 {
+		allErrs = append(allErrs, field.Forbidden(fldPath, fmt.Sprintf("zones %v are enabled for %s load balancers, but are not used by any nodes", sets.List(diffSet), lbType)))
+	}
+
 	return allErrs
 }
 
 func validateServiceEndpoints(fldPath *field.Path, region string, services []awstypes.ServiceEndpoint) field.ErrorList {
 	allErrs := field.ErrorList{}
-	ec2Endpoint := ""
+	// Validate the endpoint overrides for all provided services.
+	// The following is the list of required services by the installer. When
+	// an override is not provided for these services, the default endpoint will be used.
+	//	"ec2", "elasticloadbalancing", "iam", "route53", "s3", "sts", "tagging",
 	for id, service := range services {
 		err := validateEndpointAccessibility(service.URL)
 		if err != nil {
+			logrus.Debugf("failed to access %s endpoint at %s", service.Name, service.URL)
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(id).Child("url"), service.URL, err.Error()))
-			continue
-		}
-		if service.Name == ec2.ServiceName {
-			ec2Endpoint = service.URL
 		}
 	}
 
-	if partition, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region); partitionFound {
-		if _, ok := partition.Regions()[region]; !ok && ec2Endpoint == "" {
-			err := validateRegion(region)
-			if err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("region"), region, err.Error()))
-			}
-		}
-		return allErrs
-	}
-
-	resolver := newAWSResolver(region, services)
-	var errs []error
-	for _, service := range requiredServices {
-		_, err := resolver.EndpointFor(service, region, endpoints.StrictMatchingOption)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("failed to find endpoint for service %q: %w", service, err))
-		}
-	}
-	if err := utilerrors.NewAggregate(errs); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath, services, err.Error()))
-	}
 	return allErrs
-}
-
-func validateRegion(region string) error {
-	ses, err := GetSessionWithOptions(func(sess *session.Options) {
-		sess.Config.Region = aws.String(region)
-	})
-	if err != nil {
-		return err
-	}
-	ec2Session := ec2.New(ses)
-	return validateEndpointAccessibility(ec2Session.Endpoint)
 }
 
 func validateZoneLocal(ctx context.Context, meta *Metadata, fldPath *field.Path, zoneName string) *field.Error {
 	sess, err := meta.Session(ctx)
 	if err != nil {
-		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to start a session: %s", err.Error()))
+		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to retrieve aws session: %s", err.Error()))
 	}
 	zones, err := describeFilteredZones(ctx, sess, meta.Region, []string{zoneName})
 	if err != nil {
@@ -548,17 +844,13 @@ func validateZoneLocal(ctx context.Context, meta *Metadata, fldPath *field.Path,
 }
 
 func validateEndpointAccessibility(endpointURL string) error {
-	// For each provided service endpoint, verify we can resolve and connect with net.Dial.
-	// Ignore e2e.local from unit tests.
-	if endpointURL == "e2e.local" {
-		return nil
+	if _, err := url.Parse(endpointURL); err != nil {
+		return fmt.Errorf("failed to parse service endpoint url: %w", err)
 	}
-	_, err := url.Parse(endpointURL)
-	if err != nil {
-		return err
+	if _, err := http.Head(endpointURL); err != nil { //nolint:gosec
+		return fmt.Errorf("failed to connect to service endpoint url: %w", err)
 	}
-	_, err = http.Head(endpointURL)
-	return err
+	return nil
 }
 
 var requiredServices = []string{
@@ -629,7 +921,7 @@ func validateHostedZone(hostedZoneOutput *route53.GetHostedZoneOutput, hostedZon
 	allErrs := field.ErrorList{}
 
 	// validate that the hosted zone is associated with the VPC containing the existing subnets for the cluster
-	vpcID, err := metadata.VPC(context.TODO())
+	vpcID, err := metadata.VPCID(context.TODO())
 	if err == nil {
 		if !isHostedZoneAssociatedWithVPC(hostedZoneOutput, vpcID) {
 			allErrs = append(allErrs, field.Invalid(hostedZonePath, hostedZoneName, "hosted zone is not associated with the VPC"))
@@ -656,7 +948,7 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 func validateInstanceProfile(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) *field.Error {
 	session, err := meta.Session(ctx)
 	if err != nil {
-		return field.InternalError(fldPath, fmt.Errorf("unable to start a session: %w", err))
+		return field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err))
 	}
 	client := iam.New(session)
 	res, err := client.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{

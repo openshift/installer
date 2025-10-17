@@ -14,14 +14,10 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/coreos/stream-metadata-go/arch"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
@@ -42,6 +38,15 @@ const (
 	retryCount       = 6
 	confidentialVMST = "ConfidentialVMSupported"
 	trustedLaunchST  = "TrustedLaunchsupported"
+
+	// stackAPIVersion is the Azure Stack compatible API version.
+	stackAPIVersion = "2019-06-01"
+
+	// stackComputeAPIVersion is the Azure Stack compatible API version for compute resources (VMs & images).
+	stackComputeAPIVersion = "2020-06-01"
+
+	// stackDNSAPIVersion is the Azure Stack compatible API version for DNS resources.
+	stackDNSAPIVersion = "2018-05-01"
 )
 
 // Provider implements Azure CAPI installation.
@@ -57,9 +62,10 @@ type Provider struct {
 	CloudConfiguration    cloud.Configuration
 	TokenCredential       azcore.TokenCredential
 	Tags                  map[string]*string
+	clientOptions         *arm.ClientOptions
+	computeClientOptions  *arm.ClientOptions
 }
 
-var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
 var _ clusterapi.IgnitionProvider = (*Provider)(nil)
@@ -87,8 +93,10 @@ func (p Provider) ProvisionTimeout() time.Duration {
 // in the status and should use the API load balancer when gathering bootstrap log bundles.
 func (*Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.APILoadBalancer }
 
-// PreProvision is called before provisioning using CAPI controllers has begun.
-func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
+// InfraReady is called once the installer infrastructure is ready.
+//
+//nolint:gocyclo //TODO(padillon): forthcoming marketplace image support should help reduce complexity here.
+func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	session, err := in.InstallConfig.Azure.Session()
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
@@ -99,7 +107,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 	subscriptionID := session.Credentials.SubscriptionID
 	cloudConfiguration := session.CloudConfig
 	tokenCredential := session.TokenCreds
-	resourceGroupName := platform.ClusterResourceGroupName(in.InfraID)
+	p.ResourceGroupName = platform.ClusterResourceGroupName(in.InfraID)
 
 	userTags := platform.UserTags
 	tags := make(map[string]*string, len(userTags)+1)
@@ -109,155 +117,44 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 	}
 	p.Tags = tags
 
-	// Create resource group
-	resourcesClientFactory, err := armresources.NewClientFactory(
-		subscriptionID,
-		tokenCredential,
-		&arm.ClientOptions{
+	opts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: cloudConfiguration,
+		},
+	}
+	computeClientOpts := opts
+	if platform.CloudName == aztypes.StackCloud {
+		opts.APIVersion = stackAPIVersion
+		computeClientOpts = &arm.ClientOptions{
 			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
+				Cloud:      cloudConfiguration,
+				APIVersion: stackComputeAPIVersion,
 			},
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed to get azure resource groups factory: %w", err)
-	}
-	resourceGroupsClient := resourcesClientFactory.NewResourceGroupsClient()
-	_, err = resourceGroupsClient.CreateOrUpdate(
-		ctx,
-		resourceGroupName,
-		armresources.ResourceGroup{
-			Location:  ptr.To(platform.Region),
-			ManagedBy: nil,
-			Tags:      tags,
-		},
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("error creating resource group %s: %w", resourceGroupName, err)
-	}
-	resourceGroup, err := resourceGroupsClient.Get(ctx, resourceGroupName, nil)
-	if err != nil {
-		return fmt.Errorf("error getting resource group %s: %w", resourceGroupName, err)
-	}
-
-	logrus.Debugf("ResourceGroup.ID=%s", *resourceGroup.ID)
-	p.ResourceGroupName = resourceGroupName
-
-	// Create user assigned identity
-	userAssignedIdentityName := fmt.Sprintf("%s-identity", in.InfraID)
-	armmsiClientFactory, err := armmsi.NewClientFactory(
-		subscriptionID,
-		tokenCredential,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create armmsi client: %w", err)
-	}
-	_, err = armmsiClientFactory.NewUserAssignedIdentitiesClient().CreateOrUpdate(
-		ctx,
-		resourceGroupName,
-		userAssignedIdentityName,
-		armmsi.Identity{
-			Location: ptr.To(platform.Region),
-			Tags:     tags,
-		},
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create user assigned identity %s: %w", userAssignedIdentityName, err)
-	}
-	userAssignedIdentity, err := armmsiClientFactory.NewUserAssignedIdentitiesClient().Get(
-		ctx,
-		resourceGroupName,
-		userAssignedIdentityName,
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to get user assigned identity %s: %w", userAssignedIdentityName, err)
-	}
-	principalID := *userAssignedIdentity.Properties.PrincipalID
-
-	logrus.Debugf("UserAssignedIdentity.ID=%s", *userAssignedIdentity.ID)
-	logrus.Debugf("PrinciapalID=%s", principalID)
-
-	clientFactory, err := armauthorization.NewClientFactory(
-		subscriptionID,
-		tokenCredential,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create armauthorization client: %w", err)
-	}
-
-	roleDefinitionsClient := clientFactory.NewRoleDefinitionsClient()
-
-	var contributor *armauthorization.RoleDefinition
-	roleDefinitionsPager := roleDefinitionsClient.NewListPager(*resourceGroup.ID, nil)
-	for roleDefinitionsPager.More() {
-		roleDefinitionsList, err := roleDefinitionsPager.NextPage(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to find any role definitions: %w", err)
-		}
-		for _, roleDefinition := range roleDefinitionsList.Value {
-			if *roleDefinition.Properties.RoleName == "Contributor" {
-				contributor = roleDefinition
-				break
-			}
 		}
 	}
-	if contributor == nil {
-		return fmt.Errorf("failed to find contributor definition")
-	}
+	p.clientOptions = opts
+	p.computeClientOptions = computeClientOpts
 
-	roleAssignmentsClient := clientFactory.NewRoleAssignmentsClient()
-	scope := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s", subscriptionID, resourceGroupName)
-	roleAssignmentUUID := uuid.New().String()
-
-	// XXX: Azure doesn't like creating an identity and immediately
-	// creating a role assignment for the identity. There can be
-	// replication delays. So, retry every 10 seconds for a minute until
-	// the role assignment gets created.
-	//
-	// See https://aka.ms/docs-principaltype
-	for i := 0; i < retryCount; i++ {
-		_, err = roleAssignmentsClient.Create(ctx, scope, roleAssignmentUUID,
-			armauthorization.RoleAssignmentCreateParameters{
-				Properties: &armauthorization.RoleAssignmentProperties{
-					PrincipalID:      ptr.To(principalID),
-					RoleDefinitionID: contributor.ID,
-				},
-			},
-			nil,
-		)
-		if err == nil {
-			break
-		}
-		time.Sleep(retryTime)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to create role assignment: %w", err)
+	if err = handleIdentity(ctx, identityInput{
+		installConfig:     installConfig,
+		region:            platform.Region,
+		resourceGroupName: p.ResourceGroupName,
+		subscriptionID:    subscriptionID,
+		tokenCredential:   tokenCredential,
+		infraID:           in.InfraID,
+		clientOpts:        p.clientOptions,
+		tags:              p.Tags,
+	}); err != nil {
+		errMsg := "error creating user-assigned identity: please ensure your user credentials " +
+			"have the User Access Admin Role or if you are not utilizing an Azure Container Registry " +
+			"you can set installconfig.platform.azure.defaultMachinePlatform.identity.type: None to skip " +
+			"the creation of the identity: creation failed with: %w"
+		return fmt.Errorf(errMsg, err)
 	}
 
 	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
-		networkClientFactory, err := armnetwork.NewClientFactory(
-			subscriptionID,
-			tokenCredential,
-			&arm.ClientOptions{
-				ClientOptions: policy.ClientOptions{
-					Cloud: cloudConfiguration,
-				},
-			},
-		)
+		networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, tokenCredential, p.clientOptions)
 		if err != nil {
 			return fmt.Errorf("failed to create azure network factory: %w", err)
 		}
@@ -265,11 +162,11 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		securityGroupsClient := networkClientFactory.NewSecurityGroupsClient()
 		pollerResp, err := securityGroupsClient.BeginCreateOrUpdate(
 			ctx,
-			resourceGroupName,
+			p.ResourceGroupName,
 			securityGroupName,
 			armnetwork.SecurityGroup{
 				Location: to.Ptr(platform.Region),
-				Tags:     tags,
+				Tags:     p.Tags,
 			},
 			nil)
 		if err != nil {
@@ -282,21 +179,6 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		logrus.Infof("nsg=%s", *nsg.ID)
 	}
 
-	return nil
-}
-
-// InfraReady is called once the installer infrastructure is ready.
-func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
-	session, err := in.InstallConfig.Azure.Session()
-	if err != nil {
-		return fmt.Errorf("failed to get session: %w", err)
-	}
-
-	installConfig := in.InstallConfig.Config
-	platform := installConfig.Platform.Azure
-	subscriptionID := session.Credentials.SubscriptionID
-	cloudConfiguration := session.CloudConfig
-
 	var architecture armcompute.Architecture
 	if installConfig.ControlPlane.Architecture == types.ArchitectureARM64 {
 		architecture = armcompute.ArchitectureArm64
@@ -305,7 +187,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 
 	resourceGroupName := p.ResourceGroupName
-	storageAccountName := getStorageAccountName(in.InfraID)
+	storageAccountName := aztypes.GetStorageAccountName(in.InfraID)
 	containerName := "vhd"
 	blobName := fmt.Sprintf("rhcos%s.vhd", randomString(5))
 
@@ -341,59 +223,58 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		return fmt.Errorf("image length is not aligned on a 512 byte boundary")
 	}
 
-	userTags := platform.UserTags
-	tags := make(map[string]*string, len(userTags)+1)
-	tags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
-	for k, v := range userTags {
-		tags[k] = ptr.To(v)
-	}
-
-	tokenCredential := session.TokenCreds
 	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
 
-	// Create storage account
-	createStorageAccountOutput, err := CreateStorageAccount(ctx, &CreateStorageAccountInput{
-		SubscriptionID:     subscriptionID,
-		ResourceGroupName:  resourceGroupName,
-		StorageAccountName: storageAccountName,
-		CloudName:          platform.CloudName,
-		Region:             platform.Region,
-		AuthType:           session.AuthType,
-		Tags:               tags,
-		CustomerManagedKey: platform.CustomerManagedKey,
-		TokenCredential:    tokenCredential,
-		CloudConfiguration: cloudConfiguration,
-	})
-	if err != nil {
-		return err
+	var storageAccount *armstorage.Account
+	var storageClientFactory *armstorage.ClientFactory
+	var storageAccountKeys []armstorage.AccountKey
+
+	var createStorageAccountOutput *CreateStorageAccountOutput
+	if platform.CloudName != aztypes.StackCloud {
+		// Create storage account
+		createStorageAccountOutput, err = CreateStorageAccount(ctx, &CreateStorageAccountInput{
+			SubscriptionID:     subscriptionID,
+			ResourceGroupName:  resourceGroupName,
+			StorageAccountName: storageAccountName,
+			CloudName:          platform.CloudName,
+			Region:             platform.Region,
+			AuthType:           session.AuthType,
+			Tags:               tags,
+			CustomerManagedKey: platform.CustomerManagedKey,
+			TokenCredential:    tokenCredential,
+			ClientOpts:         p.clientOptions,
+		})
+		if err != nil {
+			return err
+		}
+		storageAccount = createStorageAccountOutput.StorageAccount
+		storageClientFactory = createStorageAccountOutput.StorageClientFactory
+		storageAccountKeys = createStorageAccountOutput.StorageAccountKeys
+
+		logrus.Debugf("StorageAccount.ID=%s", *storageAccount.ID)
 	}
-
-	storageAccount := createStorageAccountOutput.StorageAccount
-	storageClientFactory := createStorageAccountOutput.StorageClientFactory
-	storageAccountKeys := createStorageAccountOutput.StorageAccountKeys
-
-	logrus.Debugf("StorageAccount.ID=%s", *storageAccount.ID)
-
-	// Create blob storage container
-	publicAccess := armstorage.PublicAccessNone
-	createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
-		SubscriptionID:       subscriptionID,
-		ResourceGroupName:    resourceGroupName,
-		StorageAccountName:   storageAccountName,
-		ContainerName:        containerName,
-		PublicAccess:         to.Ptr(publicAccess),
-		StorageClientFactory: storageClientFactory,
-	})
-	if err != nil {
-		return err
-	}
-
-	blobContainer := createBlobContainerOutput.BlobContainer
-	logrus.Debugf("BlobContainer.ID=%s", *blobContainer.ID)
 
 	// Upload the image to the container
-	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD"); !ok {
+	_, skipImageUpload := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD")
+	if !(skipImageUpload || platform.CloudName == aztypes.StackCloud) {
+		// Create vhd blob storage container
+		publicAccess := armstorage.PublicAccessNone
+		createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
+			SubscriptionID:       subscriptionID,
+			ResourceGroupName:    resourceGroupName,
+			StorageAccountName:   storageAccountName,
+			ContainerName:        containerName,
+			PublicAccess:         to.Ptr(publicAccess),
+			StorageClientFactory: storageClientFactory,
+		})
+		if err != nil {
+			return err
+		}
+
+		blobContainer := createBlobContainerOutput.BlobContainer
+		logrus.Debugf("BlobContainer.ID=%s", *blobContainer.ID)
+
 		_, err = CreatePageBlob(ctx, &CreatePageBlobInput{
 			StorageURL:         storageURL,
 			BlobURL:            blobURL,
@@ -401,7 +282,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			ImageLength:        imageLength,
 			StorageAccountName: storageAccountName,
 			StorageAccountKeys: storageAccountKeys,
-			CloudConfiguration: cloudConfiguration,
+			ClientOpts:         p.clientOptions,
 		})
 		if err != nil {
 			return err
@@ -409,13 +290,13 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 		// Create image gallery
 		createImageGalleryOutput, err := CreateImageGallery(ctx, &CreateImageGalleryInput{
-			SubscriptionID:     subscriptionID,
-			ResourceGroupName:  resourceGroupName,
-			GalleryName:        galleryName,
-			Region:             platform.Region,
-			Tags:               tags,
-			TokenCredential:    tokenCredential,
-			CloudConfiguration: cloudConfiguration,
+			SubscriptionID:    subscriptionID,
+			ResourceGroupName: resourceGroupName,
+			GalleryName:       galleryName,
+			Region:            platform.Region,
+			Tags:              tags,
+			TokenCredential:   tokenCredential,
+			ClientOpts:        p.clientOptions,
 		})
 		if err != nil {
 			return err
@@ -434,7 +315,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			SKU:                  "basic",
 			Tags:                 tags,
 			TokenCredential:      tokenCredential,
-			CloudConfiguration:   cloudConfiguration,
+			ClientOpts:           p.clientOptions,
 			Architecture:         architecture,
 			OSType:               armcompute.OperatingSystemTypesLinux,
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
@@ -463,7 +344,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			SKU:                  "gen2",
 			Tags:                 tags,
 			TokenCredential:      tokenCredential,
-			CloudConfiguration:   cloudConfiguration,
+			ClientOpts:           p.clientOptions,
 			Architecture:         architecture,
 			OSType:               armcompute.OperatingSystemTypesLinux,
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
@@ -507,13 +388,25 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 	}
 
-	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
+	if installConfig.Azure.CloudName == aztypes.StackCloud {
+		client, err := armcompute.NewImagesClient(subscriptionID, tokenCredential, p.computeClientOptions)
+		if err != nil {
+			return fmt.Errorf("error creating stack managed images client: %w", err)
+		}
+		createManagedImageInput := CreateManagedImageInput{
+			VHDBlobURL:        platform.ClusterOSImage,
+			ResourceGroupName: resourceGroupName,
+			Region:            platform.Region,
+			InfraID:           in.InfraID,
+			Tags:              tags,
+			Client:            client,
+		}
+		if err = CreateManagedImage(ctx, &createManagedImageInput); err != nil {
+			return fmt.Errorf("error creating stack managed image: %w", err)
+		}
+	}
+
+	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds, p.clientOptions)
 	if err != nil {
 		return fmt.Errorf("error creating network client factory: %w", err)
 	}
@@ -543,6 +436,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	var lbBaps []*armnetwork.BackendAddressPool
 	var extLBFQDN string
+	var pubIPAddress string
 	if in.InstallConfig.Config.PublicAPI() {
 		publicIP, err := createPublicIP(ctx, &pipInput{
 			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
@@ -576,6 +470,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		logrus.Debugf("updated external load balancer: %s", *loadBalancer.ID)
 		lbBaps = loadBalancer.Properties.BackendAddressPools
 		extLBFQDN = *publicIP.Properties.DNSSettings.Fqdn
+		pubIPAddress = *publicIP.Properties.IPAddress
 	}
 
 	// Save context for other hooks
@@ -588,7 +483,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPools = lbBaps
 
-	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName); err != nil {
+	if err := createDNSEntries(ctx, in, extLBFQDN, pubIPAddress, resourceGroupName, p.clientOptions); err != nil {
 		return fmt.Errorf("error creating DNS records: %w", err)
 	}
 
@@ -603,16 +498,9 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		return fmt.Errorf("error retrieving Azure session: %w", err)
 	}
 	subscriptionID := ssn.Credentials.SubscriptionID
-	cloudConfiguration := ssn.CloudConfig
 
 	if in.InstallConfig.Config.PublicAPI() {
-		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds,
-			&arm.ClientOptions{
-				ClientOptions: policy.ClientOptions{
-					Cloud: cloudConfiguration,
-				},
-			},
-		)
+		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds, p.computeClientOptions)
 		if err != nil {
 			return fmt.Errorf("error creating vm client: %w", err)
 		}
@@ -701,20 +589,31 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
+	// Construct client options here, rather than relying on p.clientOptions,
+	// as PostDestroy can be called as part of destroy bootstrap, in which case
+	// p.clientOption would not be populated.
+	opts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: session.CloudConfig,
+		},
+	}
+	if in.Metadata.Azure.CloudName == aztypes.StackCloud {
+		opts.APIVersion = stackAPIVersion
+	}
+
 	networkClientFactory, err := armnetwork.NewClientFactory(
 		session.Credentials.SubscriptionID,
 		session.TokenCreds,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: session.CloudConfig,
-			},
-		},
+		opts,
 	)
 	if err != nil {
 		return fmt.Errorf("error creating network client factory: %w", err)
 	}
 
 	resourceGroupName := fmt.Sprintf("%s-rg", in.Metadata.InfraID)
+	if in.Metadata.Azure.ResourceGroupName != "" {
+		resourceGroupName = in.Metadata.Azure.ResourceGroupName
+	}
 	securityGroupName := fmt.Sprintf("%s-nsg", in.Metadata.InfraID)
 	sshRuleName := fmt.Sprintf("%s_ssh_in", in.Metadata.InfraID)
 
@@ -794,19 +693,6 @@ func getControlPlaneIDs(cl client.Client, replicas *int64, infraID string) ([]st
 	return res, nil
 }
 
-// Storage account names can't be more than 24 characters.
-func getStorageAccountName(infraID string) string {
-	storageAccountNameMax := 24
-
-	storageAccountName := strings.ReplaceAll(infraID, "-", "")
-	if len(storageAccountName) > storageAccountNameMax-2 {
-		storageAccountName = storageAccountName[:storageAccountNameMax-2]
-	}
-	storageAccountName = fmt.Sprintf("%ssa", storageAccountName)
-
-	return storageAccountName
-}
-
 func randomString(length int) string {
 	source := rand.NewSource(time.Now().UnixNano())
 	rng := rand.New(source) // nolint:gosec
@@ -830,27 +716,28 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 
 	bootstrapIgnData := in.BootstrapIgnData
 	subscriptionID := session.Credentials.SubscriptionID
-	cloudConfiguration := session.CloudConfig
 
 	ignitionContainerName := "ignition"
 	blobName := "bootstrap.ign"
 	blobURL := fmt.Sprintf("%s/%s/%s", p.StorageURL, ignitionContainerName, blobName)
 	publicAccess := armstorage.PublicAccessNone
 	// Create ignition blob storage container
-	createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
-		ContainerName:        ignitionContainerName,
-		SubscriptionID:       subscriptionID,
-		ResourceGroupName:    p.ResourceGroupName,
-		StorageAccountName:   p.StorageAccountName,
-		PublicAccess:         to.Ptr(publicAccess),
-		StorageClientFactory: p.StorageClientFactory,
-	})
-	if err != nil {
-		return nil, err
+	var blobIgnitionContainer *armstorage.BlobContainer
+	if in.InstallConfig.Azure.CloudName != aztypes.StackCloud {
+		createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
+			ContainerName:        ignitionContainerName,
+			SubscriptionID:       subscriptionID,
+			ResourceGroupName:    p.ResourceGroupName,
+			StorageAccountName:   p.StorageAccountName,
+			PublicAccess:         to.Ptr(publicAccess),
+			StorageClientFactory: p.StorageClientFactory,
+		})
+		if err != nil {
+			return nil, err
+		}
+		blobIgnitionContainer = createBlobContainerOutput.BlobContainer
+		logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
 	}
-
-	blobIgnitionContainer := createBlobContainerOutput.BlobContainer
-	logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
 
 	sasURL := ""
 
@@ -861,8 +748,17 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			BlobURL:            blobURL,
 			StorageAccountName: p.StorageAccountName,
 			StorageAccountKeys: p.StorageAccountKeys,
-			CloudConfiguration: cloudConfiguration,
+			ClientOpts:         p.clientOptions,
 			BootstrapIgnData:   bootstrapIgnData,
+			CloudEnvironment:   in.InstallConfig.Azure.CloudName,
+			ContainerName:      ignitionContainerName,
+			BlobName:           blobName,
+			StorageSuffix:      session.Environment.StorageEndpointSuffix,
+			ARMEndpoint:        in.InstallConfig.Azure.ARMEndpoint,
+			Session:            session,
+			Region:             in.InstallConfig.Config.Azure.Region,
+			Tags:               p.Tags,
+			ResourceGroupName:  p.ResourceGroupName,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create BlockBlob for ignition shim: %w", err)
@@ -882,7 +778,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			BootstrapIgnData:   bootstrapIgnData,
 			ImageLength:        lengthBootstrapFile,
 			StorageAccountKeys: p.StorageAccountKeys,
-			CloudConfiguration: cloudConfiguration,
+			ClientOpts:         p.clientOptions,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create PageBlob for ignition shim: %w", err)

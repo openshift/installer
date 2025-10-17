@@ -5,10 +5,14 @@ package v1api20220801
 
 import (
 	"fmt"
-	v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type Policy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Service_Policy_Spec   `json:"spec,omitempty"`
-	Status            Service_Policy_STATUS `json:"status,omitempty"`
+	Spec              Policy_Spec   `json:"spec,omitempty"`
+	Status            Policy_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &Policy{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &Policy{}
 
 // ConvertFrom populates our Policy from the provided hub Policy
 func (policy *Policy) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220801s.Policy)
+	source, ok := hub.(*storage.Policy)
 	if !ok {
 		return fmt.Errorf("expected apimanagement/v1api20220801/storage/Policy but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (policy *Policy) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Policy from our Policy
 func (policy *Policy) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220801s.Policy)
+	destination, ok := hub.(*storage.Policy)
 	if !ok {
 		return fmt.Errorf("expected apimanagement/v1api20220801/storage/Policy but received %T instead", hub)
 	}
@@ -83,15 +87,35 @@ func (policy *Policy) Default() {
 // defaultImpl applies the code generated defaults to the Policy resource
 func (policy *Policy) defaultImpl() {}
 
+var _ configmaps.Exporter = &Policy{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (policy *Policy) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Policy{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (policy *Policy) SecretDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &Policy{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (policy *Policy) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Service_Policy_STATUS); ok {
-		return policy.Spec.Initialize_From_Service_Policy_STATUS(s)
+	if s, ok := status.(*Policy_STATUS); ok {
+		return policy.Spec.Initialize_From_Policy_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Service_Policy_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type Policy_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &Policy{}
@@ -103,7 +127,7 @@ func (policy *Policy) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-08-01"
 func (policy Policy) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-08-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -138,7 +162,7 @@ func (policy *Policy) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (policy *Policy) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Service_Policy_STATUS{}
+	return &Policy_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -150,13 +174,13 @@ func (policy *Policy) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (policy *Policy) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Service_Policy_STATUS); ok {
+	if st, ok := status.(*Policy_STATUS); ok {
 		policy.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Service_Policy_STATUS
+	var st Policy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -202,7 +226,7 @@ func (policy *Policy) ValidateUpdate(old runtime.Object) (admission.Warnings, er
 
 // createValidations validates the creation of the resource
 func (policy *Policy) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference}
+	return []func() (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -220,7 +244,21 @@ func (policy *Policy) updateValidations() []func(old runtime.Object) (admission.
 		func(old runtime.Object) (admission.Warnings, error) {
 			return policy.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return policy.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return policy.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (policy *Policy) validateConfigMapDestinations() (admission.Warnings, error) {
+	if policy.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(policy, nil, policy.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -237,6 +275,14 @@ func (policy *Policy) validateResourceReferences() (admission.Warnings, error) {
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (policy *Policy) validateSecretDestinations() (admission.Warnings, error) {
+	if policy.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(policy, nil, policy.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (policy *Policy) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*Policy)
@@ -248,24 +294,24 @@ func (policy *Policy) validateWriteOnceProperties(old runtime.Object) (admission
 }
 
 // AssignProperties_From_Policy populates our Policy from the provided source Policy
-func (policy *Policy) AssignProperties_From_Policy(source *v20220801s.Policy) error {
+func (policy *Policy) AssignProperties_From_Policy(source *storage.Policy) error {
 
 	// ObjectMeta
 	policy.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Service_Policy_Spec
-	err := spec.AssignProperties_From_Service_Policy_Spec(&source.Spec)
+	var spec Policy_Spec
+	err := spec.AssignProperties_From_Policy_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Service_Policy_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_Policy_Spec() to populate field Spec")
 	}
 	policy.Spec = spec
 
 	// Status
-	var status Service_Policy_STATUS
-	err = status.AssignProperties_From_Service_Policy_STATUS(&source.Status)
+	var status Policy_STATUS
+	err = status.AssignProperties_From_Policy_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Service_Policy_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_Policy_STATUS() to populate field Status")
 	}
 	policy.Status = status
 
@@ -274,24 +320,24 @@ func (policy *Policy) AssignProperties_From_Policy(source *v20220801s.Policy) er
 }
 
 // AssignProperties_To_Policy populates the provided destination Policy from our Policy
-func (policy *Policy) AssignProperties_To_Policy(destination *v20220801s.Policy) error {
+func (policy *Policy) AssignProperties_To_Policy(destination *storage.Policy) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *policy.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220801s.Service_Policy_Spec
-	err := policy.Spec.AssignProperties_To_Service_Policy_Spec(&spec)
+	var spec storage.Policy_Spec
+	err := policy.Spec.AssignProperties_To_Policy_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Service_Policy_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_Policy_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20220801s.Service_Policy_STATUS
-	err = policy.Status.AssignProperties_To_Service_Policy_STATUS(&status)
+	var status storage.Policy_STATUS
+	err = policy.Status.AssignProperties_To_Policy_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Service_Policy_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_Policy_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -318,9 +364,13 @@ type PolicyList struct {
 	Items           []Policy `json:"items"`
 }
 
-type Service_Policy_Spec struct {
+type Policy_Spec struct {
 	// Format: Format of the policyContent.
 	Format *PolicyContractProperties_Format `json:"format,omitempty"`
+
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *PolicyOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -333,24 +383,26 @@ type Service_Policy_Spec struct {
 	Value *string `json:"value,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Service_Policy_Spec{}
+var _ genruntime.ARMTransformer = &Policy_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (policy *Service_Policy_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (policy *Policy_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if policy == nil {
 		return nil, nil
 	}
-	result := &Service_Policy_Spec_ARM{}
+	result := &arm.Policy_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
 
 	// Set property "Properties":
 	if policy.Format != nil || policy.Value != nil {
-		result.Properties = &PolicyContractProperties_ARM{}
+		result.Properties = &arm.PolicyContractProperties{}
 	}
 	if policy.Format != nil {
-		format := *policy.Format
+		var temp string
+		temp = string(*policy.Format)
+		format := arm.PolicyContractProperties_Format(temp)
 		result.Properties.Format = &format
 	}
 	if policy.Value != nil {
@@ -361,25 +413,29 @@ func (policy *Service_Policy_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (policy *Service_Policy_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Service_Policy_Spec_ARM{}
+func (policy *Policy_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.Policy_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (policy *Service_Policy_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Service_Policy_Spec_ARM)
+func (policy *Policy_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.Policy_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Service_Policy_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Policy_Spec, got %T", armInput)
 	}
 
 	// Set property "Format":
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Format != nil {
-			format := *typedInput.Properties.Format
+			var temp string
+			temp = string(*typedInput.Properties.Format)
+			format := PolicyContractProperties_Format(temp)
 			policy.Format = &format
 		}
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	policy.Owner = &genruntime.KnownResourceReference{
@@ -400,25 +456,25 @@ func (policy *Service_Policy_Spec) PopulateFromARM(owner genruntime.ArbitraryOwn
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Service_Policy_Spec{}
+var _ genruntime.ConvertibleSpec = &Policy_Spec{}
 
-// ConvertSpecFrom populates our Service_Policy_Spec from the provided source
-func (policy *Service_Policy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220801s.Service_Policy_Spec)
+// ConvertSpecFrom populates our Policy_Spec from the provided source
+func (policy *Policy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.Policy_Spec)
 	if ok {
 		// Populate our instance from source
-		return policy.AssignProperties_From_Service_Policy_Spec(src)
+		return policy.AssignProperties_From_Policy_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220801s.Service_Policy_Spec{}
+	src = &storage.Policy_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = policy.AssignProperties_From_Service_Policy_Spec(src)
+	err = policy.AssignProperties_From_Policy_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -426,17 +482,17 @@ func (policy *Service_Policy_Spec) ConvertSpecFrom(source genruntime.Convertible
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Service_Policy_Spec
-func (policy *Service_Policy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220801s.Service_Policy_Spec)
+// ConvertSpecTo populates the provided destination from our Policy_Spec
+func (policy *Policy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.Policy_Spec)
 	if ok {
 		// Populate destination from our instance
-		return policy.AssignProperties_To_Service_Policy_Spec(dst)
+		return policy.AssignProperties_To_Policy_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220801s.Service_Policy_Spec{}
-	err := policy.AssignProperties_To_Service_Policy_Spec(dst)
+	dst = &storage.Policy_Spec{}
+	err := policy.AssignProperties_To_Policy_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -450,15 +506,28 @@ func (policy *Service_Policy_Spec) ConvertSpecTo(destination genruntime.Converti
 	return nil
 }
 
-// AssignProperties_From_Service_Policy_Spec populates our Service_Policy_Spec from the provided source Service_Policy_Spec
-func (policy *Service_Policy_Spec) AssignProperties_From_Service_Policy_Spec(source *v20220801s.Service_Policy_Spec) error {
+// AssignProperties_From_Policy_Spec populates our Policy_Spec from the provided source Policy_Spec
+func (policy *Policy_Spec) AssignProperties_From_Policy_Spec(source *storage.Policy_Spec) error {
 
 	// Format
 	if source.Format != nil {
-		format := PolicyContractProperties_Format(*source.Format)
-		policy.Format = &format
+		format := *source.Format
+		formatTemp := genruntime.ToEnum(format, policyContractProperties_Format_Values)
+		policy.Format = &formatTemp
 	} else {
 		policy.Format = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec PolicyOperatorSpec
+		err := operatorSpec.AssignProperties_From_PolicyOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_PolicyOperatorSpec() to populate field OperatorSpec")
+		}
+		policy.OperatorSpec = &operatorSpec
+	} else {
+		policy.OperatorSpec = nil
 	}
 
 	// Owner
@@ -476,8 +545,8 @@ func (policy *Service_Policy_Spec) AssignProperties_From_Service_Policy_Spec(sou
 	return nil
 }
 
-// AssignProperties_To_Service_Policy_Spec populates the provided destination Service_Policy_Spec from our Service_Policy_Spec
-func (policy *Service_Policy_Spec) AssignProperties_To_Service_Policy_Spec(destination *v20220801s.Service_Policy_Spec) error {
+// AssignProperties_To_Policy_Spec populates the provided destination Policy_Spec from our Policy_Spec
+func (policy *Policy_Spec) AssignProperties_To_Policy_Spec(destination *storage.Policy_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -487,6 +556,18 @@ func (policy *Service_Policy_Spec) AssignProperties_To_Service_Policy_Spec(desti
 		destination.Format = &format
 	} else {
 		destination.Format = nil
+	}
+
+	// OperatorSpec
+	if policy.OperatorSpec != nil {
+		var operatorSpec storage.PolicyOperatorSpec
+		err := policy.OperatorSpec.AssignProperties_To_PolicyOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_PolicyOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -514,12 +595,12 @@ func (policy *Service_Policy_Spec) AssignProperties_To_Service_Policy_Spec(desti
 	return nil
 }
 
-// Initialize_From_Service_Policy_STATUS populates our Service_Policy_Spec from the provided source Service_Policy_STATUS
-func (policy *Service_Policy_Spec) Initialize_From_Service_Policy_STATUS(source *Service_Policy_STATUS) error {
+// Initialize_From_Policy_STATUS populates our Policy_Spec from the provided source Policy_STATUS
+func (policy *Policy_Spec) Initialize_From_Policy_STATUS(source *Policy_STATUS) error {
 
 	// Format
 	if source.Format != nil {
-		format := PolicyContractProperties_Format(*source.Format)
+		format := genruntime.ToEnum(string(*source.Format), policyContractProperties_Format_Values)
 		policy.Format = &format
 	} else {
 		policy.Format = nil
@@ -533,11 +614,11 @@ func (policy *Service_Policy_Spec) Initialize_From_Service_Policy_STATUS(source 
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (policy *Service_Policy_Spec) OriginalVersion() string {
+func (policy *Policy_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
-type Service_Policy_STATUS struct {
+type Policy_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
@@ -558,25 +639,25 @@ type Service_Policy_STATUS struct {
 	Value *string `json:"value,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Service_Policy_STATUS{}
+var _ genruntime.ConvertibleStatus = &Policy_STATUS{}
 
-// ConvertStatusFrom populates our Service_Policy_STATUS from the provided source
-func (policy *Service_Policy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220801s.Service_Policy_STATUS)
+// ConvertStatusFrom populates our Policy_STATUS from the provided source
+func (policy *Policy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.Policy_STATUS)
 	if ok {
 		// Populate our instance from source
-		return policy.AssignProperties_From_Service_Policy_STATUS(src)
+		return policy.AssignProperties_From_Policy_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220801s.Service_Policy_STATUS{}
+	src = &storage.Policy_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = policy.AssignProperties_From_Service_Policy_STATUS(src)
+	err = policy.AssignProperties_From_Policy_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -584,17 +665,17 @@ func (policy *Service_Policy_STATUS) ConvertStatusFrom(source genruntime.Convert
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Service_Policy_STATUS
-func (policy *Service_Policy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220801s.Service_Policy_STATUS)
+// ConvertStatusTo populates the provided destination from our Policy_STATUS
+func (policy *Policy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.Policy_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return policy.AssignProperties_To_Service_Policy_STATUS(dst)
+		return policy.AssignProperties_To_Policy_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220801s.Service_Policy_STATUS{}
-	err := policy.AssignProperties_To_Service_Policy_STATUS(dst)
+	dst = &storage.Policy_STATUS{}
+	err := policy.AssignProperties_To_Policy_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -608,18 +689,18 @@ func (policy *Service_Policy_STATUS) ConvertStatusTo(destination genruntime.Conv
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Service_Policy_STATUS{}
+var _ genruntime.FromARMConverter = &Policy_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (policy *Service_Policy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Service_Policy_STATUS_ARM{}
+func (policy *Policy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.Policy_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (policy *Service_Policy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Service_Policy_STATUS_ARM)
+func (policy *Policy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.Policy_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Service_Policy_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Policy_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -628,7 +709,9 @@ func (policy *Service_Policy_STATUS) PopulateFromARM(owner genruntime.ArbitraryO
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Format != nil {
-			format := *typedInput.Properties.Format
+			var temp string
+			temp = string(*typedInput.Properties.Format)
+			format := PolicyContractProperties_Format_STATUS(temp)
 			policy.Format = &format
 		}
 	}
@@ -664,16 +747,17 @@ func (policy *Service_Policy_STATUS) PopulateFromARM(owner genruntime.ArbitraryO
 	return nil
 }
 
-// AssignProperties_From_Service_Policy_STATUS populates our Service_Policy_STATUS from the provided source Service_Policy_STATUS
-func (policy *Service_Policy_STATUS) AssignProperties_From_Service_Policy_STATUS(source *v20220801s.Service_Policy_STATUS) error {
+// AssignProperties_From_Policy_STATUS populates our Policy_STATUS from the provided source Policy_STATUS
+func (policy *Policy_STATUS) AssignProperties_From_Policy_STATUS(source *storage.Policy_STATUS) error {
 
 	// Conditions
 	policy.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
 
 	// Format
 	if source.Format != nil {
-		format := PolicyContractProperties_Format_STATUS(*source.Format)
-		policy.Format = &format
+		format := *source.Format
+		formatTemp := genruntime.ToEnum(format, policyContractProperties_Format_STATUS_Values)
+		policy.Format = &formatTemp
 	} else {
 		policy.Format = nil
 	}
@@ -694,8 +778,8 @@ func (policy *Service_Policy_STATUS) AssignProperties_From_Service_Policy_STATUS
 	return nil
 }
 
-// AssignProperties_To_Service_Policy_STATUS populates the provided destination Service_Policy_STATUS from our Service_Policy_STATUS
-func (policy *Service_Policy_STATUS) AssignProperties_To_Service_Policy_STATUS(destination *v20220801s.Service_Policy_STATUS) error {
+// AssignProperties_To_Policy_STATUS populates the provided destination Policy_STATUS from our Policy_STATUS
+func (policy *Policy_STATUS) AssignProperties_To_Policy_STATUS(destination *storage.Policy_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -743,6 +827,14 @@ const (
 	PolicyContractProperties_Format_XmlLink    = PolicyContractProperties_Format("xml-link")
 )
 
+// Mapping from string to PolicyContractProperties_Format
+var policyContractProperties_Format_Values = map[string]PolicyContractProperties_Format{
+	"rawxml":      PolicyContractProperties_Format_Rawxml,
+	"rawxml-link": PolicyContractProperties_Format_RawxmlLink,
+	"xml":         PolicyContractProperties_Format_Xml,
+	"xml-link":    PolicyContractProperties_Format_XmlLink,
+}
+
 type PolicyContractProperties_Format_STATUS string
 
 const (
@@ -751,6 +843,118 @@ const (
 	PolicyContractProperties_Format_STATUS_Xml        = PolicyContractProperties_Format_STATUS("xml")
 	PolicyContractProperties_Format_STATUS_XmlLink    = PolicyContractProperties_Format_STATUS("xml-link")
 )
+
+// Mapping from string to PolicyContractProperties_Format_STATUS
+var policyContractProperties_Format_STATUS_Values = map[string]PolicyContractProperties_Format_STATUS{
+	"rawxml":      PolicyContractProperties_Format_STATUS_Rawxml,
+	"rawxml-link": PolicyContractProperties_Format_STATUS_RawxmlLink,
+	"xml":         PolicyContractProperties_Format_STATUS_Xml,
+	"xml-link":    PolicyContractProperties_Format_STATUS_XmlLink,
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type PolicyOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_PolicyOperatorSpec populates our PolicyOperatorSpec from the provided source PolicyOperatorSpec
+func (operator *PolicyOperatorSpec) AssignProperties_From_PolicyOperatorSpec(source *storage.PolicyOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PolicyOperatorSpec populates the provided destination PolicyOperatorSpec from our PolicyOperatorSpec
+func (operator *PolicyOperatorSpec) AssignProperties_To_PolicyOperatorSpec(destination *storage.PolicyOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
 
 func init() {
 	SchemeBuilder.Register(&Policy{}, &PolicyList{})

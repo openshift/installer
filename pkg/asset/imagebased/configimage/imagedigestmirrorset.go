@@ -8,11 +8,11 @@ import (
 	"os"
 	"path/filepath"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sjson "sigs.k8s.io/json"
 
 	apicfgv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -51,7 +51,7 @@ func (ids *ImageDigestMirrorSet) Generate(_ context.Context, dependencies asset.
 		return nil
 	}
 
-	ids.Config = convertIDSToIDMS(installConfig.Config.ImageDigestSources)
+	ids.Config = manifests.ConvertImageDigestMirrorSet(installConfig.Config.ImageDigestSources)
 
 	imageDigestMirrorSetData, err := json.Marshal(ids.Config)
 	if err != nil {
@@ -93,7 +93,7 @@ func (ids *ImageDigestMirrorSet) Load(f asset.FileFetcher) (bool, error) {
 		return false, fmt.Errorf("failed to unmarshal %s: invalid JSON syntax", imageDigestMirrorSetFilename)
 	}
 
-	ids.File, ids.Config = file, convertIDSToIDMS(config)
+	ids.File, ids.Config = file, manifests.ConvertImageDigestMirrorSet(config)
 	if err = ids.finish(); err != nil {
 		return false, err
 	}
@@ -106,30 +106,4 @@ func (ids *ImageDigestMirrorSet) finish() error {
 		return errors.New("missing configuration or manifest file")
 	}
 	return nil
-}
-
-func convertIDSToIDMS(imageDigestSources []types.ImageDigestSource) *apicfgv1.ImageDigestMirrorSet {
-	imageDigestMirrorSet := &apicfgv1.ImageDigestMirrorSet{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: apicfgv1.SchemeGroupVersion.String(),
-			Kind:       "ImageDigestMirrorSet",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "image-digest-mirror",
-			// not namespaced
-		},
-	}
-
-	imageDigestMirrorSet.Spec.ImageDigestMirrors = make([]apicfgv1.ImageDigestMirrors, len(imageDigestSources))
-
-	for idsi, imageDigestSource := range imageDigestSources {
-		mirrors := make([]apicfgv1.ImageMirror, len(imageDigestSource.Mirrors))
-		for mi, mirror := range imageDigestSource.Mirrors {
-			mirrors[mi] = apicfgv1.ImageMirror(mirror)
-		}
-
-		imageDigestMirrorSet.Spec.ImageDigestMirrors[idsi] = apicfgv1.ImageDigestMirrors{Source: imageDigestSource.Source, Mirrors: mirrors}
-	}
-
-	return imageDigestMirrorSet
 }

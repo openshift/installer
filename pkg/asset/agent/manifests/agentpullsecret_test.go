@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -149,7 +149,7 @@ stringData:
 		{
 			name:          "empty",
 			data:          "",
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret is empty",
+			expectedError: "invalid PullSecret configuration: stringData: Required value: the pull secret is empty",
 		},
 		{
 			name: "missing-string-data",
@@ -159,7 +159,7 @@ kind: Secret
 metadata:
   name: pull-secret
   namespace: cluster-0`,
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret is empty",
+			expectedError: "invalid PullSecret configuration: stringData: Required value: the pull secret is empty",
 		},
 		{
 			name: "missing-secret-key",
@@ -171,7 +171,7 @@ metadata:
   namespace: cluster-0
 stringData:
   .dockerconfigjson:`,
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret does not contain any data",
+			expectedError: "invalid PullSecret configuration: stringData: Required value: the pull secret does not contain any data",
 		},
 		{
 			name: "bad-secret-format",
@@ -183,7 +183,7 @@ metadata:
   namespace: cluster-0
 stringData:
   .dockerconfigjson: 'foo'`,
-			expectedError: "invalid PullSecret configuration: StringData: Invalid value: \"foo\": invalid character 'o' in literal false (expecting 'a')",
+			expectedError: "invalid PullSecret configuration: stringData: Invalid value: \"foo\": invalid character 'o' in literal false (expecting 'a')",
 		},
 		{
 			name:       "file-not-found",

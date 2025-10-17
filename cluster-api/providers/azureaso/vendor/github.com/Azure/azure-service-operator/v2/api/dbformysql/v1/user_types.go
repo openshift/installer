@@ -360,7 +360,7 @@ type AADUserSpec struct {
 }
 
 type UserStatus struct {
-	//Conditions: The observed state of the resource
+	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 }
 

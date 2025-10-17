@@ -76,7 +76,7 @@ func network(config *types.InstallConfig, machines []*machineapi.AWSMachineProvi
 			Region: config.Platform.AWS.Region,
 			Count:  2,
 		})
-		if len(config.Platform.AWS.Subnets) == 0 {
+		if len(config.Platform.AWS.VPC.Subnets) == 0 {
 			ret = append(ret, []quota.Constraint{{
 				Name:   "vpc/L-F678F1CE", // 1 vpc
 				Region: config.Platform.AWS.Region,
@@ -135,13 +135,13 @@ func machineTypeToQuota(t string, instanceTypes map[string]InstanceTypeInfo) quo
 	info, ok := instanceTypes[t]
 	warnMessage := fmt.Sprintf("The instance class is unknown for the instance type %q. The vCPU quota check will be skipped.", t)
 	if !ok {
-		logrus.Warnf(warnMessage)
+		logrus.Warnf("%s", warnMessage)
 		return quota.Constraint{Name: "ec2/L-7295265B", Count: 0}
 	}
 	r := regexp.MustCompile(`^([A-Za-z]+)[0-9]`)
 	match := r.FindStringSubmatch(strings.ToLower(t))
 	if match == nil {
-		logrus.Warnf(warnMessage)
+		logrus.Warnf("%s", warnMessage)
 		return quota.Constraint{Name: "ec2/L-7295265B", Count: 0}
 	}
 	switch match[1] {
@@ -152,7 +152,7 @@ func machineTypeToQuota(t string, instanceTypes map[string]InstanceTypeInfo) quo
 	case "x":
 		return quota.Constraint{Name: "ec2/L-7295265B", Count: info.vCPU}
 	default:
-		logrus.Warnf(warnMessage)
+		logrus.Warnf("%s", warnMessage)
 		return quota.Constraint{Name: "ec2/L-7295265B", Count: 0}
 	}
 }

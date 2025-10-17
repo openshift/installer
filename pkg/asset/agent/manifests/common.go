@@ -3,6 +3,7 @@ package manifests
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset/agent"
@@ -45,7 +46,7 @@ func getProxy(proxy *types.Proxy, machineNetwork *[]types.MachineNetworkEntry, r
 		if cidr != "" {
 			if noProxy == "" {
 				noProxy = cidr
-			} else {
+			} else if !strings.Contains(noProxy, cidr) {
 				noProxy = fmt.Sprintf("%s,%s", noProxy, cidr)
 			}
 		}

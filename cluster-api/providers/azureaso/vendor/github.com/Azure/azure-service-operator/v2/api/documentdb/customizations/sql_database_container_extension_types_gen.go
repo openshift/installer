@@ -6,6 +6,8 @@ package customizations
 import (
 	v20210515 "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515"
 	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515/storage"
+	v20231115 "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115"
+	v20231115s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type SqlDatabaseContainerExtension struct {
 func (extension *SqlDatabaseContainerExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20210515.SqlDatabaseContainer{},
-		&v20210515s.SqlDatabaseContainer{}}
+		&v20210515s.SqlDatabaseContainer{},
+		&v20231115.SqlDatabaseContainer{},
+		&v20231115s.SqlDatabaseContainer{}}
 }

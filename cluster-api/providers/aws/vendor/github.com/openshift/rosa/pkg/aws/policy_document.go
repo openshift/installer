@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
+	asv1 "github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
@@ -314,7 +315,7 @@ func GenerateOperatorRolePolicyDoc(partition string, cluster *cmv1.Cluster,
 		accountID, operator, policyDetails)
 }
 
-func GenerateAddonPolicyDoc(partition string, cluster *cmv1.Cluster, accountID string, cr *cmv1.CredentialRequest,
+func GenerateAddonPolicyDoc(partition string, cluster *cmv1.Cluster, accountID string, cr *asv1.CredentialRequest,
 	policyDetails string) (string, error) {
 	service_accounts := fmt.Sprintf("system:serviceaccount:%s:%s", cr.Namespace(), cr.ServiceAccount())
 	return GenerateRolePolicyDoc(partition, cluster.AWS().STS().OIDCEndpointURL(),

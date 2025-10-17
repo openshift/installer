@@ -5,9 +5,12 @@ package storage
 
 import (
 	"fmt"
-	v20230101s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,8 +30,8 @@ import (
 type StorageAccountsBlobServicesContainer struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              StorageAccounts_BlobServices_Container_Spec   `json:"spec,omitempty"`
-	Status            StorageAccounts_BlobServices_Container_STATUS `json:"status,omitempty"`
+	Spec              StorageAccountsBlobServicesContainer_Spec   `json:"spec,omitempty"`
+	Status            StorageAccountsBlobServicesContainer_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &StorageAccountsBlobServicesContainer{}
@@ -47,7 +50,7 @@ var _ conversion.Convertible = &StorageAccountsBlobServicesContainer{}
 
 // ConvertFrom populates our StorageAccountsBlobServicesContainer from the provided hub StorageAccountsBlobServicesContainer
 func (container *StorageAccountsBlobServicesContainer) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230101s.StorageAccountsBlobServicesContainer)
+	source, ok := hub.(*storage.StorageAccountsBlobServicesContainer)
 	if !ok {
 		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccountsBlobServicesContainer but received %T instead", hub)
 	}
@@ -57,12 +60,32 @@ func (container *StorageAccountsBlobServicesContainer) ConvertFrom(hub conversio
 
 // ConvertTo populates the provided hub StorageAccountsBlobServicesContainer from our StorageAccountsBlobServicesContainer
 func (container *StorageAccountsBlobServicesContainer) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230101s.StorageAccountsBlobServicesContainer)
+	destination, ok := hub.(*storage.StorageAccountsBlobServicesContainer)
 	if !ok {
 		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccountsBlobServicesContainer but received %T instead", hub)
 	}
 
 	return container.AssignProperties_To_StorageAccountsBlobServicesContainer(destination)
+}
+
+var _ configmaps.Exporter = &StorageAccountsBlobServicesContainer{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (container *StorageAccountsBlobServicesContainer) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if container.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return container.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &StorageAccountsBlobServicesContainer{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (container *StorageAccountsBlobServicesContainer) SecretDestinationExpressions() []*core.DestinationExpression {
+	if container.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return container.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &StorageAccountsBlobServicesContainer{}
@@ -74,7 +97,7 @@ func (container *StorageAccountsBlobServicesContainer) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-09-01"
 func (container StorageAccountsBlobServicesContainer) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-09-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -108,7 +131,7 @@ func (container *StorageAccountsBlobServicesContainer) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (container *StorageAccountsBlobServicesContainer) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &StorageAccounts_BlobServices_Container_STATUS{}
+	return &StorageAccountsBlobServicesContainer_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -120,13 +143,13 @@ func (container *StorageAccountsBlobServicesContainer) Owner() *genruntime.Resou
 // SetStatus sets the status of this resource
 func (container *StorageAccountsBlobServicesContainer) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*StorageAccounts_BlobServices_Container_STATUS); ok {
+	if st, ok := status.(*StorageAccountsBlobServicesContainer_STATUS); ok {
 		container.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st StorageAccounts_BlobServices_Container_STATUS
+	var st StorageAccountsBlobServicesContainer_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -137,24 +160,24 @@ func (container *StorageAccountsBlobServicesContainer) SetStatus(status genrunti
 }
 
 // AssignProperties_From_StorageAccountsBlobServicesContainer populates our StorageAccountsBlobServicesContainer from the provided source StorageAccountsBlobServicesContainer
-func (container *StorageAccountsBlobServicesContainer) AssignProperties_From_StorageAccountsBlobServicesContainer(source *v20230101s.StorageAccountsBlobServicesContainer) error {
+func (container *StorageAccountsBlobServicesContainer) AssignProperties_From_StorageAccountsBlobServicesContainer(source *storage.StorageAccountsBlobServicesContainer) error {
 
 	// ObjectMeta
 	container.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec StorageAccounts_BlobServices_Container_Spec
-	err := spec.AssignProperties_From_StorageAccounts_BlobServices_Container_Spec(&source.Spec)
+	var spec StorageAccountsBlobServicesContainer_Spec
+	err := spec.AssignProperties_From_StorageAccountsBlobServicesContainer_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccounts_BlobServices_Container_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsBlobServicesContainer_Spec() to populate field Spec")
 	}
 	container.Spec = spec
 
 	// Status
-	var status StorageAccounts_BlobServices_Container_STATUS
-	err = status.AssignProperties_From_StorageAccounts_BlobServices_Container_STATUS(&source.Status)
+	var status StorageAccountsBlobServicesContainer_STATUS
+	err = status.AssignProperties_From_StorageAccountsBlobServicesContainer_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccounts_BlobServices_Container_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsBlobServicesContainer_STATUS() to populate field Status")
 	}
 	container.Status = status
 
@@ -172,24 +195,24 @@ func (container *StorageAccountsBlobServicesContainer) AssignProperties_From_Sto
 }
 
 // AssignProperties_To_StorageAccountsBlobServicesContainer populates the provided destination StorageAccountsBlobServicesContainer from our StorageAccountsBlobServicesContainer
-func (container *StorageAccountsBlobServicesContainer) AssignProperties_To_StorageAccountsBlobServicesContainer(destination *v20230101s.StorageAccountsBlobServicesContainer) error {
+func (container *StorageAccountsBlobServicesContainer) AssignProperties_To_StorageAccountsBlobServicesContainer(destination *storage.StorageAccountsBlobServicesContainer) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *container.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230101s.StorageAccounts_BlobServices_Container_Spec
-	err := container.Spec.AssignProperties_To_StorageAccounts_BlobServices_Container_Spec(&spec)
+	var spec storage.StorageAccountsBlobServicesContainer_Spec
+	err := container.Spec.AssignProperties_To_StorageAccountsBlobServicesContainer_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccounts_BlobServices_Container_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsBlobServicesContainer_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20230101s.StorageAccounts_BlobServices_Container_STATUS
-	err = container.Status.AssignProperties_To_StorageAccounts_BlobServices_Container_STATUS(&status)
+	var status storage.StorageAccountsBlobServicesContainer_STATUS
+	err = container.Status.AssignProperties_To_StorageAccountsBlobServicesContainer_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccounts_BlobServices_Container_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsBlobServicesContainer_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -227,22 +250,23 @@ type StorageAccountsBlobServicesContainerList struct {
 }
 
 type augmentConversionForStorageAccountsBlobServicesContainer interface {
-	AssignPropertiesFrom(src *v20230101s.StorageAccountsBlobServicesContainer) error
-	AssignPropertiesTo(dst *v20230101s.StorageAccountsBlobServicesContainer) error
+	AssignPropertiesFrom(src *storage.StorageAccountsBlobServicesContainer) error
+	AssignPropertiesTo(dst *storage.StorageAccountsBlobServicesContainer) error
 }
 
-// Storage version of v1api20220901.StorageAccounts_BlobServices_Container_Spec
-type StorageAccounts_BlobServices_Container_Spec struct {
+// Storage version of v1api20220901.StorageAccountsBlobServicesContainer_Spec
+type StorageAccountsBlobServicesContainer_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                      string                          `json:"azureName,omitempty"`
-	DefaultEncryptionScope         *string                         `json:"defaultEncryptionScope,omitempty"`
-	DenyEncryptionScopeOverride    *bool                           `json:"denyEncryptionScopeOverride,omitempty"`
-	EnableNfsV3AllSquash           *bool                           `json:"enableNfsV3AllSquash,omitempty"`
-	EnableNfsV3RootSquash          *bool                           `json:"enableNfsV3RootSquash,omitempty"`
-	ImmutableStorageWithVersioning *ImmutableStorageWithVersioning `json:"immutableStorageWithVersioning,omitempty"`
-	Metadata                       map[string]string               `json:"metadata,omitempty"`
-	OriginalVersion                string                          `json:"originalVersion,omitempty"`
+	AzureName                      string                                            `json:"azureName,omitempty"`
+	DefaultEncryptionScope         *string                                           `json:"defaultEncryptionScope,omitempty"`
+	DenyEncryptionScopeOverride    *bool                                             `json:"denyEncryptionScopeOverride,omitempty"`
+	EnableNfsV3AllSquash           *bool                                             `json:"enableNfsV3AllSquash,omitempty"`
+	EnableNfsV3RootSquash          *bool                                             `json:"enableNfsV3RootSquash,omitempty"`
+	ImmutableStorageWithVersioning *ImmutableStorageWithVersioning                   `json:"immutableStorageWithVersioning,omitempty"`
+	Metadata                       map[string]string                                 `json:"metadata,omitempty"`
+	OperatorSpec                   *StorageAccountsBlobServicesContainerOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion                string                                            `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -253,25 +277,25 @@ type StorageAccounts_BlobServices_Container_Spec struct {
 	PublicAccess *string                            `json:"publicAccess,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &StorageAccounts_BlobServices_Container_Spec{}
+var _ genruntime.ConvertibleSpec = &StorageAccountsBlobServicesContainer_Spec{}
 
-// ConvertSpecFrom populates our StorageAccounts_BlobServices_Container_Spec from the provided source
-func (container *StorageAccounts_BlobServices_Container_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230101s.StorageAccounts_BlobServices_Container_Spec)
+// ConvertSpecFrom populates our StorageAccountsBlobServicesContainer_Spec from the provided source
+func (container *StorageAccountsBlobServicesContainer_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.StorageAccountsBlobServicesContainer_Spec)
 	if ok {
 		// Populate our instance from source
-		return container.AssignProperties_From_StorageAccounts_BlobServices_Container_Spec(src)
+		return container.AssignProperties_From_StorageAccountsBlobServicesContainer_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230101s.StorageAccounts_BlobServices_Container_Spec{}
+	src = &storage.StorageAccountsBlobServicesContainer_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = container.AssignProperties_From_StorageAccounts_BlobServices_Container_Spec(src)
+	err = container.AssignProperties_From_StorageAccountsBlobServicesContainer_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -279,17 +303,17 @@ func (container *StorageAccounts_BlobServices_Container_Spec) ConvertSpecFrom(so
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our StorageAccounts_BlobServices_Container_Spec
-func (container *StorageAccounts_BlobServices_Container_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230101s.StorageAccounts_BlobServices_Container_Spec)
+// ConvertSpecTo populates the provided destination from our StorageAccountsBlobServicesContainer_Spec
+func (container *StorageAccountsBlobServicesContainer_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.StorageAccountsBlobServicesContainer_Spec)
 	if ok {
 		// Populate destination from our instance
-		return container.AssignProperties_To_StorageAccounts_BlobServices_Container_Spec(dst)
+		return container.AssignProperties_To_StorageAccountsBlobServicesContainer_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230101s.StorageAccounts_BlobServices_Container_Spec{}
-	err := container.AssignProperties_To_StorageAccounts_BlobServices_Container_Spec(dst)
+	dst = &storage.StorageAccountsBlobServicesContainer_Spec{}
+	err := container.AssignProperties_To_StorageAccountsBlobServicesContainer_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -303,8 +327,8 @@ func (container *StorageAccounts_BlobServices_Container_Spec) ConvertSpecTo(dest
 	return nil
 }
 
-// AssignProperties_From_StorageAccounts_BlobServices_Container_Spec populates our StorageAccounts_BlobServices_Container_Spec from the provided source StorageAccounts_BlobServices_Container_Spec
-func (container *StorageAccounts_BlobServices_Container_Spec) AssignProperties_From_StorageAccounts_BlobServices_Container_Spec(source *v20230101s.StorageAccounts_BlobServices_Container_Spec) error {
+// AssignProperties_From_StorageAccountsBlobServicesContainer_Spec populates our StorageAccountsBlobServicesContainer_Spec from the provided source StorageAccountsBlobServicesContainer_Spec
+func (container *StorageAccountsBlobServicesContainer_Spec) AssignProperties_From_StorageAccountsBlobServicesContainer_Spec(source *storage.StorageAccountsBlobServicesContainer_Spec) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -353,6 +377,18 @@ func (container *StorageAccounts_BlobServices_Container_Spec) AssignProperties_F
 	// Metadata
 	container.Metadata = genruntime.CloneMapOfStringToString(source.Metadata)
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec StorageAccountsBlobServicesContainerOperatorSpec
+		err := operatorSpec.AssignProperties_From_StorageAccountsBlobServicesContainerOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsBlobServicesContainerOperatorSpec() to populate field OperatorSpec")
+		}
+		container.OperatorSpec = &operatorSpec
+	} else {
+		container.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	container.OriginalVersion = source.OriginalVersion
 
@@ -374,9 +410,9 @@ func (container *StorageAccounts_BlobServices_Container_Spec) AssignProperties_F
 		container.PropertyBag = nil
 	}
 
-	// Invoke the augmentConversionForStorageAccounts_BlobServices_Container_Spec interface (if implemented) to customize the conversion
+	// Invoke the augmentConversionForStorageAccountsBlobServicesContainer_Spec interface (if implemented) to customize the conversion
 	var containerAsAny any = container
-	if augmentedContainer, ok := containerAsAny.(augmentConversionForStorageAccounts_BlobServices_Container_Spec); ok {
+	if augmentedContainer, ok := containerAsAny.(augmentConversionForStorageAccountsBlobServicesContainer_Spec); ok {
 		err := augmentedContainer.AssignPropertiesFrom(source)
 		if err != nil {
 			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
@@ -387,8 +423,8 @@ func (container *StorageAccounts_BlobServices_Container_Spec) AssignProperties_F
 	return nil
 }
 
-// AssignProperties_To_StorageAccounts_BlobServices_Container_Spec populates the provided destination StorageAccounts_BlobServices_Container_Spec from our StorageAccounts_BlobServices_Container_Spec
-func (container *StorageAccounts_BlobServices_Container_Spec) AssignProperties_To_StorageAccounts_BlobServices_Container_Spec(destination *v20230101s.StorageAccounts_BlobServices_Container_Spec) error {
+// AssignProperties_To_StorageAccountsBlobServicesContainer_Spec populates the provided destination StorageAccountsBlobServicesContainer_Spec from our StorageAccountsBlobServicesContainer_Spec
+func (container *StorageAccountsBlobServicesContainer_Spec) AssignProperties_To_StorageAccountsBlobServicesContainer_Spec(destination *storage.StorageAccountsBlobServicesContainer_Spec) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(container.PropertyBag)
 
@@ -424,7 +460,7 @@ func (container *StorageAccounts_BlobServices_Container_Spec) AssignProperties_T
 
 	// ImmutableStorageWithVersioning
 	if container.ImmutableStorageWithVersioning != nil {
-		var immutableStorageWithVersioning v20230101s.ImmutableStorageWithVersioning
+		var immutableStorageWithVersioning storage.ImmutableStorageWithVersioning
 		err := container.ImmutableStorageWithVersioning.AssignProperties_To_ImmutableStorageWithVersioning(&immutableStorageWithVersioning)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ImmutableStorageWithVersioning() to populate field ImmutableStorageWithVersioning")
@@ -436,6 +472,18 @@ func (container *StorageAccounts_BlobServices_Container_Spec) AssignProperties_T
 
 	// Metadata
 	destination.Metadata = genruntime.CloneMapOfStringToString(container.Metadata)
+
+	// OperatorSpec
+	if container.OperatorSpec != nil {
+		var operatorSpec storage.StorageAccountsBlobServicesContainerOperatorSpec
+		err := container.OperatorSpec.AssignProperties_To_StorageAccountsBlobServicesContainerOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsBlobServicesContainerOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = container.OriginalVersion
@@ -458,9 +506,9 @@ func (container *StorageAccounts_BlobServices_Container_Spec) AssignProperties_T
 		destination.PropertyBag = nil
 	}
 
-	// Invoke the augmentConversionForStorageAccounts_BlobServices_Container_Spec interface (if implemented) to customize the conversion
+	// Invoke the augmentConversionForStorageAccountsBlobServicesContainer_Spec interface (if implemented) to customize the conversion
 	var containerAsAny any = container
-	if augmentedContainer, ok := containerAsAny.(augmentConversionForStorageAccounts_BlobServices_Container_Spec); ok {
+	if augmentedContainer, ok := containerAsAny.(augmentConversionForStorageAccountsBlobServicesContainer_Spec); ok {
 		err := augmentedContainer.AssignPropertiesTo(destination)
 		if err != nil {
 			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
@@ -471,8 +519,8 @@ func (container *StorageAccounts_BlobServices_Container_Spec) AssignProperties_T
 	return nil
 }
 
-// Storage version of v1api20220901.StorageAccounts_BlobServices_Container_STATUS
-type StorageAccounts_BlobServices_Container_STATUS struct {
+// Storage version of v1api20220901.StorageAccountsBlobServicesContainer_STATUS
+type StorageAccountsBlobServicesContainer_STATUS struct {
 	Conditions                     []conditions.Condition                 `json:"conditions,omitempty"`
 	DefaultEncryptionScope         *string                                `json:"defaultEncryptionScope,omitempty"`
 	Deleted                        *bool                                  `json:"deleted,omitempty"`
@@ -500,25 +548,25 @@ type StorageAccounts_BlobServices_Container_STATUS struct {
 	Version                        *string                                `json:"version,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &StorageAccounts_BlobServices_Container_STATUS{}
+var _ genruntime.ConvertibleStatus = &StorageAccountsBlobServicesContainer_STATUS{}
 
-// ConvertStatusFrom populates our StorageAccounts_BlobServices_Container_STATUS from the provided source
-func (container *StorageAccounts_BlobServices_Container_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230101s.StorageAccounts_BlobServices_Container_STATUS)
+// ConvertStatusFrom populates our StorageAccountsBlobServicesContainer_STATUS from the provided source
+func (container *StorageAccountsBlobServicesContainer_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.StorageAccountsBlobServicesContainer_STATUS)
 	if ok {
 		// Populate our instance from source
-		return container.AssignProperties_From_StorageAccounts_BlobServices_Container_STATUS(src)
+		return container.AssignProperties_From_StorageAccountsBlobServicesContainer_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230101s.StorageAccounts_BlobServices_Container_STATUS{}
+	src = &storage.StorageAccountsBlobServicesContainer_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = container.AssignProperties_From_StorageAccounts_BlobServices_Container_STATUS(src)
+	err = container.AssignProperties_From_StorageAccountsBlobServicesContainer_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -526,17 +574,17 @@ func (container *StorageAccounts_BlobServices_Container_STATUS) ConvertStatusFro
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our StorageAccounts_BlobServices_Container_STATUS
-func (container *StorageAccounts_BlobServices_Container_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230101s.StorageAccounts_BlobServices_Container_STATUS)
+// ConvertStatusTo populates the provided destination from our StorageAccountsBlobServicesContainer_STATUS
+func (container *StorageAccountsBlobServicesContainer_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.StorageAccountsBlobServicesContainer_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return container.AssignProperties_To_StorageAccounts_BlobServices_Container_STATUS(dst)
+		return container.AssignProperties_To_StorageAccountsBlobServicesContainer_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230101s.StorageAccounts_BlobServices_Container_STATUS{}
-	err := container.AssignProperties_To_StorageAccounts_BlobServices_Container_STATUS(dst)
+	dst = &storage.StorageAccountsBlobServicesContainer_STATUS{}
+	err := container.AssignProperties_To_StorageAccountsBlobServicesContainer_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -550,8 +598,8 @@ func (container *StorageAccounts_BlobServices_Container_STATUS) ConvertStatusTo(
 	return nil
 }
 
-// AssignProperties_From_StorageAccounts_BlobServices_Container_STATUS populates our StorageAccounts_BlobServices_Container_STATUS from the provided source StorageAccounts_BlobServices_Container_STATUS
-func (container *StorageAccounts_BlobServices_Container_STATUS) AssignProperties_From_StorageAccounts_BlobServices_Container_STATUS(source *v20230101s.StorageAccounts_BlobServices_Container_STATUS) error {
+// AssignProperties_From_StorageAccountsBlobServicesContainer_STATUS populates our StorageAccountsBlobServicesContainer_STATUS from the provided source StorageAccountsBlobServicesContainer_STATUS
+func (container *StorageAccountsBlobServicesContainer_STATUS) AssignProperties_From_StorageAccountsBlobServicesContainer_STATUS(source *storage.StorageAccountsBlobServicesContainer_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -691,9 +739,9 @@ func (container *StorageAccounts_BlobServices_Container_STATUS) AssignProperties
 		container.PropertyBag = nil
 	}
 
-	// Invoke the augmentConversionForStorageAccounts_BlobServices_Container_STATUS interface (if implemented) to customize the conversion
+	// Invoke the augmentConversionForStorageAccountsBlobServicesContainer_STATUS interface (if implemented) to customize the conversion
 	var containerAsAny any = container
-	if augmentedContainer, ok := containerAsAny.(augmentConversionForStorageAccounts_BlobServices_Container_STATUS); ok {
+	if augmentedContainer, ok := containerAsAny.(augmentConversionForStorageAccountsBlobServicesContainer_STATUS); ok {
 		err := augmentedContainer.AssignPropertiesFrom(source)
 		if err != nil {
 			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
@@ -704,8 +752,8 @@ func (container *StorageAccounts_BlobServices_Container_STATUS) AssignProperties
 	return nil
 }
 
-// AssignProperties_To_StorageAccounts_BlobServices_Container_STATUS populates the provided destination StorageAccounts_BlobServices_Container_STATUS from our StorageAccounts_BlobServices_Container_STATUS
-func (container *StorageAccounts_BlobServices_Container_STATUS) AssignProperties_To_StorageAccounts_BlobServices_Container_STATUS(destination *v20230101s.StorageAccounts_BlobServices_Container_STATUS) error {
+// AssignProperties_To_StorageAccountsBlobServicesContainer_STATUS populates the provided destination StorageAccountsBlobServicesContainer_STATUS from our StorageAccountsBlobServicesContainer_STATUS
+func (container *StorageAccountsBlobServicesContainer_STATUS) AssignProperties_To_StorageAccountsBlobServicesContainer_STATUS(destination *storage.StorageAccountsBlobServicesContainer_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(container.PropertyBag)
 
@@ -774,7 +822,7 @@ func (container *StorageAccounts_BlobServices_Container_STATUS) AssignProperties
 
 	// ImmutabilityPolicy
 	if container.ImmutabilityPolicy != nil {
-		var immutabilityPolicy v20230101s.ImmutabilityPolicyProperties_STATUS
+		var immutabilityPolicy storage.ImmutabilityPolicyProperties_STATUS
 		err := container.ImmutabilityPolicy.AssignProperties_To_ImmutabilityPolicyProperties_STATUS(&immutabilityPolicy)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ImmutabilityPolicyProperties_STATUS() to populate field ImmutabilityPolicy")
@@ -786,7 +834,7 @@ func (container *StorageAccounts_BlobServices_Container_STATUS) AssignProperties
 
 	// ImmutableStorageWithVersioning
 	if container.ImmutableStorageWithVersioning != nil {
-		var immutableStorageWithVersioning v20230101s.ImmutableStorageWithVersioning_STATUS
+		var immutableStorageWithVersioning storage.ImmutableStorageWithVersioning_STATUS
 		err := container.ImmutableStorageWithVersioning.AssignProperties_To_ImmutableStorageWithVersioning_STATUS(&immutableStorageWithVersioning)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ImmutableStorageWithVersioning_STATUS() to populate field ImmutableStorageWithVersioning")
@@ -810,7 +858,7 @@ func (container *StorageAccounts_BlobServices_Container_STATUS) AssignProperties
 
 	// LegalHold
 	if container.LegalHold != nil {
-		var legalHold v20230101s.LegalHoldProperties_STATUS
+		var legalHold storage.LegalHoldProperties_STATUS
 		err := container.LegalHold.AssignProperties_To_LegalHoldProperties_STATUS(&legalHold)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_LegalHoldProperties_STATUS() to populate field LegalHold")
@@ -845,9 +893,9 @@ func (container *StorageAccounts_BlobServices_Container_STATUS) AssignProperties
 		destination.PropertyBag = nil
 	}
 
-	// Invoke the augmentConversionForStorageAccounts_BlobServices_Container_STATUS interface (if implemented) to customize the conversion
+	// Invoke the augmentConversionForStorageAccountsBlobServicesContainer_STATUS interface (if implemented) to customize the conversion
 	var containerAsAny any = container
-	if augmentedContainer, ok := containerAsAny.(augmentConversionForStorageAccounts_BlobServices_Container_STATUS); ok {
+	if augmentedContainer, ok := containerAsAny.(augmentConversionForStorageAccountsBlobServicesContainer_STATUS); ok {
 		err := augmentedContainer.AssignPropertiesTo(destination)
 		if err != nil {
 			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
@@ -858,14 +906,14 @@ func (container *StorageAccounts_BlobServices_Container_STATUS) AssignProperties
 	return nil
 }
 
-type augmentConversionForStorageAccounts_BlobServices_Container_Spec interface {
-	AssignPropertiesFrom(src *v20230101s.StorageAccounts_BlobServices_Container_Spec) error
-	AssignPropertiesTo(dst *v20230101s.StorageAccounts_BlobServices_Container_Spec) error
+type augmentConversionForStorageAccountsBlobServicesContainer_Spec interface {
+	AssignPropertiesFrom(src *storage.StorageAccountsBlobServicesContainer_Spec) error
+	AssignPropertiesTo(dst *storage.StorageAccountsBlobServicesContainer_Spec) error
 }
 
-type augmentConversionForStorageAccounts_BlobServices_Container_STATUS interface {
-	AssignPropertiesFrom(src *v20230101s.StorageAccounts_BlobServices_Container_STATUS) error
-	AssignPropertiesTo(dst *v20230101s.StorageAccounts_BlobServices_Container_STATUS) error
+type augmentConversionForStorageAccountsBlobServicesContainer_STATUS interface {
+	AssignPropertiesFrom(src *storage.StorageAccountsBlobServicesContainer_STATUS) error
+	AssignPropertiesTo(dst *storage.StorageAccountsBlobServicesContainer_STATUS) error
 }
 
 // Storage version of v1api20220901.ImmutabilityPolicyProperties_STATUS
@@ -881,7 +929,7 @@ type ImmutabilityPolicyProperties_STATUS struct {
 }
 
 // AssignProperties_From_ImmutabilityPolicyProperties_STATUS populates our ImmutabilityPolicyProperties_STATUS from the provided source ImmutabilityPolicyProperties_STATUS
-func (properties *ImmutabilityPolicyProperties_STATUS) AssignProperties_From_ImmutabilityPolicyProperties_STATUS(source *v20230101s.ImmutabilityPolicyProperties_STATUS) error {
+func (properties *ImmutabilityPolicyProperties_STATUS) AssignProperties_From_ImmutabilityPolicyProperties_STATUS(source *storage.ImmutabilityPolicyProperties_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -949,7 +997,7 @@ func (properties *ImmutabilityPolicyProperties_STATUS) AssignProperties_From_Imm
 }
 
 // AssignProperties_To_ImmutabilityPolicyProperties_STATUS populates the provided destination ImmutabilityPolicyProperties_STATUS from our ImmutabilityPolicyProperties_STATUS
-func (properties *ImmutabilityPolicyProperties_STATUS) AssignProperties_To_ImmutabilityPolicyProperties_STATUS(destination *v20230101s.ImmutabilityPolicyProperties_STATUS) error {
+func (properties *ImmutabilityPolicyProperties_STATUS) AssignProperties_To_ImmutabilityPolicyProperties_STATUS(destination *storage.ImmutabilityPolicyProperties_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
 
@@ -980,11 +1028,11 @@ func (properties *ImmutabilityPolicyProperties_STATUS) AssignProperties_To_Immut
 
 	// UpdateHistory
 	if properties.UpdateHistory != nil {
-		updateHistoryList := make([]v20230101s.UpdateHistoryProperty_STATUS, len(properties.UpdateHistory))
+		updateHistoryList := make([]storage.UpdateHistoryProperty_STATUS, len(properties.UpdateHistory))
 		for updateHistoryIndex, updateHistoryItem := range properties.UpdateHistory {
 			// Shadow the loop variable to avoid aliasing
 			updateHistoryItem := updateHistoryItem
-			var updateHistory v20230101s.UpdateHistoryProperty_STATUS
+			var updateHistory storage.UpdateHistoryProperty_STATUS
 			err := updateHistoryItem.AssignProperties_To_UpdateHistoryProperty_STATUS(&updateHistory)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_UpdateHistoryProperty_STATUS() to populate field UpdateHistory")
@@ -1024,7 +1072,7 @@ type ImmutableStorageWithVersioning struct {
 }
 
 // AssignProperties_From_ImmutableStorageWithVersioning populates our ImmutableStorageWithVersioning from the provided source ImmutableStorageWithVersioning
-func (versioning *ImmutableStorageWithVersioning) AssignProperties_From_ImmutableStorageWithVersioning(source *v20230101s.ImmutableStorageWithVersioning) error {
+func (versioning *ImmutableStorageWithVersioning) AssignProperties_From_ImmutableStorageWithVersioning(source *storage.ImmutableStorageWithVersioning) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1057,7 +1105,7 @@ func (versioning *ImmutableStorageWithVersioning) AssignProperties_From_Immutabl
 }
 
 // AssignProperties_To_ImmutableStorageWithVersioning populates the provided destination ImmutableStorageWithVersioning from our ImmutableStorageWithVersioning
-func (versioning *ImmutableStorageWithVersioning) AssignProperties_To_ImmutableStorageWithVersioning(destination *v20230101s.ImmutableStorageWithVersioning) error {
+func (versioning *ImmutableStorageWithVersioning) AssignProperties_To_ImmutableStorageWithVersioning(destination *storage.ImmutableStorageWithVersioning) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(versioning.PropertyBag)
 
@@ -1099,7 +1147,7 @@ type ImmutableStorageWithVersioning_STATUS struct {
 }
 
 // AssignProperties_From_ImmutableStorageWithVersioning_STATUS populates our ImmutableStorageWithVersioning_STATUS from the provided source ImmutableStorageWithVersioning_STATUS
-func (versioning *ImmutableStorageWithVersioning_STATUS) AssignProperties_From_ImmutableStorageWithVersioning_STATUS(source *v20230101s.ImmutableStorageWithVersioning_STATUS) error {
+func (versioning *ImmutableStorageWithVersioning_STATUS) AssignProperties_From_ImmutableStorageWithVersioning_STATUS(source *storage.ImmutableStorageWithVersioning_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1138,7 +1186,7 @@ func (versioning *ImmutableStorageWithVersioning_STATUS) AssignProperties_From_I
 }
 
 // AssignProperties_To_ImmutableStorageWithVersioning_STATUS populates the provided destination ImmutableStorageWithVersioning_STATUS from our ImmutableStorageWithVersioning_STATUS
-func (versioning *ImmutableStorageWithVersioning_STATUS) AssignProperties_To_ImmutableStorageWithVersioning_STATUS(destination *v20230101s.ImmutableStorageWithVersioning_STATUS) error {
+func (versioning *ImmutableStorageWithVersioning_STATUS) AssignProperties_To_ImmutableStorageWithVersioning_STATUS(destination *storage.ImmutableStorageWithVersioning_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(versioning.PropertyBag)
 
@@ -1186,7 +1234,7 @@ type LegalHoldProperties_STATUS struct {
 }
 
 // AssignProperties_From_LegalHoldProperties_STATUS populates our LegalHoldProperties_STATUS from the provided source LegalHoldProperties_STATUS
-func (properties *LegalHoldProperties_STATUS) AssignProperties_From_LegalHoldProperties_STATUS(source *v20230101s.LegalHoldProperties_STATUS) error {
+func (properties *LegalHoldProperties_STATUS) AssignProperties_From_LegalHoldProperties_STATUS(source *storage.LegalHoldProperties_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1249,7 +1297,7 @@ func (properties *LegalHoldProperties_STATUS) AssignProperties_From_LegalHoldPro
 }
 
 // AssignProperties_To_LegalHoldProperties_STATUS populates the provided destination LegalHoldProperties_STATUS from our LegalHoldProperties_STATUS
-func (properties *LegalHoldProperties_STATUS) AssignProperties_To_LegalHoldProperties_STATUS(destination *v20230101s.LegalHoldProperties_STATUS) error {
+func (properties *LegalHoldProperties_STATUS) AssignProperties_To_LegalHoldProperties_STATUS(destination *storage.LegalHoldProperties_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
 
@@ -1263,7 +1311,7 @@ func (properties *LegalHoldProperties_STATUS) AssignProperties_To_LegalHoldPrope
 
 	// ProtectedAppendWritesHistory
 	if properties.ProtectedAppendWritesHistory != nil {
-		var protectedAppendWritesHistory v20230101s.ProtectedAppendWritesHistory_STATUS
+		var protectedAppendWritesHistory storage.ProtectedAppendWritesHistory_STATUS
 		err := properties.ProtectedAppendWritesHistory.AssignProperties_To_ProtectedAppendWritesHistory_STATUS(&protectedAppendWritesHistory)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ProtectedAppendWritesHistory_STATUS() to populate field ProtectedAppendWritesHistory")
@@ -1275,11 +1323,11 @@ func (properties *LegalHoldProperties_STATUS) AssignProperties_To_LegalHoldPrope
 
 	// Tags
 	if properties.Tags != nil {
-		tagList := make([]v20230101s.TagProperty_STATUS, len(properties.Tags))
+		tagList := make([]storage.TagProperty_STATUS, len(properties.Tags))
 		for tagIndex, tagItem := range properties.Tags {
 			// Shadow the loop variable to avoid aliasing
 			tagItem := tagItem
-			var tag v20230101s.TagProperty_STATUS
+			var tag storage.TagProperty_STATUS
 			err := tagItem.AssignProperties_To_TagProperty_STATUS(&tag)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_TagProperty_STATUS() to populate field Tags")
@@ -1311,24 +1359,159 @@ func (properties *LegalHoldProperties_STATUS) AssignProperties_To_LegalHoldPrope
 	return nil
 }
 
+// Storage version of v1api20220901.StorageAccountsBlobServicesContainerOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type StorageAccountsBlobServicesContainerOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_StorageAccountsBlobServicesContainerOperatorSpec populates our StorageAccountsBlobServicesContainerOperatorSpec from the provided source StorageAccountsBlobServicesContainerOperatorSpec
+func (operator *StorageAccountsBlobServicesContainerOperatorSpec) AssignProperties_From_StorageAccountsBlobServicesContainerOperatorSpec(source *storage.StorageAccountsBlobServicesContainerOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageAccountsBlobServicesContainerOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForStorageAccountsBlobServicesContainerOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_StorageAccountsBlobServicesContainerOperatorSpec populates the provided destination StorageAccountsBlobServicesContainerOperatorSpec from our StorageAccountsBlobServicesContainerOperatorSpec
+func (operator *StorageAccountsBlobServicesContainerOperatorSpec) AssignProperties_To_StorageAccountsBlobServicesContainerOperatorSpec(destination *storage.StorageAccountsBlobServicesContainerOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageAccountsBlobServicesContainerOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForStorageAccountsBlobServicesContainerOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 type augmentConversionForImmutabilityPolicyProperties_STATUS interface {
-	AssignPropertiesFrom(src *v20230101s.ImmutabilityPolicyProperties_STATUS) error
-	AssignPropertiesTo(dst *v20230101s.ImmutabilityPolicyProperties_STATUS) error
+	AssignPropertiesFrom(src *storage.ImmutabilityPolicyProperties_STATUS) error
+	AssignPropertiesTo(dst *storage.ImmutabilityPolicyProperties_STATUS) error
 }
 
 type augmentConversionForImmutableStorageWithVersioning interface {
-	AssignPropertiesFrom(src *v20230101s.ImmutableStorageWithVersioning) error
-	AssignPropertiesTo(dst *v20230101s.ImmutableStorageWithVersioning) error
+	AssignPropertiesFrom(src *storage.ImmutableStorageWithVersioning) error
+	AssignPropertiesTo(dst *storage.ImmutableStorageWithVersioning) error
 }
 
 type augmentConversionForImmutableStorageWithVersioning_STATUS interface {
-	AssignPropertiesFrom(src *v20230101s.ImmutableStorageWithVersioning_STATUS) error
-	AssignPropertiesTo(dst *v20230101s.ImmutableStorageWithVersioning_STATUS) error
+	AssignPropertiesFrom(src *storage.ImmutableStorageWithVersioning_STATUS) error
+	AssignPropertiesTo(dst *storage.ImmutableStorageWithVersioning_STATUS) error
 }
 
 type augmentConversionForLegalHoldProperties_STATUS interface {
-	AssignPropertiesFrom(src *v20230101s.LegalHoldProperties_STATUS) error
-	AssignPropertiesTo(dst *v20230101s.LegalHoldProperties_STATUS) error
+	AssignPropertiesFrom(src *storage.LegalHoldProperties_STATUS) error
+	AssignPropertiesTo(dst *storage.LegalHoldProperties_STATUS) error
+}
+
+type augmentConversionForStorageAccountsBlobServicesContainerOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.StorageAccountsBlobServicesContainerOperatorSpec) error
+	AssignPropertiesTo(dst *storage.StorageAccountsBlobServicesContainerOperatorSpec) error
 }
 
 // Storage version of v1api20220901.ProtectedAppendWritesHistory_STATUS
@@ -1340,7 +1523,7 @@ type ProtectedAppendWritesHistory_STATUS struct {
 }
 
 // AssignProperties_From_ProtectedAppendWritesHistory_STATUS populates our ProtectedAppendWritesHistory_STATUS from the provided source ProtectedAppendWritesHistory_STATUS
-func (history *ProtectedAppendWritesHistory_STATUS) AssignProperties_From_ProtectedAppendWritesHistory_STATUS(source *v20230101s.ProtectedAppendWritesHistory_STATUS) error {
+func (history *ProtectedAppendWritesHistory_STATUS) AssignProperties_From_ProtectedAppendWritesHistory_STATUS(source *storage.ProtectedAppendWritesHistory_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1376,7 +1559,7 @@ func (history *ProtectedAppendWritesHistory_STATUS) AssignProperties_From_Protec
 }
 
 // AssignProperties_To_ProtectedAppendWritesHistory_STATUS populates the provided destination ProtectedAppendWritesHistory_STATUS from our ProtectedAppendWritesHistory_STATUS
-func (history *ProtectedAppendWritesHistory_STATUS) AssignProperties_To_ProtectedAppendWritesHistory_STATUS(destination *v20230101s.ProtectedAppendWritesHistory_STATUS) error {
+func (history *ProtectedAppendWritesHistory_STATUS) AssignProperties_To_ProtectedAppendWritesHistory_STATUS(destination *storage.ProtectedAppendWritesHistory_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(history.PropertyBag)
 
@@ -1423,7 +1606,7 @@ type TagProperty_STATUS struct {
 }
 
 // AssignProperties_From_TagProperty_STATUS populates our TagProperty_STATUS from the provided source TagProperty_STATUS
-func (property *TagProperty_STATUS) AssignProperties_From_TagProperty_STATUS(source *v20230101s.TagProperty_STATUS) error {
+func (property *TagProperty_STATUS) AssignProperties_From_TagProperty_STATUS(source *storage.TagProperty_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1463,7 +1646,7 @@ func (property *TagProperty_STATUS) AssignProperties_From_TagProperty_STATUS(sou
 }
 
 // AssignProperties_To_TagProperty_STATUS populates the provided destination TagProperty_STATUS from our TagProperty_STATUS
-func (property *TagProperty_STATUS) AssignProperties_To_TagProperty_STATUS(destination *v20230101s.TagProperty_STATUS) error {
+func (property *TagProperty_STATUS) AssignProperties_To_TagProperty_STATUS(destination *storage.TagProperty_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(property.PropertyBag)
 
@@ -1517,7 +1700,7 @@ type UpdateHistoryProperty_STATUS struct {
 }
 
 // AssignProperties_From_UpdateHistoryProperty_STATUS populates our UpdateHistoryProperty_STATUS from the provided source UpdateHistoryProperty_STATUS
-func (property *UpdateHistoryProperty_STATUS) AssignProperties_From_UpdateHistoryProperty_STATUS(source *v20230101s.UpdateHistoryProperty_STATUS) error {
+func (property *UpdateHistoryProperty_STATUS) AssignProperties_From_UpdateHistoryProperty_STATUS(source *storage.UpdateHistoryProperty_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1576,7 +1759,7 @@ func (property *UpdateHistoryProperty_STATUS) AssignProperties_From_UpdateHistor
 }
 
 // AssignProperties_To_UpdateHistoryProperty_STATUS populates the provided destination UpdateHistoryProperty_STATUS from our UpdateHistoryProperty_STATUS
-func (property *UpdateHistoryProperty_STATUS) AssignProperties_To_UpdateHistoryProperty_STATUS(destination *v20230101s.UpdateHistoryProperty_STATUS) error {
+func (property *UpdateHistoryProperty_STATUS) AssignProperties_To_UpdateHistoryProperty_STATUS(destination *storage.UpdateHistoryProperty_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(property.PropertyBag)
 
@@ -1635,18 +1818,18 @@ func (property *UpdateHistoryProperty_STATUS) AssignProperties_To_UpdateHistoryP
 }
 
 type augmentConversionForProtectedAppendWritesHistory_STATUS interface {
-	AssignPropertiesFrom(src *v20230101s.ProtectedAppendWritesHistory_STATUS) error
-	AssignPropertiesTo(dst *v20230101s.ProtectedAppendWritesHistory_STATUS) error
+	AssignPropertiesFrom(src *storage.ProtectedAppendWritesHistory_STATUS) error
+	AssignPropertiesTo(dst *storage.ProtectedAppendWritesHistory_STATUS) error
 }
 
 type augmentConversionForTagProperty_STATUS interface {
-	AssignPropertiesFrom(src *v20230101s.TagProperty_STATUS) error
-	AssignPropertiesTo(dst *v20230101s.TagProperty_STATUS) error
+	AssignPropertiesFrom(src *storage.TagProperty_STATUS) error
+	AssignPropertiesTo(dst *storage.TagProperty_STATUS) error
 }
 
 type augmentConversionForUpdateHistoryProperty_STATUS interface {
-	AssignPropertiesFrom(src *v20230101s.UpdateHistoryProperty_STATUS) error
-	AssignPropertiesTo(dst *v20230101s.UpdateHistoryProperty_STATUS) error
+	AssignPropertiesFrom(src *storage.UpdateHistoryProperty_STATUS) error
+	AssignPropertiesTo(dst *storage.UpdateHistoryProperty_STATUS) error
 }
 
 func init() {

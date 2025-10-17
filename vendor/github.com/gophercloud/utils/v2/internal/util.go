@@ -5,12 +5,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"os/user"
+	"path/filepath"
 	"reflect"
 	"strings"
-
-	"github.com/mitchellh/go-homedir"
 )
 
 // RemainingKeys will inspect a struct and compare it to a map. Any struct
@@ -92,15 +91,20 @@ func pathOrContents(poc string) ([]byte, bool, error) {
 
 	path := poc
 	if path[0] == '~' {
-		var err error
-		path, err = homedir.Expand(path)
+		usr, err := user.Current()
 		if err != nil {
 			return []byte(path), true, err
+		}
+
+		if len(path) == 1 {
+			path = usr.HomeDir
+		} else if strings.HasPrefix(path, "~/") {
+			path = filepath.Join(usr.HomeDir, path[2:])
 		}
 	}
 
 	if _, err := os.Stat(path); err == nil {
-		contents, err := ioutil.ReadFile(path)
+		contents, err := os.ReadFile(path)
 		if err != nil {
 			return contents, true, err
 		}

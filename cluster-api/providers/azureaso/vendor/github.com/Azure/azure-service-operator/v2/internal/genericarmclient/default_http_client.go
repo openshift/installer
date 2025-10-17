@@ -38,5 +38,4 @@ func init() {
 	defaultHttpClient = &http.Client{
 		Transport: httpTransport,
 	}
-
 }

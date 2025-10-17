@@ -3,7 +3,7 @@
 # Get target architecture
 arch=$(uname -m)
 
-if test "x${1}" = 'x--id'
+if test "${1}" = '--id'
 then
 	GATHER_ID="${2}"
 	shift 2
@@ -25,12 +25,29 @@ done
 
 echo "Gathering master journals ..."
 mkdir -p "${ARTIFACTS}/journals"
-for service in crio kubelet machine-config-daemon-host machine-config-daemon-firstboot openshift-azure-routes openshift-gcp-routes pivot sssd
+
+# Services [pcsd, pacemaker, corosync] are used in Two Node OpenShift with Fencing
+for service in crio kubelet machine-config-daemon-host machine-config-daemon-firstboot openshift-azure-routes openshift-gcp-routes pivot sssd pcsd pacemaker corosync
 do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/journals/${service}.log"
 done
 
 journalctl -o with-unit --no-pager | gzip > "${ARTIFACTS}/journals/journal.log.gz"
+
+echo "Gathering pacemaker logs ..."
+mkdir -p "${ARTIFACTS}/pacemaker"
+cp /var/log/pcsd/pcsd.log "${ARTIFACTS}/pacemaker/pcsd.log"
+cp /var/log/cluster/corosync.log "${ARTIFACTS}/pacemaker/corosync.log"
+
+# There is a concern that the pacemaker log may inadvertently contain sensitive information like passwords
+# It may become necessary to pull this log in the future, but for now we've erred on the side of caution
+# Users looking to gather a complete set of logs for pacemake-enabled machines should follow the standard
+# RHEL practice of gathering system information via `sos report`
+# This security concern is tracked here: https://projects.clusterlabs.org/T615
+# If this is addressed, we can proceed to gather the pacemaker log with the following commands:
+# cp /var/log/pacemaker/pacemaker.log "${ARTIFACTS}/pacemaker/pacemaker.log"
+# chmod o+r ${ARTIFACTS}/pacemaker/pacemaker.log
+gzip -r "${ARTIFACTS}/pacemaker"
 
 echo "Gathering master networking ..."
 mkdir -p "${ARTIFACTS}/network"

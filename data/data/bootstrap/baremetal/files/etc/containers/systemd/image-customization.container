@@ -1,9 +1,9 @@
 [Unit]
 Description=Customized Machine OS Image Server
 BindsTo=ironic-volume.service
-Requires=build-ironic-env.service extract-machine-os.service
+Requires=build-ironic-env.service
 PartOf=ironic.service
-Wants=network-online.target
+Wants=network-online.target extract-machine-os.service
 After=network-online.target ironic-volume.service build-ironic-env.service extract-machine-os.service
 
 [Container]
@@ -16,6 +16,7 @@ Volume=ironic.volume:/shared:z
 Volume=/etc/containers:/tmp/containers:z
 Volume=${AUTH_DIR}:/auth:z,ro
 Volume=/opt/openshift:/opt/openshift:z,ro
+Volume=/etc/pki/ca-trust/source/anchors/ca.crt:/tmp/ca.crt:z,ro
 Environment="DEPLOY_ISO=/shared/html/images/ironic-python-agent.iso"
 Environment="DEPLOY_INITRD=/shared/html/images/ironic-python-agent.initramfs"
 Environment="IRONIC_BASE_URL=${IRONIC_BASE_URL}"
@@ -25,6 +26,7 @@ Environment="IP_OPTIONS=${EXTERNAL_IP_OPTIONS}"
 Environment="REGISTRIES_CONF_PATH=/tmp/containers/registries.conf"
 Environment="KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback"
 Environment="ADDITIONAL_NTP_SERVERS=${ADDITIONAL_NTP_SERVERS}"
+Environment="CA_BUNDLE=/tmp/ca.crt"
 
 [Service]
 EnvironmentFile=/etc/ironic.env

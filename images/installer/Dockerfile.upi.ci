@@ -1,20 +1,18 @@
 # This Dockerfile is used by CI to test UPI platforms for OpenShift Installer
-# It builds an image containing binaries like jq, terraform, awscli, oc, etc. to allow bringing up UPI infrastructure.
+# It builds an image containing binaries like jq, awscli, oc, etc. to allow bringing up UPI infrastructure.
 # It also contains the `upi` directory that contains various terraform and cloud formation templates that are used to create infrastructure resources.
 
-FROM registry.ci.openshift.org/ocp/4.17:installer-terraform-providers as providers
 # We copy from the -artifacts images because they are statically linked
 FROM registry.ci.openshift.org/ocp/4.17:installer-kube-apiserver-artifacts AS kas-artifacts
 FROM registry.ci.openshift.org/ocp/4.17:installer-etcd-artifacts AS etcd-artifacts
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.23-openshift-4.19 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.20 AS builder
 # FIPS support is offered via the baremetal-installer image
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 ARG SKIP_ENVTEST="y"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
-COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/ terraform/bin/
 COPY --from=kas-artifacts /usr/share/openshift/ cluster-api/bin/
 COPY --from=etcd-artifacts /usr/share/openshift/ cluster-api/bin/
 RUN mkdir -p cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH) && \
@@ -114,6 +112,5 @@ RUN mkdir /output/.ssh && chown 1000:1000 "/output/.ssh/" && chmod -R g=u "/outp
 
 RUN chown 1000:1000 /output && chmod -R g=u "/output/.bluemix/"
 USER 1000:1000
-ENV PATH /bin
 ENV HOME /output
 WORKDIR /output

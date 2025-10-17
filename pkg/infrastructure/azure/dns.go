@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"k8s.io/utils/ptr"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 type recordListType string
@@ -37,7 +37,7 @@ type recordPrivateList struct {
 }
 
 // Create DNS entries for azure.
-func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string, resourceGroup string) error {
+func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN, publicIP, resourceGroup string, opts *arm.ClientOptions) error {
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
@@ -50,6 +50,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	for k, v := range in.InstallConfig.Config.Azure.UserTags {
 		azureTags[k] = ptr.To(v)
 	}
+	azureTags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
 	azureCluster := &capz.AzureCluster{}
 	key := client.ObjectKey{
 		Name:      in.InfraID,
@@ -84,27 +85,39 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 		return fmt.Errorf("failed to create session: %w", err)
 	}
 	subscriptionID := session.Credentials.SubscriptionID
-	cloudConfiguration := session.CloudConfig
 
-	recordSetClient, err := armdns.NewRecordSetsClient(subscriptionID, session.TokenCreds,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
+	onAzureStack := in.InstallConfig.Azure.CloudName == azure.StackCloud
+	if onAzureStack {
+		opts.APIVersion = stackDNSAPIVersion
+	}
+
+	recordSetClient, err := armdns.NewRecordSetsClient(subscriptionID, session.TokenCreds, opts)
 	if err != nil {
 		return fmt.Errorf("failed to create public record client: %w", err)
 	}
-	privateRecordSetClient, err := armprivatedns.NewRecordSetsClient(subscriptionID, session.TokenCreds,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
+	privateRecordSetClient, err := armprivatedns.NewRecordSetsClient(subscriptionID, session.TokenCreds, opts)
 	if err != nil {
 		return fmt.Errorf("failed to create private record client: %w", err)
+	}
+
+	// Azure Stack only supports "DNS zones"--there is not a private/public zone distinction,
+	// so we handle Azure Stack differently and create all records in the single zone.
+	if onAzureStack {
+		stackRecords := []recordList{}
+		apiInternalName := fmt.Sprintf("api-int.%s", in.InstallConfig.Config.ObjectMeta.Name)
+		if in.InstallConfig.Config.PublicAPI() {
+			stackRecords = append(stackRecords, createRecordSet(apiExternalName, azureTags, ttl, arecord, publicIP, ""))
+		} else {
+			stackRecords = append(stackRecords, createRecordSet(apiExternalName, azureTags, ttl, arecord, ipIlb, ""))
+		}
+		stackRecords = append(stackRecords, createRecordSet(apiInternalName, azureTags, ttl, arecord, ipIlb, ""))
+		for _, record := range stackRecords {
+			_, err = recordSetClient.CreateOrUpdate(ctx, baseDomainResourceGroup, zone, record.Name, record.RecordType, record.RecordSet, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create public record set: %w", err)
+			}
+		}
+		return nil
 	}
 
 	// Create the records for api and api-int in the private zone and api.<clustername> for public zone.

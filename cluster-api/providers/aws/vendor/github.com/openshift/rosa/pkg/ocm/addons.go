@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	asv1 "github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
@@ -37,12 +38,12 @@ var BillingOptions = []string{
 	string(amsv1.BillingModelMarketplaceRHM),
 }
 
-var BillingModels = map[string]cmv1.BillingModel{
-	string(amsv1.BillingModelMarketplace):      cmv1.BillingModelMarketplace,
-	string(amsv1.BillingModelStandard):         cmv1.BillingModelStandard,
-	string(amsv1.BillingModelMarketplaceAWS):   cmv1.BillingModelMarketplaceAWS,
-	string(amsv1.BillingModelMarketplaceAzure): cmv1.BillingModelMarketplaceAzure,
-	string(amsv1.BillingModelMarketplaceRHM):   cmv1.BillingModelMarketplaceRHM,
+var BillingModels = map[string]asv1.BillingModel{
+	string(amsv1.BillingModelMarketplace):      asv1.BillingModelMarketplace,
+	string(amsv1.BillingModelStandard):         asv1.BillingModelStandard,
+	string(amsv1.BillingModelMarketplaceAWS):   asv1.BillingModelMarketplaceAws,
+	string(amsv1.BillingModelMarketplaceAzure): asv1.BillingModelMarketplaceAzure,
+	string(amsv1.BillingModelMarketplaceRHM):   asv1.BillingModelMarketplaceRhm,
 }
 
 type AddOnParam struct {
@@ -51,17 +52,17 @@ type AddOnParam struct {
 }
 
 type AddOnResource struct {
-	AddOn     *cmv1.AddOn
+	AddOn     *asv1.Addon
 	AZType    string
 	Available bool
 }
 
 // We customize here the marshalling of AddOnResource to JSON as the embedded AddOn struct does not
-// export its member fields. We instead delegate to cmv1.MarshallAddOn for Marshalling the JSON of the
+// export its member fields. We instead delegate to asv1.MarshalAddon for Marshalling the JSON of the
 // embedded AddOn struct and then build a string representation of the struct to be returned as JSON.
 func (ar *AddOnResource) MarshalJSON() ([]byte, error) {
 	var b bytes.Buffer
-	err := cmv1.MarshalAddOn(ar.AddOn, &b)
+	err := asv1.MarshalAddon(ar.AddOn, &b)
 	if err != nil {
 		return nil, err
 	}
@@ -77,23 +78,23 @@ type ClusterAddOn struct {
 }
 
 func (c *Client) InstallAddOn(clusterID, addOnID string, params []AddOnParam, billing AddOnBilling) error {
-	addOnInstallationBuilder := cmv1.NewAddOnInstallation().
-		Addon(cmv1.NewAddOn().ID(addOnID))
+	addOnInstallationBuilder := asv1.NewAddonInstallation().
+		Addon(asv1.NewAddon().ID(addOnID))
 
 	if len(params) > 0 {
-		addOnParamList := make([]*cmv1.AddOnInstallationParameterBuilder, len(params))
+		addOnParamList := make([]*asv1.AddonInstallationParameterBuilder, len(params))
 		for i, param := range params {
-			addOnParamList[i] = cmv1.NewAddOnInstallationParameter().ID(param.Key).Value(param.Val)
+			addOnParamList[i] = asv1.NewAddonInstallationParameter().Id(param.Key).Value(param.Val)
 		}
 		addOnInstallationBuilder = addOnInstallationBuilder.
-			Parameters(cmv1.NewAddOnInstallationParameterList().Items(addOnParamList...))
+			Parameters(asv1.NewAddonInstallationParameterList().Items(addOnParamList...))
 	}
 
 	billingModel, exists := BillingModels[billing.BillingModel]
 	if !exists {
 		return fmt.Errorf("'%s' is not an valid billing model", billing.BillingModel)
 	}
-	billingBuilder := cmv1.NewAddOnInstallationBilling().
+	billingBuilder := asv1.NewAddonInstallationBilling().
 		BillingModel(billingModel).
 		BillingMarketplaceAccount(billing.BillingAccountID)
 	addOnInstallationBuilder.Billing(billingBuilder)
@@ -103,7 +104,7 @@ func (c *Client) InstallAddOn(clusterID, addOnID string, params []AddOnParam, bi
 		return err
 	}
 
-	response, err := c.ocm.ClustersMgmt().V1().
+	response, err := c.ocm.AddonsMgmt().V1().
 		Clusters().
 		Cluster(clusterID).
 		Addons().
@@ -118,11 +119,11 @@ func (c *Client) InstallAddOn(clusterID, addOnID string, params []AddOnParam, bi
 }
 
 func (c *Client) UninstallAddOn(clusterID, addOnID string) error {
-	response, err := c.ocm.ClustersMgmt().V1().
+	response, err := c.ocm.AddonsMgmt().V1().
 		Clusters().
 		Cluster(clusterID).
 		Addons().
-		Addoninstallation(addOnID).
+		Addon(addOnID).
 		Delete().
 		Send()
 	if err != nil {
@@ -132,12 +133,12 @@ func (c *Client) UninstallAddOn(clusterID, addOnID string) error {
 	return nil
 }
 
-func (c *Client) GetAddOnInstallation(clusterID, addOnID string) (*cmv1.AddOnInstallation, error) {
-	response, err := c.ocm.ClustersMgmt().V1().
+func (c *Client) GetAddOnInstallation(clusterID, addOnID string) (*asv1.AddonInstallation, error) {
+	response, err := c.ocm.AddonsMgmt().V1().
 		Clusters().
 		Cluster(clusterID).
 		Addons().
-		Addoninstallation(addOnID).
+		Addon(addOnID).
 		Get().
 		Send()
 	if err != nil {
@@ -148,16 +149,16 @@ func (c *Client) GetAddOnInstallation(clusterID, addOnID string) (*cmv1.AddOnIns
 }
 
 func (c *Client) UpdateAddOnInstallation(clusterID, addOnID string, params []AddOnParam) error {
-	addOnInstallationBuilder := cmv1.NewAddOnInstallation().
-		Addon(cmv1.NewAddOn().ID(addOnID))
+	addOnInstallationBuilder := asv1.NewAddonInstallation().
+		Addon(asv1.NewAddon().ID(addOnID))
 
 	if len(params) > 0 {
-		addOnParamList := make([]*cmv1.AddOnInstallationParameterBuilder, len(params))
+		addOnParamList := make([]*asv1.AddonInstallationParameterBuilder, len(params))
 		for i, param := range params {
-			addOnParamList[i] = cmv1.NewAddOnInstallationParameter().ID(param.Key).Value(param.Val)
+			addOnParamList[i] = asv1.NewAddonInstallationParameter().Id(param.Key).Value(param.Val)
 		}
 		addOnInstallationBuilder = addOnInstallationBuilder.
-			Parameters(cmv1.NewAddOnInstallationParameterList().Items(addOnParamList...))
+			Parameters(asv1.NewAddonInstallationParameterList().Items(addOnParamList...))
 	}
 
 	addOnInstallation, err := addOnInstallationBuilder.Build()
@@ -165,8 +166,8 @@ func (c *Client) UpdateAddOnInstallation(clusterID, addOnID string, params []Add
 		return err
 	}
 
-	response, err := c.ocm.ClustersMgmt().V1().Clusters().Cluster(clusterID).
-		Addons().Addoninstallation(addOnID).
+	response, err := c.ocm.AddonsMgmt().V1().Clusters().Cluster(clusterID).
+		Addons().Addon(addOnID).
 		Update().Body(addOnInstallation).Send()
 	if err != nil {
 		return handleErr(response.Error(), err)
@@ -175,8 +176,8 @@ func (c *Client) UpdateAddOnInstallation(clusterID, addOnID string, params []Add
 	return nil
 }
 
-func (c *Client) GetAddOnParameters(clusterID, addOnID string) (*cmv1.AddOnParameterList, error) {
-	response, err := c.ocm.ClustersMgmt().V1().Clusters().
+func (c *Client) GetAddOnParameters(clusterID, addOnID string) (*asv1.AddonParameterList, error) {
+	response, err := c.ocm.AddonsMgmt().V1().Clusters().
 		Cluster(clusterID).AddonInquiries().AddonInquiry(addOnID).Get().Send()
 	if err != nil {
 		return nil, handleErr(response.Error(), err)
@@ -211,7 +212,7 @@ func (c *Client) GetAvailableAddOns() ([]*AddOnResource, error) {
 	quotaCosts := quotaCostResponse.Items()
 
 	// Get complete list of enabled add-ons
-	addOnsResponse, err := c.ocm.ClustersMgmt().V1().Addons().
+	addOnsResponse, err := c.ocm.AddonsMgmt().V1().Addons().
 		List().
 		Search("enabled='t'").
 		Page(1).
@@ -224,7 +225,7 @@ func (c *Client) GetAvailableAddOns() ([]*AddOnResource, error) {
 	var addOns []*AddOnResource
 
 	// Populate enabled add-ons with if they are available for the current org
-	addOnsResponse.Items().Each(func(addOn *cmv1.AddOn) bool {
+	addOnsResponse.Items().Each(func(addOn *asv1.Addon) bool {
 		addOnResource := &AddOnResource{
 			AddOn: addOn,
 		}
@@ -262,8 +263,8 @@ func (c *Client) GetAvailableAddOns() ([]*AddOnResource, error) {
 	return addOns, nil
 }
 
-func (c *Client) GetAddOn(id string) (*cmv1.AddOn, error) {
-	response, err := c.ocm.ClustersMgmt().V1().Addons().Addon(id).Get().Send()
+func (c *Client) GetAddOn(id string) (*asv1.Addon, error) {
+	response, err := c.ocm.AddonsMgmt().V1().Addons().Addon(id).Get().Send()
 	if err != nil {
 		return nil, handleErr(response.Error(), err)
 	}
@@ -278,7 +279,7 @@ func (c *Client) GetClusterAddOns(cluster *cmv1.Cluster) ([]*ClusterAddOn, error
 	}
 
 	// Get add-ons already installed on cluster
-	addOnInstallationsResponse, err := c.ocm.ClustersMgmt().V1().Clusters().
+	addOnInstallationsResponse, err := c.ocm.AddonsMgmt().V1().Clusters().
 		Cluster(cluster.ID()).
 		Addons().
 		List().
@@ -310,11 +311,11 @@ func (c *Client) GetClusterAddOns(cluster *cmv1.Cluster) ([]*ClusterAddOn, error
 		}
 
 		// Get the state of add-on installations on the cluster
-		addOnInstallations.Each(func(addOnInstallation *cmv1.AddOnInstallation) bool {
+		addOnInstallations.Each(func(addOnInstallation *asv1.AddonInstallation) bool {
 			if addOnResource.AddOn.ID() == addOnInstallation.Addon().ID() {
 				clusterAddOn.State = string(addOnInstallation.State())
 				if clusterAddOn.State == "" {
-					clusterAddOn.State = string(cmv1.AddOnInstallationStateInstalling)
+					clusterAddOn.State = string(asv1.AddonInstallationStateInstalling)
 				}
 			}
 			return true

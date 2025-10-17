@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20180601 "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601"
-	v20180601s "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type ConfigurationExtension struct {
 func (extension *ConfigurationExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20180601.Configuration{},
-		&v20180601s.Configuration{}}
+		&storage.Configuration{}}
 }

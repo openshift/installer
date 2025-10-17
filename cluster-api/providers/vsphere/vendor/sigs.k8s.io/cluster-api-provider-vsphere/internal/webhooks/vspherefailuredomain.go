@@ -45,7 +45,7 @@ func (webhook *VSphereFailureDomainWebhook) SetupWebhookWithManager(mgr ctrl.Man
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&infrav1.VSphereFailureDomain{}).
 		WithValidator(webhook).
-		WithDefaulter(webhook).
+		WithDefaulter(webhook, admission.DefaulterRemoveUnknownOrOmitableFields).
 		Complete()
 }
 

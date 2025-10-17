@@ -1,6 +1,6 @@
 run:
   timeout: 20m
-  go: '1.23'
+  go: '1.24'
   modules-download-mode: vendor
   allow-parallel-runners: true
 output:
@@ -43,7 +43,7 @@ linters-settings:
   gosec:
     excludes:
       # Potential integer overflow when converting between integer types
-      - G115
+    - G115
   errcheck:
     # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
     # Such cases aren't reported by default.
@@ -157,13 +157,14 @@ issues:
     - goconst
     path: _test\.go
   exclude-dirs:
-    - ^bin
-    - ^cluster-api
-    - ^data/data
-    - ^docs
-    - ^hack
-    - ^images
-    - ^scripts
-    - ^terraform
-    - ^upi
+  - ^bin
+  - ^cluster-api
+  - ^data/data
+  - ^docs
+  - ^hack
+  - ^images
+  - ^scripts
+  - ^terraform
+  - ^upi
+  - ^pkg/asset/manifests/azure/stack/v1beta1 # local copy of capi azurestack provider fork api
   uniq-by-line: false

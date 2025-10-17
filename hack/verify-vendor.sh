@@ -19,14 +19,6 @@ if [ "$IS_CONTAINER" != "" ]; then
   # Verify the main installer module.
   verify_module "${PWD}"
 
-  # Verify the sub-modules for the terraform providers.
-  find terraform/providers -maxdepth 1 -mindepth 1 -print0 | while read -r -d '' dir
-  do
-    verify_module "$dir"
-  done
-  # Verify the terraform sub-module.
-  verify_module "terraform/terraform"
-
   find cluster-api/providers -maxdepth 1 -mindepth 1 -print0 | while read -r -d '' dir
   do
     verify_module "$dir"
@@ -39,6 +31,6 @@ else
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \
-    docker.io/golang:1.23 \
+    docker.io/golang:1.24 \
     ./hack/verify-vendor.sh "${@}"
 fi

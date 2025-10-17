@@ -21,7 +21,7 @@ import (
 type NetworkSecurityGroupRuleProtocolTCPFlag struct {
 
 	// TCP flag
-	// Enum: ["syn","ack","fin","rst","urg","psh","wnd","chk","seq"]
+	// Enum: ["syn","ack","fin","rst"]
 	Flag string `json:"flag,omitempty"`
 }
 
@@ -43,7 +43,7 @@ var networkSecurityGroupRuleProtocolTcpFlagTypeFlagPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["syn","ack","fin","rst","urg","psh","wnd","chk","seq"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["syn","ack","fin","rst"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -64,21 +64,6 @@ const (
 
 	// NetworkSecurityGroupRuleProtocolTCPFlagFlagRst captures enum value "rst"
 	NetworkSecurityGroupRuleProtocolTCPFlagFlagRst string = "rst"
-
-	// NetworkSecurityGroupRuleProtocolTCPFlagFlagUrg captures enum value "urg"
-	NetworkSecurityGroupRuleProtocolTCPFlagFlagUrg string = "urg"
-
-	// NetworkSecurityGroupRuleProtocolTCPFlagFlagPsh captures enum value "psh"
-	NetworkSecurityGroupRuleProtocolTCPFlagFlagPsh string = "psh"
-
-	// NetworkSecurityGroupRuleProtocolTCPFlagFlagWnd captures enum value "wnd"
-	NetworkSecurityGroupRuleProtocolTCPFlagFlagWnd string = "wnd"
-
-	// NetworkSecurityGroupRuleProtocolTCPFlagFlagChk captures enum value "chk"
-	NetworkSecurityGroupRuleProtocolTCPFlagFlagChk string = "chk"
-
-	// NetworkSecurityGroupRuleProtocolTCPFlagFlagSeq captures enum value "seq"
-	NetworkSecurityGroupRuleProtocolTCPFlagFlagSeq string = "seq"
 )
 
 // prop value enum

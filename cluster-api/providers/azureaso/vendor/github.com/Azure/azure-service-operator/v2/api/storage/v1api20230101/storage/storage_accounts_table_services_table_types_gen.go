@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type StorageAccountsTableServicesTable struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              StorageAccounts_TableServices_Table_Spec   `json:"spec,omitempty"`
-	Status            StorageAccounts_TableServices_Table_STATUS `json:"status,omitempty"`
+	Spec              StorageAccountsTableServicesTable_Spec   `json:"spec,omitempty"`
+	Status            StorageAccountsTableServicesTable_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &StorageAccountsTableServicesTable{}
@@ -44,6 +47,26 @@ func (table *StorageAccountsTableServicesTable) SetConditions(conditions conditi
 	table.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &StorageAccountsTableServicesTable{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (table *StorageAccountsTableServicesTable) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if table.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return table.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &StorageAccountsTableServicesTable{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (table *StorageAccountsTableServicesTable) SecretDestinationExpressions() []*core.DestinationExpression {
+	if table.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return table.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &StorageAccountsTableServicesTable{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (table *StorageAccountsTableServicesTable) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-01-01"
 func (table StorageAccountsTableServicesTable) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-01-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +110,7 @@ func (table *StorageAccountsTableServicesTable) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (table *StorageAccountsTableServicesTable) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &StorageAccounts_TableServices_Table_STATUS{}
+	return &StorageAccountsTableServicesTable_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +122,13 @@ func (table *StorageAccountsTableServicesTable) Owner() *genruntime.ResourceRefe
 // SetStatus sets the status of this resource
 func (table *StorageAccountsTableServicesTable) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*StorageAccounts_TableServices_Table_STATUS); ok {
+	if st, ok := status.(*StorageAccountsTableServicesTable_STATUS); ok {
 		table.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st StorageAccounts_TableServices_Table_STATUS
+	var st StorageAccountsTableServicesTable_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -138,12 +161,13 @@ type StorageAccountsTableServicesTableList struct {
 	Items           []StorageAccountsTableServicesTable `json:"items"`
 }
 
-// Storage version of v1api20230101.StorageAccounts_TableServices_Table_Spec
-type StorageAccounts_TableServices_Table_Spec struct {
+// Storage version of v1api20230101.StorageAccountsTableServicesTable_Spec
+type StorageAccountsTableServicesTable_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string `json:"azureName,omitempty"`
-	OriginalVersion string `json:"originalVersion,omitempty"`
+	AzureName       string                                         `json:"azureName,omitempty"`
+	OperatorSpec    *StorageAccountsTableServicesTableOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                                         `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -154,10 +178,10 @@ type StorageAccounts_TableServices_Table_Spec struct {
 	SignedIdentifiers []TableSignedIdentifier            `json:"signedIdentifiers,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &StorageAccounts_TableServices_Table_Spec{}
+var _ genruntime.ConvertibleSpec = &StorageAccountsTableServicesTable_Spec{}
 
-// ConvertSpecFrom populates our StorageAccounts_TableServices_Table_Spec from the provided source
-func (table *StorageAccounts_TableServices_Table_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our StorageAccountsTableServicesTable_Spec from the provided source
+func (table *StorageAccountsTableServicesTable_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == table {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -165,8 +189,8 @@ func (table *StorageAccounts_TableServices_Table_Spec) ConvertSpecFrom(source ge
 	return source.ConvertSpecTo(table)
 }
 
-// ConvertSpecTo populates the provided destination from our StorageAccounts_TableServices_Table_Spec
-func (table *StorageAccounts_TableServices_Table_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our StorageAccountsTableServicesTable_Spec
+func (table *StorageAccountsTableServicesTable_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == table {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -174,8 +198,8 @@ func (table *StorageAccounts_TableServices_Table_Spec) ConvertSpecTo(destination
 	return destination.ConvertSpecFrom(table)
 }
 
-// Storage version of v1api20230101.StorageAccounts_TableServices_Table_STATUS
-type StorageAccounts_TableServices_Table_STATUS struct {
+// Storage version of v1api20230101.StorageAccountsTableServicesTable_STATUS
+type StorageAccountsTableServicesTable_STATUS struct {
 	Conditions        []conditions.Condition         `json:"conditions,omitempty"`
 	Id                *string                        `json:"id,omitempty"`
 	Name              *string                        `json:"name,omitempty"`
@@ -185,10 +209,10 @@ type StorageAccounts_TableServices_Table_STATUS struct {
 	Type              *string                        `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &StorageAccounts_TableServices_Table_STATUS{}
+var _ genruntime.ConvertibleStatus = &StorageAccountsTableServicesTable_STATUS{}
 
-// ConvertStatusFrom populates our StorageAccounts_TableServices_Table_STATUS from the provided source
-func (table *StorageAccounts_TableServices_Table_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our StorageAccountsTableServicesTable_STATUS from the provided source
+func (table *StorageAccountsTableServicesTable_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == table {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -196,13 +220,21 @@ func (table *StorageAccounts_TableServices_Table_STATUS) ConvertStatusFrom(sourc
 	return source.ConvertStatusTo(table)
 }
 
-// ConvertStatusTo populates the provided destination from our StorageAccounts_TableServices_Table_STATUS
-func (table *StorageAccounts_TableServices_Table_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our StorageAccountsTableServicesTable_STATUS
+func (table *StorageAccountsTableServicesTable_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == table {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(table)
+}
+
+// Storage version of v1api20230101.StorageAccountsTableServicesTableOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type StorageAccountsTableServicesTableOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20230101.TableSignedIdentifier

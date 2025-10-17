@@ -80,7 +80,7 @@ func (tvp TVP) encode(schema, name string, columnStr []columnStruct, tvpFieldInd
 	for i, column := range columnStr {
 		binary.Write(buf, binary.LittleEndian, column.UserType)
 		binary.Write(buf, binary.LittleEndian, column.Flags)
-		writeTypeInfo(buf, &columnStr[i].ti)
+		writeTypeInfo(buf, &columnStr[i].ti, false)
 		writeBVarChar(buf, "")
 	}
 	// The returned error is always nil

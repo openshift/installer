@@ -65,6 +65,7 @@ type agentTemplateData struct {
 	ServiceProtocol           string
 	PullSecret                string
 	ControlPlaneAgents        int
+	ArbiterAgents             int
 	WorkerAgents              int
 	ReleaseImages             string
 	ReleaseImage              string
@@ -155,6 +156,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	clusterName := ""
 	imageTypeISO := "full-iso"
 	numMasters := 0
+	numArbiters := 0
 	numWorkers := 0
 	enabledServices := getDefaultEnabledServices()
 	openshiftVersion := ""
@@ -178,6 +180,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 		}
 		// Fetch the required number of master and worker nodes.
 		numMasters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
+		numArbiters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ArbiterAgents
 		numWorkers = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.WorkerAgents
 		// Enable specific install services
 		enabledServices = append(enabledServices, "start-cluster-installation.service")
@@ -202,6 +205,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 		// is supported, so forcing the expected number of masters to zero, and assuming implcitly
 		// that all the hosts defined are workers.
 		numMasters = 0
+		numArbiters = 0
 		numWorkers = len(addNodesConfig.Config.Hosts)
 
 		// Enable add-nodes specific services
@@ -290,7 +294,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 		authConfig.AuthTokenExpiry,
 		caBundleMount,
 		len(registriesConfig.MirrorConfig) > 0,
-		numMasters, numWorkers,
+		numMasters, numArbiters, numWorkers,
 		osImage,
 		infraEnv.Spec.Proxy,
 	)
@@ -413,13 +417,14 @@ func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err erro
 func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries,
 	imageTypeISO, infraEnvID, publicKey, authType, agentAuthToken, userAuthToken, watcherAuthToken, tokenExpiry, caBundleMount string,
 	haveMirrorConfig bool,
-	numMasters, numWorkers int,
+	numMasters, numArbiters, numWorkers int,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
 		ControlPlaneAgents:        numMasters,
+		ArbiterAgents:             numArbiters,
 		WorkerAgents:              numWorkers,
 		ReleaseImages:             releaseImageList,
 		ReleaseImage:              releaseImage,
@@ -464,13 +469,27 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, agentAuthtoken, userAuthT
 	// and ensure successful authentication.
 	// In the absence of PULL_SECRET_TOKEN, the cluster installation will wait forever.
 
-	return fmt.Sprintf(`NODE_ZERO_IP=%s
+	rendezvousHostEnv := fmt.Sprintf(`NODE_ZERO_IP=%s
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
 PULL_SECRET_TOKEN=%s
 USER_AUTH_TOKEN=%s
 WORKFLOW_TYPE=%s
 `, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), agentAuthtoken, userAuthToken, workflowType)
+
+	if workflowType == workflow.AgentWorkflowTypeInstallInteractiveDisconnected {
+		uiBaseURL := url.URL{
+			Scheme: serviceProtocol,
+			Host:   net.JoinHostPort(nodeZeroIP, "3001"),
+			Path:   "/",
+		}
+		uiEnv := fmt.Sprintf(`AIUI_APP_API_URL=%s
+AIUI_URL=%s
+`, serviceBaseURL.String(), uiBaseURL.String())
+		rendezvousHostEnv = fmt.Sprintf("%s%s", rendezvousHostEnv, uiEnv)
+	}
+
+	return rendezvousHostEnv
 }
 
 func getAddNodesEnv(clusterInfo joiner.ClusterInfo, authTokenExpiry string) string {

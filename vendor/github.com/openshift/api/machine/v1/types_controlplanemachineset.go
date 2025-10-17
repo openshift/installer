@@ -46,13 +46,14 @@ type ControlPlaneMachineSetSpec struct {
 	// Each machine name will consist of this prefix, followed by
 	// a randomly generated string of 5 characters, and the index of the machine.
 	// It must be a lowercase RFC 1123 subdomain, consisting of lowercase
-	// alphanumeric characters, '-', or '.', and must start and end
-	// with an alphanumeric character.
+	// alphanumeric characters, hyphens ('-'), and periods ('.').
+	// Each block, separated by periods, must start and end with an alphanumeric character.
+	// Hyphens are not allowed at the start or end of a block, and consecutive periods are not permitted.
 	// The prefix must be between 1 and 245 characters in length.
 	// For example, if machineNamePrefix is set to 'control-plane',
 	// and three machines are created, their names might be:
 	// control-plane-abcde-0, control-plane-fghij-1, control-plane-klmno-2
-	// +openshift:validation:FeatureGateAwareXValidation:featureGate=CPMSMachineNamePrefix,rule="!format.dns1123Subdomain().validate(self).hasValue()",message="a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
+	// +openshift:validation:FeatureGateAwareXValidation:featureGate=CPMSMachineNamePrefix,rule="!format.dns1123Subdomain().validate(self).hasValue()",message="a lowercase RFC 1123 subdomain must consist of lowercase alphanumeric characters, hyphens ('-'), and periods ('.'). Each block, separated by periods, must start and end with an alphanumeric character. Hyphens are not allowed at the start or end of a block, and consecutive periods are not permitted."
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=245
 	// +openshift:enable:FeatureGate=CPMSMachineNamePrefix
@@ -134,7 +135,7 @@ type ControlPlaneMachineSetTemplate struct {
 	// Currently, the only valid value is machines_v1beta1_machine_openshift_io.
 	// +unionDiscriminator
 	// +required
-	MachineType ControlPlaneMachineSetMachineType `json:"machineType,omitempty"`
+	MachineType ControlPlaneMachineSetMachineType `json:"machineType"`
 
 	// OpenShiftMachineV1Beta1Machine defines the template for creating Machines
 	// from the v1beta1.machine.openshift.io API group.
@@ -285,7 +286,6 @@ type FailureDomains struct {
 	VSphere []VSphereFailureDomain `json:"vsphere,omitempty"`
 
 	// openstack configures failure domain information for the OpenStack platform.
-	// +optional
 	//
 	// + ---
 	// + Unlike other platforms, OpenStack failure domains can be empty.
@@ -427,12 +427,10 @@ type RootVolume struct {
 type ControlPlaneMachineSetStatus struct {
 	// conditions represents the observations of the ControlPlaneMachineSet's current state.
 	// Known .status.conditions.type are: Available, Degraded and Progressing.
-	// +patchMergeKey=type
-	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
 	// +optional
-	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
 	// observedGeneration is the most recent generation observed for this
 	// ControlPlaneMachineSet. It corresponds to the ControlPlaneMachineSets's generation,

@@ -6,6 +6,8 @@ package customizations
 import (
 	v20180901 "github.com/Azure/azure-service-operator/v2/api/network/v1api20180901"
 	v20180901s "github.com/Azure/azure-service-operator/v2/api/network/v1api20180901/storage"
+	v20240601 "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601"
+	v20240601s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type PrivateDnsZoneExtension struct {
 func (extension *PrivateDnsZoneExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20180901.PrivateDnsZone{},
-		&v20180901s.PrivateDnsZone{}}
+		&v20180901s.PrivateDnsZone{},
+		&v20240601.PrivateDnsZone{},
+		&v20240601s.PrivateDnsZone{}}
 }

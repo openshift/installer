@@ -1,22 +1,11 @@
-/*
-Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package simulator
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -52,17 +41,15 @@ var refValueMap = map[string]string{
 	"StoragePod":                     "group-p",
 }
 
-// Map is the default Registry instance.
-//
-// TODO/WIP: To support the eventual removal of this unsyncronized global
-// variable, the Map should be accessed through any Context.Map that is passed
-// in to functions that may need it.
-var Map = NewRegistry()
+// Map returns simulator.Context.Map from the given ctx
+func Map(ctx context.Context) *Registry {
+	return ctx.(*Context).Map
+}
 
 // RegisterObject interface supports callbacks when objects are created, updated and deleted from the Registry
 type RegisterObject interface {
 	mo.Reference
-	PutObject(mo.Reference)
+	PutObject(*Context, mo.Reference)
 	UpdateObject(*Context, mo.Reference, []types.PropertyChange)
 	RemoveObject(*Context, types.ManagedObjectReference)
 }
@@ -78,6 +65,7 @@ type Registry struct {
 	Namespace string
 	Path      string
 	Handler   func(*Context, *Method) (mo.Reference, types.BaseMethodFault)
+	Cookie    func(*Context) string
 
 	tagManager tagManager
 }
@@ -283,8 +271,12 @@ func (r *Registry) Put(item mo.Reference) mo.Reference {
 
 	r.m.Unlock()
 
+	ctx := &Context{
+		Map: r,
+	}
+
 	r.applyHandlers(func(o RegisterObject) {
-		o.PutObject(item)
+		o.PutObject(ctx, item)
 	})
 
 	return item
@@ -500,7 +492,9 @@ func (r *Registry) removeString(ctx *Context, obj mo.Reference, field *[]string,
 }
 
 func (r *Registry) content() types.ServiceContent {
-	return r.Get(vim25.ServiceInstance).(*ServiceInstance).Content
+	return r.Get(vim25.ServiceInstance).(interface {
+		ServiceContent() types.ServiceContent
+	}).ServiceContent()
 }
 
 // IsESX returns true if this Registry maps an ESX model
@@ -601,6 +595,11 @@ func (r *Registry) VmProvisioningChecker() *VmProvisioningChecker {
 // ExtensionManager returns the ExtensionManager singleton
 func (r *Registry) ExtensionManager() *ExtensionManager {
 	return r.Get(r.content().ExtensionManager.Reference()).(*ExtensionManager)
+}
+
+// VStorageObjectManager returns the VStorageObjectManager singleton
+func (r *Registry) VStorageObjectManager() *VcenterVStorageObjectManager {
+	return r.Get(r.content().VStorageObjectManager.Reference()).(*VcenterVStorageObjectManager)
 }
 
 func (r *Registry) MarshalJSON() ([]byte, error) {

@@ -23,10 +23,11 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	webhookutils "sigs.k8s.io/cluster-api-provider-azure/util/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	webhookutils "sigs.k8s.io/cluster-api-provider-azure/util/webhook"
 )
 
 // SetupAzureMachineWebhookWithManager sets up and registers the webhook with the manager.
@@ -48,7 +49,7 @@ type azureMachineWebhook struct {
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (mw *azureMachineWebhook) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (mw *azureMachineWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	m, ok := obj.(*AzureMachine)
 	if !ok {
 		return nil, apierrors.NewBadRequest("expected an AzureMachine resource")
@@ -74,7 +75,7 @@ func (mw *azureMachineWebhook) ValidateCreate(ctx context.Context, obj runtime.O
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (mw *azureMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (mw *azureMachineWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 	old, ok := oldObj.(*AzureMachine)
 	if !ok {
@@ -86,70 +87,70 @@ func (mw *azureMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newOb
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Image"),
+		field.NewPath("spec", "image"),
 		old.Spec.Image,
 		m.Spec.Image); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Identity"),
+		field.NewPath("spec", "identity"),
 		old.Spec.Identity,
 		m.Spec.Identity); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "SystemAssignedIdentityRole"),
+		field.NewPath("spec", "systemAssignedIdentityRole"),
 		old.Spec.SystemAssignedIdentityRole,
 		m.Spec.SystemAssignedIdentityRole); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "UserAssignedIdentities"),
+		field.NewPath("spec", "userAssignedIdentities"),
 		old.Spec.UserAssignedIdentities,
 		m.Spec.UserAssignedIdentities); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "RoleAssignmentName"),
+		field.NewPath("spec", "roleAssignmentName"),
 		old.Spec.RoleAssignmentName,
 		m.Spec.RoleAssignmentName); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "OSDisk"),
+		field.NewPath("spec", "osDisk"),
 		old.Spec.OSDisk,
 		m.Spec.OSDisk); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "DataDisks"),
+		field.NewPath("spec", "dataDisks"),
 		old.Spec.DataDisks,
 		m.Spec.DataDisks); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "SSHPublicKey"),
+		field.NewPath("spec", "sshPublicKey"),
 		old.Spec.SSHPublicKey,
 		m.Spec.SSHPublicKey); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "AllocatePublicIP"),
+		field.NewPath("spec", "allocatePublicIP"),
 		old.Spec.AllocatePublicIP,
 		m.Spec.AllocatePublicIP); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "EnableIPForwarding"),
+		field.NewPath("spec", "enableIPForwarding"),
 		old.Spec.EnableIPForwarding,
 		m.Spec.EnableIPForwarding); err != nil {
 		allErrs = append(allErrs, err)
@@ -181,7 +182,7 @@ func (mw *azureMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newOb
 
 	if old.Spec.Diagnostics != nil {
 		if err := webhookutils.ValidateImmutable(
-			field.NewPath("Spec", "Diagnostics"),
+			field.NewPath("spec", "diagnostics"),
 			old.Spec.Diagnostics,
 			m.Spec.Diagnostics); err != nil {
 			allErrs = append(allErrs, err)
@@ -227,12 +228,12 @@ func (mw *azureMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newOb
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (mw *azureMachineWebhook) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (mw *azureMachineWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (mw *azureMachineWebhook) Default(ctx context.Context, obj runtime.Object) error {
+func (mw *azureMachineWebhook) Default(_ context.Context, obj runtime.Object) error {
 	m, ok := obj.(*AzureMachine)
 	if !ok {
 		return apierrors.NewBadRequest("expected an AzureMachine resource")

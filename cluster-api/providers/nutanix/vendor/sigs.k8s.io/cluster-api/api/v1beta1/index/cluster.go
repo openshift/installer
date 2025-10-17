@@ -29,28 +29,71 @@ import (
 
 const (
 	// ClusterClassNameField is used by the Cluster controller to index Clusters by ClusterClass name.
+	//
+	// Deprecated: This constant will be removed in an upcoming release, please use ClusterClassRefPath instead.
 	ClusterClassNameField = "spec.topology.class"
+
+	// ClusterClassRefPath is used by the Cluster controller to index Clusters by ClusterClass name and namespace.
+	ClusterClassRefPath = "spec.topology.classRef"
+
+	// clusterClassRefFmt is used to correctly format class ref index key.
+	clusterClassRefFmt = "%s/%s"
 )
 
-// ByClusterClassName adds the cluster class name  index to the
+// ByClusterClassRef adds the cluster class name  index to the
 // managers cache.
-func ByClusterClassName(ctx context.Context, mgr ctrl.Manager) error {
+func ByClusterClassRef(ctx context.Context, mgr ctrl.Manager) error {
 	if err := mgr.GetCache().IndexField(ctx, &clusterv1.Cluster{},
-		ClusterClassNameField,
-		clusterByClassName,
+		ClusterClassRefPath,
+		ClusterByClusterClassRef,
 	); err != nil {
 		return errors.Wrap(err, "error setting index field")
 	}
 	return nil
 }
 
-func clusterByClassName(o client.Object) []string {
+// ClusterByClusterClassRef contains the logic to index Clusters by ClusterClass name and namespace.
+func ClusterByClusterClassRef(o client.Object) []string {
 	cluster, ok := o.(*clusterv1.Cluster)
 	if !ok {
 		panic(fmt.Sprintf("Expected Cluster but got a %T", o))
 	}
 	if cluster.Spec.Topology != nil {
-		return []string{cluster.Spec.Topology.Class}
+		key := cluster.GetClassKey()
+		return []string{fmt.Sprintf(clusterClassRefFmt, key.Namespace, key.Name)}
+	}
+	return nil
+}
+
+// ClusterClassRef returns ClusterClass index key to be used for search.
+func ClusterClassRef(cc *clusterv1.ClusterClass) string {
+	return fmt.Sprintf(clusterClassRefFmt, cc.GetNamespace(), cc.GetName())
+}
+
+// ByClusterClassName adds the cluster class name  index to the
+// managers cache.
+//
+// Deprecated: This func will be removed in an upcoming release, please use ByClusterClassRef instead.
+func ByClusterClassName(ctx context.Context, mgr ctrl.Manager) error {
+	if err := mgr.GetCache().IndexField(ctx, &clusterv1.Cluster{},
+		ClusterClassNameField,
+		ClusterByClusterClassClassName,
+	); err != nil {
+		return errors.Wrap(err, "error setting index field")
+	}
+	return nil
+}
+
+// ClusterByClusterClassClassName contains the logic to index Clusters by ClusterClass name.
+//
+// Deprecated: This func will be removed in an upcoming release, please use ClusterByClusterClassRef instead.
+func ClusterByClusterClassClassName(o client.Object) []string {
+	cluster, ok := o.(*clusterv1.Cluster)
+	if !ok {
+		panic(fmt.Sprintf("Expected Cluster but got a %T", o))
+	}
+	if cluster.Spec.Topology != nil {
+		return []string{cluster.GetClassKey().Name}
 	}
 	return nil
 }

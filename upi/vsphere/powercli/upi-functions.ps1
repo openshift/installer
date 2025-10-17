@@ -2,18 +2,19 @@
 
 function New-OpenShiftVM {
     param(
+        [int]$CoresPerSocket = 1, # Default is 1 due to not knowing how many may come in via NumCpu variable
         [Parameter(Mandatory=$true)]
         $Datastore,
         [Parameter(Mandatory=$true)]
         [string]$IgnitionData,
         [switch]$LinkedClone,
         $Location,
-        $MemoryMB,
+        [int]$MemoryMB = 8192,
         [Parameter(Mandatory=$true)]
         [string]$Name,
         $Network,
         $Networking,
-        $NumCpu,
+        [int]$NumCpu = 4,
         $ReferenceSnapshot,
         $ResourcePool,
         $SecureBoot,
@@ -38,6 +39,7 @@ function New-OpenShiftVM {
     $args.Remove('Network') > $null
     $args.Remove('MemoryMB') > $null
     $args.Remove('NumCpu') > $null
+    $args.Remove('CoresPerSocket') > $null
     $args.Remove('SecureBoot') > $null
     foreach ($key in $args.Keys){
         if ($NULL -eq $($args.Item($key)) -or $($args.Item($key)) -eq "") {
@@ -62,7 +64,7 @@ function New-OpenShiftVM {
     # Update VM specs.  New-VM does not honor the passed in parameters due to Template being used.
     if ($null -ne $MemoryMB -And $null -ne $NumCpu)
     {
-        Set-VM -Server $Server -VM $vm -MemoryMB $MemoryMB -NumCpu $NumCpu -CoresPerSocket 4 -Confirm:$false > $null
+        Set-VM -Server $Server -VM $vm -MemoryMB $MemoryMB -NumCpu $NumCpu -CoresPerSocket $CoresPerSocket -Confirm:$false > $null
     }
     #Get-HardDisk -VM $vm | Select-Object -First 1 | Set-HardDisk -CapacityGB 120 -Confirm:$false > $null
     updateDisk -VM $vm -CapacityGB 120
@@ -284,14 +286,23 @@ function New-OpenshiftVMs {
             if ($node.type -eq "master") {
                 $numCPU = $control_plane_num_cpus
                 $memory = $control_plane_memory
+                $coresPerSocket = $control_plane_cores_per_socket
             } elseif ($node.type -eq "worker") {
                 $numCPU = $compute_num_cpus
                 $memory = $compute_memory
+                $coresPerSocket = $compute_cores_per_socket
             } else {
                 # should only be bootstrap
                 $numCPU = $control_plane_num_cpus
                 $memory = $control_plane_memory
+                $coresPerSocket = $control_plane_cores_per_socket
             }
+
+            # Since coresPerSocket is not required for configs, we need to make sure its not zero (default).  We'll make it match NumCPU.
+            if ($NULL -eq $coresPerSocket -or $coresPerSocket -lt 1) {
+                $coresPerSocket = $numCPU
+            }
+
             $ip = $node.ip
             $network = New-VMNetworkConfig -Server $node.server -Hostname $name -IPAddress $ip -Netmask $netmask -Gateway $gateway -DNS $dns
 
@@ -309,7 +320,7 @@ function New-OpenshiftVMs {
 
             # Clone the virtual machine from the imported template
             #$vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -LinkedClone -ReferenceSnapshot $snapshot -IgnitionData $ignition -Tag $tag -Networking $network -NumCPU $numCPU -MemoryMB $memory
-            $vm = New-OpenShiftVM -Server $node.server -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -SecureBoot $secureboot -StoragePolicy $storagepolicy -NumCPU $numCPU -MemoryMB $memory
+            $vm = New-OpenShiftVM -Server $node.server -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -SecureBoot $secureboot -StoragePolicy $storagepolicy -NumCPU $numCPU -MemoryMB $memory -CoresPerSocket $coresPerSocket
 
             # Assign tag so we can later clean up
             # New-TagAssignment -Entity $vm -Tag $tag

@@ -60,12 +60,10 @@ type MachineOSConfigSpec struct {
 // MachineOSConfigStatus describes the status this config object and relates it to the builds associated with this MachineOSConfig
 type MachineOSConfigStatus struct {
 	// conditions are state related conditions for the config.
-	// +patchMergeKey=type
-	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
 	// +optional
-	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// observedGeneration represents the generation observed by the controller.
 	// this field is updated when the user changes the configuration in BuildSettings or the MCP this object is associated with.
 	// +required
@@ -176,7 +174,7 @@ type MachineOSContainerfile struct {
 	// +kubebuilder:validation:Enum:=arm64;amd64;ppc64le;s390x;aarch64;x86_64;noarch
 	// +kubebuilder:default:=noarch
 	// +optional
-	ContainerfileArch ContainerfileArch `json:"containerfileArch"`
+	ContainerfileArch ContainerfileArch `json:"containerfileArch,omitempty"`
 	// content is the custom content to be built
 	// +required
 	Content string `json:"content"`

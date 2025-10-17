@@ -201,8 +201,22 @@ func getPrismElement(ctx context.Context, client *nutanixclientv3.Client) (*nuta
 		return nil, errors.Wrap(err, "failed UserInput")
 	}
 
-	pe.UUID = *pesMap[selectedPe].Metadata.UUID
-	pe.Endpoint.Address = *pesMap[selectedPe].Spec.Resources.Network.ExternalIP
+	peEntry, ok := pesMap[selectedPe]
+	if !ok {
+		return nil, fmt.Errorf("prism Element %q not found", selectedPe)
+	}
+
+	switch {
+	case peEntry.Metadata == nil || peEntry.Metadata.UUID == nil:
+		return nil, fmt.Errorf("missing UUID in Prism Element metadata for %q", selectedPe)
+	case peEntry.Spec == nil || peEntry.Spec.Resources == nil:
+		return nil, fmt.Errorf("missing Resources in Prism Element spec for %q", selectedPe)
+	case peEntry.Spec.Resources.Network == nil || peEntry.Spec.Resources.Network.ExternalIP == nil:
+		return nil, fmt.Errorf("missing ExternalIP in Prism Element network spec for %q", selectedPe)
+	}
+
+	pe.UUID = *peEntry.Metadata.UUID
+	pe.Endpoint.Address = *peEntry.Spec.Resources.Network.ExternalIP
 	return pe, nil
 
 }
