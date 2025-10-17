@@ -1,6 +1,6 @@
 [Unit]
 Description=Get interactive user configuration at boot on %I
-After=dev-fb0.device dev-%i.device network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service agent-extract-tui.service
+After=dev-fb0.device dev-%i.device network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service agent-extract-tui.service coreos-update-ca-trust.service
 Before=serial-getty@%i.service network.target network.service agent.service node-zero.service NetworkManager-wait-online.service
 Wants=agent-extract-tui.service
 ConditionPathExists=/usr/local/bin/agent-tui
