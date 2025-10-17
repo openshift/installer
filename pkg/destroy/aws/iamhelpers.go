@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -12,6 +13,17 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
+)
+
+var (
+	// iamUserCache stores cached iam user arn mapping to its tags.
+	iamUserCache = NewCache[map[string]string]()
+
+	// iamRoleCache stores cached iam role arn mapping to its tags.
+	iamRoleCache = NewCache[map[string]string]()
+
+	// cacheEntryTTL is the Time-To-Live for a cache entry for AWS IAM resources.
+	cacheEntryTTL = 30 * time.Minute
 )
 
 // IamRoleSearch holds data to search for IAM roles.
@@ -35,6 +47,17 @@ func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []s
 			search.Logger.Debugf("iterating over a page of %d IAM roles", len(results.Roles))
 			for _, role := range results.Roles {
 				if _, ok := search.Unmatched[*role.Arn]; ok {
+					continue
+				}
+
+				// If the cache has an entry for the role and its TTL has not expired, use it instead.
+				if tags, ok := iamRoleCache.Get(*role.Arn); ok {
+					if tagMatch(search.Filters, tags) {
+						arns = append(arns, *role.Arn)
+						names = append(names, *role.RoleName)
+					} else {
+						search.Unmatched[*role.Arn] = exists
+					}
 					continue
 				}
 
@@ -73,6 +96,7 @@ func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []s
 					} else {
 						search.Unmatched[*role.Arn] = exists
 					}
+					iamRoleCache.Set(*role.Arn, tags, cacheEntryTTL)
 				}
 			}
 
@@ -111,6 +135,16 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 					continue
 				}
 
+				// If the cache has an entry for the user and its TTL has not expired, use it instead.
+				if tags, ok := iamUserCache.Get(*user.Arn); ok {
+					if tagMatch(search.filters, tags) {
+						arns = append(arns, *user.Arn)
+					} else {
+						search.unmatched[*user.Arn] = exists
+					}
+					continue
+				}
+
 				// Unfortunately user.Tags is empty from ListUsers, so we need to query each one
 				response, err := search.client.GetUserWithContext(ctx, &iam.GetUserInput{UserName: aws.String(*user.UserName)})
 				if err != nil {
@@ -144,6 +178,7 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 					} else {
 						search.unmatched[*user.Arn] = exists
 					}
+					iamUserCache.Set(*user.Arn, tags, cacheEntryTTL)
 				}
 			}
 
