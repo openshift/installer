@@ -1,2 +1,2 @@
 \S
-OpenShift Agent Installer image for {{.ClusterName}}
+OpenShift Agent Installer image{{if .ClusterName}} for {{.ClusterName}}{{end}}
