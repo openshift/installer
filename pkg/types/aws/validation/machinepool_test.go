@@ -128,6 +128,26 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path\.authentication: Invalid value: \"foobarbaz\": must be either Required or Optional$`,
 		},
+		{
+			name: "valid dedicated hosts",
+			platform: &aws.MachinePool{
+				HostAffinity: "default",
+				HostID:       "h-09dcf61cb388b0149",
+			},
+		},
+		{
+			name: "invalid dedicated hosts - invalid affinity type",
+			platform: &aws.MachinePool{
+				HostAffinity: "unknown",
+				HostID:       "h-09dcf61cb388b0149",
+			},
+		},
+		{
+			name: "invalid dedicated hosts - missing hostID",
+			platform: &aws.MachinePool{
+				HostAffinity: "host",
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

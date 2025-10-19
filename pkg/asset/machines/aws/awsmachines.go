@@ -33,6 +33,8 @@ type MachineInput struct {
 	PublicIP       bool
 	PublicIpv4Pool string
 	Ignition       *capa.Ignition
+	HostAffinity   string
+	HostIDs        []string
 }
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
@@ -86,6 +88,9 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 			}
 		}
 
+		if len(in.hostIDs) > 1 {
+			// warn
+		}
 		awsMachine := &capa.AWSMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("%s-%s-%d", clusterID, in.Pool.Name, idx),
@@ -103,6 +108,8 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 				Subnet:               subnet,
 				PublicIP:             ptr.To(in.PublicIP),
 				AdditionalTags:       in.Tags,
+				HostID:               ptr.To(in.HostIDs[0]),
+				HostAffinity:         ptr.To(in.HostAffinity),				
 				RootVolume: &capa.Volume{
 					Size:          int64(mpool.EC2RootVolume.Size),
 					Type:          capa.VolumeType(mpool.EC2RootVolume.Type),
