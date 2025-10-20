@@ -252,6 +252,31 @@ passwd:
 				return clusterInfo
 			},
 		},
+		{
+			name:     "duplicate noProxy entries are removed",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
+				t.Helper()
+				objs, ocObjs, ocMachineConfigObjs := defaultObjects()(t)
+				for i, o := range ocObjs {
+					if proxy, ok := o.(*configv1.Proxy); ok {
+						proxy.Spec.NoProxy = "172.22.0.0/24,192.168.111.0/24,.ostest.test.metalkube.org,172.30.0.0/16,192.168.111.0/24"
+						ocObjs[i] = proxy
+						break
+					}
+				}
+				return objs, ocObjs, ocMachineConfigObjs
+			},
+			overrideExpectedClusterInfo: func(clusterInfo ClusterInfo) ClusterInfo {
+				t.Helper()
+				clusterInfo.Proxy = &types.Proxy{
+					HTTPProxy:  "http://proxy",
+					HTTPSProxy: "https://proxy",
+					NoProxy:    "172.22.0.0/24,192.168.111.0/24,.ostest.test.metalkube.org,172.30.0.0/16",
+				}
+				return clusterInfo
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
