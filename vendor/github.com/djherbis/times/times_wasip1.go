@@ -2,7 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// http://golang.org/src/os/stat_linux.go
+// https://github.com/golang/go/blob/master/src/os/stat_wasip1.go
+
+//go:build wasip1
+// +build wasip1
 
 package times
 
@@ -26,14 +29,14 @@ type timespec struct {
 	nobtime
 }
 
-func timespecToTime(ts syscall.Timespec) time.Time {
-	return time.Unix(int64(ts.Sec), int64(ts.Nsec))
+func timespecToTime(sec, nsec int64) time.Time {
+	return time.Unix(sec, nsec)
 }
 
 func getTimespec(fi os.FileInfo) (t timespec) {
 	stat := fi.Sys().(*syscall.Stat_t)
-	t.atime.v = timespecToTime(stat.Atim)
-	t.mtime.v = timespecToTime(stat.Mtim)
-	t.ctime.v = timespecToTime(stat.Ctim)
+	t.atime.v = timespecToTime(int64(stat.Atime), 0)
+	t.mtime.v = timespecToTime(int64(stat.Mtime), 0)
+	t.ctime.v = timespecToTime(int64(stat.Ctime), 0)
 	return t
 }

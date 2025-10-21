@@ -4,7 +4,7 @@ times
 [![GoDoc](https://godoc.org/github.com/djherbis/times?status.svg)](https://godoc.org/github.com/djherbis/times)
 [![Release](https://img.shields.io/github/release/djherbis/times.svg)](https://github.com/djherbis/times/releases/latest)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE.txt)
-[![Build Status](https://travis-ci.org/djherbis/times.svg?branch=master)](https://travis-ci.org/djherbis/times)
+[![go test](https://github.com/djherbis/times/actions/workflows/go-test.yml/badge.svg)](https://github.com/djherbis/times/actions/workflows/go-test.yml)
 [![Coverage Status](https://coveralls.io/repos/djherbis/times/badge.svg?branch=master)](https://coveralls.io/r/djherbis/times?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/djherbis/times)](https://goreportcard.com/report/github.com/djherbis/times)
 [![Sourcegraph](https://sourcegraph.com/github.com/djherbis/times/-/badge.svg)](https://sourcegraph.com/github.com/djherbis/times?badge)
@@ -21,7 +21,7 @@ package main
 import (
   "log"
 
-  "gopkg.in/djherbis/times.v1"
+  "github.com/djherbis/times"
 )
 
 func main() {
@@ -50,8 +50,11 @@ Supported Times
 | atime | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | mtime | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | ctime | ✓* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ | ✓ |
-| btime | ✓ |  |  |  |  | ✓ |  ✓| ✓ |  |  |
+| btime | ✓ | ✓* |  |  |  | ✓ |  ✓| ✓ |  |  |
 
+* Linux btime requires kernel 4.11 and filesystem support, so HasBirthTime = false.
+Use Timespec.HasBirthTime() to check if file has birth time.
+Get(FileInfo) never returns btime.
 * Windows XP does not have ChangeTime so HasChangeTime = false, 
 however Vista onward does have ChangeTime so Timespec.HasChangeTime() will 
 only return false on those platforms when the syscall used to obtain them fails.
@@ -60,5 +63,5 @@ only return false on those platforms when the syscall used to obtain them fails.
 Installation
 ------------
 ```sh
-go get gopkg.in/djherbis/times.v1
+go get -u github.com/djherbis/times
 ```
