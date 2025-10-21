@@ -10,6 +10,7 @@ import (
 	"k8s.io/utils/ptr"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 
+	v1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
@@ -240,6 +241,25 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 			awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules,
 			apiLBIngressRule,
 		)
+	}
+
+	// If dualstack with IPv4 primary, we should use IPv4 target group.
+	if ipFamily := ic.Config.InfraStack(); ipFamily == v1.IPFamiliesDualStack {
+		spec := &awsCluster.Spec
+
+		spec.ControlPlaneLoadBalancer.TargetGroupIPType = &capa.TargetGroupIPTypeIPv4
+		for i := range spec.ControlPlaneLoadBalancer.AdditionalListeners {
+			listener := &spec.ControlPlaneLoadBalancer.AdditionalListeners[i]
+			listener.TargetGroupIPType = &capa.TargetGroupIPTypeIPv4
+		}
+
+		if spec.SecondaryControlPlaneLoadBalancer != nil {
+			spec.SecondaryControlPlaneLoadBalancer.TargetGroupIPType = &capa.TargetGroupIPTypeIPv4
+			for i := range spec.SecondaryControlPlaneLoadBalancer.AdditionalListeners {
+				listener := &spec.SecondaryControlPlaneLoadBalancer.AdditionalListeners[i]
+				listener.TargetGroupIPType = &capa.TargetGroupIPTypeIPv4
+			}
+		}
 	}
 
 	// Set the NetworkSpec.Subnets from VPC and zones (managed) or subnets (BYO VPC) based in the install-config.yaml.
