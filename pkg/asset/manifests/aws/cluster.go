@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/ipnet"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 // BootstrapSSHDescription is the description for the
@@ -239,6 +240,31 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 			awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules,
 			apiLBIngressRule,
 		)
+	}
+
+	ipFamily := ic.Config.AWS.IPFamily
+
+	// If dualstack with IPv6 primary, we should use IPv6 target group.
+	tgIPType := capa.TargetGroupIPTypeIPv4
+	if ipFamily == awstypes.DualStackIPv6Primary {
+		tgIPType = capa.TargetGroupIPTypeIPv6
+	}
+
+	spec := &awsCluster.Spec
+	if spec.ControlPlaneLoadBalancer != nil {
+		spec.ControlPlaneLoadBalancer.TargetGroupIPType = &tgIPType
+		for i := range spec.ControlPlaneLoadBalancer.AdditionalListeners {
+			listener := &spec.ControlPlaneLoadBalancer.AdditionalListeners[i]
+			listener.TargetGroupIPType = &tgIPType
+		}
+	}
+
+	if spec.SecondaryControlPlaneLoadBalancer != nil {
+		spec.SecondaryControlPlaneLoadBalancer.TargetGroupIPType = &tgIPType
+		for i := range spec.SecondaryControlPlaneLoadBalancer.AdditionalListeners {
+			listener := &spec.SecondaryControlPlaneLoadBalancer.AdditionalListeners[i]
+			listener.TargetGroupIPType = &tgIPType
+		}
 	}
 
 	// Set the NetworkSpec.Subnets from VPC and zones (managed) or subnets (BYO VPC) based in the install-config.yaml.
