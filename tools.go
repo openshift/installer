@@ -13,6 +13,8 @@ import (
 	_ "github.com/daixiang0/gci" // dependency of hack/go-fmt.sh
 	// used to generate mocks
 	_ "go.uber.org/mock/mockgen"
+	// dependency of generating DeepCopy implementations for install-config
+	_ "k8s.io/code-generator/cmd/deepcopy-gen"
 	// dependency of generating CRD for install-config
 	_ "sigs.k8s.io/controller-tools/cmd/controller-gen"
 )
