@@ -38,12 +38,6 @@ type TagManager interface {
 	GetAttachedTagsOnObjects(ctx context.Context, objectID []mo.Reference) ([]vapitags.AttachedTags, error)
 }
 
-const (
-	esxi7U2BuildNumber    int    = 17630552
-	vcenter7U2BuildNumber int    = 17694817
-	vcenter7U2Version     string = "7.0.2"
-)
-
 var localLogger = logrus.New()
 
 type validationContext struct {
@@ -233,10 +227,48 @@ func validateHostGroups(validationCtx *validationContext, cluster, hostGroup str
 	return append(allErrs, field.NotFound(fldPath, hostGroup))
 }
 
+/* Support Scenario Notes
+ * <7 not supported - validation fail
+ * <7.0.2 not supported because of CSI drivers - validation fail
+ * >= 7.0.2 <8 - eol warning only - validation pass
+ * >=8 - validation pass
+ * https://knowledge.broadcom.com/external/article/326316/build-numbers-and-versions-of-vmware-vce.html
+ * https://knowledge.broadcom.com/external/article/314608/correlating-vmware-cloud-foundation-vers.html
+ */
+
+const (
+	eolVSphereVersion int = 7
+
+	// csi driver requirement.
+	minimumVCenterBuild    int = 17694817
+	minimumEsxiBuildNumber int = 17630552
+
+	supportedVSphereVersion int = 8
+
+	// GA build of vCenter 8, there are no constraints with csi.
+	supportedVCenterBuild    int = 20519528
+	supportedEsxiBuildNumber int = 20513097
+
+	vSphereCsiMinimumVersion string = "7.0.2"
+)
+
 func validateVCenterVersion(validationCtx *validationContext, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	constraints, err := version.NewConstraint(fmt.Sprintf("< %s", vcenter7U2Version))
+	// constraints
+	// CSI version constraint
+	csiConstraint, err := version.NewConstraint(fmt.Sprintf(">= %d, < %s", eolVSphereVersion, vSphereCsiMinimumVersion))
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	eolConstraints, err := version.NewConstraint(fmt.Sprintf(">= %d, < %d", eolVSphereVersion, supportedVSphereVersion))
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	// We support vSphere 8 and VVF/VCF 9
+	supportedConstraints, err := version.NewConstraint(fmt.Sprintf(">= %d", supportedVSphereVersion))
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(fldPath, err))
 	}
@@ -245,6 +277,8 @@ func validateVCenterVersion(validationCtx *validationContext, fldPath *field.Pat
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(fldPath, err))
 	}
+
+	// Current vCenter Build number
 	build, err := strconv.Atoi(validationCtx.Client.ServiceContent.About.Build)
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(fldPath, err))
@@ -253,9 +287,32 @@ func validateVCenterVersion(validationCtx *validationContext, fldPath *field.Pat
 	detail := fmt.Sprintf("The vSphere storage driver requires a minimum of vSphere 7 Update 2. Current vCenter version: %s, build: %s",
 		validationCtx.Client.ServiceContent.About.Version, validationCtx.Client.ServiceContent.About.Build)
 
-	if constraints.Check(vCenterVersion) {
+	switch {
+	// case: vCenter < 7.0.2
+	case csiConstraint.Check(vCenterVersion):
+		// case: < 7.0.2
+		logrus.Warnf("VMware vSphere 7 is end of service as of 10/2/2025. Current vCenter version: %s, build: %d", vCenterVersion.String(), build)
 		allErrs = append(allErrs, field.Required(fldPath, detail))
-	} else if build < vcenter7U2BuildNumber {
+	case eolConstraints.Check(vCenterVersion):
+		// case: >= 7.0.0 < 8.0.0
+		// While vSphere 7 is EOL we can't block installs because a customer could
+		// have an extended support and a support exception
+		logrus.Warnf("VMware vSphere 7 is end of service as of 10/2/2025. Current vCenter version: %s, build: %d", vCenterVersion.String(), build)
+
+		// Still running vSphere 7 but wrong build to use CSI driver
+		if build < minimumVCenterBuild {
+			allErrs = append(allErrs, field.Required(fldPath, detail))
+		}
+	case supportedConstraints.Check(vCenterVersion):
+		// case: >= 8.0.0
+		// This is currently set to the GA build number, all of vSphere 8 is supported
+		if build < supportedVCenterBuild {
+			allErrs = append(allErrs, field.Required(fldPath, detail))
+		}
+	default:
+		// case: < 7.0.0
+		detail = fmt.Sprintf("Unsupported version of vSphere. Current vCenter version: %s, build: %s",
+			validationCtx.Client.ServiceContent.About.Version, validationCtx.Client.ServiceContent.About.Build)
 		allErrs = append(allErrs, field.Required(fldPath, detail))
 	}
 
@@ -268,6 +325,22 @@ func validateESXiVersion(validationCtx *validationContext, clusterPath string, v
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
+
+	csiConstraint, err := version.NewConstraint(fmt.Sprintf(">= %d, < %s", eolVSphereVersion, vSphereCsiMinimumVersion))
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(vSphereFldPath, err))
+	}
+
+	eolConstraints, err := version.NewConstraint(fmt.Sprintf(">= %d, < %d", eolVSphereVersion, supportedVSphereVersion))
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(vSphereFldPath, err))
+	}
+
+	// We support vSphere 8 and VVF/VCF 9
+	supportedConstraints, err := version.NewConstraint(fmt.Sprintf(">= %d", supportedVSphereVersion))
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(vSphereFldPath, err))
+	}
 
 	clusters, err := finder.ClusterComputeResourceList(ctx, clusterPath)
 
@@ -287,11 +360,6 @@ func validateESXiVersion(validationCtx *validationContext, clusterPath string, v
 		default:
 			return append(allErrs, field.InternalError(vSphereFldPath, err))
 		}
-	}
-
-	v7, err := version.NewVersion("7.0")
-	if err != nil {
-		return append(allErrs, field.InternalError(vSphereFldPath, err))
 	}
 
 	hosts, err := clusters[0].Hosts(context.TODO())
@@ -324,16 +392,36 @@ func validateESXiVersion(validationCtx *validationContext, clusterPath string, v
 		detail := fmt.Sprintf("The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: %s is version: %s and build: %s",
 			h.Name(), mh.Config.Product.Version, mh.Config.Product.Build)
 
-		if esxiHostVersion.LessThan(v7) {
-			allErrs = append(allErrs, field.Required(computeClusterFldPath, detail))
-		} else {
-			build, err := strconv.Atoi(mh.Config.Product.Build)
-			if err != nil {
-				return append(allErrs, field.InternalError(vSphereFldPath, err))
+		build, err := strconv.Atoi(mh.Config.Product.Build)
+		if err != nil {
+			return append(allErrs, field.InternalError(vSphereFldPath, err))
+		}
+
+		switch {
+		// case: vCenter < 7.0.2
+		case csiConstraint.Check(esxiHostVersion):
+			// case: < 7.0.2
+			logrus.Warnf("VMware vSphere 7 is end of service as of 10/2/2025. The ESXi host: %s is version: %s and build: %s",
+				h.Name(), mh.Config.Product.Version, mh.Config.Product.Build)
+			allErrs = append(allErrs, field.Required(vSphereFldPath, detail))
+		case eolConstraints.Check(esxiHostVersion):
+			logrus.Warnf("VMware vSphere 7 is end of service as of 10/2/2025. The ESXi host: %s is version: %s and build: %s",
+				h.Name(), mh.Config.Product.Version, mh.Config.Product.Build)
+			// Still running vSphere 7 but wrong build to use CSI driver
+			if build < minimumEsxiBuildNumber {
+				allErrs = append(allErrs, field.Required(vSphereFldPath, detail))
 			}
-			if build < esxi7U2BuildNumber {
-				allErrs = append(allErrs, field.Required(computeClusterFldPath, detail))
+		case supportedConstraints.Check(esxiHostVersion):
+			// case: >= 8.0.0
+			// This is currently set to the GA build number, all of vSphere 8 is supported
+			if build < supportedEsxiBuildNumber {
+				allErrs = append(allErrs, field.Required(vSphereFldPath, detail))
 			}
+		default:
+			// case: < 7.0.0
+			detail = fmt.Sprintf("Unsupported version of vSphere.  The ESXi host: %s is version: %s and build: %s",
+				h.Name(), mh.Config.Product.Version, mh.Config.Product.Build)
+			allErrs = append(allErrs, field.Required(vSphereFldPath, detail))
 		}
 	}
 	return allErrs
