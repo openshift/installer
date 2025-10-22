@@ -3,7 +3,9 @@ package clusterapi
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net"
@@ -15,6 +17,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -231,6 +234,28 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			}
 		}
 
+		// ASO expects the contents of the cert--not the path--in the env var.
+		// Since .pfx is a binary format, we need to parse it and convert to PEM format.
+		var certPEM string
+		if session.AuthType == azic.ClientCertificateAuth {
+			certPath := session.Credentials.ClientCertificatePath
+			certData, err := os.ReadFile(certPath)
+			if err != nil {
+				return fmt.Errorf("unable to read client certificate contents from %s: %w", certPath, err)
+			}
+
+			// Parse the .pfx file to get certificates and private key
+			certs, key, err := azidentity.ParseCertificates(certData, []byte(session.Credentials.ClientCertificatePassword))
+			if err != nil {
+				return fmt.Errorf("failed to parse client certificate: %w", err)
+			}
+
+			// Convert certificates and key to PEM format
+			certPEM, err = certificatesToPEM(certs, key)
+			if err != nil {
+				return fmt.Errorf("failed to convert certificate to PEM: %w", err)
+			}
+		}
 		controllers = append(controllers,
 			c.getInfrastructureController(
 				&azProvider,
@@ -259,7 +284,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 					"POD_NAMESPACE":                     "capz-system",
 					"AZURE_CLIENT_ID":                   session.Credentials.ClientID,
 					"AZURE_CLIENT_SECRET":               session.Credentials.ClientSecret,
-					"AZURE_CLIENT_CERTIFICATE":          session.Credentials.ClientCertificatePath,
+					"AZURE_CLIENT_CERTIFICATE":          certPEM,
 					"AZURE_CLIENT_CERTIFICATE_PASSWORD": session.Credentials.ClientCertificatePassword,
 					"AZURE_TENANT_ID":                   session.Credentials.TenantID,
 					"AZURE_SUBSCRIPTION_ID":             session.Credentials.SubscriptionID,
@@ -684,4 +709,35 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 	}
 	ct.state = pr
 	return nil
+}
+
+// certificatesToPEM converts x509 certificates and a private key to PEM format.
+// The output is a concatenated string of PEM-encoded certificates followed by the PEM-encoded private key.
+func certificatesToPEM(certs []*x509.Certificate, key any) (string, error) {
+	var pemData strings.Builder
+
+	// Encode each certificate
+	for _, cert := range certs {
+		if err := pem.Encode(&pemData, &pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: cert.Raw,
+		}); err != nil {
+			return "", fmt.Errorf("failed to encode certificate: %w", err)
+		}
+	}
+
+	// Encode the private key
+	keyBytes, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal private key: %w", err)
+	}
+
+	if err := pem.Encode(&pemData, &pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: keyBytes,
+	}); err != nil {
+		return "", fmt.Errorf("failed to encode private key: %w", err)
+	}
+
+	return pemData.String(), nil
 }
