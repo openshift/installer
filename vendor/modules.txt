@@ -1296,7 +1296,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v0.0.0-20250806102053-6a7223edb2fc
+# github.com/openshift/api v0.0.0-20250806102053-6a7223edb2fc => github.com/jhixson74/api v0.0.0-20251023212951-b8aca3cf7f6b
 ## explicit; go 1.24.0
 github.com/openshift/api/annotations
 github.com/openshift/api/config/v1
@@ -1533,15 +1533,6 @@ github.com/rogpeppe/go-internal/txtar
 # github.com/russross/blackfriday/v2 v2.1.0
 ## explicit
 github.com/russross/blackfriday/v2
-# github.com/seancfoley/bintree v1.3.1
-## explicit; go 1.18
-github.com/seancfoley/bintree/tree
-# github.com/seancfoley/ipaddress-go v1.7.1
-## explicit; go 1.18
-github.com/seancfoley/ipaddress-go/ipaddr
-github.com/seancfoley/ipaddress-go/ipaddr/addrerr
-github.com/seancfoley/ipaddress-go/ipaddr/addrstr
-github.com/seancfoley/ipaddress-go/ipaddr/addrstrparam
 # github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 ## explicit
 github.com/shurcooL/httpfs/vfsutil
@@ -2851,3 +2842,4 @@ sigs.k8s.io/yaml/goyaml.v3
 # sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 # k8s.io/apimachinery => k8s.io/apimachinery v0.32.1
 # sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.9.6
+# github.com/openshift/api => github.com/jhixson74/api v0.0.0-20251023212951-b8aca3cf7f6b

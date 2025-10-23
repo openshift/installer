@@ -872,4 +872,27 @@ var (
 						enhancementPR("https://github.com/openshift/enhancements/pull/1785").
 						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 						mustRegister()
+	FeatureGateAWSDualStackInstall = newFeatureGate("AWSDualStackInstall").
+					reportProblemsToJiraComponent("Installer").
+					contactPerson("sadasu").
+					productScope(ocpSpecific).
+					enhancementPR("https://github.com/openshift/enhancements/pull/1806").
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
+
+	FeatureGateAzureDualStackInstall = newFeatureGate("AzureDualStackInstall").
+						reportProblemsToJiraComponent("Installer").
+						contactPerson("jhixson74").
+						productScope(ocpSpecific).
+						enhancementPR("https://github.com/openshift/enhancements/pull/1806").
+						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						mustRegister()
+
+	FeatureGateGCPDualStackInstall = newFeatureGate("GCPDualStackInstall").
+					reportProblemsToJiraComponent("Installer").
+					contactPerson("barbacbd").
+					productScope(ocpSpecific).
+					enhancementPR("https://github.com/openshift/enhancements/pull/1806").
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
 )
