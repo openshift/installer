@@ -21,6 +21,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/pageblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/service"
 	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/sirupsen/logrus"
 
@@ -40,8 +41,8 @@ type CreateStorageAccountInput struct {
 	ResourceGroupName  string
 	StorageAccountName string
 	Region             string
-	AuthType           azic.AuthenticationType
 	Tags               map[string]*string
+	AuthType           azic.AuthenticationType
 	CustomerManagedKey *aztypes.CustomerManagedKey
 	CloudName          aztypes.CloudEnvironment
 	TokenCredential    azcore.TokenCredential
@@ -62,7 +63,6 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 	minimumTLSVersion := armstorage.MinimumTLSVersionTLS10
 	storageKind := to.Ptr(armstorage.KindStorageV2)
 
-	/* XXX: Do we support other clouds? */
 	switch in.CloudName {
 	case aztypes.PublicCloud:
 		minimumTLSVersion = armstorage.MinimumTLSVersionTLS12
@@ -81,11 +81,6 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 			//APIVersion: "2019-06-01",
 		},
 	}
-	allowSharedKeyAccess := true
-	if in.AuthType == azic.ManagedIdentityAuth {
-		allowSharedKeyAccess = false
-	}
-
 	storageClientFactory, err := armstorage.NewClientFactory(in.SubscriptionID, in.TokenCredential, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get storage account factory %w", err)
@@ -94,6 +89,7 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 	sku := armstorage.SKU{
 		Name: to.Ptr(armstorage.SKUNameStandardLRS),
 	}
+
 	accountCreateParameters := armstorage.AccountCreateParameters{
 		Identity: nil,
 		Kind:     storageKind,
@@ -101,7 +97,7 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		SKU:      &sku,
 		Properties: &armstorage.AccountPropertiesCreateParameters{
 			AllowBlobPublicAccess:       to.Ptr(false),
-			AllowSharedKeyAccess:        to.Ptr(allowSharedKeyAccess),
+			AllowSharedKeyAccess:        to.Ptr(in.CloudName == aztypes.StackCloud),
 			IsLocalUserEnabled:          to.Ptr(true),
 			LargeFileSharesState:        to.Ptr(armstorage.LargeFileSharesStateEnabled),
 			PublicNetworkAccess:         to.Ptr(armstorage.PublicNetworkAccessEnabled),
@@ -235,8 +231,11 @@ type CreatePageBlobInput struct {
 	BlobURL            string
 	ImageURL           string
 	StorageAccountName string
+	CloudEnvironment   aztypes.CloudEnvironment
 	BootstrapIgnData   []byte
+	UserDelegatedSAS   *sas.UserDelegationCredential
 	ImageLength        int64
+	TokenCredential    azcore.TokenCredential
 	StorageAccountKeys []armstorage.AccountKey
 	ClientOpts         *arm.ClientOptions
 }
@@ -249,18 +248,11 @@ type CreatePageBlobOutput struct {
 
 // CreatePageBlob creates a blob and uploads a file from a URL to it.
 func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error) {
-	logrus.Debugf("Getting page blob credentials")
-
-	// XXX: Should try all of them until one is successful
-	sharedKeyCredential, err := azblob.NewSharedKeyCredential(in.StorageAccountName, *in.StorageAccountKeys[0].Value)
-	if err != nil {
-		return "", fmt.Errorf("failed to get shared credentials for storage account: %w", err)
-	}
-
 	logrus.Debugf("Getting page blob client")
-	pageBlobClient, err := pageblob.NewClientWithSharedKeyCredential(
+
+	pageBlobClient, err := pageblob.NewClient(
 		in.BlobURL,
-		sharedKeyCredential,
+		in.TokenCredential,
 		&pageblob.ClientOptions{
 			ClientOptions: azcore.ClientOptions{
 				Cloud: in.ClientOpts.Cloud,
@@ -300,13 +292,15 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error
 			return "", fmt.Errorf("failed to upload page blob image from URL %s: %w", in.ImageURL, err)
 		}
 	}
-
-	// Is this addition OK for when CreatePageBlob() is called from InfraReady()
-	sasURL, err := pageBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
-	if err != nil {
-		return "", fmt.Errorf("failed to get Page Blob SAS URL: %w", err)
+	if in.CloudEnvironment == aztypes.StackCloud {
+		// Is this addition OK for when CreatePageBlob() is called from InfraReady()
+		sasURL, err := pageBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
+		if err != nil {
+			return "", fmt.Errorf("failed to get Page Blob SAS URL: %w", err)
+		}
+		return sasURL, nil
 	}
-	return sasURL, nil
+	return "", nil
 }
 
 func doUploadPages(ctx context.Context, pageBlobClient *pageblob.Client, imageData []byte, imageLength int64) error {
@@ -452,17 +446,21 @@ type CreateBlockBlobInput struct {
 	BlobURL            string
 	StorageAccountName string
 	BootstrapIgnData   []byte
+	AuthType           azic.AuthenticationType
+	TokenCredential    azcore.TokenCredential
 	StorageAccountKeys []armstorage.AccountKey
 	ClientOpts         *arm.ClientOptions
 	CloudEnvironment   aztypes.CloudEnvironment
 	ContainerName      string
 	BlobName           string
+	UserDelegatedSAS   *sas.UserDelegationCredential
 	StorageSuffix      string
 	ARMEndpoint        string
 	Region             string
 	ResourceGroupName  string
 	Session            *azic.Session
 	Tags               map[string]*string
+	UserDelegatedCreds *service.UserDelegationCredential
 }
 
 // CreateBlockBlobOutput contains the return values after creating a block
@@ -478,19 +476,14 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 		return createBlockBlobOnStack(ctx, in)
 	}
 	logrus.Debugf("Getting block blob credentials")
-	// XXX: Should try all of them until one is successful
-	sharedKeyCredential, err := azblob.NewSharedKeyCredential(in.StorageAccountName, *in.StorageAccountKeys[0].Value)
-	if err != nil {
-		return "", fmt.Errorf("failed to get shared crdentials for storage account: %w", err)
-	}
-	return createBlockBlob(ctx, in, sharedKeyCredential)
+	return createBlockBlob(ctx, in)
 }
 
-func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput, sharedKeyCredential *azblob.SharedKeyCredential) (string, error) {
+func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
 	logrus.Debugf("Getting block blob client")
-	blockBlobClient, err := blockblob.NewClientWithSharedKeyCredential(
+	blockBlobClient, err := blockblob.NewClient(
 		in.BlobURL,
-		sharedKeyCredential,
+		in.TokenCredential,
 		&blockblob.ClientOptions{
 			ClientOptions: azcore.ClientOptions{
 				Cloud: in.ClientOpts.Cloud,
@@ -498,7 +491,7 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput, sharedKeyCre
 		},
 	)
 	if err != nil {
-		return "", fmt.Errorf("failed to get page blob client: %w", err)
+		return "", fmt.Errorf("failed to get block blob client: %w", err)
 	}
 
 	logrus.Debugf("Creating block blob")
@@ -511,12 +504,11 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput, sharedKeyCre
 		return "", fmt.Errorf("failed to create block blob: %w", err)
 	}
 
-	sasURL, err := blockBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
-	if err != nil {
-		return "", fmt.Errorf("failed to get SAS URL: %w", err)
+	// SAS not supported when using managed identity.
+	if in.AuthType == azic.ManagedIdentityAuth {
+		return blockBlobClient.URL(), nil
 	}
-
-	return sasURL, nil
+	return "", nil
 }
 
 func createBlockBlobOnStack(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
