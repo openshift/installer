@@ -477,17 +477,18 @@ USER_AUTH_TOKEN=%s
 WORKFLOW_TYPE=%s
 `, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), agentAuthtoken, userAuthToken, workflowType)
 
-	if workflowType == workflow.AgentWorkflowTypeInstallInteractiveDisconnected {
-		uiBaseURL := url.URL{
-			Scheme: serviceProtocol,
-			Host:   net.JoinHostPort(nodeZeroIP, "3001"),
-			Path:   "/",
-		}
-		uiEnv := fmt.Sprintf(`AIUI_APP_API_URL=%s
-AIUI_URL=%s
-`, serviceBaseURL.String(), uiBaseURL.String())
-		rendezvousHostEnv = fmt.Sprintf("%s%s", rendezvousHostEnv, uiEnv)
-	}
+// Below code will be handled via https://github.com/openshift/installer/pull/9941/files
+// 	if workflowType == workflow.AgentWorkflowTypeInstallInteractiveDisconnected {
+// 		uiBaseURL := url.URL{
+// 			Scheme: serviceProtocol,
+// 			Host:   net.JoinHostPort(nodeZeroIP, "3001"),
+// 			Path:   "/",
+// 		}
+// 		uiEnv := fmt.Sprintf(`AIUI_APP_API_URL=%s
+// AIUI_URL=%s
+// `, serviceBaseURL.String(), uiBaseURL.String())
+// 		rendezvousHostEnv = fmt.Sprintf("%s%s", rendezvousHostEnv, uiEnv)
+// 	}
 
 	return rendezvousHostEnv
 }

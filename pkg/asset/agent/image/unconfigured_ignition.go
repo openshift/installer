@@ -170,6 +170,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		// Enable the agent-check-config-image.service for the current workflow.
 		enabledServices = append(enabledServices, "agent-check-config-image.service")
 
+	// Below code will be handled via https://github.com/openshift/installer/pull/9941/files
 	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
 		// Add the rendezvous host file. Agent TUI will interact with that file in case
 		// the rendezvous IP wasn't previously configured, by managing it as a template file.
