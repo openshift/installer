@@ -204,10 +204,13 @@ func (ci *ClusterInfo) retrieveProxy() error {
 	if err != nil {
 		return err
 	}
+	// Remove any duplicates in noProxy
+	noProxy := ci.removeDuplicates(proxy.Spec.NoProxy)
+
 	ci.Proxy = &types.Proxy{
 		HTTPProxy:  proxy.Spec.HTTPProxy,
 		HTTPSProxy: proxy.Spec.HTTPSProxy,
-		NoProxy:    proxy.Spec.NoProxy,
+		NoProxy:    noProxy,
 	}
 
 	return nil
@@ -687,4 +690,32 @@ func (ci *ClusterInfo) reportResult(ctx context.Context) error {
 	}
 
 	return workflowreport.GetReport(ctx).StageResult(workflow.StageClusterInspection, string(data))
+}
+
+func (ci *ClusterInfo) removeDuplicates(input string) string {
+	entries := strings.Split(strings.TrimSpace(input), ",")
+
+	duplicates := []string{}
+	uniqueMap := make(map[string]bool)
+	var uniqueList []string
+	for _, entry := range entries {
+		trimmedEntry := strings.TrimSpace(entry)
+
+		// Check if the entry is not empty and hasn't been added to the map yet
+		if trimmedEntry == "" {
+			continue
+		}
+		if _, exists := uniqueMap[trimmedEntry]; !exists {
+			// If it doesn't exist, add it to the map and the unique list
+			uniqueMap[trimmedEntry] = true
+			uniqueList = append(uniqueList, trimmedEntry)
+		} else {
+			duplicates = append(duplicates, trimmedEntry)
+		}
+	}
+
+	if len(duplicates) > 0 {
+		logrus.Infof("Duplicates detected in noProxy: %v", duplicates)
+	}
+	return strings.Join(uniqueList, ",")
 }
