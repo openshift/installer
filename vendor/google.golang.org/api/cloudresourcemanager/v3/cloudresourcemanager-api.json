@@ -321,7 +321,7 @@
           ],
           "parameters": {
             "name": {
-              "description": "Output only. The resource name of the folder. Its format is `folders/{folder_id}`, for example: \"folders/1234\".",
+              "description": "Identifier. The resource name of the folder. Its format is `folders/{folder_id}`, for example: \"folders/1234\".",
               "location": "path",
               "pattern": "^folders/[^/]+$",
               "required": true,
@@ -461,6 +461,71 @@
           "scopes": [
             "https://www.googleapis.com/auth/cloud-platform"
           ]
+        }
+      },
+      "resources": {
+        "capabilities": {
+          "methods": {
+            "get": {
+              "description": "Retrieves the Capability identified by the supplied resource name.",
+              "flatPath": "v3/folders/{foldersId}/capabilities/{capabilitiesId}",
+              "httpMethod": "GET",
+              "id": "cloudresourcemanager.folders.capabilities.get",
+              "parameterOrder": [
+                "name"
+              ],
+              "parameters": {
+                "name": {
+                  "description": "Required. The name of the capability to get. For example, `folders/123/capabilities/app-management`",
+                  "location": "path",
+                  "pattern": "^folders/[^/]+/capabilities/[^/]+$",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "path": "v3/{+name}",
+              "response": {
+                "$ref": "Capability"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ]
+            },
+            "patch": {
+              "description": "Updates the Capability.",
+              "flatPath": "v3/folders/{foldersId}/capabilities/{capabilitiesId}",
+              "httpMethod": "PATCH",
+              "id": "cloudresourcemanager.folders.capabilities.patch",
+              "parameterOrder": [
+                "name"
+              ],
+              "parameters": {
+                "name": {
+                  "description": "Immutable. Identifier. The resource name of the capability. Must be in the following form: * `folders/{folder_id}/capabilities/{capability_name}` For example, `folders/123/capabilities/app-management` Following are the allowed {capability_name} values: * `app-management`",
+                  "location": "path",
+                  "pattern": "^folders/[^/]+/capabilities/[^/]+$",
+                  "required": true,
+                  "type": "string"
+                },
+                "updateMask": {
+                  "description": "Optional. The list of fields to update. Only [Capability.value] can be updated.",
+                  "format": "google-fieldmask",
+                  "location": "query",
+                  "type": "string"
+                }
+              },
+              "path": "v3/{+name}",
+              "request": {
+                "$ref": "Capability"
+              },
+              "response": {
+                "$ref": "Operation"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ]
+            }
+          }
         }
       }
     },
@@ -772,7 +837,7 @@
           ]
         },
         "delete": {
-          "description": "Marks the project identified by the specified `name` (for example, `projects/415104041262`) for deletion. This method will only affect the project if it has a lifecycle state of ACTIVE. This method changes the Project's lifecycle state from ACTIVE to DELETE_REQUESTED. The deletion starts at an unspecified time, at which point the Project is no longer accessible. Until the deletion completes, you can check the lifecycle state checked by retrieving the project with GetProject, and the project remains visible to ListProjects. However, you cannot update the project. After the deletion completes, the project is not retrievable by the GetProject, ListProjects, and SearchProjects methods. This method behaves idempotently, such that deleting a `DELETE_REQUESTED` project will not cause an error, but also won't do anything. The caller must have `resourcemanager.projects.delete` permissions for this project.",
+          "description": "Marks the project identified by the specified `name` (for example, `projects/415104041262`) for deletion. This method will only affect the project if it has a lifecycle state of ACTIVE. This method changes the Project's lifecycle state from ACTIVE to DELETE_REQUESTED. The deletion starts at an unspecified time, at which point the Project is no longer accessible. Until the deletion completes, you can check the lifecycle state checked by retrieving the project with GetProject, and the project remains visible to ListProjects. However, you cannot update the project. After the deletion completes, the project is not retrievable by the GetProject, ListProjects, and SearchProjects methods. The caller must have `resourcemanager.projects.delete` permissions for this project.",
           "flatPath": "v3/projects/{projectsId}",
           "httpMethod": "DELETE",
           "id": "cloudresourcemanager.projects.delete",
@@ -1805,7 +1870,7 @@
       }
     }
   },
-  "revision": "20240310",
+  "revision": "20250508",
   "rootUrl": "https://cloudresourcemanager.googleapis.com/",
   "schemas": {
     "AuditConfig": {
@@ -1874,6 +1939,21 @@
         "role": {
           "description": "Role that is assigned to the list of `members`, or principals. For example, `roles/viewer`, `roles/editor`, or `roles/owner`. For an overview of the IAM roles and permissions, see the [IAM documentation](https://cloud.google.com/iam/docs/roles-overview). For a list of the available pre-defined roles, see [here](https://cloud.google.com/iam/docs/understanding-roles).",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Capability": {
+      "description": "Representation of a Capability.",
+      "id": "Capability",
+      "properties": {
+        "name": {
+          "description": "Immutable. Identifier. The resource name of the capability. Must be in the following form: * `folders/{folder_id}/capabilities/{capability_name}` For example, `folders/123/capabilities/app-management` Following are the allowed {capability_name} values: * `app-management`",
+          "type": "string"
+        },
+        "value": {
+          "description": "Required. The configured value of the capability at the given parent resource.",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -2097,6 +2177,14 @@
       "description": "A folder in an organization's resource hierarchy, used to organize that organization's resources.",
       "id": "Folder",
       "properties": {
+        "configuredCapabilities": {
+          "description": "Output only. Optional capabilities configured for this folder (via UpdateCapability API). Example: `folders/123/capabilities/app-management`.",
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
+        },
         "createTime": {
           "description": "Output only. Timestamp when the folder was created.",
           "format": "google-datetime",
@@ -2118,9 +2206,13 @@
           "readOnly": true,
           "type": "string"
         },
-        "name": {
-          "description": "Output only. The resource name of the folder. Its format is `folders/{folder_id}`, for example: \"folders/1234\".",
+        "managementProject": {
+          "description": "Output only. Management Project associated with this folder (if app-management capability is enabled). Example: `projects/google-mp-123` OUTPUT ONLY.",
           "readOnly": true,
+          "type": "string"
+        },
+        "name": {
+          "description": "Identifier. The resource name of the folder. Its format is `folders/{folder_id}`, for example: \"folders/1234\".",
           "type": "string"
         },
         "parent": {

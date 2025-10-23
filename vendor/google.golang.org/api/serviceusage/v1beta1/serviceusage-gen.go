@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC.
+// Copyright 2025 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -135,9 +135,6 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*APIService, 
 	s := &APIService{client: client, BasePath: basePath, logger: internaloption.GetLogger(opts)}
 	s.Operations = NewOperationsService(s)
 	s.Services = NewServicesService(s)
-	if err != nil {
-		return nil, err
-	}
 	if endpoint != "" {
 		s.BasePath = endpoint
 	}
@@ -153,7 +150,7 @@ func New(client *http.Client) (*APIService, error) {
 	if client == nil {
 		return nil, errors.New("client is nil")
 	}
-	return NewService(context.Background(), option.WithHTTPClient(client))
+	return NewService(context.TODO(), option.WithHTTPClient(client))
 }
 
 type APIService struct {
@@ -330,6 +327,8 @@ type Analysis struct {
 	//   "ANALYSIS_TYPE_UNSPECIFIED" - Unspecified analysis type. Do not use.
 	//   "ANALYSIS_TYPE_DEPENDENCY" - The analysis of service dependencies.
 	//   "ANALYSIS_TYPE_RESOURCE_USAGE" - The analysis of service resource usage.
+	//   "ANALYSIS_TYPE_RESOURCE_EXISTENCE" - The analysis of service resource
+	// existence.
 	AnalysisType string `json:"analysisType,omitempty"`
 	// DisplayName: Output only. The user friendly display name of the analysis
 	// type. E.g. service dependency analysis, service resource usage analysis,
@@ -471,6 +470,32 @@ type Api struct {
 
 func (s Api) MarshalJSON() ([]byte, error) {
 	type NoMethod Api
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// Aspect: Aspect represents Generic aspect. It is used to configure an aspect
+// without making direct changes to service.proto
+type Aspect struct {
+	// Kind: The type of this aspect configuration.
+	Kind string `json:"kind,omitempty"`
+	// Spec: Content of the configuration. The underlying schema should be defined
+	// by Aspect owners as protobuf message under `google/api/configaspects/proto`.
+	Spec googleapi.RawMessage `json:"spec,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Kind") to unconditionally
+	// include in API requests. By default, fields with empty or default values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Kind") to include in API requests
+	// with the JSON null value. By default, fields with empty values are omitted
+	// from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s Aspect) MarshalJSON() ([]byte, error) {
+	type NoMethod Aspect
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
@@ -691,6 +716,12 @@ type BackendRule struct {
 	// backend. This ID token will be added in the HTTP "authorization" header, and
 	// sent to the backend.
 	JwtAudience string `json:"jwtAudience,omitempty"`
+	// LoadBalancingPolicy: The load balancing policy used for connection to the
+	// application backend. Defined as an arbitrary string to accomondate custom
+	// load balancing policies supported by the underlying channel, but suggest
+	// most users use one of the standard policies, such as the default,
+	// "RoundRobin".
+	LoadBalancingPolicy string `json:"loadBalancingPolicy,omitempty"`
 	// MinDeadline: Deprecated, do not use.
 	MinDeadline float64 `json:"minDeadline,omitempty"`
 	// OperationDeadline: The number of seconds to wait for the completion of a
@@ -871,6 +902,119 @@ type BatchEnableServicesResponse struct {
 
 func (s BatchEnableServicesResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod BatchEnableServicesResponse
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// BatchingConfigProto: `BatchingConfigProto` defines the batching
+// configuration for an API method.
+type BatchingConfigProto struct {
+	// BatchDescriptor: The request and response fields used in batching.
+	BatchDescriptor *BatchingDescriptorProto `json:"batchDescriptor,omitempty"`
+	// Thresholds: The thresholds which trigger a batched request to be sent.
+	Thresholds *BatchingSettingsProto `json:"thresholds,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "BatchDescriptor") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "BatchDescriptor") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s BatchingConfigProto) MarshalJSON() ([]byte, error) {
+	type NoMethod BatchingConfigProto
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// BatchingDescriptorProto: `BatchingDescriptorProto` specifies the fields of
+// the request message to be used for batching, and, optionally, the fields of
+// the response message to be used for demultiplexing.
+type BatchingDescriptorProto struct {
+	// BatchedField: The repeated field in the request message to be aggregated by
+	// batching.
+	BatchedField string `json:"batchedField,omitempty"`
+	// DiscriminatorFields: A list of the fields in the request message. Two
+	// requests will be batched together only if the values of every field
+	// specified in `request_discriminator_fields` is equal between the two
+	// requests.
+	DiscriminatorFields []string `json:"discriminatorFields,omitempty"`
+	// SubresponseField: Optional. When present, indicates the field in the
+	// response message to be used to demultiplex the response into multiple
+	// response messages, in correspondence with the multiple request messages
+	// originally batched together.
+	SubresponseField string `json:"subresponseField,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "BatchedField") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "BatchedField") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s BatchingDescriptorProto) MarshalJSON() ([]byte, error) {
+	type NoMethod BatchingDescriptorProto
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// BatchingSettingsProto: `BatchingSettingsProto` specifies a set of batching
+// thresholds, each of which acts as a trigger to send a batch of messages as a
+// request. At least one threshold must be positive nonzero.
+type BatchingSettingsProto struct {
+	// DelayThreshold: The duration after which a batch should be sent, starting
+	// from the addition of the first message to that batch.
+	DelayThreshold string `json:"delayThreshold,omitempty"`
+	// ElementCountLimit: The maximum number of elements collected in a batch that
+	// could be accepted by server.
+	ElementCountLimit int64 `json:"elementCountLimit,omitempty"`
+	// ElementCountThreshold: The number of elements of a field collected into a
+	// batch which, if exceeded, causes the batch to be sent.
+	ElementCountThreshold int64 `json:"elementCountThreshold,omitempty"`
+	// FlowControlByteLimit: The maximum size of data allowed by flow control.
+	FlowControlByteLimit int64 `json:"flowControlByteLimit,omitempty"`
+	// FlowControlElementLimit: The maximum number of elements allowed by flow
+	// control.
+	FlowControlElementLimit int64 `json:"flowControlElementLimit,omitempty"`
+	// FlowControlLimitExceededBehavior: The behavior to take when the flow control
+	// limit is exceeded.
+	//
+	// Possible values:
+	//   "UNSET_BEHAVIOR" - Default behavior, system-defined.
+	//   "THROW_EXCEPTION" - Stop operation, raise error.
+	//   "BLOCK" - Pause operation until limit clears.
+	//   "IGNORE" - Continue operation, disregard limit.
+	FlowControlLimitExceededBehavior string `json:"flowControlLimitExceededBehavior,omitempty"`
+	// RequestByteLimit: The maximum size of the request that could be accepted by
+	// server.
+	RequestByteLimit int64 `json:"requestByteLimit,omitempty"`
+	// RequestByteThreshold: The aggregated size of the batched field which, if
+	// exceeded, causes the batch to be sent. This size is computed by aggregating
+	// the sizes of the request field to be batched, not of the entire request
+	// message.
+	RequestByteThreshold int64 `json:"requestByteThreshold,omitempty,string"`
+	// ForceSendFields is a list of field names (e.g. "DelayThreshold") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "DelayThreshold") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s BatchingSettingsProto) MarshalJSON() ([]byte, error) {
+	type NoMethod BatchingSettingsProto
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
@@ -1478,9 +1622,9 @@ type Documentation struct {
 	// Rules: A list of documentation rules that apply to individual API elements.
 	// **NOTE:** All service configuration rules follow "last one wins" order.
 	Rules []*DocumentationRule `json:"rules,omitempty"`
-	// SectionOverrides: Specifies section and content to override boilerplate
-	// content provided by go/api-docgen. Currently overrides following sections:
-	// 1. rest.service.client_libraries
+	// SectionOverrides: Specifies section and content to override the boilerplate
+	// content. Currently overrides following sections: 1.
+	// rest.service.client_libraries
 	SectionOverrides []*Page `json:"sectionOverrides,omitempty"`
 	// ServiceRootUrl: Specifies the service root url if the default one (the
 	// service name from the yaml file) is not suitable. This can be seen in any
@@ -1520,8 +1664,7 @@ type DocumentationRule struct {
 	// comments taken from the proto source definition of the proto element.
 	Description string `json:"description,omitempty"`
 	// DisableReplacementWords: String of comma or space separated case-sensitive
-	// words for which method/field name replacement will be disabled by
-	// go/api-docgen.
+	// words for which method/field name replacement will be disabled.
 	DisableReplacementWords string `json:"disableReplacementWords,omitempty"`
 	// Selector: The selector is a comma-separated list of patterns for any element
 	// such as a method, a field, an enum value. Each pattern is a qualified name
@@ -1829,6 +1972,11 @@ type ExperimentalFeatures struct {
 	// be generated. This feature will be enabled by default 1 month after
 	// launching the feature in preview packages.
 	RestAsyncIoEnabled bool `json:"restAsyncIoEnabled,omitempty"`
+	// UnversionedPackageDisabled: Disables generation of an unversioned Python
+	// package for this client library. This means that the module names will need
+	// to be versioned in import statements. For example `import
+	// google.cloud.library_v2` instead of `import google.cloud.library`.
+	UnversionedPackageDisabled bool `json:"unversionedPackageDisabled,omitempty"`
 	// ForceSendFields is a list of field names (e.g.
 	// "ProtobufPythonicTypesEnabled") to unconditionally include in API requests.
 	// By default, fields with empty or default values are omitted from API
@@ -2042,6 +2190,11 @@ type GoogleApiService struct {
 	// normalization process. It is an error to specify an API interface here which
 	// cannot be resolved against the associated IDL files.
 	Apis []*Api `json:"apis,omitempty"`
+	// Aspects: Configuration aspects. This is a repeated field to allow multiple
+	// aspects to be configured. The kind field in each ConfigAspect specifies the
+	// type of aspect. The spec field contains the configuration for that aspect.
+	// The schema for the spec field is defined by the backend service owners.
+	Aspects []*Aspect `json:"aspects,omitempty"`
 	// Authentication: Auth configuration.
 	Authentication *Authentication `json:"authentication,omitempty"`
 	// Backend: API backend configuration.
@@ -2392,8 +2545,8 @@ type GoogleApiServiceusageV2alphaUpdateConsumerPolicyMetadata struct {
 // GoogleApiServiceusageV2betaAnalysis: A message to group the analysis
 // information.
 type GoogleApiServiceusageV2betaAnalysis struct {
-	// Analysis: Output only. Analysis result of updating a policy.
-	Analysis *GoogleApiServiceusageV2betaAnalysisResult `json:"analysis,omitempty"`
+	// AnalysisResult: Output only. Analysis result of updating a policy.
+	AnalysisResult *GoogleApiServiceusageV2betaAnalysisResult `json:"analysisResult,omitempty"`
 	// AnalysisType: Output only. The type of analysis.
 	//
 	// Possible values:
@@ -2408,15 +2561,15 @@ type GoogleApiServiceusageV2betaAnalysis struct {
 	// Service: The names of the service that has analysis result of warnings or
 	// blockers. Example: `services/storage.googleapis.com`.
 	Service string `json:"service,omitempty"`
-	// ForceSendFields is a list of field names (e.g. "Analysis") to
+	// ForceSendFields is a list of field names (e.g. "AnalysisResult") to
 	// unconditionally include in API requests. By default, fields with empty or
 	// default values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
 	// details.
 	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "Analysis") to include in API
-	// requests with the JSON null value. By default, fields with empty values are
-	// omitted from API requests. See
+	// NullFields is a list of field names (e.g. "AnalysisResult") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
 	NullFields []string `json:"-"`
 }
@@ -2820,10 +2973,24 @@ type Impact struct {
 	//   "IMPACT_TYPE_UNSPECIFIED" - Reserved Blocks (Block n contains codes from
 	// 100n to 100(n+1) -1 Block 0 - Special/Admin codes Block 1 - Impact Type of
 	// ANALYSIS_TYPE_DEPENDENCY Block 2 - Impact Type of
-	// ANALYSIS_TYPE_RESOURCE_USAGE ...
+	// ANALYSIS_TYPE_RESOURCE_USAGE Block 3 - Impact Type of
+	// ANALYSIS_TYPE_RESOURCE_EXISTENCE ...
 	//   "DEPENDENCY_MISSING_DEPENDENCIES" - Block 1 - Impact Type of
 	// ANALYSIS_TYPE_DEPENDENCY
+	//   "RESOURCE_EXISTENCE_PROJECT" - Block 3 - Impact Type of
+	// ANALYSIS_TYPE_RESOURCE_EXISTENCE
 	ImpactType string `json:"impactType,omitempty"`
+	// Parent: The parent resource that the analysis is based on and the service
+	// name that the analysis is for. Example:
+	// `projects/100/services/compute.googleapis.com`,
+	// folders/101/services/compute.googleapis.com` and
+	// `organizations/102/services/compute.googleapis.com`. Usually, the parent
+	// resource here is same as the parent resource of the analyzed policy.
+	// However, for some analysis types, the parent can be different. For example,
+	// for resource existence analysis, if the parent resource of the analyzed
+	// policy is a folder or an organization, the parent resource here can still be
+	// the project that contains the resources.
+	Parent string `json:"parent,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "Detail") to unconditionally
 	// include in API requests. By default, fields with empty or default values are
 	// omitted from API requests. See
@@ -3024,8 +3191,8 @@ type JavaSettings struct {
 	// option set in the protobuf. This should be used **only** by APIs who have
 	// already set the language_settings.java.package_name" field in gapic.yaml.
 	// API teams should use the protobuf java_package option where possible.
-	// Example of a YAML configuration:: publishing: java_settings:
-	// library_package: com.google.cloud.pubsub.v1
+	// Example of a YAML configuration:: publishing: library_settings:
+	// java_settings: library_package: com.google.cloud.pubsub.v1
 	LibraryPackage string `json:"libraryPackage,omitempty"`
 	// ServiceClassNames: Configure the Java class name to use instead of the
 	// service's for its corresponding generated GAPIC client. Keys are
@@ -3490,6 +3657,12 @@ type MethodSettings struct {
 	// google.example.v1.ExampleService.CreateExample auto_populated_fields: -
 	// request_id
 	AutoPopulatedFields []string `json:"autoPopulatedFields,omitempty"`
+	// Batching: Batching configuration for an API method in client libraries.
+	// Example of a YAML configuration: publishing: method_settings: - selector:
+	// google.example.v1.ExampleService.BatchCreateExample batching:
+	// element_count_threshold: 1000 request_byte_threshold: 100000000
+	// delay_threshold_millis: 10
+	Batching *BatchingConfigProto `json:"batching,omitempty"`
 	// LongRunning: Describes settings to use for long-running operations when
 	// generating API methods for RPCs. Complements RPCs that use the annotations
 	// in google/longrunning/operations.proto. Example of a YAML configuration::
@@ -4211,8 +4384,8 @@ func (s OverrideInlineSource) MarshalJSON() ([]byte, error) {
 // Page: Represents a documentation page. A page can contain subpages to
 // represent nested documentation set structure.
 type Page struct {
-	// Content: The Markdown content of the page. You can use (== include {path}
-	// ==) to include content from a Markdown file. The content can be used to
+	// Content: The Markdown content of the page. You can use ```(== include {path}
+	// ==)``` to include content from a Markdown file. The content can be used to
 	// produce the documentation page such as HTML format page.
 	Content string `json:"content,omitempty"`
 	// Name: The name of the page. It will be used as an identity of the page to
@@ -4722,18 +4895,25 @@ func (s RubySettings) MarshalJSON() ([]byte, error) {
 // SelectiveGapicGeneration: This message is used to configure the generation
 // of a subset of the RPCs in a service for client libraries.
 type SelectiveGapicGeneration struct {
+	// GenerateOmittedAsInternal: Setting this to true indicates to the client
+	// generators that methods that would be excluded from the generation should
+	// instead be generated in a way that indicates these methods should not be
+	// consumed by end users. How this is expressed is up to individual language
+	// implementations to decide. Some examples may be: added annotations,
+	// obfuscated identifiers, or other language idiomatic patterns.
+	GenerateOmittedAsInternal bool `json:"generateOmittedAsInternal,omitempty"`
 	// Methods: An allowlist of the fully qualified names of RPCs that should be
 	// included on public client surfaces.
 	Methods []string `json:"methods,omitempty"`
-	// ForceSendFields is a list of field names (e.g. "Methods") to unconditionally
-	// include in API requests. By default, fields with empty or default values are
-	// omitted from API requests. See
+	// ForceSendFields is a list of field names (e.g. "GenerateOmittedAsInternal")
+	// to unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
 	// details.
 	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "Methods") to include in API
-	// requests with the JSON null value. By default, fields with empty values are
-	// omitted from API requests. See
+	// NullFields is a list of field names (e.g. "GenerateOmittedAsInternal") to
+	// include in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
 	NullFields []string `json:"-"`
 }
@@ -5129,20 +5309,13 @@ func (s Usage) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
-// UsageRule: Usage configuration rules for the service. NOTE: Under
-// development. Use this rule to configure unregistered calls for the service.
-// Unregistered calls are calls that do not contain consumer project identity.
-// (Example: calls that do not contain an API key). By default, API methods do
-// not allow unregistered calls, and each method call must be identified by a
-// consumer project identity. Use this rule to allow/disallow unregistered
-// calls. Example of an API that wants to allow unregistered calls for entire
-// service. usage: rules: - selector: "*" allow_unregistered_calls: true
-// Example of a method that wants to allow unregistered calls. usage: rules: -
-// selector: "google.example.library.v1.LibraryService.CreateBook"
-// allow_unregistered_calls: true
+// UsageRule: Usage configuration rules for the service.
 type UsageRule struct {
-	// AllowUnregisteredCalls: If true, the selected method allows unregistered
-	// calls, e.g. calls that don't identify any user or application.
+	// AllowUnregisteredCalls:  Use this rule to configure unregistered calls for
+	// the service. Unregistered calls are calls that do not contain consumer
+	// project identity. (Example: calls that do not contain an API key). WARNING:
+	// By default, API methods do not allow unregistered calls, and each method
+	// call must be identified by a consumer project identity.
 	AllowUnregisteredCalls bool `json:"allowUnregisteredCalls,omitempty"`
 	// Selector: Selects the methods to which this rule applies. Use '*' to
 	// indicate all methods in all APIs. Refer to selector for syntax details.
@@ -6146,9 +6319,9 @@ type ServicesConsumerQuotaMetricsGetCall struct {
 
 // Get: Retrieves a summary of quota information for a specific quota metric
 //
-//   - name: The resource name of the quota limit. An example name would be:
-//     `projects/123/services/serviceusage.googleapis.com/quotas/metrics/serviceus
-//     age.googleapis.com%2Fmutate_requests`.
+//   - name: The resource name of the quota. An example name would be:
+//     `projects/123/services/serviceusage.googleapis.com/consumerQuotaMetrics/ser
+//     viceusage.googleapis.com%2Fmutate_requests`.
 func (r *ServicesConsumerQuotaMetricsService) Get(name string) *ServicesConsumerQuotaMetricsGetCall {
 	c := &ServicesConsumerQuotaMetricsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name

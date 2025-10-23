@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC.
+// Copyright 2025 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -120,9 +120,6 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	}
 	s := &Service{client: client, BasePath: basePath, logger: internaloption.GetLogger(opts)}
 	s.Projects = NewProjectsService(s)
-	if err != nil {
-		return nil, err
-	}
 	if endpoint != "" {
 		s.BasePath = endpoint
 	}
@@ -138,7 +135,7 @@ func New(client *http.Client) (*Service, error) {
 	if client == nil {
 		return nil, errors.New("client is nil")
 	}
-	return NewService(context.Background(), option.WithHTTPClient(client))
+	return NewService(context.TODO(), option.WithHTTPClient(client))
 }
 
 type Service struct {
@@ -563,15 +560,15 @@ type AuthzExtension struct {
 	// UpdateTime: Output only. The timestamp when the resource was updated.
 	UpdateTime string `json:"updateTime,omitempty"`
 	// WireFormat: Optional. The format of communication supported by the callout
-	// extension. If not specified, the default is `EXT_PROC_GRPC`.
+	// extension. If not specified, the default value `EXT_PROC_GRPC` is used.
 	//
 	// Possible values:
 	//   "WIRE_FORMAT_UNSPECIFIED" - Not specified.
-	//   "EXT_PROC_GRPC" - The extension service uses ExtProc GRPC API over a gRPC
+	//   "EXT_PROC_GRPC" - The extension service uses ext_proc gRPC API over a gRPC
 	// stream. This is the default value if the wire format is not specified. The
 	// backend service for the extension must use HTTP2 or H2C as the protocol. All
-	// `supported_events` for a client request will be sent as part of the same
-	// gRPC stream.
+	// `supported_events` for a client request are sent as part of the same gRPC
+	// stream.
 	WireFormat string `json:"wireFormat,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
@@ -989,8 +986,15 @@ type ExtensionChainExtension struct {
 	// `com.google.lb_traffic_extension.lbtrafficextension1.chain1.ext1`. The
 	// following variables are supported in the metadata: `{forwarding_rule_id}` -
 	// substituted with the forwarding rule's fully qualified resource name. This
-	// field is not supported for plugin extensions. Setting it results in a
-	// validation error.
+	// field must not be set for plugin extensions. Setting it results in a
+	// validation error. You can set metadata at either the resource level or the
+	// extension level. The extension level metadata is recommended because you can
+	// pass a different set of metadata through each extension to the backend. This
+	// field is subject to following limitations: * The total size of the metadata
+	// must be less than 1KiB. * The total number of keys in the metadata must be
+	// less than 16. * The length of each key must be less than 64 characters. *
+	// The length of each value must be less than 1024 characters. * All values
+	// must be strings.
 	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
 	// Name: Required. The name for this extension. The name is logged as part of
 	// the HTTP request logs. The name must conform with RFC-1034, is restricted to
@@ -1017,8 +1021,8 @@ type ExtensionChainExtension struct {
 	Service string `json:"service,omitempty"`
 	// SupportedEvents: Optional. A set of events during request or response
 	// processing for which this extension is called. This field is required for
-	// the `LbTrafficExtension` resource. It must not be set for the
-	// `LbRouteExtension` resource, otherwise a validation error is returned.
+	// the `LbTrafficExtension` resource. It is optional for the `LbRouteExtension`
+	// resource. If unspecified `REQUEST_HEADERS` event is assumed as supported.
 	//
 	// Possible values:
 	//   "EVENT_TYPE_UNSPECIFIED" - Unspecified value. Do not use.
@@ -1036,7 +1040,7 @@ type ExtensionChainExtension struct {
 	// called when the HTTP response trailers arrives.
 	SupportedEvents []string `json:"supportedEvents,omitempty"`
 	// Timeout: Optional. Specifies the timeout for each individual message on the
-	// stream. The timeout must be between `10`-`1000` milliseconds. Required for
+	// stream. The timeout must be between `10`-`10000` milliseconds. Required for
 	// callout extensions. This field is not supported for plugin extensions.
 	// Setting it results in a validation error.
 	Timeout string `json:"timeout,omitempty"`
@@ -1087,8 +1091,7 @@ func (s ExtensionChainMatchCondition) MarshalJSON() ([]byte, error) {
 // Gateway: Gateway represents the configuration for a proxy, typically a load
 // balancer. It captures the ip:port over which the services are exposed by the
 // proxy, along with any policy configurations. Routes have reference to to
-// Gateways to dictate how requests should be routed by this Gateway. Next id:
-// 33
+// Gateways to dictate how requests should be routed by this Gateway.
 type Gateway struct {
 	// Addresses: Optional. Zero or one IPv4 or IPv6 address on which the Gateway
 	// will receive the traffic. When no address is provided, an IP from the
@@ -1164,7 +1167,7 @@ type Gateway struct {
 	RoutingMode string `json:"routingMode,omitempty"`
 	// Scope: Optional. Scope determines how configuration across multiple Gateway
 	// instances are merged. The configuration for multiple Gateway instances with
-	// the same scope will be merged as presented as a single coniguration to the
+	// the same scope will be merged as presented as a single configuration to the
 	// proxy/load balancer. Max length 64 characters. Scope should start with a
 	// letter and can only have letters, numbers, hyphens.
 	Scope string `json:"scope,omitempty"`
@@ -1661,7 +1664,8 @@ func (s GrpcRouteRouteRule) MarshalJSON() ([]byte, error) {
 type GrpcRouteStatefulSessionAffinityPolicy struct {
 	// CookieTtl: Required. The cookie TTL value for the Set-Cookie header
 	// generated by the data plane. The lifetime of the cookie may be set to a
-	// value from 1 to 86400 seconds (24 hours) inclusive.
+	// value from 0 to 86400 seconds (24 hours) inclusive. Set this to 0s to use a
+	// session cookie and disable cookie expiration.
 	CookieTtl string `json:"cookieTtl,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "CookieTtl") to
 	// unconditionally include in API requests. By default, fields with empty or
@@ -2383,7 +2387,8 @@ func (s HttpRouteRouteRule) MarshalJSON() ([]byte, error) {
 type HttpRouteStatefulSessionAffinityPolicy struct {
 	// CookieTtl: Required. The cookie TTL value for the Set-Cookie header
 	// generated by the data plane. The lifetime of the cookie may be set to a
-	// value from 1 to 86400 seconds (24 hours) inclusive.
+	// value from 0 to 86400 seconds (24 hours) inclusive. Set this to 0s to use a
+	// session cookie and disable cookie expiration.
 	CookieTtl string `json:"cookieTtl,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "CookieTtl") to
 	// unconditionally include in API requests. By default, fields with empty or
@@ -2447,8 +2452,8 @@ type LbRouteExtension struct {
 	ExtensionChains []*ExtensionChain `json:"extensionChains,omitempty"`
 	// ForwardingRules: Required. A list of references to the forwarding rules to
 	// which this service extension is attached. At least one forwarding rule is
-	// required. There can be only one `LbRouteExtension` resource per forwarding
-	// rule.
+	// required. Only one `LbRouteExtension` resource can be associated with a
+	// forwarding rule.
 	ForwardingRules []string `json:"forwardingRules,omitempty"`
 	// Labels: Optional. Set of labels associated with the `LbRouteExtension`
 	// resource. The format must comply with the requirements for labels
@@ -2470,12 +2475,16 @@ type LbRouteExtension struct {
 	LoadBalancingScheme string `json:"loadBalancingScheme,omitempty"`
 	// Metadata: Optional. The metadata provided here is included as part of the
 	// `metadata_context` (of type `google.protobuf.Struct`) in the
-	// `ProcessingRequest` message sent to the extension server. The metadata is
-	// available under the namespace `com.google.lb_route_extension.`. The
-	// following variables are supported in the metadata Struct:
-	// `{forwarding_rule_id}` - substituted with the forwarding rule's fully
-	// qualified resource name. This field is not supported for plugin extensions.
-	// Setting it results in a validation error.
+	// `ProcessingRequest` message sent to the extension server. The metadata
+	// applies to all extensions in all extensions chains in this resource. The
+	// metadata is available under the key `com.google.lb_route_extension.`. The
+	// following variables are supported in the metadata: `{forwarding_rule_id}` -
+	// substituted with the forwarding rule's fully qualified resource name. This
+	// field must not be set if at least one of the extension chains contains
+	// plugin extensions. Setting it results in a validation error. You can set
+	// metadata at either the resource level or the extension level. The extension
+	// level metadata is recommended because you can pass a different set of
+	// metadata through each extension to the backend.
 	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
 	// Name: Required. Identifier. Name of the `LbRouteExtension` resource in the
 	// following format:
@@ -2523,8 +2532,8 @@ type LbTrafficExtension struct {
 	ExtensionChains []*ExtensionChain `json:"extensionChains,omitempty"`
 	// ForwardingRules: Optional. A list of references to the forwarding rules to
 	// which this service extension is attached. At least one forwarding rule is
-	// required. There can be only one `LBTrafficExtension` resource per forwarding
-	// rule.
+	// required. Only one `LbTrafficExtension` resource can be associated with a
+	// forwarding rule.
 	ForwardingRules []string `json:"forwardingRules,omitempty"`
 	// Labels: Optional. Set of labels associated with the `LbTrafficExtension`
 	// resource. The format must comply with the requirements for labels
@@ -2533,7 +2542,7 @@ type LbTrafficExtension struct {
 	Labels map[string]string `json:"labels,omitempty"`
 	// LoadBalancingScheme: Required. All backend services and forwarding rules
 	// referenced by this extension must share the same load balancing scheme.
-	// Supported values: `INTERNAL_MANAGED`, `EXTERNAL_MANAGED`. For more
+	// Supported values: `INTERNAL_MANAGED` and `EXTERNAL_MANAGED`. For more
 	// information, refer to Backend services overview
 	// (https://cloud.google.com/load-balancing/docs/backend-service).
 	//
@@ -2544,13 +2553,18 @@ type LbTrafficExtension struct {
 	//   "EXTERNAL_MANAGED" - Signifies that this is used for External Managed
 	// HTTP(S) Load Balancing.
 	LoadBalancingScheme string `json:"loadBalancingScheme,omitempty"`
-	// Metadata: Optional. The metadata provided here is included in the
-	// `ProcessingRequest.metadata_context.filter_metadata` map field. The metadata
-	// is available under the key `com.google.lb_traffic_extension.`. The following
-	// variables are supported in the metadata: `{forwarding_rule_id}` -
+	// Metadata: Optional. The metadata provided here is included as part of the
+	// `metadata_context` (of type `google.protobuf.Struct`) in the
+	// `ProcessingRequest` message sent to the extension server. The metadata
+	// applies to all extensions in all extensions chains in this resource. The
+	// metadata is available under the key `com.google.lb_traffic_extension.`. The
+	// following variables are supported in the metadata: `{forwarding_rule_id}` -
 	// substituted with the forwarding rule's fully qualified resource name. This
-	// field is not supported for plugin extensions. Setting it results in a
-	// validation error.
+	// field must not be set if at least one of the extension chains contains
+	// plugin extensions. Setting it results in a validation error. You can set
+	// metadata at either the resource level or the extension level. The extension
+	// level metadata is recommended because you can pass a different set of
+	// metadata through each extension to the backend.
 	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
 	// Name: Required. Identifier. Name of the `LbTrafficExtension` resource in the
 	// following format:
@@ -2621,6 +2635,10 @@ type ListEndpointPoliciesResponse struct {
 	// results, call this method again using the value of `next_page_token` as
 	// `page_token`.
 	NextPageToken string `json:"nextPageToken,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request opts into
+	// return_partial_success and reading across collections e.g. when attempting
+	// to list all resources across all supported locations.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -2650,6 +2668,10 @@ type ListGatewayRouteViewsResponse struct {
 	// NextPageToken: A token, which can be sent as `page_token` to retrieve the
 	// next page. If this field is omitted, there are no subsequent pages.
 	NextPageToken string `json:"nextPageToken,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request attempts to
+	// list all resources across all supported locations, while some locations are
+	// temporarily unavailable.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -2712,6 +2734,10 @@ type ListGrpcRoutesResponse struct {
 	// results, call this method again using the value of `next_page_token` as
 	// `page_token`.
 	NextPageToken string `json:"nextPageToken,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request opts into
+	// return_partial_success and reading across collections e.g. when attempting
+	// to list all resources across all supported locations.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -2742,6 +2768,10 @@ type ListHttpRoutesResponse struct {
 	// results, call this method again using the value of `next_page_token` as
 	// `page_token`.
 	NextPageToken string `json:"nextPageToken,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request opts into
+	// return_partial_success and reading across collections e.g. when attempting
+	// to list all resources across all supported locations.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -2861,6 +2891,10 @@ type ListMeshRouteViewsResponse struct {
 	// NextPageToken: A token, which can be sent as `page_token` to retrieve the
 	// next page. If this field is omitted, there are no subsequent pages.
 	NextPageToken string `json:"nextPageToken,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request attempts to
+	// list all resources across all supported locations, while some locations are
+	// temporarily unavailable.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -2891,6 +2925,10 @@ type ListMeshesResponse struct {
 	// results, call this method again using the value of `next_page_token` as
 	// `page_token`.
 	NextPageToken string `json:"nextPageToken,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request opts into
+	// `return_partial_success` and reading across collections e.g. when attempting
+	// to list all resources across all supported locations.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -2950,6 +2988,10 @@ type ListServiceBindingsResponse struct {
 	NextPageToken string `json:"nextPageToken,omitempty"`
 	// ServiceBindings: List of ServiceBinding resources.
 	ServiceBindings []*ServiceBinding `json:"serviceBindings,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request attempts to
+	// list all resources across all supported locations, while some locations are
+	// temporarily unavailable.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -2981,6 +3023,10 @@ type ListServiceLbPoliciesResponse struct {
 	NextPageToken string `json:"nextPageToken,omitempty"`
 	// ServiceLbPolicies: List of ServiceLbPolicy resources.
 	ServiceLbPolicies []*ServiceLbPolicy `json:"serviceLbPolicies,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request attempts to
+	// list all resources across all supported locations, while some locations are
+	// temporarily unavailable.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -3011,6 +3057,10 @@ type ListTcpRoutesResponse struct {
 	NextPageToken string `json:"nextPageToken,omitempty"`
 	// TcpRoutes: List of TcpRoute resources.
 	TcpRoutes []*TcpRoute `json:"tcpRoutes,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request opts into
+	// return_partial_success and reading across collections e.g. when attempting
+	// to list all resources across all supported locations.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -3041,6 +3091,10 @@ type ListTlsRoutesResponse struct {
 	NextPageToken string `json:"nextPageToken,omitempty"`
 	// TlsRoutes: List of TlsRoute resources.
 	TlsRoutes []*TlsRoute `json:"tlsRoutes,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request opts into
+	// return_partial_success and reading across collections e.g. when attempting
+	// to list all resources across all supported locations.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -3070,6 +3124,10 @@ type ListWasmPluginVersionsResponse struct {
 	// results, call this method again using the value of `next_page_token` as
 	// `page_token`.
 	NextPageToken string `json:"nextPageToken,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request attempts to
+	// list all resources across all supported locations, while some locations are
+	// temporarily unavailable.
+	Unreachable []string `json:"unreachable,omitempty"`
 	// WasmPluginVersions: List of `WasmPluginVersion` resources.
 	WasmPluginVersions []*WasmPluginVersion `json:"wasmPluginVersions,omitempty"`
 
@@ -3100,6 +3158,10 @@ type ListWasmPluginsResponse struct {
 	// results, call this method again using the value of `next_page_token` as
 	// `page_token`.
 	NextPageToken string `json:"nextPageToken,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request attempts to
+	// list all resources across all supported locations, while some locations are
+	// temporarily unavailable.
+	Unreachable []string `json:"unreachable,omitempty"`
 	// WasmPlugins: List of `WasmPlugin` resources.
 	WasmPlugins []*WasmPlugin `json:"wasmPlugins,omitempty"`
 
@@ -3495,8 +3557,12 @@ func (s RetryFilterPerRouteConfig) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
-// ServiceBinding: ServiceBinding is the resource that defines a Service
-// Directory Service to be used in a BackendService resource.
+// ServiceBinding: ServiceBinding can be used to: - Bind a Service Directory
+// Service to be used in a BackendService resource. This feature will be
+// deprecated soon. - Bind a Private Service Connect producer service to be
+// used in consumer Cloud Service Mesh or Application Load Balancers. - Bind a
+// Cloud Run service to be used in consumer Cloud Service Mesh or Application
+// Load Balancers.
 type ServiceBinding struct {
 	// CreateTime: Output only. The timestamp when the resource was created.
 	CreateTime string `json:"createTime,omitempty"`
@@ -3507,15 +3573,17 @@ type ServiceBinding struct {
 	// resource.
 	Labels map[string]string `json:"labels,omitempty"`
 	// Name: Identifier. Name of the ServiceBinding resource. It matches pattern
-	// `projects/*/locations/global/serviceBindings/service_binding_name`.
+	// `projects/*/locations/*/serviceBindings/`.
 	Name string `json:"name,omitempty"`
-	// Service: Required. The full Service Directory Service name of the format
-	// projects/*/locations/*/namespaces/*/services/*
+	// Service: Optional. The full Service Directory Service name of the format
+	// `projects/*/locations/*/namespaces/*/services/*`. This field is for Service
+	// Directory integration which will be deprecated soon.
 	Service string `json:"service,omitempty"`
 	// ServiceId: Output only. The unique identifier of the Service Directory
-	// Service against which the Service Binding resource is validated. This is
+	// Service against which the ServiceBinding resource is validated. This is
 	// populated when the Service Binding resource is used in another resource
-	// (like Backend Service). This is of the UUID4 format.
+	// (like Backend Service). This is of the UUID4 format. This field is for
+	// Service Directory integration which will be deprecated soon.
 	ServiceId string `json:"serviceId,omitempty"`
 	// UpdateTime: Output only. The timestamp when the resource was updated.
 	UpdateTime string `json:"updateTime,omitempty"`
@@ -4039,7 +4107,7 @@ func (s TlsRouteRouteAction) MarshalJSON() ([]byte, error) {
 type TlsRouteRouteDestination struct {
 	// ServiceName: Required. The URL of a BackendService to route traffic to.
 	ServiceName string `json:"serviceName,omitempty"`
-	// Weight: Optional. Specifies the proportion of requests forwareded to the
+	// Weight: Optional. Specifies the proportion of requests forwarded to the
 	// backend referenced by the service_name field. This is computed as: -
 	// weight/Sum(weights in destinations) Weights in all destinations does not
 	// need to sum up to 100.
@@ -4063,8 +4131,7 @@ func (s TlsRouteRouteDestination) MarshalJSON() ([]byte, error) {
 }
 
 // TlsRouteRouteMatch: RouteMatch defines the predicate used to match requests
-// to a given action. Multiple match types are "AND"ed for evaluation. If no
-// routeMatch field is specified, this rule will unconditionally match traffic.
+// to a given action. Multiple match types are "AND"ed for evaluation.
 type TlsRouteRouteMatch struct {
 	// Alpn: Optional. ALPN (Application-Layer Protocol Negotiation) to match
 	// against. Examples: "http/1.1", "h2". At least one of sni_host and alpn is
@@ -4101,7 +4168,8 @@ type TlsRouteRouteRule struct {
 	// Action: Required. The detailed rule defining how to route matched traffic.
 	Action *TlsRouteRouteAction `json:"action,omitempty"`
 	// Matches: Required. RouteMatch defines the predicate used to match requests
-	// to a given action. Multiple match types are "OR"ed for evaluation.
+	// to a given action. Multiple match types are "OR"ed for evaluation. Atleast
+	// one RouteMatch must be supplied.
 	Matches []*TlsRouteRouteMatch `json:"matches,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "Action") to unconditionally
 	// include in API requests. By default, fields with empty or default values are
@@ -4545,6 +4613,14 @@ func (r *ProjectsLocationsService) List(name string) *ProjectsLocationsListCall 
 	return c
 }
 
+// ExtraLocationTypes sets the optional parameter "extraLocationTypes": A list
+// of extra location types that should be used as conditions for controlling
+// the visibility of the locations.
+func (c *ProjectsLocationsListCall) ExtraLocationTypes(extraLocationTypes ...string) *ProjectsLocationsListCall {
+	c.urlParams_.SetMulti("extraLocationTypes", append([]string{}, extraLocationTypes...))
+	return c
+}
+
 // Filter sets the optional parameter "filter": A filter to narrow down results
 // to a preferred subset. The filtering language accepts strings like
 // "displayName=tokyo", and is documented in more detail in AIP-160
@@ -4713,14 +4789,13 @@ func (c *ProjectsLocationsAuthzExtensionsCreateCall) AuthzExtensionId(authzExten
 // RequestId sets the optional parameter "requestId": An optional request ID to
 // identify requests. Specify a unique request ID so that if you must retry
 // your request, the server can ignore the request if it has already been
-// completed. The server guarantees that for at least 60 minutes since the
-// first request. For example, consider a situation where you make an initial
-// request and the request times out. If you make the request again with the
-// same request ID, the server can check if original operation with the same
-// request ID was received, and if so, ignores the second request. This
-// prevents clients from accidentally creating duplicate commitments. The
-// request ID must be a valid UUID with the exception that zero UUID is not
-// supported (00000000-0000-0000-0000-000000000000).
+// completed. The server guarantees that for 60 minutes since the first
+// request. For example, consider a situation where you make an initial request
+// and the request times out. If you make the request again with the same
+// request ID, the server ignores the second request This prevents clients from
+// accidentally creating duplicate commitments. The request ID must be a valid
+// UUID with the exception that zero UUID is not supported
+// (00000000-0000-0000-0000-000000000000).
 func (c *ProjectsLocationsAuthzExtensionsCreateCall) RequestId(requestId string) *ProjectsLocationsAuthzExtensionsCreateCall {
 	c.urlParams_.Set("requestId", requestId)
 	return c
@@ -4833,14 +4908,13 @@ func (r *ProjectsLocationsAuthzExtensionsService) Delete(name string) *ProjectsL
 // RequestId sets the optional parameter "requestId": An optional request ID to
 // identify requests. Specify a unique request ID so that if you must retry
 // your request, the server can ignore the request if it has already been
-// completed. The server guarantees that for at least 60 minutes after the
-// first request. For example, consider a situation where you make an initial
-// request and the request times out. If you make the request again with the
-// same request ID, the server can check if original operation with the same
-// request ID was received, and if so, ignores the second request. This
-// prevents clients from accidentally creating duplicate commitments. The
-// request ID must be a valid UUID with the exception that zero UUID is not
-// supported (00000000-0000-0000-0000-000000000000).
+// completed. The server guarantees that for 60 minutes after the first
+// request. For example, consider a situation where you make an initial request
+// and the request times out. If you make the request again with the same
+// request ID, the server ignores the second request This prevents clients from
+// accidentally creating duplicate commitments. The request ID must be a valid
+// UUID with the exception that zero UUID is not supported
+// (00000000-0000-0000-0000-000000000000).
 func (c *ProjectsLocationsAuthzExtensionsDeleteCall) RequestId(requestId string) *ProjectsLocationsAuthzExtensionsDeleteCall {
 	c.urlParams_.Set("requestId", requestId)
 	return c
@@ -5050,7 +5124,7 @@ type ProjectsLocationsAuthzExtensionsListCall struct {
 // List: Lists `AuthzExtension` resources in a given project and location.
 //
 //   - parent: The project and location from which the `AuthzExtension` resources
-//     are listed, specified in the following format:
+//     are listed. These values are specified in the following format:
 //     `projects/{project}/locations/{location}`.
 func (r *ProjectsLocationsAuthzExtensionsService) List(parent string) *ProjectsLocationsAuthzExtensionsListCall {
 	c := &ProjectsLocationsAuthzExtensionsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -5064,7 +5138,7 @@ func (c *ProjectsLocationsAuthzExtensionsListCall) Filter(filter string) *Projec
 	return c
 }
 
-// OrderBy sets the optional parameter "orderBy": Hint for how to order the
+// OrderBy sets the optional parameter "orderBy": Hint about how to order the
 // results.
 func (c *ProjectsLocationsAuthzExtensionsListCall) OrderBy(orderBy string) *ProjectsLocationsAuthzExtensionsListCall {
 	c.urlParams_.Set("orderBy", orderBy)
@@ -5224,14 +5298,13 @@ func (r *ProjectsLocationsAuthzExtensionsService) Patch(name string, authzextens
 // RequestId sets the optional parameter "requestId": An optional request ID to
 // identify requests. Specify a unique request ID so that if you must retry
 // your request, the server can ignore the request if it has already been
-// completed. The server guarantees that for at least 60 minutes since the
-// first request. For example, consider a situation where you make an initial
-// request and the request times out. If you make the request again with the
-// same request ID, the server can check if original operation with the same
-// request ID was received, and if so, ignores the second request. This
-// prevents clients from accidentally creating duplicate commitments. The
-// request ID must be a valid UUID with the exception that zero UUID is not
-// supported (00000000-0000-0000-0000-000000000000).
+// completed. The server guarantees that for 60 minutes since the first
+// request. For example, consider a situation where you make an initial request
+// and the request times out. If you make the request again with the same
+// request ID, the server ignores the second request This prevents clients from
+// accidentally creating duplicate commitments. The request ID must be a valid
+// UUID with the exception that zero UUID is not supported
+// (00000000-0000-0000-0000-000000000000).
 func (c *ProjectsLocationsAuthzExtensionsPatchCall) RequestId(requestId string) *ProjectsLocationsAuthzExtensionsPatchCall {
 	c.urlParams_.Set("requestId", requestId)
 	return c
@@ -6726,6 +6799,15 @@ func (c *ProjectsLocationsEndpointPoliciesListCall) PageToken(pageToken string) 
 	return c
 }
 
+// ReturnPartialSuccess sets the optional parameter "returnPartialSuccess": If
+// true, allow partial responses for multi-regional Aggregated List requests.
+// Otherwise if one of the locations is down or unreachable, the Aggregated
+// List request will fail.
+func (c *ProjectsLocationsEndpointPoliciesListCall) ReturnPartialSuccess(returnPartialSuccess bool) *ProjectsLocationsEndpointPoliciesListCall {
+	c.urlParams_.Set("returnPartialSuccess", fmt.Sprint(returnPartialSuccess))
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
 // details.
@@ -8149,6 +8231,15 @@ func (c *ProjectsLocationsGrpcRoutesListCall) PageToken(pageToken string) *Proje
 	return c
 }
 
+// ReturnPartialSuccess sets the optional parameter "returnPartialSuccess": If
+// true, allow partial responses for multi-regional Aggregated List requests.
+// Otherwise if one of the locations is down or unreachable, the Aggregated
+// List request will fail.
+func (c *ProjectsLocationsGrpcRoutesListCall) ReturnPartialSuccess(returnPartialSuccess bool) *ProjectsLocationsGrpcRoutesListCall {
+	c.urlParams_.Set("returnPartialSuccess", fmt.Sprint(returnPartialSuccess))
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
 // details.
@@ -8731,6 +8822,15 @@ func (c *ProjectsLocationsHttpRoutesListCall) PageToken(pageToken string) *Proje
 	return c
 }
 
+// ReturnPartialSuccess sets the optional parameter "returnPartialSuccess": If
+// true, allow partial responses for multi-regional Aggregated List requests.
+// Otherwise if one of the locations is down or unreachable, the Aggregated
+// List request will fail.
+func (c *ProjectsLocationsHttpRoutesListCall) ReturnPartialSuccess(returnPartialSuccess bool) *ProjectsLocationsHttpRoutesListCall {
+	c.urlParams_.Set("returnPartialSuccess", fmt.Sprint(returnPartialSuccess))
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
 // details.
@@ -8990,14 +9090,13 @@ func (c *ProjectsLocationsLbRouteExtensionsCreateCall) LbRouteExtensionId(lbRout
 // RequestId sets the optional parameter "requestId": An optional request ID to
 // identify requests. Specify a unique request ID so that if you must retry
 // your request, the server can ignore the request if it has already been
-// completed. The server guarantees that for at least 60 minutes since the
-// first request. For example, consider a situation where you make an initial
-// request and the request times out. If you make the request again with the
-// same request ID, the server can check if original operation with the same
-// request ID was received, and if so, ignores the second request. This
-// prevents clients from accidentally creating duplicate commitments. The
-// request ID must be a valid UUID with the exception that zero UUID is not
-// supported (00000000-0000-0000-0000-000000000000).
+// completed. The server guarantees that for 60 minutes since the first
+// request. For example, consider a situation where you make an initial request
+// and the request times out. If you make the request again with the same
+// request ID, the server ignores the second request This prevents clients from
+// accidentally creating duplicate commitments. The request ID must be a valid
+// UUID with the exception that zero UUID is not supported
+// (00000000-0000-0000-0000-000000000000).
 func (c *ProjectsLocationsLbRouteExtensionsCreateCall) RequestId(requestId string) *ProjectsLocationsLbRouteExtensionsCreateCall {
 	c.urlParams_.Set("requestId", requestId)
 	return c
@@ -9110,14 +9209,13 @@ func (r *ProjectsLocationsLbRouteExtensionsService) Delete(name string) *Project
 // RequestId sets the optional parameter "requestId": An optional request ID to
 // identify requests. Specify a unique request ID so that if you must retry
 // your request, the server can ignore the request if it has already been
-// completed. The server guarantees that for at least 60 minutes after the
-// first request. For example, consider a situation where you make an initial
-// request and the request times out. If you make the request again with the
-// same request ID, the server can check if original operation with the same
-// request ID was received, and if so, ignores the second request. This
-// prevents clients from accidentally creating duplicate commitments. The
-// request ID must be a valid UUID with the exception that zero UUID is not
-// supported (00000000-0000-0000-0000-000000000000).
+// completed. The server guarantees that for 60 minutes after the first
+// request. For example, consider a situation where you make an initial request
+// and the request times out. If you make the request again with the same
+// request ID, the server ignores the second request This prevents clients from
+// accidentally creating duplicate commitments. The request ID must be a valid
+// UUID with the exception that zero UUID is not supported
+// (00000000-0000-0000-0000-000000000000).
 func (c *ProjectsLocationsLbRouteExtensionsDeleteCall) RequestId(requestId string) *ProjectsLocationsLbRouteExtensionsDeleteCall {
 	c.urlParams_.Set("requestId", requestId)
 	return c
@@ -9328,7 +9426,7 @@ type ProjectsLocationsLbRouteExtensionsListCall struct {
 // List: Lists `LbRouteExtension` resources in a given project and location.
 //
 //   - parent: The project and location from which the `LbRouteExtension`
-//     resources are listed, specified in the following format:
+//     resources are listed. These values are specified in the following format:
 //     `projects/{project}/locations/{location}`.
 func (r *ProjectsLocationsLbRouteExtensionsService) List(parent string) *ProjectsLocationsLbRouteExtensionsListCall {
 	c := &ProjectsLocationsLbRouteExtensionsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -9342,7 +9440,7 @@ func (c *ProjectsLocationsLbRouteExtensionsListCall) Filter(filter string) *Proj
 	return c
 }
 
-// OrderBy sets the optional parameter "orderBy": Hint for how to order the
+// OrderBy sets the optional parameter "orderBy": Hint about how to order the
 // results.
 func (c *ProjectsLocationsLbRouteExtensionsListCall) OrderBy(orderBy string) *ProjectsLocationsLbRouteExtensionsListCall {
 	c.urlParams_.Set("orderBy", orderBy)
@@ -9502,14 +9600,13 @@ func (r *ProjectsLocationsLbRouteExtensionsService) Patch(name string, lbrouteex
 // RequestId sets the optional parameter "requestId": An optional request ID to
 // identify requests. Specify a unique request ID so that if you must retry
 // your request, the server can ignore the request if it has already been
-// completed. The server guarantees that for at least 60 minutes since the
-// first request. For example, consider a situation where you make an initial
-// request and the request times out. If you make the request again with the
-// same request ID, the server can check if original operation with the same
-// request ID was received, and if so, ignores the second request. This
-// prevents clients from accidentally creating duplicate commitments. The
-// request ID must be a valid UUID with the exception that zero UUID is not
-// supported (00000000-0000-0000-0000-000000000000).
+// completed. The server guarantees that for 60 minutes since the first
+// request. For example, consider a situation where you make an initial request
+// and the request times out. If you make the request again with the same
+// request ID, the server ignores the second request This prevents clients from
+// accidentally creating duplicate commitments. The request ID must be a valid
+// UUID with the exception that zero UUID is not supported
+// (00000000-0000-0000-0000-000000000000).
 func (c *ProjectsLocationsLbRouteExtensionsPatchCall) RequestId(requestId string) *ProjectsLocationsLbRouteExtensionsPatchCall {
 	c.urlParams_.Set("requestId", requestId)
 	return c
@@ -9641,14 +9738,13 @@ func (c *ProjectsLocationsLbTrafficExtensionsCreateCall) LbTrafficExtensionId(lb
 // RequestId sets the optional parameter "requestId": An optional request ID to
 // identify requests. Specify a unique request ID so that if you must retry
 // your request, the server can ignore the request if it has already been
-// completed. The server guarantees that for at least 60 minutes since the
-// first request. For example, consider a situation where you make an initial
-// request and the request times out. If you make the request again with the
-// same request ID, the server can check if original operation with the same
-// request ID was received, and if so, ignores the second request. This
-// prevents clients from accidentally creating duplicate commitments. The
-// request ID must be a valid UUID with the exception that zero UUID is not
-// supported (00000000-0000-0000-0000-000000000000).
+// completed. The server guarantees that for 60 minutes since the first
+// request. For example, consider a situation where you make an initial request
+// and the request times out. If you make the request again with the same
+// request ID, the server ignores the second request This prevents clients from
+// accidentally creating duplicate commitments. The request ID must be a valid
+// UUID with the exception that zero UUID is not supported
+// (00000000-0000-0000-0000-000000000000).
 func (c *ProjectsLocationsLbTrafficExtensionsCreateCall) RequestId(requestId string) *ProjectsLocationsLbTrafficExtensionsCreateCall {
 	c.urlParams_.Set("requestId", requestId)
 	return c
@@ -9761,14 +9857,13 @@ func (r *ProjectsLocationsLbTrafficExtensionsService) Delete(name string) *Proje
 // RequestId sets the optional parameter "requestId": An optional request ID to
 // identify requests. Specify a unique request ID so that if you must retry
 // your request, the server can ignore the request if it has already been
-// completed. The server guarantees that for at least 60 minutes after the
-// first request. For example, consider a situation where you make an initial
-// request and the request times out. If you make the request again with the
-// same request ID, the server can check if original operation with the same
-// request ID was received, and if so, ignores the second request. This
-// prevents clients from accidentally creating duplicate commitments. The
-// request ID must be a valid UUID with the exception that zero UUID is not
-// supported (00000000-0000-0000-0000-000000000000).
+// completed. The server guarantees that for 60 minutes after the first
+// request. For example, consider a situation where you make an initial request
+// and the request times out. If you make the request again with the same
+// request ID, the server ignores the second request This prevents clients from
+// accidentally creating duplicate commitments. The request ID must be a valid
+// UUID with the exception that zero UUID is not supported
+// (00000000-0000-0000-0000-000000000000).
 func (c *ProjectsLocationsLbTrafficExtensionsDeleteCall) RequestId(requestId string) *ProjectsLocationsLbTrafficExtensionsDeleteCall {
 	c.urlParams_.Set("requestId", requestId)
 	return c
@@ -9979,7 +10074,7 @@ type ProjectsLocationsLbTrafficExtensionsListCall struct {
 // List: Lists `LbTrafficExtension` resources in a given project and location.
 //
 //   - parent: The project and location from which the `LbTrafficExtension`
-//     resources are listed, specified in the following format:
+//     resources are listed. These values are specified in the following format:
 //     `projects/{project}/locations/{location}`.
 func (r *ProjectsLocationsLbTrafficExtensionsService) List(parent string) *ProjectsLocationsLbTrafficExtensionsListCall {
 	c := &ProjectsLocationsLbTrafficExtensionsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -9993,7 +10088,7 @@ func (c *ProjectsLocationsLbTrafficExtensionsListCall) Filter(filter string) *Pr
 	return c
 }
 
-// OrderBy sets the optional parameter "orderBy": Hint for how to order the
+// OrderBy sets the optional parameter "orderBy": Hint about how to order the
 // results.
 func (c *ProjectsLocationsLbTrafficExtensionsListCall) OrderBy(orderBy string) *ProjectsLocationsLbTrafficExtensionsListCall {
 	c.urlParams_.Set("orderBy", orderBy)
@@ -10154,14 +10249,13 @@ func (r *ProjectsLocationsLbTrafficExtensionsService) Patch(name string, lbtraff
 // RequestId sets the optional parameter "requestId": An optional request ID to
 // identify requests. Specify a unique request ID so that if you must retry
 // your request, the server can ignore the request if it has already been
-// completed. The server guarantees that for at least 60 minutes since the
-// first request. For example, consider a situation where you make an initial
-// request and the request times out. If you make the request again with the
-// same request ID, the server can check if original operation with the same
-// request ID was received, and if so, ignores the second request. This
-// prevents clients from accidentally creating duplicate commitments. The
-// request ID must be a valid UUID with the exception that zero UUID is not
-// supported (00000000-0000-0000-0000-000000000000).
+// completed. The server guarantees that for 60 minutes since the first
+// request. For example, consider a situation where you make an initial request
+// and the request times out. If you make the request again with the same
+// request ID, the server ignores the second request This prevents clients from
+// accidentally creating duplicate commitments. The request ID must be a valid
+// UUID with the exception that zero UUID is not supported
+// (00000000-0000-0000-0000-000000000000).
 func (c *ProjectsLocationsLbTrafficExtensionsPatchCall) RequestId(requestId string) *ProjectsLocationsLbTrafficExtensionsPatchCall {
 	c.urlParams_.Set("requestId", requestId)
 	return c
@@ -10611,6 +10705,15 @@ func (c *ProjectsLocationsMeshesListCall) PageSize(pageSize int64) *ProjectsLoca
 // `ListMeshes` call, and that the system should return the next page of data.
 func (c *ProjectsLocationsMeshesListCall) PageToken(pageToken string) *ProjectsLocationsMeshesListCall {
 	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// ReturnPartialSuccess sets the optional parameter "returnPartialSuccess": If
+// true, allow partial responses for multi-regional Aggregated List requests.
+// Otherwise if one of the locations is down or unreachable, the Aggregated
+// List request will fail.
+func (c *ProjectsLocationsMeshesListCall) ReturnPartialSuccess(returnPartialSuccess bool) *ProjectsLocationsMeshesListCall {
+	c.urlParams_.Set("returnPartialSuccess", fmt.Sprint(returnPartialSuccess))
 	return c
 }
 
@@ -11586,7 +11689,7 @@ type ProjectsLocationsServiceBindingsCreateCall struct {
 // Create: Creates a new ServiceBinding in a given project and location.
 //
 //   - parent: The parent resource of the ServiceBinding. Must be in the format
-//     `projects/*/locations/global`.
+//     `projects/*/locations/*`.
 func (r *ProjectsLocationsServiceBindingsService) Create(parent string, servicebinding *ServiceBinding) *ProjectsLocationsServiceBindingsCreateCall {
 	c := &ProjectsLocationsServiceBindingsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -11696,7 +11799,7 @@ type ProjectsLocationsServiceBindingsDeleteCall struct {
 // Delete: Deletes a single ServiceBinding.
 //
 //   - name: A name of the ServiceBinding to delete. Must be in the format
-//     `projects/*/locations/global/serviceBindings/*`.
+//     `projects/*/locations/*/serviceBindings/*`.
 func (r *ProjectsLocationsServiceBindingsService) Delete(name string) *ProjectsLocationsServiceBindingsDeleteCall {
 	c := &ProjectsLocationsServiceBindingsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -11795,7 +11898,7 @@ type ProjectsLocationsServiceBindingsGetCall struct {
 // Get: Gets details of a single ServiceBinding.
 //
 //   - name: A name of the ServiceBinding to get. Must be in the format
-//     `projects/*/locations/global/serviceBindings/*`.
+//     `projects/*/locations/*/serviceBindings/*`.
 func (r *ProjectsLocationsServiceBindingsService) Get(name string) *ProjectsLocationsServiceBindingsGetCall {
 	c := &ProjectsLocationsServiceBindingsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -11905,7 +12008,7 @@ type ProjectsLocationsServiceBindingsListCall struct {
 // List: Lists ServiceBinding in a given project and location.
 //
 //   - parent: The project and location from which the ServiceBindings should be
-//     listed, specified in the format `projects/*/locations/global`.
+//     listed, specified in the format `projects/*/locations/*`.
 func (r *ProjectsLocationsServiceBindingsService) List(parent string) *ProjectsLocationsServiceBindingsListCall {
 	c := &ProjectsLocationsServiceBindingsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -12039,6 +12142,121 @@ func (c *ProjectsLocationsServiceBindingsListCall) Pages(ctx context.Context, f 
 		}
 		c.PageToken(x.NextPageToken)
 	}
+}
+
+type ProjectsLocationsServiceBindingsPatchCall struct {
+	s              *Service
+	name           string
+	servicebinding *ServiceBinding
+	urlParams_     gensupport.URLParams
+	ctx_           context.Context
+	header_        http.Header
+}
+
+// Patch: Updates the parameters of a single ServiceBinding.
+//
+//   - name: Identifier. Name of the ServiceBinding resource. It matches pattern
+//     `projects/*/locations/*/serviceBindings/`.
+func (r *ProjectsLocationsServiceBindingsService) Patch(name string, servicebinding *ServiceBinding) *ProjectsLocationsServiceBindingsPatchCall {
+	c := &ProjectsLocationsServiceBindingsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.servicebinding = servicebinding
+	return c
+}
+
+// UpdateMask sets the optional parameter "updateMask": Field mask is used to
+// specify the fields to be overwritten in the ServiceBinding resource by the
+// update. The fields specified in the update_mask are relative to the
+// resource, not the full request. A field will be overwritten if it is in the
+// mask. If the user does not provide a mask then all fields will be
+// overwritten.
+func (c *ProjectsLocationsServiceBindingsPatchCall) UpdateMask(updateMask string) *ProjectsLocationsServiceBindingsPatchCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsServiceBindingsPatchCall) Fields(s ...googleapi.Field) *ProjectsLocationsServiceBindingsPatchCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsServiceBindingsPatchCall) Context(ctx context.Context) *ProjectsLocationsServiceBindingsPatchCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsServiceBindingsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsServiceBindingsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "application/json", c.header_)
+	body, err := googleapi.WithoutDataWrapper.JSONBuffer(c.servicebinding)
+	if err != nil {
+		return nil, err
+	}
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("PATCH", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "networkservices.projects.locations.serviceBindings.patch", "request", internallog.HTTPRequest(req, body.Bytes()))
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "networkservices.projects.locations.serviceBindings.patch" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was returned.
+func (c *ProjectsLocationsServiceBindingsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	b, err := gensupport.DecodeResponseBytes(target, res)
+	if err != nil {
+		return nil, err
+	}
+	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "networkservices.projects.locations.serviceBindings.patch", "response", internallog.HTTPResponse(res, b))
+	return ret, nil
 }
 
 type ProjectsLocationsServiceLbPoliciesCreateCall struct {
@@ -12983,6 +13201,15 @@ func (c *ProjectsLocationsTcpRoutesListCall) PageToken(pageToken string) *Projec
 	return c
 }
 
+// ReturnPartialSuccess sets the optional parameter "returnPartialSuccess": If
+// true, allow partial responses for multi-regional Aggregated List requests.
+// Otherwise if one of the locations is down or unreachable, the Aggregated
+// List request will fail.
+func (c *ProjectsLocationsTcpRoutesListCall) ReturnPartialSuccess(returnPartialSuccess bool) *ProjectsLocationsTcpRoutesListCall {
+	c.urlParams_.Set("returnPartialSuccess", fmt.Sprint(returnPartialSuccess))
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
 // details.
@@ -13561,6 +13788,15 @@ func (c *ProjectsLocationsTlsRoutesListCall) PageSize(pageSize int64) *ProjectsL
 // of data.
 func (c *ProjectsLocationsTlsRoutesListCall) PageToken(pageToken string) *ProjectsLocationsTlsRoutesListCall {
 	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// ReturnPartialSuccess sets the optional parameter "returnPartialSuccess": If
+// true, allow partial responses for multi-regional Aggregated List requests.
+// Otherwise if one of the locations is down or unreachable, the Aggregated
+// List request will fail.
+func (c *ProjectsLocationsTlsRoutesListCall) ReturnPartialSuccess(returnPartialSuccess bool) *ProjectsLocationsTlsRoutesListCall {
+	c.urlParams_.Set("returnPartialSuccess", fmt.Sprint(returnPartialSuccess))
 	return c
 }
 
