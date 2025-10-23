@@ -227,11 +227,6 @@ func (a *OptionalInstallConfig) validateTwoNodeConfiguration(installConfig *type
 
 	var allErrs field.ErrorList
 
-	// Check for conflicting feature gates (only one should be enabled)
-	if err := a.validateTwoNodeFeatureGates(installConfig); err != nil {
-		allErrs = append(allErrs, err...)
-	}
-
 	// Validate TNA configuration if applicable
 	if err := a.validateTNAConfiguration(installConfig); err != nil {
 		allErrs = append(allErrs, err...)
@@ -244,21 +239,6 @@ func (a *OptionalInstallConfig) validateTwoNodeConfiguration(installConfig *type
 
 	// If we have errors from both TNA and TNF validation, then neither is properly configured
 	// This replaces the current "neither is valid" check
-	return allErrs
-}
-
-func (a *OptionalInstallConfig) validateTwoNodeFeatureGates(installConfig *types.InstallConfig) field.ErrorList {
-	var allErrs field.ErrorList
-
-	hasTNAFeature := installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter)
-	hasTNFFeature := installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica)
-
-	if hasTNAFeature && hasTNFFeature {
-		fieldPath := field.NewPath("featureSet")
-		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.FeatureSet,
-			"cannot enable both TNA (FeatureGateHighlyAvailableArbiter) and TNF (FeatureGateDualReplica) features simultaneously"))
-	}
-
 	return allErrs
 }
 

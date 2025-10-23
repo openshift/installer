@@ -2197,54 +2197,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 				FeatureGates: []string{"DualReplica=true"},
 			},
 		},
-		{
-			name: "TNF and TNA feature gates enabled simultaneously (should fail)",
-			data: `
-apiVersion: v1
-metadata:
-  name: test-cluster
-baseDomain: test-domain
-networking:
-  networkType: OVNKubernetes
-compute:
-- architecture: amd64
-  hyperthreading: Enabled
-  name: worker
-  platform: {}
-  replicas: 0
-controlPlane:
-  architecture: amd64
-  hyperthreading: Enabled
-  name: master
-  platform: {}
-  replicas: 2
-  fencing:
-    credentials:
-    - hostName: "host1"
-      username: "admin"
-      password: "password"
-      address: "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234"
-    - hostName: "host2"
-      username: "admin"
-      password: "password"
-      address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
-arbiter:
-  replicas: 1
-featureSet: CustomNoUpgrade
-featureGates:
-- DualReplica=true
-- HighlyAvailableArbiter=true
-platform:
-  baremetal:
-    apiVIPs:
-    - 10.0.0.5
-    ingressVIPs:
-    - 10.0.0.4
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
-`,
-			expectedFound: false,
-			expectedError: `invalid install-config configuration: featureSet: Invalid value: "CustomNoUpgrade": cannot enable both TNA (FeatureGateHighlyAvailableArbiter) and TNF (FeatureGateDualReplica) features simultaneously`,
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
