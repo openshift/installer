@@ -294,12 +294,13 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				UserDataSecret:  "master-user-data",
 				HyperVGen:       hyperVGen,
 				UseImageGallery: installConfig.Azure.CloudName != azuretypes.StackCloud,
-				PublicIP:        ic.Networking.IsIPv6(), // XXX we can probably overload Private for this
-				Private:         installConfig.Config.Publish == types.InternalPublishingStrategy,
-				UserTags:        installConfig.Config.Platform.Azure.UserTags,
-				Platform:        installConfig.Config.Platform.Azure,
-				Pool:            &pool,
-				StorageSuffix:   session.Environment.StorageEndpointSuffix,
+				PublicIP:        false,
+				//PublicIP:        ic.Networking.IsIPv6(), // XXX we can probably overload Private for this
+				Private:       installConfig.Config.Publish == types.InternalPublishingStrategy,
+				UserTags:      installConfig.Config.Platform.Azure.UserTags,
+				Platform:      installConfig.Config.Platform.Azure,
+				Pool:          &pool,
+				StorageSuffix: session.Environment.StorageEndpointSuffix,
 			},
 		)
 		if err != nil {
