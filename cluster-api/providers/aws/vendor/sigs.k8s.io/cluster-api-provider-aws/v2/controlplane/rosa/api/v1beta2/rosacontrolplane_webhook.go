@@ -1,6 +1,24 @@
+/*
+Copyright 2023 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package v1beta2
 
 import (
+	"context"
+	"fmt"
 	"net"
 
 	"github.com/blang/semver"
@@ -15,19 +33,29 @@ import (
 
 // SetupWebhookWithManager will setup the webhooks for the ROSAControlPlane.
 func (r *ROSAControlPlane) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(rosaControlPlaneWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(w).
+		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-controlplane-cluster-x-k8s-io-v1beta2-rosacontrolplane,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=controlplane.cluster.x-k8s.io,resources=rosacontrolplanes,versions=v1beta2,name=validation.rosacontrolplanes.controlplane.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-controlplane-cluster-x-k8s-io-v1beta2-rosacontrolplane,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=controlplane.cluster.x-k8s.io,resources=rosacontrolplanes,versions=v1beta2,name=default.rosacontrolplanes.controlplane.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-var _ webhook.Defaulter = &ROSAControlPlane{}
-var _ webhook.Validator = &ROSAControlPlane{}
+type rosaControlPlaneWebhook struct{}
+
+var _ webhook.CustomDefaulter = &rosaControlPlaneWebhook{}
+var _ webhook.CustomValidator = &rosaControlPlaneWebhook{}
 
 // ValidateCreate implements admission.Validator.
-func (r *ROSAControlPlane) ValidateCreate() (warnings admission.Warnings, err error) {
+func (*rosaControlPlaneWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (warnings admission.Warnings, err error) {
+	r, ok := obj.(*ROSAControlPlane)
+	if !ok {
+		return nil, fmt.Errorf("expected an ROSAControlPlane object but got %T", r)
+	}
+
 	var allErrs field.ErrorList
 
 	if err := r.validateVersion(); err != nil {
@@ -46,8 +74,16 @@ func (r *ROSAControlPlane) ValidateCreate() (warnings admission.Warnings, err er
 		allErrs = append(allErrs, err)
 	}
 
+	if err := r.validateRosaRoleConfig(); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
 	allErrs = append(allErrs, r.validateNetwork()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
+
+	if err := r.validateROSANetwork(); err != nil {
+		allErrs = append(allErrs, err)
+	}
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -73,7 +109,12 @@ func (r *ROSAControlPlane) validateClusterRegistryConfig() *field.Error {
 }
 
 // ValidateUpdate implements admission.Validator.
-func (r *ROSAControlPlane) ValidateUpdate(old runtime.Object) (warnings admission.Warnings, err error) {
+func (*rosaControlPlaneWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (warnings admission.Warnings, err error) {
+	r, ok := newObj.(*ROSAControlPlane)
+	if !ok {
+		return nil, fmt.Errorf("expected an ROSAControlPlane object but got %T", r)
+	}
+
 	var allErrs field.ErrorList
 
 	if err := r.validateVersion(); err != nil {
@@ -81,6 +122,10 @@ func (r *ROSAControlPlane) ValidateUpdate(old runtime.Object) (warnings admissio
 	}
 
 	if err := r.validateEtcdEncryptionKMSArn(); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := r.validateRosaRoleConfig(); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
@@ -99,7 +144,7 @@ func (r *ROSAControlPlane) ValidateUpdate(old runtime.Object) (warnings admissio
 }
 
 // ValidateDelete implements admission.Validator.
-func (r *ROSAControlPlane) ValidateDelete() (warnings admission.Warnings, err error) {
+func (*rosaControlPlaneWebhook) ValidateDelete(_ context.Context, obj runtime.Object) (warnings admission.Warnings, err error) {
 	return nil, nil
 }
 
@@ -162,7 +207,86 @@ func (r *ROSAControlPlane) validateExternalAuthProviders() *field.Error {
 	return nil
 }
 
+func (r *ROSAControlPlane) validateRosaRoleConfig() *field.Error {
+	hasRoleFields := r.Spec.OIDCID != "" || r.Spec.InstallerRoleARN != "" || r.Spec.SupportRoleARN != "" || r.Spec.WorkerRoleARN != "" ||
+		r.Spec.RolesRef.IngressARN != "" || r.Spec.RolesRef.ImageRegistryARN != "" || r.Spec.RolesRef.StorageARN != "" ||
+		r.Spec.RolesRef.NetworkARN != "" || r.Spec.RolesRef.KubeCloudControllerARN != "" || r.Spec.RolesRef.NodePoolManagementARN != "" ||
+		r.Spec.RolesRef.ControlPlaneOperatorARN != "" || r.Spec.RolesRef.KMSProviderARN != ""
+
+	if r.Spec.RosaRoleConfigRef != nil {
+		if hasRoleFields {
+			return field.Invalid(field.NewPath("spec.rosaRoleConfigRef"), r.Spec.RosaRoleConfigRef, "RosaRoleConfigRef and role fields such as installerRoleARN, supportRoleARN, workerRoleARN, rolesRef and oidcID are mutually exclusive")
+		}
+		return nil
+	}
+
+	if r.Spec.OIDCID == "" {
+		return field.Invalid(field.NewPath("spec.oidcID"), r.Spec.OIDCID, "must be specified")
+	}
+	if r.Spec.InstallerRoleARN == "" {
+		return field.Invalid(field.NewPath("spec.installerRoleARN"), r.Spec.InstallerRoleARN, "must be specified")
+	}
+	if r.Spec.SupportRoleARN == "" {
+		return field.Invalid(field.NewPath("spec.supportRoleARN"), r.Spec.SupportRoleARN, "must be specified")
+	}
+	if r.Spec.WorkerRoleARN == "" {
+		return field.Invalid(field.NewPath("spec.workerRoleARN"), r.Spec.WorkerRoleARN, "must be specified")
+	}
+	if r.Spec.RolesRef.IngressARN == "" {
+		return field.Invalid(field.NewPath("spec.rolesRef.ingressARN"), r.Spec.RolesRef.IngressARN, "must be specified")
+	}
+	if r.Spec.RolesRef.ImageRegistryARN == "" {
+		return field.Invalid(field.NewPath("spec.rolesRef.imageRegistryARN"), r.Spec.RolesRef.ImageRegistryARN, "must be specified")
+	}
+	if r.Spec.RolesRef.StorageARN == "" {
+		return field.Invalid(field.NewPath("spec.rolesRef.storageARN"), r.Spec.RolesRef.StorageARN, "must be specified")
+	}
+	if r.Spec.RolesRef.NetworkARN == "" {
+		return field.Invalid(field.NewPath("spec.rolesRef.networkARN"), r.Spec.RolesRef.NetworkARN, "must be specified")
+	}
+	if r.Spec.RolesRef.KubeCloudControllerARN == "" {
+		return field.Invalid(field.NewPath("spec.rolesRef.kubeCloudControllerARN"), r.Spec.RolesRef.KubeCloudControllerARN, "must be specified")
+	}
+	if r.Spec.RolesRef.NodePoolManagementARN == "" {
+		return field.Invalid(field.NewPath("spec.rolesRef.nodePoolManagementARN"), r.Spec.RolesRef.NodePoolManagementARN, "must be specified")
+	}
+	if r.Spec.RolesRef.ControlPlaneOperatorARN == "" {
+		return field.Invalid(field.NewPath("spec.rolesRef.controlPlaneOperatorARN"), r.Spec.RolesRef.ControlPlaneOperatorARN, "must be specified")
+	}
+	if r.Spec.RolesRef.KMSProviderARN == "" {
+		return field.Invalid(field.NewPath("spec.rolesRef.kmsProviderARN"), r.Spec.RolesRef.KMSProviderARN, "must be specified")
+	}
+	return nil
+}
+
+func (r *ROSAControlPlane) validateROSANetwork() *field.Error {
+	if r.Spec.ROSANetworkRef != nil {
+		if r.Spec.Subnets != nil {
+			return field.Forbidden(field.NewPath("spec.rosaNetworkRef"), "spec.subnets and spec.rosaNetworkRef are mutually exclusive")
+		}
+		if r.Spec.AvailabilityZones != nil {
+			return field.Forbidden(field.NewPath("spec.rosaNetworkRef"), "spec.availabilityZones and spec.rosaNetworkRef are mutually exclusive")
+		}
+	}
+
+	if r.Spec.ROSANetworkRef == nil && r.Spec.Subnets == nil {
+		return field.Required(field.NewPath("spec.subnets"), "spec.subnets cannot be empty when spec.rosaNetworkRef is unspecified")
+	}
+
+	if r.Spec.ROSANetworkRef == nil && r.Spec.AvailabilityZones == nil {
+		return field.Required(field.NewPath("spec.availabilityZones"), "spec.availabilityZones cannot be empty when spec.rosaNetworkRef is unspecified")
+	}
+
+	return nil
+}
+
 // Default implements admission.Defaulter.
-func (r *ROSAControlPlane) Default() {
+func (*rosaControlPlaneWebhook) Default(_ context.Context, obj runtime.Object) error {
+	r, ok := obj.(*ROSAControlPlane)
+	if !ok {
+		return fmt.Errorf("expected an ROSAControlPlane object but got %T", r)
+	}
+
 	SetObjectDefaults_ROSAControlPlane(r)
+	return nil
 }

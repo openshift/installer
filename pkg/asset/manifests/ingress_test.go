@@ -133,7 +133,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			// AWS currently uses a load balancer even on single-node, so the
 			// default placement should be workers
 			name:                      "aws single node with 0 or 1 day-1 workers",
-			installConfigBuildOptions: []icOption{icBuild.forAWS()},
+			installConfigBuildOptions: []icOption{icBuild.forAWS(), icBuild.withMachineNetwork(defaultMachineNetwork)},
 			controlPlaneTopology:      configv1.SingleReplicaTopologyMode,
 			infrastructureTopology:    configv1.SingleReplicaTopologyMode,
 			expectedIngressAWSLBType:  configv1.Classic,
@@ -141,7 +141,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 		},
 		{
 			name:                      "aws multi-node with 1 day-1 worker",
-			installConfigBuildOptions: []icOption{icBuild.forAWS()},
+			installConfigBuildOptions: []icOption{icBuild.forAWS(), icBuild.withMachineNetwork(defaultMachineNetwork)},
 			controlPlaneTopology:      configv1.HighlyAvailableTopologyMode,
 			infrastructureTopology:    configv1.SingleReplicaTopologyMode,
 			expectedIngressAWSLBType:  configv1.Classic,
@@ -151,7 +151,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			// AWS currently uses a load balancer even on single-node, so the
 			// default placement should be workers
 			name:                      "aws single-node with multiple day-1 workers",
-			installConfigBuildOptions: []icOption{icBuild.forAWS()},
+			installConfigBuildOptions: []icOption{icBuild.forAWS(), icBuild.withMachineNetwork(defaultMachineNetwork)},
 			controlPlaneTopology:      configv1.SingleReplicaTopologyMode,
 			infrastructureTopology:    configv1.HighlyAvailableTopologyMode,
 			expectedIngressAWSLBType:  configv1.Classic,
@@ -159,7 +159,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 		},
 		{
 			name:                      "vanilla aws",
-			installConfigBuildOptions: []icOption{icBuild.forAWS()},
+			installConfigBuildOptions: []icOption{icBuild.forAWS(), icBuild.withMachineNetwork(defaultMachineNetwork)},
 			controlPlaneTopology:      configv1.HighlyAvailableTopologyMode,
 			infrastructureTopology:    configv1.HighlyAvailableTopologyMode,
 			expectedIngressAWSLBType:  configv1.Classic,
@@ -167,7 +167,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 		},
 		{
 			name:                        "test setting of aws lb type to NLB",
-			installConfigBuildOptions:   []icOption{icBuild.withLBType(configv1.NLB)},
+			installConfigBuildOptions:   []icOption{icBuild.withLBType(configv1.NLB), icBuild.withMachineNetwork(defaultMachineNetwork)},
 			controlPlaneTopology:        configv1.HighlyAvailableTopologyMode,
 			infrastructureTopology:      configv1.HighlyAvailableTopologyMode,
 			expectedIngressPlacement:    configv1.DefaultPlacementWorkers,
@@ -176,7 +176,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 		},
 		{
 			name:                        "test setting of aws lb type to Classic",
-			installConfigBuildOptions:   []icOption{icBuild.withLBType(configv1.Classic)},
+			installConfigBuildOptions:   []icOption{icBuild.withLBType(configv1.Classic), icBuild.withMachineNetwork(defaultMachineNetwork)},
 			controlPlaneTopology:        configv1.HighlyAvailableTopologyMode,
 			infrastructureTopology:      configv1.HighlyAvailableTopologyMode,
 			expectedIngressPlacement:    configv1.DefaultPlacementWorkers,
@@ -265,6 +265,7 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 			installConfig: icBuild.build(
 				icBuild.forAWS(),
 				icBuild.withPublish(types.ExternalPublishingStrategy),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
 			),
 		},
 		{
@@ -272,6 +273,7 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 			installConfig: icBuild.build(
 				icBuild.forAWS(),
 				icBuild.withPublish(types.InternalPublishingStrategy),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
 			),
 			expectedScope:    operatorv1.InternalLoadBalancer,
 			expectIngressCtr: true,
@@ -280,6 +282,7 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 			name: "aws platform, byo subnets without roles and public ingress",
 			installConfig: icBuild.build(
 				icBuild.forAWS(),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
 				icBuild.withPublish(types.ExternalPublishingStrategy),
 				icBuild.withAWSBYOSubnets(
 					awstypes.Subnet{ID: "subnet-valid-private-a"},
@@ -291,6 +294,7 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 			name: "aws platform, byo subnets without roles and private ingress",
 			installConfig: icBuild.build(
 				icBuild.forAWS(),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
 				icBuild.withPublish(types.InternalPublishingStrategy),
 				icBuild.withAWSBYOSubnets(
 					awstypes.Subnet{ID: "subnet-valid-private-a"},
@@ -304,6 +308,7 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 			name: "aws platform, byo subnets with roles, public ingress and network lb",
 			installConfig: icBuild.build(
 				icBuild.forAWS(),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
 				icBuild.withPublish(types.ExternalPublishingStrategy),
 				icBuild.withLBType(configv1.NLB),
 				icBuild.withAWSBYOSubnets(awsBYOSubnets(types.ExternalPublishingStrategy)...),
@@ -320,6 +325,7 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 			name: "aws platform, byo subnets with roles, public ingress and classic lb",
 			installConfig: icBuild.build(
 				icBuild.forAWS(),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
 				icBuild.withPublish(types.ExternalPublishingStrategy),
 				icBuild.withLBType(configv1.Classic),
 				icBuild.withAWSBYOSubnets(awsBYOSubnets(types.ExternalPublishingStrategy)...),
@@ -336,6 +342,7 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 			name: "aws platform, byo subnets with roles, private ingress and network lb",
 			installConfig: icBuild.build(
 				icBuild.forAWS(),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
 				icBuild.withPublish(types.InternalPublishingStrategy),
 				icBuild.withLBType(configv1.NLB),
 				icBuild.withAWSBYOSubnets(awsBYOSubnets(types.InternalPublishingStrategy)...),
@@ -352,6 +359,7 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 			name: "aws platform, byo subnets with roles, private ingress and classic lb",
 			installConfig: icBuild.build(
 				icBuild.forAWS(),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
 				icBuild.withPublish(types.InternalPublishingStrategy),
 				icBuild.withLBType(configv1.Classic),
 				icBuild.withAWSBYOSubnets(awsBYOSubnets(types.InternalPublishingStrategy)...),

@@ -202,7 +202,7 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	// Reference: https://github.com/openshift/cluster-network-operator/blob/fc3e0e25b4cfa43e14122bdcdd6d7f2585017d75/pkg/network/cluster_config.go#L45-L52
 	if ic.Networking != nil && len(ic.Networking.ServiceNetwork) == 2 {
 		// Only configure kernel args for dual-stack clusters.
-		ignIPv6, err := machineconfig.ForDualStackAddresses("arbiter")
+		ignIPv6, err := machineconfig.ForDualStackAddresses("arbiter", ic)
 		if err != nil {
 			return fmt.Errorf("failed to create ignition to configure IPv6 for arbiter machines: %w", err)
 		}

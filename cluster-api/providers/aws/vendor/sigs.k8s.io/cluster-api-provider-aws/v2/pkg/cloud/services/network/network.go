@@ -42,48 +42,56 @@ func (s *Service) ReconcileNetwork() (err error) {
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SecondaryCidrsReadyCondition, infrav1.SecondaryCidrReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
+	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.SecondaryCidrsReadyCondition)
 
 	// Subnets.
 	if err := s.reconcileSubnets(); err != nil {
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition, infrav1.SubnetsReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
+	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition)
 
 	// Internet Gateways.
 	if err := s.reconcileInternetGateways(); err != nil {
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.InternetGatewayReadyCondition, infrav1.InternetGatewayFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
+	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.InternetGatewayReadyCondition)
 
 	// Carrier Gateway.
 	if err := s.reconcileCarrierGateway(); err != nil {
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.CarrierGatewayReadyCondition, infrav1.CarrierGatewayFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
+	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.CarrierGatewayReadyCondition)
 
 	// Egress Only Internet Gateways.
 	if err := s.reconcileEgressOnlyInternetGateways(); err != nil {
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition, infrav1.EgressOnlyInternetGatewayFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
+	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition)
 
 	// NAT Gateways.
 	if err := s.reconcileNatGateways(); err != nil {
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.NatGatewaysReadyCondition, infrav1.NatGatewaysReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
+	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.NatGatewaysReadyCondition)
 
 	// Routing tables.
 	if err := s.reconcileRouteTables(); err != nil {
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition, infrav1.RouteTableReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
+	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition)
 
 	// VPC Endpoints.
 	if err := s.reconcileVPCEndpoints(); err != nil {
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, infrav1.VpcEndpointsReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
+	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition)
 
 	s.scope.Debug("Reconcile network completed successfully")
 	return nil

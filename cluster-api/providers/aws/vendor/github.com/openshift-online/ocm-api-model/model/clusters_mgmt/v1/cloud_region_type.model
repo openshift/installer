@@ -1,0 +1,55 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Description of a region of a cloud provider.
+class CloudRegion {
+	// Human friendly identifier of the region, for example `us-east-1`.
+	//
+	// NOTE: Currently for all cloud providers and all regions `id` and `name` have exactly
+	// the same values.
+	Name String
+
+	// Name of the region for display purposes, for example `N. Virginia`.
+	DisplayName String
+
+	// Link to the cloud provider that the region belongs to.
+	link CloudProvider CloudProvider
+
+	// Whether the region is enabled for deploying a managed cluster.
+	Enabled Boolean
+
+	// Whether the region supports multiple availability zones.
+	SupportsMultiAZ Boolean
+
+	// 'true' if the region is supported only for CCS clusters, 'false' otherwise.
+	CCSOnly Boolean
+
+	// 'true' if the region is supported for Hypershift deployments, 'false' otherwise.
+	SupportsHypershift Boolean
+
+	// Whether the region is an AWS GovCloud region.
+	@json(name = "govcloud")
+	GovCloud Boolean
+
+	// (GCP only) Comma-separated list of KMS location IDs that can be used with this region.
+	// E.g. "global,nam4,us". Order is not guaranteed.
+	KMSLocationID String
+
+	// (GCP only) Comma-separated list of display names corresponding to KMSLocationID.
+	// E.g. "Global,nam4 (Iowa, South Carolina, and Oklahoma),US". Order is not guaranteed but will match KMSLocationID.
+	// Unfortunately, this API doesn't allow robust splitting - Contact ocm-feedback@redhat.com if you want to rely on this.
+	KMSLocationName String
+}

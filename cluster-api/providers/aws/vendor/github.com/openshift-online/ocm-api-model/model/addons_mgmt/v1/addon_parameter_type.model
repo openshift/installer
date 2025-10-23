@@ -1,0 +1,63 @@
+/*
+Copyright (c) 2022 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of an addon parameter.
+struct AddonParameter {
+    // ID for this addon parameter
+    ID String
+
+    // Name of the addon parameter.
+    Name String
+
+    // Description of the addon parameter.
+    Description String
+
+    // Type of value of the addon parameter.
+    ValueType AddonParameterValueType
+
+    // Validation rule for the addon parameter.
+    Validation String
+
+    // Error message to return should the parameter be invalid.
+    ValidationErrMsg String
+
+    // Indicates if this parameter is required by the addon.
+    Required Boolean
+
+    // Indicates if this parameter can be edited after creation.
+    Editable Boolean
+
+    // Restricts if the parameter can be upscaled/downscaled
+    // Expected values are "up", "down", or "" (no restriction).
+    EditableDirection String
+
+    // Indicates if this parameter is enabled for the addon.
+    Enabled Boolean
+
+    // Indicates the value default for the addon parameter.
+    DefaultValue String
+
+    // List of options for the addon parameter value.
+    Options []AddonParameterOption
+
+    // Conditions in which this parameter is valid for
+    Conditions []AddonRequirement
+
+    Addon Addon
+
+    // Indicates the weight of the AddonParameter which would be used by sort order
+    Order Integer
+}

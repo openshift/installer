@@ -1,0 +1,227 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of an identity provider.
+class IdentityProvider {
+	// Type of identity provider. The rest of the attributes will be populated according to this
+	// value. For example, if the type is `github` then only the `github` attribute will be
+	// populated.
+	Type IdentityProviderType
+
+	// The name of the identity provider.
+	Name String
+
+	// When `true` unauthenticated token requests from non-web clients (like the CLI) are sent a
+	// `WWW-Authenticate` challenge header for this provider.
+	Challenge Boolean
+
+	// When `true` unauthenticated token requests from web clients (like the web console) are
+	// redirected to the authorize URL to log in.
+	Login Boolean
+
+	// Controls how mappings are established between this provider's identities and user
+	// objects.
+	MappingMethod IdentityProviderMappingMethod
+
+	// Details for `github` identity providers.
+	Github GithubIdentityProvider
+
+	// Details for `gitlab` identity providers.
+	Gitlab GitlabIdentityProvider
+
+	// Details for `google` identity providers.
+	Google GoogleIdentityProvider
+
+	// Details for `htpasswd` identity providers.
+	Htpasswd HTPasswdIdentityProvider
+
+	// Details for `ldap` identity providers.
+	LDAP LDAPIdentityProvider
+
+	// Details for `openid` identity providers.
+	OpenID OpenIDIdentityProvider
+}
+
+// Type of identity provider.
+enum IdentityProviderType {
+	@json(name = "GithubIdentityProvider")
+	Github
+
+	@json(name = "GitlabIdentityProvider")
+	Gitlab
+
+	@json(name = "GoogleIdentityProvider")
+	Google
+
+	@json(name = "HTPasswdIdentityProvider")
+	Htpasswd
+
+	@json(name = "LDAPIdentityProvider")
+	LDAP
+
+	@json(name = "OpenIDIdentityProvider")
+	OpenID
+}
+
+// Controls how mappings are established between provider identities and user objects.
+enum IdentityProviderMappingMethod {
+	Claim
+	Lookup
+	Generate
+	Add
+}
+
+// Details for `github` identity providers.
+struct GithubIdentityProvider {
+	// Optional trusted certificate authority bundle to use when making requests tot he server.
+	CA String
+
+	// Client identifier of a registered _GitHub_ OAuth application.
+	ClientID String
+
+	// Client secret of a registered _GitHub_ OAuth application.
+	ClientSecret String
+
+	// For _GitHub Enterprise_ you must provide the host name of your instance, such as
+	// `example.com`. This value must match the _GitHub Enterprise_ host name value in the
+	// `/setup/settings` file and cannot include a port number.
+	//
+	// For plain _GitHub_ omit this parameter.
+	Hostname String
+
+	// Optional list of organizations. Cannot be used in combination with the Teams field.
+	Organizations []String
+
+	// Optional list of teams. Cannot be used in combination with the Organizations field.
+	Teams []String
+}
+
+// Details for `gitlab` identity providers.
+struct GitlabIdentityProvider {
+	// Optional trusted certificate authority bundle to use when making requests tot he server.
+	CA String
+
+	// Client identifier of a registered _GitLab_ OAuth application.
+	ClientID String
+
+	// Client secret issued by _GitLab_.
+	ClientSecret String
+
+	// URL of the _GitLab_ instance.
+	URL String
+}
+
+// Details for `google` identity providers.
+struct GoogleIdentityProvider {
+	// Client identifier of a registered _Google_ project.
+	ClientID String
+
+	// Client secret issued by _Google_.
+	ClientSecret String
+
+	// Optional hosted domain to restrict sign-in accounts to.
+	HostedDomain String
+}
+
+// Details for `htpasswd` identity providers.
+struct HTPasswdIdentityProvider {
+	// Username to be used in the _HTPasswd_ data file.
+	Username String
+
+	// Password to be used in the _HTPasswd_ data file.
+	Password String
+
+    // Link to the collection of _HTPasswd_ users.
+    link Users []HTPasswdUser
+}
+
+// Details for `ldap` identity providers.
+struct LDAPIdentityProvider {
+	// LDAP attributes used to configure the provider.
+	Attributes LDAPAttributes
+
+	// Optional distinguished name to use to bind during the search phase.
+	BindDN String
+
+	// Optional password to use to bind during the search phase.
+	BindPassword String
+
+	// Certificate bundle to use to validate server certificates for the configured URL.
+	CA String
+
+	// An https://tools.ietf.org/html/rfc2255[RFC 2255] URL which specifies the LDAP host and
+	// search parameters to use.
+	URL String
+
+	// When `true` no TLS connection is made to the server. When `false` `ldaps://...` URLs
+	// connect using TLS and `ldap://...` are upgraded to TLS.
+	Insecure Boolean
+}
+
+// LDAP attributes used to configure the LDAP identity provider.
+struct LDAPAttributes {
+	// List of attributes to use as the mail address.
+	Email []String
+
+	// List of attributes to use as the identity.
+	ID []String
+
+	// List of attributes to use as the display name.
+	Name []String
+
+	// List of attributes to use as the preferred user name when provisioning a user.
+	PreferredUsername []String
+}
+
+// Details for `openid` identity providers.
+struct OpenIDIdentityProvider {
+	// Certificate bunde to use to validate server certificates for the configured URL.
+	CA String
+
+	// Claims used to configure the provider.
+	Claims OpenIDClaims
+
+	// Identifier of a client registered with the _OpenID_ provider.
+	ClientID String
+
+	// Client secret.
+	ClientSecret String
+
+	// Optional map of extra parameters to add to the authorization token request.
+	ExtraAuthorizeParameters [String]String
+
+	// Optional list of scopes to request, in addition to the `openid` scope, during the
+	// authorization token request.
+	ExtraScopes []String
+
+	// The URL that the OpenID Provider asserts as the Issuer Identifier
+	Issuer String
+}
+
+// _OpenID_ identity provider claims.
+struct OpenIDClaims {
+	// List of claims to use as the mail address.
+	Email []String
+
+	// List of claims to use as the display name.
+	Name []String
+
+	// List of claims to use as the preferred user name when provisioning a user.
+	PreferredUsername []String
+
+	// List of claims to use as the group name.
+	Groups []String
+}

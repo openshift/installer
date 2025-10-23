@@ -30,7 +30,7 @@ type MachineHealthCheckSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ClusterName string `json:"clusterName"`
 
-	// Label selector to match machines whose health will be exercised
+	// selector is the label selector to match machines whose health will be exercised
 	Selector metav1.LabelSelector `json:"selector"`
 
 	// unhealthyConditions contains a list of the conditions that determine
@@ -40,13 +40,14 @@ type MachineHealthCheckSpec struct {
 	// +kubebuilder:validation:MinItems=1
 	UnhealthyConditions []UnhealthyCondition `json:"unhealthyConditions"`
 
-	// Any further remediation is only allowed if at most "MaxUnhealthy" machines selected by
+	// maxUnhealthy specifies the maximum number of unhealthy machines allowed.
+	// Any further remediation is only allowed if at most "maxUnhealthy" machines selected by
 	// "selector" are not healthy.
 	// +optional
 	MaxUnhealthy *intstr.IntOrString `json:"maxUnhealthy,omitempty"`
 
-	// Machines older than this duration without a node will be considered to have
-	// failed and will be remediated.
+	// nodeStartupTimeout is the duration after which machines without a node will be considered to
+	// have failed and will be remediated.
 	// +optional
 	NodeStartupTimeout *metav1.Duration `json:"nodeStartupTimeout,omitempty"`
 
@@ -68,14 +69,20 @@ type MachineHealthCheckSpec struct {
 // specified as a duration.  When the named condition has been in the given
 // status for at least the timeout value, a node is considered unhealthy.
 type UnhealthyCondition struct {
+	// type of Node condition
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:MinLength=1
 	Type corev1.NodeConditionType `json:"type"`
 
+	// status of the condition, one of True, False, Unknown.
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:MinLength=1
 	Status corev1.ConditionStatus `json:"status"`
 
+	// timeout is the duration that a node must be in a given status for,
+	// after which the node is considered unhealthy.
+	// For example, with a value of "1h", the node must match the status
+	// for at least 1 hour before being considered unhealthy.
 	Timeout metav1.Duration `json:"timeout"`
 }
 
@@ -85,11 +92,11 @@ type UnhealthyCondition struct {
 
 // MachineHealthCheckStatus defines the observed state of MachineHealthCheck.
 type MachineHealthCheckStatus struct {
-	// total number of machines counted by this machine health check
+	// expectedMachines is the total number of machines counted by this machine health check
 	// +kubebuilder:validation:Minimum=0
 	ExpectedMachines int32 `json:"expectedMachines,omitempty"`
 
-	// total number of healthy machines counted by this machine health check
+	// currentHealthy is the total number of healthy machines counted by this machine health check
 	// +kubebuilder:validation:Minimum=0
 	CurrentHealthy int32 `json:"currentHealthy,omitempty"`
 
@@ -126,13 +133,15 @@ type MachineHealthCheckStatus struct {
 //
 // Deprecated: This type will be removed in one of the next releases.
 type MachineHealthCheck struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// Specification of machine health check policy
+	// spec is the specification of machine health check policy
 	Spec MachineHealthCheckSpec `json:"spec,omitempty"`
 
-	// Most recently observed status of MachineHealthCheck resource
+	// status is the most recently observed status of MachineHealthCheck resource
 	Status MachineHealthCheckStatus `json:"status,omitempty"`
 }
 
@@ -153,8 +162,11 @@ func (m *MachineHealthCheck) SetConditions(conditions Conditions) {
 // Deprecated: This type will be removed in one of the next releases.
 type MachineHealthCheckList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []MachineHealthCheck `json:"items"`
+	// items is the list of MachineHealthChecks.
+	Items []MachineHealthCheck `json:"items"`
 }
 
 func init() {

@@ -1,0 +1,56 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Counts of different classes of nodes inside a cluster.
+struct ClusterNodes {
+	// Total number of nodes of the cluster.
+	Total Integer
+
+	// Number of master nodes of the cluster.
+	Master Integer
+
+	// Number of infrastructure nodes of the cluster.
+	Infra Integer
+
+	// Number of compute nodes of the cluster.
+	// Compute and AutoscaleCompute cannot be used together.
+	Compute Integer
+
+	// Details for auto-scaling the compute machine pool.
+	// Compute and AutoscaleCompute cannot be used together.
+	AutoscaleCompute MachinePoolAutoscaling
+
+	// The compute machine type to use, for example `r5.xlarge`.
+	ComputeMachineType MachineType
+
+	// The labels set on the "default" compute machine pool.
+	ComputeLabels [String]String
+
+	// The availability zones upon which the nodes are created.
+	AvailabilityZones []String
+
+	// List of security groups to be applied to nodes (Optional).
+	SecurityGroupFilters []MachinePoolSecurityGroupFilter
+
+	// The master machine type to use, for example `r5.xlarge` (Optional).
+	MasterMachineType MachineType
+
+	// The infra machine type to use, for example `r5.xlarge` (Optional).
+	InfraMachineType MachineType
+
+	// The compute machine root volume capabilities.
+	ComputeRootVolume RootVolume
+}

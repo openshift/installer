@@ -16,3 +16,8 @@ limitations under the License.
 
 // Package sdk contains a set of objects that simplify usage of `api.openshift.com`.
 package sdk
+
+import (
+	_ "github.com/openshift-online/ocm-api-model/clientapi/dependencymagnet"
+	_ "github.com/openshift-online/ocm-api-model/model/dependencymagnet"
+)

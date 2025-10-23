@@ -13,8 +13,11 @@ import (
 )
 
 // Describes Capacity Block offerings available for purchase in the Amazon Web
-// Services Region that you're currently using. With Capacity Blocks, you purchase
-// a specific instance type for a period of time.
+// Services Region that you're currently using. With Capacity Blocks, you can
+// purchase a specific GPU instance type or EC2 UltraServer for a period of time.
+//
+// To search for an available Capacity Block offering, you specify a reservation
+// duration and instance count.
 func (c *Client) DescribeCapacityBlockOfferings(ctx context.Context, params *DescribeCapacityBlockOfferingsInput, optFns ...func(*Options)) (*DescribeCapacityBlockOfferingsOutput, error) {
 	if params == nil {
 		params = &DescribeCapacityBlockOfferingsInput{}
@@ -32,20 +35,11 @@ func (c *Client) DescribeCapacityBlockOfferings(ctx context.Context, params *Des
 
 type DescribeCapacityBlockOfferingsInput struct {
 
-	// The number of hours for which to reserve Capacity Block.
+	// The reservation duration for the Capacity Block, in hours. You must specify the
+	// duration in 1-day increments up 14 days, and in 7-day increments up to 182 days.
 	//
 	// This member is required.
 	CapacityDurationHours *int32
-
-	// The number of instances for which to reserve capacity.
-	//
-	// This member is required.
-	InstanceCount *int32
-
-	// The type of instance for which the Capacity Block offering reserves capacity.
-	//
-	// This member is required.
-	InstanceType *string
 
 	// Checks whether you have the required permissions for the action, without
 	// actually making the request, and provides an error response. If you have the
@@ -56,10 +50,19 @@ type DescribeCapacityBlockOfferingsInput struct {
 	// The latest end date for the Capacity Block offering.
 	EndDateRange *time.Time
 
+	// The number of instances for which to reserve capacity. Each Capacity Block can
+	// have up to 64 instances, and you can have up to 256 instances across Capacity
+	// Blocks.
+	InstanceCount *int32
+
+	// The type of instance for which the Capacity Block offering reserves capacity.
+	InstanceType *string
+
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token to use to retrieve the next page of results.
@@ -67,6 +70,12 @@ type DescribeCapacityBlockOfferingsInput struct {
 
 	// The earliest start date for the Capacity Block offering.
 	StartDateRange *time.Time
+
+	// The number of EC2 UltraServers in the offerings.
+	UltraserverCount *int32
+
+	// The EC2 UltraServer type of the Capacity Block offerings.
+	UltraserverType *string
 
 	noSmithyDocumentSerde
 }
@@ -129,6 +138,9 @@ func (c *Client) addOperationDescribeCapacityBlockOfferingsMiddlewares(stack *mi
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -139,6 +151,15 @@ func (c *Client) addOperationDescribeCapacityBlockOfferingsMiddlewares(stack *mi
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeCapacityBlockOfferingsValidationMiddleware(stack); err != nil {
@@ -162,24 +183,29 @@ func (c *Client) addOperationDescribeCapacityBlockOfferingsMiddlewares(stack *mi
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeCapacityBlockOfferingsAPIClient is a client that implements the
-// DescribeCapacityBlockOfferings operation.
-type DescribeCapacityBlockOfferingsAPIClient interface {
-	DescribeCapacityBlockOfferings(context.Context, *DescribeCapacityBlockOfferingsInput, ...func(*Options)) (*DescribeCapacityBlockOfferingsOutput, error)
-}
-
-var _ DescribeCapacityBlockOfferingsAPIClient = (*Client)(nil)
 
 // DescribeCapacityBlockOfferingsPaginatorOptions is the paginator options for
 // DescribeCapacityBlockOfferings
 type DescribeCapacityBlockOfferingsPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -242,6 +268,9 @@ func (p *DescribeCapacityBlockOfferingsPaginator) NextPage(ctx context.Context, 
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeCapacityBlockOfferings(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -260,6 +289,14 @@ func (p *DescribeCapacityBlockOfferingsPaginator) NextPage(ctx context.Context, 
 
 	return result, nil
 }
+
+// DescribeCapacityBlockOfferingsAPIClient is a client that implements the
+// DescribeCapacityBlockOfferings operation.
+type DescribeCapacityBlockOfferingsAPIClient interface {
+	DescribeCapacityBlockOfferings(context.Context, *DescribeCapacityBlockOfferingsInput, ...func(*Options)) (*DescribeCapacityBlockOfferingsOutput, error)
+}
+
+var _ DescribeCapacityBlockOfferingsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeCapacityBlockOfferings(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -120,7 +120,7 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 	switch config.Platform.Name() {
 	case aws.Name:
 		lbType := configv1.Classic
-		if config.AWS.LBType == configv1.NLB {
+		if config.AWS.LBType == configv1.NLB || config.IsDualStackInfra() {
 			lbType = configv1.NLB
 		}
 		obj.Spec.LoadBalancer = configv1.LoadBalancer{
@@ -161,6 +161,20 @@ func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig
 
 	switch config.Platform.Name() {
 	case aws.Name:
+		// FIXME: CCM cannot create an IPv6-enabled load balancer
+		// Thus, we set publish to NodePort and manage the Load Balancer in the installer.
+		// Remove after CCM support dualstack NLB.
+		if config.IsDualStackInfra() {
+			obj = getDefaultIngressController()
+			obj.Spec.EndpointPublishingStrategy = &operatorv1.EndpointPublishingStrategy{
+				Type: operatorv1.NodePortServiceStrategyType,
+				NodePort: &operatorv1.NodePortStrategy{
+					Protocol: operatorv1.ProxyProtocol,
+				},
+			}
+			break
+		}
+
 		subnetIDsByRole := make(map[aws.SubnetRoleType][]operatorv1.AWSSubnetID)
 		for _, subnet := range config.AWS.VPC.Subnets {
 			for _, role := range subnet.Roles {
@@ -206,6 +220,7 @@ func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig
 			}
 			break
 		}
+
 		// Fall back to existing logic similar to other platforms otherwise.
 		// i.e. managed subnets or no subnet roles are specified.
 		fallthrough

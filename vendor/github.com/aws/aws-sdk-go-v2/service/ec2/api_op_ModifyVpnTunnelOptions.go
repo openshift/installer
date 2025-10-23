@@ -14,8 +14,9 @@ import (
 // Modifies the options for a VPN tunnel in an Amazon Web Services Site-to-Site
 // VPN connection. You can modify multiple options for a tunnel in a single
 // request, but you can only modify one tunnel at a time. For more information, see
-// Site-to-Site VPN tunnel options for your Site-to-Site VPN connection (https://docs.aws.amazon.com/vpn/latest/s2svpn/VPNTunnels.html)
-// in the Amazon Web Services Site-to-Site VPN User Guide.
+// [Site-to-Site VPN tunnel options for your Site-to-Site VPN connection]in the Amazon Web Services Site-to-Site VPN User Guide.
+//
+// [Site-to-Site VPN tunnel options for your Site-to-Site VPN connection]: https://docs.aws.amazon.com/vpn/latest/s2svpn/VPNTunnels.html
 func (c *Client) ModifyVpnTunnelOptions(ctx context.Context, params *ModifyVpnTunnelOptionsInput, optFns ...func(*Options)) (*ModifyVpnTunnelOptionsOutput, error) {
 	if params == nil {
 		params = &ModifyVpnTunnelOptionsInput{}
@@ -54,9 +55,15 @@ type ModifyVpnTunnelOptionsInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
+	// Specifies the storage mode for the pre-shared key (PSK). Valid values are
+	// Standard (stored in Site-to-Site VPN service) or SecretsManager (stored in
+	// Amazon Web Services Secrets Manager).
+	PreSharedKeyStorage *string
+
 	// Choose whether or not to trigger immediate tunnel replacement. This is only
-	// applicable when turning on or off EnableTunnelLifecycleControl . Valid values:
-	// True | False
+	// applicable when turning on or off EnableTunnelLifecycleControl .
+	//
+	// Valid values: True | False
 	SkipTunnelReplacement *bool
 
 	noSmithyDocumentSerde
@@ -116,6 +123,9 @@ func (c *Client) addOperationModifyVpnTunnelOptionsMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +136,15 @@ func (c *Client) addOperationModifyVpnTunnelOptionsMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyVpnTunnelOptionsValidationMiddleware(stack); err != nil {
@@ -147,6 +166,18 @@ func (c *Client) addOperationModifyVpnTunnelOptionsMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

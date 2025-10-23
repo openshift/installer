@@ -59,6 +59,14 @@ const (
 	AWSMachineCreationFailed = "AWSMachineCreationFailed"
 	// AWSMachineDeletionFailed reports if deleting AWSMachines failed.
 	AWSMachineDeletionFailed = "AWSMachineDeletionFailed"
+	// LifecycleHookReadyCondition reports on the status of the lifecycle hook.
+	LifecycleHookReadyCondition clusterv1.ConditionType = "LifecycleHookReady"
+	// LifecycleHookCreationFailedReason used for failures during lifecycle hook creation.
+	LifecycleHookCreationFailedReason = "LifecycleHookCreationFailed"
+	// LifecycleHookUpdateFailedReason used for failures during lifecycle hook update.
+	LifecycleHookUpdateFailedReason = "LifecycleHookUpdateFailed"
+	// LifecycleHookDeletionFailedReason used for failures during lifecycle hook deletion.
+	LifecycleHookDeletionFailedReason = "LifecycleHookDeletionFailed"
 )
 
 const (
@@ -120,4 +128,24 @@ const (
 
 	// RosaMachinePoolReconciliationFailedReason used to report failures while reconciling ROSAMachinePool.
 	RosaMachinePoolReconciliationFailedReason = "ReconciliationFailed"
+)
+
+const (
+	// ROSANetworkReadyCondition condition reports on the successful reconciliation of ROSANetwork.
+	ROSANetworkReadyCondition clusterv1.ConditionType = "ROSANetworkReady"
+
+	// ROSANetworkCreatingReason used when ROSANetwork is being created.
+	ROSANetworkCreatingReason = "Creating"
+
+	// ROSANetworkCreatedReason used when ROSANetwork is created.
+	ROSANetworkCreatedReason = "Created"
+
+	// ROSANetworkFailedReason used when rosaNetwork creation failed.
+	ROSANetworkFailedReason = "Failed"
+
+	// ROSANetworkDeletingReason used when ROSANetwork is being deleted.
+	ROSANetworkDeletingReason = "Deleting"
+
+	// ROSANetworkDeletionFailedReason used to report failures while deleting ROSANetwork.
+	ROSANetworkDeletionFailedReason = "DeletionFailed"
 )

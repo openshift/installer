@@ -36,19 +36,26 @@ type DescribeTransitGatewayPeeringAttachmentsInput struct {
 	DryRun *bool
 
 	// One or more filters. The possible values are:
+	//
 	//   - transit-gateway-attachment-id - The ID of the transit gateway attachment.
+	//
 	//   - local-owner-id - The ID of your Amazon Web Services account.
+	//
 	//   - remote-owner-id - The ID of the Amazon Web Services account in the remote
 	//   Region that owns the transit gateway.
+	//
 	//   - state - The state of the peering attachment. Valid values are available |
 	//   deleted | deleting | failed | failing | initiatingRequest | modifying |
 	//   pendingAcceptance | pending | rollingBack | rejected | rejecting ).
+	//
 	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
+	//
 	//   - tag-key - The key of a tag assigned to the resource. Use this filter to find
 	//   all resources that have a tag with a specific key, regardless of the tag value.
+	//
 	//   - transit-gateway-id - The ID of the transit gateway.
 	Filters []types.Filter
 
@@ -123,6 +130,9 @@ func (c *Client) addOperationDescribeTransitGatewayPeeringAttachmentsMiddlewares
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -133,6 +143,15 @@ func (c *Client) addOperationDescribeTransitGatewayPeeringAttachmentsMiddlewares
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeTransitGatewayPeeringAttachments(options.Region), middleware.Before); err != nil {
@@ -153,16 +172,20 @@ func (c *Client) addOperationDescribeTransitGatewayPeeringAttachmentsMiddlewares
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeTransitGatewayPeeringAttachmentsAPIClient is a client that implements
-// the DescribeTransitGatewayPeeringAttachments operation.
-type DescribeTransitGatewayPeeringAttachmentsAPIClient interface {
-	DescribeTransitGatewayPeeringAttachments(context.Context, *DescribeTransitGatewayPeeringAttachmentsInput, ...func(*Options)) (*DescribeTransitGatewayPeeringAttachmentsOutput, error)
-}
-
-var _ DescribeTransitGatewayPeeringAttachmentsAPIClient = (*Client)(nil)
 
 // DescribeTransitGatewayPeeringAttachmentsPaginatorOptions is the paginator
 // options for DescribeTransitGatewayPeeringAttachments
@@ -231,6 +254,9 @@ func (p *DescribeTransitGatewayPeeringAttachmentsPaginator) NextPage(ctx context
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeTransitGatewayPeeringAttachments(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -249,6 +275,14 @@ func (p *DescribeTransitGatewayPeeringAttachmentsPaginator) NextPage(ctx context
 
 	return result, nil
 }
+
+// DescribeTransitGatewayPeeringAttachmentsAPIClient is a client that implements
+// the DescribeTransitGatewayPeeringAttachments operation.
+type DescribeTransitGatewayPeeringAttachmentsAPIClient interface {
+	DescribeTransitGatewayPeeringAttachments(context.Context, *DescribeTransitGatewayPeeringAttachmentsInput, ...func(*Options)) (*DescribeTransitGatewayPeeringAttachmentsOutput, error)
+}
+
+var _ DescribeTransitGatewayPeeringAttachmentsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeTransitGatewayPeeringAttachments(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
