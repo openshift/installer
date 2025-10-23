@@ -6,7 +6,7 @@
 package configmaps
 
 import (
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/Azure/azure-service-operator/v2/internal/set"
@@ -42,7 +42,7 @@ func ValidateDestinations(
 			key:  dest.Key,
 		}
 		if locations.Contains(pair) {
-			return nil, errors.Errorf("cannot write more than one configmap value to destination %s", dest.String())
+			return nil, eris.Errorf("cannot write more than one configmap value to destination %s", dest.String())
 		}
 
 		locations.Add(pair)
@@ -65,10 +65,10 @@ func ValidateDestinations(
 			}
 
 			if outputType.IsExactType(asocel.StringType) && dest.Key == "" {
-				return nil, errors.Errorf("CEL expression with output type string must specify destination 'key', %s", dest.String())
+				return nil, eris.Errorf("CEL expression with output type string must specify destination 'key', %s", dest.String())
 			}
 			if outputType.IsExactType(asocel.MapType) && dest.Key != "" {
-				return nil, errors.Errorf("CEL expression with output type map[string]string must not specify destination 'key', %s", dest.String())
+				return nil, eris.Errorf("CEL expression with output type map[string]string must not specify destination 'key', %s", dest.String())
 			}
 		}
 
@@ -84,7 +84,7 @@ func ValidateDestinations(
 			key:  dest.Key,
 		}
 		if locations.Contains(pair) {
-			return nil, errors.Errorf("cannot write more than one configmap value to destination %s", dest.String())
+			return nil, eris.Errorf("cannot write more than one configmap value to destination %s", dest.String())
 		}
 
 		locations.Add(pair)
@@ -108,7 +108,7 @@ type OptionalReferencePair struct {
 func ValidateOptionalReferences(pairs []*OptionalReferencePair) (admission.Warnings, error) {
 	for _, pair := range pairs {
 		if pair.Value != nil && pair.Ref != nil {
-			return nil, errors.Errorf("cannot specify both %s and %s", pair.Name, pair.RefName)
+			return nil, eris.Errorf("cannot specify both %s and %s", pair.Name, pair.RefName)
 		}
 	}
 

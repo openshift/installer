@@ -294,8 +294,6 @@ func (ampmr *AzureMachinePoolMachineController) reconcileNormal(ctx context.Cont
 	switch state {
 	case infrav1.Failed:
 		ampmr.Recorder.Eventf(machineScope.AzureMachinePoolMachine, corev1.EventTypeWarning, "FailedVMState", "Azure scale set VM is in failed state")
-		machineScope.SetFailureReason(azure.UpdateError)
-		machineScope.SetFailureMessage(errors.Errorf("Azure VM state is %s", state))
 	case infrav1.Deleting:
 		log.V(4).Info("deleting machine because state is Deleting", "machine", machineScope.Name())
 		if err := ampmr.Client.Delete(ctx, machineScope.Machine); err != nil {

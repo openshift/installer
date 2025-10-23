@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api2023
 --------------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-05-01"
+
 Extension: Resource
 ├── Spec: Object (16 properties)
 │   ├── AksAssignedIdentity: *Object (2 properties)
@@ -126,6 +127,7 @@ Extension: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Type: *string
     └── Version: *string
+
 FluxConfiguration: Resource
 ├── Spec: Object (16 properties)
 │   ├── AzureBlob: *Object (10 properties)
@@ -310,3 +312,102 @@ FluxConfiguration: Resource
     ├── Suspend: *bool
     ├── Type: *string
     └── WaitForReconciliation: *bool
+
+augmentConversionForAzureBlobDefinition: Interface
+
+augmentConversionForAzureBlobDefinition_STATUS: Interface
+
+augmentConversionForBucketDefinition: Interface
+
+augmentConversionForBucketDefinition_STATUS: Interface
+
+augmentConversionForErrorAdditionalInfo_STATUS: Interface
+
+augmentConversionForErrorDetail_STATUS: Interface
+
+augmentConversionForErrorDetail_STATUS_Unrolled: Interface
+
+augmentConversionForExtension: Interface
+
+augmentConversionForExtensionOperatorConfigMaps: Interface
+
+augmentConversionForExtensionOperatorSpec: Interface
+
+augmentConversionForExtensionStatus_STATUS: Interface
+
+augmentConversionForExtension_Properties_AksAssignedIdentity_STATUS: Interface
+
+augmentConversionForExtension_Properties_AksAssignedIdentity_Spec: Interface
+
+augmentConversionForExtension_STATUS: Interface
+
+augmentConversionForExtension_Spec: Interface
+
+augmentConversionForFluxConfiguration: Interface
+
+augmentConversionForFluxConfigurationOperatorSpec: Interface
+
+augmentConversionForFluxConfiguration_STATUS: Interface
+
+augmentConversionForFluxConfiguration_Spec: Interface
+
+augmentConversionForGitRepositoryDefinition: Interface
+
+augmentConversionForGitRepositoryDefinition_STATUS: Interface
+
+augmentConversionForHelmReleasePropertiesDefinition_STATUS: Interface
+
+augmentConversionForIdentity: Interface
+
+augmentConversionForIdentity_STATUS: Interface
+
+augmentConversionForKustomizationDefinition: Interface
+
+augmentConversionForKustomizationDefinition_STATUS: Interface
+
+augmentConversionForManagedIdentityDefinition: Interface
+
+augmentConversionForManagedIdentityDefinition_STATUS: Interface
+
+augmentConversionForObjectReferenceDefinition_STATUS: Interface
+
+augmentConversionForObjectStatusConditionDefinition_STATUS: Interface
+
+augmentConversionForObjectStatusDefinition_STATUS: Interface
+
+augmentConversionForPlan: Interface
+
+augmentConversionForPlan_STATUS: Interface
+
+augmentConversionForPostBuildDefinition: Interface
+
+augmentConversionForPostBuildDefinition_STATUS: Interface
+
+augmentConversionForRepositoryRefDefinition: Interface
+
+augmentConversionForRepositoryRefDefinition_STATUS: Interface
+
+augmentConversionForScope: Interface
+
+augmentConversionForScopeCluster: Interface
+
+augmentConversionForScopeCluster_STATUS: Interface
+
+augmentConversionForScopeNamespace: Interface
+
+augmentConversionForScopeNamespace_STATUS: Interface
+
+augmentConversionForScope_STATUS: Interface
+
+augmentConversionForServicePrincipalDefinition: Interface
+
+augmentConversionForServicePrincipalDefinition_STATUS: Interface
+
+augmentConversionForSubstituteFromDefinition: Interface
+
+augmentConversionForSubstituteFromDefinition_STATUS: Interface
+
+augmentConversionForSystemData: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+

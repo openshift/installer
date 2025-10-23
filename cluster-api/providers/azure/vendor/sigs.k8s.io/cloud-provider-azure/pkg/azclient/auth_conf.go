@@ -46,6 +46,9 @@ type AzureAuthConfig struct {
 	// Auxiliary token provider for accessing resources from network tenant
 	// Require MSI to be enabled and have permission to access the KeyVault
 	AuxiliaryTokenProvider *AzureAuthAuxiliaryTokenProvider `json:"auxiliaryTokenProvider,omitempty" yaml:"auxiliaryTokenProvider,omitempty"`
+	// The path where a JSON file exists containing the JSON format of a UserAssignedIdentityCredentials struct
+	// See the msi-dataplane for more details on UserAssignedIdentityCredentials - https://github.com/Azure/msi-dataplane/blob/63fb37d3a1aaac130120624674df795d2e088083/pkg/dataplane/internal/generated_client.go#L156C6-L156C37
+	AADMSIDataPlaneIdentityPath string `json:"aadMSIDataPlaneIdentityPath,omitempty" yaml:"aadMSIDataPlaneIdentityPath,omitempty"`
 }
 
 type AzureAuthAuxiliaryTokenProvider struct {

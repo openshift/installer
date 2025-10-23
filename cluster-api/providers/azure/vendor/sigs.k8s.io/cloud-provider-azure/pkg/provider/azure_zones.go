@@ -18,12 +18,12 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cloudprovider "k8s.io/cloud-provider"
@@ -31,27 +31,26 @@ import (
 
 	azcache "sigs.k8s.io/cloud-provider-azure/pkg/cache"
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
-	"sigs.k8s.io/cloud-provider-azure/pkg/retry"
 )
 
 var _ cloudprovider.Zones = (*Cloud)(nil)
 
-func (az *Cloud) refreshZones(ctx context.Context, refreshFunc func() error) {
+func (az *Cloud) refreshZones(ctx context.Context, refreshFunc func(ctx context.Context) error) {
 	klog.V(2).Info("refreshZones: refreshing zones every 30 minutes.")
 	err := wait.PollUntilContextCancel(ctx, consts.ZoneFetchingInterval, false, func(ctx context.Context) (bool, error) {
-		_ = refreshFunc()
+		_ = refreshFunc(ctx)
 		return false, nil
 	})
 	klog.V(2).Infof("refreshZones: refresh zones finished with error: %s", err.Error())
 }
 
-func (az *Cloud) syncRegionZonesMap() error {
+func (az *Cloud) syncRegionZonesMap(ctx context.Context) error {
 	klog.V(2).Infof("syncRegionZonesMap: starting to fetch all available zones for the subscription %s", az.SubscriptionID)
-	zones, rerr := az.ZoneClient.GetZones(context.Background(), az.SubscriptionID)
-	if rerr != nil {
-		klog.Warningf("syncRegionZonesMap: error when get zones: %s, will retry after %s", rerr.Error().Error(), consts.ZoneFetchingInterval.String())
-		return rerr.Error()
+	zones, err := az.zoneRepo.ListZones(ctx)
+	if err != nil {
+		return fmt.Errorf("list zones: %w", err)
 	}
+
 	if len(zones) == 0 {
 		klog.Warning("syncRegionZonesMap: empty zone list")
 	}
@@ -74,39 +73,39 @@ func (az *Cloud) updateRegionZonesMap(zones map[string][]string) {
 	}
 }
 
-func (az *Cloud) getRegionZonesBackoff(region string) ([]string, error) {
-	if az.isStackCloud() {
+func (az *Cloud) getRegionZonesBackoff(ctx context.Context, region string) ([]*string, error) {
+	if az.IsStackCloud() {
 		// Azure Stack does not support zone at the moment
 		// https://docs.microsoft.com/en-us/azure-stack/user/azure-stack-network-differences?view=azs-2102
 		klog.V(3).Infof("getRegionZonesMapWrapper: Azure Stack does not support Zones at the moment, skipping")
-		return az.regionZonesMap[region], nil
+		return to.SliceOfPtrs(az.regionZonesMap[region]...), nil
 	}
 
 	if len(az.regionZonesMap) != 0 {
 		az.refreshZonesLock.RLock()
 		defer az.refreshZonesLock.RUnlock()
 
-		return az.regionZonesMap[region], nil
+		return to.SliceOfPtrs(az.regionZonesMap[region]...), nil
 	}
 
 	klog.V(2).Infof("getRegionZonesMapWrapper: the region-zones map is not initialized successfully, retrying immediately")
 
 	var (
-		zones map[string][]string
-		rerr  *retry.Error
+		zones    map[string][]string
+		innerErr error
 	)
-	err := wait.ExponentialBackoff(az.RequestBackoff(), func() (done bool, err error) {
-		zones, rerr = az.ZoneClient.GetZones(context.Background(), az.SubscriptionID)
-		if rerr != nil {
-			klog.Errorf("getRegionZonesMapWrapper: failed to fetch zones information: %v", rerr.Error())
+	err := wait.ExponentialBackoffWithContext(ctx, az.RequestBackoff(), func(ctx context.Context) (done bool, err error) {
+		zones, innerErr = az.zoneRepo.ListZones(ctx)
+		if innerErr != nil {
+			klog.ErrorS(err, "Failed to list zones")
 			return false, nil
 		}
 
 		return true, nil
 	})
 
-	if errors.Is(err, wait.ErrWaitTimeout) {
-		return []string{}, rerr.Error()
+	if wait.Interrupted(err) {
+		return []*string{}, innerErr
 	}
 
 	az.updateRegionZonesMap(zones)
@@ -115,10 +114,10 @@ func (az *Cloud) getRegionZonesBackoff(region string) ([]string, error) {
 		az.refreshZonesLock.RLock()
 		defer az.refreshZonesLock.RUnlock()
 
-		return az.regionZonesMap[region], nil
+		return to.SliceOfPtrs(az.regionZonesMap[region]...), nil
 	}
 
-	return []string{}, nil
+	return []*string{}, nil
 }
 
 // makeZone returns the zone value in format of <region>-<zone-id>.
@@ -144,9 +143,9 @@ func (az *Cloud) GetZoneID(zoneLabel string) string {
 // DEPRECATED: Zones is deprecated in favor of retrieving zone/region information from InstancesV2.
 // This interface will not be called if InstancesV2 is enabled.
 // If the node is not running with availability zones, then it will fall back to fault domain.
-func (az *Cloud) GetZone(_ context.Context) (cloudprovider.Zone, error) {
+func (az *Cloud) GetZone(ctx context.Context) (cloudprovider.Zone, error) {
 	if az.UseInstanceMetadata {
-		metadata, err := az.Metadata.GetMetadata(azcache.CacheReadTypeUnsafe)
+		metadata, err := az.Metadata.GetMetadata(ctx, azcache.CacheReadTypeUnsafe)
 		if err != nil {
 			return cloudprovider.Zone{}, err
 		}
@@ -182,7 +181,7 @@ func (az *Cloud) GetZone(_ context.Context) (cloudprovider.Zone, error) {
 	if az.VMSet == nil {
 		return cloudprovider.Zone{}, fmt.Errorf("VMSet is not initialized")
 	}
-	return az.VMSet.GetZoneByNodeName(strings.ToLower(hostname))
+	return az.VMSet.GetZoneByNodeName(ctx, strings.ToLower(hostname))
 }
 
 // GetZoneByProviderID implements Zones.GetZoneByProviderID
@@ -201,7 +200,7 @@ func (az *Cloud) GetZoneByProviderID(ctx context.Context, providerID string) (cl
 		return cloudprovider.Zone{}, nil
 	}
 
-	nodeName, err := az.VMSet.GetNodeNameByProviderID(providerID)
+	nodeName, err := az.VMSet.GetNodeNameByProviderID(ctx, providerID)
 	if err != nil {
 		return cloudprovider.Zone{}, err
 	}
@@ -214,7 +213,7 @@ func (az *Cloud) GetZoneByProviderID(ctx context.Context, providerID string) (cl
 // does not initialize node data.
 // DEPRECATED: Zones is deprecated in favor of retrieving zone/region information from InstancesV2.
 // This interface will not be called if InstancesV2 is enabled.
-func (az *Cloud) GetZoneByNodeName(_ context.Context, nodeName types.NodeName) (cloudprovider.Zone, error) {
+func (az *Cloud) GetZoneByNodeName(ctx context.Context, nodeName types.NodeName) (cloudprovider.Zone, error) {
 	// Returns "" for unmanaged nodes because azure cloud provider couldn't fetch information for them.
 	unmanaged, err := az.IsNodeUnmanaged(string(nodeName))
 	if err != nil {
@@ -225,5 +224,5 @@ func (az *Cloud) GetZoneByNodeName(_ context.Context, nodeName types.NodeName) (
 		return cloudprovider.Zone{}, nil
 	}
 
-	return az.VMSet.GetZoneByNodeName(string(nodeName))
+	return az.VMSet.GetZoneByNodeName(ctx, string(nodeName))
 }

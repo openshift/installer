@@ -25,7 +25,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
-	"sigs.k8s.io/cloud-provider-azure/pkg/retry"
 )
 
 var (
@@ -81,18 +80,6 @@ func (mc *MetricContext) RateLimitedCount() {
 // ThrottledCount records the metrics for throttled request count.
 func (mc *MetricContext) ThrottledCount() {
 	apiMetrics.throttledCount.WithLabelValues(mc.attributes...).Inc()
-}
-
-// Observe observes the request latency and failed requests.
-func (mc *MetricContext) Observe(rerr *retry.Error, labelAndValues ...interface{}) {
-	latency := time.Since(mc.start).Seconds()
-	apiMetrics.latency.WithLabelValues(mc.attributes...).Observe(latency)
-	if rerr != nil {
-		errorCode := rerr.ServiceErrorCode()
-		attributes := append(mc.attributes, errorCode)
-		apiMetrics.errors.WithLabelValues(attributes...).Inc()
-	}
-	mc.logLatency(6, latency, append(labelAndValues, "error_code", rerr.ServiceErrorCode())...)
 }
 
 // ObserveOperationWithResult observes the request latency and failed requests of an operation.

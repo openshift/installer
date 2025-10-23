@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (subnet *VirtualNetworksSubnet) NewEmptyStatus() genruntime.ConvertibleStat
 
 // Owner returns the ResourceReference of the owner
 func (subnet *VirtualNetworksSubnet) Owner() *genruntime.ResourceReference {
+	if subnet.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(subnet.Spec)
 	return subnet.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (subnet *VirtualNetworksSubnet) SetStatus(status genruntime.ConvertibleStat
 	var st VirtualNetworksSubnet_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	subnet.Status = st
@@ -197,7 +201,7 @@ var _ genruntime.ConvertibleSpec = &VirtualNetworksSubnet_Spec{}
 // ConvertSpecFrom populates our VirtualNetworksSubnet_Spec from the provided source
 func (subnet *VirtualNetworksSubnet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == subnet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(subnet)
@@ -206,7 +210,7 @@ func (subnet *VirtualNetworksSubnet_Spec) ConvertSpecFrom(source genruntime.Conv
 // ConvertSpecTo populates the provided destination from our VirtualNetworksSubnet_Spec
 func (subnet *VirtualNetworksSubnet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == subnet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(subnet)
@@ -248,7 +252,7 @@ var _ genruntime.ConvertibleStatus = &VirtualNetworksSubnet_STATUS{}
 // ConvertStatusFrom populates our VirtualNetworksSubnet_STATUS from the provided source
 func (subnet *VirtualNetworksSubnet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == subnet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(subnet)
@@ -257,7 +261,7 @@ func (subnet *VirtualNetworksSubnet_STATUS) ConvertStatusFrom(source genruntime.
 // ConvertStatusTo populates the provided destination from our VirtualNetworksSubnet_STATUS
 func (subnet *VirtualNetworksSubnet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == subnet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(subnet)

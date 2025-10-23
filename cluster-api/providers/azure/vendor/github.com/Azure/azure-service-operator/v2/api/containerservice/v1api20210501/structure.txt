@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501
 -----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-05-01"
+
 ManagedCluster: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (30 properties)
@@ -573,6 +574,7 @@ ManagedCluster: Resource
         └── LicenseType: *Enum (2 values)
             ├── "None"
             └── "Windows_Server"
+
 ManagedClustersAgentPool: Resource
 ├── Owner: ManagedCluster
 ├── Spec: Object (36 properties)
@@ -791,3 +793,4 @@ ManagedClustersAgentPool: Resource
     │   └── MaxSurge: *string
     ├── VmSize: *string
     └── VnetSubnetID: *string
+

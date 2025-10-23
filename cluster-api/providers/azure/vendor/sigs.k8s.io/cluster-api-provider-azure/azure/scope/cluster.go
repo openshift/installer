@@ -266,6 +266,7 @@ func (s *ClusterScope) LBSpecs() []azure.ResourceSpecGetter {
 			BackendPoolName:      s.APIServerLB().BackendPool.Name,
 			IdleTimeoutInMinutes: s.APIServerLB().IdleTimeoutInMinutes,
 			AdditionalTags:       s.AdditionalTags(),
+			AdditionalPorts:      s.AdditionalAPIServerLBPorts(),
 		}
 
 		if s.APIServerLB().FrontendIPs != nil {
@@ -299,6 +300,7 @@ func (s *ClusterScope) LBSpecs() []azure.ResourceSpecGetter {
 			BackendPoolName:      s.APIServerLB().BackendPool.Name + "-internal",
 			IdleTimeoutInMinutes: s.APIServerLB().IdleTimeoutInMinutes,
 			AdditionalTags:       s.AdditionalTags(),
+			AdditionalPorts:      s.AdditionalAPIServerLBPorts(),
 		}
 
 		privateIPFound := false
@@ -407,6 +409,7 @@ func (s *ClusterScope) NatGatewaySpecs() []azure.ASOResourceSpecGetter[*asonetwo
 					SubscriptionID: s.SubscriptionID(),
 					Location:       s.Location(),
 					ClusterName:    s.ClusterName(),
+					Zones:          subnet.NatGateway.Zones,
 					NatGatewayIP: infrav1.PublicIPSpec{
 						Name: subnet.NatGateway.NatGatewayIP.Name,
 					},
@@ -557,7 +560,7 @@ func (s *ClusterScope) VNetSpec() azure.ASOResourceSpecGetter[*asonetworkv1api20
 
 // PrivateDNSSpec returns the private dns zone spec.
 func (s *ClusterScope) PrivateDNSSpec() (zoneSpec azure.ResourceSpecGetter, linkSpec, recordSpec []azure.ResourceSpecGetter) {
-	if s.IsAPIServerPrivate() {
+	if s.IsAPIServerPrivate() && s.PrivateDNSZoneMode() != infrav1.PrivateDNSZoneModeNone {
 		resourceGroup := s.ResourceGroup()
 		if s.AzureCluster.Spec.NetworkSpec.PrivateDNSZoneResourceGroup != "" {
 			resourceGroup = s.AzureCluster.Spec.NetworkSpec.PrivateDNSZoneResourceGroup
@@ -769,6 +772,11 @@ func (s *ClusterScope) NodeOutboundLB() *infrav1.LoadBalancerSpec {
 // ControlPlaneOutboundLB returns the cluster control plane outbound load balancer.
 func (s *ClusterScope) ControlPlaneOutboundLB() *infrav1.LoadBalancerSpec {
 	return s.AzureCluster.Spec.NetworkSpec.ControlPlaneOutboundLB
+}
+
+// AdditionalAPIServerLBPorts returns the additional API server ports list.
+func (s *ClusterScope) AdditionalAPIServerLBPorts() []infrav1.LoadBalancerPort {
+	return s.AzureCluster.Spec.NetworkSpec.AdditionalAPIServerLBPorts
 }
 
 // APIServerLBName returns the API Server LB name.
@@ -1020,9 +1028,12 @@ func (s *ClusterScope) SetControlPlaneSecurityRules() {
 	if !s.ControlPlaneEnabled() {
 		return
 	}
-	if s.ControlPlaneSubnet().SecurityGroup.SecurityRules == nil {
-		subnet := s.ControlPlaneSubnet()
-		subnet.SecurityGroup.SecurityRules = infrav1.SecurityRules{
+
+	subnet := s.ControlPlaneSubnet()
+
+	missingSSH := subnet.GetSecurityRuleByDestination("22") == nil
+	if missingSSH {
+		subnet.SecurityGroup.SecurityRules = append(subnet.SecurityGroup.SecurityRules,
 			infrav1.SecurityRule{
 				Name:             "allow_ssh",
 				Description:      "Allow SSH",
@@ -1034,20 +1045,28 @@ func (s *ClusterScope) SetControlPlaneSecurityRules() {
 				Destination:      ptr.To("*"),
 				DestinationPorts: ptr.To("22"),
 				Action:           infrav1.SecurityRuleActionAllow,
-			},
-			infrav1.SecurityRule{
-				Name:             "allow_apiserver",
-				Description:      "Allow K8s API Server",
-				Priority:         2201,
-				Protocol:         infrav1.SecurityGroupProtocolTCP,
-				Direction:        infrav1.SecurityRuleDirectionInbound,
-				Source:           ptr.To("*"),
-				SourcePorts:      ptr.To("*"),
-				Destination:      ptr.To("*"),
-				DestinationPorts: ptr.To(strconv.Itoa(int(s.APIServerPort()))),
-				Action:           infrav1.SecurityRuleActionAllow,
-			},
-		}
+			})
+	}
+
+	port := strconv.Itoa(int(s.APIServerPort()))
+
+	missingAPIPort := subnet.GetSecurityRuleByDestination(port) == nil
+	if missingAPIPort {
+		subnet.SecurityGroup.SecurityRules = append(subnet.SecurityGroup.SecurityRules, infrav1.SecurityRule{
+			Name:             "allow_apiserver",
+			Description:      "Allow K8s API Server",
+			Priority:         2201,
+			Protocol:         infrav1.SecurityGroupProtocolTCP,
+			Direction:        infrav1.SecurityRuleDirectionInbound,
+			Source:           ptr.To("*"),
+			SourcePorts:      ptr.To("*"),
+			Destination:      ptr.To("*"),
+			DestinationPorts: ptr.To(port),
+			Action:           infrav1.SecurityRuleActionAllow,
+		})
+	}
+
+	if missingSSH || missingAPIPort {
 		s.AzureCluster.Spec.NetworkSpec.UpdateControlPlaneSubnet(subnet)
 	}
 }
@@ -1232,4 +1251,14 @@ func (s *ClusterScope) getLastAppliedSecurityRules(nsgName string) map[string]in
 		lastAppliedSecurityRules = map[string]interface{}{}
 	}
 	return lastAppliedSecurityRules
+}
+
+// PrivateDNSZoneMode returns the current Private DNS Zone mode.
+// When unconfigured, the method returns the default.
+// Returned value is used to determine if the Private DNS Zone should be created.
+func (s *ClusterScope) PrivateDNSZoneMode() infrav1.PrivateDNSZoneMode {
+	if s.AzureCluster.Spec.NetworkSpec.PrivateDNSZone == nil {
+		return infrav1.PrivateDNSZoneModeSystem
+	}
+	return *s.AzureCluster.Spec.NetworkSpec.PrivateDNSZone
 }

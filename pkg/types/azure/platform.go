@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
@@ -22,6 +24,9 @@ const (
 	// NATGatewaySingleZoneOutboundType uses a single (non-zone-resilient) NAT Gateway for compute node outbound access.
 	// see https://learn.microsoft.com/en-us/azure/virtual-network/nat-gateway/nat-gateway-resource
 	NATGatewaySingleZoneOutboundType OutboundType = "NATGatewaySingleZone"
+
+	// NATGatewayMultiZoneOutboundType uses NAT gateways in multiple zones in the compute node subnets for outbound access.
+	NATGatewayMultiZoneOutboundType OutboundType = "MultiZoneNatGateway"
 
 	// UserDefinedRoutingOutboundType uses user defined routing for egress from the cluster.
 	// see https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview
@@ -83,6 +88,11 @@ type Platform struct {
 	// +optional
 	OutboundType OutboundType `json:"outboundType"`
 
+	// Subnets is the list of subnets the user can bring into the cluster to be used.
+	//
+	// +optional
+	Subnets []SubnetSpec `json:"subnets,omitempty"`
+
 	// ResourceGroupName is the name of an already existing resource group where the cluster should be installed.
 	// This resource group should only be used for this specific cluster and the cluster components will assume
 	// ownership of all resources in the resource group. Destroying the cluster using installer will delete this
@@ -108,6 +118,26 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+}
+
+// SubnetSpec specifies the properties the subnet needs to be used in the cluster.
+type SubnetSpec struct {
+	// Name of the subnet.
+	Name string `json:"name"`
+	// Role specifies the actual role which the subnet should be used in.
+	// kubebuilder:validation:Enum="";node;control-plane
+	Role capz.SubnetRole `json:"role"`
+	// CIDR specifies the CIDR for the subnet only when it needs to be created.
+	// Ignore if subnet already exists.
+	// +optional
+	CIDR []string `json:"cidr"`
+	// NatGatewayName specifies the name of the NAT gateway to be created for this subnet.
+	// Can only be used if the outbound type is set to MultiZoneNatGateway.
+	// +optional
+	NatGatewayName string `json:"natGateway"`
+	// NatGatewayAZ specifies the availability zone the NAT gateway needs to be placed in.
+	// +optional
+	NatGatewayAZ string `json:"natGatewayAZ"`
 }
 
 // KeyVault defines an Azure Key Vault.

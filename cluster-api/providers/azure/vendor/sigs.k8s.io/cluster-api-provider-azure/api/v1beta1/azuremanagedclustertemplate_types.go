@@ -28,6 +28,7 @@ type AzureManagedClusterTemplateSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=azuremanagedclustertemplates,scope=Namespaced,categories=cluster-api,shortName=amct
 // +kubebuilder:storageversion
+// +kubebuilder:deprecatedversion:warning="AzureManagedClusterTemplate and the AzureManaged API are deprecated. Please migrate to infrastructure.cluster.x-k8s.io/v1beta1 AzureASOManagedClusterTemplate and related AzureASOManaged resources instead."
 
 // AzureManagedClusterTemplate is the Schema for the AzureManagedClusterTemplates API.
 type AzureManagedClusterTemplate struct {

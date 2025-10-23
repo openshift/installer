@@ -492,6 +492,7 @@ type AzureManagedMachinePoolStatus struct {
 // +kubebuilder:resource:path=azuremanagedmachinepools,scope=Namespaced,categories=cluster-api,shortName=ammp
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
+// +kubebuilder:deprecatedversion:warning="AzureManagedMachinePool and the AzureManaged API are deprecated. Please migrate to infrastructure.cluster.x-k8s.io/v1beta1 AzureASOManagedMachinePool and related AzureASOManaged resources instead."
 
 // AzureManagedMachinePool is the Schema for the azuremanagedmachinepools API.
 type AzureManagedMachinePool struct {

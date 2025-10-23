@@ -137,6 +137,11 @@ type AzureMachineSpec struct {
 	// +optional
 	DisableExtensionOperations *bool `json:"disableExtensionOperations,omitempty"`
 
+	// DisableVMBootstrapExtension specifies whether the VM bootstrap extension should be disabled on the virtual machine.
+	// Use this setting if you want to disable only the bootstrapping extension and not all extensions.
+	// +optional
+	DisableVMBootstrapExtension *bool `json:"disableVMBootstrapExtension,omitempty"`
+
 	// VMExtensions specifies a list of extensions to be added to the virtual machine.
 	// +optional
 	VMExtensions []VMExtension `json:"vmExtensions,omitempty"`

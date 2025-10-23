@@ -221,6 +221,13 @@ func (mw *azureMachineWebhook) ValidateUpdate(_ context.Context, oldObj, newObj 
 		allErrs = append(allErrs, err)
 	}
 
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "disableVMBootstrapExtension"),
+		old.Spec.DisableVMBootstrapExtension,
+		m.Spec.DisableVMBootstrapExtension); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
