@@ -129,11 +129,11 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
-	// Validate data disk security profiles (OCPBUGS-59521, OCPBUGS-59522)
+	// Validate data disks, (OCPBUGS-59521, OCPBUGS-59522, OCPBUGS-63147)
 	// Control plane machines (Cluster API) support data disk security profiles
 	// Worker machines (Machine API) do not support data disk security profiles
 	if len(p.DataDisks) > 0 {
-		allErrs = append(allErrs, validateDataDiskSecurityProfiles(p, poolName, fldPath.Child("dataDisks"))...)
+		allErrs = append(allErrs, validateDataDisk(p, poolName, fldPath.Child("dataDisks"))...)
 	}
 
 	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
@@ -267,42 +267,22 @@ func getDataDisksSecurityProfileType(p *azure.MachinePool) capz.SecurityEncrypti
 // validateDataDiskSecurityProfiles ensures data disk security profiles are only used where supported
 // Control plane machines use Cluster API (supports data disk security profiles)
 // Worker machines use Machine API (does not support data disk security profiles)
-func validateDataDiskSecurityProfiles(p *azure.MachinePool, poolName string, fldPath *field.Path) field.ErrorList {
+func validateDataDisk(p *azure.MachinePool, poolName string, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	// Check if any data disks have security profiles
-	hasSecurityProfiles := false
-	for _, dataDisk := range p.DataDisks {
-		if dataDisk.ManagedDisk != nil && dataDisk.ManagedDisk.SecurityProfile != nil {
-			hasSecurityProfiles = true
-			break
-		}
-	}
-
-	if !hasSecurityProfiles {
-		return allErrs
-	}
-
 	// Control plane/master machines use Cluster API which supports data disk security profiles
-
-	// https://github.com/kubernetes-sigs/cluster-api-provider-azure/blob/cc24323ded8947bef736f90bf73fdb7ff3bb54e4/api/v1beta1/types.go#L693
-	// Can only be set on Confidential VMs
+	// If using a ManagedDisk the StorageAccountType must be defined
 	if poolName == "master" || poolName == "" { // empty poolName means default machine pool (control plane)
-		/*
-			for i, dataDisk := range p.DataDisks {
-					if dataDisk.ManagedDisk != nil && dataDisk.ManagedDisk.DiskEncryptionSet != nil {
-
-						if p.Settings != nil && p.Settings.SecurityType != azure.SecurityTypesConfidentialVM {
-							allErrs = append(allErrs, field.Invalid(
-								fldPath.Index(i).Child("managedDisk").Child("diskEncryptionSet"),
-								dataDisk.ManagedDisk.SecurityProfile,
-								"data disk encryption set must be used with confidential VMs"))
-						}
-
-					}
-
+		for i, dataDisk := range p.DataDisks {
+			if dataDisk.ManagedDisk != nil {
+				if dataDisk.ManagedDisk.StorageAccountType == "" {
+					allErrs = append(allErrs, field.Invalid(
+						fldPath.Index(i).Child("managedDisk").Child("storageAccountType"),
+						dataDisk.ManagedDisk.StorageAccountType,
+						"storageAccount type must not be empty"))
+				}
 			}
-		*/
+		}
 
 		return allErrs
 	}
