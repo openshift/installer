@@ -67,15 +67,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	//apiServerLBFrontendConfigName := azure.InternalFrontendIPv4ConfigName
-	apiServerLBFrontendConfigName := fmt.Sprintf("%s-internal-frontEnd", clusterID.InfraID)
 	//apiServerBackendPoolName := azure.InternalBackendAddressPoolIPv4Name
+	apiServerLBFrontendConfigName := fmt.Sprintf("%s-internal-frontEnd", clusterID.InfraID)
 	apiServerBackendPoolName := fmt.Sprintf("%s-internal", clusterID.InfraID)
-	if installConfig.Config.Networking.IsIPv6() && !installConfig.Config.Networking.IsDualStack() {
-		//apiServerLBFrontendConfigName = azure.InternalFrontendIPv6ConfigName
-		apiServerLBFrontendConfigName = fmt.Sprintf("%s-internal-frontEnd-ipv6", clusterID.InfraID)
-		//apiServerBackendPoolName = azure.InternalBackendAddressPoolIPv6Name
-		apiServerBackendPoolName = fmt.Sprintf("%s-internal-ipv6", clusterID.InfraID)
-	}
+	/*
+		if installConfig.Config.Networking.IsIPv6() && !installConfig.Config.Networking.IsDualStack() {
+			//apiServerLBFrontendConfigName = azure.InternalFrontendIPv6ConfigName
+			apiServerLBFrontendConfigName = fmt.Sprintf("%s-internal-frontEnd-ipv6", clusterID.InfraID)
+			//apiServerBackendPoolName = azure.InternalBackendAddressPoolIPv6Name
+			apiServerBackendPoolName = fmt.Sprintf("%s-internal-ipv6", clusterID.InfraID)
+		}
+	*/
 	apiServerLB := capz.LoadBalancerSpec{
 		Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
 		BackendPool: capz.BackendPool{
@@ -87,11 +89,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	//controlPlaneBackendPoolName := azure.OutboundBackendAddressPoolIPv4Name
+	//if installConfig.Config.Networking.IsIPv6() && !installConfig.Config.Networking.IsDualStack() {
+	//controlPlaneBackendPoolName = azure.OutboundBackendAddressPoolIPv6Name
+	//controlPlaneBackendPoolName = fmt.Sprintf("%s-outbound-lb-outboundBackendPool-ipv6", clusterID.InfraID)
+	//}
 	controlPlaneBackendPoolName := fmt.Sprintf("%s-outbound-lb-outboundBackendPool", clusterID.InfraID)
-	if installConfig.Config.Networking.IsIPv6() && !installConfig.Config.Networking.IsDualStack() {
-		//controlPlaneBackendPoolName = azure.OutboundBackendAddressPoolIPv6Name
-		controlPlaneBackendPoolName = fmt.Sprintf("%s-outbound-lb-outboundBackendPool-ipv6", clusterID.InfraID)
-	}
 	controlPlaneOutboundLB := &capz.LoadBalancerSpec{
 		Name:             clusterID.InfraID,
 		FrontendIPsCount: to.Ptr(int32(1)),
@@ -104,16 +106,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		controlPlaneOutboundLB = nil
 	}
 
-	// XXX: keep this in for now to keep the LB code happy, but rewrite
-	// later
+	// Internal load balancer is IPv4 only, we can configure a private IPv6 address later
 	subnets, err := cidr.SplitIntoSubnetsIPv4(capiutils.CIDRFromInstallConfig(installConfig).String(), 2)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to split CIDR into subnets")
+		return nil, errors.Wrap(err, "failed to split CIDR into IPv4 subnets")
 	}
-	virtualNetworkID := ""
+
+	// XXX: Does this work if outside the specified CIDR?
 	lbip := capz.DefaultInternalLBIPAddress
 	lbip = getIPWithinCIDR(subnets, lbip)
 
+	virtualNetworkID := ""
 	if controlPlaneSub := installConfig.Config.Azure.ControlPlaneSubnet; controlPlaneSub != "" {
 		client, err := installConfig.Azure.Client()
 		if err != nil {
@@ -147,13 +150,16 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		lbip = getIPWithinCIDR(subnetList, lbip)
 	}
 
-	apiServerLB.FrontendIPs = []capz.FrontendIP{{
-		Name: apiServerLBFrontendConfigName,
-		FrontendIPClass: capz.FrontendIPClass{
-			PrivateIPAddress: lbip,
-		},
-	}}
+	/*
+		apiServerLB.FrontendIPs = []capz.FrontendIP{{
+			Name: apiServerLBFrontendConfigName,
+			FrontendIPClass: capz.FrontendIPClass{
+				PrivateIPAddress: lbip,
+			},
+		}}
+	*/
 
+	logrus.Debugf("XXX : lbip=%s", lbip)
 	if installConfig.Config.Azure.VirtualNetwork != "" {
 		client, err := installConfig.Azure.Client()
 		if err != nil {
@@ -171,13 +177,20 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if err != nil {
 			return nil, err
 		}
+		apiServerLB.FrontendIPs[0].Name = apiServerLBFrontendConfigName
 		apiServerLB.FrontendIPs[0].FrontendIPClass = capz.FrontendIPClass{
 			PrivateIPAddress: lbip,
 		}
+	} else {
+		apiServerLB.FrontendIPs = []capz.FrontendIP{{
+			Name: apiServerLBFrontendConfigName,
+			FrontendIPClass: capz.FrontendIPClass{
+				PrivateIPAddress: lbip,
+			},
+		}}
 	}
 
 	azEnv := string(installConfig.Azure.CloudName)
-
 	computeSubnetSpec := capz.SubnetSpec{
 		ID: nodeSubnetID,
 		SubnetClassSpec: capz.SubnetClassSpec{
@@ -470,6 +483,42 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	for i := 0; i < subnetsCount; i++ {
 		azureCluster.Spec.NetworkSpec.Subnets[i].SecurityGroup = securityGroup
 	}
+
+	//apiServerLB.FrontendIPs
+
+	/*
+		if installConfig.Config.Networking.IsDualStack() {
+			addr := ipaddr.NewIPAddressString(ipv6Subnets[0].String()).GetAddress()
+			lower, upper := addr.GetLower(), addr.GetUpper()
+			count := addr.GetCount()
+			logrus.Debugf("XXX: %s has size %d, ranging from %v to %v",
+				addr, count, lower, upper)
+			logrus.Debugf("XXX: hundredth address is %s", addr.Increment(100))
+
+			lbip = lower.String()
+			logrus.Debugf("XXX: Before: lbip=%s", lbip)
+			for _, subnet := range ipv6Subnets {
+				logrus.Debugf("XXX: subnet=%s", subnet)
+			}
+			lbip = getIPWithinCIDR(ipv6Subnets, lbip)
+			logrus.Debugf("XXX: After: lbip=%s", lbip)
+
+			apiServerLB.FrontendIPs = append(apiServerLB.FrontendIPs, capz.FrontendIP{
+				Name: fmt.Sprintf("%s-internal-frontEnd-ipv6", clusterID.InfraID),
+				FrontendIPClass: capz.FrontendIPClass{
+					PrivateIPAddress: lbip,
+				},
+			})
+
+			apiServerStruct, err := json.MarshalIndent(apiServerLB, "", "  ")
+			if err != nil {
+				fmt.Println(err)
+			}
+			logrus.Debugf("XXX: apiServerStruct=%s", string(apiServerStruct))
+
+			azureCluster.Spec.NetworkSpec.APIServerLB = &apiServerLB
+		}
+	*/
 
 	// We are maintaining a fork of CAPZ for azurestack. The only API difference
 	// is the ARMEndpoint field, so we can use the CAPZ cluster object, and if
