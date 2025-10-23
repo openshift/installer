@@ -29,7 +29,7 @@ import (
 // MarshalNodePoolManagementUpgrade writes a value of the 'node_pool_management_upgrade' type to the given writer.
 func MarshalNodePoolManagementUpgrade(object *NodePoolManagementUpgrade, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeNodePoolManagementUpgrade(object, stream)
+	WriteNodePoolManagementUpgrade(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalNodePoolManagementUpgrade(object *NodePoolManagementUpgrade, writer 
 	return stream.Error
 }
 
-// writeNodePoolManagementUpgrade writes a value of the 'node_pool_management_upgrade' type to the given stream.
-func writeNodePoolManagementUpgrade(object *NodePoolManagementUpgrade, stream *jsoniter.Stream) {
+// WriteNodePoolManagementUpgrade writes a value of the 'node_pool_management_upgrade' type to the given stream.
+func WriteNodePoolManagementUpgrade(object *NodePoolManagementUpgrade, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -101,13 +101,13 @@ func UnmarshalNodePoolManagementUpgrade(source interface{}) (object *NodePoolMan
 	if err != nil {
 		return
 	}
-	object = readNodePoolManagementUpgrade(iterator)
+	object = ReadNodePoolManagementUpgrade(iterator)
 	err = iterator.Error
 	return
 }
 
-// readNodePoolManagementUpgrade reads a value of the 'node_pool_management_upgrade' type from the given iterator.
-func readNodePoolManagementUpgrade(iterator *jsoniter.Iterator) *NodePoolManagementUpgrade {
+// ReadNodePoolManagementUpgrade reads a value of the 'node_pool_management_upgrade' type from the given iterator.
+func ReadNodePoolManagementUpgrade(iterator *jsoniter.Iterator) *NodePoolManagementUpgrade {
 	object := &NodePoolManagementUpgrade{}
 	for {
 		field := iterator.ReadObject()

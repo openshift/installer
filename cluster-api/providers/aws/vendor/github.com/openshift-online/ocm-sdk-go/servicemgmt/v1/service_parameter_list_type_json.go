@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalServiceParameterList(list []*ServiceParameter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeServiceParameterList(list, stream)
+	WriteServiceParameterList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalServiceParameterList(list []*ServiceParameter, writer io.Writer) err
 	return stream.Error
 }
 
-// writeServiceParameterList writes a list of value of the 'service_parameter' type to
+// WriteServiceParameterList writes a list of value of the 'service_parameter' type to
 // the given stream.
-func writeServiceParameterList(list []*ServiceParameter, stream *jsoniter.Stream) {
+func WriteServiceParameterList(list []*ServiceParameter, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeServiceParameter(value, stream)
+		WriteServiceParameter(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalServiceParameterList(source interface{}) (items []*ServiceParamete
 	if err != nil {
 		return
 	}
-	items = readServiceParameterList(iterator)
+	items = ReadServiceParameterList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readServiceParameterList reads list of values of the ”service_parameter' type from
+// ReadServiceParameterList reads list of values of the ”service_parameter' type from
 // the given iterator.
-func readServiceParameterList(iterator *jsoniter.Iterator) []*ServiceParameter {
+func ReadServiceParameterList(iterator *jsoniter.Iterator) []*ServiceParameter {
 	list := []*ServiceParameter{}
 	for iterator.ReadArray() {
-		item := readServiceParameter(iterator)
+		item := ReadServiceParameter(iterator)
 		list = append(list, item)
 	}
 	return list

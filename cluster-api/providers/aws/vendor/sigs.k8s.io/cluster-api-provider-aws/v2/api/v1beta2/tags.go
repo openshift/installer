@@ -195,6 +195,12 @@ const (
 	// of the bootstrap secret that was used to create the user data for the latest launch
 	// template version.
 	LaunchTemplateBootstrapDataSecret = NameAWSProviderPrefix + "bootstrap-data-secret"
+
+	// LaunchTemplateBootstrapDataHash is the tag we use to store the hash of the raw bootstrap data.
+	// If bootstrap data is stored in S3, this hash relates to that data, not to the EC2 instance
+	// user data which only references the S3 object. We store this tag on launch template versions
+	// so that S3 bootstrap data objects can be deleted when they get outdated.
+	LaunchTemplateBootstrapDataHash = NameAWSProviderPrefix + "bootstrap-data-hash"
 )
 
 // ClusterTagKey generates the key for resources associated with a cluster.

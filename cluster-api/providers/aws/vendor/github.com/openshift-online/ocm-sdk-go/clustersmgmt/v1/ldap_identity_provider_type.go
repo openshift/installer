@@ -206,6 +206,29 @@ func (l *LDAPIdentityProviderList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *LDAPIdentityProviderList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *LDAPIdentityProviderList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *LDAPIdentityProviderList) SetItems(items []*LDAPIdentityProvider) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *LDAPIdentityProviderList) Items() []*LDAPIdentityProvider {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *LDAPIdentityProviderList) Empty() bool {
 	return l == nil || len(l.items) == 0

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalTokenClaimMappingsList(list []*TokenClaimMappings, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTokenClaimMappingsList(list, stream)
+	WriteTokenClaimMappingsList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalTokenClaimMappingsList(list []*TokenClaimMappings, writer io.Writer)
 	return stream.Error
 }
 
-// writeTokenClaimMappingsList writes a list of value of the 'token_claim_mappings' type to
+// WriteTokenClaimMappingsList writes a list of value of the 'token_claim_mappings' type to
 // the given stream.
-func writeTokenClaimMappingsList(list []*TokenClaimMappings, stream *jsoniter.Stream) {
+func WriteTokenClaimMappingsList(list []*TokenClaimMappings, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeTokenClaimMappings(value, stream)
+		WriteTokenClaimMappings(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalTokenClaimMappingsList(source interface{}) (items []*TokenClaimMap
 	if err != nil {
 		return
 	}
-	items = readTokenClaimMappingsList(iterator)
+	items = ReadTokenClaimMappingsList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTokenClaimMappingsList reads list of values of the ”token_claim_mappings' type from
+// ReadTokenClaimMappingsList reads list of values of the ”token_claim_mappings' type from
 // the given iterator.
-func readTokenClaimMappingsList(iterator *jsoniter.Iterator) []*TokenClaimMappings {
+func ReadTokenClaimMappingsList(iterator *jsoniter.Iterator) []*TokenClaimMappings {
 	list := []*TokenClaimMappings{}
 	for iterator.ReadArray() {
-		item := readTokenClaimMappings(iterator)
+		item := ReadTokenClaimMappings(iterator)
 		list = append(list, item)
 	}
 	return list

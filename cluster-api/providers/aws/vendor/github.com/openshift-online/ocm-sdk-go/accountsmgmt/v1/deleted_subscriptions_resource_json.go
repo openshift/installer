@@ -49,7 +49,7 @@ func readDeletedSubscriptionsListResponse(response *DeletedSubscriptionsListResp
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readDeletedSubscriptionList(iterator)
+			items := ReadDeletedSubscriptionList(iterator)
 			response.items = &DeletedSubscriptionList{
 				items: items,
 			}

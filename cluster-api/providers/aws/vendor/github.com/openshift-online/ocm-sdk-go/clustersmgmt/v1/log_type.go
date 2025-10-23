@@ -52,7 +52,7 @@ func (o *Log) Kind() string {
 	return LogKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *Log) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -180,6 +180,29 @@ func (l *LogList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *LogList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *LogList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *LogList) SetItems(items []*Log) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *LogList) Items() []*Log {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

@@ -29,7 +29,7 @@ import (
 // MarshalDNS writes a value of the 'DNS' type to the given writer.
 func MarshalDNS(object *DNS, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDNS(object, stream)
+	WriteDNS(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalDNS(object *DNS, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeDNS writes a value of the 'DNS' type to the given stream.
-func writeDNS(object *DNS, stream *jsoniter.Stream) {
+// WriteDNS writes a value of the 'DNS' type to the given stream.
+func WriteDNS(object *DNS, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalDNS(source interface{}) (object *DNS, err error) {
 	if err != nil {
 		return
 	}
-	object = readDNS(iterator)
+	object = ReadDNS(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDNS reads a value of the 'DNS' type from the given iterator.
-func readDNS(iterator *jsoniter.Iterator) *DNS {
+// ReadDNS reads a value of the 'DNS' type from the given iterator.
+func ReadDNS(iterator *jsoniter.Iterator) *DNS {
 	object := &DNS{}
 	for {
 		field := iterator.ReadObject()

@@ -29,7 +29,7 @@ import (
 // MarshalAzureServiceManagedIdentity writes a value of the 'azure_service_managed_identity' type to the given writer.
 func MarshalAzureServiceManagedIdentity(object *AzureServiceManagedIdentity, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAzureServiceManagedIdentity(object, stream)
+	WriteAzureServiceManagedIdentity(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAzureServiceManagedIdentity(object *AzureServiceManagedIdentity, wri
 	return stream.Error
 }
 
-// writeAzureServiceManagedIdentity writes a value of the 'azure_service_managed_identity' type to the given stream.
-func writeAzureServiceManagedIdentity(object *AzureServiceManagedIdentity, stream *jsoniter.Stream) {
+// WriteAzureServiceManagedIdentity writes a value of the 'azure_service_managed_identity' type to the given stream.
+func WriteAzureServiceManagedIdentity(object *AzureServiceManagedIdentity, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalAzureServiceManagedIdentity(source interface{}) (object *AzureServ
 	if err != nil {
 		return
 	}
-	object = readAzureServiceManagedIdentity(iterator)
+	object = ReadAzureServiceManagedIdentity(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAzureServiceManagedIdentity reads a value of the 'azure_service_managed_identity' type from the given iterator.
-func readAzureServiceManagedIdentity(iterator *jsoniter.Iterator) *AzureServiceManagedIdentity {
+// ReadAzureServiceManagedIdentity reads a value of the 'azure_service_managed_identity' type from the given iterator.
+func ReadAzureServiceManagedIdentity(iterator *jsoniter.Iterator) *AzureServiceManagedIdentity {
 	object := &AzureServiceManagedIdentity{}
 	for {
 		field := iterator.ReadObject()

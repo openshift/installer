@@ -49,7 +49,7 @@ func readEncryptionKeysInquirySearchResponse(response *EncryptionKeysInquirySear
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readEncryptionKeyList(iterator)
+			items := ReadEncryptionKeyList(iterator)
 			response.items = &EncryptionKeyList{
 				items: items,
 			}

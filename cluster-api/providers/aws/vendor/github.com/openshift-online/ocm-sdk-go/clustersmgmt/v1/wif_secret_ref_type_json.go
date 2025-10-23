@@ -29,7 +29,7 @@ import (
 // MarshalWifSecretRef writes a value of the 'wif_secret_ref' type to the given writer.
 func MarshalWifSecretRef(object *WifSecretRef, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifSecretRef(object, stream)
+	WriteWifSecretRef(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalWifSecretRef(object *WifSecretRef, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeWifSecretRef writes a value of the 'wif_secret_ref' type to the given stream.
-func writeWifSecretRef(object *WifSecretRef, stream *jsoniter.Stream) {
+// WriteWifSecretRef writes a value of the 'wif_secret_ref' type to the given stream.
+func WriteWifSecretRef(object *WifSecretRef, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalWifSecretRef(source interface{}) (object *WifSecretRef, err error)
 	if err != nil {
 		return
 	}
-	object = readWifSecretRef(iterator)
+	object = ReadWifSecretRef(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifSecretRef reads a value of the 'wif_secret_ref' type from the given iterator.
-func readWifSecretRef(iterator *jsoniter.Iterator) *WifSecretRef {
+// ReadWifSecretRef reads a value of the 'wif_secret_ref' type from the given iterator.
+func ReadWifSecretRef(iterator *jsoniter.Iterator) *WifSecretRef {
 	object := &WifSecretRef{}
 	for {
 		field := iterator.ReadObject()

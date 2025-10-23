@@ -29,7 +29,7 @@ import (
 // MarshalRegistrySources writes a value of the 'registry_sources' type to the given writer.
 func MarshalRegistrySources(object *RegistrySources, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeRegistrySources(object, stream)
+	WriteRegistrySources(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalRegistrySources(object *RegistrySources, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeRegistrySources writes a value of the 'registry_sources' type to the given stream.
-func writeRegistrySources(object *RegistrySources, stream *jsoniter.Stream) {
+// WriteRegistrySources writes a value of the 'registry_sources' type to the given stream.
+func WriteRegistrySources(object *RegistrySources, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeRegistrySources(object *RegistrySources, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("allowed_registries")
-		writeStringList(object.allowedRegistries, stream)
+		WriteStringList(object.allowedRegistries, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0 && object.blockedRegistries != nil
@@ -57,7 +57,7 @@ func writeRegistrySources(object *RegistrySources, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("blocked_registries")
-		writeStringList(object.blockedRegistries, stream)
+		WriteStringList(object.blockedRegistries, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0 && object.insecureRegistries != nil
@@ -66,7 +66,7 @@ func writeRegistrySources(object *RegistrySources, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("insecure_registries")
-		writeStringList(object.insecureRegistries, stream)
+		WriteStringList(object.insecureRegistries, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -78,13 +78,13 @@ func UnmarshalRegistrySources(source interface{}) (object *RegistrySources, err 
 	if err != nil {
 		return
 	}
-	object = readRegistrySources(iterator)
+	object = ReadRegistrySources(iterator)
 	err = iterator.Error
 	return
 }
 
-// readRegistrySources reads a value of the 'registry_sources' type from the given iterator.
-func readRegistrySources(iterator *jsoniter.Iterator) *RegistrySources {
+// ReadRegistrySources reads a value of the 'registry_sources' type from the given iterator.
+func ReadRegistrySources(iterator *jsoniter.Iterator) *RegistrySources {
 	object := &RegistrySources{}
 	for {
 		field := iterator.ReadObject()
@@ -93,15 +93,15 @@ func readRegistrySources(iterator *jsoniter.Iterator) *RegistrySources {
 		}
 		switch field {
 		case "allowed_registries":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.allowedRegistries = value
 			object.bitmap_ |= 1
 		case "blocked_registries":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.blockedRegistries = value
 			object.bitmap_ |= 2
 		case "insecure_registries":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.insecureRegistries = value
 			object.bitmap_ |= 4
 		default:

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalValueList(list []*Value, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeValueList(list, stream)
+	WriteValueList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalValueList(list []*Value, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeValueList writes a list of value of the 'value' type to
+// WriteValueList writes a list of value of the 'value' type to
 // the given stream.
-func writeValueList(list []*Value, stream *jsoniter.Stream) {
+func WriteValueList(list []*Value, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeValue(value, stream)
+		WriteValue(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalValueList(source interface{}) (items []*Value, err error) {
 	if err != nil {
 		return
 	}
-	items = readValueList(iterator)
+	items = ReadValueList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readValueList reads list of values of the ”value' type from
+// ReadValueList reads list of values of the ”value' type from
 // the given iterator.
-func readValueList(iterator *jsoniter.Iterator) []*Value {
+func ReadValueList(iterator *jsoniter.Iterator) []*Value {
 	list := []*Value{}
 	for iterator.ReadArray() {
-		item := readValue(iterator)
+		item := ReadValue(iterator)
 		list = append(list, item)
 	}
 	return list

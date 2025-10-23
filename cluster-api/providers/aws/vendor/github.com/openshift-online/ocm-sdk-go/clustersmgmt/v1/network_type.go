@@ -178,6 +178,29 @@ func (l *NetworkList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *NetworkList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *NetworkList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *NetworkList) SetItems(items []*Network) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *NetworkList) Items() []*Network {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *NetworkList) Empty() bool {
 	return l == nil || len(l.items) == 0

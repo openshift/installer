@@ -47,20 +47,24 @@ type ModifyTrafficMirrorSessionInput struct {
 	// header. To mirror a subset, set this to the length (in bytes) to mirror. For
 	// example, if you set this value to 100, then the first 100 bytes that meet the
 	// filter criteria are copied to the target. Do not specify this parameter when you
-	// want to mirror the entire packet. For sessions with Network Load Balancer (NLB)
-	// traffic mirror targets, the default PacketLength will be set to 8500. Valid
-	// values are 1-8500. Setting a PacketLength greater than 8500 will result in an
-	// error response.
+	// want to mirror the entire packet.
+	//
+	// For sessions with Network Load Balancer (NLB) traffic mirror targets, the
+	// default PacketLength will be set to 8500. Valid values are 1-8500. Setting a
+	// PacketLength greater than 8500 will result in an error response.
 	PacketLength *int32
 
-	// The properties that you want to remove from the Traffic Mirror session. When
-	// you remove a property from a Traffic Mirror session, the property is set to the
-	// default.
+	// The properties that you want to remove from the Traffic Mirror session.
+	//
+	// When you remove a property from a Traffic Mirror session, the property is set
+	// to the default.
 	RemoveFields []types.TrafficMirrorSessionField
 
 	// The session number determines the order in which sessions are evaluated when an
 	// interface is used by multiple sessions. The first session with a matching filter
-	// is the one that mirrors the packets. Valid values are 1-32766.
+	// is the one that mirrors the packets.
+	//
+	// Valid values are 1-32766.
 	SessionNumber *int32
 
 	// The ID of the Traffic Mirror filter.
@@ -130,6 +134,9 @@ func (c *Client) addOperationModifyTrafficMirrorSessionMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -140,6 +147,15 @@ func (c *Client) addOperationModifyTrafficMirrorSessionMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyTrafficMirrorSessionValidationMiddleware(stack); err != nil {
@@ -161,6 +177,18 @@ func (c *Client) addOperationModifyTrafficMirrorSessionMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

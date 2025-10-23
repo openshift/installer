@@ -52,7 +52,7 @@ func readAWSSTSAccountRolesInquirySearchResponse(response *AWSSTSAccountRolesInq
 			value := iterator.ReadString()
 			response.awsAccountId = &value
 		case "items":
-			items := readAWSSTSAccountRoleList(iterator)
+			items := ReadAWSSTSAccountRoleList(iterator)
 			response.items = &AWSSTSAccountRoleList{
 				items: items,
 			}

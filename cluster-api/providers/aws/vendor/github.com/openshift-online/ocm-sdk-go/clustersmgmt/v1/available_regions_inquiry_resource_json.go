@@ -49,7 +49,7 @@ func readAvailableRegionsInquirySearchResponse(response *AvailableRegionsInquiry
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readCloudRegionList(iterator)
+			items := ReadCloudRegionList(iterator)
 			response.items = &CloudRegionList{
 				items: items,
 			}

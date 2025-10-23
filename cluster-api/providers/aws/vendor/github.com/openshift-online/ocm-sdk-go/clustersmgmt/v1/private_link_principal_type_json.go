@@ -29,7 +29,7 @@ import (
 // MarshalPrivateLinkPrincipal writes a value of the 'private_link_principal' type to the given writer.
 func MarshalPrivateLinkPrincipal(object *PrivateLinkPrincipal, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writePrivateLinkPrincipal(object, stream)
+	WritePrivateLinkPrincipal(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalPrivateLinkPrincipal(object *PrivateLinkPrincipal, writer io.Writer)
 	return stream.Error
 }
 
-// writePrivateLinkPrincipal writes a value of the 'private_link_principal' type to the given stream.
-func writePrivateLinkPrincipal(object *PrivateLinkPrincipal, stream *jsoniter.Stream) {
+// WritePrivateLinkPrincipal writes a value of the 'private_link_principal' type to the given stream.
+func WritePrivateLinkPrincipal(object *PrivateLinkPrincipal, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -83,13 +83,13 @@ func UnmarshalPrivateLinkPrincipal(source interface{}) (object *PrivateLinkPrinc
 	if err != nil {
 		return
 	}
-	object = readPrivateLinkPrincipal(iterator)
+	object = ReadPrivateLinkPrincipal(iterator)
 	err = iterator.Error
 	return
 }
 
-// readPrivateLinkPrincipal reads a value of the 'private_link_principal' type from the given iterator.
-func readPrivateLinkPrincipal(iterator *jsoniter.Iterator) *PrivateLinkPrincipal {
+// ReadPrivateLinkPrincipal reads a value of the 'private_link_principal' type from the given iterator.
+func ReadPrivateLinkPrincipal(iterator *jsoniter.Iterator) *PrivateLinkPrincipal {
 	object := &PrivateLinkPrincipal{}
 	for {
 		field := iterator.ReadObject()

@@ -13,9 +13,10 @@ import (
 
 // Remove the association between your Autonomous System Number (ASN) and your
 // BYOIP CIDR. You may want to use this action to disassociate an ASN from a CIDR
-// or if you want to swap ASNs. For more information, see Tutorial: Bring your ASN
-// to IPAM (https://docs.aws.amazon.com/vpc/latest/ipam/tutorials-byoasn.html) in
-// the Amazon VPC IPAM guide.
+// or if you want to swap ASNs. For more information, see [Tutorial: Bring your ASN to IPAM]in the Amazon VPC IPAM
+// guide.
+//
+// [Tutorial: Bring your ASN to IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/tutorials-byoasn.html
 func (c *Client) DisassociateIpamByoasn(ctx context.Context, params *DisassociateIpamByoasnInput, optFns ...func(*Options)) (*DisassociateIpamByoasnOutput, error) {
 	if params == nil {
 		params = &DisassociateIpamByoasnInput{}
@@ -106,6 +107,9 @@ func (c *Client) addOperationDisassociateIpamByoasnMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -116,6 +120,15 @@ func (c *Client) addOperationDisassociateIpamByoasnMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDisassociateIpamByoasnValidationMiddleware(stack); err != nil {
@@ -137,6 +150,18 @@ func (c *Client) addOperationDisassociateIpamByoasnMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

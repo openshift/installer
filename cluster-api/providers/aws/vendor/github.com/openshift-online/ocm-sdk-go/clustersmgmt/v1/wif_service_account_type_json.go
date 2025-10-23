@@ -29,7 +29,7 @@ import (
 // MarshalWifServiceAccount writes a value of the 'wif_service_account' type to the given writer.
 func MarshalWifServiceAccount(object *WifServiceAccount, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifServiceAccount(object, stream)
+	WriteWifServiceAccount(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalWifServiceAccount(object *WifServiceAccount, writer io.Writer) error
 	return stream.Error
 }
 
-// writeWifServiceAccount writes a value of the 'wif_service_account' type to the given stream.
-func writeWifServiceAccount(object *WifServiceAccount, stream *jsoniter.Stream) {
+// WriteWifServiceAccount writes a value of the 'wif_service_account' type to the given stream.
+func WriteWifServiceAccount(object *WifServiceAccount, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func writeWifServiceAccount(object *WifServiceAccount, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("credential_request")
-		writeWifCredentialRequest(object.credentialRequest, stream)
+		WriteWifCredentialRequest(object.credentialRequest, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0
@@ -75,7 +75,7 @@ func writeWifServiceAccount(object *WifServiceAccount, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("roles")
-		writeWifRoleList(object.roles, stream)
+		WriteWifRoleList(object.roles, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -96,13 +96,13 @@ func UnmarshalWifServiceAccount(source interface{}) (object *WifServiceAccount, 
 	if err != nil {
 		return
 	}
-	object = readWifServiceAccount(iterator)
+	object = ReadWifServiceAccount(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifServiceAccount reads a value of the 'wif_service_account' type from the given iterator.
-func readWifServiceAccount(iterator *jsoniter.Iterator) *WifServiceAccount {
+// ReadWifServiceAccount reads a value of the 'wif_service_account' type from the given iterator.
+func ReadWifServiceAccount(iterator *jsoniter.Iterator) *WifServiceAccount {
 	object := &WifServiceAccount{}
 	for {
 		field := iterator.ReadObject()
@@ -116,7 +116,7 @@ func readWifServiceAccount(iterator *jsoniter.Iterator) *WifServiceAccount {
 			object.accessMethod = value
 			object.bitmap_ |= 1
 		case "credential_request":
-			value := readWifCredentialRequest(iterator)
+			value := ReadWifCredentialRequest(iterator)
 			object.credentialRequest = value
 			object.bitmap_ |= 2
 		case "osd_role":
@@ -124,7 +124,7 @@ func readWifServiceAccount(iterator *jsoniter.Iterator) *WifServiceAccount {
 			object.osdRole = value
 			object.bitmap_ |= 4
 		case "roles":
-			value := readWifRoleList(iterator)
+			value := ReadWifRoleList(iterator)
 			object.roles = value
 			object.bitmap_ |= 8
 		case "service_account_id":

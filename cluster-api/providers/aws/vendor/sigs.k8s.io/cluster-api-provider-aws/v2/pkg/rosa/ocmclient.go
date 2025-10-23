@@ -33,6 +33,7 @@ type OCMClient interface {
 	GetIdentityProviders(clusterID string) ([]*v1.IdentityProvider, error)
 	GetMissingGateAgreementsHypershift(clusterID string, upgradePolicy *v1.ControlPlaneUpgradePolicy) ([]*v1.VersionGate, error)
 	GetNodePool(clusterID string, nodePoolID string) (*v1.NodePool, bool, error)
+	GetNodePools(clusterID string) ([]*v1.NodePool, error)
 	GetHypershiftNodePoolUpgrade(clusterID string, clusterKey string, nodePoolID string) (*v1.NodePool, *v1.NodePoolUpgradePolicy, error)
 	GetUser(clusterID string, group string, username string) (*v1.User, error)
 	ScheduleHypershiftControlPlaneUpgrade(clusterID string, upgradePolicy *v1.ControlPlaneUpgradePolicy) (*v1.ControlPlaneUpgradePolicy, error)
@@ -93,6 +94,10 @@ func (c *ocmclient) GetMissingGateAgreementsHypershift(clusterID string, upgrade
 
 func (c *ocmclient) GetNodePool(clusterID string, nodePoolID string) (*v1.NodePool, bool, error) {
 	return c.ocmClient.GetNodePool(clusterID, nodePoolID)
+}
+
+func (c *ocmclient) GetNodePools(clusterID string) ([]*v1.NodePool, error) {
+	return c.ocmClient.GetNodePools(clusterID)
 }
 
 func (c *ocmclient) GetHypershiftNodePoolUpgrade(clusterID string, clusterKey string, nodePoolID string) (*v1.NodePool, *v1.NodePoolUpgradePolicy, error) {

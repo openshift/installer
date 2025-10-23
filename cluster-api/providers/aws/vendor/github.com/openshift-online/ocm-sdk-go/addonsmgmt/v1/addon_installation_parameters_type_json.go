@@ -29,7 +29,7 @@ import (
 // MarshalAddonInstallationParameters writes a value of the 'addon_installation_parameters' type to the given writer.
 func MarshalAddonInstallationParameters(object *AddonInstallationParameters, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonInstallationParameters(object, stream)
+	WriteAddonInstallationParameters(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddonInstallationParameters(object *AddonInstallationParameters, wri
 	return stream.Error
 }
 
-// writeAddonInstallationParameters writes a value of the 'addon_installation_parameters' type to the given stream.
-func writeAddonInstallationParameters(object *AddonInstallationParameters, stream *jsoniter.Stream) {
+// WriteAddonInstallationParameters writes a value of the 'addon_installation_parameters' type to the given stream.
+func WriteAddonInstallationParameters(object *AddonInstallationParameters, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeAddonInstallationParameters(object *AddonInstallationParameters, strea
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("items")
-		writeAddonInstallationParameterList(object.items, stream)
+		WriteAddonInstallationParameterList(object.items, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalAddonInstallationParameters(source interface{}) (object *AddonInst
 	if err != nil {
 		return
 	}
-	object = readAddonInstallationParameters(iterator)
+	object = ReadAddonInstallationParameters(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonInstallationParameters reads a value of the 'addon_installation_parameters' type from the given iterator.
-func readAddonInstallationParameters(iterator *jsoniter.Iterator) *AddonInstallationParameters {
+// ReadAddonInstallationParameters reads a value of the 'addon_installation_parameters' type from the given iterator.
+func ReadAddonInstallationParameters(iterator *jsoniter.Iterator) *AddonInstallationParameters {
 	object := &AddonInstallationParameters{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func readAddonInstallationParameters(iterator *jsoniter.Iterator) *AddonInstalla
 		}
 		switch field {
 		case "items":
-			value := readAddonInstallationParameterList(iterator)
+			value := ReadAddonInstallationParameterList(iterator)
 			object.items = value
 			object.bitmap_ |= 1
 		default:

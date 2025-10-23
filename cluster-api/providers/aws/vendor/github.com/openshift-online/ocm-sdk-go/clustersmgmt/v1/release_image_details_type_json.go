@@ -29,7 +29,7 @@ import (
 // MarshalReleaseImageDetails writes a value of the 'release_image_details' type to the given writer.
 func MarshalReleaseImageDetails(object *ReleaseImageDetails, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeReleaseImageDetails(object, stream)
+	WriteReleaseImageDetails(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalReleaseImageDetails(object *ReleaseImageDetails, writer io.Writer) e
 	return stream.Error
 }
 
-// writeReleaseImageDetails writes a value of the 'release_image_details' type to the given stream.
-func writeReleaseImageDetails(object *ReleaseImageDetails, stream *jsoniter.Stream) {
+// WriteReleaseImageDetails writes a value of the 'release_image_details' type to the given stream.
+func WriteReleaseImageDetails(object *ReleaseImageDetails, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeReleaseImageDetails(object *ReleaseImageDetails, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("available_upgrades")
-		writeStringList(object.availableUpgrades, stream)
+		WriteStringList(object.availableUpgrades, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -69,13 +69,13 @@ func UnmarshalReleaseImageDetails(source interface{}) (object *ReleaseImageDetai
 	if err != nil {
 		return
 	}
-	object = readReleaseImageDetails(iterator)
+	object = ReadReleaseImageDetails(iterator)
 	err = iterator.Error
 	return
 }
 
-// readReleaseImageDetails reads a value of the 'release_image_details' type from the given iterator.
-func readReleaseImageDetails(iterator *jsoniter.Iterator) *ReleaseImageDetails {
+// ReadReleaseImageDetails reads a value of the 'release_image_details' type from the given iterator.
+func ReadReleaseImageDetails(iterator *jsoniter.Iterator) *ReleaseImageDetails {
 	object := &ReleaseImageDetails{}
 	for {
 		field := iterator.ReadObject()
@@ -84,7 +84,7 @@ func readReleaseImageDetails(iterator *jsoniter.Iterator) *ReleaseImageDetails {
 		}
 		switch field {
 		case "available_upgrades":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.availableUpgrades = value
 			object.bitmap_ |= 1
 		case "release_image":

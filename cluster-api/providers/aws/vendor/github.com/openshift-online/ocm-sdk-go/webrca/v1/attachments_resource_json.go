@@ -49,7 +49,7 @@ func readAttachmentsListResponse(response *AttachmentsListResponse, reader io.Re
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readAttachmentList(iterator)
+			items := ReadAttachmentList(iterator)
 			response.items = &AttachmentList{
 				items: items,
 			}

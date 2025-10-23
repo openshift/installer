@@ -30,7 +30,7 @@ import (
 // MarshalAddonRequirement writes a value of the 'addon_requirement' type to the given writer.
 func MarshalAddonRequirement(object *AddonRequirement, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonRequirement(object, stream)
+	WriteAddonRequirement(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAddonRequirement(object *AddonRequirement, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddonRequirement writes a value of the 'addon_requirement' type to the given stream.
-func writeAddonRequirement(object *AddonRequirement, stream *jsoniter.Stream) {
+// WriteAddonRequirement writes a value of the 'addon_requirement' type to the given stream.
+func WriteAddonRequirement(object *AddonRequirement, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -105,7 +105,7 @@ func writeAddonRequirement(object *AddonRequirement, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("status")
-		writeAddonRequirementStatus(object.status, stream)
+		WriteAddonRequirementStatus(object.status, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -117,13 +117,13 @@ func UnmarshalAddonRequirement(source interface{}) (object *AddonRequirement, er
 	if err != nil {
 		return
 	}
-	object = readAddonRequirement(iterator)
+	object = ReadAddonRequirement(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonRequirement reads a value of the 'addon_requirement' type from the given iterator.
-func readAddonRequirement(iterator *jsoniter.Iterator) *AddonRequirement {
+// ReadAddonRequirement reads a value of the 'addon_requirement' type from the given iterator.
+func ReadAddonRequirement(iterator *jsoniter.Iterator) *AddonRequirement {
 	object := &AddonRequirement{}
 	for {
 		field := iterator.ReadObject()
@@ -158,7 +158,7 @@ func readAddonRequirement(iterator *jsoniter.Iterator) *AddonRequirement {
 			object.resource = value
 			object.bitmap_ |= 8
 		case "status":
-			value := readAddonRequirementStatus(iterator)
+			value := ReadAddonRequirementStatus(iterator)
 			object.status = value
 			object.bitmap_ |= 16
 		default:

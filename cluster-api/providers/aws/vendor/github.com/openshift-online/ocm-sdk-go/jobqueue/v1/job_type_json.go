@@ -30,7 +30,7 @@ import (
 // MarshalJob writes a value of the 'job' type to the given writer.
 func MarshalJob(object *Job, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeJob(object, stream)
+	WriteJob(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalJob(object *Job, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeJob writes a value of the 'job' type to the given stream.
-func writeJob(object *Job, stream *jsoniter.Stream) {
+// WriteJob writes a value of the 'job' type to the given stream.
+func WriteJob(object *Job, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -129,13 +129,13 @@ func UnmarshalJob(source interface{}) (object *Job, err error) {
 	if err != nil {
 		return
 	}
-	object = readJob(iterator)
+	object = ReadJob(iterator)
 	err = iterator.Error
 	return
 }
 
-// readJob reads a value of the 'job' type from the given iterator.
-func readJob(iterator *jsoniter.Iterator) *Job {
+// ReadJob reads a value of the 'job' type from the given iterator.
+func ReadJob(iterator *jsoniter.Iterator) *Job {
 	object := &Job{}
 	for {
 		field := iterator.ReadObject()

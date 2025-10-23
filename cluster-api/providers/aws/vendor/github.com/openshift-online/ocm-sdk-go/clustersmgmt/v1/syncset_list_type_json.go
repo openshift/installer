@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSyncsetList(list []*Syncset, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSyncsetList(list, stream)
+	WriteSyncsetList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSyncsetList(list []*Syncset, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeSyncsetList writes a list of value of the 'syncset' type to
+// WriteSyncsetList writes a list of value of the 'syncset' type to
 // the given stream.
-func writeSyncsetList(list []*Syncset, stream *jsoniter.Stream) {
+func WriteSyncsetList(list []*Syncset, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeSyncset(value, stream)
+		WriteSyncset(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSyncsetList(source interface{}) (items []*Syncset, err error) {
 	if err != nil {
 		return
 	}
-	items = readSyncsetList(iterator)
+	items = ReadSyncsetList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSyncsetList reads list of values of the ”syncset' type from
+// ReadSyncsetList reads list of values of the ”syncset' type from
 // the given iterator.
-func readSyncsetList(iterator *jsoniter.Iterator) []*Syncset {
+func ReadSyncsetList(iterator *jsoniter.Iterator) []*Syncset {
 	list := []*Syncset{}
 	for iterator.ReadArray() {
-		item := readSyncset(iterator)
+		item := ReadSyncset(iterator)
 		list = append(list, item)
 	}
 	return list

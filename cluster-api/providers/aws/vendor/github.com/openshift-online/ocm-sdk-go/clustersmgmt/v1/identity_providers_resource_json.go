@@ -57,7 +57,7 @@ func readIdentityProvidersListResponse(response *IdentityProvidersListResponse, 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readIdentityProviderList(iterator)
+			items := ReadIdentityProviderList(iterator)
 			response.items = &IdentityProviderList{
 				items: items,
 			}

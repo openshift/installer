@@ -228,6 +228,29 @@ func (l *AzureNodePoolList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AzureNodePoolList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AzureNodePoolList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AzureNodePoolList) SetItems(items []*AzureNodePool) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AzureNodePoolList) Items() []*AzureNodePool {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AzureNodePoolList) Empty() bool {
 	return l == nil || len(l.items) == 0

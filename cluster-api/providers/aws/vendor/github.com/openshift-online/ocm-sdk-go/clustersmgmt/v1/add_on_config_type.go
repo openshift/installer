@@ -54,7 +54,7 @@ func (o *AddOnConfig) Kind() string {
 	return AddOnConfigKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *AddOnConfig) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -205,6 +205,29 @@ func (l *AddOnConfigList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *AddOnConfigList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddOnConfigList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddOnConfigList) SetItems(items []*AddOnConfig) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddOnConfigList) Items() []*AddOnConfig {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

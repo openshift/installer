@@ -154,6 +154,29 @@ func (l *AddonEnvironmentVariableList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AddonEnvironmentVariableList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddonEnvironmentVariableList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddonEnvironmentVariableList) SetItems(items []*AddonEnvironmentVariable) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddonEnvironmentVariableList) Items() []*AddonEnvironmentVariable {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AddonEnvironmentVariableList) Empty() bool {
 	return l == nil || len(l.items) == 0

@@ -49,7 +49,7 @@ func readPendingDeleteClustersListResponse(response *PendingDeleteClustersListRe
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readPendingDeleteClusterList(iterator)
+			items := ReadPendingDeleteClusterList(iterator)
 			response.items = &PendingDeleteClusterList{
 				items: items,
 			}

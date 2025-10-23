@@ -62,7 +62,7 @@ func (o *UpgradePolicy) Kind() string {
 	return UpgradePolicyKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *UpgradePolicy) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -328,6 +328,29 @@ func (l *UpgradePolicyList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *UpgradePolicyList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *UpgradePolicyList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *UpgradePolicyList) SetItems(items []*UpgradePolicy) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *UpgradePolicyList) Items() []*UpgradePolicy {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

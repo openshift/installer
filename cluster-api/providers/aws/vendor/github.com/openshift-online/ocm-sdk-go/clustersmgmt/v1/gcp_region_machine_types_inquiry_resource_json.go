@@ -49,7 +49,7 @@ func readGCPRegionMachineTypesInquirySearchResponse(response *GCPRegionMachineTy
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readMachineTypeList(iterator)
+			items := ReadMachineTypeList(iterator)
 			response.items = &MachineTypeList{
 				items: items,
 			}

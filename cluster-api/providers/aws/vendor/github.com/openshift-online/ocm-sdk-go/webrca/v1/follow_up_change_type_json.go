@@ -30,7 +30,7 @@ import (
 // MarshalFollowUpChange writes a value of the 'follow_up_change' type to the given writer.
 func MarshalFollowUpChange(object *FollowUpChange, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeFollowUpChange(object, stream)
+	WriteFollowUpChange(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalFollowUpChange(object *FollowUpChange, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeFollowUpChange writes a value of the 'follow_up_change' type to the given stream.
-func writeFollowUpChange(object *FollowUpChange, stream *jsoniter.Stream) {
+// WriteFollowUpChange writes a value of the 'follow_up_change' type to the given stream.
+func WriteFollowUpChange(object *FollowUpChange, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -90,7 +90,7 @@ func writeFollowUpChange(object *FollowUpChange, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("follow_up")
-		writeFollowUp(object.followUp, stream)
+		WriteFollowUp(object.followUp, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -120,13 +120,13 @@ func UnmarshalFollowUpChange(source interface{}) (object *FollowUpChange, err er
 	if err != nil {
 		return
 	}
-	object = readFollowUpChange(iterator)
+	object = ReadFollowUpChange(iterator)
 	err = iterator.Error
 	return
 }
 
-// readFollowUpChange reads a value of the 'follow_up_change' type from the given iterator.
-func readFollowUpChange(iterator *jsoniter.Iterator) *FollowUpChange {
+// ReadFollowUpChange reads a value of the 'follow_up_change' type from the given iterator.
+func ReadFollowUpChange(iterator *jsoniter.Iterator) *FollowUpChange {
 	object := &FollowUpChange{}
 	for {
 		field := iterator.ReadObject()
@@ -162,7 +162,7 @@ func readFollowUpChange(iterator *jsoniter.Iterator) *FollowUpChange {
 			object.deletedAt = value
 			object.bitmap_ |= 16
 		case "follow_up":
-			value := readFollowUp(iterator)
+			value := ReadFollowUp(iterator)
 			object.followUp = value
 			object.bitmap_ |= 32
 		case "status":

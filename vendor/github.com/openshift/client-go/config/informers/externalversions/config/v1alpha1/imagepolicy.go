@@ -3,13 +3,13 @@
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
+	apiconfigv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	versioned "github.com/openshift/client-go/config/clientset/versioned"
 	internalinterfaces "github.com/openshift/client-go/config/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/openshift/client-go/config/listers/config/v1alpha1"
+	configv1alpha1 "github.com/openshift/client-go/config/listers/config/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -20,7 +20,7 @@ import (
 // ImagePolicies.
 type ImagePolicyInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.ImagePolicyLister
+	Lister() configv1alpha1.ImagePolicyLister
 }
 
 type imagePolicyInformer struct {
@@ -46,16 +46,28 @@ func NewFilteredImagePolicyInformer(client versioned.Interface, namespace string
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ConfigV1alpha1().ImagePolicies(namespace).List(context.TODO(), options)
+				return client.ConfigV1alpha1().ImagePolicies(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ConfigV1alpha1().ImagePolicies(namespace).Watch(context.TODO(), options)
+				return client.ConfigV1alpha1().ImagePolicies(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ConfigV1alpha1().ImagePolicies(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ConfigV1alpha1().ImagePolicies(namespace).Watch(ctx, options)
 			},
 		},
-		&configv1alpha1.ImagePolicy{},
+		&apiconfigv1alpha1.ImagePolicy{},
 		resyncPeriod,
 		indexers,
 	)
@@ -66,9 +78,9 @@ func (f *imagePolicyInformer) defaultInformer(client versioned.Interface, resync
 }
 
 func (f *imagePolicyInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&configv1alpha1.ImagePolicy{}, f.defaultInformer)
+	return f.factory.InformerFor(&apiconfigv1alpha1.ImagePolicy{}, f.defaultInformer)
 }
 
-func (f *imagePolicyInformer) Lister() v1alpha1.ImagePolicyLister {
-	return v1alpha1.NewImagePolicyLister(f.Informer().GetIndexer())
+func (f *imagePolicyInformer) Lister() configv1alpha1.ImagePolicyLister {
+	return configv1alpha1.NewImagePolicyLister(f.Informer().GetIndexer())
 }

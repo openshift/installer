@@ -130,6 +130,29 @@ func (l *SecurityGroupList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *SecurityGroupList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SecurityGroupList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SecurityGroupList) SetItems(items []*SecurityGroup) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SecurityGroupList) Items() []*SecurityGroup {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *SecurityGroupList) Empty() bool {
 	return l == nil || len(l.items) == 0

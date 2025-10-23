@@ -12,9 +12,11 @@ import (
 )
 
 // Describes the specified attribute of the specified volume. You can specify only
-// one attribute at a time. For more information about EBS volumes, see Amazon EBS
-// volumes (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volumes.html) in
-// the Amazon EBS User Guide.
+// one attribute at a time.
+//
+// For more information about EBS volumes, see [Amazon EBS volumes] in the Amazon EBS User Guide.
+//
+// [Amazon EBS volumes]: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volumes.html
 func (c *Client) DescribeVolumeAttribute(ctx context.Context, params *DescribeVolumeAttributeInput, optFns ...func(*Options)) (*DescribeVolumeAttributeOutput, error) {
 	if params == nil {
 		params = &DescribeVolumeAttributeInput{}
@@ -111,6 +113,9 @@ func (c *Client) addOperationDescribeVolumeAttributeMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -121,6 +126,15 @@ func (c *Client) addOperationDescribeVolumeAttributeMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeVolumeAttributeValidationMiddleware(stack); err != nil {
@@ -142,6 +156,18 @@ func (c *Client) addOperationDescribeVolumeAttributeMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -136,6 +136,29 @@ func (l *StatefulObjectList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *StatefulObjectList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *StatefulObjectList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *StatefulObjectList) SetItems(items []*StatefulObject) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *StatefulObjectList) Items() []*StatefulObject {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *StatefulObjectList) Empty() bool {
 	return l == nil || len(l.items) == 0

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAttachmentList(list []*Attachment, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAttachmentList(list, stream)
+	WriteAttachmentList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAttachmentList(list []*Attachment, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAttachmentList writes a list of value of the 'attachment' type to
+// WriteAttachmentList writes a list of value of the 'attachment' type to
 // the given stream.
-func writeAttachmentList(list []*Attachment, stream *jsoniter.Stream) {
+func WriteAttachmentList(list []*Attachment, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAttachment(value, stream)
+		WriteAttachment(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAttachmentList(source interface{}) (items []*Attachment, err error
 	if err != nil {
 		return
 	}
-	items = readAttachmentList(iterator)
+	items = ReadAttachmentList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAttachmentList reads list of values of the ”attachment' type from
+// ReadAttachmentList reads list of values of the ”attachment' type from
 // the given iterator.
-func readAttachmentList(iterator *jsoniter.Iterator) []*Attachment {
+func ReadAttachmentList(iterator *jsoniter.Iterator) []*Attachment {
 	list := []*Attachment{}
 	for iterator.ReadArray() {
-		item := readAttachment(iterator)
+		item := ReadAttachment(iterator)
 		list = append(list, item)
 	}
 	return list

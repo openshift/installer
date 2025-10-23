@@ -29,7 +29,7 @@ import (
 // MarshalAddonParameter writes a value of the 'addon_parameter' type to the given writer.
 func MarshalAddonParameter(object *AddonParameter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAddonParameter(object, stream)
+	WriteAddonParameter(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddonParameter(object *AddonParameter, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAddonParameter writes a value of the 'addon_parameter' type to the given stream.
-func writeAddonParameter(object *AddonParameter, stream *jsoniter.Stream) {
+// WriteAddonParameter writes a value of the 'addon_parameter' type to the given stream.
+func WriteAddonParameter(object *AddonParameter, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func writeAddonParameter(object *AddonParameter, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("addon")
-		writeAddon(object.addon, stream)
+		WriteAddon(object.addon, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0 && object.conditions != nil
@@ -66,7 +66,7 @@ func writeAddonParameter(object *AddonParameter, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("conditions")
-		writeAddonRequirementList(object.conditions, stream)
+		WriteAddonRequirementList(object.conditions, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0
@@ -129,7 +129,7 @@ func writeAddonParameter(object *AddonParameter, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("options")
-		writeAddonParameterOptionList(object.options, stream)
+		WriteAddonParameterOptionList(object.options, stream)
 		count++
 	}
 	present_ = object.bitmap_&1024 != 0
@@ -186,13 +186,13 @@ func UnmarshalAddonParameter(source interface{}) (object *AddonParameter, err er
 	if err != nil {
 		return
 	}
-	object = readAddonParameter(iterator)
+	object = ReadAddonParameter(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAddonParameter reads a value of the 'addon_parameter' type from the given iterator.
-func readAddonParameter(iterator *jsoniter.Iterator) *AddonParameter {
+// ReadAddonParameter reads a value of the 'addon_parameter' type from the given iterator.
+func ReadAddonParameter(iterator *jsoniter.Iterator) *AddonParameter {
 	object := &AddonParameter{}
 	for {
 		field := iterator.ReadObject()
@@ -205,11 +205,11 @@ func readAddonParameter(iterator *jsoniter.Iterator) *AddonParameter {
 			object.id = value
 			object.bitmap_ |= 1
 		case "addon":
-			value := readAddon(iterator)
+			value := ReadAddon(iterator)
 			object.addon = value
 			object.bitmap_ |= 2
 		case "conditions":
-			value := readAddonRequirementList(iterator)
+			value := ReadAddonRequirementList(iterator)
 			object.conditions = value
 			object.bitmap_ |= 4
 		case "default_value":
@@ -237,7 +237,7 @@ func readAddonParameter(iterator *jsoniter.Iterator) *AddonParameter {
 			object.name = value
 			object.bitmap_ |= 256
 		case "options":
-			value := readAddonParameterOptionList(iterator)
+			value := ReadAddonParameterOptionList(iterator)
 			object.options = value
 			object.bitmap_ |= 512
 		case "order":

@@ -49,7 +49,7 @@ func readRegistriesListResponse(response *RegistriesListResponse, reader io.Read
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readRegistryList(iterator)
+			items := ReadRegistryList(iterator)
 			response.items = &RegistryList{
 				items: items,
 			}

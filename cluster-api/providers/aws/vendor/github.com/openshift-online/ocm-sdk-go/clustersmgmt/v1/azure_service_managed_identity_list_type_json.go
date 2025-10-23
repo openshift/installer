@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAzureServiceManagedIdentityList(list []*AzureServiceManagedIdentity, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAzureServiceManagedIdentityList(list, stream)
+	WriteAzureServiceManagedIdentityList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAzureServiceManagedIdentityList(list []*AzureServiceManagedIdentity,
 	return stream.Error
 }
 
-// writeAzureServiceManagedIdentityList writes a list of value of the 'azure_service_managed_identity' type to
+// WriteAzureServiceManagedIdentityList writes a list of value of the 'azure_service_managed_identity' type to
 // the given stream.
-func writeAzureServiceManagedIdentityList(list []*AzureServiceManagedIdentity, stream *jsoniter.Stream) {
+func WriteAzureServiceManagedIdentityList(list []*AzureServiceManagedIdentity, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAzureServiceManagedIdentity(value, stream)
+		WriteAzureServiceManagedIdentity(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAzureServiceManagedIdentityList(source interface{}) (items []*Azur
 	if err != nil {
 		return
 	}
-	items = readAzureServiceManagedIdentityList(iterator)
+	items = ReadAzureServiceManagedIdentityList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAzureServiceManagedIdentityList reads list of values of the ”azure_service_managed_identity' type from
+// ReadAzureServiceManagedIdentityList reads list of values of the ”azure_service_managed_identity' type from
 // the given iterator.
-func readAzureServiceManagedIdentityList(iterator *jsoniter.Iterator) []*AzureServiceManagedIdentity {
+func ReadAzureServiceManagedIdentityList(iterator *jsoniter.Iterator) []*AzureServiceManagedIdentity {
 	list := []*AzureServiceManagedIdentity{}
 	for iterator.ReadArray() {
-		item := readAzureServiceManagedIdentity(iterator)
+		item := ReadAzureServiceManagedIdentity(iterator)
 		list = append(list, item)
 	}
 	return list

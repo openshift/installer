@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAWSInfrastructureAccessRoleStateList(list []AWSInfrastructureAccessRoleState, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAWSInfrastructureAccessRoleStateList(list, stream)
+	WriteAWSInfrastructureAccessRoleStateList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalAWSInfrastructureAccessRoleStateList(list []AWSInfrastructureAccessR
 	return stream.Error
 }
 
-// writeAWSInfrastructureAccessRoleStateList writes a list of value of the 'AWS_infrastructure_access_role_state' type to
+// WriteAWSInfrastructureAccessRoleStateList writes a list of value of the 'AWS_infrastructure_access_role_state' type to
 // the given stream.
-func writeAWSInfrastructureAccessRoleStateList(list []AWSInfrastructureAccessRoleState, stream *jsoniter.Stream) {
+func WriteAWSInfrastructureAccessRoleStateList(list []AWSInfrastructureAccessRoleState, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalAWSInfrastructureAccessRoleStateList(source interface{}) (items []
 	if err != nil {
 		return
 	}
-	items = readAWSInfrastructureAccessRoleStateList(iterator)
+	items = ReadAWSInfrastructureAccessRoleStateList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAWSInfrastructureAccessRoleStateList reads list of values of the ”AWS_infrastructure_access_role_state' type from
+// ReadAWSInfrastructureAccessRoleStateList reads list of values of the ”AWS_infrastructure_access_role_state' type from
 // the given iterator.
-func readAWSInfrastructureAccessRoleStateList(iterator *jsoniter.Iterator) []AWSInfrastructureAccessRoleState {
+func ReadAWSInfrastructureAccessRoleStateList(iterator *jsoniter.Iterator) []AWSInfrastructureAccessRoleState {
 	list := []AWSInfrastructureAccessRoleState{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()
