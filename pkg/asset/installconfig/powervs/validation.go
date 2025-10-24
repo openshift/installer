@@ -51,7 +51,10 @@ func validateMachinePool(fldPath *field.Path, machinePool *types.MachinePool) fi
 
 // ValidatePERAvailability ensures the target datacenter has PER enabled.
 func ValidatePERAvailability(client API, ic *types.InstallConfig) error {
-	capabilities, err := client.GetDatacenterCapabilities(context.TODO(), ic.PowerVS.Zone)
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
+	capabilities, err := client.GetDatacenterCapabilities(ctx, ic.PowerVS.Zone)
 	if err != nil {
 		return err
 	}
@@ -83,15 +86,19 @@ func ValidatePreExistingDNS(client API, ic *types.InstallConfig, metadata Metada
 }
 
 func validatePreExistingPublicDNS(fldPath *field.Path, client API, ic *types.InstallConfig, metadata MetadataAPI) field.ErrorList {
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
 	allErrs := field.ErrorList{}
+
 	// Get CIS CRN
-	crn, err := metadata.CISInstanceCRN(context.TODO())
+	crn, err := metadata.CISInstanceCRN(ctx)
 	if err != nil {
 		return append(allErrs, field.InternalError(fldPath, err))
 	}
 
 	// Get CIS zone ID by name
-	zoneID, err := client.GetDNSZoneIDByName(context.TODO(), ic.BaseDomain, types.ExternalPublishingStrategy)
+	zoneID, err := client.GetDNSZoneIDByName(ctx, ic.BaseDomain, types.ExternalPublishingStrategy)
 	if err != nil {
 		return append(allErrs, field.InternalError(fldPath, err))
 	}
@@ -99,7 +106,7 @@ func validatePreExistingPublicDNS(fldPath *field.Path, client API, ic *types.Ins
 	// Search for existing records
 	recordNames := [...]string{fmt.Sprintf("api.%s", ic.ClusterDomain()), fmt.Sprintf("api-int.%s", ic.ClusterDomain())}
 	for _, recordName := range recordNames {
-		records, err := client.GetDNSRecordsByName(context.TODO(), crn, zoneID, recordName, types.ExternalPublishingStrategy)
+		records, err := client.GetDNSRecordsByName(ctx, crn, zoneID, recordName, types.ExternalPublishingStrategy)
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(fldPath, err))
 		}
@@ -113,15 +120,19 @@ func validatePreExistingPublicDNS(fldPath *field.Path, client API, ic *types.Ins
 }
 
 func validatePreExistingPrivateDNS(fldPath *field.Path, client API, ic *types.InstallConfig, metadata MetadataAPI) field.ErrorList {
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
 	allErrs := field.ErrorList{}
+
 	// Get DNS CRN
-	crn, err := metadata.DNSInstanceCRN(context.TODO())
+	crn, err := metadata.DNSInstanceCRN(ctx)
 	if err != nil {
 		return append(allErrs, field.InternalError(fldPath, err))
 	}
 
 	// Get CIS zone ID by name
-	zoneID, err := client.GetDNSZoneIDByName(context.TODO(), ic.BaseDomain, types.InternalPublishingStrategy)
+	zoneID, err := client.GetDNSZoneIDByName(ctx, ic.BaseDomain, types.InternalPublishingStrategy)
 	if err != nil {
 		return append(allErrs, field.InternalError(fldPath, err))
 	}
@@ -129,7 +140,7 @@ func validatePreExistingPrivateDNS(fldPath *field.Path, client API, ic *types.In
 	// Search for existing records
 	recordNames := [...]string{fmt.Sprintf("api-int.%s", ic.ClusterDomain())}
 	for _, recordName := range recordNames {
-		records, err := client.GetDNSRecordsByName(context.TODO(), crn, zoneID, recordName, types.InternalPublishingStrategy)
+		records, err := client.GetDNSRecordsByName(ctx, crn, zoneID, recordName, types.InternalPublishingStrategy)
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(fldPath, err))
 		}

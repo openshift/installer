@@ -226,8 +226,11 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpc *vpcv1.VPC, ba
 		return false, err
 	}
 
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
 	// Get CIS zone ID by name
-	zoneID, err := client.GetDNSZoneIDByName(context.TODO(), baseDomain, types.InternalPublishingStrategy)
+	zoneID, err := client.GetDNSZoneIDByName(ctx, baseDomain, types.InternalPublishingStrategy)
 	if err != nil {
 		return false, fmt.Errorf("failed to get DNS zone ID: %w", err)
 	}
