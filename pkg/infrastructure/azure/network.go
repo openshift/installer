@@ -164,6 +164,25 @@ func apiRule(in *lbRuleInput) *armnetwork.LoadBalancingRule {
 	}
 }
 
+func outboundRule(in *lbRuleInput) *armnetwork.OutboundRule {
+	return &armnetwork.OutboundRule{
+		Name: to.Ptr(in.ruleName),
+		Properties: &armnetwork.OutboundRulePropertiesFormat{
+			Protocol:               to.Ptr(armnetwork.LoadBalancerOutboundRuleProtocolAll),
+			AllocatedOutboundPorts: to.Ptr[int32](1024), // configurable ??
+			IdleTimeoutInMinutes:   nil,
+			FrontendIPConfigurations: []*armnetwork.SubResource{
+				&armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, in.frontendIPConfigName)),
+				},
+			},
+			BackendAddressPool: &armnetwork.SubResource{
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, in.backendAddressPoolName)),
+			},
+		},
+	}
+}
+
 func addProbeToLoadBalancer(ctx context.Context, probe *armnetwork.Probe, in *lbInput) (*armnetwork.LoadBalancer, error) {
 	lbResp, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
 	if err != nil {
@@ -193,6 +212,27 @@ func addLoadBalancingRuleToLoadBalancer(ctx context.Context, rule *armnetwork.Lo
 	lb := lbResp.LoadBalancer
 
 	lb.Properties.LoadBalancingRules = append(lb.Properties.LoadBalancingRules, rule)
+
+	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.loadBalancerName, lb, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update load balancer: %w", err)
+	}
+
+	resp, err := pollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.LoadBalancer, nil
+}
+
+func addOutboundRuleToLoadBalancer(ctx context.Context, rule *armnetwork.OutboundRule, in *lbInput) (*armnetwork.LoadBalancer, error) {
+	lbResp, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get load balancer: %w", err)
+	}
+	lb := lbResp.LoadBalancer
+
+	lb.Properties.OutboundRules = append(lb.Properties.OutboundRules, rule)
 
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.loadBalancerName, lb, nil)
 	if err != nil {

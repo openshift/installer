@@ -478,7 +478,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	if installConfig.Networking.IsDualStack() {
 		logrus.Debugf("XXX: adding frontend IP configuration to internal load balancer")
-		internalLoadBalancer, err = addFrontendIPConfigurationToLoadBalancer(ctx,
+		_, err = addFrontendIPConfigurationToLoadBalancer(ctx,
 			&armnetwork.FrontendIPConfiguration{
 				Name: to.Ptr(fmt.Sprintf("%s-internal-frontEnd-ipv6", in.InfraID)),
 				Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{
@@ -494,7 +494,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 
 		logrus.Debugf("XXX: adding backend address pool to internal load balancer")
-		internalLoadBalancer, err = addBackendAddressPoolToLoadBalancer(ctx,
+		_, err = addBackendAddressPoolToLoadBalancer(ctx,
 			&armnetwork.BackendAddressPool{
 				Name: to.Ptr(fmt.Sprintf("%s-internal-ipv6", in.InfraID)),
 			},
@@ -505,7 +505,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 
 		logrus.Debugf("XXX: adding mcs load balancer rule to internal load balancer")
-		internalLoadBalancer, err = addLoadBalancingRuleToLoadBalancer(ctx,
+		_, err = addLoadBalancingRuleToLoadBalancer(ctx,
 			mcsRule(&lbRuleInput{
 				loadBalancerName:       lbInput.loadBalancerName,
 				probeName:              *intMcsProbe.Name,
@@ -521,7 +521,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 		logrus.Debugf("XXX: adding API load balancer rule probe to internal load balancer")
 		intApiProbe := apiProbe()
-		internalLoadBalancer, err = addLoadBalancingRuleToLoadBalancer(ctx,
+		_, err = addLoadBalancingRuleToLoadBalancer(ctx,
 			apiRule(&lbRuleInput{
 				loadBalancerName:       lbInput.loadBalancerName,
 				probeName:              *intApiProbe.Name,
@@ -573,7 +573,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 				}
 			*/
 			logrus.Debugf("XXX: adding frontend IPv4 configuration to API load balancer")
-			externalLoadBalancer, err = addFrontendIPConfigurationToLoadBalancer(ctx,
+			_, err = addFrontendIPConfigurationToLoadBalancer(ctx,
 				&armnetwork.FrontendIPConfiguration{
 					Name: to.Ptr(lbInput.frontendIPConfigName),
 					Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{
@@ -589,7 +589,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			}
 
 			logrus.Debugf("XXX: adding backend address pool to API load balancer")
-			externalLoadBalancer, err = addBackendAddressPoolToLoadBalancer(ctx,
+			_, err = addBackendAddressPoolToLoadBalancer(ctx,
 				&armnetwork.BackendAddressPool{
 					Name: to.Ptr(lbInput.backendAddressPoolName),
 				},
@@ -601,7 +601,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 			logrus.Debugf("XXX: adding API probe to API load balancer")
 			extApiProbe := apiProbe()
-			externalLoadBalancer, err = addProbeToLoadBalancer(ctx, extApiProbe, lbInput)
+			_, err = addProbeToLoadBalancer(ctx, extApiProbe, lbInput)
 			if err != nil {
 				return fmt.Errorf("failed to add mcs probe to internal load balancer: %w", err)
 			}
@@ -648,7 +648,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 			if platform.OutboundType != aztypes.UserDefinedRoutingOutboundType {
 				logrus.Debugf("XXX: adding frontend IPv6 configuration to API load balancer")
-				externalLoadBalancer, err = addFrontendIPConfigurationToLoadBalancer(ctx,
+				_, err = addFrontendIPConfigurationToLoadBalancer(ctx,
 					&armnetwork.FrontendIPConfiguration{
 						Name: to.Ptr(lbInput.frontendIPConfigName),
 						Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{
@@ -664,7 +664,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 				}
 
 				logrus.Debugf("XXX: adding backend address pool to API load balancer")
-				externalLoadBalancer, err = addBackendAddressPoolToLoadBalancer(ctx,
+				_, err = addBackendAddressPoolToLoadBalancer(ctx,
 					&armnetwork.BackendAddressPool{
 						Name: to.Ptr(lbInput.backendAddressPoolName),
 					},
@@ -676,7 +676,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 				logrus.Debugf("XXX: adding API load balancer rule probe to API load balancer")
 				intApiProbe := apiProbe()
-				externalLoadBalancer, err = addLoadBalancingRuleToLoadBalancer(ctx,
+				_, err = addLoadBalancingRuleToLoadBalancer(ctx,
 					apiRule(&lbRuleInput{
 						loadBalancerName:       lbInput.loadBalancerName,
 						probeName:              *intApiProbe.Name,
@@ -688,6 +688,22 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 					lbInput)
 				if err != nil {
 					return fmt.Errorf("failed to update API load balancer: %w", err)
+				}
+
+				// XXX: Use constants and better place to set these all up
+				//lbInput.frontendIPConfigName = "public-lb-ip-v6"
+				//lbInput.backendAddressPoolName = fmt.Sprintf("%s-ipv6", in.InfraID)
+
+				outboundNatRuleIPv6 := outboundRule(&lbRuleInput{
+					idPrefix:               lbInput.idPrefix,
+					loadBalancerName:       lbInput.loadBalancerName,
+					ruleName:               "OutboundNATAllProtocols-ipv6",
+					frontendIPConfigName:   lbInput.frontendIPConfigName,
+					backendAddressPoolName: lbInput.backendAddressPoolName,
+				})
+				_, err = addOutboundRuleToLoadBalancer(ctx, outboundNatRuleIPv6, lbInput)
+				if err != nil {
+					return fmt.Errorf("failed to add nat ipv6 api rule to public load balancer: %w", err)
 				}
 
 				/*
@@ -702,6 +718,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 				// XXX: Create another backend address pool for outbound IPv6
 				// XXX: ${infraid}-outbound-lb-outboundBackendPool-ipv6
+				// XXX: It appears this isn't necessary
 				/*
 					lbInput.frontendIPConfigName = "public-lb-ip-v6" // XXX: Should we use a frontEnd-ipv6 for this?
 					lbInput.backendAddressPoolName = fmt.Sprintf("%s-outbound-lb-outboundBackendPool-ipv6", in.InfraID)
