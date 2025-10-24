@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vsphereconversion "github.com/openshift/installer/pkg/types/vsphere/conversion"
 )
@@ -44,7 +45,7 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 		if err := convertNutanix(config); err != nil {
 			return err
 		}
-	case openstack.Name:
+	case openstack.Name, powervc.Name:
 		if err := convertOpenStack(config); err != nil {
 			return err
 		}
