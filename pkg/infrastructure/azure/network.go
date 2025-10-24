@@ -677,8 +677,7 @@ func associateVMToBackendPools(ctx context.Context, in vmInput) error {
 			}
 			for _, ipConfig := range nic.Properties.IPConfigurations {
 				logrus.Debugf("XXX: nicName=%s ipConfig.Name=%s vmName=%s", nicName, *ipConfig.Name, vmName)
-				if *ipConfig.Name == "pipConfig" {
-					//ipConfig.Properties.LoadBalancerBackendAddressPools = []*armnetwork.BackendAddressPool{}
+				if *ipConfig.Properties.PrivateIPAddressVersion == armnetwork.IPVersionIPv4 {
 					for _, pool := range ipv4BackendAddressPools {
 						ipConfig.Properties.LoadBalancerBackendAddressPools = append(
 							ipConfig.Properties.LoadBalancerBackendAddressPools,
@@ -688,8 +687,7 @@ func associateVMToBackendPools(ctx context.Context, in vmInput) error {
 						)
 					}
 
-				} else if *ipConfig.Name == "ipConfigv6" {
-					//ipConfig.Properties.LoadBalancerBackendAddressPools = []*armnetwork.BackendAddressPool{}
+				} else if *ipConfig.Properties.PrivateIPAddressVersion == armnetwork.IPVersionIPv6 {
 					for _, pool := range ipv6BackendAddressPools {
 						ipConfig.Properties.LoadBalancerBackendAddressPools = append(
 							ipConfig.Properties.LoadBalancerBackendAddressPools,
