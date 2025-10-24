@@ -12,6 +12,7 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
@@ -452,7 +453,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			ServiceAccount:   string(sess.Credentials.JSON),
 		}
 
-		client, err := gcpconfig.NewClient(context.Background(), installConfig.Config.GCP.ServiceEndpoints)
+		client, err := gcpconfig.NewClient(context.Background(), installConfig.Config.GCP.Endpoint)
 		if err != nil {
 			return err
 		}
@@ -527,7 +528,12 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 		defer cancel()
 
-		storageClient, err := gcpconfig.GetStorageService(ctx, installConfig.Config.GCP.ServiceEndpoints)
+		opts := []option.ClientOption{}
+		if installConfig.Config.GCP.Endpoint != nil && !installConfig.Config.GCP.Endpoint.ClusterUseOnly {
+			opts = append(opts, gcpconfig.CreateEndpointOption(installConfig.Config.GCP.Endpoint.Name, gcpconfig.ServiceNameGCPStorage))
+		}
+
+		storageClient, err := gcpconfig.GetStorageService(ctx, opts...)
 		if err != nil {
 			return fmt.Errorf("failed to create storage client: %w", err)
 		}
