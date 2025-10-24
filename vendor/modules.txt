@@ -2148,7 +2148,7 @@ sigs.k8s.io/cluster-api/util/kubeconfig
 sigs.k8s.io/cluster-api/util/labels/format
 sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
-# sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.2-0.20250307190545-2361956824d0
+# sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.2-0.20251023220133-66942942ff92
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2
