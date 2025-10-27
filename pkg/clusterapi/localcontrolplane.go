@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	capnv1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/sirupsen/logrus"
@@ -82,6 +83,11 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 	}
 	if c.APIServerLog, err = os.Create(filepath.Join(command.RootOpts.Dir, ArtifactsDir, "kube-apiserver.log")); err != nil {
 		return fmt.Errorf("failed to create kube-apiserver log file: %w", err)
+	}
+
+	if runtime.GOOS == "windows" {
+		os.Setenv("TEST_ASSET_ETCD", filepath.Join(c.BinDir, "etcd.exe"))
+		os.Setenv("TEST_ASSET_KUBE_APISERVER", filepath.Join(c.BinDir, "kube-apiserver.exe"))
 	}
 
 	log.SetLogger(klog.NewKlogr())

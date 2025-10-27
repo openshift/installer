@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
+	"path"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
@@ -43,7 +43,7 @@ import (
 )
 
 var (
-	cloudProviderConfigFileName = filepath.Join(manifestDir, "cloud-provider-config.yaml")
+	cloudProviderConfigFileName = path.Join(manifestDir, "cloud-provider-config.yaml")
 )
 
 const (

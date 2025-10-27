@@ -2,7 +2,7 @@ package manifests
 
 import (
 	"context"
-	"path/filepath"
+	"path"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,7 +49,7 @@ func (p *ImageDigestMirrorSet) Generate(_ context.Context, dependencies asset.Pa
 			return errors.Wrapf(err, "failed to marshal ImageDigestMirrorSet")
 		}
 		p.File = &asset.File{
-			Filename: filepath.Join(manifestDir, imageDigestMirrorSetFilename),
+			Filename: path.Join(manifestDir, imageDigestMirrorSetFilename),
 			Data:     policyData,
 		}
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -22,7 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
-var proxyCfgFilename = filepath.Join(manifestDir, "cluster-proxy-01-config.yaml")
+var proxyCfgFilename = path.Join(manifestDir, "cluster-proxy-01-config.yaml")
 
 // Proxy generates the cluster-proxy-*.yml files.
 type Proxy struct {

@@ -2,7 +2,7 @@ package manifests
 
 import (
 	"context"
-	"path/filepath"
+	"path"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -16,7 +16,7 @@ import (
 
 var (
 	// SchedulerCfgFilename is the path of the Scheduler Config file
-	SchedulerCfgFilename = filepath.Join(manifestDir, "cluster-scheduler-02-config.yml")
+	SchedulerCfgFilename = path.Join(manifestDir, "cluster-scheduler-02-config.yml")
 )
 
 // Scheduler generates the cluster-scheduler-*.yml files.

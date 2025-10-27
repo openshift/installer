@@ -2,7 +2,7 @@ package manifests
 
 import (
 	"context"
-	"path/filepath"
+	"path"
 
 	"github.com/pkg/errors"
 
@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	clusterCSIDriverConfigFileName = filepath.Join(manifestDir, "cluster-csi-driver-config.yaml")
+	clusterCSIDriverConfigFileName = path.Join(manifestDir, "cluster-csi-driver-config.yaml")
 )
 
 // ClusterCSIDriverConfig generates the cluster-csi-driver-config.yaml file.

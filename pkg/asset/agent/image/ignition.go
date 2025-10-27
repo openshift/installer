@@ -316,14 +316,14 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 
 	// add ZTP manifests to manifestPath
 	for _, file := range agentManifests.FileList {
-		manifestFile := ignition.FileFromBytes(filepath.Join(manifestPath, filepath.Base(file.Filename)),
+		manifestFile := ignition.FileFromBytes(path.Join(manifestPath, filepath.Base(file.Filename)),
 			"root", 0600, file.Data)
 		config.Storage.Files = append(config.Storage.Files, manifestFile)
 	}
 
 	// add AgentConfig if provided
 	if agentConfigAsset.Config != nil {
-		agentConfigFile := ignition.FileFromBytes(filepath.Join(manifestPath, filepath.Base(agentConfigAsset.File.Filename)),
+		agentConfigFile := ignition.FileFromBytes(path.Join(manifestPath, filepath.Base(agentConfigAsset.File.Filename)),
 			"root", 0600, agentConfigAsset.File.Data)
 		config.Storage.Files = append(config.Storage.Files, agentConfigFile)
 	}
@@ -588,7 +588,7 @@ func addMacAddressToHostnameMappings(
 	}
 	for _, host := range agentHostsAsset.Hosts {
 		if host.Hostname != "" {
-			file := ignition.FileFromBytes(filepath.Join(hostnamesPath,
+			file := ignition.FileFromBytes(path.Join(hostnamesPath,
 				strings.ToLower(filepath.Base(host.Interfaces[0].MacAddress))),
 				"root", 0600, []byte(host.Hostname))
 			config.Storage.Files = append(config.Storage.Files, file)
@@ -602,8 +602,8 @@ func addHostConfig(config *igntypes.Config, agentHosts *agentconfig.AgentHosts) 
 		return err
 	}
 
-	for path, content := range confs {
-		hostConfigFile := ignition.FileFromBytes(filepath.Join("/etc/assisted/hostconfig", path), "root", 0644, content)
+	for pathName, content := range confs {
+		hostConfigFile := ignition.FileFromBytes(path.Join("/etc/assisted/hostconfig", pathName), "root", 0644, content)
 		config.Storage.Files = append(config.Storage.Files, hostConfigFile)
 	}
 	return nil
