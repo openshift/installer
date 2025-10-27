@@ -84,8 +84,8 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 		check    func(analysis) bool
 		optional bool
 	}{
-		{name: "node-image-pull", check: checkReleaseImageDownload, optional: false},
 		{name: "release-image", check: checkReleaseImageDownload, optional: false},
+		{name: "node-image-pull", check: checkNodeImagePull, optional: false},
 		{name: "bootkube", check: checkBootkubeService, optional: false},
 	}
 	for _, check := range analysisChecks {
@@ -111,6 +111,15 @@ func checkReleaseImageDownload(a analysis) bool {
 		return true
 	}
 	logrus.Error("The bootstrap machine failed to download the release image")
+	a.logLastError()
+	return false
+}
+
+func checkNodeImagePull(a analysis) bool {
+	if a.successful {
+		return true
+	}
+	logrus.Error("Node image pull failed on the bootstrap machine")
 	a.logLastError()
 	return false
 }
