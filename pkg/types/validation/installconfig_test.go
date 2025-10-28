@@ -3169,6 +3169,39 @@ func TestValidateTNF(t *testing.T) {
 			config: installConfig().
 				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("http://192.168.111.1/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("http://192.168.111.2/redfish/v1/Systems/2"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_http_not_allowed",
+			expected: "controlPlane.fencing.credentials\\[0\\].address: Invalid value: \"http://192.168.111.1/redfish/v1/Systems/1\": fencing does not support http scheme, use https",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("https://192.168.111.1/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("https://192.168.111.2/redfish/v1/Systems/2"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_https_no_port",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("idrac-redfish://192.168.111.1/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("ilo5-redfish://192.168.111.2/redfish/v1/Systems/2"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_redfish_scheme_no_port",
+			expected: "controlPlane.fencing.credentials\\[0\\].address: Invalid value: \"idrac-redfish://192.168.111.1/redfish/v1/Systems/1\": failed to parse redfish address, no port number found",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
 					Architecture(types.ArchitectureAMD64).
 					Credential(c1(), c2())).
 				MachinePoolCompute(
