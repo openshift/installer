@@ -15,6 +15,25 @@ const (
 	regionBackendServiceResource = "regionbackendservice"
 )
 
+func (o *ClusterUninstaller) deleteBackendServiceByName(ctx context.Context, resourceName, location string) error {
+	typeName := globalBackendServiceResource
+	if location != string(global) {
+		typeName = regionBackendServiceResource
+	}
+	items, err := o.listBackendServicesWithFilter(ctx, typeName, "items(name),nextPageToken", func(item *compute.BackendService) bool {
+		return item.Name == resourceName
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list backend services by name : %w", err)
+	}
+	for _, item := range items {
+		if err := o.deleteBackendService(ctx, item); err != nil {
+			return fmt.Errorf("failed to delete backend service by name: %w", err)
+		}
+	}
+	return nil
+}
+
 func (o *ClusterUninstaller) listBackendServices(ctx context.Context, typeName string) ([]cloudResource, error) {
 	return o.listBackendServicesWithFilter(ctx, typeName, "items(name),nextPageToken",
 		func(item *compute.BackendService) bool {

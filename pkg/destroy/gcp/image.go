@@ -15,14 +15,16 @@ const (
 )
 
 func (o *ClusterUninstaller) listImages(ctx context.Context) ([]cloudResource, error) {
-	return o.listImagesWithFilter(ctx, "items(name),nextPageToken", o.isClusterResource)
+	return o.listImagesWithFilter(ctx, "items(name,labels),nextPageToken", func(item *compute.Image) bool {
+		return o.isClusterResource(item.Name) && !o.isSharedResource(item.Labels)
+	})
 }
 
 // listImagesWithFilter lists addresses in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listImagesWithFilter(ctx context.Context, fields string, filterFunc resourceFilterFunc) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listImagesWithFilter(ctx context.Context, fields string, filterFunc func(item *compute.Image) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing images")
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
@@ -30,7 +32,7 @@ func (o *ClusterUninstaller) listImagesWithFilter(ctx context.Context, fields st
 	req := o.computeSvc.Images.List(o.ProjectID).Fields(googleapi.Field(fields))
 	err := req.Pages(ctx, func(list *compute.ImageList) error {
 		for _, item := range list.Items {
-			if filterFunc(item.Name) {
+			if filterFunc(item) {
 				o.Logger.Debugf("Found image: %s\n", item.Name)
 				result = append(result, cloudResource{
 					key:      item.Name,

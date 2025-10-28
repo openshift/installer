@@ -45,6 +45,8 @@ const (
 
 	// DONE represents the done status for a compute service operation.
 	DONE = "DONE"
+
+	alreadyInUseStr = "is already being used by "
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
@@ -441,6 +443,72 @@ func operationErrorMessage(op *compute.Operation) string {
 	return strings.Join(errs, ", ")
 }
 
+func (o *ClusterUninstaller) handleDependentResourceError(ctx context.Context, op *compute.Operation, err error) error {
+	errorCode := 0
+	errMsg := ""
+	switch {
+	case op != nil:
+		errorCode = int(op.HttpErrorStatusCode)
+		errMsg = operationErrorMessage(op)
+	case err != nil:
+		var apiErr *googleapi.Error
+		if errors.As(err, &apiErr) {
+			errorCode = apiErr.Code
+			errMsg = apiErr.Message
+		} else {
+			errMsg = err.Error()
+		}
+	default:
+		return fmt.Errorf("failed to extract information from operation or error")
+	}
+
+	if errorCode == 400 && strings.Contains(errMsg, alreadyInUseStr) {
+		splitDetails := strings.Split(errMsg, alreadyInUseStr)
+		resource := strings.ReplaceAll(
+			strings.ReplaceAll(
+				strings.ReplaceAll(splitDetails[len(splitDetails)-1], "\"", ""),
+				"'", "",
+			), ", resourceInUseByAnotherResource", "",
+		)
+		splitResource := strings.Split(resource, "/")
+
+		if len(splitResource) > 6 || len(splitResource) < 5 {
+			return fmt.Errorf("dependent resource information unable to be parsed: %s", resource)
+		}
+		// global -> ex: projects/xxxxxxxxxxxxxxxx/global/resource-type/resource-name
+		// regional -> ex: projects/xxxxxxxxxxxxxx/region/region-name/resource-type/resource-name
+		location, resourceType, resourceName := splitResource[len(splitResource)-3], splitResource[len(splitResource)-2], splitResource[len(splitResource)-1]
+		o.Logger.Debugf("found dependent resource information: %s, %s, %s", location, resourceType, resourceName)
+
+		var deleteErr error
+		switch resourceType {
+		case "backendServices":
+			deleteErr = o.deleteBackendServiceByName(ctx, resourceName, location)
+		case "firewalls":
+			deleteErr = o.deleteFirewallByName(ctx, resourceName)
+		case "forwardingRules":
+			deleteErr = o.deleteForwardingRuleByName(ctx, resourceName, location)
+		case "subnetworks":
+			deleteErr = o.deleteSubnetworkByName(ctx, resourceName)
+		case "routers":
+			deleteErr = o.deleteRouterByName(ctx, resourceName)
+		case "addresses":
+			deleteErr = o.deleteAddressByName(ctx, resourceName, location)
+		case "targetPools":
+			deleteErr = o.deleteTargetPoolByName(ctx, resourceName)
+		case "targetTcpProxies":
+			deleteErr = o.deleteTargetTCPProxyByName(ctx, resourceName)
+		default:
+			deleteErr = fmt.Errorf("failed to find resource type: %s for %s", resourceType, resourceName)
+		}
+
+		if deleteErr != nil {
+			return fmt.Errorf("failed to delete dependent resource: %w", deleteErr)
+		}
+	}
+	return nil
+}
+
 func (o *ClusterUninstaller) handleOperation(ctx context.Context, op *compute.Operation, err error, item cloudResource, resourceType string) error {
 	identifier := []string{item.typeName, item.name}
 	if item.zone != "" {
@@ -454,13 +522,20 @@ func (o *ClusterUninstaller) handleOperation(ctx context.Context, op *compute.Op
 			o.deletePendingItems(item.typeName, []cloudResource{item})
 			return nil
 		}
-		return fmt.Errorf("failed to delete %s %s: %w", resourceType, item.name, err)
+
+		err = o.handleDependentResourceError(ctx, op, err)
+		if err != nil {
+			o.Logger.Debugf("failed to handle dependent resource error: %v", err)
+		}
 	}
 
 	// wait for operation to complete before checking any further
 	op, err = o.waitFor(ctx, op, item)
-
 	if op != nil && op.Status == DONE && isErrorStatus(op.HttpErrorStatusCode) {
+		err = o.handleDependentResourceError(ctx, op, err)
+		if err != nil {
+			o.Logger.Debugf("failed to handle dependent resource error: %v", err)
+		}
 		o.resetRequestID(identifier...)
 		return fmt.Errorf("failed to delete %s %s with error: %s", resourceType, item.name, operationErrorMessage(op))
 	}

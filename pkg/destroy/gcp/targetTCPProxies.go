@@ -14,6 +14,21 @@ const (
 	globalTargetTCPProxyResource = "targettcpproxy"
 )
 
+func (o *ClusterUninstaller) deleteTargetTCPProxyByName(ctx context.Context, resourceName string) error {
+	items, err := o.listTargetTCPProxiesWithFilter(ctx, globalTargetTCPProxyResource, "items(name),nextPageToken", func(item string) bool {
+		return item == resourceName
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list target TCP Proxy by name: %w", err)
+	}
+	for _, item := range items {
+		if err := o.deleteTargetTCPProxy(ctx, item); err != nil {
+			return fmt.Errorf("failed to delete target TCP Proxy by name: %w", err)
+		}
+	}
+	return nil
+}
+
 func (o *ClusterUninstaller) listTargetTCPProxies(ctx context.Context, typeName string) ([]cloudResource, error) {
 	return o.listTargetTCPProxiesWithFilter(ctx, typeName, "items(name),nextPageToken", o.isClusterResource)
 }

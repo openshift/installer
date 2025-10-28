@@ -2,6 +2,8 @@ package gcp
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
@@ -15,6 +17,21 @@ const (
 )
 
 type targetPoolFilterFunc func(pool *compute.TargetPool) bool
+
+func (o *ClusterUninstaller) deleteTargetPoolByName(ctx context.Context, resourceName string) error {
+	items, err := o.listTargetPoolsWithFilter(ctx, "items(name),nextPageToken", func(pool *compute.TargetPool) bool {
+		return strings.Contains(pool.Name, resourceName)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list target pool by name: %w", err)
+	}
+	for _, item := range items {
+		if err := o.deleteTargetPool(ctx, item); err != nil {
+			return fmt.Errorf("failed to delete target pool by name: %w", err)
+		}
+	}
+	return nil
+}
 
 func (o *ClusterUninstaller) listTargetPools(ctx context.Context) ([]cloudResource, error) {
 	return o.listTargetPoolsWithFilter(ctx, "items(name),nextPageToken", func(item *compute.TargetPool) bool {

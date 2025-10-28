@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -14,6 +15,19 @@ import (
 const (
 	firewallResourceName = "firewall"
 )
+
+func (o *ClusterUninstaller) deleteFirewallByName(ctx context.Context, resourceName string) error {
+	items, err := o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", func(item string) bool { return strings.Contains(item, resourceName) })
+	if err != nil {
+		return fmt.Errorf("failed to list firewall by name: %w", err)
+	}
+	for _, item := range items {
+		if err := o.deleteFirewall(ctx, item); err != nil {
+			return fmt.Errorf("failed to delete firewall by name: %w", err)
+		}
+	}
+	return nil
+}
 
 func (o *ClusterUninstaller) listFirewalls(ctx context.Context) ([]cloudResource, error) {
 	// The firewall rules that the destroyer is searching for here include a

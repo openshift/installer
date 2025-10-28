@@ -50,7 +50,6 @@ func (o *ClusterUninstaller) listCloudControllerBackendServices(ctx context.Cont
 
 			fwList, err := o.computeSvc.Firewalls.List(o.ProjectID).Fields(googleapi.Field("items(name,targetTags),nextPageToken")).Context(ctx).Do()
 			if err != nil {
-				o.Logger.Debugf("failed to list firewall rules associated with backend service %s: %v", item.Name, err)
 				return false
 			}
 			for _, fw := range fwList.Items {
@@ -103,9 +102,7 @@ func (o *ClusterUninstaller) listCloudControllerTargetPools(ctx context.Context,
 						break
 					}
 				}
-
 				if !foundClusterResource {
-					o.Logger.Debugf("Skipping target pool instance %s because it is not a cluster resource", item.Name)
 					return false
 				}
 			}
@@ -121,7 +118,10 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	loadBalancerFilterFunc := o.createLoadBalancerFilterFunc(loadBalancerName)
 
 	// Discover associated addresses: loadBalancerName
-	found, err := o.listAddressesWithFilter(ctx, regionalAddressResource, "items(name),nextPageToken", loadBalancerFilterFunc)
+	found, err := o.listAddressesWithFilter(ctx, regionalAddressResource, "items(name),nextPageToken", func(item *compute.Address) bool {
+		// address should have labels but none observed
+		return strings.HasPrefix(item.Name, loadBalancerName)
+	})
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,12 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	o.insertPendingItems(firewallResourceName, found)
 
 	// Discover associated forwarding rules: loadBalancerName
-	found, err = o.listForwardingRulesWithFilter(ctx, regionForwardingRuleResource, "items(name),nextPageToken", loadBalancerFilterFunc)
+	found, err = o.listForwardingRulesWithFilter(ctx, regionForwardingRuleResource, "items(name,labels),nextPageToken", func(item *compute.ForwardingRule) bool {
+		// The forwarding rule should be checked for labels to ensure that
+		// it is owned and not shared. However, the forwarding rules associated with
+		// load balancers do not have these labels.
+		return strings.HasPrefix(item.Name, loadBalancerName)
+	})
 	if err != nil {
 		return err
 	}
@@ -203,7 +208,6 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 // For each of those backend services, resources like forwarding rules, firewalls, health checks and
 // backend services are added to pendingItems
 func (o *ClusterUninstaller) discoverCloudControllerResources(ctx context.Context) error {
-	o.Logger.Debugf("Discovering cloud controller resources")
 	errs := []error{}
 
 	// Instance group related items
@@ -222,7 +226,6 @@ func (o *ClusterUninstaller) discoverCloudControllerResources(ctx context.Contex
 			return err
 		}
 		for _, backend := range backends {
-			o.Logger.Debugf("Discovering cloud controller resources for %s", backend.name)
 			err := o.discoverCloudControllerLoadBalancerResources(ctx, backend.name)
 			if err != nil {
 				errs = append(errs, err)
@@ -244,7 +247,6 @@ func (o *ClusterUninstaller) discoverCloudControllerResources(ctx context.Contex
 		return err
 	}
 	for _, pool := range pools {
-		o.Logger.Debugf("Discovering cloud controller resources for %s", pool.name)
 		err := o.discoverCloudControllerLoadBalancerResources(ctx, pool.name)
 		if err != nil {
 			errs = append(errs, err)
