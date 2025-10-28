@@ -586,10 +586,10 @@ func validateNetworkNotOverlapDefaultOVNSubnets(n *types.Networking, network *ne
 
 	// We only check against OVNKubernetes default subnets.
 	// Any overrides of default subnets is validated in func validateOVNKubernetesConfig.
-	subnetsCheck := func(joinSubnet, transitSubnet, masqueradeSubnet *net.IPNet) {
+	subnetsCheck := func(joinSubnet, transitSubnet, masqueradeSubnet *net.IPNet, ipversion string) {
 		// Join subnet
 		if ovnsubnet, configured := getOVNSubnet(joinSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
-			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default internal subnet %s", ovnsubnet.String())))
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default internal subnet %s: please run 'openshift-install explain installconfig.networking.ovnKubernetesConfig.%s' for further documentation", ovnsubnet.String(), ipversion)))
 		}
 
 		// Transit subnet
@@ -604,9 +604,9 @@ func validateNetworkNotOverlapDefaultOVNSubnets(n *types.Networking, network *ne
 	}
 
 	if network.IP.To4() != nil {
-		subnetsCheck(validate.OVNIPv4JoinSubnet, validate.OVNIPv4TransitSubnet, validate.OVNIPv4MasqueradeSubnet)
+		subnetsCheck(validate.OVNIPv4JoinSubnet, validate.OVNIPv4TransitSubnet, validate.OVNIPv4MasqueradeSubnet, "ipv4")
 	} else {
-		subnetsCheck(validate.OVNIPv6JoinSubnet, validate.OVNIPv6TransitSubnet, validate.OVNIPv6MasqueradeSubnet)
+		subnetsCheck(validate.OVNIPv6JoinSubnet, validate.OVNIPv6TransitSubnet, validate.OVNIPv6MasqueradeSubnet, "ipv6")
 	}
 
 	return allErrs
