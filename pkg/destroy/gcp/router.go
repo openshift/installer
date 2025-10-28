@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
@@ -13,6 +14,19 @@ import (
 const (
 	routerResourceName = "router"
 )
+
+func (o *ClusterUninstaller) deleteRouterByName(ctx context.Context, resourceName string) error {
+	items, err := o.listRoutersWithFilter(ctx, "items(name),nextPageToken", func(item string) bool { return item == resourceName })
+	if err != nil {
+		return fmt.Errorf("failed to list router by name: %w", err)
+	}
+	for _, item := range items {
+		if err := o.deleteRouter(ctx, item); err != nil {
+			return fmt.Errorf("failed to delete router by name: %w", err)
+		}
+	}
+	return nil
+}
 
 func (o *ClusterUninstaller) listRouters(ctx context.Context) ([]cloudResource, error) {
 	return o.listRoutersWithFilter(ctx, "items(name),nextPageToken", o.isClusterResource)

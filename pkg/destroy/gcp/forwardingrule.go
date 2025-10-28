@@ -16,15 +16,36 @@ const (
 	regionForwardingRuleResource = "regionalforwardingrule"
 )
 
+func (o *ClusterUninstaller) deleteForwardingRuleByName(ctx context.Context, resourceName, location string) error {
+	typeName := regionForwardingRuleResource
+	if location == string(global) {
+		typeName = globalForwardingRuleResource
+	}
+	items, err := o.listForwardingRulesWithFilter(ctx, typeName, "items(name,labels),nextPageToken", func(item *compute.ForwardingRule) bool {
+		return item.Name == resourceName && o.isOwnedResource(item.Labels)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list forwarding rules by name: %w", err)
+	}
+	for _, item := range items {
+		if err := o.deleteForwardingRule(ctx, item); err != nil {
+			return fmt.Errorf("failed to delete forwarding rule by name: %w", err)
+		}
+	}
+	return nil
+}
+
 func (o *ClusterUninstaller) listForwardingRules(ctx context.Context, typeName string) ([]cloudResource, error) {
-	return o.listForwardingRulesWithFilter(ctx, typeName, "items(name,region,loadBalancingScheme),nextPageToken", o.isClusterResource)
+	return o.listForwardingRulesWithFilter(ctx, typeName, "items(name,region,loadBalancingScheme,labels),nextPageToken", func(item *compute.ForwardingRule) bool {
+		return o.isClusterResource(item.Name) && o.isOwnedResource(item.Labels)
+	})
 }
 
 // listForwardingRulesWithFilter lists forwarding rules in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listForwardingRulesWithFilter(ctx context.Context, typeName, fields string, filterFunc resourceFilterFunc) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listForwardingRulesWithFilter(ctx context.Context, typeName, fields string, filterFunc func(item *compute.ForwardingRule) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing forwarding rules")
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
@@ -33,7 +54,7 @@ func (o *ClusterUninstaller) listForwardingRulesWithFilter(ctx context.Context, 
 
 	pagesFunc := func(list *compute.ForwardingRuleList) error {
 		for _, item := range list.Items {
-			if filterFunc(item.Name) {
+			if filterFunc(item) {
 				logrus.Debugf("Found forwarding rule: %s", item.Name)
 				var quota []gcp.QuotaUsage
 				if item.LoadBalancingScheme == "EXTERNAL" {
