@@ -589,7 +589,7 @@ func validateNetworkNotOverlapDefaultOVNSubnets(n *types.Networking, network *ne
 	subnetsCheck := func(joinSubnet, transitSubnet, masqueradeSubnet *net.IPNet) {
 		// Join subnet
 		if ovnsubnet, configured := getOVNSubnet(joinSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
-			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default internal subnet %s", ovnsubnet.String())))
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default internal subnet %s: please run 'openshift-install explain installconfig.networking.ovnKubernetesConfig.ipv4' for further documentation", ovnsubnet.String())))
 		}
 
 		// Transit subnet
