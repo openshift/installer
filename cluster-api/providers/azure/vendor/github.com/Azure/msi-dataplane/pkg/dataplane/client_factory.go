@@ -102,7 +102,7 @@ func (c *clientFactory) NewClient(identityURL string) (Client, error) {
 				req.Raw().URL.RawQuery = query.Encode()
 				return req.Next()
 			}),
-			newAuthenticatorPolicy(c.cred, c.audience, c.cfOpts.logger),
+			newAuthenticatorPolicy(c.cred, c.audience),
 		},
 	}, c.clientOpts)
 	if err != nil {

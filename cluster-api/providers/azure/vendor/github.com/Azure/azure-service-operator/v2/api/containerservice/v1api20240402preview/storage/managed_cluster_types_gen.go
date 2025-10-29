@@ -14,7 +14,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -59,12 +59,12 @@ func (cluster *ManagedCluster) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = cluster.AssignProperties_From_ManagedCluster(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to cluster")
+		return eris.Wrap(err, "converting from source to cluster")
 	}
 
 	return nil
@@ -76,11 +76,11 @@ func (cluster *ManagedCluster) ConvertTo(hub conversion.Hub) error {
 	var destination v20231102ps.ManagedCluster
 	err := cluster.AssignProperties_To_ManagedCluster(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from cluster")
+		return eris.Wrap(err, "converting to destination from cluster")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
@@ -173,6 +173,10 @@ func (cluster *ManagedCluster) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (cluster *ManagedCluster) Owner() *genruntime.ResourceReference {
+	if cluster.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(cluster.Spec)
 	return cluster.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,7 +193,7 @@ func (cluster *ManagedCluster) SetStatus(status genruntime.ConvertibleStatus) er
 	var st ManagedCluster_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	cluster.Status = st
@@ -206,7 +210,7 @@ func (cluster *ManagedCluster) AssignProperties_From_ManagedCluster(source *v202
 	var spec ManagedCluster_Spec
 	err := spec.AssignProperties_From_ManagedCluster_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ManagedCluster_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ManagedCluster_Spec() to populate field Spec")
 	}
 	cluster.Spec = spec
 
@@ -214,7 +218,7 @@ func (cluster *ManagedCluster) AssignProperties_From_ManagedCluster(source *v202
 	var status ManagedCluster_STATUS
 	err = status.AssignProperties_From_ManagedCluster_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ManagedCluster_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ManagedCluster_STATUS() to populate field Status")
 	}
 	cluster.Status = status
 
@@ -223,7 +227,7 @@ func (cluster *ManagedCluster) AssignProperties_From_ManagedCluster(source *v202
 	if augmentedCluster, ok := clusterAsAny.(augmentConversionForManagedCluster); ok {
 		err := augmentedCluster.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -241,7 +245,7 @@ func (cluster *ManagedCluster) AssignProperties_To_ManagedCluster(destination *v
 	var spec v20231102ps.ManagedCluster_Spec
 	err := cluster.Spec.AssignProperties_To_ManagedCluster_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ManagedCluster_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ManagedCluster_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -249,7 +253,7 @@ func (cluster *ManagedCluster) AssignProperties_To_ManagedCluster(destination *v
 	var status v20231102ps.ManagedCluster_STATUS
 	err = cluster.Status.AssignProperties_To_ManagedCluster_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ManagedCluster_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ManagedCluster_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -258,7 +262,7 @@ func (cluster *ManagedCluster) AssignProperties_To_ManagedCluster(destination *v
 	if augmentedCluster, ok := clusterAsAny.(augmentConversionForManagedCluster); ok {
 		err := augmentedCluster.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -377,13 +381,13 @@ func (cluster *ManagedCluster_Spec) ConvertSpecFrom(source genruntime.Convertibl
 	src = &v20231102ps.ManagedCluster_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = cluster.AssignProperties_From_ManagedCluster_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -401,13 +405,13 @@ func (cluster *ManagedCluster_Spec) ConvertSpecTo(destination genruntime.Convert
 	dst = &v20231102ps.ManagedCluster_Spec{}
 	err := cluster.AssignProperties_To_ManagedCluster_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -423,7 +427,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var aadProfile ManagedClusterAADProfile
 		err := aadProfile.AssignProperties_From_ManagedClusterAADProfile(source.AadProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAADProfile() to populate field AadProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAADProfile() to populate field AadProfile")
 		}
 		cluster.AadProfile = &aadProfile
 	} else {
@@ -439,7 +443,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 			var addonProfile ManagedClusterAddonProfile
 			err := addonProfile.AssignProperties_From_ManagedClusterAddonProfile(&addonProfileValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAddonProfile() to populate field AddonProfiles")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAddonProfile() to populate field AddonProfiles")
 			}
 			addonProfileMap[addonProfileKey] = addonProfile
 		}
@@ -457,7 +461,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 			var agentPoolProfile ManagedClusterAgentPoolProfile
 			err := agentPoolProfile.AssignProperties_From_ManagedClusterAgentPoolProfile(&agentPoolProfileItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAgentPoolProfile() to populate field AgentPoolProfiles")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAgentPoolProfile() to populate field AgentPoolProfiles")
 			}
 			agentPoolProfileList[agentPoolProfileIndex] = agentPoolProfile
 		}
@@ -471,7 +475,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var aiToolchainOperatorProfile ManagedClusterAIToolchainOperatorProfile
 		err := aiToolchainOperatorProfile.AssignProperties_From_ManagedClusterAIToolchainOperatorProfile(source.AiToolchainOperatorProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAIToolchainOperatorProfile() to populate field AiToolchainOperatorProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAIToolchainOperatorProfile() to populate field AiToolchainOperatorProfile")
 		}
 		cluster.AiToolchainOperatorProfile = &aiToolchainOperatorProfile
 	} else {
@@ -483,7 +487,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var apiServerAccessProfile ManagedClusterAPIServerAccessProfile
 		err := apiServerAccessProfile.AssignProperties_From_ManagedClusterAPIServerAccessProfile(source.ApiServerAccessProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAPIServerAccessProfile() to populate field ApiServerAccessProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAPIServerAccessProfile() to populate field ApiServerAccessProfile")
 		}
 		cluster.ApiServerAccessProfile = &apiServerAccessProfile
 	} else {
@@ -495,7 +499,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var autoScalerProfile ManagedClusterProperties_AutoScalerProfile
 		err := autoScalerProfile.AssignProperties_From_ManagedClusterProperties_AutoScalerProfile(source.AutoScalerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterProperties_AutoScalerProfile() to populate field AutoScalerProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterProperties_AutoScalerProfile() to populate field AutoScalerProfile")
 		}
 		cluster.AutoScalerProfile = &autoScalerProfile
 	} else {
@@ -507,7 +511,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var autoUpgradeProfile ManagedClusterAutoUpgradeProfile
 		err := autoUpgradeProfile.AssignProperties_From_ManagedClusterAutoUpgradeProfile(source.AutoUpgradeProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAutoUpgradeProfile() to populate field AutoUpgradeProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAutoUpgradeProfile() to populate field AutoUpgradeProfile")
 		}
 		cluster.AutoUpgradeProfile = &autoUpgradeProfile
 	} else {
@@ -519,7 +523,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var azureMonitorProfile ManagedClusterAzureMonitorProfile
 		err := azureMonitorProfile.AssignProperties_From_ManagedClusterAzureMonitorProfile(source.AzureMonitorProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfile() to populate field AzureMonitorProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfile() to populate field AzureMonitorProfile")
 		}
 		cluster.AzureMonitorProfile = &azureMonitorProfile
 	} else {
@@ -534,7 +538,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var bootstrapProfile ManagedClusterBootstrapProfile
 		err := propertyBag.Pull("BootstrapProfile", &bootstrapProfile)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'BootstrapProfile' from propertyBag")
+			return eris.Wrap(err, "pulling 'BootstrapProfile' from propertyBag")
 		}
 
 		cluster.BootstrapProfile = &bootstrapProfile
@@ -547,7 +551,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var creationDatum CreationData
 		err := creationDatum.AssignProperties_From_CreationData(source.CreationData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CreationData() to populate field CreationData")
+			return eris.Wrap(err, "calling AssignProperties_From_CreationData() to populate field CreationData")
 		}
 		cluster.CreationData = &creationDatum
 	} else {
@@ -602,7 +606,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var extendedLocation ExtendedLocation
 		err := extendedLocation.AssignProperties_From_ExtendedLocation(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
 		}
 		cluster.ExtendedLocation = &extendedLocation
 	} else {
@@ -617,7 +621,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var httpProxyConfig ManagedClusterHTTPProxyConfig
 		err := httpProxyConfig.AssignProperties_From_ManagedClusterHTTPProxyConfig(source.HttpProxyConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterHTTPProxyConfig() to populate field HttpProxyConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterHTTPProxyConfig() to populate field HttpProxyConfig")
 		}
 		cluster.HttpProxyConfig = &httpProxyConfig
 	} else {
@@ -629,7 +633,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var identity ManagedClusterIdentity
 		err := identity.AssignProperties_From_ManagedClusterIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterIdentity() to populate field Identity")
 		}
 		cluster.Identity = &identity
 	} else {
@@ -645,7 +649,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 			var identityProfile UserAssignedIdentity
 			err := identityProfile.AssignProperties_From_UserAssignedIdentity(&identityProfileValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity() to populate field IdentityProfile")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity() to populate field IdentityProfile")
 			}
 			identityProfileMap[identityProfileKey] = identityProfile
 		}
@@ -659,7 +663,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var ingressProfile ManagedClusterIngressProfile
 		err := ingressProfile.AssignProperties_From_ManagedClusterIngressProfile(source.IngressProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterIngressProfile() to populate field IngressProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterIngressProfile() to populate field IngressProfile")
 		}
 		cluster.IngressProfile = &ingressProfile
 	} else {
@@ -671,7 +675,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var kind string
 		err := propertyBag.Pull("Kind", &kind)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Kind' from propertyBag")
+			return eris.Wrap(err, "pulling 'Kind' from propertyBag")
 		}
 
 		cluster.Kind = &kind
@@ -687,7 +691,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var linuxProfile ContainerServiceLinuxProfile
 		err := linuxProfile.AssignProperties_From_ContainerServiceLinuxProfile(source.LinuxProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceLinuxProfile() to populate field LinuxProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceLinuxProfile() to populate field LinuxProfile")
 		}
 		cluster.LinuxProfile = &linuxProfile
 	} else {
@@ -702,7 +706,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var metricsProfile ManagedClusterMetricsProfile
 		err := metricsProfile.AssignProperties_From_ManagedClusterMetricsProfile(source.MetricsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterMetricsProfile() to populate field MetricsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterMetricsProfile() to populate field MetricsProfile")
 		}
 		cluster.MetricsProfile = &metricsProfile
 	} else {
@@ -714,7 +718,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var networkProfile ContainerServiceNetworkProfile
 		err := networkProfile.AssignProperties_From_ContainerServiceNetworkProfile(source.NetworkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile() to populate field NetworkProfile")
 		}
 		cluster.NetworkProfile = &networkProfile
 	} else {
@@ -726,7 +730,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var nodeProvisioningProfile ManagedClusterNodeProvisioningProfile
 		err := nodeProvisioningProfile.AssignProperties_From_ManagedClusterNodeProvisioningProfile(source.NodeProvisioningProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterNodeProvisioningProfile() to populate field NodeProvisioningProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterNodeProvisioningProfile() to populate field NodeProvisioningProfile")
 		}
 		cluster.NodeProvisioningProfile = &nodeProvisioningProfile
 	} else {
@@ -741,7 +745,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var nodeResourceGroupProfile ManagedClusterNodeResourceGroupProfile
 		err := nodeResourceGroupProfile.AssignProperties_From_ManagedClusterNodeResourceGroupProfile(source.NodeResourceGroupProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterNodeResourceGroupProfile() to populate field NodeResourceGroupProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterNodeResourceGroupProfile() to populate field NodeResourceGroupProfile")
 		}
 		cluster.NodeResourceGroupProfile = &nodeResourceGroupProfile
 	} else {
@@ -753,7 +757,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var oidcIssuerProfile ManagedClusterOIDCIssuerProfile
 		err := oidcIssuerProfile.AssignProperties_From_ManagedClusterOIDCIssuerProfile(source.OidcIssuerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterOIDCIssuerProfile() to populate field OidcIssuerProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterOIDCIssuerProfile() to populate field OidcIssuerProfile")
 		}
 		cluster.OidcIssuerProfile = &oidcIssuerProfile
 	} else {
@@ -765,7 +769,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var operatorSpec ManagedClusterOperatorSpec
 		err := operatorSpec.AssignProperties_From_ManagedClusterOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterOperatorSpec() to populate field OperatorSpec")
 		}
 		cluster.OperatorSpec = &operatorSpec
 	} else {
@@ -788,7 +792,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var podIdentityProfile ManagedClusterPodIdentityProfile
 		err := podIdentityProfile.AssignProperties_From_ManagedClusterPodIdentityProfile(source.PodIdentityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityProfile() to populate field PodIdentityProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityProfile() to populate field PodIdentityProfile")
 		}
 		cluster.PodIdentityProfile = &podIdentityProfile
 	} else {
@@ -804,7 +808,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 			var privateLinkResource PrivateLinkResource
 			err := privateLinkResource.AssignProperties_From_PrivateLinkResource(&privateLinkResourceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateLinkResource() to populate field PrivateLinkResources")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkResource() to populate field PrivateLinkResources")
 			}
 			privateLinkResourceList[privateLinkResourceIndex] = privateLinkResource
 		}
@@ -821,7 +825,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var safeguardsProfile SafeguardsProfile
 		err := safeguardsProfile.AssignProperties_From_SafeguardsProfile(source.SafeguardsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SafeguardsProfile() to populate field SafeguardsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_SafeguardsProfile() to populate field SafeguardsProfile")
 		}
 		cluster.SafeguardsProfile = &safeguardsProfile
 	} else {
@@ -833,7 +837,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var securityProfile ManagedClusterSecurityProfile
 		err := securityProfile.AssignProperties_From_ManagedClusterSecurityProfile(source.SecurityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfile() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfile() to populate field SecurityProfile")
 		}
 		cluster.SecurityProfile = &securityProfile
 	} else {
@@ -845,7 +849,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var serviceMeshProfile ServiceMeshProfile
 		err := serviceMeshProfile.AssignProperties_From_ServiceMeshProfile(source.ServiceMeshProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceMeshProfile() to populate field ServiceMeshProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceMeshProfile() to populate field ServiceMeshProfile")
 		}
 		cluster.ServiceMeshProfile = &serviceMeshProfile
 	} else {
@@ -857,7 +861,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var servicePrincipalProfile ManagedClusterServicePrincipalProfile
 		err := servicePrincipalProfile.AssignProperties_From_ManagedClusterServicePrincipalProfile(source.ServicePrincipalProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterServicePrincipalProfile() to populate field ServicePrincipalProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterServicePrincipalProfile() to populate field ServicePrincipalProfile")
 		}
 		cluster.ServicePrincipalProfile = &servicePrincipalProfile
 	} else {
@@ -869,7 +873,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var sku ManagedClusterSKU
 		err := sku.AssignProperties_From_ManagedClusterSKU(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSKU() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSKU() to populate field Sku")
 		}
 		cluster.Sku = &sku
 	} else {
@@ -881,7 +885,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var storageProfile ManagedClusterStorageProfile
 		err := storageProfile.AssignProperties_From_ManagedClusterStorageProfile(source.StorageProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfile() to populate field StorageProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfile() to populate field StorageProfile")
 		}
 		cluster.StorageProfile = &storageProfile
 	} else {
@@ -899,7 +903,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var upgradeSetting ClusterUpgradeSettings
 		err := upgradeSetting.AssignProperties_From_ClusterUpgradeSettings(source.UpgradeSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ClusterUpgradeSettings() to populate field UpgradeSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ClusterUpgradeSettings() to populate field UpgradeSettings")
 		}
 		cluster.UpgradeSettings = &upgradeSetting
 	} else {
@@ -911,7 +915,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var windowsProfile ManagedClusterWindowsProfile
 		err := windowsProfile.AssignProperties_From_ManagedClusterWindowsProfile(source.WindowsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterWindowsProfile() to populate field WindowsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterWindowsProfile() to populate field WindowsProfile")
 		}
 		cluster.WindowsProfile = &windowsProfile
 	} else {
@@ -923,7 +927,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 		var workloadAutoScalerProfile ManagedClusterWorkloadAutoScalerProfile
 		err := workloadAutoScalerProfile.AssignProperties_From_ManagedClusterWorkloadAutoScalerProfile(source.WorkloadAutoScalerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfile() to populate field WorkloadAutoScalerProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfile() to populate field WorkloadAutoScalerProfile")
 		}
 		cluster.WorkloadAutoScalerProfile = &workloadAutoScalerProfile
 	} else {
@@ -942,7 +946,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 	if augmentedCluster, ok := clusterAsAny.(augmentConversionForManagedCluster_Spec); ok {
 		err := augmentedCluster.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -960,7 +964,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var aadProfile v20231102ps.ManagedClusterAADProfile
 		err := cluster.AadProfile.AssignProperties_To_ManagedClusterAADProfile(&aadProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAADProfile() to populate field AadProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAADProfile() to populate field AadProfile")
 		}
 		destination.AadProfile = &aadProfile
 	} else {
@@ -976,7 +980,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 			var addonProfile v20231102ps.ManagedClusterAddonProfile
 			err := addonProfileValue.AssignProperties_To_ManagedClusterAddonProfile(&addonProfile)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAddonProfile() to populate field AddonProfiles")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAddonProfile() to populate field AddonProfiles")
 			}
 			addonProfileMap[addonProfileKey] = addonProfile
 		}
@@ -994,7 +998,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 			var agentPoolProfile v20231102ps.ManagedClusterAgentPoolProfile
 			err := agentPoolProfileItem.AssignProperties_To_ManagedClusterAgentPoolProfile(&agentPoolProfile)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAgentPoolProfile() to populate field AgentPoolProfiles")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAgentPoolProfile() to populate field AgentPoolProfiles")
 			}
 			agentPoolProfileList[agentPoolProfileIndex] = agentPoolProfile
 		}
@@ -1008,7 +1012,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var aiToolchainOperatorProfile v20231102ps.ManagedClusterAIToolchainOperatorProfile
 		err := cluster.AiToolchainOperatorProfile.AssignProperties_To_ManagedClusterAIToolchainOperatorProfile(&aiToolchainOperatorProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAIToolchainOperatorProfile() to populate field AiToolchainOperatorProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAIToolchainOperatorProfile() to populate field AiToolchainOperatorProfile")
 		}
 		destination.AiToolchainOperatorProfile = &aiToolchainOperatorProfile
 	} else {
@@ -1020,7 +1024,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var apiServerAccessProfile v20231102ps.ManagedClusterAPIServerAccessProfile
 		err := cluster.ApiServerAccessProfile.AssignProperties_To_ManagedClusterAPIServerAccessProfile(&apiServerAccessProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAPIServerAccessProfile() to populate field ApiServerAccessProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAPIServerAccessProfile() to populate field ApiServerAccessProfile")
 		}
 		destination.ApiServerAccessProfile = &apiServerAccessProfile
 	} else {
@@ -1032,7 +1036,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var autoScalerProfile v20231102ps.ManagedClusterProperties_AutoScalerProfile
 		err := cluster.AutoScalerProfile.AssignProperties_To_ManagedClusterProperties_AutoScalerProfile(&autoScalerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterProperties_AutoScalerProfile() to populate field AutoScalerProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterProperties_AutoScalerProfile() to populate field AutoScalerProfile")
 		}
 		destination.AutoScalerProfile = &autoScalerProfile
 	} else {
@@ -1044,7 +1048,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var autoUpgradeProfile v20231102ps.ManagedClusterAutoUpgradeProfile
 		err := cluster.AutoUpgradeProfile.AssignProperties_To_ManagedClusterAutoUpgradeProfile(&autoUpgradeProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAutoUpgradeProfile() to populate field AutoUpgradeProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAutoUpgradeProfile() to populate field AutoUpgradeProfile")
 		}
 		destination.AutoUpgradeProfile = &autoUpgradeProfile
 	} else {
@@ -1056,7 +1060,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var azureMonitorProfile v20231102ps.ManagedClusterAzureMonitorProfile
 		err := cluster.AzureMonitorProfile.AssignProperties_To_ManagedClusterAzureMonitorProfile(&azureMonitorProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfile() to populate field AzureMonitorProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfile() to populate field AzureMonitorProfile")
 		}
 		destination.AzureMonitorProfile = &azureMonitorProfile
 	} else {
@@ -1078,7 +1082,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var creationDatum v20231102ps.CreationData
 		err := cluster.CreationData.AssignProperties_To_CreationData(&creationDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CreationData() to populate field CreationData")
+			return eris.Wrap(err, "calling AssignProperties_To_CreationData() to populate field CreationData")
 		}
 		destination.CreationData = &creationDatum
 	} else {
@@ -1133,7 +1137,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var extendedLocation v20231102ps.ExtendedLocation
 		err := cluster.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
 		}
 		destination.ExtendedLocation = &extendedLocation
 	} else {
@@ -1148,7 +1152,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var httpProxyConfig v20231102ps.ManagedClusterHTTPProxyConfig
 		err := cluster.HttpProxyConfig.AssignProperties_To_ManagedClusterHTTPProxyConfig(&httpProxyConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterHTTPProxyConfig() to populate field HttpProxyConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterHTTPProxyConfig() to populate field HttpProxyConfig")
 		}
 		destination.HttpProxyConfig = &httpProxyConfig
 	} else {
@@ -1160,7 +1164,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var identity v20231102ps.ManagedClusterIdentity
 		err := cluster.Identity.AssignProperties_To_ManagedClusterIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1176,7 +1180,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 			var identityProfile v20231102ps.UserAssignedIdentity
 			err := identityProfileValue.AssignProperties_To_UserAssignedIdentity(&identityProfile)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity() to populate field IdentityProfile")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity() to populate field IdentityProfile")
 			}
 			identityProfileMap[identityProfileKey] = identityProfile
 		}
@@ -1190,7 +1194,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var ingressProfile v20231102ps.ManagedClusterIngressProfile
 		err := cluster.IngressProfile.AssignProperties_To_ManagedClusterIngressProfile(&ingressProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterIngressProfile() to populate field IngressProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterIngressProfile() to populate field IngressProfile")
 		}
 		destination.IngressProfile = &ingressProfile
 	} else {
@@ -1212,7 +1216,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var linuxProfile v20231102ps.ContainerServiceLinuxProfile
 		err := cluster.LinuxProfile.AssignProperties_To_ContainerServiceLinuxProfile(&linuxProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceLinuxProfile() to populate field LinuxProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceLinuxProfile() to populate field LinuxProfile")
 		}
 		destination.LinuxProfile = &linuxProfile
 	} else {
@@ -1227,7 +1231,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var metricsProfile v20231102ps.ManagedClusterMetricsProfile
 		err := cluster.MetricsProfile.AssignProperties_To_ManagedClusterMetricsProfile(&metricsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterMetricsProfile() to populate field MetricsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterMetricsProfile() to populate field MetricsProfile")
 		}
 		destination.MetricsProfile = &metricsProfile
 	} else {
@@ -1239,7 +1243,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var networkProfile v20231102ps.ContainerServiceNetworkProfile
 		err := cluster.NetworkProfile.AssignProperties_To_ContainerServiceNetworkProfile(&networkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile() to populate field NetworkProfile")
 		}
 		destination.NetworkProfile = &networkProfile
 	} else {
@@ -1251,7 +1255,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var nodeProvisioningProfile v20231102ps.ManagedClusterNodeProvisioningProfile
 		err := cluster.NodeProvisioningProfile.AssignProperties_To_ManagedClusterNodeProvisioningProfile(&nodeProvisioningProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterNodeProvisioningProfile() to populate field NodeProvisioningProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterNodeProvisioningProfile() to populate field NodeProvisioningProfile")
 		}
 		destination.NodeProvisioningProfile = &nodeProvisioningProfile
 	} else {
@@ -1266,7 +1270,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var nodeResourceGroupProfile v20231102ps.ManagedClusterNodeResourceGroupProfile
 		err := cluster.NodeResourceGroupProfile.AssignProperties_To_ManagedClusterNodeResourceGroupProfile(&nodeResourceGroupProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterNodeResourceGroupProfile() to populate field NodeResourceGroupProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterNodeResourceGroupProfile() to populate field NodeResourceGroupProfile")
 		}
 		destination.NodeResourceGroupProfile = &nodeResourceGroupProfile
 	} else {
@@ -1278,7 +1282,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var oidcIssuerProfile v20231102ps.ManagedClusterOIDCIssuerProfile
 		err := cluster.OidcIssuerProfile.AssignProperties_To_ManagedClusterOIDCIssuerProfile(&oidcIssuerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterOIDCIssuerProfile() to populate field OidcIssuerProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterOIDCIssuerProfile() to populate field OidcIssuerProfile")
 		}
 		destination.OidcIssuerProfile = &oidcIssuerProfile
 	} else {
@@ -1290,7 +1294,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var operatorSpec v20231102ps.ManagedClusterOperatorSpec
 		err := cluster.OperatorSpec.AssignProperties_To_ManagedClusterOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -1313,7 +1317,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var podIdentityProfile v20231102ps.ManagedClusterPodIdentityProfile
 		err := cluster.PodIdentityProfile.AssignProperties_To_ManagedClusterPodIdentityProfile(&podIdentityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityProfile() to populate field PodIdentityProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityProfile() to populate field PodIdentityProfile")
 		}
 		destination.PodIdentityProfile = &podIdentityProfile
 	} else {
@@ -1329,7 +1333,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 			var privateLinkResource v20231102ps.PrivateLinkResource
 			err := privateLinkResourceItem.AssignProperties_To_PrivateLinkResource(&privateLinkResource)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkResource() to populate field PrivateLinkResources")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkResource() to populate field PrivateLinkResources")
 			}
 			privateLinkResourceList[privateLinkResourceIndex] = privateLinkResource
 		}
@@ -1346,7 +1350,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var safeguardsProfile v20231102ps.SafeguardsProfile
 		err := cluster.SafeguardsProfile.AssignProperties_To_SafeguardsProfile(&safeguardsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SafeguardsProfile() to populate field SafeguardsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_SafeguardsProfile() to populate field SafeguardsProfile")
 		}
 		destination.SafeguardsProfile = &safeguardsProfile
 	} else {
@@ -1358,7 +1362,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var securityProfile v20231102ps.ManagedClusterSecurityProfile
 		err := cluster.SecurityProfile.AssignProperties_To_ManagedClusterSecurityProfile(&securityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfile() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfile() to populate field SecurityProfile")
 		}
 		destination.SecurityProfile = &securityProfile
 	} else {
@@ -1370,7 +1374,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var serviceMeshProfile v20231102ps.ServiceMeshProfile
 		err := cluster.ServiceMeshProfile.AssignProperties_To_ServiceMeshProfile(&serviceMeshProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceMeshProfile() to populate field ServiceMeshProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceMeshProfile() to populate field ServiceMeshProfile")
 		}
 		destination.ServiceMeshProfile = &serviceMeshProfile
 	} else {
@@ -1382,7 +1386,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var servicePrincipalProfile v20231102ps.ManagedClusterServicePrincipalProfile
 		err := cluster.ServicePrincipalProfile.AssignProperties_To_ManagedClusterServicePrincipalProfile(&servicePrincipalProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterServicePrincipalProfile() to populate field ServicePrincipalProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterServicePrincipalProfile() to populate field ServicePrincipalProfile")
 		}
 		destination.ServicePrincipalProfile = &servicePrincipalProfile
 	} else {
@@ -1394,7 +1398,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var sku v20231102ps.ManagedClusterSKU
 		err := cluster.Sku.AssignProperties_To_ManagedClusterSKU(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSKU() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSKU() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1406,7 +1410,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var storageProfile v20231102ps.ManagedClusterStorageProfile
 		err := cluster.StorageProfile.AssignProperties_To_ManagedClusterStorageProfile(&storageProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfile() to populate field StorageProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfile() to populate field StorageProfile")
 		}
 		destination.StorageProfile = &storageProfile
 	} else {
@@ -1424,7 +1428,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var upgradeSetting v20231102ps.ClusterUpgradeSettings
 		err := cluster.UpgradeSettings.AssignProperties_To_ClusterUpgradeSettings(&upgradeSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ClusterUpgradeSettings() to populate field UpgradeSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ClusterUpgradeSettings() to populate field UpgradeSettings")
 		}
 		destination.UpgradeSettings = &upgradeSetting
 	} else {
@@ -1436,7 +1440,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var windowsProfile v20231102ps.ManagedClusterWindowsProfile
 		err := cluster.WindowsProfile.AssignProperties_To_ManagedClusterWindowsProfile(&windowsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterWindowsProfile() to populate field WindowsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterWindowsProfile() to populate field WindowsProfile")
 		}
 		destination.WindowsProfile = &windowsProfile
 	} else {
@@ -1448,7 +1452,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 		var workloadAutoScalerProfile v20231102ps.ManagedClusterWorkloadAutoScalerProfile
 		err := cluster.WorkloadAutoScalerProfile.AssignProperties_To_ManagedClusterWorkloadAutoScalerProfile(&workloadAutoScalerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfile() to populate field WorkloadAutoScalerProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfile() to populate field WorkloadAutoScalerProfile")
 		}
 		destination.WorkloadAutoScalerProfile = &workloadAutoScalerProfile
 	} else {
@@ -1467,7 +1471,7 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 	if augmentedCluster, ok := clusterAsAny.(augmentConversionForManagedCluster_Spec); ok {
 		err := augmentedCluster.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1555,13 +1559,13 @@ func (cluster *ManagedCluster_STATUS) ConvertStatusFrom(source genruntime.Conver
 	src = &v20231102ps.ManagedCluster_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = cluster.AssignProperties_From_ManagedCluster_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1579,13 +1583,13 @@ func (cluster *ManagedCluster_STATUS) ConvertStatusTo(destination genruntime.Con
 	dst = &v20231102ps.ManagedCluster_STATUS{}
 	err := cluster.AssignProperties_To_ManagedCluster_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1601,7 +1605,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var aadProfile ManagedClusterAADProfile_STATUS
 		err := aadProfile.AssignProperties_From_ManagedClusterAADProfile_STATUS(source.AadProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAADProfile_STATUS() to populate field AadProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAADProfile_STATUS() to populate field AadProfile")
 		}
 		cluster.AadProfile = &aadProfile
 	} else {
@@ -1617,7 +1621,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 			var addonProfile ManagedClusterAddonProfile_STATUS
 			err := addonProfile.AssignProperties_From_ManagedClusterAddonProfile_STATUS(&addonProfileValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAddonProfile_STATUS() to populate field AddonProfiles")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAddonProfile_STATUS() to populate field AddonProfiles")
 			}
 			addonProfileMap[addonProfileKey] = addonProfile
 		}
@@ -1635,7 +1639,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 			var agentPoolProfile ManagedClusterAgentPoolProfile_STATUS
 			err := agentPoolProfile.AssignProperties_From_ManagedClusterAgentPoolProfile_STATUS(&agentPoolProfileItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAgentPoolProfile_STATUS() to populate field AgentPoolProfiles")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAgentPoolProfile_STATUS() to populate field AgentPoolProfiles")
 			}
 			agentPoolProfileList[agentPoolProfileIndex] = agentPoolProfile
 		}
@@ -1649,7 +1653,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var aiToolchainOperatorProfile ManagedClusterAIToolchainOperatorProfile_STATUS
 		err := aiToolchainOperatorProfile.AssignProperties_From_ManagedClusterAIToolchainOperatorProfile_STATUS(source.AiToolchainOperatorProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAIToolchainOperatorProfile_STATUS() to populate field AiToolchainOperatorProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAIToolchainOperatorProfile_STATUS() to populate field AiToolchainOperatorProfile")
 		}
 		cluster.AiToolchainOperatorProfile = &aiToolchainOperatorProfile
 	} else {
@@ -1661,7 +1665,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var apiServerAccessProfile ManagedClusterAPIServerAccessProfile_STATUS
 		err := apiServerAccessProfile.AssignProperties_From_ManagedClusterAPIServerAccessProfile_STATUS(source.ApiServerAccessProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAPIServerAccessProfile_STATUS() to populate field ApiServerAccessProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAPIServerAccessProfile_STATUS() to populate field ApiServerAccessProfile")
 		}
 		cluster.ApiServerAccessProfile = &apiServerAccessProfile
 	} else {
@@ -1673,7 +1677,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var autoScalerProfile ManagedClusterProperties_AutoScalerProfile_STATUS
 		err := autoScalerProfile.AssignProperties_From_ManagedClusterProperties_AutoScalerProfile_STATUS(source.AutoScalerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterProperties_AutoScalerProfile_STATUS() to populate field AutoScalerProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterProperties_AutoScalerProfile_STATUS() to populate field AutoScalerProfile")
 		}
 		cluster.AutoScalerProfile = &autoScalerProfile
 	} else {
@@ -1685,7 +1689,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var autoUpgradeProfile ManagedClusterAutoUpgradeProfile_STATUS
 		err := autoUpgradeProfile.AssignProperties_From_ManagedClusterAutoUpgradeProfile_STATUS(source.AutoUpgradeProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAutoUpgradeProfile_STATUS() to populate field AutoUpgradeProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAutoUpgradeProfile_STATUS() to populate field AutoUpgradeProfile")
 		}
 		cluster.AutoUpgradeProfile = &autoUpgradeProfile
 	} else {
@@ -1697,7 +1701,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var azureMonitorProfile ManagedClusterAzureMonitorProfile_STATUS
 		err := azureMonitorProfile.AssignProperties_From_ManagedClusterAzureMonitorProfile_STATUS(source.AzureMonitorProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfile_STATUS() to populate field AzureMonitorProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfile_STATUS() to populate field AzureMonitorProfile")
 		}
 		cluster.AzureMonitorProfile = &azureMonitorProfile
 	} else {
@@ -1712,7 +1716,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var bootstrapProfile ManagedClusterBootstrapProfile_STATUS
 		err := propertyBag.Pull("BootstrapProfile", &bootstrapProfile)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'BootstrapProfile' from propertyBag")
+			return eris.Wrap(err, "pulling 'BootstrapProfile' from propertyBag")
 		}
 
 		cluster.BootstrapProfile = &bootstrapProfile
@@ -1728,7 +1732,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var creationDatum CreationData_STATUS
 		err := creationDatum.AssignProperties_From_CreationData_STATUS(source.CreationData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CreationData_STATUS() to populate field CreationData")
+			return eris.Wrap(err, "calling AssignProperties_From_CreationData_STATUS() to populate field CreationData")
 		}
 		cluster.CreationData = &creationDatum
 	} else {
@@ -1757,7 +1761,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var eTag string
 		err := propertyBag.Pull("ETag", &eTag)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ETag' from propertyBag")
+			return eris.Wrap(err, "pulling 'ETag' from propertyBag")
 		}
 
 		cluster.ETag = &eTag
@@ -1794,7 +1798,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var extendedLocation ExtendedLocation_STATUS
 		err := extendedLocation.AssignProperties_From_ExtendedLocation_STATUS(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
 		}
 		cluster.ExtendedLocation = &extendedLocation
 	} else {
@@ -1812,7 +1816,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var httpProxyConfig ManagedClusterHTTPProxyConfig_STATUS
 		err := httpProxyConfig.AssignProperties_From_ManagedClusterHTTPProxyConfig_STATUS(source.HttpProxyConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterHTTPProxyConfig_STATUS() to populate field HttpProxyConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterHTTPProxyConfig_STATUS() to populate field HttpProxyConfig")
 		}
 		cluster.HttpProxyConfig = &httpProxyConfig
 	} else {
@@ -1827,7 +1831,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var identity ManagedClusterIdentity_STATUS
 		err := identity.AssignProperties_From_ManagedClusterIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterIdentity_STATUS() to populate field Identity")
 		}
 		cluster.Identity = &identity
 	} else {
@@ -1843,7 +1847,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 			var identityProfile UserAssignedIdentity_STATUS
 			err := identityProfile.AssignProperties_From_UserAssignedIdentity_STATUS(&identityProfileValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field IdentityProfile")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field IdentityProfile")
 			}
 			identityProfileMap[identityProfileKey] = identityProfile
 		}
@@ -1857,7 +1861,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var ingressProfile ManagedClusterIngressProfile_STATUS
 		err := ingressProfile.AssignProperties_From_ManagedClusterIngressProfile_STATUS(source.IngressProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterIngressProfile_STATUS() to populate field IngressProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterIngressProfile_STATUS() to populate field IngressProfile")
 		}
 		cluster.IngressProfile = &ingressProfile
 	} else {
@@ -1869,7 +1873,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var kind string
 		err := propertyBag.Pull("Kind", &kind)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Kind' from propertyBag")
+			return eris.Wrap(err, "pulling 'Kind' from propertyBag")
 		}
 
 		cluster.Kind = &kind
@@ -1885,7 +1889,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var linuxProfile ContainerServiceLinuxProfile_STATUS
 		err := linuxProfile.AssignProperties_From_ContainerServiceLinuxProfile_STATUS(source.LinuxProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceLinuxProfile_STATUS() to populate field LinuxProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceLinuxProfile_STATUS() to populate field LinuxProfile")
 		}
 		cluster.LinuxProfile = &linuxProfile
 	} else {
@@ -1903,7 +1907,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var metricsProfile ManagedClusterMetricsProfile_STATUS
 		err := metricsProfile.AssignProperties_From_ManagedClusterMetricsProfile_STATUS(source.MetricsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterMetricsProfile_STATUS() to populate field MetricsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterMetricsProfile_STATUS() to populate field MetricsProfile")
 		}
 		cluster.MetricsProfile = &metricsProfile
 	} else {
@@ -1918,7 +1922,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var networkProfile ContainerServiceNetworkProfile_STATUS
 		err := networkProfile.AssignProperties_From_ContainerServiceNetworkProfile_STATUS(source.NetworkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile_STATUS() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile_STATUS() to populate field NetworkProfile")
 		}
 		cluster.NetworkProfile = &networkProfile
 	} else {
@@ -1930,7 +1934,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var nodeProvisioningProfile ManagedClusterNodeProvisioningProfile_STATUS
 		err := nodeProvisioningProfile.AssignProperties_From_ManagedClusterNodeProvisioningProfile_STATUS(source.NodeProvisioningProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterNodeProvisioningProfile_STATUS() to populate field NodeProvisioningProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterNodeProvisioningProfile_STATUS() to populate field NodeProvisioningProfile")
 		}
 		cluster.NodeProvisioningProfile = &nodeProvisioningProfile
 	} else {
@@ -1945,7 +1949,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var nodeResourceGroupProfile ManagedClusterNodeResourceGroupProfile_STATUS
 		err := nodeResourceGroupProfile.AssignProperties_From_ManagedClusterNodeResourceGroupProfile_STATUS(source.NodeResourceGroupProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterNodeResourceGroupProfile_STATUS() to populate field NodeResourceGroupProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterNodeResourceGroupProfile_STATUS() to populate field NodeResourceGroupProfile")
 		}
 		cluster.NodeResourceGroupProfile = &nodeResourceGroupProfile
 	} else {
@@ -1957,7 +1961,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var oidcIssuerProfile ManagedClusterOIDCIssuerProfile_STATUS
 		err := oidcIssuerProfile.AssignProperties_From_ManagedClusterOIDCIssuerProfile_STATUS(source.OidcIssuerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterOIDCIssuerProfile_STATUS() to populate field OidcIssuerProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterOIDCIssuerProfile_STATUS() to populate field OidcIssuerProfile")
 		}
 		cluster.OidcIssuerProfile = &oidcIssuerProfile
 	} else {
@@ -1969,7 +1973,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var podIdentityProfile ManagedClusterPodIdentityProfile_STATUS
 		err := podIdentityProfile.AssignProperties_From_ManagedClusterPodIdentityProfile_STATUS(source.PodIdentityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityProfile_STATUS() to populate field PodIdentityProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityProfile_STATUS() to populate field PodIdentityProfile")
 		}
 		cluster.PodIdentityProfile = &podIdentityProfile
 	} else {
@@ -1981,7 +1985,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var powerState PowerState_STATUS
 		err := powerState.AssignProperties_From_PowerState_STATUS(source.PowerState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PowerState_STATUS() to populate field PowerState")
+			return eris.Wrap(err, "calling AssignProperties_From_PowerState_STATUS() to populate field PowerState")
 		}
 		cluster.PowerState = &powerState
 	} else {
@@ -2000,7 +2004,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 			var privateLinkResource PrivateLinkResource_STATUS
 			err := privateLinkResource.AssignProperties_From_PrivateLinkResource_STATUS(&privateLinkResourceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateLinkResource_STATUS() to populate field PrivateLinkResources")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkResource_STATUS() to populate field PrivateLinkResources")
 			}
 			privateLinkResourceList[privateLinkResourceIndex] = privateLinkResource
 		}
@@ -2023,7 +2027,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var safeguardsProfile SafeguardsProfile_STATUS
 		err := safeguardsProfile.AssignProperties_From_SafeguardsProfile_STATUS(source.SafeguardsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SafeguardsProfile_STATUS() to populate field SafeguardsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_SafeguardsProfile_STATUS() to populate field SafeguardsProfile")
 		}
 		cluster.SafeguardsProfile = &safeguardsProfile
 	} else {
@@ -2035,7 +2039,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var securityProfile ManagedClusterSecurityProfile_STATUS
 		err := securityProfile.AssignProperties_From_ManagedClusterSecurityProfile_STATUS(source.SecurityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfile_STATUS() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfile_STATUS() to populate field SecurityProfile")
 		}
 		cluster.SecurityProfile = &securityProfile
 	} else {
@@ -2047,7 +2051,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var serviceMeshProfile ServiceMeshProfile_STATUS
 		err := serviceMeshProfile.AssignProperties_From_ServiceMeshProfile_STATUS(source.ServiceMeshProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceMeshProfile_STATUS() to populate field ServiceMeshProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceMeshProfile_STATUS() to populate field ServiceMeshProfile")
 		}
 		cluster.ServiceMeshProfile = &serviceMeshProfile
 	} else {
@@ -2059,7 +2063,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var servicePrincipalProfile ManagedClusterServicePrincipalProfile_STATUS
 		err := servicePrincipalProfile.AssignProperties_From_ManagedClusterServicePrincipalProfile_STATUS(source.ServicePrincipalProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterServicePrincipalProfile_STATUS() to populate field ServicePrincipalProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterServicePrincipalProfile_STATUS() to populate field ServicePrincipalProfile")
 		}
 		cluster.ServicePrincipalProfile = &servicePrincipalProfile
 	} else {
@@ -2071,7 +2075,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var sku ManagedClusterSKU_STATUS
 		err := sku.AssignProperties_From_ManagedClusterSKU_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSKU_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSKU_STATUS() to populate field Sku")
 		}
 		cluster.Sku = &sku
 	} else {
@@ -2083,7 +2087,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var storageProfile ManagedClusterStorageProfile_STATUS
 		err := storageProfile.AssignProperties_From_ManagedClusterStorageProfile_STATUS(source.StorageProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfile_STATUS() to populate field StorageProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfile_STATUS() to populate field StorageProfile")
 		}
 		cluster.StorageProfile = &storageProfile
 	} else {
@@ -2098,7 +2102,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		cluster.SystemData = &systemDatum
 	} else {
@@ -2116,7 +2120,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var upgradeSetting ClusterUpgradeSettings_STATUS
 		err := upgradeSetting.AssignProperties_From_ClusterUpgradeSettings_STATUS(source.UpgradeSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ClusterUpgradeSettings_STATUS() to populate field UpgradeSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ClusterUpgradeSettings_STATUS() to populate field UpgradeSettings")
 		}
 		cluster.UpgradeSettings = &upgradeSetting
 	} else {
@@ -2128,7 +2132,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var windowsProfile ManagedClusterWindowsProfile_STATUS
 		err := windowsProfile.AssignProperties_From_ManagedClusterWindowsProfile_STATUS(source.WindowsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterWindowsProfile_STATUS() to populate field WindowsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterWindowsProfile_STATUS() to populate field WindowsProfile")
 		}
 		cluster.WindowsProfile = &windowsProfile
 	} else {
@@ -2140,7 +2144,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 		var workloadAutoScalerProfile ManagedClusterWorkloadAutoScalerProfile_STATUS
 		err := workloadAutoScalerProfile.AssignProperties_From_ManagedClusterWorkloadAutoScalerProfile_STATUS(source.WorkloadAutoScalerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfile_STATUS() to populate field WorkloadAutoScalerProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfile_STATUS() to populate field WorkloadAutoScalerProfile")
 		}
 		cluster.WorkloadAutoScalerProfile = &workloadAutoScalerProfile
 	} else {
@@ -2159,7 +2163,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 	if augmentedCluster, ok := clusterAsAny.(augmentConversionForManagedCluster_STATUS); ok {
 		err := augmentedCluster.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2177,7 +2181,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var aadProfile v20231102ps.ManagedClusterAADProfile_STATUS
 		err := cluster.AadProfile.AssignProperties_To_ManagedClusterAADProfile_STATUS(&aadProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAADProfile_STATUS() to populate field AadProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAADProfile_STATUS() to populate field AadProfile")
 		}
 		destination.AadProfile = &aadProfile
 	} else {
@@ -2193,7 +2197,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 			var addonProfile v20231102ps.ManagedClusterAddonProfile_STATUS
 			err := addonProfileValue.AssignProperties_To_ManagedClusterAddonProfile_STATUS(&addonProfile)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAddonProfile_STATUS() to populate field AddonProfiles")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAddonProfile_STATUS() to populate field AddonProfiles")
 			}
 			addonProfileMap[addonProfileKey] = addonProfile
 		}
@@ -2211,7 +2215,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 			var agentPoolProfile v20231102ps.ManagedClusterAgentPoolProfile_STATUS
 			err := agentPoolProfileItem.AssignProperties_To_ManagedClusterAgentPoolProfile_STATUS(&agentPoolProfile)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAgentPoolProfile_STATUS() to populate field AgentPoolProfiles")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAgentPoolProfile_STATUS() to populate field AgentPoolProfiles")
 			}
 			agentPoolProfileList[agentPoolProfileIndex] = agentPoolProfile
 		}
@@ -2225,7 +2229,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var aiToolchainOperatorProfile v20231102ps.ManagedClusterAIToolchainOperatorProfile_STATUS
 		err := cluster.AiToolchainOperatorProfile.AssignProperties_To_ManagedClusterAIToolchainOperatorProfile_STATUS(&aiToolchainOperatorProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAIToolchainOperatorProfile_STATUS() to populate field AiToolchainOperatorProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAIToolchainOperatorProfile_STATUS() to populate field AiToolchainOperatorProfile")
 		}
 		destination.AiToolchainOperatorProfile = &aiToolchainOperatorProfile
 	} else {
@@ -2237,7 +2241,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var apiServerAccessProfile v20231102ps.ManagedClusterAPIServerAccessProfile_STATUS
 		err := cluster.ApiServerAccessProfile.AssignProperties_To_ManagedClusterAPIServerAccessProfile_STATUS(&apiServerAccessProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAPIServerAccessProfile_STATUS() to populate field ApiServerAccessProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAPIServerAccessProfile_STATUS() to populate field ApiServerAccessProfile")
 		}
 		destination.ApiServerAccessProfile = &apiServerAccessProfile
 	} else {
@@ -2249,7 +2253,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var autoScalerProfile v20231102ps.ManagedClusterProperties_AutoScalerProfile_STATUS
 		err := cluster.AutoScalerProfile.AssignProperties_To_ManagedClusterProperties_AutoScalerProfile_STATUS(&autoScalerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterProperties_AutoScalerProfile_STATUS() to populate field AutoScalerProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterProperties_AutoScalerProfile_STATUS() to populate field AutoScalerProfile")
 		}
 		destination.AutoScalerProfile = &autoScalerProfile
 	} else {
@@ -2261,7 +2265,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var autoUpgradeProfile v20231102ps.ManagedClusterAutoUpgradeProfile_STATUS
 		err := cluster.AutoUpgradeProfile.AssignProperties_To_ManagedClusterAutoUpgradeProfile_STATUS(&autoUpgradeProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAutoUpgradeProfile_STATUS() to populate field AutoUpgradeProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAutoUpgradeProfile_STATUS() to populate field AutoUpgradeProfile")
 		}
 		destination.AutoUpgradeProfile = &autoUpgradeProfile
 	} else {
@@ -2273,7 +2277,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var azureMonitorProfile v20231102ps.ManagedClusterAzureMonitorProfile_STATUS
 		err := cluster.AzureMonitorProfile.AssignProperties_To_ManagedClusterAzureMonitorProfile_STATUS(&azureMonitorProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfile_STATUS() to populate field AzureMonitorProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfile_STATUS() to populate field AzureMonitorProfile")
 		}
 		destination.AzureMonitorProfile = &azureMonitorProfile
 	} else {
@@ -2298,7 +2302,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var creationDatum v20231102ps.CreationData_STATUS
 		err := cluster.CreationData.AssignProperties_To_CreationData_STATUS(&creationDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CreationData_STATUS() to populate field CreationData")
+			return eris.Wrap(err, "calling AssignProperties_To_CreationData_STATUS() to populate field CreationData")
 		}
 		destination.CreationData = &creationDatum
 	} else {
@@ -2358,7 +2362,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var extendedLocation v20231102ps.ExtendedLocation_STATUS
 		err := cluster.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
 		}
 		destination.ExtendedLocation = &extendedLocation
 	} else {
@@ -2376,7 +2380,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var httpProxyConfig v20231102ps.ManagedClusterHTTPProxyConfig_STATUS
 		err := cluster.HttpProxyConfig.AssignProperties_To_ManagedClusterHTTPProxyConfig_STATUS(&httpProxyConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterHTTPProxyConfig_STATUS() to populate field HttpProxyConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterHTTPProxyConfig_STATUS() to populate field HttpProxyConfig")
 		}
 		destination.HttpProxyConfig = &httpProxyConfig
 	} else {
@@ -2391,7 +2395,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var identity v20231102ps.ManagedClusterIdentity_STATUS
 		err := cluster.Identity.AssignProperties_To_ManagedClusterIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -2407,7 +2411,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 			var identityProfile v20231102ps.UserAssignedIdentity_STATUS
 			err := identityProfileValue.AssignProperties_To_UserAssignedIdentity_STATUS(&identityProfile)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field IdentityProfile")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field IdentityProfile")
 			}
 			identityProfileMap[identityProfileKey] = identityProfile
 		}
@@ -2421,7 +2425,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var ingressProfile v20231102ps.ManagedClusterIngressProfile_STATUS
 		err := cluster.IngressProfile.AssignProperties_To_ManagedClusterIngressProfile_STATUS(&ingressProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterIngressProfile_STATUS() to populate field IngressProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterIngressProfile_STATUS() to populate field IngressProfile")
 		}
 		destination.IngressProfile = &ingressProfile
 	} else {
@@ -2443,7 +2447,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var linuxProfile v20231102ps.ContainerServiceLinuxProfile_STATUS
 		err := cluster.LinuxProfile.AssignProperties_To_ContainerServiceLinuxProfile_STATUS(&linuxProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceLinuxProfile_STATUS() to populate field LinuxProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceLinuxProfile_STATUS() to populate field LinuxProfile")
 		}
 		destination.LinuxProfile = &linuxProfile
 	} else {
@@ -2461,7 +2465,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var metricsProfile v20231102ps.ManagedClusterMetricsProfile_STATUS
 		err := cluster.MetricsProfile.AssignProperties_To_ManagedClusterMetricsProfile_STATUS(&metricsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterMetricsProfile_STATUS() to populate field MetricsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterMetricsProfile_STATUS() to populate field MetricsProfile")
 		}
 		destination.MetricsProfile = &metricsProfile
 	} else {
@@ -2476,7 +2480,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var networkProfile v20231102ps.ContainerServiceNetworkProfile_STATUS
 		err := cluster.NetworkProfile.AssignProperties_To_ContainerServiceNetworkProfile_STATUS(&networkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile_STATUS() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile_STATUS() to populate field NetworkProfile")
 		}
 		destination.NetworkProfile = &networkProfile
 	} else {
@@ -2488,7 +2492,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var nodeProvisioningProfile v20231102ps.ManagedClusterNodeProvisioningProfile_STATUS
 		err := cluster.NodeProvisioningProfile.AssignProperties_To_ManagedClusterNodeProvisioningProfile_STATUS(&nodeProvisioningProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterNodeProvisioningProfile_STATUS() to populate field NodeProvisioningProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterNodeProvisioningProfile_STATUS() to populate field NodeProvisioningProfile")
 		}
 		destination.NodeProvisioningProfile = &nodeProvisioningProfile
 	} else {
@@ -2503,7 +2507,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var nodeResourceGroupProfile v20231102ps.ManagedClusterNodeResourceGroupProfile_STATUS
 		err := cluster.NodeResourceGroupProfile.AssignProperties_To_ManagedClusterNodeResourceGroupProfile_STATUS(&nodeResourceGroupProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterNodeResourceGroupProfile_STATUS() to populate field NodeResourceGroupProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterNodeResourceGroupProfile_STATUS() to populate field NodeResourceGroupProfile")
 		}
 		destination.NodeResourceGroupProfile = &nodeResourceGroupProfile
 	} else {
@@ -2515,7 +2519,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var oidcIssuerProfile v20231102ps.ManagedClusterOIDCIssuerProfile_STATUS
 		err := cluster.OidcIssuerProfile.AssignProperties_To_ManagedClusterOIDCIssuerProfile_STATUS(&oidcIssuerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterOIDCIssuerProfile_STATUS() to populate field OidcIssuerProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterOIDCIssuerProfile_STATUS() to populate field OidcIssuerProfile")
 		}
 		destination.OidcIssuerProfile = &oidcIssuerProfile
 	} else {
@@ -2527,7 +2531,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var podIdentityProfile v20231102ps.ManagedClusterPodIdentityProfile_STATUS
 		err := cluster.PodIdentityProfile.AssignProperties_To_ManagedClusterPodIdentityProfile_STATUS(&podIdentityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityProfile_STATUS() to populate field PodIdentityProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityProfile_STATUS() to populate field PodIdentityProfile")
 		}
 		destination.PodIdentityProfile = &podIdentityProfile
 	} else {
@@ -2539,7 +2543,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var powerState v20231102ps.PowerState_STATUS
 		err := cluster.PowerState.AssignProperties_To_PowerState_STATUS(&powerState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PowerState_STATUS() to populate field PowerState")
+			return eris.Wrap(err, "calling AssignProperties_To_PowerState_STATUS() to populate field PowerState")
 		}
 		destination.PowerState = &powerState
 	} else {
@@ -2558,7 +2562,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 			var privateLinkResource v20231102ps.PrivateLinkResource_STATUS
 			err := privateLinkResourceItem.AssignProperties_To_PrivateLinkResource_STATUS(&privateLinkResource)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkResource_STATUS() to populate field PrivateLinkResources")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkResource_STATUS() to populate field PrivateLinkResources")
 			}
 			privateLinkResourceList[privateLinkResourceIndex] = privateLinkResource
 		}
@@ -2581,7 +2585,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var safeguardsProfile v20231102ps.SafeguardsProfile_STATUS
 		err := cluster.SafeguardsProfile.AssignProperties_To_SafeguardsProfile_STATUS(&safeguardsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SafeguardsProfile_STATUS() to populate field SafeguardsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_SafeguardsProfile_STATUS() to populate field SafeguardsProfile")
 		}
 		destination.SafeguardsProfile = &safeguardsProfile
 	} else {
@@ -2593,7 +2597,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var securityProfile v20231102ps.ManagedClusterSecurityProfile_STATUS
 		err := cluster.SecurityProfile.AssignProperties_To_ManagedClusterSecurityProfile_STATUS(&securityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfile_STATUS() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfile_STATUS() to populate field SecurityProfile")
 		}
 		destination.SecurityProfile = &securityProfile
 	} else {
@@ -2605,7 +2609,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var serviceMeshProfile v20231102ps.ServiceMeshProfile_STATUS
 		err := cluster.ServiceMeshProfile.AssignProperties_To_ServiceMeshProfile_STATUS(&serviceMeshProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceMeshProfile_STATUS() to populate field ServiceMeshProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceMeshProfile_STATUS() to populate field ServiceMeshProfile")
 		}
 		destination.ServiceMeshProfile = &serviceMeshProfile
 	} else {
@@ -2617,7 +2621,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var servicePrincipalProfile v20231102ps.ManagedClusterServicePrincipalProfile_STATUS
 		err := cluster.ServicePrincipalProfile.AssignProperties_To_ManagedClusterServicePrincipalProfile_STATUS(&servicePrincipalProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterServicePrincipalProfile_STATUS() to populate field ServicePrincipalProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterServicePrincipalProfile_STATUS() to populate field ServicePrincipalProfile")
 		}
 		destination.ServicePrincipalProfile = &servicePrincipalProfile
 	} else {
@@ -2629,7 +2633,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var sku v20231102ps.ManagedClusterSKU_STATUS
 		err := cluster.Sku.AssignProperties_To_ManagedClusterSKU_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSKU_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSKU_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -2641,7 +2645,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var storageProfile v20231102ps.ManagedClusterStorageProfile_STATUS
 		err := cluster.StorageProfile.AssignProperties_To_ManagedClusterStorageProfile_STATUS(&storageProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfile_STATUS() to populate field StorageProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfile_STATUS() to populate field StorageProfile")
 		}
 		destination.StorageProfile = &storageProfile
 	} else {
@@ -2656,7 +2660,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var systemDatum v20231102ps.SystemData_STATUS
 		err := cluster.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -2674,7 +2678,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var upgradeSetting v20231102ps.ClusterUpgradeSettings_STATUS
 		err := cluster.UpgradeSettings.AssignProperties_To_ClusterUpgradeSettings_STATUS(&upgradeSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ClusterUpgradeSettings_STATUS() to populate field UpgradeSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ClusterUpgradeSettings_STATUS() to populate field UpgradeSettings")
 		}
 		destination.UpgradeSettings = &upgradeSetting
 	} else {
@@ -2686,7 +2690,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var windowsProfile v20231102ps.ManagedClusterWindowsProfile_STATUS
 		err := cluster.WindowsProfile.AssignProperties_To_ManagedClusterWindowsProfile_STATUS(&windowsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterWindowsProfile_STATUS() to populate field WindowsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterWindowsProfile_STATUS() to populate field WindowsProfile")
 		}
 		destination.WindowsProfile = &windowsProfile
 	} else {
@@ -2698,7 +2702,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 		var workloadAutoScalerProfile v20231102ps.ManagedClusterWorkloadAutoScalerProfile_STATUS
 		err := cluster.WorkloadAutoScalerProfile.AssignProperties_To_ManagedClusterWorkloadAutoScalerProfile_STATUS(&workloadAutoScalerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfile_STATUS() to populate field WorkloadAutoScalerProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfile_STATUS() to populate field WorkloadAutoScalerProfile")
 		}
 		destination.WorkloadAutoScalerProfile = &workloadAutoScalerProfile
 	} else {
@@ -2717,7 +2721,7 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 	if augmentedCluster, ok := clusterAsAny.(augmentConversionForManagedCluster_STATUS); ok {
 		err := augmentedCluster.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2752,7 +2756,7 @@ func (settings *ClusterUpgradeSettings) AssignProperties_From_ClusterUpgradeSett
 		var overrideSetting UpgradeOverrideSettings
 		err := overrideSetting.AssignProperties_From_UpgradeOverrideSettings(source.OverrideSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpgradeOverrideSettings() to populate field OverrideSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_UpgradeOverrideSettings() to populate field OverrideSettings")
 		}
 		settings.OverrideSettings = &overrideSetting
 	} else {
@@ -2771,7 +2775,7 @@ func (settings *ClusterUpgradeSettings) AssignProperties_From_ClusterUpgradeSett
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForClusterUpgradeSettings); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2789,7 +2793,7 @@ func (settings *ClusterUpgradeSettings) AssignProperties_To_ClusterUpgradeSettin
 		var overrideSetting v20231102ps.UpgradeOverrideSettings
 		err := settings.OverrideSettings.AssignProperties_To_UpgradeOverrideSettings(&overrideSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpgradeOverrideSettings() to populate field OverrideSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_UpgradeOverrideSettings() to populate field OverrideSettings")
 		}
 		destination.OverrideSettings = &overrideSetting
 	} else {
@@ -2808,7 +2812,7 @@ func (settings *ClusterUpgradeSettings) AssignProperties_To_ClusterUpgradeSettin
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForClusterUpgradeSettings); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2833,7 +2837,7 @@ func (settings *ClusterUpgradeSettings_STATUS) AssignProperties_From_ClusterUpgr
 		var overrideSetting UpgradeOverrideSettings_STATUS
 		err := overrideSetting.AssignProperties_From_UpgradeOverrideSettings_STATUS(source.OverrideSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpgradeOverrideSettings_STATUS() to populate field OverrideSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_UpgradeOverrideSettings_STATUS() to populate field OverrideSettings")
 		}
 		settings.OverrideSettings = &overrideSetting
 	} else {
@@ -2852,7 +2856,7 @@ func (settings *ClusterUpgradeSettings_STATUS) AssignProperties_From_ClusterUpgr
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForClusterUpgradeSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2870,7 +2874,7 @@ func (settings *ClusterUpgradeSettings_STATUS) AssignProperties_To_ClusterUpgrad
 		var overrideSetting v20231102ps.UpgradeOverrideSettings_STATUS
 		err := settings.OverrideSettings.AssignProperties_To_UpgradeOverrideSettings_STATUS(&overrideSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpgradeOverrideSettings_STATUS() to populate field OverrideSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_UpgradeOverrideSettings_STATUS() to populate field OverrideSettings")
 		}
 		destination.OverrideSettings = &overrideSetting
 	} else {
@@ -2889,7 +2893,7 @@ func (settings *ClusterUpgradeSettings_STATUS) AssignProperties_To_ClusterUpgrad
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForClusterUpgradeSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2918,7 +2922,7 @@ func (profile *ContainerServiceLinuxProfile) AssignProperties_From_ContainerServ
 		var ssh ContainerServiceSshConfiguration
 		err := ssh.AssignProperties_From_ContainerServiceSshConfiguration(source.Ssh)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceSshConfiguration() to populate field Ssh")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceSshConfiguration() to populate field Ssh")
 		}
 		profile.Ssh = &ssh
 	} else {
@@ -2937,7 +2941,7 @@ func (profile *ContainerServiceLinuxProfile) AssignProperties_From_ContainerServ
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForContainerServiceLinuxProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2958,7 +2962,7 @@ func (profile *ContainerServiceLinuxProfile) AssignProperties_To_ContainerServic
 		var ssh v20231102ps.ContainerServiceSshConfiguration
 		err := profile.Ssh.AssignProperties_To_ContainerServiceSshConfiguration(&ssh)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceSshConfiguration() to populate field Ssh")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceSshConfiguration() to populate field Ssh")
 		}
 		destination.Ssh = &ssh
 	} else {
@@ -2977,7 +2981,7 @@ func (profile *ContainerServiceLinuxProfile) AssignProperties_To_ContainerServic
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForContainerServiceLinuxProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3006,7 +3010,7 @@ func (profile *ContainerServiceLinuxProfile_STATUS) AssignProperties_From_Contai
 		var ssh ContainerServiceSshConfiguration_STATUS
 		err := ssh.AssignProperties_From_ContainerServiceSshConfiguration_STATUS(source.Ssh)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceSshConfiguration_STATUS() to populate field Ssh")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceSshConfiguration_STATUS() to populate field Ssh")
 		}
 		profile.Ssh = &ssh
 	} else {
@@ -3025,7 +3029,7 @@ func (profile *ContainerServiceLinuxProfile_STATUS) AssignProperties_From_Contai
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForContainerServiceLinuxProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3046,7 +3050,7 @@ func (profile *ContainerServiceLinuxProfile_STATUS) AssignProperties_To_Containe
 		var ssh v20231102ps.ContainerServiceSshConfiguration_STATUS
 		err := profile.Ssh.AssignProperties_To_ContainerServiceSshConfiguration_STATUS(&ssh)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceSshConfiguration_STATUS() to populate field Ssh")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceSshConfiguration_STATUS() to populate field Ssh")
 		}
 		destination.Ssh = &ssh
 	} else {
@@ -3065,7 +3069,7 @@ func (profile *ContainerServiceLinuxProfile_STATUS) AssignProperties_To_Containe
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForContainerServiceLinuxProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3108,7 +3112,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_From_ContainerSe
 		var advancedNetworking AdvancedNetworking
 		err := propertyBag.Pull("AdvancedNetworking", &advancedNetworking)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'AdvancedNetworking' from propertyBag")
+			return eris.Wrap(err, "pulling 'AdvancedNetworking' from propertyBag")
 		}
 
 		profile.AdvancedNetworking = &advancedNetworking
@@ -3127,7 +3131,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_From_ContainerSe
 		var kubeProxyConfig ContainerServiceNetworkProfile_KubeProxyConfig
 		err := kubeProxyConfig.AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig(source.KubeProxyConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig() to populate field KubeProxyConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig() to populate field KubeProxyConfig")
 		}
 		profile.KubeProxyConfig = &kubeProxyConfig
 	} else {
@@ -3139,7 +3143,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_From_ContainerSe
 		var loadBalancerProfile ManagedClusterLoadBalancerProfile
 		err := loadBalancerProfile.AssignProperties_From_ManagedClusterLoadBalancerProfile(source.LoadBalancerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile() to populate field LoadBalancerProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile() to populate field LoadBalancerProfile")
 		}
 		profile.LoadBalancerProfile = &loadBalancerProfile
 	} else {
@@ -3161,7 +3165,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_From_ContainerSe
 		var natGatewayProfile ManagedClusterNATGatewayProfile
 		err := natGatewayProfile.AssignProperties_From_ManagedClusterNATGatewayProfile(source.NatGatewayProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterNATGatewayProfile() to populate field NatGatewayProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterNATGatewayProfile() to populate field NatGatewayProfile")
 		}
 		profile.NatGatewayProfile = &natGatewayProfile
 	} else {
@@ -3197,7 +3201,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_From_ContainerSe
 		var podLinkLocalAccess string
 		err := propertyBag.Pull("PodLinkLocalAccess", &podLinkLocalAccess)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'PodLinkLocalAccess' from propertyBag")
+			return eris.Wrap(err, "pulling 'PodLinkLocalAccess' from propertyBag")
 		}
 
 		profile.PodLinkLocalAccess = &podLinkLocalAccess
@@ -3216,7 +3220,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_From_ContainerSe
 		var staticEgressGatewayProfile ManagedClusterStaticEgressGatewayProfile
 		err := propertyBag.Pull("StaticEgressGatewayProfile", &staticEgressGatewayProfile)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'StaticEgressGatewayProfile' from propertyBag")
+			return eris.Wrap(err, "pulling 'StaticEgressGatewayProfile' from propertyBag")
 		}
 
 		profile.StaticEgressGatewayProfile = &staticEgressGatewayProfile
@@ -3236,7 +3240,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_From_ContainerSe
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForContainerServiceNetworkProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3267,7 +3271,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_To_ContainerServ
 		var kubeProxyConfig v20231102ps.ContainerServiceNetworkProfile_KubeProxyConfig
 		err := profile.KubeProxyConfig.AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig(&kubeProxyConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig() to populate field KubeProxyConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig() to populate field KubeProxyConfig")
 		}
 		destination.KubeProxyConfig = &kubeProxyConfig
 	} else {
@@ -3279,7 +3283,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_To_ContainerServ
 		var loadBalancerProfile v20231102ps.ManagedClusterLoadBalancerProfile
 		err := profile.LoadBalancerProfile.AssignProperties_To_ManagedClusterLoadBalancerProfile(&loadBalancerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile() to populate field LoadBalancerProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile() to populate field LoadBalancerProfile")
 		}
 		destination.LoadBalancerProfile = &loadBalancerProfile
 	} else {
@@ -3294,7 +3298,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_To_ContainerServ
 		var monitoring v20231102ps.NetworkMonitoring
 		err := propertyBag.Pull("Monitoring", &monitoring)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Monitoring' from propertyBag")
+			return eris.Wrap(err, "pulling 'Monitoring' from propertyBag")
 		}
 
 		destination.Monitoring = &monitoring
@@ -3307,7 +3311,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_To_ContainerServ
 		var natGatewayProfile v20231102ps.ManagedClusterNATGatewayProfile
 		err := profile.NatGatewayProfile.AssignProperties_To_ManagedClusterNATGatewayProfile(&natGatewayProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterNATGatewayProfile() to populate field NatGatewayProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterNATGatewayProfile() to populate field NatGatewayProfile")
 		}
 		destination.NatGatewayProfile = &natGatewayProfile
 	} else {
@@ -3370,7 +3374,7 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_To_ContainerServ
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForContainerServiceNetworkProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3413,7 +3417,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_From_Cont
 		var advancedNetworking AdvancedNetworking_STATUS
 		err := propertyBag.Pull("AdvancedNetworking", &advancedNetworking)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'AdvancedNetworking' from propertyBag")
+			return eris.Wrap(err, "pulling 'AdvancedNetworking' from propertyBag")
 		}
 
 		profile.AdvancedNetworking = &advancedNetworking
@@ -3432,7 +3436,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_From_Cont
 		var kubeProxyConfig ContainerServiceNetworkProfile_KubeProxyConfig_STATUS
 		err := kubeProxyConfig.AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig_STATUS(source.KubeProxyConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig_STATUS() to populate field KubeProxyConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig_STATUS() to populate field KubeProxyConfig")
 		}
 		profile.KubeProxyConfig = &kubeProxyConfig
 	} else {
@@ -3444,7 +3448,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_From_Cont
 		var loadBalancerProfile ManagedClusterLoadBalancerProfile_STATUS
 		err := loadBalancerProfile.AssignProperties_From_ManagedClusterLoadBalancerProfile_STATUS(source.LoadBalancerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_STATUS() to populate field LoadBalancerProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_STATUS() to populate field LoadBalancerProfile")
 		}
 		profile.LoadBalancerProfile = &loadBalancerProfile
 	} else {
@@ -3466,7 +3470,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_From_Cont
 		var natGatewayProfile ManagedClusterNATGatewayProfile_STATUS
 		err := natGatewayProfile.AssignProperties_From_ManagedClusterNATGatewayProfile_STATUS(source.NatGatewayProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterNATGatewayProfile_STATUS() to populate field NatGatewayProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterNATGatewayProfile_STATUS() to populate field NatGatewayProfile")
 		}
 		profile.NatGatewayProfile = &natGatewayProfile
 	} else {
@@ -3502,7 +3506,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_From_Cont
 		var podLinkLocalAccess string
 		err := propertyBag.Pull("PodLinkLocalAccess", &podLinkLocalAccess)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'PodLinkLocalAccess' from propertyBag")
+			return eris.Wrap(err, "pulling 'PodLinkLocalAccess' from propertyBag")
 		}
 
 		profile.PodLinkLocalAccess = &podLinkLocalAccess
@@ -3521,7 +3525,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_From_Cont
 		var staticEgressGatewayProfile ManagedClusterStaticEgressGatewayProfile_STATUS
 		err := propertyBag.Pull("StaticEgressGatewayProfile", &staticEgressGatewayProfile)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'StaticEgressGatewayProfile' from propertyBag")
+			return eris.Wrap(err, "pulling 'StaticEgressGatewayProfile' from propertyBag")
 		}
 
 		profile.StaticEgressGatewayProfile = &staticEgressGatewayProfile
@@ -3541,7 +3545,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_From_Cont
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForContainerServiceNetworkProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3572,7 +3576,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_To_Contai
 		var kubeProxyConfig v20231102ps.ContainerServiceNetworkProfile_KubeProxyConfig_STATUS
 		err := profile.KubeProxyConfig.AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig_STATUS(&kubeProxyConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig_STATUS() to populate field KubeProxyConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig_STATUS() to populate field KubeProxyConfig")
 		}
 		destination.KubeProxyConfig = &kubeProxyConfig
 	} else {
@@ -3584,7 +3588,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_To_Contai
 		var loadBalancerProfile v20231102ps.ManagedClusterLoadBalancerProfile_STATUS
 		err := profile.LoadBalancerProfile.AssignProperties_To_ManagedClusterLoadBalancerProfile_STATUS(&loadBalancerProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_STATUS() to populate field LoadBalancerProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_STATUS() to populate field LoadBalancerProfile")
 		}
 		destination.LoadBalancerProfile = &loadBalancerProfile
 	} else {
@@ -3599,7 +3603,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_To_Contai
 		var monitoring v20231102ps.NetworkMonitoring_STATUS
 		err := propertyBag.Pull("Monitoring", &monitoring)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Monitoring' from propertyBag")
+			return eris.Wrap(err, "pulling 'Monitoring' from propertyBag")
 		}
 
 		destination.Monitoring = &monitoring
@@ -3612,7 +3616,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_To_Contai
 		var natGatewayProfile v20231102ps.ManagedClusterNATGatewayProfile_STATUS
 		err := profile.NatGatewayProfile.AssignProperties_To_ManagedClusterNATGatewayProfile_STATUS(&natGatewayProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterNATGatewayProfile_STATUS() to populate field NatGatewayProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterNATGatewayProfile_STATUS() to populate field NatGatewayProfile")
 		}
 		destination.NatGatewayProfile = &natGatewayProfile
 	} else {
@@ -3675,7 +3679,7 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_To_Contai
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForContainerServiceNetworkProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3717,7 +3721,7 @@ func (data *CreationData) AssignProperties_From_CreationData(source *v20231102ps
 	if augmentedData, ok := dataAsAny.(augmentConversionForCreationData); ok {
 		err := augmentedData.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3750,7 +3754,7 @@ func (data *CreationData) AssignProperties_To_CreationData(destination *v2023110
 	if augmentedData, ok := dataAsAny.(augmentConversionForCreationData); ok {
 		err := augmentedData.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3785,7 +3789,7 @@ func (data *CreationData_STATUS) AssignProperties_From_CreationData_STATUS(sourc
 	if augmentedData, ok := dataAsAny.(augmentConversionForCreationData_STATUS); ok {
 		err := augmentedData.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3813,7 +3817,7 @@ func (data *CreationData_STATUS) AssignProperties_To_CreationData_STATUS(destina
 	if augmentedData, ok := dataAsAny.(augmentConversionForCreationData_STATUS); ok {
 		err := augmentedData.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3852,7 +3856,7 @@ func (location *ExtendedLocation) AssignProperties_From_ExtendedLocation(source 
 	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation); ok {
 		err := augmentedLocation.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3883,7 +3887,7 @@ func (location *ExtendedLocation) AssignProperties_To_ExtendedLocation(destinati
 	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation); ok {
 		err := augmentedLocation.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3922,7 +3926,7 @@ func (location *ExtendedLocation_STATUS) AssignProperties_From_ExtendedLocation_
 	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation_STATUS); ok {
 		err := augmentedLocation.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3953,7 +3957,7 @@ func (location *ExtendedLocation_STATUS) AssignProperties_To_ExtendedLocation_ST
 	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation_STATUS); ok {
 		err := augmentedLocation.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4022,7 +4026,7 @@ func (profile *ManagedClusterAADProfile) AssignProperties_From_ManagedClusterAAD
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAADProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4078,7 +4082,7 @@ func (profile *ManagedClusterAADProfile) AssignProperties_To_ManagedClusterAADPr
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAADProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4147,7 +4151,7 @@ func (profile *ManagedClusterAADProfile_STATUS) AssignProperties_From_ManagedClu
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAADProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4203,7 +4207,7 @@ func (profile *ManagedClusterAADProfile_STATUS) AssignProperties_To_ManagedClust
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAADProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4247,7 +4251,7 @@ func (profile *ManagedClusterAddonProfile) AssignProperties_From_ManagedClusterA
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAddonProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4283,7 +4287,7 @@ func (profile *ManagedClusterAddonProfile) AssignProperties_To_ManagedClusterAdd
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAddonProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4321,7 +4325,7 @@ func (profile *ManagedClusterAddonProfile_STATUS) AssignProperties_From_ManagedC
 		var identity UserAssignedIdentity_STATUS
 		err := identity.AssignProperties_From_UserAssignedIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field Identity")
 		}
 		profile.Identity = &identity
 	} else {
@@ -4340,7 +4344,7 @@ func (profile *ManagedClusterAddonProfile_STATUS) AssignProperties_From_ManagedC
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAddonProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4369,7 +4373,7 @@ func (profile *ManagedClusterAddonProfile_STATUS) AssignProperties_To_ManagedClu
 		var identity v20231102ps.UserAssignedIdentity_STATUS
 		err := profile.Identity.AssignProperties_To_UserAssignedIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -4388,7 +4392,7 @@ func (profile *ManagedClusterAddonProfile_STATUS) AssignProperties_To_ManagedClu
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAddonProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4483,7 +4487,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var artifactStreamingProfile AgentPoolArtifactStreamingProfile
 		err := artifactStreamingProfile.AssignProperties_From_AgentPoolArtifactStreamingProfile(source.ArtifactStreamingProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolArtifactStreamingProfile() to populate field ArtifactStreamingProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolArtifactStreamingProfile() to populate field ArtifactStreamingProfile")
 		}
 		profile.ArtifactStreamingProfile = &artifactStreamingProfile
 	} else {
@@ -4509,7 +4513,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var creationDatum CreationData
 		err := creationDatum.AssignProperties_From_CreationData(source.CreationData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CreationData() to populate field CreationData")
+			return eris.Wrap(err, "calling AssignProperties_From_CreationData() to populate field CreationData")
 		}
 		profile.CreationData = &creationDatum
 	} else {
@@ -4569,7 +4573,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var gatewayProfile AgentPoolGatewayProfile
 		err := propertyBag.Pull("GatewayProfile", &gatewayProfile)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'GatewayProfile' from propertyBag")
+			return eris.Wrap(err, "pulling 'GatewayProfile' from propertyBag")
 		}
 
 		profile.GatewayProfile = &gatewayProfile
@@ -4585,7 +4589,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var gpuProfile AgentPoolGPUProfile
 		err := gpuProfile.AssignProperties_From_AgentPoolGPUProfile(source.GpuProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolGPUProfile() to populate field GpuProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolGPUProfile() to populate field GpuProfile")
 		}
 		profile.GpuProfile = &gpuProfile
 	} else {
@@ -4605,7 +4609,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var kubeletConfig KubeletConfig
 		err := kubeletConfig.AssignProperties_From_KubeletConfig(source.KubeletConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KubeletConfig() to populate field KubeletConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_KubeletConfig() to populate field KubeletConfig")
 		}
 		profile.KubeletConfig = &kubeletConfig
 	} else {
@@ -4620,7 +4624,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var linuxOSConfig LinuxOSConfig
 		err := linuxOSConfig.AssignProperties_From_LinuxOSConfig(source.LinuxOSConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LinuxOSConfig() to populate field LinuxOSConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_LinuxOSConfig() to populate field LinuxOSConfig")
 		}
 		profile.LinuxOSConfig = &linuxOSConfig
 	} else {
@@ -4650,7 +4654,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var networkProfile AgentPoolNetworkProfile
 		err := networkProfile.AssignProperties_From_AgentPoolNetworkProfile(source.NetworkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolNetworkProfile() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolNetworkProfile() to populate field NetworkProfile")
 		}
 		profile.NetworkProfile = &networkProfile
 	} else {
@@ -4694,7 +4698,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var podIPAllocationMode string
 		err := propertyBag.Pull("PodIPAllocationMode", &podIPAllocationMode)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'PodIPAllocationMode' from propertyBag")
+			return eris.Wrap(err, "pulling 'PodIPAllocationMode' from propertyBag")
 		}
 
 		profile.PodIPAllocationMode = &podIPAllocationMode
@@ -4715,7 +4719,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var powerState PowerState
 		err := powerState.AssignProperties_From_PowerState(source.PowerState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PowerState() to populate field PowerState")
+			return eris.Wrap(err, "calling AssignProperties_From_PowerState() to populate field PowerState")
 		}
 		profile.PowerState = &powerState
 	} else {
@@ -4744,7 +4748,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var securityProfile AgentPoolSecurityProfile
 		err := securityProfile.AssignProperties_From_AgentPoolSecurityProfile(source.SecurityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolSecurityProfile() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolSecurityProfile() to populate field SecurityProfile")
 		}
 		profile.SecurityProfile = &securityProfile
 	} else {
@@ -4770,7 +4774,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var upgradeSetting AgentPoolUpgradeSettings
 		err := upgradeSetting.AssignProperties_From_AgentPoolUpgradeSettings(source.UpgradeSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolUpgradeSettings() to populate field UpgradeSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolUpgradeSettings() to populate field UpgradeSettings")
 		}
 		profile.UpgradeSettings = &upgradeSetting
 	} else {
@@ -4786,7 +4790,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 			var virtualMachineNodesStatus VirtualMachineNodes
 			err := virtualMachineNodesStatus.AssignProperties_From_VirtualMachineNodes(&virtualMachineNodesStatusItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineNodes() to populate field VirtualMachineNodesStatus")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineNodes() to populate field VirtualMachineNodesStatus")
 			}
 			virtualMachineNodesStatusList[virtualMachineNodesStatusIndex] = virtualMachineNodesStatus
 		}
@@ -4800,7 +4804,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var virtualMachinesProfile VirtualMachinesProfile
 		err := virtualMachinesProfile.AssignProperties_From_VirtualMachinesProfile(source.VirtualMachinesProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachinesProfile() to populate field VirtualMachinesProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachinesProfile() to populate field VirtualMachinesProfile")
 		}
 		profile.VirtualMachinesProfile = &virtualMachinesProfile
 	} else {
@@ -4823,7 +4827,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 		var windowsProfile AgentPoolWindowsProfile
 		err := windowsProfile.AssignProperties_From_AgentPoolWindowsProfile(source.WindowsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolWindowsProfile() to populate field WindowsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolWindowsProfile() to populate field WindowsProfile")
 		}
 		profile.WindowsProfile = &windowsProfile
 	} else {
@@ -4845,7 +4849,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_From_ManagedClus
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAgentPoolProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4863,7 +4867,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var artifactStreamingProfile v20231102ps.AgentPoolArtifactStreamingProfile
 		err := profile.ArtifactStreamingProfile.AssignProperties_To_AgentPoolArtifactStreamingProfile(&artifactStreamingProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolArtifactStreamingProfile() to populate field ArtifactStreamingProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolArtifactStreamingProfile() to populate field ArtifactStreamingProfile")
 		}
 		destination.ArtifactStreamingProfile = &artifactStreamingProfile
 	} else {
@@ -4889,7 +4893,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var creationDatum v20231102ps.CreationData
 		err := profile.CreationData.AssignProperties_To_CreationData(&creationDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CreationData() to populate field CreationData")
+			return eris.Wrap(err, "calling AssignProperties_To_CreationData() to populate field CreationData")
 		}
 		destination.CreationData = &creationDatum
 	} else {
@@ -4959,7 +4963,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var gpuProfile v20231102ps.AgentPoolGPUProfile
 		err := profile.GpuProfile.AssignProperties_To_AgentPoolGPUProfile(&gpuProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolGPUProfile() to populate field GpuProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolGPUProfile() to populate field GpuProfile")
 		}
 		destination.GpuProfile = &gpuProfile
 	} else {
@@ -4979,7 +4983,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var kubeletConfig v20231102ps.KubeletConfig
 		err := profile.KubeletConfig.AssignProperties_To_KubeletConfig(&kubeletConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KubeletConfig() to populate field KubeletConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_KubeletConfig() to populate field KubeletConfig")
 		}
 		destination.KubeletConfig = &kubeletConfig
 	} else {
@@ -4994,7 +4998,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var linuxOSConfig v20231102ps.LinuxOSConfig
 		err := profile.LinuxOSConfig.AssignProperties_To_LinuxOSConfig(&linuxOSConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LinuxOSConfig() to populate field LinuxOSConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_LinuxOSConfig() to populate field LinuxOSConfig")
 		}
 		destination.LinuxOSConfig = &linuxOSConfig
 	} else {
@@ -5024,7 +5028,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var networkProfile v20231102ps.AgentPoolNetworkProfile
 		err := profile.NetworkProfile.AssignProperties_To_AgentPoolNetworkProfile(&networkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolNetworkProfile() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolNetworkProfile() to populate field NetworkProfile")
 		}
 		destination.NetworkProfile = &networkProfile
 	} else {
@@ -5083,7 +5087,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var powerState v20231102ps.PowerState
 		err := profile.PowerState.AssignProperties_To_PowerState(&powerState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PowerState() to populate field PowerState")
+			return eris.Wrap(err, "calling AssignProperties_To_PowerState() to populate field PowerState")
 		}
 		destination.PowerState = &powerState
 	} else {
@@ -5112,7 +5116,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var securityProfile v20231102ps.AgentPoolSecurityProfile
 		err := profile.SecurityProfile.AssignProperties_To_AgentPoolSecurityProfile(&securityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolSecurityProfile() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolSecurityProfile() to populate field SecurityProfile")
 		}
 		destination.SecurityProfile = &securityProfile
 	} else {
@@ -5138,7 +5142,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var upgradeSetting v20231102ps.AgentPoolUpgradeSettings
 		err := profile.UpgradeSettings.AssignProperties_To_AgentPoolUpgradeSettings(&upgradeSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolUpgradeSettings() to populate field UpgradeSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolUpgradeSettings() to populate field UpgradeSettings")
 		}
 		destination.UpgradeSettings = &upgradeSetting
 	} else {
@@ -5154,7 +5158,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 			var virtualMachineNodesStatus v20231102ps.VirtualMachineNodes
 			err := virtualMachineNodesStatusItem.AssignProperties_To_VirtualMachineNodes(&virtualMachineNodesStatus)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineNodes() to populate field VirtualMachineNodesStatus")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineNodes() to populate field VirtualMachineNodesStatus")
 			}
 			virtualMachineNodesStatusList[virtualMachineNodesStatusIndex] = virtualMachineNodesStatus
 		}
@@ -5168,7 +5172,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var virtualMachinesProfile v20231102ps.VirtualMachinesProfile
 		err := profile.VirtualMachinesProfile.AssignProperties_To_VirtualMachinesProfile(&virtualMachinesProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachinesProfile() to populate field VirtualMachinesProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachinesProfile() to populate field VirtualMachinesProfile")
 		}
 		destination.VirtualMachinesProfile = &virtualMachinesProfile
 	} else {
@@ -5191,7 +5195,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 		var windowsProfile v20231102ps.AgentPoolWindowsProfile
 		err := profile.WindowsProfile.AssignProperties_To_AgentPoolWindowsProfile(&windowsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolWindowsProfile() to populate field WindowsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolWindowsProfile() to populate field WindowsProfile")
 		}
 		destination.WindowsProfile = &windowsProfile
 	} else {
@@ -5213,7 +5217,7 @@ func (profile *ManagedClusterAgentPoolProfile) AssignProperties_To_ManagedCluste
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAgentPoolProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -5293,7 +5297,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var artifactStreamingProfile AgentPoolArtifactStreamingProfile_STATUS
 		err := artifactStreamingProfile.AssignProperties_From_AgentPoolArtifactStreamingProfile_STATUS(source.ArtifactStreamingProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolArtifactStreamingProfile_STATUS() to populate field ArtifactStreamingProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolArtifactStreamingProfile_STATUS() to populate field ArtifactStreamingProfile")
 		}
 		profile.ArtifactStreamingProfile = &artifactStreamingProfile
 	} else {
@@ -5314,7 +5318,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var creationDatum CreationData_STATUS
 		err := creationDatum.AssignProperties_From_CreationData_STATUS(source.CreationData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CreationData_STATUS() to populate field CreationData")
+			return eris.Wrap(err, "calling AssignProperties_From_CreationData_STATUS() to populate field CreationData")
 		}
 		profile.CreationData = &creationDatum
 	} else {
@@ -5329,7 +5333,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var eTag string
 		err := propertyBag.Pull("ETag", &eTag)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ETag' from propertyBag")
+			return eris.Wrap(err, "pulling 'ETag' from propertyBag")
 		}
 
 		profile.ETag = &eTag
@@ -5390,7 +5394,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var gatewayProfile AgentPoolGatewayProfile_STATUS
 		err := propertyBag.Pull("GatewayProfile", &gatewayProfile)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'GatewayProfile' from propertyBag")
+			return eris.Wrap(err, "pulling 'GatewayProfile' from propertyBag")
 		}
 
 		profile.GatewayProfile = &gatewayProfile
@@ -5406,7 +5410,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var gpuProfile AgentPoolGPUProfile_STATUS
 		err := gpuProfile.AssignProperties_From_AgentPoolGPUProfile_STATUS(source.GpuProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolGPUProfile_STATUS() to populate field GpuProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolGPUProfile_STATUS() to populate field GpuProfile")
 		}
 		profile.GpuProfile = &gpuProfile
 	} else {
@@ -5421,7 +5425,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var kubeletConfig KubeletConfig_STATUS
 		err := kubeletConfig.AssignProperties_From_KubeletConfig_STATUS(source.KubeletConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KubeletConfig_STATUS() to populate field KubeletConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_KubeletConfig_STATUS() to populate field KubeletConfig")
 		}
 		profile.KubeletConfig = &kubeletConfig
 	} else {
@@ -5436,7 +5440,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var linuxOSConfig LinuxOSConfig_STATUS
 		err := linuxOSConfig.AssignProperties_From_LinuxOSConfig_STATUS(source.LinuxOSConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LinuxOSConfig_STATUS() to populate field LinuxOSConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_LinuxOSConfig_STATUS() to populate field LinuxOSConfig")
 		}
 		profile.LinuxOSConfig = &linuxOSConfig
 	} else {
@@ -5466,7 +5470,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var networkProfile AgentPoolNetworkProfile_STATUS
 		err := networkProfile.AssignProperties_From_AgentPoolNetworkProfile_STATUS(source.NetworkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolNetworkProfile_STATUS() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolNetworkProfile_STATUS() to populate field NetworkProfile")
 		}
 		profile.NetworkProfile = &networkProfile
 	} else {
@@ -5508,7 +5512,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var podIPAllocationMode string
 		err := propertyBag.Pull("PodIPAllocationMode", &podIPAllocationMode)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'PodIPAllocationMode' from propertyBag")
+			return eris.Wrap(err, "pulling 'PodIPAllocationMode' from propertyBag")
 		}
 
 		profile.PodIPAllocationMode = &podIPAllocationMode
@@ -5524,7 +5528,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var powerState PowerState_STATUS
 		err := powerState.AssignProperties_From_PowerState_STATUS(source.PowerState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PowerState_STATUS() to populate field PowerState")
+			return eris.Wrap(err, "calling AssignProperties_From_PowerState_STATUS() to populate field PowerState")
 		}
 		profile.PowerState = &powerState
 	} else {
@@ -5551,7 +5555,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var securityProfile AgentPoolSecurityProfile_STATUS
 		err := securityProfile.AssignProperties_From_AgentPoolSecurityProfile_STATUS(source.SecurityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolSecurityProfile_STATUS() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolSecurityProfile_STATUS() to populate field SecurityProfile")
 		}
 		profile.SecurityProfile = &securityProfile
 	} else {
@@ -5577,7 +5581,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var upgradeSetting AgentPoolUpgradeSettings_STATUS
 		err := upgradeSetting.AssignProperties_From_AgentPoolUpgradeSettings_STATUS(source.UpgradeSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolUpgradeSettings_STATUS() to populate field UpgradeSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolUpgradeSettings_STATUS() to populate field UpgradeSettings")
 		}
 		profile.UpgradeSettings = &upgradeSetting
 	} else {
@@ -5593,7 +5597,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 			var virtualMachineNodesStatus VirtualMachineNodes_STATUS
 			err := virtualMachineNodesStatus.AssignProperties_From_VirtualMachineNodes_STATUS(&virtualMachineNodesStatusItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineNodes_STATUS() to populate field VirtualMachineNodesStatus")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineNodes_STATUS() to populate field VirtualMachineNodesStatus")
 			}
 			virtualMachineNodesStatusList[virtualMachineNodesStatusIndex] = virtualMachineNodesStatus
 		}
@@ -5607,7 +5611,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var virtualMachinesProfile VirtualMachinesProfile_STATUS
 		err := virtualMachinesProfile.AssignProperties_From_VirtualMachinesProfile_STATUS(source.VirtualMachinesProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachinesProfile_STATUS() to populate field VirtualMachinesProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachinesProfile_STATUS() to populate field VirtualMachinesProfile")
 		}
 		profile.VirtualMachinesProfile = &virtualMachinesProfile
 	} else {
@@ -5625,7 +5629,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 		var windowsProfile AgentPoolWindowsProfile_STATUS
 		err := windowsProfile.AssignProperties_From_AgentPoolWindowsProfile_STATUS(source.WindowsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AgentPoolWindowsProfile_STATUS() to populate field WindowsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_AgentPoolWindowsProfile_STATUS() to populate field WindowsProfile")
 		}
 		profile.WindowsProfile = &windowsProfile
 	} else {
@@ -5647,7 +5651,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_From_Mana
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAgentPoolProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -5665,7 +5669,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var artifactStreamingProfile v20231102ps.AgentPoolArtifactStreamingProfile_STATUS
 		err := profile.ArtifactStreamingProfile.AssignProperties_To_AgentPoolArtifactStreamingProfile_STATUS(&artifactStreamingProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolArtifactStreamingProfile_STATUS() to populate field ArtifactStreamingProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolArtifactStreamingProfile_STATUS() to populate field ArtifactStreamingProfile")
 		}
 		destination.ArtifactStreamingProfile = &artifactStreamingProfile
 	} else {
@@ -5686,7 +5690,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var creationDatum v20231102ps.CreationData_STATUS
 		err := profile.CreationData.AssignProperties_To_CreationData_STATUS(&creationDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CreationData_STATUS() to populate field CreationData")
+			return eris.Wrap(err, "calling AssignProperties_To_CreationData_STATUS() to populate field CreationData")
 		}
 		destination.CreationData = &creationDatum
 	} else {
@@ -5766,7 +5770,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var gpuProfile v20231102ps.AgentPoolGPUProfile_STATUS
 		err := profile.GpuProfile.AssignProperties_To_AgentPoolGPUProfile_STATUS(&gpuProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolGPUProfile_STATUS() to populate field GpuProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolGPUProfile_STATUS() to populate field GpuProfile")
 		}
 		destination.GpuProfile = &gpuProfile
 	} else {
@@ -5781,7 +5785,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var kubeletConfig v20231102ps.KubeletConfig_STATUS
 		err := profile.KubeletConfig.AssignProperties_To_KubeletConfig_STATUS(&kubeletConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KubeletConfig_STATUS() to populate field KubeletConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_KubeletConfig_STATUS() to populate field KubeletConfig")
 		}
 		destination.KubeletConfig = &kubeletConfig
 	} else {
@@ -5796,7 +5800,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var linuxOSConfig v20231102ps.LinuxOSConfig_STATUS
 		err := profile.LinuxOSConfig.AssignProperties_To_LinuxOSConfig_STATUS(&linuxOSConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LinuxOSConfig_STATUS() to populate field LinuxOSConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_LinuxOSConfig_STATUS() to populate field LinuxOSConfig")
 		}
 		destination.LinuxOSConfig = &linuxOSConfig
 	} else {
@@ -5826,7 +5830,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var networkProfile v20231102ps.AgentPoolNetworkProfile_STATUS
 		err := profile.NetworkProfile.AssignProperties_To_AgentPoolNetworkProfile_STATUS(&networkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolNetworkProfile_STATUS() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolNetworkProfile_STATUS() to populate field NetworkProfile")
 		}
 		destination.NetworkProfile = &networkProfile
 	} else {
@@ -5878,7 +5882,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var powerState v20231102ps.PowerState_STATUS
 		err := profile.PowerState.AssignProperties_To_PowerState_STATUS(&powerState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PowerState_STATUS() to populate field PowerState")
+			return eris.Wrap(err, "calling AssignProperties_To_PowerState_STATUS() to populate field PowerState")
 		}
 		destination.PowerState = &powerState
 	} else {
@@ -5905,7 +5909,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var securityProfile v20231102ps.AgentPoolSecurityProfile_STATUS
 		err := profile.SecurityProfile.AssignProperties_To_AgentPoolSecurityProfile_STATUS(&securityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolSecurityProfile_STATUS() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolSecurityProfile_STATUS() to populate field SecurityProfile")
 		}
 		destination.SecurityProfile = &securityProfile
 	} else {
@@ -5931,7 +5935,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var upgradeSetting v20231102ps.AgentPoolUpgradeSettings_STATUS
 		err := profile.UpgradeSettings.AssignProperties_To_AgentPoolUpgradeSettings_STATUS(&upgradeSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolUpgradeSettings_STATUS() to populate field UpgradeSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolUpgradeSettings_STATUS() to populate field UpgradeSettings")
 		}
 		destination.UpgradeSettings = &upgradeSetting
 	} else {
@@ -5947,7 +5951,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 			var virtualMachineNodesStatus v20231102ps.VirtualMachineNodes_STATUS
 			err := virtualMachineNodesStatusItem.AssignProperties_To_VirtualMachineNodes_STATUS(&virtualMachineNodesStatus)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineNodes_STATUS() to populate field VirtualMachineNodesStatus")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineNodes_STATUS() to populate field VirtualMachineNodesStatus")
 			}
 			virtualMachineNodesStatusList[virtualMachineNodesStatusIndex] = virtualMachineNodesStatus
 		}
@@ -5961,7 +5965,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var virtualMachinesProfile v20231102ps.VirtualMachinesProfile_STATUS
 		err := profile.VirtualMachinesProfile.AssignProperties_To_VirtualMachinesProfile_STATUS(&virtualMachinesProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachinesProfile_STATUS() to populate field VirtualMachinesProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachinesProfile_STATUS() to populate field VirtualMachinesProfile")
 		}
 		destination.VirtualMachinesProfile = &virtualMachinesProfile
 	} else {
@@ -5979,7 +5983,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 		var windowsProfile v20231102ps.AgentPoolWindowsProfile_STATUS
 		err := profile.WindowsProfile.AssignProperties_To_AgentPoolWindowsProfile_STATUS(&windowsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AgentPoolWindowsProfile_STATUS() to populate field WindowsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_AgentPoolWindowsProfile_STATUS() to populate field WindowsProfile")
 		}
 		destination.WindowsProfile = &windowsProfile
 	} else {
@@ -6001,7 +6005,7 @@ func (profile *ManagedClusterAgentPoolProfile_STATUS) AssignProperties_To_Manage
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAgentPoolProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6043,7 +6047,7 @@ func (profile *ManagedClusterAIToolchainOperatorProfile) AssignProperties_From_M
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAIToolchainOperatorProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6076,7 +6080,7 @@ func (profile *ManagedClusterAIToolchainOperatorProfile) AssignProperties_To_Man
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAIToolchainOperatorProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6118,7 +6122,7 @@ func (profile *ManagedClusterAIToolchainOperatorProfile_STATUS) AssignProperties
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAIToolchainOperatorProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6151,7 +6155,7 @@ func (profile *ManagedClusterAIToolchainOperatorProfile_STATUS) AssignProperties
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAIToolchainOperatorProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6230,7 +6234,7 @@ func (profile *ManagedClusterAPIServerAccessProfile) AssignProperties_From_Manag
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAPIServerAccessProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6296,7 +6300,7 @@ func (profile *ManagedClusterAPIServerAccessProfile) AssignProperties_To_Managed
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAPIServerAccessProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6375,7 +6379,7 @@ func (profile *ManagedClusterAPIServerAccessProfile_STATUS) AssignProperties_Fro
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAPIServerAccessProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6441,7 +6445,7 @@ func (profile *ManagedClusterAPIServerAccessProfile_STATUS) AssignProperties_To_
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAPIServerAccessProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6480,7 +6484,7 @@ func (profile *ManagedClusterAutoUpgradeProfile) AssignProperties_From_ManagedCl
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAutoUpgradeProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6511,7 +6515,7 @@ func (profile *ManagedClusterAutoUpgradeProfile) AssignProperties_To_ManagedClus
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAutoUpgradeProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6550,7 +6554,7 @@ func (profile *ManagedClusterAutoUpgradeProfile_STATUS) AssignProperties_From_Ma
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAutoUpgradeProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6581,7 +6585,7 @@ func (profile *ManagedClusterAutoUpgradeProfile_STATUS) AssignProperties_To_Mana
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAutoUpgradeProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6608,7 +6612,7 @@ func (profile *ManagedClusterAzureMonitorProfile) AssignProperties_From_ManagedC
 		var appMonitoring ManagedClusterAzureMonitorProfileAppMonitoring
 		err := propertyBag.Pull("AppMonitoring", &appMonitoring)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'AppMonitoring' from propertyBag")
+			return eris.Wrap(err, "pulling 'AppMonitoring' from propertyBag")
 		}
 
 		profile.AppMonitoring = &appMonitoring
@@ -6621,7 +6625,7 @@ func (profile *ManagedClusterAzureMonitorProfile) AssignProperties_From_ManagedC
 		var containerInsight ManagedClusterAzureMonitorProfileContainerInsights
 		err := propertyBag.Pull("ContainerInsights", &containerInsight)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ContainerInsights' from propertyBag")
+			return eris.Wrap(err, "pulling 'ContainerInsights' from propertyBag")
 		}
 
 		profile.ContainerInsights = &containerInsight
@@ -6641,7 +6645,7 @@ func (profile *ManagedClusterAzureMonitorProfile) AssignProperties_From_ManagedC
 		var metric ManagedClusterAzureMonitorProfileMetrics
 		err := metric.AssignProperties_From_ManagedClusterAzureMonitorProfileMetrics(source.Metrics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfileMetrics() to populate field Metrics")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfileMetrics() to populate field Metrics")
 		}
 		profile.Metrics = &metric
 	} else {
@@ -6660,7 +6664,7 @@ func (profile *ManagedClusterAzureMonitorProfile) AssignProperties_From_ManagedC
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAzureMonitorProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6692,7 +6696,7 @@ func (profile *ManagedClusterAzureMonitorProfile) AssignProperties_To_ManagedClu
 		var log v20231102ps.ManagedClusterAzureMonitorProfileLogs
 		err := propertyBag.Pull("Logs", &log)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Logs' from propertyBag")
+			return eris.Wrap(err, "pulling 'Logs' from propertyBag")
 		}
 
 		destination.Logs = &log
@@ -6705,7 +6709,7 @@ func (profile *ManagedClusterAzureMonitorProfile) AssignProperties_To_ManagedClu
 		var metric v20231102ps.ManagedClusterAzureMonitorProfileMetrics
 		err := profile.Metrics.AssignProperties_To_ManagedClusterAzureMonitorProfileMetrics(&metric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfileMetrics() to populate field Metrics")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfileMetrics() to populate field Metrics")
 		}
 		destination.Metrics = &metric
 	} else {
@@ -6724,7 +6728,7 @@ func (profile *ManagedClusterAzureMonitorProfile) AssignProperties_To_ManagedClu
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAzureMonitorProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6751,7 +6755,7 @@ func (profile *ManagedClusterAzureMonitorProfile_STATUS) AssignProperties_From_M
 		var appMonitoring ManagedClusterAzureMonitorProfileAppMonitoring_STATUS
 		err := propertyBag.Pull("AppMonitoring", &appMonitoring)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'AppMonitoring' from propertyBag")
+			return eris.Wrap(err, "pulling 'AppMonitoring' from propertyBag")
 		}
 
 		profile.AppMonitoring = &appMonitoring
@@ -6764,7 +6768,7 @@ func (profile *ManagedClusterAzureMonitorProfile_STATUS) AssignProperties_From_M
 		var containerInsight ManagedClusterAzureMonitorProfileContainerInsights_STATUS
 		err := propertyBag.Pull("ContainerInsights", &containerInsight)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ContainerInsights' from propertyBag")
+			return eris.Wrap(err, "pulling 'ContainerInsights' from propertyBag")
 		}
 
 		profile.ContainerInsights = &containerInsight
@@ -6784,7 +6788,7 @@ func (profile *ManagedClusterAzureMonitorProfile_STATUS) AssignProperties_From_M
 		var metric ManagedClusterAzureMonitorProfileMetrics_STATUS
 		err := metric.AssignProperties_From_ManagedClusterAzureMonitorProfileMetrics_STATUS(source.Metrics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfileMetrics_STATUS() to populate field Metrics")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfileMetrics_STATUS() to populate field Metrics")
 		}
 		profile.Metrics = &metric
 	} else {
@@ -6803,7 +6807,7 @@ func (profile *ManagedClusterAzureMonitorProfile_STATUS) AssignProperties_From_M
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAzureMonitorProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6835,7 +6839,7 @@ func (profile *ManagedClusterAzureMonitorProfile_STATUS) AssignProperties_To_Man
 		var log v20231102ps.ManagedClusterAzureMonitorProfileLogs_STATUS
 		err := propertyBag.Pull("Logs", &log)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Logs' from propertyBag")
+			return eris.Wrap(err, "pulling 'Logs' from propertyBag")
 		}
 
 		destination.Logs = &log
@@ -6848,7 +6852,7 @@ func (profile *ManagedClusterAzureMonitorProfile_STATUS) AssignProperties_To_Man
 		var metric v20231102ps.ManagedClusterAzureMonitorProfileMetrics_STATUS
 		err := profile.Metrics.AssignProperties_To_ManagedClusterAzureMonitorProfileMetrics_STATUS(&metric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfileMetrics_STATUS() to populate field Metrics")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfileMetrics_STATUS() to populate field Metrics")
 		}
 		destination.Metrics = &metric
 	} else {
@@ -6867,7 +6871,7 @@ func (profile *ManagedClusterAzureMonitorProfile_STATUS) AssignProperties_To_Man
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterAzureMonitorProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6933,7 +6937,7 @@ func (config *ManagedClusterHTTPProxyConfig) AssignProperties_From_ManagedCluste
 	if augmentedConfig, ok := configAsAny.(augmentConversionForManagedClusterHTTPProxyConfig); ok {
 		err := augmentedConfig.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6970,7 +6974,7 @@ func (config *ManagedClusterHTTPProxyConfig) AssignProperties_To_ManagedClusterH
 	if augmentedConfig, ok := configAsAny.(augmentConversionForManagedClusterHTTPProxyConfig); ok {
 		err := augmentedConfig.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7021,7 +7025,7 @@ func (config *ManagedClusterHTTPProxyConfig_STATUS) AssignProperties_From_Manage
 	if augmentedConfig, ok := configAsAny.(augmentConversionForManagedClusterHTTPProxyConfig_STATUS); ok {
 		err := augmentedConfig.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7061,7 +7065,7 @@ func (config *ManagedClusterHTTPProxyConfig_STATUS) AssignProperties_To_ManagedC
 	if augmentedConfig, ok := configAsAny.(augmentConversionForManagedClusterHTTPProxyConfig_STATUS); ok {
 		err := augmentedConfig.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7092,7 +7096,7 @@ func (identity *ManagedClusterIdentity) AssignProperties_From_ManagedClusterIden
 			var delegatedResource DelegatedResource
 			err := delegatedResource.AssignProperties_From_DelegatedResource(&delegatedResourceValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_DelegatedResource() to populate field DelegatedResources")
+				return eris.Wrap(err, "calling AssignProperties_From_DelegatedResource() to populate field DelegatedResources")
 			}
 			delegatedResourceMap[delegatedResourceKey] = delegatedResource
 		}
@@ -7113,7 +7117,7 @@ func (identity *ManagedClusterIdentity) AssignProperties_From_ManagedClusterIden
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -7134,7 +7138,7 @@ func (identity *ManagedClusterIdentity) AssignProperties_From_ManagedClusterIden
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterIdentity); ok {
 		err := augmentedIdentity.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7156,7 +7160,7 @@ func (identity *ManagedClusterIdentity) AssignProperties_To_ManagedClusterIdenti
 			var delegatedResource v20231102ps.DelegatedResource
 			err := delegatedResourceValue.AssignProperties_To_DelegatedResource(&delegatedResource)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_DelegatedResource() to populate field DelegatedResources")
+				return eris.Wrap(err, "calling AssignProperties_To_DelegatedResource() to populate field DelegatedResources")
 			}
 			delegatedResourceMap[delegatedResourceKey] = delegatedResource
 		}
@@ -7177,7 +7181,7 @@ func (identity *ManagedClusterIdentity) AssignProperties_To_ManagedClusterIdenti
 			var userAssignedIdentity v20231102ps.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -7198,7 +7202,7 @@ func (identity *ManagedClusterIdentity) AssignProperties_To_ManagedClusterIdenti
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterIdentity); ok {
 		err := augmentedIdentity.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7231,7 +7235,7 @@ func (identity *ManagedClusterIdentity_STATUS) AssignProperties_From_ManagedClus
 			var delegatedResource DelegatedResource_STATUS
 			err := delegatedResource.AssignProperties_From_DelegatedResource_STATUS(&delegatedResourceValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_DelegatedResource_STATUS() to populate field DelegatedResources")
+				return eris.Wrap(err, "calling AssignProperties_From_DelegatedResource_STATUS() to populate field DelegatedResources")
 			}
 			delegatedResourceMap[delegatedResourceKey] = delegatedResource
 		}
@@ -7258,7 +7262,7 @@ func (identity *ManagedClusterIdentity_STATUS) AssignProperties_From_ManagedClus
 			var userAssignedIdentity ManagedClusterIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_ManagedClusterIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -7279,7 +7283,7 @@ func (identity *ManagedClusterIdentity_STATUS) AssignProperties_From_ManagedClus
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterIdentity_STATUS); ok {
 		err := augmentedIdentity.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7301,7 +7305,7 @@ func (identity *ManagedClusterIdentity_STATUS) AssignProperties_To_ManagedCluste
 			var delegatedResource v20231102ps.DelegatedResource_STATUS
 			err := delegatedResourceValue.AssignProperties_To_DelegatedResource_STATUS(&delegatedResource)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_DelegatedResource_STATUS() to populate field DelegatedResources")
+				return eris.Wrap(err, "calling AssignProperties_To_DelegatedResource_STATUS() to populate field DelegatedResources")
 			}
 			delegatedResourceMap[delegatedResourceKey] = delegatedResource
 		}
@@ -7328,7 +7332,7 @@ func (identity *ManagedClusterIdentity_STATUS) AssignProperties_To_ManagedCluste
 			var userAssignedIdentity v20231102ps.ManagedClusterIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_ManagedClusterIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -7349,7 +7353,7 @@ func (identity *ManagedClusterIdentity_STATUS) AssignProperties_To_ManagedCluste
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterIdentity_STATUS); ok {
 		err := augmentedIdentity.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7374,7 +7378,7 @@ func (profile *ManagedClusterIngressProfile) AssignProperties_From_ManagedCluste
 		var webAppRouting ManagedClusterIngressProfileWebAppRouting
 		err := webAppRouting.AssignProperties_From_ManagedClusterIngressProfileWebAppRouting(source.WebAppRouting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterIngressProfileWebAppRouting() to populate field WebAppRouting")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterIngressProfileWebAppRouting() to populate field WebAppRouting")
 		}
 		profile.WebAppRouting = &webAppRouting
 	} else {
@@ -7393,7 +7397,7 @@ func (profile *ManagedClusterIngressProfile) AssignProperties_From_ManagedCluste
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterIngressProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7411,7 +7415,7 @@ func (profile *ManagedClusterIngressProfile) AssignProperties_To_ManagedClusterI
 		var webAppRouting v20231102ps.ManagedClusterIngressProfileWebAppRouting
 		err := profile.WebAppRouting.AssignProperties_To_ManagedClusterIngressProfileWebAppRouting(&webAppRouting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterIngressProfileWebAppRouting() to populate field WebAppRouting")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterIngressProfileWebAppRouting() to populate field WebAppRouting")
 		}
 		destination.WebAppRouting = &webAppRouting
 	} else {
@@ -7430,7 +7434,7 @@ func (profile *ManagedClusterIngressProfile) AssignProperties_To_ManagedClusterI
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterIngressProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7455,7 +7459,7 @@ func (profile *ManagedClusterIngressProfile_STATUS) AssignProperties_From_Manage
 		var webAppRouting ManagedClusterIngressProfileWebAppRouting_STATUS
 		err := webAppRouting.AssignProperties_From_ManagedClusterIngressProfileWebAppRouting_STATUS(source.WebAppRouting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterIngressProfileWebAppRouting_STATUS() to populate field WebAppRouting")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterIngressProfileWebAppRouting_STATUS() to populate field WebAppRouting")
 		}
 		profile.WebAppRouting = &webAppRouting
 	} else {
@@ -7474,7 +7478,7 @@ func (profile *ManagedClusterIngressProfile_STATUS) AssignProperties_From_Manage
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterIngressProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7492,7 +7496,7 @@ func (profile *ManagedClusterIngressProfile_STATUS) AssignProperties_To_ManagedC
 		var webAppRouting v20231102ps.ManagedClusterIngressProfileWebAppRouting_STATUS
 		err := profile.WebAppRouting.AssignProperties_To_ManagedClusterIngressProfileWebAppRouting_STATUS(&webAppRouting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterIngressProfileWebAppRouting_STATUS() to populate field WebAppRouting")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterIngressProfileWebAppRouting_STATUS() to populate field WebAppRouting")
 		}
 		destination.WebAppRouting = &webAppRouting
 	} else {
@@ -7511,7 +7515,7 @@ func (profile *ManagedClusterIngressProfile_STATUS) AssignProperties_To_ManagedC
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterIngressProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7536,7 +7540,7 @@ func (profile *ManagedClusterMetricsProfile) AssignProperties_From_ManagedCluste
 		var costAnalysis ManagedClusterCostAnalysis
 		err := costAnalysis.AssignProperties_From_ManagedClusterCostAnalysis(source.CostAnalysis)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterCostAnalysis() to populate field CostAnalysis")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterCostAnalysis() to populate field CostAnalysis")
 		}
 		profile.CostAnalysis = &costAnalysis
 	} else {
@@ -7555,7 +7559,7 @@ func (profile *ManagedClusterMetricsProfile) AssignProperties_From_ManagedCluste
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterMetricsProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7573,7 +7577,7 @@ func (profile *ManagedClusterMetricsProfile) AssignProperties_To_ManagedClusterM
 		var costAnalysis v20231102ps.ManagedClusterCostAnalysis
 		err := profile.CostAnalysis.AssignProperties_To_ManagedClusterCostAnalysis(&costAnalysis)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterCostAnalysis() to populate field CostAnalysis")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterCostAnalysis() to populate field CostAnalysis")
 		}
 		destination.CostAnalysis = &costAnalysis
 	} else {
@@ -7592,7 +7596,7 @@ func (profile *ManagedClusterMetricsProfile) AssignProperties_To_ManagedClusterM
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterMetricsProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7617,7 +7621,7 @@ func (profile *ManagedClusterMetricsProfile_STATUS) AssignProperties_From_Manage
 		var costAnalysis ManagedClusterCostAnalysis_STATUS
 		err := costAnalysis.AssignProperties_From_ManagedClusterCostAnalysis_STATUS(source.CostAnalysis)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterCostAnalysis_STATUS() to populate field CostAnalysis")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterCostAnalysis_STATUS() to populate field CostAnalysis")
 		}
 		profile.CostAnalysis = &costAnalysis
 	} else {
@@ -7636,7 +7640,7 @@ func (profile *ManagedClusterMetricsProfile_STATUS) AssignProperties_From_Manage
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterMetricsProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7654,7 +7658,7 @@ func (profile *ManagedClusterMetricsProfile_STATUS) AssignProperties_To_ManagedC
 		var costAnalysis v20231102ps.ManagedClusterCostAnalysis_STATUS
 		err := profile.CostAnalysis.AssignProperties_To_ManagedClusterCostAnalysis_STATUS(&costAnalysis)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterCostAnalysis_STATUS() to populate field CostAnalysis")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterCostAnalysis_STATUS() to populate field CostAnalysis")
 		}
 		destination.CostAnalysis = &costAnalysis
 	} else {
@@ -7673,7 +7677,7 @@ func (profile *ManagedClusterMetricsProfile_STATUS) AssignProperties_To_ManagedC
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterMetricsProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7707,7 +7711,7 @@ func (profile *ManagedClusterNodeProvisioningProfile) AssignProperties_From_Mana
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNodeProvisioningProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7735,7 +7739,7 @@ func (profile *ManagedClusterNodeProvisioningProfile) AssignProperties_To_Manage
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNodeProvisioningProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7769,7 +7773,7 @@ func (profile *ManagedClusterNodeProvisioningProfile_STATUS) AssignProperties_Fr
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNodeProvisioningProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7797,7 +7801,7 @@ func (profile *ManagedClusterNodeProvisioningProfile_STATUS) AssignProperties_To
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNodeProvisioningProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7832,7 +7836,7 @@ func (profile *ManagedClusterNodeResourceGroupProfile) AssignProperties_From_Man
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNodeResourceGroupProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7860,7 +7864,7 @@ func (profile *ManagedClusterNodeResourceGroupProfile) AssignProperties_To_Manag
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNodeResourceGroupProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7895,7 +7899,7 @@ func (profile *ManagedClusterNodeResourceGroupProfile_STATUS) AssignProperties_F
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNodeResourceGroupProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7923,7 +7927,7 @@ func (profile *ManagedClusterNodeResourceGroupProfile_STATUS) AssignProperties_T
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNodeResourceGroupProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7963,7 +7967,7 @@ func (profile *ManagedClusterOIDCIssuerProfile) AssignProperties_From_ManagedClu
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterOIDCIssuerProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7996,7 +8000,7 @@ func (profile *ManagedClusterOIDCIssuerProfile) AssignProperties_To_ManagedClust
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterOIDCIssuerProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8040,7 +8044,7 @@ func (profile *ManagedClusterOIDCIssuerProfile_STATUS) AssignProperties_From_Man
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterOIDCIssuerProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8076,7 +8080,7 @@ func (profile *ManagedClusterOIDCIssuerProfile_STATUS) AssignProperties_To_Manag
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterOIDCIssuerProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8122,7 +8126,7 @@ func (operator *ManagedClusterOperatorSpec) AssignProperties_From_ManagedCluster
 		var configMap ManagedClusterOperatorConfigMaps
 		err := configMap.AssignProperties_From_ManagedClusterOperatorConfigMaps(source.ConfigMaps)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterOperatorConfigMaps() to populate field ConfigMaps")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterOperatorConfigMaps() to populate field ConfigMaps")
 		}
 		operator.ConfigMaps = &configMap
 	} else {
@@ -8152,7 +8156,7 @@ func (operator *ManagedClusterOperatorSpec) AssignProperties_From_ManagedCluster
 		var secret ManagedClusterOperatorSecrets
 		err := secret.AssignProperties_From_ManagedClusterOperatorSecrets(source.Secrets)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterOperatorSecrets() to populate field Secrets")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterOperatorSecrets() to populate field Secrets")
 		}
 		operator.Secrets = &secret
 	} else {
@@ -8171,7 +8175,7 @@ func (operator *ManagedClusterOperatorSpec) AssignProperties_From_ManagedCluster
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForManagedClusterOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8207,7 +8211,7 @@ func (operator *ManagedClusterOperatorSpec) AssignProperties_To_ManagedClusterOp
 		var configMap v20231102ps.ManagedClusterOperatorConfigMaps
 		err := operator.ConfigMaps.AssignProperties_To_ManagedClusterOperatorConfigMaps(&configMap)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterOperatorConfigMaps() to populate field ConfigMaps")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterOperatorConfigMaps() to populate field ConfigMaps")
 		}
 		destination.ConfigMaps = &configMap
 	} else {
@@ -8237,7 +8241,7 @@ func (operator *ManagedClusterOperatorSpec) AssignProperties_To_ManagedClusterOp
 		var secret v20231102ps.ManagedClusterOperatorSecrets
 		err := operator.Secrets.AssignProperties_To_ManagedClusterOperatorSecrets(&secret)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterOperatorSecrets() to populate field Secrets")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterOperatorSecrets() to populate field Secrets")
 		}
 		destination.Secrets = &secret
 	} else {
@@ -8256,7 +8260,7 @@ func (operator *ManagedClusterOperatorSpec) AssignProperties_To_ManagedClusterOp
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForManagedClusterOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8305,7 +8309,7 @@ func (profile *ManagedClusterPodIdentityProfile) AssignProperties_From_ManagedCl
 			var userAssignedIdentity ManagedClusterPodIdentity
 			err := userAssignedIdentity.AssignProperties_From_ManagedClusterPodIdentity(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentity() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentity() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -8323,7 +8327,7 @@ func (profile *ManagedClusterPodIdentityProfile) AssignProperties_From_ManagedCl
 			var userAssignedIdentityException ManagedClusterPodIdentityException
 			err := userAssignedIdentityException.AssignProperties_From_ManagedClusterPodIdentityException(&userAssignedIdentityExceptionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityException() to populate field UserAssignedIdentityExceptions")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityException() to populate field UserAssignedIdentityExceptions")
 			}
 			userAssignedIdentityExceptionList[userAssignedIdentityExceptionIndex] = userAssignedIdentityException
 		}
@@ -8344,7 +8348,7 @@ func (profile *ManagedClusterPodIdentityProfile) AssignProperties_From_ManagedCl
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterPodIdentityProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8382,7 +8386,7 @@ func (profile *ManagedClusterPodIdentityProfile) AssignProperties_To_ManagedClus
 			var userAssignedIdentity v20231102ps.ManagedClusterPodIdentity
 			err := userAssignedIdentityItem.AssignProperties_To_ManagedClusterPodIdentity(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentity() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentity() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -8400,7 +8404,7 @@ func (profile *ManagedClusterPodIdentityProfile) AssignProperties_To_ManagedClus
 			var userAssignedIdentityException v20231102ps.ManagedClusterPodIdentityException
 			err := userAssignedIdentityExceptionItem.AssignProperties_To_ManagedClusterPodIdentityException(&userAssignedIdentityException)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityException() to populate field UserAssignedIdentityExceptions")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityException() to populate field UserAssignedIdentityExceptions")
 			}
 			userAssignedIdentityExceptionList[userAssignedIdentityExceptionIndex] = userAssignedIdentityException
 		}
@@ -8421,7 +8425,7 @@ func (profile *ManagedClusterPodIdentityProfile) AssignProperties_To_ManagedClus
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterPodIdentityProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8470,7 +8474,7 @@ func (profile *ManagedClusterPodIdentityProfile_STATUS) AssignProperties_From_Ma
 			var userAssignedIdentity ManagedClusterPodIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_ManagedClusterPodIdentity_STATUS(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentity_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentity_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -8488,7 +8492,7 @@ func (profile *ManagedClusterPodIdentityProfile_STATUS) AssignProperties_From_Ma
 			var userAssignedIdentityException ManagedClusterPodIdentityException_STATUS
 			err := userAssignedIdentityException.AssignProperties_From_ManagedClusterPodIdentityException_STATUS(&userAssignedIdentityExceptionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityException_STATUS() to populate field UserAssignedIdentityExceptions")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityException_STATUS() to populate field UserAssignedIdentityExceptions")
 			}
 			userAssignedIdentityExceptionList[userAssignedIdentityExceptionIndex] = userAssignedIdentityException
 		}
@@ -8509,7 +8513,7 @@ func (profile *ManagedClusterPodIdentityProfile_STATUS) AssignProperties_From_Ma
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterPodIdentityProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8547,7 +8551,7 @@ func (profile *ManagedClusterPodIdentityProfile_STATUS) AssignProperties_To_Mana
 			var userAssignedIdentity v20231102ps.ManagedClusterPodIdentity_STATUS
 			err := userAssignedIdentityItem.AssignProperties_To_ManagedClusterPodIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentity_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentity_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -8565,7 +8569,7 @@ func (profile *ManagedClusterPodIdentityProfile_STATUS) AssignProperties_To_Mana
 			var userAssignedIdentityException v20231102ps.ManagedClusterPodIdentityException_STATUS
 			err := userAssignedIdentityExceptionItem.AssignProperties_To_ManagedClusterPodIdentityException_STATUS(&userAssignedIdentityException)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityException_STATUS() to populate field UserAssignedIdentityExceptions")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityException_STATUS() to populate field UserAssignedIdentityExceptions")
 			}
 			userAssignedIdentityExceptionList[userAssignedIdentityExceptionIndex] = userAssignedIdentityException
 		}
@@ -8586,7 +8590,7 @@ func (profile *ManagedClusterPodIdentityProfile_STATUS) AssignProperties_To_Mana
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterPodIdentityProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8711,7 +8715,7 @@ func (profile *ManagedClusterProperties_AutoScalerProfile) AssignProperties_From
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterProperties_AutoScalerProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8811,7 +8815,7 @@ func (profile *ManagedClusterProperties_AutoScalerProfile) AssignProperties_To_M
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterProperties_AutoScalerProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8936,7 +8940,7 @@ func (profile *ManagedClusterProperties_AutoScalerProfile_STATUS) AssignProperti
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterProperties_AutoScalerProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9036,7 +9040,7 @@ func (profile *ManagedClusterProperties_AutoScalerProfile_STATUS) AssignProperti
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterProperties_AutoScalerProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9067,7 +9071,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_From_ManagedClust
 		var azureKeyVaultKm AzureKeyVaultKms
 		err := azureKeyVaultKm.AssignProperties_From_AzureKeyVaultKms(source.AzureKeyVaultKms)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AzureKeyVaultKms() to populate field AzureKeyVaultKms")
+			return eris.Wrap(err, "calling AssignProperties_From_AzureKeyVaultKms() to populate field AzureKeyVaultKms")
 		}
 		profile.AzureKeyVaultKms = &azureKeyVaultKm
 	} else {
@@ -9082,7 +9086,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_From_ManagedClust
 		var defender ManagedClusterSecurityProfileDefender
 		err := defender.AssignProperties_From_ManagedClusterSecurityProfileDefender(source.Defender)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileDefender() to populate field Defender")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileDefender() to populate field Defender")
 		}
 		profile.Defender = &defender
 	} else {
@@ -9094,7 +9098,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_From_ManagedClust
 		var imageCleaner ManagedClusterSecurityProfileImageCleaner
 		err := imageCleaner.AssignProperties_From_ManagedClusterSecurityProfileImageCleaner(source.ImageCleaner)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileImageCleaner() to populate field ImageCleaner")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileImageCleaner() to populate field ImageCleaner")
 		}
 		profile.ImageCleaner = &imageCleaner
 	} else {
@@ -9106,7 +9110,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_From_ManagedClust
 		var imageIntegrity ManagedClusterSecurityProfileImageIntegrity
 		err := imageIntegrity.AssignProperties_From_ManagedClusterSecurityProfileImageIntegrity(source.ImageIntegrity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileImageIntegrity() to populate field ImageIntegrity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileImageIntegrity() to populate field ImageIntegrity")
 		}
 		profile.ImageIntegrity = &imageIntegrity
 	} else {
@@ -9118,7 +9122,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_From_ManagedClust
 		var nodeRestriction ManagedClusterSecurityProfileNodeRestriction
 		err := nodeRestriction.AssignProperties_From_ManagedClusterSecurityProfileNodeRestriction(source.NodeRestriction)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileNodeRestriction() to populate field NodeRestriction")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileNodeRestriction() to populate field NodeRestriction")
 		}
 		profile.NodeRestriction = &nodeRestriction
 	} else {
@@ -9130,7 +9134,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_From_ManagedClust
 		var workloadIdentity ManagedClusterSecurityProfileWorkloadIdentity
 		err := workloadIdentity.AssignProperties_From_ManagedClusterSecurityProfileWorkloadIdentity(source.WorkloadIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileWorkloadIdentity() to populate field WorkloadIdentity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileWorkloadIdentity() to populate field WorkloadIdentity")
 		}
 		profile.WorkloadIdentity = &workloadIdentity
 	} else {
@@ -9149,7 +9153,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_From_ManagedClust
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterSecurityProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9167,7 +9171,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_To_ManagedCluster
 		var azureKeyVaultKm v20231102ps.AzureKeyVaultKms
 		err := profile.AzureKeyVaultKms.AssignProperties_To_AzureKeyVaultKms(&azureKeyVaultKm)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AzureKeyVaultKms() to populate field AzureKeyVaultKms")
+			return eris.Wrap(err, "calling AssignProperties_To_AzureKeyVaultKms() to populate field AzureKeyVaultKms")
 		}
 		destination.AzureKeyVaultKms = &azureKeyVaultKm
 	} else {
@@ -9182,7 +9186,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_To_ManagedCluster
 		var defender v20231102ps.ManagedClusterSecurityProfileDefender
 		err := profile.Defender.AssignProperties_To_ManagedClusterSecurityProfileDefender(&defender)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileDefender() to populate field Defender")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileDefender() to populate field Defender")
 		}
 		destination.Defender = &defender
 	} else {
@@ -9194,7 +9198,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_To_ManagedCluster
 		var imageCleaner v20231102ps.ManagedClusterSecurityProfileImageCleaner
 		err := profile.ImageCleaner.AssignProperties_To_ManagedClusterSecurityProfileImageCleaner(&imageCleaner)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileImageCleaner() to populate field ImageCleaner")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileImageCleaner() to populate field ImageCleaner")
 		}
 		destination.ImageCleaner = &imageCleaner
 	} else {
@@ -9206,7 +9210,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_To_ManagedCluster
 		var imageIntegrity v20231102ps.ManagedClusterSecurityProfileImageIntegrity
 		err := profile.ImageIntegrity.AssignProperties_To_ManagedClusterSecurityProfileImageIntegrity(&imageIntegrity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileImageIntegrity() to populate field ImageIntegrity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileImageIntegrity() to populate field ImageIntegrity")
 		}
 		destination.ImageIntegrity = &imageIntegrity
 	} else {
@@ -9218,7 +9222,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_To_ManagedCluster
 		var nodeRestriction v20231102ps.ManagedClusterSecurityProfileNodeRestriction
 		err := profile.NodeRestriction.AssignProperties_To_ManagedClusterSecurityProfileNodeRestriction(&nodeRestriction)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileNodeRestriction() to populate field NodeRestriction")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileNodeRestriction() to populate field NodeRestriction")
 		}
 		destination.NodeRestriction = &nodeRestriction
 	} else {
@@ -9230,7 +9234,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_To_ManagedCluster
 		var workloadIdentity v20231102ps.ManagedClusterSecurityProfileWorkloadIdentity
 		err := profile.WorkloadIdentity.AssignProperties_To_ManagedClusterSecurityProfileWorkloadIdentity(&workloadIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileWorkloadIdentity() to populate field WorkloadIdentity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileWorkloadIdentity() to populate field WorkloadIdentity")
 		}
 		destination.WorkloadIdentity = &workloadIdentity
 	} else {
@@ -9249,7 +9253,7 @@ func (profile *ManagedClusterSecurityProfile) AssignProperties_To_ManagedCluster
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterSecurityProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9280,7 +9284,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_From_Manag
 		var azureKeyVaultKm AzureKeyVaultKms_STATUS
 		err := azureKeyVaultKm.AssignProperties_From_AzureKeyVaultKms_STATUS(source.AzureKeyVaultKms)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AzureKeyVaultKms_STATUS() to populate field AzureKeyVaultKms")
+			return eris.Wrap(err, "calling AssignProperties_From_AzureKeyVaultKms_STATUS() to populate field AzureKeyVaultKms")
 		}
 		profile.AzureKeyVaultKms = &azureKeyVaultKm
 	} else {
@@ -9295,7 +9299,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_From_Manag
 		var defender ManagedClusterSecurityProfileDefender_STATUS
 		err := defender.AssignProperties_From_ManagedClusterSecurityProfileDefender_STATUS(source.Defender)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileDefender_STATUS() to populate field Defender")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileDefender_STATUS() to populate field Defender")
 		}
 		profile.Defender = &defender
 	} else {
@@ -9307,7 +9311,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_From_Manag
 		var imageCleaner ManagedClusterSecurityProfileImageCleaner_STATUS
 		err := imageCleaner.AssignProperties_From_ManagedClusterSecurityProfileImageCleaner_STATUS(source.ImageCleaner)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileImageCleaner_STATUS() to populate field ImageCleaner")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileImageCleaner_STATUS() to populate field ImageCleaner")
 		}
 		profile.ImageCleaner = &imageCleaner
 	} else {
@@ -9319,7 +9323,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_From_Manag
 		var imageIntegrity ManagedClusterSecurityProfileImageIntegrity_STATUS
 		err := imageIntegrity.AssignProperties_From_ManagedClusterSecurityProfileImageIntegrity_STATUS(source.ImageIntegrity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileImageIntegrity_STATUS() to populate field ImageIntegrity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileImageIntegrity_STATUS() to populate field ImageIntegrity")
 		}
 		profile.ImageIntegrity = &imageIntegrity
 	} else {
@@ -9331,7 +9335,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_From_Manag
 		var nodeRestriction ManagedClusterSecurityProfileNodeRestriction_STATUS
 		err := nodeRestriction.AssignProperties_From_ManagedClusterSecurityProfileNodeRestriction_STATUS(source.NodeRestriction)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileNodeRestriction_STATUS() to populate field NodeRestriction")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileNodeRestriction_STATUS() to populate field NodeRestriction")
 		}
 		profile.NodeRestriction = &nodeRestriction
 	} else {
@@ -9343,7 +9347,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_From_Manag
 		var workloadIdentity ManagedClusterSecurityProfileWorkloadIdentity_STATUS
 		err := workloadIdentity.AssignProperties_From_ManagedClusterSecurityProfileWorkloadIdentity_STATUS(source.WorkloadIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileWorkloadIdentity_STATUS() to populate field WorkloadIdentity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileWorkloadIdentity_STATUS() to populate field WorkloadIdentity")
 		}
 		profile.WorkloadIdentity = &workloadIdentity
 	} else {
@@ -9362,7 +9366,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_From_Manag
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterSecurityProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9380,7 +9384,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_To_Managed
 		var azureKeyVaultKm v20231102ps.AzureKeyVaultKms_STATUS
 		err := profile.AzureKeyVaultKms.AssignProperties_To_AzureKeyVaultKms_STATUS(&azureKeyVaultKm)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AzureKeyVaultKms_STATUS() to populate field AzureKeyVaultKms")
+			return eris.Wrap(err, "calling AssignProperties_To_AzureKeyVaultKms_STATUS() to populate field AzureKeyVaultKms")
 		}
 		destination.AzureKeyVaultKms = &azureKeyVaultKm
 	} else {
@@ -9395,7 +9399,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_To_Managed
 		var defender v20231102ps.ManagedClusterSecurityProfileDefender_STATUS
 		err := profile.Defender.AssignProperties_To_ManagedClusterSecurityProfileDefender_STATUS(&defender)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileDefender_STATUS() to populate field Defender")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileDefender_STATUS() to populate field Defender")
 		}
 		destination.Defender = &defender
 	} else {
@@ -9407,7 +9411,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_To_Managed
 		var imageCleaner v20231102ps.ManagedClusterSecurityProfileImageCleaner_STATUS
 		err := profile.ImageCleaner.AssignProperties_To_ManagedClusterSecurityProfileImageCleaner_STATUS(&imageCleaner)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileImageCleaner_STATUS() to populate field ImageCleaner")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileImageCleaner_STATUS() to populate field ImageCleaner")
 		}
 		destination.ImageCleaner = &imageCleaner
 	} else {
@@ -9419,7 +9423,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_To_Managed
 		var imageIntegrity v20231102ps.ManagedClusterSecurityProfileImageIntegrity_STATUS
 		err := profile.ImageIntegrity.AssignProperties_To_ManagedClusterSecurityProfileImageIntegrity_STATUS(&imageIntegrity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileImageIntegrity_STATUS() to populate field ImageIntegrity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileImageIntegrity_STATUS() to populate field ImageIntegrity")
 		}
 		destination.ImageIntegrity = &imageIntegrity
 	} else {
@@ -9431,7 +9435,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_To_Managed
 		var nodeRestriction v20231102ps.ManagedClusterSecurityProfileNodeRestriction_STATUS
 		err := profile.NodeRestriction.AssignProperties_To_ManagedClusterSecurityProfileNodeRestriction_STATUS(&nodeRestriction)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileNodeRestriction_STATUS() to populate field NodeRestriction")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileNodeRestriction_STATUS() to populate field NodeRestriction")
 		}
 		destination.NodeRestriction = &nodeRestriction
 	} else {
@@ -9443,7 +9447,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_To_Managed
 		var workloadIdentity v20231102ps.ManagedClusterSecurityProfileWorkloadIdentity_STATUS
 		err := profile.WorkloadIdentity.AssignProperties_To_ManagedClusterSecurityProfileWorkloadIdentity_STATUS(&workloadIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileWorkloadIdentity_STATUS() to populate field WorkloadIdentity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileWorkloadIdentity_STATUS() to populate field WorkloadIdentity")
 		}
 		destination.WorkloadIdentity = &workloadIdentity
 	} else {
@@ -9462,7 +9466,7 @@ func (profile *ManagedClusterSecurityProfile_STATUS) AssignProperties_To_Managed
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterSecurityProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9506,7 +9510,7 @@ func (profile *ManagedClusterServicePrincipalProfile) AssignProperties_From_Mana
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterServicePrincipalProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9542,7 +9546,7 @@ func (profile *ManagedClusterServicePrincipalProfile) AssignProperties_To_Manage
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterServicePrincipalProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9577,7 +9581,7 @@ func (profile *ManagedClusterServicePrincipalProfile_STATUS) AssignProperties_Fr
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterServicePrincipalProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9605,7 +9609,7 @@ func (profile *ManagedClusterServicePrincipalProfile_STATUS) AssignProperties_To
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterServicePrincipalProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9644,7 +9648,7 @@ func (clusterSKU *ManagedClusterSKU) AssignProperties_From_ManagedClusterSKU(sou
 	if augmentedClusterSKU, ok := clusterSKUAsAny.(augmentConversionForManagedClusterSKU); ok {
 		err := augmentedClusterSKU.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9675,7 +9679,7 @@ func (clusterSKU *ManagedClusterSKU) AssignProperties_To_ManagedClusterSKU(desti
 	if augmentedClusterSKU, ok := clusterSKUAsAny.(augmentConversionForManagedClusterSKU); ok {
 		err := augmentedClusterSKU.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9714,7 +9718,7 @@ func (clusterSKU *ManagedClusterSKU_STATUS) AssignProperties_From_ManagedCluster
 	if augmentedClusterSKU, ok := clusterSKUAsAny.(augmentConversionForManagedClusterSKU_STATUS); ok {
 		err := augmentedClusterSKU.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9745,7 +9749,7 @@ func (clusterSKU *ManagedClusterSKU_STATUS) AssignProperties_To_ManagedClusterSK
 	if augmentedClusterSKU, ok := clusterSKUAsAny.(augmentConversionForManagedClusterSKU_STATUS); ok {
 		err := augmentedClusterSKU.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9773,7 +9777,7 @@ func (profile *ManagedClusterStorageProfile) AssignProperties_From_ManagedCluste
 		var blobCSIDriver ManagedClusterStorageProfileBlobCSIDriver
 		err := blobCSIDriver.AssignProperties_From_ManagedClusterStorageProfileBlobCSIDriver(source.BlobCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileBlobCSIDriver() to populate field BlobCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileBlobCSIDriver() to populate field BlobCSIDriver")
 		}
 		profile.BlobCSIDriver = &blobCSIDriver
 	} else {
@@ -9785,7 +9789,7 @@ func (profile *ManagedClusterStorageProfile) AssignProperties_From_ManagedCluste
 		var diskCSIDriver ManagedClusterStorageProfileDiskCSIDriver
 		err := diskCSIDriver.AssignProperties_From_ManagedClusterStorageProfileDiskCSIDriver(source.DiskCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileDiskCSIDriver() to populate field DiskCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileDiskCSIDriver() to populate field DiskCSIDriver")
 		}
 		profile.DiskCSIDriver = &diskCSIDriver
 	} else {
@@ -9797,7 +9801,7 @@ func (profile *ManagedClusterStorageProfile) AssignProperties_From_ManagedCluste
 		var fileCSIDriver ManagedClusterStorageProfileFileCSIDriver
 		err := fileCSIDriver.AssignProperties_From_ManagedClusterStorageProfileFileCSIDriver(source.FileCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileFileCSIDriver() to populate field FileCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileFileCSIDriver() to populate field FileCSIDriver")
 		}
 		profile.FileCSIDriver = &fileCSIDriver
 	} else {
@@ -9809,7 +9813,7 @@ func (profile *ManagedClusterStorageProfile) AssignProperties_From_ManagedCluste
 		var snapshotController ManagedClusterStorageProfileSnapshotController
 		err := snapshotController.AssignProperties_From_ManagedClusterStorageProfileSnapshotController(source.SnapshotController)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileSnapshotController() to populate field SnapshotController")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileSnapshotController() to populate field SnapshotController")
 		}
 		profile.SnapshotController = &snapshotController
 	} else {
@@ -9828,7 +9832,7 @@ func (profile *ManagedClusterStorageProfile) AssignProperties_From_ManagedCluste
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterStorageProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9846,7 +9850,7 @@ func (profile *ManagedClusterStorageProfile) AssignProperties_To_ManagedClusterS
 		var blobCSIDriver v20231102ps.ManagedClusterStorageProfileBlobCSIDriver
 		err := profile.BlobCSIDriver.AssignProperties_To_ManagedClusterStorageProfileBlobCSIDriver(&blobCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileBlobCSIDriver() to populate field BlobCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileBlobCSIDriver() to populate field BlobCSIDriver")
 		}
 		destination.BlobCSIDriver = &blobCSIDriver
 	} else {
@@ -9858,7 +9862,7 @@ func (profile *ManagedClusterStorageProfile) AssignProperties_To_ManagedClusterS
 		var diskCSIDriver v20231102ps.ManagedClusterStorageProfileDiskCSIDriver
 		err := profile.DiskCSIDriver.AssignProperties_To_ManagedClusterStorageProfileDiskCSIDriver(&diskCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileDiskCSIDriver() to populate field DiskCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileDiskCSIDriver() to populate field DiskCSIDriver")
 		}
 		destination.DiskCSIDriver = &diskCSIDriver
 	} else {
@@ -9870,7 +9874,7 @@ func (profile *ManagedClusterStorageProfile) AssignProperties_To_ManagedClusterS
 		var fileCSIDriver v20231102ps.ManagedClusterStorageProfileFileCSIDriver
 		err := profile.FileCSIDriver.AssignProperties_To_ManagedClusterStorageProfileFileCSIDriver(&fileCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileFileCSIDriver() to populate field FileCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileFileCSIDriver() to populate field FileCSIDriver")
 		}
 		destination.FileCSIDriver = &fileCSIDriver
 	} else {
@@ -9882,7 +9886,7 @@ func (profile *ManagedClusterStorageProfile) AssignProperties_To_ManagedClusterS
 		var snapshotController v20231102ps.ManagedClusterStorageProfileSnapshotController
 		err := profile.SnapshotController.AssignProperties_To_ManagedClusterStorageProfileSnapshotController(&snapshotController)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileSnapshotController() to populate field SnapshotController")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileSnapshotController() to populate field SnapshotController")
 		}
 		destination.SnapshotController = &snapshotController
 	} else {
@@ -9901,7 +9905,7 @@ func (profile *ManagedClusterStorageProfile) AssignProperties_To_ManagedClusterS
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterStorageProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9929,7 +9933,7 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_From_Manage
 		var blobCSIDriver ManagedClusterStorageProfileBlobCSIDriver_STATUS
 		err := blobCSIDriver.AssignProperties_From_ManagedClusterStorageProfileBlobCSIDriver_STATUS(source.BlobCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileBlobCSIDriver_STATUS() to populate field BlobCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileBlobCSIDriver_STATUS() to populate field BlobCSIDriver")
 		}
 		profile.BlobCSIDriver = &blobCSIDriver
 	} else {
@@ -9941,7 +9945,7 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_From_Manage
 		var diskCSIDriver ManagedClusterStorageProfileDiskCSIDriver_STATUS
 		err := diskCSIDriver.AssignProperties_From_ManagedClusterStorageProfileDiskCSIDriver_STATUS(source.DiskCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileDiskCSIDriver_STATUS() to populate field DiskCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileDiskCSIDriver_STATUS() to populate field DiskCSIDriver")
 		}
 		profile.DiskCSIDriver = &diskCSIDriver
 	} else {
@@ -9953,7 +9957,7 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_From_Manage
 		var fileCSIDriver ManagedClusterStorageProfileFileCSIDriver_STATUS
 		err := fileCSIDriver.AssignProperties_From_ManagedClusterStorageProfileFileCSIDriver_STATUS(source.FileCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileFileCSIDriver_STATUS() to populate field FileCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileFileCSIDriver_STATUS() to populate field FileCSIDriver")
 		}
 		profile.FileCSIDriver = &fileCSIDriver
 	} else {
@@ -9965,7 +9969,7 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_From_Manage
 		var snapshotController ManagedClusterStorageProfileSnapshotController_STATUS
 		err := snapshotController.AssignProperties_From_ManagedClusterStorageProfileSnapshotController_STATUS(source.SnapshotController)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileSnapshotController_STATUS() to populate field SnapshotController")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterStorageProfileSnapshotController_STATUS() to populate field SnapshotController")
 		}
 		profile.SnapshotController = &snapshotController
 	} else {
@@ -9984,7 +9988,7 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_From_Manage
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterStorageProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10002,7 +10006,7 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_To_ManagedC
 		var blobCSIDriver v20231102ps.ManagedClusterStorageProfileBlobCSIDriver_STATUS
 		err := profile.BlobCSIDriver.AssignProperties_To_ManagedClusterStorageProfileBlobCSIDriver_STATUS(&blobCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileBlobCSIDriver_STATUS() to populate field BlobCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileBlobCSIDriver_STATUS() to populate field BlobCSIDriver")
 		}
 		destination.BlobCSIDriver = &blobCSIDriver
 	} else {
@@ -10014,7 +10018,7 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_To_ManagedC
 		var diskCSIDriver v20231102ps.ManagedClusterStorageProfileDiskCSIDriver_STATUS
 		err := profile.DiskCSIDriver.AssignProperties_To_ManagedClusterStorageProfileDiskCSIDriver_STATUS(&diskCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileDiskCSIDriver_STATUS() to populate field DiskCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileDiskCSIDriver_STATUS() to populate field DiskCSIDriver")
 		}
 		destination.DiskCSIDriver = &diskCSIDriver
 	} else {
@@ -10026,7 +10030,7 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_To_ManagedC
 		var fileCSIDriver v20231102ps.ManagedClusterStorageProfileFileCSIDriver_STATUS
 		err := profile.FileCSIDriver.AssignProperties_To_ManagedClusterStorageProfileFileCSIDriver_STATUS(&fileCSIDriver)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileFileCSIDriver_STATUS() to populate field FileCSIDriver")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileFileCSIDriver_STATUS() to populate field FileCSIDriver")
 		}
 		destination.FileCSIDriver = &fileCSIDriver
 	} else {
@@ -10038,7 +10042,7 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_To_ManagedC
 		var snapshotController v20231102ps.ManagedClusterStorageProfileSnapshotController_STATUS
 		err := profile.SnapshotController.AssignProperties_To_ManagedClusterStorageProfileSnapshotController_STATUS(&snapshotController)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileSnapshotController_STATUS() to populate field SnapshotController")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterStorageProfileSnapshotController_STATUS() to populate field SnapshotController")
 		}
 		destination.SnapshotController = &snapshotController
 	} else {
@@ -10057,7 +10061,7 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_To_ManagedC
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterStorageProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10105,7 +10109,7 @@ func (profile *ManagedClusterWindowsProfile) AssignProperties_From_ManagedCluste
 		var gmsaProfile WindowsGmsaProfile
 		err := gmsaProfile.AssignProperties_From_WindowsGmsaProfile(source.GmsaProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WindowsGmsaProfile() to populate field GmsaProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_WindowsGmsaProfile() to populate field GmsaProfile")
 		}
 		profile.GmsaProfile = &gmsaProfile
 	} else {
@@ -10127,7 +10131,7 @@ func (profile *ManagedClusterWindowsProfile) AssignProperties_From_ManagedCluste
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterWindowsProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10164,7 +10168,7 @@ func (profile *ManagedClusterWindowsProfile) AssignProperties_To_ManagedClusterW
 		var gmsaProfile v20231102ps.WindowsGmsaProfile
 		err := profile.GmsaProfile.AssignProperties_To_WindowsGmsaProfile(&gmsaProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WindowsGmsaProfile() to populate field GmsaProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_WindowsGmsaProfile() to populate field GmsaProfile")
 		}
 		destination.GmsaProfile = &gmsaProfile
 	} else {
@@ -10186,7 +10190,7 @@ func (profile *ManagedClusterWindowsProfile) AssignProperties_To_ManagedClusterW
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterWindowsProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10225,7 +10229,7 @@ func (profile *ManagedClusterWindowsProfile_STATUS) AssignProperties_From_Manage
 		var gmsaProfile WindowsGmsaProfile_STATUS
 		err := gmsaProfile.AssignProperties_From_WindowsGmsaProfile_STATUS(source.GmsaProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WindowsGmsaProfile_STATUS() to populate field GmsaProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_WindowsGmsaProfile_STATUS() to populate field GmsaProfile")
 		}
 		profile.GmsaProfile = &gmsaProfile
 	} else {
@@ -10247,7 +10251,7 @@ func (profile *ManagedClusterWindowsProfile_STATUS) AssignProperties_From_Manage
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterWindowsProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10276,7 +10280,7 @@ func (profile *ManagedClusterWindowsProfile_STATUS) AssignProperties_To_ManagedC
 		var gmsaProfile v20231102ps.WindowsGmsaProfile_STATUS
 		err := profile.GmsaProfile.AssignProperties_To_WindowsGmsaProfile_STATUS(&gmsaProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WindowsGmsaProfile_STATUS() to populate field GmsaProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_WindowsGmsaProfile_STATUS() to populate field GmsaProfile")
 		}
 		destination.GmsaProfile = &gmsaProfile
 	} else {
@@ -10298,7 +10302,7 @@ func (profile *ManagedClusterWindowsProfile_STATUS) AssignProperties_To_ManagedC
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterWindowsProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10324,7 +10328,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile) AssignProperties_From_Ma
 		var kedum ManagedClusterWorkloadAutoScalerProfileKeda
 		err := kedum.AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileKeda(source.Keda)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileKeda() to populate field Keda")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileKeda() to populate field Keda")
 		}
 		profile.Keda = &kedum
 	} else {
@@ -10336,7 +10340,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile) AssignProperties_From_Ma
 		var verticalPodAutoscaler ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler
 		err := verticalPodAutoscaler.AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler(source.VerticalPodAutoscaler)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler() to populate field VerticalPodAutoscaler")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler() to populate field VerticalPodAutoscaler")
 		}
 		profile.VerticalPodAutoscaler = &verticalPodAutoscaler
 	} else {
@@ -10355,7 +10359,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile) AssignProperties_From_Ma
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10373,7 +10377,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile) AssignProperties_To_Mana
 		var kedum v20231102ps.ManagedClusterWorkloadAutoScalerProfileKeda
 		err := profile.Keda.AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileKeda(&kedum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileKeda() to populate field Keda")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileKeda() to populate field Keda")
 		}
 		destination.Keda = &kedum
 	} else {
@@ -10385,7 +10389,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile) AssignProperties_To_Mana
 		var verticalPodAutoscaler v20231102ps.ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler
 		err := profile.VerticalPodAutoscaler.AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler(&verticalPodAutoscaler)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler() to populate field VerticalPodAutoscaler")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler() to populate field VerticalPodAutoscaler")
 		}
 		destination.VerticalPodAutoscaler = &verticalPodAutoscaler
 	} else {
@@ -10404,7 +10408,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile) AssignProperties_To_Mana
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10430,7 +10434,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile_STATUS) AssignProperties_
 		var kedum ManagedClusterWorkloadAutoScalerProfileKeda_STATUS
 		err := kedum.AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileKeda_STATUS(source.Keda)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileKeda_STATUS() to populate field Keda")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileKeda_STATUS() to populate field Keda")
 		}
 		profile.Keda = &kedum
 	} else {
@@ -10442,7 +10446,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile_STATUS) AssignProperties_
 		var verticalPodAutoscaler ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS
 		err := verticalPodAutoscaler.AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS(source.VerticalPodAutoscaler)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS() to populate field VerticalPodAutoscaler")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS() to populate field VerticalPodAutoscaler")
 		}
 		profile.VerticalPodAutoscaler = &verticalPodAutoscaler
 	} else {
@@ -10461,7 +10465,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile_STATUS) AssignProperties_
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10479,7 +10483,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile_STATUS) AssignProperties_
 		var kedum v20231102ps.ManagedClusterWorkloadAutoScalerProfileKeda_STATUS
 		err := profile.Keda.AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileKeda_STATUS(&kedum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileKeda_STATUS() to populate field Keda")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileKeda_STATUS() to populate field Keda")
 		}
 		destination.Keda = &kedum
 	} else {
@@ -10491,7 +10495,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile_STATUS) AssignProperties_
 		var verticalPodAutoscaler v20231102ps.ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS
 		err := profile.VerticalPodAutoscaler.AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS(&verticalPodAutoscaler)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS() to populate field VerticalPodAutoscaler")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS() to populate field VerticalPodAutoscaler")
 		}
 		destination.VerticalPodAutoscaler = &verticalPodAutoscaler
 	} else {
@@ -10510,7 +10514,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile_STATUS) AssignProperties_
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10545,7 +10549,7 @@ func (state *PowerState_STATUS) AssignProperties_From_PowerState_STATUS(source *
 	if augmentedState, ok := stateAsAny.(augmentConversionForPowerState_STATUS); ok {
 		err := augmentedState.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10573,7 +10577,7 @@ func (state *PowerState_STATUS) AssignProperties_To_PowerState_STATUS(destinatio
 	if augmentedState, ok := stateAsAny.(augmentConversionForPowerState_STATUS); ok {
 		err := augmentedState.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10631,7 +10635,7 @@ func (resource *PrivateLinkResource) AssignProperties_From_PrivateLinkResource(s
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForPrivateLinkResource); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10676,7 +10680,7 @@ func (resource *PrivateLinkResource) AssignProperties_To_PrivateLinkResource(des
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForPrivateLinkResource); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10731,7 +10735,7 @@ func (resource *PrivateLinkResource_STATUS) AssignProperties_From_PrivateLinkRes
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForPrivateLinkResource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10774,7 +10778,7 @@ func (resource *PrivateLinkResource_STATUS) AssignProperties_To_PrivateLinkResou
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForPrivateLinkResource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10817,7 +10821,7 @@ func (profile *SafeguardsProfile) AssignProperties_From_SafeguardsProfile(source
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForSafeguardsProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10851,7 +10855,7 @@ func (profile *SafeguardsProfile) AssignProperties_To_SafeguardsProfile(destinat
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForSafeguardsProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10898,7 +10902,7 @@ func (profile *SafeguardsProfile_STATUS) AssignProperties_From_SafeguardsProfile
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForSafeguardsProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10935,7 +10939,7 @@ func (profile *SafeguardsProfile_STATUS) AssignProperties_To_SafeguardsProfile_S
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForSafeguardsProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10961,7 +10965,7 @@ func (profile *ServiceMeshProfile) AssignProperties_From_ServiceMeshProfile(sour
 		var istio IstioServiceMesh
 		err := istio.AssignProperties_From_IstioServiceMesh(source.Istio)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IstioServiceMesh() to populate field Istio")
+			return eris.Wrap(err, "calling AssignProperties_From_IstioServiceMesh() to populate field Istio")
 		}
 		profile.Istio = &istio
 	} else {
@@ -10983,7 +10987,7 @@ func (profile *ServiceMeshProfile) AssignProperties_From_ServiceMeshProfile(sour
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForServiceMeshProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11001,7 +11005,7 @@ func (profile *ServiceMeshProfile) AssignProperties_To_ServiceMeshProfile(destin
 		var istio v20231102ps.IstioServiceMesh
 		err := profile.Istio.AssignProperties_To_IstioServiceMesh(&istio)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IstioServiceMesh() to populate field Istio")
+			return eris.Wrap(err, "calling AssignProperties_To_IstioServiceMesh() to populate field Istio")
 		}
 		destination.Istio = &istio
 	} else {
@@ -11023,7 +11027,7 @@ func (profile *ServiceMeshProfile) AssignProperties_To_ServiceMeshProfile(destin
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForServiceMeshProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11049,7 +11053,7 @@ func (profile *ServiceMeshProfile_STATUS) AssignProperties_From_ServiceMeshProfi
 		var istio IstioServiceMesh_STATUS
 		err := istio.AssignProperties_From_IstioServiceMesh_STATUS(source.Istio)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IstioServiceMesh_STATUS() to populate field Istio")
+			return eris.Wrap(err, "calling AssignProperties_From_IstioServiceMesh_STATUS() to populate field Istio")
 		}
 		profile.Istio = &istio
 	} else {
@@ -11071,7 +11075,7 @@ func (profile *ServiceMeshProfile_STATUS) AssignProperties_From_ServiceMeshProfi
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForServiceMeshProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11089,7 +11093,7 @@ func (profile *ServiceMeshProfile_STATUS) AssignProperties_To_ServiceMeshProfile
 		var istio v20231102ps.IstioServiceMesh_STATUS
 		err := profile.Istio.AssignProperties_To_IstioServiceMesh_STATUS(&istio)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IstioServiceMesh_STATUS() to populate field Istio")
+			return eris.Wrap(err, "calling AssignProperties_To_IstioServiceMesh_STATUS() to populate field Istio")
 		}
 		destination.Istio = &istio
 	} else {
@@ -11111,7 +11115,7 @@ func (profile *ServiceMeshProfile_STATUS) AssignProperties_To_ServiceMeshProfile
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForServiceMeshProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11166,7 +11170,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
 		err := augmentedData.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11209,7 +11213,7 @@ func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination
 	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
 		err := augmentedData.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11259,7 +11263,7 @@ func (identity *UserAssignedIdentity) AssignProperties_From_UserAssignedIdentity
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForUserAssignedIdentity); ok {
 		err := augmentedIdentity.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11298,7 +11302,7 @@ func (identity *UserAssignedIdentity) AssignProperties_To_UserAssignedIdentity(d
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForUserAssignedIdentity); ok {
 		err := augmentedIdentity.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11341,7 +11345,7 @@ func (identity *UserAssignedIdentity_STATUS) AssignProperties_From_UserAssignedI
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForUserAssignedIdentity_STATUS); ok {
 		err := augmentedIdentity.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11375,7 +11379,7 @@ func (identity *UserAssignedIdentity_STATUS) AssignProperties_To_UserAssignedIde
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForUserAssignedIdentity_STATUS); ok {
 		err := augmentedIdentity.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11401,7 +11405,7 @@ func (networking *AdvancedNetworking) AssignProperties_From_AdvancedNetworking(s
 		var observability AdvancedNetworkingObservability
 		err := observability.AssignProperties_From_AdvancedNetworkingObservability(source.Observability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AdvancedNetworkingObservability() to populate field Observability")
+			return eris.Wrap(err, "calling AssignProperties_From_AdvancedNetworkingObservability() to populate field Observability")
 		}
 		networking.Observability = &observability
 	} else {
@@ -11420,7 +11424,7 @@ func (networking *AdvancedNetworking) AssignProperties_From_AdvancedNetworking(s
 	if augmentedNetworking, ok := networkingAsAny.(augmentConversionForAdvancedNetworking); ok {
 		err := augmentedNetworking.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11438,7 +11442,7 @@ func (networking *AdvancedNetworking) AssignProperties_To_AdvancedNetworking(des
 		var observability v20231001sc.AdvancedNetworkingObservability
 		err := networking.Observability.AssignProperties_To_AdvancedNetworkingObservability(&observability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AdvancedNetworkingObservability() to populate field Observability")
+			return eris.Wrap(err, "calling AssignProperties_To_AdvancedNetworkingObservability() to populate field Observability")
 		}
 		destination.Observability = &observability
 	} else {
@@ -11457,7 +11461,7 @@ func (networking *AdvancedNetworking) AssignProperties_To_AdvancedNetworking(des
 	if augmentedNetworking, ok := networkingAsAny.(augmentConversionForAdvancedNetworking); ok {
 		err := augmentedNetworking.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11483,7 +11487,7 @@ func (networking *AdvancedNetworking_STATUS) AssignProperties_From_AdvancedNetwo
 		var observability AdvancedNetworkingObservability_STATUS
 		err := observability.AssignProperties_From_AdvancedNetworkingObservability_STATUS(source.Observability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AdvancedNetworkingObservability_STATUS() to populate field Observability")
+			return eris.Wrap(err, "calling AssignProperties_From_AdvancedNetworkingObservability_STATUS() to populate field Observability")
 		}
 		networking.Observability = &observability
 	} else {
@@ -11502,7 +11506,7 @@ func (networking *AdvancedNetworking_STATUS) AssignProperties_From_AdvancedNetwo
 	if augmentedNetworking, ok := networkingAsAny.(augmentConversionForAdvancedNetworking_STATUS); ok {
 		err := augmentedNetworking.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11520,7 +11524,7 @@ func (networking *AdvancedNetworking_STATUS) AssignProperties_To_AdvancedNetwork
 		var observability v20231001sc.AdvancedNetworkingObservability_STATUS
 		err := networking.Observability.AssignProperties_To_AdvancedNetworkingObservability_STATUS(&observability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AdvancedNetworkingObservability_STATUS() to populate field Observability")
+			return eris.Wrap(err, "calling AssignProperties_To_AdvancedNetworkingObservability_STATUS() to populate field Observability")
 		}
 		destination.Observability = &observability
 	} else {
@@ -11539,7 +11543,7 @@ func (networking *AdvancedNetworking_STATUS) AssignProperties_To_AdvancedNetwork
 	if augmentedNetworking, ok := networkingAsAny.(augmentConversionForAdvancedNetworking_STATUS); ok {
 		err := augmentedNetworking.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11924,7 +11928,7 @@ func (vaultKms *AzureKeyVaultKms) AssignProperties_From_AzureKeyVaultKms(source 
 	if augmentedVaultKms, ok := vaultKmsAsAny.(augmentConversionForAzureKeyVaultKms); ok {
 		err := augmentedVaultKms.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11971,7 +11975,7 @@ func (vaultKms *AzureKeyVaultKms) AssignProperties_To_AzureKeyVaultKms(destinati
 	if augmentedVaultKms, ok := vaultKmsAsAny.(augmentConversionForAzureKeyVaultKms); ok {
 		err := augmentedVaultKms.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12023,7 +12027,7 @@ func (vaultKms *AzureKeyVaultKms_STATUS) AssignProperties_From_AzureKeyVaultKms_
 	if augmentedVaultKms, ok := vaultKmsAsAny.(augmentConversionForAzureKeyVaultKms_STATUS); ok {
 		err := augmentedVaultKms.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12065,7 +12069,7 @@ func (vaultKms *AzureKeyVaultKms_STATUS) AssignProperties_To_AzureKeyVaultKms_ST
 	if augmentedVaultKms, ok := vaultKmsAsAny.(augmentConversionForAzureKeyVaultKms_STATUS); ok {
 		err := augmentedVaultKms.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12099,7 +12103,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig) AssignProperties_F
 		var ipvsConfig ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig
 		err := ipvsConfig.AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig(source.IpvsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig() to populate field IpvsConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig() to populate field IpvsConfig")
 		}
 		config.IpvsConfig = &ipvsConfig
 	} else {
@@ -12121,7 +12125,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig) AssignProperties_F
 	if augmentedConfig, ok := configAsAny.(augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig); ok {
 		err := augmentedConfig.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12147,7 +12151,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig) AssignProperties_T
 		var ipvsConfig v20231102ps.ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig
 		err := config.IpvsConfig.AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig(&ipvsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig() to populate field IpvsConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig() to populate field IpvsConfig")
 		}
 		destination.IpvsConfig = &ipvsConfig
 	} else {
@@ -12169,7 +12173,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig) AssignProperties_T
 	if augmentedConfig, ok := configAsAny.(augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig); ok {
 		err := augmentedConfig.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12203,7 +12207,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig_STATUS) AssignPrope
 		var ipvsConfig ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS
 		err := ipvsConfig.AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS(source.IpvsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS() to populate field IpvsConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS() to populate field IpvsConfig")
 		}
 		config.IpvsConfig = &ipvsConfig
 	} else {
@@ -12225,7 +12229,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig_STATUS) AssignPrope
 	if augmentedConfig, ok := configAsAny.(augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig_STATUS); ok {
 		err := augmentedConfig.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12251,7 +12255,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig_STATUS) AssignPrope
 		var ipvsConfig v20231102ps.ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS
 		err := config.IpvsConfig.AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS(&ipvsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS() to populate field IpvsConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS() to populate field IpvsConfig")
 		}
 		destination.IpvsConfig = &ipvsConfig
 	} else {
@@ -12273,7 +12277,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig_STATUS) AssignPrope
 	if augmentedConfig, ok := configAsAny.(augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig_STATUS); ok {
 		err := augmentedConfig.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12302,7 +12306,7 @@ func (configuration *ContainerServiceSshConfiguration) AssignProperties_From_Con
 			var publicKey ContainerServiceSshPublicKey
 			err := publicKey.AssignProperties_From_ContainerServiceSshPublicKey(&publicKeyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceSshPublicKey() to populate field PublicKeys")
+				return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceSshPublicKey() to populate field PublicKeys")
 			}
 			publicKeyList[publicKeyIndex] = publicKey
 		}
@@ -12323,7 +12327,7 @@ func (configuration *ContainerServiceSshConfiguration) AssignProperties_From_Con
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForContainerServiceSshConfiguration); ok {
 		err := augmentedConfiguration.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12345,7 +12349,7 @@ func (configuration *ContainerServiceSshConfiguration) AssignProperties_To_Conta
 			var publicKey v20231102ps.ContainerServiceSshPublicKey
 			err := publicKeyItem.AssignProperties_To_ContainerServiceSshPublicKey(&publicKey)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceSshPublicKey() to populate field PublicKeys")
+				return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceSshPublicKey() to populate field PublicKeys")
 			}
 			publicKeyList[publicKeyIndex] = publicKey
 		}
@@ -12366,7 +12370,7 @@ func (configuration *ContainerServiceSshConfiguration) AssignProperties_To_Conta
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForContainerServiceSshConfiguration); ok {
 		err := augmentedConfiguration.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12395,7 +12399,7 @@ func (configuration *ContainerServiceSshConfiguration_STATUS) AssignProperties_F
 			var publicKey ContainerServiceSshPublicKey_STATUS
 			err := publicKey.AssignProperties_From_ContainerServiceSshPublicKey_STATUS(&publicKeyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ContainerServiceSshPublicKey_STATUS() to populate field PublicKeys")
+				return eris.Wrap(err, "calling AssignProperties_From_ContainerServiceSshPublicKey_STATUS() to populate field PublicKeys")
 			}
 			publicKeyList[publicKeyIndex] = publicKey
 		}
@@ -12416,7 +12420,7 @@ func (configuration *ContainerServiceSshConfiguration_STATUS) AssignProperties_F
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForContainerServiceSshConfiguration_STATUS); ok {
 		err := augmentedConfiguration.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12438,7 +12442,7 @@ func (configuration *ContainerServiceSshConfiguration_STATUS) AssignProperties_T
 			var publicKey v20231102ps.ContainerServiceSshPublicKey_STATUS
 			err := publicKeyItem.AssignProperties_To_ContainerServiceSshPublicKey_STATUS(&publicKey)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ContainerServiceSshPublicKey_STATUS() to populate field PublicKeys")
+				return eris.Wrap(err, "calling AssignProperties_To_ContainerServiceSshPublicKey_STATUS() to populate field PublicKeys")
 			}
 			publicKeyList[publicKeyIndex] = publicKey
 		}
@@ -12459,7 +12463,7 @@ func (configuration *ContainerServiceSshConfiguration_STATUS) AssignProperties_T
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForContainerServiceSshConfiguration_STATUS); ok {
 		err := augmentedConfiguration.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12513,7 +12517,7 @@ func (resource *DelegatedResource) AssignProperties_From_DelegatedResource(sourc
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForDelegatedResource); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12555,7 +12559,7 @@ func (resource *DelegatedResource) AssignProperties_To_DelegatedResource(destina
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForDelegatedResource); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12602,7 +12606,7 @@ func (resource *DelegatedResource_STATUS) AssignProperties_From_DelegatedResourc
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForDelegatedResource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12639,7 +12643,7 @@ func (resource *DelegatedResource_STATUS) AssignProperties_To_DelegatedResource_
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForDelegatedResource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12666,7 +12670,7 @@ func (mesh *IstioServiceMesh) AssignProperties_From_IstioServiceMesh(source *v20
 		var certificateAuthority IstioCertificateAuthority
 		err := certificateAuthority.AssignProperties_From_IstioCertificateAuthority(source.CertificateAuthority)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IstioCertificateAuthority() to populate field CertificateAuthority")
+			return eris.Wrap(err, "calling AssignProperties_From_IstioCertificateAuthority() to populate field CertificateAuthority")
 		}
 		mesh.CertificateAuthority = &certificateAuthority
 	} else {
@@ -12678,7 +12682,7 @@ func (mesh *IstioServiceMesh) AssignProperties_From_IstioServiceMesh(source *v20
 		var component IstioComponents
 		err := component.AssignProperties_From_IstioComponents(source.Components)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IstioComponents() to populate field Components")
+			return eris.Wrap(err, "calling AssignProperties_From_IstioComponents() to populate field Components")
 		}
 		mesh.Components = &component
 	} else {
@@ -12700,7 +12704,7 @@ func (mesh *IstioServiceMesh) AssignProperties_From_IstioServiceMesh(source *v20
 	if augmentedMesh, ok := meshAsAny.(augmentConversionForIstioServiceMesh); ok {
 		err := augmentedMesh.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12718,7 +12722,7 @@ func (mesh *IstioServiceMesh) AssignProperties_To_IstioServiceMesh(destination *
 		var certificateAuthority v20231102ps.IstioCertificateAuthority
 		err := mesh.CertificateAuthority.AssignProperties_To_IstioCertificateAuthority(&certificateAuthority)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IstioCertificateAuthority() to populate field CertificateAuthority")
+			return eris.Wrap(err, "calling AssignProperties_To_IstioCertificateAuthority() to populate field CertificateAuthority")
 		}
 		destination.CertificateAuthority = &certificateAuthority
 	} else {
@@ -12730,7 +12734,7 @@ func (mesh *IstioServiceMesh) AssignProperties_To_IstioServiceMesh(destination *
 		var component v20231102ps.IstioComponents
 		err := mesh.Components.AssignProperties_To_IstioComponents(&component)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IstioComponents() to populate field Components")
+			return eris.Wrap(err, "calling AssignProperties_To_IstioComponents() to populate field Components")
 		}
 		destination.Components = &component
 	} else {
@@ -12752,7 +12756,7 @@ func (mesh *IstioServiceMesh) AssignProperties_To_IstioServiceMesh(destination *
 	if augmentedMesh, ok := meshAsAny.(augmentConversionForIstioServiceMesh); ok {
 		err := augmentedMesh.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12779,7 +12783,7 @@ func (mesh *IstioServiceMesh_STATUS) AssignProperties_From_IstioServiceMesh_STAT
 		var certificateAuthority IstioCertificateAuthority_STATUS
 		err := certificateAuthority.AssignProperties_From_IstioCertificateAuthority_STATUS(source.CertificateAuthority)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IstioCertificateAuthority_STATUS() to populate field CertificateAuthority")
+			return eris.Wrap(err, "calling AssignProperties_From_IstioCertificateAuthority_STATUS() to populate field CertificateAuthority")
 		}
 		mesh.CertificateAuthority = &certificateAuthority
 	} else {
@@ -12791,7 +12795,7 @@ func (mesh *IstioServiceMesh_STATUS) AssignProperties_From_IstioServiceMesh_STAT
 		var component IstioComponents_STATUS
 		err := component.AssignProperties_From_IstioComponents_STATUS(source.Components)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IstioComponents_STATUS() to populate field Components")
+			return eris.Wrap(err, "calling AssignProperties_From_IstioComponents_STATUS() to populate field Components")
 		}
 		mesh.Components = &component
 	} else {
@@ -12813,7 +12817,7 @@ func (mesh *IstioServiceMesh_STATUS) AssignProperties_From_IstioServiceMesh_STAT
 	if augmentedMesh, ok := meshAsAny.(augmentConversionForIstioServiceMesh_STATUS); ok {
 		err := augmentedMesh.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12831,7 +12835,7 @@ func (mesh *IstioServiceMesh_STATUS) AssignProperties_To_IstioServiceMesh_STATUS
 		var certificateAuthority v20231102ps.IstioCertificateAuthority_STATUS
 		err := mesh.CertificateAuthority.AssignProperties_To_IstioCertificateAuthority_STATUS(&certificateAuthority)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IstioCertificateAuthority_STATUS() to populate field CertificateAuthority")
+			return eris.Wrap(err, "calling AssignProperties_To_IstioCertificateAuthority_STATUS() to populate field CertificateAuthority")
 		}
 		destination.CertificateAuthority = &certificateAuthority
 	} else {
@@ -12843,7 +12847,7 @@ func (mesh *IstioServiceMesh_STATUS) AssignProperties_To_IstioServiceMesh_STATUS
 		var component v20231102ps.IstioComponents_STATUS
 		err := mesh.Components.AssignProperties_To_IstioComponents_STATUS(&component)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IstioComponents_STATUS() to populate field Components")
+			return eris.Wrap(err, "calling AssignProperties_To_IstioComponents_STATUS() to populate field Components")
 		}
 		destination.Components = &component
 	} else {
@@ -12865,7 +12869,7 @@ func (mesh *IstioServiceMesh_STATUS) AssignProperties_To_IstioServiceMesh_STATUS
 	if augmentedMesh, ok := meshAsAny.(augmentConversionForIstioServiceMesh_STATUS); ok {
 		err := augmentedMesh.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12894,7 +12898,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring) AssignProperti
 		var autoInstrumentation ManagedClusterAzureMonitorProfileAppMonitoringAutoInstrumentation
 		err := propertyBag.Pull("AutoInstrumentation", &autoInstrumentation)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'AutoInstrumentation' from propertyBag")
+			return eris.Wrap(err, "pulling 'AutoInstrumentation' from propertyBag")
 		}
 
 		monitoring.AutoInstrumentation = &autoInstrumentation
@@ -12914,7 +12918,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring) AssignProperti
 		var openTelemetryLog ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryLogs
 		err := propertyBag.Pull("OpenTelemetryLogs", &openTelemetryLog)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'OpenTelemetryLogs' from propertyBag")
+			return eris.Wrap(err, "pulling 'OpenTelemetryLogs' from propertyBag")
 		}
 
 		monitoring.OpenTelemetryLogs = &openTelemetryLog
@@ -12927,7 +12931,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring) AssignProperti
 		var openTelemetryMetric ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetrics
 		err := propertyBag.Pull("OpenTelemetryMetrics", &openTelemetryMetric)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'OpenTelemetryMetrics' from propertyBag")
+			return eris.Wrap(err, "pulling 'OpenTelemetryMetrics' from propertyBag")
 		}
 
 		monitoring.OpenTelemetryMetrics = &openTelemetryMetric
@@ -12947,7 +12951,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring) AssignProperti
 	if augmentedMonitoring, ok := monitoringAsAny.(augmentConversionForManagedClusterAzureMonitorProfileAppMonitoring); ok {
 		err := augmentedMonitoring.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12972,7 +12976,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring) AssignProperti
 		var enabled bool
 		err := propertyBag.Pull("Enabled", &enabled)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Enabled' from propertyBag")
+			return eris.Wrap(err, "pulling 'Enabled' from propertyBag")
 		}
 
 		destination.Enabled = &enabled
@@ -13006,7 +13010,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring) AssignProperti
 	if augmentedMonitoring, ok := monitoringAsAny.(augmentConversionForManagedClusterAzureMonitorProfileAppMonitoring); ok {
 		err := augmentedMonitoring.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -13035,7 +13039,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring_STATUS) AssignP
 		var autoInstrumentation ManagedClusterAzureMonitorProfileAppMonitoringAutoInstrumentation_STATUS
 		err := propertyBag.Pull("AutoInstrumentation", &autoInstrumentation)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'AutoInstrumentation' from propertyBag")
+			return eris.Wrap(err, "pulling 'AutoInstrumentation' from propertyBag")
 		}
 
 		monitoring.AutoInstrumentation = &autoInstrumentation
@@ -13055,7 +13059,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring_STATUS) AssignP
 		var openTelemetryLog ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryLogs_STATUS
 		err := propertyBag.Pull("OpenTelemetryLogs", &openTelemetryLog)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'OpenTelemetryLogs' from propertyBag")
+			return eris.Wrap(err, "pulling 'OpenTelemetryLogs' from propertyBag")
 		}
 
 		monitoring.OpenTelemetryLogs = &openTelemetryLog
@@ -13068,7 +13072,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring_STATUS) AssignP
 		var openTelemetryMetric ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetrics_STATUS
 		err := propertyBag.Pull("OpenTelemetryMetrics", &openTelemetryMetric)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'OpenTelemetryMetrics' from propertyBag")
+			return eris.Wrap(err, "pulling 'OpenTelemetryMetrics' from propertyBag")
 		}
 
 		monitoring.OpenTelemetryMetrics = &openTelemetryMetric
@@ -13088,7 +13092,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring_STATUS) AssignP
 	if augmentedMonitoring, ok := monitoringAsAny.(augmentConversionForManagedClusterAzureMonitorProfileAppMonitoring_STATUS); ok {
 		err := augmentedMonitoring.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -13113,7 +13117,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring_STATUS) AssignP
 		var enabled bool
 		err := propertyBag.Pull("Enabled", &enabled)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Enabled' from propertyBag")
+			return eris.Wrap(err, "pulling 'Enabled' from propertyBag")
 		}
 
 		destination.Enabled = &enabled
@@ -13147,7 +13151,7 @@ func (monitoring *ManagedClusterAzureMonitorProfileAppMonitoring_STATUS) AssignP
 	if augmentedMonitoring, ok := monitoringAsAny.(augmentConversionForManagedClusterAzureMonitorProfileAppMonitoring_STATUS); ok {
 		err := augmentedMonitoring.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -13180,7 +13184,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights) AssignProper
 		var disableCustomMetric bool
 		err := propertyBag.Pull("DisableCustomMetrics", &disableCustomMetric)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DisableCustomMetrics' from propertyBag")
+			return eris.Wrap(err, "pulling 'DisableCustomMetrics' from propertyBag")
 		}
 
 		insights.DisableCustomMetrics = &disableCustomMetric
@@ -13193,7 +13197,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights) AssignProper
 		var disablePrometheusMetricsScraping bool
 		err := propertyBag.Pull("DisablePrometheusMetricsScraping", &disablePrometheusMetricsScraping)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DisablePrometheusMetricsScraping' from propertyBag")
+			return eris.Wrap(err, "pulling 'DisablePrometheusMetricsScraping' from propertyBag")
 		}
 
 		insights.DisablePrometheusMetricsScraping = &disablePrometheusMetricsScraping
@@ -13222,7 +13226,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights) AssignProper
 		var syslogPort int
 		err := propertyBag.Pull("SyslogPort", &syslogPort)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'SyslogPort' from propertyBag")
+			return eris.Wrap(err, "pulling 'SyslogPort' from propertyBag")
 		}
 
 		insights.SyslogPort = &syslogPort
@@ -13249,7 +13253,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights) AssignProper
 	if augmentedInsights, ok := insightsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileContainerInsights); ok {
 		err := augmentedInsights.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -13304,7 +13308,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights) AssignProper
 		var windowsHostLog v20231102ps.ManagedClusterAzureMonitorProfileWindowsHostLogs
 		err := propertyBag.Pull("WindowsHostLogs", &windowsHostLog)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'WindowsHostLogs' from propertyBag")
+			return eris.Wrap(err, "pulling 'WindowsHostLogs' from propertyBag")
 		}
 
 		destination.WindowsHostLogs = &windowsHostLog
@@ -13324,7 +13328,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights) AssignProper
 	if augmentedInsights, ok := insightsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileContainerInsights); ok {
 		err := augmentedInsights.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -13354,7 +13358,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights_STATUS) Assig
 		var disableCustomMetric bool
 		err := propertyBag.Pull("DisableCustomMetrics", &disableCustomMetric)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DisableCustomMetrics' from propertyBag")
+			return eris.Wrap(err, "pulling 'DisableCustomMetrics' from propertyBag")
 		}
 
 		insights.DisableCustomMetrics = &disableCustomMetric
@@ -13367,7 +13371,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights_STATUS) Assig
 		var disablePrometheusMetricsScraping bool
 		err := propertyBag.Pull("DisablePrometheusMetricsScraping", &disablePrometheusMetricsScraping)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DisablePrometheusMetricsScraping' from propertyBag")
+			return eris.Wrap(err, "pulling 'DisablePrometheusMetricsScraping' from propertyBag")
 		}
 
 		insights.DisablePrometheusMetricsScraping = &disablePrometheusMetricsScraping
@@ -13391,7 +13395,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights_STATUS) Assig
 		var syslogPort int
 		err := propertyBag.Pull("SyslogPort", &syslogPort)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'SyslogPort' from propertyBag")
+			return eris.Wrap(err, "pulling 'SyslogPort' from propertyBag")
 		}
 
 		insights.SyslogPort = &syslogPort
@@ -13418,7 +13422,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights_STATUS) Assig
 	if augmentedInsights, ok := insightsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileContainerInsights_STATUS); ok {
 		err := augmentedInsights.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -13468,7 +13472,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights_STATUS) Assig
 		var windowsHostLog v20231102ps.ManagedClusterAzureMonitorProfileWindowsHostLogs_STATUS
 		err := propertyBag.Pull("WindowsHostLogs", &windowsHostLog)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'WindowsHostLogs' from propertyBag")
+			return eris.Wrap(err, "pulling 'WindowsHostLogs' from propertyBag")
 		}
 
 		destination.WindowsHostLogs = &windowsHostLog
@@ -13488,7 +13492,7 @@ func (insights *ManagedClusterAzureMonitorProfileContainerInsights_STATUS) Assig
 	if augmentedInsights, ok := insightsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileContainerInsights_STATUS); ok {
 		err := augmentedInsights.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -13529,7 +13533,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics) AssignProperties_From_M
 		var kubeStateMetric ManagedClusterAzureMonitorProfileKubeStateMetrics
 		err := kubeStateMetric.AssignProperties_From_ManagedClusterAzureMonitorProfileKubeStateMetrics(source.KubeStateMetrics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfileKubeStateMetrics() to populate field KubeStateMetrics")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfileKubeStateMetrics() to populate field KubeStateMetrics")
 		}
 		metrics.KubeStateMetrics = &kubeStateMetric
 	} else {
@@ -13548,7 +13552,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics) AssignProperties_From_M
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileMetrics); ok {
 		err := augmentedMetrics.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -13566,7 +13570,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics) AssignProperties_To_Man
 		var appMonitoringOpenTelemetryMetric v20231102ps.ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetrics
 		err := propertyBag.Pull("AppMonitoringOpenTelemetryMetrics", &appMonitoringOpenTelemetryMetric)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'AppMonitoringOpenTelemetryMetrics' from propertyBag")
+			return eris.Wrap(err, "pulling 'AppMonitoringOpenTelemetryMetrics' from propertyBag")
 		}
 
 		destination.AppMonitoringOpenTelemetryMetrics = &appMonitoringOpenTelemetryMetric
@@ -13587,7 +13591,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics) AssignProperties_To_Man
 		var kubeStateMetric v20231102ps.ManagedClusterAzureMonitorProfileKubeStateMetrics
 		err := metrics.KubeStateMetrics.AssignProperties_To_ManagedClusterAzureMonitorProfileKubeStateMetrics(&kubeStateMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfileKubeStateMetrics() to populate field KubeStateMetrics")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfileKubeStateMetrics() to populate field KubeStateMetrics")
 		}
 		destination.KubeStateMetrics = &kubeStateMetric
 	} else {
@@ -13606,7 +13610,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics) AssignProperties_To_Man
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileMetrics); ok {
 		err := augmentedMetrics.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -13647,7 +13651,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics_STATUS) AssignProperties
 		var kubeStateMetric ManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS
 		err := kubeStateMetric.AssignProperties_From_ManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS(source.KubeStateMetrics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS() to populate field KubeStateMetrics")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS() to populate field KubeStateMetrics")
 		}
 		metrics.KubeStateMetrics = &kubeStateMetric
 	} else {
@@ -13666,7 +13670,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics_STATUS) AssignProperties
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileMetrics_STATUS); ok {
 		err := augmentedMetrics.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -13684,7 +13688,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics_STATUS) AssignProperties
 		var appMonitoringOpenTelemetryMetric v20231102ps.ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetrics_STATUS
 		err := propertyBag.Pull("AppMonitoringOpenTelemetryMetrics", &appMonitoringOpenTelemetryMetric)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'AppMonitoringOpenTelemetryMetrics' from propertyBag")
+			return eris.Wrap(err, "pulling 'AppMonitoringOpenTelemetryMetrics' from propertyBag")
 		}
 
 		destination.AppMonitoringOpenTelemetryMetrics = &appMonitoringOpenTelemetryMetric
@@ -13705,7 +13709,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics_STATUS) AssignProperties
 		var kubeStateMetric v20231102ps.ManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS
 		err := metrics.KubeStateMetrics.AssignProperties_To_ManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS(&kubeStateMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS() to populate field KubeStateMetrics")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS() to populate field KubeStateMetrics")
 		}
 		destination.KubeStateMetrics = &kubeStateMetric
 	} else {
@@ -13724,7 +13728,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics_STATUS) AssignProperties
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileMetrics_STATUS); ok {
 		err := augmentedMetrics.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -13764,7 +13768,7 @@ func (analysis *ManagedClusterCostAnalysis) AssignProperties_From_ManagedCluster
 	if augmentedAnalysis, ok := analysisAsAny.(augmentConversionForManagedClusterCostAnalysis); ok {
 		err := augmentedAnalysis.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -13797,7 +13801,7 @@ func (analysis *ManagedClusterCostAnalysis) AssignProperties_To_ManagedClusterCo
 	if augmentedAnalysis, ok := analysisAsAny.(augmentConversionForManagedClusterCostAnalysis); ok {
 		err := augmentedAnalysis.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -13837,7 +13841,7 @@ func (analysis *ManagedClusterCostAnalysis_STATUS) AssignProperties_From_Managed
 	if augmentedAnalysis, ok := analysisAsAny.(augmentConversionForManagedClusterCostAnalysis_STATUS); ok {
 		err := augmentedAnalysis.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -13870,7 +13874,7 @@ func (analysis *ManagedClusterCostAnalysis_STATUS) AssignProperties_To_ManagedCl
 	if augmentedAnalysis, ok := analysisAsAny.(augmentConversionForManagedClusterCostAnalysis_STATUS); ok {
 		err := augmentedAnalysis.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -13908,7 +13912,7 @@ func (identities *ManagedClusterIdentity_UserAssignedIdentities_STATUS) AssignPr
 	if augmentedIdentities, ok := identitiesAsAny.(augmentConversionForManagedClusterIdentity_UserAssignedIdentities_STATUS); ok {
 		err := augmentedIdentities.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -13939,7 +13943,7 @@ func (identities *ManagedClusterIdentity_UserAssignedIdentities_STATUS) AssignPr
 	if augmentedIdentities, ok := identitiesAsAny.(augmentConversionForManagedClusterIdentity_UserAssignedIdentities_STATUS); ok {
 		err := augmentedIdentities.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -13993,7 +13997,7 @@ func (routing *ManagedClusterIngressProfileWebAppRouting) AssignProperties_From_
 	if augmentedRouting, ok := routingAsAny.(augmentConversionForManagedClusterIngressProfileWebAppRouting); ok {
 		err := augmentedRouting.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -14039,7 +14043,7 @@ func (routing *ManagedClusterIngressProfileWebAppRouting) AssignProperties_To_Ma
 	if augmentedRouting, ok := routingAsAny.(augmentConversionForManagedClusterIngressProfileWebAppRouting); ok {
 		err := augmentedRouting.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -14077,7 +14081,7 @@ func (routing *ManagedClusterIngressProfileWebAppRouting_STATUS) AssignPropertie
 		var identity UserAssignedIdentity_STATUS
 		err := identity.AssignProperties_From_UserAssignedIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field Identity")
 		}
 		routing.Identity = &identity
 	} else {
@@ -14096,7 +14100,7 @@ func (routing *ManagedClusterIngressProfileWebAppRouting_STATUS) AssignPropertie
 	if augmentedRouting, ok := routingAsAny.(augmentConversionForManagedClusterIngressProfileWebAppRouting_STATUS); ok {
 		err := augmentedRouting.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -14125,7 +14129,7 @@ func (routing *ManagedClusterIngressProfileWebAppRouting_STATUS) AssignPropertie
 		var identity v20231102ps.UserAssignedIdentity_STATUS
 		err := routing.Identity.AssignProperties_To_UserAssignedIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -14144,7 +14148,7 @@ func (routing *ManagedClusterIngressProfileWebAppRouting_STATUS) AssignPropertie
 	if augmentedRouting, ok := routingAsAny.(augmentConversionForManagedClusterIngressProfileWebAppRouting_STATUS); ok {
 		err := augmentedRouting.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -14183,7 +14187,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_From_ManagedC
 		var clusterServiceLoadBalancerHealthProbeMode string
 		err := propertyBag.Pull("ClusterServiceLoadBalancerHealthProbeMode", &clusterServiceLoadBalancerHealthProbeMode)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ClusterServiceLoadBalancerHealthProbeMode' from propertyBag")
+			return eris.Wrap(err, "pulling 'ClusterServiceLoadBalancerHealthProbeMode' from propertyBag")
 		}
 
 		profile.ClusterServiceLoadBalancerHealthProbeMode = &clusterServiceLoadBalancerHealthProbeMode
@@ -14200,7 +14204,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_From_ManagedC
 			var effectiveOutboundIP ResourceReference
 			err := effectiveOutboundIP.AssignProperties_From_ResourceReference(&effectiveOutboundIPItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field EffectiveOutboundIPs")
+				return eris.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field EffectiveOutboundIPs")
 			}
 			effectiveOutboundIPList[effectiveOutboundIPIndex] = effectiveOutboundIP
 		}
@@ -14225,7 +14229,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_From_ManagedC
 		var managedOutboundIP ManagedClusterLoadBalancerProfile_ManagedOutboundIPs
 		err := managedOutboundIP.AssignProperties_From_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs(source.ManagedOutboundIPs)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs() to populate field ManagedOutboundIPs")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs() to populate field ManagedOutboundIPs")
 		}
 		profile.ManagedOutboundIPs = &managedOutboundIP
 	} else {
@@ -14237,7 +14241,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_From_ManagedC
 		var outboundIPPrefix ManagedClusterLoadBalancerProfile_OutboundIPPrefixes
 		err := outboundIPPrefix.AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes(source.OutboundIPPrefixes)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes() to populate field OutboundIPPrefixes")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes() to populate field OutboundIPPrefixes")
 		}
 		profile.OutboundIPPrefixes = &outboundIPPrefix
 	} else {
@@ -14249,7 +14253,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_From_ManagedC
 		var outboundIP ManagedClusterLoadBalancerProfile_OutboundIPs
 		err := outboundIP.AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPs(source.OutboundIPs)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPs() to populate field OutboundIPs")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPs() to populate field OutboundIPs")
 		}
 		profile.OutboundIPs = &outboundIP
 	} else {
@@ -14268,7 +14272,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_From_ManagedC
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterLoadBalancerProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -14303,7 +14307,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_To_ManagedClu
 			var effectiveOutboundIP v20231102ps.ResourceReference
 			err := effectiveOutboundIPItem.AssignProperties_To_ResourceReference(&effectiveOutboundIP)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field EffectiveOutboundIPs")
+				return eris.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field EffectiveOutboundIPs")
 			}
 			effectiveOutboundIPList[effectiveOutboundIPIndex] = effectiveOutboundIP
 		}
@@ -14328,7 +14332,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_To_ManagedClu
 		var managedOutboundIP v20231102ps.ManagedClusterLoadBalancerProfile_ManagedOutboundIPs
 		err := profile.ManagedOutboundIPs.AssignProperties_To_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs(&managedOutboundIP)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs() to populate field ManagedOutboundIPs")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs() to populate field ManagedOutboundIPs")
 		}
 		destination.ManagedOutboundIPs = &managedOutboundIP
 	} else {
@@ -14340,7 +14344,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_To_ManagedClu
 		var outboundIPPrefix v20231102ps.ManagedClusterLoadBalancerProfile_OutboundIPPrefixes
 		err := profile.OutboundIPPrefixes.AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes(&outboundIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes() to populate field OutboundIPPrefixes")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes() to populate field OutboundIPPrefixes")
 		}
 		destination.OutboundIPPrefixes = &outboundIPPrefix
 	} else {
@@ -14352,7 +14356,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_To_ManagedClu
 		var outboundIP v20231102ps.ManagedClusterLoadBalancerProfile_OutboundIPs
 		err := profile.OutboundIPs.AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPs(&outboundIP)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPs() to populate field OutboundIPs")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPs() to populate field OutboundIPs")
 		}
 		destination.OutboundIPs = &outboundIP
 	} else {
@@ -14371,7 +14375,7 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_To_ManagedClu
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterLoadBalancerProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -14410,7 +14414,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_From_M
 		var clusterServiceLoadBalancerHealthProbeMode string
 		err := propertyBag.Pull("ClusterServiceLoadBalancerHealthProbeMode", &clusterServiceLoadBalancerHealthProbeMode)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ClusterServiceLoadBalancerHealthProbeMode' from propertyBag")
+			return eris.Wrap(err, "pulling 'ClusterServiceLoadBalancerHealthProbeMode' from propertyBag")
 		}
 
 		profile.ClusterServiceLoadBalancerHealthProbeMode = &clusterServiceLoadBalancerHealthProbeMode
@@ -14427,7 +14431,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_From_M
 			var effectiveOutboundIP ResourceReference_STATUS
 			err := effectiveOutboundIP.AssignProperties_From_ResourceReference_STATUS(&effectiveOutboundIPItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field EffectiveOutboundIPs")
+				return eris.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field EffectiveOutboundIPs")
 			}
 			effectiveOutboundIPList[effectiveOutboundIPIndex] = effectiveOutboundIP
 		}
@@ -14452,7 +14456,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_From_M
 		var managedOutboundIP ManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS
 		err := managedOutboundIP.AssignProperties_From_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS(source.ManagedOutboundIPs)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS() to populate field ManagedOutboundIPs")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS() to populate field ManagedOutboundIPs")
 		}
 		profile.ManagedOutboundIPs = &managedOutboundIP
 	} else {
@@ -14464,7 +14468,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_From_M
 		var outboundIPPrefix ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS
 		err := outboundIPPrefix.AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS(source.OutboundIPPrefixes)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS() to populate field OutboundIPPrefixes")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS() to populate field OutboundIPPrefixes")
 		}
 		profile.OutboundIPPrefixes = &outboundIPPrefix
 	} else {
@@ -14476,7 +14480,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_From_M
 		var outboundIP ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS
 		err := outboundIP.AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS(source.OutboundIPs)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS() to populate field OutboundIPs")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS() to populate field OutboundIPs")
 		}
 		profile.OutboundIPs = &outboundIP
 	} else {
@@ -14495,7 +14499,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_From_M
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -14530,7 +14534,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_To_Man
 			var effectiveOutboundIP v20231102ps.ResourceReference_STATUS
 			err := effectiveOutboundIPItem.AssignProperties_To_ResourceReference_STATUS(&effectiveOutboundIP)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field EffectiveOutboundIPs")
+				return eris.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field EffectiveOutboundIPs")
 			}
 			effectiveOutboundIPList[effectiveOutboundIPIndex] = effectiveOutboundIP
 		}
@@ -14555,7 +14559,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_To_Man
 		var managedOutboundIP v20231102ps.ManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS
 		err := profile.ManagedOutboundIPs.AssignProperties_To_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS(&managedOutboundIP)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS() to populate field ManagedOutboundIPs")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS() to populate field ManagedOutboundIPs")
 		}
 		destination.ManagedOutboundIPs = &managedOutboundIP
 	} else {
@@ -14567,7 +14571,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_To_Man
 		var outboundIPPrefix v20231102ps.ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS
 		err := profile.OutboundIPPrefixes.AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS(&outboundIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS() to populate field OutboundIPPrefixes")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS() to populate field OutboundIPPrefixes")
 		}
 		destination.OutboundIPPrefixes = &outboundIPPrefix
 	} else {
@@ -14579,7 +14583,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_To_Man
 		var outboundIP v20231102ps.ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS
 		err := profile.OutboundIPs.AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS(&outboundIP)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS() to populate field OutboundIPs")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS() to populate field OutboundIPs")
 		}
 		destination.OutboundIPs = &outboundIP
 	} else {
@@ -14598,7 +14602,7 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_To_Man
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -14629,7 +14633,7 @@ func (profile *ManagedClusterNATGatewayProfile) AssignProperties_From_ManagedClu
 			var effectiveOutboundIP ResourceReference
 			err := effectiveOutboundIP.AssignProperties_From_ResourceReference(&effectiveOutboundIPItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field EffectiveOutboundIPs")
+				return eris.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field EffectiveOutboundIPs")
 			}
 			effectiveOutboundIPList[effectiveOutboundIPIndex] = effectiveOutboundIP
 		}
@@ -14646,7 +14650,7 @@ func (profile *ManagedClusterNATGatewayProfile) AssignProperties_From_ManagedClu
 		var managedOutboundIPProfile ManagedClusterManagedOutboundIPProfile
 		err := managedOutboundIPProfile.AssignProperties_From_ManagedClusterManagedOutboundIPProfile(source.ManagedOutboundIPProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterManagedOutboundIPProfile() to populate field ManagedOutboundIPProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterManagedOutboundIPProfile() to populate field ManagedOutboundIPProfile")
 		}
 		profile.ManagedOutboundIPProfile = &managedOutboundIPProfile
 	} else {
@@ -14665,7 +14669,7 @@ func (profile *ManagedClusterNATGatewayProfile) AssignProperties_From_ManagedClu
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNATGatewayProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -14687,7 +14691,7 @@ func (profile *ManagedClusterNATGatewayProfile) AssignProperties_To_ManagedClust
 			var effectiveOutboundIP v20231102ps.ResourceReference
 			err := effectiveOutboundIPItem.AssignProperties_To_ResourceReference(&effectiveOutboundIP)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field EffectiveOutboundIPs")
+				return eris.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field EffectiveOutboundIPs")
 			}
 			effectiveOutboundIPList[effectiveOutboundIPIndex] = effectiveOutboundIP
 		}
@@ -14704,7 +14708,7 @@ func (profile *ManagedClusterNATGatewayProfile) AssignProperties_To_ManagedClust
 		var managedOutboundIPProfile v20231102ps.ManagedClusterManagedOutboundIPProfile
 		err := profile.ManagedOutboundIPProfile.AssignProperties_To_ManagedClusterManagedOutboundIPProfile(&managedOutboundIPProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterManagedOutboundIPProfile() to populate field ManagedOutboundIPProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterManagedOutboundIPProfile() to populate field ManagedOutboundIPProfile")
 		}
 		destination.ManagedOutboundIPProfile = &managedOutboundIPProfile
 	} else {
@@ -14723,7 +14727,7 @@ func (profile *ManagedClusterNATGatewayProfile) AssignProperties_To_ManagedClust
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNATGatewayProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -14754,7 +14758,7 @@ func (profile *ManagedClusterNATGatewayProfile_STATUS) AssignProperties_From_Man
 			var effectiveOutboundIP ResourceReference_STATUS
 			err := effectiveOutboundIP.AssignProperties_From_ResourceReference_STATUS(&effectiveOutboundIPItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field EffectiveOutboundIPs")
+				return eris.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field EffectiveOutboundIPs")
 			}
 			effectiveOutboundIPList[effectiveOutboundIPIndex] = effectiveOutboundIP
 		}
@@ -14771,7 +14775,7 @@ func (profile *ManagedClusterNATGatewayProfile_STATUS) AssignProperties_From_Man
 		var managedOutboundIPProfile ManagedClusterManagedOutboundIPProfile_STATUS
 		err := managedOutboundIPProfile.AssignProperties_From_ManagedClusterManagedOutboundIPProfile_STATUS(source.ManagedOutboundIPProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterManagedOutboundIPProfile_STATUS() to populate field ManagedOutboundIPProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterManagedOutboundIPProfile_STATUS() to populate field ManagedOutboundIPProfile")
 		}
 		profile.ManagedOutboundIPProfile = &managedOutboundIPProfile
 	} else {
@@ -14790,7 +14794,7 @@ func (profile *ManagedClusterNATGatewayProfile_STATUS) AssignProperties_From_Man
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNATGatewayProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -14812,7 +14816,7 @@ func (profile *ManagedClusterNATGatewayProfile_STATUS) AssignProperties_To_Manag
 			var effectiveOutboundIP v20231102ps.ResourceReference_STATUS
 			err := effectiveOutboundIPItem.AssignProperties_To_ResourceReference_STATUS(&effectiveOutboundIP)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field EffectiveOutboundIPs")
+				return eris.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field EffectiveOutboundIPs")
 			}
 			effectiveOutboundIPList[effectiveOutboundIPIndex] = effectiveOutboundIP
 		}
@@ -14829,7 +14833,7 @@ func (profile *ManagedClusterNATGatewayProfile_STATUS) AssignProperties_To_Manag
 		var managedOutboundIPProfile v20231102ps.ManagedClusterManagedOutboundIPProfile_STATUS
 		err := profile.ManagedOutboundIPProfile.AssignProperties_To_ManagedClusterManagedOutboundIPProfile_STATUS(&managedOutboundIPProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterManagedOutboundIPProfile_STATUS() to populate field ManagedOutboundIPProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterManagedOutboundIPProfile_STATUS() to populate field ManagedOutboundIPProfile")
 		}
 		destination.ManagedOutboundIPProfile = &managedOutboundIPProfile
 	} else {
@@ -14848,7 +14852,7 @@ func (profile *ManagedClusterNATGatewayProfile_STATUS) AssignProperties_To_Manag
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterNATGatewayProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -14887,7 +14891,7 @@ func (maps *ManagedClusterOperatorConfigMaps) AssignProperties_From_ManagedClust
 	if augmentedMaps, ok := mapsAsAny.(augmentConversionForManagedClusterOperatorConfigMaps); ok {
 		err := augmentedMaps.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -14920,7 +14924,7 @@ func (maps *ManagedClusterOperatorConfigMaps) AssignProperties_To_ManagedCluster
 	if augmentedMaps, ok := mapsAsAny.(augmentConversionForManagedClusterOperatorConfigMaps); ok {
 		err := augmentedMaps.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -14968,7 +14972,7 @@ func (secrets *ManagedClusterOperatorSecrets) AssignProperties_From_ManagedClust
 	if augmentedSecrets, ok := secretsAsAny.(augmentConversionForManagedClusterOperatorSecrets); ok {
 		err := augmentedSecrets.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15009,7 +15013,7 @@ func (secrets *ManagedClusterOperatorSecrets) AssignProperties_To_ManagedCluster
 	if augmentedSecrets, ok := secretsAsAny.(augmentConversionForManagedClusterOperatorSecrets); ok {
 		err := augmentedSecrets.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15040,7 +15044,7 @@ func (identity *ManagedClusterPodIdentity) AssignProperties_From_ManagedClusterP
 		var identityLocal UserAssignedIdentity
 		err := identityLocal.AssignProperties_From_UserAssignedIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity() to populate field Identity")
 		}
 		identity.Identity = &identityLocal
 	} else {
@@ -15065,7 +15069,7 @@ func (identity *ManagedClusterPodIdentity) AssignProperties_From_ManagedClusterP
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterPodIdentity); ok {
 		err := augmentedIdentity.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15086,7 +15090,7 @@ func (identity *ManagedClusterPodIdentity) AssignProperties_To_ManagedClusterPod
 		var identityLocal v20231102ps.UserAssignedIdentity
 		err := identity.Identity.AssignProperties_To_UserAssignedIdentity(&identityLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity() to populate field Identity")
 		}
 		destination.Identity = &identityLocal
 	} else {
@@ -15111,7 +15115,7 @@ func (identity *ManagedClusterPodIdentity) AssignProperties_To_ManagedClusterPod
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterPodIdentity); ok {
 		err := augmentedIdentity.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15144,7 +15148,7 @@ func (identity *ManagedClusterPodIdentity_STATUS) AssignProperties_From_ManagedC
 		var identityLocal UserAssignedIdentity_STATUS
 		err := identityLocal.AssignProperties_From_UserAssignedIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field Identity")
 		}
 		identity.Identity = &identityLocal
 	} else {
@@ -15162,7 +15166,7 @@ func (identity *ManagedClusterPodIdentity_STATUS) AssignProperties_From_ManagedC
 		var provisioningInfo ManagedClusterPodIdentity_ProvisioningInfo_STATUS
 		err := provisioningInfo.AssignProperties_From_ManagedClusterPodIdentity_ProvisioningInfo_STATUS(source.ProvisioningInfo)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentity_ProvisioningInfo_STATUS() to populate field ProvisioningInfo")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentity_ProvisioningInfo_STATUS() to populate field ProvisioningInfo")
 		}
 		identity.ProvisioningInfo = &provisioningInfo
 	} else {
@@ -15184,7 +15188,7 @@ func (identity *ManagedClusterPodIdentity_STATUS) AssignProperties_From_ManagedC
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterPodIdentity_STATUS); ok {
 		err := augmentedIdentity.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15205,7 +15209,7 @@ func (identity *ManagedClusterPodIdentity_STATUS) AssignProperties_To_ManagedClu
 		var identityLocal v20231102ps.UserAssignedIdentity_STATUS
 		err := identity.Identity.AssignProperties_To_UserAssignedIdentity_STATUS(&identityLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identityLocal
 	} else {
@@ -15223,7 +15227,7 @@ func (identity *ManagedClusterPodIdentity_STATUS) AssignProperties_To_ManagedClu
 		var provisioningInfo v20231102ps.ManagedClusterPodIdentity_ProvisioningInfo_STATUS
 		err := identity.ProvisioningInfo.AssignProperties_To_ManagedClusterPodIdentity_ProvisioningInfo_STATUS(&provisioningInfo)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentity_ProvisioningInfo_STATUS() to populate field ProvisioningInfo")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentity_ProvisioningInfo_STATUS() to populate field ProvisioningInfo")
 		}
 		destination.ProvisioningInfo = &provisioningInfo
 	} else {
@@ -15245,7 +15249,7 @@ func (identity *ManagedClusterPodIdentity_STATUS) AssignProperties_To_ManagedClu
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterPodIdentity_STATUS); ok {
 		err := augmentedIdentity.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15289,7 +15293,7 @@ func (exception *ManagedClusterPodIdentityException) AssignProperties_From_Manag
 	if augmentedException, ok := exceptionAsAny.(augmentConversionForManagedClusterPodIdentityException); ok {
 		err := augmentedException.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15323,7 +15327,7 @@ func (exception *ManagedClusterPodIdentityException) AssignProperties_To_Managed
 	if augmentedException, ok := exceptionAsAny.(augmentConversionForManagedClusterPodIdentityException); ok {
 		err := augmentedException.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15367,7 +15371,7 @@ func (exception *ManagedClusterPodIdentityException_STATUS) AssignProperties_Fro
 	if augmentedException, ok := exceptionAsAny.(augmentConversionForManagedClusterPodIdentityException_STATUS); ok {
 		err := augmentedException.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15401,7 +15405,7 @@ func (exception *ManagedClusterPodIdentityException_STATUS) AssignProperties_To_
 	if augmentedException, ok := exceptionAsAny.(augmentConversionForManagedClusterPodIdentityException_STATUS); ok {
 		err := augmentedException.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15438,7 +15442,7 @@ func (defender *ManagedClusterSecurityProfileDefender) AssignProperties_From_Man
 		var securityMonitoring ManagedClusterSecurityProfileDefenderSecurityMonitoring
 		err := securityMonitoring.AssignProperties_From_ManagedClusterSecurityProfileDefenderSecurityMonitoring(source.SecurityMonitoring)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileDefenderSecurityMonitoring() to populate field SecurityMonitoring")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileDefenderSecurityMonitoring() to populate field SecurityMonitoring")
 		}
 		defender.SecurityMonitoring = &securityMonitoring
 	} else {
@@ -15457,7 +15461,7 @@ func (defender *ManagedClusterSecurityProfileDefender) AssignProperties_From_Man
 	if augmentedDefender, ok := defenderAsAny.(augmentConversionForManagedClusterSecurityProfileDefender); ok {
 		err := augmentedDefender.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15483,7 +15487,7 @@ func (defender *ManagedClusterSecurityProfileDefender) AssignProperties_To_Manag
 		var securityMonitoring v20231102ps.ManagedClusterSecurityProfileDefenderSecurityMonitoring
 		err := defender.SecurityMonitoring.AssignProperties_To_ManagedClusterSecurityProfileDefenderSecurityMonitoring(&securityMonitoring)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileDefenderSecurityMonitoring() to populate field SecurityMonitoring")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileDefenderSecurityMonitoring() to populate field SecurityMonitoring")
 		}
 		destination.SecurityMonitoring = &securityMonitoring
 	} else {
@@ -15502,7 +15506,7 @@ func (defender *ManagedClusterSecurityProfileDefender) AssignProperties_To_Manag
 	if augmentedDefender, ok := defenderAsAny.(augmentConversionForManagedClusterSecurityProfileDefender); ok {
 		err := augmentedDefender.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15531,7 +15535,7 @@ func (defender *ManagedClusterSecurityProfileDefender_STATUS) AssignProperties_F
 		var securityMonitoring ManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS
 		err := securityMonitoring.AssignProperties_From_ManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS(source.SecurityMonitoring)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS() to populate field SecurityMonitoring")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS() to populate field SecurityMonitoring")
 		}
 		defender.SecurityMonitoring = &securityMonitoring
 	} else {
@@ -15550,7 +15554,7 @@ func (defender *ManagedClusterSecurityProfileDefender_STATUS) AssignProperties_F
 	if augmentedDefender, ok := defenderAsAny.(augmentConversionForManagedClusterSecurityProfileDefender_STATUS); ok {
 		err := augmentedDefender.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15571,7 +15575,7 @@ func (defender *ManagedClusterSecurityProfileDefender_STATUS) AssignProperties_T
 		var securityMonitoring v20231102ps.ManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS
 		err := defender.SecurityMonitoring.AssignProperties_To_ManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS(&securityMonitoring)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS() to populate field SecurityMonitoring")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS() to populate field SecurityMonitoring")
 		}
 		destination.SecurityMonitoring = &securityMonitoring
 	} else {
@@ -15590,7 +15594,7 @@ func (defender *ManagedClusterSecurityProfileDefender_STATUS) AssignProperties_T
 	if augmentedDefender, ok := defenderAsAny.(augmentConversionForManagedClusterSecurityProfileDefender_STATUS); ok {
 		err := augmentedDefender.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15635,7 +15639,7 @@ func (cleaner *ManagedClusterSecurityProfileImageCleaner) AssignProperties_From_
 	if augmentedCleaner, ok := cleanerAsAny.(augmentConversionForManagedClusterSecurityProfileImageCleaner); ok {
 		err := augmentedCleaner.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15671,7 +15675,7 @@ func (cleaner *ManagedClusterSecurityProfileImageCleaner) AssignProperties_To_Ma
 	if augmentedCleaner, ok := cleanerAsAny.(augmentConversionForManagedClusterSecurityProfileImageCleaner); ok {
 		err := augmentedCleaner.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15716,7 +15720,7 @@ func (cleaner *ManagedClusterSecurityProfileImageCleaner_STATUS) AssignPropertie
 	if augmentedCleaner, ok := cleanerAsAny.(augmentConversionForManagedClusterSecurityProfileImageCleaner_STATUS); ok {
 		err := augmentedCleaner.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15752,7 +15756,7 @@ func (cleaner *ManagedClusterSecurityProfileImageCleaner_STATUS) AssignPropertie
 	if augmentedCleaner, ok := cleanerAsAny.(augmentConversionForManagedClusterSecurityProfileImageCleaner_STATUS); ok {
 		err := augmentedCleaner.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15792,7 +15796,7 @@ func (integrity *ManagedClusterSecurityProfileImageIntegrity) AssignProperties_F
 	if augmentedIntegrity, ok := integrityAsAny.(augmentConversionForManagedClusterSecurityProfileImageIntegrity); ok {
 		err := augmentedIntegrity.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15825,7 +15829,7 @@ func (integrity *ManagedClusterSecurityProfileImageIntegrity) AssignProperties_T
 	if augmentedIntegrity, ok := integrityAsAny.(augmentConversionForManagedClusterSecurityProfileImageIntegrity); ok {
 		err := augmentedIntegrity.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15865,7 +15869,7 @@ func (integrity *ManagedClusterSecurityProfileImageIntegrity_STATUS) AssignPrope
 	if augmentedIntegrity, ok := integrityAsAny.(augmentConversionForManagedClusterSecurityProfileImageIntegrity_STATUS); ok {
 		err := augmentedIntegrity.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15898,7 +15902,7 @@ func (integrity *ManagedClusterSecurityProfileImageIntegrity_STATUS) AssignPrope
 	if augmentedIntegrity, ok := integrityAsAny.(augmentConversionForManagedClusterSecurityProfileImageIntegrity_STATUS); ok {
 		err := augmentedIntegrity.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -15938,7 +15942,7 @@ func (restriction *ManagedClusterSecurityProfileNodeRestriction) AssignPropertie
 	if augmentedRestriction, ok := restrictionAsAny.(augmentConversionForManagedClusterSecurityProfileNodeRestriction); ok {
 		err := augmentedRestriction.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -15971,7 +15975,7 @@ func (restriction *ManagedClusterSecurityProfileNodeRestriction) AssignPropertie
 	if augmentedRestriction, ok := restrictionAsAny.(augmentConversionForManagedClusterSecurityProfileNodeRestriction); ok {
 		err := augmentedRestriction.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16011,7 +16015,7 @@ func (restriction *ManagedClusterSecurityProfileNodeRestriction_STATUS) AssignPr
 	if augmentedRestriction, ok := restrictionAsAny.(augmentConversionForManagedClusterSecurityProfileNodeRestriction_STATUS); ok {
 		err := augmentedRestriction.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16044,7 +16048,7 @@ func (restriction *ManagedClusterSecurityProfileNodeRestriction_STATUS) AssignPr
 	if augmentedRestriction, ok := restrictionAsAny.(augmentConversionForManagedClusterSecurityProfileNodeRestriction_STATUS); ok {
 		err := augmentedRestriction.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16084,7 +16088,7 @@ func (identity *ManagedClusterSecurityProfileWorkloadIdentity) AssignProperties_
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterSecurityProfileWorkloadIdentity); ok {
 		err := augmentedIdentity.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16117,7 +16121,7 @@ func (identity *ManagedClusterSecurityProfileWorkloadIdentity) AssignProperties_
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterSecurityProfileWorkloadIdentity); ok {
 		err := augmentedIdentity.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16157,7 +16161,7 @@ func (identity *ManagedClusterSecurityProfileWorkloadIdentity_STATUS) AssignProp
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterSecurityProfileWorkloadIdentity_STATUS); ok {
 		err := augmentedIdentity.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16190,7 +16194,7 @@ func (identity *ManagedClusterSecurityProfileWorkloadIdentity_STATUS) AssignProp
 	if augmentedIdentity, ok := identityAsAny.(augmentConversionForManagedClusterSecurityProfileWorkloadIdentity_STATUS); ok {
 		err := augmentedIdentity.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16244,7 +16248,7 @@ func (driver *ManagedClusterStorageProfileBlobCSIDriver) AssignProperties_From_M
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileBlobCSIDriver); ok {
 		err := augmentedDriver.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16277,7 +16281,7 @@ func (driver *ManagedClusterStorageProfileBlobCSIDriver) AssignProperties_To_Man
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileBlobCSIDriver); ok {
 		err := augmentedDriver.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16317,7 +16321,7 @@ func (driver *ManagedClusterStorageProfileBlobCSIDriver_STATUS) AssignProperties
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileBlobCSIDriver_STATUS); ok {
 		err := augmentedDriver.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16350,7 +16354,7 @@ func (driver *ManagedClusterStorageProfileBlobCSIDriver_STATUS) AssignProperties
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileBlobCSIDriver_STATUS); ok {
 		err := augmentedDriver.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16394,7 +16398,7 @@ func (driver *ManagedClusterStorageProfileDiskCSIDriver) AssignProperties_From_M
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileDiskCSIDriver); ok {
 		err := augmentedDriver.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16430,7 +16434,7 @@ func (driver *ManagedClusterStorageProfileDiskCSIDriver) AssignProperties_To_Man
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileDiskCSIDriver); ok {
 		err := augmentedDriver.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16474,7 +16478,7 @@ func (driver *ManagedClusterStorageProfileDiskCSIDriver_STATUS) AssignProperties
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileDiskCSIDriver_STATUS); ok {
 		err := augmentedDriver.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16510,7 +16514,7 @@ func (driver *ManagedClusterStorageProfileDiskCSIDriver_STATUS) AssignProperties
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileDiskCSIDriver_STATUS); ok {
 		err := augmentedDriver.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16550,7 +16554,7 @@ func (driver *ManagedClusterStorageProfileFileCSIDriver) AssignProperties_From_M
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileFileCSIDriver); ok {
 		err := augmentedDriver.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16583,7 +16587,7 @@ func (driver *ManagedClusterStorageProfileFileCSIDriver) AssignProperties_To_Man
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileFileCSIDriver); ok {
 		err := augmentedDriver.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16623,7 +16627,7 @@ func (driver *ManagedClusterStorageProfileFileCSIDriver_STATUS) AssignProperties
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileFileCSIDriver_STATUS); ok {
 		err := augmentedDriver.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16656,7 +16660,7 @@ func (driver *ManagedClusterStorageProfileFileCSIDriver_STATUS) AssignProperties
 	if augmentedDriver, ok := driverAsAny.(augmentConversionForManagedClusterStorageProfileFileCSIDriver_STATUS); ok {
 		err := augmentedDriver.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16696,7 +16700,7 @@ func (controller *ManagedClusterStorageProfileSnapshotController) AssignProperti
 	if augmentedController, ok := controllerAsAny.(augmentConversionForManagedClusterStorageProfileSnapshotController); ok {
 		err := augmentedController.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16729,7 +16733,7 @@ func (controller *ManagedClusterStorageProfileSnapshotController) AssignProperti
 	if augmentedController, ok := controllerAsAny.(augmentConversionForManagedClusterStorageProfileSnapshotController); ok {
 		err := augmentedController.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16769,7 +16773,7 @@ func (controller *ManagedClusterStorageProfileSnapshotController_STATUS) AssignP
 	if augmentedController, ok := controllerAsAny.(augmentConversionForManagedClusterStorageProfileSnapshotController_STATUS); ok {
 		err := augmentedController.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16802,7 +16806,7 @@ func (controller *ManagedClusterStorageProfileSnapshotController_STATUS) AssignP
 	if augmentedController, ok := controllerAsAny.(augmentConversionForManagedClusterStorageProfileSnapshotController_STATUS); ok {
 		err := augmentedController.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16842,7 +16846,7 @@ func (keda *ManagedClusterWorkloadAutoScalerProfileKeda) AssignProperties_From_M
 	if augmentedKeda, ok := kedaAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfileKeda); ok {
 		err := augmentedKeda.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16875,7 +16879,7 @@ func (keda *ManagedClusterWorkloadAutoScalerProfileKeda) AssignProperties_To_Man
 	if augmentedKeda, ok := kedaAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfileKeda); ok {
 		err := augmentedKeda.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16915,7 +16919,7 @@ func (keda *ManagedClusterWorkloadAutoScalerProfileKeda_STATUS) AssignProperties
 	if augmentedKeda, ok := kedaAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfileKeda_STATUS); ok {
 		err := augmentedKeda.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -16948,7 +16952,7 @@ func (keda *ManagedClusterWorkloadAutoScalerProfileKeda_STATUS) AssignProperties
 	if augmentedKeda, ok := kedaAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfileKeda_STATUS); ok {
 		err := augmentedKeda.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -16991,7 +16995,7 @@ func (autoscaler *ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler) 
 	if augmentedAutoscaler, ok := autoscalerAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler); ok {
 		err := augmentedAutoscaler.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -17027,7 +17031,7 @@ func (autoscaler *ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler) 
 	if augmentedAutoscaler, ok := autoscalerAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler); ok {
 		err := augmentedAutoscaler.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -17070,7 +17074,7 @@ func (autoscaler *ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_S
 	if augmentedAutoscaler, ok := autoscalerAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS); ok {
 		err := augmentedAutoscaler.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -17106,7 +17110,7 @@ func (autoscaler *ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_S
 	if augmentedAutoscaler, ok := autoscalerAsAny.(augmentConversionForManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS); ok {
 		err := augmentedAutoscaler.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -17150,7 +17154,7 @@ func (settings *UpgradeOverrideSettings) AssignProperties_From_UpgradeOverrideSe
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForUpgradeOverrideSettings); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -17186,7 +17190,7 @@ func (settings *UpgradeOverrideSettings) AssignProperties_To_UpgradeOverrideSett
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForUpgradeOverrideSettings); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -17230,7 +17234,7 @@ func (settings *UpgradeOverrideSettings_STATUS) AssignProperties_From_UpgradeOve
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForUpgradeOverrideSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -17266,7 +17270,7 @@ func (settings *UpgradeOverrideSettings_STATUS) AssignProperties_To_UpgradeOverr
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForUpgradeOverrideSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -17301,7 +17305,7 @@ func (details *UserAssignedIdentityDetails) AssignProperties_From_UserAssignedId
 	if augmentedDetails, ok := detailsAsAny.(augmentConversionForUserAssignedIdentityDetails); ok {
 		err := augmentedDetails.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -17329,7 +17333,7 @@ func (details *UserAssignedIdentityDetails) AssignProperties_To_UserAssignedIden
 	if augmentedDetails, ok := detailsAsAny.(augmentConversionForUserAssignedIdentityDetails); ok {
 		err := augmentedDetails.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -17377,7 +17381,7 @@ func (profile *WindowsGmsaProfile) AssignProperties_From_WindowsGmsaProfile(sour
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForWindowsGmsaProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -17416,7 +17420,7 @@ func (profile *WindowsGmsaProfile) AssignProperties_To_WindowsGmsaProfile(destin
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForWindowsGmsaProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -17464,7 +17468,7 @@ func (profile *WindowsGmsaProfile_STATUS) AssignProperties_From_WindowsGmsaProfi
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForWindowsGmsaProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -17503,7 +17507,7 @@ func (profile *WindowsGmsaProfile_STATUS) AssignProperties_To_WindowsGmsaProfile
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForWindowsGmsaProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -17543,7 +17547,7 @@ func (observability *AdvancedNetworkingObservability) AssignProperties_From_Adva
 	if augmentedObservability, ok := observabilityAsAny.(augmentConversionForAdvancedNetworkingObservability); ok {
 		err := augmentedObservability.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -17576,7 +17580,7 @@ func (observability *AdvancedNetworkingObservability) AssignProperties_To_Advanc
 	if augmentedObservability, ok := observabilityAsAny.(augmentConversionForAdvancedNetworkingObservability); ok {
 		err := augmentedObservability.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -17616,7 +17620,7 @@ func (observability *AdvancedNetworkingObservability_STATUS) AssignProperties_Fr
 	if augmentedObservability, ok := observabilityAsAny.(augmentConversionForAdvancedNetworkingObservability_STATUS); ok {
 		err := augmentedObservability.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -17649,7 +17653,7 @@ func (observability *AdvancedNetworkingObservability_STATUS) AssignProperties_To
 	if augmentedObservability, ok := observabilityAsAny.(augmentConversionForAdvancedNetworkingObservability_STATUS); ok {
 		err := augmentedObservability.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -17995,7 +17999,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig) AssignP
 	if augmentedConfig, ok := configAsAny.(augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig); ok {
 		err := augmentedConfig.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18032,7 +18036,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig) AssignP
 	if augmentedConfig, ok := configAsAny.(augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig); ok {
 		err := augmentedConfig.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -18078,7 +18082,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS) 
 	if augmentedConfig, ok := configAsAny.(augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS); ok {
 		err := augmentedConfig.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18115,7 +18119,7 @@ func (config *ContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS) 
 	if augmentedConfig, ok := configAsAny.(augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS); ok {
 		err := augmentedConfig.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -18150,7 +18154,7 @@ func (publicKey *ContainerServiceSshPublicKey) AssignProperties_From_ContainerSe
 	if augmentedPublicKey, ok := publicKeyAsAny.(augmentConversionForContainerServiceSshPublicKey); ok {
 		err := augmentedPublicKey.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18178,7 +18182,7 @@ func (publicKey *ContainerServiceSshPublicKey) AssignProperties_To_ContainerServ
 	if augmentedPublicKey, ok := publicKeyAsAny.(augmentConversionForContainerServiceSshPublicKey); ok {
 		err := augmentedPublicKey.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -18213,7 +18217,7 @@ func (publicKey *ContainerServiceSshPublicKey_STATUS) AssignProperties_From_Cont
 	if augmentedPublicKey, ok := publicKeyAsAny.(augmentConversionForContainerServiceSshPublicKey_STATUS); ok {
 		err := augmentedPublicKey.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18241,7 +18245,7 @@ func (publicKey *ContainerServiceSshPublicKey_STATUS) AssignProperties_To_Contai
 	if augmentedPublicKey, ok := publicKeyAsAny.(augmentConversionForContainerServiceSshPublicKey_STATUS); ok {
 		err := augmentedPublicKey.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -18267,7 +18271,7 @@ func (authority *IstioCertificateAuthority) AssignProperties_From_IstioCertifica
 		var plugin IstioPluginCertificateAuthority
 		err := plugin.AssignProperties_From_IstioPluginCertificateAuthority(source.Plugin)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IstioPluginCertificateAuthority() to populate field Plugin")
+			return eris.Wrap(err, "calling AssignProperties_From_IstioPluginCertificateAuthority() to populate field Plugin")
 		}
 		authority.Plugin = &plugin
 	} else {
@@ -18286,7 +18290,7 @@ func (authority *IstioCertificateAuthority) AssignProperties_From_IstioCertifica
 	if augmentedAuthority, ok := authorityAsAny.(augmentConversionForIstioCertificateAuthority); ok {
 		err := augmentedAuthority.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18304,7 +18308,7 @@ func (authority *IstioCertificateAuthority) AssignProperties_To_IstioCertificate
 		var plugin v20231102ps.IstioPluginCertificateAuthority
 		err := authority.Plugin.AssignProperties_To_IstioPluginCertificateAuthority(&plugin)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IstioPluginCertificateAuthority() to populate field Plugin")
+			return eris.Wrap(err, "calling AssignProperties_To_IstioPluginCertificateAuthority() to populate field Plugin")
 		}
 		destination.Plugin = &plugin
 	} else {
@@ -18323,7 +18327,7 @@ func (authority *IstioCertificateAuthority) AssignProperties_To_IstioCertificate
 	if augmentedAuthority, ok := authorityAsAny.(augmentConversionForIstioCertificateAuthority); ok {
 		err := augmentedAuthority.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -18349,7 +18353,7 @@ func (authority *IstioCertificateAuthority_STATUS) AssignProperties_From_IstioCe
 		var plugin IstioPluginCertificateAuthority_STATUS
 		err := plugin.AssignProperties_From_IstioPluginCertificateAuthority_STATUS(source.Plugin)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IstioPluginCertificateAuthority_STATUS() to populate field Plugin")
+			return eris.Wrap(err, "calling AssignProperties_From_IstioPluginCertificateAuthority_STATUS() to populate field Plugin")
 		}
 		authority.Plugin = &plugin
 	} else {
@@ -18368,7 +18372,7 @@ func (authority *IstioCertificateAuthority_STATUS) AssignProperties_From_IstioCe
 	if augmentedAuthority, ok := authorityAsAny.(augmentConversionForIstioCertificateAuthority_STATUS); ok {
 		err := augmentedAuthority.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18386,7 +18390,7 @@ func (authority *IstioCertificateAuthority_STATUS) AssignProperties_To_IstioCert
 		var plugin v20231102ps.IstioPluginCertificateAuthority_STATUS
 		err := authority.Plugin.AssignProperties_To_IstioPluginCertificateAuthority_STATUS(&plugin)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IstioPluginCertificateAuthority_STATUS() to populate field Plugin")
+			return eris.Wrap(err, "calling AssignProperties_To_IstioPluginCertificateAuthority_STATUS() to populate field Plugin")
 		}
 		destination.Plugin = &plugin
 	} else {
@@ -18405,7 +18409,7 @@ func (authority *IstioCertificateAuthority_STATUS) AssignProperties_To_IstioCert
 	if augmentedAuthority, ok := authorityAsAny.(augmentConversionForIstioCertificateAuthority_STATUS); ok {
 		err := augmentedAuthority.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -18435,7 +18439,7 @@ func (components *IstioComponents) AssignProperties_From_IstioComponents(source 
 			var egressGateway IstioEgressGateway
 			err := egressGateway.AssignProperties_From_IstioEgressGateway(&egressGatewayItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IstioEgressGateway() to populate field EgressGateways")
+				return eris.Wrap(err, "calling AssignProperties_From_IstioEgressGateway() to populate field EgressGateways")
 			}
 			egressGatewayList[egressGatewayIndex] = egressGateway
 		}
@@ -18453,7 +18457,7 @@ func (components *IstioComponents) AssignProperties_From_IstioComponents(source 
 			var ingressGateway IstioIngressGateway
 			err := ingressGateway.AssignProperties_From_IstioIngressGateway(&ingressGatewayItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IstioIngressGateway() to populate field IngressGateways")
+				return eris.Wrap(err, "calling AssignProperties_From_IstioIngressGateway() to populate field IngressGateways")
 			}
 			ingressGatewayList[ingressGatewayIndex] = ingressGateway
 		}
@@ -18474,7 +18478,7 @@ func (components *IstioComponents) AssignProperties_From_IstioComponents(source 
 	if augmentedComponents, ok := componentsAsAny.(augmentConversionForIstioComponents); ok {
 		err := augmentedComponents.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18496,7 +18500,7 @@ func (components *IstioComponents) AssignProperties_To_IstioComponents(destinati
 			var egressGateway v20231102ps.IstioEgressGateway
 			err := egressGatewayItem.AssignProperties_To_IstioEgressGateway(&egressGateway)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IstioEgressGateway() to populate field EgressGateways")
+				return eris.Wrap(err, "calling AssignProperties_To_IstioEgressGateway() to populate field EgressGateways")
 			}
 			egressGatewayList[egressGatewayIndex] = egressGateway
 		}
@@ -18514,7 +18518,7 @@ func (components *IstioComponents) AssignProperties_To_IstioComponents(destinati
 			var ingressGateway v20231102ps.IstioIngressGateway
 			err := ingressGatewayItem.AssignProperties_To_IstioIngressGateway(&ingressGateway)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IstioIngressGateway() to populate field IngressGateways")
+				return eris.Wrap(err, "calling AssignProperties_To_IstioIngressGateway() to populate field IngressGateways")
 			}
 			ingressGatewayList[ingressGatewayIndex] = ingressGateway
 		}
@@ -18535,7 +18539,7 @@ func (components *IstioComponents) AssignProperties_To_IstioComponents(destinati
 	if augmentedComponents, ok := componentsAsAny.(augmentConversionForIstioComponents); ok {
 		err := augmentedComponents.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -18565,7 +18569,7 @@ func (components *IstioComponents_STATUS) AssignProperties_From_IstioComponents_
 			var egressGateway IstioEgressGateway_STATUS
 			err := egressGateway.AssignProperties_From_IstioEgressGateway_STATUS(&egressGatewayItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IstioEgressGateway_STATUS() to populate field EgressGateways")
+				return eris.Wrap(err, "calling AssignProperties_From_IstioEgressGateway_STATUS() to populate field EgressGateways")
 			}
 			egressGatewayList[egressGatewayIndex] = egressGateway
 		}
@@ -18583,7 +18587,7 @@ func (components *IstioComponents_STATUS) AssignProperties_From_IstioComponents_
 			var ingressGateway IstioIngressGateway_STATUS
 			err := ingressGateway.AssignProperties_From_IstioIngressGateway_STATUS(&ingressGatewayItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IstioIngressGateway_STATUS() to populate field IngressGateways")
+				return eris.Wrap(err, "calling AssignProperties_From_IstioIngressGateway_STATUS() to populate field IngressGateways")
 			}
 			ingressGatewayList[ingressGatewayIndex] = ingressGateway
 		}
@@ -18604,7 +18608,7 @@ func (components *IstioComponents_STATUS) AssignProperties_From_IstioComponents_
 	if augmentedComponents, ok := componentsAsAny.(augmentConversionForIstioComponents_STATUS); ok {
 		err := augmentedComponents.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18626,7 +18630,7 @@ func (components *IstioComponents_STATUS) AssignProperties_To_IstioComponents_ST
 			var egressGateway v20231102ps.IstioEgressGateway_STATUS
 			err := egressGatewayItem.AssignProperties_To_IstioEgressGateway_STATUS(&egressGateway)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IstioEgressGateway_STATUS() to populate field EgressGateways")
+				return eris.Wrap(err, "calling AssignProperties_To_IstioEgressGateway_STATUS() to populate field EgressGateways")
 			}
 			egressGatewayList[egressGatewayIndex] = egressGateway
 		}
@@ -18644,7 +18648,7 @@ func (components *IstioComponents_STATUS) AssignProperties_To_IstioComponents_ST
 			var ingressGateway v20231102ps.IstioIngressGateway_STATUS
 			err := ingressGatewayItem.AssignProperties_To_IstioIngressGateway_STATUS(&ingressGateway)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IstioIngressGateway_STATUS() to populate field IngressGateways")
+				return eris.Wrap(err, "calling AssignProperties_To_IstioIngressGateway_STATUS() to populate field IngressGateways")
 			}
 			ingressGatewayList[ingressGatewayIndex] = ingressGateway
 		}
@@ -18665,7 +18669,7 @@ func (components *IstioComponents_STATUS) AssignProperties_To_IstioComponents_ST
 	if augmentedComponents, ok := componentsAsAny.(augmentConversionForIstioComponents_STATUS); ok {
 		err := augmentedComponents.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -18739,7 +18743,7 @@ func (metrics *ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetric
 		var port int
 		err := propertyBag.Pull("Port", &port)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Port' from propertyBag")
+			return eris.Wrap(err, "pulling 'Port' from propertyBag")
 		}
 
 		metrics.Port = &port
@@ -18759,7 +18763,7 @@ func (metrics *ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetric
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetrics); ok {
 		err := augmentedMetrics.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18799,7 +18803,7 @@ func (metrics *ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetric
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetrics); ok {
 		err := augmentedMetrics.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -18835,7 +18839,7 @@ func (metrics *ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetric
 		var port int
 		err := propertyBag.Pull("Port", &port)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Port' from propertyBag")
+			return eris.Wrap(err, "pulling 'Port' from propertyBag")
 		}
 
 		metrics.Port = &port
@@ -18855,7 +18859,7 @@ func (metrics *ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetric
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetrics_STATUS); ok {
 		err := augmentedMetrics.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18895,7 +18899,7 @@ func (metrics *ManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetric
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetrics_STATUS); ok {
 		err := augmentedMetrics.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -18934,7 +18938,7 @@ func (metrics *ManagedClusterAzureMonitorProfileKubeStateMetrics) AssignProperti
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileKubeStateMetrics); ok {
 		err := augmentedMetrics.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -18965,7 +18969,7 @@ func (metrics *ManagedClusterAzureMonitorProfileKubeStateMetrics) AssignProperti
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileKubeStateMetrics); ok {
 		err := augmentedMetrics.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19004,7 +19008,7 @@ func (metrics *ManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS) AssignP
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS); ok {
 		err := augmentedMetrics.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19035,7 +19039,7 @@ func (metrics *ManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS) AssignP
 	if augmentedMetrics, ok := metricsAsAny.(augmentConversionForManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS); ok {
 		err := augmentedMetrics.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19073,7 +19077,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_ManagedOutboundIPs) AssignPropertie
 	if augmentedIPs, ok := iPsAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_ManagedOutboundIPs); ok {
 		err := augmentedIPs.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19104,7 +19108,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_ManagedOutboundIPs) AssignPropertie
 	if augmentedIPs, ok := iPsAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_ManagedOutboundIPs); ok {
 		err := augmentedIPs.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19142,7 +19146,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS) AssignPr
 	if augmentedIPs, ok := iPsAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS); ok {
 		err := augmentedIPs.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19173,7 +19177,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS) AssignPr
 	if augmentedIPs, ok := iPsAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS); ok {
 		err := augmentedIPs.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19201,7 +19205,7 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes) AssignProp
 			var publicIPPrefix ResourceReference
 			err := publicIPPrefix.AssignProperties_From_ResourceReference(&publicIPPrefixItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field PublicIPPrefixes")
+				return eris.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field PublicIPPrefixes")
 			}
 			publicIPPrefixList[publicIPPrefixIndex] = publicIPPrefix
 		}
@@ -19222,7 +19226,7 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes) AssignProp
 	if augmentedPrefixes, ok := prefixesAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPPrefixes); ok {
 		err := augmentedPrefixes.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19244,7 +19248,7 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes) AssignProp
 			var publicIPPrefix v20231102ps.ResourceReference
 			err := publicIPPrefixItem.AssignProperties_To_ResourceReference(&publicIPPrefix)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field PublicIPPrefixes")
+				return eris.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field PublicIPPrefixes")
 			}
 			publicIPPrefixList[publicIPPrefixIndex] = publicIPPrefix
 		}
@@ -19265,7 +19269,7 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes) AssignProp
 	if augmentedPrefixes, ok := prefixesAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPPrefixes); ok {
 		err := augmentedPrefixes.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19293,7 +19297,7 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS) Ass
 			var publicIPPrefix ResourceReference_STATUS
 			err := publicIPPrefix.AssignProperties_From_ResourceReference_STATUS(&publicIPPrefixItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field PublicIPPrefixes")
+				return eris.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field PublicIPPrefixes")
 			}
 			publicIPPrefixList[publicIPPrefixIndex] = publicIPPrefix
 		}
@@ -19314,7 +19318,7 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS) Ass
 	if augmentedPrefixes, ok := prefixesAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS); ok {
 		err := augmentedPrefixes.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19336,7 +19340,7 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS) Ass
 			var publicIPPrefix v20231102ps.ResourceReference_STATUS
 			err := publicIPPrefixItem.AssignProperties_To_ResourceReference_STATUS(&publicIPPrefix)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field PublicIPPrefixes")
+				return eris.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field PublicIPPrefixes")
 			}
 			publicIPPrefixList[publicIPPrefixIndex] = publicIPPrefix
 		}
@@ -19357,7 +19361,7 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS) Ass
 	if augmentedPrefixes, ok := prefixesAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS); ok {
 		err := augmentedPrefixes.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19385,7 +19389,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs) AssignProperties_From_
 			var publicIP ResourceReference
 			err := publicIP.AssignProperties_From_ResourceReference(&publicIPItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field PublicIPs")
+				return eris.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field PublicIPs")
 			}
 			publicIPList[publicIPIndex] = publicIP
 		}
@@ -19406,7 +19410,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs) AssignProperties_From_
 	if augmentedIPs, ok := iPsAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPs); ok {
 		err := augmentedIPs.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19428,7 +19432,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs) AssignProperties_To_Ma
 			var publicIP v20231102ps.ResourceReference
 			err := publicIPItem.AssignProperties_To_ResourceReference(&publicIP)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field PublicIPs")
+				return eris.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field PublicIPs")
 			}
 			publicIPList[publicIPIndex] = publicIP
 		}
@@ -19449,7 +19453,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs) AssignProperties_To_Ma
 	if augmentedIPs, ok := iPsAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPs); ok {
 		err := augmentedIPs.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19477,7 +19481,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS) AssignPropertie
 			var publicIP ResourceReference_STATUS
 			err := publicIP.AssignProperties_From_ResourceReference_STATUS(&publicIPItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field PublicIPs")
+				return eris.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field PublicIPs")
 			}
 			publicIPList[publicIPIndex] = publicIP
 		}
@@ -19498,7 +19502,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS) AssignPropertie
 	if augmentedIPs, ok := iPsAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPs_STATUS); ok {
 		err := augmentedIPs.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19520,7 +19524,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS) AssignPropertie
 			var publicIP v20231102ps.ResourceReference_STATUS
 			err := publicIPItem.AssignProperties_To_ResourceReference_STATUS(&publicIP)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field PublicIPs")
+				return eris.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field PublicIPs")
 			}
 			publicIPList[publicIPIndex] = publicIP
 		}
@@ -19541,7 +19545,7 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS) AssignPropertie
 	if augmentedIPs, ok := iPsAsAny.(augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPs_STATUS); ok {
 		err := augmentedIPs.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19576,7 +19580,7 @@ func (profile *ManagedClusterManagedOutboundIPProfile) AssignProperties_From_Man
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterManagedOutboundIPProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19604,7 +19608,7 @@ func (profile *ManagedClusterManagedOutboundIPProfile) AssignProperties_To_Manag
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterManagedOutboundIPProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19639,7 +19643,7 @@ func (profile *ManagedClusterManagedOutboundIPProfile_STATUS) AssignProperties_F
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterManagedOutboundIPProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19667,7 +19671,7 @@ func (profile *ManagedClusterManagedOutboundIPProfile_STATUS) AssignProperties_T
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForManagedClusterManagedOutboundIPProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19691,7 +19695,7 @@ func (info *ManagedClusterPodIdentity_ProvisioningInfo_STATUS) AssignProperties_
 		var error ManagedClusterPodIdentityProvisioningError_STATUS
 		err := error.AssignProperties_From_ManagedClusterPodIdentityProvisioningError_STATUS(source.Error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityProvisioningError_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityProvisioningError_STATUS() to populate field Error")
 		}
 		info.Error = &error
 	} else {
@@ -19710,7 +19714,7 @@ func (info *ManagedClusterPodIdentity_ProvisioningInfo_STATUS) AssignProperties_
 	if augmentedInfo, ok := infoAsAny.(augmentConversionForManagedClusterPodIdentity_ProvisioningInfo_STATUS); ok {
 		err := augmentedInfo.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19728,7 +19732,7 @@ func (info *ManagedClusterPodIdentity_ProvisioningInfo_STATUS) AssignProperties_
 		var error v20231102ps.ManagedClusterPodIdentityProvisioningError_STATUS
 		err := info.Error.AssignProperties_To_ManagedClusterPodIdentityProvisioningError_STATUS(&error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityProvisioningError_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityProvisioningError_STATUS() to populate field Error")
 		}
 		destination.Error = &error
 	} else {
@@ -19747,7 +19751,7 @@ func (info *ManagedClusterPodIdentity_ProvisioningInfo_STATUS) AssignProperties_
 	if augmentedInfo, ok := infoAsAny.(augmentConversionForManagedClusterPodIdentity_ProvisioningInfo_STATUS); ok {
 		err := augmentedInfo.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19787,7 +19791,7 @@ func (monitoring *ManagedClusterSecurityProfileDefenderSecurityMonitoring) Assig
 	if augmentedMonitoring, ok := monitoringAsAny.(augmentConversionForManagedClusterSecurityProfileDefenderSecurityMonitoring); ok {
 		err := augmentedMonitoring.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19820,7 +19824,7 @@ func (monitoring *ManagedClusterSecurityProfileDefenderSecurityMonitoring) Assig
 	if augmentedMonitoring, ok := monitoringAsAny.(augmentConversionForManagedClusterSecurityProfileDefenderSecurityMonitoring); ok {
 		err := augmentedMonitoring.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19860,7 +19864,7 @@ func (monitoring *ManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS
 	if augmentedMonitoring, ok := monitoringAsAny.(augmentConversionForManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS); ok {
 		err := augmentedMonitoring.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19893,7 +19897,7 @@ func (monitoring *ManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS
 	if augmentedMonitoring, ok := monitoringAsAny.(augmentConversionForManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS); ok {
 		err := augmentedMonitoring.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -19935,7 +19939,7 @@ func (reference *ResourceReference) AssignProperties_From_ResourceReference(sour
 	if augmentedReference, ok := referenceAsAny.(augmentConversionForResourceReference); ok {
 		err := augmentedReference.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -19968,7 +19972,7 @@ func (reference *ResourceReference) AssignProperties_To_ResourceReference(destin
 	if augmentedReference, ok := referenceAsAny.(augmentConversionForResourceReference); ok {
 		err := augmentedReference.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -20003,7 +20007,7 @@ func (reference *ResourceReference_STATUS) AssignProperties_From_ResourceReferen
 	if augmentedReference, ok := referenceAsAny.(augmentConversionForResourceReference_STATUS); ok {
 		err := augmentedReference.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -20031,7 +20035,7 @@ func (reference *ResourceReference_STATUS) AssignProperties_To_ResourceReference
 	if augmentedReference, ok := referenceAsAny.(augmentConversionForResourceReference_STATUS); ok {
 		err := augmentedReference.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -20213,7 +20217,7 @@ func (gateway *IstioEgressGateway) AssignProperties_From_IstioEgressGateway(sour
 	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForIstioEgressGateway); ok {
 		err := augmentedGateway.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -20239,7 +20243,7 @@ func (gateway *IstioEgressGateway) AssignProperties_To_IstioEgressGateway(destin
 		var nodeSelector map[string]string
 		err := propertyBag.Pull("NodeSelector", &nodeSelector)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'NodeSelector' from propertyBag")
+			return eris.Wrap(err, "pulling 'NodeSelector' from propertyBag")
 		}
 
 		destination.NodeSelector = nodeSelector
@@ -20259,7 +20263,7 @@ func (gateway *IstioEgressGateway) AssignProperties_To_IstioEgressGateway(destin
 	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForIstioEgressGateway); ok {
 		err := augmentedGateway.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -20306,7 +20310,7 @@ func (gateway *IstioEgressGateway_STATUS) AssignProperties_From_IstioEgressGatew
 	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForIstioEgressGateway_STATUS); ok {
 		err := augmentedGateway.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -20332,7 +20336,7 @@ func (gateway *IstioEgressGateway_STATUS) AssignProperties_To_IstioEgressGateway
 		var nodeSelector map[string]string
 		err := propertyBag.Pull("NodeSelector", &nodeSelector)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'NodeSelector' from propertyBag")
+			return eris.Wrap(err, "pulling 'NodeSelector' from propertyBag")
 		}
 
 		destination.NodeSelector = nodeSelector
@@ -20352,7 +20356,7 @@ func (gateway *IstioEgressGateway_STATUS) AssignProperties_To_IstioEgressGateway
 	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForIstioEgressGateway_STATUS); ok {
 		err := augmentedGateway.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -20397,7 +20401,7 @@ func (gateway *IstioIngressGateway) AssignProperties_From_IstioIngressGateway(so
 	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForIstioIngressGateway); ok {
 		err := augmentedGateway.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -20433,7 +20437,7 @@ func (gateway *IstioIngressGateway) AssignProperties_To_IstioIngressGateway(dest
 	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForIstioIngressGateway); ok {
 		err := augmentedGateway.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -20478,7 +20482,7 @@ func (gateway *IstioIngressGateway_STATUS) AssignProperties_From_IstioIngressGat
 	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForIstioIngressGateway_STATUS); ok {
 		err := augmentedGateway.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -20514,7 +20518,7 @@ func (gateway *IstioIngressGateway_STATUS) AssignProperties_To_IstioIngressGatew
 	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForIstioIngressGateway_STATUS); ok {
 		err := augmentedGateway.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -20572,7 +20576,7 @@ func (authority *IstioPluginCertificateAuthority) AssignProperties_From_IstioPlu
 	if augmentedAuthority, ok := authorityAsAny.(augmentConversionForIstioPluginCertificateAuthority); ok {
 		err := augmentedAuthority.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -20617,7 +20621,7 @@ func (authority *IstioPluginCertificateAuthority) AssignProperties_To_IstioPlugi
 	if augmentedAuthority, ok := authorityAsAny.(augmentConversionForIstioPluginCertificateAuthority); ok {
 		err := augmentedAuthority.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -20668,7 +20672,7 @@ func (authority *IstioPluginCertificateAuthority_STATUS) AssignProperties_From_I
 	if augmentedAuthority, ok := authorityAsAny.(augmentConversionForIstioPluginCertificateAuthority_STATUS); ok {
 		err := augmentedAuthority.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -20708,7 +20712,7 @@ func (authority *IstioPluginCertificateAuthority_STATUS) AssignProperties_To_Ist
 	if augmentedAuthority, ok := authorityAsAny.(augmentConversionForIstioPluginCertificateAuthority_STATUS); ok {
 		err := augmentedAuthority.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -20733,7 +20737,7 @@ func (error *ManagedClusterPodIdentityProvisioningError_STATUS) AssignProperties
 		var errorLocal ManagedClusterPodIdentityProvisioningErrorBody_STATUS
 		err := errorLocal.AssignProperties_From_ManagedClusterPodIdentityProvisioningErrorBody_STATUS(source.Error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityProvisioningErrorBody_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityProvisioningErrorBody_STATUS() to populate field Error")
 		}
 		error.Error = &errorLocal
 	} else {
@@ -20752,7 +20756,7 @@ func (error *ManagedClusterPodIdentityProvisioningError_STATUS) AssignProperties
 	if augmentedError, ok := errorAsAny.(augmentConversionForManagedClusterPodIdentityProvisioningError_STATUS); ok {
 		err := augmentedError.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -20770,7 +20774,7 @@ func (error *ManagedClusterPodIdentityProvisioningError_STATUS) AssignProperties
 		var errorLocal v20231102ps.ManagedClusterPodIdentityProvisioningErrorBody_STATUS
 		err := error.Error.AssignProperties_To_ManagedClusterPodIdentityProvisioningErrorBody_STATUS(&errorLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityProvisioningErrorBody_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityProvisioningErrorBody_STATUS() to populate field Error")
 		}
 		destination.Error = &errorLocal
 	} else {
@@ -20789,7 +20793,7 @@ func (error *ManagedClusterPodIdentityProvisioningError_STATUS) AssignProperties
 	if augmentedError, ok := errorAsAny.(augmentConversionForManagedClusterPodIdentityProvisioningError_STATUS); ok {
 		err := augmentedError.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -20859,7 +20863,7 @@ func (body *ManagedClusterPodIdentityProvisioningErrorBody_STATUS) AssignPropert
 			var detail ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled
 			err := detail.AssignProperties_From_ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled(&detailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled() to populate field Details")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled() to populate field Details")
 			}
 			detailList[detailIndex] = detail
 		}
@@ -20886,7 +20890,7 @@ func (body *ManagedClusterPodIdentityProvisioningErrorBody_STATUS) AssignPropert
 	if augmentedBody, ok := bodyAsAny.(augmentConversionForManagedClusterPodIdentityProvisioningErrorBody_STATUS); ok {
 		err := augmentedBody.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -20911,7 +20915,7 @@ func (body *ManagedClusterPodIdentityProvisioningErrorBody_STATUS) AssignPropert
 			var detail v20231102ps.ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled
 			err := detailItem.AssignProperties_To_ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled(&detail)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled() to populate field Details")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled() to populate field Details")
 			}
 			detailList[detailIndex] = detail
 		}
@@ -20938,7 +20942,7 @@ func (body *ManagedClusterPodIdentityProvisioningErrorBody_STATUS) AssignPropert
 	if augmentedBody, ok := bodyAsAny.(augmentConversionForManagedClusterPodIdentityProvisioningErrorBody_STATUS); ok {
 		err := augmentedBody.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -20985,7 +20989,7 @@ func (unrolled *ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled) 
 	if augmentedUnrolled, ok := unrolledAsAny.(augmentConversionForManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled); ok {
 		err := augmentedUnrolled.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -21019,7 +21023,7 @@ func (unrolled *ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled) 
 	if augmentedUnrolled, ok := unrolledAsAny.(augmentConversionForManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled); ok {
 		err := augmentedUnrolled.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

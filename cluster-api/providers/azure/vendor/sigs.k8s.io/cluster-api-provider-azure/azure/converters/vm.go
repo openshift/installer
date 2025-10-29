@@ -67,12 +67,10 @@ func SDKToVM(v armcompute.VirtualMachine) *VM {
 	}
 
 	if v.Identity != nil {
-		for _, identity := range v.Identity.UserAssignedIdentities {
-			if identity != nil && identity.ClientID != nil {
-				vm.UserAssignedIdentities = append(vm.UserAssignedIdentities, infrav1.UserAssignedIdentity{
-					ProviderID: *identity.ClientID,
-				})
-			}
+		for providerID := range v.Identity.UserAssignedIdentities {
+			vm.UserAssignedIdentities = append(vm.UserAssignedIdentities, infrav1.UserAssignedIdentity{
+				ProviderID: providerID,
+			})
 		}
 	}
 

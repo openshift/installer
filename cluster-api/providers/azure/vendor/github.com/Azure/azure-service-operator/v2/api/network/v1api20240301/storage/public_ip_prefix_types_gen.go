@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (prefix *PublicIPPrefix) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (prefix *PublicIPPrefix) Owner() *genruntime.ResourceReference {
+	if prefix.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(prefix.Spec)
 	return prefix.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (prefix *PublicIPPrefix) SetStatus(status genruntime.ConvertibleStatus) err
 	var st PublicIPPrefix_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	prefix.Status = st
@@ -192,7 +196,7 @@ var _ genruntime.ConvertibleSpec = &PublicIPPrefix_Spec{}
 // ConvertSpecFrom populates our PublicIPPrefix_Spec from the provided source
 func (prefix *PublicIPPrefix_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == prefix {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(prefix)
@@ -201,7 +205,7 @@ func (prefix *PublicIPPrefix_Spec) ConvertSpecFrom(source genruntime.Convertible
 // ConvertSpecTo populates the provided destination from our PublicIPPrefix_Spec
 func (prefix *PublicIPPrefix_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == prefix {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(prefix)
@@ -238,7 +242,7 @@ var _ genruntime.ConvertibleStatus = &PublicIPPrefix_STATUS{}
 // ConvertStatusFrom populates our PublicIPPrefix_STATUS from the provided source
 func (prefix *PublicIPPrefix_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == prefix {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(prefix)
@@ -247,7 +251,7 @@ func (prefix *PublicIPPrefix_STATUS) ConvertStatusFrom(source genruntime.Convert
 // ConvertStatusTo populates the provided destination from our PublicIPPrefix_STATUS
 func (prefix *PublicIPPrefix_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == prefix {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(prefix)

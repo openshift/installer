@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
+	"fmt"
 	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -32,30 +34,51 @@ const AzureClusterTemplateImmutableMsg = "AzureClusterTemplate spec.template.spe
 
 // SetupWebhookWithManager will set up the webhook to be managed by the specified manager.
 func (c *AzureClusterTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(azureClusterTemplateWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(c).
+		WithValidator(w).
+		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-azureclustertemplate,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=azureclustertemplates,versions=v1beta1,name=validation.azureclustertemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-azureclustertemplate,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=azureclustertemplates,versions=v1beta1,name=default.azureclustertemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-var _ webhook.Defaulter = &AzureClusterTemplate{}
+type azureClusterTemplateWebhook struct{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (c *AzureClusterTemplate) Default() {
+var _ webhook.CustomDefaulter = &azureClusterTemplateWebhook{}
+
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type.
+func (*azureClusterTemplateWebhook) Default(_ context.Context, obj runtime.Object) error {
+	c, ok := obj.(*AzureClusterTemplate)
+	if !ok {
+		return fmt.Errorf("expected an AzureClusterTemplate object but got %T", c)
+	}
+
 	c.setDefaults()
+	return nil
 }
 
-var _ webhook.Validator = &AzureClusterTemplate{}
+var _ webhook.CustomValidator = &azureClusterTemplateWebhook{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (c *AzureClusterTemplate) ValidateCreate() (admission.Warnings, error) {
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (*azureClusterTemplateWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	c, ok := obj.(*AzureClusterTemplate)
+	if !ok {
+		return nil, fmt.Errorf("expected an AzureClusterTemplate object but got %T", c)
+	}
+
 	return c.validateClusterTemplate()
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (c *AzureClusterTemplate) ValidateUpdate(oldRaw runtime.Object) (admission.Warnings, error) {
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (*azureClusterTemplateWebhook) ValidateUpdate(_ context.Context, oldRaw, newObj runtime.Object) (admission.Warnings, error) {
+	c, ok := newObj.(*AzureClusterTemplate)
+	if !ok {
+		return nil, fmt.Errorf("expected an AzureClusterTemplate object but got %T", c)
+	}
+
 	var allErrs field.ErrorList
 	old := oldRaw.(*AzureClusterTemplate)
 	if !reflect.DeepEqual(c.Spec.Template.Spec, old.Spec.Template.Spec) {
@@ -70,7 +93,7 @@ func (c *AzureClusterTemplate) ValidateUpdate(oldRaw runtime.Object) (admission.
 	return nil, apierrors.NewInvalid(GroupVersion.WithKind(AzureClusterTemplateKind).GroupKind(), c.Name, allErrs)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (c *AzureClusterTemplate) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (*azureClusterTemplateWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }

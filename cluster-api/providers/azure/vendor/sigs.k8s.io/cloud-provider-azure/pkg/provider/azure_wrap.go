@@ -17,22 +17,21 @@ limitations under the License.
 package provider
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
-	"sigs.k8s.io/cloud-provider-azure/pkg/retry"
 )
 
 var (
 	vmCacheTTLDefaultInSeconds           = 60
 	loadBalancerCacheTTLDefaultInSeconds = 120
-	nsgCacheTTLDefaultInSeconds          = 120
-	routeTableCacheTTLDefaultInSeconds   = 120
 	publicIPCacheTTLDefaultInSeconds     = 120
-	plsCacheTTLDefaultInSeconds          = 120
 
 	azureNodeProviderIDRE    = regexp.MustCompile(`^azure:///subscriptions/(?:.*)/resourceGroups/(?:.*)/providers/Microsoft.Compute/(?:.*)`)
 	azureResourceGroupNameRE = regexp.MustCompile(`.*/subscriptions/(?:.*)/resourceGroups/(.+)/providers/(?:.*)`)
@@ -41,32 +40,18 @@ var (
 // checkExistsFromError inspects an error and returns a true if err is nil,
 // false if error is an autorest.Error with StatusCode=404 and will return the
 // error back if error is another status code or another type of error.
-func checkResourceExistsFromError(err *retry.Error) (bool, *retry.Error) {
+func checkResourceExistsFromError(err error) (bool, error) {
 	if err == nil {
 		return true, nil
 	}
-
-	if err.HTTPStatusCode == http.StatusNotFound {
-		return false, nil
+	var rerr *azcore.ResponseError
+	if errors.As(err, &rerr) {
+		if rerr.StatusCode == http.StatusNotFound {
+			return false, nil
+		}
 	}
 
 	return false, err
-}
-
-func (az *Cloud) useStandardLoadBalancer() bool {
-	return strings.EqualFold(az.LoadBalancerSku, consts.LoadBalancerSkuStandard)
-}
-
-func (az *Cloud) excludeMasterNodesFromStandardLB() bool {
-	return az.ExcludeMasterFromStandardLB != nil && *az.ExcludeMasterFromStandardLB
-}
-
-func (az *Cloud) disableLoadBalancerOutboundSNAT() bool {
-	if !az.useStandardLoadBalancer() || az.DisableOutboundSNAT == nil {
-		return false
-	}
-
-	return *az.DisableOutboundSNAT
 }
 
 // IsNodeUnmanaged returns true if the node is not managed by Azure cloud provider.

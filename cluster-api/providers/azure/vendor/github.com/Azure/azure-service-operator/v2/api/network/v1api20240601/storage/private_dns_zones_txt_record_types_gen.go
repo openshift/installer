@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (record *PrivateDnsZonesTXTRecord) NewEmptyStatus() genruntime.ConvertibleS
 
 // Owner returns the ResourceReference of the owner
 func (record *PrivateDnsZonesTXTRecord) Owner() *genruntime.ResourceReference {
+	if record.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(record.Spec)
 	return record.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (record *PrivateDnsZonesTXTRecord) SetStatus(status genruntime.ConvertibleS
 	var st PrivateDnsZonesTXTRecord_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	record.Status = st
@@ -194,7 +198,7 @@ var _ genruntime.ConvertibleSpec = &PrivateDnsZonesTXTRecord_Spec{}
 // ConvertSpecFrom populates our PrivateDnsZonesTXTRecord_Spec from the provided source
 func (record *PrivateDnsZonesTXTRecord_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == record {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(record)
@@ -203,7 +207,7 @@ func (record *PrivateDnsZonesTXTRecord_Spec) ConvertSpecFrom(source genruntime.C
 // ConvertSpecTo populates the provided destination from our PrivateDnsZonesTXTRecord_Spec
 func (record *PrivateDnsZonesTXTRecord_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == record {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(record)
@@ -236,7 +240,7 @@ var _ genruntime.ConvertibleStatus = &PrivateDnsZonesTXTRecord_STATUS{}
 // ConvertStatusFrom populates our PrivateDnsZonesTXTRecord_STATUS from the provided source
 func (record *PrivateDnsZonesTXTRecord_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == record {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(record)
@@ -245,7 +249,7 @@ func (record *PrivateDnsZonesTXTRecord_STATUS) ConvertStatusFrom(source genrunti
 // ConvertStatusTo populates the provided destination from our PrivateDnsZonesTXTRecord_STATUS
 func (record *PrivateDnsZonesTXTRecord_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == record {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(record)

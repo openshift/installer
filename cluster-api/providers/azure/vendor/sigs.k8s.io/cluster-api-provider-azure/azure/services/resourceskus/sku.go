@@ -158,6 +158,12 @@ func (s SKU) HasLocationCapability(capabilityName, location, zone string) bool {
 
 			for _, capability := range zoneDetail.Capabilities {
 				if capability.Name != nil && *capability.Name == capabilityName {
+					// If capability is not limited to specific zones, return true
+					if zoneDetail.Name == nil {
+						return true
+					}
+
+					// Otherwise, we need to check listed zones to verify capability is available
 					for _, name := range zoneDetail.Name {
 						if ptr.Deref(name, "") == zone {
 							return true

@@ -25,12 +25,19 @@ const (
 	// ManagedClusterFinalizer allows Reconcile to clean up Azure resources associated with the AzureManagedControlPlane before
 	// removing it from the apiserver.
 	ManagedClusterFinalizer = "azuremanagedcontrolplane.infrastructure.cluster.x-k8s.io"
+)
 
-	// PrivateDNSZoneModeSystem represents mode System for azuremanagedcontrolplane.
-	PrivateDNSZoneModeSystem string = "System"
+// PrivateDNSZoneMode determines the creation of Private DNS Zones in a private cluster.
+// When unset or set to the default value of PrivateDNSZoneModeSystem, Private DNS Zones are created.
+// When set to PrivateDNSZoneModeNone, Private DNS Zones are not created in a private cluster.
+type PrivateDNSZoneMode string
 
-	// PrivateDNSZoneModeNone represents mode None for azuremanagedcontrolplane.
-	PrivateDNSZoneModeNone string = "None"
+const (
+	// PrivateDNSZoneModeSystem represents mode System for Private DNS Zones.
+	PrivateDNSZoneModeSystem PrivateDNSZoneMode = "System"
+
+	// PrivateDNSZoneModeNone represents mode None for Private DNS Zones.
+	PrivateDNSZoneModeNone PrivateDNSZoneMode = "None"
 )
 
 // UpgradeChannel determines the type of upgrade channel for automatically upgrading the cluster.
@@ -661,6 +668,7 @@ type AKSExtension struct {
 // +kubebuilder:resource:path=azuremanagedcontrolplanes,scope=Namespaced,categories=cluster-api,shortName=amcp
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
+// +kubebuilder:deprecatedversion:warning="AzureManagedControlPlane and the AzureManaged API are deprecated. Please migrate to infrastructure.cluster.x-k8s.io/v1beta1 AzureASOManagedControlPlane and related AzureASOManaged resources instead."
 
 // AzureManagedControlPlane is the Schema for the azuremanagedcontrolplanes API.
 type AzureManagedControlPlane struct {

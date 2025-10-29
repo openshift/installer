@@ -45,6 +45,7 @@ type AzureManagedClusterStatus struct {
 // +kubebuilder:resource:path=azuremanagedclusters,scope=Namespaced,categories=cluster-api,shortName=amc
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
+// +kubebuilder:deprecatedversion:warning="AzureManagedCluster and the AzureManaged API are deprecated. Please migrate to infrastructure.cluster.x-k8s.io/v1beta1 AzureASOManagedCluster and related AzureASOManaged resources instead."
 
 // AzureManagedCluster is the Schema for the azuremanagedclusters API.
 type AzureManagedCluster struct {

@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/utils"
 )
 
-// +azure:client:verbs=get;delete;listbyrg,resource=Registry,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry,packageAlias=armcontainerregistry,clientName=RegistriesClient,expand=false
+// +azure:client:verbs=get;delete;listbyrg,resource=Registry,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry,packageAlias=armcontainerregistry,clientName=RegistriesClient,expand=false,mooncakeApiVersion="2023-07-01"
 type Interface interface {
 	utils.GetFunc[armcontainerregistry.Registry]
 	Create(ctx context.Context, resourceGroupName string, resourceName string, resourceParam armcontainerregistry.Registry) (*armcontainerregistry.Registry, error)
