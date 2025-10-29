@@ -952,6 +952,32 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expectedError: `test-path.failureDomains.topology.networks: Required value: must specify a network`,
 		},
+		{
+			name: "Valid - template without clusterOSImage",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Template = "/test-datacenter/vm/test-template"
+				return p
+			}(),
+		},
+		{
+			name: "Valid - clusterOSImage without template",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.ClusterOSImage = "http://example.com/rhcos.ova"
+				return p
+			}(),
+		},
+		{
+			name: "Invalid - both template and clusterOSImage",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Template = "/test-datacenter/vm/test-template"
+				p.ClusterOSImage = "http://example.com/rhcos.ova"
+				return p
+			}(),
+			expectedError: `test-path.failureDomains.topology.template: Invalid value: "/test-datacenter/vm/test-template": cannot be specified when clusterOSImage is set, test-path.clusterOSImage: Invalid value: "http://example.com/rhcos.ova": cannot be specified when failuredomain.topology.template is set`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
