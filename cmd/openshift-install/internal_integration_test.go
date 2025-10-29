@@ -112,8 +112,12 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 				}
 			}
 			e.Vars = append(e.Vars, fmt.Sprintf("RELEASE_IMAGE=%s", pullspec))
-			if xdgCacheHome, ok := os.LookupEnv("XDG_CACHE_HOME"); ok && xdgCacheHome != "" {
-				e.Vars = append(e.Vars, fmt.Sprintf("XDG_CACHE_HOME=%s", xdgCacheHome))
+			// Pass through environment variables that may be set by the sandbox or CI
+			passthroughVars := []string{"XDG_CACHE_HOME", "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy"}
+			for _, varName := range passthroughVars {
+				if value, ok := os.LookupEnv(varName); ok && value != "" {
+					e.Vars = append(e.Vars, fmt.Sprintf("%s=%s", varName, value))
+				}
 			}
 			// When AUTH_FILE is set in the CI integration-tests job
 			if authFilePath, ok := os.LookupEnv("AUTH_FILE"); ok && authFilePath != "" {
