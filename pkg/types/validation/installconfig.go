@@ -1712,17 +1712,15 @@ func validateFencingCredentialAddress(address string, fldPath *field.Path) field
 		errs = append(errs, field.Invalid(fldPath, address, "fencing only supports redfish-compatible BMC addresses, IPMI is not supported"))
 	}
 
-	// Disallow http scheme
-	if strings.Contains(parsedUrl.Scheme, "http") && !strings.Contains(parsedUrl.Scheme, "https") {
-		errs = append(errs, field.Invalid(fldPath, address, "fencing does not support http scheme, use https"))
-	}
-
-	// Validate port - try to infer standard port for https, otherwise require explicit port
+	// Validate port - try to infer standard schema ports for https/http, otherwise notify user port is needed
 	redfishPort := parsedUrl.Port()
 	if redfishPort == "" {
-		if strings.Contains(parsedUrl.Scheme, "https") {
+		switch {
+		case strings.Contains(parsedUrl.Scheme, "https"):
 			// Port 443 is default for https, so it's acceptable
-		} else {
+		case strings.Contains(parsedUrl.Scheme, "http"):
+			// Port 80 is default for http, so it's acceptable
+		default:
 			errs = append(errs, field.Invalid(fldPath, address, "failed to parse redfish address, no port number found"))
 		}
 	}
