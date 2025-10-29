@@ -1645,7 +1645,7 @@ func validateFencingCredentialAddress(address string, fldPath *field.Path) field
 	}
 
 	// Parse the URL to ensure it's a valid URL
-	parsedUrl, err := url.Parse(address)
+	parsedURL, err := url.Parse(address)
 	if err != nil {
 		errs = append(errs, field.Invalid(fldPath, address, fmt.Sprintf("invalid URL format: %v", err)))
 		return errs
@@ -1657,12 +1657,12 @@ func validateFencingCredentialAddress(address string, fldPath *field.Path) field
 	}
 
 	// Validate port - try to infer standard schema ports for https/http, otherwise notify user port is needed
-	redfishPort := parsedUrl.Port()
+	redfishPort := parsedURL.Port()
 	if redfishPort == "" {
 		switch {
-		case strings.Contains(parsedUrl.Scheme, "https"):
+		case strings.Contains(parsedURL.Scheme, "https"):
 			// Port 443 is default for https, so it's acceptable
-		case strings.Contains(parsedUrl.Scheme, "http"):
+		case strings.Contains(parsedURL.Scheme, "http"):
 			// Port 80 is default for http, so it's acceptable
 		default:
 			errs = append(errs, field.Invalid(fldPath, address, "failed to parse redfish address, no port number found"))
