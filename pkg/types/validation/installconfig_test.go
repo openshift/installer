@@ -3173,8 +3173,8 @@ func TestValidateTNF(t *testing.T) {
 						c1().FencingCredentialAddress("http://192.168.111.1/redfish/v1/Systems/1"),
 						c2().FencingCredentialAddress("http://192.168.111.2/redfish/v1/Systems/2"))).
 				CpReplicas(2).build(),
-			name:     "fencing_credential_http_not_allowed",
-			expected: "controlPlane.fencing.credentials\\[0\\].address: Invalid value: \"http://192.168.111.1/redfish/v1/Systems/1\": fencing does not support http scheme, use https",
+			name:     "fencing_credential_http_no_port",
+			expected: "",
 		},
 		{
 			config: installConfig().
