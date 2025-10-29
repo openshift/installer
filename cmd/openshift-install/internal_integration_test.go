@@ -112,6 +112,9 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 				}
 			}
 			e.Vars = append(e.Vars, fmt.Sprintf("RELEASE_IMAGE=%s", pullspec))
+			if xdgCacheHome, ok := os.LookupEnv("XDG_CACHE_HOME"); ok && xdgCacheHome != "" {
+				e.Vars = append(e.Vars, fmt.Sprintf("XDG_CACHE_HOME=%s", xdgCacheHome))
+			}
 			// When AUTH_FILE is set in the CI integration-tests job
 			if authFilePath, ok := os.LookupEnv("AUTH_FILE"); ok && authFilePath != "" {
 				workDir := e.Getenv("WORK")
