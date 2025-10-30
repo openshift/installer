@@ -1,0 +1,85 @@
+digraph agent_installer_services_install_workflow {
+    rankdir=BT;
+    ranksep=0.5;
+    node [shape=box, style="rounded,filled", fillcolor="#ADD8E6", fontname="Arial", fontsize=10, penwidth=1];
+    edge [color="#333333"];
+
+    // Bottom row - foundation services
+    {
+        node [fillcolor="#ADD8E6"];
+        selinux [label="selinux"];
+        pre_network_manager_config [label="pre-network-manager-config"];
+        set_hostname [label="set-hostname"];
+        iscsistart [label="iscsistart", penwidth=0.5];
+        iscsiadm [label="iscsiadm", penwidth=0.5];
+    }
+
+    // Files (document style)
+    node [shape=note, fillcolor="#FFFACD"];
+    agent_tui_bin [label="/usr/local/bin/agent-tui"];
+    copy_files_hook [label="/usr/lib/dracut/hooks/pre-pivot/\n99-agent-copy-files.sh", fillcolor="#F5DEB3"];
+    node0_file [label="/etc/assisted/node0"];
+
+    // Middle services
+    node [shape=box, style="rounded,filled", fillcolor="#ADD8E6", penwidth=1];
+    agent_interactive_console [label="agent-interactive-console", fillcolor="#6495ED", penwidth=2];
+    agent [label="agent"];
+    node_zero [label="node-zero"];
+
+    // Assisted service pod (subgraph cluster)
+    subgraph cluster_pod {
+        label="";
+        style=dashed;
+        color="#666666";
+        fillcolor="#FFFFFF";
+
+        assisted_service_pod [label="assisted-service-pod", fillcolor="#ADD8E6"];
+        assisted_service [label="assisted-service", fillcolor="#ADD8E6"];
+        assisted_service_db [label="assisted-service-db", fillcolor="#ADD8E6"];
+        install_status [label="install-status", fillcolor="#ADD8E6"];
+        agent_register_cluster [label="agent-register-cluster", fillcolor="#ADD8E6"];
+        agent_register_infraenv [label="agent-register-infraenv", fillcolor="#ADD8E6"];
+        apply_host_config [label="apply-host-config", fillcolor="#ADD8E6"];
+        start_cluster_installation [label="start-cluster-installation", fillcolor="#ADD8E6"];
+
+        assisted_service_pod -> assisted_service [style=invis];
+        assisted_service_pod -> assisted_service_db [style=invis];
+    }
+
+    // Dependencies (bottom to top flow)
+
+    // File preparation (initramfs phase on the left)
+    copy_files_hook -> agent_tui_bin [style=dotted, weight=10];
+    agent_tui_bin -> agent_interactive_console [style=dotted, weight=1];
+
+    // Interactive console branches
+    selinux -> agent_interactive_console;
+    pre_network_manager_config -> agent_interactive_console;
+    set_hostname -> agent_interactive_console;
+    agent_interactive_console -> agent;
+    agent_interactive_console -> node_zero;
+
+    // Node zero creates file and starts pod
+    node_zero -> node0_file [style=dotted];
+    node_zero -> assisted_service_pod;
+
+    // Pod relationships
+    assisted_service_pod -> install_status;
+    assisted_service_pod -> assisted_service [constraint=false];
+    assisted_service_pod -> assisted_service_db [constraint=false];
+
+    // Registration and installation chain
+    assisted_service -> agent_register_cluster;
+    agent_register_cluster -> agent_register_infraenv;
+    agent_register_infraenv -> apply_host_config;
+    apply_host_config -> start_cluster_installation;
+
+    // Rank constraints for better layout
+    {rank=same; selinux; pre_network_manager_config; set_hostname; iscsistart; iscsiadm;}
+    {rank=same; copy_files_hook;}
+    {rank=same; agent_tui_bin; agent_interactive_console;}
+    {rank=same; agent; node_zero;}
+
+    // Force left-to-right ordering within ranks
+    agent_tui_bin -> agent_interactive_console [style=invis, constraint=false];
+}
