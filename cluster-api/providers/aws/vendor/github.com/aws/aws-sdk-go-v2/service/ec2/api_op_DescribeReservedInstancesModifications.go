@@ -14,11 +14,15 @@ import (
 // Describes the modifications made to your Reserved Instances. If no parameter is
 // specified, information about all your Reserved Instances modification requests
 // is returned. If a modification ID is specified, only information about the
-// specific modification is returned. For more information, see Modifying Reserved
-// Instances (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ri-modifying.html)
-// in the Amazon EC2 User Guide. The order of the elements in the response,
-// including those within nested structures, might vary. Applications should not
-// assume the elements appear in a particular order.
+// specific modification is returned.
+//
+// For more information, see [Modify Reserved Instances] in the Amazon EC2 User Guide.
+//
+// The order of the elements in the response, including those within nested
+// structures, might vary. Applications should not assume the elements appear in a
+// particular order.
+//
+// [Modify Reserved Instances]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ri-modifying.html
 func (c *Client) DescribeReservedInstancesModifications(ctx context.Context, params *DescribeReservedInstancesModificationsInput, optFns ...func(*Options)) (*DescribeReservedInstancesModificationsOutput, error) {
 	if params == nil {
 		params = &DescribeReservedInstancesModificationsInput{}
@@ -38,23 +42,38 @@ func (c *Client) DescribeReservedInstancesModifications(ctx context.Context, par
 type DescribeReservedInstancesModificationsInput struct {
 
 	// One or more filters.
+	//
 	//   - client-token - The idempotency token for the modification request.
+	//
 	//   - create-date - The time when the modification request was created.
+	//
 	//   - effective-date - The time when the modification becomes effective.
+	//
 	//   - modification-result.reserved-instances-id - The ID for the Reserved
 	//   Instances created as part of the modification request. This ID is only available
 	//   when the status of the modification is fulfilled .
+	//
 	//   - modification-result.target-configuration.availability-zone - The
 	//   Availability Zone for the new Reserved Instances.
+	//
+	//   - modification-result.target-configuration.availability-zone-id - The ID of
+	//   the Availability Zone for the new Reserved Instances.
+	//
 	//   - modification-result.target-configuration.instance-count - The number of new
 	//   Reserved Instances.
+	//
 	//   - modification-result.target-configuration.instance-type - The instance type
 	//   of the new Reserved Instances.
+	//
 	//   - reserved-instances-id - The ID of the Reserved Instances modified.
+	//
 	//   - reserved-instances-modification-id - The ID of the modification request.
+	//
 	//   - status - The status of the Reserved Instances modification request (
 	//   processing | fulfilled | failed ).
+	//
 	//   - status-message - The reason for the status.
+	//
 	//   - update-date - The time when the modification request was last updated.
 	Filters []types.Filter
 
@@ -126,6 +145,9 @@ func (c *Client) addOperationDescribeReservedInstancesModificationsMiddlewares(s
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -136,6 +158,15 @@ func (c *Client) addOperationDescribeReservedInstancesModificationsMiddlewares(s
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeReservedInstancesModifications(options.Region), middleware.Before); err != nil {
@@ -156,16 +187,20 @@ func (c *Client) addOperationDescribeReservedInstancesModificationsMiddlewares(s
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeReservedInstancesModificationsAPIClient is a client that implements the
-// DescribeReservedInstancesModifications operation.
-type DescribeReservedInstancesModificationsAPIClient interface {
-	DescribeReservedInstancesModifications(context.Context, *DescribeReservedInstancesModificationsInput, ...func(*Options)) (*DescribeReservedInstancesModificationsOutput, error)
-}
-
-var _ DescribeReservedInstancesModificationsAPIClient = (*Client)(nil)
 
 // DescribeReservedInstancesModificationsPaginatorOptions is the paginator options
 // for DescribeReservedInstancesModifications
@@ -221,6 +256,9 @@ func (p *DescribeReservedInstancesModificationsPaginator) NextPage(ctx context.C
 	params := *p.params
 	params.NextToken = p.nextToken
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeReservedInstancesModifications(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -239,6 +277,14 @@ func (p *DescribeReservedInstancesModificationsPaginator) NextPage(ctx context.C
 
 	return result, nil
 }
+
+// DescribeReservedInstancesModificationsAPIClient is a client that implements the
+// DescribeReservedInstancesModifications operation.
+type DescribeReservedInstancesModificationsAPIClient interface {
+	DescribeReservedInstancesModifications(context.Context, *DescribeReservedInstancesModificationsInput, ...func(*Options)) (*DescribeReservedInstancesModificationsOutput, error)
+}
+
+var _ DescribeReservedInstancesModificationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeReservedInstancesModifications(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

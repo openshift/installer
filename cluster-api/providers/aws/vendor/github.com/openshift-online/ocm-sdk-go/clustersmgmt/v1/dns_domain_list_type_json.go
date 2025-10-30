@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalDNSDomainList(list []*DNSDomain, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDNSDomainList(list, stream)
+	WriteDNSDomainList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalDNSDomainList(list []*DNSDomain, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeDNSDomainList writes a list of value of the 'DNS_domain' type to
+// WriteDNSDomainList writes a list of value of the 'DNS_domain' type to
 // the given stream.
-func writeDNSDomainList(list []*DNSDomain, stream *jsoniter.Stream) {
+func WriteDNSDomainList(list []*DNSDomain, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeDNSDomain(value, stream)
+		WriteDNSDomain(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalDNSDomainList(source interface{}) (items []*DNSDomain, err error) 
 	if err != nil {
 		return
 	}
-	items = readDNSDomainList(iterator)
+	items = ReadDNSDomainList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDNSDomainList reads list of values of the ”DNS_domain' type from
+// ReadDNSDomainList reads list of values of the ”DNS_domain' type from
 // the given iterator.
-func readDNSDomainList(iterator *jsoniter.Iterator) []*DNSDomain {
+func ReadDNSDomainList(iterator *jsoniter.Iterator) []*DNSDomain {
 	list := []*DNSDomain{}
 	for iterator.ReadArray() {
-		item := readDNSDomain(iterator)
+		item := ReadDNSDomain(iterator)
 		list = append(list, item)
 	}
 	return list

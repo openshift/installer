@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalIncidentList(list []*Incident, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeIncidentList(list, stream)
+	WriteIncidentList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalIncidentList(list []*Incident, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeIncidentList writes a list of value of the 'incident' type to
+// WriteIncidentList writes a list of value of the 'incident' type to
 // the given stream.
-func writeIncidentList(list []*Incident, stream *jsoniter.Stream) {
+func WriteIncidentList(list []*Incident, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeIncident(value, stream)
+		WriteIncident(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalIncidentList(source interface{}) (items []*Incident, err error) {
 	if err != nil {
 		return
 	}
-	items = readIncidentList(iterator)
+	items = ReadIncidentList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readIncidentList reads list of values of the ”incident' type from
+// ReadIncidentList reads list of values of the ”incident' type from
 // the given iterator.
-func readIncidentList(iterator *jsoniter.Iterator) []*Incident {
+func ReadIncidentList(iterator *jsoniter.Iterator) []*Incident {
 	list := []*Incident{}
 	for iterator.ReadArray() {
-		item := readIncident(iterator)
+		item := ReadIncident(iterator)
 		list = append(list, item)
 	}
 	return list

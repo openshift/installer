@@ -57,7 +57,7 @@ func readMachinePoolsListResponse(response *MachinePoolsListResponse, reader io.
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readMachinePoolList(iterator)
+			items := ReadMachinePoolList(iterator)
 			response.items = &MachinePoolList{
 				items: items,
 			}

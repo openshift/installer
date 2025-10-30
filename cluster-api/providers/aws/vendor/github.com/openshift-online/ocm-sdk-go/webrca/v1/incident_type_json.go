@@ -30,7 +30,7 @@ import (
 // MarshalIncident writes a value of the 'incident' type to the given writer.
 func MarshalIncident(object *Incident, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeIncident(object, stream)
+	WriteIncident(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalIncident(object *Incident, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeIncident writes a value of the 'incident' type to the given stream.
-func writeIncident(object *Incident, stream *jsoniter.Stream) {
+// WriteIncident writes a value of the 'incident' type to the given stream.
+func WriteIncident(object *Incident, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -108,7 +108,7 @@ func writeIncident(object *Incident, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("external_coordination")
-		writeStringList(object.externalCoordination, stream)
+		WriteStringList(object.externalCoordination, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0
@@ -201,13 +201,13 @@ func UnmarshalIncident(source interface{}) (object *Incident, err error) {
 	if err != nil {
 		return
 	}
-	object = readIncident(iterator)
+	object = ReadIncident(iterator)
 	err = iterator.Error
 	return
 }
 
-// readIncident reads a value of the 'incident' type from the given iterator.
-func readIncident(iterator *jsoniter.Iterator) *Incident {
+// ReadIncident reads a value of the 'incident' type from the given iterator.
+func ReadIncident(iterator *jsoniter.Iterator) *Incident {
 	object := &Incident{}
 	for {
 		field := iterator.ReadObject()
@@ -251,7 +251,7 @@ func readIncident(iterator *jsoniter.Iterator) *Incident {
 			object.description = value
 			object.bitmap_ |= 64
 		case "external_coordination":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.externalCoordination = value
 			object.bitmap_ |= 128
 		case "incident_id":

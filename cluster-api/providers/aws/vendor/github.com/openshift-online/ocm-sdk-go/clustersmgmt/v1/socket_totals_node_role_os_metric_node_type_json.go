@@ -29,7 +29,7 @@ import (
 // MarshalSocketTotalsNodeRoleOSMetricNode writes a value of the 'socket_totals_node_role_OS_metric_node' type to the given writer.
 func MarshalSocketTotalsNodeRoleOSMetricNode(object *SocketTotalsNodeRoleOSMetricNode, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeSocketTotalsNodeRoleOSMetricNode(object, stream)
+	WriteSocketTotalsNodeRoleOSMetricNode(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSocketTotalsNodeRoleOSMetricNode(object *SocketTotalsNodeRoleOSMetri
 	return stream.Error
 }
 
-// writeSocketTotalsNodeRoleOSMetricNode writes a value of the 'socket_totals_node_role_OS_metric_node' type to the given stream.
-func writeSocketTotalsNodeRoleOSMetricNode(object *SocketTotalsNodeRoleOSMetricNode, stream *jsoniter.Stream) {
+// WriteSocketTotalsNodeRoleOSMetricNode writes a value of the 'socket_totals_node_role_OS_metric_node' type to the given stream.
+func WriteSocketTotalsNodeRoleOSMetricNode(object *SocketTotalsNodeRoleOSMetricNode, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeSocketTotalsNodeRoleOSMetricNode(object *SocketTotalsNodeRoleOSMetricN
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("socket_totals")
-		writeSocketTotalNodeRoleOSMetricNodeList(object.socketTotals, stream)
+		WriteSocketTotalNodeRoleOSMetricNodeList(object.socketTotals, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalSocketTotalsNodeRoleOSMetricNode(source interface{}) (object *Sock
 	if err != nil {
 		return
 	}
-	object = readSocketTotalsNodeRoleOSMetricNode(iterator)
+	object = ReadSocketTotalsNodeRoleOSMetricNode(iterator)
 	err = iterator.Error
 	return
 }
 
-// readSocketTotalsNodeRoleOSMetricNode reads a value of the 'socket_totals_node_role_OS_metric_node' type from the given iterator.
-func readSocketTotalsNodeRoleOSMetricNode(iterator *jsoniter.Iterator) *SocketTotalsNodeRoleOSMetricNode {
+// ReadSocketTotalsNodeRoleOSMetricNode reads a value of the 'socket_totals_node_role_OS_metric_node' type from the given iterator.
+func ReadSocketTotalsNodeRoleOSMetricNode(iterator *jsoniter.Iterator) *SocketTotalsNodeRoleOSMetricNode {
 	object := &SocketTotalsNodeRoleOSMetricNode{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func readSocketTotalsNodeRoleOSMetricNode(iterator *jsoniter.Iterator) *SocketTo
 		}
 		switch field {
 		case "socket_totals":
-			value := readSocketTotalNodeRoleOSMetricNodeList(iterator)
+			value := ReadSocketTotalNodeRoleOSMetricNodeList(iterator)
 			object.socketTotals = value
 			object.bitmap_ |= 1
 		default:

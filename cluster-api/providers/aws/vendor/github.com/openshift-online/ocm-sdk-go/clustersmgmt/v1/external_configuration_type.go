@@ -130,6 +130,29 @@ func (l *ExternalConfigurationList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ExternalConfigurationList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ExternalConfigurationList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ExternalConfigurationList) SetItems(items []*ExternalConfiguration) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ExternalConfigurationList) Items() []*ExternalConfiguration {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ExternalConfigurationList) Empty() bool {
 	return l == nil || len(l.items) == 0

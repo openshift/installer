@@ -19,7 +19,7 @@ package v1beta1
 import (
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/pkg/errors"
 )
 

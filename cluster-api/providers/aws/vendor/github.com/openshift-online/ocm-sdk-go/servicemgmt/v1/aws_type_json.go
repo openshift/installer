@@ -30,7 +30,7 @@ import (
 // MarshalAWS writes a value of the 'AWS' type to the given writer.
 func MarshalAWS(object *AWS, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAWS(object, stream)
+	WriteAWS(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAWS(object *AWS, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAWS writes a value of the 'AWS' type to the given stream.
-func writeAWS(object *AWS, stream *jsoniter.Stream) {
+// WriteAWS writes a value of the 'AWS' type to the given stream.
+func WriteAWS(object *AWS, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -49,7 +49,7 @@ func writeAWS(object *AWS, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("sts")
-		writeSTS(object.sts, stream)
+		WriteSTS(object.sts, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -94,7 +94,7 @@ func writeAWS(object *AWS, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("subnet_ids")
-		writeStringList(object.subnetIDs, stream)
+		WriteStringList(object.subnetIDs, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0 && object.tags != nil
@@ -135,13 +135,13 @@ func UnmarshalAWS(source interface{}) (object *AWS, err error) {
 	if err != nil {
 		return
 	}
-	object = readAWS(iterator)
+	object = ReadAWS(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAWS reads a value of the 'AWS' type from the given iterator.
-func readAWS(iterator *jsoniter.Iterator) *AWS {
+// ReadAWS reads a value of the 'AWS' type from the given iterator.
+func ReadAWS(iterator *jsoniter.Iterator) *AWS {
 	object := &AWS{}
 	for {
 		field := iterator.ReadObject()
@@ -150,7 +150,7 @@ func readAWS(iterator *jsoniter.Iterator) *AWS {
 		}
 		switch field {
 		case "sts":
-			value := readSTS(iterator)
+			value := ReadSTS(iterator)
 			object.sts = value
 			object.bitmap_ |= 1
 		case "access_key_id":
@@ -170,7 +170,7 @@ func readAWS(iterator *jsoniter.Iterator) *AWS {
 			object.secretAccessKey = value
 			object.bitmap_ |= 16
 		case "subnet_ids":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.subnetIDs = value
 			object.bitmap_ |= 32
 		case "tags":

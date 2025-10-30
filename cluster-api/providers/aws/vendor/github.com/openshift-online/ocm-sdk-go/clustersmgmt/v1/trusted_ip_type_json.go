@@ -29,7 +29,7 @@ import (
 // MarshalTrustedIp writes a value of the 'trusted_ip' type to the given writer.
 func MarshalTrustedIp(object *TrustedIp, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTrustedIp(object, stream)
+	WriteTrustedIp(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalTrustedIp(object *TrustedIp, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeTrustedIp writes a value of the 'trusted_ip' type to the given stream.
-func writeTrustedIp(object *TrustedIp, stream *jsoniter.Stream) {
+// WriteTrustedIp writes a value of the 'trusted_ip' type to the given stream.
+func WriteTrustedIp(object *TrustedIp, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -83,13 +83,13 @@ func UnmarshalTrustedIp(source interface{}) (object *TrustedIp, err error) {
 	if err != nil {
 		return
 	}
-	object = readTrustedIp(iterator)
+	object = ReadTrustedIp(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTrustedIp reads a value of the 'trusted_ip' type from the given iterator.
-func readTrustedIp(iterator *jsoniter.Iterator) *TrustedIp {
+// ReadTrustedIp reads a value of the 'trusted_ip' type from the given iterator.
+func ReadTrustedIp(iterator *jsoniter.Iterator) *TrustedIp {
 	object := &TrustedIp{}
 	for {
 		field := iterator.ReadObject()

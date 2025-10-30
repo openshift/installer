@@ -78,6 +78,29 @@ func (l *ClusterOperatorsInfoList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *ClusterOperatorsInfoList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ClusterOperatorsInfoList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ClusterOperatorsInfoList) SetItems(items []*ClusterOperatorsInfo) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ClusterOperatorsInfoList) Items() []*ClusterOperatorsInfo {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *ClusterOperatorsInfoList) Empty() bool {
 	return l == nil || len(l.items) == 0

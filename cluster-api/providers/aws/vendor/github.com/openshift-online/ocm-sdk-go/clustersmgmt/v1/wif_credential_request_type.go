@@ -96,6 +96,29 @@ func (l *WifCredentialRequestList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *WifCredentialRequestList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *WifCredentialRequestList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *WifCredentialRequestList) SetItems(items []*WifCredentialRequest) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *WifCredentialRequestList) Items() []*WifCredentialRequest {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *WifCredentialRequestList) Empty() bool {
 	return l == nil || len(l.items) == 0

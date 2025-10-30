@@ -13,12 +13,20 @@ import (
 
 // Disables the block public access for snapshots setting at the account level for
 // the specified Amazon Web Services Region. After you disable block public access
-// for snapshots in a Region, users can publicly share snapshots in that Region. If
-// block public access is enabled in block-all-sharing mode, and you disable block
-// public access, all snapshots that were previously publicly shared are no longer
-// treated as private and they become publicly accessible again. For more
-// information, see Block public access for snapshots (https://docs.aws.amazon.com/ebs/latest/userguide/block-public-access-snapshots.html)
-// in the Amazon EBS User Guide .
+// for snapshots in a Region, users can publicly share snapshots in that Region.
+//
+// Enabling block public access for snapshots in block-all-sharing mode does not
+// change the permissions for snapshots that are already publicly shared. Instead,
+// it prevents these snapshots from be publicly visible and publicly accessible.
+// Therefore, the attributes for these snapshots still indicate that they are
+// publicly shared, even though they are not publicly available.
+//
+// If you disable block public access , these snapshots will become publicly
+// available again.
+//
+// For more information, see [Block public access for snapshots] in the Amazon EBS User Guide .
+//
+// [Block public access for snapshots]: https://docs.aws.amazon.com/ebs/latest/userguide/block-public-access-snapshots.html
 func (c *Client) DisableSnapshotBlockPublicAccess(ctx context.Context, params *DisableSnapshotBlockPublicAccessInput, optFns ...func(*Options)) (*DisableSnapshotBlockPublicAccessOutput, error) {
 	if params == nil {
 		params = &DisableSnapshotBlockPublicAccessInput{}
@@ -99,6 +107,9 @@ func (c *Client) addOperationDisableSnapshotBlockPublicAccessMiddlewares(stack *
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -109,6 +120,15 @@ func (c *Client) addOperationDisableSnapshotBlockPublicAccessMiddlewares(stack *
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDisableSnapshotBlockPublicAccess(options.Region), middleware.Before); err != nil {
@@ -127,6 +147,18 @@ func (c *Client) addOperationDisableSnapshotBlockPublicAccessMiddlewares(stack *
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

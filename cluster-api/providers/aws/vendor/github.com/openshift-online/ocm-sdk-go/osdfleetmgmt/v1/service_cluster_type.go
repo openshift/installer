@@ -98,7 +98,7 @@ func (o *ServiceCluster) Kind() string {
 	return ServiceClusterKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *ServiceCluster) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -410,6 +410,29 @@ func (l *ServiceClusterList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *ServiceClusterList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *ServiceClusterList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *ServiceClusterList) SetItems(items []*ServiceCluster) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *ServiceClusterList) Items() []*ServiceCluster {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

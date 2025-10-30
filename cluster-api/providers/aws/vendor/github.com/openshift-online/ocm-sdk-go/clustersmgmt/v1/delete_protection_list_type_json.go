@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalDeleteProtectionList(list []*DeleteProtection, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDeleteProtectionList(list, stream)
+	WriteDeleteProtectionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalDeleteProtectionList(list []*DeleteProtection, writer io.Writer) err
 	return stream.Error
 }
 
-// writeDeleteProtectionList writes a list of value of the 'delete_protection' type to
+// WriteDeleteProtectionList writes a list of value of the 'delete_protection' type to
 // the given stream.
-func writeDeleteProtectionList(list []*DeleteProtection, stream *jsoniter.Stream) {
+func WriteDeleteProtectionList(list []*DeleteProtection, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeDeleteProtection(value, stream)
+		WriteDeleteProtection(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalDeleteProtectionList(source interface{}) (items []*DeleteProtectio
 	if err != nil {
 		return
 	}
-	items = readDeleteProtectionList(iterator)
+	items = ReadDeleteProtectionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDeleteProtectionList reads list of values of the ”delete_protection' type from
+// ReadDeleteProtectionList reads list of values of the ”delete_protection' type from
 // the given iterator.
-func readDeleteProtectionList(iterator *jsoniter.Iterator) []*DeleteProtection {
+func ReadDeleteProtectionList(iterator *jsoniter.Iterator) []*DeleteProtection {
 	list := []*DeleteProtection{}
 	for iterator.ReadArray() {
-		item := readDeleteProtection(iterator)
+		item := ReadDeleteProtection(iterator)
 		list = append(list, item)
 	}
 	return list

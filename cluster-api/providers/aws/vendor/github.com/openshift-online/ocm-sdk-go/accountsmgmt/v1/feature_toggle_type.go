@@ -50,7 +50,7 @@ func (o *FeatureToggle) Kind() string {
 	return FeatureToggleKind
 }
 
-// Link returns true iif this is a link.
+// Link returns true if this is a link.
 func (o *FeatureToggle) Link() bool {
 	return o != nil && o.bitmap_&1 != 0
 }
@@ -174,6 +174,29 @@ func (l *FeatureToggleList) Len() int {
 		return 0
 	}
 	return len(l.items)
+}
+
+// Items sets the items of the list.
+func (l *FeatureToggleList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *FeatureToggleList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *FeatureToggleList) SetItems(items []*FeatureToggle) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *FeatureToggleList) Items() []*FeatureToggle {
+	if l == nil {
+		return nil
+	}
+	return l.items
 }
 
 // Empty returns true if the list is empty.

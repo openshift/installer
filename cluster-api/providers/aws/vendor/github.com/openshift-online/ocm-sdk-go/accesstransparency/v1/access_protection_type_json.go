@@ -29,7 +29,7 @@ import (
 // MarshalAccessProtection writes a value of the 'access_protection' type to the given writer.
 func MarshalAccessProtection(object *AccessProtection, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAccessProtection(object, stream)
+	WriteAccessProtection(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAccessProtection(object *AccessProtection, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAccessProtection writes a value of the 'access_protection' type to the given stream.
-func writeAccessProtection(object *AccessProtection, stream *jsoniter.Stream) {
+// WriteAccessProtection writes a value of the 'access_protection' type to the given stream.
+func WriteAccessProtection(object *AccessProtection, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalAccessProtection(source interface{}) (object *AccessProtection, er
 	if err != nil {
 		return
 	}
-	object = readAccessProtection(iterator)
+	object = ReadAccessProtection(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAccessProtection reads a value of the 'access_protection' type from the given iterator.
-func readAccessProtection(iterator *jsoniter.Iterator) *AccessProtection {
+// ReadAccessProtection reads a value of the 'access_protection' type from the given iterator.
+func ReadAccessProtection(iterator *jsoniter.Iterator) *AccessProtection {
 	object := &AccessProtection{}
 	for {
 		field := iterator.ReadObject()

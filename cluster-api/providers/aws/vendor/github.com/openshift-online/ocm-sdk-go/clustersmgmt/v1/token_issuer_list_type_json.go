@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalTokenIssuerList(list []*TokenIssuer, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeTokenIssuerList(list, stream)
+	WriteTokenIssuerList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalTokenIssuerList(list []*TokenIssuer, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeTokenIssuerList writes a list of value of the 'token_issuer' type to
+// WriteTokenIssuerList writes a list of value of the 'token_issuer' type to
 // the given stream.
-func writeTokenIssuerList(list []*TokenIssuer, stream *jsoniter.Stream) {
+func WriteTokenIssuerList(list []*TokenIssuer, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeTokenIssuer(value, stream)
+		WriteTokenIssuer(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalTokenIssuerList(source interface{}) (items []*TokenIssuer, err err
 	if err != nil {
 		return
 	}
-	items = readTokenIssuerList(iterator)
+	items = ReadTokenIssuerList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readTokenIssuerList reads list of values of the ”token_issuer' type from
+// ReadTokenIssuerList reads list of values of the ”token_issuer' type from
 // the given iterator.
-func readTokenIssuerList(iterator *jsoniter.Iterator) []*TokenIssuer {
+func ReadTokenIssuerList(iterator *jsoniter.Iterator) []*TokenIssuer {
 	list := []*TokenIssuer{}
 	for iterator.ReadArray() {
-		item := readTokenIssuer(iterator)
+		item := ReadTokenIssuer(iterator)
 		list = append(list, item)
 	}
 	return list

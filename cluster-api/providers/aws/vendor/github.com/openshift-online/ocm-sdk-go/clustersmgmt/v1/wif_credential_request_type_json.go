@@ -29,7 +29,7 @@ import (
 // MarshalWifCredentialRequest writes a value of the 'wif_credential_request' type to the given writer.
 func MarshalWifCredentialRequest(object *WifCredentialRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeWifCredentialRequest(object, stream)
+	WriteWifCredentialRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalWifCredentialRequest(object *WifCredentialRequest, writer io.Writer)
 	return stream.Error
 }
 
-// writeWifCredentialRequest writes a value of the 'wif_credential_request' type to the given stream.
-func writeWifCredentialRequest(object *WifCredentialRequest, stream *jsoniter.Stream) {
+// WriteWifCredentialRequest writes a value of the 'wif_credential_request' type to the given stream.
+func WriteWifCredentialRequest(object *WifCredentialRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func writeWifCredentialRequest(object *WifCredentialRequest, stream *jsoniter.St
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("secret_ref")
-		writeWifSecretRef(object.secretRef, stream)
+		WriteWifSecretRef(object.secretRef, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0 && object.serviceAccountNames != nil
@@ -57,7 +57,7 @@ func writeWifCredentialRequest(object *WifCredentialRequest, stream *jsoniter.St
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("service_account_names")
-		writeStringList(object.serviceAccountNames, stream)
+		WriteStringList(object.serviceAccountNames, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -69,13 +69,13 @@ func UnmarshalWifCredentialRequest(source interface{}) (object *WifCredentialReq
 	if err != nil {
 		return
 	}
-	object = readWifCredentialRequest(iterator)
+	object = ReadWifCredentialRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readWifCredentialRequest reads a value of the 'wif_credential_request' type from the given iterator.
-func readWifCredentialRequest(iterator *jsoniter.Iterator) *WifCredentialRequest {
+// ReadWifCredentialRequest reads a value of the 'wif_credential_request' type from the given iterator.
+func ReadWifCredentialRequest(iterator *jsoniter.Iterator) *WifCredentialRequest {
 	object := &WifCredentialRequest{}
 	for {
 		field := iterator.ReadObject()
@@ -84,11 +84,11 @@ func readWifCredentialRequest(iterator *jsoniter.Iterator) *WifCredentialRequest
 		}
 		switch field {
 		case "secret_ref":
-			value := readWifSecretRef(iterator)
+			value := ReadWifSecretRef(iterator)
 			object.secretRef = value
 			object.bitmap_ |= 1
 		case "service_account_names":
-			value := readStringList(iterator)
+			value := ReadStringList(iterator)
 			object.serviceAccountNames = value
 			object.bitmap_ |= 2
 		default:

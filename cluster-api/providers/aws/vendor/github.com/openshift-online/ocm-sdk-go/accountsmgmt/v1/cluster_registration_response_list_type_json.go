@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterRegistrationResponseList(list []*ClusterRegistrationResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterRegistrationResponseList(list, stream)
+	WriteClusterRegistrationResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterRegistrationResponseList(list []*ClusterRegistrationResponse,
 	return stream.Error
 }
 
-// writeClusterRegistrationResponseList writes a list of value of the 'cluster_registration_response' type to
+// WriteClusterRegistrationResponseList writes a list of value of the 'cluster_registration_response' type to
 // the given stream.
-func writeClusterRegistrationResponseList(list []*ClusterRegistrationResponse, stream *jsoniter.Stream) {
+func WriteClusterRegistrationResponseList(list []*ClusterRegistrationResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeClusterRegistrationResponse(value, stream)
+		WriteClusterRegistrationResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterRegistrationResponseList(source interface{}) (items []*Clus
 	if err != nil {
 		return
 	}
-	items = readClusterRegistrationResponseList(iterator)
+	items = ReadClusterRegistrationResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterRegistrationResponseList reads list of values of the ”cluster_registration_response' type from
+// ReadClusterRegistrationResponseList reads list of values of the ”cluster_registration_response' type from
 // the given iterator.
-func readClusterRegistrationResponseList(iterator *jsoniter.Iterator) []*ClusterRegistrationResponse {
+func ReadClusterRegistrationResponseList(iterator *jsoniter.Iterator) []*ClusterRegistrationResponse {
 	list := []*ClusterRegistrationResponse{}
 	for iterator.ReadArray() {
-		item := readClusterRegistrationResponse(iterator)
+		item := ReadClusterRegistrationResponse(iterator)
 		list = append(list, item)
 	}
 	return list

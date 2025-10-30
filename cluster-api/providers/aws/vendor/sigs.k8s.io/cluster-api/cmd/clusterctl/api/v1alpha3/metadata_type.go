@@ -26,9 +26,13 @@ import (
 
 // Metadata for a provider repository.
 type Metadata struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// releaseSeries maps a provider release series (major/minor) with an API Version of Cluster API (contract).
 	// +optional
 	ReleaseSeries []ReleaseSeries `json:"releaseSeries"`
 }
@@ -36,14 +40,17 @@ type Metadata struct {
 // ReleaseSeries maps a provider release series (major/minor) with a API Version of Cluster API (contract).
 type ReleaseSeries struct {
 	// major version of the release series
-	Major uint `json:"major,omitempty"`
+	// +optional
+	Major int32 `json:"major,omitempty"`
 
 	// minor version of the release series
-	Minor uint `json:"minor,omitempty"`
+	// +optional
+	Minor int32 `json:"minor,omitempty"`
 
 	// contract defines the Cluster API contract supported by this series.
 	//
 	// The value is an API Version, e.g. `v1alpha3`.
+	// +optional
 	Contract string `json:"contract,omitempty"`
 }
 
@@ -60,7 +67,7 @@ func init() {
 // GetReleaseSeriesForVersion returns the release series for a given version.
 func (m *Metadata) GetReleaseSeriesForVersion(version *version.Version) *ReleaseSeries {
 	for _, releaseSeries := range m.ReleaseSeries {
-		if version.Major() == releaseSeries.Major && version.Minor() == releaseSeries.Minor {
+		if version.Major() == uint(releaseSeries.Major) && version.Minor() == uint(releaseSeries.Minor) {
 			return &releaseSeries
 		}
 	}

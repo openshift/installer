@@ -26,10 +26,9 @@ import (
 
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	apiv1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1"
 	apiv1beta2 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	v1beta2 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
-	clusterapiapiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	apiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 func init() {
@@ -64,6 +63,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSLaunchTemplate)(nil), (*AWSLaunchTemplate)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AWSLaunchTemplate_To_v1beta1_AWSLaunchTemplate(a.(*v1beta2.AWSLaunchTemplate), b.(*AWSLaunchTemplate), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*AWSMachinePool)(nil), (*v1beta2.AWSMachinePool)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_AWSMachinePool_To_v1beta2_AWSMachinePool(a.(*AWSMachinePool), b.(*v1beta2.AWSMachinePool), scope)
 	}); err != nil {
@@ -94,8 +98,23 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*AWSMachinePoolSpec)(nil), (*v1beta2.AWSMachinePoolSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_AWSMachinePoolSpec_To_v1beta2_AWSMachinePoolSpec(a.(*AWSMachinePoolSpec), b.(*v1beta2.AWSMachinePoolSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSMachinePoolSpec)(nil), (*AWSMachinePoolSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(a.(*v1beta2.AWSMachinePoolSpec), b.(*AWSMachinePoolSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*AWSMachinePoolStatus)(nil), (*v1beta2.AWSMachinePoolStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_AWSMachinePoolStatus_To_v1beta2_AWSMachinePoolStatus(a.(*AWSMachinePoolStatus), b.(*v1beta2.AWSMachinePoolStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSMachinePoolStatus)(nil), (*AWSMachinePoolStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AWSMachinePoolStatus_To_v1beta1_AWSMachinePoolStatus(a.(*v1beta2.AWSMachinePoolStatus), b.(*AWSMachinePoolStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -124,6 +143,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSManagedMachinePoolSpec)(nil), (*AWSManagedMachinePoolSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachinePoolSpec(a.(*v1beta2.AWSManagedMachinePoolSpec), b.(*AWSManagedMachinePoolSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*AWSManagedMachinePoolStatus)(nil), (*v1beta2.AWSManagedMachinePoolStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_AWSManagedMachinePoolStatus_To_v1beta2_AWSManagedMachinePoolStatus(a.(*AWSManagedMachinePoolStatus), b.(*v1beta2.AWSManagedMachinePoolStatus), scope)
 	}); err != nil {
@@ -131,6 +155,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSManagedMachinePoolStatus)(nil), (*AWSManagedMachinePoolStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_AWSManagedMachinePoolStatus_To_v1beta1_AWSManagedMachinePoolStatus(a.(*v1beta2.AWSManagedMachinePoolStatus), b.(*AWSManagedMachinePoolStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AutoScalingGroup)(nil), (*v1beta2.AutoScalingGroup)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_AutoScalingGroup_To_v1beta2_AutoScalingGroup(a.(*AutoScalingGroup), b.(*v1beta2.AutoScalingGroup), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.AutoScalingGroup)(nil), (*AutoScalingGroup)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AutoScalingGroup_To_v1beta1_AutoScalingGroup(a.(*v1beta2.AutoScalingGroup), b.(*AutoScalingGroup), scope)
 	}); err != nil {
 		return err
 	}
@@ -239,6 +273,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.RefreshPreferences)(nil), (*RefreshPreferences)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_RefreshPreferences_To_v1beta1_RefreshPreferences(a.(*v1beta2.RefreshPreferences), b.(*RefreshPreferences), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*Taint)(nil), (*v1beta2.Taint)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_Taint_To_v1beta2_Taint(a.(*Taint), b.(*v1beta2.Taint), scope)
 	}); err != nil {
@@ -259,70 +298,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*apiv1beta1.AMIReference)(nil), (*apiv1beta2.AMIReference)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_AMIReference_To_v1beta2_AMIReference(a.(*apiv1beta1.AMIReference), b.(*apiv1beta2.AMIReference), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*AWSMachinePoolSpec)(nil), (*v1beta2.AWSMachinePoolSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_AWSMachinePoolSpec_To_v1beta2_AWSMachinePoolSpec(a.(*AWSMachinePoolSpec), b.(*v1beta2.AWSMachinePoolSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*AutoScalingGroup)(nil), (*v1beta2.AutoScalingGroup)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_AutoScalingGroup_To_v1beta2_AutoScalingGroup(a.(*AutoScalingGroup), b.(*v1beta2.AutoScalingGroup), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*apiv1beta1.Instance)(nil), (*apiv1beta2.Instance)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_Instance_To_v1beta2_Instance(a.(*apiv1beta1.Instance), b.(*apiv1beta2.Instance), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*apiv1beta2.AMIReference)(nil), (*apiv1beta1.AMIReference)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AMIReference_To_v1beta1_AMIReference(a.(*apiv1beta2.AMIReference), b.(*apiv1beta1.AMIReference), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.AWSLaunchTemplate)(nil), (*AWSLaunchTemplate)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AWSLaunchTemplate_To_v1beta1_AWSLaunchTemplate(a.(*v1beta2.AWSLaunchTemplate), b.(*AWSLaunchTemplate), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.AWSMachinePoolSpec)(nil), (*AWSMachinePoolSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(a.(*v1beta2.AWSMachinePoolSpec), b.(*AWSMachinePoolSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.AWSMachinePoolStatus)(nil), (*AWSMachinePoolStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AWSMachinePoolStatus_To_v1beta1_AWSMachinePoolStatus(a.(*v1beta2.AWSMachinePoolStatus), b.(*AWSMachinePoolStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.AWSManagedMachinePoolSpec)(nil), (*AWSManagedMachinePoolSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachinePoolSpec(a.(*v1beta2.AWSManagedMachinePoolSpec), b.(*AWSManagedMachinePoolSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.AutoScalingGroup)(nil), (*AutoScalingGroup)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AutoScalingGroup_To_v1beta1_AutoScalingGroup(a.(*v1beta2.AutoScalingGroup), b.(*AutoScalingGroup), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*apiv1beta2.Instance)(nil), (*apiv1beta1.Instance)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_Instance_To_v1beta1_Instance(a.(*apiv1beta2.Instance), b.(*apiv1beta1.Instance), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.RefreshPreferences)(nil), (*RefreshPreferences)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_RefreshPreferences_To_v1beta1_RefreshPreferences(a.(*v1beta2.RefreshPreferences), b.(*RefreshPreferences), scope)
-	}); err != nil {
-		return err
-	}
 	return nil
 }
 
 func autoConvert_v1beta1_AWSFargateProfile_To_v1beta2_AWSFargateProfile(in *AWSFargateProfile, out *v1beta2.AWSFargateProfile, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_FargateProfileSpec_To_v1beta2_FargateProfileSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -339,6 +319,7 @@ func Convert_v1beta1_AWSFargateProfile_To_v1beta2_AWSFargateProfile(in *AWSFarga
 }
 
 func autoConvert_v1beta2_AWSFargateProfile_To_v1beta1_AWSFargateProfile(in *v1beta2.AWSFargateProfile, out *AWSFargateProfile, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_FargateProfileSpec_To_v1beta1_FargateProfileSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -355,8 +336,19 @@ func Convert_v1beta2_AWSFargateProfile_To_v1beta1_AWSFargateProfile(in *v1beta2.
 }
 
 func autoConvert_v1beta1_AWSFargateProfileList_To_v1beta2_AWSFargateProfileList(in *AWSFargateProfileList, out *v1beta2.AWSFargateProfileList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
-	out.Items = *(*[]v1beta2.AWSFargateProfile)(unsafe.Pointer(&in.Items))
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]v1beta2.AWSFargateProfile, len(*in))
+		for i := range *in {
+			if err := Convert_v1beta1_AWSFargateProfile_To_v1beta2_AWSFargateProfile(&(*in)[i], &(*out)[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -366,8 +358,19 @@ func Convert_v1beta1_AWSFargateProfileList_To_v1beta2_AWSFargateProfileList(in *
 }
 
 func autoConvert_v1beta2_AWSFargateProfileList_To_v1beta1_AWSFargateProfileList(in *v1beta2.AWSFargateProfileList, out *AWSFargateProfileList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
-	out.Items = *(*[]AWSFargateProfile)(unsafe.Pointer(&in.Items))
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]AWSFargateProfile, len(*in))
+		for i := range *in {
+			if err := Convert_v1beta2_AWSFargateProfile_To_v1beta1_AWSFargateProfile(&(*in)[i], &(*out)[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -415,10 +418,12 @@ func autoConvert_v1beta2_AWSLaunchTemplate_To_v1beta1_AWSLaunchTemplate(in *v1be
 	// WARNING: in.PrivateDNSName requires manual conversion: does not exist in peer-type
 	// WARNING: in.CapacityReservationID requires manual conversion: does not exist in peer-type
 	// WARNING: in.MarketType requires manual conversion: does not exist in peer-type
+	// WARNING: in.CapacityReservationPreference requires manual conversion: does not exist in peer-type
 	return nil
 }
 
 func autoConvert_v1beta1_AWSMachinePool_To_v1beta2_AWSMachinePool(in *AWSMachinePool, out *v1beta2.AWSMachinePool, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_AWSMachinePoolSpec_To_v1beta2_AWSMachinePoolSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -435,6 +440,7 @@ func Convert_v1beta1_AWSMachinePool_To_v1beta2_AWSMachinePool(in *AWSMachinePool
 }
 
 func autoConvert_v1beta2_AWSMachinePool_To_v1beta1_AWSMachinePool(in *v1beta2.AWSMachinePool, out *AWSMachinePool, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -473,6 +479,7 @@ func Convert_v1beta2_AWSMachinePoolInstanceStatus_To_v1beta1_AWSMachinePoolInsta
 }
 
 func autoConvert_v1beta1_AWSMachinePoolList_To_v1beta2_AWSMachinePoolList(in *AWSMachinePoolList, out *v1beta2.AWSMachinePoolList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -494,6 +501,7 @@ func Convert_v1beta1_AWSMachinePoolList_To_v1beta2_AWSMachinePoolList(in *AWSMac
 }
 
 func autoConvert_v1beta2_AWSMachinePoolList_To_v1beta1_AWSMachinePoolList(in *v1beta2.AWSMachinePoolList, out *AWSMachinePoolList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -540,6 +548,11 @@ func autoConvert_v1beta1_AWSMachinePoolSpec_To_v1beta2_AWSMachinePoolSpec(in *AW
 	return nil
 }
 
+// Convert_v1beta1_AWSMachinePoolSpec_To_v1beta2_AWSMachinePoolSpec is an autogenerated conversion function.
+func Convert_v1beta1_AWSMachinePoolSpec_To_v1beta2_AWSMachinePoolSpec(in *AWSMachinePoolSpec, out *v1beta2.AWSMachinePoolSpec, s conversion.Scope) error {
+	return autoConvert_v1beta1_AWSMachinePoolSpec_To_v1beta2_AWSMachinePoolSpec(in, out, s)
+}
+
 func autoConvert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(in *v1beta2.AWSMachinePoolSpec, out *AWSMachinePoolSpec, s conversion.Scope) error {
 	out.ProviderID = in.ProviderID
 	out.MinSize = in.MinSize
@@ -566,13 +579,15 @@ func autoConvert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(in *v1
 	}
 	out.CapacityRebalance = in.CapacityRebalance
 	// WARNING: in.SuspendProcesses requires manual conversion: does not exist in peer-type
+	// WARNING: in.Ignition requires manual conversion: does not exist in peer-type
+	// WARNING: in.AWSLifecycleHooks requires manual conversion: does not exist in peer-type
 	return nil
 }
 
 func autoConvert_v1beta1_AWSMachinePoolStatus_To_v1beta2_AWSMachinePoolStatus(in *AWSMachinePoolStatus, out *v1beta2.AWSMachinePoolStatus, s conversion.Scope) error {
 	out.Ready = in.Ready
 	out.Replicas = in.Replicas
-	out.Conditions = *(*clusterapiapiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	out.Instances = *(*[]v1beta2.AWSMachinePoolInstanceStatus)(unsafe.Pointer(&in.Instances))
 	out.LaunchTemplateID = in.LaunchTemplateID
 	out.LaunchTemplateVersion = (*string)(unsafe.Pointer(in.LaunchTemplateVersion))
@@ -590,7 +605,7 @@ func Convert_v1beta1_AWSMachinePoolStatus_To_v1beta2_AWSMachinePoolStatus(in *AW
 func autoConvert_v1beta2_AWSMachinePoolStatus_To_v1beta1_AWSMachinePoolStatus(in *v1beta2.AWSMachinePoolStatus, out *AWSMachinePoolStatus, s conversion.Scope) error {
 	out.Ready = in.Ready
 	out.Replicas = in.Replicas
-	out.Conditions = *(*clusterapiapiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	out.Instances = *(*[]AWSMachinePoolInstanceStatus)(unsafe.Pointer(&in.Instances))
 	out.LaunchTemplateID = in.LaunchTemplateID
 	out.LaunchTemplateVersion = (*string)(unsafe.Pointer(in.LaunchTemplateVersion))
@@ -602,6 +617,7 @@ func autoConvert_v1beta2_AWSMachinePoolStatus_To_v1beta1_AWSMachinePoolStatus(in
 }
 
 func autoConvert_v1beta1_AWSManagedMachinePool_To_v1beta2_AWSManagedMachinePool(in *AWSManagedMachinePool, out *v1beta2.AWSManagedMachinePool, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta1_AWSManagedMachinePoolSpec_To_v1beta2_AWSManagedMachinePoolSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -618,6 +634,7 @@ func Convert_v1beta1_AWSManagedMachinePool_To_v1beta2_AWSManagedMachinePool(in *
 }
 
 func autoConvert_v1beta2_AWSManagedMachinePool_To_v1beta1_AWSManagedMachinePool(in *v1beta2.AWSManagedMachinePool, out *AWSManagedMachinePool, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachinePoolSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
@@ -634,6 +651,7 @@ func Convert_v1beta2_AWSManagedMachinePool_To_v1beta1_AWSManagedMachinePool(in *
 }
 
 func autoConvert_v1beta1_AWSManagedMachinePoolList_To_v1beta2_AWSManagedMachinePoolList(in *AWSManagedMachinePoolList, out *v1beta2.AWSManagedMachinePoolList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -655,6 +673,7 @@ func Convert_v1beta1_AWSManagedMachinePoolList_To_v1beta2_AWSManagedMachinePoolL
 }
 
 func autoConvert_v1beta2_AWSManagedMachinePoolList_To_v1beta1_AWSManagedMachinePoolList(in *v1beta2.AWSManagedMachinePoolList, out *AWSManagedMachinePoolList, s conversion.Scope) error {
+	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
@@ -718,6 +737,8 @@ func autoConvert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachineP
 	out.AdditionalTags = *(*apiv1beta2.Tags)(unsafe.Pointer(&in.AdditionalTags))
 	out.RoleAdditionalPolicies = *(*[]string)(unsafe.Pointer(&in.RoleAdditionalPolicies))
 	out.RoleName = in.RoleName
+	// WARNING: in.RolePath requires manual conversion: does not exist in peer-type
+	// WARNING: in.RolePermissionsBoundary requires manual conversion: does not exist in peer-type
 	out.AMIVersion = (*string)(unsafe.Pointer(in.AMIVersion))
 	out.AMIType = (*ManagedMachineAMIType)(unsafe.Pointer(in.AMIType))
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
@@ -738,6 +759,7 @@ func autoConvert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachineP
 	} else {
 		out.AWSLaunchTemplate = nil
 	}
+	// WARNING: in.AWSLifecycleHooks requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -748,7 +770,7 @@ func autoConvert_v1beta1_AWSManagedMachinePoolStatus_To_v1beta2_AWSManagedMachin
 	out.LaunchTemplateVersion = (*string)(unsafe.Pointer(in.LaunchTemplateVersion))
 	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
-	out.Conditions = *(*clusterapiapiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	return nil
 }
 
@@ -764,7 +786,7 @@ func autoConvert_v1beta2_AWSManagedMachinePoolStatus_To_v1beta1_AWSManagedMachin
 	out.LaunchTemplateVersion = (*string)(unsafe.Pointer(in.LaunchTemplateVersion))
 	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
-	out.Conditions = *(*clusterapiapiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	return nil
 }
 
@@ -788,6 +810,11 @@ func autoConvert_v1beta1_AutoScalingGroup_To_v1beta2_AutoScalingGroup(in *AutoSc
 	out.Status = v1beta2.ASGStatus(in.Status)
 	out.Instances = *(*[]apiv1beta2.Instance)(unsafe.Pointer(&in.Instances))
 	return nil
+}
+
+// Convert_v1beta1_AutoScalingGroup_To_v1beta2_AutoScalingGroup is an autogenerated conversion function.
+func Convert_v1beta1_AutoScalingGroup_To_v1beta2_AutoScalingGroup(in *AutoScalingGroup, out *v1beta2.AutoScalingGroup, s conversion.Scope) error {
+	return autoConvert_v1beta1_AutoScalingGroup_To_v1beta2_AutoScalingGroup(in, out, s)
 }
 
 func autoConvert_v1beta2_AutoScalingGroup_To_v1beta1_AutoScalingGroup(in *v1beta2.AutoScalingGroup, out *AutoScalingGroup, s conversion.Scope) error {
@@ -880,20 +907,17 @@ func autoConvert_v1beta2_FargateProfileSpec_To_v1beta1_FargateProfileSpec(in *v1
 	out.SubnetIDs = *(*[]string)(unsafe.Pointer(&in.SubnetIDs))
 	out.AdditionalTags = *(*apiv1beta2.Tags)(unsafe.Pointer(&in.AdditionalTags))
 	out.RoleName = in.RoleName
+	// WARNING: in.RolePath requires manual conversion: does not exist in peer-type
+	// WARNING: in.RolePermissionsBoundary requires manual conversion: does not exist in peer-type
 	out.Selectors = *(*[]FargateSelector)(unsafe.Pointer(&in.Selectors))
 	return nil
-}
-
-// Convert_v1beta2_FargateProfileSpec_To_v1beta1_FargateProfileSpec is an autogenerated conversion function.
-func Convert_v1beta2_FargateProfileSpec_To_v1beta1_FargateProfileSpec(in *v1beta2.FargateProfileSpec, out *FargateProfileSpec, s conversion.Scope) error {
-	return autoConvert_v1beta2_FargateProfileSpec_To_v1beta1_FargateProfileSpec(in, out, s)
 }
 
 func autoConvert_v1beta1_FargateProfileStatus_To_v1beta2_FargateProfileStatus(in *FargateProfileStatus, out *v1beta2.FargateProfileStatus, s conversion.Scope) error {
 	out.Ready = in.Ready
 	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
-	out.Conditions = *(*clusterapiapiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	return nil
 }
 
@@ -906,7 +930,7 @@ func autoConvert_v1beta2_FargateProfileStatus_To_v1beta1_FargateProfileStatus(in
 	out.Ready = in.Ready
 	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
-	out.Conditions = *(*clusterapiapiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	return nil
 }
 

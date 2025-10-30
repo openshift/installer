@@ -30,7 +30,7 @@ import (
 // MarshalDeletedSubscription writes a value of the 'deleted_subscription' type to the given writer.
 func MarshalDeletedSubscription(object *DeletedSubscription, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeDeletedSubscription(object, stream)
+	WriteDeletedSubscription(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalDeletedSubscription(object *DeletedSubscription, writer io.Writer) e
 	return stream.Error
 }
 
-// writeDeletedSubscription writes a value of the 'deleted_subscription' type to the given stream.
-func writeDeletedSubscription(object *DeletedSubscription, stream *jsoniter.Stream) {
+// WriteDeletedSubscription writes a value of the 'deleted_subscription' type to the given stream.
+func WriteDeletedSubscription(object *DeletedSubscription, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -363,13 +363,13 @@ func UnmarshalDeletedSubscription(source interface{}) (object *DeletedSubscripti
 	if err != nil {
 		return
 	}
-	object = readDeletedSubscription(iterator)
+	object = ReadDeletedSubscription(iterator)
 	err = iterator.Error
 	return
 }
 
-// readDeletedSubscription reads a value of the 'deleted_subscription' type from the given iterator.
-func readDeletedSubscription(iterator *jsoniter.Iterator) *DeletedSubscription {
+// ReadDeletedSubscription reads a value of the 'deleted_subscription' type from the given iterator.
+func ReadDeletedSubscription(iterator *jsoniter.Iterator) *DeletedSubscription {
 	object := &DeletedSubscription{}
 	for {
 		field := iterator.ReadObject()

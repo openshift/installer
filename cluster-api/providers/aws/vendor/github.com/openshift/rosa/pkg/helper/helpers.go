@@ -156,7 +156,7 @@ func RemoveStrFromSlice(s []string, str string) []string {
 	return s
 }
 
-func DisplaySpinnerWithDelay(reporter *reporter.Object, infoMessage string, delay time.Duration) {
+func DisplaySpinnerWithDelay(reporter reporter.Logger, infoMessage string, delay time.Duration) {
 	if reporter.IsTerminal() {
 		spin := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		reporter.Infof(infoMessage)

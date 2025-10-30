@@ -18,10 +18,12 @@ limitations under the License.
 package awserrors
 
 import (
+	"errors"
 	"net/http"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/ssm"
+	ssmtypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
+	"github.com/aws/smithy-go"
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Error singletons for AWS errors.
@@ -63,17 +65,21 @@ var _ error = &EC2Error{}
 
 // Code returns the AWS error code as a string.
 func Code(err error) (string, bool) {
-	if awserr, ok := err.(awserr.Error); ok {
-		return awserr.Code(), true
+	// Handle smithy errors from AWS SDK v2
+	if smithyErr := ParseSmithyError(err); smithyErr != nil && smithyErr.ErrorCode() != "" {
+		return smithyErr.ErrorCode(), true
 	}
+
 	return "", false
 }
 
 // Message returns the AWS error message as a string.
 func Message(err error) string {
-	if awserr, ok := err.(awserr.Error); ok {
-		return awserr.Message()
+	// Handle smithy errors from AWS SDK v2
+	if smithyErr := ParseSmithyError(err); smithyErr != nil {
+		return smithyErr.ErrorMessage()
 	}
+
 	return ""
 }
 
@@ -82,6 +88,13 @@ type EC2Error struct {
 	msg string
 
 	Code int
+}
+
+// SmithyError holds parsed smithy errors from aws-sdk-go-v2 API calls.
+type SmithyError struct {
+	errCode    string
+	errMessage string
+	statusCode int
 }
 
 // Error implements the Error interface.
@@ -155,12 +168,6 @@ func IsConflict(err error) bool {
 	return ReasonForError(err) == http.StatusConflict
 }
 
-// IsSDKError returns true if the error is of type awserr.Error.
-func IsSDKError(err error) (ok bool) {
-	_, ok = err.(awserr.Error)
-	return
-}
-
 // IsInvalidNotFoundError tests for common aws not found errors.
 func IsInvalidNotFoundError(err error) bool {
 	if code, ok := Code(err); ok {
@@ -169,7 +176,7 @@ func IsInvalidNotFoundError(err error) bool {
 			return true
 		case InvalidInstanceID:
 			return true
-		case ssm.ErrCodeParameterNotFound:
+		case (&ssmtypes.ParameterNotFound{}).ErrorCode():
 			return true
 		case LaunchTemplateNameNotFound:
 			return true
@@ -223,4 +230,47 @@ func IsPermissionNotFoundError(err error) bool {
 		}
 	}
 	return false
+}
+
+// ParseSmithyError returns parsed SmithyError from AWS API calls.
+func ParseSmithyError(err error) *SmithyError {
+	smithyErr := &SmithyError{}
+
+	if err == nil {
+		return nil
+	}
+
+	var ae smithy.APIError
+	if errors.As(err, &ae) {
+		smithyErr.errCode = ae.ErrorCode()
+		smithyErr.errMessage = ae.Error()
+	}
+
+	var re *smithyhttp.ResponseError
+	if errors.As(err, &re) {
+		if re.Response != nil {
+			smithyErr.statusCode = re.Response.StatusCode
+		}
+		var innerAE smithy.APIError
+		if re.Err != nil && errors.As(re.Err, &innerAE) {
+			smithyErr.errCode = innerAE.ErrorCode()
+		}
+	}
+
+	return smithyErr
+}
+
+// ErrorCode returns the error code from the SmithyError.
+func (s *SmithyError) ErrorCode() string {
+	return s.errCode
+}
+
+// ErrorMessage returns the error message from the SmithyError.
+func (s *SmithyError) ErrorMessage() string {
+	return s.errMessage
+}
+
+// StatusCode returns the status code from the SmithyError.
+func (s *SmithyError) StatusCode() int {
+	return s.statusCode
 }

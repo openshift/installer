@@ -29,7 +29,7 @@ import (
 // MarshalGCPEncryptionKey writes a value of the 'GCP_encryption_key' type to the given writer.
 func MarshalGCPEncryptionKey(object *GCPEncryptionKey, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeGCPEncryptionKey(object, stream)
+	WriteGCPEncryptionKey(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGCPEncryptionKey(object *GCPEncryptionKey, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeGCPEncryptionKey writes a value of the 'GCP_encryption_key' type to the given stream.
-func writeGCPEncryptionKey(object *GCPEncryptionKey, stream *jsoniter.Stream) {
+// WriteGCPEncryptionKey writes a value of the 'GCP_encryption_key' type to the given stream.
+func WriteGCPEncryptionKey(object *GCPEncryptionKey, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalGCPEncryptionKey(source interface{}) (object *GCPEncryptionKey, er
 	if err != nil {
 		return
 	}
-	object = readGCPEncryptionKey(iterator)
+	object = ReadGCPEncryptionKey(iterator)
 	err = iterator.Error
 	return
 }
 
-// readGCPEncryptionKey reads a value of the 'GCP_encryption_key' type from the given iterator.
-func readGCPEncryptionKey(iterator *jsoniter.Iterator) *GCPEncryptionKey {
+// ReadGCPEncryptionKey reads a value of the 'GCP_encryption_key' type from the given iterator.
+func ReadGCPEncryptionKey(iterator *jsoniter.Iterator) *GCPEncryptionKey {
 	object := &GCPEncryptionKey{}
 	for {
 		field := iterator.ReadObject()

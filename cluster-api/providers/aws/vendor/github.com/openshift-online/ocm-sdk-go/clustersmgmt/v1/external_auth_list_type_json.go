@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalExternalAuthList(list []*ExternalAuth, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeExternalAuthList(list, stream)
+	WriteExternalAuthList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalExternalAuthList(list []*ExternalAuth, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeExternalAuthList writes a list of value of the 'external_auth' type to
+// WriteExternalAuthList writes a list of value of the 'external_auth' type to
 // the given stream.
-func writeExternalAuthList(list []*ExternalAuth, stream *jsoniter.Stream) {
+func WriteExternalAuthList(list []*ExternalAuth, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeExternalAuth(value, stream)
+		WriteExternalAuth(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalExternalAuthList(source interface{}) (items []*ExternalAuth, err e
 	if err != nil {
 		return
 	}
-	items = readExternalAuthList(iterator)
+	items = ReadExternalAuthList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readExternalAuthList reads list of values of the ”external_auth' type from
+// ReadExternalAuthList reads list of values of the ”external_auth' type from
 // the given iterator.
-func readExternalAuthList(iterator *jsoniter.Iterator) []*ExternalAuth {
+func ReadExternalAuthList(iterator *jsoniter.Iterator) []*ExternalAuth {
 	list := []*ExternalAuth{}
 	for iterator.ReadArray() {
-		item := readExternalAuth(iterator)
+		item := ReadExternalAuth(iterator)
 		list = append(list, item)
 	}
 	return list

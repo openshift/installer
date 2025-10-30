@@ -114,6 +114,9 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 					HTTPTokens:   imds,
 					HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
 				},
+				CPUOptions: capa.CPUOptions{
+					ConfidentialCompute: capa.AWSConfidentialComputePolicy(*mpool.CPUOptions.ConfidentialCompute),
+				},
 			},
 		}
 		awsMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))

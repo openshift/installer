@@ -3,17 +3,18 @@
 package v1
 
 import (
-	v1 "github.com/openshift/api/config/v1"
+	configv1 "github.com/openshift/api/config/v1"
 )
 
 // AzurePlatformStatusApplyConfiguration represents a declarative configuration of the AzurePlatformStatus type for use
 // with apply.
 type AzurePlatformStatusApplyConfiguration struct {
-	ResourceGroupName        *string                              `json:"resourceGroupName,omitempty"`
-	NetworkResourceGroupName *string                              `json:"networkResourceGroupName,omitempty"`
-	CloudName                *v1.AzureCloudEnvironment            `json:"cloudName,omitempty"`
-	ARMEndpoint              *string                              `json:"armEndpoint,omitempty"`
-	ResourceTags             []AzureResourceTagApplyConfiguration `json:"resourceTags,omitempty"`
+	ResourceGroupName        *string                                    `json:"resourceGroupName,omitempty"`
+	NetworkResourceGroupName *string                                    `json:"networkResourceGroupName,omitempty"`
+	CloudName                *configv1.AzureCloudEnvironment            `json:"cloudName,omitempty"`
+	ARMEndpoint              *string                                    `json:"armEndpoint,omitempty"`
+	ResourceTags             []AzureResourceTagApplyConfiguration       `json:"resourceTags,omitempty"`
+	CloudLoadBalancerConfig  *CloudLoadBalancerConfigApplyConfiguration `json:"cloudLoadBalancerConfig,omitempty"`
 }
 
 // AzurePlatformStatusApplyConfiguration constructs a declarative configuration of the AzurePlatformStatus type for use with
@@ -41,7 +42,7 @@ func (b *AzurePlatformStatusApplyConfiguration) WithNetworkResourceGroupName(val
 // WithCloudName sets the CloudName field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the CloudName field is set to the value of the last call.
-func (b *AzurePlatformStatusApplyConfiguration) WithCloudName(value v1.AzureCloudEnvironment) *AzurePlatformStatusApplyConfiguration {
+func (b *AzurePlatformStatusApplyConfiguration) WithCloudName(value configv1.AzureCloudEnvironment) *AzurePlatformStatusApplyConfiguration {
 	b.CloudName = &value
 	return b
 }
@@ -64,5 +65,13 @@ func (b *AzurePlatformStatusApplyConfiguration) WithResourceTags(values ...*Azur
 		}
 		b.ResourceTags = append(b.ResourceTags, *values[i])
 	}
+	return b
+}
+
+// WithCloudLoadBalancerConfig sets the CloudLoadBalancerConfig field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the CloudLoadBalancerConfig field is set to the value of the last call.
+func (b *AzurePlatformStatusApplyConfiguration) WithCloudLoadBalancerConfig(value *CloudLoadBalancerConfigApplyConfiguration) *AzurePlatformStatusApplyConfiguration {
+	b.CloudLoadBalancerConfig = value
 	return b
 }

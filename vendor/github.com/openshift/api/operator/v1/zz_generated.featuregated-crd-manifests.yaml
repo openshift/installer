@@ -175,10 +175,7 @@ ingresscontrollers.operator.openshift.io:
   CRDName: ingresscontrollers.operator.openshift.io
   Capability: Ingress
   Category: ""
-  FeatureGates:
-  - IngressControllerLBSubnetsAWS
-  - SetEIPForNLBIngressController
-  - SetEIPForNLBIngressController+IngressControllerLBSubnetsAWS
+  FeatureGates: []
   FilenameOperatorName: ingress
   FilenameOperatorOrdering: "00"
   FilenameRunLevel: "0000_50"
@@ -305,7 +302,10 @@ machineconfigurations.operator.openshift.io:
   Capability: ""
   Category: ""
   FeatureGates:
+  - BootImageSkewEnforcement
+  - IrreconcilableMachineConfig
   - ManagedBootImages
+  - ManagedBootImages+ManagedBootImagesCPMS
   FilenameOperatorName: machine-config
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_80"

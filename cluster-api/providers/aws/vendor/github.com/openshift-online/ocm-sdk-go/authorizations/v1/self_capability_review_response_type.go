@@ -78,6 +78,29 @@ func (l *SelfCapabilityReviewResponseList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *SelfCapabilityReviewResponseList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *SelfCapabilityReviewResponseList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *SelfCapabilityReviewResponseList) SetItems(items []*SelfCapabilityReviewResponse) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *SelfCapabilityReviewResponseList) Items() []*SelfCapabilityReviewResponse {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *SelfCapabilityReviewResponseList) Empty() bool {
 	return l == nil || len(l.items) == 0

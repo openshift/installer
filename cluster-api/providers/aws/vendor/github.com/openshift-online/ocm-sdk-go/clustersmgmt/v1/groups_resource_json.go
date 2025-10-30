@@ -49,7 +49,7 @@ func readGroupsListResponse(response *GroupsListResponse, reader io.Reader) erro
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readGroupList(iterator)
+			items := ReadGroupList(iterator)
 			response.items = &GroupList{
 				items: items,
 			}

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAWSFlavourList(list []*AWSFlavour, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAWSFlavourList(list, stream)
+	WriteAWSFlavourList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAWSFlavourList(list []*AWSFlavour, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAWSFlavourList writes a list of value of the 'AWS_flavour' type to
+// WriteAWSFlavourList writes a list of value of the 'AWS_flavour' type to
 // the given stream.
-func writeAWSFlavourList(list []*AWSFlavour, stream *jsoniter.Stream) {
+func WriteAWSFlavourList(list []*AWSFlavour, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAWSFlavour(value, stream)
+		WriteAWSFlavour(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAWSFlavourList(source interface{}) (items []*AWSFlavour, err error
 	if err != nil {
 		return
 	}
-	items = readAWSFlavourList(iterator)
+	items = ReadAWSFlavourList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAWSFlavourList reads list of values of the ”AWS_flavour' type from
+// ReadAWSFlavourList reads list of values of the ”AWS_flavour' type from
 // the given iterator.
-func readAWSFlavourList(iterator *jsoniter.Iterator) []*AWSFlavour {
+func ReadAWSFlavourList(iterator *jsoniter.Iterator) []*AWSFlavour {
 	list := []*AWSFlavour{}
 	for iterator.ReadArray() {
-		item := readAWSFlavour(iterator)
+		item := ReadAWSFlavour(iterator)
 		list = append(list, item)
 	}
 	return list

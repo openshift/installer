@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalStatusChangeList(list []*StatusChange, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeStatusChangeList(list, stream)
+	WriteStatusChangeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalStatusChangeList(list []*StatusChange, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeStatusChangeList writes a list of value of the 'status_change' type to
+// WriteStatusChangeList writes a list of value of the 'status_change' type to
 // the given stream.
-func writeStatusChangeList(list []*StatusChange, stream *jsoniter.Stream) {
+func WriteStatusChangeList(list []*StatusChange, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeStatusChange(value, stream)
+		WriteStatusChange(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalStatusChangeList(source interface{}) (items []*StatusChange, err e
 	if err != nil {
 		return
 	}
-	items = readStatusChangeList(iterator)
+	items = ReadStatusChangeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readStatusChangeList reads list of values of the ”status_change' type from
+// ReadStatusChangeList reads list of values of the ”status_change' type from
 // the given iterator.
-func readStatusChangeList(iterator *jsoniter.Iterator) []*StatusChange {
+func ReadStatusChangeList(iterator *jsoniter.Iterator) []*StatusChange {
 	list := []*StatusChange{}
 	for iterator.ReadArray() {
-		item := readStatusChange(iterator)
+		item := ReadStatusChange(iterator)
 		list = append(list, item)
 	}
 	return list

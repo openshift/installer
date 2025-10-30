@@ -29,7 +29,7 @@ import (
 // MarshalClusterAuthorizationResponse writes a value of the 'cluster_authorization_response' type to the given writer.
 func MarshalClusterAuthorizationResponse(object *ClusterAuthorizationResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeClusterAuthorizationResponse(object, stream)
+	WriteClusterAuthorizationResponse(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterAuthorizationResponse(object *ClusterAuthorizationResponse, w
 	return stream.Error
 }
 
-// writeClusterAuthorizationResponse writes a value of the 'cluster_authorization_response' type to the given stream.
-func writeClusterAuthorizationResponse(object *ClusterAuthorizationResponse, stream *jsoniter.Stream) {
+// WriteClusterAuthorizationResponse writes a value of the 'cluster_authorization_response' type to the given stream.
+func WriteClusterAuthorizationResponse(object *ClusterAuthorizationResponse, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func writeClusterAuthorizationResponse(object *ClusterAuthorizationResponse, str
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("excess_resources")
-		writeReservedResourceList(object.excessResources, stream)
+		WriteReservedResourceList(object.excessResources, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0 && object.subscription != nil
@@ -66,7 +66,7 @@ func writeClusterAuthorizationResponse(object *ClusterAuthorizationResponse, str
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("subscription")
-		writeSubscription(object.subscription, stream)
+		WriteSubscription(object.subscription, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -78,13 +78,13 @@ func UnmarshalClusterAuthorizationResponse(source interface{}) (object *ClusterA
 	if err != nil {
 		return
 	}
-	object = readClusterAuthorizationResponse(iterator)
+	object = ReadClusterAuthorizationResponse(iterator)
 	err = iterator.Error
 	return
 }
 
-// readClusterAuthorizationResponse reads a value of the 'cluster_authorization_response' type from the given iterator.
-func readClusterAuthorizationResponse(iterator *jsoniter.Iterator) *ClusterAuthorizationResponse {
+// ReadClusterAuthorizationResponse reads a value of the 'cluster_authorization_response' type from the given iterator.
+func ReadClusterAuthorizationResponse(iterator *jsoniter.Iterator) *ClusterAuthorizationResponse {
 	object := &ClusterAuthorizationResponse{}
 	for {
 		field := iterator.ReadObject()
@@ -97,11 +97,11 @@ func readClusterAuthorizationResponse(iterator *jsoniter.Iterator) *ClusterAutho
 			object.allowed = value
 			object.bitmap_ |= 1
 		case "excess_resources":
-			value := readReservedResourceList(iterator)
+			value := ReadReservedResourceList(iterator)
 			object.excessResources = value
 			object.bitmap_ |= 2
 		case "subscription":
-			value := readSubscription(iterator)
+			value := ReadSubscription(iterator)
 			object.subscription = value
 			object.bitmap_ |= 4
 		default:

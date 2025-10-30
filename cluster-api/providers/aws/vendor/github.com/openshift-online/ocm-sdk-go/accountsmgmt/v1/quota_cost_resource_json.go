@@ -49,7 +49,7 @@ func readQuotaCostListResponse(response *QuotaCostListResponse, reader io.Reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := readQuotaCostList(iterator)
+			items := ReadQuotaCostList(iterator)
 			response.items = &QuotaCostList{
 				items: items,
 			}

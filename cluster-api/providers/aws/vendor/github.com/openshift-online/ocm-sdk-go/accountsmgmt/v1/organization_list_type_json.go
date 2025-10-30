@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalOrganizationList(list []*Organization, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeOrganizationList(list, stream)
+	WriteOrganizationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalOrganizationList(list []*Organization, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeOrganizationList writes a list of value of the 'organization' type to
+// WriteOrganizationList writes a list of value of the 'organization' type to
 // the given stream.
-func writeOrganizationList(list []*Organization, stream *jsoniter.Stream) {
+func WriteOrganizationList(list []*Organization, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeOrganization(value, stream)
+		WriteOrganization(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalOrganizationList(source interface{}) (items []*Organization, err e
 	if err != nil {
 		return
 	}
-	items = readOrganizationList(iterator)
+	items = ReadOrganizationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readOrganizationList reads list of values of the ”organization' type from
+// ReadOrganizationList reads list of values of the ”organization' type from
 // the given iterator.
-func readOrganizationList(iterator *jsoniter.Iterator) []*Organization {
+func ReadOrganizationList(iterator *jsoniter.Iterator) []*Organization {
 	list := []*Organization{}
 	for iterator.ReadArray() {
-		item := readOrganization(iterator)
+		item := ReadOrganization(iterator)
 		list = append(list, item)
 	}
 	return list

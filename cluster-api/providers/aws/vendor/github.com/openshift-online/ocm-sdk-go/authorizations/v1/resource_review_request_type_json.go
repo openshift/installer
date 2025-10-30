@@ -29,7 +29,7 @@ import (
 // MarshalResourceReviewRequest writes a value of the 'resource_review_request' type to the given writer.
 func MarshalResourceReviewRequest(object *ResourceReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeResourceReviewRequest(object, stream)
+	WriteResourceReviewRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalResourceReviewRequest(object *ResourceReviewRequest, writer io.Write
 	return stream.Error
 }
 
-// writeResourceReviewRequest writes a value of the 'resource_review_request' type to the given stream.
-func writeResourceReviewRequest(object *ResourceReviewRequest, stream *jsoniter.Stream) {
+// WriteResourceReviewRequest writes a value of the 'resource_review_request' type to the given stream.
+func WriteResourceReviewRequest(object *ResourceReviewRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -66,7 +66,7 @@ func writeResourceReviewRequest(object *ResourceReviewRequest, stream *jsoniter.
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("exclude_subscription_statuses")
-		writeSubscriptionStatusList(object.excludeSubscriptionStatuses, stream)
+		WriteSubscriptionStatusList(object.excludeSubscriptionStatuses, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0
@@ -96,13 +96,13 @@ func UnmarshalResourceReviewRequest(source interface{}) (object *ResourceReviewR
 	if err != nil {
 		return
 	}
-	object = readResourceReviewRequest(iterator)
+	object = ReadResourceReviewRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// readResourceReviewRequest reads a value of the 'resource_review_request' type from the given iterator.
-func readResourceReviewRequest(iterator *jsoniter.Iterator) *ResourceReviewRequest {
+// ReadResourceReviewRequest reads a value of the 'resource_review_request' type from the given iterator.
+func ReadResourceReviewRequest(iterator *jsoniter.Iterator) *ResourceReviewRequest {
 	object := &ResourceReviewRequest{}
 	for {
 		field := iterator.ReadObject()
@@ -119,7 +119,7 @@ func readResourceReviewRequest(iterator *jsoniter.Iterator) *ResourceReviewReque
 			object.action = value
 			object.bitmap_ |= 2
 		case "exclude_subscription_statuses":
-			value := readSubscriptionStatusList(iterator)
+			value := ReadSubscriptionStatusList(iterator)
 			object.excludeSubscriptionStatuses = value
 			object.bitmap_ |= 4
 		case "reduce_cluster_list":

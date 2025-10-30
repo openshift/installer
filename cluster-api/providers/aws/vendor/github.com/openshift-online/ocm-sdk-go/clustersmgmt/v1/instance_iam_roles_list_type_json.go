@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalInstanceIAMRolesList(list []*InstanceIAMRoles, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeInstanceIAMRolesList(list, stream)
+	WriteInstanceIAMRolesList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalInstanceIAMRolesList(list []*InstanceIAMRoles, writer io.Writer) err
 	return stream.Error
 }
 
-// writeInstanceIAMRolesList writes a list of value of the 'instance_IAM_roles' type to
+// WriteInstanceIAMRolesList writes a list of value of the 'instance_IAM_roles' type to
 // the given stream.
-func writeInstanceIAMRolesList(list []*InstanceIAMRoles, stream *jsoniter.Stream) {
+func WriteInstanceIAMRolesList(list []*InstanceIAMRoles, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeInstanceIAMRoles(value, stream)
+		WriteInstanceIAMRoles(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalInstanceIAMRolesList(source interface{}) (items []*InstanceIAMRole
 	if err != nil {
 		return
 	}
-	items = readInstanceIAMRolesList(iterator)
+	items = ReadInstanceIAMRolesList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readInstanceIAMRolesList reads list of values of the ”instance_IAM_roles' type from
+// ReadInstanceIAMRolesList reads list of values of the ”instance_IAM_roles' type from
 // the given iterator.
-func readInstanceIAMRolesList(iterator *jsoniter.Iterator) []*InstanceIAMRoles {
+func ReadInstanceIAMRolesList(iterator *jsoniter.Iterator) []*InstanceIAMRoles {
 	list := []*InstanceIAMRoles{}
 	for iterator.ReadArray() {
-		item := readInstanceIAMRoles(iterator)
+		item := ReadInstanceIAMRoles(iterator)
 		list = append(list, item)
 	}
 	return list

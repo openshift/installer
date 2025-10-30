@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAWSVolumeList(list []*AWSVolume, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeAWSVolumeList(list, stream)
+	WriteAWSVolumeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAWSVolumeList(list []*AWSVolume, writer io.Writer) error {
 	return stream.Error
 }
 
-// writeAWSVolumeList writes a list of value of the 'AWS_volume' type to
+// WriteAWSVolumeList writes a list of value of the 'AWS_volume' type to
 // the given stream.
-func writeAWSVolumeList(list []*AWSVolume, stream *jsoniter.Stream) {
+func WriteAWSVolumeList(list []*AWSVolume, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeAWSVolume(value, stream)
+		WriteAWSVolume(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAWSVolumeList(source interface{}) (items []*AWSVolume, err error) 
 	if err != nil {
 		return
 	}
-	items = readAWSVolumeList(iterator)
+	items = ReadAWSVolumeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readAWSVolumeList reads list of values of the ”AWS_volume' type from
+// ReadAWSVolumeList reads list of values of the ”AWS_volume' type from
 // the given iterator.
-func readAWSVolumeList(iterator *jsoniter.Iterator) []*AWSVolume {
+func ReadAWSVolumeList(iterator *jsoniter.Iterator) []*AWSVolume {
 	list := []*AWSVolume{}
 	for iterator.ReadArray() {
-		item := readAWSVolume(iterator)
+		item := ReadAWSVolume(iterator)
 		list = append(list, item)
 	}
 	return list

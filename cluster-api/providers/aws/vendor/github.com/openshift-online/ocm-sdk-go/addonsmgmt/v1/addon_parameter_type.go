@@ -416,6 +416,29 @@ func (l *AddonParameterList) Len() int {
 	return len(l.items)
 }
 
+// Items sets the items of the list.
+func (l *AddonParameterList) SetLink(link bool) {
+	l.link = link
+}
+
+// Items sets the items of the list.
+func (l *AddonParameterList) SetHREF(href string) {
+	l.href = href
+}
+
+// Items sets the items of the list.
+func (l *AddonParameterList) SetItems(items []*AddonParameter) {
+	l.items = items
+}
+
+// Items returns the items of the list.
+func (l *AddonParameterList) Items() []*AddonParameter {
+	if l == nil {
+		return nil
+	}
+	return l.items
+}
+
 // Empty returns true if the list is empty.
 func (l *AddonParameterList) Empty() bool {
 	return l == nil || len(l.items) == 0
