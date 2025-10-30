@@ -397,6 +397,9 @@ func archiveFileNames(isoPath string) (string, string, error) {
 
 func expand(ts *testscript.TestScript, s []byte) string {
 	return os.Expand(string(s), func(key string) string {
+		if key == "$" {
+			return "$"
+		}
 		return ts.Getenv(key)
 	})
 }
@@ -431,7 +434,7 @@ func byteCompareInternal(ts *testscript.TestScript, neg bool, aData, eData []byt
 		return
 	}
 
-	ts.Logf(aText)
+	ts.Logf("%s", aText)
 
 	var sb strings.Builder
 	if err := diff.Text(eFilePath, aFilePath, eText, aText, &sb); err != nil {

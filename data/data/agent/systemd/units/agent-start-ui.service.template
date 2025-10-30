@@ -3,7 +3,6 @@
 [Unit]
 Description=Service that runs the Agent Installer UI
 Wants=network-online.target assisted-service.service
-Conflicts=agent-register-cluster.service agent-import-cluster.service
 After=network-online.target assisted-service.service
 PartOf=assisted-service-pod.service
 ConditionPathExists=/etc/assisted/node0
