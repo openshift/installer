@@ -319,6 +319,11 @@
                 "BulkInsert"
               ]
             },
+            "BulkSetLabels": {
+              "methods": [
+                "BulkSetLabels"
+              ]
+            },
             "CreateSnapshot": {
               "methods": [
                 "CreateSnapshot"
@@ -1355,6 +1360,11 @@
                 "RemoveResourcePolicies"
               ]
             },
+            "ReportHostAsFaulty": {
+              "methods": [
+                "ReportHostAsFaulty"
+              ]
+            },
             "Reset": {
               "methods": [
                 "Reset"
@@ -1553,6 +1563,60 @@
         }
       }
     },
+    "InterconnectAttachmentGroups": {
+      "clients": {
+        "rest": {
+          "libraryClient": "InterconnectAttachmentGroupsClient",
+          "rpcs": {
+            "Delete": {
+              "methods": [
+                "Delete"
+              ]
+            },
+            "Get": {
+              "methods": [
+                "Get"
+              ]
+            },
+            "GetIamPolicy": {
+              "methods": [
+                "GetIamPolicy"
+              ]
+            },
+            "GetOperationalStatus": {
+              "methods": [
+                "GetOperationalStatus"
+              ]
+            },
+            "Insert": {
+              "methods": [
+                "Insert"
+              ]
+            },
+            "List": {
+              "methods": [
+                "List"
+              ]
+            },
+            "Patch": {
+              "methods": [
+                "Patch"
+              ]
+            },
+            "SetIamPolicy": {
+              "methods": [
+                "SetIamPolicy"
+              ]
+            },
+            "TestIamPermissions": {
+              "methods": [
+                "TestIamPermissions"
+              ]
+            }
+          }
+        }
+      }
+    },
     "InterconnectAttachments": {
       "clients": {
         "rest": {
@@ -1591,6 +1655,65 @@
             "SetLabels": {
               "methods": [
                 "SetLabels"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "InterconnectGroups": {
+      "clients": {
+        "rest": {
+          "libraryClient": "InterconnectGroupsClient",
+          "rpcs": {
+            "CreateMembers": {
+              "methods": [
+                "CreateMembers"
+              ]
+            },
+            "Delete": {
+              "methods": [
+                "Delete"
+              ]
+            },
+            "Get": {
+              "methods": [
+                "Get"
+              ]
+            },
+            "GetIamPolicy": {
+              "methods": [
+                "GetIamPolicy"
+              ]
+            },
+            "GetOperationalStatus": {
+              "methods": [
+                "GetOperationalStatus"
+              ]
+            },
+            "Insert": {
+              "methods": [
+                "Insert"
+              ]
+            },
+            "List": {
+              "methods": [
+                "List"
+              ]
+            },
+            "Patch": {
+              "methods": [
+                "Patch"
+              ]
+            },
+            "SetIamPolicy": {
+              "methods": [
+                "SetIamPolicy"
+              ]
+            },
+            "TestIamPermissions": {
+              "methods": [
+                "TestIamPermissions"
               ]
             }
           }
@@ -1742,6 +1865,11 @@
               "methods": [
                 "TestIamPermissions"
               ]
+            },
+            "Update": {
+              "methods": [
+                "Update"
+              ]
             }
           }
         }
@@ -1780,6 +1908,11 @@
             "SetIamPolicy": {
               "methods": [
                 "SetIamPolicy"
+              ]
+            },
+            "SetLabels": {
+              "methods": [
+                "SetLabels"
               ]
             },
             "TestIamPermissions": {
@@ -1967,9 +2100,19 @@
                 "AddAssociation"
               ]
             },
+            "AddPacketMirroringRule": {
+              "methods": [
+                "AddPacketMirroringRule"
+              ]
+            },
             "AddRule": {
               "methods": [
                 "AddRule"
+              ]
+            },
+            "AggregatedList": {
+              "methods": [
+                "AggregatedList"
               ]
             },
             "CloneRules": {
@@ -1997,6 +2140,11 @@
                 "GetIamPolicy"
               ]
             },
+            "GetPacketMirroringRule": {
+              "methods": [
+                "GetPacketMirroringRule"
+              ]
+            },
             "GetRule": {
               "methods": [
                 "GetRule"
@@ -2017,6 +2165,11 @@
                 "Patch"
               ]
             },
+            "PatchPacketMirroringRule": {
+              "methods": [
+                "PatchPacketMirroringRule"
+              ]
+            },
             "PatchRule": {
               "methods": [
                 "PatchRule"
@@ -2025,6 +2178,11 @@
             "RemoveAssociation": {
               "methods": [
                 "RemoveAssociation"
+              ]
+            },
+            "RemovePacketMirroringRule": {
+              "methods": [
+                "RemovePacketMirroringRule"
               ]
             },
             "RemoveRule": {
@@ -3582,6 +3740,49 @@
         }
       }
     },
+    "ReservationBlocks": {
+      "clients": {
+        "rest": {
+          "libraryClient": "ReservationBlocksClient",
+          "rpcs": {
+            "Get": {
+              "methods": [
+                "Get"
+              ]
+            },
+            "List": {
+              "methods": [
+                "List"
+              ]
+            },
+            "PerformMaintenance": {
+              "methods": [
+                "PerformMaintenance"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "ReservationSubBlocks": {
+      "clients": {
+        "rest": {
+          "libraryClient": "ReservationSubBlocksClient",
+          "rpcs": {
+            "Get": {
+              "methods": [
+                "Get"
+              ]
+            },
+            "List": {
+              "methods": [
+                "List"
+              ]
+            }
+          }
+        }
+      }
+    },
     "Reservations": {
       "clients": {
         "rest": {
@@ -3615,6 +3816,11 @@
             "List": {
               "methods": [
                 "List"
+              ]
+            },
+            "PerformMaintenance": {
+              "methods": [
+                "PerformMaintenance"
               ]
             },
             "Resize": {
@@ -3710,6 +3916,11 @@
                 "Delete"
               ]
             },
+            "DeleteRoutePolicy": {
+              "methods": [
+                "DeleteRoutePolicy"
+              ]
+            },
             "Get": {
               "methods": [
                 "Get"
@@ -3723,6 +3934,11 @@
             "GetNatMappingInfo": {
               "methods": [
                 "GetNatMappingInfo"
+              ]
+            },
+            "GetRoutePolicy": {
+              "methods": [
+                "GetRoutePolicy"
               ]
             },
             "GetRouterStatus": {
@@ -3740,9 +3956,24 @@
                 "List"
               ]
             },
+            "ListBgpRoutes": {
+              "methods": [
+                "ListBgpRoutes"
+              ]
+            },
+            "ListRoutePolicies": {
+              "methods": [
+                "ListRoutePolicies"
+              ]
+            },
             "Patch": {
               "methods": [
                 "Patch"
+              ]
+            },
+            "PatchRoutePolicy": {
+              "methods": [
+                "PatchRoutePolicy"
               ]
             },
             "Preview": {
@@ -3753,6 +3984,11 @@
             "Update": {
               "methods": [
                 "Update"
+              ]
+            },
+            "UpdateRoutePolicy": {
+              "methods": [
+                "UpdateRoutePolicy"
               ]
             }
           }

@@ -48,7 +48,7 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	if err != nil {
 		s.scope.GCPManagedControlPlane.Status.Initialized = false
 		s.scope.GCPManagedControlPlane.Status.Ready = false
-		conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, "describing cluster: %v", err)
 		return ctrl.Result{}, err
 	}
 	if cluster == nil {
@@ -58,9 +58,9 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 
 		nodePools, _, err := s.scope.GetAllNodePools(ctx)
 		if err != nil {
-			conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
-			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEControlPlaneReadyCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
-			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEControlPlaneCreatingCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+			conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, "fetching node pools: %v", err)
+			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEControlPlaneReadyCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, "fetching node pools: %v", err)
+			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEControlPlaneCreatingCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, "fetching node pools: %v", err)
 			return ctrl.Result{}, err
 		}
 		if s.scope.IsAutopilotCluster() {
@@ -83,9 +83,9 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 
 		if err = s.createCluster(ctx, &log); err != nil {
 			log.Error(err, "failed creating cluster")
-			conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
-			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEControlPlaneReadyCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
-			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEControlPlaneCreatingCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+			conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, "creating cluster: %v", err)
+			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEControlPlaneReadyCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, "creating cluster: %v", err)
+			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEControlPlaneCreatingCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, "creating cluster: %v", err)
 			return ctrl.Result{}, err
 		}
 		log.Info("Cluster created provisioning in progress")
@@ -96,7 +96,9 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	}
 
 	log.V(2).Info("gke cluster found", "status", cluster.GetStatus())
-	s.scope.GCPManagedControlPlane.Status.CurrentVersion = convertToSdkMasterVersion(cluster.GetCurrentMasterVersion())
+	controlPlaneVersion := convertToSdkMasterVersion(cluster.GetCurrentMasterVersion())
+	s.scope.GCPManagedControlPlane.Status.CurrentVersion = controlPlaneVersion
+	s.scope.GCPManagedControlPlane.Status.Version = &controlPlaneVersion
 
 	switch cluster.GetStatus() {
 	case containerpb.Cluster_PROVISIONING:
@@ -210,7 +212,7 @@ func (s *Service) Delete(ctx context.Context) (ctrl.Result, error) {
 	}
 
 	if err = s.deleteCluster(ctx, &log); err != nil {
-		conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEControlPlaneDeletingCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEControlPlaneDeletingCondition, infrav1exp.GKEControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, "deleting cluster: %v", err)
 		return ctrl.Result{}, err
 	}
 	log.Info("Cluster deleting in progress")
@@ -271,14 +273,16 @@ func (s *Service) createCluster(ctx context.Context, log *logr.Logger) error {
 			},
 		},
 	}
-	if s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion != nil {
-		cluster.InitialClusterVersion = convertToSdkMasterVersion(*s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion)
+	if initialClusterVersionFromSpec := s.scope.GetControlPlaneVersion(); initialClusterVersionFromSpec != nil {
+		cluster.InitialClusterVersion = convertToSdkMasterVersion(*initialClusterVersionFromSpec)
 	}
 	if s.scope.GCPManagedControlPlane.Spec.ClusterNetwork != nil {
 		cn := s.scope.GCPManagedControlPlane.Spec.ClusterNetwork
 		if cn.UseIPAliases {
 			cluster.IpAllocationPolicy = &containerpb.IPAllocationPolicy{}
 			cluster.IpAllocationPolicy.UseIpAliases = cn.UseIPAliases
+			cluster.IpAllocationPolicy.ClusterIpv4CidrBlock = cn.Pod.CidrBlock
+			cluster.IpAllocationPolicy.ServicesIpv4CidrBlock = cn.Service.CidrBlock
 		}
 		if cn.PrivateCluster != nil {
 			cluster.PrivateClusterConfig = &containerpb.PrivateClusterConfig{}
@@ -434,8 +438,8 @@ func (s *Service) checkDiffAndPrepareUpdate(existingCluster *containerpb.Cluster
 		}
 	}
 	// Master version
-	if s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion != nil {
-		desiredMasterVersion := convertToSdkMasterVersion(*s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion)
+	if desiredMasterVersionFromSpec := s.scope.GetControlPlaneVersion(); desiredMasterVersionFromSpec != nil {
+		desiredMasterVersion := convertToSdkMasterVersion(*desiredMasterVersionFromSpec)
 		existingClusterMasterVersion := convertToSdkMasterVersion(existingCluster.GetCurrentMasterVersion())
 		if desiredMasterVersion != existingClusterMasterVersion {
 			needUpdate = true
@@ -445,17 +449,21 @@ func (s *Service) checkDiffAndPrepareUpdate(existingCluster *containerpb.Cluster
 	}
 
 	// LoggingService
-	if existingCluster.GetLoggingService() != s.scope.GCPManagedControlPlane.Spec.LoggingService.String() {
-		needUpdate = true
-		clusterUpdate.DesiredLoggingService = s.scope.GCPManagedControlPlane.Spec.LoggingService.String()
-		log.V(2).Info("LoggingService config update required", "current", existingCluster.GetLoggingService(), "desired", s.scope.GCPManagedControlPlane.Spec.LoggingService.String())
+	if specLoggingService := s.scope.GCPManagedControlPlane.Spec.LoggingService; specLoggingService != nil {
+		if existingCluster.GetLoggingService() != specLoggingService.String() {
+			needUpdate = true
+			clusterUpdate.DesiredLoggingService = specLoggingService.String()
+			log.V(2).Info("LoggingService config update required", "current", existingCluster.GetLoggingService(), "desired", specLoggingService.String())
+		}
 	}
 
 	// MonitoringService
-	if existingCluster.GetMonitoringService() != s.scope.GCPManagedControlPlane.Spec.MonitoringService.String() {
-		needUpdate = true
-		clusterUpdate.DesiredLoggingService = s.scope.GCPManagedControlPlane.Spec.MonitoringService.String()
-		log.V(2).Info("MonitoringService config update required", "current", existingCluster.GetMonitoringService(), "desired", s.scope.GCPManagedControlPlane.Spec.MonitoringService.String())
+	if specMonitoringService := s.scope.GCPManagedControlPlane.Spec.MonitoringService; specMonitoringService != nil {
+		if existingCluster.GetMonitoringService() != specMonitoringService.String() {
+			needUpdate = true
+			clusterUpdate.DesiredLoggingService = specMonitoringService.String()
+			log.V(2).Info("MonitoringService config update required", "current", existingCluster.GetMonitoringService(), "desired", specMonitoringService.String())
+		}
 	}
 
 	// DesiredMasterAuthorizedNetworksConfig

@@ -601,6 +601,10 @@ func (s *Service) createOrGetRegionalForwardingRule(ctx context.Context, lbname 
 	spec.LoadBalancingScheme = string(loadBalanceTrafficInternal)
 	spec.Region = s.scope.Region()
 	spec.BackendService = backendSvc.SelfLink
+	lbSpec := s.scope.LoadBalancer()
+	if lbSpec.InternalLoadBalancer != nil && lbSpec.InternalLoadBalancer.InternalAccess == infrav1.InternalAccessGlobal {
+		spec.AllowGlobalAccess = true
+	}
 	// Ports is used instead or PortRange for passthrough Load Balancer
 	// Configure ports for k8s API to match the external API which is the first port of range
 	var ports []string

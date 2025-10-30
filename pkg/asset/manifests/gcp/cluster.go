@@ -135,6 +135,19 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	formattedEndpoints := gcpic.FormatGCPEndpointList(installConfig.Config.GCP.ServiceEndpoints, gcpic.FormatGCPEndpointInput{SkipPath: false})
 
+	// Firewall rules will never be created when there is a shared VPC installation. If this is
+	// that case, skip the checks and default to Unmanaged
+	firewallRulesManagementPolicy := capg.RulesManagementUnmanaged
+	if installConfig.Config.GCP.NetworkProjectID == "" {
+		createFwRules, err := gcpic.HasPermissions(context.TODO(), installConfig.Config.GCP.ProjectID, []string{gcpic.CreateGCPFirewallPermission}, installConfig.Config.GCP.ServiceEndpoints)
+		if err != nil {
+			return nil, fmt.Errorf("failed to verify firewall rules: %w", err)
+		}
+		if createFwRules {
+			firewallRulesManagementPolicy = capg.RulesManagementManaged
+		}
+	}
+
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -150,6 +163,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Name:                  ptr.To(networkName),
 				Subnets:               subnets,
 				AutoCreateSubnetworks: ptr.To(autoCreateSubnets),
+				Firewall: capg.FirewallSpec{
+					DefaultRulesManagement: firewallRulesManagementPolicy,
+				},
 			},
 			AdditionalLabels: labels,
 			FailureDomains:   findFailureDomains(installConfig),

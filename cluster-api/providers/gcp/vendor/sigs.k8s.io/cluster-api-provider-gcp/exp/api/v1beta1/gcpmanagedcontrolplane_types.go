@@ -146,8 +146,16 @@ type GCPManagedControlPlaneSpec struct {
 	// ControlPlaneVersion represents the control plane version of the GKE cluster.
 	// If not specified, the default version currently supported by GKE will be
 	// used.
+	//
+	// Deprecated: This field will soon be removed and you are expected to use Version instead.
+	//
 	// +optional
 	ControlPlaneVersion *string `json:"controlPlaneVersion,omitempty"`
+	// Version represents the control plane version of the GKE cluster.
+	// If not specified, the default version currently supported by GKE will be
+	// used.
+	// +optional
+	Version *string `json:"version,omitempty"`
 	// Endpoint represents the endpoint used to communicate with the control plane.
 	// +optional
 	Endpoint clusterv1.APIEndpoint `json:"endpoint"`
@@ -183,8 +191,15 @@ type GCPManagedControlPlaneStatus struct {
 	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
 
 	// CurrentVersion shows the current version of the GKE control plane.
+	//
+	// Deprecated: This field will soon be removed and you are expected to use Version instead.
+	//
 	// +optional
 	CurrentVersion string `json:"currentVersion,omitempty"`
+
+	// Version represents the version of the GKE control plane.
+	// +optional
+	Version *string `json:"version,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -194,6 +209,7 @@ type GCPManagedControlPlaneStatus struct {
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this GCPManagedControlPlane belongs"
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Control plane is ready"
 // +kubebuilder:printcolumn:name="CurrentVersion",type="string",JSONPath=".status.currentVersion",description="The current Kubernetes version"
+// +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="The Kubernetes version of the GKE control plane"
 // +kubebuilder:printcolumn:name="Endpoint",type="string",JSONPath=".spec.endpoint",description="API Endpoint",priority=1
 
 // GCPManagedControlPlane is the Schema for the gcpmanagedcontrolplanes API.
