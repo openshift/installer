@@ -5,6 +5,18 @@
 FROM registry.ci.openshift.org/ocp/4.21:installer-kube-apiserver-artifacts AS kas-artifacts
 FROM registry.ci.openshift.org/ocp/4.21:installer-etcd-artifacts AS etcd-artifacts
 
+# Copy CAPI controllers from release image to embed into the installer binary at build time
+# TODO handle static/dynamic linking
+FROM registry.ci.openshift.org/ocp/4.21:cluster-capi-controllers AS capi
+FROM registry.ci.openshift.org/ocp/4.21:aws-cluster-api-controllers AS capa
+FROM registry.ci.openshift.org/ocp/4.21:azure-cluster-api-controllers AS capz
+FROM registry.ci.openshift.org/ocp/4.21:azure-service-operator AS aso
+FROM registry.ci.openshift.org/ocp/4.21:gcp-cluster-api-controllers AS capg
+FROM registry.ci.openshift.org/ocp/4.21:ibmcloud-cluster-api-controllers AS capibm
+#FROM registry.ci.openshift.org/ocp/4.21:nutanix-machine-controllers AS capx
+FROM registry.ci.openshift.org/ocp/4.21:openstack-cluster-api-controllers AS capo
+FROM registry.ci.openshift.org/ocp/4.21:vsphere-cluster-api-controllers AS capv
+
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.21 AS builder
 # FIPS support is offered via the baremetal-installer image
 ENV GO_COMPLIANCE_EXCLUDE=".*"
@@ -12,10 +24,23 @@ ARG TAGS=""
 ARG SKIP_ENVTEST="y"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
+
 COPY --from=kas-artifacts /usr/share/openshift/ cluster-api/bin/
 COPY --from=etcd-artifacts /usr/share/openshift/ cluster-api/bin/
+COPY --from=capi /bin/cluster-api-controller-manager cluster-api/bin/cluster-api
+COPY --from=capa /bin/cluster-api-provider-aws-controller-manager cluster-api/bin/cluster-api-provider-aws
+COPY --from=capz /bin/manager cluster-api/bin/cluster-api-provider-azure
+COPY --from=aso /bin/azure-service-operator cluster-api/bin/cluster-api-provider-azureaso
+COPY --from=capg /bin/cluster-api-provider-gcp-controller-manager cluster-api/bin/cluster-api-provider-gcp
+COPY --from=capibm /bin/cluster-api-provider-ibmcloud-controller-manager cluster-api/bin/cluster-api-provider-ibmcloud
+#COPY --from=capx /bin/cluster-api-provider-nutanix-controller-manager cluster-api/bin/cluster-api-provider-nutanix
+COPY --from=capo /manager cluster-api/bin/cluster-api-provider-openstack
+COPY --from=capv /manager cluster-api/bin/cluster-api-provider-vsphere
 RUN mkdir -p cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH) && \
-	mv cluster-api/bin/$(go env GOOS)/$(go env GOHOSTARCH)/* -t cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH)/
+	mv cluster-api/bin/$(go env GOOS)/$(go env GOHOSTARCH)/* -t cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH)/ && \
+	mv cluster-api/bin/cluster-api cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH)/ && \
+	mv cluster-api/bin/cluster-api-provider-* cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH)/
+
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 RUN go run -mod=vendor hack/build-coreos-manifest.go
 
