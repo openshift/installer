@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
@@ -90,8 +91,8 @@ func ConvertImageDigestMirrorSet(imageDigestSources []types.ImageDigestSource) *
 		for mi, mirror := range imageDigestSource.Mirrors {
 			mirrors[mi] = apicfgv1.ImageMirror(mirror)
 		}
-
-		imageDigestMirrorSet.Spec.ImageDigestMirrors[idsi] = apicfgv1.ImageDigestMirrors{Source: imageDigestSource.Source, Mirrors: mirrors}
+		logrus.Debugf("SourcePolicy is %q for Source: %s", imageDigestSource.SourcePolicy, imageDigestSource.Source)
+		imageDigestMirrorSet.Spec.ImageDigestMirrors[idsi] = apicfgv1.ImageDigestMirrors{Source: imageDigestSource.Source, Mirrors: mirrors, MirrorSourcePolicy: imageDigestSource.SourcePolicy}
 	}
 
 	return imageDigestMirrorSet

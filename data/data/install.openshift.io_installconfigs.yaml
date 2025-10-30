@@ -4335,6 +4335,14 @@ spec:
                   description: Source is the repository that users refer to, e.g.
                     in image pull specifications.
                   type: string
+                sourcePolicy:
+                  description: |-
+                    SourcePolicy defines the fallback policy when there is a failure pulling an
+                    image from the mirrors.
+                  enum:
+                  - NeverContactSource
+                  - AllowContactingSource
+                  type: string
               required:
               - source
               type: object
