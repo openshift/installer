@@ -448,11 +448,12 @@ func (o *ClusterUninstaller) handleOperation(ctx context.Context, op *compute.Op
 	}
 
 	if err != nil {
+		o.resetRequestID(identifier...)
 		if isNoOp(err) {
 			o.Logger.Debugf("No operation found for %s %s", resourceType, item.name)
+			o.deletePendingItems(item.typeName, []cloudResource{item})
 			return nil
 		}
-		o.resetRequestID(identifier...)
 		return fmt.Errorf("failed to delete %s %s: %w", resourceType, item.name, err)
 	}
 
