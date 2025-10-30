@@ -64,5 +64,4 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 			}
 		}
 	}
-
 }
