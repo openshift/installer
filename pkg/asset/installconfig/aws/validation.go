@@ -721,7 +721,9 @@ func validateUntaggedSubnets(ctx context.Context, fldPath *field.Path, meta *Met
 }
 
 // validateSharedVPC ensures the BYO VPC can be shared to install the new cluster.
-// That is the VPC must not have have tag: kubernetes.io/cluster/<another-cluster-id>: owned.
+// That is the VPC must not have have tags:
+// - "kubernetes.io/cluster/<another-cluster-id>: owned"
+// - "sigs.k8s.io/cluster-api-provider-aws/cluster/<another-cluster-id>: owned".
 func validateSharedVPC(ctx context.Context, meta *Metadata, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -730,8 +732,15 @@ func validateSharedVPC(ctx context.Context, meta *Metadata, fldPath *field.Path)
 		return append(allErrs, field.Invalid(fldPath, meta.ProvidedSubnets, err.Error()))
 	}
 
-	if vpc.Tags.HasClusterOwnedTag() {
-		clusterIDs := vpc.Tags.GetOwnedClusterIDs()
+	var clusterIDs []string
+	switch {
+	case vpc.Tags.HasClusterOwnedTag():
+		clusterIDs = vpc.Tags.GetOwnedClusterIDs()
+	case vpc.Tags.HasClusterAPIOwnedTag():
+		clusterIDs = vpc.Tags.GetOwnedCAPIClusterIDs()
+	}
+
+	if len(clusterIDs) > 0 {
 		allErrs = append(allErrs, field.Forbidden(fldPath,
 			fmt.Sprintf("VPC of subnets is owned by other clusters %v and cannot be used for new installations, another VPC must be created separately", clusterIDs)))
 	}
@@ -740,7 +749,9 @@ func validateSharedVPC(ctx context.Context, meta *Metadata, fldPath *field.Path)
 }
 
 // validateSharedSubnets ensures the BYO subnets can be shared to install the new cluster.
-// That is the subnets must not have have tag: kubernetes.io/cluster/<another-cluster-id>: owned.
+// That is the subnets must not have have tags:
+// - "kubernetes.io/cluster/<another-cluster-id>: owned"
+// - "sigs.k8s.io/cluster-api-provider-aws/cluster/<another-cluster-id>: owned".
 func validateSharedSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -750,8 +761,15 @@ func validateSharedSubnets(ctx context.Context, meta *Metadata, fldPath *field.P
 	}
 
 	for id, subnet := range mergeSubnets(subnets.Private, subnets.Public, subnets.Edge) {
-		if subnet.Tags.HasClusterOwnedTag() {
-			clusterIDs := subnet.Tags.GetOwnedClusterIDs()
+		var clusterIDs []string
+		switch {
+		case subnet.Tags.HasClusterOwnedTag():
+			clusterIDs = subnet.Tags.GetOwnedClusterIDs()
+		case subnet.Tags.HasClusterAPIOwnedTag():
+			clusterIDs = subnet.Tags.GetOwnedCAPIClusterIDs()
+		}
+
+		if len(clusterIDs) > 0 {
 			allErrs = append(allErrs, field.Forbidden(fldPath, fmt.Sprintf("subnet %s is owned by other clusters %v and cannot be used for new installations, another subnet must be created separately", id, clusterIDs)))
 		}
 	}
