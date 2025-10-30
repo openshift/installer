@@ -70,6 +70,15 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
+		// once AgentWorkflowTypeInstallInteractiveDisconnected is reomved, the default workflow
+		// will be AgentWorkflowTypeInstall and then the agenthost asset should just return empty
+		// as its not needed.
+		// The thought here is in OVE, install config and agent config won't be supplied 
+		// ( but approach could cause issues when UI is introduced for regular cases) 
+		if agentConfig.Config == nil || installConfig == nil {
+			return nil
+		}
+
 		if agentConfig.Config != nil {
 			a.rendezvousIP = agentConfig.Config.RendezvousIP
 			a.Hosts = append(a.Hosts, agentConfig.Config.Hosts...)
@@ -89,10 +98,6 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 				logrus.Warnf("hosts from %s are ignored", agentAsset.InstallConfigFilename)
 			}
 		}
-
-	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
-		// Not required
-		return nil
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		a.Hosts = append(a.Hosts, addNodesConfig.Config.Hosts...)
