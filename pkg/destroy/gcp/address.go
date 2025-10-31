@@ -15,21 +15,43 @@ const (
 	regionalAddressResource = "regionaddress"
 )
 
+func (o *ClusterUninstaller) deleteAddressByName(ctx context.Context, resourceName, location string) error {
+	typeName := globalAddressResource
+	if location != string(global) {
+		typeName = regionalAddressResource
+	}
+	items, err := o.listAddressesWithFilter(ctx, typeName, "items(name,labels),nextPageToken", func(item *compute.Address) bool {
+		// Address should have labels, but none observed
+		return item.Name == resourceName
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list address by name : %w", err)
+	}
+	for _, item := range items {
+		if err := o.deleteAddress(ctx, item); err != nil {
+			return fmt.Errorf("failed to delete address by name: %w", err)
+		}
+	}
+	return nil
+}
+
 func (o *ClusterUninstaller) listAddresses(ctx context.Context, typeName string) ([]cloudResource, error) {
-	return o.listAddressesWithFilter(ctx, typeName, "items(name,region,addressType),nextPageToken", o.isClusterResource)
+	return o.listAddressesWithFilter(ctx, typeName, "items(name,region,addressType,labels),nextPageToken", func(item *compute.Address) bool {
+		return o.isClusterResource(item.Name) && !o.isSharedResource(item.Labels)
+	})
 }
 
 // listAddressesWithFilter lists addresses in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results.
-func (o *ClusterUninstaller) listAddressesWithFilter(ctx context.Context, typeName, fields string, filterFunc resourceFilterFunc) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listAddressesWithFilter(ctx context.Context, typeName, fields string, filterFunc func(item *compute.Address) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing addresses")
 	result := []cloudResource{}
 
 	pagesFunc := func(list *compute.AddressList) error {
 		for _, item := range list.Items {
 			o.Logger.Debugf("Found address (%s): %s", typeName, item.Name)
-			if filterFunc(item.Name) {
+			if filterFunc(item) {
 				var quota []gcp.QuotaUsage
 				if item.AddressType == "INTERNAL" {
 					quota = []gcp.QuotaUsage{{

@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
@@ -13,6 +14,19 @@ import (
 const (
 	subnetworkResourceName = "subnetwork"
 )
+
+func (o *ClusterUninstaller) deleteSubnetworkByName(ctx context.Context, resourceName string) error {
+	items, err := o.listSubnetworksWithFilter(ctx, "items(name),nextPageToken", func(item string) bool { return item == resourceName })
+	if err != nil {
+		return fmt.Errorf("failed to list subnetworks by name: %w", err)
+	}
+	for _, item := range items {
+		if err := o.deleteSubnetwork(ctx, item); err != nil {
+			return fmt.Errorf("failed to delete subnetwork by name: %w", err)
+		}
+	}
+	return nil
+}
 
 func (o *ClusterUninstaller) listSubnetworks(ctx context.Context) ([]cloudResource, error) {
 	return o.listSubnetworksWithFilter(ctx, "items(name,network),nextPageToken", o.isClusterResource)
