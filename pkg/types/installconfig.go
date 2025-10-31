@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -431,6 +432,36 @@ type Networking struct {
 	// Deprecated name for ClusterNetwork
 	// +optional
 	DeprecatedClusterNetworks []ClusterNetworkEntry `json:"clusterNetworks,omitempty"`
+}
+
+// IsIPv4 tests if the MachineNetwork has IPv4 entries.
+func (n *Networking) IsIPv4() bool {
+	for _, entry := range n.MachineNetwork {
+		switch len(entry.CIDR.IP) {
+		case net.IPv4len:
+			return true
+		}
+	}
+	return false
+}
+
+// IsIPv6 tests if the MachineNetwork has IPv6 entries.
+func (n *Networking) IsIPv6() bool {
+	for _, entry := range n.MachineNetwork {
+		switch len(entry.CIDR.IP) {
+		case net.IPv6len:
+			return true
+		}
+	}
+	return false
+}
+
+// IsDualStack tests if the MachineNetwork has both IPv4 and IPv6 entries.
+func (n *Networking) IsDualStack() bool {
+	if n.IsIPv4() && n.IsIPv6() {
+		return true
+	}
+	return false
 }
 
 // MachineNetworkEntry is a single IP address block for node IP blocks.

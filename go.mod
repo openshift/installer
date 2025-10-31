@@ -370,3 +370,6 @@ replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.32.1
 
 replace sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.9.6
+
+// Temporary hack for dual stack networking work
+replace github.com/openshift/api => github.com/jhixson74/api v0.0.0-20251023212951-b8aca3cf7f6b

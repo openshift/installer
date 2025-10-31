@@ -166,6 +166,20 @@ func (c *Cluster) Generate(_ context.Context, dependencies asset.Parents) error 
 			Spec: clusterv1.ClusterSpec{
 				ClusterNetwork: &clusterv1.ClusterNetwork{
 					APIServerPort: ptr.To[int32](6443),
+					/*
+						Pods: &clusterv1.NetworkRanges{
+							CIDRBlocks: []string{
+								"10.244.0.0/16",
+								"2001:1234:5678:9a40::/58",
+							},
+						},
+						Services: &clusterv1.NetworkRanges{
+							CIDRBlocks: []string{
+								"172.30.0.0/16",
+								"fd00::/108",
+							},
+						},
+					*/
 				},
 			},
 		}
