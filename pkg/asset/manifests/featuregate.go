@@ -2,7 +2,7 @@ package manifests
 
 import (
 	"context"
-	"path/filepath"
+	"path"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,7 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/types/featuregates"
 )
 
-var fgFileName = filepath.Join(openshiftManifestDir, "99_feature-gate.yaml")
+var fgFileName = path.Join(openshiftManifestDir, "99_feature-gate.yaml")
 
 // FeatureGate generates the feature gate manifest.
 type FeatureGate struct {

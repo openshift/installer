@@ -12,7 +12,6 @@ import (
 	"path"
 	"regexp"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -133,9 +132,7 @@ func (ps *State) Start(ctx context.Context, stdout io.Writer, stderr io.Writer) 
 	ps.Cmd.Stdout = stdout
 	ps.Cmd.Stderr = stderr
 	ps.Cmd.Dir = ps.Dir
-	ps.Cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-	}
+	setSysProcAttr(ps.Cmd)
 
 	ready := make(chan bool)
 	timedOut := time.After(ps.StartTimeout)
@@ -178,7 +175,7 @@ func (ps *State) Start(ctx context.Context, stdout io.Writer, stderr io.Writer) 
 		close(pollerStopCh)
 		if ps.Cmd != nil {
 			// intentionally ignore this -- we might've crashed, failed to start, etc
-			ps.Cmd.Process.Signal(syscall.SIGTERM) //nolint:errcheck
+			stopProcess(ps) //nolint:errcheck
 		}
 		return fmt.Errorf("timeout waiting for process %s to start", path.Base(ps.Path))
 	}
@@ -237,7 +234,7 @@ func (ps *State) Stop() error {
 		}
 		return nil
 	}
-	if err := ps.Cmd.Process.Signal(syscall.SIGTERM); err != nil {
+	if err := stopProcess(ps); err != nil {
 		return fmt.Errorf("unable to signal for process %s to stop: %w", ps.Path, err)
 	}
 
@@ -246,10 +243,10 @@ func (ps *State) Stop() error {
 	case <-ps.waitDone:
 		break
 	case <-timedOut:
-		if err := ps.Cmd.Process.Signal(syscall.SIGKILL); err != nil {
-			return fmt.Errorf("unable to signal for process %s to stop: %w", ps.Path, err)
+		if err := killProcess(ps); err != nil {
+			return fmt.Errorf("unable to kill process %s: %w", ps.Path, err)
 		}
-		return fmt.Errorf("timeout waiting for process %s to stop, sent SIGKILL", path.Base(ps.Path))
+		return fmt.Errorf("timeout waiting for process %s to stop, killed process", path.Base(ps.Path))
 	}
 	ps.ready = false
 	return nil

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -286,7 +287,7 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			continue
 		}
 		o.FileList = append(o.FileList, &asset.File{
-			Filename: filepath.Join(openshiftManifestDir, name),
+			Filename: path.Join(openshiftManifestDir, name),
 			Data:     data,
 		})
 	}

@@ -3,7 +3,7 @@ package tls
 import (
 	"fmt"
 	"net"
-	"path/filepath"
+	"path"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 
@@ -15,7 +15,7 @@ const (
 )
 
 func assetFilePath(filename string) string {
-	return filepath.Join(tlsDir, filename)
+	return path.Join(tlsDir, filename)
 }
 
 func apiAddress(cfg *types.InstallConfig) string {

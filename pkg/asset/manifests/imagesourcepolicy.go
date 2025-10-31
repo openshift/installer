@@ -2,7 +2,7 @@ package manifests
 
 import (
 	"context"
-	"path/filepath"
+	"path"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,7 +62,7 @@ func (p *ImageContentSourcePolicy) Generate(_ context.Context, dependencies asse
 			return errors.Wrapf(err, "failed to marshal ImageContentSourcePolicy")
 		}
 		p.File = &asset.File{
-			Filename: filepath.Join(manifestDir, imageContentSourcePolicyFilename),
+			Filename: path.Join(manifestDir, imageContentSourcePolicyFilename),
 			Data:     policyData,
 		}
 	}

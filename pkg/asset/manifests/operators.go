@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -32,7 +33,7 @@ const (
 )
 
 var (
-	kubeSysConfigPath = filepath.Join(manifestDir, "cluster-config.yaml")
+	kubeSysConfigPath = path.Join(manifestDir, "cluster-config.yaml")
 
 	_ asset.WritableAsset = (*Manifests)(nil)
 
@@ -215,7 +216,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		dependencies.Get(a)
 		for _, f := range a.Files() {
 			files = append(files, &asset.File{
-				Filename: filepath.Join(manifestDir, strings.TrimSuffix(filepath.Base(f.Filename), ".template")),
+				Filename: path.Join(manifestDir, strings.TrimSuffix(filepath.Base(f.Filename), ".template")),
 				Data:     applyTemplateData(f.Data, templateData),
 			})
 		}

@@ -3,7 +3,7 @@ package manifests
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"path"
 	"sort"
 
 	"github.com/pkg/errors"
@@ -35,8 +35,8 @@ import (
 )
 
 var (
-	infraCfgFilename           = filepath.Join(manifestDir, "cluster-infrastructure-02-config.yml")
-	cloudControllerUIDFilename = filepath.Join(manifestDir, "cloud-controller-uid-config.yml")
+	infraCfgFilename           = path.Join(manifestDir, "cluster-infrastructure-02-config.yml")
+	cloudControllerUIDFilename = path.Join(manifestDir, "cloud-controller-uid-config.yml")
 )
 
 // Infrastructure generates the cluster-infrastructure-*.yml files.

@@ -3,7 +3,7 @@ package manifests
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -35,7 +35,7 @@ import (
 )
 
 var (
-	dnsCfgFilename = filepath.Join(manifestDir, "cluster-dns-02-config.yml")
+	dnsCfgFilename = path.Join(manifestDir, "cluster-dns-02-config.yml")
 
 	combineGCPZoneInfo = func(project, zoneName string) string {
 		return fmt.Sprintf("project/%s/managedZones/%s", project, zoneName)
