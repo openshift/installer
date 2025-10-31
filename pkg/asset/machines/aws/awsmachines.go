@@ -32,6 +32,7 @@ type MachineInput struct {
 	Tags           capa.Tags
 	PublicIP       bool
 	PublicIpv4Pool string
+	EnableIPv6     bool
 	Ignition       *capa.Ignition
 }
 
@@ -117,6 +118,20 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 			},
 		}
 		awsMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
+
+		// When IPv6 is enabled (i.e. dual stack), the node private hostname must
+		// resolve to both its Ipv4 and Ipv6 address.
+		// IMDS Ipv6 endpoint is enabled for completeness (i.e. not required for functioning).
+		if in.EnableIPv6 {
+			enabled := true
+			hostNameType := "resource-name"
+			awsMachine.Spec.PrivateDNSName = &capa.PrivateDNSName{
+				EnableResourceNameDNSAAAARecord: &enabled,
+				EnableResourceNameDNSARecord:    &enabled,
+				HostnameType:                    &hostNameType,
+			}
+			awsMachine.Spec.InstanceMetadataOptions.HTTPProtocolIPv6 = capa.InstanceMetadataEndpointStateEnabled
+		}
 
 		if in.Role == "bootstrap" {
 			awsMachine.Name = capiutils.GenerateBoostrapMachineName(clusterID)

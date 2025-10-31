@@ -68,7 +68,7 @@ func Enabled() bool {
 	if err != nil {
 		return false
 	}
-	if cfg != nil && cfg.FedRAMP {
+	if cfg != nil && cfg.FedRAMP && !config.IsNotValid(cfg) {
 		Enable()
 	}
 	return enabled
@@ -82,7 +82,7 @@ func Enable() {
 func Disable() {
 	enabled = false
 	cfg, err := config.Load()
-	if err != nil || cfg == nil {
+	if err != nil || cfg == nil || config.IsNotValid(cfg) {
 		return
 	}
 	cfg.FedRAMP = false

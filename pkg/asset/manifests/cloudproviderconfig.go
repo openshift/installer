@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	machinev1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
@@ -119,6 +120,19 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		// Note that the newline is required in order to be valid yaml.
 		cm.Data[cloudProviderConfigDataKey] = `[Global]
 `
+		netStack := installConfig.Config.InfraStack()
+		if netStack == machinev1.IPFamiliesDualStackIPv6Primary {
+			cm.Data[cloudProviderConfigDataKey] = `[Global]
+NodeIPFamilies=ipv6
+NodeIPFamilies=ipv4
+`
+		}
+		if netStack == machinev1.IPFamiliesDualStack {
+			cm.Data[cloudProviderConfigDataKey] = `[Global]
+NodeIPFamilies=ipv4
+NodeIPFamilies=ipv6
+`
+		}
 	case openstacktypes.Name:
 		cloudProviderConfigData, cloudProviderConfigCABundleData, err := openstackmanifests.GenerateCloudProviderConfig(ctx, *installConfig.Config)
 		if err != nil {

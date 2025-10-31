@@ -1,0 +1,46 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Manages the collection of cluster migrations of a cluster.
+resource ClusterMigrations {
+    method List {
+        // Index of the returned page, where one corresponds to the first page.
+        in out Page Integer = 1
+
+        // Number of items that will be contained in the returned page.
+        in out Size Integer = 100
+
+        // Total number of items of the collection that match the search criteria,
+        // regardless of the size of the page. As this collection doesn't support paging or
+        // searching the result will always be the total number of migrations of the cluster.
+        out Total Integer
+
+        // Retrieved list of cluster migrations.
+        out Items []ClusterMigration
+    }
+
+	// Adds a cluster migration to the database.
+	method Add {
+	    // Description of the cluster migration.
+		in out Body ClusterMigration
+	}
+
+    // Returns a reference to the service that manages a specific cluster migration.
+    locator Migration {
+        target ClusterMigration
+        variable ID
+    }
+}

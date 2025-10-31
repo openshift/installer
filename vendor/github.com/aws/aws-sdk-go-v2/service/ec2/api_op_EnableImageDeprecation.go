@@ -11,9 +11,11 @@ import (
 	"time"
 )
 
-// Enables deprecation of the specified AMI at the specified date and time. For
-// more information, see Deprecate an AMI (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-deprecate.html)
-// in the Amazon EC2 User Guide.
+// Enables deprecation of the specified AMI at the specified date and time.
+//
+// For more information, see [Deprecate an AMI] in the Amazon EC2 User Guide.
+//
+// [Deprecate an AMI]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-deprecate.html
 func (c *Client) EnableImageDeprecation(ctx context.Context, params *EnableImageDeprecationInput, optFns ...func(*Options)) (*EnableImageDeprecationOutput, error) {
 	if params == nil {
 		params = &EnableImageDeprecationInput{}
@@ -33,9 +35,11 @@ type EnableImageDeprecationInput struct {
 
 	// The date and time to deprecate the AMI, in UTC, in the following format:
 	// YYYY-MM-DDTHH:MM:SSZ. If you specify a value for seconds, Amazon EC2 rounds the
-	// seconds to the nearest minute. You can’t specify a date in the past. The upper
-	// limit for DeprecateAt is 10 years from now, except for public AMIs, where the
-	// upper limit is 2 years from the creation date.
+	// seconds to the nearest minute.
+	//
+	// You can’t specify a date in the past. The upper limit for DeprecateAt is 10
+	// years from now, except for public AMIs, where the upper limit is 2 years from
+	// the creation date.
 	//
 	// This member is required.
 	DeprecateAt *time.Time
@@ -108,6 +112,9 @@ func (c *Client) addOperationEnableImageDeprecationMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -118,6 +125,15 @@ func (c *Client) addOperationEnableImageDeprecationMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpEnableImageDeprecationValidationMiddleware(stack); err != nil {
@@ -139,6 +155,18 @@ func (c *Client) addOperationEnableImageDeprecationMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

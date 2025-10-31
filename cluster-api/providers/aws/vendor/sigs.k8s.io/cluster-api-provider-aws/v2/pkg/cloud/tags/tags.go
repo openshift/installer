@@ -23,14 +23,14 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-	"github.com/aws/aws-sdk-go/service/eks"
-	"github.com/aws/aws-sdk-go/service/eks/eksiface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/pkg/errors"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/common"
 )
 
 const (
@@ -45,6 +45,11 @@ var (
 	// ErrApplyFuncRequired defines an error for when tags are not supplied.
 	ErrApplyFuncRequired = errors.New("no tags apply function supplied")
 )
+
+// eksClient implements EKSAPI as it can not be imported from pkg/cloud/services/eks.go due to import cycle.
+type eksClient interface {
+	TagResource(ctx context.Context, params *eks.TagResourceInput, optFns ...func(*eks.Options)) (*eks.TagResourceOutput, error)
+}
 
 // BuilderOption represents an option when creating a tags builder.
 type BuilderOption func(*Builder)
@@ -96,11 +101,11 @@ func (b *Builder) Ensure(current infrav1.Tags) error {
 }
 
 // WithEC2 is used to denote that the tags builder will be using EC2.
-func WithEC2(ec2client ec2iface.EC2API) BuilderOption {
+func WithEC2(ec2client common.EC2API) BuilderOption {
 	return func(b *Builder) {
 		b.applyFunc = func(params *infrav1.BuildParams) error {
 			tags := infrav1.Build(*params)
-			awsTags := make([]*ec2.Tag, 0, len(tags))
+			awsTags := make([]ec2types.Tag, 0, len(tags))
 
 			// For testing, we need sorted keys
 			sortedKeys := make([]string, 0, len(tags))
@@ -113,7 +118,7 @@ func WithEC2(ec2client ec2iface.EC2API) BuilderOption {
 			sort.Strings(sortedKeys)
 
 			for _, key := range sortedKeys {
-				tag := &ec2.Tag{
+				tag := ec2types.Tag{
 					Key:   aws.String(key),
 					Value: aws.String(tags[key]),
 				}
@@ -121,18 +126,18 @@ func WithEC2(ec2client ec2iface.EC2API) BuilderOption {
 			}
 
 			createTagsInput := &ec2.CreateTagsInput{
-				Resources: aws.StringSlice([]string{params.ResourceID}),
+				Resources: []string{params.ResourceID},
 				Tags:      awsTags,
 			}
 
-			_, err := ec2client.CreateTagsWithContext(context.TODO(), createTagsInput)
+			_, err := ec2client.CreateTags(context.TODO(), createTagsInput)
 			return errors.Wrapf(err, "failed to tag resource %q in cluster %q", params.ResourceID, params.ClusterName)
 		}
 	}
 }
 
 // WithEKS is used to specify that the tags builder will be targeting EKS.
-func WithEKS(eksclient eksiface.EKSAPI) BuilderOption {
+func WithEKS(ctx context.Context, eksclient eksClient) BuilderOption {
 	return func(b *Builder) {
 		b.applyFunc = func(params *infrav1.BuildParams) error {
 			tags := infrav1.Build(*params)
@@ -146,10 +151,10 @@ func WithEKS(eksclient eksiface.EKSAPI) BuilderOption {
 
 			tagResourcesInput := &eks.TagResourceInput{
 				ResourceArn: aws.String(params.ResourceID),
-				Tags:        eksTags,
+				Tags:        aws.ToStringMap(eksTags),
 			}
 
-			_, err := eksclient.TagResource(tagResourcesInput)
+			_, err := eksclient.TagResource(ctx, tagResourcesInput)
 			if err != nil {
 				return errors.Wrapf(err, "failed to tag eks cluster %q in cluster %q", params.ResourceID, params.ClusterName)
 			}
@@ -172,10 +177,10 @@ func computeDiff(current infrav1.Tags, buildParams infrav1.BuildParams) infrav1.
 }
 
 // BuildParamsToTagSpecification builds a TagSpecification for the specified resource type.
-func BuildParamsToTagSpecification(ec2ResourceType string, params infrav1.BuildParams) *ec2.TagSpecification {
+func BuildParamsToTagSpecification(ec2ResourceType ec2types.ResourceType, params infrav1.BuildParams) ec2types.TagSpecification {
 	tags := infrav1.Build(params)
 
-	tagSpec := &ec2.TagSpecification{ResourceType: aws.String(ec2ResourceType)}
+	tagSpec := ec2types.TagSpecification{ResourceType: ec2ResourceType}
 
 	// For testing, we need sorted keys
 	sortedKeys := make([]string, 0, len(tags))
@@ -186,7 +191,7 @@ func BuildParamsToTagSpecification(ec2ResourceType string, params infrav1.BuildP
 	sort.Strings(sortedKeys)
 
 	for _, key := range sortedKeys {
-		tagSpec.Tags = append(tagSpec.Tags, &ec2.Tag{
+		tagSpec.Tags = append(tagSpec.Tags, ec2types.Tag{
 			Key:   aws.String(key),
 			Value: aws.String(tags[key]),
 		})

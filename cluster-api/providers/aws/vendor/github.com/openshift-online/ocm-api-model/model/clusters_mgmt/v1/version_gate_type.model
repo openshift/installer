@@ -1,0 +1,48 @@
+/*
+Copyright (c) 2021 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of an _OpenShift_ version gate.
+class VersionGate {
+  // VersionRawIDPrefix represents the versions prefix that the gate applies to.
+  VersionRawIDPrefix String
+
+  // Label representing the version gate in OpenShift.
+  Label String
+
+  // Value represents the required value of the label.
+  Value String
+
+  // WarningMessage is a warning that will be displayed to the user before they acknowledge the gate
+  WarningMessage String
+
+  // Description of the version gate.
+  Description String
+
+  // DocumentationURL is the URL for the documentation of the version gate.
+  DocumentationURL String
+
+  // STSOnly indicates if this version gate is for STS clusters only,
+  // deprecated: to be replaced with ClusterCondition
+  STSOnly Boolean
+
+  // ClusterCondition aims at selecting the clusters targeted by this version gate,
+  // ignored if STSOnly is true
+  ClusterCondition String
+
+  // CreationTimestamp is the date and time when the version gate was created,
+  // format defined in https://www.ietf.org/rfc/rfc3339.txt[RC3339].
+  CreationTimestamp Date
+}

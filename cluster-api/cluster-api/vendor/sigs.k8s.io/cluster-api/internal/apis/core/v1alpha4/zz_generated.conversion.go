@@ -642,9 +642,11 @@ func Convert_v1alpha4_ClusterClassSpec_To_v1beta1_ClusterClassSpec(in *ClusterCl
 }
 
 func autoConvert_v1beta1_ClusterClassSpec_To_v1alpha4_ClusterClassSpec(in *v1beta1.ClusterClassSpec, out *ClusterClassSpec, s conversion.Scope) error {
+	// WARNING: in.AvailabilityGates requires manual conversion: does not exist in peer-type
 	if err := Convert_v1beta1_LocalObjectTemplate_To_v1alpha4_LocalObjectTemplate(&in.Infrastructure, &out.Infrastructure, s); err != nil {
 		return err
 	}
+	// WARNING: in.InfrastructureNamingStrategy requires manual conversion: does not exist in peer-type
 	if err := Convert_v1beta1_ControlPlaneClass_To_v1alpha4_ControlPlaneClass(&in.ControlPlane, &out.ControlPlane, s); err != nil {
 		return err
 	}
@@ -859,6 +861,7 @@ func autoConvert_v1beta1_ControlPlaneClass_To_v1alpha4_ControlPlaneClass(in *v1b
 	// WARNING: in.NodeDrainTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.NodeVolumeDetachTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.NodeDeletionTimeout requires manual conversion: does not exist in peer-type
+	// WARNING: in.ReadinessGates requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -884,6 +887,7 @@ func autoConvert_v1beta1_ControlPlaneTopology_To_v1alpha4_ControlPlaneTopology(i
 	// WARNING: in.NodeDrainTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.NodeVolumeDetachTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.NodeDeletionTimeout requires manual conversion: does not exist in peer-type
+	// WARNING: in.ReadinessGates requires manual conversion: does not exist in peer-type
 	// WARNING: in.Variables requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -1041,6 +1045,7 @@ func autoConvert_v1beta1_MachineDeploymentClass_To_v1alpha4_MachineDeploymentCla
 	// WARNING: in.NodeVolumeDetachTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.NodeDeletionTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.MinReadySeconds requires manual conversion: does not exist in peer-type
+	// WARNING: in.ReadinessGates requires manual conversion: does not exist in peer-type
 	// WARNING: in.Strategy requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -1168,6 +1173,7 @@ func autoConvert_v1beta1_MachineDeploymentSpec_To_v1alpha4_MachineDeploymentSpec
 	} else {
 		out.Strategy = nil
 	}
+	// WARNING: in.MachineNamingStrategy requires manual conversion: does not exist in peer-type
 	out.MinReadySeconds = (*int32)(unsafe.Pointer(in.MinReadySeconds))
 	out.RevisionHistoryLimit = (*int32)(unsafe.Pointer(in.RevisionHistoryLimit))
 	out.Paused = in.Paused
@@ -1253,6 +1259,7 @@ func autoConvert_v1beta1_MachineDeploymentTopology_To_v1alpha4_MachineDeployment
 	// WARNING: in.NodeVolumeDetachTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.NodeDeletionTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.MinReadySeconds requires manual conversion: does not exist in peer-type
+	// WARNING: in.ReadinessGates requires manual conversion: does not exist in peer-type
 	// WARNING: in.Strategy requires manual conversion: does not exist in peer-type
 	// WARNING: in.Variables requires manual conversion: does not exist in peer-type
 	return nil
@@ -1556,6 +1563,7 @@ func autoConvert_v1beta1_MachineSetSpec_To_v1alpha4_MachineSetSpec(in *v1beta1.M
 	if err := Convert_v1beta1_MachineTemplateSpec_To_v1alpha4_MachineTemplateSpec(&in.Template, &out.Template, s); err != nil {
 		return err
 	}
+	// WARNING: in.MachineNamingStrategy requires manual conversion: does not exist in peer-type
 	return nil
 }
 

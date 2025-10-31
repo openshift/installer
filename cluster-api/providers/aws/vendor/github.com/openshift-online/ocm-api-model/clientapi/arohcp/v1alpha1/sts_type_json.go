@@ -1,0 +1,231 @@
+/*
+Copyright (c) 2020 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// IMPORTANT: This file has been generated automatically, refrain from modifying it manually as all
+// your changes will be lost when the file is generated again.
+
+package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
+
+import (
+	"io"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/openshift-online/ocm-api-model/clientapi/helpers"
+)
+
+// MarshalSTS writes a value of the 'STS' type to the given writer.
+func MarshalSTS(object *STS, writer io.Writer) error {
+	stream := helpers.NewStream(writer)
+	WriteSTS(object, stream)
+	err := stream.Flush()
+	if err != nil {
+		return err
+	}
+	return stream.Error
+}
+
+// WriteSTS writes a value of the 'STS' type to the given stream.
+func WriteSTS(object *STS, stream *jsoniter.Stream) {
+	count := 0
+	stream.WriteObjectStart()
+	var present_ bool
+	present_ = len(object.fieldSet_) > 0 && object.fieldSet_[0]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("oidc_endpoint_url")
+		stream.WriteString(object.oidcEndpointURL)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 1 && object.fieldSet_[1]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("auto_mode")
+		stream.WriteBool(object.autoMode)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 2 && object.fieldSet_[2]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("enabled")
+		stream.WriteBool(object.enabled)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 3 && object.fieldSet_[3]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("external_id")
+		stream.WriteString(object.externalID)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 4 && object.fieldSet_[4] && object.instanceIAMRoles != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("instance_iam_roles")
+		WriteInstanceIAMRoles(object.instanceIAMRoles, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("managed_policies")
+		stream.WriteBool(object.managedPolicies)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6] && object.oidcConfig != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("oidc_config")
+		WriteOidcConfig(object.oidcConfig, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7] && object.operatorIAMRoles != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("operator_iam_roles")
+		WriteOperatorIAMRoleList(object.operatorIAMRoles, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("operator_role_prefix")
+		stream.WriteString(object.operatorRolePrefix)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("permission_boundary")
+		stream.WriteString(object.permissionBoundary)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("role_arn")
+		stream.WriteString(object.roleARN)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("support_role_arn")
+		stream.WriteString(object.supportRoleARN)
+	}
+	stream.WriteObjectEnd()
+}
+
+// UnmarshalSTS reads a value of the 'STS' type from the given
+// source, which can be an slice of bytes, a string or a reader.
+func UnmarshalSTS(source interface{}) (object *STS, err error) {
+	iterator, err := helpers.NewIterator(source)
+	if err != nil {
+		return
+	}
+	object = ReadSTS(iterator)
+	err = iterator.Error
+	return
+}
+
+// ReadSTS reads a value of the 'STS' type from the given iterator.
+func ReadSTS(iterator *jsoniter.Iterator) *STS {
+	object := &STS{
+		fieldSet_: make([]bool, 12),
+	}
+	for {
+		field := iterator.ReadObject()
+		if field == "" {
+			break
+		}
+		switch field {
+		case "oidc_endpoint_url":
+			value := iterator.ReadString()
+			object.oidcEndpointURL = value
+			object.fieldSet_[0] = true
+		case "auto_mode":
+			value := iterator.ReadBool()
+			object.autoMode = value
+			object.fieldSet_[1] = true
+		case "enabled":
+			value := iterator.ReadBool()
+			object.enabled = value
+			object.fieldSet_[2] = true
+		case "external_id":
+			value := iterator.ReadString()
+			object.externalID = value
+			object.fieldSet_[3] = true
+		case "instance_iam_roles":
+			value := ReadInstanceIAMRoles(iterator)
+			object.instanceIAMRoles = value
+			object.fieldSet_[4] = true
+		case "managed_policies":
+			value := iterator.ReadBool()
+			object.managedPolicies = value
+			object.fieldSet_[5] = true
+		case "oidc_config":
+			value := ReadOidcConfig(iterator)
+			object.oidcConfig = value
+			object.fieldSet_[6] = true
+		case "operator_iam_roles":
+			value := ReadOperatorIAMRoleList(iterator)
+			object.operatorIAMRoles = value
+			object.fieldSet_[7] = true
+		case "operator_role_prefix":
+			value := iterator.ReadString()
+			object.operatorRolePrefix = value
+			object.fieldSet_[8] = true
+		case "permission_boundary":
+			value := iterator.ReadString()
+			object.permissionBoundary = value
+			object.fieldSet_[9] = true
+		case "role_arn":
+			value := iterator.ReadString()
+			object.roleARN = value
+			object.fieldSet_[10] = true
+		case "support_role_arn":
+			value := iterator.ReadString()
+			object.supportRoleARN = value
+			object.fieldSet_[11] = true
+		default:
+			iterator.ReadAny()
+		}
+	}
+	return object
+}

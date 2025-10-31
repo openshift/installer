@@ -29,6 +29,7 @@ import (
 )
 
 // RolloutStrategyType defines the rollout strategies for a KubeadmControlPlane.
+// +kubebuilder:validation:Enum=RollingUpdate
 type RolloutStrategyType string
 
 const (
@@ -78,7 +79,7 @@ const (
 
 // KubeadmControlPlaneSpec defines the desired state of KubeadmControlPlane.
 type KubeadmControlPlaneSpec struct {
-	// Number of desired machines. Defaults to 1. When stacked etcd is used only
+	// replicas is the number of desired machines. Defaults to 1. When stacked etcd is used only
 	// odd numbers are permitted, as per [etcd best practice](https://etcd.io/docs/v3.3.12/faq/#why-an-odd-number-of-cluster-members).
 	// This is a pointer to distinguish between explicit zero and not specified.
 	// +optional
@@ -90,14 +91,19 @@ type KubeadmControlPlaneSpec struct {
 	// Please use a newer patch version with the new registry instead. The default registries of kubeadm are:
 	//   * registry.k8s.io (new registry): >= v1.22.17, >= v1.23.15, >= v1.24.9, >= v1.25.0
 	//   * k8s.gcr.io (old registry): all older versions
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Version string `json:"version"`
 
 	// machineTemplate contains information about how machines
 	// should be shaped when creating or updating a control plane.
+	// +required
 	MachineTemplate KubeadmControlPlaneMachineTemplate `json:"machineTemplate"`
 
 	// kubeadmConfigSpec is a KubeadmConfigSpec
 	// to use for initializing and joining machines to the control plane.
+	// +required
 	KubeadmConfigSpec bootstrapv1.KubeadmConfigSpec `json:"kubeadmConfigSpec"`
 
 	// rolloutBefore is a field to indicate a rollout should be performed
@@ -114,17 +120,17 @@ type KubeadmControlPlaneSpec struct {
 	// +optional
 	RolloutAfter *metav1.Time `json:"rolloutAfter,omitempty"`
 
-	// The RolloutStrategy to use to replace control plane machines with
+	// rolloutStrategy is the RolloutStrategy to use to replace control plane machines with
 	// new ones.
 	// +optional
 	// +kubebuilder:default={type: "RollingUpdate", rollingUpdate: {maxSurge: 1}}
 	RolloutStrategy *RolloutStrategy `json:"rolloutStrategy,omitempty"`
 
-	// The RemediationStrategy that controls how control plane machine remediation happens.
+	// remediationStrategy is the RemediationStrategy that controls how control plane machine remediation happens.
 	// +optional
 	RemediationStrategy *RemediationStrategy `json:"remediationStrategy,omitempty"`
 
-	// MachineNamingStrategy allows changing the naming pattern used when creating Machines.
+	// machineNamingStrategy allows changing the naming pattern used when creating Machines.
 	// InfraMachines & KubeadmConfigs will use the same name as the corresponding Machines.
 	// +optional
 	MachineNamingStrategy *MachineNamingStrategy `json:"machineNamingStrategy,omitempty"`
@@ -133,14 +139,30 @@ type KubeadmControlPlaneSpec struct {
 // KubeadmControlPlaneMachineTemplate defines the template for Machines
 // in a KubeadmControlPlane object.
 type KubeadmControlPlaneMachineTemplate struct {
-	// Standard object's metadata.
+	// metadata is the standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
 	ObjectMeta clusterv1.ObjectMeta `json:"metadata,omitempty"`
 
 	// infrastructureRef is a required reference to a custom resource
 	// offered by an infrastructure provider.
+	// +required
 	InfrastructureRef corev1.ObjectReference `json:"infrastructureRef"`
+
+	// readinessGates specifies additional conditions to include when evaluating Machine Ready condition;
+	// KubeadmControlPlane will always add readinessGates for the condition it is setting on the Machine:
+	// APIServerPodHealthy, SchedulerPodHealthy, ControllerManagerPodHealthy, and if etcd is managed by CKP also
+	// EtcdPodHealthy, EtcdMemberHealthy.
+	//
+	// This field can be used e.g. to instruct the machine controller to include in the computation for Machine's ready
+	// computation a condition, managed by an external controllers, reporting the status of special software/hardware installed on the Machine.
+	//
+	// NOTE: This field is considered only for computing v1beta2 conditions.
+	// +optional
+	// +listType=map
+	// +listMapKey=conditionType
+	// +kubebuilder:validation:MaxItems=32
+	ReadinessGates []clusterv1.MachineReadinessGate `json:"readinessGates,omitempty"`
 
 	// nodeDrainTimeout is the total amount of time that the controller will spend on draining a controlplane node
 	// The default value is 0, meaning that the node can be drained without any time limitations.
@@ -177,7 +199,7 @@ type RolloutStrategy struct {
 	// +optional
 	Type RolloutStrategyType `json:"type,omitempty"`
 
-	// Rolling update config params. Present only if
+	// rollingUpdate is the rolling update config params. Present only if
 	// RolloutStrategyType = RollingUpdate.
 	// +optional
 	RollingUpdate *RollingUpdate `json:"rollingUpdate,omitempty"`
@@ -185,7 +207,7 @@ type RolloutStrategy struct {
 
 // RollingUpdate is used to control the desired behavior of rolling update.
 type RollingUpdate struct {
-	// The maximum number of control planes that can be scheduled above or under the
+	// maxSurge is the maximum number of control planes that can be scheduled above or under the
 	// desired number of control planes.
 	// Value can be an absolute number 1 or 0.
 	// Defaults to 1.
@@ -242,7 +264,7 @@ type RemediationStrategy struct {
 // MachineNamingStrategy allows changing the naming pattern used when creating Machines.
 // InfraMachines & KubeadmConfigs will use the same name as the corresponding Machines.
 type MachineNamingStrategy struct {
-	// Template defines the template to use for generating the names of the Machine objects.
+	// template defines the template to use for generating the names of the Machine objects.
 	// If not defined, it will fallback to `{{ .kubeadmControlPlane.name }}-{{ .random }}`.
 	// If the generated name string exceeds 63 characters, it will be trimmed to 58 characters and will
 	// get concatenated with a random suffix of length 5.
@@ -250,8 +272,10 @@ type MachineNamingStrategy struct {
 	// The template allows the following variables `.cluster.name`, `.kubeadmControlPlane.name` and `.random`.
 	// The variable `.cluster.name` retrieves the name of the cluster object that owns the Machines being created.
 	// The variable `.kubeadmControlPlane.name` retrieves the name of the KubeadmControlPlane object that owns the Machines being created.
-	// The variable `.random` is substituted with random alphanumeric string, without vowels, of length 5.
+	// The variable `.random` is substituted with random alphanumeric string, without vowels, of length 5. This variable is required
+	// part of the template. If not provided, validation will fail.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=256
 	Template string `json:"template,omitempty"`
 }
@@ -264,9 +288,11 @@ type KubeadmControlPlaneStatus struct {
 	// describe.. The string will be in the same format as the query-param syntax.
 	// More info about label selectors: http://kubernetes.io/docs/user-guide/labels#label-selectors
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=4096
 	Selector string `json:"selector,omitempty"`
 
-	// Total number of non-terminated machines targeted by this control plane
+	// replicas is the total number of non-terminated machines targeted by this control plane
 	// (their labels match the selector).
 	// +optional
 	Replicas int32 `json:"replicas"`
@@ -274,18 +300,20 @@ type KubeadmControlPlaneStatus struct {
 	// version represents the minimum Kubernetes version for the control plane machines
 	// in the cluster.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Version *string `json:"version,omitempty"`
 
-	// Total number of non-terminated machines targeted by this control plane
+	// updatedReplicas is the total number of non-terminated machines targeted by this control plane
 	// that have the desired template spec.
 	// +optional
 	UpdatedReplicas int32 `json:"updatedReplicas"`
 
-	// Total number of fully running and ready control plane machines.
+	// readyReplicas is the total number of fully running and ready control plane machines.
 	// +optional
 	ReadyReplicas int32 `json:"readyReplicas"`
 
-	// Total number of unavailable machines targeted by this control plane.
+	// unavailableReplicas is the total number of unavailable machines targeted by this control plane.
 	// This is the total number of machines that are still required for
 	// the deployment to have 100% available capacity. They may either
 	// be machines that are running but not yet ready or machines
@@ -321,12 +349,14 @@ type KubeadmControlPlaneStatus struct {
 	// +optional
 	FailureReason errors.KubeadmControlPlaneStatusError `json:"failureReason,omitempty"`
 
-	// ErrorMessage indicates that there is a terminal problem reconciling the
+	// failureMessage indicates that there is a terminal problem reconciling the
 	// state, and will be set to a descriptive error message.
 	//
 	// Deprecated: This field is deprecated and is going to be removed in the next apiVersion. Please see https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more details.
 	//
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=10240
 	FailureMessage *string `json:"failureMessage,omitempty"`
 
 	// observedGeneration is the latest generation observed by the controller.
@@ -376,13 +406,18 @@ type KubeadmControlPlaneV1Beta2Status struct {
 // more remediations than expected might happen.
 type LastRemediationStatus struct {
 	// machine is the machine name of the latest machine being remediated.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	Machine string `json:"machine"`
 
 	// timestamp is when last remediation happened. It is represented in RFC3339 form and is in UTC.
+	// +required
 	Timestamp metav1.Time `json:"timestamp"`
 
 	// retryCount used to keep track of remediation retry for the last remediated machine.
 	// A retry happens when a machine that was created as a replacement for an unhealthy machine also fails.
+	// +required
 	RetryCount int32 `json:"retryCount"`
 }
 
@@ -404,10 +439,17 @@ type LastRemediationStatus struct {
 
 // KubeadmControlPlane is the Schema for the KubeadmControlPlane API.
 type KubeadmControlPlane struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KubeadmControlPlaneSpec   `json:"spec,omitempty"`
+	// spec is the desired state of KubeadmControlPlane.
+	// +optional
+	Spec KubeadmControlPlaneSpec `json:"spec,omitempty"`
+	// status is the observed state of KubeadmControlPlane.
+	// +optional
 	Status KubeadmControlPlaneStatus `json:"status,omitempty"`
 }
 
@@ -442,8 +484,12 @@ func (in *KubeadmControlPlane) SetV1Beta2Conditions(conditions []metav1.Conditio
 // KubeadmControlPlaneList contains a list of KubeadmControlPlane.
 type KubeadmControlPlaneList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
+	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []KubeadmControlPlane `json:"items"`
+	// items is the list of KubeadmControlPlanes.
+	Items []KubeadmControlPlane `json:"items"`
 }
 
 func init() {

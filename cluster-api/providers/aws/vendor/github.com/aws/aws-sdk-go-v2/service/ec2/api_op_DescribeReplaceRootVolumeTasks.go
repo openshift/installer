@@ -11,9 +11,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes a root volume replacement task. For more information, see Replace a
-// root volume (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/replace-root.html)
-// in the Amazon Elastic Compute Cloud User Guide.
+// Describes a root volume replacement task. For more information, see [Replace a root volume] in the
+// Amazon EC2 User Guide.
+//
+// [Replace a root volume]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/replace-root.html
 func (c *Client) DescribeReplaceRootVolumeTasks(ctx context.Context, params *DescribeReplaceRootVolumeTasksInput, optFns ...func(*Options)) (*DescribeReplaceRootVolumeTasksOutput, error) {
 	if params == nil {
 		params = &DescribeReplaceRootVolumeTasksInput{}
@@ -38,14 +39,16 @@ type DescribeReplaceRootVolumeTasksInput struct {
 	DryRun *bool
 
 	// Filter to use:
+	//
 	//   - instance-id - The ID of the instance for which the root volume replacement
 	//   task was created.
 	Filters []types.Filter
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -116,6 +119,9 @@ func (c *Client) addOperationDescribeReplaceRootVolumeTasksMiddlewares(stack *mi
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +132,15 @@ func (c *Client) addOperationDescribeReplaceRootVolumeTasksMiddlewares(stack *mi
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeReplaceRootVolumeTasks(options.Region), middleware.Before); err != nil {
@@ -146,24 +161,29 @@ func (c *Client) addOperationDescribeReplaceRootVolumeTasksMiddlewares(stack *mi
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeReplaceRootVolumeTasksAPIClient is a client that implements the
-// DescribeReplaceRootVolumeTasks operation.
-type DescribeReplaceRootVolumeTasksAPIClient interface {
-	DescribeReplaceRootVolumeTasks(context.Context, *DescribeReplaceRootVolumeTasksInput, ...func(*Options)) (*DescribeReplaceRootVolumeTasksOutput, error)
-}
-
-var _ DescribeReplaceRootVolumeTasksAPIClient = (*Client)(nil)
 
 // DescribeReplaceRootVolumeTasksPaginatorOptions is the paginator options for
 // DescribeReplaceRootVolumeTasks
 type DescribeReplaceRootVolumeTasksPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -226,6 +246,9 @@ func (p *DescribeReplaceRootVolumeTasksPaginator) NextPage(ctx context.Context, 
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeReplaceRootVolumeTasks(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -244,6 +267,14 @@ func (p *DescribeReplaceRootVolumeTasksPaginator) NextPage(ctx context.Context, 
 
 	return result, nil
 }
+
+// DescribeReplaceRootVolumeTasksAPIClient is a client that implements the
+// DescribeReplaceRootVolumeTasks operation.
+type DescribeReplaceRootVolumeTasksAPIClient interface {
+	DescribeReplaceRootVolumeTasks(context.Context, *DescribeReplaceRootVolumeTasksInput, ...func(*Options)) (*DescribeReplaceRootVolumeTasksOutput, error)
+}
+
+var _ DescribeReplaceRootVolumeTasksAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeReplaceRootVolumeTasks(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -1,8 +1,25 @@
+/*
+Copyright 2025 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 // Package rosa provides a way to interact with the Red Hat OpenShift Service on AWS (ROSA) API.
 package rosa
 
 import (
 	"context"
+	"fmt"
 
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/rosa/pkg/aws"
@@ -30,10 +47,12 @@ type OCMClient interface {
 	GetCluster(clusterKey string, creator *aws.Creator) (*v1.Cluster, error)
 	GetControlPlaneUpgradePolicies(clusterID string) (controlPlaneUpgradePolicies []*v1.ControlPlaneUpgradePolicy, err error)
 	GetHTPasswdUserList(clusterID string, htpasswdIDPId string) (*v1.HTPasswdUserList, error)
+	GetHypershiftNodePoolUpgrade(clusterID string, clusterKey string, nodePoolID string) (*v1.NodePool, *v1.NodePoolUpgradePolicy, error)
 	GetIdentityProviders(clusterID string) ([]*v1.IdentityProvider, error)
 	GetMissingGateAgreementsHypershift(clusterID string, upgradePolicy *v1.ControlPlaneUpgradePolicy) ([]*v1.VersionGate, error)
 	GetNodePool(clusterID string, nodePoolID string) (*v1.NodePool, bool, error)
-	GetHypershiftNodePoolUpgrade(clusterID string, clusterKey string, nodePoolID string) (*v1.NodePool, *v1.NodePoolUpgradePolicy, error)
+	GetNodePools(clusterID string) ([]*v1.NodePool, error)
+	GetPolicies(policyType string) (map[string]*v1.AWSSTSPolicy, error)
 	GetUser(clusterID string, group string, username string) (*v1.User, error)
 	ScheduleHypershiftControlPlaneUpgrade(clusterID string, upgradePolicy *v1.ControlPlaneUpgradePolicy) (*v1.ControlPlaneUpgradePolicy, error)
 	ScheduleNodePoolUpgrade(clusterID string, nodePoolID string, upgradePolicy *v1.NodePoolUpgradePolicy) (*v1.NodePoolUpgradePolicy, error)
@@ -95,12 +114,20 @@ func (c *ocmclient) GetNodePool(clusterID string, nodePoolID string) (*v1.NodePo
 	return c.ocmClient.GetNodePool(clusterID, nodePoolID)
 }
 
+func (c *ocmclient) GetNodePools(clusterID string) ([]*v1.NodePool, error) {
+	return c.ocmClient.GetNodePools(clusterID)
+}
+
 func (c *ocmclient) GetHypershiftNodePoolUpgrade(clusterID string, clusterKey string, nodePoolID string) (*v1.NodePool, *v1.NodePoolUpgradePolicy, error) {
 	return c.ocmClient.GetHypershiftNodePoolUpgrade(clusterID, clusterKey, nodePoolID)
 }
 
 func (c *ocmclient) GetCluster(clusterKey string, creator *aws.Creator) (*v1.Cluster, error) {
 	return c.ocmClient.GetCluster(clusterKey, creator)
+}
+
+func (c *ocmclient) GetPolicies(policyType string) (map[string]*v1.AWSSTSPolicy, error) {
+	return c.ocmClient.GetPolicies(policyType)
 }
 
 func (c *ocmclient) GetUser(clusterID string, group string, username string) (*v1.User, error) {
@@ -130,4 +157,17 @@ func (c *ocmclient) ValidateHypershiftVersion(versionRawID string, channelGroup 
 // NewMockOCMClient creates a new empty ocm.Client without any real connection.
 func NewMockOCMClient(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (OCMClient, error) {
 	return &ocmclient{ocmClient: &ocm.Client{}}, nil
+}
+
+// ConvertToRosaOcmClient convert OCMClient to *ocm.Client that is needed by rosa-cli lib.
+func ConvertToRosaOcmClient(i OCMClient) (*ocm.Client, error) {
+	c, ok := i.(*ocmclient)
+	if !ok {
+		c, ok := i.(*ocm.Client)
+		if !ok {
+			return nil, fmt.Errorf("failed to convert to Rosa OCM Client")
+		}
+		return c, nil
+	}
+	return c.ocmClient, nil
 }

@@ -37,10 +37,14 @@ type DescribeLocalGatewaysInput struct {
 	DryRun *bool
 
 	// One or more filters.
+	//
 	//   - local-gateway-id - The ID of a local gateway.
+	//
 	//   - outpost-arn - The Amazon Resource Name (ARN) of the Outpost.
+	//
 	//   - owner-id - The ID of the Amazon Web Services account that owns the local
 	//   gateway.
+	//
 	//   - state - The state of the association.
 	Filters []types.Filter
 
@@ -115,6 +119,9 @@ func (c *Client) addOperationDescribeLocalGatewaysMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,6 +132,15 @@ func (c *Client) addOperationDescribeLocalGatewaysMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeLocalGateways(options.Region), middleware.Before); err != nil {
@@ -145,16 +161,20 @@ func (c *Client) addOperationDescribeLocalGatewaysMiddlewares(stack *middleware.
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeLocalGatewaysAPIClient is a client that implements the
-// DescribeLocalGateways operation.
-type DescribeLocalGatewaysAPIClient interface {
-	DescribeLocalGateways(context.Context, *DescribeLocalGatewaysInput, ...func(*Options)) (*DescribeLocalGatewaysOutput, error)
-}
-
-var _ DescribeLocalGatewaysAPIClient = (*Client)(nil)
 
 // DescribeLocalGatewaysPaginatorOptions is the paginator options for
 // DescribeLocalGateways
@@ -221,6 +241,9 @@ func (p *DescribeLocalGatewaysPaginator) NextPage(ctx context.Context, optFns ..
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeLocalGateways(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -239,6 +262,14 @@ func (p *DescribeLocalGatewaysPaginator) NextPage(ctx context.Context, optFns ..
 
 	return result, nil
 }
+
+// DescribeLocalGatewaysAPIClient is a client that implements the
+// DescribeLocalGateways operation.
+type DescribeLocalGatewaysAPIClient interface {
+	DescribeLocalGateways(context.Context, *DescribeLocalGatewaysInput, ...func(*Options)) (*DescribeLocalGatewaysOutput, error)
+}
+
+var _ DescribeLocalGatewaysAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeLocalGateways(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -496,7 +496,7 @@ type machineConditionCustomMergeStrategy struct {
 	negativePolarityConditionTypes []string
 }
 
-func (c machineConditionCustomMergeStrategy) Merge(conditions []v1beta2conditions.ConditionWithOwnerInfo, conditionTypes []string) (status metav1.ConditionStatus, reason, message string, err error) {
+func (c machineConditionCustomMergeStrategy) Merge(operation v1beta2conditions.MergeOperation, conditions []v1beta2conditions.ConditionWithOwnerInfo, conditionTypes []string) (status metav1.ConditionStatus, reason, message string, err error) {
 	return v1beta2conditions.DefaultMergeStrategy(
 		// While machine is deleting, treat unknown conditions from external objects as info (it is ok that those objects have been deleted at this stage).
 		v1beta2conditions.GetPriorityFunc(func(condition metav1.Condition) v1beta2conditions.MergePriority {
@@ -522,7 +522,7 @@ func (c machineConditionCustomMergeStrategy) Merge(conditions []v1beta2condition
 			clusterv1.MachineReadyUnknownV1Beta2Reason,
 			clusterv1.MachineReadyV1Beta2Reason,
 		)),
-	).Merge(conditions, conditionTypes)
+	).Merge(operation, conditions, conditionTypes)
 }
 
 // transformControlPlaneAndEtcdConditions Group readiness gates for control plane conditions when they have the same messages.
@@ -630,8 +630,12 @@ func setReadyCondition(ctx context.Context, machine *clusterv1.Machine) {
 		clusterv1.MachineNodeHealthyV1Beta2Condition,
 		clusterv1.MachineHealthCheckSucceededV1Beta2Condition,
 	}
+	negativePolarityConditionTypes := []string{clusterv1.MachineDeletingV1Beta2Condition}
 	for _, g := range machine.Spec.ReadinessGates {
 		forConditionTypes = append(forConditionTypes, g.ConditionType)
+		if g.Polarity == clusterv1.NegativePolarityCondition {
+			negativePolarityConditionTypes = append(negativePolarityConditionTypes, g.ConditionType)
+		}
 	}
 
 	summaryOpts := []v1beta2conditions.SummaryOption{
@@ -646,7 +650,7 @@ func setReadyCondition(ctx context.Context, machine *clusterv1.Machine) {
 			MergeStrategy: machineConditionCustomMergeStrategy{
 				machine: machine,
 				// Instruct merge to consider Deleting condition with negative polarity,
-				negativePolarityConditionTypes: []string{clusterv1.MachineDeletingV1Beta2Condition},
+				negativePolarityConditionTypes: negativePolarityConditionTypes,
 			},
 		},
 		// Instruct summary to consider Deleting condition with negative polarity.
