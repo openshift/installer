@@ -39,7 +39,7 @@ func MergedMirrorSets(sources []types.ImageDigestSource) []types.ImageDigestSour
 func ContentSourceToDigestMirror(sources []types.ImageContentSource) []types.ImageDigestSource {
 	digestSources := []types.ImageDigestSource{}
 	for _, s := range sources {
-		digestSources = append(digestSources, types.ImageDigestSource(s))
+		digestSources = append(digestSources, types.ImageDigestSource{Source: s.Source, Mirrors: s.Mirrors})
 	}
 	return digestSources
 }

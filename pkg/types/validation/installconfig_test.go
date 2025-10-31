@@ -1488,6 +1488,29 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
+			name: "valid release image source ImageDigstSourrce with valid sourcePolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:       "quay.io/ocp/release-x.y",
+					SourcePolicy: "NeverContactSource",
+				}}
+				return c
+			}(),
+		},
+		{
+			name: "valid release image source ImageDigstSourrce with invalid sourcePolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:       "quay.io/ocp/release-x.y",
+					SourcePolicy: "InvalidPolicy",
+				}}
+				return c
+			}(),
+			expectedError: `sourcePolicy: Invalid value: "InvalidPolicy": supported values "NeverContactSource", "AllowContactingSource"`,
+		},
+		{
 			name: "error out ImageContentSources and ImageDigestSources and are set at the same time",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()

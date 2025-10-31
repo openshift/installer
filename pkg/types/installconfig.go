@@ -517,6 +517,11 @@ type ImageDigestSource struct {
 	// Mirrors is one or more repositories that may also contain the same images.
 	// +optional
 	Mirrors []string `json:"mirrors,omitempty"`
+
+	// SourcePolicy defines the fallback policy when there is a failure pulling an
+	// image from the mirrors.
+	// +optional
+	SourcePolicy configv1.MirrorSourcePolicy `json:"sourcePolicy"`
 }
 
 // CredentialsMode is the mode by which CredentialsRequests will be satisfied.
