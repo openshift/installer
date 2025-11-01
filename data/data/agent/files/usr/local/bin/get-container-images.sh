@@ -10,7 +10,7 @@ set -euo pipefail
 # The agent image will be also retrieved when its script is run.
 # UI image is currently hardcoded until it will be shipped into the release payload.
 cat <<EOF >/usr/local/share/assisted-service/agent-images.env
-SERVICE_IMAGE=$(image_for agent-installer-api-server)
+SERVICE_IMAGE=localhost/assisted-service:late-binding
 CONTROLLER_IMAGE=$(image_for agent-installer-csr-approver)
 INSTALLER_IMAGE=$(image_for agent-installer-orchestrator)
 AGENT_DOCKER_IMAGE=$(image_for agent-installer-node-agent)
