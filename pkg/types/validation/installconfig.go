@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilsnet "k8s.io/utils/net"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/api/features"
@@ -797,6 +798,7 @@ func validateComputeEdge(platform *types.Platform, pName string, fldPath *field.
 
 func validateCompute(platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	controlReplicas, computeReplicas := int64(0), int64(0)
 	// Multi Arch is enabled by default for AWS and GCP, these are also the only
 	// two valid platforms for multi arch installations.
 	isMultiArchEnabled := platform.AWS != nil || platform.GCP != nil
@@ -805,6 +807,7 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 		poolFldPath := fldPath.Index(i)
 		switch p.Name {
 		case types.MachinePoolComputeRoleName:
+			computeReplicas += ptr.Deref(p.Replicas, 0)
 		case types.MachinePoolEdgeRoleName:
 			allErrs = append(allErrs, validateComputeEdge(platform, p.Name, poolFldPath, poolFldPath)...)
 		default:
@@ -824,6 +827,16 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("fencing"), p.Fencing, "fencing is only valid for control plane"))
 		}
 	}
+
+	if control != nil {
+		controlReplicas = ptr.Deref(control.Replicas, 3)
+	}
+
+	// Validate that exactly 1 worker node is allowed only when a single control plane node is provisioned on platforms None or External
+	if computeReplicas == 1 && controlReplicas != 1 && !(platform.None != nil || platform.External != nil) {
+		allErrs = append(allErrs, field.Invalid(fldPath, computeReplicas, "exactly 1 worker node is not allowed for this platform and configuration. Use 0 workers for single-node clusters or 2 workers for multi-node clusters"))
+	}
+
 	return allErrs
 }
 

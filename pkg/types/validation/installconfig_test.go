@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/pointer"
 	utilsslice "k8s.io/utils/strings/slices"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -31,6 +30,12 @@ import (
 
 const TechPreviewNoUpgrade = "TechPreviewNoUpgrade"
 
+func validControlPlane() *types.MachinePool {
+	mp := validMachinePool("master")
+	mp.Replicas = ptr.Int64(3)
+	return mp
+}
+
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -41,8 +46,8 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		BaseDomain:   "test-domain",
 		Networking:   validIPv4NetworkingConfig(),
-		ControlPlane: validMachinePool("master"),
-		Compute:      []types.MachinePool{*validMachinePool("worker")},
+		ControlPlane: validControlPlane(),
+		Compute:      []types.MachinePool{func() types.MachinePool { p := *validMachinePool("worker"); p.Replicas = ptr.Int64(0); return p }()},
 		Platform: types.Platform{
 			AWS: validAWSPlatform(),
 		},
@@ -801,7 +806,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "control plane with 0 replicas",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.ControlPlane.Replicas = pointer.Int64Ptr(0)
+				c.ControlPlane.Replicas = ptr.Int64(0)
 				return c
 			}(),
 			expectedError: `^controlPlane.replicas: Invalid value: 0: number of control plane replicas must be positive$`,
@@ -850,7 +855,69 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Compute = []types.MachinePool{
 					func() types.MachinePool {
 						p := *validMachinePool("worker")
-						p.Replicas = pointer.Int64Ptr(0)
+						p.Replicas = ptr.Int64(0)
+						return p
+					}(),
+				}
+				return c
+			}(),
+		},
+		{
+			name: "one compute replica, one control plane, AWS",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute = []types.MachinePool{
+					func() types.MachinePool {
+						p := *validMachinePool("worker")
+						p.Replicas = ptr.Int64(1)
+						return p
+					}(),
+				}
+				return c
+			}(),
+			expectedError: `compute: Invalid value: 1: exactly 1 worker node is not allowed for this platform and configuration. Use 0 workers for single-node clusters or 2 workers for multi-node clusters`,
+		},
+		{
+			name: "one compute replicas, 3 control plane, AWS",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ControlPlane.Replicas = ptr.Int64(3)
+				c.Compute = []types.MachinePool{
+					func() types.MachinePool {
+						p := *validMachinePool("worker")
+						p.Replicas = ptr.Int64(1)
+						return p
+					}(),
+				}
+				return c
+			}(),
+			expectedError: `compute: Invalid value: 1: exactly 1 worker node is not allowed for this platform and configuration. Use 0 workers for single-node clusters or 2 workers for multi-node clusters`,
+		},
+		{
+			name: "one compute replicas, one control plane, None/External",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					None: &none.Platform{},
+				}
+				c.Compute = []types.MachinePool{
+					func() types.MachinePool {
+						p := *validMachinePool("worker")
+						p.Replicas = ptr.Int64(1)
+						return p
+					}(),
+				}
+				return c
+			}(),
+		},
+		{
+			name: "two compute replicas allowed",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute = []types.MachinePool{
+					func() types.MachinePool {
+						p := *validMachinePool("worker")
+						p.Replicas = ptr.Int64(2)
 						return p
 					}(),
 				}
@@ -910,6 +977,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "valid baremetal platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.ControlPlane.Replicas = ptr.Int64(1)
 				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11"}
 				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityIngress, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager, configv1.ClusterVersionCapabilityOperatorLifecycleManager)
 				c.Platform = types.Platform{
@@ -1672,6 +1740,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalidly set cloud credentials mode",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.ControlPlane.Replicas = ptr.Int64(1)
 				c.Platform = types.Platform{BareMetal: validBareMetalPlatform()}
 				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetCurrent}
 				c.CredentialsMode = types.PassthroughCredentialsMode
@@ -1859,6 +1928,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "apivip_v4_not_in_machinenetwork_cidr_usermanaged_loadbalancer",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.ControlPlane.Replicas = ptr.Int64(1)
 				c.FeatureSet = configv1.TechPreviewNoUpgrade
 				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
 					{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
@@ -2160,6 +2230,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "identical_apivip_ingressvip_usermanaged_loadbalancer",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.ControlPlane.Replicas = ptr.Int64(1)
 				c.FeatureSet = configv1.TechPreviewNoUpgrade
 				c.Platform = types.Platform{
 					BareMetal: validBareMetalPlatform(),
@@ -2548,6 +2619,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.BareMetal = validBareMetalPlatform()
 				c.AWS = nil
+				c.ControlPlane.Replicas = ptr.Int64(1)
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetCurrent,
 				}
@@ -2560,6 +2632,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.BareMetal = validBareMetalPlatform()
 				c.AWS = nil
+				c.ControlPlane.Replicas = ptr.Int64(1)
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
 					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityIngress},
@@ -2584,6 +2657,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Platform.AWS = nil
 				c.Platform.None = &none.Platform{}
+				c.ControlPlane.Replicas = ptr.Int64(1)
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
 					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityIngress},
@@ -2596,6 +2670,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform.AWS = nil
+				c.ControlPlane.Replicas = ptr.Int64(1)
 				c.Platform.BareMetal = validBareMetalPlatform()
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
