@@ -54,6 +54,12 @@ var (
 // https://github.com/openshift/api/blob/e82a99f5bc64c2bf8549da559a6f37ccaf7d3af6/config/v1/types_infrastructure.go#L483-L490
 const maxUserTagLimit = 10
 
+// isUserTagsAllowed returns true if the cloud environment supports userTags.
+// userTags are supported on PublicCloud and USGovernmentCloud.
+func isUserTagsAllowed(cloudName azure.CloudEnvironment) bool {
+	return cloudName == azure.PublicCloud || cloudName == azure.USGovernmentCloud
+}
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -108,10 +114,10 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		allErrs = append(allErrs, validateCustomerManagedKeys(p.CloudName, *p.CustomerManagedKey, fldPath.Child("customerManagedKey"))...)
 	}
 
-	// support for Azure user-defined tags made available through
-	// RFE-2017 is for AzurePublicCloud only.
-	if p.CloudName != azure.PublicCloud && len(p.UserTags) > 0 {
-		allErrs = append(allErrs, field.Forbidden(fldPath.Child("userTags"), fmt.Sprintf("userTags support is for %s only", azure.PublicCloud)))
+	// support for Azure user-defined tags
+	// is for AzurePublicCloud and USGovernmentCloud only.
+	if !isUserTagsAllowed(p.CloudName) && len(p.UserTags) > 0 {
+		allErrs = append(allErrs, field.Forbidden(fldPath.Child("userTags"), "userTags support is for PublicCloud and USGovernmentCloud only"))
 	}
 	// check if configured userTags are valid.
 	allErrs = append(allErrs, validateUserTags(p.UserTags, fldPath.Child("userTags"))...)
