@@ -17,19 +17,14 @@ import (
 	openstackcapi "github.com/openshift/installer/pkg/infrastructure/openstack/clusterapi"
 	powervscapi "github.com/openshift/installer/pkg/infrastructure/powervs/clusterapi"
 	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
-	"github.com/openshift/installer/pkg/terraform"
-	"github.com/openshift/installer/pkg/terraform/stages/ovirt"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
-	externaltypes "github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/featuregates"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
-	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
-	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -55,16 +50,8 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		return clusterapi.InitializeProvider(&powervscapi.Provider{}), nil
 	case openstacktypes.Name:
 		return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
-	case ovirttypes.Name:
-		return terraform.InitializeProvider(ovirt.PlatformStages), nil
 	case vspheretypes.Name:
 		return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
-	case nonetypes.Name:
-		// terraform is not used when the platform is "none"
-		return terraform.InitializeProvider([]terraform.Stage{}), nil
-	case externaltypes.Name:
-		// terraform is not used when the platform is "external"
-		return terraform.InitializeProvider([]terraform.Stage{}), nil
 	}
-	return nil, fmt.Errorf("unsupported platform %q", platform)
+	return nil, fmt.Errorf("platform %q does not support automated infrastructure provisioning", platform)
 }
