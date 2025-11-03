@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/dns"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
@@ -197,6 +198,14 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
+	privateDNSZoneMode := capz.PrivateDNSZoneModeSystem
+	// When UserProvisionedDNS is enabled, prevent automatic creation of private DNS zone
+	// because the cloud DNS will not be used. Instead, an in-cluster DNS will be configured
+	// to resolve api, api-int and *apps URLs.
+	if installConfig.Config.Azure.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
+		privateDNSZoneMode = capz.PrivateDNSZoneModeNone
+	}
+
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -249,6 +258,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					},
 					computeSubnetSpec,
 				},
+				PrivateDNSZone: &privateDNSZoneMode,
 			},
 		},
 	}
