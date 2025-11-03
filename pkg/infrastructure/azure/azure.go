@@ -31,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/dns"
 )
 
 const (
@@ -64,6 +65,7 @@ type Provider struct {
 	Tags                  map[string]*string
 	clientOptions         *arm.ClientOptions
 	computeClientOptions  *arm.ClientOptions
+	publicLBIP            string
 }
 
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
@@ -436,7 +438,6 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	var lbBaps []*armnetwork.BackendAddressPool
 	var extLBFQDN string
-	var pubIPAddress string
 	if in.InstallConfig.Config.PublicAPI() {
 		publicIP, err := createPublicIP(ctx, &pipInput{
 			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
@@ -470,7 +471,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		logrus.Debugf("updated external load balancer: %s", *loadBalancer.ID)
 		lbBaps = loadBalancer.Properties.BackendAddressPools
 		extLBFQDN = *publicIP.Properties.DNSSettings.Fqdn
-		pubIPAddress = *publicIP.Properties.IPAddress
+		p.publicLBIP = *publicIP.Properties.IPAddress
 	}
 
 	// Save context for other hooks
@@ -483,8 +484,10 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPools = lbBaps
 
-	if err := createDNSEntries(ctx, in, extLBFQDN, pubIPAddress, resourceGroupName, p.clientOptions); err != nil {
-		return fmt.Errorf("error creating DNS records: %w", err)
+	if in.InstallConfig.Config.Azure.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
+		if err := createDNSEntries(ctx, in, extLBFQDN, p.publicLBIP, resourceGroupName, p.clientOptions); err != nil {
+			return fmt.Errorf("error creating DNS records: %w", err)
+		}
 	}
 
 	return nil
@@ -714,7 +717,6 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
-	bootstrapIgnData := in.BootstrapIgnData
 	subscriptionID := session.Credentials.SubscriptionID
 
 	ignitionContainerName := "ignition"
@@ -739,6 +741,13 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
 	}
 
+	// Edit Bootstrap, Master and Worker ignition files if needed. Currently, these
+	// ignition files are updated only when userProvisionedDNS is enabled.
+	ignOutput, err := editIgnition(ctx, in, p.publicLBIP)
+	if err != nil {
+		return nil, fmt.Errorf("failed to edit bootstrap, master or worker ignition: %w", err)
+	}
+
 	sasURL := ""
 
 	if in.InstallConfig.Config.Azure.CustomerManagedKey == nil {
@@ -749,7 +758,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			StorageAccountName: p.StorageAccountName,
 			StorageAccountKeys: p.StorageAccountKeys,
 			ClientOpts:         p.clientOptions,
-			BootstrapIgnData:   bootstrapIgnData,
+			BootstrapIgnData:   ignOutput.UpdatedBootstrapIgn,
 			CloudEnvironment:   in.InstallConfig.Azure.CloudName,
 			ContainerName:      ignitionContainerName,
 			BlobName:           blobName,
@@ -765,7 +774,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		}
 	} else {
 		logrus.Debugf("Creating a Page Blob for ignition shim because Customer Managed Key is provided")
-		lengthBootstrapFile := int64(len(bootstrapIgnData))
+		lengthBootstrapFile := int64(len(ignOutput.UpdatedBootstrapIgn))
 		if lengthBootstrapFile%512 != 0 {
 			lengthBootstrapFile = (((lengthBootstrapFile / 512) + 1) * 512)
 		}
@@ -775,7 +784,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			BlobURL:            blobURL,
 			ImageURL:           "",
 			StorageAccountName: p.StorageAccountName,
-			BootstrapIgnData:   bootstrapIgnData,
+			BootstrapIgnData:   ignOutput.UpdatedBootstrapIgn,
 			ImageLength:        lengthBootstrapFile,
 			StorageAccountKeys: p.StorageAccountKeys,
 			ClientOpts:         p.clientOptions,
@@ -791,7 +800,8 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 
 	ignSecrets := []*corev1.Secret{
 		clusterapi.IgnitionSecret(ignShim, in.InfraID, "bootstrap"),
-		clusterapi.IgnitionSecret(in.MasterIgnData, in.InfraID, "master"),
+		clusterapi.IgnitionSecret(ignOutput.UpdatedMasterIgn, in.InfraID, "master"),
+		clusterapi.IgnitionSecret(ignOutput.UpdatedWorkerIgn, in.InfraID, "worker"),
 	}
 
 	return ignSecrets, nil
