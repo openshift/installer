@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,12 +55,12 @@ func (table *RouteTable) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = table.AssignProperties_From_RouteTable(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to table")
+		return eris.Wrap(err, "converting from source to table")
 	}
 
 	return nil
@@ -75,38 +72,15 @@ func (table *RouteTable) ConvertTo(hub conversion.Hub) error {
 	var destination storage.RouteTable
 	err := table.AssignProperties_To_RouteTable(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from table")
+		return eris.Wrap(err, "converting to destination from table")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20201101-routetable,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=routetables,verbs=create;update,versions=v1api20201101,name=default.v1api20201101.routetables.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &RouteTable{}
-
-// Default applies defaults to the RouteTable resource
-func (table *RouteTable) Default() {
-	table.defaultImpl()
-	var temp any = table
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (table *RouteTable) defaultAzureName() {
-	if table.Spec.AzureName == "" {
-		table.Spec.AzureName = table.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the RouteTable resource
-func (table *RouteTable) defaultImpl() { table.defaultAzureName() }
 
 var _ configmaps.Exporter = &RouteTable{}
 
@@ -176,6 +150,10 @@ func (table *RouteTable) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (table *RouteTable) Owner() *genruntime.ResourceReference {
+	if table.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(table.Spec)
 	return table.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -192,114 +170,11 @@ func (table *RouteTable) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st RouteTable_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	table.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-network-azure-com-v1api20201101-routetable,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=routetables,verbs=create;update,versions=v1api20201101,name=validate.v1api20201101.routetables.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &RouteTable{}
-
-// ValidateCreate validates the creation of the resource
-func (table *RouteTable) ValidateCreate() (admission.Warnings, error) {
-	validations := table.createValidations()
-	var temp any = table
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (table *RouteTable) ValidateDelete() (admission.Warnings, error) {
-	validations := table.deleteValidations()
-	var temp any = table
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (table *RouteTable) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := table.updateValidations()
-	var temp any = table
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (table *RouteTable) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){table.validateResourceReferences, table.validateOwnerReference, table.validateSecretDestinations, table.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (table *RouteTable) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (table *RouteTable) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return table.validateResourceReferences()
-		},
-		table.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return table.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return table.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return table.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (table *RouteTable) validateConfigMapDestinations() (admission.Warnings, error) {
-	if table.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(table, nil, table.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (table *RouteTable) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(table)
-}
-
-// validateResourceReferences validates all resource references
-func (table *RouteTable) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&table.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (table *RouteTable) validateSecretDestinations() (admission.Warnings, error) {
-	if table.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(table, nil, table.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (table *RouteTable) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*RouteTable)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, table)
 }
 
 // AssignProperties_From_RouteTable populates our RouteTable from the provided source RouteTable
@@ -312,7 +187,7 @@ func (table *RouteTable) AssignProperties_From_RouteTable(source *storage.RouteT
 	var spec RouteTable_Spec
 	err := spec.AssignProperties_From_RouteTable_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RouteTable_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_RouteTable_Spec() to populate field Spec")
 	}
 	table.Spec = spec
 
@@ -320,7 +195,7 @@ func (table *RouteTable) AssignProperties_From_RouteTable(source *storage.RouteT
 	var status RouteTable_STATUS
 	err = status.AssignProperties_From_RouteTable_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RouteTable_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_RouteTable_STATUS() to populate field Status")
 	}
 	table.Status = status
 
@@ -338,7 +213,7 @@ func (table *RouteTable) AssignProperties_To_RouteTable(destination *storage.Rou
 	var spec storage.RouteTable_Spec
 	err := table.Spec.AssignProperties_To_RouteTable_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RouteTable_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_RouteTable_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -346,7 +221,7 @@ func (table *RouteTable) AssignProperties_To_RouteTable(destination *storage.Rou
 	var status storage.RouteTable_STATUS
 	err = table.Status.AssignProperties_To_RouteTable_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RouteTable_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_RouteTable_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -499,13 +374,13 @@ func (table *RouteTable_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec)
 	src = &storage.RouteTable_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = table.AssignProperties_From_RouteTable_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -523,13 +398,13 @@ func (table *RouteTable_Spec) ConvertSpecTo(destination genruntime.ConvertibleSp
 	dst = &storage.RouteTable_Spec{}
 	err := table.AssignProperties_To_RouteTable_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -557,7 +432,7 @@ func (table *RouteTable_Spec) AssignProperties_From_RouteTable_Spec(source *stor
 		var operatorSpec RouteTableOperatorSpec
 		err := operatorSpec.AssignProperties_From_RouteTableOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RouteTableOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_RouteTableOperatorSpec() to populate field OperatorSpec")
 		}
 		table.OperatorSpec = &operatorSpec
 	} else {
@@ -603,7 +478,7 @@ func (table *RouteTable_Spec) AssignProperties_To_RouteTable_Spec(destination *s
 		var operatorSpec storage.RouteTableOperatorSpec
 		err := table.OperatorSpec.AssignProperties_To_RouteTableOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RouteTableOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_RouteTableOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -690,13 +565,13 @@ func (table *RouteTable_STATUS) ConvertStatusFrom(source genruntime.ConvertibleS
 	src = &storage.RouteTable_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = table.AssignProperties_From_RouteTable_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -714,13 +589,13 @@ func (table *RouteTable_STATUS) ConvertStatusTo(destination genruntime.Convertib
 	dst = &storage.RouteTable_STATUS{}
 	err := table.AssignProperties_To_RouteTable_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil

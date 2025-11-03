@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20201101
 --------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-11-01"
+
 LoadBalancer: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (14 properties)
@@ -325,6 +326,7 @@ LoadBalancer: Resource
     │       └── "Regional"
     ├── Tags: map[string]string
     └── Type: *string
+
 LoadBalancersInboundNatRule: Resource
 ├── Owner: LoadBalancer
 ├── Spec: Object (10 properties)
@@ -368,6 +370,7 @@ LoadBalancersInboundNatRule: Resource
     │   ├── "Succeeded"
     │   └── "Updating"
     └── Type: *string
+
 NetworkInterface: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (13 properties)
@@ -504,6 +507,7 @@ NetworkInterface: Resource
     ├── Type: *string
     └── VirtualMachine: *Object (1 property)
         └── Id: *string
+
 NetworkSecurityGroup: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (5 properties)
@@ -536,6 +540,7 @@ NetworkSecurityGroup: Resource
     │   └── Id: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 NetworkSecurityGroupsSecurityRule: Resource
 ├── Owner: NetworkSecurityGroup
 ├── Spec: Object (18 properties)
@@ -609,6 +614,7 @@ NetworkSecurityGroupsSecurityRule: Resource
     ├── SourcePortRange: *string
     ├── SourcePortRanges: string[]
     └── Type: *string
+
 PublicIPAddress: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (19 properties)
@@ -721,6 +727,7 @@ PublicIPAddress: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 RouteTable: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (6 properties)
@@ -747,6 +754,7 @@ RouteTable: Resource
     ├── ResourceGuid: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 RouteTablesRoute: Resource
 ├── Owner: RouteTable
 ├── Spec: Object (6 properties)
@@ -783,6 +791,7 @@ RouteTablesRoute: Resource
     │   ├── "Succeeded"
     │   └── "Updating"
     └── Type: *string
+
 VirtualNetwork: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (13 properties)
@@ -840,6 +849,7 @@ VirtualNetwork: Resource
     ├── ResourceGuid: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 VirtualNetworkGateway: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (20 properties)
@@ -1204,6 +1214,7 @@ VirtualNetworkGateway: Resource
     └── VpnType: *Enum (2 values)
         ├── "PolicyBased"
         └── "RouteBased"
+
 VirtualNetworksSubnet: Resource
 ├── Owner: VirtualNetwork
 ├── Spec: Object (15 properties)
@@ -1300,6 +1311,7 @@ VirtualNetworksSubnet: Resource
     │   │   └── "Updating"
     │   └── Service: *string
     └── Type: *string
+
 VirtualNetworksVirtualNetworkPeering: Resource
 ├── Owner: VirtualNetwork
 ├── Spec: Object (12 properties)
@@ -1351,3 +1363,4 @@ VirtualNetworksVirtualNetworkPeering: Resource
     ├── ResourceGuid: *string
     ├── Type: *string
     └── UseRemoteGateways: *bool
+

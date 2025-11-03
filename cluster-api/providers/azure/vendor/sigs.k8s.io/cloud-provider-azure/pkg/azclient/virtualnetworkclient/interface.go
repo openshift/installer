@@ -20,12 +20,12 @@ package virtualnetworkclient
 import (
 	"context"
 
-	armnetwork "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
+	armnetwork "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/utils"
 )
 
-// +azure:client:verbs=get;createorupdate;delete;list,resource=VirtualNetwork,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4,packageAlias=armnetwork,clientName=VirtualNetworksClient,expand=true
+// +azure:client:verbs=get;createorupdate;delete;list,resource=VirtualNetwork,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6,packageAlias=armnetwork,clientName=VirtualNetworksClient,expand=true,etag=true
 type Interface interface {
 	utils.GetWithExpandFunc[armnetwork.VirtualNetwork]
 	utils.CreateOrUpdateFunc[armnetwork.VirtualNetwork]

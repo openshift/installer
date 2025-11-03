@@ -49,11 +49,7 @@ func ValidateImage(image *Image, fldPath *field.Path) field.ErrorList {
 
 func validateSingleDetailsOnly(image *Image, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	imageDetailsFound := false
-
-	if image.ID != nil {
-		imageDetailsFound = true
-	}
+	imageDetailsFound := (image.ID != nil)
 
 	if image.Marketplace != nil {
 		if imageDetailsFound {

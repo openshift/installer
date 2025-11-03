@@ -18,20 +18,17 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net"
 	"strings"
 	"sync"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute"
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2022-07-01/network"
-
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 	utilnet "k8s.io/utils/net"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	azcache "sigs.k8s.io/cloud-provider-azure/pkg/cache"
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
@@ -42,61 +39,28 @@ const (
 	IPVersionIPv4 bool = false
 )
 
-var strToExtendedLocationType = map[string]network.ExtendedLocationTypes{
-	"edgezone": network.EdgeZone,
-}
-
-// LockMap used to lock on entries
-type LockMap struct {
-	sync.Mutex
-	mutexMap map[string]*sync.Mutex
-}
-
-// NewLockMap returns a new lock map
-func newLockMap() *LockMap {
-	return &LockMap{
-		mutexMap: make(map[string]*sync.Mutex),
-	}
-}
-
-// LockEntry acquires a lock associated with the specific entry
-func (lm *LockMap) LockEntry(entry string) {
-	lm.Lock()
-	// check if entry does not exists, then add entry
-	mutex, exists := lm.mutexMap[entry]
-	if !exists {
-		mutex = &sync.Mutex{}
-		lm.mutexMap[entry] = mutex
-	}
-	lm.Unlock()
-	mutex.Lock()
-}
-
-// UnlockEntry release the lock associated with the specific entry
-func (lm *LockMap) UnlockEntry(entry string) {
-	lm.Lock()
-	defer lm.Unlock()
-
-	mutex, exists := lm.mutexMap[entry]
-	if !exists {
-		return
-	}
-	mutex.Unlock()
+var strToExtendedLocationType = map[string]armnetwork.ExtendedLocationTypes{
+	"edgezone": armnetwork.ExtendedLocationTypesEdgeZone,
 }
 
 func getContextWithCancel() (context.Context, context.CancelFunc) {
 	return context.WithCancel(context.Background())
 }
 
-func convertMapToMapPointer(origin map[string]string) map[string]*string {
-	newly := make(map[string]*string)
-	for k, v := range origin {
-		value := v
-		newly[k] = &value
-	}
-	return newly
-}
-
+// parseTags processes and combines tags from a string and a map into a single map of string pointers.
+// It handles tag parsing, trimming, and case-insensitive key conflicts.
+//
+// Parameters:
+//   - tags: A string containing tags in the format "key1=value1,key2=value2"
+//   - tagsMap: A map of string key-value pairs representing additional tags
+//
+// Returns:
+//   - A map[string]*string where keys are tag names and values are pointers to tag values
+//
+// The function prioritizes tags from tagsMap over those from the tags string in case of conflicts.
+// It logs warnings for parsing errors and empty keys, and info messages for case-insensitive key replacements.
+//
+// XXX: return error instead of logging; decouple tag parsing and tag application
 func parseTags(tags string, tagsMap map[string]string) map[string]*string {
 	formatted := make(map[string]*string)
 
@@ -108,18 +72,27 @@ func parseTags(tags string, tagsMap map[string]string) map[string]*string {
 				klog.Warningf("parseTags: error when parsing key-value pair %s, would ignore this one", kv)
 				continue
 			}
+			// Avoid generate `Null` string after TrimSpace operation, (e.g. " null", " Null " -> "null"/"Null")
+			// `Null` is a reserved tag value by ARM, so the leading/trailing spaces must be preserved.
+			// Refer to https://github.com/kubernetes-sigs/cloud-provider-azure/issues/7048.
 			k, v := strings.TrimSpace(res[0]), strings.TrimSpace(res[1])
+			if strings.EqualFold(v, "null") {
+				v = res[1]
+			}
 			if k == "" {
 				klog.Warning("parseTags: empty key, ignoring this key-value pair")
 				continue
 			}
-			formatted[k] = pointer.String(v)
+			formatted[k] = ptr.To(v)
 		}
 	}
 
 	if len(tagsMap) > 0 {
-		for key, value := range tagsMap {
-			key, value := strings.TrimSpace(key), strings.TrimSpace(value)
+		for k, v := range tagsMap {
+			key, value := strings.TrimSpace(k), strings.TrimSpace(v)
+			if strings.EqualFold(value, "null") {
+				value = v
+			}
 			if key == "" {
 				klog.Warningf("parseTags: empty key, ignoring this key-value pair")
 				continue
@@ -129,7 +102,7 @@ func parseTags(tags string, tagsMap map[string]string) map[string]*string {
 				klog.V(4).Infof("parseTags: found identical keys: %s from tags and %s from tagsMap (case-insensitive), %s will replace %s", k, key, key, k)
 				delete(formatted, k)
 			}
-			formatted[key] = pointer.String(value)
+			formatted[key] = ptr.To(value)
 		}
 	}
 
@@ -146,6 +119,23 @@ func findKeyInMapCaseInsensitive(targetMap map[string]*string, key string) (bool
 	return false, ""
 }
 
+// This function extends the functionality of findKeyInMapCaseInsensitive by supporting both
+// exact case-insensitive key matching and prefix-based key matching in the given map.
+// 1. If the key is found in the map (case-insensitively), the function returns true and the matching key in the map.
+// 2. If the key's prefix is found in the map (case-insensitively), the function also returns true and the matching key in the map.
+// This function is designed to enable systemTags to support prefix-based tag keys,
+// allowing more flexible and efficient tag key matching.
+func findKeyInMapWithPrefix(targetMap map[string]*string, key string) (bool, string) {
+	for k := range targetMap {
+		// use prefix-based key matching
+		// use case-insensitive comparison
+		if strings.HasPrefix(strings.ToLower(key), strings.ToLower(k)) {
+			return true, k
+		}
+	}
+	return false, ""
+}
+
 func (az *Cloud) reconcileTags(currentTagsOnResource, newTags map[string]*string) (reconciledTags map[string]*string, changed bool) {
 	var systemTags []string
 	systemTagsMap := make(map[string]*string)
@@ -157,7 +147,7 @@ func (az *Cloud) reconcileTags(currentTagsOnResource, newTags map[string]*string
 		}
 
 		for _, systemTag := range systemTags {
-			systemTagsMap[systemTag] = pointer.String("")
+			systemTagsMap[systemTag] = ptr.To("")
 		}
 	}
 
@@ -168,7 +158,7 @@ func (az *Cloud) reconcileTags(currentTagsOnResource, newTags map[string]*string
 		if !found {
 			currentTagsOnResource[k] = v
 			changed = true
-		} else if !strings.EqualFold(pointer.StringDeref(v, ""), pointer.StringDeref(currentTagsOnResource[key], "")) {
+		} else if !strings.EqualFold(ptr.Deref(v, ""), ptr.Deref(currentTagsOnResource[key], "")) {
 			currentTagsOnResource[key] = v
 			changed = true
 		}
@@ -178,8 +168,8 @@ func (az *Cloud) reconcileTags(currentTagsOnResource, newTags map[string]*string
 	if len(systemTagsMap) > 0 {
 		for k := range currentTagsOnResource {
 			if _, ok := newTags[k]; !ok {
-				if found, _ := findKeyInMapCaseInsensitive(systemTagsMap, k); !found {
-					klog.V(2).Infof("reconcileTags: delete tag %s: %s", k, pointer.StringDeref(currentTagsOnResource[k], ""))
+				if found, _ := findKeyInMapWithPrefix(systemTagsMap, k); !found {
+					klog.V(2).Infof("reconcileTags: delete tag %s: %s", k, ptr.Deref(currentTagsOnResource[k], ""))
 					delete(currentTagsOnResource, k)
 					changed = true
 				}
@@ -190,12 +180,12 @@ func (az *Cloud) reconcileTags(currentTagsOnResource, newTags map[string]*string
 	return currentTagsOnResource, changed
 }
 
-func getExtendedLocationTypeFromString(extendedLocationType string) network.ExtendedLocationTypes {
+func getExtendedLocationTypeFromString(extendedLocationType string) armnetwork.ExtendedLocationTypes {
 	extendedLocationType = strings.ToLower(extendedLocationType)
 	if val, ok := strToExtendedLocationType[extendedLocationType]; ok {
 		return val
 	}
-	return network.EdgeZone
+	return armnetwork.ExtendedLocationTypesEdgeZone
 }
 
 func getNodePrivateIPAddress(node *v1.Node, isIPv6 bool) string {
@@ -246,14 +236,14 @@ func sameContentInSlices(s1 []string, s2 []string) bool {
 	return true
 }
 
-func removeDuplicatedSecurityRules(rules []network.SecurityRule) []network.SecurityRule {
+func removeDuplicatedSecurityRules(rules []*armnetwork.SecurityRule) []*armnetwork.SecurityRule {
 	ruleNames := make(map[string]bool)
 	for i := len(rules) - 1; i >= 0; i-- {
-		if _, ok := ruleNames[pointer.StringDeref(rules[i].Name, "")]; ok {
-			klog.Warningf("Found duplicated rule %s, will be removed.", pointer.StringDeref(rules[i].Name, ""))
+		if _, ok := ruleNames[ptr.Deref(rules[i].Name, "")]; ok {
+			klog.Warningf("Found duplicated rule %s, will be removed.", ptr.Deref(rules[i].Name, ""))
 			rules = append(rules[:i], rules[i+1:]...)
 		}
-		ruleNames[pointer.StringDeref(rules[i].Name, "")] = true
+		ruleNames[ptr.Deref(rules[i].Name, "")] = true
 	}
 	return rules
 }
@@ -423,12 +413,15 @@ func getResourceByIPFamily(resource string, isDualStack, isIPv6 bool) string {
 
 // isFIPIPv6 checks if the frontend IP configuration is of IPv6.
 // NOTICE: isFIPIPv6 assumes the FIP is owned by the Service and it is the primary Service.
-func (az *Cloud) isFIPIPv6(service *v1.Service, _ string, fip *network.FrontendIPConfiguration) (bool, error) {
+func (az *Cloud) isFIPIPv6(service *v1.Service, fip *armnetwork.FrontendIPConfiguration) (bool, error) {
 	isDualStack := isServiceDualStack(service)
 	if !isDualStack {
+		if len(service.Spec.IPFamilies) == 0 {
+			return false, nil
+		}
 		return service.Spec.IPFamilies[0] == v1.IPv6Protocol, nil
 	}
-	return managedResourceHasIPv6Suffix(pointer.StringDeref(fip.Name, "")), nil
+	return managedResourceHasIPv6Suffix(ptr.Deref(fip.Name, "")), nil
 }
 
 // getResourceIDPrefix returns a substring from the provided one between beginning and the last "/".
@@ -440,34 +433,34 @@ func getResourceIDPrefix(id string) string {
 	return id[:idx]
 }
 
-func getLBNameFromBackendPoolID(backendPoolID string) (string, error) {
+func getBackendPoolNameFromBackendPoolID(backendPoolID string) (string, error) {
 	matches := backendPoolIDRE.FindStringSubmatch(backendPoolID)
-	if len(matches) != 2 {
+	if len(matches) != 3 {
 		return "", fmt.Errorf("backendPoolID %q is in wrong format", backendPoolID)
 	}
 
-	return matches[1], nil
+	return matches[2], nil
 }
 
-func countNICsOnBackendPool(backendPool network.BackendAddressPool) int {
-	if backendPool.BackendAddressPoolPropertiesFormat == nil ||
-		backendPool.BackendIPConfigurations == nil {
+func countNICsOnBackendPool(backendPool *armnetwork.BackendAddressPool) int {
+	if backendPool.Properties == nil ||
+		backendPool.Properties.BackendIPConfigurations == nil {
 		return 0
 	}
 
-	return len(*backendPool.BackendIPConfigurations)
+	return len(backendPool.Properties.BackendIPConfigurations)
 }
 
-func countIPsOnBackendPool(backendPool network.BackendAddressPool) int {
-	if backendPool.BackendAddressPoolPropertiesFormat == nil ||
-		backendPool.LoadBalancerBackendAddresses == nil {
+func countIPsOnBackendPool(backendPool *armnetwork.BackendAddressPool) int {
+	if backendPool.Properties == nil ||
+		backendPool.Properties.LoadBalancerBackendAddresses == nil {
 		return 0
 	}
 
 	var ipsCount int
-	for _, loadBalancerBackendAddress := range *backendPool.LoadBalancerBackendAddresses {
-		if loadBalancerBackendAddress.LoadBalancerBackendAddressPropertiesFormat != nil &&
-			pointer.StringDeref(loadBalancerBackendAddress.IPAddress, "") != "" {
+	for _, loadBalancerBackendAddress := range backendPool.Properties.LoadBalancerBackendAddresses {
+		if loadBalancerBackendAddress.Properties != nil &&
+			ptr.Deref(loadBalancerBackendAddress.Properties.IPAddress, "") != "" {
 			ipsCount++
 		}
 	}
@@ -483,15 +476,6 @@ func StringInSlice(s string, list []string) bool {
 		}
 	}
 	return false
-}
-
-// stringSlice returns a string slice value for the passed string slice pointer. It returns a nil
-// slice if the pointer is nil.
-func stringSlice(s *[]string) []string {
-	if s != nil {
-		return *s
-	}
-	return nil
 }
 
 // IntInSlice checks if an int is in a list
@@ -535,7 +519,7 @@ func getResourceGroupAndNameFromNICID(ipConfigurationID string) (string, string,
 	return nicResourceGroup, nicName, nil
 }
 
-func isInternalLoadBalancer(lb *network.LoadBalancer) bool {
+func isInternalLoadBalancer(lb *armnetwork.LoadBalancer) bool {
 	return strings.HasSuffix(strings.ToLower(*lb.Name), consts.InternalLoadBalancerNameSuffix)
 }
 
@@ -551,23 +535,9 @@ func trimSuffixIgnoreCase(str, suf string) string {
 	return str
 }
 
-// ToArmcomputeDisk converts compute.DataDisk to armcompute.DataDisk
-// This is a workaround during track2 migration.
-// TODO: remove this function after compute api is migrated to track2
-func ToArmcomputeDisk(disks []compute.DataDisk) ([]*armcompute.DataDisk, error) {
-	var result []*armcompute.DataDisk
-	for _, disk := range disks {
-		content, err := json.Marshal(disk)
-		if err != nil {
-			return nil, err
-		}
-		var dataDisk armcompute.DataDisk
-		err = json.Unmarshal(content, &dataDisk)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, &dataDisk)
+func isEmptyLabelSelector(selector *metav1.LabelSelector) bool {
+	if selector == nil {
+		return true
 	}
-
-	return result, nil
+	return len(selector.MatchLabels) == 0 && len(selector.MatchExpressions) == 0
 }

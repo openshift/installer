@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -115,11 +115,11 @@ func reconcileAutoscaling(agentPool *unstructured.Unstructured, machinePool *exp
 			if machinePool.Annotations == nil {
 				machinePool.Annotations = make(map[string]string)
 			}
-			machinePool.Annotations[clusterv1.ReplicasManagedByAnnotation] = infrav1alpha.ReplicasManagedByAKS
-		} else if replicaManager != infrav1alpha.ReplicasManagedByAKS {
+			machinePool.Annotations[clusterv1.ReplicasManagedByAnnotation] = infrav1.ReplicasManagedByAKS
+		} else if replicaManager != infrav1.ReplicasManagedByAKS {
 			return fmt.Errorf("failed to enable autoscaling, replicas are already being managed by %s according to MachinePool %s's %s annotation", replicaManager, machinePool.Name, clusterv1.ReplicasManagedByAnnotation)
 		}
-	} else if !autoscaling && replicaManager == infrav1alpha.ReplicasManagedByAKS {
+	} else if !autoscaling && replicaManager == infrav1.ReplicasManagedByAKS {
 		// Removing this annotation informs the MachinePool controller that this MachinePool is no longer
 		// being autoscaled.
 		delete(machinePool.Annotations, clusterv1.ReplicasManagedByAnnotation)

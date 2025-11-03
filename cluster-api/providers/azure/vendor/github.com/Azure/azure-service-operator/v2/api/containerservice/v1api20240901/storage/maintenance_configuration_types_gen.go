@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (configuration *MaintenanceConfiguration) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (configuration *MaintenanceConfiguration) Owner() *genruntime.ResourceReference {
+	if configuration.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(configuration.Spec)
 	return configuration.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (configuration *MaintenanceConfiguration) SetStatus(status genruntime.Conve
 	var st MaintenanceConfiguration_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	configuration.Status = st
@@ -191,7 +195,7 @@ var _ genruntime.ConvertibleSpec = &MaintenanceConfiguration_Spec{}
 // ConvertSpecFrom populates our MaintenanceConfiguration_Spec from the provided source
 func (configuration *MaintenanceConfiguration_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == configuration {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(configuration)
@@ -200,7 +204,7 @@ func (configuration *MaintenanceConfiguration_Spec) ConvertSpecFrom(source genru
 // ConvertSpecTo populates the provided destination from our MaintenanceConfiguration_Spec
 func (configuration *MaintenanceConfiguration_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == configuration {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(configuration)
@@ -224,7 +228,7 @@ var _ genruntime.ConvertibleStatus = &MaintenanceConfiguration_STATUS{}
 // ConvertStatusFrom populates our MaintenanceConfiguration_STATUS from the provided source
 func (configuration *MaintenanceConfiguration_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == configuration {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(configuration)
@@ -233,7 +237,7 @@ func (configuration *MaintenanceConfiguration_STATUS) ConvertStatusFrom(source g
 // ConvertStatusTo populates the provided destination from our MaintenanceConfiguration_STATUS
 func (configuration *MaintenanceConfiguration_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == configuration {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(configuration)

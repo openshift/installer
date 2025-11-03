@@ -19,8 +19,6 @@ package consts
 import (
 	"strings"
 	"time"
-
-	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-09-01/storage"
 )
 
 const (
@@ -95,17 +93,6 @@ const (
 	StorageAccountNameMaxLength = 24
 
 	CannotFindDiskLUN = "cannot find Lun"
-
-	// DefaultStorageAccountType is the default storage account type
-	DefaultStorageAccountType = string(storage.SkuNameStandardLRS)
-	// DefaultStorageAccountKind is the default storage account kind
-	DefaultStorageAccountKind = storage.KindStorageV2
-	// FileShareAccountNamePrefix is the file share account name prefix
-	FileShareAccountNamePrefix = "f"
-	// SharedDiskAccountNamePrefix is the shared disk account name prefix
-	SharedDiskAccountNamePrefix = "ds"
-	// DedicatedDiskAccountNamePrefix is the dedicated disk account name prefix
-	DedicatedDiskAccountNamePrefix = "dd"
 
 	// RetryAfterHeaderKey is the retry-after header key in ARM responses.
 	RetryAfterHeaderKey = "Retry-After"
@@ -245,10 +232,10 @@ const (
 	// ref: https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits#load-balancer.
 	MaximumLoadBalancerRuleCount = 250
 
-	// LoadBalancerSkuBasic is the load balancer basic sku
-	LoadBalancerSkuBasic = "basic"
-	// LoadBalancerSkuStandard is the load balancer standard sku
-	LoadBalancerSkuStandard = "standard"
+	// LoadBalancerSKUBasic is the load balancer basic SKU
+	LoadBalancerSKUBasic = "basic"
+	// LoadBalancerSKUStandard is the load balancer standard SKU
+	LoadBalancerSKUStandard = "standard"
 
 	// ServiceAnnotationLoadBalancerInternal is the annotation used on the service
 	ServiceAnnotationLoadBalancerInternal = "service.beta.kubernetes.io/azure-load-balancer-internal"
@@ -259,7 +246,7 @@ const (
 
 	// ServiceAnnotationLoadBalancerMode is the annotation used on the service to specify
 	// which load balancer should be associated with the service. This is valid when using the basic
-	// sku load balancer, or it would be ignored.
+	// SKU load balancer, or it would be ignored.
 	// 1. Default mode - service has no annotation ("service.beta.kubernetes.io/azure-load-balancer-mode")
 	//	  In this case the Loadbalancer of the primary VMSS/VMAS is selected.
 	// 2. "__auto__" mode - service is annotated with __auto__ value, this when loadbalancer from any VMSS/VMAS
@@ -591,4 +578,17 @@ const (
 	VMPowerStateDeallocated  = "deallocated"
 	VMPowerStateDeallocating = "deallocating"
 	VMPowerStateUnknown      = "unknown"
+)
+
+// Azure resource lock
+const (
+	AzureResourceLockHolderNameCloudControllerManager = "cloud-controller-manager"
+	AzureResourceLockLeaseName                        = "aks-managed-resource-locker"
+	AzureResourceLockLeaseNamespace                   = "kube-system"
+	AzureResourceLockLeaseDuration                    = int32(15 * 60)
+	AzureResourceLockPreviousHolderNameAnnotation     = "aks-managed-resource-locker-previous-holder"
+
+	AzureResourceLockFailedToLockErrorTemplate                = "%s failed due to fail to lock azure resources. This may because another component is trying to update azure resources, e.g., load balancers. This will be automatically retried by cloud provider exponentially: %w"
+	AzureResourceLockFailedToUnlockErrorTemplate              = "%s failed due to fail to unlock azure resources. This will be automatically retried by cloud provider exponentially, but can also be manually unlocked by removing the holder of the lease '%s/%s'. Before doing this, please be aware that this could lead to unexpected issues: %w"
+	AzureResourceLockFailedToReconcileWithUnlockErrorTemplate = "%s failed due to %s, and when unlocking azure resources another error happened: %w"
 )
