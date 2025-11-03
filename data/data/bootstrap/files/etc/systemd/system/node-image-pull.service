@@ -1,7 +1,8 @@
 [Unit]
 Description=Node Image Pull
 Requires=network.target NetworkManager.service
-After=network.target
+Wants=resize-ephemeral.service
+After=network.target resize-ephemeral.service
 
 [Service]
 Type=oneshot

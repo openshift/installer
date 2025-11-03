@@ -1,0 +1,10 @@
+[Unit]
+Description=Resize ephemeral disk
+Requires=network.target NetworkManager.service
+Before=node-image-pull.service bootkube.service
+ConditionPathExists=/run/ostree-live
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/resize-ephemeral.sh 12G
