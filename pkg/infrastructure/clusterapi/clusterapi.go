@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	"sigs.k8s.io/cluster-api/util"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -202,7 +203,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		}
 		// Create the secret.
 		clusterKubeconfig := clusterKubeconfigAsset.Files()[0].Data
-		secret := utilkubeconfig.GenerateSecret(cluster, clusterKubeconfig)
+		secret := generateSecret(cluster, clusterKubeconfig)
 		if err := cl.Create(ctx, secret); err != nil {
 			return fileList, err
 		}
@@ -730,4 +731,17 @@ func warnIfFalsyInfraConditions(ctx context.Context, objRef *corev1.ObjectRefere
 		logrus.Infof("No conditions found")
 	}
 	logrus.Infof("Done checking conditions for %s", objInfo)
+}
+
+// generateSecret returns a Kubernetes secret for the given Cluster and kubeconfig data.
+// TODO: upgrade our usage from the deprecated capi cluster v1beta1 -> v1beta2
+// and remove this function in favor of Generate secret in capi util/kubeconfig.
+func generateSecret(cluster *clusterv1.Cluster, data []byte) *corev1.Secret {
+	name := util.ObjectKey(cluster)
+	return utilkubeconfig.GenerateSecretWithOwner(name, data, metav1.OwnerReference{
+		APIVersion: clusterv1.GroupVersion.String(),
+		Kind:       "Cluster",
+		Name:       cluster.Name,
+		UID:        cluster.UID,
+	})
 }
