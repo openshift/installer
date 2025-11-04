@@ -30,17 +30,17 @@ make
 
 This single command will:
 1. Auto-generate `.dot` files from systemd units (if units changed)
-2. Generate PNG files from the `.dot` files (if `.dot` files changed)
+2. Generate SVG files from the `.dot` files (if `.dot` files changed)
 
 The diagrams are automatically regenerated when:
 - Any systemd unit file in `data/data/agent/systemd/units/` changes
 - The `generate_diagrams.py` script changes
 
 Output files are created in the parent directory:
-- `agent_installer_services-install_workflow.png`
-- `agent_installer_services-add_nodes_workflow.png`
-- `agent_installer_services-unconfigured_ignition_and_config_image_flow.png`
-- `agent_installer_services-interactive.png`
+- `agent_installer_services-install_workflow.svg`
+- `agent_installer_services-add_nodes_workflow.svg`
+- `agent_installer_services-unconfigured_ignition_and_config_image_flow.svg`
+- `agent_installer_services-interactive.svg`
 
 ## How It Works
 
@@ -83,4 +83,4 @@ To remove all generated files:
 make clean
 ```
 
-This removes both `.dot` and `.png` files.
+This removes both `.dot` and `.svg` files.

@@ -2,7 +2,7 @@
 
 ## Install workflow
 
-![Install workflow](./agent_installer_services-install_workflow.png)
+![Install workflow](./agent_installer_services-install_workflow.svg)
 
 In the install workflow, all information needed to configure a cluster is included in the agent ISO.
 When the agent ISO is booted, agent-tui and nmstate libraries are copied to the host from initrd. This copy 
@@ -27,7 +27,7 @@ step is required because the agent-tui and nmstate libraries are too big to fit 
 
 ## Add-nodes workflow
 
-![Add-nodes workflow](./agent_installer_services-add_nodes_workflow.png)
+![Add-nodes workflow](./agent_installer_services-add_nodes_workflow.svg)
 
 The add-nodes workflow is used to generate an ISO image for adding one or more nodes to a target cluster. It is very similar to the install workflow, with
 the following exceptions (highlighted in green in the previous picture):
@@ -41,7 +41,7 @@ the following exceptions (highlighted in green in the previous picture):
 
 ## Appliance workflow (unconfigured ignition and config image)
 
-![Appliance workflow](./agent_installer_services-unconfigured_ignition_and_config_image_flow.png)
+![Appliance workflow](./agent_installer_services-unconfigured_ignition_and_config_image_flow.svg)
 
 In the appliance workflow, most of the cluster deployment information is included in a config image that is mounted
 onto the host running the unconfigured-ignition. The appliance flow does not include the agent-tui or the
@@ -55,7 +55,7 @@ so no connectivity checks to the release image is needed.
 
 ## Interactive workflow (unconfigured ignition --interactive)
 
-![Interactive workflow](./agent_installer_services-interactive.png)
+![Interactive workflow](./agent_installer_services-interactive.svg)
 
 The interactive workflow allows the user to install a cluster by using the assisted UI running on the rendezvous node. In this workflow
 the agent-tui is also used interactively to configure which node will be the rendezvous host, and to configure accordingly the other nodes.
