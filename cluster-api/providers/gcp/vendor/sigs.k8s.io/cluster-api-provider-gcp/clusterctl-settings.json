@@ -1,7 +1,0 @@
-{
-  "name": "infrastructure-gcp",
-  "config": {
-    "componentsFile": "infrastructure-components.yaml",
-    "nextVersion": "v1.4.0"
-  }
-}

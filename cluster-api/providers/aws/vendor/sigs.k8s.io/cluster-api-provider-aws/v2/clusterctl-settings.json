@@ -1,7 +1,0 @@
-{
-  "name": "infrastructure-aws",
-  "config": {
-    "componentsFile": "infrastructure-components.yaml",
-    "nextVersion": "v1.0.0"
-  }
-}

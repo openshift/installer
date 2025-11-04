@@ -1,4 +1,0 @@
-sudo: false
-language: go
-script:
-  - go test
