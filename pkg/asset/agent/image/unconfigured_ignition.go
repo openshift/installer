@@ -195,14 +195,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 				config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 			}
 
-			// Explicitly disable the load-config-iso service, not required in the current flow
-			// (even though disabled by default, the udev rule may require it).
-			config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/etc/assisted/no-config-image", "root", 0644, ""))
-
-			// Enable the UI service.
-			interactiveUIFile := ignition.FileFromString("/etc/assisted/interactive-ui", "root", 0644, "")
-			config.Storage.Files = append(config.Storage.Files, interactiveUIFile)
-
 			// Let's disable the assisted-service authentication.
 			agentTemplateData.AuthType = "none"
 		}
