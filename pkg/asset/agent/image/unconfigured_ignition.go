@@ -188,16 +188,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 
 		// Enable the agent-check-config-image.service for the current workflow.
 		enabledServices = append(enabledServices, "agent-check-config-image.service")
-
-		// To Do:
-		if sentinelfiel is present or another way to identify we want to invoke AgentWorkflowTypeInstallInteractiveDisconnected workflow {
-			// Add the rendezvous host file. Agent TUI will interact with that file in case
-			// the rendezvous IP wasn't previously configured, by managing it as a template file.
-			if rendezvousIP == "" {
-				rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostTemplateData)
-				config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
-			}
-		}
 	}
 
 	// Required by assisted-service.
