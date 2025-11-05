@@ -53,14 +53,16 @@ func (i *CaBundle) Generate(_ context.Context, dependencies asset.Parents) error
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
+		// once AgentWorkflowTypeInstallInteractiveDisconnected is reomved, the default workflow
+		// will be AgentWorkflowTypeInstall and then the cabundle asset should just return empty 
+		// as previously in case of AgentWorkflowTypeInstallInteractiveDisconnected workflow
+		// as its not needed.
+		// The thought here is in OVE, install config won't be supplied 
+		// ( but could this cause issues when UI is introduced for regular cases in the future)
 		if !installConfig.Supplied {
 			return nil
 		}
 		additionalTrustBundle = installConfig.Config.AdditionalTrustBundle
-
-	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
-		// Not required
-		return nil
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		additionalTrustBundle = clusterInfo.UserCaBundle

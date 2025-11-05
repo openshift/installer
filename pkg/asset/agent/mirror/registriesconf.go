@@ -152,6 +152,11 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
+		// once AgentWorkflowTypeInstallInteractiveDisconnected is reomved, the default workflow
+		// will be AgentWorkflowTypeInstall and then the registryconf asset should just return empty
+		//  as previously in case of AgentWorkflowTypeInstallInteractiveDisconnected workflow
+		// as its not needed.
+		// what condition under install worflow could identify this behaviour and return nil instead?
 		if installConfig.Supplied {
 			imageDigestSources = installConfig.Config.ImageDigestSources
 			deprecatedImageContentSources = installConfig.Config.DeprecatedImageContentSources
@@ -162,10 +167,6 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 		imageDigestSources = clusterInfo.ImageDigestSources
 		deprecatedImageContentSources = clusterInfo.DeprecatedImageContentSources
 		image = clusterInfo.ReleaseImage
-
-	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
-		// Not required
-		return nil
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)

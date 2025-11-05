@@ -42,14 +42,15 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				"agent-check-config-image.service":   true,
 				"agent-extract-tui.service":          true},
 		},
-		{
-			name: "interactive-disconnected-workflow-should-have-agent-extract-tui-service-enabled",
-			overrideDeps: []asset.Asset{
-				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstallInteractiveDisconnected},
-			},
-			serviceEnabledMap: map[string]bool{
-				"agent-extract-tui.service": true},
-		},
+		// update this test to still check the same but without AgentWorkflowTypeInstallInteractiveDisconnected workflow
+		// {
+		// 	name: "interactive-disconnected-workflow-should-have-agent-extract-tui-service-enabled",
+		// 	overrideDeps: []asset.Asset{
+		// 		&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstallInteractiveDisconnected},
+		// 	},
+		// 	serviceEnabledMap: map[string]bool{
+		// 		"agent-extract-tui.service": true},
+		// },
 		{
 			name: "with-mirror-configs",
 			overrideDeps: []asset.Asset{

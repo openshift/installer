@@ -186,24 +186,26 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		// Enable the agent-check-config-image.service for the current workflow.
 		enabledServices = append(enabledServices, "agent-check-config-image.service")
 
-	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
-		// Add the rendezvous host file. Agent TUI will interact with that file in case
-		// the rendezvous IP wasn't previously configured, by managing it as a template file.
-		if rendezvousIP == "" {
-			rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostTemplateData)
-			config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
+		// To Do:
+		if sentinelfiel is present or another way to identify we want to invoke AgentWorkflowTypeInstallInteractiveDisconnected workflow {
+			// Add the rendezvous host file. Agent TUI will interact with that file in case
+			// the rendezvous IP wasn't previously configured, by managing it as a template file.
+			if rendezvousIP == "" {
+				rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostTemplateData)
+				config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
+			}
+
+			// Explicitly disable the load-config-iso service, not required in the current flow
+			// (even though disabled by default, the udev rule may require it).
+			config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/etc/assisted/no-config-image", "root", 0644, ""))
+
+			// Enable the UI service.
+			interactiveUIFile := ignition.FileFromString("/etc/assisted/interactive-ui", "root", 0644, "")
+			config.Storage.Files = append(config.Storage.Files, interactiveUIFile)
+
+			// Let's disable the assisted-service authentication.
+			agentTemplateData.AuthType = "none"
 		}
-
-		// Explicitly disable the load-config-iso service, not required in the current flow
-		// (even though disabled by default, the udev rule may require it).
-		config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/etc/assisted/no-config-image", "root", 0644, ""))
-
-		// Enable the UI service.
-		interactiveUIFile := ignition.FileFromString("/etc/assisted/interactive-ui", "root", 0644, "")
-		config.Storage.Files = append(config.Storage.Files, interactiveUIFile)
-
-		// Let's disable the assisted-service authentication.
-		agentTemplateData.AuthType = "none"
 	}
 
 	// Required by assisted-service.
