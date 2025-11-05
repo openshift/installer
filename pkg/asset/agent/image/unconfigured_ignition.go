@@ -161,6 +161,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		InfraEnvID:                infraEnvID,
 		OSImage:                   osImage,
 		Proxy:                     infraEnv.Spec.Proxy,
+		AuthType:                  "none",
 	}
 
 	enabledServices := getDefaultEnabledServices()
@@ -202,8 +203,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		interactiveUIFile := ignition.FileFromString("/etc/assisted/interactive-ui", "root", 0644, "")
 		config.Storage.Files = append(config.Storage.Files, interactiveUIFile)
 
-		// Let's disable the assisted-service authentication.
-		agentTemplateData.AuthType = "none"
 	}
 
 	// Required by assisted-service.
