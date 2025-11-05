@@ -184,9 +184,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	case workflow.AgentWorkflowTypeInstall:
 		agentTemplateData.ConfigImageFiles = strings.Join(GetConfigImageFiles(), ",")
 
-		// Enable the agent-check-config-image.service for the current workflow.
-		enabledServices = append(enabledServices, "agent-check-config-image.service")
-
 	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
 		// Add the rendezvous host file. Agent TUI will interact with that file in case
 		// the rendezvous IP wasn't previously configured, by managing it as a template file.
@@ -245,6 +242,8 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		config.Storage.Files = append(config.Storage.Files, manifestFile)
 	}
 
+	// the agent-check-config-image.service added only to the unconfigured ignition
+	enabledServices = append(enabledServices, "agent-check-config-image.service")
 	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, enabledServices)
 	if err != nil {
 		return err
