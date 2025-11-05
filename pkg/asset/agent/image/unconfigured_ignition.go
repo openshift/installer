@@ -179,6 +179,9 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 	}
 
+	// Let's disable the assisted-service authentication.
+	agentTemplateData.AuthType = "none"
+
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		agentTemplateData.ConfigImageFiles = strings.Join(GetConfigImageFiles(), ",")
@@ -194,9 +197,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 				rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostTemplateData)
 				config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 			}
-
-			// Let's disable the assisted-service authentication.
-			agentTemplateData.AuthType = "none"
 		}
 	}
 
