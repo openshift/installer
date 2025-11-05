@@ -1831,7 +1831,7 @@ func TestValidateInstallConfig(t *testing.T) {
 					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"marketplace"}}
 				return c
 			}(),
-			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"marketplace"}: the marketplace capability requires the OperatorLifecycleManager capability`,
+			expectedError: `additionalEnabledCapabilities: Invalid value: \["marketplace"\]: the marketplace capability requires the OperatorLifecycleManager capability`,
 		},
 		{
 			name: "valid additional enabled capability specified",
@@ -1872,7 +1872,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "None", AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"marketplace"}}
 				return c
 			}(),
-			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"marketplace"}: platform baremetal requires the baremetal capability`,
+			expectedError: `additionalEnabledCapabilities: Invalid value: \["marketplace"\]: platform baremetal requires the baremetal capability`,
 		},
 		// VIP tests
 		{
@@ -2035,7 +2035,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.apiVIPs: Invalid value: \\[\\]string\\{\"192.168.111.1\", \"192.168.111.2\"\\}: If two API VIPs are given, one must be an IPv4 address, the other an IPv6",
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \\[\"192.168.111.1\",\"192.168.111.2\"\\]: If two API VIPs are given, one must be an IPv4 address, the other an IPv6",
 		},
 		{
 			name: "invalid_apis_both_ipv6",
@@ -2048,7 +2048,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.apiVIPs: Invalid value: \\[\\]string\\{\"fe80::1\", \"fe80::2\"\\}: If two API VIPs are given, one must be an IPv4 address, the other an IPv6",
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \\[\"fe80::1\",\"fe80::2\"\\]: If two API VIPs are given, one must be an IPv4 address, the other an IPv6",
 		},
 		{
 			name: "ingressvip_v4_not_in_machinenetwork_cidr",
@@ -2164,7 +2164,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \\[\\]string\\{\"192.168.111.4\", \"192.168.111.5\"\\}: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6",
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \\[\"192.168.111.4\",\"192.168.111.5\"\\]: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6",
 		},
 		{
 			name: "invalid_ingressvips_both_ipv6",
@@ -2177,7 +2177,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \\[\\]string\\{\"fe80::1\", \"fe80::2\"\\}: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6",
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \\[\"fe80::1\",\"fe80::2\"\\]: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6",
 		},
 		{
 			name: "identical_apivip_ingressvip",
@@ -3034,7 +3034,7 @@ func TestValidateTNF(t *testing.T) {
 				CpReplicas(2).build(),
 			name:         "fencing_only_valid_for_control_plane",
 			checkCompute: true,
-			expected:     `compute\[\d+\]\.fencing: Invalid value: types\.Fencing\{Credentials:\[\]\*types\.Credential\{\(\*types\.Credential\)\(\S+\)\}\}: fencing is only valid for control plane`,
+			expected:     `compute\[\d+\]\.fencing: Invalid value: \{"credentials":\[\{"hostName":"host1","username":"root","password":"password","address":"ipmi://192.168.111.1"\}\]\}: fencing is only valid for control plane`,
 		},
 		{
 			config: installConfig().

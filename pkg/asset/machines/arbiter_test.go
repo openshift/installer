@@ -35,7 +35,6 @@ func TestArbiterGenerateMachineConfigs(t *testing.T) {
 			expectedMachineConfig: []string{`apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  creationTimestamp: null
   labels:
     machineconfiguration.openshift.io/role: arbiter
   name: 99-arbiter-ssh
@@ -62,7 +61,6 @@ spec:
 			expectedMachineConfig: []string{`apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  creationTimestamp: null
   labels:
     machineconfiguration.openshift.io/role: arbiter
   name: 99-arbiter-disable-hyperthreading
@@ -87,7 +85,6 @@ spec:
 			expectedMachineConfig: []string{`apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  creationTimestamp: null
   labels:
     machineconfiguration.openshift.io/role: arbiter
   name: 99-arbiter-disable-hyperthreading
@@ -106,7 +103,6 @@ spec:
 `, `apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  creationTimestamp: null
   labels:
     machineconfiguration.openshift.io/role: arbiter
   name: 99-arbiter-ssh

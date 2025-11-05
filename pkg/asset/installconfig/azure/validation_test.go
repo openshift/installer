@@ -806,7 +806,7 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid disk encryption set for default pool",
 			edits:    editFunctions{invalidDiskEncryptionSetDefaultMachinePlatform},
-			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 		{
 			name:     "Valid disk encryption set for control-plane",
@@ -816,7 +816,7 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid disk encryption set for control-plane",
 			edits:    editFunctions{invalidDiskEncryptionSetControlPlane},
-			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 		{
 			name:     "Valid disk encryption set for compute",
@@ -826,7 +826,7 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid disk encryption set for compute",
 			edits:    editFunctions{invalidDiskEncryptionSetCompute},
-			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 	}
 
@@ -871,12 +871,12 @@ func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid security profile disk encryption set not found for default pool",
 			edits:    editFunctions{invalidConfidentialVMDiskEncryptionSetDefaultMachinePlatform},
-			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 		{
 			name:     "Invalid security profile disk encryption set with default encryption type for default pool",
 			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetDefaultMachinePlatform},
-			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
 		},
 		{
 			name:     "Valid security profile disk encryption set for control-plane",
@@ -886,12 +886,12 @@ func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid security profile disk encryption set not found for control-plane",
 			edits:    editFunctions{invalidConfidentialVMDiskEncryptionSetControlPlane},
-			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 		{
 			name:     "Invalid security profile disk encryption set with default encryption type for control-plane",
 			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetControlPlane},
-			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
+			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
 		},
 		{
 			name:     "Valid security profile disk encryption set for compute",
@@ -901,12 +901,12 @@ func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid security profile disk encryption set not found for compute",
 			edits:    editFunctions{invalidConfidentialVMDiskEncryptionSetCompute},
-			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 		{
 			name:     "Invalid security profile disk encryption set with default encryption type for compute",
 			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetCompute},
-			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
 		},
 	}
 

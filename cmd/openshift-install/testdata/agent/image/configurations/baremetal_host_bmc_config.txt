@@ -134,7 +134,6 @@ kind: AgentClusterInstall
 metadata:
   annotations:
     agent-install.openshift.io/install-config-overrides: '{"platform":{"baremetal":{"hosts":[{"name":"master-0","bmc":{"username":"foo","password":"pwd1","address":"http://172.22.0.10:8000/redfish/v1/Systems/d3fe1eb9-f04c-465d-b5d6-d267f0a0059b","disableCertificateVerification":false},"role":"","bootMACAddress":"00:00:00:aa:bb:01","hardwareProfile":""},{"name":"master-1","bmc":{"username":"foo","password":"pwd2","address":"http://172.22.0.11:8000/redfish/v1/Systems/65bf6806-b634-4494-bccf-032ebdecc65d","disableCertificateVerification":false},"role":"","bootMACAddress":"00:00:00:aa:bb:02","hardwareProfile":""},{"name":"master-2","bmc":{"username":"foo","password":"pwd3","address":"http://172.22.0.12:8000/redfish/v1/Systems/ff67e706-28c4-42f6-b9a2-ce714195300a","disableCertificateVerification":false},"role":"","bootMACAddress":"00:00:00:aa:bb:03","hardwareProfile":""}],"clusterProvisioningIP":"172.22.0.3","provisioningNetwork":"Managed","provisioningNetworkInterface":"enp1s0","provisioningNetworkCIDR":"172.22.0.0/24","provisioningDHCPRange":"172.22.0.10,172.22.0.254"}}}'
-  creationTimestamp: null
   name: ostest
   namespace: cluster0
 spec:

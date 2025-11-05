@@ -45,7 +45,6 @@ stringData:
 apiVersion: hive.openshift.io/v1
 kind: ClusterImageSet
 metadata:
-  creationTimestamp: null
   name: openshift-was not built correctly
 spec:
   releaseImage: $RELEASE_IMAGE
