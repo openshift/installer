@@ -5904,8 +5904,11 @@ spec:
                           - DNS
                           - File
                           - IAM
+                          - IAMCredentials
+                          - OAuth
                           - ServiceUsage
                           - Storage
+                          - STS
                           type: string
                         url:
                           description: |-
