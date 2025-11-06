@@ -1488,6 +1488,43 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
+			name: "valid release image source ImageDigstSource with valid mirror and sourcePolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:       "quay.io/ocp/release-x.y",
+					Mirrors:      []string{"mirror.example.com:5000"},
+					SourcePolicy: "NeverContactSource",
+				}}
+				return c
+			}(),
+		},
+		{
+			name: "valid release image source ImageDigstSource with no mirror and valid sourcePolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:       "quay.io/ocp/release-x.y",
+					SourcePolicy: "NeverContactSource",
+				}}
+				return c
+			}(),
+			expectedError: `^imageDigestSources\[0\]\.sourcePolicy: Invalid value: "NeverContactSource": sourcePolicy cannot be configured without a mirror$`,
+		},
+		{
+			name: "valid release image source ImageDigstSource with invalid sourcePolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:       "quay.io/ocp/release-x.y",
+					Mirrors:      []string{"mirror.example.com:5000"},
+					SourcePolicy: "InvalidPolicy",
+				}}
+				return c
+			}(),
+			expectedError: `^imageDigestSources\[0\]\.sourcePolicy: Invalid value: "InvalidPolicy": supported values are "NeverContactSource" and "AllowContactingSource"$`,
+		},
+		{
 			name: "error out ImageContentSources and ImageDigestSources and are set at the same time",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()

@@ -1222,8 +1222,25 @@ func validateImageDigestSources(groups []types.ImageDigestSource, fldPath *field
 				continue
 			}
 		}
+		if group.SourcePolicy != "" {
+			if len(group.Mirrors) == 0 {
+				allErrs = append(allErrs, field.Invalid(groupf.Child("sourcePolicy"), group.SourcePolicy, "sourcePolicy cannot be configured without a mirror"))
+			}
+			if err := validateImageMirrorSourcePolicy(group.SourcePolicy); err != nil {
+				allErrs = append(allErrs, field.Invalid(groupf.Child("sourcePolicy"), group.SourcePolicy, err.Error()))
+			}
+		}
 	}
 	return allErrs
+}
+
+func validateImageMirrorSourcePolicy(sourcePolicy configv1.MirrorSourcePolicy) error {
+	switch sourcePolicy {
+	case configv1.NeverContactSource, configv1.AllowContactingSource:
+		return nil
+	default:
+		return fmt.Errorf("supported values are %q and %q", configv1.NeverContactSource, configv1.AllowContactingSource)
+	}
 }
 
 func validateNamedRepository(r string) error {
