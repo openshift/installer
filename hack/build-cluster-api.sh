@@ -8,6 +8,30 @@ CLUSTER_API_MIRROR_DIR="${PWD}/pkg/clusterapi/mirror/"
 ENVTEST_K8S_VERSION="1.32.0"
 ENVTEST_ARCH=$(go env GOOS)-$(go env GOARCH)
 
+# Build cluster-api binaries, skipping ones that already exist
+build_cluster_api_binaries() {
+  # List of provider binaries
+  providers="aws azure azureaso gcp ibmcloud nutanix openstack vsphere"
+
+  # Build core cluster-api binary if it doesn't exist
+  if [ -f "${CLUSTER_API_BIN_DIR}/cluster-api" ]; then
+    echo "cluster-api binary already exists, skipping build"
+  else
+    echo "building cluster-api binary"
+    make -C cluster-api go-build-cluster-api
+  fi
+
+  # Build each provider binary if it doesn't exist
+  for provider in ${providers}; do
+    if [ -f "${CLUSTER_API_BIN_DIR}/cluster-api-provider-${provider}" ]; then
+      echo "cluster-api-provider-${provider} binary already exists, skipping build"
+    else
+      echo "building cluster-api-provider-${provider} binary"
+      make -C cluster-api "go-build.${provider}"
+    fi
+  done
+}
+
 copy_cluster_api_to_mirror() {
   mkdir -p "${CLUSTER_API_BIN_DIR}"
   mkdir -p "${CLUSTER_API_MIRROR_DIR}"
