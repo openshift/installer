@@ -191,7 +191,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/etc/assisted/no-config-image", "root", 0644, ""))
 
 		// Enable the UI service.
-		enabledServices = append(enabledServices, "agent-start-ui.service")
+		enabledServices = append(enabledServices, "agent-ui.service")
 		interactiveUIFile := ignition.FileFromString("/etc/assisted/interactive-ui", "root", 0644, "")
 		config.Storage.Files = append(config.Storage.Files, interactiveUIFile)
 
