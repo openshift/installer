@@ -5465,6 +5465,8 @@ spec:
                           type: string
                         hardwareProfile:
                           type: string
+                        metadata:
+                          type: object
                         name:
                           type: string
                         networkConfig:
