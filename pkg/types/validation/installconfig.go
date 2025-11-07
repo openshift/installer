@@ -1638,37 +1638,48 @@ func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path
 	return errs
 }
 
-func validateFencingCredentialAddress(address string, fldPath *field.Path) field.ErrorList {
-	errs := field.ErrorList{}
+// validateRedfishURL validates that a URL is a valid RedFish BMC address.
+// Returns error with description if invalid, nil if valid.
+// This is a shared validation function used for both controlPlane.fencing.credentials
+// and platform.baremetal.hosts[].bmc validation.
+func validateRedfishURL(address string) error {
 	if address == "" {
-		return errs
+		return nil // empty is allowed for optional fields
 	}
 
-	// Parse the URL to ensure it's a valid URL
+	// Parse the URL to ensure it's valid
 	parsedURL, err := url.Parse(address)
 	if err != nil {
-		errs = append(errs, field.Invalid(fldPath, address, fmt.Sprintf("invalid URL format: %v", err)))
-		return errs
+		return fmt.Errorf("invalid URL format: %v", err)
 	}
 
 	// Check if the address contains "redfish"
 	if !strings.Contains(address, "redfish") {
-		errs = append(errs, field.Invalid(fldPath, address, "fencing only supports redfish-compatible BMC addresses, IPMI is not supported"))
+		return errors.New("fencing only supports redfish-compatible BMC addresses, IPMI is not supported")
 	}
 
-	// Validate port - try to infer standard schema ports for https/http, otherwise notify user port is needed
+	// Validate port - try to infer standard schema ports for https/http
 	redfishPort := parsedURL.Port()
 	if redfishPort == "" {
 		switch {
 		case strings.Contains(parsedURL.Scheme, "https"):
-			// Port 443 is default for https, so it's acceptable
+			// Port 443 is default for https, acceptable
 		case strings.Contains(parsedURL.Scheme, "http"):
-			// Port 80 is default for http, so it's acceptable
+			// Port 80 is default for http, acceptable
 		default:
-			errs = append(errs, field.Invalid(fldPath, address, "failed to parse redfish address, no port number found"))
+			return errors.New("failed to parse redfish address, no port number found")
 		}
 	}
 
+	return nil
+}
+
+// validateFencingCredentialAddress wraps validateRedfishURL for use in install-config validation.
+func validateFencingCredentialAddress(address string, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if err := validateRedfishURL(address); err != nil {
+		errs = append(errs, field.Invalid(fldPath, address, err.Error()))
+	}
 	return errs
 }
 
