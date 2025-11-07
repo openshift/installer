@@ -9,6 +9,7 @@ import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/yaml"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
@@ -752,4 +753,247 @@ func iface(name string, mac string) *InterfacetBuilder {
 
 func (ib *InterfacetBuilder) build() *aiv1beta1.Interface {
 	return &ib.Interface
+}
+
+func TestGenerateFencingCredentialsYAML(t *testing.T) {
+	tests := []struct {
+		name               string
+		bmc                *baremetal.BMC
+		expectedCertVerify string
+		expectError        bool
+		expectNil          bool
+	}{
+		{
+			name: "BMC with certificate verification disabled",
+			bmc: &baremetal.BMC{
+				Address:                        "redfish+https://192.168.1.1:8000/redfish/v1/Systems/1",
+				Username:                       "admin",
+				Password:                       "password",
+				DisableCertificateVerification: true,
+			},
+			expectedCertVerify: "Disabled",
+			expectError:        false,
+			expectNil:          false,
+		},
+		{
+			name: "BMC with certificate verification enabled",
+			bmc: &baremetal.BMC{
+				Address:                        "redfish+https://192.168.1.1:8000/redfish/v1/Systems/1",
+				Username:                       "admin",
+				Password:                       "password",
+				DisableCertificateVerification: false,
+			},
+			expectedCertVerify: "Enabled",
+			expectError:        false,
+			expectNil:          false,
+		},
+		{
+			name:        "Nil BMC",
+			bmc:         nil,
+			expectError: true,
+			expectNil:   false,
+		},
+		{
+			name: "BMC with empty address",
+			bmc: &baremetal.BMC{
+				Address:  "",
+				Username: "admin",
+				Password: "password",
+			},
+			expectError: false,
+			expectNil:   true,
+		},
+		{
+			name: "BMC with various redfish schemes",
+			bmc: &baremetal.BMC{
+				Address:                        "idrac-redfish+https://192.168.1.1:8000/redfish/v1/Systems/1",
+				Username:                       "admin",
+				Password:                       "password",
+				DisableCertificateVerification: false,
+			},
+			expectedCertVerify: "Enabled",
+			expectError:        false,
+			expectNil:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := generateFencingCredentialsYAML(tt.bmc)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+
+			if tt.expectNil {
+				assert.Nil(t, data)
+				return
+			}
+
+			// Unmarshal and verify structure
+			var fc struct {
+				Address                 string  `yaml:"address"`
+				Username                string  `yaml:"username"`
+				Password                string  `yaml:"password"`
+				CertificateVerification *string `yaml:"certificateVerification"`
+			}
+
+			err = yaml.Unmarshal(data, &fc)
+			assert.NoError(t, err)
+
+			assert.Equal(t, tt.bmc.Address, fc.Address)
+			assert.Equal(t, tt.bmc.Username, fc.Username)
+			assert.Equal(t, tt.bmc.Password, fc.Password)
+			assert.NotNil(t, fc.CertificateVerification)
+			assert.Equal(t, tt.expectedCertVerify, *fc.CertificateVerification)
+		})
+	}
+}
+
+func TestHostConfigFiles_WithFencingCredentials(t *testing.T) {
+	agentHosts := &AgentHosts{
+		Hosts: []agent.Host{
+			{
+				Hostname: "master-0",
+				Role:     "master",
+				BMC: baremetal.BMC{
+					Address:                        "redfish+https://192.168.1.1:8000/redfish/v1/Systems/1",
+					Username:                       "admin",
+					Password:                       "password",
+					DisableCertificateVerification: true,
+				},
+				RootDeviceHints: baremetal.RootDeviceHints{
+					DeviceName: "/dev/sda",
+				},
+				Interfaces: []*aiv1beta1.Interface{
+					{
+						Name:       "eth0",
+						MacAddress: "00:11:22:33:44:55",
+					},
+				},
+			},
+		},
+	}
+
+	files, err := agentHosts.HostConfigFiles()
+	assert.NoError(t, err)
+
+	// Verify fencing-credentials.yaml was generated
+	fcPath := "master-0/fencing-credentials.yaml"
+	assert.Contains(t, files, fcPath)
+
+	// Verify content
+	var fc struct {
+		Address                 string  `yaml:"address"`
+		Username                string  `yaml:"username"`
+		Password                string  `yaml:"password"`
+		CertificateVerification *string `yaml:"certificateVerification"`
+	}
+
+	err = yaml.Unmarshal(files[fcPath], &fc)
+	assert.NoError(t, err)
+	assert.Equal(t, "redfish+https://192.168.1.1:8000/redfish/v1/Systems/1", fc.Address)
+	assert.Equal(t, "admin", fc.Username)
+	assert.Equal(t, "password", fc.Password)
+	assert.NotNil(t, fc.CertificateVerification)
+	assert.Equal(t, "Disabled", *fc.CertificateVerification)
+
+	// Verify other hostconfig files were also generated
+	assert.Contains(t, files, "master-0/mac_addresses")
+	assert.Contains(t, files, "master-0/root-device-hints.yaml")
+	assert.Contains(t, files, "master-0/role")
+}
+
+func TestHostConfigFiles_WithoutBMC(t *testing.T) {
+	agentHosts := &AgentHosts{
+		Hosts: []agent.Host{
+			{
+				Hostname: "worker-0",
+				Role:     "worker",
+				// No BMC configured
+				Interfaces: []*aiv1beta1.Interface{
+					{
+						Name:       "eth0",
+						MacAddress: "00:11:22:33:44:66",
+					},
+				},
+			},
+		},
+	}
+
+	files, err := agentHosts.HostConfigFiles()
+	assert.NoError(t, err)
+
+	// Verify fencing-credentials.yaml was NOT generated for hosts without BMC
+	fcPath := "worker-0/fencing-credentials.yaml"
+	assert.NotContains(t, files, fcPath)
+
+	// But other files should still be generated
+	assert.Contains(t, files, "worker-0/mac_addresses")
+	assert.Contains(t, files, "worker-0/role")
+}
+
+func TestHostConfigFiles_MultiplHostsWithMixedBMC(t *testing.T) {
+	agentHosts := &AgentHosts{
+		Hosts: []agent.Host{
+			{
+				Hostname: "master-0",
+				Role:     "master",
+				BMC: baremetal.BMC{
+					Address:                        "redfish+https://192.168.1.1:8000/redfish/v1/Systems/1",
+					Username:                       "admin",
+					Password:                       "password",
+					DisableCertificateVerification: false,
+				},
+				Interfaces: []*aiv1beta1.Interface{
+					{MacAddress: "00:11:22:33:44:55"},
+				},
+			},
+			{
+				Hostname: "master-1",
+				Role:     "master",
+				BMC: baremetal.BMC{
+					Address:                        "redfish+https://192.168.1.2:8000/redfish/v1/Systems/2",
+					Username:                       "admin",
+					Password:                       "password",
+					DisableCertificateVerification: true,
+				},
+				Interfaces: []*aiv1beta1.Interface{
+					{MacAddress: "00:11:22:33:44:56"},
+				},
+			},
+			{
+				Hostname: "worker-0",
+				Role:     "worker",
+				// No BMC
+				Interfaces: []*aiv1beta1.Interface{
+					{MacAddress: "00:11:22:33:44:57"},
+				},
+			},
+		},
+	}
+
+	files, err := agentHosts.HostConfigFiles()
+	assert.NoError(t, err)
+
+	// Verify both masters have fencing-credentials.yaml
+	assert.Contains(t, files, "master-0/fencing-credentials.yaml")
+	assert.Contains(t, files, "master-1/fencing-credentials.yaml")
+
+	// Verify worker does NOT have fencing-credentials.yaml
+	assert.NotContains(t, files, "worker-0/fencing-credentials.yaml")
+
+	// Verify different certificate verification settings
+	var fc0, fc1 struct {
+		CertificateVerification *string `yaml:"certificateVerification"`
+	}
+
+	yaml.Unmarshal(files["master-0/fencing-credentials.yaml"], &fc0)
+	yaml.Unmarshal(files["master-1/fencing-credentials.yaml"], &fc1)
+
+	assert.Equal(t, "Enabled", *fc0.CertificateVerification)
+	assert.Equal(t, "Disabled", *fc1.CertificateVerification)
 }

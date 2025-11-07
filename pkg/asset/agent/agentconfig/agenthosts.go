@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types/agent"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
