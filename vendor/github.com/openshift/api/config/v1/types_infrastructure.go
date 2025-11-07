@@ -491,6 +491,21 @@ type AWSServiceEndpoint struct {
 	URL string `json:"url"`
 }
 
+// IPFamilyType represents the IP protocol family that cloud platform resources should use.
+// +kubebuilder:validation:Enum=IPv4;DualStackIPv6Primary;DualStackIPv4Primary
+type IPFamilyType string
+
+const (
+	// IPv4 indicates that cloud platform resources should use IPv4 addressing only.
+	IPv4 IPFamilyType = "IPv4"
+
+	// DualStackIPv6Primary indicates that cloud platform resources should use dual-stack networking with IPv6 as primary.
+	DualStackIPv6Primary IPFamilyType = "DualStackIPv6Primary"
+
+	// DualStackIPv4Primary indicates that cloud platform resources should use dual-stack networking with IPv4 as primary.
+	DualStackIPv4Primary IPFamilyType = "DualStackIPv4Primary"
+)
+
 // AWSPlatformSpec holds the desired state of the Amazon Web Services infrastructure provider.
 // This only includes fields that can be modified in the cluster.
 type AWSPlatformSpec struct {
@@ -536,6 +551,18 @@ type AWSPlatformStatus struct {
 	// +optional
 	// +nullable
 	CloudLoadBalancerConfig *CloudLoadBalancerConfig `json:"cloudLoadBalancerConfig,omitempty"`
+
+	// ipFamily specifies the IP protocol family that should be used for AWS
+	// network resources. This controls whether AWS resources are created with
+	// IPv4-only, or dual-stack networking with IPv4 or IPv6 as the primary
+	// protocol family.
+	//
+	// +default="IPv4"
+	// +kubebuilder:default="IPv4"
+	// +kubebuilder:validation:XValidation:rule="oldSelf == '' || self == oldSelf",message="ipFamily is immutable once set"
+	// +openshift:enable:FeatureGate=AWSDualStackInstall
+	// +optional
+	IPFamily IPFamilyType `json:"ipFamily,omitempty"`
 }
 
 // AWSResourceTag is a tag to apply to AWS resources created for the cluster.
@@ -607,6 +634,18 @@ type AzurePlatformStatus struct {
 	// +openshift:enable:FeatureGate=AzureClusterHostedDNSInstall
 	// +optional
 	CloudLoadBalancerConfig *CloudLoadBalancerConfig `json:"cloudLoadBalancerConfig,omitempty"`
+
+	// ipFamily specifies the IP protocol family that should be used for Azure
+	// network resources. This controls whether Azure resources are created with
+	// IPv4-only, or dual-stack networking with IPv4 or IPv6 as the primary
+	// protocol family.
+	//
+	// +default="IPv4"
+	// +kubebuilder:default="IPv4"
+	// +kubebuilder:validation:XValidation:rule="oldSelf == '' || self == oldSelf",message="ipFamily is immutable once set"
+	// +openshift:enable:FeatureGate=AzureDualStackInstall
+	// +optional
+	IPFamily IPFamilyType `json:"ipFamily,omitempty"`
 }
 
 // AzureResourceTag is a tag to apply to Azure resources created for the cluster.
@@ -650,7 +689,7 @@ const (
 )
 
 // GCPServiceEndpointName is the name of the GCP Service Endpoint.
-// +kubebuilder:validation:Enum=Compute;Container;CloudResourceManager;DNS;File;IAM;ServiceUsage;Storage
+// +kubebuilder:validation:Enum=Compute;Container;CloudResourceManager;DNS;File;IAM;IAMCredentials;OAuth;ServiceUsage;Storage;STS
 type GCPServiceEndpointName string
 
 const (
@@ -672,11 +711,20 @@ const (
 	// GCPServiceEndpointNameIAM is the name used for the GCP IAM Service endpoint.
 	GCPServiceEndpointNameIAM GCPServiceEndpointName = "IAM"
 
+	// GCPServiceEndpointNameIAMCredentials is the name used for the GCP IAM Credentials Service endpoint.
+	GCPServiceEndpointNameIAMCredentials GCPServiceEndpointName = "IAMCredentials"
+
+	// GCPServiceEndpointNameOAuth is the name used for the GCP OAuth2 Service endpoint.
+	GCPServiceEndpointNameOAuth GCPServiceEndpointName = "OAuth"
+
 	// GCPServiceEndpointNameServiceUsage is the name used for the GCP Service Usage Service endpoint.
 	GCPServiceEndpointNameServiceUsage GCPServiceEndpointName = "ServiceUsage"
 
 	// GCPServiceEndpointNameStorage is the name used for the GCP Storage Service endpoint.
 	GCPServiceEndpointNameStorage GCPServiceEndpointName = "Storage"
+
+	// GCPServiceEndpointNameSTS is the name used for the GCP STS Service endpoint.
+	GCPServiceEndpointNameSTS GCPServiceEndpointName = "STS"
 )
 
 // GCPServiceEndpoint store the configuration of a custom url to
@@ -767,10 +815,10 @@ type GCPPlatformStatus struct {
 	// used when creating clients to interact with GCP services.
 	// When not specified, the default endpoint for the GCP region will be used.
 	// Only 1 endpoint override is permitted for each GCP service.
-	// The maximum number of endpoint overrides allowed is 9.
+	// The maximum number of endpoint overrides allowed is 11.
 	// +listType=map
 	// +listMapKey=name
-	// +kubebuilder:validation:MaxItems=8
+	// +kubebuilder:validation:MaxItems=11
 	// +kubebuilder:validation:XValidation:rule="self.all(x, self.exists_one(y, x.name == y.name))",message="only 1 endpoint override is permitted per GCP service name"
 	// +optional
 	// +openshift:enable:FeatureGate=GCPCustomAPIEndpointsInstall
@@ -1728,7 +1776,7 @@ type IBMCloudPlatformSpec struct {
 	// serviceEndpoints is a list of custom endpoints which will override the default
 	// service endpoints of an IBM service. These endpoints are used by components
 	// within the cluster when trying to reach the IBM Cloud Services that have been
-	// overriden. The CCCMO reads in the IBMCloudPlatformSpec and validates each
+	// overridden. The CCCMO reads in the IBMCloudPlatformSpec and validates each
 	// endpoint is resolvable. Once validated, the cloud config and IBMCloudPlatformStatus
 	// are updated to reflect the same custom endpoints.
 	// A maximum of 13 service endpoints overrides are supported.
@@ -1762,7 +1810,7 @@ type IBMCloudPlatformStatus struct {
 	// serviceEndpoints is a list of custom endpoints which will override the default
 	// service endpoints of an IBM service. These endpoints are used by components
 	// within the cluster when trying to reach the IBM Cloud Services that have been
-	// overriden. The CCCMO reads in the IBMCloudPlatformSpec and validates each
+	// overridden. The CCCMO reads in the IBMCloudPlatformSpec and validates each
 	// endpoint is resolvable. Once validated, the cloud config and IBMCloudPlatformStatus
 	// are updated to reflect the same custom endpoints.
 	// +openshift:validation:FeatureGateAwareMaxItems:featureGate=DyanmicServiceEndpointIBMCloud,maxItems=13

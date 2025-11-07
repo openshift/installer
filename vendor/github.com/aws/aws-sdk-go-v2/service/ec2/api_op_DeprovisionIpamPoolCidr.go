@@ -13,8 +13,9 @@ import (
 
 // Deprovision a CIDR provisioned from an IPAM pool. If you deprovision a CIDR
 // from a pool that has a source pool, the CIDR is recycled back into the source
-// pool. For more information, see Deprovision pool CIDRs (https://docs.aws.amazon.com/vpc/latest/ipam/depro-pool-cidr-ipam.html)
-// in the Amazon VPC IPAM User Guide.
+// pool. For more information, see [Deprovision pool CIDRs]in the Amazon VPC IPAM User Guide.
+//
+// [Deprovision pool CIDRs]: https://docs.aws.amazon.com/vpc/latest/ipam/depro-pool-cidr-ipam.html
 func (c *Client) DeprovisionIpamPoolCidr(ctx context.Context, params *DeprovisionIpamPoolCidrInput, optFns ...func(*Options)) (*DeprovisionIpamPoolCidrOutput, error) {
 	if params == nil {
 		params = &DeprovisionIpamPoolCidrInput{}
@@ -103,6 +104,9 @@ func (c *Client) addOperationDeprovisionIpamPoolCidrMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -113,6 +117,15 @@ func (c *Client) addOperationDeprovisionIpamPoolCidrMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeprovisionIpamPoolCidrValidationMiddleware(stack); err != nil {
@@ -134,6 +147,18 @@ func (c *Client) addOperationDeprovisionIpamPoolCidrMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

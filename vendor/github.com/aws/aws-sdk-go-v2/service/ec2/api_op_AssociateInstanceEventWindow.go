@@ -13,8 +13,11 @@ import (
 
 // Associates one or more targets with an event window. Only one type of target
 // (instance IDs, Dedicated Host IDs, or tags) can be specified with an event
-// window. For more information, see Define event windows for scheduled events (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/event-windows.html)
-// in the Amazon EC2 User Guide.
+// window.
+//
+// For more information, see [Define event windows for scheduled events] in the Amazon EC2 User Guide.
+//
+// [Define event windows for scheduled events]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/event-windows.html
 func (c *Client) AssociateInstanceEventWindow(ctx context.Context, params *AssociateInstanceEventWindowInput, optFns ...func(*Options)) (*AssociateInstanceEventWindowOutput, error) {
 	if params == nil {
 		params = &AssociateInstanceEventWindowInput{}
@@ -105,6 +108,9 @@ func (c *Client) addOperationAssociateInstanceEventWindowMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +121,15 @@ func (c *Client) addOperationAssociateInstanceEventWindowMiddlewares(stack *midd
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAssociateInstanceEventWindowValidationMiddleware(stack); err != nil {
@@ -136,6 +151,18 @@ func (c *Client) addOperationAssociateInstanceEventWindowMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

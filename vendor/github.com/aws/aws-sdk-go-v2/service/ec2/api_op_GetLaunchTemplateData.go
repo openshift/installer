@@ -12,10 +12,12 @@ import (
 )
 
 // Retrieves the configuration data of the specified instance. You can use this
-// data to create a launch template. This action calls on other describe actions to
-// get instance information. Depending on your instance configuration, you may need
-// to allow the following actions in your IAM policy: DescribeSpotInstanceRequests
-// , DescribeInstanceCreditSpecifications , DescribeVolumes , and
+// data to create a launch template.
+//
+// This action calls on other describe actions to get instance information.
+// Depending on your instance configuration, you may need to allow the following
+// actions in your IAM policy: DescribeSpotInstanceRequests ,
+// DescribeInstanceCreditSpecifications , DescribeVolumes , and
 // DescribeInstanceAttribute . Or, you can allow describe* depending on your
 // instance requirements.
 func (c *Client) GetLaunchTemplateData(ctx context.Context, params *GetLaunchTemplateDataInput, optFns ...func(*Options)) (*GetLaunchTemplateDataOutput, error) {
@@ -103,6 +105,9 @@ func (c *Client) addOperationGetLaunchTemplateDataMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -113,6 +118,15 @@ func (c *Client) addOperationGetLaunchTemplateDataMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetLaunchTemplateDataValidationMiddleware(stack); err != nil {
@@ -134,6 +148,18 @@ func (c *Client) addOperationGetLaunchTemplateDataMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

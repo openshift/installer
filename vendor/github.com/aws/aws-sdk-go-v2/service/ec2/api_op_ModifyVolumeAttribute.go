@@ -11,13 +11,17 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Modifies a volume attribute. By default, all I/O operations for the volume are
-// suspended when the data on the volume is determined to be potentially
-// inconsistent, to prevent undetectable, latent data corruption. The I/O access to
-// the volume can be resumed by first enabling I/O access and then checking the
-// data consistency on your volume. You can change the default behavior to resume
-// I/O operations. We recommend that you change this only for boot volumes or for
-// volumes that are stateless or disposable.
+// Modifies a volume attribute.
+//
+// By default, all I/O operations for the volume are suspended when the data on
+// the volume is determined to be potentially inconsistent, to prevent
+// undetectable, latent data corruption. The I/O access to the volume can be
+// resumed by first enabling I/O access and then checking the data consistency on
+// your volume.
+//
+// You can change the default behavior to resume I/O operations. We recommend that
+// you change this only for boot volumes or for volumes that are stateless or
+// disposable.
 func (c *Client) ModifyVolumeAttribute(ctx context.Context, params *ModifyVolumeAttributeInput, optFns ...func(*Options)) (*ModifyVolumeAttributeOutput, error) {
 	if params == nil {
 		params = &ModifyVolumeAttributeInput{}
@@ -102,6 +106,9 @@ func (c *Client) addOperationModifyVolumeAttributeMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,6 +119,15 @@ func (c *Client) addOperationModifyVolumeAttributeMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyVolumeAttributeValidationMiddleware(stack); err != nil {
@@ -133,6 +149,18 @@ func (c *Client) addOperationModifyVolumeAttributeMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

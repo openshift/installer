@@ -16,14 +16,14 @@ limitations under the License.
 
 package v1beta1
 
-import clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+import clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
 // Conditions and condition Reasons for the VSphereCluster object.
 
 const (
 	// FailureDomainsAvailableCondition documents the status of the failure domains
 	// associated to the VSphereCluster.
-	FailureDomainsAvailableCondition clusterv1.ConditionType = "FailureDomainsAvailable"
+	FailureDomainsAvailableCondition clusterv1beta1.ConditionType = "FailureDomainsAvailable"
 
 	// FailureDomainsSkippedReason (Severity=Info) documents that some of the failure domain statuses
 	// associated to the VSphereCluster are reported as not ready.
@@ -43,7 +43,7 @@ const (
 
 const (
 	// VMProvisionedCondition documents the status of the provisioning of a VSphereMachine and its underlying VSphereVM.
-	VMProvisionedCondition clusterv1.ConditionType = "VMProvisioned"
+	VMProvisionedCondition clusterv1beta1.ConditionType = "VMProvisioned"
 
 	// WaitingForClusterInfrastructureReason (Severity=Info) documents a VSphereMachine waiting for the cluster
 	// infrastructure to be ready before starting the provisioning process.
@@ -106,7 +106,7 @@ const (
 	// the underlying VM and would require manual intervention to fix the situation.
 	//
 	// NOTE: This condition does not apply to VSphereMachine.
-	PCIDevicesDetachedCondition clusterv1.ConditionType = "PCIDevicesDetached"
+	PCIDevicesDetachedCondition clusterv1beta1.ConditionType = "PCIDevicesDetached"
 
 	// NotFoundReason (Severity=Warning) documents the VSphereVM not having the PCI device attached during VM startup.
 	// This would indicate that the PCI devices were removed out of band by an external entity.
@@ -118,7 +118,7 @@ const (
 const (
 	// VCenterAvailableCondition documents the connectivity with vcenter
 	// for a given resource.
-	VCenterAvailableCondition clusterv1.ConditionType = "VCenterAvailable"
+	VCenterAvailableCondition clusterv1beta1.ConditionType = "VCenterAvailable"
 
 	// VCenterUnreachableReason (Severity=Error) documents a controller detecting
 	// issues with VCenter reachability.
@@ -127,7 +127,7 @@ const (
 
 const (
 	// ClusterModulesAvailableCondition documents the availability of cluster modules for the VSphereCluster object.
-	ClusterModulesAvailableCondition clusterv1.ConditionType = "ClusterModulesAvailable"
+	ClusterModulesAvailableCondition clusterv1beta1.ConditionType = "ClusterModulesAvailable"
 
 	// MissingVCenterVersionReason (Severity=Warning) documents a controller detecting
 	//  the scenario in which the vCenter version is not set in the status of the VSphereCluster object.
@@ -146,7 +146,7 @@ const (
 const (
 	// CredentialsAvailableCondidtion is used by VSphereClusterIdentity when a credential
 	// secret is available and unused by other VSphereClusterIdentities.
-	CredentialsAvailableCondidtion clusterv1.ConditionType = "CredentialsAvailable"
+	CredentialsAvailableCondidtion clusterv1beta1.ConditionType = "CredentialsAvailable"
 
 	// SecretNotAvailableReason is used when the secret referenced by the VSphereClusterIdentity cannot be found.
 	SecretNotAvailableReason = "SecretNotAvailable"
@@ -160,7 +160,7 @@ const (
 
 const (
 	// PlacementConstraintMetCondition documents whether the placement constraint is configured correctly or not.
-	PlacementConstraintMetCondition clusterv1.ConditionType = "PlacementConstraintMet"
+	PlacementConstraintMetCondition clusterv1beta1.ConditionType = "PlacementConstraintMet"
 
 	// ResourcePoolNotFoundReason (Severity=Error) documents that the resource pool in the placement constraint
 	// associated to the VSphereDeploymentZone is misconfigured.
@@ -173,7 +173,7 @@ const (
 
 const (
 	// VSphereFailureDomainValidatedCondition documents whether the failure domain for the deployment zone is configured correctly or not.
-	VSphereFailureDomainValidatedCondition clusterv1.ConditionType = "VSphereFailureDomainValidated"
+	VSphereFailureDomainValidatedCondition clusterv1beta1.ConditionType = "VSphereFailureDomainValidated"
 
 	// RegionMisconfiguredReason (Severity=Error) documents that the region for the Failure Domain associated to
 	// the VSphereDeploymentZone is misconfigured.
@@ -206,7 +206,7 @@ const (
 const (
 	// IPAddressClaimedCondition documents the status of claiming an IP address
 	// from an IPAM provider.
-	IPAddressClaimedCondition clusterv1.ConditionType = "IPAddressClaimed"
+	IPAddressClaimedCondition clusterv1beta1.ConditionType = "IPAddressClaimed"
 
 	// IPAddressClaimsBeingCreatedReason (Severity=Info) documents that claims for the
 	// IP addresses required by the VSphereVM are being created.
@@ -228,7 +228,7 @@ const (
 const (
 	// GuestSoftPowerOffSucceededCondition documents the status of performing guest initiated
 	// graceful shutdown.
-	GuestSoftPowerOffSucceededCondition clusterv1.ConditionType = "GuestSoftPowerOffSucceeded"
+	GuestSoftPowerOffSucceededCondition clusterv1beta1.ConditionType = "GuestSoftPowerOffSucceeded"
 
 	// GuestSoftPowerOffInProgressReason (Severity=Info) documents that the guest receives
 	// a graceful shutdown request.

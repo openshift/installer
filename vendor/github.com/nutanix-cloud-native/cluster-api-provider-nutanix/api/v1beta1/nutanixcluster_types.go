@@ -23,7 +23,7 @@ import (
 	credentialTypes "github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	capiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	capiv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck // suppress complaining on Deprecated package
 )
 
 const (
@@ -52,7 +52,7 @@ type NutanixClusterSpec struct {
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// host can be either DNS name or ip address
 	// +optional
-	ControlPlaneEndpoint capiv1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint capiv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 
 	// prismCentral holds the endpoint address and port to access the Nutanix Prism Central.
 	// When a cluster-wide proxy is installed, by default, this endpoint will be accessed via the proxy.
@@ -90,11 +90,11 @@ type NutanixClusterStatus struct {
 
 	// failureDomains are a list of failure domains configured in the
 	// cluster's spec and validated by the cluster controller.
-	FailureDomains capiv1.FailureDomains `json:"failureDomains,omitempty"`
+	FailureDomains capiv1beta1.FailureDomains `json:"failureDomains,omitempty"`
 
 	// Conditions defines current service state of the NutanixCluster.
 	// +optional
-	Conditions capiv1.Conditions `json:"conditions,omitempty"`
+	Conditions capiv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// Will be set in case of failure of Cluster instance
 	// +optional
@@ -156,12 +156,12 @@ type NutanixFailureDomainConfig struct {
 }
 
 // GetConditions returns the set of conditions for this object.
-func (ncl *NutanixCluster) GetConditions() capiv1.Conditions {
+func (ncl *NutanixCluster) GetConditions() capiv1beta1.Conditions {
 	return ncl.Status.Conditions
 }
 
 // SetConditions sets the conditions on this object.
-func (ncl *NutanixCluster) SetConditions(conditions capiv1.Conditions) {
+func (ncl *NutanixCluster) SetConditions(conditions capiv1beta1.Conditions) {
 	ncl.Status.Conditions = conditions
 }
 

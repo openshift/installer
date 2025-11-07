@@ -20,7 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -154,7 +154,7 @@ type IBMVPCMachineStatus struct {
 
 	// Conditions deefines current service state of the IBMVPCMachine.
 	// +optional
-	Conditions capiv1beta1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// FailureReason will be set in the event that there is a terminal problem
 	// reconciling the Machine and will contain a succinct value suitable
@@ -175,6 +175,21 @@ type IBMVPCMachineStatus struct {
 	// LoadBalancerPoolMembers is the status of IBM Cloud VPC Load Balancer Backend Pools the machine is a member.
 	// +optional
 	LoadBalancerPoolMembers []VPCLoadBalancerBackendPoolMember `json:"loadBalancerPoolMembers,omitempty"`
+
+	// V1beta2 groups all the fields that will be added or modified in IBMVPCMachine's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *IBMVPCMachineV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// IBMVPCMachineV1Beta2Status groups all the fields that will be added or modified in IBMVPCMachineStatus with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type IBMVPCMachineV1Beta2Status struct {
+	// Conditions represents the observations of a IBMVPCMachine's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -193,12 +208,12 @@ type IBMVPCMachine struct {
 }
 
 // GetConditions returns the observations of the operational state of the IBMVPCMachine resource.
-func (r *IBMVPCMachine) GetConditions() capiv1beta1.Conditions {
+func (r *IBMVPCMachine) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
-// SetConditions sets the underlying service state of the IBMVPCMachine to the predescribed clusterv1.Conditions.
-func (r *IBMVPCMachine) SetConditions(conditions capiv1beta1.Conditions) {
+// SetConditions sets the underlying service state of the IBMVPCMachine to the predescribed clusterv1beta1.Conditions.
+func (r *IBMVPCMachine) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 
@@ -211,6 +226,22 @@ type IBMVPCMachineList struct {
 	Items           []IBMVPCMachine `json:"items"`
 }
 
+// GetV1Beta2Conditions returns the set of conditions for IBMVPCMachine object.
+func (r *IBMVPCMachine) GetV1Beta2Conditions() []metav1.Condition {
+	if r.Status.V1Beta2 == nil {
+		return nil
+	}
+	return r.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for IBMVPCMachine object.
+func (r *IBMVPCMachine) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if r.Status.V1Beta2 == nil {
+		r.Status.V1Beta2 = &IBMVPCMachineV1Beta2Status{}
+	}
+	r.Status.V1Beta2.Conditions = conditions
+}
+
 func init() {
-	SchemeBuilder.Register(&IBMVPCMachine{}, &IBMVPCMachineList{})
+	objectTypes = append(objectTypes, &IBMVPCMachine{}, &IBMVPCMachineList{})
 }

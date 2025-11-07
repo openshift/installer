@@ -70,14 +70,14 @@ type Env struct {
 	// Values holds a map of arbitrary values for use by custom
 	// testscript commands. This enables Setup to pass arbitrary
 	// values (not just strings) through to custom commands.
-	Values map[interface{}]interface{}
+	Values map[any]any
 
 	ts *TestScript
 }
 
 // Value returns a value from Env.Values, or nil if no
 // value was set by Setup.
-func (ts *TestScript) Value(key interface{}) interface{} {
+func (ts *TestScript) Value(key any) any {
 	return ts.values[key]
 }
 
@@ -181,7 +181,7 @@ type Params struct {
 	// script.
 	UpdateScripts bool
 
-	// RequireExplicitExec requires that commands passed to RunMain must be used
+	// RequireExplicitExec requires that commands passed to [Main] must be used
 	// in test scripts via `exec cmd` and not simply `cmd`. This can help keep
 	// consistency across test scripts as well as keep separate process
 	// executions explicit.
@@ -214,10 +214,10 @@ func Run(t *testing.T, p Params) {
 // T holds all the methods of the *testing.T type that
 // are used by testscript.
 type T interface {
-	Skip(...interface{})
-	Fatal(...interface{})
+	Skip(...any)
+	Fatal(...any)
 	Parallel()
-	Log(...interface{})
+	Log(...any)
 	FailNow()
 	Run(string, func(T))
 	// Verbose is usually implemented by the testing package
@@ -376,30 +376,30 @@ type TestScript struct {
 	params        Params
 	t             T
 	testTempDir   string
-	workdir       string                      // temporary work dir ($WORK)
-	log           bytes.Buffer                // test execution log (printed at end of test)
-	mark          int                         // offset of next log truncation
-	cd            string                      // current directory during test execution; initially $WORK/gopath/src
-	name          string                      // short name of test ("foo")
-	file          string                      // full file name ("testdata/script/foo.txt")
-	lineno        int                         // line number currently executing
-	line          string                      // line currently executing
-	env           []string                    // environment list (for os/exec)
-	envMap        map[string]string           // environment mapping (matches env; on Windows keys are lowercase)
-	values        map[interface{}]interface{} // values for custom commands
-	stdin         string                      // standard input to next 'go' command; set by 'stdin' command.
-	stdout        string                      // standard output from last 'go' command; for 'stdout' command
-	stderr        string                      // standard error from last 'go' command; for 'stderr' command
-	ttyin         string                      // terminal input; set by 'ttyin' command
-	stdinPty      bool                        // connect pty to standard input; set by 'ttyin -stdin' command
-	ttyout        string                      // terminal output; for 'ttyout' command
-	stopped       bool                        // test wants to stop early
-	start         time.Time                   // time phase started
-	background    []backgroundCmd             // backgrounded 'exec' and 'go' commands
-	deferred      func()                      // deferred cleanup actions.
-	archive       *txtar.Archive              // the testscript being run.
-	scriptFiles   map[string]string           // files stored in the txtar archive (absolute paths -> path in script)
-	scriptUpdates map[string]string           // updates to testscript files via UpdateScripts.
+	workdir       string            // temporary work dir ($WORK)
+	log           bytes.Buffer      // test execution log (printed at end of test)
+	mark          int               // offset of next log truncation
+	cd            string            // current directory during test execution; initially $WORK/gopath/src
+	name          string            // short name of test ("foo")
+	file          string            // full file name ("testdata/script/foo.txt")
+	lineno        int               // line number currently executing
+	line          string            // line currently executing
+	env           []string          // environment list (for os/exec)
+	envMap        map[string]string // environment mapping (matches env; on Windows keys are lowercase)
+	values        map[any]any       // values for custom commands
+	stdin         string            // standard input to next 'go' command; set by 'stdin' command.
+	stdout        string            // standard output from last 'go' command; for 'stdout' command
+	stderr        string            // standard error from last 'go' command; for 'stderr' command
+	ttyin         string            // terminal input; set by 'ttyin' command
+	stdinPty      bool              // connect pty to standard input; set by 'ttyin -stdin' command
+	ttyout        string            // terminal output; for 'ttyout' command
+	stopped       bool              // test wants to stop early
+	start         time.Time         // time phase started
+	background    []backgroundCmd   // backgrounded 'exec' and 'go' commands
+	deferred      func()            // deferred cleanup actions.
+	archive       *txtar.Archive    // the testscript being run.
+	scriptFiles   map[string]string // files stored in the txtar archive (absolute paths -> path in script)
+	scriptUpdates map[string]string // updates to testscript files via UpdateScripts.
 
 	// runningBuiltin indicates if we are running a user-supplied builtin
 	// command. These commands are specified via Params.Cmds.
@@ -475,7 +475,7 @@ func (ts *TestScript) setup() string {
 			"$=$",
 		},
 		WorkDir: ts.workdir,
-		Values:  make(map[interface{}]interface{}),
+		Values:  make(map[any]any),
 		Cd:      ts.workdir,
 		ts:      ts,
 	}
@@ -552,7 +552,7 @@ func (ts *TestScript) run() {
 	// Insert elapsed time for phase at end of phase marker
 	markTime := func() {
 		if ts.mark > 0 && !ts.start.IsZero() {
-			afterMark := append([]byte{}, ts.log.Bytes()[ts.mark:]...)
+			afterMark := slices.Clone(ts.log.Bytes()[ts.mark:])
 			ts.log.Truncate(ts.mark - 1) // cut \n and afterMark
 			fmt.Fprintf(&ts.log, " (%.3fs)\n", timeSince(ts.start).Seconds())
 			ts.log.Write(afterMark)
@@ -856,7 +856,7 @@ func (ts *TestScript) condition(cond string) (bool, error) {
 		return cond == runtime.GOARCH, nil
 	case strings.HasPrefix(cond, "exec:"):
 		prog := cond[len("exec:"):]
-		ok := execCache.Do(prog, func() interface{} {
+		ok := execCache.Do(prog, func() any {
 			_, err := execpath.Look(prog, ts.Getenv)
 			return err == nil
 		}).(bool)
@@ -867,10 +867,8 @@ func (ts *TestScript) condition(cond string) (bool, error) {
 		// that will be used.
 		return cond == runtime.Compiler, nil
 	case goVersionRegex.MatchString(cond):
-		for _, v := range build.Default.ReleaseTags {
-			if cond == v {
-				return true, nil
-			}
+		if slices.Contains(build.Default.ReleaseTags, cond) {
+			return true, nil
 		}
 		return false, nil
 	case ts.params.Condition != nil:
@@ -968,7 +966,7 @@ func (ts *TestScript) clearBuiltinStd() {
 }
 
 // Logf appends the given formatted message to the test log transcript.
-func (ts *TestScript) Logf(format string, args ...interface{}) {
+func (ts *TestScript) Logf(format string, args ...any) {
 	format = strings.TrimSuffix(format, "\n")
 	fmt.Fprintf(&ts.log, format, args...)
 	ts.log.WriteByte('\n')
@@ -1188,7 +1186,7 @@ func (ts *TestScript) expand(s string) string {
 }
 
 // fatalf aborts the test with the given failure message.
-func (ts *TestScript) Fatalf(format string, args ...interface{}) {
+func (ts *TestScript) Fatalf(format string, args ...any) {
 	// In user-supplied builtins, the only way we have of aborting
 	// is via Fatalf. Hence if we are aborting from a user-supplied
 	// builtin, it's important we first log stdout and stderr. If

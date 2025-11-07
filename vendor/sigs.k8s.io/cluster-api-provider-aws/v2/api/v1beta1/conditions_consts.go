@@ -16,19 +16,19 @@ limitations under the License.
 
 package v1beta1
 
-import clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+import clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck
 
 const (
 	// PrincipalCredentialRetrievedCondition reports on whether Principal credentials could be retrieved successfully.
 	// A possible scenario, where retrieval is unsuccessful, is when SourcePrincipal is not authorized for assume role.
-	PrincipalCredentialRetrievedCondition clusterv1.ConditionType = "PrincipalCredentialRetrieved"
+	PrincipalCredentialRetrievedCondition clusterv1beta1.ConditionType = "PrincipalCredentialRetrieved"
 	// PrincipalCredentialRetrievalFailedReason used when errors occur during identity credential retrieval.
 	PrincipalCredentialRetrievalFailedReason = "PrincipalCredentialRetrievalFailed"
 	// CredentialProviderBuildFailedReason used when errors occur during building providers before trying credential retrieval.
 	//nolint:gosec
 	CredentialProviderBuildFailedReason = "CredentialProviderBuildFailed"
 	// PrincipalUsageAllowedCondition reports on whether Principal and all the nested source identities are allowed to be used in the AWSCluster namespace.
-	PrincipalUsageAllowedCondition clusterv1.ConditionType = "PrincipalUsageAllowed"
+	PrincipalUsageAllowedCondition clusterv1beta1.ConditionType = "PrincipalUsageAllowed"
 	// PrincipalUsageUnauthorizedReason used when AWSCluster namespace is not in the identity's allowed namespaces list.
 	PrincipalUsageUnauthorizedReason = "PrincipalUsageUnauthorized"
 	// SourcePrincipalUsageUnauthorizedReason used when AWSCluster is not in the intersection of source identity allowed namespaces
@@ -38,7 +38,7 @@ const (
 
 const (
 	// VpcReadyCondition reports on the successful reconciliation of a VPC.
-	VpcReadyCondition clusterv1.ConditionType = "VpcReady"
+	VpcReadyCondition clusterv1beta1.ConditionType = "VpcReady"
 	// VpcCreationStartedReason used when attempting to create a VPC for a managed cluster.
 	// Will not be applied to unmanaged clusters.
 	VpcCreationStartedReason = "VpcCreationStarted"
@@ -48,7 +48,7 @@ const (
 
 const (
 	// SubnetsReadyCondition reports on the successful reconciliation of subnets.
-	SubnetsReadyCondition clusterv1.ConditionType = "SubnetsReady"
+	SubnetsReadyCondition clusterv1beta1.ConditionType = "SubnetsReady"
 	// SubnetsReconciliationFailedReason used to report failures while reconciling subnets.
 	SubnetsReconciliationFailedReason = "SubnetsReconciliationFailed"
 )
@@ -56,7 +56,7 @@ const (
 const (
 	// InternetGatewayReadyCondition reports on the successful reconciliation of internet gateways.
 	// Only applicable to managed clusters.
-	InternetGatewayReadyCondition clusterv1.ConditionType = "InternetGatewayReady"
+	InternetGatewayReadyCondition clusterv1beta1.ConditionType = "InternetGatewayReady"
 	// InternetGatewayFailedReason used when errors occur during internet gateway reconciliation.
 	InternetGatewayFailedReason = "InternetGatewayFailed"
 )
@@ -64,7 +64,7 @@ const (
 const (
 	// EgressOnlyInternetGatewayReadyCondition reports on the successful reconciliation of egress only internet gateways.
 	// Only applicable to managed clusters.
-	EgressOnlyInternetGatewayReadyCondition clusterv1.ConditionType = "EgressOnlyInternetGatewayReady"
+	EgressOnlyInternetGatewayReadyCondition clusterv1beta1.ConditionType = "EgressOnlyInternetGatewayReady"
 	// EgressOnlyInternetGatewayFailedReason used when errors occur during egress only internet gateway reconciliation.
 	EgressOnlyInternetGatewayFailedReason = "EgressOnlyInternetGatewayFailed"
 )
@@ -72,7 +72,7 @@ const (
 const (
 	// NatGatewaysReadyCondition reports successful reconciliation of NAT gateways.
 	// Only applicable to managed clusters.
-	NatGatewaysReadyCondition clusterv1.ConditionType = "NatGatewaysReady"
+	NatGatewaysReadyCondition clusterv1beta1.ConditionType = "NatGatewaysReady"
 	// NatGatewaysCreationStartedReason set once when creating new NAT gateways.
 	NatGatewaysCreationStartedReason = "NatGatewaysCreationStarted"
 	// NatGatewaysReconciliationFailedReason used when any errors occur during reconciliation of NAT gateways.
@@ -82,7 +82,7 @@ const (
 const (
 	// RouteTablesReadyCondition reports successful reconciliation of route tables.
 	// Only applicable to managed clusters.
-	RouteTablesReadyCondition clusterv1.ConditionType = "RouteTablesReady"
+	RouteTablesReadyCondition clusterv1beta1.ConditionType = "RouteTablesReady"
 	// RouteTableReconciliationFailedReason used when any errors occur during reconciliation of route tables.
 	RouteTableReconciliationFailedReason = "RouteTableReconciliationFailed"
 )
@@ -90,14 +90,14 @@ const (
 const (
 	// SecondaryCidrsReadyCondition reports successful reconciliation of secondary CIDR blocks.
 	// Only applicable to managed clusters.
-	SecondaryCidrsReadyCondition clusterv1.ConditionType = "SecondaryCidrsReady"
+	SecondaryCidrsReadyCondition clusterv1beta1.ConditionType = "SecondaryCidrsReady"
 	// SecondaryCidrReconciliationFailedReason used when any errors occur during reconciliation of secondary CIDR blocks.
 	SecondaryCidrReconciliationFailedReason = "SecondaryCidrReconciliationFailed"
 )
 
 const (
 	// ClusterSecurityGroupsReadyCondition reports successful reconciliation of security groups.
-	ClusterSecurityGroupsReadyCondition clusterv1.ConditionType = "ClusterSecurityGroupsReady"
+	ClusterSecurityGroupsReadyCondition clusterv1beta1.ConditionType = "ClusterSecurityGroupsReady"
 	// ClusterSecurityGroupReconciliationFailedReason used when any errors occur during reconciliation of security groups.
 	ClusterSecurityGroupReconciliationFailedReason = "SecurityGroupReconciliationFailed"
 )
@@ -105,7 +105,7 @@ const (
 const (
 	// BastionHostReadyCondition reports whether a bastion host is ready. Depending on the configuration, a cluster
 	// may not require a bastion host and this condition will be skipped.
-	BastionHostReadyCondition clusterv1.ConditionType = "BastionHostReady"
+	BastionHostReadyCondition clusterv1beta1.ConditionType = "BastionHostReady"
 	// BastionCreationStartedReason used when creating a new bastion host.
 	BastionCreationStartedReason = "BastionCreationStarted"
 	// BastionHostFailedReason used when an error occurs during the creation of a bastion host.
@@ -114,7 +114,7 @@ const (
 
 const (
 	// LoadBalancerReadyCondition reports on whether a control plane load balancer was successfully reconciled.
-	LoadBalancerReadyCondition clusterv1.ConditionType = "LoadBalancerReady"
+	LoadBalancerReadyCondition clusterv1beta1.ConditionType = "LoadBalancerReady"
 	// WaitForDNSNameReason used while waiting for a DNS name for the API server to be populated.
 	WaitForDNSNameReason = "WaitForDNSName"
 	// WaitForDNSNameResolveReason used while waiting for DNS name to resolve.
@@ -125,7 +125,7 @@ const (
 
 const (
 	// InstanceReadyCondition reports on current status of the EC2 instance. Ready indicates the instance is in a Running state.
-	InstanceReadyCondition clusterv1.ConditionType = "InstanceReady"
+	InstanceReadyCondition clusterv1beta1.ConditionType = "InstanceReady"
 
 	// InstanceNotFoundReason used when the instance couldn't be retrieved.
 	InstanceNotFoundReason = "InstanceNotFound"
@@ -147,7 +147,7 @@ const (
 
 const (
 	// SecurityGroupsReadyCondition indicates the security groups are up to date on the AWSMachine.
-	SecurityGroupsReadyCondition clusterv1.ConditionType = "SecurityGroupsReady"
+	SecurityGroupsReadyCondition clusterv1beta1.ConditionType = "SecurityGroupsReady"
 
 	// SecurityGroupsFailedReason used when the security groups could not be synced.
 	SecurityGroupsFailedReason = "SecurityGroupsSyncFailed"
@@ -158,7 +158,7 @@ const (
 	// When set to false, severity can be an Error if the subnet is not found or unavailable in the instance's AZ.
 	// Note this is only applicable to control plane machines.
 	// Only applicable to control plane machines.
-	ELBAttachedCondition clusterv1.ConditionType = "ELBAttached"
+	ELBAttachedCondition clusterv1beta1.ConditionType = "ELBAttached"
 
 	// ELBAttachFailedReason used when a control plane node fails to attach to the ELB.
 	ELBAttachFailedReason = "ELBAttachFailed"
@@ -168,7 +168,7 @@ const (
 
 const (
 	// S3BucketReadyCondition indicates an S3 bucket has been created successfully.
-	S3BucketReadyCondition clusterv1.ConditionType = "S3BucketCreated"
+	S3BucketReadyCondition clusterv1beta1.ConditionType = "S3BucketCreated"
 
 	// S3BucketFailedReason is used when any errors occur during reconciliation of an S3 bucket.
 	S3BucketFailedReason = "S3BucketCreationFailed"

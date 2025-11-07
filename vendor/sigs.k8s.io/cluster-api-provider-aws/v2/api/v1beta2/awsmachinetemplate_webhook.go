@@ -32,10 +32,11 @@ import (
 	"sigs.k8s.io/cluster-api/util/topology"
 )
 
-func (r *AWSMachineTemplateWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *AWSMachineTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(AWSMachineTemplateWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&AWSMachineTemplate{}).
-		WithValidator(r).
+		WithValidator(w).
 		Complete()
 }
 
@@ -171,6 +172,7 @@ func (r *AWSMachineTemplate) validateIgnitionAndCloudInit() field.ErrorList {
 
 	return allErrs
 }
+
 func (r *AWSMachineTemplate) validateSSHKeyName() field.ErrorList {
 	return validateSSHKeyName(r.Spec.Template.Spec.SSHKeyName)
 }
@@ -226,7 +228,7 @@ func (r *AWSMachineTemplateWebhook) ValidateUpdate(ctx context.Context, oldRaw r
 
 	var allErrs field.ErrorList
 
-	if !topology.ShouldSkipImmutabilityChecks(req, newAWSMachineTemplate) && !cmp.Equal(newAWSMachineTemplate.Spec, oldAWSMachineTemplate.Spec) {
+	if !topology.IsDryRunRequest(req, newAWSMachineTemplate) && !cmp.Equal(newAWSMachineTemplate.Spec, oldAWSMachineTemplate.Spec) {
 		if oldAWSMachineTemplate.Spec.Template.Spec.InstanceMetadataOptions == nil {
 			oldAWSMachineTemplate.Spec.Template.Spec.InstanceMetadataOptions = newAWSMachineTemplate.Spec.Template.Spec.InstanceMetadataOptions
 		}

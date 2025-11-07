@@ -19,7 +19,8 @@ package v1beta2
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
 const (
@@ -29,6 +30,16 @@ const (
 
 	// DefaultIgnitionVersion represents default Ignition version generated for machine userdata.
 	DefaultIgnitionVersion = "2.3"
+
+	// DefaultIgnitionStorageType represents the default storage type of Ignition userdata
+	DefaultIgnitionStorageType = IgnitionStorageTypeOptionClusterObjectStore
+
+	// DefaultMachinePoolIgnitionStorageType represents the default storage type of Ignition userdata for machine pools.
+	//
+	// This is only different from DefaultIgnitionStorageType because of backward compatibility. Machine pools used to
+	// default to store Ignition user data directly on the EC2 instance. Since the choice between remote storage (S3)
+	// and direct storage was introduced, the default was kept, but might change in newer API versions.
+	DefaultMachinePoolIgnitionStorageType = IgnitionStorageTypeOptionUnencryptedUserData
 )
 
 // SecretBackend defines variants for backend secret storage.
@@ -64,6 +75,8 @@ const (
 )
 
 // AWSMachineSpec defines the desired state of an Amazon EC2 instance.
+// +kubebuilder:validation:XValidation:rule="!has(self.capacityReservationId) || !has(self.marketType) || self.marketType != 'Spot'",message="capacityReservationId may not be set when marketType is Spot"
+// +kubebuilder:validation:XValidation:rule="!has(self.capacityReservationId) || !has(self.spotMarketOptions)",message="capacityReservationId cannot be set when spotMarketOptions is specified"
 type AWSMachineSpec struct {
 	// ProviderID is the unique identifier as specified by the cloud provider.
 	ProviderID *string `json:"providerID,omitempty"`
@@ -103,6 +116,11 @@ type AWSMachineSpec struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength:=2
 	InstanceType string `json:"instanceType"`
+
+	// CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+	// When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+	// +optional
+	CPUOptions CPUOptions `json:"cpuOptions,omitempty,omitzero"`
 
 	// AdditionalTags is an optional set of tags to add to an instance, in addition to the ones added by default by the
 	// AWS provider. If both the AWSCluster and the AWSMachine specify the same tag name with different values, the
@@ -221,6 +239,26 @@ type AWSMachineSpec struct {
 	// If marketType is not specified and spotMarketOptions is provided, the marketType defaults to "Spot".
 	// +optional
 	MarketType MarketType `json:"marketType,omitempty"`
+
+	// HostID specifies the Dedicated Host on which the instance must be started.
+	// +optional
+	HostID *string `json:"hostID,omitempty"`
+
+	// HostAffinity specifies the dedicated host affinity setting for the instance.
+	// When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
+	// When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
+	// When HostAffinity is defined, HostID is required.
+	// +optional
+	// +kubebuilder:validation:Enum:=default;host
+	HostAffinity *string `json:"hostAffinity,omitempty"`
+
+	// CapacityReservationPreference specifies the preference for use of Capacity Reservations by the instance. Valid values include:
+	// "Open": The instance may make use of open Capacity Reservations that match its AZ and InstanceType
+	// "None": The instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
+	// "CapacityReservationsOnly": The instance will only run if matched or targeted to a Capacity Reservation. Note that this is incompatible with a MarketType of `Spot`
+	// +kubebuilder:validation:Enum="";None;CapacityReservationsOnly;Open
+	// +optional
+	CapacityReservationPreference CapacityReservationPreference `json:"capacityReservationPreference,omitempty"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where
@@ -254,9 +292,10 @@ type CloudInit struct {
 // For more information on Ignition configuration, see https://coreos.github.io/butane/specs/
 type Ignition struct {
 	// Version defines which version of Ignition will be used to generate bootstrap data.
+	// Defaults to `2.3` if storageType is set to `ClusterObjectStore`.
+	// It will be ignored if storageType is set to `UnencryptedUserData`, as the userdata defines its own version.
 	//
 	// +optional
-	// +kubebuilder:default="2.3"
 	// +kubebuilder:validation:Enum="2.3";"3.0";"3.1";"3.2";"3.3";"3.4"
 	Version string `json:"version,omitempty"`
 
@@ -399,7 +438,7 @@ type AWSMachineStatus struct {
 
 	// Conditions defines current service state of the AWSMachine.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -423,12 +462,12 @@ type AWSMachine struct {
 }
 
 // GetConditions returns the observations of the operational state of the AWSMachine resource.
-func (r *AWSMachine) GetConditions() clusterv1.Conditions {
+func (r *AWSMachine) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
-// SetConditions sets the underlying service state of the AWSMachine to the predescribed clusterv1.Conditions.
-func (r *AWSMachine) SetConditions(conditions clusterv1.Conditions) {
+// SetConditions sets the underlying service state of the AWSMachine to the predescribed clusterv1beta1.Conditions.
+func (r *AWSMachine) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 

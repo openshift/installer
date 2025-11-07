@@ -12,9 +12,11 @@ import (
 )
 
 // Gets the default instance metadata service (IMDS) settings that are set at the
-// account level in the specified Amazon Web Services  Region. For more
-// information, see Order of precedence for instance metadata options (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html#instance-metadata-options-order-of-precedence)
-// in the Amazon EC2 User Guide.
+// account level in the specified Amazon Web Services  Region.
+//
+// For more information, see [Order of precedence for instance metadata options] in the Amazon EC2 User Guide.
+//
+// [Order of precedence for instance metadata options]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html#instance-metadata-options-order-of-precedence
 func (c *Client) GetInstanceMetadataDefaults(ctx context.Context, params *GetInstanceMetadataDefaultsInput, optFns ...func(*Options)) (*GetInstanceMetadataDefaultsOutput, error) {
 	if params == nil {
 		params = &GetInstanceMetadataDefaultsInput{}
@@ -32,7 +34,7 @@ func (c *Client) GetInstanceMetadataDefaults(ctx context.Context, params *GetIns
 
 type GetInstanceMetadataDefaultsInput struct {
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
@@ -95,6 +97,9 @@ func (c *Client) addOperationGetInstanceMetadataDefaultsMiddlewares(stack *middl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -105,6 +110,15 @@ func (c *Client) addOperationGetInstanceMetadataDefaultsMiddlewares(stack *middl
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetInstanceMetadataDefaults(options.Region), middleware.Before); err != nil {
@@ -123,6 +137,18 @@ func (c *Client) addOperationGetInstanceMetadataDefaultsMiddlewares(stack *middl
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

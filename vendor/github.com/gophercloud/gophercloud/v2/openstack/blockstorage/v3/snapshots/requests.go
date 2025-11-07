@@ -122,6 +122,21 @@ func List(client *gophercloud.ServiceClient, opts ListOptsBuilder) pagination.Pa
 	})
 }
 
+// ListDetail returns Snapshots with additional details optionally limited by the conditions provided in ListOpts.
+func ListDetail(client *gophercloud.ServiceClient, opts ListOptsBuilder) pagination.Pager {
+	url := listDetailsURL(client)
+	if opts != nil {
+		query, err := opts.ToSnapshotListQuery()
+		if err != nil {
+			return pagination.Pager{Err: err}
+		}
+		url += query
+	}
+	return pagination.NewPager(client, url, func(r pagination.PageResult) pagination.Page {
+		return SnapshotPage{pagination.LinkedPageBase{PageResult: r}}
+	})
+}
+
 // UpdateOptsBuilder allows extensions to add additional parameters to the
 // Update request.
 type UpdateOptsBuilder interface {
