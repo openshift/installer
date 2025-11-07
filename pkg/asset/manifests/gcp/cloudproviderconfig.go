@@ -31,10 +31,12 @@ type global struct {
 	// ContainerAPIEndpoint is the container API endpoint to use. If this is blank,
 	// then the default endpoint is used.
 	ContainerAPIEndpoint string `gcfg:"container-api-endpoint"`
+
+	FirewallManagement string `gcfg:"firewall-rules-management"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the GCP platform.
-func CloudProviderConfig(infraID, projectID, subnet, networkProjectID, apiEndpoint, containerAPIEndpoint string) (string, error) {
+func CloudProviderConfig(infraID, projectID, subnet, networkProjectID, apiEndpoint, containerAPIEndpoint, firewallManagement string) (string, error) {
 	config := &config{
 		Global: global{
 			ProjectID: projectID,
@@ -58,6 +60,8 @@ func CloudProviderConfig(infraID, projectID, subnet, networkProjectID, apiEndpoi
 			// Used for api endpoint overrides in the cloud provider.
 			APIEndpoint:          apiEndpoint,
 			ContainerAPIEndpoint: containerAPIEndpoint,
+
+			FirewallManagement: firewallManagement,
 		},
 	}
 
@@ -82,5 +86,6 @@ subnetwork-name = {{.Global.SubnetworkName}}
 {{- if ne .Global.NetworkProjectID "" }}{{"\n"}}network-project-id = {{.Global.NetworkProjectID}}{{ end }}
 {{- if ne .Global.APIEndpoint "" }}{{"\n"}}api-endpoint = {{.Global.APIEndpoint}}{{ end }}
 {{- if ne .Global.ContainerAPIEndpoint "" }}{{"\n"}}container-api-endpoint = {{.Global.ContainerAPIEndpoint}}{{ end }}
+{{- if ne .Global.FirewallManagement "" }}{{"\n"}}firewall-rules-management = {{.Global.FirewallManagement}}{{ end }}
 
 `

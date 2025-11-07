@@ -195,6 +195,20 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			}
 		}
 
+		projectID := installConfig.Config.Platform.GCP.ProjectID
+		if networkProjectID := installConfig.Config.Platform.GCP.NetworkProjectID; networkProjectID != "" {
+			projectID = networkProjectID
+		}
+
+		hasFirewallRules, err := gcp.HasPermissions(ctx, projectID, []string{gcp.CreateGCPFirewallPermission, gcp.DeleteGCPFirewallPermission})
+		if err != nil {
+			return fmt.Errorf("failed to determine user firewall permissions: %w", err)
+		}
+		firewallManagement := "Enabled"
+		if !hasFirewallRules {
+			firewallManagement = "Disabled"
+		}
+
 		gcpConfig, err := gcpmanifests.CloudProviderConfig(
 			clusterID.InfraID,
 			installConfig.Config.GCP.ProjectID,
@@ -202,6 +216,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			installConfig.Config.GCP.NetworkProjectID,
 			apiEndpoint,
 			containerAPIEndpoint,
+			firewallManagement,
 		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
