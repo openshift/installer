@@ -17,6 +17,12 @@ const (
 	// DeleteGCPFirewallPermission is the role/permission to delete or skip the delete of
 	// firewall rules for GCP during a bootstrap firewall rule deletion during a xpn installation.
 	DeleteGCPFirewallPermission = "compute.firewalls.delete"
+
+	// GetGCPFirewallPermission is the role/permission to get/list firewall rules.
+	GetGCPFirewallPermission = "compute.firewalls.get"
+
+	// UpdateGCPFirewallPermission is the role/permission to update firewall rules.
+	UpdateGCPFirewallPermission = "compute.firewalls.update"
 )
 
 // HasPermissions will check if the user has the permissions in the project.

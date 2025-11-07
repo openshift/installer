@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
@@ -179,11 +180,26 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			subnet = installConfig.Config.GCP.ComputeSubnet
 		}
 
+		projectID := installConfig.Config.Platform.GCP.ProjectID
+		if networkProjectID := installConfig.Config.Platform.GCP.NetworkProjectID; networkProjectID != "" {
+			projectID = networkProjectID
+		}
+
+		hasFirewallRules, err := gcpic.HasPermissions(ctx, projectID, []string{gcpic.CreateGCPFirewallPermission}, installConfig.Config.GCP.Endpoint)
+		if err != nil {
+			return fmt.Errorf("failed to determine user firewall permissions: %w", err)
+		}
+		firewallManagement := gcpmanifests.FirewallManagementEnabled
+		if !hasFirewallRules {
+			firewallManagement = gcpmanifests.FirewallManagementDisabled
+		}
+
 		gcpConfig, err := gcpmanifests.CloudProviderConfig(
 			clusterID.InfraID,
 			installConfig.Config.GCP.ProjectID,
 			subnet,
 			installConfig.Config.GCP.NetworkProjectID,
+			firewallManagement,
 		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
