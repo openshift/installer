@@ -296,6 +296,48 @@ type HostConfigFileMap map[string][]byte
 
 // HostConfigFiles returns a map from filename to contents of the files used for
 // host-specific configuration by the agent installer client.
+// generateFencingCredentialsYAML creates the YAML content for fencing-credentials.yaml
+// from a baremetal.BMC struct. It converts the BMC structure to the format expected
+// by the assisted-service agent-based installer client.
+func generateFencingCredentialsYAML(bmc *baremetal.BMC) ([]byte, error) {
+	if bmc == nil {
+		return nil, errors.New("BMC cannot be nil")
+	}
+
+	// Skip generation if BMC address is not set
+	if bmc.Address == "" {
+		return nil, nil
+	}
+
+	// Convert bool to string enum for certificateVerification
+	// BMC uses DisableCertificateVerification (bool), but the fencing-credentials.yaml
+	// uses certificateVerification (string: "Enabled"|"Disabled")
+	certVerification := "Enabled" // default is enabled (DisableCertificateVerification = false)
+	if bmc.DisableCertificateVerification {
+		certVerification = "Disabled"
+	}
+
+	// Create intermediate structure for YAML marshaling
+	fcYAML := struct {
+		Address                 string  `yaml:"address"`
+		Username                string  `yaml:"username"`
+		Password                string  `yaml:"password"`
+		CertificateVerification *string `yaml:"certificateVerification,omitempty"`
+	}{
+		Address:                 bmc.Address,
+		Username:                bmc.Username,
+		Password:                bmc.Password,
+		CertificateVerification: &certVerification,
+	}
+
+	data, err := yaml.Marshal(fcYAML)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal fencing credentials: %w", err)
+	}
+
+	return data, nil
+}
+
 func (a *AgentHosts) HostConfigFiles() (HostConfigFileMap, error) {
 	if a == nil {
 		return nil, nil
@@ -327,6 +369,17 @@ func (a *AgentHosts) HostConfigFiles() (HostConfigFileMap, error) {
 
 		if len(host.Role) > 0 {
 			files[filepath.Join(name, "role")] = []byte(host.Role)
+		}
+
+		// Generate fencing-credentials.yaml if BMC is configured
+		if host.BMC.Address != "" {
+			fcData, err := generateFencingCredentialsYAML(&host.BMC)
+			if err != nil {
+				return nil, fmt.Errorf("failed to generate fencing credentials for host %s: %w", name, err)
+			}
+			if fcData != nil {
+				files[filepath.Join(name, "fencing-credentials.yaml")] = fcData
+			}
 		}
 	}
 	return files, nil
