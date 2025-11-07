@@ -14,10 +14,10 @@ import (
 
 // Submits feedback about the status of an instance. The instance must be in the
 // running state. If your experience with the instance differs from the instance
-// status returned by DescribeInstanceStatus , use ReportInstanceStatus to report
-// your experience with the instance. Amazon EC2 collects this information to
-// improve the accuracy of status checks. Use of this action does not change the
-// value returned by DescribeInstanceStatus .
+// status returned by DescribeInstanceStatus, use ReportInstanceStatus to report your experience with the instance. Amazon
+// EC2 collects this information to improve the accuracy of status checks.
+//
+// Use of this action does not change the value returned by DescribeInstanceStatus.
 func (c *Client) ReportInstanceStatus(ctx context.Context, params *ReportInstanceStatusInput, optFns ...func(*Options)) (*ReportInstanceStatusOutput, error) {
 	if params == nil {
 		params = &ReportInstanceStatusInput{}
@@ -41,17 +41,26 @@ type ReportInstanceStatusInput struct {
 	Instances []string
 
 	// The reason codes that describe the health state of your instance.
+	//
 	//   - instance-stuck-in-state : My instance is stuck in a state.
+	//
 	//   - unresponsive : My instance is unresponsive.
+	//
 	//   - not-accepting-credentials : My instance is not accepting my credentials.
+	//
 	//   - password-not-available : A password is not available for my instance.
+	//
 	//   - performance-network : My instance is experiencing performance problems that
 	//   I believe are network related.
+	//
 	//   - performance-instance-store : My instance is experiencing performance
 	//   problems that I believe are related to the instance stores.
+	//
 	//   - performance-ebs-volume : My instance is experiencing performance problems
 	//   that I believe are related to an EBS volume.
+	//
 	//   - performance-other : My instance is experiencing performance problems.
+	//
 	//   - other : [explain using the description parameter]
 	//
 	// This member is required.
@@ -63,9 +72,11 @@ type ReportInstanceStatusInput struct {
 	Status types.ReportStatusType
 
 	// Descriptive text about the health state of your instance.
+	//
+	// Deprecated: This member has been deprecated
 	Description *string
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
@@ -130,6 +141,9 @@ func (c *Client) addOperationReportInstanceStatusMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -140,6 +154,15 @@ func (c *Client) addOperationReportInstanceStatusMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpReportInstanceStatusValidationMiddleware(stack); err != nil {
@@ -161,6 +184,18 @@ func (c *Client) addOperationReportInstanceStatusMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

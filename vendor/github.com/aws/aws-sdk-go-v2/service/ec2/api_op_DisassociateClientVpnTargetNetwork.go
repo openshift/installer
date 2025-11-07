@@ -13,9 +13,13 @@ import (
 
 // Disassociates a target network from the specified Client VPN endpoint. When you
 // disassociate the last target network from a Client VPN, the following happens:
+//
 //   - The route that was automatically added for the VPC is deleted
+//
 //   - All active client connections are terminated
+//
 //   - New client connections are disallowed
+//
 //   - The Client VPN endpoint's status changes to pending-associate
 func (c *Client) DisassociateClientVpnTargetNetwork(ctx context.Context, params *DisassociateClientVpnTargetNetworkInput, optFns ...func(*Options)) (*DisassociateClientVpnTargetNetworkOutput, error) {
 	if params == nil {
@@ -110,6 +114,9 @@ func (c *Client) addOperationDisassociateClientVpnTargetNetworkMiddlewares(stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -120,6 +127,15 @@ func (c *Client) addOperationDisassociateClientVpnTargetNetworkMiddlewares(stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDisassociateClientVpnTargetNetworkValidationMiddleware(stack); err != nil {
@@ -141,6 +157,18 @@ func (c *Client) addOperationDisassociateClientVpnTargetNetworkMiddlewares(stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

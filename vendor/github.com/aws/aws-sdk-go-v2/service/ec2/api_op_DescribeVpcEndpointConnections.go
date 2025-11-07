@@ -37,12 +37,20 @@ type DescribeVpcEndpointConnectionsInput struct {
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - ip-address-type - The IP address type ( ipv4 | ipv6 ).
+	//
 	//   - service-id - The ID of the service.
+	//
 	//   - vpc-endpoint-owner - The ID of the Amazon Web Services account ID that owns
 	//   the endpoint.
+	//
+	//   - vpc-endpoint-region - The Region of the endpoint or cross-region to find
+	//   endpoints for other Regions.
+	//
 	//   - vpc-endpoint-state - The state of the endpoint ( pendingAcceptance | pending
 	//   | available | deleting | deleted | rejected | failed ).
+	//
 	//   - vpc-endpoint-id - The ID of the endpoint.
 	Filters []types.Filter
 
@@ -116,6 +124,9 @@ func (c *Client) addOperationDescribeVpcEndpointConnectionsMiddlewares(stack *mi
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +137,15 @@ func (c *Client) addOperationDescribeVpcEndpointConnectionsMiddlewares(stack *mi
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeVpcEndpointConnections(options.Region), middleware.Before); err != nil {
@@ -146,16 +166,20 @@ func (c *Client) addOperationDescribeVpcEndpointConnectionsMiddlewares(stack *mi
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeVpcEndpointConnectionsAPIClient is a client that implements the
-// DescribeVpcEndpointConnections operation.
-type DescribeVpcEndpointConnectionsAPIClient interface {
-	DescribeVpcEndpointConnections(context.Context, *DescribeVpcEndpointConnectionsInput, ...func(*Options)) (*DescribeVpcEndpointConnectionsOutput, error)
-}
-
-var _ DescribeVpcEndpointConnectionsAPIClient = (*Client)(nil)
 
 // DescribeVpcEndpointConnectionsPaginatorOptions is the paginator options for
 // DescribeVpcEndpointConnections
@@ -226,6 +250,9 @@ func (p *DescribeVpcEndpointConnectionsPaginator) NextPage(ctx context.Context, 
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeVpcEndpointConnections(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -244,6 +271,14 @@ func (p *DescribeVpcEndpointConnectionsPaginator) NextPage(ctx context.Context, 
 
 	return result, nil
 }
+
+// DescribeVpcEndpointConnectionsAPIClient is a client that implements the
+// DescribeVpcEndpointConnections operation.
+type DescribeVpcEndpointConnectionsAPIClient interface {
+	DescribeVpcEndpointConnections(context.Context, *DescribeVpcEndpointConnectionsInput, ...func(*Options)) (*DescribeVpcEndpointConnectionsOutput, error)
+}
+
+var _ DescribeVpcEndpointConnectionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeVpcEndpointConnections(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

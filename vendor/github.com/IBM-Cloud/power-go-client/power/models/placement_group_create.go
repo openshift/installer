@@ -28,6 +28,9 @@ type PlacementGroupCreate struct {
 	// Required: true
 	// Enum: ["affinity","anti-affinity"]
 	Policy *string `json:"policy"`
+
+	// user tags
+	UserTags Tags `json:"userTags,omitempty"`
 }
 
 // Validate validates this placement group create
@@ -39,6 +42,10 @@ func (m *PlacementGroupCreate) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validatePolicy(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateUserTags(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -100,8 +107,48 @@ func (m *PlacementGroupCreate) validatePolicy(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this placement group create based on context it is used
+func (m *PlacementGroupCreate) validateUserTags(formats strfmt.Registry) error {
+	if swag.IsZero(m.UserTags) { // not required
+		return nil
+	}
+
+	if err := m.UserTags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this placement group create based on the context it is used
 func (m *PlacementGroupCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateUserTags(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *PlacementGroupCreate) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
 	return nil
 }
 

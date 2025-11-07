@@ -20,6 +20,9 @@ import (
 // swagger:model PlacementGroup
 type PlacementGroup struct {
 
+	// crn
+	Crn CRN `json:"crn,omitempty"`
+
 	// The id of the Placement Group
 	// Required: true
 	ID *string `json:"id"`
@@ -36,11 +39,18 @@ type PlacementGroup struct {
 	// Required: true
 	// Enum: ["affinity","anti-affinity"]
 	Policy *string `json:"policy"`
+
+	// user tags
+	UserTags Tags `json:"userTags,omitempty"`
 }
 
 // Validate validates this placement group
 func (m *PlacementGroup) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateCrn(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateID(formats); err != nil {
 		res = append(res, err)
@@ -58,9 +68,30 @@ func (m *PlacementGroup) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateUserTags(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *PlacementGroup) validateCrn(formats strfmt.Registry) error {
+	if swag.IsZero(m.Crn) { // not required
+		return nil
+	}
+
+	if err := m.Crn.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("crn")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("crn")
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -134,8 +165,70 @@ func (m *PlacementGroup) validatePolicy(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this placement group based on context it is used
+func (m *PlacementGroup) validateUserTags(formats strfmt.Registry) error {
+	if swag.IsZero(m.UserTags) { // not required
+		return nil
+	}
+
+	if err := m.UserTags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this placement group based on the context it is used
 func (m *PlacementGroup) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateCrn(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateUserTags(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *PlacementGroup) contextValidateCrn(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Crn) { // not required
+		return nil
+	}
+
+	if err := m.Crn.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("crn")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("crn")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *PlacementGroup) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
 	return nil
 }
 

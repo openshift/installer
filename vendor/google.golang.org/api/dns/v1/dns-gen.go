@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC.
+// Copyright 2025 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -146,9 +146,6 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	s.ResourceRecordSets = NewResourceRecordSetsService(s)
 	s.ResponsePolicies = NewResponsePoliciesService(s)
 	s.ResponsePolicyRules = NewResponsePolicyRulesService(s)
-	if err != nil {
-		return nil, err
-	}
 	if endpoint != "" {
 		s.BasePath = endpoint
 	}
@@ -164,7 +161,7 @@ func New(client *http.Client) (*Service, error) {
 	if client == nil {
 		return nil, errors.New("client is nil")
 	}
-	return NewService(context.Background(), option.WithHTTPClient(client))
+	return NewService(context.TODO(), option.WithHTTPClient(client))
 }
 
 type Service struct {
@@ -1174,6 +1171,8 @@ func (s ManagedZoneForwardingConfig) MarshalJSON() ([]byte, error) {
 }
 
 type ManagedZoneForwardingConfigNameServerTarget struct {
+	// DomainName: Fully qualified domain name for the forwarding target.
+	DomainName string `json:"domainName,omitempty"`
 	// ForwardingPath: Forwarding path for this NameServerTarget. If unset or set
 	// to DEFAULT, Cloud DNS makes forwarding decisions based on IP address ranges;
 	// that is, RFC1918 addresses go to the VPC network, non-RFC1918 addresses go
@@ -1192,15 +1191,15 @@ type ManagedZoneForwardingConfigNameServerTarget struct {
 	// fields (ipv4 & ipv6) being populated. Public preview as of November 2022.
 	Ipv6Address string `json:"ipv6Address,omitempty"`
 	Kind        string `json:"kind,omitempty"`
-	// ForceSendFields is a list of field names (e.g. "ForwardingPath") to
+	// ForceSendFields is a list of field names (e.g. "DomainName") to
 	// unconditionally include in API requests. By default, fields with empty or
 	// default values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
 	// details.
 	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "ForwardingPath") to include in
-	// API requests with the JSON null value. By default, fields with empty values
-	// are omitted from API requests. See
+	// NullFields is a list of field names (e.g. "DomainName") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
 	NullFields []string `json:"-"`
 }
@@ -1680,6 +1679,8 @@ type Policy struct {
 	// this resource for the user's convenience. Has no effect on the policy's
 	// function.
 	Description string `json:"description,omitempty"`
+	// Dns64Config: Configurations related to DNS64 for this policy.
+	Dns64Config *PolicyDns64Config `json:"dns64Config,omitempty"`
 	// EnableInboundForwarding: Allows networks bound to this policy to receive DNS
 	// queries sent by VMs or applications over VPN connections. When enabled, a
 	// virtual IP address is allocated from each of the subnetworks that are bound
@@ -1776,6 +1777,52 @@ type PolicyAlternativeNameServerConfigTargetNameServer struct {
 
 func (s PolicyAlternativeNameServerConfigTargetNameServer) MarshalJSON() ([]byte, error) {
 	type NoMethod PolicyAlternativeNameServerConfigTargetNameServer
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// PolicyDns64Config: DNS64 policies
+type PolicyDns64Config struct {
+	Kind string `json:"kind,omitempty"`
+	// Scope: The scope to which DNS64 config will be applied to.
+	Scope *PolicyDns64ConfigScope `json:"scope,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Kind") to unconditionally
+	// include in API requests. By default, fields with empty or default values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Kind") to include in API requests
+	// with the JSON null value. By default, fields with empty values are omitted
+	// from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s PolicyDns64Config) MarshalJSON() ([]byte, error) {
+	type NoMethod PolicyDns64Config
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+type PolicyDns64ConfigScope struct {
+	// AllQueries: Controls whether DNS64 is enabled globally for all networks
+	// bound to the policy.
+	AllQueries bool   `json:"allQueries,omitempty"`
+	Kind       string `json:"kind,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "AllQueries") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "AllQueries") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s PolicyDns64ConfigScope) MarshalJSON() ([]byte, error) {
+	type NoMethod PolicyDns64ConfigScope
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
@@ -1928,8 +1975,10 @@ func (s Quota) MarshalJSON() ([]byte, error) {
 // properties such as geolocation or by weighted random selection.
 type RRSetRoutingPolicy struct {
 	Geo *RRSetRoutingPolicyGeoPolicy `json:"geo,omitempty"`
-	// HealthCheck: The selfLink attribute of the HealthCheck resource to use for
-	// this RRSetRoutingPolicy.
+	// HealthCheck: The fully qualified URL of the HealthCheck to use for this
+	// RRSetRoutingPolicy. Format this URL like
+	// `https://www.googleapis.com/compute/v1/projects/{project}/global/healthChecks
+	// /{healthCheck}`.
 	// https://cloud.google.com/compute/docs/reference/rest/v1/healthChecks
 	HealthCheck   string                                 `json:"healthCheck,omitempty"`
 	Kind          string                                 `json:"kind,omitempty"`
@@ -2000,8 +2049,8 @@ type RRSetRoutingPolicyGeoPolicyGeoPolicyItem struct {
 	Location string   `json:"location,omitempty"`
 	Rrdatas  []string `json:"rrdatas,omitempty"`
 	// SignatureRrdatas: DNSSEC generated signatures for all the `rrdata` within
-	// this item. If health checked targets are provided for DNSSEC enabled zones,
-	// there's a restriction of 1 IP address per item.
+	// this item. When using health-checked targets for DNSSEC-enabled zones, you
+	// can only use at most one health-checked IP address per item.
 	SignatureRrdatas []string `json:"signatureRrdatas,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "HealthCheckedTargets") to
 	// unconditionally include in API requests. By default, fields with empty or
@@ -2023,7 +2072,8 @@ func (s RRSetRoutingPolicyGeoPolicyGeoPolicyItem) MarshalJSON() ([]byte, error) 
 
 // RRSetRoutingPolicyHealthCheckTargets: HealthCheckTargets describes endpoints
 // to health-check when responding to Routing Policy queries. Only the healthy
-// endpoints will be included in the response.
+// endpoints will be included in the response. Set either
+// `internal_load_balancer` or `external_endpoints`. Do not set both.
 type RRSetRoutingPolicyHealthCheckTargets struct {
 	// ExternalEndpoints: The Internet IP addresses to be health checked. The
 	// format matches the format of ResourceRecordSet.rrdata as defined in RFC 1035
@@ -2192,8 +2242,8 @@ type RRSetRoutingPolicyWrrPolicyWrrPolicyItem struct {
 	Kind                 string                                `json:"kind,omitempty"`
 	Rrdatas              []string                              `json:"rrdatas,omitempty"`
 	// SignatureRrdatas: DNSSEC generated signatures for all the `rrdata` within
-	// this item. Note that if health checked targets are provided for DNSSEC
-	// enabled zones, there's a restriction of 1 IP address per item.
+	// this item. When using health-checked targets for DNSSEC-enabled zones, you
+	// can only use at most one health-checked IP address per item.
 	SignatureRrdatas []string `json:"signatureRrdatas,omitempty"`
 	// Weight: The weight corresponding to this `WrrPolicyItem` object. When
 	// multiple `WrrPolicyItem` objects are configured, the probability of
@@ -4678,7 +4728,7 @@ type PoliciesCreateCall struct {
 	header_    http.Header
 }
 
-// Create: Creates a new Policy.
+// Create: Creates a new policy.
 //
 // - project: Identifies the project addressed by this request.
 func (r *PoliciesService) Create(project string, policy *Policy) *PoliciesCreateCall {
@@ -4789,7 +4839,7 @@ type PoliciesDeleteCall struct {
 	header_    http.Header
 }
 
-// Delete: Deletes a previously created Policy. Fails if the policy is still
+// Delete: Deletes a previously created policy. Fails if the policy is still
 // being referenced by a network.
 //
 // - policy: User given friendly name of the policy addressed by this request.
@@ -4876,7 +4926,7 @@ type PoliciesGetCall struct {
 	header_      http.Header
 }
 
-// Get: Fetches the representation of an existing Policy.
+// Get: Fetches the representation of an existing policy.
 //
 // - policy: User given friendly name of the policy addressed by this request.
 // - project: Identifies the project addressed by this request.
@@ -4996,7 +5046,7 @@ type PoliciesListCall struct {
 	header_      http.Header
 }
 
-// List: Enumerates all Policies associated with a project.
+// List: Enumerates all policies associated with a project.
 //
 // - project: Identifies the project addressed by this request.
 func (r *PoliciesService) List(project string) *PoliciesListCall {
@@ -5144,7 +5194,7 @@ type PoliciesPatchCall struct {
 	header_    http.Header
 }
 
-// Patch: Applies a partial update to an existing Policy.
+// Patch: Applies a partial update to an existing policy.
 //
 // - policy: User given friendly name of the policy addressed by this request.
 // - project: Identifies the project addressed by this request.
@@ -5260,7 +5310,7 @@ type PoliciesUpdateCall struct {
 	header_    http.Header
 }
 
-// Update: Updates an existing Policy.
+// Update: Updates an existing policy.
 //
 // - policy: User given friendly name of the policy addressed by this request.
 // - project: Identifies the project addressed by this request.
@@ -5882,7 +5932,8 @@ func (c *ResourceRecordSetsListCall) MaxResults(maxResults int64) *ResourceRecor
 }
 
 // Name sets the optional parameter "name": Restricts the list to return only
-// records with this fully qualified domain name.
+// records with this fully qualified domain name. Mutually exclusive with the
+// {@code filter} field.
 func (c *ResourceRecordSetsListCall) Name(name string) *ResourceRecordSetsListCall {
 	c.urlParams_.Set("name", name)
 	return c
@@ -5898,6 +5949,7 @@ func (c *ResourceRecordSetsListCall) PageToken(pageToken string) *ResourceRecord
 
 // Type sets the optional parameter "type": Restricts the list to return only
 // records of this type. If present, the "name" parameter must also be present.
+// Mutually exclusive with the {@code filter} field.
 func (c *ResourceRecordSetsListCall) Type(type_ string) *ResourceRecordSetsListCall {
 	c.urlParams_.Set("type", type_)
 	return c

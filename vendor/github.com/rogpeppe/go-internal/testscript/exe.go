@@ -23,13 +23,12 @@ type TestingM interface {
 // Deprecated: this option is no longer used.
 func IgnoreMissedCoverage() {}
 
-// RunMain should be called within a TestMain function to allow
+// Main should be called within a TestMain function to allow
 // subcommands to be run in the testscript context.
+// Main always calls [os.Exit], so it does not return back to the caller.
 //
 // The commands map holds the set of command names, each
-// with an associated run function which should return the
-// code to pass to os.Exit. It's OK for a command function to
-// exit itself, but this may result in loss of coverage information.
+// with an associated run function which may call os.Exit.
 //
 // When Run is called, these commands are installed as regular commands in the shell
 // path, so can be invoked with "exec" or via any other command (for example a shell script).
@@ -38,9 +37,7 @@ func IgnoreMissedCoverage() {}
 // without "exec" - that is, "foo" will behave like "exec foo".
 // This can be disabled with Params.RequireExplicitExec to keep consistency
 // across test scripts, and to keep separate process executions explicit.
-//
-// This function returns an exit code to pass to os.Exit, after calling m.Run.
-func RunMain(m TestingM, commands map[string]func() int) (exitCode int) {
+func Main(m TestingM, commands map[string]func()) {
 	// Depending on os.Args[0], this is either the top-level execution of
 	// the test binary by "go test", or the execution of one of the provided
 	// commands via "foo" or "exec foo".
@@ -53,53 +50,68 @@ func RunMain(m TestingM, commands map[string]func() int) (exitCode int) {
 	if mainf == nil {
 		// Unknown command; this is just the top-level execution of the
 		// test binary by "go test".
-
-		// Set up all commands in a directory, added in $PATH.
-		tmpdir, err := os.MkdirTemp("", "testscript-main")
-		if err != nil {
-			log.Printf("could not set up temporary directory: %v", err)
-			return 2
-		}
-		defer func() {
-			if err := os.RemoveAll(tmpdir); err != nil {
-				log.Printf("cannot delete temporary directory: %v", err)
-				exitCode = 2
-			}
-		}()
-		bindir := filepath.Join(tmpdir, "bin")
-		if err := os.MkdirAll(bindir, 0o777); err != nil {
-			log.Printf("could not set up PATH binary directory: %v", err)
-			return 2
-		}
-		os.Setenv("PATH", bindir+string(filepath.ListSeparator)+os.Getenv("PATH"))
-
-		// We're not in a subcommand.
-		for name := range commands {
-			// Set up this command in the directory we added to $PATH.
-			binfile := filepath.Join(bindir, name)
-			if runtime.GOOS == "windows" {
-				binfile += ".exe"
-			}
-			binpath, err := os.Executable()
-			if err == nil {
-				err = copyBinary(binpath, binfile)
-			}
-			if err != nil {
-				log.Printf("could not set up %s in $PATH: %v", name, err)
-				return 2
-			}
-			scriptCmds[name] = func(ts *TestScript, neg bool, args []string) {
-				if ts.params.RequireExplicitExec {
-					ts.Fatalf("use 'exec %s' rather than '%s' (because RequireExplicitExec is enabled)", name, name)
-				}
-				ts.cmdExec(neg, append([]string{name}, args...))
-			}
-		}
-		return m.Run()
+		os.Exit(testingMRun(m, commands))
 	}
 	// The command being registered is being invoked, so run it, then exit.
 	os.Args[0] = cmdName
-	return mainf()
+	mainf()
+	os.Exit(0)
+}
+
+// testingMRun exists just so that we can use `defer`, given that [Main] above uses [os.Exit].
+func testingMRun(m TestingM, commands map[string]func()) int {
+	// Set up all commands in a directory, added in $PATH.
+	tmpdir, err := os.MkdirTemp("", "testscript-main")
+	if err != nil {
+		log.Fatalf("could not set up temporary directory: %v", err)
+	}
+	defer func() {
+		if err := os.RemoveAll(tmpdir); err != nil {
+			log.Fatalf("cannot delete temporary directory: %v", err)
+		}
+	}()
+	bindir := filepath.Join(tmpdir, "bin")
+	if err := os.MkdirAll(bindir, 0o777); err != nil {
+		log.Fatalf("could not set up PATH binary directory: %v", err)
+	}
+	os.Setenv("PATH", bindir+string(filepath.ListSeparator)+os.Getenv("PATH"))
+
+	// We're not in a subcommand.
+	for name := range commands {
+		// Set up this command in the directory we added to $PATH.
+		binfile := filepath.Join(bindir, name)
+		if runtime.GOOS == "windows" {
+			binfile += ".exe"
+		}
+		binpath, err := os.Executable()
+		if err == nil {
+			err = copyBinary(binpath, binfile)
+		}
+		if err != nil {
+			log.Fatalf("could not set up %s in $PATH: %v", name, err)
+		}
+		scriptCmds[name] = func(ts *TestScript, neg bool, args []string) {
+			if ts.params.RequireExplicitExec {
+				ts.Fatalf("use 'exec %s' rather than '%s' (because RequireExplicitExec is enabled)", name, name)
+			}
+			ts.cmdExec(neg, append([]string{name}, args...))
+		}
+	}
+	return m.Run()
+}
+
+// Deprecated: use [Main], as the only reason for returning exit codes
+// was to collect full code coverage, which Go does automatically now:
+// https://go.dev/blog/integration-test-coverage
+func RunMain(m TestingM, commands map[string]func() int) (exitCode int) {
+	commands2 := make(map[string]func(), len(commands))
+	for name, fn := range commands {
+		commands2[name] = func() { os.Exit(fn()) }
+	}
+	Main(m, commands2)
+	// Main always calls os.Exit; we assume that all users of RunMain would have simply
+	// called os.Exit with the returned exitCode as well, following the documentation.
+	panic("unreachable")
 }
 
 // copyBinary makes a copy of a binary to a new location. It is used as part of

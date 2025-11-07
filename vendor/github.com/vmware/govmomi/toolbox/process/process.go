@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2017-2021 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package process
 
@@ -154,7 +142,7 @@ func (a *File) IsDir() bool {
 }
 
 // Sys implementation of the os.FileInfo interface method.
-func (a *File) Sys() interface{} {
+func (a *File) Sys() any {
 	return nil
 }
 
@@ -204,7 +192,7 @@ func (e *Error) Error() string {
 }
 
 // Manager manages processes within the guest.
-// See: http://pubs.vmware.com/vsphere-60/topic/com.vmware.wssdk.apiref.doc/vim.vm.guest.Manager.html
+// See: https://developer.broadcom.com/xapis/vsphere-web-services-api/latest/vim.vm.guest.Manager.html
 type Manager struct {
 	wg      sync.WaitGroup
 	mu      sync.Mutex
@@ -224,7 +212,7 @@ func NewManager() *Manager {
 		expire:  time.Minute * 5,
 		entries: make(map[int64]*Process),
 		pids: sync.Pool{
-			New: func() interface{} {
+			New: func() any {
 				return atomic.AddInt64(&pid, 1)
 			},
 		},
@@ -283,7 +271,7 @@ func (m *Manager) Start(r *vix.StartProgramRequest, p *Process) (int64, error) {
 		m.wg.Done()
 		p.Kill() // cancel context for those waiting on p.ctx.Done()
 
-		// See: http://pubs.vmware.com/vsphere-65/topic/com.vmware.wssdk.apiref.doc/vim.vm.guest.ProcessManager.ProcessInfo.html
+		// See: https://developer.broadcom.com/xapis/vsphere-web-services-api/latest/vim.vm.guest.ProcessManager.ProcessInfo.html
 		// "If the process was started using StartProgramInGuest then the process completion time
 		//  will be available if queried within 5 minutes after it completes."
 		<-time.After(m.expire)

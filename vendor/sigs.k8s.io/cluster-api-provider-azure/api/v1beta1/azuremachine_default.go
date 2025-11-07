@@ -27,7 +27,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	utilSSH "sigs.k8s.io/cluster-api-provider-azure/util/ssh"
@@ -172,7 +172,7 @@ func (s *AzureMachineSpec) SetNetworkInterfacesDefaults() {
 func GetOwnerAzureClusterNameAndNamespace(cli client.Client, clusterName string, namespace string, maxAttempts int) (azureClusterName string, azureClusterNamespace string, err error) {
 	ctx := context.Background()
 
-	ownerCluster := &clusterv1.Cluster{}
+	ownerCluster := &clusterv1beta1.Cluster{}
 	key := client.ObjectKey{
 		Namespace: namespace,
 		Name:      clusterName,
@@ -223,7 +223,7 @@ func (m *AzureMachine) SetDefaults(client client.Client) error {
 	}
 
 	// Fetch the Cluster.
-	clusterName, ok := m.Labels[clusterv1.ClusterNameLabel]
+	clusterName, ok := m.Labels[clusterv1beta1.ClusterNameLabel]
 	if !ok {
 		errs = append(errs, errors.Errorf("failed to fetch ClusterName for AzureMachine %s/%s", m.Namespace, m.Name))
 	}

@@ -12,17 +12,24 @@ import (
 )
 
 // Creates a VPC endpoint service to which service consumers (Amazon Web Services
-// accounts, users, and IAM roles) can connect. Before you create an endpoint
-// service, you must create one of the following for your service:
-//   - A Network Load Balancer (https://docs.aws.amazon.com/elasticloadbalancing/latest/network/)
-//     . Service consumers connect to your service using an interface endpoint.
-//   - A Gateway Load Balancer (https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/)
-//     . Service consumers connect to your service using a Gateway Load Balancer
+// accounts, users, and IAM roles) can connect.
+//
+// Before you create an endpoint service, you must create one of the following for
+// your service:
+//
+//   - A [Network Load Balancer]. Service consumers connect to your service using an interface endpoint.
+//
+//   - A [Gateway Load Balancer]. Service consumers connect to your service using a Gateway Load Balancer
 //     endpoint.
 //
 // If you set the private DNS name, you must prove that you own the private DNS
-// domain name. For more information, see the Amazon Web Services PrivateLink Guide (https://docs.aws.amazon.com/vpc/latest/privatelink/)
-// .
+// domain name.
+//
+// For more information, see the [Amazon Web Services PrivateLink Guide].
+//
+// [Gateway Load Balancer]: https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/
+// [Network Load Balancer]: https://docs.aws.amazon.com/elasticloadbalancing/latest/network/
+// [Amazon Web Services PrivateLink Guide]: https://docs.aws.amazon.com/vpc/latest/privatelink/
 func (c *Client) CreateVpcEndpointServiceConfiguration(ctx context.Context, params *CreateVpcEndpointServiceConfigurationInput, optFns ...func(*Options)) (*CreateVpcEndpointServiceConfigurationOutput, error) {
 	if params == nil {
 		params = &CreateVpcEndpointServiceConfigurationInput{}
@@ -45,8 +52,9 @@ type CreateVpcEndpointServiceConfigurationInput struct {
 	AcceptanceRequired *bool
 
 	// Unique, case-sensitive identifier that you provide to ensure the idempotency of
-	// the request. For more information, see How to ensure idempotency (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html)
-	// .
+	// the request. For more information, see [How to ensure idempotency].
+	//
+	// [How to ensure idempotency]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-api-idempotency.html
 	ClientToken *string
 
 	// Checks whether you have the required permissions for the action, without
@@ -67,6 +75,9 @@ type CreateVpcEndpointServiceConfigurationInput struct {
 
 	// The supported IP address types. The possible values are ipv4 and ipv6 .
 	SupportedIpAddressTypes []string
+
+	// The Regions from which service consumers can access the service.
+	SupportedRegions []string
 
 	// The tags to associate with the service.
 	TagSpecifications []types.TagSpecification
@@ -132,6 +143,9 @@ func (c *Client) addOperationCreateVpcEndpointServiceConfigurationMiddlewares(st
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -142,6 +156,15 @@ func (c *Client) addOperationCreateVpcEndpointServiceConfigurationMiddlewares(st
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateVpcEndpointServiceConfiguration(options.Region), middleware.Before); err != nil {
@@ -160,6 +183,18 @@ func (c *Client) addOperationCreateVpcEndpointServiceConfigurationMiddlewares(st
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

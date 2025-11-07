@@ -6,6 +6,8 @@ package simulator
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -30,7 +32,7 @@ type SessionManager struct {
 	nopLocker
 
 	ServiceHostName string
-	TLSCert         func() string
+	TLS             func() *tls.Config
 	ValidLogin      func(*types.Login) bool
 
 	sessions map[string]Session
@@ -41,9 +43,6 @@ func (m *SessionManager) init(*Registry) {
 }
 
 var (
-	// SessionIdleTimeout duration used to expire idle sessions
-	SessionIdleTimeout time.Duration
-
 	sessionMutex sync.Mutex
 
 	// secureCookies enables Set-Cookie.Secure=true
@@ -122,6 +121,13 @@ func (s *SessionManager) Authenticate(u url.URL, req *types.Login) bool {
 	return req.UserName == u.User.Username() && req.Password == pass
 }
 
+func (s *SessionManager) TLSCert() string {
+	if s.TLS == nil {
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(s.TLS().Certificates[0].Certificate[0])
+}
+
 func (s *SessionManager) Login(ctx *Context, req *types.Login) soap.HasFault {
 	body := new(methods.LoginBody)
 
@@ -186,6 +192,9 @@ func (s *SessionManager) Logout(ctx *Context, _ *types.Logout) soap.HasFault {
 	session := ctx.Session
 	s.delSession(session.Key)
 	pc := ctx.Map.content().PropertyCollector
+
+	ctx.Session.Registry.m.Lock()
+	defer ctx.Session.Registry.m.Unlock()
 
 	for ref, obj := range ctx.Session.Registry.objects {
 		if ref == pc {
@@ -349,12 +358,12 @@ func (c *Context) mapSession() {
 	}
 }
 
-func (m *SessionManager) expiredSession(id string, now time.Time) bool {
+func (m *SessionManager) expiredSession(id string, now time.Time, timeout time.Duration) bool {
 	expired := true
 
 	s, ok := m.getSession(id)
 	if ok {
-		expired = now.Sub(s.LastActiveTime) > SessionIdleTimeout
+		expired = now.Sub(s.LastActiveTime) > timeout
 		if expired {
 			m.delSession(id)
 		}
@@ -363,23 +372,29 @@ func (m *SessionManager) expiredSession(id string, now time.Time) bool {
 	return expired
 }
 
-// SessionIdleWatch starts a goroutine that calls func expired() at SessionIdleTimeout intervals.
+// SessionIdleWatch starts a goroutine that calls func expired() at timeout intervals.
 // The goroutine exits if the func returns true.
-func SessionIdleWatch(ctx context.Context, id string, expired func(string, time.Time) bool) {
-	if SessionIdleTimeout == 0 {
+func SessionIdleWatch(ctx *Context, id string, expired func(string, time.Time, time.Duration) bool) {
+	opt := ctx.Map.OptionManager().find("config.vmacore.soap.sessionTimeout")
+	if opt == nil {
 		return
 	}
 
+	timeout, err := time.ParseDuration(opt.Value.(string))
+	if err != nil {
+		panic(err)
+	}
+
 	go func() {
-		for t := time.NewTimer(SessionIdleTimeout); ; {
+		for t := time.NewTimer(timeout); ; {
 			select {
 			case <-ctx.Done():
 				return
 			case now := <-t.C:
-				if expired(id, now) {
+				if expired(id, now, timeout) {
 					return
 				}
-				t.Reset(SessionIdleTimeout)
+				t.Reset(timeout)
 			}
 		}
 	}()
@@ -411,7 +426,7 @@ func (c *Context) SetSession(session Session, login bool) {
 			Locale:    session.Locale,
 		})
 
-		SessionIdleWatch(c.Context, session.Key, m.expiredSession)
+		SessionIdleWatch(c, session.Key, m.expiredSession)
 	}
 }
 

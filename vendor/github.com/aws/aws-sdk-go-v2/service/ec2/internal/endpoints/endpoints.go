@@ -87,6 +87,7 @@ func New() *Resolver {
 var partitionRegexp = struct {
 	Aws      *regexp.Regexp
 	AwsCn    *regexp.Regexp
+	AwsEusc  *regexp.Regexp
 	AwsIso   *regexp.Regexp
 	AwsIsoB  *regexp.Regexp
 	AwsIsoE  *regexp.Regexp
@@ -94,8 +95,9 @@ var partitionRegexp = struct {
 	AwsUsGov *regexp.Regexp
 }{
 
-	Aws:      regexp.MustCompile("^(us|eu|ap|sa|ca|me|af|il)\\-\\w+\\-\\d+$"),
+	Aws:      regexp.MustCompile("^(us|eu|ap|sa|ca|me|af|il|mx)\\-\\w+\\-\\d+$"),
 	AwsCn:    regexp.MustCompile("^cn\\-\\w+\\-\\d+$"),
+	AwsEusc:  regexp.MustCompile("^eusc\\-(de)\\-\\w+\\-\\d+$"),
 	AwsIso:   regexp.MustCompile("^us\\-iso\\-\\w+\\-\\d+$"),
 	AwsIsoB:  regexp.MustCompile("^us\\-isob\\-\\w+\\-\\d+$"),
 	AwsIsoE:  regexp.MustCompile("^eu\\-isoe\\-\\w+\\-\\d+$"),
@@ -143,14 +145,41 @@ var defaultPartitions = endpoints.Partitions{
 				Region: "af-south-1",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
+				Region:  "af-south-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.af-south-1.api.aws",
+			},
+			endpoints.EndpointKey{
 				Region: "ap-east-1",
+			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
+				Region:  "ap-east-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.ap-east-1.api.aws",
+			},
+			endpoints.EndpointKey{
+				Region: "ap-east-2",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
 				Region: "ap-northeast-1",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
+				Region:  "ap-northeast-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.ap-northeast-1.api.aws",
+			},
+			endpoints.EndpointKey{
 				Region: "ap-northeast-2",
 			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
+				Region:  "ap-northeast-2",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.ap-northeast-2.api.aws",
+			},
 			endpoints.EndpointKey{
 				Region: "ap-northeast-3",
 			}: endpoints.Endpoint{},
@@ -170,13 +199,31 @@ var defaultPartitions = endpoints.Partitions{
 				Region: "ap-southeast-1",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
+				Region:  "ap-southeast-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.ap-southeast-1.api.aws",
+			},
+			endpoints.EndpointKey{
 				Region: "ap-southeast-2",
 			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
+				Region:  "ap-southeast-2",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.ap-southeast-2.api.aws",
+			},
 			endpoints.EndpointKey{
 				Region: "ap-southeast-3",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
 				Region: "ap-southeast-4",
+			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
+				Region: "ap-southeast-5",
+			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
+				Region: "ap-southeast-7",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
 				Region: "ca-central-1",
@@ -186,6 +233,12 @@ var defaultPartitions = endpoints.Partitions{
 				Variant: endpoints.FIPSVariant,
 			}: {
 				Hostname: "ec2-fips.ca-central-1.amazonaws.com",
+			},
+			endpoints.EndpointKey{
+				Region:  "ca-central-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.ca-central-1.api.aws",
 			},
 			endpoints.EndpointKey{
 				Region: "ca-west-1",
@@ -200,14 +253,32 @@ var defaultPartitions = endpoints.Partitions{
 				Region: "eu-central-1",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
+				Region:  "eu-central-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.eu-central-1.api.aws",
+			},
+			endpoints.EndpointKey{
 				Region: "eu-central-2",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
 				Region: "eu-north-1",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
+				Region:  "eu-north-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.eu-north-1.api.aws",
+			},
+			endpoints.EndpointKey{
 				Region: "eu-south-1",
 			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
+				Region:  "eu-south-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.eu-south-1.api.aws",
+			},
 			endpoints.EndpointKey{
 				Region: "eu-south-2",
 			}: endpoints.Endpoint{},
@@ -224,8 +295,20 @@ var defaultPartitions = endpoints.Partitions{
 				Region: "eu-west-2",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
+				Region:  "eu-west-2",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.eu-west-2.api.aws",
+			},
+			endpoints.EndpointKey{
 				Region: "eu-west-3",
 			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
+				Region:  "eu-west-3",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.eu-west-3.api.aws",
+			},
 			endpoints.EndpointKey{
 				Region: "fips-ca-central-1",
 			}: endpoints.Endpoint{
@@ -290,6 +373,15 @@ var defaultPartitions = endpoints.Partitions{
 				Region: "me-south-1",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
+				Region:  "me-south-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.me-south-1.api.aws",
+			},
+			endpoints.EndpointKey{
+				Region: "mx-central-1",
+			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
 				Region: "sa-east-1",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
@@ -336,6 +428,12 @@ var defaultPartitions = endpoints.Partitions{
 				Variant: endpoints.FIPSVariant,
 			}: {
 				Hostname: "ec2-fips.us-west-1.amazonaws.com",
+			},
+			endpoints.EndpointKey{
+				Region:  "us-west-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "ec2.us-west-1.api.aws",
 			},
 			endpoints.EndpointKey{
 				Region: "us-west-2",
@@ -396,6 +494,27 @@ var defaultPartitions = endpoints.Partitions{
 				Region: "cn-northwest-1",
 			}: endpoints.Endpoint{},
 		},
+	},
+	{
+		ID: "aws-eusc",
+		Defaults: map[endpoints.DefaultKey]endpoints.Endpoint{
+			{
+				Variant: endpoints.FIPSVariant,
+			}: {
+				Hostname:          "ec2-fips.{region}.amazonaws.eu",
+				Protocols:         []string{"https"},
+				SignatureVersions: []string{"v4"},
+			},
+			{
+				Variant: 0,
+			}: {
+				Hostname:          "ec2.{region}.amazonaws.eu",
+				Protocols:         []string{"https"},
+				SignatureVersions: []string{"v4"},
+			},
+		},
+		RegionRegex:    partitionRegexp.AwsEusc,
+		IsRegionalized: true,
 	},
 	{
 		ID: "aws-iso",
@@ -472,6 +591,11 @@ var defaultPartitions = endpoints.Partitions{
 		},
 		RegionRegex:    partitionRegexp.AwsIsoE,
 		IsRegionalized: true,
+		Endpoints: endpoints.Endpoints{
+			endpoints.EndpointKey{
+				Region: "eu-isoe-west-1",
+			}: endpoints.Endpoint{},
+		},
 	},
 	{
 		ID: "aws-iso-f",
@@ -493,6 +617,14 @@ var defaultPartitions = endpoints.Partitions{
 		},
 		RegionRegex:    partitionRegexp.AwsIsoF,
 		IsRegionalized: true,
+		Endpoints: endpoints.Endpoints{
+			endpoints.EndpointKey{
+				Region: "us-isof-east-1",
+			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
+				Region: "us-isof-south-1",
+			}: endpoints.Endpoint{},
+		},
 	},
 	{
 		ID: "aws-us-gov",

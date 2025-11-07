@@ -3,168 +3,35 @@
 package fake
 
 import (
-	"context"
-	json "encoding/json"
-	"fmt"
-
 	v1 "github.com/openshift/api/operator/v1"
 	operatorv1 "github.com/openshift/client-go/operator/applyconfigurations/operator/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	typedoperatorv1 "github.com/openshift/client-go/operator/clientset/versioned/typed/operator/v1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeKubeControllerManagers implements KubeControllerManagerInterface
-type FakeKubeControllerManagers struct {
+// fakeKubeControllerManagers implements KubeControllerManagerInterface
+type fakeKubeControllerManagers struct {
+	*gentype.FakeClientWithListAndApply[*v1.KubeControllerManager, *v1.KubeControllerManagerList, *operatorv1.KubeControllerManagerApplyConfiguration]
 	Fake *FakeOperatorV1
 }
 
-var kubecontrollermanagersResource = v1.SchemeGroupVersion.WithResource("kubecontrollermanagers")
-
-var kubecontrollermanagersKind = v1.SchemeGroupVersion.WithKind("KubeControllerManager")
-
-// Get takes name of the kubeControllerManager, and returns the corresponding kubeControllerManager object, and an error if there is any.
-func (c *FakeKubeControllerManagers) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.KubeControllerManager, err error) {
-	emptyResult := &v1.KubeControllerManager{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootGetActionWithOptions(kubecontrollermanagersResource, name, options), emptyResult)
-	if obj == nil {
-		return emptyResult, err
+func newFakeKubeControllerManagers(fake *FakeOperatorV1) typedoperatorv1.KubeControllerManagerInterface {
+	return &fakeKubeControllerManagers{
+		gentype.NewFakeClientWithListAndApply[*v1.KubeControllerManager, *v1.KubeControllerManagerList, *operatorv1.KubeControllerManagerApplyConfiguration](
+			fake.Fake,
+			"",
+			v1.SchemeGroupVersion.WithResource("kubecontrollermanagers"),
+			v1.SchemeGroupVersion.WithKind("KubeControllerManager"),
+			func() *v1.KubeControllerManager { return &v1.KubeControllerManager{} },
+			func() *v1.KubeControllerManagerList { return &v1.KubeControllerManagerList{} },
+			func(dst, src *v1.KubeControllerManagerList) { dst.ListMeta = src.ListMeta },
+			func(list *v1.KubeControllerManagerList) []*v1.KubeControllerManager {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1.KubeControllerManagerList, items []*v1.KubeControllerManager) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1.KubeControllerManager), err
-}
-
-// List takes label and field selectors, and returns the list of KubeControllerManagers that match those selectors.
-func (c *FakeKubeControllerManagers) List(ctx context.Context, opts metav1.ListOptions) (result *v1.KubeControllerManagerList, err error) {
-	emptyResult := &v1.KubeControllerManagerList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootListActionWithOptions(kubecontrollermanagersResource, kubecontrollermanagersKind, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1.KubeControllerManagerList{ListMeta: obj.(*v1.KubeControllerManagerList).ListMeta}
-	for _, item := range obj.(*v1.KubeControllerManagerList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested kubeControllerManagers.
-func (c *FakeKubeControllerManagers) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewRootWatchActionWithOptions(kubecontrollermanagersResource, opts))
-}
-
-// Create takes the representation of a kubeControllerManager and creates it.  Returns the server's representation of the kubeControllerManager, and an error, if there is any.
-func (c *FakeKubeControllerManagers) Create(ctx context.Context, kubeControllerManager *v1.KubeControllerManager, opts metav1.CreateOptions) (result *v1.KubeControllerManager, err error) {
-	emptyResult := &v1.KubeControllerManager{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateActionWithOptions(kubecontrollermanagersResource, kubeControllerManager, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1.KubeControllerManager), err
-}
-
-// Update takes the representation of a kubeControllerManager and updates it. Returns the server's representation of the kubeControllerManager, and an error, if there is any.
-func (c *FakeKubeControllerManagers) Update(ctx context.Context, kubeControllerManager *v1.KubeControllerManager, opts metav1.UpdateOptions) (result *v1.KubeControllerManager, err error) {
-	emptyResult := &v1.KubeControllerManager{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateActionWithOptions(kubecontrollermanagersResource, kubeControllerManager, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1.KubeControllerManager), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeKubeControllerManagers) UpdateStatus(ctx context.Context, kubeControllerManager *v1.KubeControllerManager, opts metav1.UpdateOptions) (result *v1.KubeControllerManager, err error) {
-	emptyResult := &v1.KubeControllerManager{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(kubecontrollermanagersResource, "status", kubeControllerManager, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1.KubeControllerManager), err
-}
-
-// Delete takes name of the kubeControllerManager and deletes it. Returns an error if one occurs.
-func (c *FakeKubeControllerManagers) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteActionWithOptions(kubecontrollermanagersResource, name, opts), &v1.KubeControllerManager{})
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeKubeControllerManagers) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionActionWithOptions(kubecontrollermanagersResource, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1.KubeControllerManagerList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched kubeControllerManager.
-func (c *FakeKubeControllerManagers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.KubeControllerManager, err error) {
-	emptyResult := &v1.KubeControllerManager{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceActionWithOptions(kubecontrollermanagersResource, name, pt, data, opts, subresources...), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1.KubeControllerManager), err
-}
-
-// Apply takes the given apply declarative configuration, applies it and returns the applied kubeControllerManager.
-func (c *FakeKubeControllerManagers) Apply(ctx context.Context, kubeControllerManager *operatorv1.KubeControllerManagerApplyConfiguration, opts metav1.ApplyOptions) (result *v1.KubeControllerManager, err error) {
-	if kubeControllerManager == nil {
-		return nil, fmt.Errorf("kubeControllerManager provided to Apply must not be nil")
-	}
-	data, err := json.Marshal(kubeControllerManager)
-	if err != nil {
-		return nil, err
-	}
-	name := kubeControllerManager.Name
-	if name == nil {
-		return nil, fmt.Errorf("kubeControllerManager.Name must be provided to Apply")
-	}
-	emptyResult := &v1.KubeControllerManager{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceActionWithOptions(kubecontrollermanagersResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1.KubeControllerManager), err
-}
-
-// ApplyStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-func (c *FakeKubeControllerManagers) ApplyStatus(ctx context.Context, kubeControllerManager *operatorv1.KubeControllerManagerApplyConfiguration, opts metav1.ApplyOptions) (result *v1.KubeControllerManager, err error) {
-	if kubeControllerManager == nil {
-		return nil, fmt.Errorf("kubeControllerManager provided to Apply must not be nil")
-	}
-	data, err := json.Marshal(kubeControllerManager)
-	if err != nil {
-		return nil, err
-	}
-	name := kubeControllerManager.Name
-	if name == nil {
-		return nil, fmt.Errorf("kubeControllerManager.Name must be provided to Apply")
-	}
-	emptyResult := &v1.KubeControllerManager{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceActionWithOptions(kubecontrollermanagersResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions(), "status"), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1.KubeControllerManager), err
 }
