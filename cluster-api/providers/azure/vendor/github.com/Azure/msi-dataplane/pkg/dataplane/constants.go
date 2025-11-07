@@ -22,3 +22,12 @@ const (
 	// storing a UserAssignedIdentityCredentials object in Azure KeyVault.
 	UserAssignedIdentityCredentialsStoragePrefix = "uamsi-"
 )
+
+const (
+	// RenewAfterKeyVaultTag is used to store the RFC3339-formatted timestamp after which the
+	// certificate stored in the KeyVault item should be renewed.
+	RenewAfterKeyVaultTag = "renew_after"
+	// CannotRenewAfterKeyVaultTag is used to store the RFC3339-formatted timestamp after which the
+	// certificate stored in the KeyVault item cannot be renewed.
+	CannotRenewAfterKeyVaultTag = "cannot_renew_after"
+)

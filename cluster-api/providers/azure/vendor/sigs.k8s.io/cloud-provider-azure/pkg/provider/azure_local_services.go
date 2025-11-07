@@ -23,21 +23,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2022-07-01/network"
-
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6"
 	v1 "k8s.io/api/core/v1"
 	discovery_v1 "k8s.io/api/discovery/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 	utilnet "k8s.io/utils/net"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
-	"sigs.k8s.io/cloud-provider-azure/pkg/retry"
+	"sigs.k8s.io/cloud-provider-azure/pkg/util/errutils"
 	utilsets "sigs.k8s.io/cloud-provider-azure/pkg/util/sets"
 )
 
@@ -92,7 +90,7 @@ func newLoadBalancerBackendPoolUpdater(az *Cloud, interval time.Duration) *loadB
 func (updater *loadBalancerBackendPoolUpdater) run(ctx context.Context) {
 	klog.V(2).Info("loadBalancerBackendPoolUpdater.run: started")
 	err := wait.PollUntilContextCancel(ctx, updater.interval, false, func(ctx context.Context) (bool, error) {
-		updater.process()
+		updater.process(ctx)
 		return false, nil
 	})
 	klog.Infof("loadBalancerBackendPoolUpdater.run: stopped due to %s", err.Error())
@@ -162,7 +160,7 @@ func (updater *loadBalancerBackendPoolUpdater) removeOperation(serviceName strin
 // and then processes them in batches. If an operation fails, it will be retried
 // if it is retriable, otherwise all operations in the batch targeting to
 // this backend pool will fail.
-func (updater *loadBalancerBackendPoolUpdater) process() {
+func (updater *loadBalancerBackendPoolUpdater) process(ctx context.Context) {
 	updater.lock.Lock()
 	defer updater.lock.Unlock()
 
@@ -199,9 +197,9 @@ func (updater *loadBalancerBackendPoolUpdater) process() {
 		parts := strings.Split(key, ":")
 		lbName, poolName := parts[0], parts[1]
 		operationName := fmt.Sprintf("%s/%s", lbName, poolName)
-		bp, rerr := updater.az.LoadBalancerClient.GetLBBackendPool(context.Background(), updater.az.ResourceGroup, lbName, poolName, "")
-		if rerr != nil {
-			updater.processError(rerr, operationName, ops...)
+		bp, err := updater.az.NetworkClientFactory.GetBackendAddressPoolClient().Get(ctx, updater.az.ResourceGroup, lbName, poolName)
+		if err != nil {
+			updater.processError(err, operationName, ops...)
 			continue
 		}
 
@@ -210,10 +208,10 @@ func (updater *loadBalancerBackendPoolUpdater) process() {
 			lbOp := op.(*loadBalancerBackendPoolUpdateOperation)
 			switch lbOp.kind {
 			case consts.LoadBalancerBackendPoolUpdateOperationRemove:
-				removed := removeNodeIPAddressesFromBackendPool(bp, lbOp.nodeIPs, false, true)
+				removed := removeNodeIPAddressesFromBackendPool(bp, lbOp.nodeIPs, false, true, true)
 				changed = changed || removed
 			case consts.LoadBalancerBackendPoolUpdateOperationAdd:
-				added := updater.az.addNodeIPAddressesToBackendPool(&bp, lbOp.nodeIPs)
+				added := updater.az.addNodeIPAddressesToBackendPool(bp, lbOp.nodeIPs)
 				changed = changed || added
 			default:
 				panic("loadBalancerBackendPoolUpdater.process: unknown operation type")
@@ -223,9 +221,9 @@ func (updater *loadBalancerBackendPoolUpdater) process() {
 		// but the backend pool object is not changed after multiple times of removal and re-adding.
 		if changed {
 			klog.V(2).Infof("loadBalancerBackendPoolUpdater.process: updating backend pool %s/%s", lbName, poolName)
-			rerr = updater.az.LoadBalancerClient.CreateOrUpdateBackendPools(context.Background(), updater.az.ResourceGroup, lbName, poolName, bp, pointer.StringDeref(bp.Etag, ""))
-			if rerr != nil {
-				updater.processError(rerr, operationName, ops...)
+			_, err = updater.az.NetworkClientFactory.GetBackendAddressPoolClient().CreateOrUpdate(ctx, updater.az.ResourceGroup, lbName, poolName, *bp)
+			if err != nil {
+				updater.processError(err, operationName, ops...)
 				continue
 			}
 		}
@@ -236,22 +234,18 @@ func (updater *loadBalancerBackendPoolUpdater) process() {
 // processError mark the operations as retriable if the error is retriable,
 // and fail all operations if the error is not retriable.
 func (updater *loadBalancerBackendPoolUpdater) processError(
-	rerr *retry.Error,
+	rerr error,
 	operationName string,
 	operations ...batchOperation,
 ) {
-	if rerr.IsNotFound() {
+	if exists, err := errutils.CheckResourceExistsFromAzcoreError(rerr); !exists && err == nil {
 		klog.V(4).Infof("backend pool not found for operation %s, skip updating", operationName)
 		return
 	}
 
-	if rerr.Retriable {
-		// Retry if retriable.
-		updater.operations = append(updater.operations, operations...)
-	} else {
-		// Fail all operations if not retriable.
-		updater.notify(newBatchOperationResult(operationName, false, rerr.Error()), operations...)
-	}
+	// Fail all operations if not retriable.
+	updater.notify(newBatchOperationResult(operationName, false, rerr), operations...)
+
 }
 
 // notify notifies the operations with the result.
@@ -320,12 +314,12 @@ func (az *Cloud) setUpEndpointSlicesInformer(informerFactory informers.SharedInf
 				var previousIPs, currentIPs, previousNodeNames, currentNodeNames []string
 				if previousES != nil {
 					for _, ep := range previousES.Endpoints {
-						previousNodeNames = append(previousNodeNames, pointer.StringDeref(ep.NodeName, ""))
+						previousNodeNames = append(previousNodeNames, ptr.Deref(ep.NodeName, ""))
 					}
 				}
 				if newES != nil {
 					for _, ep := range newES.Endpoints {
-						currentNodeNames = append(currentNodeNames, pointer.StringDeref(ep.NodeName, ""))
+						currentNodeNames = append(currentNodeNames, ptr.Deref(ep.NodeName, ""))
 					}
 				}
 				for _, previousNodeName := range previousNodeNames {
@@ -357,7 +351,23 @@ func (az *Cloud) setUpEndpointSlicesInformer(informerFactory informers.SharedInf
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
-				es := obj.(*discovery_v1.EndpointSlice)
+				var es *discovery_v1.EndpointSlice
+				switch v := obj.(type) {
+				case *discovery_v1.EndpointSlice:
+					es = v
+				case cache.DeletedFinalStateUnknown:
+					// We may miss the deletion event if the watch stream is disconnected and the object is deleted.
+					var ok bool
+					es, ok = v.Obj.(*discovery_v1.EndpointSlice)
+					if !ok {
+						klog.Errorf("Cannot convert to *discovery_v1.EndpointSlice: %T", v.Obj)
+						return
+					}
+				default:
+					klog.Errorf("Cannot convert to *discovery_v1.EndpointSlice: %T", v)
+					return
+				}
+
 				az.endpointSlicesCache.Delete(strings.ToLower(fmt.Sprintf("%s/%s", es.Namespace, es.Name)))
 			},
 		})
@@ -409,7 +419,7 @@ func getLocalServiceBackendPoolName(serviceName string, ipv6 bool) string {
 // getBackendPoolNameForService determine the expected backend pool name
 // by checking the external traffic policy of the service.
 func (az *Cloud) getBackendPoolNameForService(service *v1.Service, clusterName string, ipv6 bool) string {
-	if !isLocalService(service) || !az.useMultipleStandardLoadBalancers() {
+	if !isLocalService(service) || !az.UseMultipleStandardLoadBalancers() {
 		return getBackendPoolName(clusterName, ipv6)
 	}
 	return getLocalServiceBackendPoolName(getServiceName(service), ipv6)
@@ -418,7 +428,7 @@ func (az *Cloud) getBackendPoolNameForService(service *v1.Service, clusterName s
 // getBackendPoolNamesForService determine the expected backend pool names
 // by checking the external traffic policy of the service.
 func (az *Cloud) getBackendPoolNamesForService(service *v1.Service, clusterName string) map[bool]string {
-	if !isLocalService(service) || !az.useMultipleStandardLoadBalancers() {
+	if !isLocalService(service) || !az.UseMultipleStandardLoadBalancers() {
 		return getBackendPoolNames(clusterName)
 	}
 	return map[bool]string{
@@ -430,7 +440,7 @@ func (az *Cloud) getBackendPoolNamesForService(service *v1.Service, clusterName 
 // getBackendPoolIDsForService determine the expected backend pool IDs
 // by checking the external traffic policy of the service.
 func (az *Cloud) getBackendPoolIDsForService(service *v1.Service, clusterName, lbName string) map[bool]string {
-	if !isLocalService(service) || !az.useMultipleStandardLoadBalancers() {
+	if !isLocalService(service) || !az.UseMultipleStandardLoadBalancers() {
 		return az.getBackendPoolIDs(clusterName, lbName)
 	}
 	return map[bool]string{
@@ -446,8 +456,10 @@ func (az *Cloud) getLocalServiceBackendPoolID(serviceName string, lbName string,
 
 // localServiceOwnsBackendPool checks if a backend pool is owned by a local service.
 func localServiceOwnsBackendPool(serviceName, bpName string) bool {
-	prefix := strings.Replace(serviceName, "/", "-", -1)
-	return strings.HasPrefix(strings.ToLower(bpName), strings.ToLower(prefix))
+	if strings.HasSuffix(strings.ToLower(bpName), consts.IPVersionIPv6StringLower) {
+		return strings.EqualFold(getLocalServiceBackendPoolName(serviceName, true), bpName)
+	}
+	return strings.EqualFold(getLocalServiceBackendPoolName(serviceName, false), bpName)
 }
 
 type serviceInfo struct {
@@ -463,81 +475,61 @@ func newServiceInfo(ipFamily, lbName string) *serviceInfo {
 }
 
 // getLocalServiceEndpointsNodeNames gets the node names that host all endpoints of the local service.
-func (az *Cloud) getLocalServiceEndpointsNodeNames(service *v1.Service) (*utilsets.IgnoreCaseSet, error) {
-	var (
-		ep           *discovery_v1.EndpointSlice
-		foundInCache bool
-	)
-	az.endpointSlicesCache.Range(func(key, value interface{}) bool {
+func (az *Cloud) getLocalServiceEndpointsNodeNames(service *v1.Service) *utilsets.IgnoreCaseSet {
+	var eps []*discovery_v1.EndpointSlice
+	az.endpointSlicesCache.Range(func(_, value interface{}) bool {
 		endpointSlice := value.(*discovery_v1.EndpointSlice)
 		if strings.EqualFold(getServiceNameOfEndpointSlice(endpointSlice), service.Name) &&
 			strings.EqualFold(endpointSlice.Namespace, service.Namespace) {
-			ep = endpointSlice
-			foundInCache = true
-			return false
+			eps = append(eps, endpointSlice)
 		}
 		return true
 	})
-	if ep == nil {
-		klog.Infof("EndpointSlice for service %s/%s not found, try to list EndpointSlices", service.Namespace, service.Name)
-		eps, err := az.KubeClient.DiscoveryV1().EndpointSlices(service.Namespace).List(context.Background(), metav1.ListOptions{})
-		if err != nil {
-			klog.Errorf("Failed to list EndpointSlices for service %s/%s: %s", service.Namespace, service.Name, err.Error())
-			return nil, err
-		}
-		for _, endpointSlice := range eps.Items {
-			endpointSlice := endpointSlice
-			if strings.EqualFold(getServiceNameOfEndpointSlice(&endpointSlice), service.Name) {
-				ep = &endpointSlice
-				break
-			}
-		}
-	}
-	if ep == nil {
-		return nil, fmt.Errorf("failed to find EndpointSlice for service %s/%s", service.Namespace, service.Name)
-	}
-	if !foundInCache {
-		az.endpointSlicesCache.Store(strings.ToLower(fmt.Sprintf("%s/%s", ep.Namespace, ep.Name)), ep)
+	if len(eps) == 0 {
+		klog.Warningf("getLocalServiceEndpointsNodeNames: failed to find EndpointSlice for service %s/%s", service.Namespace, service.Name)
+		return nil
 	}
 
 	var nodeNames []string
-	for _, endpoint := range ep.Endpoints {
-		klog.V(4).Infof("EndpointSlice %s/%s has endpoint %s on node %s", ep.Namespace, ep.Name, endpoint.Addresses, pointer.StringDeref(endpoint.NodeName, ""))
-		nodeNames = append(nodeNames, pointer.StringDeref(endpoint.NodeName, ""))
+	for _, ep := range eps {
+		for _, endpoint := range ep.Endpoints {
+			klog.V(4).Infof("EndpointSlice %s/%s has endpoint %s on node %s", ep.Namespace, ep.Name, endpoint.Addresses, ptr.Deref(endpoint.NodeName, ""))
+			nodeNames = append(nodeNames, ptr.Deref(endpoint.NodeName, ""))
+		}
 	}
 
-	return utilsets.NewString(nodeNames...), nil
+	return utilsets.NewString(nodeNames...)
 }
 
 // cleanupLocalServiceBackendPool cleans up the backend pool of
 // a local service among given load balancers.
 func (az *Cloud) cleanupLocalServiceBackendPool(
+	ctx context.Context,
 	svc *v1.Service,
 	nodes []*v1.Node,
-	lbs *[]network.LoadBalancer,
+	lbs []*armnetwork.LoadBalancer,
 	clusterName string,
-) (newLBs *[]network.LoadBalancer, err error) {
+) (newLBs []*armnetwork.LoadBalancer, err error) {
 	var changed bool
-	if lbs != nil {
-		for _, lb := range *lbs {
-			lbName := pointer.StringDeref(lb.Name, "")
-			if lb.BackendAddressPools != nil {
-				for _, bp := range *lb.BackendAddressPools {
-					bpName := pointer.StringDeref(bp.Name, "")
-					if localServiceOwnsBackendPool(getServiceName(svc), bpName) {
-						if err := az.DeleteLBBackendPool(lbName, bpName); err != nil {
-							return nil, err
-						}
-						changed = true
+	for _, lb := range lbs {
+		lbName := ptr.Deref(lb.Name, "")
+		if lb.Properties.BackendAddressPools != nil {
+			for _, bp := range lb.Properties.BackendAddressPools {
+				bpName := ptr.Deref(bp.Name, "")
+				if localServiceOwnsBackendPool(getServiceName(svc), bpName) {
+					if err := az.DeleteLBBackendPool(ctx, lbName, bpName); err != nil {
+						return nil, err
 					}
+					changed = true
 				}
 			}
 		}
 	}
+
 	if changed {
 		// Refresh the list of existing LBs after cleanup to update etags for the LBs.
 		klog.V(4).Info("Refreshing the list of existing LBs")
-		lbs, err = az.ListManagedLBs(svc, nodes, clusterName)
+		lbs, err = az.ListManagedLBs(ctx, svc, nodes, clusterName)
 		if err != nil {
 			return nil, fmt.Errorf("reconcileLoadBalancer: failed to list managed LB: %w", err)
 		}
@@ -547,24 +539,25 @@ func (az *Cloud) cleanupLocalServiceBackendPool(
 
 // checkAndApplyLocalServiceBackendPoolUpdates if the IPs in the backend pool are aligned
 // with the corresponding endpointslice, and update the backend pool if necessary.
-func (az *Cloud) checkAndApplyLocalServiceBackendPoolUpdates(lb network.LoadBalancer, service *v1.Service) error {
+func (az *Cloud) checkAndApplyLocalServiceBackendPoolUpdates(lb armnetwork.LoadBalancer, service *v1.Service) error {
 	serviceName := getServiceName(service)
-	endpointsNodeNames, err := az.getLocalServiceEndpointsNodeNames(service)
-	if err != nil {
-		return err
+	endpointsNodeNames := az.getLocalServiceEndpointsNodeNames(service)
+	if endpointsNodeNames == nil {
+		return nil
 	}
+
 	var expectedIPs []string
 	for _, nodeName := range endpointsNodeNames.UnsortedList() {
 		ips := az.nodePrivateIPs[strings.ToLower(nodeName)]
 		expectedIPs = append(expectedIPs, ips.UnsortedList()...)
 	}
 	currentIPsInBackendPools := make(map[string][]string)
-	for _, bp := range *lb.BackendAddressPools {
-		bpName := pointer.StringDeref(bp.Name, "")
+	for _, bp := range lb.Properties.BackendAddressPools {
+		bpName := ptr.Deref(bp.Name, "")
 		if localServiceOwnsBackendPool(serviceName, bpName) {
 			var currentIPs []string
-			for _, address := range *bp.LoadBalancerBackendAddresses {
-				currentIPs = append(currentIPs, *address.IPAddress)
+			for _, address := range bp.Properties.LoadBalancerBackendAddresses {
+				currentIPs = append(currentIPs, *address.Properties.IPAddress)
 			}
 			currentIPsInBackendPools[bpName] = currentIPs
 		}

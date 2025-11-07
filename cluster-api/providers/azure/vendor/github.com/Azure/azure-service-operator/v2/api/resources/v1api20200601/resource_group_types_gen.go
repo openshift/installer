@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (group *ResourceGroup) ConvertTo(hub conversion.Hub) error {
 
 	return group.AssignProperties_To_ResourceGroup(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-resources-azure-com-v1api20200601-resourcegroup,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=resources.azure.com,resources=resourcegroups,verbs=create;update,versions=v1api20200601,name=default.v1api20200601.resourcegroups.resources.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ResourceGroup{}
-
-// Default applies defaults to the ResourceGroup resource
-func (group *ResourceGroup) Default() {
-	group.defaultImpl()
-	var temp any = group
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (group *ResourceGroup) defaultAzureName() {
-	if group.Spec.AzureName == "" {
-		group.Spec.AzureName = group.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ResourceGroup resource
-func (group *ResourceGroup) defaultImpl() { group.defaultAzureName() }
 
 var _ configmaps.Exporter = &ResourceGroup{}
 
@@ -189,7 +163,7 @@ func (group *ResourceGroup) SetStatus(status genruntime.ConvertibleStatus) error
 	var st ResourceGroup_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	group.Status = st
@@ -206,101 +180,6 @@ func (group *ResourceGroup) Location() string {
 	return *group.Spec.Location
 }
 
-// +kubebuilder:webhook:path=/validate-resources-azure-com-v1api20200601-resourcegroup,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=resources.azure.com,resources=resourcegroups,verbs=create;update,versions=v1api20200601,name=validate.v1api20200601.resourcegroups.resources.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ResourceGroup{}
-
-// ValidateCreate validates the creation of the resource
-func (group *ResourceGroup) ValidateCreate() (admission.Warnings, error) {
-	validations := group.createValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (group *ResourceGroup) ValidateDelete() (admission.Warnings, error) {
-	validations := group.deleteValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (group *ResourceGroup) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := group.updateValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (group *ResourceGroup) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateSecretDestinations, group.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (group *ResourceGroup) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (group *ResourceGroup) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateResourceReferences()
-		},
-		group.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (group *ResourceGroup) validateConfigMapDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(group, nil, group.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateResourceReferences validates all resource references
-func (group *ResourceGroup) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&group.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (group *ResourceGroup) validateSecretDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(group, nil, group.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (group *ResourceGroup) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ResourceGroup)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, group)
-}
-
 // AssignProperties_From_ResourceGroup populates our ResourceGroup from the provided source ResourceGroup
 func (group *ResourceGroup) AssignProperties_From_ResourceGroup(source *storage.ResourceGroup) error {
 
@@ -311,7 +190,7 @@ func (group *ResourceGroup) AssignProperties_From_ResourceGroup(source *storage.
 	var spec ResourceGroup_Spec
 	err := spec.AssignProperties_From_ResourceGroup_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ResourceGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ResourceGroup_Spec() to populate field Spec")
 	}
 	group.Spec = spec
 
@@ -319,7 +198,7 @@ func (group *ResourceGroup) AssignProperties_From_ResourceGroup(source *storage.
 	var status ResourceGroup_STATUS
 	err = status.AssignProperties_From_ResourceGroup_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ResourceGroup_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ResourceGroup_STATUS() to populate field Status")
 	}
 	group.Status = status
 
@@ -337,7 +216,7 @@ func (group *ResourceGroup) AssignProperties_To_ResourceGroup(destination *stora
 	var spec storage.ResourceGroup_Spec
 	err := group.Spec.AssignProperties_To_ResourceGroup_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ResourceGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ResourceGroup_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -345,7 +224,7 @@ func (group *ResourceGroup) AssignProperties_To_ResourceGroup(destination *stora
 	var status storage.ResourceGroup_STATUS
 	err = group.Status.AssignProperties_To_ResourceGroup_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ResourceGroup_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ResourceGroup_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -489,13 +368,13 @@ func (group *ResourceGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSp
 	src = &storage.ResourceGroup_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_ResourceGroup_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -513,13 +392,13 @@ func (group *ResourceGroup_Spec) ConvertSpecTo(destination genruntime.Convertibl
 	dst = &storage.ResourceGroup_Spec{}
 	err := group.AssignProperties_To_ResourceGroup_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -542,7 +421,7 @@ func (group *ResourceGroup_Spec) AssignProperties_From_ResourceGroup_Spec(source
 		var operatorSpec ResourceGroupOperatorSpec
 		err := operatorSpec.AssignProperties_From_ResourceGroupOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		group.OperatorSpec = &operatorSpec
 	} else {
@@ -575,7 +454,7 @@ func (group *ResourceGroup_Spec) AssignProperties_To_ResourceGroup_Spec(destinat
 		var operatorSpec storage.ResourceGroupOperatorSpec
 		err := group.OperatorSpec.AssignProperties_To_ResourceGroupOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -665,13 +544,13 @@ func (group *ResourceGroup_STATUS) ConvertStatusFrom(source genruntime.Convertib
 	src = &storage.ResourceGroup_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_ResourceGroup_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -689,13 +568,13 @@ func (group *ResourceGroup_STATUS) ConvertStatusTo(destination genruntime.Conver
 	dst = &storage.ResourceGroup_STATUS{}
 	err := group.AssignProperties_To_ResourceGroup_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -793,7 +672,7 @@ func (group *ResourceGroup_STATUS) AssignProperties_From_ResourceGroup_STATUS(so
 		var property ResourceGroupProperties_STATUS
 		err := property.AssignProperties_From_ResourceGroupProperties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceGroupProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceGroupProperties_STATUS() to populate field Properties")
 		}
 		group.Properties = &property
 	} else {
@@ -835,7 +714,7 @@ func (group *ResourceGroup_STATUS) AssignProperties_To_ResourceGroup_STATUS(dest
 		var property storage.ResourceGroupProperties_STATUS
 		err := group.Properties.AssignProperties_To_ResourceGroupProperties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceGroupProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceGroupProperties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {

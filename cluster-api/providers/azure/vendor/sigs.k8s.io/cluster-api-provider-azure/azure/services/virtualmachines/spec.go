@@ -34,32 +34,33 @@ import (
 
 // VMSpec defines the specification for a Virtual Machine.
 type VMSpec struct {
-	Name                       string
-	ResourceGroup              string
-	Location                   string
-	ExtendedLocation           *infrav1.ExtendedLocationSpec
-	ClusterName                string
-	Role                       string
-	NICIDs                     []string
-	SSHKeyData                 string
-	Size                       string
-	AvailabilitySetID          string
-	Zone                       string
-	Identity                   infrav1.VMIdentity
-	OSDisk                     infrav1.OSDisk
-	DataDisks                  []infrav1.DataDisk
-	UserAssignedIdentities     []infrav1.UserAssignedIdentity
-	SpotVMOptions              *infrav1.SpotVMOptions
-	SecurityProfile            *infrav1.SecurityProfile
-	AdditionalTags             infrav1.Tags
-	AdditionalCapabilities     *infrav1.AdditionalCapabilities
-	DiagnosticsProfile         *infrav1.Diagnostics
-	DisableExtensionOperations bool
-	CapacityReservationGroupID string
-	SKU                        resourceskus.SKU
-	Image                      *infrav1.Image
-	BootstrapData              string
-	ProviderID                 string
+	Name                        string
+	ResourceGroup               string
+	Location                    string
+	ExtendedLocation            *infrav1.ExtendedLocationSpec
+	ClusterName                 string
+	Role                        string
+	NICIDs                      []string
+	SSHKeyData                  string
+	Size                        string
+	AvailabilitySetID           string
+	Zone                        string
+	Identity                    infrav1.VMIdentity
+	OSDisk                      infrav1.OSDisk
+	DataDisks                   []infrav1.DataDisk
+	UserAssignedIdentities      []infrav1.UserAssignedIdentity
+	SpotVMOptions               *infrav1.SpotVMOptions
+	SecurityProfile             *infrav1.SecurityProfile
+	AdditionalTags              infrav1.Tags
+	AdditionalCapabilities      *infrav1.AdditionalCapabilities
+	DiagnosticsProfile          *infrav1.Diagnostics
+	DisableExtensionOperations  bool
+	DisableVMBootstrapExtension bool
+	CapacityReservationGroupID  string
+	SKU                         resourceskus.SKU
+	Image                       *infrav1.Image
+	BootstrapData               string
+	ProviderID                  string
 }
 
 // ResourceName returns the name of the virtual machine.

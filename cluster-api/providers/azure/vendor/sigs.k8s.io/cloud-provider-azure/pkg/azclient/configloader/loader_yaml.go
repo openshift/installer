@@ -23,14 +23,14 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// yamlByteLoader is a FactoryConfigLoader that loads a YAML file from a byte array.
-type yamlByteLoader[Type any] struct {
+// YamlByteLoader is a FactoryConfigLoader that loads a YAML file from a byte array.
+type YamlByteLoader[Type any] struct {
 	content []byte
 	configLoader[Type]
 }
 
 // Load loads the YAML file from the byte array and returns the client factory config.
-func (s *yamlByteLoader[Type]) Load(ctx context.Context) (*Type, error) {
+func (s *YamlByteLoader[Type]) Load(ctx context.Context) (*Type, error) {
 	if s.configLoader == nil {
 		s.configLoader = newEmptyLoader[Type](nil)
 	}
@@ -45,9 +45,9 @@ func (s *yamlByteLoader[Type]) Load(ctx context.Context) (*Type, error) {
 	return config, nil
 }
 
-// newYamlByteLoader creates a YamlByteLoader with the specified content and loader.
-func newYamlByteLoader[Type any](content []byte, loader configLoader[Type]) configLoader[Type] {
-	return &yamlByteLoader[Type]{
+// NewYamlByteLoader creates a YamlByteLoader with the specified content and loader.
+func NewYamlByteLoader[Type any](content []byte, loader configLoader[Type]) configLoader[Type] {
+	return &YamlByteLoader[Type]{
 		content:      content,
 		configLoader: loader,
 	}

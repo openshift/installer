@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // PropertyBag is an unordered set of stashed information that used for properties not directly supported by storage
@@ -57,7 +57,7 @@ func (bag PropertyBag) Add(property string, value interface{}) error {
 		// Default to treating as a JSON blob
 		j, err := json.Marshal(v)
 		if err != nil {
-			return errors.Wrapf(err, "adding %s as JSON", property)
+			return eris.Wrapf(err, "adding %s as JSON", property)
 		}
 		bag[property] = string(j)
 	}
@@ -74,7 +74,7 @@ func (bag PropertyBag) Pull(property string, destination interface{}) error {
 	value, found := bag[property]
 	if !found {
 		// Property not found in the bag
-		return errors.Errorf("property bag does not contain %q", property)
+		return eris.Errorf("property bag does not contain %q", property)
 	}
 
 	// Property found, remove the value
@@ -89,7 +89,7 @@ func (bag PropertyBag) Pull(property string, destination interface{}) error {
 		decoder.DisallowUnknownFields()
 		err := decoder.Decode(destination)
 		if err != nil {
-			return errors.Wrapf(err, "pulling %q from PropertyBag", property)
+			return eris.Wrapf(err, "pulling %q from PropertyBag", property)
 		}
 	}
 

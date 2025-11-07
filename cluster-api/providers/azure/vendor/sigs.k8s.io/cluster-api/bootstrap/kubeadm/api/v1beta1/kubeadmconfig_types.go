@@ -65,6 +65,7 @@ type KubeadmConfigSpec struct {
 
 	// files specifies extra files to be passed to user_data upon creation.
 	// +optional
+	// +kubebuilder:validation:MaxItems=200
 	Files []File `json:"files,omitempty"`
 
 	// diskSetup specifies options for the creation of partition tables and file systems on devices.
@@ -73,18 +74,39 @@ type KubeadmConfigSpec struct {
 
 	// mounts specifies a list of mount points to be setup.
 	// +optional
+	// +kubebuilder:validation:MaxItems=100
 	Mounts []MountPoints `json:"mounts,omitempty"`
 
-	// preKubeadmCommands specifies extra commands to run before kubeadm runs
+	// bootCommands specifies extra commands to run very early in the boot process via the cloud-init bootcmd
+	// module. bootcmd will run on every boot, 'cloud-init-per' command can be used to make bootcmd run exactly
+	// once. This is typically run in the cloud-init.service systemd unit. This has no effect in Ignition.
 	// +optional
+	// +kubebuilder:validation:MaxItems=1000
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=10240
+	BootCommands []string `json:"bootCommands,omitempty"`
+
+	// preKubeadmCommands specifies extra commands to run before kubeadm runs.
+	// With cloud-init, this is prepended to the runcmd module configuration, and is typically executed in
+	// the cloud-final.service systemd unit. In Ignition, this is prepended to /etc/kubeadm.sh.
+	// +optional
+	// +kubebuilder:validation:MaxItems=1000
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=10240
 	PreKubeadmCommands []string `json:"preKubeadmCommands,omitempty"`
 
-	// postKubeadmCommands specifies extra commands to run after kubeadm runs
+	// postKubeadmCommands specifies extra commands to run after kubeadm runs.
+	// With cloud-init, this is appended to the runcmd module configuration, and is typically executed in
+	// the cloud-final.service systemd unit. In Ignition, this is appended to /etc/kubeadm.sh.
 	// +optional
+	// +kubebuilder:validation:MaxItems=1000
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=10240
 	PostKubeadmCommands []string `json:"postKubeadmCommands,omitempty"`
 
 	// users specifies extra users to add
 	// +optional
+	// +kubebuilder:validation:MaxItems=100
 	Users []User `json:"users,omitempty"`
 
 	// ntp specifies NTP configuration
@@ -347,6 +369,16 @@ func (c *KubeadmConfigSpec) validateIgnition(pathPrefix *field.Path) field.Error
 		}
 	}
 
+	if c.BootCommands != nil {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(
+				pathPrefix.Child("bootCommands"),
+				cannotUseWithIgnition,
+			),
+		)
+	}
+
 	if c.DiskSetup == nil {
 		return allErrs
 	}
@@ -409,6 +441,8 @@ type ContainerLinuxConfig struct {
 	//
 	// The data format is documented here: https://kinvolk.io/docs/flatcar-container-linux/latest/provisioning/cl-config/
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=32768
 	AdditionalConfig string `json:"additionalConfig,omitempty"`
 
 	// strict controls if AdditionalConfig should be strictly parsed. If so, warnings are treated as errors.
@@ -424,6 +458,8 @@ type KubeadmConfigStatus struct {
 
 	// dataSecretName is the name of the secret that stores the bootstrap data script.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	DataSecretName *string `json:"dataSecretName,omitempty"`
 
 	// failureReason will be set on non-retryable errors
@@ -431,6 +467,8 @@ type KubeadmConfigStatus struct {
 	// Deprecated: This field is deprecated and is going to be removed in the next apiVersion. Please see https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more details.
 	//
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	FailureReason string `json:"failureReason,omitempty"`
 
 	// failureMessage will be set on non-retryable errors
@@ -438,6 +476,8 @@ type KubeadmConfigStatus struct {
 	// Deprecated: This field is deprecated and is going to be removed in the next apiVersion. Please see https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more details.
 	//
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=10240
 	FailureMessage string `json:"failureMessage,omitempty"`
 
 	// observedGeneration is the latest generation observed by the controller.
@@ -474,10 +514,17 @@ type KubeadmConfigV1Beta2Status struct {
 
 // KubeadmConfig is the Schema for the kubeadmconfigs API.
 type KubeadmConfig struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KubeadmConfigSpec   `json:"spec,omitempty"`
+	// spec is the desired state of KubeadmConfig.
+	// +optional
+	Spec KubeadmConfigSpec `json:"spec,omitempty"`
+	// status is the observed state of KubeadmConfig.
+	// +optional
 	Status KubeadmConfigStatus `json:"status,omitempty"`
 }
 
@@ -512,8 +559,12 @@ func (c *KubeadmConfig) SetV1Beta2Conditions(conditions []metav1.Condition) {
 // KubeadmConfigList contains a list of KubeadmConfig.
 type KubeadmConfigList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
+	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []KubeadmConfig `json:"items"`
+	// items is the list of KubeadmConfigs.
+	Items []KubeadmConfig `json:"items"`
 }
 
 func init() {
@@ -536,14 +587,21 @@ const (
 // File defines the input for generating write_files in cloud-init.
 type File struct {
 	// path specifies the full path on disk where to store the file.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=512
 	Path string `json:"path"`
 
 	// owner specifies the ownership of the file, e.g. "root:root".
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Owner string `json:"owner,omitempty"`
 
 	// permissions specifies the permissions to assign to the file, e.g. "0640".
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=16
 	Permissions string `json:"permissions,omitempty"`
 
 	// encoding specifies the encoding of the file contents.
@@ -556,6 +614,8 @@ type File struct {
 
 	// content is the actual content of the file.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=10240
 	Content string `json:"content,omitempty"`
 
 	// contentFrom is a referenced source of content to populate the file.
@@ -568,6 +628,7 @@ type File struct {
 // sources of data for target systems should add them here.
 type FileSource struct {
 	// secret represents a secret that should populate this file.
+	// +required
 	Secret SecretFileSource `json:"secret"`
 }
 
@@ -577,9 +638,15 @@ type FileSource struct {
 // as files using the keys in the Data field as the file names.
 type SecretFileSource struct {
 	// name of the secret in the KubeadmBootstrapConfig's namespace to use.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	Name string `json:"name"`
 
 	// key is the key in the secret's data map for this value.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Key string `json:"key"`
 }
 
@@ -588,6 +655,7 @@ type SecretFileSource struct {
 // sources of data for target systems should add them here.
 type PasswdSource struct {
 	// secret represents a secret that should populate this password.
+	// +required
 	Secret SecretPasswdSource `json:"secret"`
 }
 
@@ -597,27 +665,42 @@ type PasswdSource struct {
 // as passwd using the keys in the Data field as the file names.
 type SecretPasswdSource struct {
 	// name of the secret in the KubeadmBootstrapConfig's namespace to use.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	Name string `json:"name"`
 
 	// key is the key in the secret's data map for this value.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Key string `json:"key"`
 }
 
 // User defines the input for a generated user in cloud-init.
 type User struct {
 	// name specifies the user name
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Name string `json:"name"`
 
 	// gecos specifies the gecos to use for the user
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Gecos *string `json:"gecos,omitempty"`
 
 	// groups specifies the additional groups for the user
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Groups *string `json:"groups,omitempty"`
 
 	// homeDir specifies the home directory to use for the user
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	HomeDir *string `json:"homeDir,omitempty"`
 
 	// inactive specifies whether to mark the user as inactive
@@ -626,10 +709,14 @@ type User struct {
 
 	// shell specifies the user's shell
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Shell *string `json:"shell,omitempty"`
 
 	// passwd specifies a hashed password for the user
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Passwd *string `json:"passwd,omitempty"`
 
 	// passwdFrom is a referenced source of passwd to populate the passwd.
@@ -638,6 +725,8 @@ type User struct {
 
 	// primaryGroup specifies the primary group for the user
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	PrimaryGroup *string `json:"primaryGroup,omitempty"`
 
 	// lockPassword specifies if password login should be disabled
@@ -646,10 +735,15 @@ type User struct {
 
 	// sudo specifies a sudo role for the user
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Sudo *string `json:"sudo,omitempty"`
 
 	// sshAuthorizedKeys specifies a list of ssh authorized keys for the user
 	// +optional
+	// +kubebuilder:validation:MaxItems=100
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=2048
 	SSHAuthorizedKeys []string `json:"sshAuthorizedKeys,omitempty"`
 }
 
@@ -657,6 +751,9 @@ type User struct {
 type NTP struct {
 	// servers specifies which NTP servers to use
 	// +optional
+	// +kubebuilder:validation:MaxItems=100
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=512
 	Servers []string `json:"servers,omitempty"`
 
 	// enabled specifies whether NTP should be enabled
@@ -668,20 +765,26 @@ type NTP struct {
 type DiskSetup struct {
 	// partitions specifies the list of the partitions to setup.
 	// +optional
+	// +kubebuilder:validation:MaxItems=100
 	Partitions []Partition `json:"partitions,omitempty"`
 
 	// filesystems specifies the list of file systems to setup.
 	// +optional
+	// +kubebuilder:validation:MaxItems=100
 	Filesystems []Filesystem `json:"filesystems,omitempty"`
 }
 
 // Partition defines how to create and layout a partition.
 type Partition struct {
 	// device is the name of the device.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Device string `json:"device"`
 	// layout specifies the device layout.
 	// If it is true, a single partition will be created for the entire device.
 	// When layout is false, it means don't partition or ignore existing partitioning.
+	// +required
 	Layout bool `json:"layout"`
 	// overwrite describes whether to skip checks and create the partition if a partition or filesystem is found on the device.
 	// Use with caution. Default is 'false'.
@@ -691,32 +794,57 @@ type Partition struct {
 	// 'mbr': default and setups a MS-DOS partition table
 	// 'gpt': setups a GPT partition table
 	// +optional
+	// +kubebuilder:validation:Enum=mbr;gpt
 	TableType *string `json:"tableType,omitempty"`
 }
 
 // Filesystem defines the file systems to be created.
 type Filesystem struct {
 	// device specifies the device name
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Device string `json:"device"`
+
 	// filesystem specifies the file system type.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
 	Filesystem string `json:"filesystem"`
+
 	// label specifies the file system label to be used. If set to None, no label is used.
-	Label string `json:"label"`
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=512
+	Label string `json:"label,omitempty"`
+
 	// partition specifies the partition to use. The valid options are: "auto|any", "auto", "any", "none", and <NUM>, where NUM is the actual partition number.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
 	Partition *string `json:"partition,omitempty"`
+
 	// overwrite defines whether or not to overwrite any existing filesystem.
 	// If true, any pre-existing file system will be destroyed. Use with Caution.
 	// +optional
 	Overwrite *bool `json:"overwrite,omitempty"`
+
 	// replaceFS is a special directive, used for Microsoft Azure that instructs cloud-init to replace a file system of <FS_TYPE>.
 	// NOTE: unless you define a label, this requires the use of the 'any' partition directive.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
 	ReplaceFS *string `json:"replaceFS,omitempty"`
+
 	// extraOpts defined extra options to add to the command for creating the file system.
 	// +optional
+	// +kubebuilder:validation:MaxItems=100
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=256
 	ExtraOpts []string `json:"extraOpts,omitempty"`
 }
 
 // MountPoints defines input for generated mounts in cloud-init.
+// +kubebuilder:validation:items:MinLength=1
+// +kubebuilder:validation:items:MaxLength=512
 type MountPoints []string

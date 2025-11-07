@@ -71,6 +71,10 @@ type (
 		// +optional
 		AcceleratedNetworking *bool `json:"acceleratedNetworking,omitempty"`
 
+		// AdditionalCapabilities specifies additional capabilities enabled or disabled on the virtual machine.
+		// +optional
+		AdditionalCapabilities *infrav1.AdditionalCapabilities `json:"additionalCapabilities,omitempty"`
+
 		// Diagnostics specifies the diagnostics settings for a virtual machine.
 		// If not specified then Boot diagnostics (Managed) will be enabled.
 		// +optional

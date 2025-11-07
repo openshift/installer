@@ -19,36 +19,34 @@ package provider
 import (
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
 	"k8s.io/klog/v2"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
-	"sigs.k8s.io/cloud-provider-azure/pkg/retry"
 )
 
-// CreateOrUpdateVMSS invokes az.VirtualMachineScaleSetsClient.Update().
-func (az *Cloud) CreateOrUpdateVMSS(resourceGroupName string, VMScaleSetName string, parameters compute.VirtualMachineScaleSet) *retry.Error {
+// CreateOrUpdateVMSS invokes az.ComputeClientFactory.GetVirtualMachineScaleSetClient().Update().
+func (az *Cloud) CreateOrUpdateVMSS(resourceGroupName string, VMScaleSetName string, parameters armcompute.VirtualMachineScaleSet) error {
 	ctx, cancel := getContextWithCancel()
 	defer cancel()
 
 	// When vmss is being deleted, CreateOrUpdate API would report "the vmss is being deleted" error.
 	// Since it is being deleted, we shouldn't send more CreateOrUpdate requests for it.
 	klog.V(3).Infof("CreateOrUpdateVMSS: verify the status of the vmss being created or updated")
-	vmss, rerr := az.VirtualMachineScaleSetsClient.Get(ctx, resourceGroupName, VMScaleSetName)
-	if rerr != nil {
-		klog.Errorf("CreateOrUpdateVMSS: error getting vmss(%s): %v", VMScaleSetName, rerr)
-		return rerr
+	vmss, err := az.ComputeClientFactory.GetVirtualMachineScaleSetClient().Get(ctx, resourceGroupName, VMScaleSetName, nil)
+	if err != nil {
+		klog.Errorf("CreateOrUpdateVMSS: error getting vmss(%s): %v", VMScaleSetName, err)
+		return err
 	}
-	if vmss.ProvisioningState != nil && strings.EqualFold(*vmss.ProvisioningState, consts.ProvisionStateDeleting) {
+	if vmss.Properties.ProvisioningState != nil && strings.EqualFold(*vmss.Properties.ProvisioningState, consts.ProvisionStateDeleting) {
 		klog.V(3).Infof("CreateOrUpdateVMSS: found vmss %s being deleted, skipping", VMScaleSetName)
 		return nil
 	}
 
-	rerr = az.VirtualMachineScaleSetsClient.CreateOrUpdate(ctx, resourceGroupName, VMScaleSetName, parameters)
-	klog.V(10).Infof("UpdateVmssVMWithRetry: VirtualMachineScaleSetsClient.CreateOrUpdate(%s): end", VMScaleSetName)
-	if rerr != nil {
-		klog.Errorf("CreateOrUpdateVMSS: error CreateOrUpdate vmss(%s): %v", VMScaleSetName, rerr)
-		return rerr
+	_, err = az.ComputeClientFactory.GetVirtualMachineScaleSetClient().CreateOrUpdate(ctx, resourceGroupName, VMScaleSetName, parameters)
+	if err != nil {
+		klog.Errorf("CreateOrUpdateVMSS: error CreateOrUpdate vmss(%s): %v", VMScaleSetName, err)
+		return err
 	}
 
 	return nil

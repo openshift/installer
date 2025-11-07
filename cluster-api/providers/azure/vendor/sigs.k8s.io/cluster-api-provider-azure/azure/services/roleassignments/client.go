@@ -59,7 +59,7 @@ func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 
 // CreateOrUpdateAsync creates a roleassignment.
 // Creating a roleassignment is not a long running operation, so we don't ever return a poller.
-func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armauthorization.RoleAssignmentsClientCreateResponse], err error) { //nolint:revive // keeping resumeToken for readability
+func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, _ string, parameters interface{}) (result interface{}, poller *runtime.Poller[armauthorization.RoleAssignmentsClientCreateResponse], err error) { // ignore resumeToken (3rd arg) since this is not a long-running operation
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "roleassignments.azureClient.CreateOrUpdateAsync")
 	defer done()
 
