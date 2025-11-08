@@ -61,5 +61,5 @@ The interactive workflow allows the user to install a cluster by using the assis
 the agent-tui is also used interactively to configure which node will be the rendezvous host, and to configure accordingly the other nodes.
 
 * agent-extract-tui - extracts agent-tui and nmstate libraries from the agent-installer-utils image during boot
-* agent-start-ui - runs the assisted UI on the rendezvous node
+* agent-ui - runs the assisted UI on the rendezvous node
 

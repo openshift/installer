@@ -1,9 +1,9 @@
 [Unit]
 Description=Extract agent-tui at boot
 After=selinux.service start-local-registry.service
-Before=agent-interactive-console.service
-ConditionPathExists=/etc/assisted/rendezvous-host.env
+ConditionPathExists=/etc/assisted/rendezvous-host.env.template
 ConditionPathExists=/etc/assisted/interactive-ui
+ConditionPathExists=!/usr/local/bin/agent-tui
 
 [Service]
 Type=oneshot
@@ -11,4 +11,3 @@ ExecStart=/usr/local/bin/agent-extract-tui.sh
 TimeoutStartSec=300s
 
 [Install]
-WantedBy=getty@tty1.service

@@ -1,12 +1,12 @@
 package image
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"net"
-	"net/url"
 	"path"
 	"path/filepath"
 	"strings"
@@ -306,7 +306,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, authConfig.AgentAuthToken, authConfig.UserAuthToken, agentWorkflow.Workflow))
+		getRendezvousHostEnv(agentTemplateData, a.RendezvousIP, agentWorkflow.Workflow))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
@@ -370,11 +370,13 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 
 func getDefaultEnabledServices() []string {
 	return []string{
+		"agent-extract-tui.service",
 		"agent-interactive-console.service",
 		"agent-interactive-console-serial@.service",
 		"agent-register-cluster.service",
 		"agent-import-cluster.service",
 		"agent-register-infraenv.service",
+		"agent-ui.service",
 		"agent.service",
 		"assisted-service-db.service",
 		"assisted-service-pod.service",
@@ -446,17 +448,12 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 	}
 }
 
-func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, agentAuthtoken, userAuthToken string, workflowType workflow.AgentWorkflowType) string {
-	serviceBaseURL := url.URL{
-		Scheme: serviceProtocol,
-		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
-		Path:   "/",
-	}
-	imageServiceBaseURL := url.URL{
-		Scheme: serviceProtocol,
-		Host:   net.JoinHostPort(nodeZeroIP, "8888"),
-		Path:   "/",
-	}
+func getRendezvousHostEnvTemplate(data *agentTemplateData, workflowType workflow.AgentWorkflowType) string {
+	host := "{{ if $isIPv6 }}{{ printf \"[%s]\" .RendezvousIP }}{{ else }}{{ .RendezvousIP }}{{ end }}"
+	serviceBaseURL := fmt.Sprintf("%s://%s:8090/", data.ServiceProtocol, host)
+	imageServiceBaseURL := fmt.Sprintf("%s://%s:8888/", data.ServiceProtocol, host)
+	uiBaseURL := fmt.Sprintf("%s://%s:3001/", data.ServiceProtocol, host)
+
 	// USER_AUTH_TOKEN is required to authenticate API requests against agent-installer-local auth type
 	// and for the endpoints marked with userAuth security definition in assisted-service swagger.yaml.
 	// PULL_SECRET_TOKEN contains the AGENT_AUTH_TOKEN and is required for the endpoints marked with agentAuth security definition in assisted-service swagger.yaml.
@@ -469,27 +466,40 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, agentAuthtoken, userAuthT
 	// and ensure successful authentication.
 	// In the absence of PULL_SECRET_TOKEN, the cluster installation will wait forever.
 
-	rendezvousHostEnv := fmt.Sprintf(`NODE_ZERO_IP=%s
+	rendezvousHostEnvTemplate := fmt.Sprintf(`#{{ $isIPv6 := false }}{{ $host := .RendezvousIP }}{{ range ( len .RendezvousIP ) }}{{if eq ( index ( slice $host . ) 0 ) ':'}}{{ $isIPv6 = true }}{{ end }}{{ end }}
+NODE_ZERO_IP={{.RendezvousIP}}
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
 PULL_SECRET_TOKEN=%s
 USER_AUTH_TOKEN=%s
 WORKFLOW_TYPE=%s
-`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), agentAuthtoken, userAuthToken, workflowType)
-
-	if workflowType == workflow.AgentWorkflowTypeInstallInteractiveDisconnected {
-		uiBaseURL := url.URL{
-			Scheme: serviceProtocol,
-			Host:   net.JoinHostPort(nodeZeroIP, "3001"),
-			Path:   "/",
-		}
-		uiEnv := fmt.Sprintf(`AIUI_APP_API_URL=%s
+AIUI_APP_API_URL=%s
 AIUI_URL=%s
-`, serviceBaseURL.String(), uiBaseURL.String())
-		rendezvousHostEnv = fmt.Sprintf("%s%s", rendezvousHostEnv, uiEnv)
-	}
+`, serviceBaseURL, imageServiceBaseURL, data.AgentAuthToken, data.UserAuthToken, workflowType, serviceBaseURL, uiBaseURL)
 
-	return rendezvousHostEnv
+	return rendezvousHostEnvTemplate
+}
+
+func getRendezvousHostEnvFromTemplate(hostEnvTemplate, nodeZeroIP string) (string, error) {
+	tmpl, err := template.New("rendezvous-host.env").Parse(hostEnvTemplate)
+	if err != nil {
+		return "", err
+	}
+	buf := &bytes.Buffer{}
+	if err := tmpl.Execute(buf, struct{ RendezvousIP string }{nodeZeroIP}); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func getRendezvousHostEnv(data *agentTemplateData, nodeZeroIP string, workflowType workflow.AgentWorkflowType) string {
+	env, err := getRendezvousHostEnvFromTemplate(
+		getRendezvousHostEnvTemplate(data, workflowType),
+		nodeZeroIP)
+	if err != nil {
+		panic(err)
+	}
+	return env
 }
 
 func getAddNodesEnv(clusterInfo joiner.ClusterInfo, authTokenExpiry string) string {

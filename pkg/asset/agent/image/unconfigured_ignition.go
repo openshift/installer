@@ -2,7 +2,7 @@ package image
 
 import (
 	"context"
-	"net/url"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -151,6 +151,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	a.CPUArch = *osImage.CPUArchitecture
 
 	agentTemplateData := &agentTemplateData{
+		ServiceProtocol:           "http",
 		PullSecret:                pullSecretAsset.GetPullSecretData(),
 		ReleaseImages:             releaseImageList,
 		ReleaseImage:              clusterImageSet.Spec.ReleaseImage,
@@ -160,46 +161,45 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		InfraEnvID:                infraEnvID,
 		OSImage:                   osImage,
 		Proxy:                     infraEnv.Spec.Proxy,
+		AuthType:                  "none",
 	}
 
 	enabledServices := getDefaultEnabledServices()
 
-	switch agentWorkflow.Workflow {
-	case workflow.AgentWorkflowTypeInstall:
-		agentTemplateData.ConfigImageFiles = strings.Join(GetConfigImageFiles(), ",")
+	rendezvousHostTemplateData := getRendezvousHostEnvTemplate(agentTemplateData, agentWorkflow.Workflow)
+	rendezvousHostTemplateFile := ignition.FileFromString(fmt.Sprintf("%s.template", rendezvousHostEnvPath), "root", 0644, rendezvousHostTemplateData)
+	config.Storage.Files = append(config.Storage.Files, rendezvousHostTemplateFile)
 
-		// Enable the agent-check-config-image.service for the current workflow.
-		enabledServices = append(enabledServices, "agent-check-config-image.service")
-
-	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
-		// Add the rendezvous host file. Agent TUI will interact with that file in case
-		// the rendezvous IP wasn't previously configured, by managing it as a template file.
-		rendezvousIP := "{{.RendezvousIP}}"
-		if agentConfig.Config != nil {
-			rendezvousIP = agentConfig.Config.RendezvousIP
-		}
-		// Avoids escaping in case the template parameter was used.
-		rendezvousHostData, err := url.QueryUnescape(getRendezvousHostEnv("http", rendezvousIP, "", "", agentWorkflow.Workflow))
+	rendezvousIP, err := RetrieveRendezvousIP(agentConfig.Config, nil, nmStateConfigs.Config)
+	if err == nil {
+		rendezvousHostData, err := getRendezvousHostEnvFromTemplate(rendezvousHostTemplateData, rendezvousIP)
 		if err != nil {
 			return err
 		}
 		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostData)
 		config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
+	}
+
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		agentTemplateData.ConfigImageFiles = strings.Join(GetConfigImageFiles(), ",")
+
+	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
+		// Add the rendezvous host file. Agent TUI will interact with that file in case
+		// the rendezvous IP wasn't previously configured, by managing it as a template file.
+		if rendezvousIP == "" {
+			rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostTemplateData)
+			config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
+		}
 
 		// Explicitly disable the load-config-iso service, not required in the current flow
 		// (even though disabled by default, the udev rule may require it).
 		config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/etc/assisted/no-config-image", "root", 0644, ""))
 
 		// Enable the UI service.
-		enabledServices = append(enabledServices, "agent-start-ui.service")
 		interactiveUIFile := ignition.FileFromString("/etc/assisted/interactive-ui", "root", 0644, "")
 		config.Storage.Files = append(config.Storage.Files, interactiveUIFile)
 
-		// Enable the agent-extract-tui service
-		enabledServices = append(enabledServices, "agent-extract-tui.service")
-
-		// Let's disable the assisted-service authentication.
-		agentTemplateData.AuthType = "none"
 	}
 
 	// Required by assisted-service.
@@ -242,6 +242,8 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		config.Storage.Files = append(config.Storage.Files, manifestFile)
 	}
 
+	// the agent-check-config-image.service added only to the unconfigured ignition
+	enabledServices = append(enabledServices, "agent-check-config-image.service")
 	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, enabledServices)
 	if err != nil {
 		return err
