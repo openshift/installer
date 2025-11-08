@@ -10,8 +10,35 @@ import (
 )
 
 const (
+	bootstrapSGNameSuffix = "sg-bootstrap"
 	kubeAPILBSGNameSuffix = "sg-kube-api-lb"
 )
+
+func buildBootstrapSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
+	bootstrapSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, bootstrapSGNameSuffix))
+	return capibmcloud.VPCSecurityGroup{
+		Name: bootstrapSGNamePtr,
+		Rules: []*capibmcloud.VPCSecurityGroupRule{
+			{
+				// SSH inbound bootstrap
+				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
+				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
+					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
+						MaximumPort: 22,
+						MinimumPort: 22,
+					},
+					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
+						{
+							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
+						},
+					},
+				},
+			},
+		},
+	}
+}
 
 func buildKubeAPILBSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNameSuffix))
@@ -43,5 +70,6 @@ func getVPCSecurityGroups(infraID string, publishStrategy types.PublishingStrate
 	// IBM Power VS will rely on 6 SecurityGroups to manage traffic and 1 SecurityGroup for bootstrapping.
 	securityGroups := make([]capibmcloud.VPCSecurityGroup, 0, 6)
 	securityGroups = append(securityGroups, buildKubeAPILBSecurityGroup(infraID))
+	securityGroups = append(securityGroups, buildBootstrapSecurityGroup(infraID))
 	return securityGroups
 }

@@ -78,7 +78,8 @@ func (p Provider) ProvisionTimeout() time.Duration {
 // to create DNS records.
 func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	var (
-		client    *powervsconfig.Client
+		client *powervsconfig.Client
+		// bootstrap Bootstrap
 		kubeapilb KubeAPILB
 		groups    []vpcv1.SecurityGroup
 		rule      *vpcv1.SecurityGroupRulePrototype
