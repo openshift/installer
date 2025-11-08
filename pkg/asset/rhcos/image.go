@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -63,15 +64,17 @@ func (i *Image) Generate(ctx context.Context, p asset.Parents) error {
 	ic := &installconfig.InstallConfig{}
 	p.Get(ic)
 	config := ic.Config
-	osimageControlPlane, err := osImage(ctx, config, config.ControlPlane.Architecture)
+	osimageControlPlane, err := osImage(ctx, ic, config.ControlPlane)
 	if err != nil {
 		return err
 	}
-	arch := config.ControlPlane.Architecture
+	var computePool *types.MachinePool
 	if len(config.Compute) > 0 {
-		arch = config.Compute[0].Architecture
+		computePool = &config.Compute[0]
+	} else {
+		computePool = config.ControlPlane
 	}
-	osimageCompute, err := osImage(ctx, config, arch)
+	osimageCompute, err := osImage(ctx, ic, computePool)
 	if err != nil {
 		return err
 	}
@@ -80,10 +83,11 @@ func (i *Image) Generate(ctx context.Context, p asset.Parents) error {
 }
 
 //nolint:gocyclo
-func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Architecture) (string, error) {
+func osImage(ctx context.Context, ic *installconfig.InstallConfig, machinePool *types.MachinePool) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
+	nodeArch := machinePool.Architecture
 	archName := arch.RpmArch(string(nodeArch))
 
 	st, err := rhcos.FetchCoreOSBuild(ctx)
@@ -94,9 +98,11 @@ func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Ar
 	if err != nil {
 		return "", err
 	}
-	switch config.Platform.Name() {
+	streamArchPrefix := st.FormatPrefix(archName)
+	platform := ic.Config.Platform
+	switch platform.Name() {
 	case aws.Name:
-		region := config.Platform.AWS.Region
+		region := platform.AWS.Region
 		if !rhcos.AMIRegions(nodeArch).Has(region) {
 			const globalResourceRegion = "us-east-1"
 			logrus.Debugf("No AMI found in %s. Using AMI from %s.", region, globalResourceRegion)
@@ -106,7 +112,7 @@ func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Ar
 		if err != nil {
 			return "", err
 		}
-		if region != config.Platform.AWS.Region {
+		if region != platform.AWS.Region {
 			osimage = fmt.Sprintf("%s,%s", osimage, region)
 		}
 		return osimage, nil
@@ -115,14 +121,14 @@ func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Ar
 			img := streamArch.Images.Gcp
 			return fmt.Sprintf("projects/%s/global/images/%s", img.Project, img.Name), nil
 		}
-		return "", fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
+		return "", fmt.Errorf("%s: No GCP build found", streamArchPrefix)
 	case ibmcloud.Name:
 		if a, ok := streamArch.Artifacts["ibmcloud"]; ok {
 			return rhcos.FindArtifactURL(a)
 		}
-		return "", fmt.Errorf("%s: No ibmcloud build found", st.FormatPrefix(archName))
+		return "", fmt.Errorf("%s: No ibmcloud build found", streamArchPrefix)
 	case ovirt.Name, openstack.Name, powervc.Name:
-		op := config.Platform.OpenStack
+		op := platform.OpenStack
 		if op != nil {
 			if oi := op.ClusterOSImage; oi != "" {
 				return oi, nil
@@ -131,31 +137,46 @@ func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Ar
 		if a, ok := streamArch.Artifacts["openstack"]; ok {
 			return rhcos.FindArtifactURL(a)
 		}
-		return "", fmt.Errorf("%s: No openstack build found", st.FormatPrefix(archName))
+		return "", fmt.Errorf("%s: No openstack build found", streamArchPrefix)
 	case azure.Name:
 		ext := streamArch.RHELCoreOSExtensions
-		if config.Platform.Azure.CloudName == azure.StackCloud {
-			return config.Platform.Azure.ClusterOSImage, nil
+		if platform.Azure.CloudName == azure.StackCloud {
+			return platform.Azure.ClusterOSImage, nil
 		}
 		if ext == nil {
-			return "", fmt.Errorf("%s: No azure build found", st.FormatPrefix(archName))
+			return "", fmt.Errorf("%s: No extensions found in stream", streamArchPrefix)
 		}
-		azd := ext.AzureDisk
-		if azd == nil {
-			return "", fmt.Errorf("%s: No azure build found", st.FormatPrefix(archName))
+		if ext.AzureDisk == nil {
+			return "", fmt.Errorf("%s: No azure build found", streamArchPrefix)
 		}
-		return azd.URL, nil
+		azi := ext.AzureDisk.URL
+		if mkt := ext.Marketplace; mkt == nil || mkt.Azure == nil || mkt.Azure.NoPurchasePlan == nil || mkt.Azure.NoPurchasePlan.Gen2 == nil {
+			logrus.Warnf("%s: No default Azure marketplace image was found in stream", streamArchPrefix)
+		} else {
+			gen, err := getHyperVGeneration(ic.Azure, machinePool.Name)
+			if err != nil {
+				return "", fmt.Errorf("failed to get hyperVGeneration: %w", err)
+			}
+			azi = ext.Marketplace.Azure.NoPurchasePlan.Gen2.URN()
+			if gen == "V1" {
+				if mkt.Azure.NoPurchasePlan.Gen1 == nil {
+					return "", fmt.Errorf("a HyperVGeneration 1 instance was selected but no Gen1 marketplace image is available")
+				}
+				azi = ext.Marketplace.Azure.NoPurchasePlan.Gen1.URN()
+			}
+		}
+		return azi, nil
 	case baremetal.Name:
 		// Check for image URL override
-		if oi := config.Platform.BareMetal.ClusterOSImage; oi != "" {
+		if oi := platform.BareMetal.ClusterOSImage; oi != "" {
 			return oi, nil
 		}
 		// Use image from release payload
 		return "", nil
 	case vsphere.Name:
 		// Check for image URL override
-		if config.Platform.VSphere.ClusterOSImage != "" {
-			return config.Platform.VSphere.ClusterOSImage, nil
+		if platform.VSphere.ClusterOSImage != "" {
+			return platform.VSphere.ClusterOSImage, nil
 		}
 
 		if a, ok := streamArch.Artifacts["vmware"]; ok {
@@ -177,11 +198,11 @@ func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Ar
 
 			return u.String(), nil
 		}
-		return "", fmt.Errorf("%s: No vmware build found", st.FormatPrefix(archName))
+		return "", fmt.Errorf("%s: No vmware build found", streamArchPrefix)
 	case powervs.Name:
 		// Check for image URL override
-		if config.Platform.PowerVS.ClusterOSImage != "" {
-			return config.Platform.PowerVS.ClusterOSImage, nil
+		if platform.PowerVS.ClusterOSImage != "" {
+			return platform.PowerVS.ClusterOSImage, nil
 		}
 
 		if streamArch.Images.PowerVS != nil {
@@ -189,35 +210,35 @@ func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Ar
 				vpcRegion string
 				err       error
 			)
-			if config.Platform.PowerVS.VPCRegion != "" {
-				vpcRegion = config.Platform.PowerVS.VPCRegion
+			if platform.PowerVS.VPCRegion != "" {
+				vpcRegion = platform.PowerVS.VPCRegion
 			} else {
-				vpcRegion = powervs.Regions[config.Platform.PowerVS.Region].VPCRegion
+				vpcRegion = powervs.Regions[platform.PowerVS.Region].VPCRegion
 			}
 			vpcRegion, err = powervs.COSRegionForVPCRegion(vpcRegion)
 			if err != nil {
-				return "", fmt.Errorf("%s: No Power COS region found", st.FormatPrefix(archName))
+				return "", fmt.Errorf("%s: No Power COS region found", streamArchPrefix)
 			}
 			img := streamArch.Images.PowerVS.Regions[vpcRegion]
 			logrus.Debug("Power VS using image ", img.Object)
 			return fmt.Sprintf("%s/%s", img.Bucket, img.Object), nil
 		}
 
-		return "", fmt.Errorf("%s: No Power VS build found", st.FormatPrefix(archName))
+		return "", fmt.Errorf("%s: No Power VS build found", streamArchPrefix)
 	case external.Name:
 		return "", nil
 	case none.Name:
 		return "", nil
 	case nutanix.Name:
-		if config.Platform.Nutanix != nil && config.Platform.Nutanix.ClusterOSImage != "" {
-			return config.Platform.Nutanix.ClusterOSImage, nil
+		if platform.Nutanix != nil && platform.Nutanix.ClusterOSImage != "" {
+			return platform.Nutanix.ClusterOSImage, nil
 		}
 		if a, ok := streamArch.Artifacts["nutanix"]; ok {
 			return rhcos.FindArtifactURL(a)
 		}
-		return "", fmt.Errorf("%s: No nutanix build found", st.FormatPrefix(archName))
+		return "", fmt.Errorf("%s: No nutanix build found", streamArchPrefix)
 	default:
-		return "", fmt.Errorf("invalid platform %v", config.Platform.Name())
+		return "", fmt.Errorf("invalid platform %v", platform.Name())
 	}
 }
 
@@ -227,4 +248,11 @@ func MakeAsset(osImage string) *Image {
 		ControlPlane: osImage,
 		Compute:      osImage,
 	}
+}
+
+func getHyperVGeneration(metadata *icazure.Metadata, role string) (string, error) {
+	if role == types.MachinePoolControlPlaneRoleName {
+		return metadata.ControlPlaneHyperVGeneration()
+	}
+	return metadata.ComputeHyperVGeneration()
 }
