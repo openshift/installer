@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	bootstrapSGNameSuffix = "sg-bootstrap"
-	kubeAPILBSGNameSuffix = "sg-kube-api-lb"
+	bootstrapSGNameSuffix   = "sg-bootstrap"
+	clusterWideSGNameSuffix = "sg-clusterwide"
+	kubeAPILBSGNameSuffix   = "sg-kube-api-lb"
 )
 
 func buildBootstrapSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
@@ -37,6 +38,13 @@ func buildBootstrapSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 				},
 			},
 		},
+	}
+}
+
+func buildClusterWideSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
+	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNameSuffix))
+	return capibmcloud.VPCSecurityGroup{
+		Name: clusterWideSGNamePtr,
 	}
 }
 
@@ -71,5 +79,6 @@ func getVPCSecurityGroups(infraID string, publishStrategy types.PublishingStrate
 	securityGroups := make([]capibmcloud.VPCSecurityGroup, 0, 6)
 	securityGroups = append(securityGroups, buildKubeAPILBSecurityGroup(infraID))
 	securityGroups = append(securityGroups, buildBootstrapSecurityGroup(infraID))
+	securityGroups = append(securityGroups, buildClusterWideSecurityGroup(infraID))
 	return securityGroups
 }
