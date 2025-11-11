@@ -375,6 +375,67 @@ func validateProvisioningNetworkDisabledSupported(hosts []*baremetal.Host, fldPa
 	return
 }
 
+// validateHostsBMCForFencing validates BMC addresses are RedFish-compatible for fencing (TNF).
+// This is required for Two-Node Fencing configurations where Pacemaker needs to fence nodes
+// via RedFish-compatible BMCs.
+func validateHostsBMCForFencing(hosts []*baremetal.Host, installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	errors := field.ErrorList{}
+
+	// Only validate if this is a TNF cluster (2 control plane replicas with fencing enabled)
+	if installConfig.ControlPlane == nil || installConfig.ControlPlane.Replicas == nil {
+		return errors
+	}
+
+	// TNF requires exactly 2 control plane nodes and fencing credentials
+	isTNF := *installConfig.ControlPlane.Replicas == 2 &&
+		installConfig.ControlPlane.Fencing != nil &&
+		len(installConfig.ControlPlane.Fencing.Credentials) > 0
+
+	if !isTNF {
+		return errors
+	}
+
+	// For TNF clusters, validate that control plane BMC addresses are RedFish-compatible
+	for idx, host := range hosts {
+		if !host.IsMaster() {
+			continue // Only validate control plane hosts
+		}
+
+		// Use the shared validation function from types/validation package
+		// Import cycle workaround: inline the validation here
+		if err := validateBMCAddressForFencing(host.BMC.Address); err != nil {
+			errors = append(errors, field.Invalid(
+				fldPath.Index(idx).Child("bmc").Child("address"),
+				host.BMC.Address,
+				fmt.Sprintf("TNF requires RedFish-compatible BMC: %s", err.Error()),
+			))
+		}
+	}
+
+	return errors
+}
+
+// validateBMCAddressForFencing validates that a BMC address is RedFish-compatible.
+// This is a local implementation to avoid import cycles with types/validation.
+func validateBMCAddressForFencing(address string) error {
+	if address == "" {
+		return nil
+	}
+
+	// Parse the URL
+	_, err := url.Parse(address)
+	if err != nil {
+		return fmt.Errorf("invalid URL format: %v", err)
+	}
+
+	// Check if the address contains "redfish"
+	if !strings.Contains(address, "redfish") {
+		return errors.New("fencing requires redfish-compatible BMC addresses, IPMI is not supported")
+	}
+
+	return nil
+}
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *types.Networking, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -437,6 +498,10 @@ func ValidateHosts(p *baremetal.Platform, fldPath *field.Path, c *types.InstallC
 	allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath)...)
 
 	allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath)...)
+
+	// Validate BMC addresses for TNF (Two-Node Fencing) clusters
+	allErrs = append(allErrs, validateHostsBMCForFencing(p.Hosts, c, fldPath)...)
+
 	return allErrs
 }
 

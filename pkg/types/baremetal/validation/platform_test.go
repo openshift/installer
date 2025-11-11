@@ -1085,3 +1085,147 @@ func (nb *networkingBuilder) Network(cidr string) *networkingBuilder {
 func (nb *networkingBuilder) build() *types.Networking {
 	return &nb.Networking
 }
+
+func TestValidateHostsBMCForFencing(t *testing.T) {
+	validConfig := func() *types.InstallConfig {
+		return &types.InstallConfig{
+			ControlPlane: &types.MachinePool{
+				Replicas: ptr(int64(2)),
+				Fencing: &types.Fencing{
+					Credentials: []*types.Credential{
+						{HostName: "master-0", Address: "redfish+https://192.168.1.1:8000/redfish/v1/Systems/1"},
+						{HostName: "master-1", Address: "redfish+https://192.168.1.2:8000/redfish/v1/Systems/2"},
+					},
+				},
+			},
+		}
+	}
+
+	cases := []struct {
+		name        string
+		hosts       []*baremetal.Host
+		config      *types.InstallConfig
+		expectedErr string
+	}{
+		{
+			name: "TNF with valid RedFish BMC addresses",
+			hosts: []*baremetal.Host{
+				{
+					Name: "master-0",
+					Role: "master",
+					BMC: baremetal.BMC{
+						Address:  "redfish+https://192.168.1.1:8000/redfish/v1/Systems/1",
+						Username: "admin",
+						Password: "password",
+					},
+				},
+				{
+					Name: "master-1",
+					Role: "master",
+					BMC: baremetal.BMC{
+						Address:  "redfish+https://192.168.1.2:8000/redfish/v1/Systems/2",
+						Username: "admin",
+						Password: "password",
+					},
+				},
+			},
+			config:      validConfig(),
+			expectedErr: "",
+		},
+		{
+			name: "TNF with IPMI BMC address should fail",
+			hosts: []*baremetal.Host{
+				{
+					Name: "master-0",
+					Role: "master",
+					BMC: baremetal.BMC{
+						Address:  "ipmi://192.168.1.1",
+						Username: "admin",
+						Password: "password",
+					},
+				},
+				{
+					Name: "master-1",
+					Role: "master",
+					BMC: baremetal.BMC{
+						Address:  "redfish+https://192.168.1.2:8000/redfish/v1/Systems/2",
+						Username: "admin",
+						Password: "password",
+					},
+				},
+			},
+			config:      validConfig(),
+			expectedErr: "fencing requires redfish-compatible BMC addresses",
+		},
+		{
+			name: "Non-TNF cluster (3 nodes) should not validate",
+			hosts: []*baremetal.Host{
+				{
+					Name: "master-0",
+					Role: "master",
+					BMC: baremetal.BMC{
+						Address:  "ipmi://192.168.1.1",  // IPMI is OK for non-TNF
+						Username: "admin",
+						Password: "password",
+					},
+				},
+			},
+			config: &types.InstallConfig{
+				ControlPlane: &types.MachinePool{
+					Replicas: ptr(int64(3)),  // 3 nodes, not TNF
+				},
+			},
+			expectedErr: "",  // Should not validate, so no error
+		},
+		{
+			name: "TNF with worker node using IPMI should be OK",
+			hosts: []*baremetal.Host{
+				{
+					Name: "master-0",
+					Role: "master",
+					BMC: baremetal.BMC{
+						Address:  "redfish+https://192.168.1.1:8000/redfish/v1/Systems/1",
+						Username: "admin",
+						Password: "password",
+					},
+				},
+				{
+					Name: "worker-0",
+					Role: "worker",
+					BMC: baremetal.BMC{
+						Address:  "ipmi://192.168.1.3",  // Worker can use IPMI
+						Username: "admin",
+						Password: "password",
+					},
+				},
+			},
+			config:      validConfig(),
+			expectedErr: "",  // Only validates master nodes
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fldPath := field.NewPath("platform", "baremetal", "hosts")
+			errs := validateHostsBMCForFencing(tc.hosts, tc.config, fldPath)
+
+			if tc.expectedErr == "" {
+				assert.Empty(t, errs, "expected no errors but got: %v", errs)
+			} else {
+				assert.NotEmpty(t, errs, "expected errors but got none")
+				found := false
+				for _, err := range errs {
+					if strings.Contains(err.Error(), tc.expectedErr) {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "expected error containing %q, but got: %v", tc.expectedErr, errs)
+			}
+		})
+	}
+}
+
+func ptr(i int64) *int64 {
+	return &i
+}
