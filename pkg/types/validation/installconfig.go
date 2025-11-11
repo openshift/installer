@@ -39,6 +39,7 @@ import (
 	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	ibmcloudvalidation "github.com/openshift/installer/pkg/types/ibmcloud/validation"
+	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	nutanixvalidation "github.com/openshift/installer/pkg/types/nutanix/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -770,8 +771,8 @@ func validateControlPlane(installConfig *types.InstallConfig, fldPath *field.Pat
 
 func validateArbiter(platform *types.Platform, arbiterPool, masterPool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if platform != nil && platform.BareMetal == nil {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("platform"), platform.Name(), []string{baremetal.Name}))
+	if platform != nil && (platform.BareMetal == nil && platform.None == nil && platform.External == nil) {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("platform"), platform.Name(), []string{baremetal.Name, none.Name, external.Name}))
 	}
 	if arbiterPool.Name != types.MachinePoolArbiterRoleName {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), arbiterPool.Name, []string{types.MachinePoolArbiterRoleName}))
