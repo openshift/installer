@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"os"
 	"slices"
 	"sort"
 	"strconv"
@@ -665,46 +664,12 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateResourceGroup(client, field.NewPath("platform").Child("azure"), ic.Azure)...)
 	allErrs = append(allErrs, ValidateDiskEncryptionSet(client, ic)...)
 	allErrs = append(allErrs, ValidateSecurityProfileDiskEncryptionSet(client, ic)...)
-	allErrs = append(allErrs, validateSkipImageUpload(field.NewPath("image"), ic)...)
 	if ic.Azure.CloudName == aztypes.StackCloud {
 		allErrs = append(allErrs, checkAzureStackClusterOSImageSet(ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
 	return allErrs.ToAggregate()
 }
 
-func validateSkipImageUpload(fieldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
-	allErrs := field.ErrorList{}
-	defaultOSImage := aztypes.OSImage{}
-	if ic.Azure.DefaultMachinePlatform != nil {
-		defaultOSImage = aztypes.OSImage{
-			Plan:      ic.Azure.DefaultMachinePlatform.OSImage.Plan,
-			Publisher: ic.Azure.DefaultMachinePlatform.OSImage.Publisher,
-			SKU:       ic.Azure.DefaultMachinePlatform.OSImage.SKU,
-			Version:   ic.Azure.DefaultMachinePlatform.OSImage.Version,
-			Offer:     ic.Azure.DefaultMachinePlatform.OSImage.Offer,
-		}
-	}
-	controlPlaneOSImage := defaultOSImage
-	if ic.ControlPlane.Platform.Azure != nil {
-		controlPlaneOSImage = ic.ControlPlane.Platform.Azure.OSImage
-	}
-	allErrs = append(allErrs, validateOSImage(fieldPath.Child("controlplane"), controlPlaneOSImage)...)
-	computeOSImage := defaultOSImage
-	if len(ic.Compute) > 0 && ic.Compute[0].Platform.Azure != nil {
-		computeOSImage = ic.Compute[0].Platform.Azure.OSImage
-	}
-	allErrs = append(allErrs, validateOSImage(fieldPath.Child("compute"), computeOSImage)...)
-	return allErrs
-}
-func validateOSImage(fieldPath *field.Path, osImage aztypes.OSImage) field.ErrorList {
-	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD"); ok {
-		if len(osImage.SKU) > 0 {
-			return nil
-		}
-		return field.ErrorList{field.Invalid(fieldPath, "image", "cannot skip image upload without marketplace image specified")}
-	}
-	return nil
-}
 func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.Platform) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if len(platform.ResourceGroupName) == 0 {

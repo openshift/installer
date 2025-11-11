@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -96,8 +95,6 @@ func (p Provider) ProvisionTimeout() time.Duration {
 func (*Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.APILoadBalancer }
 
 // InfraReady is called once the installer infrastructure is ready.
-//
-//nolint:gocyclo //TODO(padillon): forthcoming marketplace image support should help reduce complexity here.
 func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	session, err := in.InstallConfig.Azure.Session()
 	if err != nil {
@@ -257,9 +254,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		logrus.Debugf("StorageAccount.ID=%s", *storageAccount.ID)
 	}
 
-	// Upload the image to the container
-	_, skipImageUpload := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD")
-	if !(skipImageUpload || platform.CloudName == aztypes.StackCloud) {
+	// Create a managed image, which is only used for OKD, as OCP can use marketplace images.
+	if installConfig.IsOKD() && platform.CloudName != aztypes.StackCloud {
 		// Create vhd blob storage container
 		publicAccess := armstorage.PublicAccessNone
 		createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
