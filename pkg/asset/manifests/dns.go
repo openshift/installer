@@ -156,7 +156,7 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { 
 			config.Spec.PrivateZone = nil
 			break
 		}
-		client, err := icgcp.NewClient(context.Background(), installConfig.Config.GCP.ServiceEndpoints)
+		client, err := icgcp.NewClient(context.Background(), installConfig.Config.GCP.Endpoint)
 		if err != nil {
 			return err
 		}

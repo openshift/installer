@@ -21,7 +21,6 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	configv1 "github.com/openshift/api/config/v1"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/destroy/providers"
@@ -67,7 +66,8 @@ type ClusterUninstaller struct {
 	globalOpSvc *compute.GlobalOperationsService
 	zonalOpSvc  *compute.ZoneOperationsService
 
-	serviceEndpoints []configv1.GCPServiceEndpoint
+	// endpoint contains the private service connect endpoint information.
+	endpoint *gcptypes.PSCEndpoint
 
 	// cpusByMachineType caches the number of CPUs per machine type, used in quota
 	// calculations on deletion
@@ -102,7 +102,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		cloudControllerUID:   gcptypes.CloudControllerUID(metadata.InfraID),
 		requestIDTracker:     newRequestIDTracker(),
 		pendingItemTracker:   newPendingItemTracker(),
-		serviceEndpoints:     metadata.ClusterPlatformMetadata.GCP.ServiceEndpoints,
+		endpoint:             metadata.ClusterPlatformMetadata.GCP.Endpoint,
 	}, nil
 }
 
@@ -110,12 +110,24 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	ctx := context.Background()
 
-	options := []option.ClientOption{
-		option.WithUserAgent(fmt.Sprintf("OpenShift/4.x Destroyer/%s", version.Raw)),
+	agentOption := option.WithUserAgent(fmt.Sprintf("OpenShift/4.x Destroyer/%s", version.Raw))
+	computeOpts := []option.ClientOption{agentOption}
+	iamOpts := []option.ClientOption{agentOption}
+	dnsOpts := []option.ClientOption{agentOption}
+	storageOpts := []option.ClientOption{agentOption}
+	crmOpts := []option.ClientOption{agentOption}
+	fileOpts := []option.ClientOption{agentOption}
+	if gcptypes.ShouldUseEndpointForInstaller(o.endpoint) {
+		computeOpts = append(computeOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPCompute))
+		iamOpts = append(iamOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPIAM))
+		dnsOpts = append(dnsOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPDNS))
+		storageOpts = append(storageOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPStorage))
+		crmOpts = append(crmOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPCloudResource))
+		fileOpts = append(fileOpts, gcpconfig.CreateEndpointOption(o.endpoint.Name, gcpconfig.ServiceNameGCPFile))
 	}
 
 	var err error
-	o.computeSvc, err = gcpconfig.GetComputeService(ctx, o.serviceEndpoints, options...)
+	o.computeSvc, err = gcpconfig.GetComputeService(ctx, computeOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create compute service")
 	}
@@ -140,27 +152,27 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		return nil, errors.Wrap(err, "failed to cache machine types")
 	}
 
-	o.iamSvc, err = gcpconfig.GetIAMService(ctx, o.serviceEndpoints, options...)
+	o.iamSvc, err = gcpconfig.GetIAMService(ctx, iamOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create iam service")
 	}
 
-	o.dnsSvc, err = gcpconfig.GetDNSService(ctx, o.serviceEndpoints, options...)
+	o.dnsSvc, err = gcpconfig.GetDNSService(ctx, dnsOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create dns service")
 	}
 
-	o.storageSvc, err = gcpconfig.GetStorageService(ctx, o.serviceEndpoints, options...)
+	o.storageSvc, err = gcpconfig.GetStorageService(ctx, storageOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create storage service")
 	}
 
-	o.rmSvc, err = gcpconfig.GetCloudResourceService(ctx, o.serviceEndpoints, options...)
+	o.rmSvc, err = gcpconfig.GetCloudResourceService(ctx, crmOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create resourcemanager service")
 	}
 
-	o.fileSvc, err = gcpconfig.GetFileService(ctx, o.serviceEndpoints, options...)
+	o.fileSvc, err = gcpconfig.GetFileService(ctx, fileOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create filestore service: %w", err)
 	}

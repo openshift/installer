@@ -101,7 +101,7 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		summarizeReport(reports)
 	case typesgcp.Name:
 		services := []string{"compute.googleapis.com", "iam.googleapis.com"}
-		q, err := quotagcp.Load(ctx, ic.Config.Platform.GCP.ProjectID, ic.Config.Platform.GCP.ServiceEndpoints, services...)
+		q, err := quotagcp.Load(ctx, ic.Config.Platform.GCP.ProjectID, ic.Config.Platform.GCP.Endpoint, services...)
 		if quotagcp.IsUnauthorized(err) {
 			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `roles/servicemanagement.quotaViewer` assigned to the user.", err)
 			return nil
@@ -109,7 +109,12 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		if err != nil {
 			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
 		}
-		client, err := gcp.NewClient(ctx, ic.Config.Platform.GCP.ProjectID, ic.Config.Platform.GCP.ServiceEndpoints)
+		endpointName := ""
+		endpoint := ic.Config.Platform.GCP.Endpoint
+		if typesgcp.ShouldUseEndpointForInstaller(endpoint) {
+			endpointName = ic.Config.GCP.Endpoint.Name
+		}
+		client, err := gcp.NewClient(ctx, ic.Config.Platform.GCP.ProjectID, endpointName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create client for quota constraints")
 		}

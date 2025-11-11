@@ -118,6 +118,22 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 	return found, err
 }
 
+// finishGCP will set default values in the install config that require api calls rather than static checks.
+func (a *InstallConfig) finishGCP() error {
+	if endpoint := a.Config.Platform.GCP.Endpoint; endpoint != nil && endpoint.ClusterUseOnly == nil {
+		client, err := icgcp.NewClient(context.TODO(), nil)
+		if err != nil {
+			return err
+		}
+		defaultClusterUseOnly := true
+		if _, err := client.GetRegions(context.TODO(), a.Config.Platform.GCP.ProjectID); err != nil {
+			defaultClusterUseOnly = false
+		}
+		a.Config.Platform.GCP.Endpoint.ClusterUseOnly = &defaultClusterUseOnly
+	}
+	return nil
+}
+
 // finishAWS set defaults for AWS Platform before the config validation.
 func (a *InstallConfig) finishAWS() error {
 	// Set the Default Edge Compute pool when the subnets in AWS Local Zones are defined,
@@ -147,6 +163,11 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 	}
 	if a.Config.Azure != nil {
 		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint)
+	}
+	if a.Config.GCP != nil {
+		if err := a.finishGCP(); err != nil {
+			return err
+		}
 	}
 	if a.Config.IBMCloud != nil {
 		a.IBMCloud = icibmcloud.NewMetadata(a.Config)
@@ -187,7 +208,7 @@ func (a *InstallConfig) platformValidation(ctx context.Context) error {
 		return icazure.Validate(client, a.Config)
 	}
 	if a.Config.Platform.GCP != nil {
-		client, err := icgcp.NewClient(ctx, a.Config.GCP.ServiceEndpoints)
+		client, err := icgcp.NewClient(ctx, a.Config.GCP.Endpoint)
 		if err != nil {
 			return err
 		}

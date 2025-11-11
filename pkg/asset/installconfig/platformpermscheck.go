@@ -65,7 +65,7 @@ func (a *PlatformPermsCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return errors.Wrap(err, "validate AWS credentials")
 		}
 	case gcp.Name:
-		client, err := gcpconfig.NewClient(ctx, ic.Config.GCP.ServiceEndpoints)
+		client, err := gcpconfig.NewClient(ctx, ic.Config.GCP.Endpoint)
 		if err != nil {
 			return err
 		}

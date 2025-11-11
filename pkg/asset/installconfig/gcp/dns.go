@@ -11,12 +11,12 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/api/googleapi"
 
-	configv1 "github.com/openshift/api/config/v1"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 // GetBaseDomain returns a base domain chosen from among the project's public DNS zones.
-func GetBaseDomain(project string, endpoints []configv1.GCPServiceEndpoint) (string, error) {
-	client, err := NewClient(context.TODO(), endpoints)
+func GetBaseDomain(project string, endpoint *gcptypes.PSCEndpoint) (string, error) {
+	client, err := NewClient(context.TODO(), endpoint)
 	if err != nil {
 		return "", err
 	}

@@ -212,6 +212,21 @@ func (mr *MockAPIMockRecorder) GetNetwork(ctx, network, project any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetwork", reflect.TypeOf((*MockAPI)(nil).GetNetwork), ctx, network, project)
 }
 
+// GetPrivateServiceConnectEndpoint mocks base method.
+func (m *MockAPI) GetPrivateServiceConnectEndpoint(ctx context.Context, project string, endpoint *gcp.PSCEndpoint) (*compute.ForwardingRule, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPrivateServiceConnectEndpoint", ctx, project, endpoint)
+	ret0, _ := ret[0].(*compute.ForwardingRule)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPrivateServiceConnectEndpoint indicates an expected call of GetPrivateServiceConnectEndpoint.
+func (mr *MockAPIMockRecorder) GetPrivateServiceConnectEndpoint(ctx, project, endpoint any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrivateServiceConnectEndpoint", reflect.TypeOf((*MockAPI)(nil).GetPrivateServiceConnectEndpoint), ctx, project, endpoint)
+}
+
 // GetProjectByID mocks base method.
 func (m *MockAPI) GetProjectByID(ctx context.Context, project string) (*cloudresourcemanager.Project, error) {
 	m.ctrl.T.Helper()
