@@ -24,21 +24,6 @@ function signal_bootstrap_complete {
   done
 }
 
-function create_bmc_verify_ca_cm {
-  local ca_storage_dir="/tmp/cert/ca/bmc"
-  local name="bmc-verify-ca"
-  local ns="openshift-machine-api"
-
-  [[ -d "$ca_storage_dir" ]] || return
-
-  until [ "$(oc get cm "${name}" -n "${ns}")" -eq 0 ];
-  do
-    echo "Creating bmc verify ca configmap ..."
-    oc create cm "${name}" -n "${ns}" --from-file="${ca_storage_dir}" || true
-    sleep 5
-  done
-}
-
 function release_lease {
   local ns="$1"
   local lease="$2"
@@ -145,7 +130,6 @@ function clean {
 
 wait_for_api
 signal_bootstrap_complete
-create_bmc_verify_ca_cm
 release_cvo_lease
 release_cpc_lease
 restore_cvo_overrides
