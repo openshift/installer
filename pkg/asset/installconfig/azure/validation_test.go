@@ -14,7 +14,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/azure/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -156,10 +156,13 @@ var (
 	invalidResourceSkuRegion = "centralus"
 
 	invalidateVirtualNetwork               = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "invalid-virtual-network" }
+	invalidateComputeSubnet                = func(ic *types.InstallConfig) { ic.Azure.Subnets[0].Name = "invalid-compute-subnet" }
+	invalidateControlPlaneSubnet           = func(ic *types.InstallConfig) { ic.Azure.Subnets[1].Name = "invalid-controlplane-subnet" }
 	invalidateRegion                       = func(ic *types.InstallConfig) { ic.Azure.Region = "neverland" }
 	invalidateRegionCapabilities           = func(ic *types.InstallConfig) { ic.Azure.Region = "australiacentral2" }
 	invalidateRegionLetterCase             = func(ic *types.InstallConfig) { ic.Azure.Region = "Central US" }
 	removeVirtualNetwork                   = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "" }
+	removeSubnets                          = func(ic *types.InstallConfig) { ic.Azure.Subnets = nil }
 	premiumDiskCompute                     = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.OSDisk.DiskType = "Premium_LRS" }
 	nonpremiumInstanceTypeDiskCompute      = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.InstanceType = "Standard_D4_v4" }
 	premiumDiskControlPlane                = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.OSDisk.DiskType = "Premium_LRS" }
@@ -194,6 +197,19 @@ var (
 
 	virtualNetworkAPIResult = &aznetwork.VirtualNetwork{
 		Name: &validVirtualNetwork,
+		VirtualNetworkPropertiesFormat: &aznetwork.VirtualNetworkPropertiesFormat{
+			Subnets: &[]aznetwork.Subnet{{
+				Name: &validComputeSubnet,
+				SubnetPropertiesFormat: &aznetwork.SubnetPropertiesFormat{
+					AddressPrefix: to.StringPtr("10.0.0.0/24"),
+				},
+			}, {
+				Name: &validControlPlaneSubnet,
+				SubnetPropertiesFormat: &aznetwork.SubnetPropertiesFormat{
+					AddressPrefix: to.StringPtr("10.0.1.0/24"),
+				},
+			}},
+		},
 	}
 	computeSubnetAPIResult = &aznetwork.Subnet{
 		Name: &validComputeSubnet,
@@ -374,7 +390,7 @@ var (
 	validBootDiagnosticsResourceGroup  = "valid-resource-group"
 	validStorageAccountValues          = func(ic *types.InstallConfig) {
 		ic.ControlPlane.Platform.Azure.BootDiagnostics = &azure.BootDiagnostics{
-			Type:               v1beta1.UserManagedDiagnosticsStorage,
+			Type:               capz.UserManagedDiagnosticsStorage,
 			ResourceGroup:      validBootDiagnosticsResourceGroup,
 			StorageAccountName: validBootDiagnosticsStorageAccount,
 		}
@@ -394,6 +410,13 @@ func validInstallConfig() *types.InstallConfig {
 				NetworkResourceGroupName: validNetworkResourceGroup,
 				VirtualNetwork:           validVirtualNetwork,
 				DefaultMachinePlatform:   &azure.MachinePool{},
+				Subnets: []azure.SubnetSpec{{
+					Name: validControlPlaneSubnet,
+					Role: capz.SubnetControlPlane,
+				}, {
+					Name: validComputeSubnet,
+					Role: capz.SubnetNode,
+				}},
 			},
 		},
 		ControlPlane: &types.MachinePool{
@@ -440,17 +463,17 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		{
 			name:     "Invalid compute subnet",
 			edits:    editFunctions{invalidateComputeSubnet},
-			errorMsg: "failed to retrieve compute subnet",
+			errorMsg: `platform.azure.subnetSpec.subnets: Invalid value: "invalid-compute-subnet": subnet does not exist in the vnet`,
 		},
 		{
 			name:     "Invalid control plane subnet",
 			edits:    editFunctions{invalidateControlPlaneSubnet},
-			errorMsg: "failed to retrieve control plane subnet",
+			errorMsg: `platform.azure.subnetSpec.subnets: Invalid value: "invalid-controlplane-subnet": subnet does not exist in the vnet`,
 		},
 		{
 			name:     "Invalid both subnets",
 			edits:    editFunctions{invalidateControlPlaneSubnet, invalidateComputeSubnet},
-			errorMsg: "failed to retrieve compute subnet",
+			errorMsg: `platform.azure.subnetSpec.subnets: Invalid value: "invalid-compute-subnet": subnet does not exist in the vnet, platform.azure.subnetSpec.subnets: Invalid value: "invalid-controlplane-subnet": subnet does not exist in the vnet`,
 		},
 		{
 			name:     "Valid instance types",

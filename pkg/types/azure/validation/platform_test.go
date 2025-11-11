@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -23,8 +24,17 @@ func validNetworkPlatform() *azure.Platform {
 	p := validPlatform()
 	p.NetworkResourceGroupName = "networkresourcegroup"
 	p.VirtualNetwork = "virtualnetwork"
-	// p.ComputeSubnet = "computesubnet"
-	// p.ControlPlaneSubnet = "controlplanesubnet"
+	p.Subnets = []azure.SubnetSpec{
+		{
+			Name: "controlplanesubnet",
+			Role: v1beta1.SubnetControlPlane,
+		},
+		{
+			Name: "computesubnet",
+			Role: v1beta1.SubnetNode,
+		},
+	}
+
 	return p
 }
 
@@ -85,7 +95,7 @@ func TestValidatePlatform(t *testing.T) {
 			name: "missing subnets",
 			platform: func() *azure.Platform {
 				p := validNetworkPlatform()
-				p.ControlPlaneSubnet = ""
+				p.Subnets = p.Subnets[1:]
 				return p
 			}(),
 			expected: `^test-path\.controlPlaneSubnet: Required value: must provide a control plane subnet when a virtual network is specified$`,
@@ -94,7 +104,7 @@ func TestValidatePlatform(t *testing.T) {
 			name: "subnets missing virtual network",
 			platform: func() *azure.Platform {
 				p := validNetworkPlatform()
-				p.ControlPlaneSubnet = ""
+				p.Subnets = p.Subnets[0:1]
 				p.VirtualNetwork = ""
 				return p
 			}(),
@@ -134,7 +144,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.OutboundType = "random-egress"
 				return p
 			}(),
-			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "MultiZoneNatGateway", "NATGatewaySingleZone", "UserDefinedRouting"$`,
+			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "NATGatewayMultiZone", "NATGatewaySingleZone", "UserDefinedRouting"$`,
 		},
 		{
 			name: "invalid user defined type",
