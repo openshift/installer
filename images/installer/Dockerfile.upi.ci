@@ -21,7 +21,7 @@ RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/4.17:cli as cli
 FROM quay.io/ocp-splat/govc:v0.30.7 as govc
-FROM quay.io/ocp-splat/pwsh:v7.3.12 as pwsh
+FROM quay.io/ocp-splat/pwsh:latest as pwsh
 FROM quay.io/multi-arch/yq:3.3.0 as yq3
 FROM quay.io/multi-arch/yq:4.30.5 as yq4
 
