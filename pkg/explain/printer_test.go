@@ -347,6 +347,10 @@ resource group.
 This resource group must be empty with no other resources when trying to use it for creating a cluster.
 If empty, a new resource group will created for the cluster.
 
+    subnets <[]object>
+      Subnets is the list of subnets the user can bring into the cluster to be used.
+      SubnetSpec specifies the properties the subnet needs to be used in the cluster.
+
     userProvisionedDNS <string>
       Default: "Disabled"
       Valid Values: "Enabled","Disabled"

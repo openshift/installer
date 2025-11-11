@@ -164,7 +164,7 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 		}
 	}
 	if a.Config.Azure != nil {
-		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint)
+		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint, a.Config.Azure.Region)
 	}
 	if a.Config.GCP != nil {
 		if err := a.finishGCP(); err != nil {

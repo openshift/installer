@@ -14,6 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	azcoreto "github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
@@ -58,6 +59,8 @@ type ClusterUninstaller struct {
 	msgraphClient           *msgraphsdk.GraphServiceClient
 	resourceGraphClient     *armresourcegraph.Client
 	tagsClient              *armresources.TagsClient
+	vnetClient              *armnetwork.VirtualNetworksClient
+	subnetClient            *armnetwork.SubnetsClient
 }
 
 func (o *ClusterUninstaller) configureClients() error {
@@ -113,6 +116,17 @@ func (o *ClusterUninstaller) configureClients() error {
 	}
 	o.tagsClient = tagsClient
 
+	vnetClient, err := armnetwork.NewVirtualNetworksClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	if err != nil {
+		return err
+	}
+	o.vnetClient = vnetClient
+
+	subnetClient, err := armnetwork.NewSubnetsClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	if err != nil {
+		return err
+	}
+	o.subnetClient = subnetClient
 	return nil
 }
 
@@ -199,6 +213,31 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 				o.Logger.Debug(err)
 				if isAuthError(err) {
 					errs = append(errs, fmt.Errorf("unable to authenticate when deleting public DNS records: %w", err))
+					return true, err
+				}
+				return false, nil
+			}
+			return true, nil
+		},
+	)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("failed to delete public DNS records: %w", err))
+		o.Logger.Debug(err)
+	}
+
+	err = wait.PollUntilContextCancel(
+		waitCtx,
+		1*time.Second,
+		false,
+		func(ctx context.Context) (bool, error) {
+			o.Logger.Debugf("disassociating NAT gateway from subnets")
+			if o.CloudName != azure.StackCloud {
+				err = disassociateNATGateways(ctx, o.vnetClient, o.subnetClient, o.Logger, o.ResourceGroupName, o.InfraID)
+			}
+			if err != nil {
+				o.Logger.Debug(err)
+				if isAuthError(err) {
+					errs = append(errs, fmt.Errorf("unable to authenticate when disassociating NAT gateways: %w", err))
 					return true, err
 				}
 				return false, nil
@@ -782,4 +821,73 @@ func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.Grap
 		return nil, err
 	}
 	return resp.GetValue(), nil
+}
+
+func disassociateNATGateways(ctx context.Context, vnetClient *armnetwork.VirtualNetworksClient, subnetsClient *armnetwork.SubnetsClient, logger logrus.FieldLogger, resourceGroupName, infraID string) error {
+	vnets := vnetClient.NewListAllPager(nil)
+	for vnets.More() {
+		vnetPage, err := vnets.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to list virtual networks: %w", err)
+		}
+		for _, vnet := range vnetPage.Value {
+			if vnet.Name == nil || vnet.Properties == nil || vnet.Properties.Subnets == nil {
+				continue
+			}
+			vnetName := *vnet.Name
+			logger.Debugf("checking vnet: %s", vnetName)
+			value, ok := vnet.Tags[fmt.Sprintf("sigs.k8s.io_cluster-api-provider-azure_cluster_%s", infraID)]
+			if !ok {
+				value, ok = vnet.Tags[fmt.Sprintf("kubernetes.io_cluster.%s", infraID)]
+				if !ok {
+					continue
+				}
+			}
+			if *value != "owned" && *value != "shared" {
+				continue
+			}
+			vnetInfo, err := arm.ParseResourceID(*vnet.ID)
+			if err != nil {
+				logger.Warnf("error parsing vnet ID %s: %v", vnet.Name, err)
+			}
+			for _, subnet := range vnet.Properties.Subnets {
+				if subnet.Name == nil || subnet.Properties == nil {
+					continue
+				}
+				subnetName := *subnet.Name
+				if subnet.Properties.NatGateway != nil && subnet.Properties.NatGateway.ID != nil {
+					natGateway, err := arm.ParseResourceID(*subnet.Properties.NatGateway.ID)
+					if err != nil {
+						logger.Warnf("error parsing nat gateway in subnet %s: %v", subnetName, err)
+					}
+					if !strings.HasPrefix(natGateway.Name, infraID) {
+						continue
+					}
+					if !strings.HasPrefix(natGateway.ResourceGroupName, infraID) {
+						continue
+					}
+					logger.Debugf("found NAT Gateway association in Subnet: %s", subnetName)
+					err = removeSubnetFromNATGateway(ctx, subnetsClient, vnetInfo.ResourceGroupName, vnetName, subnetName, subnet)
+					if err != nil {
+						logger.Warnf("error disassociating NAT Gateway from subnet '%s': %v", subnetName, err)
+					}
+					logger.Debug("subnet disassociated")
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func removeSubnetFromNATGateway(ctx context.Context, subnetsClient *armnetwork.SubnetsClient, resourceGroupName, vnetName, subnetName string, subnet *armnetwork.Subnet) error {
+	subnet.Properties.NatGateway = nil
+	poller, err := subnetsClient.BeginCreateOrUpdate(ctx, resourceGroupName, vnetName, subnetName, *subnet, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin update for subnet '%s': %w", subnetName, err)
+	}
+	_, err = poller.PollUntilDone(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("subnet update operation failed for '%s': %w", subnetName, err)
+	}
+	return nil
 }

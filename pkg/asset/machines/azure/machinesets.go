@@ -2,6 +2,7 @@ package azure
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,7 +15,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool, session *icazure.Session) ([]*clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool, subnetZones []string, session *icazure.Session) ([]*clusterapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, fmt.Errorf("non-azure configuration: %q", configPlatform)
 	}
@@ -36,14 +37,23 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		total = *pool.Replicas
 	}
 
+	networkResourceGroup, virtualNetworkName, subnets, err := getNetworkInfo(platform, clusterID, role, subnetZones)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subnets for role %s : %w", role, err)
+	}
+
+	sort.Strings(subnets)
 	numOfAZs := int64(len(azs))
+	sort.Strings(azs)
+	subnetIndex := -1
 	var machinesets []*clusterapi.MachineSet
 	for idx, az := range azs {
 		replicas := int32(total / numOfAZs)
 		if int64(idx) < total%numOfAZs {
 			replicas++
 		}
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &idx, capabilities, useImageGallery, session)
+		subnetIndex = (subnetIndex + 1) % len(subnets)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &idx, capabilities, useImageGallery, session, networkResourceGroup, virtualNetworkName, subnets[subnetIndex])
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}

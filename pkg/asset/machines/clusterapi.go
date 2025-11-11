@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -273,7 +274,12 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			}
 		}
 		pool.Platform.Azure = &mpool
-		subnet := ic.Azure.ControlPlaneSubnet
+		subnet := installConfig.Config.Azure.ControlPlaneSubnetName(clusterID.InfraID)
+		for _, sub := range installConfig.Config.Azure.Subnets {
+			if sub.Role == v1beta1.SubnetControlPlane {
+				subnet = sub.Name
+			}
+		}
 
 		hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")
 		if err != nil {

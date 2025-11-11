@@ -23,8 +23,8 @@ func validNetworkPlatform() *azure.Platform {
 	p := validPlatform()
 	p.NetworkResourceGroupName = "networkresourcegroup"
 	p.VirtualNetwork = "virtualnetwork"
-	p.ComputeSubnet = "computesubnet"
-	p.ControlPlaneSubnet = "controlplanesubnet"
+	// p.ComputeSubnet = "computesubnet"
+	// p.ControlPlaneSubnet = "controlplanesubnet"
 	return p
 }
 
@@ -134,7 +134,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.OutboundType = "random-egress"
 				return p
 			}(),
-			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "NATGatewaySingleZone", "UserDefinedRouting"$`,
+			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "MultiZoneNatGateway", "NATGatewaySingleZone", "UserDefinedRouting"$`,
 		},
 		{
 			name: "invalid user defined type",
