@@ -8,7 +8,9 @@ import (
 
 	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
+	"github.com/openshift/installer/pkg/types"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
+	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 )
 
 // Metadata holds additional metadata for InstallConfig resources that
@@ -22,6 +24,13 @@ type Metadata struct {
 	vmZones           []string
 	region            string
 	ZonesSubnetMap    map[string][]string
+
+	controlPlane    *types.MachinePool
+	compute         *types.MachinePool
+	defaultPlatform *typesazure.MachinePool
+
+	controlPlaneCapabilities map[string]string
+	computeCapabilities      map[string]string
 
 	// CloudName indicates the Azure cloud environment (e.g. public, gov't).
 	CloudName typesazure.CloudEnvironment `json:"cloudName,omitempty"`
@@ -42,18 +51,21 @@ type Metadata struct {
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(cloudName typesazure.CloudEnvironment, armEndpoint string, region string) *Metadata {
-	return NewMetadataWithCredentials(cloudName, armEndpoint, nil, region)
+func NewMetadata(az *typesazure.Platform, controlPlane, compute *types.MachinePool) *Metadata {
+	return NewMetadataWithCredentials(az, controlPlane, compute, nil)
 }
 
 // NewMetadataWithCredentials initializes a new Metadata object
 // with prepopulated Azure credentials.
-func NewMetadataWithCredentials(cloudName typesazure.CloudEnvironment, armEndpoint string, credentials *Credentials, region string) *Metadata {
+func NewMetadataWithCredentials(az *typesazure.Platform, controlPlane, compute *types.MachinePool, credentials *Credentials) *Metadata {
 	return &Metadata{
-		CloudName:   cloudName,
-		ARMEndpoint: armEndpoint,
-		Credentials: credentials,
-		region:      region,
+		CloudName:       az.CloudName,
+		ARMEndpoint:     az.ARMEndpoint,
+		Credentials:     credentials,
+		controlPlane:    controlPlane,
+		compute:         compute,
+		region:          az.Region,
+		defaultPlatform: az.DefaultMachinePlatform,
 	}
 }
 
@@ -197,4 +209,74 @@ func (m *Metadata) GenerateZonesSubnetMap(subnetSpec []typesazure.SubnetSpec, de
 		m.ZonesSubnetMap = subnetMap
 	}
 	return m.ZonesSubnetMap, nil
+}
+
+// ControlPlaneCapabilities returns the capabilities for the instance type of control-plane
+// nodes from the Azure API.
+func (m *Metadata) ControlPlaneCapabilities() (map[string]string, error) {
+	if m.controlPlaneCapabilities == nil {
+		caps, err := m.getCapabilities(m.controlPlane, azuredefaults.ControlPlaneInstanceType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get control plane capabilities: %w", err)
+		}
+		m.controlPlaneCapabilities = caps
+	}
+	return m.controlPlaneCapabilities, nil
+}
+
+// ComputeCapabilities returns the capabilities for the instance type of compute nodes
+// from the Azure API.
+func (m *Metadata) ComputeCapabilities() (map[string]string, error) {
+	if m.computeCapabilities == nil {
+		caps, err := m.getCapabilities(m.compute, azuredefaults.ComputeInstanceType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get compute capabilities: %w", err)
+		}
+		m.computeCapabilities = caps
+	}
+	return m.computeCapabilities, nil
+}
+
+// ControlPlaneHyperVGeneration returns the HyperVGeneration for the control-plane
+// instances. If the instance type supports both V1 & V2, V2 is returned.
+func (m *Metadata) ControlPlaneHyperVGeneration() (string, error) {
+	caps, err := m.ControlPlaneCapabilities()
+	if err != nil {
+		return "", fmt.Errorf("unable to get control plane capabilities: %w", err)
+	}
+	return GetHyperVGenerationVersion(caps, "")
+}
+
+// ComputeHyperVGeneration returns the HyperVGeneration for the compute instances.
+// If the instance type supports both V1 & V2, V2 is returned.
+func (m *Metadata) ComputeHyperVGeneration() (string, error) {
+	caps, err := m.ComputeCapabilities()
+	if err != nil {
+		return "", fmt.Errorf("unable to get compute capabilities: %w", err)
+	}
+	return GetHyperVGenerationVersion(caps, "")
+}
+
+type machinePoolInstanceTypeFunc func(typesazure.CloudEnvironment, string, types.Architecture) string
+
+func (m *Metadata) getCapabilities(mPool *types.MachinePool, defaultInstanceType machinePoolInstanceTypeFunc) (map[string]string, error) {
+	if mPool == nil {
+		return nil, fmt.Errorf("unable to get capabilities because machinepool is not populated in metadata")
+	}
+	instType := defaultInstanceType(m.CloudName, m.region, mPool.Architecture)
+	if dmp := m.defaultPlatform; dmp != nil && dmp.InstanceType != "" {
+		instType = dmp.InstanceType
+	}
+	if mPool.Platform.Azure != nil && mPool.Platform.Azure.InstanceType != "" {
+		instType = mPool.Platform.Azure.InstanceType
+	}
+	client, err := m.Client()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get azure client %w", err)
+	}
+	caps, err := client.GetVMCapabilities(context.TODO(), instType, m.region)
+	if err != nil {
+		return nil, err
+	}
+	return caps, nil
 }

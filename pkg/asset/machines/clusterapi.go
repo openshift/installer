@@ -261,7 +261,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				mpool.OSImage.Publisher = *img.Plan.Publisher
 			}
 		}
-		capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+		capabilities, err := installConfig.Azure.ControlPlaneCapabilities()
 		if err != nil {
 			return err
 		}

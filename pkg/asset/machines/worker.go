@@ -610,7 +610,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 			pool.Platform.Azure = &mpool
 
-			capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+			capabilities, err := installConfig.Azure.ComputeCapabilities()
 			if err != nil {
 				return err
 			}
