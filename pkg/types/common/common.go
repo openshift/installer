@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"reflect"
 	"strings"
 	"unicode"
@@ -78,4 +79,42 @@ func errorPath(verr validator.FieldError, base string) string {
 		parts[i] = strings.ToLower(p[:index]) + p[index:]
 	}
 	return strings.Join(parts, ".")
+}
+
+// ValidateRedfishBMCAddress validates that a BMC address is a valid RedFish-compatible address.
+// This is specifically for fencing/TNF requirements and is shared between:
+// - controlPlane.fencing.credentials[].address validation
+// - platform.baremetal.hosts[].bmc.address validation (for TNF clusters only)
+func ValidateRedfishBMCAddress(address string, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if address == "" {
+		return errs
+	}
+
+	// Parse the URL to ensure it's a valid URL
+	parsedURL, err := url.Parse(address)
+	if err != nil {
+		errs = append(errs, field.Invalid(fldPath, address, fmt.Sprintf("invalid URL format: %v", err)))
+		return errs
+	}
+
+	// Check if the address contains "redfish"
+	if !strings.Contains(address, "redfish") {
+		errs = append(errs, field.Invalid(fldPath, address, "fencing only supports redfish-compatible BMC addresses, IPMI is not supported"))
+	}
+
+	// Validate port - try to infer standard schema ports for https/http, otherwise notify user port is needed
+	redfishPort := parsedURL.Port()
+	if redfishPort == "" {
+		switch {
+		case strings.Contains(parsedURL.Scheme, "https"):
+			// Port 443 is default for https, so it's acceptable
+		case strings.Contains(parsedURL.Scheme, "http"):
+			// Port 80 is default for http, so it's acceptable
+		default:
+			errs = append(errs, field.Invalid(fldPath, address, "failed to parse redfish address, no port number found"))
+		}
+	}
+
+	return errs
 }

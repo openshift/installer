@@ -1155,7 +1155,7 @@ func TestValidateHostsBMCForFencing(t *testing.T) {
 				},
 			},
 			config:      validConfig(),
-			expectedErr: "fencing requires redfish-compatible BMC addresses",
+			expectedErr: "fencing only supports redfish-compatible BMC addresses",
 		},
 		{
 			name: "Non-TNF cluster (3 nodes) should not validate",
