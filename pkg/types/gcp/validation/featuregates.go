@@ -15,8 +15,8 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 	return []featuregates.GatedInstallConfigFeature{
 		{
 			FeatureGateName: features.FeatureGateGCPCustomAPIEndpointsInstall,
-			Condition:       len(g.ServiceEndpoints) > 0,
-			Field:           field.NewPath("platform", "gcp", "serviceEndpoints"),
+			Condition:       g.Endpoint != nil,
+			Field:           field.NewPath("platform", "gcp", "endpoint"),
 		},
 	}
 }
