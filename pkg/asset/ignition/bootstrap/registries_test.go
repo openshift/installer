@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -116,6 +117,33 @@ func TestMergedMirrorSets(t *testing.T) {
 		}, {
 			Source:  "b",
 			Mirrors: []string{"md", "mc"},
+		}},
+	}, {
+		input: []types.ImageDigestSource{{
+			Source:       "a",
+			Mirrors:      []string{"ma"},
+			SourcePolicy: configv1.NeverContactSource,
+		}, {
+			Source:       "b",
+			Mirrors:      []string{"md", "mc"},
+			SourcePolicy: configv1.NeverContactSource,
+		}, {
+			Source:       "a",
+			Mirrors:      []string{"mb", "ma"},
+			SourcePolicy: configv1.AllowContactingSource,
+		}},
+		expected: []types.ImageDigestSource{{
+			Source:       "a",
+			Mirrors:      []string{"ma"},
+			SourcePolicy: configv1.NeverContactSource,
+		}, {
+			Source:       "b",
+			Mirrors:      []string{"md", "mc"},
+			SourcePolicy: configv1.NeverContactSource,
+		}, {
+			Source:       "a",
+			Mirrors:      []string{"mb", "ma"},
+			SourcePolicy: configv1.AllowContactingSource,
 		}},
 	}}
 	for _, test := range tests {
