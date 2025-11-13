@@ -209,6 +209,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						//	Port: 6443,
 						// },
 					},
+					SecurityGroups: []capibm.VPCResource{
+						{
+							Name: ptr.To(fmt.Sprintf("%s-%s", clusterID.InfraID, kubeAPILBSGNameSuffix)),
+						},
+					},
 				},
 				{
 					Name:   fmt.Sprintf("%s-loadbalancer-int", clusterID.InfraID),
