@@ -173,7 +173,6 @@ var permissions = map[PermissionGroup][]string{
 		"iam:ListRoles",
 		"iam:ListUsers",
 		"iam:PassRole",
-		"iam:SimulatePrincipalPolicy",
 		"iam:TagInstanceProfile",
 		"iam:TagRole",
 
@@ -375,7 +374,6 @@ var permissions = map[PermissionGroup][]string{
 	PermissionPassthroughCreds: {
 		// so we can query whether we have the below list of creds
 		"iam:GetUser",
-		"iam:SimulatePrincipalPolicy",
 
 		// openshift-ingress
 		"elasticloadbalancing:DescribeLoadBalancers",
