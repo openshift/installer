@@ -31,6 +31,7 @@ type Provider struct {
 
 type SGIDCollection struct {
 	ClusterWideSGID string
+	KubeAPILBSGID   string
 }
 
 var _ clusterapi.Timeouts = (*Provider)(nil)
@@ -80,11 +81,12 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	var (
 		client *powervsconfig.Client
 		// bootstrap Bootstrap
-		clusterwide ClusterWide
-		kubeapilb   KubeAPILB
-		groups      []vpcv1.SecurityGroup
-		rule        *vpcv1.SecurityGroupRulePrototype
-		err         error
+		clusterwide  ClusterWide
+		controlplane ControlPlane
+		kubeapilb    KubeAPILB
+		groups       []vpcv1.SecurityGroup
+		rule         *vpcv1.SecurityGroupRulePrototype
+		err          error
 	)
 
 	logrus.Debugf("InfraReady: in = %+v", in)
@@ -185,6 +187,8 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	for _, sg := range groups {
 		if strings.Contains(*sg.Name, "clusterwide") {
 			sgIDs.ClusterWideSGID = *sg.ID
+		} else if strings.Contains(*sg.Name, "kube-api") {
+			sgIDs.KubeAPILBSGID = *sg.ID
 		}
 	}
 	logrus.Debugf("Found %v security groups", len(groups))
@@ -214,6 +218,19 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 					return fmt.Errorf("failed to add security group rule %v", err)
 				} else {
 					logrus.Debugf("ClusterWide SG rule added")
+				}
+			}
+		} else if strings.Contains(*sg.Name, "control-plane") {
+			logrus.Debugf("Found ControlPlane security group")
+			rules := GetSGRules(controlplane, sgIDs)
+			logrus.Debugf("Number of security group rules are %v", len(rules))
+			for _, rule := range rules {
+				logrus.Debugf("Adding security group rule: Direction: %v, Protocol: %v, Max port: %v, Min port: %v", *rule.Direction, *rule.Protocol, *rule.PortMax, *rule.PortMin)
+				err := in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID, *sg.ID)
+				if err != nil {
+					return fmt.Errorf("failed to add security group rule %v", err)
+				} else {
+					logrus.Debugf("ControlPlane SG rule added")
 				}
 			}
 		}
