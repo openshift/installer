@@ -31,6 +31,7 @@ type Provider struct {
 
 type SGIDCollection struct {
 	ClusterWideSGID string
+	CPInternalSGID  string
 	KubeAPILBSGID   string
 }
 
@@ -83,6 +84,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		// bootstrap Bootstrap
 		clusterwide  ClusterWide
 		controlplane ControlPlane
+		cpInternal   CPInternal
 		kubeapilb    KubeAPILB
 		groups       []vpcv1.SecurityGroup
 		rule         *vpcv1.SecurityGroupRulePrototype
@@ -187,6 +189,8 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	for _, sg := range groups {
 		if strings.Contains(*sg.Name, "clusterwide") {
 			sgIDs.ClusterWideSGID = *sg.ID
+		} else if strings.Contains(*sg.Name, "cp-internal") {
+			sgIDs.CPInternalSGID = *sg.ID
 		} else if strings.Contains(*sg.Name, "kube-api") {
 			sgIDs.KubeAPILBSGID = *sg.ID
 		}
@@ -231,6 +235,19 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 					return fmt.Errorf("failed to add security group rule %v", err)
 				} else {
 					logrus.Debugf("ControlPlane SG rule added")
+				}
+			}
+		} else if strings.Contains(*sg.Name, "cp-internal") {
+			logrus.Debugf("Found ControlPlaneInternal security group")
+			rules := GetSGRules(cpInternal, sgIDs)
+			logrus.Debugf("Number of security group rules are %v", len(rules))
+			for _, rule := range rules {
+				logrus.Debugf("Adding security group rule: Direction: %v, Protocol: %v, Max port: %v, Min port: %v", *rule.Direction, *rule.Protocol, *rule.PortMax, *rule.PortMin)
+				err := in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID, *sg.ID)
+				if err != nil {
+					return fmt.Errorf("failed to add security group rule %v", err)
+				} else {
+					logrus.Debugf("CPInternal SG rule added")
 				}
 			}
 		}

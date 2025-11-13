@@ -10,6 +10,7 @@ type Rules interface {
 }
 type ClusterWide struct{}
 type ControlPlane struct{}
+type CPInternal struct{}
 type KubeAPILB struct{}
 
 func GetSGRules(r Rules, sgIDs SGIDCollection) []*vpcv1.SecurityGroupRulePrototype {
@@ -83,6 +84,20 @@ func (ControlPlane) GetRules(sgIDs SGIDCollection) []*vpcv1.SecurityGroupRulePro
 			},
 			PortMin: ptr.To(int64(22623)),
 			PortMax: ptr.To(int64(22623)),
+		},
+	}
+}
+
+func (CPInternal) GetRules(sgIDs SGIDCollection) []*vpcv1.SecurityGroupRulePrototype {
+	return []*vpcv1.SecurityGroupRulePrototype{
+		{
+			Direction: ptr.To("inbound"),
+			Protocol:  ptr.To("tcp"),
+			Remote: &vpcv1.SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByID{
+				ID: &sgIDs.CPInternalSGID,
+			},
+			PortMin: ptr.To(int64(2379)),
+			PortMax: ptr.To(int64(2380)),
 		},
 	}
 }

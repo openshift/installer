@@ -13,6 +13,7 @@ const (
 	bootstrapSGNameSuffix    = "sg-bootstrap"
 	clusterWideSGNameSuffix  = "sg-clusterwide"
 	controlPlaneSGNameSuffix = "sg-control-plane"
+	cpInternalSGNameSuffix   = "sg-cp-internal"
 	kubeAPILBSGNameSuffix    = "sg-kube-api-lb"
 )
 
@@ -56,6 +57,13 @@ func buildControlPlaneSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup
 	}
 }
 
+func buildCPInternalSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
+	cpInternalSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, cpInternalSGNameSuffix))
+	return capibmcloud.VPCSecurityGroup{
+		Name: cpInternalSGNamePtr,
+	}
+}
+
 func buildKubeAPILBSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNameSuffix))
 	return capibmcloud.VPCSecurityGroup{
@@ -89,5 +97,6 @@ func getVPCSecurityGroups(infraID string, publishStrategy types.PublishingStrate
 	securityGroups = append(securityGroups, buildBootstrapSecurityGroup(infraID))
 	securityGroups = append(securityGroups, buildClusterWideSecurityGroup(infraID))
 	securityGroups = append(securityGroups, buildControlPlaneSecurityGroup(infraID))
+	securityGroups = append(securityGroups, buildCPInternalSecurityGroup(infraID))
 	return securityGroups
 }
