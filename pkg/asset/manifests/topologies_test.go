@@ -54,7 +54,7 @@ func Test_DetermineTopologies(t *testing.T) {
 			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
 		{
-			desc: "should default infra to Single and controlPlane to Single for 1 control replicas and 1 worker replicas",
+			desc: "should default infra to HA and controlPlane to Single for 1 control replicas and 1 worker replicas",
 			installConfig: &types.InstallConfig{
 				ControlPlane: &types.MachinePool{
 					Replicas: ptr.To[int64](1),
@@ -66,7 +66,7 @@ func Test_DetermineTopologies(t *testing.T) {
 				},
 			},
 			expectedControlPlane: configv1.SingleReplicaTopologyMode,
-			expectedInfra:        configv1.SingleReplicaTopologyMode,
+			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
 		{
 			desc: "should default infra to HA and controlPlane to DualReplica for 2 control replicas",
@@ -123,6 +123,51 @@ func Test_DetermineTopologies(t *testing.T) {
 				},
 			},
 			expectedControlPlane: configv1.HighlyAvailableTopologyMode,
+			expectedInfra:        configv1.HighlyAvailableTopologyMode,
+		},
+		{
+			desc: "should default infra to HA and controlPlane to HA for 3 control replicas and 1 worker replica",
+			installConfig: &types.InstallConfig{
+				ControlPlane: &types.MachinePool{
+					Replicas: ptr.To[int64](3),
+				},
+				Compute: []types.MachinePool{
+					{
+						Replicas: ptr.To[int64](1),
+					},
+				},
+			},
+			expectedControlPlane: configv1.HighlyAvailableTopologyMode,
+			expectedInfra:        configv1.HighlyAvailableTopologyMode,
+		},
+		{
+			desc: "should default infra to Single and controlPlane to Single for 1 control replica and an explicit 0 worker replicas",
+			installConfig: &types.InstallConfig{
+				ControlPlane: &types.MachinePool{
+					Replicas: ptr.To[int64](1),
+				},
+				Compute: []types.MachinePool{
+					{
+						Replicas: ptr.To[int64](0),
+					},
+				},
+			},
+			expectedControlPlane: configv1.SingleReplicaTopologyMode,
+			expectedInfra:        configv1.SingleReplicaTopologyMode,
+		},
+		{
+			desc: "should default infra to HA and controlPlane to DualReplica for 2 control replicas and 0 worker replicas",
+			installConfig: &types.InstallConfig{
+				ControlPlane: &types.MachinePool{
+					Replicas: ptr.To[int64](2),
+				},
+				Compute: []types.MachinePool{
+					{
+						Replicas: ptr.To[int64](0),
+					},
+				},
+			},
+			expectedControlPlane: configv1.DualReplicaTopologyMode,
 			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
 	}

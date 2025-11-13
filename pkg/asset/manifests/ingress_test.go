@@ -21,6 +21,7 @@ func installConfigFromTopologies(t *testing.T, options []icOption,
 	controlPlaneTopology configv1.TopologyMode, infrastructureTopology configv1.TopologyMode) *types.InstallConfig {
 	installConfig := icBuild.build(options...)
 
+	noReplicas := int64(0)
 	highlyAvailable := int64(3)
 	singleReplica := int64(1)
 
@@ -41,8 +42,10 @@ func installConfigFromTopologies(t *testing.T, options []icOption,
 			{Replicas: &highlyAvailable},
 		}
 	case configv1.SingleReplicaTopologyMode:
+		// A single-replica infrastructure topology is only produced by a
+		// single-node control plane with no workers.
 		installConfig.Compute = []types.MachinePool{
-			{Replicas: &singleReplica},
+			{Replicas: &noReplicas},
 		}
 	}
 
@@ -132,7 +135,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 		{
 			// AWS currently uses a load balancer even on single-node, so the
 			// default placement should be workers
-			name:                      "aws single node with 0 or 1 day-1 workers",
+			name:                      "aws single node with no day-1 workers",
 			installConfigBuildOptions: []icOption{icBuild.forAWS()},
 			controlPlaneTopology:      configv1.SingleReplicaTopologyMode,
 			infrastructureTopology:    configv1.SingleReplicaTopologyMode,
@@ -140,10 +143,10 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			expectedIngressPlacement:  configv1.DefaultPlacementWorkers,
 		},
 		{
-			name:                      "aws multi-node with 1 day-1 worker",
+			name:                      "aws multi-node with day-1 workers",
 			installConfigBuildOptions: []icOption{icBuild.forAWS()},
 			controlPlaneTopology:      configv1.HighlyAvailableTopologyMode,
-			infrastructureTopology:    configv1.SingleReplicaTopologyMode,
+			infrastructureTopology:    configv1.HighlyAvailableTopologyMode,
 			expectedIngressAWSLBType:  configv1.Classic,
 			expectedIngressPlacement:  configv1.DefaultPlacementWorkers,
 		},
@@ -184,17 +187,17 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			expectedIngressPlatformType: configv1.AWSPlatformType,
 		},
 		{
-			name:                      "none-platform single node with 0 or 1 day-1 workers",
+			name:                      "none-platform single node with no day-1 workers",
 			installConfigBuildOptions: []icOption{icBuild.forNone()},
 			controlPlaneTopology:      configv1.SingleReplicaTopologyMode,
 			infrastructureTopology:    configv1.SingleReplicaTopologyMode,
 			expectedIngressPlacement:  configv1.DefaultPlacementControlPlane,
 		},
 		{
-			name:                      "none-platform multi-node with 1 day-1 worker",
+			name:                      "none-platform multi-node with day-1 workers",
 			installConfigBuildOptions: []icOption{icBuild.forNone()},
 			controlPlaneTopology:      configv1.HighlyAvailableTopologyMode,
-			infrastructureTopology:    configv1.SingleReplicaTopologyMode,
+			infrastructureTopology:    configv1.HighlyAvailableTopologyMode,
 			expectedIngressPlacement:  configv1.DefaultPlacementWorkers,
 		},
 		{
