@@ -30,9 +30,10 @@ type Provider struct {
 }
 
 type SGIDCollection struct {
-	ClusterWideSGID string
-	CPInternalSGID  string
-	KubeAPILBSGID   string
+	ClusterWideSGID  string
+	CPInternalSGID   string
+	KubeAPILBSGID    string
+	OpenShiftNetSGID string
 }
 
 var _ clusterapi.Timeouts = (*Provider)(nil)
@@ -86,6 +87,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		controlplane ControlPlane
 		cpInternal   CPInternal
 		kubeapilb    KubeAPILB
+		openShiftNet OpenShiftNet
 		groups       []vpcv1.SecurityGroup
 		rule         *vpcv1.SecurityGroupRulePrototype
 		err          error
@@ -193,6 +195,8 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 			sgIDs.CPInternalSGID = *sg.ID
 		} else if strings.Contains(*sg.Name, "kube-api") {
 			sgIDs.KubeAPILBSGID = *sg.ID
+		} else if strings.Contains(*sg.Name, "openshift-net") {
+			sgIDs.OpenShiftNetSGID = *sg.ID
 		}
 	}
 	logrus.Debugf("Found %v security groups", len(groups))
@@ -248,6 +252,19 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 					return fmt.Errorf("failed to add security group rule %v", err)
 				} else {
 					logrus.Debugf("CPInternal SG rule added")
+				}
+			}
+		} else if strings.Contains(*sg.Name, "openshift-net") {
+			logrus.Debugf("Found OpenShift-net security group")
+			rules := GetSGRules(openShiftNet, sgIDs)
+			logrus.Debugf("Number of security group rules are %v", len(rules))
+			for _, rule := range rules {
+				logrus.Debugf("Adding security group rule: Direction: %v, Protocol: %v, Max port: %v, Min port: %v", *rule.Direction, *rule.Protocol, *rule.PortMax, *rule.PortMin)
+				err := in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID, *sg.ID)
+				if err != nil {
+					return fmt.Errorf("failed to add security group rule %v", err)
+				} else {
+					logrus.Debugf("OpenShiftNet SG rule added")
 				}
 			}
 		}
