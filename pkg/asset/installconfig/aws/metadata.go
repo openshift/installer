@@ -27,6 +27,7 @@ type Metadata struct {
 	vpc               VPC
 	instanceTypes     map[string]InstanceType
 
+	Hosts           map[string]Host
 	Region          string                     `json:"region,omitempty"`
 	ProvidedSubnets []typesaws.Subnet          `json:"subnets,omitempty"`
 	Services        []typesaws.ServiceEndpoint `json:"services,omitempty"`
@@ -389,4 +390,24 @@ func (m *Metadata) InstanceTypes(ctx context.Context) (map[string]InstanceType, 
 	}
 
 	return m.instanceTypes, nil
+}
+
+// DedicatedHosts retrieves all hosts available for use to verify against this installation for configured region.
+func (m *Metadata) DedicatedHosts(ctx context.Context) (map[string]Host, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.Hosts) == 0 {
+		awsSession, err := m.unlockedSession(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		m.Hosts, err = dedicatedHosts(ctx, awsSession, m.Region)
+		if err != nil {
+			return nil, fmt.Errorf("error listing dedicated hosts: %w", err)
+		}
+	}
+
+	return m.Hosts, nil
 }
