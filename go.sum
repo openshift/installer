@@ -146,6 +146,8 @@ github.com/PaesslerAG/jsonpath v0.1.1 h1:c1/AToHQMVsduPAa4Vh6xp2U0evy4t8SWp8imEs
 github.com/PaesslerAG/jsonpath v0.1.1/go.mod h1:lVboNxFGal/VwW6d9JzIy56bUsYAP6tH/x80vjnCseY=
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
+github.com/anik120/openshift-api v0.0.0-20251113203504-11f7307b75ad h1:EbKPpd737XnSW1rw7rw5b6U7oN6c7SZRJ6vhTUj9fcE=
+github.com/anik120/openshift-api v0.0.0-20251113203504-11f7307b75ad/go.mod h1:d5uzF0YN2nQQFA0jIEWzzOZ+edmo6wzlGLvx5Fhz4uY=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/apparentlymart/go-cidr v1.1.0 h1:2mAhrMoF+nhXqxTzSZMUzDHkLjmIHC+Zzn4tdgBZjnU=
@@ -701,8 +703,6 @@ github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQ
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/openshift/api v0.0.0-20251106190826-ebe535b08719 h1:KEwYyKaJniwhoyLB75tAMmJn9pMlk0PUlRfrsXYOhwM=
-github.com/openshift/api v0.0.0-20251106190826-ebe535b08719/go.mod h1:d5uzF0YN2nQQFA0jIEWzzOZ+edmo6wzlGLvx5Fhz4uY=
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6 h1:U6ve+dnHlHhAELoxX+rdFOHVhoaYl0l9qtxwYtsO6C0=
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6/go.mod h1:o2H5VwQhUD8P6XsK6dRmKpCCJqVvv12KJQZBXmcCXCU=
 github.com/openshift/assisted-service/api v0.0.0-20250922204150-a52b83145bea h1:YhJ9iHKKT5ooAdVr8qq3BdudhTxP/WF0XYDT5gzi1ak=

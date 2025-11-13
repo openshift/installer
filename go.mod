@@ -4,6 +4,8 @@ go 1.24.0
 
 toolchain go1.24.5
 
+replace github.com/openshift/api => github.com/anik120/openshift-api v0.0.0-20251113203504-11f7307b75ad
+
 require (
 	cloud.google.com/go/kms v1.22.0
 	cloud.google.com/go/monitoring v1.24.2
