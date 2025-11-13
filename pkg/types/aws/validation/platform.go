@@ -61,7 +61,7 @@ func ValidatePlatform(p *aws.Platform, publish types.PublishingStrategy, cm type
 	allErrs = append(allErrs, validateLBType(p.LBType, p.IPFamily, fldPath.Child("lbType"))...)
 
 	if p.DefaultMachinePlatform != nil {
-		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
+		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, types.MachinePoolDefaultConfig, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
 	return allErrs
