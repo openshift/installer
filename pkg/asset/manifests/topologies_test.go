@@ -66,7 +66,7 @@ func Test_DetermineTopologies(t *testing.T) {
 				},
 			},
 			expectedControlPlane: configv1.SingleReplicaTopologyMode,
-			expectedInfra:        configv1.SingleReplicaTopologyMode,
+			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
 		{
 			desc: "should default infra to HA and controlPlane to DualReplica for 2 control replicas",
@@ -119,6 +119,21 @@ func Test_DetermineTopologies(t *testing.T) {
 				Compute: []types.MachinePool{
 					{
 						Replicas: ptr.To[int64](3),
+					},
+				},
+			},
+			expectedControlPlane: configv1.HighlyAvailableTopologyMode,
+			expectedInfra:        configv1.HighlyAvailableTopologyMode,
+		},
+		{
+			desc: "should set infra to HA controlPlane and compute from controlPlane value",
+			installConfig: &types.InstallConfig{
+				ControlPlane: &types.MachinePool{
+					Replicas: ptr.To[int64](3),
+				},
+				Compute: []types.MachinePool{
+					{
+						Replicas: ptr.To[int64](1),
 					},
 				},
 			},

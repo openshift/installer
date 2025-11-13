@@ -28,19 +28,21 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 	for _, mp := range installConfig.Compute {
 		numOfWorkers += ptr.Deref(mp.Replicas, 0)
 	}
+	if numOfWorkers < 2 {
+		// Control planes are schedulable when there are < 2 workers.
+		// Adjust the number of schedulable nodes here to reflect.
+		numOfWorkers += controlPlaneReplicas
+	}
 
 	switch numOfWorkers {
-	case 0:
-		// Two node deployments with 0 workers mean that the control plane nodes are treated as workers
-		// in that situation we have decided that it is appropriate to set the infrastructureTopology to HA.
-		// All other configuration for different worker count are respected with the original intention.
-		if controlPlaneTopology == configv1.DualReplicaTopologyMode || controlPlaneTopology == configv1.HighlyAvailableArbiterMode {
-			infrastructureTopology = configv1.HighlyAvailableTopologyMode
-		} else {
-			infrastructureTopology = controlPlaneTopology
-		}
 	case 1:
 		infrastructureTopology = configv1.SingleReplicaTopologyMode
+		// When there are less than 2 worker nodes, the masters are made scheduable,
+		// effectively making the number of worker nodes greater than 1.
+		// Setting infrastructureTopology accordingly.
+		if controlPlaneTopology == configv1.HighlyAvailableTopologyMode {
+			infrastructureTopology = configv1.HighlyAvailableTopologyMode
+		}
 	default:
 		infrastructureTopology = configv1.HighlyAvailableTopologyMode
 	}
