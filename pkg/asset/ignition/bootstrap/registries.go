@@ -7,7 +7,9 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-type SourceSetKey struct {
+// sourceSetKey represents the set of fields that have to be unique to form
+// a merged list without duplicate entries for Image sources.
+type sourceSetKey struct {
 	Source       string
 	SourcePolicy configv1.MirrorSourcePolicy
 }
@@ -15,16 +17,16 @@ type SourceSetKey struct {
 // MergedMirrorSets consolidates a list of ImageDigestSources so that each
 // source appears only once.
 func MergedMirrorSets(sources []types.ImageDigestSource) []types.ImageDigestSource {
-	sourceSet := make(map[SourceSetKey][]string)
-	mirrorSet := make(map[SourceSetKey]sets.String)
-	orderedSources := []SourceSetKey{}
+	sourceSet := make(map[sourceSetKey][]string)
+	mirrorSet := make(map[sourceSetKey]sets.Set[string])
+	orderedSources := []sourceSetKey{}
 
 	for _, group := range sources {
-		key := SourceSetKey{Source: group.Source, SourcePolicy: group.SourcePolicy}
+		key := sourceSetKey{Source: group.Source, SourcePolicy: group.SourcePolicy}
 		if _, ok := sourceSet[key]; !ok {
 			orderedSources = append(orderedSources, key)
 			sourceSet[key] = nil
-			mirrorSet[key] = sets.NewString()
+			mirrorSet[key] = sets.New[string]()
 		}
 		for _, mirror := range group.Mirrors {
 			if !mirrorSet[key].Has(mirror) {
