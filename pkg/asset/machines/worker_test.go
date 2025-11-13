@@ -34,7 +34,6 @@ func TestWorkerGenerate(t *testing.T) {
 			expectedMachineConfig: []string{`apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  creationTimestamp: null
   labels:
     machineconfiguration.openshift.io/role: worker
   name: 99-worker-ssh
@@ -61,7 +60,6 @@ spec:
 			expectedMachineConfig: []string{`apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  creationTimestamp: null
   labels:
     machineconfiguration.openshift.io/role: worker
   name: 99-worker-disable-hyperthreading
@@ -86,7 +84,6 @@ spec:
 			expectedMachineConfig: []string{`apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  creationTimestamp: null
   labels:
     machineconfiguration.openshift.io/role: worker
   name: 99-worker-disable-hyperthreading
@@ -105,7 +102,6 @@ spec:
 `, `apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
-  creationTimestamp: null
   labels:
     machineconfiguration.openshift.io/role: worker
   name: 99-worker-ssh

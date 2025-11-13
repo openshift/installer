@@ -3,13 +3,13 @@
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
+	apiconfigv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	versioned "github.com/openshift/client-go/config/clientset/versioned"
 	internalinterfaces "github.com/openshift/client-go/config/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/openshift/client-go/config/listers/config/v1alpha1"
+	configv1alpha1 "github.com/openshift/client-go/config/listers/config/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -20,7 +20,7 @@ import (
 // InsightsDataGathers.
 type InsightsDataGatherInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.InsightsDataGatherLister
+	Lister() configv1alpha1.InsightsDataGatherLister
 }
 
 type insightsDataGatherInformer struct {
@@ -45,16 +45,28 @@ func NewFilteredInsightsDataGatherInformer(client versioned.Interface, resyncPer
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ConfigV1alpha1().InsightsDataGathers().List(context.TODO(), options)
+				return client.ConfigV1alpha1().InsightsDataGathers().List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ConfigV1alpha1().InsightsDataGathers().Watch(context.TODO(), options)
+				return client.ConfigV1alpha1().InsightsDataGathers().Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ConfigV1alpha1().InsightsDataGathers().List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ConfigV1alpha1().InsightsDataGathers().Watch(ctx, options)
 			},
 		},
-		&configv1alpha1.InsightsDataGather{},
+		&apiconfigv1alpha1.InsightsDataGather{},
 		resyncPeriod,
 		indexers,
 	)
@@ -65,9 +77,9 @@ func (f *insightsDataGatherInformer) defaultInformer(client versioned.Interface,
 }
 
 func (f *insightsDataGatherInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&configv1alpha1.InsightsDataGather{}, f.defaultInformer)
+	return f.factory.InformerFor(&apiconfigv1alpha1.InsightsDataGather{}, f.defaultInformer)
 }
 
-func (f *insightsDataGatherInformer) Lister() v1alpha1.InsightsDataGatherLister {
-	return v1alpha1.NewInsightsDataGatherLister(f.Informer().GetIndexer())
+func (f *insightsDataGatherInformer) Lister() configv1alpha1.InsightsDataGatherLister {
+	return configv1alpha1.NewInsightsDataGatherLister(f.Informer().GetIndexer())
 }

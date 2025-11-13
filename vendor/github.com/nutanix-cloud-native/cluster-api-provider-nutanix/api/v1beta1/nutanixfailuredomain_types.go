@@ -18,7 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	capiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	capiv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck // suppress complaining on Deprecated package
 )
 
 const (
@@ -31,6 +31,7 @@ const (
 )
 
 // NutanixFailureDomainSpec defines the desired state of NutanixFailureDomain.
+// +kubebuilder:validation:XValidation:rule="size(self.subnets) > 1 ? self.subnets.all(x, self.subnets.exists_one(y, x == y)) : true",message="each subnet must be unique"
 type NutanixFailureDomainSpec struct {
 	// prismElementCluster is to identify the Prism Element cluster in the Prism Central for the failure domain.
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="prismElementCluster is immutable once set"
@@ -42,6 +43,7 @@ type NutanixFailureDomainSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="subnets is immutable once set"
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=32
 	Subnets []NutanixResourceIdentifier `json:"subnets"`
 }
 

@@ -62,7 +62,7 @@ type ClientService interface {
 
 	PcloudPvminstancesVirtualserialnumberPost(params *PcloudPvminstancesVirtualserialnumberPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVirtualserialnumberPostAccepted, error)
 
-	PcloudPvminstancesVirtualserialnumberPut(params *PcloudPvminstancesVirtualserialnumberPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVirtualserialnumberPutOK, error)
+	PcloudPvminstancesVirtualserialnumberPut(params *PcloudPvminstancesVirtualserialnumberPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVirtualserialnumberPutOK, *PcloudPvminstancesVirtualserialnumberPutAccepted, error)
 
 	PcloudVirtualserialnumberDelete(params *PcloudVirtualserialnumberDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVirtualserialnumberDeleteOK, error)
 
@@ -71,6 +71,8 @@ type ClientService interface {
 	PcloudVirtualserialnumberGetall(params *PcloudVirtualserialnumberGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVirtualserialnumberGetallOK, error)
 
 	PcloudVirtualserialnumberPut(params *PcloudVirtualserialnumberPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVirtualserialnumberPutOK, error)
+
+	PcloudVirtualserialnumberSoftwaretiersGetall(params *PcloudVirtualserialnumberSoftwaretiersGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVirtualserialnumberSoftwaretiersGetallOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
@@ -193,9 +195,9 @@ func (a *Client) PcloudPvminstancesVirtualserialnumberPost(params *PcloudPvminst
 }
 
 /*
-PcloudPvminstancesVirtualserialnumberPut updates description of a virtual serial number
+PcloudPvminstancesVirtualserialnumberPut updates a virtual serial number
 */
-func (a *Client) PcloudPvminstancesVirtualserialnumberPut(params *PcloudPvminstancesVirtualserialnumberPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVirtualserialnumberPutOK, error) {
+func (a *Client) PcloudPvminstancesVirtualserialnumberPut(params *PcloudPvminstancesVirtualserialnumberPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVirtualserialnumberPutOK, *PcloudPvminstancesVirtualserialnumberPutAccepted, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudPvminstancesVirtualserialnumberPutParams()
@@ -219,15 +221,16 @@ func (a *Client) PcloudPvminstancesVirtualserialnumberPut(params *PcloudPvminsta
 
 	result, err := a.transport.Submit(op)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	success, ok := result.(*PcloudPvminstancesVirtualserialnumberPutOK)
-	if ok {
-		return success, nil
+	switch value := result.(type) {
+	case *PcloudPvminstancesVirtualserialnumberPutOK:
+		return value, nil, nil
+	case *PcloudPvminstancesVirtualserialnumberPutAccepted:
+		return nil, value, nil
 	}
-	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for pcloud.pvminstances.virtualserialnumber.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for p_cloud_virtual_serial_number: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -384,6 +387,45 @@ func (a *Client) PcloudVirtualserialnumberPut(params *PcloudVirtualserialnumberP
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.virtualserialnumber.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PcloudVirtualserialnumberSoftwaretiersGetall lists supported software tiers i b mi licensing
+*/
+func (a *Client) PcloudVirtualserialnumberSoftwaretiersGetall(params *PcloudVirtualserialnumberSoftwaretiersGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVirtualserialnumberSoftwaretiersGetallOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPcloudVirtualserialnumberSoftwaretiersGetallParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "pcloud.virtualserialnumber.softwaretiers.getall",
+		Method:             "GET",
+		PathPattern:        "/v1/virtual-serial-number/software-tiers",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PcloudVirtualserialnumberSoftwaretiersGetallReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PcloudVirtualserialnumberSoftwaretiersGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.virtualserialnumber.softwaretiers.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

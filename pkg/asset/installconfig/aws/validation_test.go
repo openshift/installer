@@ -370,7 +370,7 @@ func TestValidate(t *testing.T) {
 				Public: validSubnets("public"),
 				VpcID:  validVPCID,
 			},
-			expectErr: `^\[platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-valid-public-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: no private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\]\]$`,
+			expectErr: `^\[platform\.aws\.vpc\.subnets: Invalid value: \[{"id":"subnet-valid-public-a"},{"id":"subnet-valid-public-b"},{"id":"subnet-valid-public-c"}\]: no private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\"a\",\"b\",\"c\"]: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\"a\",\"b\",\"c\"]: No subnets provided for zones \[a b c\]\]$`,
 		},
 		{
 			name: "invalid byo subnets, no public subnets",
@@ -384,7 +384,7 @@ func TestValidate(t *testing.T) {
 				Private: validSubnets("private"),
 				VpcID:   validVPCID,
 			},
-			expectErr: `^platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-valid-private-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-private-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-private-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No public subnet provided for zones \[a b c\]$`,
+			expectErr: `^platform\.aws\.vpc\.subnets: Invalid value: \[{"id":"subnet-valid-private-a"},{"id":"subnet-valid-private-b"},{"id":"subnet-valid-private-c"}\]: No public subnet provided for zones \[a b c\]$`,
 		},
 		{
 			name: "invalid byo subnets, invalid cidr does not belong to machine CIDR",
@@ -426,7 +426,7 @@ func TestValidate(t *testing.T) {
 				Public: validSubnets("public"),
 				VpcID:  validVPCID,
 			},
-			expectErr: `^platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-valid-private-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-private-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-private-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"no-matching-public-private-zone\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No public subnet provided for zones \[f\]$`,
+			expectErr: `^platform\.aws\.vpc\.subnets: Invalid value: \[{"id":"subnet-valid-private-a"},{"id":"subnet-valid-private-b"},{"id":"subnet-valid-private-c"},{"id":"subnet-valid-public-a"},{"id":"subnet-valid-public-b"},{"id":"subnet-valid-public-c"},{"id":"no-matching-public-private-zone"}\]: No public subnet provided for zones \[f\]$`,
 		},
 		{
 			name: "invalid byo subnets with no roles, multiple private in same zone",
@@ -516,7 +516,7 @@ func TestValidate(t *testing.T) {
 				Edge:  validSubnets("edge"),
 				VpcID: validVPCID,
 			},
-			expectErr: `^\[platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-valid-public-edge-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-edge-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-edge-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: no private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\]\]$`,
+			expectErr: `^\[platform\.aws\.vpc\.subnets: Invalid value: \[{"id":"subnet-valid-public-edge-a"},{"id":"subnet-valid-public-edge-b"},{"id":"subnet-valid-public-edge-c"}\]: no private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\"a\",\"b\",\"c\"]: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\"a\",\"b\",\"c\"]: No subnets provided for zones \[a b c\]\]$`,
 		},
 		{
 			name: "invalid byo subnets, no subnet for control plane zones",
@@ -531,7 +531,7 @@ func TestValidate(t *testing.T) {
 				Public:  validSubnets("public"),
 				VpcID:   validVPCID,
 			},
-			expectErr: `^controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\", \"e\"}: No subnets provided for zones \[d e\]$`,
+			expectErr: `^controlPlane\.platform\.aws\.zones: Invalid value: \[\"a\",\"b\",\"c\",\"d\",\"e\"\]: No subnets provided for zones \[d e\]$`,
 		},
 		{
 			name: "invalid byo subnets, no subnet for compute[0] zones",
@@ -546,7 +546,7 @@ func TestValidate(t *testing.T) {
 				Public:  validSubnets("public"),
 				VpcID:   validVPCID,
 			},
-			expectErr: `^compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\]$`,
+			expectErr: `^compute\[0\]\.platform\.aws\.zones: Invalid value: \[\"a\",\"b\",\"c\",\"d\"\]: No subnets provided for zones \[d\]$`,
 		},
 		{
 			name: "invalid byo subnets, no subnet for compute zone",
@@ -569,7 +569,7 @@ func TestValidate(t *testing.T) {
 				Public:  validSubnets("public"),
 				VpcID:   validVPCID,
 			},
-			expectErr: `^\[compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\], compute\[1\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"e\"}: No subnets provided for zones \[e\]\]$`,
+			expectErr: `^\[compute\[0\]\.platform\.aws\.zones: Invalid value: \[\"a\",\"b\",\"c\",\"d\"\]: No subnets provided for zones \[d\], compute\[1\]\.platform\.aws\.zones: Invalid value: \[\"a\",\"b\",\"e\"\]: No subnets provided for zones \[e\]\]$`,
 		},
 		{
 			name:          "valid byo subnets, private and public subnets provided for public-only subnets cluster",
@@ -611,7 +611,7 @@ func TestValidate(t *testing.T) {
 				VpcID:   validVPCID,
 			},
 			publicOnly: true,
-			expectErr:  `^\Q[platform.aws.vpc.subnets: Required value: public subnets are required for a public-only subnets cluster, platform.aws.vpc.subnets: Invalid value: []aws.Subnet{aws.Subnet{ID:"subnet-valid-private-a", Roles:[]aws.SubnetRole(nil)}, aws.Subnet{ID:"subnet-valid-private-b", Roles:[]aws.SubnetRole(nil)}, aws.Subnet{ID:"subnet-valid-private-c", Roles:[]aws.SubnetRole(nil)}}: No public subnet provided for zones [a b c]]\E$`,
+			expectErr:  `^\Q[platform.aws.vpc.subnets: Required value: public subnets are required for a public-only subnets cluster, platform.aws.vpc.subnets: Invalid value: [{"id":"subnet-valid-private-a"},{"id":"subnet-valid-private-b"},{"id":"subnet-valid-private-c"}]: No public subnet provided for zones [a b c]]\E$`,
 		},
 		{
 			name: "invalid byo subnets, internal publish method for public-only subnets install",

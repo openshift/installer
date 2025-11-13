@@ -14,14 +14,18 @@ import (
 
 // Purchases a Reserved Instance for use with your account. With Reserved
 // Instances, you pay a lower hourly rate compared to On-Demand instance pricing.
-// Use DescribeReservedInstancesOfferings to get a list of Reserved Instance
-// offerings that match your specifications. After you've purchased a Reserved
-// Instance, you can check for your new Reserved Instance with
-// DescribeReservedInstances . To queue a purchase for a future date and time,
-// specify a purchase time. If you do not specify a purchase time, the default is
-// the current time. For more information, see Reserved Instances (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts-on-demand-reserved-instances.html)
-// and Reserved Instance Marketplace (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ri-market-general.html)
-// in the Amazon EC2 User Guide.
+//
+// Use DescribeReservedInstancesOfferings to get a list of Reserved Instance offerings that match your
+// specifications. After you've purchased a Reserved Instance, you can check for
+// your new Reserved Instance with DescribeReservedInstances.
+//
+// To queue a purchase for a future date and time, specify a purchase time. If you
+// do not specify a purchase time, the default is the current time.
+//
+// For more information, see [Reserved Instances] and [Sell in the Reserved Instance Marketplace] in the Amazon EC2 User Guide.
+//
+// [Reserved Instances]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts-on-demand-reserved-instances.html
+// [Sell in the Reserved Instance Marketplace]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ri-market-general.html
 func (c *Client) PurchaseReservedInstancesOffering(ctx context.Context, params *PurchaseReservedInstancesOfferingInput, optFns ...func(*Options)) (*PurchaseReservedInstancesOfferingOutput, error) {
 	if params == nil {
 		params = &PurchaseReservedInstancesOfferingInput{}
@@ -72,8 +76,9 @@ type PurchaseReservedInstancesOfferingOutput struct {
 
 	// The IDs of the purchased Reserved Instances. If your purchase crosses into a
 	// discounted pricing tier, the final Reserved Instances IDs might change. For more
-	// information, see Crossing pricing tiers (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts-reserved-instances-application.html#crossing-pricing-tiers)
-	// in the Amazon Elastic Compute Cloud User Guide.
+	// information, see [Crossing pricing tiers]in the Amazon EC2 User Guide.
+	//
+	// [Crossing pricing tiers]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts-reserved-instances-application.html#crossing-pricing-tiers
 	ReservedInstancesId *string
 
 	// Metadata pertaining to the operation's result.
@@ -125,6 +130,9 @@ func (c *Client) addOperationPurchaseReservedInstancesOfferingMiddlewares(stack 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -135,6 +143,15 @@ func (c *Client) addOperationPurchaseReservedInstancesOfferingMiddlewares(stack 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpPurchaseReservedInstancesOfferingValidationMiddleware(stack); err != nil {
@@ -156,6 +173,18 @@ func (c *Client) addOperationPurchaseReservedInstancesOfferingMiddlewares(stack 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

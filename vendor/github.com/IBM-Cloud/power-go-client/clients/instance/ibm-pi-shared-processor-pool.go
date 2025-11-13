@@ -57,7 +57,7 @@ func (f *IBMPISharedProcessorPoolClient) GetAll() (*models.SharedProcessorPools,
 func (f *IBMPISharedProcessorPoolClient) Create(body *models.SharedProcessorPoolCreate) (*models.SharedProcessorPool, error) {
 	// Check for satellite differences in this endpoint
 	if f.session.IsOnPrem() && body.HostID != "" {
-		return nil, fmt.Errorf("host id parameter is not supported in satellite location, check documentation")
+		return nil, fmt.Errorf("host id parameter is not supported in on-prem location")
 	}
 	params := p_cloud_shared_processor_pools.NewPcloudSharedprocessorpoolsPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).

@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2015-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package object
 
@@ -660,6 +648,24 @@ func (v VirtualMachine) CreateSnapshot(ctx context.Context, name string, descrip
 	return NewTask(v.c, res.Returnval), nil
 }
 
+// CreateSnapshotEx creates a new snapshot of a virtual machine.
+func (v VirtualMachine) CreateSnapshotEx(ctx context.Context, name string, description string, memory bool, quiesceSpec types.BaseVirtualMachineGuestQuiesceSpec) (*Task, error) {
+	req := types.CreateSnapshotEx_Task{
+		This:        v.Reference(),
+		Name:        name,
+		Description: description,
+		Memory:      memory,
+		QuiesceSpec: quiesceSpec,
+	}
+
+	res, err := methods.CreateSnapshotEx_Task(ctx, v.c, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTask(v.c, res.Returnval), nil
+}
+
 // RemoveAllSnapshot removes all snapshots of a virtual machine
 func (v VirtualMachine) RemoveAllSnapshot(ctx context.Context, consolidate *bool) (*Task, error) {
 	req := types.RemoveAllSnapshots_Task{
@@ -1089,4 +1095,19 @@ func (v *VirtualMachine) ExportSnapshot(ctx context.Context, snapshot *types.Man
 		return nil, err
 	}
 	return nfc.NewLease(v.c, resp.Returnval), nil
+}
+
+func (v *VirtualMachine) PromoteDisks(ctx context.Context, unlink bool, disks []types.VirtualDisk) (*Task, error) {
+	req := types.PromoteDisks_Task{
+		This:   v.Reference(),
+		Unlink: unlink,
+		Disks:  disks,
+	}
+
+	res, err := methods.PromoteDisks_Task(ctx, v.Client(), &req)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTask(v.Client(), res.Returnval), nil
 }

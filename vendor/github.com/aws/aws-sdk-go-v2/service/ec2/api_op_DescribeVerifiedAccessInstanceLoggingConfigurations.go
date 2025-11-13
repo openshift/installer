@@ -109,6 +109,9 @@ func (c *Client) addOperationDescribeVerifiedAccessInstanceLoggingConfigurations
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -119,6 +122,15 @@ func (c *Client) addOperationDescribeVerifiedAccessInstanceLoggingConfigurations
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeVerifiedAccessInstanceLoggingConfigurations(options.Region), middleware.Before); err != nil {
@@ -139,16 +151,20 @@ func (c *Client) addOperationDescribeVerifiedAccessInstanceLoggingConfigurations
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeVerifiedAccessInstanceLoggingConfigurationsAPIClient is a client that
-// implements the DescribeVerifiedAccessInstanceLoggingConfigurations operation.
-type DescribeVerifiedAccessInstanceLoggingConfigurationsAPIClient interface {
-	DescribeVerifiedAccessInstanceLoggingConfigurations(context.Context, *DescribeVerifiedAccessInstanceLoggingConfigurationsInput, ...func(*Options)) (*DescribeVerifiedAccessInstanceLoggingConfigurationsOutput, error)
-}
-
-var _ DescribeVerifiedAccessInstanceLoggingConfigurationsAPIClient = (*Client)(nil)
 
 // DescribeVerifiedAccessInstanceLoggingConfigurationsPaginatorOptions is the
 // paginator options for DescribeVerifiedAccessInstanceLoggingConfigurations
@@ -218,6 +234,9 @@ func (p *DescribeVerifiedAccessInstanceLoggingConfigurationsPaginator) NextPage(
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeVerifiedAccessInstanceLoggingConfigurations(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -236,6 +255,14 @@ func (p *DescribeVerifiedAccessInstanceLoggingConfigurationsPaginator) NextPage(
 
 	return result, nil
 }
+
+// DescribeVerifiedAccessInstanceLoggingConfigurationsAPIClient is a client that
+// implements the DescribeVerifiedAccessInstanceLoggingConfigurations operation.
+type DescribeVerifiedAccessInstanceLoggingConfigurationsAPIClient interface {
+	DescribeVerifiedAccessInstanceLoggingConfigurations(context.Context, *DescribeVerifiedAccessInstanceLoggingConfigurationsInput, ...func(*Options)) (*DescribeVerifiedAccessInstanceLoggingConfigurationsOutput, error)
+}
+
+var _ DescribeVerifiedAccessInstanceLoggingConfigurationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeVerifiedAccessInstanceLoggingConfigurations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

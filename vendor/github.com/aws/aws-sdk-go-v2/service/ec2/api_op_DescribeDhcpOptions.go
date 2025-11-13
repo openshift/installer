@@ -11,9 +11,14 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes one or more of your DHCP options sets. For more information, see DHCP
-// options sets (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_DHCP_Options.html)
-// in the Amazon VPC User Guide.
+// Describes your DHCP option sets. The default is to describe all your DHCP
+// option sets. Alternatively, you can specify specific DHCP option set IDs or
+// filter the results to include only the DHCP option sets that match specific
+// criteria.
+//
+// For more information, see [DHCP option sets] in the Amazon VPC User Guide.
+//
+// [DHCP option sets]: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_DHCP_Options.html
 func (c *Client) DescribeDhcpOptions(ctx context.Context, params *DescribeDhcpOptionsInput, optFns ...func(*Options)) (*DescribeDhcpOptionsOutput, error) {
 	if params == nil {
 		params = &DescribeDhcpOptionsInput{}
@@ -31,8 +36,7 @@ func (c *Client) DescribeDhcpOptions(ctx context.Context, params *DescribeDhcpOp
 
 type DescribeDhcpOptionsInput struct {
 
-	// The IDs of one or more DHCP options sets. Default: Describes all your DHCP
-	// options sets.
+	// The IDs of DHCP option sets.
 	DhcpOptionsIds []string
 
 	// Checks whether you have the required permissions for the action, without
@@ -42,23 +46,30 @@ type DescribeDhcpOptionsInput struct {
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - dhcp-options-id - The ID of a DHCP options set.
+	//
 	//   - key - The key for one of the options (for example, domain-name ).
+	//
 	//   - value - The value for one of the options.
+	//
 	//   - owner-id - The ID of the Amazon Web Services account that owns the DHCP
 	//   options set.
-	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
+	//
+	//   - tag - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
+	//
 	//   - tag-key - The key of a tag assigned to the resource. Use this filter to find
 	//   all resources assigned a tag with a specific key, regardless of the tag value.
 	Filters []types.Filter
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -70,7 +81,7 @@ type DescribeDhcpOptionsInput struct {
 
 type DescribeDhcpOptionsOutput struct {
 
-	// Information about one or more DHCP options sets.
+	// Information about the DHCP options sets.
 	DhcpOptions []types.DhcpOptions
 
 	// The token to include in another request to get the next page of items. This
@@ -126,6 +137,9 @@ func (c *Client) addOperationDescribeDhcpOptionsMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -136,6 +150,15 @@ func (c *Client) addOperationDescribeDhcpOptionsMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeDhcpOptions(options.Region), middleware.Before); err != nil {
@@ -156,24 +179,29 @@ func (c *Client) addOperationDescribeDhcpOptionsMiddlewares(stack *middleware.St
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeDhcpOptionsAPIClient is a client that implements the
-// DescribeDhcpOptions operation.
-type DescribeDhcpOptionsAPIClient interface {
-	DescribeDhcpOptions(context.Context, *DescribeDhcpOptionsInput, ...func(*Options)) (*DescribeDhcpOptionsOutput, error)
-}
-
-var _ DescribeDhcpOptionsAPIClient = (*Client)(nil)
 
 // DescribeDhcpOptionsPaginatorOptions is the paginator options for
 // DescribeDhcpOptions
 type DescribeDhcpOptionsPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -234,6 +262,9 @@ func (p *DescribeDhcpOptionsPaginator) NextPage(ctx context.Context, optFns ...f
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeDhcpOptions(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -252,6 +283,14 @@ func (p *DescribeDhcpOptionsPaginator) NextPage(ctx context.Context, optFns ...f
 
 	return result, nil
 }
+
+// DescribeDhcpOptionsAPIClient is a client that implements the
+// DescribeDhcpOptions operation.
+type DescribeDhcpOptionsAPIClient interface {
+	DescribeDhcpOptions(context.Context, *DescribeDhcpOptionsInput, ...func(*Options)) (*DescribeDhcpOptionsOutput, error)
+}
+
+var _ DescribeDhcpOptionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeDhcpOptions(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

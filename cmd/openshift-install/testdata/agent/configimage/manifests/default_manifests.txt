@@ -47,7 +47,6 @@ rendezvousIP: 192.168.111.20
 apiVersion: extensions.hive.openshift.io/v1beta1
 kind: AgentClusterInstall
 metadata:
-  creationTimestamp: null
   name: ostest
   namespace: cluster0
 spec:
@@ -79,7 +78,6 @@ status:
 apiVersion: hive.openshift.io/v1
 kind: ClusterDeployment
 metadata:
-  creationTimestamp: null
   name: ostest
   namespace: cluster0
 spec:
@@ -101,7 +99,6 @@ status: {}
 apiVersion: hive.openshift.io/v1
 kind: ClusterImageSet
 metadata:
-  creationTimestamp: null
   name: openshift-was not built correctly
   namespace: cluster0
 spec:

@@ -12,12 +12,15 @@ import (
 )
 
 // Associates your Autonomous System Number (ASN) with a BYOIP CIDR that you own
-// in the same Amazon Web Services Region. For more information, see Tutorial:
-// Bring your ASN to IPAM (https://docs.aws.amazon.com/vpc/latest/ipam/tutorials-byoasn.html)
-// in the Amazon VPC IPAM guide. After the association succeeds, the ASN is
-// eligible for advertisement. You can view the association with DescribeByoipCidrs (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeByoipCidrs.html)
-// . You can advertise the CIDR with AdvertiseByoipCidr (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AdvertiseByoipCidr.html)
-// .
+// in the same Amazon Web Services Region. For more information, see [Tutorial: Bring your ASN to IPAM]in the Amazon
+// VPC IPAM guide.
+//
+// After the association succeeds, the ASN is eligible for advertisement. You can
+// view the association with [DescribeByoipCidrs]. You can advertise the CIDR with [AdvertiseByoipCidr].
+//
+// [DescribeByoipCidrs]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeByoipCidrs.html
+// [AdvertiseByoipCidr]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AdvertiseByoipCidr.html
+// [Tutorial: Bring your ASN to IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/tutorials-byoasn.html
 func (c *Client) AssociateIpamByoasn(ctx context.Context, params *AssociateIpamByoasnInput, optFns ...func(*Options)) (*AssociateIpamByoasnOutput, error) {
 	if params == nil {
 		params = &AssociateIpamByoasnInput{}
@@ -108,6 +111,9 @@ func (c *Client) addOperationAssociateIpamByoasnMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -118,6 +124,15 @@ func (c *Client) addOperationAssociateIpamByoasnMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAssociateIpamByoasnValidationMiddleware(stack); err != nil {
@@ -139,6 +154,18 @@ func (c *Client) addOperationAssociateIpamByoasnMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

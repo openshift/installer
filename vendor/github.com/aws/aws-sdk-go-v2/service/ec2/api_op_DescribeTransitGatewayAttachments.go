@@ -38,20 +38,29 @@ type DescribeTransitGatewayAttachmentsInput struct {
 	DryRun *bool
 
 	// One or more filters. The possible values are:
+	//
 	//   - association.state - The state of the association ( associating | associated
 	//   | disassociating ).
+	//
 	//   - association.transit-gateway-route-table-id - The ID of the route table for
 	//   the transit gateway.
+	//
 	//   - resource-id - The ID of the resource.
+	//
 	//   - resource-owner-id - The ID of the Amazon Web Services account that owns the
 	//   resource.
+	//
 	//   - resource-type - The resource type. Valid values are vpc | vpn |
 	//   direct-connect-gateway | peering | connect .
+	//
 	//   - state - The state of the attachment. Valid values are available | deleted |
 	//   deleting | failed | failing | initiatingRequest | modifying |
 	//   pendingAcceptance | pending | rollingBack | rejected | rejecting .
+	//
 	//   - transit-gateway-attachment-id - The ID of the attachment.
+	//
 	//   - transit-gateway-id - The ID of the transit gateway.
+	//
 	//   - transit-gateway-owner-id - The ID of the Amazon Web Services account that
 	//   owns the transit gateway.
 	Filters []types.Filter
@@ -127,6 +136,9 @@ func (c *Client) addOperationDescribeTransitGatewayAttachmentsMiddlewares(stack 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -137,6 +149,15 @@ func (c *Client) addOperationDescribeTransitGatewayAttachmentsMiddlewares(stack 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeTransitGatewayAttachments(options.Region), middleware.Before); err != nil {
@@ -157,16 +178,20 @@ func (c *Client) addOperationDescribeTransitGatewayAttachmentsMiddlewares(stack 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeTransitGatewayAttachmentsAPIClient is a client that implements the
-// DescribeTransitGatewayAttachments operation.
-type DescribeTransitGatewayAttachmentsAPIClient interface {
-	DescribeTransitGatewayAttachments(context.Context, *DescribeTransitGatewayAttachmentsInput, ...func(*Options)) (*DescribeTransitGatewayAttachmentsOutput, error)
-}
-
-var _ DescribeTransitGatewayAttachmentsAPIClient = (*Client)(nil)
 
 // DescribeTransitGatewayAttachmentsPaginatorOptions is the paginator options for
 // DescribeTransitGatewayAttachments
@@ -235,6 +260,9 @@ func (p *DescribeTransitGatewayAttachmentsPaginator) NextPage(ctx context.Contex
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeTransitGatewayAttachments(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -253,6 +281,14 @@ func (p *DescribeTransitGatewayAttachmentsPaginator) NextPage(ctx context.Contex
 
 	return result, nil
 }
+
+// DescribeTransitGatewayAttachmentsAPIClient is a client that implements the
+// DescribeTransitGatewayAttachments operation.
+type DescribeTransitGatewayAttachmentsAPIClient interface {
+	DescribeTransitGatewayAttachments(context.Context, *DescribeTransitGatewayAttachmentsInput, ...func(*Options)) (*DescribeTransitGatewayAttachmentsOutput, error)
+}
+
+var _ DescribeTransitGatewayAttachmentsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeTransitGatewayAttachments(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

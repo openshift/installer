@@ -5,18 +5,18 @@
 package simulator
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"strconv"
+	"path/filepath"
 	"strings"
-
-	"github.com/google/uuid"
 
 	"github.com/vmware/govmomi/internal"
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
+	"github.com/vmware/govmomi/vmdk"
 )
 
 type VirtualDiskManager struct {
@@ -48,43 +48,52 @@ func vdmCreateVirtualDisk(ctx *Context, op types.VirtualDeviceConfigSpecFileOper
 
 	shouldReplace := op == types.VirtualDeviceConfigSpecFileOperationReplace
 	shouldExist := op == ""
-	for _, name := range vdmNames(file) {
-		_, err := os.Stat(name)
-		if err == nil {
-			if shouldExist {
-				return nil
-			}
-			if shouldReplace {
-				if err = os.Truncate(file, 0); err != nil {
-					return fm.fault(name, err, new(types.CannotCreateFile))
-				}
-				return nil
-			}
-			return fm.fault(name, nil, new(types.FileAlreadyExists))
-		} else if shouldExist {
-			return fm.fault(name, nil, new(types.FileNotFound))
+
+	_, err := os.Stat(file)
+	if err == nil {
+		if shouldExist {
+			return nil
 		}
-
-		f, err := os.Create(name)
-		if err != nil {
-			return fm.fault(name, err, new(types.CannotCreateFile))
+		if !shouldReplace {
+			return fm.fault(file, nil, new(types.FileAlreadyExists))
 		}
-
-		if req.Spec != nil {
-			var spec interface{} = req.Spec
-			fileBackedSpec, ok := spec.(*types.FileBackedVirtualDiskSpec)
-
-			if !ok {
-				return fm.fault(name, nil, new(types.FileFault))
-			}
-
-			if _, err = f.WriteString(strconv.FormatInt(fileBackedSpec.CapacityKb, 10)); err != nil {
-				return fm.fault(name, err, new(types.FileFault))
-			}
-		}
-
-		_ = f.Close()
+	} else if shouldExist {
+		return fm.fault(file, nil, new(types.FileNotFound))
 	}
+
+	backing := VirtualDiskBackingFileName(file)
+
+	extent := vmdk.Extent{
+		Info: filepath.Base(backing),
+	}
+
+	f, err := os.Create(file)
+	if err != nil {
+		return fm.fault(file, err, new(types.CannotCreateFile))
+	}
+
+	defer f.Close()
+
+	if req.Spec != nil {
+		spec, ok := req.Spec.(types.BaseFileBackedVirtualDiskSpec)
+		if !ok {
+			return fm.fault(file, nil, new(types.FileFault))
+		}
+
+		fileSpec := spec.GetFileBackedVirtualDiskSpec()
+		extent.Size = fileSpec.CapacityKb * 1024 / vmdk.SectorSize
+	}
+
+	desc := vmdk.NewDescriptor(extent)
+	if err := desc.Write(f); err != nil {
+		return fm.fault(file, err, new(types.FileFault))
+	}
+
+	b, err := os.Create(backing)
+	if err != nil {
+		return fm.fault(backing, err, new(types.CannotCreateFile))
+	}
+	_ = b.Close()
 
 	return nil
 }
@@ -92,35 +101,19 @@ func vdmCreateVirtualDisk(ctx *Context, op types.VirtualDeviceConfigSpecFileOper
 func vdmExtendVirtualDisk(ctx *Context, req *types.ExtendVirtualDisk_Task) types.BaseMethodFault {
 	fm := ctx.Map.FileManager()
 
-	file, fault := fm.resolve(ctx, req.Datacenter, req.Name)
+	desc, file, fault := fm.DiskDescriptor(ctx, req.Datacenter, req.Name)
 	if fault != nil {
 		return fault
 	}
 
-	for _, name := range vdmNames(file) {
-		_, err := os.Stat(name)
-		if err == nil {
-			content, err := os.ReadFile(name)
-			if err != nil {
-				return fm.fault(name, err, new(types.FileFault))
-			}
-
-			capacity, err := strconv.Atoi(string(content))
-			if err != nil {
-				return fm.fault(name, err, new(types.FileFault))
-			}
-
-			if int64(capacity) > req.NewCapacityKb {
-				// cannot shrink disk
-				return fm.fault(name, nil, new(types.FileFault))
-			}
-			return nil
-		} else {
-			return fm.fault(name, nil, new(types.FileNotFound))
-		}
+	newCapacity := req.NewCapacityKb * 1024
+	if desc.Capacity() > newCapacity {
+		return fm.fault(req.Name, errors.New("cannot shrink disk"), new(types.FileFault))
 	}
 
-	return nil
+	desc.Extent[0].Size = newCapacity / vmdk.SectorSize
+
+	return fm.SaveDiskDescriptor(ctx, desc, file)
 }
 
 func (m *VirtualDiskManager) CreateVirtualDiskTask(ctx *Context, req *types.CreateVirtualDisk_Task) soap.HasFault {
@@ -246,7 +239,7 @@ func virtualDiskUUID(dc *types.ManagedObjectReference, file string) string {
 	if dc != nil {
 		file = dc.String() + file
 	}
-	return uuid.NewSHA1(uuid.NameSpaceOID, []byte(file)).String()
+	return newUUID(file)
 }
 
 func (m *VirtualDiskManager) QueryVirtualDiskUuid(ctx *Context, req *types.QueryVirtualDiskUuid) soap.HasFault {

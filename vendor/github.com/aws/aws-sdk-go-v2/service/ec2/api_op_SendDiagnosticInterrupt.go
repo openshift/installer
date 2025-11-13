@@ -13,17 +13,21 @@ import (
 // Sends a diagnostic interrupt to the specified Amazon EC2 instance to trigger a
 // kernel panic (on Linux instances), or a blue screen/stop error (on Windows
 // instances). For instances based on Intel and AMD processors, the interrupt is
-// received as a non-maskable interrupt (NMI). In general, the operating system
-// crashes and reboots when a kernel panic or stop error is triggered. The
-// operating system can also be configured to perform diagnostic tasks, such as
-// generating a memory dump file, loading a secondary kernel, or obtaining a call
-// trace. Before sending a diagnostic interrupt to your instance, ensure that its
-// operating system is configured to perform the required diagnostic tasks. For
-// more information about configuring your operating system to generate a crash
-// dump when a kernel panic or stop error occurs, see Send a diagnostic interrupt
-// (for advanced users) (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/diagnostic-interrupt.html)
-// (Linux instances) or Send a diagnostic interrupt (for advanced users) (https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/diagnostic-interrupt.html)
-// (Windows instances).
+// received as a non-maskable interrupt (NMI).
+//
+// In general, the operating system crashes and reboots when a kernel panic or
+// stop error is triggered. The operating system can also be configured to perform
+// diagnostic tasks, such as generating a memory dump file, loading a secondary
+// kernel, or obtaining a call trace.
+//
+// Before sending a diagnostic interrupt to your instance, ensure that its
+// operating system is configured to perform the required diagnostic tasks.
+//
+// For more information about configuring your operating system to generate a
+// crash dump when a kernel panic or stop error occurs, see [Send a diagnostic interrupt (for advanced users)]in the Amazon EC2 User
+// Guide.
+//
+// [Send a diagnostic interrupt (for advanced users)]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/diagnostic-interrupt.html
 func (c *Client) SendDiagnosticInterrupt(ctx context.Context, params *SendDiagnosticInterruptInput, optFns ...func(*Options)) (*SendDiagnosticInterruptOutput, error) {
 	if params == nil {
 		params = &SendDiagnosticInterruptInput{}
@@ -46,7 +50,7 @@ type SendDiagnosticInterruptInput struct {
 	// This member is required.
 	InstanceId *string
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
@@ -105,6 +109,9 @@ func (c *Client) addOperationSendDiagnosticInterruptMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +122,15 @@ func (c *Client) addOperationSendDiagnosticInterruptMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpSendDiagnosticInterruptValidationMiddleware(stack); err != nil {
@@ -136,6 +152,18 @@ func (c *Client) addOperationSendDiagnosticInterruptMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
