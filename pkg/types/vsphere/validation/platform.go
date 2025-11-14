@@ -180,6 +180,10 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 			}
 		}
 
+		if len(failureDomain.Topology.Networks) > 1 {
+			allErrs = append(allErrs, field.Required(topologyFld.Child("networks"), "must specify a single network"))
+		}
+
 		// Folder in failuredomain is optional
 		if len(failureDomain.Topology.Folder) != 0 {
 			folderPathRegexp := regexp.MustCompile(`^/(.*?)/vm/(.*?)$`)
