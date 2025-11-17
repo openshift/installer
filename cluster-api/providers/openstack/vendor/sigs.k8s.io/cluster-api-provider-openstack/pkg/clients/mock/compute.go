@@ -33,6 +33,7 @@ import (
 	servergroups "github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servergroups"
 	servers "github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
 	gomock "go.uber.org/mock/gomock"
+	clients "sigs.k8s.io/cluster-api-provider-openstack/pkg/clients"
 )
 
 // MockComputeClient is a mock of ComputeClient interface.
@@ -100,6 +101,21 @@ func (m *MockComputeClient) DeleteServer(serverID string) error {
 func (mr *MockComputeClientMockRecorder) DeleteServer(serverID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteServer", reflect.TypeOf((*MockComputeClient)(nil).DeleteServer), serverID)
+}
+
+// GetConsoleOutput mocks base method.
+func (m *MockComputeClient) GetConsoleOutput(serverID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConsoleOutput", serverID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConsoleOutput indicates an expected call of GetConsoleOutput.
+func (mr *MockComputeClientMockRecorder) GetConsoleOutput(serverID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsoleOutput", reflect.TypeOf((*MockComputeClient)(nil).GetConsoleOutput), serverID)
 }
 
 // GetServer mocks base method.
@@ -190,4 +206,19 @@ func (m *MockComputeClient) ListServers(listOpts servers.ListOptsBuilder) ([]ser
 func (mr *MockComputeClientMockRecorder) ListServers(listOpts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServers", reflect.TypeOf((*MockComputeClient)(nil).ListServers), listOpts)
+}
+
+// WithMicroversion mocks base method.
+func (m *MockComputeClient) WithMicroversion(required string) (clients.ComputeClient, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithMicroversion", required)
+	ret0, _ := ret[0].(clients.ComputeClient)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WithMicroversion indicates an expected call of WithMicroversion.
+func (mr *MockComputeClientMockRecorder) WithMicroversion(required any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithMicroversion", reflect.TypeOf((*MockComputeClient)(nil).WithMicroversion), required)
 }

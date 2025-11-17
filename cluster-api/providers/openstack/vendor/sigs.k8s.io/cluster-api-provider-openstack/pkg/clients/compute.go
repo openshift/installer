@@ -30,19 +30,30 @@ import (
 	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/metrics"
+	openstackutil "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/openstack"
 )
 
 /*
-NovaMinimumMicroversion is the minimum Nova microversion supported by CAPO
-2.60 corresponds to OpenStack Queens
+Constants for specific microversion requirements.
+2.60 corresponds to OpenStack Queens and 2.53 to OpenStack Pike,
+2.38 is the maximum in OpenStack Newton.
 
 For the canonical description of Nova microversions, see
 https://docs.openstack.org/nova/latest/reference/api-microversion-history.html
 
-CAPO uses server tags, which were added in microversion 2.52.
+CAPO uses server tags, which were first added in microversion 2.26 and then refined
+in 2.52 so it is possible to apply them when creating a server (which is what CAPO does).
+We round up to 2.53 here since that takes us to the maximum in Pike.
+
 CAPO supports multiattach volume types, which were added in microversion 2.60.
+
+2.38 was chosen as a base level since it is reasonably old, but not too old.
 */
-const NovaMinimumMicroversion = "2.60"
+const (
+	MinimumNovaMicroversion = "2.38"
+	NovaTagging             = "2.53"
+	NovaMultiAttachVolume   = "2.60"
+)
 
 type ComputeClient interface {
 	ListAvailabilityZones() ([]availabilityzones.AvailabilityZone, error)
@@ -57,9 +68,15 @@ type ComputeClient interface {
 	DeleteAttachedInterface(serverID, portID string) error
 
 	ListServerGroups() ([]servergroups.ServerGroup, error)
+	GetConsoleOutput(serverID string) (string, error)
+	WithMicroversion(required string) (ComputeClient, error)
 }
 
-type computeClient struct{ client *gophercloud.ServiceClient }
+type computeClient struct {
+	client     *gophercloud.ServiceClient
+	minVersion string
+	maxVersion string
+}
 
 // NewComputeClient returns a new compute client.
 func NewComputeClient(providerClient *gophercloud.ProviderClient, providerClientOpts *clientconfig.ClientOpts) (ComputeClient, error) {
@@ -70,9 +87,25 @@ func NewComputeClient(providerClient *gophercloud.ProviderClient, providerClient
 	if err != nil {
 		return nil, fmt.Errorf("failed to create compute service client: %v", err)
 	}
-	compute.Microversion = NovaMinimumMicroversion
 
-	return &computeClient{compute}, nil
+	// Find the minimum and maximum versions supported by the server
+	serviceMin, serviceMax, err := openstackutil.GetSupportedMicroversions(*compute)
+	if err != nil {
+		return nil, fmt.Errorf("unable to verify compatible server version: %w", err)
+	}
+
+	supported, err := openstackutil.MicroversionSupported(MinimumNovaMicroversion, serviceMin, serviceMax)
+	if err != nil {
+		return nil, fmt.Errorf("unable to verify compatible server version: %w", err)
+	}
+	if !supported {
+		return nil, fmt.Errorf("no compatible server version. CAPO requires %s, but min=%s and max=%s",
+			MinimumNovaMicroversion, serviceMin, serviceMax)
+	}
+
+	compute.Microversion = MinimumNovaMicroversion
+
+	return &computeClient{client: compute, minVersion: serviceMin, maxVersion: serviceMax}, nil
 }
 
 func (c computeClient) ListAvailabilityZones() ([]availabilityzones.AvailabilityZone, error) {
@@ -154,6 +187,26 @@ func (c computeClient) ListServerGroups() ([]servergroups.ServerGroup, error) {
 	return servergroups.ExtractServerGroups(allPages)
 }
 
+func (c computeClient) GetConsoleOutput(serverID string) (string, error) {
+	opts := servers.ShowConsoleOutputOpts{}
+	return servers.ShowConsoleOutput(context.TODO(), c.client, serverID, opts).Extract()
+}
+
+// WithMicroversion checks that the required Nova microversion is supported and sets it for
+// the ComputeClient.
+func (c computeClient) WithMicroversion(required string) (ComputeClient, error) {
+	supported, err := openstackutil.MicroversionSupported(required, c.minVersion, c.maxVersion)
+	if err != nil {
+		return nil, err
+	}
+	if !supported {
+		return nil, fmt.Errorf("microversion %s not supported. Min=%s, max=%s", required, c.minVersion, c.maxVersion)
+	}
+	versionedClient := c
+	versionedClient.client.Microversion = required
+	return versionedClient, nil
+}
+
 type computeErrorClient struct{ error }
 
 // NewComputeErrorClient returns a ComputeClient in which every method returns the given error.
@@ -194,5 +247,13 @@ func (e computeErrorClient) DeleteAttachedInterface(_, _ string) error {
 }
 
 func (e computeErrorClient) ListServerGroups() ([]servergroups.ServerGroup, error) {
+	return nil, e.error
+}
+
+func (e computeErrorClient) GetConsoleOutput(_ string) (string, error) {
+	return "", e.error
+}
+
+func (e computeErrorClient) WithMicroversion(_ string) (ComputeClient, error) {
 	return nil, e.error
 }

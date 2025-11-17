@@ -39,7 +39,6 @@ import (
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/clients"
-	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/hash"
 	"sigs.k8s.io/cluster-api-provider-openstack/version"
 )
 
@@ -88,7 +87,7 @@ func (f *providerScopeFactory) NewClientScopeFromObject(ctx context.Context, ctr
 }
 
 func getScopeCacheKey(cloud clientconfig.Cloud) (string, error) {
-	key, err := hash.ComputeSpewHash(cloud)
+	key, err := computeSpewHash(cloud)
 	if err != nil {
 		return "", err
 	}

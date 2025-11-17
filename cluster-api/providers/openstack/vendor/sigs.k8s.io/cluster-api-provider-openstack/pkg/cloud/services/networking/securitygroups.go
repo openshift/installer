@@ -229,9 +229,21 @@ func (s *Service) generateDesiredSecGroups(openStackCluster *infrav1.OpenStackCl
 		workerRules = append(workerRules, getSGWorkerGeneral(remoteGroupIDSelf, secControlPlaneGroupID)...)
 	}
 
+	// Append any additional rules for control plane and worker nodes
+	controlPlaneExtraRules, err := getRulesFromSpecs(remoteManagedGroups, openStackCluster.Spec.ManagedSecurityGroups.ControlPlaneNodesSecurityGroupRules)
+	if err != nil {
+		return nil, err
+	}
+	controlPlaneRules = append(controlPlaneRules, controlPlaneExtraRules...)
+	workersExtraRules, err := getRulesFromSpecs(remoteManagedGroups, openStackCluster.Spec.ManagedSecurityGroups.WorkerNodesSecurityGroupRules)
+	if err != nil {
+		return nil, err
+	}
+	workerRules = append(workerRules, workersExtraRules...)
+
 	// For now, we do not create a separate security group for allNodes.
 	// Instead, we append the rules for allNodes to the control plane and worker security groups.
-	allNodesRules, err := getAllNodesRules(remoteManagedGroups, openStackCluster.Spec.ManagedSecurityGroups.AllNodesSecurityGroupRules)
+	allNodesRules, err := getRulesFromSpecs(remoteManagedGroups, openStackCluster.Spec.ManagedSecurityGroups.AllNodesSecurityGroupRules)
 	if err != nil {
 		return nil, err
 	}
@@ -275,9 +287,9 @@ func (s *Service) generateDesiredSecGroups(openStackCluster *infrav1.OpenStackCl
 }
 
 // getAllNodesRules returns the rules for the allNodes security group that should be created.
-func getAllNodesRules(remoteManagedGroups map[string]string, allNodesSecurityGroupRules []infrav1.SecurityGroupRuleSpec) ([]resolvedSecurityGroupRuleSpec, error) {
-	rules := make([]resolvedSecurityGroupRuleSpec, 0, len(allNodesSecurityGroupRules))
-	for _, rule := range allNodesSecurityGroupRules {
+func getRulesFromSpecs(remoteManagedGroups map[string]string, securityGroupRules []infrav1.SecurityGroupRuleSpec) ([]resolvedSecurityGroupRuleSpec, error) {
+	rules := make([]resolvedSecurityGroupRuleSpec, 0, len(securityGroupRules))
+	for _, rule := range securityGroupRules {
 		if err := validateRemoteManagedGroups(remoteManagedGroups, rule.RemoteManagedGroups); err != nil {
 			return nil, err
 		}

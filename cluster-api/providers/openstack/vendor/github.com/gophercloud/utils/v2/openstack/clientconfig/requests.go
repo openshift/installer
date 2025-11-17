@@ -254,7 +254,7 @@ func GetCloudFromYAML(opts *ClientOpts) (*Cloud, error) {
 
 			cloud, err = mergeClouds(cloud, publicCloud)
 			if err != nil {
-				return nil, fmt.Errorf("Could not merge information from clouds.yaml and clouds-public.yaml for cloud %s", profileName)
+				return nil, fmt.Errorf("could not merge information from clouds.yaml and clouds-public.yaml for cloud %s", profileName)
 			}
 		}
 	}
@@ -282,7 +282,7 @@ func GetCloudFromYAML(opts *ClientOpts) (*Cloud, error) {
 			// if no entry in clouds.yaml was found and
 			// if a single-entry secureCloud wasn't used.
 			// At this point, no entry could be determined at all.
-			return nil, fmt.Errorf("Could not find cloud %s", cloudName)
+			return nil, fmt.Errorf("could not find cloud %s", cloudName)
 		}
 
 		// If secureCloud has content and it differs from the cloud entry,
@@ -298,7 +298,7 @@ func GetCloudFromYAML(opts *ClientOpts) (*Cloud, error) {
 	// As an extra precaution, do one final check to see if cloud is nil.
 	// We shouldn't reach this point, though.
 	if cloud == nil {
-		return nil, fmt.Errorf("Could not find cloud %s", cloudName)
+		return nil, fmt.Errorf("could not find cloud %s", cloudName)
 	}
 
 	// Default is to verify SSL API requests
@@ -402,7 +402,7 @@ func AuthOptions(opts *ClientOpts) (*gophercloud.AuthOptions, error) {
 		return v3auth(cloud, opts)
 	}
 
-	return nil, fmt.Errorf("Unable to build AuthOptions")
+	return nil, fmt.Errorf("unable to build AuthOptions")
 }
 
 func determineIdentityAPI(cloud *Cloud, opts *ClientOpts) string {

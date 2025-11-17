@@ -19,7 +19,9 @@ package v1alpha1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	runtime "k8s.io/apimachinery/pkg/runtime"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/optional"
@@ -151,7 +153,7 @@ type OpenStackServerStatus struct {
 
 	// Conditions defines current service state of the OpenStackServer.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // +genclient
@@ -183,12 +185,12 @@ type OpenStackServerList struct {
 }
 
 // GetConditions returns the observations of the operational state of the OpenStackServer resource.
-func (r *OpenStackServer) GetConditions() clusterv1.Conditions {
+func (r *OpenStackServer) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
 // SetConditions sets the underlying service state of the OpenStackServer to the predescribed clusterv1.Conditions.
-func (r *OpenStackServer) SetConditions(conditions clusterv1.Conditions) {
+func (r *OpenStackServer) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 
@@ -197,6 +199,16 @@ var _ infrav1.IdentityRefProvider = &OpenStackFloatingIPPool{}
 // GetIdentifyRef returns the Server's namespace and IdentityRef.
 func (r *OpenStackServer) GetIdentityRef() (*string, *infrav1.OpenStackIdentityReference) {
 	return &r.Namespace, &r.Spec.IdentityRef
+}
+
+func (r *OpenStackServer) ToUnstructured() (*unstructured.Unstructured, error) {
+	rawMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(r)
+	if err != nil {
+		return nil, err
+	}
+	u := &unstructured.Unstructured{Object: rawMap}
+	u.SetGroupVersionKind(infrav1.SchemeGroupVersion.WithKind("OpenStackServer"))
+	return u, nil
 }
 
 func init() {
