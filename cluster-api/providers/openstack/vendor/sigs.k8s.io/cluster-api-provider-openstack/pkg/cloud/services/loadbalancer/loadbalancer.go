@@ -305,9 +305,10 @@ func (s *Service) getOrCreateAPILoadBalancer(openStackCluster *infrav1.OpenStack
 	if vipNetworkID == "" && vipSubnetID == "" {
 		// keep the default and create the VIP on the first cluster subnet
 		vipSubnetID = openStackCluster.Status.Network.Subnets[0].ID
+		s.scope.Logger().Info("No load balancer network specified, creating load balancer in the default subnet", "subnetID", vipSubnetID, "name", loadBalancerName)
+	} else {
+		s.scope.Logger().Info("Creating load balancer in subnet", "subnetID", vipSubnetID, "name", loadBalancerName)
 	}
-
-	s.scope.Logger().Info("Creating load balancer in subnet", "subnetID", vipSubnetID, "name", loadBalancerName)
 
 	providers, err := s.loadbalancerClient.ListLoadBalancerProviders()
 	if err != nil {

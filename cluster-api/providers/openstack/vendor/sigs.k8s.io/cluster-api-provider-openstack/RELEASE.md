@@ -70,10 +70,7 @@ The content of the release notes differs depending on the type of release, speci
    for review and the promotion of the image.
 1. Run `make release` to build artifacts to be attached to the GitHub release.
 1. Generate and finalize the release notes and save them for the next step.
-   - Run `make release-notes RELEASE_NOTES_ARGS="--from <tag>"`.
-     - Depending on the type of release, substitute `<tag>` with the following:
-       - Stable releases: tag of the last stable release
-       - Pre-releases*: tag of the latest pre-release (or last stable release if there isn't one)
+   - Run `make release-notes`.
    - Pay close attention to the `## :question: Sort these by hand` section, as it contains items that need to be manually sorted.
 1. Create a draft release in GitHub based on the tag created above
     - Name the release `Release [VERSION]` where VERSION is the full version string.

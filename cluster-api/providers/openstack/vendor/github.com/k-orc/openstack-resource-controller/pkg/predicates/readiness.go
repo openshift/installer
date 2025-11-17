@@ -1,5 +1,5 @@
 /*
-Copyright 2024 The Kubernetes Authors.
+Copyright 2024 The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,18 +50,28 @@ func NewBecameAvailable(log logr.Logger, specimen orcv1alpha1.ObjectWithConditio
 		return objWithConditions
 	}
 
+	log = log.WithValues("watchKind", fmt.Sprintf("%T", specimen))
+
 	return availabilityChanged{
 		predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
+				log := log.WithValues("name", e.Object.GetName(), "namespace", e.Object.GetNamespace())
+				log.V(5).Info("Observed create")
+
 				obj := getObjWithConditions(e.Object, "create")
 				if obj == nil {
 					return false
 				}
 
 				// Only reconcile if the new object is available
-				return orcv1alpha1.IsAvailable(obj)
+				available := orcv1alpha1.IsAvailable(obj)
+
+				return available
 			},
 			UpdateFunc: func(e event.UpdateEvent) bool {
+				log := log.WithValues("name", e.ObjectOld.GetName(), "namespace", e.ObjectOld.GetNamespace())
+				log.V(5).Info("Observed update")
+
 				oldObj := getObjWithConditions(e.ObjectOld, "update")
 				newObj := getObjWithConditions(e.ObjectNew, "update")
 

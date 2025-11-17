@@ -44,6 +44,9 @@ const (
 	OpenStackErrorReason = "OpenStackError"
 	// DependencyFailedReason indicates that a dependent object failed.
 	DependencyFailedReason = "DependencyFailed"
+
+	// ServerUnexpectedDeletedMessage is the message used when the server is unexpectedly deleted via an external agent.
+	ServerUnexpectedDeletedMessage = "The server was unexpectedly deleted"
 )
 
 const (

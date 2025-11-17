@@ -92,6 +92,9 @@ const (
 	// LabelsFromMachineAnnotation is the annotation set on nodes to track the labels originated from machines.
 	LabelsFromMachineAnnotation = "cluster.x-k8s.io/labels-from-machine"
 
+	// AnnotationsFromMachineAnnotation is the annotation set on nodes to track the annotations that originated from machines.
+	AnnotationsFromMachineAnnotation = "cluster.x-k8s.io/annotations-from-machine"
+
 	// OwnerNameAnnotation is the annotation set on nodes identifying the owner name.
 	OwnerNameAnnotation = "cluster.x-k8s.io/owner-name"
 
@@ -312,7 +315,7 @@ type ObjectMeta struct {
 	// +optional
 	Labels map[string]string `json:"labels,omitempty"`
 
-	// Annotations is an unstructured key value map stored with a resource that may be
+	// annotations is an unstructured key value map stored with a resource that may be
 	// set by external tools to store and retrieve arbitrary metadata. They are not
 	// queryable and should be preserved when modifying objects.
 	// More info: http://kubernetes.io/docs/user-guide/annotations

@@ -19,14 +19,15 @@ package conversion
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"hash"
 	"hash/crc64"
 	"reflect"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/apimachinery/pkg/util/dump"
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
-
-	hasher "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/hash"
 )
 
 // RestorerFor holds all field restorers for a given type T.
@@ -109,6 +110,18 @@ type hashedFieldRestorer[T any, F any] struct {
 
 var _ FieldRestorerFor[any] = hashedFieldRestorer[any, any]{}
 
+// deepHashObject writes the specified object to hash using the spew library
+// which follows pointers and prints actual values of the nested objects
+// ensuring the hash does not change when a pointer changes.  This function is
+// taken from
+// https://github.com/kubernetes/kubernetes/blob/v1.29.2/pkg/util/hash/hash.go#L26-L32
+//
+//nolint:unused
+func deepHashObject(hasher hash.Hash, objectToWrite interface{}) {
+	hasher.Reset()
+	fmt.Fprintf(hasher, "%v", dump.ForHash(objectToWrite))
+}
+
 //nolint:unused
 type hashedFieldRestoreState struct {
 	Hash []byte          `json:"h,omitempty"`
@@ -124,7 +137,7 @@ func (r hashedFieldRestorer[T, F]) getHash(obj T) []byte {
 
 	table := crc64.MakeTable(crc64.ECMA)
 	hash := crc64.New(table)
-	hasher.DeepHashObject(hash, f)
+	deepHashObject(hash, f)
 	return hash.Sum(make([]byte, 0, 8))
 }
 

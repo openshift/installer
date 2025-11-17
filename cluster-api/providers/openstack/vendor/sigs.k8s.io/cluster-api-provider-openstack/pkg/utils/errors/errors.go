@@ -89,3 +89,28 @@ func IsConflict(err error) bool {
 func IsNotImplementedError(err error) bool {
 	return gophercloud.ResponseCodeIs(err, http.StatusNotImplemented)
 }
+
+// The following types and constants are imported from CAPI and will be removed at some point once we
+// implement the conditions that will be required in CAPI v1beta2
+// See https://github.com/kubernetes-sigs/cluster-api/issues/10784
+
+// DeprecatedCAPIMachineStatusError defines errors states for Machine objects.
+type DeprecatedCAPIMachineStatusError string
+
+const (
+	// DeprecatedCAPIUpdateMachineError indicates an error while trying to update a Node that this
+	// Machine represents. This may indicate a transient problem that will be
+	// fixed automatically with time, such as a service outage,
+	//
+	// Example: error updating load balancers.
+	DeprecatedCAPIUpdateMachineError DeprecatedCAPIMachineStatusError = "UpdateError"
+)
+
+// DeprecatedCAPIClusterStatusError defines errors states for Cluster objects.
+type DeprecatedCAPIClusterStatusError string
+
+const (
+	// DeprecatedCAPOUpdateClusterError indicates that an error was encountered
+	// when trying to update the cluster.
+	DeprecatedCAPOUpdateClusterError DeprecatedCAPIClusterStatusError = "UpdateError"
+)

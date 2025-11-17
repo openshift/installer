@@ -38,6 +38,11 @@ func (s *Service) GetOrCreateFloatingIP(eventObject runtime.Object, openStackClu
 	var err error
 	var fpCreateOpts floatingips.CreateOpts
 
+	// This is a safeguard, we shouldn't reach it and if we do, it's something to fix in the caller of the function.
+	if openStackCluster.Status.ExternalNetwork == nil {
+		return nil, fmt.Errorf("external network not found")
+	}
+
 	if ptr.Deref(ip, "") != "" {
 		fp, err = s.GetFloatingIP(*ip)
 		if err != nil {

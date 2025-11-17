@@ -77,6 +77,9 @@ type OpenStackServerReconciler struct {
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackservers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackservers/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=ipaddressclaims;ipaddressclaims/status,verbs=get;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=ipaddresses;ipaddresses/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups=openstack.k-orc.cloud,resources=images,verbs=get;list;watch
 
 func (r *OpenStackServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx)
@@ -105,7 +108,7 @@ func (r *OpenStackServerReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 	if cluster != nil {
 		if annotations.IsPaused(cluster, openStackServer) {
-			scope.Logger().Info("OpenStackServer %s/%s linked to a Cluster that is paused. Won't reconcile", openStackServer.Namespace, openStackServer.Name)
+			scope.Logger().Info("OpenStackServer linked to a Cluster that is paused. Won't reconcile")
 			return reconcile.Result{}, nil
 		}
 	}
@@ -169,7 +172,7 @@ func patchServer(ctx context.Context, patchHelper *patch.Helper, openStackServer
 	return patchHelper.Patch(ctx, openStackServer, options...)
 }
 
-func (r *OpenStackServerReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, _ controller.Options) error {
+func (r *OpenStackServerReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	const imageRefPath = "spec.image.imageRef.name"
 
 	log := ctrl.LoggerFrom(ctx)
@@ -189,6 +192,7 @@ func (r *OpenStackServerReconciler) SetupWithManager(ctx context.Context, mgr ct
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
+		WithOptions(options).
 		For(&infrav1alpha1.OpenStackServer{}).
 		Watches(&orcv1alpha1.Image{},
 			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
@@ -212,6 +216,10 @@ func (r *OpenStackServerReconciler) SetupWithManager(ctx context.Context, mgr ct
 				return requests
 			}),
 			builder.WithPredicates(predicates.NewBecameAvailable(mgr.GetLogger(), &orcv1alpha1.Image{})),
+		).
+		Watches(
+			&ipamv1.IPAddressClaim{},
+			handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &infrav1alpha1.OpenStackServer{}),
 		).
 		Complete(r)
 }
@@ -418,11 +426,7 @@ func getOrCreateServerPorts(openStackServer *infrav1alpha1.OpenStackServer, netw
 	}
 	desiredPorts := resolved.Ports
 
-	if len(desiredPorts) == len(resources.Ports) {
-		return nil
-	}
-
-	if err := networkingService.CreatePorts(openStackServer, desiredPorts, resources); err != nil {
+	if err := networkingService.EnsurePorts(openStackServer, desiredPorts, resources); err != nil {
 		return fmt.Errorf("creating ports: %w", err)
 	}
 
@@ -436,9 +440,18 @@ func (r *OpenStackServerReconciler) getOrCreateServer(ctx context.Context, logge
 
 	if openStackServer.Status.InstanceID != nil {
 		instanceStatus, err = computeService.GetInstanceStatus(*openStackServer.Status.InstanceID)
-		if err != nil {
-			logger.Info("Unable to get OpenStack instance", "name", openStackServer.Name)
-			conditions.MarkFalse(openStackServer, infrav1.InstanceReadyCondition, infrav1.OpenStackErrorReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+		if err != nil || instanceStatus == nil {
+			logger.Info("Unable to get OpenStack instance", "name", openStackServer.Name, "id", *openStackServer.Status.InstanceID)
+			var msg string
+			var reason string
+			if err != nil {
+				msg = err.Error()
+				reason = infrav1.OpenStackErrorReason
+			} else {
+				msg = infrav1.ServerUnexpectedDeletedMessage
+				reason = infrav1.InstanceNotFoundReason
+			}
+			conditions.MarkFalse(openStackServer, infrav1.InstanceReadyCondition, reason, clusterv1.ConditionSeverityError, msg)
 			return nil, err
 		}
 	}
@@ -453,11 +466,6 @@ func (r *OpenStackServerReconciler) getOrCreateServer(ctx context.Context, logge
 			logger.Info("Server already exists", "name", openStackServer.Name, "id", instanceStatus.ID())
 			return instanceStatus, nil
 		}
-		if openStackServer.Status.InstanceID != nil {
-			logger.Info("Not reconciling server in failed state. The previously existing OpenStack instance is no longer available")
-			conditions.MarkFalse(openStackServer, infrav1.InstanceReadyCondition, infrav1.InstanceNotFoundReason, clusterv1.ConditionSeverityError, "virtual machine no longer exists")
-			return nil, nil
-		}
 
 		logger.Info("Server does not exist, creating Server", "name", openStackServer.Name)
 		instanceSpec, err := r.serverToInstanceSpec(ctx, openStackServer)
@@ -471,6 +479,8 @@ func (r *OpenStackServerReconciler) getOrCreateServer(ctx context.Context, logge
 			openStackServer.Status.InstanceState = &infrav1.InstanceStateError
 			return nil, fmt.Errorf("create OpenStack instance: %w", err)
 		}
+		// We reached a point where a server was created with no error but we can't predict its state yet which is why we don't update conditions yet.
+		// The actual state of the server is checked in the next reconcile loops.
 		return instanceStatus, nil
 	}
 	return instanceStatus, nil
@@ -602,6 +612,7 @@ func (r *OpenStackServerReconciler) getOrCreateIPAddressClaimForFloatingAddress(
 				},
 			},
 			Finalizers: []string{infrav1.IPClaimMachineFinalizer},
+			Labels:     map[string]string{},
 		},
 		Spec: ipamv1.IPAddressClaimSpec{
 			PoolRef: *poolRef,

@@ -1,5 +1,5 @@
 /*
-Copyright 2024 The Kubernetes Authors.
+Copyright 2024 The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,10 +15,6 @@ limitations under the License.
 */
 
 package v1alpha1
-
-import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
 
 // GlanceTag is the name of the go field tag in properties structs used to specify the Glance property name.
 const GlanceTag = "glance"
@@ -278,10 +274,8 @@ type ImageHash struct {
 type ImageResourceSpec struct {
 	// Name will be the name of the created Glance image. If not specified, the
 	// name of the Image object will be used.
-	// +kubebuilder:validation:MinLength:=1
-	// +kubebuilder:validation:MaxLength:=1000
 	// +optional
-	Name string `json:"name,omitempty"`
+	Name *OpenStackName `json:"name,omitempty"`
 
 	// Protected specifies that the image is protected from deletion.
 	// If not specified, the default is false.
@@ -318,65 +312,6 @@ type ImageFilter struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// ImageImport specifies an existing image which will be imported instead of
-// creating a new image
-// +kubebuilder:validation:MinProperties:=1
-// +kubebuilder:validation:MaxProperties:=1
-type ImageImport struct {
-	// ID contains the unique identifier of an existing Glance image. Note that
-	// when specifying an image import by ID, the image MUST already exist. The
-	// Image will enter an error state if the image does not exist.
-	// +optional
-	// +kubebuilder:validation:Format:=uuid
-	ID *string `json:"id,omitempty"`
-
-	// Filter contains an image query which is expected to return a single
-	// result. The controller will continue to retry if filter returns no
-	// results. If filter returns multiple results the controller will set an
-	// error state and will not continue to retry.
-	// +optional
-	Filter *ImageFilter `json:"filter,omitempty"`
-}
-
-// ImageSpec defines the desired state of an Image.
-// +kubebuilder:validation:XValidation:rule="self.managementPolicy == 'managed' ? has(self.resource) : true",message="resource must be specified when policy is managed"
-// +kubebuilder:validation:XValidation:rule="self.managementPolicy == 'managed' ? !has(self.__import__) : true",message="import may not be specified when policy is managed"
-// +kubebuilder:validation:XValidation:rule="self.managementPolicy == 'unmanaged' ? !has(self.resource) : true",message="resource may not be specified when policy is unmanaged"
-// +kubebuilder:validation:XValidation:rule="self.managementPolicy == 'unmanaged' ? has(self.__import__) : true",message="import must be specified when policy is unmanaged"
-// +kubebuilder:validation:XValidation:rule="has(self.managedOptions) ? self.managementPolicy == 'managed' : true",message="managedOptions may only be provided when policy is managed"
-// +kubebuilder:validation:XValidation:rule="!has(self.__import__) ? has(self.resource.content) : true",message="resource content must be specified when not importing"
-type ImageSpec struct {
-	// Import refers to an existing image which will be imported instead of
-	// creating a new image.
-	// +optional
-	Import *ImageImport `json:"import,omitempty"`
-
-	// Resource specifies the desired state of the Glance image.
-	//
-	// Resource may not be specified if the management policy is `unmanaged`.
-	//
-	// Resource must be specified when the management policy is `managed`.
-	// +optional
-	Resource *ImageResourceSpec `json:"resource,omitempty"`
-
-	// ManagementPolicy defines how ORC will treat the object. Valid values are
-	// `managed`: ORC will create, update, and delete the resource; `unmanaged`:
-	// ORC will import an existing image, and will not apply updates to it or
-	// delete it.
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="managementPolicy is immutable"
-	// +kubebuilder:default:=managed
-	// +optional
-	ManagementPolicy ManagementPolicy `json:"managementPolicy,omitempty"`
-
-	// ManagedOptions specifies options which may be applied to managed objects.
-	// +optional
-	ManagedOptions *ManagedOptions `json:"managedOptions,omitempty"`
-
-	// CloudCredentialsRef points to a secret containing OpenStack credentials
-	// +kubebuilder:validation:Required
-	CloudCredentialsRef CloudCredentialsReference `json:"cloudCredentialsRef"`
-}
-
 // ImageResourceStatus represents the observed state of a Glance image
 type ImageResourceStatus struct {
 	// Status is the image status as reported by Glance
@@ -400,82 +335,8 @@ type ImageResourceStatus struct {
 	VirtualSizeB *int64 `json:"virtualSizeB,omitempty"`
 }
 
-// ImageStatus defines the observed state of an Image.
-type ImageStatus struct {
-	// Conditions represents the observed status of the object.
-	// Known .status.conditions.type are: "Available", "Progressing"
-	//
-	// Available represents the availability of the Glance image. If it is
-	// true then the image is ready for use in Glance, and its hash has been
-	// verified.
-	//
-	// Progressing indicates the state of the Glance image does not currently
-	// reflect the desired state, but that reconciliation is progressing.
-	// Progressing will be False either because the desired state has been
-	// achieved, or some terminal error prevents it from being achieved and the
-	// controller is no longer attempting to reconcile.
-	//
-	// +patchMergeKey=type
-	// +patchStrategy=merge
-	// +listType=map
-	// +listMapKey=type
-	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
-
-	// ID is the unique identifier of the Glance image
-	// +optional
-	ID *string `json:"id,omitempty"`
-
-	// Resource contains the observed state of the Glance image
-	// +optional
-	Resource *ImageResourceStatus `json:"resource,omitempty"`
-
+type ImageStatusExtra struct {
 	// DownloadAttempts is the number of times the controller has attempted to download the image contents
 	// +optional
 	DownloadAttempts *int `json:"downloadAttempts,omitempty"`
 }
-
-var _ ObjectWithConditions = &Image{}
-
-func (i *Image) GetConditions() []metav1.Condition {
-	return i.Status.Conditions
-}
-
-// +genclient
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Glance image ID"
-// +kubebuilder:printcolumn:name="Available",type="string",JSONPath=".status.conditions[?(@.type=='Available')].status",description="Availability status of image"
-// +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Available')].message",description="Message describing current availability status"
-// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation"
-
-// Image is the Schema for the ORC images API.
-type Image struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   ImageSpec   `json:"spec,omitempty"`
-	Status ImageStatus `json:"status,omitempty"`
-}
-
-// +kubebuilder:object:root=true
-
-// ImageList contains a list of Image.
-type ImageList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Image `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&Image{}, &ImageList{})
-}
-
-func (i *Image) GetCloudCredentialsRef() (*string, *CloudCredentialsReference) {
-	if i == nil {
-		return nil, nil
-	}
-
-	return &i.Namespace, &i.Spec.CloudCredentialsRef
-}
-
-var _ CloudCredentialsRefProvider = &Image{}

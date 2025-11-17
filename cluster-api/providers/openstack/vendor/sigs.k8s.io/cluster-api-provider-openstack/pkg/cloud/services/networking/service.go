@@ -18,7 +18,6 @@ package networking
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/attributestags"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -65,28 +64,15 @@ func (s *Service) replaceAllAttributesTags(eventObject runtime.Object, resourceT
 		record.Warnf(eventObject, "FailedReplaceAllAttributesTags", "Invalid resourceType argument in function call")
 		panic(fmt.Errorf("invalid argument: resourceType, %s, does not match allowed arguments: %s or %s", resourceType, trunkResource, portResource))
 	}
-	// remove duplicate values from tags
-	tagsMap := make(map[string]string)
-	for _, t := range tags {
-		tagsMap[t] = t
-	}
-
-	uniqueTags := []string{}
-	for k := range tagsMap {
-		uniqueTags = append(uniqueTags, k)
-	}
-
-	// Sort the tags so that we always get fixed order of tags to make UT easier
-	sort.Strings(uniqueTags)
 
 	_, err := s.client.ReplaceAllAttributesTags(resourceType, resourceID, attributestags.ReplaceAllOpts{
-		Tags: uniqueTags,
+		Tags: tags,
 	})
 	if err != nil {
 		record.Warnf(eventObject, "FailedReplaceAllAttributesTags", "Failed to replace all attributestags, %s: %v", resourceID, err)
 		return err
 	}
 
-	record.Eventf(eventObject, "SuccessfulReplaceAllAttributeTags", "Replaced all attributestags for %s with tags %s", resourceID, uniqueTags)
+	record.Eventf(eventObject, "SuccessfulReplaceAllAttributeTags", "Replaced all attributestags for %s with tags %s", resourceID, tags)
 	return nil
 }

@@ -1,5 +1,5 @@
 /*
-Copyright 2023 The Kubernetes Authors.
+Copyright 2023 The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,34 +31,34 @@ const (
 	// Message.
 
 	// Normal progress: continue waiting.
-	OpenStackConditionReasonProgressing = "Progressing"
+	ConditionReasonProgressing = "Progressing"
 
 	// The user must fix the configuration before trying again.
-	OpenStackConditionReasonInvalidConfiguration = "InvalidConfiguration"
+	ConditionReasonInvalidConfiguration = "InvalidConfiguration"
 
 	// An error occurred which we can't recover from. It must be addressed
 	// before we can continue.
-	OpenStackConditionReasonUnrecoverableError = "UnrecoverableError"
+	ConditionReasonUnrecoverableError = "UnrecoverableError"
 
 	// An error occurred which may go away eventually if we keep trying. The
 	// user likely wants to know about this if it persists.
-	OpenStackConditionReasonTransientError = "TransientError"
+	ConditionReasonTransientError = "TransientError"
 
 	// The resource is ready for use.
-	OpenStackConditionReasonSuccess = "Success"
+	ConditionReasonSuccess = "Success"
 )
 
 const (
-	OpenStackConditionAvailable   = "Available"
-	OpenStackConditionProgressing = "Progressing"
+	ConditionAvailable   = "Available"
+	ConditionProgressing = "Progressing"
 )
 
 // IsConditionReasonTerminal returns true if the given reason represents an error which should prevent further reconciliation.
 func IsConditionReasonTerminal(reason string) bool {
 	return slices.Contains(
 		[]string{
-			OpenStackConditionReasonInvalidConfiguration,
-			OpenStackConditionReasonUnrecoverableError,
+			ConditionReasonInvalidConfiguration,
+			ConditionReasonUnrecoverableError,
 		}, reason)
 }
 
@@ -73,7 +73,7 @@ type ObjectWithConditions interface {
 // exists and is up to date.
 func getUpToDateProgressing(obj ObjectWithConditions) *metav1.Condition {
 	conditions := obj.GetConditions()
-	progressing := meta.FindStatusCondition(conditions, OpenStackConditionProgressing)
+	progressing := meta.FindStatusCondition(conditions, ConditionProgressing)
 
 	// Not complete if Progressing condition does not exist
 	if progressing == nil {
@@ -96,7 +96,7 @@ func IsReconciliationComplete(obj ObjectWithConditions) bool {
 	}
 
 	// Complete if we've either succeeded or failed terminally
-	return progressing.Reason == OpenStackConditionReasonSuccess || IsConditionReasonTerminal(progressing.Reason)
+	return progressing.Reason == ConditionReasonSuccess || IsConditionReasonTerminal(progressing.Reason)
 }
 
 // GetTerminalError returns an error containing a descriptive message if reconciliation has failed terminally, or nil otherwise.
@@ -115,7 +115,7 @@ func GetTerminalError(obj ObjectWithConditions) error {
 
 func IsAvailable(obj ObjectWithConditions) bool {
 	conditions := obj.GetConditions()
-	available := meta.FindStatusCondition(conditions, OpenStackConditionAvailable)
+	available := meta.FindStatusCondition(conditions, ConditionAvailable)
 
 	return available != nil && available.Status == metav1.ConditionTrue
 }

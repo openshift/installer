@@ -36,10 +36,10 @@ import (
 	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/api/v1alpha1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-openstack/pkg/clients"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/filterconvert"
-	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/hash"
 )
 
 const (
@@ -105,7 +105,29 @@ func (s *Service) createInstanceImpl(eventObject runtime.Object, instanceSpec *I
 		}
 	}
 
-	server, err := s.getComputeClient().CreateServer(
+	compute := s.getComputeClient()
+	if requiresTagging(instanceSpec) {
+		s.scope.Logger().V(4).Info("Tagging support is required for creating this Openstack instance")
+		computeWithTags, err := compute.WithMicroversion(clients.NovaTagging)
+		if err != nil {
+			return nil, fmt.Errorf("tagging is not supported by the server: %w", err)
+		}
+		compute = computeWithTags
+	}
+
+	multiattachRequired, err := s.requiresMultiattach(blockDevices)
+	if err != nil {
+		return nil, fmt.Errorf("error checking if multiattach is required: %w", err)
+	}
+	if multiattachRequired {
+		s.scope.Logger().V(4).Info("Multiattach support is required for creating this Openstack instance")
+		computeWithMultiattach, err := compute.WithMicroversion(clients.NovaMultiAttachVolume)
+		if err != nil {
+			return nil, fmt.Errorf("multiattach is not supported by the server: %w", err)
+		}
+		compute = computeWithMultiattach
+	}
+	server, err := compute.CreateServer(
 		keypairs.CreateOptsExt{
 			CreateOptsBuilder: serverCreateOpts,
 			KeyName:           instanceSpec.SSHKeyName,
@@ -593,10 +615,32 @@ func getTimeout(name string, timeout int) time.Duration {
 	return time.Duration(timeout)
 }
 
-func HashInstanceSpec(computeInstance *InstanceSpec) (string, error) {
-	instanceHash, err := hash.ComputeSpewHash(computeInstance)
-	if err != nil {
-		return "", err
+// requiresTagging checks if the instanceSpec requires tagging,
+// i.e. if it is using tags in some way.
+func requiresTagging(instanceSpec *InstanceSpec) bool {
+	// All AdditionalBlockDevices are always tagged.
+	if len(instanceSpec.Tags) > 0 || len(instanceSpec.AdditionalBlockDevices) > 0 {
+		return true
 	}
-	return strconv.Itoa(int(instanceHash)), nil
+	return false
+}
+
+// requiresMultiattach checks if there is any volume in the blockDevices that requires multiattach.
+// Note that we are not checking the default volume type or the volume type configured in the
+// image metadata. We assume that these are NOT multiattach.
+func (s *Service) requiresMultiattach(blockDevices []servers.BlockDevice) (bool, error) {
+	for _, blockDevice := range blockDevices {
+		// Only check volumes
+		if blockDevice.SourceType == servers.SourceVolume {
+			volume, err := s.getVolumeClient().GetVolume(blockDevice.UUID)
+			if err != nil {
+				return false, err
+			}
+			if volume.Multiattach {
+				return true, nil
+			}
+		}
+	}
+	// We assume that the default volume type is NOT multiattach
+	return false, nil
 }

@@ -19,8 +19,8 @@ package v1beta1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 
+	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/optional"
 )
 
@@ -31,6 +31,8 @@ const (
 )
 
 // OpenStackClusterSpec defines the desired state of OpenStackCluster.
+// +kubebuilder:validation:XValidation:rule="has(self.disableExternalNetwork) && self.disableExternalNetwork ? !has(self.bastion) || !has(self.bastion.floatingIP) : true",message="bastion floating IP cannot be set when disableExternalNetwork is true"
+// +kubebuilder:validation:XValidation:rule="has(self.disableExternalNetwork) && self.disableExternalNetwork ? has(self.disableAPIServerFloatingIP) && self.disableAPIServerFloatingIP : true",message="disableAPIServerFloatingIP cannot be false when disableExternalNetwork is true"
 type OpenStackClusterSpec struct {
 	// ManagedSubnets describe OpenStack Subnets to be created. Cluster actuator will create a network,
 	// subnets with the defined CIDR, and a router connected to these subnets. Currently only one IPv4
@@ -256,7 +258,7 @@ type OpenStackClusterStatus struct {
 	// OpenStackClusters can be added as events to the OpenStackCluster object
 	// and/or logged in the controller's output.
 	// +optional
-	FailureReason *capierrors.ClusterStatusError `json:"failureReason,omitempty"`
+	FailureReason *capoerrors.DeprecatedCAPIClusterStatusError `json:"failureReason,omitempty"`
 
 	// FailureMessage will be set in the event that there is a terminal problem
 	// reconciling the OpenStackCluster and will contain a more verbose string suitable
@@ -317,6 +319,22 @@ type ManagedSecurityGroups struct {
 	// +listMapKey=name
 	// +optional
 	AllNodesSecurityGroupRules []SecurityGroupRuleSpec `json:"allNodesSecurityGroupRules,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+
+	// controlPlaneNodesSecurityGroupRules defines the rules that should be applied to control plane nodes.
+	// +patchMergeKey=name
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	ControlPlaneNodesSecurityGroupRules []SecurityGroupRuleSpec `json:"controlPlaneNodesSecurityGroupRules,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+
+	// workerNodesSecurityGroupRules defines the rules that should be applied to worker nodes.
+	// +patchMergeKey=name
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	WorkerNodesSecurityGroupRules []SecurityGroupRuleSpec `json:"workerNodesSecurityGroupRules,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
 
 	// AllowAllInClusterTraffic allows all ingress and egress traffic between cluster nodes when set to true.
 	// +kubebuilder:default=false

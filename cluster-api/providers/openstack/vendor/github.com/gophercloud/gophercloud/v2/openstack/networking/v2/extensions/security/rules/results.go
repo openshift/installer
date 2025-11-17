@@ -1,6 +1,9 @@
 package rules
 
 import (
+	"encoding/json"
+	"time"
+
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/pagination"
 )
@@ -42,6 +45,10 @@ type SecGroupRule struct {
 	// "tcp", "udp", "icmp" or an empty string.
 	Protocol string
 
+	// The remote address group ID to be associated with this security group rule.
+	// You can specify either RemoteAddressGroupID, RemoteGroupID, or RemoteIPPrefix
+	RemoteAddressGroupID string `json:"remote_address_group_id"`
+
 	// The remote group ID to be associated with this security group rule. You
 	// can specify either RemoteGroupID or RemoteIPPrefix.
 	RemoteGroupID string `json:"remote_group_id"`
@@ -56,6 +63,53 @@ type SecGroupRule struct {
 
 	// ProjectID is the project owner of this security group rule.
 	ProjectID string `json:"project_id"`
+
+	// RevisionNumber optionally set via extensions/standard-attr-revisions
+	RevisionNumber int `json:"revision_number"`
+
+	// Timestamp when the rule was created
+	CreatedAt time.Time `json:"-"`
+
+	// Timestamp when the rule was last updated
+	UpdatedAt time.Time `json:"-"`
+}
+
+func (r *SecGroupRule) UnmarshalJSON(b []byte) error {
+	type tmp SecGroupRule
+
+	// Support for older neutron time format
+	var s1 struct {
+		tmp
+		CreatedAt gophercloud.JSONRFC3339NoZ `json:"created_at"`
+		UpdatedAt gophercloud.JSONRFC3339NoZ `json:"updated_at"`
+	}
+
+	err := json.Unmarshal(b, &s1)
+	if err == nil {
+		*r = SecGroupRule(s1.tmp)
+		r.CreatedAt = time.Time(s1.CreatedAt)
+		r.UpdatedAt = time.Time(s1.UpdatedAt)
+
+		return nil
+	}
+
+	// Support for newer neutron time format
+	var s2 struct {
+		tmp
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+	}
+
+	err = json.Unmarshal(b, &s2)
+	if err != nil {
+		return err
+	}
+
+	*r = SecGroupRule(s2.tmp)
+	r.CreatedAt = time.Time(s2.CreatedAt)
+	r.UpdatedAt = time.Time(s2.UpdatedAt)
+
+	return nil
 }
 
 // SecGroupRulePage is the page returned by a pager when traversing over a
@@ -103,6 +157,10 @@ type commonResult struct {
 	gophercloud.Result
 }
 
+type bulkResult struct {
+	gophercloud.Result
+}
+
 // Extract is a function that accepts a result and extracts a security rule.
 func (r commonResult) Extract() (*SecGroupRule, error) {
 	var s struct {
@@ -112,10 +170,25 @@ func (r commonResult) Extract() (*SecGroupRule, error) {
 	return s.SecGroupRule, err
 }
 
+// Extract is a function that accepts a result and extracts security rules.
+func (r bulkResult) Extract() ([]SecGroupRule, error) {
+	var s struct {
+		SecGroupRules []SecGroupRule `json:"security_group_rules"`
+	}
+	err := r.ExtractInto(&s)
+	return s.SecGroupRules, err
+}
+
 // CreateResult represents the result of a create operation. Call its Extract
 // method to interpret it as a SecGroupRule.
 type CreateResult struct {
 	commonResult
+}
+
+// CreateBulkResult represents the result of a bulk create operation. Call its
+// Extract method to interpret it as a slice of SecGroupRules.
+type CreateBulkResult struct {
+	bulkResult
 }
 
 // GetResult represents the result of a get operation. Call its Extract

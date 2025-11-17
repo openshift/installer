@@ -548,7 +548,7 @@ func restorev1beta1APIServerLoadBalancer(previous *infrav1.APIServerLoadBalancer
 		return
 	}
 
-	// AZ doesn't exist in v1alpha6, so always restore.
+	// AZ doesn't exist in v1alpha7, so always restore.
 	dst.AvailabilityZone = previous.AvailabilityZone
 }
 
@@ -566,11 +566,11 @@ func Convert_v1beta1_SubnetFilter_To_v1alpha7_SubnetFilter(_ *infrav1.SubnetFilt
 }
 
 func Convert_v1alpha7_NetworkFilter_To_v1beta1_NetworkFilter(_ *NetworkFilter, _ *infrav1.NetworkFilter, _ apiconversion.Scope) error {
-	return errors.New("Convert_v1alpha6_NetworkFilter_To_v1beta1_NetworkFilter should not be called")
+	return errors.New("Convert_v1alpha7_NetworkFilter_To_v1beta1_NetworkFilter should not be called")
 }
 
 func Convert_v1beta1_NetworkFilter_To_v1alpha7_NetworkFilter(_ *infrav1.NetworkFilter, _ *NetworkFilter, _ apiconversion.Scope) error {
-	return errors.New("Convert_v1beta1_NetworkFilter_To_v1alpha6_NetworkFilter should not be called")
+	return errors.New("Convert_v1beta1_NetworkFilter_To_v1alpha7_NetworkFilter should not be called")
 }
 
 func Convert_v1alpha7_SecurityGroupFilter_To_v1beta1_SecurityGroupFilter(_ *SecurityGroupFilter, _ *infrav1.SecurityGroupFilter, _ apiconversion.Scope) error {

@@ -30,9 +30,9 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	v1beta1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	conversioncommon "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/conversioncommon"
+	errors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
 	optional "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/optional"
 	apiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	errors "sigs.k8s.io/cluster-api/errors"
 )
 
 func init() {
@@ -1128,7 +1128,7 @@ func autoConvert_v1alpha7_OpenStackClusterStatus_To_v1beta1_OpenStackClusterStat
 	} else {
 		out.Bastion = nil
 	}
-	out.FailureReason = (*errors.ClusterStatusError)(unsafe.Pointer(in.FailureReason))
+	out.FailureReason = (*errors.DeprecatedCAPIClusterStatusError)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
 	return nil
 }
@@ -1189,7 +1189,7 @@ func autoConvert_v1beta1_OpenStackClusterStatus_To_v1alpha7_OpenStackClusterStat
 	} else {
 		out.Bastion = nil
 	}
-	out.FailureReason = (*errors.ClusterStatusError)(unsafe.Pointer(in.FailureReason))
+	out.FailureReason = (*errors.DeprecatedCAPIClusterStatusError)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
 	return nil
 }
@@ -1527,7 +1527,7 @@ func autoConvert_v1alpha7_OpenStackMachineStatus_To_v1beta1_OpenStackMachineStat
 	out.Ready = in.Ready
 	out.Addresses = *(*[]corev1.NodeAddress)(unsafe.Pointer(&in.Addresses))
 	out.InstanceState = (*v1beta1.InstanceState)(unsafe.Pointer(in.InstanceState))
-	out.FailureReason = (*errors.MachineStatusError)(unsafe.Pointer(in.FailureReason))
+	out.FailureReason = (*errors.DeprecatedCAPIMachineStatusError)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
 	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	return nil
@@ -1545,7 +1545,7 @@ func autoConvert_v1beta1_OpenStackMachineStatus_To_v1alpha7_OpenStackMachineStat
 	out.InstanceState = (*InstanceState)(unsafe.Pointer(in.InstanceState))
 	// WARNING: in.Resolved requires manual conversion: does not exist in peer-type
 	// WARNING: in.Resources requires manual conversion: does not exist in peer-type
-	out.FailureReason = (*errors.MachineStatusError)(unsafe.Pointer(in.FailureReason))
+	out.FailureReason = (*errors.DeprecatedCAPIMachineStatusError)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
 	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	return nil
