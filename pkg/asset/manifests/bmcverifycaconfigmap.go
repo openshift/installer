@@ -10,8 +10,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 var (
@@ -41,21 +40,18 @@ func (*BMCVerifyCAConfigMap) Name() string {
 // the asset.
 func (*BMCVerifyCAConfigMap) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&installconfig.InstallConfig{},
+		&tls.BMCVerifyCA{},
 	}
 }
 
 // Generate generates the BMC Verify CA ConfigMap.
 func (bvc *BMCVerifyCAConfigMap) Generate(_ context.Context, dependencies asset.Parents) error {
-	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	bmcVerifyCA := &tls.BMCVerifyCA{}
+	dependencies.Get(bmcVerifyCA)
 
-	// Only generate the ConfigMap for baremetal platform with BMCVerifyCA configured
-	if installConfig.Config.Platform.Name() != baremetal.Name {
-		return nil
-	}
-
-	if installConfig.Config.Platform.BareMetal == nil || installConfig.Config.Platform.BareMetal.BMCVerifyCA == "" {
+	// Only generate the ConfigMap if BMCVerifyCA has content
+	files := bmcVerifyCA.Files()
+	if len(files) == 0 {
 		return nil
 	}
 
@@ -69,7 +65,7 @@ func (bvc *BMCVerifyCAConfigMap) Generate(_ context.Context, dependencies asset.
 			Name:      bmcVerifyCAConfigMapName,
 		},
 		Data: map[string]string{
-			bmcVerifyCAConfigMapDataKey: installConfig.Config.Platform.BareMetal.BMCVerifyCA,
+			bmcVerifyCAConfigMapDataKey: string(files[0].Data),
 		},
 	}
 
