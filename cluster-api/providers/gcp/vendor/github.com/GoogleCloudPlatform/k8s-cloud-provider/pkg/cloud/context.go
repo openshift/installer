@@ -43,4 +43,6 @@ type CallContextKey struct {
 	Version meta.Version
 	// Service is the service being invoked (e.g. "Firewalls", "BackendServices")
 	Service string
+	// Resource is the key of the resource being operated on.
+	Resource *meta.Key
 }

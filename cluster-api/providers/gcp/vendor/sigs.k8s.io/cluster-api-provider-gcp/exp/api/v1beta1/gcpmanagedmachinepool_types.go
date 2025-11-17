@@ -18,14 +18,16 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
 	// ManagedMachinePoolFinalizer allows Reconcile to clean up GCP resources associated with the GCPManagedMachinePool before
 	// removing it from the apiserver.
 	ManagedMachinePoolFinalizer = "gcpmanagedmachinepool.infrastructure.cluster.x-k8s.io"
+
+	// GCPManagedMachinePoolMachineKind indicates the kind of an GCPManagedMachinePoolMachine.
+	GCPManagedMachinePoolMachineKind = "GCPManagedMachinePool"
 )
 
 // DiskType is type of the disk attached to node.
@@ -45,72 +47,8 @@ const (
 
 // GCPManagedMachinePoolSpec defines the desired state of GCPManagedMachinePool.
 type GCPManagedMachinePoolSpec struct {
-	// NodePoolName specifies the name of the GKE node pool corresponding to this MachinePool. If you don't specify a name
-	// then a default name will be created based on the namespace and name of the managed machine pool.
-	// +optional
-	NodePoolName string `json:"nodePoolName,omitempty"`
-	// MachineType is the name of a Google Compute Engine [machine
-	// type](https://cloud.google.com/compute/docs/machine-types).
-	// If unspecified, the default machine type is `e2-medium`.
-	// +optional
-	MachineType *string `json:"machineType,omitempty"`
-	// DiskSizeGb is the size of the disk attached to each node, specified in GB.
-	// The smallest allowed disk size is 10GB. If unspecified, the default disk size is 100GB.
-	// +optional
-	DiskSizeGb *int32 `json:"diskSizeGb,omitempty"`
-	// LocalSsdCount is the number of local SSD disks to be attached to the node.
-	// +optional
-	LocalSsdCount *int32 `json:"localSsdCount,omitempty"`
-	// Scaling specifies scaling for the node pool
-	// +optional
-	Scaling *NodePoolAutoScaling `json:"scaling,omitempty"`
-	// NodeLocations is the list of zones in which the NodePool's
-	// nodes should be located.
-	// +optional
-	NodeLocations []string `json:"nodeLocations,omitempty"`
-	// ImageType is image type to use for this nodepool.
-	// +optional
-	ImageType *string `json:"imageType,omitempty"`
-	// InstanceType is name of Compute Engine machine type.
-	// +optional
-	InstanceType *string `json:"instanceType,omitempty"`
-	// DiskType is type of the disk attached to each node.
-	// +optional
-	DiskType *DiskType `json:"diskType,omitempty"`
-	// DiskSizeGB is size of the disk attached to each node,
-	// specified in GB.
-	// +kubebuilder:validation:Minimum:=10
-	// +optional
-	DiskSizeGB *int64 `json:"diskSizeGB,omitempty"`
-	// MaxPodsPerNode is constraint enforced on the max num of
-	// pods per node.
-	// +kubebuilder:validation:Minimum:=8
-	// +kubebuilder:validation:Maximum:=256
-	// +optional
-	MaxPodsPerNode *int64 `json:"maxPodsPerNode,omitempty"`
-	// NodeNetwork specifies the node network configuration
-	// options.
-	// +optional
-	NodeNetwork NodeNetworkConfig `json:"nodeNetwork,omitempty"`
-	// NodeSecurity specifies the node security options.
-	// +optional
-	NodeSecurity NodeSecurityConfig `json:"nodeSecurity,omitempty"`
-	// KubernetesLabels specifies the labels to apply to the nodes of the node pool.
-	// +optional
-	KubernetesLabels infrav1.Labels `json:"kubernetesLabels,omitempty"`
-	// KubernetesTaints specifies the taints to apply to the nodes of the node pool.
-	// +optional
-	KubernetesTaints Taints `json:"kubernetesTaints,omitempty"`
-	// AdditionalLabels is an optional set of tags to add to GCP resources managed by the GCP provider, in addition to the
-	// ones added by default.
-	// +optional
-	AdditionalLabels infrav1.Labels `json:"additionalLabels,omitempty"`
-	// Management specifies the node pool management options.
-	// +optional
-	Management *NodePoolManagement `json:"management,omitempty"`
-	// LinuxNodeConfig specifies the settings for Linux agent nodes.
-	// +optional
-	LinuxNodeConfig *LinuxNodeConfig `json:"linuxNodeConfig,omitempty"`
+	GCPManagedMachinePoolClassSpec `json:",inline"`
+
 	// ProviderIDList are the provider IDs of instances in the
 	// managed instance group corresponding to the nodegroup represented by this
 	// machine pool
@@ -179,6 +117,9 @@ type GCPManagedMachinePoolStatus struct {
 	Replicas int32 `json:"replicas"`
 	// Conditions specifies the cpnditions for the managed machine pool
 	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	// InfrastructureMachineKind is the kind of the infrastructure resources behind MachinePool Machines.
+	// +optional
+	InfrastructureMachineKind string `json:"infrastructureMachineKind,omitempty"`
 }
 
 // +kubebuilder:object:root=true
