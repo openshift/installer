@@ -152,16 +152,20 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 		return 0, errors.Wrap(err, "loading kubeconfig")
 	}
 
-	// Handle the case when the API server is not reachable.
-	if err := handleUnreachableAPIServer(ctx, config); err != nil {
-		logrus.Fatal(fmt.Errorf("unable to handle api server override: %w", err))
-	}
-
 	//
 	// Wait for the bootstrap to complete.
 	//
 	timer.StartTimer("Bootstrap Complete")
+	// Handle the case when the API server is not reachable before bootstrap complete.
+	if err := handleUnreachableAPIServer(ctx, config); err != nil {
+		logrus.Fatal(fmt.Errorf("unable to handle api server override before bootstrap complete: %w", err))
+	}
+
 	if err := waitForBootstrapComplete(ctx, config); err != nil {
+		// Handle the case when the API server is not reachable before logging operator conditions.
+		if err := handleUnreachableAPIServer(ctx, config); err != nil {
+			logrus.Error("Unable to handle api server override before logging operator conditions: ", err)
+		}
 		if err := command.LogClusterOperatorConditions(ctx, config); err != nil {
 			logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err)
 		}
@@ -211,8 +215,17 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 		logrus.Exit(command.ExitCodeInstallFailed)
 	}
 
+	// Handle the case when the API server is not reachable before install complete.
+	if err := handleUnreachableAPIServer(ctx, config); err != nil {
+		logrus.Fatal(fmt.Errorf("unable to handle api server override before install complete: %w", err))
+	}
+
 	err = command.WaitForInstallComplete(ctx, config, assetStore)
 	if err != nil {
+		// Handle the case when the API server is not reachable before logging operator conditions.
+		if err := handleUnreachableAPIServer(ctx, config); err != nil {
+			logrus.Error("Unable to handle api server override before logging operator conditions: ", err)
+		}
 		if err2 := command.LogClusterOperatorConditions(ctx, config); err2 != nil {
 			logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 		}
@@ -502,6 +515,14 @@ func waitForEtcdBootstrapMemberRemoval(ctx context.Context, config *rest.Config)
 }
 
 func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error {
+	// First, check if the API server is reachable using the current configuration.
+	if isAPIServerReachable(ctx, config) {
+		logrus.Debug("API server is reachable, no need to override connection")
+		return nil
+	}
+
+	logrus.Info("API server is not reachable via hostname, attempting to use IP address override")
+
 	assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
 	if err != nil {
 		return fmt.Errorf("failed to create asset store: %w", err)
@@ -566,5 +587,29 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 		return fmt.Errorf("failed to delete %s from disk", lbConfig.Name())
 	}
 
+	logrus.Info("Successfully configured API server connection using IP address override")
 	return nil
+}
+
+// isAPIServerReachable checks if the API server is reachable using the current configuration.
+func isAPIServerReachable(ctx context.Context, config *rest.Config) bool {
+	// Create a temporary config with a short timeout for the connectivity check
+	checkConfig := rest.CopyConfig(config)
+	checkConfig.Timeout = 10 * time.Second
+
+	// Create a temporary client to test connectivity
+	client, err := kubernetes.NewForConfig(checkConfig)
+	if err != nil {
+		logrus.Debugf("Failed to create Kubernetes client for reachability check: %v", err)
+		return false
+	}
+
+	// Try to reach the API server by getting the server version
+	_, err = client.Discovery().ServerVersion()
+	if err != nil {
+		logrus.Debugf("API server not reachable: %v", err)
+		return false
+	}
+
+	return true
 }
