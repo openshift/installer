@@ -15,20 +15,27 @@ const (
 	firewallResourceName = "firewall"
 )
 
+func (o *ClusterUninstaller) firewallFilterFunc(item *compute.Firewall) bool {
+	if strings.Contains(item.Name, o.ClusterID) {
+		return true
+	}
+	for _, tag := range item.TargetTags {
+		if o.isClusterResource(tag) {
+			return true
+		}
+	}
+	return false
+}
+
 func (o *ClusterUninstaller) listFirewalls(ctx context.Context) ([]cloudResource, error) {
-	// The firewall rules that the destroyer is searching for here include a
-	// pattern before and after the cluster ID. Use a regular expression that allows
-	// wildcard values before and after the cluster ID.
-	return o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", func(item string) bool {
-		return strings.Contains(item, o.ClusterID)
-	})
+	return o.listFirewallsWithFilter(ctx, "items(name,targetTags),nextPageToken", o.firewallFilterFunc)
 }
 
 // listFirewallsWithFilter lists firewall rules in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listFirewallsWithFilter(ctx context.Context, fields string, filterFunc resourceFilterFunc) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listFirewallsWithFilter(ctx context.Context, fields string, filterFunc func(item *compute.Firewall) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing firewall rules")
 	results := []cloudResource{}
 
@@ -40,7 +47,7 @@ func (o *ClusterUninstaller) listFirewallsWithFilter(ctx context.Context, fields
 
 		err := req.Pages(ctx, func(list *compute.FirewallList) error {
 			for _, item := range list.Items {
-				if filterFunc(item.Name) {
+				if filterFunc(item) {
 					o.Logger.Debugf("Found firewall rule: %s", item.Name)
 					result = append(result, cloudResource{
 						key:      item.Name,
