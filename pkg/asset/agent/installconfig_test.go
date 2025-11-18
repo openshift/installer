@@ -1511,7 +1511,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 						APIVIPs:                        []string{"192.168.122.10"},
 						DeprecatedIngressVIP:           "192.168.122.11",
 						IngressVIPs:                    []string{"192.168.122.11"},
-						BootstrapOSImage:               "https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd",
+						DeprecatedBootstrapOSImage:     "https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd",
 						ClusterOSImage:                 "https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8",
 						BootstrapExternalStaticIP:      "192.1168.122.50",
 						BootstrapExternalStaticGateway: "gateway",

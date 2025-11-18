@@ -91,7 +91,7 @@ func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 }
 
 // Generate generates the agent installer unconfigured ignition.
-func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Parents) error {
+func (a *UnconfiguredIgnition) Generate(ctx context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	infraEnvAsset := &manifests.InfraEnvFile{}
 	infraEnvIDAsset := &common.InfraEnvID{}
@@ -144,7 +144,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	if err != nil {
 		return err
 	}
-	osImage, err := getOSImagesInfo(archName, openshiftVersion, DefaultCoreOSStreamGetter)
+	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion, nil)
 	if err != nil {
 		return err
 	}
