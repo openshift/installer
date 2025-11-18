@@ -68,7 +68,7 @@
           },
           "resources": [
             {
-              "apiVersion": "2021-10-01",
+              "apiVersion": "2022-03-03",
               "type": "versions",
               "name": "[variables('imageRelease')]",
               "location": "[variables('location')]",
@@ -88,7 +88,7 @@
                 "storageProfile": {
                   "osDiskImage": {
                     "source": {
-                      "id": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount'))]",
+                      "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount'))]",
                       "uri": "[parameters('vhdBlobURL')]"
                     }
                   }
