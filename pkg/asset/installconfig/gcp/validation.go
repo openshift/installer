@@ -71,6 +71,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateServiceEndpointOverride(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validateFirewallPermissions(client, ic, field.NewPath("platform").Child("gcp"))...)
 
 	if err := validateUserTags(client, ic.Platform.GCP.ProjectID, ic.Platform.GCP.UserTags); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("platform").Child("gcp").Child("userTags"), ic.Platform.GCP.UserTags, err.Error()))
@@ -874,5 +875,27 @@ func validateServiceEndpointOverride(client API, ic *types.InstallConfig, fieldP
 		return append(allErrs, field.Invalid(fieldPath.Child("endpoint").Child("name"), ic.GCP.Endpoint.Name, errMsg))
 	}
 
+	return allErrs
+}
+
+// validateFirewallPermissions validates that the user has firewall permissions OR when the user does not have
+// permissions to create firewall rules then a network is specified.
+func validateFirewallPermissions(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	projectID := ic.GCP.ProjectID
+	configField := "projectID"
+	if ic.GCP.NetworkProjectID != "" {
+		projectID = ic.GCP.NetworkProjectID
+		configField = "networkProjectID"
+	}
+
+	hasPermissions, err := client.ValidateServiceAccountHasPermissions(context.TODO(), projectID, []string{CreateGCPFirewallPermission})
+	if err != nil {
+		return append(allErrs, field.Invalid(fieldPath.Child(configField), projectID, err.Error()))
+	}
+	if !hasPermissions && ic.GCP.Network == "" {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("network"), "firewall rule creation permission is missing, an existing network is required"))
+	}
 	return allErrs
 }
