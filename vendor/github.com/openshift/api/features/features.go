@@ -760,8 +760,8 @@ var (
 					mustRegister()
 
 	FeatureGateAWSDedicatedHosts = newFeatureGate("AWSDedicatedHosts").
-					reportProblemsToJiraComponent("Installer").
-					contactPerson("faermanj").
+					reportProblemsToJiraComponent("splat").
+					contactPerson("rvanderp3").
 					productScope(ocpSpecific).
 					enhancementPR("https://github.com/openshift/enhancements/pull/1781").
 					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
@@ -772,7 +772,7 @@ var (
 					contactPerson("vr4manta").
 					productScope(ocpSpecific).
 					enhancementPR("https://github.com/openshift/enhancements/pull/1772").
-					enableIn(configv1.DevPreviewNoUpgrade).
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
 	FeatureGatePreconfiguredUDNAddresses = newFeatureGate("PreconfiguredUDNAddresses").
@@ -916,4 +916,11 @@ var (
 							enhancementPR("https://github.com/openshift/enhancements/pull/1845").
 							enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 							mustRegister()
+	FeatureGateOnPremDNSRecords = newFeatureGate("OnPremDNSRecords").
+					reportProblemsToJiraComponent("Networking / On-Prem DNS").
+					contactPerson("bnemec").
+					productScope(ocpSpecific).
+					enhancementPR("https://github.com/openshift/enhancements/pull/1803").
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
 )

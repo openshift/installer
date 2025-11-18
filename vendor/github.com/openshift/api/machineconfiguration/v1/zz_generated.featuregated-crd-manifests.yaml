@@ -39,6 +39,7 @@ controllerconfigs.machineconfiguration.openshift.io:
   - HighlyAvailableArbiter
   - HighlyAvailableArbiter+DualReplica
   - NutanixMultiSubnets
+  - OnPremDNSRecords
   - VSphereHostVMGroupZonal
   - VSphereMultiNetworks
   FilenameOperatorName: machine-config
