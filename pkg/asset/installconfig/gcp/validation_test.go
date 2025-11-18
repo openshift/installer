@@ -22,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -118,26 +117,6 @@ var (
 	invalidateXpnSA          = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = invalidXpnSA }
 	invalidateBaseDomain     = func(ic *types.InstallConfig) { ic.BaseDomain = invalidBaseDomain }
 	enableCustomDNS          = func(ic *types.InstallConfig) { ic.GCP.UserProvisionedDNS = customDNS.UserProvisionedDNSEnabled }
-
-	validServiceEndpoint = func(ic *types.InstallConfig) {
-		ic.Publish = types.InternalPublishingStrategy
-		ic.GCP.ServiceEndpoints = append(ic.GCP.ServiceEndpoints,
-			configv1.GCPServiceEndpoint{
-				Name: configv1.GCPServiceEndpointNameCompute,
-				URL:  validServiceEndpointURL,
-			},
-		)
-	}
-
-	invalidServiceEndpointBadFormat = func(ic *types.InstallConfig) {
-		ic.Publish = types.InternalPublishingStrategy
-		ic.GCP.ServiceEndpoints = append(ic.GCP.ServiceEndpoints,
-			configv1.GCPServiceEndpoint{
-				Name: configv1.GCPServiceEndpointNameStorage,
-				URL:  invalidServiceEndpointURL,
-			},
-		)
-	}
 
 	invalidKeyRing = gcp.KMSKeyReference{
 		Name:      "invalidKeyName",
@@ -466,19 +445,6 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
 			expectedError:  true,
 			expectedErrMsg: "platform.gcp.compute.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data, platform.gcp.defaultMachinePool.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
-		},
-		{
-			name:          "Valid Service Endpoint Override",
-			edits:         editFunctions{validServiceEndpoint},
-			records:       []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
-			expectedError: false,
-		},
-		{
-			name:           "Invalid Service Endpoint Override Bad Format",
-			edits:          editFunctions{invalidServiceEndpointBadFormat},
-			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
-			expectedError:  true,
-			expectedErrMsg: `[platform.gcp.serviceEndpoint\[0\]: Invalid value: \"http://badstorage.googleapis\": Head \"http://badstorage.googleapis\": dial tcp: lookup badstorage.googleapis: no such host]`,
 		},
 		{
 			name:           "Invalid Base Domain",

@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/dns"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -24,15 +25,12 @@ func TestFeatureGates(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.GCP = validGCPPlatform()
-				c.GCP.ServiceEndpoints = []v1.GCPServiceEndpoint{
-					{
-						Name: v1.GCPServiceEndpointNameCompute,
-						URL:  "https://compute.googleapis.com",
-					},
+				c.GCP.Endpoint = &gcptypes.PSCEndpoint{
+					Name: "test-endpoint",
 				}
 				return c
 			}(),
-			expected: `^platform.gcp.serviceEndpoints: Forbidden: this field is protected by the GCPCustomAPIEndpointsInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+			expected: `^platform.gcp.endpoint: Forbidden: this field is protected by the GCPCustomAPIEndpointsInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "AWS UserProvisionedDNS is not allowed without Feature Gates",
