@@ -6,6 +6,8 @@ approvers:
   - splat-team
   - sdodson
   - zaneb
+  - dtantsur
+  - stephenfin
 reviewers:
   - installer-team
 component: Installer
