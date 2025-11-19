@@ -8,6 +8,7 @@ approvers:
   - zaneb
   - dtantsur
   - stephenfin
+  - andfasano
 reviewers:
   - installer-team
 component: Installer
