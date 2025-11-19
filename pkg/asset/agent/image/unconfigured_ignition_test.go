@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
@@ -40,6 +41,35 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				"oci-eval-user-data.service":         true,
 				"agent-check-config-image.service":   true,
 				"agent-extract-tui.service":          true},
+		},
+		{
+			name: "with-mirror-configs",
+			overrideDeps: []asset.Asset{
+				&mirror.RegistriesConf{
+					File: &asset.File{
+						Filename: mirror.RegistriesConfFilename,
+						Data:     []byte(""),
+					},
+					MirrorConfig: []mirror.RegistriesConfig{
+						{
+							Location: "some.registry.org/release",
+							Mirrors:  []string{"some.mirror.org"},
+						},
+					},
+				},
+				&mirror.CaBundle{
+					File: &asset.File{
+						Filename: "my.crt",
+						Data:     []byte("my-certificate"),
+					},
+				},
+			},
+			expectedFiles: generatedFilesUnconfiguredIgnition(registriesConfPath,
+				registryCABundlePath, "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": false,
+				"oci-eval-user-data.service":         true,
+				"agent-check-config-image.service":   true},
 		},
 		{
 			name: "with-nmstateconfigs",
@@ -94,6 +124,8 @@ func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Ass
 		&agentPullSecret,
 		&clusterImageSet,
 		&manifests.NMStateConfig{},
+		&mirror.RegistriesConf{},
+		&mirror.CaBundle{},
 		&common.InfraEnvID{},
 		&agentconfig.AgentConfig{},
 	}

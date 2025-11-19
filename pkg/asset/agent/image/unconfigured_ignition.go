@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -83,13 +84,13 @@ func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 		&manifests.AgentPullSecret{},
 		&manifests.ClusterImageSet{},
 		&manifests.NMStateConfig{},
+		&mirror.RegistriesConf{},
+		&mirror.CaBundle{},
 		&common.InfraEnvID{},
 	}
 }
 
 // Generate generates the agent installer unconfigured ignition.
-// The appliance embeds both registries.conf and CA certificates in the image's
-// system ignition for the bootstrap phase. After first reboot, MCO manages these.
 func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	infraEnvAsset := &manifests.InfraEnvFile{}
@@ -135,6 +136,10 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	if err != nil {
 		return err
 	}
+	// Load mirror configuration from filesystem if provided
+	registriesConfig := &mirror.RegistriesConf{}
+	registryCABundle := &mirror.CaBundle{}
+	dependencies.Get(registriesConfig, registryCABundle)
 
 	infraEnvID := infraEnvIDAsset.ID
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
@@ -154,9 +159,9 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		PullSecret:                pullSecretAsset.GetPullSecretData(),
 		ReleaseImages:             releaseImageList,
 		ReleaseImage:              clusterImageSet.Spec.ReleaseImage,
-		ReleaseImageMirror:        "",
-		HaveMirrorConfig:          false,
-		PublicContainerRegistries: "",
+		ReleaseImageMirror:        mirror.GetMirrorFromRelease(clusterImageSet.Spec.ReleaseImage, registriesConfig),
+		HaveMirrorConfig:          len(registriesConfig.MirrorConfig) > 0,
+		PublicContainerRegistries: getPublicContainerRegistries(registriesConfig),
 		InfraEnvID:                infraEnvID,
 		OSImage:                   osImage,
 		Proxy:                     infraEnv.Spec.Proxy,
@@ -228,6 +233,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		return err
 	}
 
+	addMirrorData(&config, registriesConfig, registryCABundle)
 	a.Config = &config
 
 	if err := a.generateFile(unconfiguredIgnitionFilename); err != nil {
