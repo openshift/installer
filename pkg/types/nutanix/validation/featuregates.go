@@ -16,7 +16,7 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 		{
 			FeatureGateName: features.FeatureGateOnPremDNSRecords,
 			Condition:       c.Nutanix.DNSRecordsType == configv1.DNSRecordsTypeExternal,
-			Field:           field.NewPath("platform", "nutanix", "DNSRecordsType"),
+			Field:           field.NewPath("platform", "nutanix", "dnsRecordsType"),
 		},
 	}
 }

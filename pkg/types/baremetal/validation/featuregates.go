@@ -16,7 +16,7 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 		{
 			FeatureGateName: features.FeatureGateOnPremDNSRecords,
 			Condition:       c.BareMetal.DNSRecordsType == configv1.DNSRecordsTypeExternal,
-			Field:           field.NewPath("platform", "baremetal", "DNSRecordsType"),
+			Field:           field.NewPath("platform", "baremetal", "dnsRecordsType"),
 		},
 	}
 }

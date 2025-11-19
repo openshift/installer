@@ -16,7 +16,7 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 		{
 			FeatureGateName: features.FeatureGateOnPremDNSRecords,
 			Condition:       c.OpenStack.DNSRecordsType == configv1.DNSRecordsTypeExternal,
-			Field:           field.NewPath("platform", "openstack", "DNSRecordsType"),
+			Field:           field.NewPath("platform", "openstack", "dnsRecordsType"),
 		},
 	}
 }

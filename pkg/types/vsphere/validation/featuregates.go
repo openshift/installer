@@ -62,7 +62,7 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 		{
 			FeatureGateName: features.FeatureGateOnPremDNSRecords,
 			Condition:       v.DNSRecordsType == configv1.DNSRecordsTypeExternal,
-			Field:           field.NewPath("platform", "vsphere", "DNSRecordsType"),
+			Field:           field.NewPath("platform", "vsphere", "dnsRecordsType"),
 		},
 	}
 }
