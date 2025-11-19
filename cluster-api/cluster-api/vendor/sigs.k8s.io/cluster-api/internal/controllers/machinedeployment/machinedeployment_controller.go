@@ -29,6 +29,7 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,12 +37,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/internal/util/ssa"
 	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	"sigs.k8s.io/cluster-api/util/finalizers"
 	clog "sigs.k8s.io/cluster-api/util/log"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -114,7 +114,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 	}
 
 	r.recorder = mgr.GetEventRecorderFor("machinedeployment-controller")
-	r.ssaCache = ssa.NewCache()
+	r.ssaCache = ssa.NewCache("machinedeployment")
 	return nil
 }
 
@@ -146,13 +146,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retres ct
 		return ctrl.Result{}, err
 	}
 
-	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, deployment); err != nil || isPaused || conditionChanged {
-		return ctrl.Result{}, err
-	}
-
 	// Initialize the patch helper
 	patchHelper, err := patch.NewHelper(deployment, r.Client)
 	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if isPaused, requeue, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, deployment); err != nil || isPaused || requeue {
 		return ctrl.Result{}, err
 	}
 
@@ -202,27 +202,28 @@ type scope struct {
 
 func patchMachineDeployment(ctx context.Context, patchHelper *patch.Helper, md *clusterv1.MachineDeployment, options ...patch.Option) error {
 	// Always update the readyCondition by summarizing the state of other conditions.
-	conditions.SetSummary(md,
-		conditions.WithConditions(
-			clusterv1.MachineDeploymentAvailableCondition,
+	v1beta1conditions.SetSummary(md,
+		v1beta1conditions.WithConditions(
+			clusterv1.MachineDeploymentAvailableV1Beta1Condition,
 		),
 	)
 
 	// Patch the object, ignoring conflicts on the conditions owned by this controller.
 	options = append(options,
-		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
-			clusterv1.ReadyCondition,
-			clusterv1.MachineDeploymentAvailableCondition,
+		patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+			clusterv1.ReadyV1Beta1Condition,
+			clusterv1.MachineDeploymentAvailableV1Beta1Condition,
 		}},
-		patch.WithOwnedV1Beta2Conditions{Conditions: []string{
-			clusterv1.MachineDeploymentAvailableV1Beta2Condition,
-			clusterv1.MachineDeploymentMachinesReadyV1Beta2Condition,
-			clusterv1.MachineDeploymentMachinesUpToDateV1Beta2Condition,
-			clusterv1.MachineDeploymentRollingOutV1Beta2Condition,
-			clusterv1.MachineDeploymentScalingDownV1Beta2Condition,
-			clusterv1.MachineDeploymentScalingUpV1Beta2Condition,
-			clusterv1.MachineDeploymentRemediatingV1Beta2Condition,
-			clusterv1.MachineDeploymentDeletingV1Beta2Condition,
+		patch.WithOwnedConditions{Conditions: []string{
+			clusterv1.PausedCondition,
+			clusterv1.MachineDeploymentAvailableCondition,
+			clusterv1.MachineDeploymentMachinesReadyCondition,
+			clusterv1.MachineDeploymentMachinesUpToDateCondition,
+			clusterv1.MachineDeploymentRollingOutCondition,
+			clusterv1.MachineDeploymentScalingDownCondition,
+			clusterv1.MachineDeploymentScalingUpCondition,
+			clusterv1.MachineDeploymentRemediatingCondition,
+			clusterv1.MachineDeploymentDeletingCondition,
 		}},
 	)
 	return patchHelper.Patch(ctx, md, options...)
@@ -298,28 +299,21 @@ func (r *Reconciler) reconcile(ctx context.Context, s *scope) error {
 		}
 	}
 
-	templateExists := s.infrastructureTemplateExists && (md.Spec.Template.Spec.Bootstrap.ConfigRef == nil || s.bootstrapTemplateExists)
+	templateExists := s.infrastructureTemplateExists && (!md.Spec.Template.Spec.Bootstrap.ConfigRef.IsDefined() || s.bootstrapTemplateExists)
 
-	if md.Spec.Paused {
+	if ptr.Deref(md.Spec.Paused, false) {
 		return r.sync(ctx, md, s.machineSets, templateExists)
 	}
 
-	if md.Spec.Strategy == nil {
-		return errors.Errorf("missing MachineDeployment strategy")
-	}
-
-	if md.Spec.Strategy.Type == clusterv1.RollingUpdateMachineDeploymentStrategyType {
-		if md.Spec.Strategy.RollingUpdate == nil {
-			return errors.Errorf("missing MachineDeployment settings for strategy type: %s", md.Spec.Strategy.Type)
-		}
+	if md.Spec.Rollout.Strategy.Type == clusterv1.RollingUpdateMachineDeploymentStrategyType {
 		return r.rolloutRolling(ctx, md, s.machineSets, templateExists)
 	}
 
-	if md.Spec.Strategy.Type == clusterv1.OnDeleteMachineDeploymentStrategyType {
+	if md.Spec.Rollout.Strategy.Type == clusterv1.OnDeleteMachineDeploymentStrategyType {
 		return r.rolloutOnDelete(ctx, md, s.machineSets, templateExists)
 	}
 
-	return errors.Errorf("unexpected deployment strategy type: %s", md.Spec.Strategy.Type)
+	return errors.Errorf("unexpected deployment strategy type: %s", md.Spec.Rollout.Strategy.Type)
 }
 
 func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) error {
@@ -461,7 +455,7 @@ func (r *Reconciler) MachineSetToDeployments(ctx context.Context, o client.Objec
 
 	// Check if the controller reference is already set and
 	// return an empty result when one is found.
-	for _, ref := range ms.ObjectMeta.GetOwnerReferences() {
+	for _, ref := range ms.GetOwnerReferences() {
 		if ref.Controller != nil && *ref.Controller {
 			return result
 		}
@@ -486,7 +480,7 @@ func (r *Reconciler) getTemplatesAndSetOwner(ctx context.Context, s *scope) erro
 	cluster := s.cluster
 
 	// Make sure to reconcile the external infrastructure reference.
-	if err := reconcileExternalTemplateReference(ctx, r.Client, cluster, &md.Spec.Template.Spec.InfrastructureRef); err != nil {
+	if err := reconcileExternalTemplateReference(ctx, r.Client, cluster, md.Spec.Template.Spec.InfrastructureRef); err != nil {
 		if !apierrors.IsNotFound(err) {
 			return err
 		}
@@ -495,7 +489,7 @@ func (r *Reconciler) getTemplatesAndSetOwner(ctx context.Context, s *scope) erro
 		s.infrastructureTemplateExists = true
 	}
 	// Make sure to reconcile the external bootstrap reference, if any.
-	if md.Spec.Template.Spec.Bootstrap.ConfigRef != nil {
+	if md.Spec.Template.Spec.Bootstrap.ConfigRef.IsDefined() {
 		if err := reconcileExternalTemplateReference(ctx, r.Client, cluster, md.Spec.Template.Spec.Bootstrap.ConfigRef); err != nil {
 			if !apierrors.IsNotFound(err) {
 				return err
@@ -508,23 +502,12 @@ func (r *Reconciler) getTemplatesAndSetOwner(ctx context.Context, s *scope) erro
 	return nil
 }
 
-func reconcileExternalTemplateReference(ctx context.Context, c client.Client, cluster *clusterv1.Cluster, ref *corev1.ObjectReference) error {
+func reconcileExternalTemplateReference(ctx context.Context, c client.Client, cluster *clusterv1.Cluster, ref clusterv1.ContractVersionedObjectReference) error {
 	if !strings.HasSuffix(ref.Kind, clusterv1.TemplateSuffix) {
 		return nil
 	}
 
-	if err := utilconversion.UpdateReferenceAPIContract(ctx, c, ref); err != nil {
-		// We want to surface the NotFound error only for the referenced object, so we use a generic error in case CRD is not found.
-		return errors.New(err.Error())
-	}
-
-	// Ensure the ref namespace is populated for objects not yet defaulted by webhook
-	if ref.Namespace == "" {
-		ref = ref.DeepCopy()
-		ref.Namespace = cluster.Namespace
-	}
-
-	obj, err := external.Get(ctx, c, ref)
+	obj, err := external.GetObjectFromContractVersionedRef(ctx, c, ref, cluster.Namespace)
 	if err != nil {
 		return err
 	}
