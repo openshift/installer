@@ -19,7 +19,9 @@ package logger
 
 import (
 	"context"
+	"fmt"
 
+	smithylogging "github.com/aws/smithy-go/logging"
 	"github.com/go-logr/logr"
 )
 
@@ -41,6 +43,7 @@ type Wrapper interface {
 	WithValues(keysAndValues ...any) *Logger
 	WithName(name string) *Logger
 	GetLogger() logr.Logger
+	GetAWSLogger() smithylogging.Logger
 }
 
 // Logger is a concrete logger using logr underneath.
@@ -104,6 +107,11 @@ func (c *Logger) GetLogger() logr.Logger {
 	return c.logger
 }
 
+// GetAWSLogger returns a compatible aws-sdk-go-v2 logger.
+func (c Logger) GetAWSLogger() smithylogging.Logger {
+	return c
+}
+
 // WithValues adds some key-value pairs of context to a logger.
 func (c *Logger) WithValues(keysAndValues ...any) *Logger {
 	return &Logger{
@@ -117,5 +125,16 @@ func (c *Logger) WithName(name string) *Logger {
 	return &Logger{
 		callStackHelper: c.callStackHelper,
 		logger:          c.logger.WithName(name),
+	}
+}
+
+// Logf allows Logger to satisfy the smithylogging.Logger interface.
+func (c Logger) Logf(classification smithylogging.Classification, format string, v ...interface{}) {
+	switch classification {
+	// The only two classification levels are WARN and DEBUG
+	case smithylogging.Debug:
+		c.logger.V(logLevelDebug).Info(fmt.Sprintf(format, v...))
+	default:
+		c.logger.V(logLevelWarn).Info(fmt.Sprintf(format, v...))
 	}
 }

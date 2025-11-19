@@ -23,22 +23,31 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	autoscalingtypes "github.com/aws/aws-sdk-go-v2/service/autoscaling/types"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/blang/semver"
+	ignTypes "github.com/coreos/ignition/config/v2_3/types"
+	ignV3Types "github.com/coreos/ignition/v2/config/v3_4/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/feature"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/userdata"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/utils"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
 )
@@ -56,43 +65,139 @@ const (
 // ReconcileLaunchTemplate reconciles a launch template and triggers instance refresh conditionally, depending on
 // changes.
 //
-//nolint:gocyclo
+//nolint:gocyclo,maintidx
 func (s *Service) ReconcileLaunchTemplate(
+	ctx context.Context,
+	ignitionScope scope.IgnitionScope,
 	scope scope.LaunchTemplateScope,
+	s3Scope scope.S3Scope,
 	ec2svc services.EC2Interface,
-	canUpdateLaunchTemplate func() (bool, error),
+	objectStoreSvc services.ObjectStoreInterface,
+	canStartInstanceRefresh func() (bool, *autoscalingtypes.InstanceRefreshStatus, error),
+	cancelInstanceRefresh func() error,
 	runPostLaunchTemplateUpdateOperation func() error,
-) error {
-	bootstrapData, bootstrapDataSecretKey, err := scope.GetRawBootstrapData()
+) (*ctrl.Result, error) {
+	bootstrapData, bootstrapDataFormat, bootstrapDataSecretKey, err := scope.GetRawBootstrapData()
 	if err != nil {
 		record.Eventf(scope.GetMachinePool(), corev1.EventTypeWarning, "FailedGetBootstrapData", err.Error())
-		return err
+		return nil, err
 	}
-	bootstrapDataHash := userdata.ComputeHash(bootstrapData)
-
 	scope.Info("checking for existing launch template")
-	launchTemplate, launchTemplateUserDataHash, launchTemplateUserDataSecretKey, err := ec2svc.GetLaunchTemplate(scope.LaunchTemplateName())
+	launchTemplate, launchTemplateUserDataHash, launchTemplateUserDataSecretKey, _, err := ec2svc.GetLaunchTemplate(scope.LaunchTemplateName())
 	if err != nil {
 		conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, "%s", err.Error())
-		return err
+		return nil, err
 	}
 
-	imageID, err := ec2svc.DiscoverLaunchTemplateAMI(scope)
+	imageID, err := ec2svc.DiscoverLaunchTemplateAMI(ctx, scope)
 	if err != nil {
 		conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateCreateFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
-		return err
+		return nil, err
 	}
+
+	var ignitionStorageType = infrav1.DefaultMachinePoolIgnitionStorageType
+	if ignition := ignitionScope.Ignition(); ignition != nil {
+		ignitionStorageType = ignition.StorageType
+	}
+
+	var userDataForLaunchTemplate []byte
+	if bootstrapDataFormat == "ignition" && ignitionStorageType == infrav1.IgnitionStorageTypeOptionClusterObjectStore {
+		var ignitionVersion = infrav1.DefaultIgnitionVersion
+		if ignition := ignitionScope.Ignition(); ignition != nil {
+			ignitionVersion = ignition.Version
+		}
+
+		if s3Scope.Bucket() == nil {
+			return nil, errors.New("using Ignition with `AWSMachinePool.spec.ignition.storageType=ClusterObjectStore` " +
+				"requires a cluster wide object storage configured at `AWSCluster.spec.s3Bucket`")
+		}
+
+		scope.Info("Using S3 bucket storage for Ignition format")
+
+		// S3 bucket storage enabled and Ignition format is used. Ignition supports reading large user data from S3,
+		// not restricted by the EC2 user data size limit. The actual user data goes into the S3 object while the
+		// user data on the launch template points to the S3 bucket (or presigned URL).
+		// Previously, user data was always written into the launch template, so we check
+		// `AWSMachinePool.Spec.Ignition != nil` to toggle the S3 feature on for `AWSMachinePool` objects.
+		objectURL, err := objectStoreSvc.CreateForMachinePool(ctx, scope, bootstrapData)
+
+		if err != nil {
+			conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateReconcileFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+			return nil, err
+		}
+
+		semver, err := semver.ParseTolerant(ignitionVersion)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to parse ignition version %q", ignitionVersion)
+			conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateReconcileFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+			return nil, err
+		}
+
+		// EC2 user data points to S3
+		switch semver.Major {
+		case 2:
+			ignData := &ignTypes.Config{
+				Ignition: ignTypes.Ignition{
+					Version: semver.String(),
+					Config: ignTypes.IgnitionConfig{
+						Append: []ignTypes.ConfigReference{
+							{
+								Source: objectURL,
+							},
+						},
+					},
+				},
+			}
+
+			userDataForLaunchTemplate, err = json.Marshal(ignData)
+			if err != nil {
+				err = errors.Wrap(err, "failed to convert ignition config to JSON")
+				conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateReconcileFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+				return nil, err
+			}
+		case 3:
+			ignData := &ignV3Types.Config{
+				Ignition: ignV3Types.Ignition{
+					Version: semver.String(),
+					Config: ignV3Types.IgnitionConfig{
+						Merge: []ignV3Types.Resource{
+							{
+								Source: aws.String(objectURL),
+							},
+						},
+					},
+				},
+			}
+
+			userDataForLaunchTemplate, err = json.Marshal(ignData)
+			if err != nil {
+				err = errors.Wrap(err, "failed to convert ignition config to JSON")
+				conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateReconcileFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+				return nil, err
+			}
+		default:
+			err = errors.Errorf("unsupported ignition version %q", ignitionVersion)
+			conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateReconcileFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+			return nil, err
+		}
+	} else {
+		// S3 bucket not used, so the bootstrap data is stored directly in the launch template
+		// (EC2 user data)
+		userDataForLaunchTemplate = bootstrapData
+	}
+
+	bootstrapDataForLaunchTemplateHash := userdata.ComputeHash(userDataForLaunchTemplate)
 
 	if launchTemplate == nil {
 		scope.Info("no existing launch template found, creating")
-		launchTemplateID, err := ec2svc.CreateLaunchTemplate(scope, imageID, *bootstrapDataSecretKey, bootstrapData)
+		launchTemplateID, err := ec2svc.CreateLaunchTemplate(scope, imageID, *bootstrapDataSecretKey, userDataForLaunchTemplate, userdata.ComputeHash(bootstrapData))
 		if err != nil {
 			conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateCreateFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
-			return err
+			return nil, err
 		}
 
 		scope.SetLaunchTemplateIDStatus(launchTemplateID)
-		return scope.PatchObject()
+		return nil, scope.PatchObject()
 	}
 
 	// LaunchTemplateID is set during LaunchTemplate creation, but for a scenario such as `clusterctl move`, status fields become blank.
@@ -101,27 +206,29 @@ func (s *Service) ReconcileLaunchTemplate(
 		launchTemplateID, err := ec2svc.GetLaunchTemplateID(scope.LaunchTemplateName())
 		if err != nil {
 			conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, "%s", err.Error())
-			return err
+			return nil, err
 		}
 		scope.SetLaunchTemplateIDStatus(launchTemplateID)
-		return scope.PatchObject()
+		if err = scope.PatchObject(); err != nil {
+			return nil, err
+		}
 	}
 
 	if scope.GetLaunchTemplateLatestVersionStatus() == "" {
 		launchTemplateVersion, err := ec2svc.GetLaunchTemplateLatestVersion(scope.GetLaunchTemplateIDStatus())
 		if err != nil {
 			conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, "%s", err.Error())
-			return err
+			return nil, err
 		}
 		scope.SetLaunchTemplateLatestVersionStatus(launchTemplateVersion)
-		if err := scope.PatchObject(); err != nil {
-			return err
+		if err = scope.PatchObject(); err != nil {
+			return nil, err
 		}
 	}
 
 	annotation, err := MachinePoolAnnotationJSON(scope, TagsLastAppliedAnnotation)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Check if the instance tags were changed. If they were, create a new LaunchTemplate.
@@ -129,7 +236,7 @@ func (s *Service) ReconcileLaunchTemplate(
 
 	needsUpdate, err := ec2svc.LaunchTemplateNeedsUpdate(scope, scope.GetLaunchTemplate(), launchTemplate)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	amiChanged := *imageID != *launchTemplate.AMI.ID
@@ -143,50 +250,90 @@ func (s *Service) ReconcileLaunchTemplate(
 	launchTemplateNeedsUserDataSecretKeyTag := launchTemplateUserDataSecretKey == nil
 
 	if needsUpdate || tagsChanged || amiChanged || userDataSecretKeyChanged {
-		canUpdate, err := canUpdateLaunchTemplate()
+		// More than just the bootstrap token changed
+
+		canStartRefresh, unfinishedRefreshStatus, err := canStartInstanceRefresh()
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if !canUpdate {
-			conditions.MarkFalse(scope.GetSetter(), expinfrav1.PreLaunchTemplateUpdateCheckCondition, expinfrav1.PreLaunchTemplateUpdateCheckFailedReason, clusterv1.ConditionSeverityWarning, "")
-			return errors.New("Cannot update the launch template, prerequisite not met")
+		if !canStartRefresh {
+			if unfinishedRefreshStatus != nil && *unfinishedRefreshStatus != autoscalingtypes.InstanceRefreshStatusCancelling {
+				// Until the previous instance refresh goes into `Cancelled` state
+				// asynchronously, allowing another refresh to be started,
+				// defer the reconciliation. Otherwise, we get an
+				// `ErrCodeInstanceRefreshInProgressFault` error if we tried to
+				// start an instance refresh immediately.
+				scope.Info("Cancelling previous instance refresh and delaying reconciliation until the next one can be started", "unfinishedRefreshStatus", unfinishedRefreshStatus)
+
+				err := cancelInstanceRefresh()
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				scope.Info("Existing instance refresh is not finished, delaying reconciliation until the next one can be started", "unfinishedRefreshStatus", unfinishedRefreshStatus)
+			}
+			return &ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 		}
 	}
 
-	userDataHashChanged := launchTemplateUserDataHash != bootstrapDataHash
+	userDataHashChanged := launchTemplateUserDataHash != bootstrapDataForLaunchTemplateHash
 
 	// Create a new launch template version if there's a difference in configuration, tags,
 	// userdata, OR we've discovered a new AMI ID.
 	if needsUpdate || tagsChanged || amiChanged || userDataHashChanged || userDataSecretKeyChanged || launchTemplateNeedsUserDataSecretKeyTag {
 		scope.Info("creating new version for launch template", "existing", launchTemplate, "incoming", scope.GetLaunchTemplate(), "needsUpdate", needsUpdate, "tagsChanged", tagsChanged, "amiChanged", amiChanged, "userDataHashChanged", userDataHashChanged, "userDataSecretKeyChanged", userDataSecretKeyChanged)
+
 		// There is a limit to the number of Launch Template Versions.
 		// We ensure that the number of versions does not grow without bound by following a simple rule: Before we create a new version, we delete one old version, if there is at least one old version that is not in use.
-		if err := ec2svc.PruneLaunchTemplateVersions(scope.GetLaunchTemplateIDStatus()); err != nil {
-			return err
+		deletedLaunchTemplateVersion, err := ec2svc.PruneLaunchTemplateVersions(scope.GetLaunchTemplateIDStatus())
+		if err != nil {
+			return nil, err
 		}
-		if err := ec2svc.CreateLaunchTemplateVersion(scope.GetLaunchTemplateIDStatus(), scope, imageID, *bootstrapDataSecretKey, bootstrapData); err != nil {
-			return err
+
+		// S3 objects should be deleted as soon as possible if they're not used
+		// anymore. If this fails, it would still be cleaned by the bucket lifecycle
+		// policy later.
+		if feature.Gates.Enabled(feature.MachinePool) && deletedLaunchTemplateVersion != nil {
+			_, _, _, deletedLaunchTemplateVersionBootstrapDataHash, err := s.SDKToLaunchTemplate(*deletedLaunchTemplateVersion)
+			if err != nil {
+				return nil, err
+			}
+
+			if deletedLaunchTemplateVersionBootstrapDataHash != nil && s3Scope.Bucket() != nil && bootstrapDataFormat == "ignition" && ignitionStorageType == infrav1.IgnitionStorageTypeOptionClusterObjectStore {
+				scope.Info("Deleting S3 object for deleted launch template version", "version", *deletedLaunchTemplateVersion.VersionNumber)
+
+				err = objectStoreSvc.DeleteForMachinePool(ctx, scope, *deletedLaunchTemplateVersionBootstrapDataHash)
+
+				// If any error happened above, log it and continue
+				if err != nil {
+					scope.Error(err, "Failed to delete S3 object for deleted launch template version, continuing because the bucket lifecycle policy will clean it later", "version", *deletedLaunchTemplateVersion.VersionNumber)
+				}
+			}
+		}
+
+		if err := ec2svc.CreateLaunchTemplateVersion(scope.GetLaunchTemplateIDStatus(), scope, imageID, *bootstrapDataSecretKey, userDataForLaunchTemplate, userdata.ComputeHash(bootstrapData)); err != nil {
+			return nil, err
 		}
 		version, err := ec2svc.GetLaunchTemplateLatestVersion(scope.GetLaunchTemplateIDStatus())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		scope.SetLaunchTemplateLatestVersionStatus(version)
 		if err := scope.PatchObject(); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	if needsUpdate || tagsChanged || amiChanged || userDataSecretKeyChanged {
 		if err := runPostLaunchTemplateUpdateOperation(); err != nil {
 			conditions.MarkFalse(scope.GetSetter(), expinfrav1.PostLaunchTemplateUpdateOperationCondition, expinfrav1.PostLaunchTemplateUpdateOperationFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
-			return err
+			return nil, err
 		}
 		conditions.MarkTrue(scope.GetSetter(), expinfrav1.PostLaunchTemplateUpdateOperationCondition)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ReconcileTags reconciles the tags for the AWSMachinePool instances.
@@ -345,28 +492,29 @@ func tagsChanged(annotation map[string]interface{}, src map[string]string) (bool
 
 // GetLaunchTemplate returns the existing LaunchTemplate or nothing if it doesn't exist.
 // For now by name until we need the input to be something different.
-func (s *Service) GetLaunchTemplate(launchTemplateName string) (*expinfrav1.AWSLaunchTemplate, string, *apimachinerytypes.NamespacedName, error) {
+func (s *Service) GetLaunchTemplate(launchTemplateName string) (*expinfrav1.AWSLaunchTemplate, string, *apimachinerytypes.NamespacedName, *string, error) {
 	if launchTemplateName == "" {
-		return nil, "", nil, nil
+		return nil, "", nil, nil, nil
 	}
 
 	s.scope.Debug("Looking for existing LaunchTemplates")
 
 	input := &ec2.DescribeLaunchTemplateVersionsInput{
 		LaunchTemplateName: aws.String(launchTemplateName),
-		Versions:           aws.StringSlice([]string{expinfrav1.LaunchTemplateLatestVersion}),
+		Versions:           []string{expinfrav1.LaunchTemplateLatestVersion},
 	}
 
-	out, err := s.EC2Client.DescribeLaunchTemplateVersionsWithContext(context.TODO(), input)
-	switch {
-	case awserrors.IsNotFound(err):
-		return nil, "", nil, nil
-	case err != nil:
-		return nil, "", nil, err
+	out, err := s.EC2Client.DescribeLaunchTemplateVersions(context.TODO(), input)
+	if err != nil {
+		serr := awserrors.ParseSmithyError(err)
+		if serr.ErrorCode() == awserrors.LaunchTemplateNameNotFound {
+			return nil, "", nil, nil, nil
+		}
+		return nil, "", nil, nil, err
 	}
 
 	if out == nil || out.LaunchTemplateVersions == nil || len(out.LaunchTemplateVersions) == 0 {
-		return nil, "", nil, nil
+		return nil, "", nil, nil, nil
 	}
 
 	return s.SDKToLaunchTemplate(out.LaunchTemplateVersions[0])
@@ -380,10 +528,10 @@ func (s *Service) GetLaunchTemplateID(launchTemplateName string) (string, error)
 
 	input := &ec2.DescribeLaunchTemplateVersionsInput{
 		LaunchTemplateName: aws.String(launchTemplateName),
-		Versions:           aws.StringSlice([]string{expinfrav1.LaunchTemplateLatestVersion}),
+		Versions:           []string{expinfrav1.LaunchTemplateLatestVersion},
 	}
 
-	out, err := s.EC2Client.DescribeLaunchTemplateVersionsWithContext(context.TODO(), input)
+	out, err := s.EC2Client.DescribeLaunchTemplateVersions(context.TODO(), input)
 	switch {
 	case awserrors.IsNotFound(err):
 		return "", nil
@@ -396,14 +544,14 @@ func (s *Service) GetLaunchTemplateID(launchTemplateName string) (string, error)
 		return "", nil
 	}
 
-	return aws.StringValue(out.LaunchTemplateVersions[0].LaunchTemplateId), nil
+	return aws.ToString(out.LaunchTemplateVersions[0].LaunchTemplateId), nil
 }
 
 // CreateLaunchTemplate generates a launch template to be used with the autoscaling group.
-func (s *Service) CreateLaunchTemplate(scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userData []byte) (string, error) {
+func (s *Service) CreateLaunchTemplate(scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userData []byte, bootstrapDataHash string) (string, error) {
 	s.scope.Info("Create a new launch template")
 
-	launchTemplateData, err := s.createLaunchTemplateData(scope, imageID, userDataSecretKey, userData)
+	launchTemplateData, err := s.createLaunchTemplateData(scope, imageID, userDataSecretKey, userData, bootstrapDataHash)
 	if err != nil {
 		return "", errors.Wrapf(err, "unable to form launch template data")
 	}
@@ -426,9 +574,9 @@ func (s *Service) CreateLaunchTemplate(scope scope.LaunchTemplateScope, imageID 
 	})
 
 	if len(tags) > 0 {
-		spec := &ec2.TagSpecification{ResourceType: aws.String(ec2.ResourceTypeLaunchTemplate)}
+		spec := types.TagSpecification{ResourceType: types.ResourceTypeLaunchTemplate}
 		for key, value := range tags {
-			spec.Tags = append(spec.Tags, &ec2.Tag{
+			spec.Tags = append(spec.Tags, types.Tag{
 				Key:   aws.String(key),
 				Value: aws.String(value),
 			})
@@ -436,18 +584,22 @@ func (s *Service) CreateLaunchTemplate(scope scope.LaunchTemplateScope, imageID 
 		input.TagSpecifications = append(input.TagSpecifications, spec)
 	}
 
-	result, err := s.EC2Client.CreateLaunchTemplateWithContext(context.TODO(), input)
+	result, err := s.EC2Client.CreateLaunchTemplate(context.TODO(), input)
 	if err != nil {
 		return "", err
 	}
-	return aws.StringValue(result.LaunchTemplate.LaunchTemplateId), nil
+	return aws.ToString(result.LaunchTemplate.LaunchTemplateId), nil
 }
 
 // CreateLaunchTemplateVersion will create a launch template.
-func (s *Service) CreateLaunchTemplateVersion(id string, scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userData []byte) error {
+// While userDataForLaunchTemplate is the data for the EC2 launch
+// template, bootstrapDataHash relates to the final bootstrap data
+// (not necessarily stored in EC2 user data, but could be in an S3
+// object).
+func (s *Service) CreateLaunchTemplateVersion(id string, scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userDataForLaunchTemplate []byte, bootstrapDataHash string) error {
 	s.scope.Debug("creating new launch template version", "machine-pool", scope.LaunchTemplateName())
 
-	launchTemplateData, err := s.createLaunchTemplateData(scope, imageID, userDataSecretKey, userData)
+	launchTemplateData, err := s.createLaunchTemplateData(scope, imageID, userDataSecretKey, userDataForLaunchTemplate, bootstrapDataHash)
 	if err != nil {
 		return errors.Wrapf(err, "unable to form launch template data")
 	}
@@ -457,7 +609,7 @@ func (s *Service) CreateLaunchTemplateVersion(id string, scope scope.LaunchTempl
 		LaunchTemplateId:   &id,
 	}
 
-	_, err = s.EC2Client.CreateLaunchTemplateVersionWithContext(context.TODO(), input)
+	_, err = s.EC2Client.CreateLaunchTemplateVersion(context.TODO(), input)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create launch template version")
 	}
@@ -465,7 +617,7 @@ func (s *Service) CreateLaunchTemplateVersion(id string, scope scope.LaunchTempl
 	return nil
 }
 
-func (s *Service) createLaunchTemplateData(scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userData []byte) (*ec2.RequestLaunchTemplateData, error) {
+func (s *Service) createLaunchTemplateData(scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userDataForLaunchTemplate []byte, bootstrapDataHash string) (*types.RequestLaunchTemplateData, error) {
 	lt := scope.GetLaunchTemplate()
 
 	// An explicit empty string for SSHKeyName means do not specify a key in the ASG launch
@@ -474,28 +626,28 @@ func (s *Service) createLaunchTemplateData(scope scope.LaunchTemplateScope, imag
 		sshKeyNamePtr = lt.SSHKeyName
 	}
 
-	data := &ec2.RequestLaunchTemplateData{
-		InstanceType: aws.String(lt.InstanceType),
+	data := &types.RequestLaunchTemplateData{
+		InstanceType: types.InstanceType(lt.InstanceType),
 		KeyName:      sshKeyNamePtr,
-		UserData:     ptr.To[string](base64.StdEncoding.EncodeToString(userData)),
+		UserData:     ptr.To[string](base64.StdEncoding.EncodeToString(userDataForLaunchTemplate)),
 	}
 
 	if lt.InstanceMetadataOptions != nil {
-		data.MetadataOptions = &ec2.LaunchTemplateInstanceMetadataOptionsRequest{
-			HttpEndpoint:         aws.String(string(lt.InstanceMetadataOptions.HTTPEndpoint)),
-			InstanceMetadataTags: aws.String(string(lt.InstanceMetadataOptions.InstanceMetadataTags)),
+		data.MetadataOptions = &types.LaunchTemplateInstanceMetadataOptionsRequest{
+			HttpEndpoint:         types.LaunchTemplateInstanceMetadataEndpointState(string(lt.InstanceMetadataOptions.HTTPEndpoint)),
+			InstanceMetadataTags: types.LaunchTemplateInstanceMetadataTagsState(string(lt.InstanceMetadataOptions.InstanceMetadataTags)),
 		}
 
 		if lt.InstanceMetadataOptions.HTTPTokens != "" {
-			data.MetadataOptions.HttpTokens = aws.String(string(lt.InstanceMetadataOptions.HTTPTokens))
+			data.MetadataOptions.HttpTokens = types.LaunchTemplateHttpTokensState(string(lt.InstanceMetadataOptions.HTTPTokens))
 		}
 		if lt.InstanceMetadataOptions.HTTPPutResponseHopLimit != 0 {
-			data.MetadataOptions.HttpPutResponseHopLimit = aws.Int64(lt.InstanceMetadataOptions.HTTPPutResponseHopLimit)
+			data.MetadataOptions.HttpPutResponseHopLimit = utils.ToInt32Pointer(&lt.InstanceMetadataOptions.HTTPPutResponseHopLimit)
 		}
 	}
 
 	if len(lt.IamInstanceProfile) > 0 {
-		data.IamInstanceProfile = &ec2.LaunchTemplateIamInstanceProfileSpecificationRequest{
+		data.IamInstanceProfile = &types.LaunchTemplateIamInstanceProfileSpecificationRequest{
 			Name: aws.String(lt.IamInstanceProfile),
 		}
 	}
@@ -505,16 +657,14 @@ func (s *Service) createLaunchTemplateData(scope scope.LaunchTemplateScope, imag
 		return nil, err
 	}
 
-	for _, id := range ids {
-		data.SecurityGroupIds = append(data.SecurityGroupIds, aws.String(id))
-	}
+	data.SecurityGroupIds = append(data.SecurityGroupIds, ids...)
 
 	// add additional security groups as well
 	securityGroupIDs, err := s.GetAdditionalSecurityGroupsIDs(scope.GetLaunchTemplate().AdditionalSecurityGroups)
 	if err != nil {
 		return nil, err
 	}
-	data.SecurityGroupIds = append(data.SecurityGroupIds, aws.StringSlice(securityGroupIDs)...)
+	data.SecurityGroupIds = append(data.SecurityGroupIds, securityGroupIDs...)
 
 	// set the AMI ID
 	data.ImageId = imageID
@@ -525,8 +675,9 @@ func (s *Service) createLaunchTemplateData(scope scope.LaunchTemplateScope, imag
 	}
 	data.InstanceMarketOptions = instanceMarketOptions
 	data.PrivateDnsNameOptions = getLaunchTemplatePrivateDNSNameOptionsRequest(scope.GetLaunchTemplate().PrivateDNSName)
+	data.CapacityReservationSpecification = getLaunchTemplateCapacityReservationSpecification(scope.GetLaunchTemplate())
 
-	blockDeviceMappings := []*ec2.LaunchTemplateBlockDeviceMappingRequest{}
+	blockDeviceMappings := []types.LaunchTemplateBlockDeviceMappingRequest{}
 
 	// Set up root volume
 	if lt.RootVolume != nil {
@@ -535,41 +686,59 @@ func (s *Service) createLaunchTemplateData(scope scope.LaunchTemplateScope, imag
 			return nil, err
 		}
 
-		lt.RootVolume.DeviceName = aws.StringValue(rootDeviceName)
+		lt.RootVolume.DeviceName = aws.ToString(rootDeviceName)
 
 		req := volumeToLaunchTemplateBlockDeviceMappingRequest(lt.RootVolume)
-		blockDeviceMappings = append(blockDeviceMappings, req)
+		blockDeviceMappings = append(blockDeviceMappings, *req)
 	}
 
 	for vi := range lt.NonRootVolumes {
 		nonRootVolume := lt.NonRootVolumes[vi]
 
 		blockDeviceMapping := volumeToLaunchTemplateBlockDeviceMappingRequest(&nonRootVolume)
-		blockDeviceMappings = append(blockDeviceMappings, blockDeviceMapping)
+		blockDeviceMappings = append(blockDeviceMappings, *blockDeviceMapping)
 	}
 
 	if len(blockDeviceMappings) > 0 {
 		data.BlockDeviceMappings = blockDeviceMappings
 	}
 
-	data.TagSpecifications = s.buildLaunchTemplateTagSpecificationRequest(scope, userDataSecretKey)
+	data.TagSpecifications = s.buildLaunchTemplateTagSpecificationRequest(scope, userDataSecretKey, bootstrapDataHash)
 
 	return data, nil
 }
 
-func volumeToLaunchTemplateBlockDeviceMappingRequest(v *infrav1.Volume) *ec2.LaunchTemplateBlockDeviceMappingRequest {
-	ltEbsDevice := &ec2.LaunchTemplateEbsBlockDeviceRequest{
+func getLaunchTemplateCapacityReservationSpecification(awsLaunchTemplate *expinfrav1.AWSLaunchTemplate) *types.LaunchTemplateCapacityReservationSpecificationRequest {
+	if awsLaunchTemplate == nil {
+		return nil
+	}
+	if awsLaunchTemplate.CapacityReservationID == nil && awsLaunchTemplate.CapacityReservationPreference == "" {
+		return nil
+	}
+	spec := &types.LaunchTemplateCapacityReservationSpecificationRequest{
+		CapacityReservationPreference: CapacityReservationPreferenceToSDK(awsLaunchTemplate.CapacityReservationPreference),
+	}
+	if awsLaunchTemplate.CapacityReservationID != nil {
+		spec.CapacityReservationTarget = &types.CapacityReservationTarget{
+			CapacityReservationId: awsLaunchTemplate.CapacityReservationID,
+		}
+	}
+	return spec
+}
+
+func volumeToLaunchTemplateBlockDeviceMappingRequest(v *infrav1.Volume) *types.LaunchTemplateBlockDeviceMappingRequest {
+	ltEbsDevice := &types.LaunchTemplateEbsBlockDeviceRequest{
 		DeleteOnTermination: aws.Bool(true),
-		VolumeSize:          aws.Int64(v.Size),
+		VolumeSize:          utils.ToInt32Pointer(&v.Size),
 		Encrypted:           v.Encrypted,
 	}
 
 	if v.Throughput != nil {
-		ltEbsDevice.Throughput = v.Throughput
+		ltEbsDevice.Throughput = utils.ToInt32Pointer(v.Throughput)
 	}
 
 	if v.IOPS != 0 {
-		ltEbsDevice.Iops = aws.Int64(v.IOPS)
+		ltEbsDevice.Iops = utils.ToInt32Pointer(&v.IOPS)
 	}
 
 	if v.EncryptionKey != "" {
@@ -578,10 +747,10 @@ func volumeToLaunchTemplateBlockDeviceMappingRequest(v *infrav1.Volume) *ec2.Lau
 	}
 
 	if v.Type != "" {
-		ltEbsDevice.VolumeType = aws.String(string(v.Type))
+		ltEbsDevice.VolumeType = types.VolumeType(string(v.Type))
 	}
 
-	return &ec2.LaunchTemplateBlockDeviceMappingRequest{
+	return &types.LaunchTemplateBlockDeviceMappingRequest{
 		DeviceName: &v.DeviceName,
 		Ebs:        ltEbsDevice,
 	}
@@ -595,7 +764,7 @@ func (s *Service) DeleteLaunchTemplate(id string) error {
 		LaunchTemplateId: aws.String(id),
 	}
 
-	if _, err := s.EC2Client.DeleteLaunchTemplateWithContext(context.TODO(), input); err != nil {
+	if _, err := s.EC2Client.DeleteLaunchTemplate(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to delete launch template %q", id)
 	}
 
@@ -607,7 +776,8 @@ func (s *Service) DeleteLaunchTemplate(id string) error {
 // It does not delete the "latest" version, because that version may still be in use.
 // It does not delete the "default" version, because that version cannot be deleted.
 // It does not assume that versions are sequential. Versions may be deleted out of band.
-func (s *Service) PruneLaunchTemplateVersions(id string) error {
+// If there was an unused version which was successfully deleted, it is returned.
+func (s *Service) PruneLaunchTemplateVersions(id string) (*types.LaunchTemplateVersion, error) {
 	// When there is one version available, it is the default and the latest.
 	// When there are two versions available, one the is the default, the other is the latest.
 	// Therefore we only prune when there are at least 3 versions available.
@@ -617,13 +787,13 @@ func (s *Service) PruneLaunchTemplateVersions(id string) error {
 		LaunchTemplateId: aws.String(id),
 		MinVersion:       aws.String("0"),
 		MaxVersion:       aws.String(expinfrav1.LaunchTemplateLatestVersion),
-		MaxResults:       aws.Int64(minCountToAllowPrune),
+		MaxResults:       aws.Int32(minCountToAllowPrune),
 	}
 
-	out, err := s.EC2Client.DescribeLaunchTemplateVersionsWithContext(context.TODO(), input)
+	out, err := s.EC2Client.DescribeLaunchTemplateVersions(context.TODO(), input)
 	if err != nil {
 		s.scope.Info("", "aerr", err.Error())
-		return err
+		return nil, err
 	}
 
 	// len(out.LaunchTemplateVersions)	|	items
@@ -632,20 +802,24 @@ func (s *Service) PruneLaunchTemplateVersions(id string) error {
 	// 								2	|	[default, latest]
 	// 								3	| 	[default, versionToPrune, latest]
 	if len(out.LaunchTemplateVersions) < minCountToAllowPrune {
-		return nil
+		return nil, nil
 	}
-	versionToPrune := out.LaunchTemplateVersions[1].VersionNumber
-	return s.deleteLaunchTemplateVersion(id, versionToPrune)
+	versionToPrune := out.LaunchTemplateVersions[1]
+	err = s.deleteLaunchTemplateVersion(id, versionToPrune.VersionNumber)
+	if err != nil {
+		return nil, err
+	}
+	return &versionToPrune, nil
 }
 
 // GetLaunchTemplateLatestVersion returns the latest version of a launch template.
 func (s *Service) GetLaunchTemplateLatestVersion(id string) (string, error) {
 	input := &ec2.DescribeLaunchTemplateVersionsInput{
 		LaunchTemplateId: aws.String(id),
-		Versions:         aws.StringSlice([]string{expinfrav1.LaunchTemplateLatestVersion}),
+		Versions:         []string{expinfrav1.LaunchTemplateLatestVersion},
 	}
 
-	out, err := s.EC2Client.DescribeLaunchTemplateVersionsWithContext(context.TODO(), input)
+	out, err := s.EC2Client.DescribeLaunchTemplateVersions(context.TODO(), input)
 	if err != nil {
 		s.scope.Info("", "aerr", err.Error())
 		return "", err
@@ -659,51 +833,107 @@ func (s *Service) GetLaunchTemplateLatestVersion(id string) (string, error) {
 }
 
 func (s *Service) deleteLaunchTemplateVersion(id string, version *int64) error {
-	s.scope.Debug("Deleting launch template version", "id", id)
-
 	if version == nil {
 		return errors.New("version is a nil pointer")
 	}
+
+	s.scope.Debug("Deleting launch template version", "id", id, "version", *version)
+
 	versions := []string{strconv.FormatInt(*version, 10)}
 
 	input := &ec2.DeleteLaunchTemplateVersionsInput{
 		LaunchTemplateId: aws.String(id),
-		Versions:         aws.StringSlice(versions),
+		Versions:         versions,
 	}
 
-	_, err := s.EC2Client.DeleteLaunchTemplateVersionsWithContext(context.TODO(), input)
+	_, err := s.EC2Client.DeleteLaunchTemplateVersions(context.TODO(), input)
 	if err != nil {
 		return err
 	}
 
-	s.scope.Debug("Deleted launch template", "id", id, "version", *version)
+	s.scope.Debug("Deleted launch template version", "id", id, "version", *version)
 	return nil
 }
 
+// SDKToSpotMarketOptions converts EC2 instance market options to SpotMarketOptions.
+func SDKToSpotMarketOptions(instanceMarketOptions *types.LaunchTemplateInstanceMarketOptions) *infrav1.SpotMarketOptions {
+	if instanceMarketOptions == nil || instanceMarketOptions.MarketType != types.MarketTypeSpot {
+		return nil
+	}
+
+	if instanceMarketOptions.SpotOptions == nil {
+		return &infrav1.SpotMarketOptions{}
+	}
+
+	result := &infrav1.SpotMarketOptions{}
+	if instanceMarketOptions.SpotOptions.MaxPrice != nil {
+		result.MaxPrice = instanceMarketOptions.SpotOptions.MaxPrice
+	}
+
+	return result
+}
+
+// SDKToCapacityReservationPreference maps an AWS SDK Capacity Reservation Preference onto the CAPA internal CapacityReservationPreference type.
+// inverse to `CapacityReservationPreferenceToSDK`.
+func SDKToCapacityReservationPreference(preference types.CapacityReservationPreference) infrav1.CapacityReservationPreference {
+	switch preference {
+	case types.CapacityReservationPreferenceCapacityReservationsOnly:
+		return infrav1.CapacityReservationPreferenceOnly
+	case types.CapacityReservationPreferenceNone:
+		return infrav1.CapacityReservationPreferenceNone
+	case types.CapacityReservationPreferenceOpen:
+		return infrav1.CapacityReservationPreferenceOpen
+	default:
+		return ""
+	}
+}
+
+// CapacityReservationPreferenceToSDK maps a CAPA internal Capacity Reservation Preference enum type onto the AWS SDK equivalent.
+// inverse to `SDKToCapacityReservationPreference`.
+func CapacityReservationPreferenceToSDK(preference infrav1.CapacityReservationPreference) types.CapacityReservationPreference {
+	switch preference {
+	case infrav1.CapacityReservationPreferenceNone:
+		return types.CapacityReservationPreferenceNone
+	case infrav1.CapacityReservationPreferenceOnly:
+		return types.CapacityReservationPreferenceCapacityReservationsOnly
+	case infrav1.CapacityReservationPreferenceOpen:
+		return types.CapacityReservationPreferenceOpen
+	default:
+		return ""
+	}
+}
+
 // SDKToLaunchTemplate converts an AWS EC2 SDK instance to the CAPA instance type.
-func (s *Service) SDKToLaunchTemplate(d *ec2.LaunchTemplateVersion) (*expinfrav1.AWSLaunchTemplate, string, *apimachinerytypes.NamespacedName, error) {
+func (s *Service) SDKToLaunchTemplate(d types.LaunchTemplateVersion) (*expinfrav1.AWSLaunchTemplate, string, *apimachinerytypes.NamespacedName, *string, error) {
 	v := d.LaunchTemplateData
 	i := &expinfrav1.AWSLaunchTemplate{
-		Name: aws.StringValue(d.LaunchTemplateName),
+		Name: aws.ToString(d.LaunchTemplateName),
 		AMI: infrav1.AMIReference{
 			ID: v.ImageId,
 		},
-		InstanceType:  aws.StringValue(v.InstanceType),
-		SSHKeyName:    v.KeyName,
-		VersionNumber: d.VersionNumber,
+		InstanceType:      string(v.InstanceType),
+		SSHKeyName:        v.KeyName,
+		SpotMarketOptions: SDKToSpotMarketOptions(v.InstanceMarketOptions),
+		VersionNumber:     d.VersionNumber,
+	}
+
+	if v.CapacityReservationSpecification != nil &&
+		v.CapacityReservationSpecification.CapacityReservationTarget != nil &&
+		v.CapacityReservationSpecification.CapacityReservationTarget.CapacityReservationId != nil {
+		i.CapacityReservationID = v.CapacityReservationSpecification.CapacityReservationTarget.CapacityReservationId
 	}
 
 	if v.MetadataOptions != nil {
 		i.InstanceMetadataOptions = &infrav1.InstanceMetadataOptions{
-			HTTPPutResponseHopLimit: aws.Int64Value(v.MetadataOptions.HttpPutResponseHopLimit),
-			HTTPTokens:              infrav1.HTTPTokensState(aws.StringValue(v.MetadataOptions.HttpTokens)),
+			HTTPPutResponseHopLimit: utils.ToInt64Value(v.MetadataOptions.HttpPutResponseHopLimit),
+			HTTPTokens:              infrav1.HTTPTokensState(string(v.MetadataOptions.HttpTokens)),
 			HTTPEndpoint:            infrav1.InstanceMetadataEndpointStateEnabled,
 			InstanceMetadataTags:    infrav1.InstanceMetadataEndpointStateDisabled,
 		}
-		if v.MetadataOptions.HttpEndpoint != nil && aws.StringValue(v.MetadataOptions.HttpEndpoint) == "disabled" {
+		if v.MetadataOptions.HttpEndpoint == types.LaunchTemplateInstanceMetadataEndpointStateDisabled {
 			i.InstanceMetadataOptions.HTTPEndpoint = infrav1.InstanceMetadataEndpointStateDisabled
 		}
-		if v.MetadataOptions.InstanceMetadataTags != nil && aws.StringValue(v.MetadataOptions.InstanceMetadataTags) == "enabled" {
+		if v.MetadataOptions.InstanceMetadataTags == types.LaunchTemplateInstanceMetadataTagsStateEnabled {
 			i.InstanceMetadataOptions.InstanceMetadataTags = infrav1.InstanceMetadataEndpointStateEnabled
 		}
 	}
@@ -712,17 +942,17 @@ func (s *Service) SDKToLaunchTemplate(d *ec2.LaunchTemplateVersion) (*expinfrav1
 		i.PrivateDNSName = &infrav1.PrivateDNSName{
 			EnableResourceNameDNSAAAARecord: v.PrivateDnsNameOptions.EnableResourceNameDnsAAAARecord,
 			EnableResourceNameDNSARecord:    v.PrivateDnsNameOptions.EnableResourceNameDnsARecord,
-			HostnameType:                    v.PrivateDnsNameOptions.HostnameType,
+			HostnameType:                    aws.String(string(v.PrivateDnsNameOptions.HostnameType)),
 		}
 	}
 
 	if v.IamInstanceProfile != nil {
-		i.IamInstanceProfile = aws.StringValue(v.IamInstanceProfile.Name)
+		i.IamInstanceProfile = aws.ToString(v.IamInstanceProfile.Name)
 	}
 
 	// Extract IAM Instance Profile name from ARN
 	if v.IamInstanceProfile != nil && v.IamInstanceProfile.Arn != nil {
-		split := strings.Split(aws.StringValue(v.IamInstanceProfile.Arn), "instance-profile/")
+		split := strings.Split(aws.ToString(v.IamInstanceProfile.Arn), "instance-profile/")
 		if len(split) > 1 && split[1] != "" {
 			i.IamInstanceProfile = split[1]
 		}
@@ -732,34 +962,39 @@ func (s *Service) SDKToLaunchTemplate(d *ec2.LaunchTemplateVersion) (*expinfrav1
 		// FIXME(dlipovetsky): This will include the core security groups as well, making the
 		// "Additional" a bit dishonest. However, including the core groups drastically simplifies
 		// comparison with the incoming security groups.
-		i.AdditionalSecurityGroups = append(i.AdditionalSecurityGroups, infrav1.AWSResourceReference{ID: id})
+		i.AdditionalSecurityGroups = append(i.AdditionalSecurityGroups, infrav1.AWSResourceReference{ID: aws.String(id)})
 	}
 
 	if v.UserData == nil {
-		return i, userdata.ComputeHash(nil), nil, nil
+		return i, userdata.ComputeHash(nil), nil, nil, nil
 	}
 	decodedUserData, err := base64.StdEncoding.DecodeString(*v.UserData)
 	if err != nil {
-		return nil, "", nil, errors.Wrap(err, "unable to decode UserData")
+		return nil, "", nil, nil, errors.Wrap(err, "unable to decode UserData")
 	}
 	decodedUserDataHash := userdata.ComputeHash(decodedUserData)
 
+	var launchTemplateUserDataSecretKey *apimachinerytypes.NamespacedName
+	var bootstrapDataHash *string
 	for _, tagSpecification := range v.TagSpecifications {
-		if tagSpecification.ResourceType != nil && *tagSpecification.ResourceType == ec2.ResourceTypeInstance {
+		if tagSpecification.ResourceType == types.ResourceTypeInstance {
 			for _, tag := range tagSpecification.Tags {
 				if tag.Key != nil && *tag.Key == infrav1.LaunchTemplateBootstrapDataSecret && tag.Value != nil && strings.Contains(*tag.Value, "/") {
 					parts := strings.SplitN(*tag.Value, "/", 2)
-					launchTemplateUserDataSecretKey := &apimachinerytypes.NamespacedName{
+					launchTemplateUserDataSecretKey = &apimachinerytypes.NamespacedName{
 						Namespace: parts[0],
 						Name:      parts[1],
 					}
-					return i, decodedUserDataHash, launchTemplateUserDataSecretKey, nil
+				}
+
+				if tag.Key != nil && *tag.Key == infrav1.LaunchTemplateBootstrapDataHash && tag.Value != nil && *tag.Value != "" {
+					bootstrapDataHash = tag.Value
 				}
 			}
 		}
 	}
 
-	return i, decodedUserDataHash, nil, nil
+	return i, decodedUserDataHash, launchTemplateUserDataSecretKey, bootstrapDataHash, nil
 }
 
 // LaunchTemplateNeedsUpdate checks if a new launch template version is needed.
@@ -774,7 +1009,24 @@ func (s *Service) LaunchTemplateNeedsUpdate(scope scope.LaunchTemplateScope, inc
 	if incoming.InstanceType != existing.InstanceType {
 		return true, nil
 	}
+
 	if !cmp.Equal(incoming.InstanceMetadataOptions, existing.InstanceMetadataOptions) {
+		return true, nil
+	}
+
+	if !cmp.Equal(incoming.SpotMarketOptions, existing.SpotMarketOptions) {
+		return true, nil
+	}
+
+	if !cmp.Equal(incoming.CapacityReservationID, existing.CapacityReservationID) {
+		return true, nil
+	}
+
+	if !cmp.Equal(incoming.PrivateDNSName, existing.PrivateDNSName) {
+		return true, nil
+	}
+
+	if !cmp.Equal(incoming.SSHKeyName, existing.SSHKeyName) {
 		return true, nil
 	}
 
@@ -804,7 +1056,7 @@ func (s *Service) LaunchTemplateNeedsUpdate(scope scope.LaunchTemplateScope, inc
 }
 
 // DiscoverLaunchTemplateAMI will discover the AMI launch template.
-func (s *Service) DiscoverLaunchTemplateAMI(scope scope.LaunchTemplateScope) (*string, error) {
+func (s *Service) DiscoverLaunchTemplateAMI(ctx context.Context, scope scope.LaunchTemplateScope) (*string, error) {
 	lt := scope.GetLaunchTemplate()
 
 	if lt.AMI.ID != nil {
@@ -844,7 +1096,7 @@ func (s *Service) DiscoverLaunchTemplateAMI(scope scope.LaunchTemplateScope) (*s
 	imageArchitecture := Amd64ArchitectureTag
 
 	if instanceType != "" {
-		imageArchitecture, err = s.pickArchitectureForInstanceType(instanceType)
+		imageArchitecture, err = s.pickArchitectureForInstanceType(types.InstanceType(instanceType))
 		if err != nil {
 			return nil, err
 		}
@@ -852,6 +1104,7 @@ func (s *Service) DiscoverLaunchTemplateAMI(scope scope.LaunchTemplateScope) (*s
 
 	if scope.IsEKSManaged() && imageLookupFormat == "" && imageLookupOrg == "" && imageLookupBaseOS == "" {
 		lookupAMI, err = s.eksAMILookup(
+			ctx,
 			*templateVersion,
 			imageArchitecture,
 			scope.GetLaunchTemplate().AMI.EKSOptimizedLookupType,
@@ -895,8 +1148,8 @@ func (s *Service) GetAdditionalSecurityGroupsIDs(securityGroups []infrav1.AWSRes
 	return additionalSecurityGroupsIDs, nil
 }
 
-func (s *Service) buildLaunchTemplateTagSpecificationRequest(scope scope.LaunchTemplateScope, userDataSecretKey apimachinerytypes.NamespacedName) []*ec2.LaunchTemplateTagSpecificationRequest {
-	tagSpecifications := make([]*ec2.LaunchTemplateTagSpecificationRequest, 0)
+func (s *Service) buildLaunchTemplateTagSpecificationRequest(scope scope.LaunchTemplateScope, userDataSecretKey apimachinerytypes.NamespacedName, bootstrapDataHash string) []types.LaunchTemplateTagSpecificationRequest {
+	tagSpecifications := make([]types.LaunchTemplateTagSpecificationRequest, 0)
 	additionalTags := scope.AdditionalTags()
 	// Set the cloud provider tag
 	additionalTags[infrav1.ClusterAWSCloudProviderTagKey(s.scope.KubernetesClusterName())] = string(infrav1.ResourceLifecycleOwned)
@@ -913,10 +1166,11 @@ func (s *Service) buildLaunchTemplateTagSpecificationRequest(scope scope.LaunchT
 	{
 		instanceTags := tags.DeepCopy()
 		instanceTags[infrav1.LaunchTemplateBootstrapDataSecret] = userDataSecretKey.String()
+		instanceTags[infrav1.LaunchTemplateBootstrapDataHash] = bootstrapDataHash
 
-		spec := &ec2.LaunchTemplateTagSpecificationRequest{ResourceType: aws.String(ec2.ResourceTypeInstance)}
+		spec := types.LaunchTemplateTagSpecificationRequest{ResourceType: types.ResourceTypeInstance}
 		for key, value := range instanceTags {
-			spec.Tags = append(spec.Tags, &ec2.Tag{
+			spec.Tags = append(spec.Tags, types.Tag{
 				Key:   aws.String(key),
 				Value: aws.String(value),
 			})
@@ -928,9 +1182,9 @@ func (s *Service) buildLaunchTemplateTagSpecificationRequest(scope scope.LaunchT
 
 	// tag EBS volumes
 	if len(tags) > 0 {
-		spec := &ec2.LaunchTemplateTagSpecificationRequest{ResourceType: aws.String(ec2.ResourceTypeVolume)}
+		spec := types.LaunchTemplateTagSpecificationRequest{ResourceType: types.ResourceTypeVolume}
 		for key, value := range tags {
-			spec.Tags = append(spec.Tags, &ec2.Tag{
+			spec.Tags = append(spec.Tags, types.Tag{
 				Key:   aws.String(key),
 				Value: aws.String(value),
 			})
@@ -949,12 +1203,12 @@ func (s *Service) getFilteredSecurityGroupIDs(securityGroup infrav1.AWSResourceR
 		return nil, nil
 	}
 
-	filters := []*ec2.Filter{}
+	filters := []types.Filter{}
 	for _, f := range securityGroup.Filters {
-		filters = append(filters, &ec2.Filter{Name: aws.String(f.Name), Values: aws.StringSlice(f.Values)})
+		filters = append(filters, types.Filter{Name: aws.String(f.Name), Values: f.Values})
 	}
 
-	sgs, err := s.EC2Client.DescribeSecurityGroupsWithContext(context.TODO(), &ec2.DescribeSecurityGroupsInput{Filters: filters})
+	sgs, err := s.EC2Client.DescribeSecurityGroups(context.TODO(), &ec2.DescribeSecurityGroupsInput{Filters: filters})
 	if err != nil {
 		return nil, err
 	}
@@ -966,7 +1220,7 @@ func (s *Service) getFilteredSecurityGroupIDs(securityGroup infrav1.AWSResourceR
 	return ids, nil
 }
 
-func getLaunchTemplateInstanceMarketOptionsRequest(i *expinfrav1.AWSLaunchTemplate) (*ec2.LaunchTemplateInstanceMarketOptionsRequest, error) {
+func getLaunchTemplateInstanceMarketOptionsRequest(i *expinfrav1.AWSLaunchTemplate) (*types.LaunchTemplateInstanceMarketOptionsRequest, error) {
 	if i.MarketType != "" && i.MarketType == infrav1.MarketTypeCapacityBlock && i.SpotMarketOptions != nil {
 		return nil, errors.New("can't create spot capacity-blocks, remove spot market request")
 	}
@@ -987,24 +1241,24 @@ func getLaunchTemplateInstanceMarketOptionsRequest(i *expinfrav1.AWSLaunchTempla
 		if i.CapacityReservationID == nil {
 			return nil, errors.Errorf("capacityReservationID is required when CapacityBlock is enabled")
 		}
-		return &ec2.LaunchTemplateInstanceMarketOptionsRequest{
-			MarketType: aws.String(ec2.MarketTypeCapacityBlock),
+		return &types.LaunchTemplateInstanceMarketOptionsRequest{
+			MarketType: types.MarketTypeCapacityBlock,
 		}, nil
 
 	case infrav1.MarketTypeSpot:
 		// Set required values for Spot instances
-		spotOptions := &ec2.LaunchTemplateSpotMarketOptionsRequest{}
+		spotOptions := &types.LaunchTemplateSpotMarketOptionsRequest{}
 
 		// Persistent option is not available for EC2 autoscaling, EC2 makes a one-time request by default and setting request type should not be allowed.
 		// For one-time requests, only terminate option is available as interruption behavior, and default for spotOptions.SetInstanceInterruptionBehavior() is terminate, so it is not set here explicitly.
 
-		if maxPrice := aws.StringValue(i.SpotMarketOptions.MaxPrice); maxPrice != "" {
-			spotOptions.SetMaxPrice(maxPrice)
+		if maxPrice := aws.ToString(i.SpotMarketOptions.MaxPrice); maxPrice != "" {
+			spotOptions.MaxPrice = aws.String(maxPrice)
 		}
 
-		launchTemplateInstanceMarketOptionsRequest := &ec2.LaunchTemplateInstanceMarketOptionsRequest{}
-		launchTemplateInstanceMarketOptionsRequest.SetMarketType(ec2.MarketTypeSpot)
-		launchTemplateInstanceMarketOptionsRequest.SetSpotOptions(spotOptions)
+		launchTemplateInstanceMarketOptionsRequest := &types.LaunchTemplateInstanceMarketOptionsRequest{}
+		launchTemplateInstanceMarketOptionsRequest.MarketType = types.MarketTypeSpot
+		launchTemplateInstanceMarketOptionsRequest.SpotOptions = spotOptions
 
 		return launchTemplateInstanceMarketOptionsRequest, nil
 	case infrav1.MarketTypeOnDemand:
@@ -1016,14 +1270,14 @@ func getLaunchTemplateInstanceMarketOptionsRequest(i *expinfrav1.AWSLaunchTempla
 	}
 }
 
-func getLaunchTemplatePrivateDNSNameOptionsRequest(privateDNSName *infrav1.PrivateDNSName) *ec2.LaunchTemplatePrivateDnsNameOptionsRequest {
+func getLaunchTemplatePrivateDNSNameOptionsRequest(privateDNSName *infrav1.PrivateDNSName) *types.LaunchTemplatePrivateDnsNameOptionsRequest {
 	if privateDNSName == nil {
 		return nil
 	}
 
-	return &ec2.LaunchTemplatePrivateDnsNameOptionsRequest{
+	return &types.LaunchTemplatePrivateDnsNameOptionsRequest{
 		EnableResourceNameDnsAAAARecord: privateDNSName.EnableResourceNameDNSAAAARecord,
 		EnableResourceNameDnsARecord:    privateDNSName.EnableResourceNameDNSARecord,
-		HostnameType:                    privateDNSName.HostnameType,
+		HostnameType:                    types.HostnameType(aws.ToString(privateDNSName.HostnameType)),
 	}
 }

@@ -10,12 +10,14 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This action is deprecated. Enables a VPC for ClassicLink. You can then link
-// EC2-Classic instances to your ClassicLink-enabled VPC to allow communication
-// over private IP addresses. You cannot enable your VPC for ClassicLink if any of
-// your VPC route tables have existing routes for address ranges within the
-// 10.0.0.0/8 IP address range, excluding local routes for VPCs in the 10.0.0.0/16
-// and 10.1.0.0/16 IP address ranges.
+// This action is deprecated.
+//
+// Enables a VPC for ClassicLink. You can then link EC2-Classic instances to your
+// ClassicLink-enabled VPC to allow communication over private IP addresses. You
+// cannot enable your VPC for ClassicLink if any of your VPC route tables have
+// existing routes for address ranges within the 10.0.0.0/8 IP address range,
+// excluding local routes for VPCs in the 10.0.0.0/16 and 10.1.0.0/16 IP address
+// ranges.
 func (c *Client) EnableVpcClassicLink(ctx context.Context, params *EnableVpcClassicLinkInput, optFns ...func(*Options)) (*EnableVpcClassicLinkOutput, error) {
 	if params == nil {
 		params = &EnableVpcClassicLinkInput{}
@@ -101,6 +103,9 @@ func (c *Client) addOperationEnableVpcClassicLinkMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -111,6 +116,15 @@ func (c *Client) addOperationEnableVpcClassicLinkMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpEnableVpcClassicLinkValidationMiddleware(stack); err != nil {
@@ -132,6 +146,18 @@ func (c *Client) addOperationEnableVpcClassicLinkMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

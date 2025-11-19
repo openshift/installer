@@ -109,6 +109,9 @@ func (c *Client) addOperationDescribeVerifiedAccessTrustProvidersMiddlewares(sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -119,6 +122,15 @@ func (c *Client) addOperationDescribeVerifiedAccessTrustProvidersMiddlewares(sta
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeVerifiedAccessTrustProviders(options.Region), middleware.Before); err != nil {
@@ -139,16 +151,20 @@ func (c *Client) addOperationDescribeVerifiedAccessTrustProvidersMiddlewares(sta
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeVerifiedAccessTrustProvidersAPIClient is a client that implements the
-// DescribeVerifiedAccessTrustProviders operation.
-type DescribeVerifiedAccessTrustProvidersAPIClient interface {
-	DescribeVerifiedAccessTrustProviders(context.Context, *DescribeVerifiedAccessTrustProvidersInput, ...func(*Options)) (*DescribeVerifiedAccessTrustProvidersOutput, error)
-}
-
-var _ DescribeVerifiedAccessTrustProvidersAPIClient = (*Client)(nil)
 
 // DescribeVerifiedAccessTrustProvidersPaginatorOptions is the paginator options
 // for DescribeVerifiedAccessTrustProviders
@@ -217,6 +233,9 @@ func (p *DescribeVerifiedAccessTrustProvidersPaginator) NextPage(ctx context.Con
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeVerifiedAccessTrustProviders(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -235,6 +254,14 @@ func (p *DescribeVerifiedAccessTrustProvidersPaginator) NextPage(ctx context.Con
 
 	return result, nil
 }
+
+// DescribeVerifiedAccessTrustProvidersAPIClient is a client that implements the
+// DescribeVerifiedAccessTrustProviders operation.
+type DescribeVerifiedAccessTrustProvidersAPIClient interface {
+	DescribeVerifiedAccessTrustProviders(context.Context, *DescribeVerifiedAccessTrustProvidersInput, ...func(*Options)) (*DescribeVerifiedAccessTrustProvidersOutput, error)
+}
+
+var _ DescribeVerifiedAccessTrustProvidersAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeVerifiedAccessTrustProviders(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

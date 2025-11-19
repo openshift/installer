@@ -18,9 +18,8 @@ limitations under the License.
 package network
 
 import (
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/common"
 )
 
 // Service holds a collection of interfaces.
@@ -28,7 +27,7 @@ import (
 // One alternative is to have a large list of functions from the ec2 client.
 type Service struct {
 	scope     scope.NetworkScope
-	EC2Client ec2iface.EC2API
+	EC2Client common.EC2API
 }
 
 // NewService returns a new service given the ec2 api client.

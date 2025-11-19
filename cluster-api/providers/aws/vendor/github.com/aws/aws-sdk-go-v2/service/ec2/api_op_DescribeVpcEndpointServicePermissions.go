@@ -12,7 +12,7 @@ import (
 )
 
 // Describes the principals (service consumers) that are permitted to discover
-// your VPC endpoint service.
+// your VPC endpoint service. Principal ARNs with path components aren't supported.
 func (c *Client) DescribeVpcEndpointServicePermissions(ctx context.Context, params *DescribeVpcEndpointServicePermissionsInput, optFns ...func(*Options)) (*DescribeVpcEndpointServicePermissionsOutput, error) {
 	if params == nil {
 		params = &DescribeVpcEndpointServicePermissionsInput{}
@@ -42,7 +42,9 @@ type DescribeVpcEndpointServicePermissionsInput struct {
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - principal - The ARN of the principal.
+	//
 	//   - principal-type - The principal type ( All | Service | OrganizationUnit |
 	//   Account | User | Role ).
 	Filters []types.Filter
@@ -117,6 +119,9 @@ func (c *Client) addOperationDescribeVpcEndpointServicePermissionsMiddlewares(st
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -127,6 +132,15 @@ func (c *Client) addOperationDescribeVpcEndpointServicePermissionsMiddlewares(st
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeVpcEndpointServicePermissionsValidationMiddleware(stack); err != nil {
@@ -150,16 +164,20 @@ func (c *Client) addOperationDescribeVpcEndpointServicePermissionsMiddlewares(st
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeVpcEndpointServicePermissionsAPIClient is a client that implements the
-// DescribeVpcEndpointServicePermissions operation.
-type DescribeVpcEndpointServicePermissionsAPIClient interface {
-	DescribeVpcEndpointServicePermissions(context.Context, *DescribeVpcEndpointServicePermissionsInput, ...func(*Options)) (*DescribeVpcEndpointServicePermissionsOutput, error)
-}
-
-var _ DescribeVpcEndpointServicePermissionsAPIClient = (*Client)(nil)
 
 // DescribeVpcEndpointServicePermissionsPaginatorOptions is the paginator options
 // for DescribeVpcEndpointServicePermissions
@@ -230,6 +248,9 @@ func (p *DescribeVpcEndpointServicePermissionsPaginator) NextPage(ctx context.Co
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeVpcEndpointServicePermissions(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -248,6 +269,14 @@ func (p *DescribeVpcEndpointServicePermissionsPaginator) NextPage(ctx context.Co
 
 	return result, nil
 }
+
+// DescribeVpcEndpointServicePermissionsAPIClient is a client that implements the
+// DescribeVpcEndpointServicePermissions operation.
+type DescribeVpcEndpointServicePermissionsAPIClient interface {
+	DescribeVpcEndpointServicePermissions(context.Context, *DescribeVpcEndpointServicePermissionsInput, ...func(*Options)) (*DescribeVpcEndpointServicePermissionsOutput, error)
+}
+
+var _ DescribeVpcEndpointServicePermissionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeVpcEndpointServicePermissions(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

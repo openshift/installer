@@ -13,11 +13,14 @@ import (
 
 // Registers members (network interfaces) with the transit gateway multicast
 // group. A member is a network interface associated with a supported EC2 instance
-// that receives multicast traffic. For information about supported instances, see
-// Multicast Consideration (https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-limits.html#multicast-limits)
-// in Amazon VPC Transit Gateways. After you add the members, use
-// SearchTransitGatewayMulticastGroups (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_SearchTransitGatewayMulticastGroups.html)
-// to verify that the members were added to the transit gateway multicast group.
+// that receives multicast traffic. For more information, see [Multicast on transit gateways]in the Amazon Web
+// Services Transit Gateways Guide.
+//
+// After you add the members, use [SearchTransitGatewayMulticastGroups] to verify that the members were added to the
+// transit gateway multicast group.
+//
+// [SearchTransitGatewayMulticastGroups]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_SearchTransitGatewayMulticastGroups.html
+// [Multicast on transit gateways]: https://docs.aws.amazon.com/vpc/latest/tgw/tgw-multicast-overview.html
 func (c *Client) RegisterTransitGatewayMulticastGroupMembers(ctx context.Context, params *RegisterTransitGatewayMulticastGroupMembersInput, optFns ...func(*Options)) (*RegisterTransitGatewayMulticastGroupMembersOutput, error) {
 	if params == nil {
 		params = &RegisterTransitGatewayMulticastGroupMembersInput{}
@@ -112,6 +115,9 @@ func (c *Client) addOperationRegisterTransitGatewayMulticastGroupMembersMiddlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -122,6 +128,15 @@ func (c *Client) addOperationRegisterTransitGatewayMulticastGroupMembersMiddlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRegisterTransitGatewayMulticastGroupMembersValidationMiddleware(stack); err != nil {
@@ -143,6 +158,18 @@ func (c *Client) addOperationRegisterTransitGatewayMulticastGroupMembersMiddlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

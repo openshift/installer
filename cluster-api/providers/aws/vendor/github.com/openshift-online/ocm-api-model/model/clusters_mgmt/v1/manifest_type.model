@@ -1,0 +1,34 @@
+/*
+Copyright (c) 2020 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of a manifestwork.
+class Manifest {
+	// List of k8s objects to deploy on a hosted cluster.
+	Workloads []Interface
+
+	// Spec of Manifest Work object from open cluster management
+	// For more info please check https://open-cluster-management.io/concepts/manifestwork.
+	Spec Interface
+
+	// Date and time when the manifest got created in OCM database.
+	CreationTimestamp Date
+
+	// Date and time when the manifest got updated in OCM database.
+	UpdatedTimestamp Date
+
+	// Transient value to represent the underlying live resource.
+	LiveResource Interface
+}

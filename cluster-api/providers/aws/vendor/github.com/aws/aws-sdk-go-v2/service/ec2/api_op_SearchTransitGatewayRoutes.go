@@ -30,22 +30,32 @@ func (c *Client) SearchTransitGatewayRoutes(ctx context.Context, params *SearchT
 type SearchTransitGatewayRoutesInput struct {
 
 	// One or more filters. The possible values are:
+	//
 	//   - attachment.transit-gateway-attachment-id - The id of the transit gateway
 	//   attachment.
+	//
 	//   - attachment.resource-id - The resource id of the transit gateway attachment.
+	//
 	//   - attachment.resource-type - The attachment resource type. Valid values are
 	//   vpc | vpn | direct-connect-gateway | peering | connect .
+	//
 	//   - prefix-list-id - The ID of the prefix list.
+	//
 	//   - route-search.exact-match - The exact match of the specified filter.
+	//
 	//   - route-search.longest-prefix-match - The longest prefix that matches the
 	//   route.
+	//
 	//   - route-search.subnet-of-match - The routes with a subnet that match the
 	//   specified CIDR filter.
+	//
 	//   - route-search.supernet-of-match - The routes with a CIDR that encompass the
 	//   CIDR filter. For example, if you have 10.0.1.0/29 and 10.0.1.0/31 routes in your
 	//   route table and you specify supernet-of-match as 10.0.1.0/30, then the result
 	//   returns 10.0.1.0/29.
+	//
 	//   - state - The state of the route ( active | blackhole ).
+	//
 	//   - type - The type of route ( propagated | static ).
 	//
 	// This member is required.
@@ -126,6 +136,9 @@ func (c *Client) addOperationSearchTransitGatewayRoutesMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -136,6 +149,15 @@ func (c *Client) addOperationSearchTransitGatewayRoutesMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpSearchTransitGatewayRoutesValidationMiddleware(stack); err != nil {
@@ -157,6 +179,18 @@ func (c *Client) addOperationSearchTransitGatewayRoutesMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

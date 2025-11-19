@@ -22,9 +22,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
-	rgapi "github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	rgapi "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
+	rgapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/annotations"
@@ -100,15 +101,15 @@ func (s *Service) defaultGetResources(ctx context.Context) ([]*AWSResource, erro
 
 	awsInput := rgapi.GetResourcesInput{
 		ResourceTypeFilters: nil,
-		TagFilters: []*rgapi.TagFilter{
+		TagFilters: []rgapitypes.TagFilter{
 			{
 				Key:    aws.String(serviceTag),
-				Values: []*string{aws.String(string(infrav1.ResourceLifecycleOwned))},
+				Values: []string{string(infrav1.ResourceLifecycleOwned)},
 			},
 		},
 	}
 
-	awsOutput, err := s.resourceTaggingClient.GetResourcesWithContext(ctx, &awsInput)
+	awsOutput, err := s.resourceTaggingClient.GetResources(ctx, &awsInput)
 	if err != nil {
 		return nil, fmt.Errorf("getting tagged resources: %w", err)
 	}

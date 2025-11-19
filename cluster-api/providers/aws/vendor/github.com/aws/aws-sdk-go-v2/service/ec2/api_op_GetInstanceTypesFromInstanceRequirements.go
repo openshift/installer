@@ -13,17 +13,19 @@ import (
 
 // Returns a list of instance types with the specified instance attributes. You
 // can use the response to preview the instance types without launching instances.
-// Note that the response does not consider capacity. When you specify multiple
-// parameters, you get instance types that satisfy all of the specified parameters.
-// If you specify multiple values for a parameter, you get instance types that
-// satisfy any of the specified values. For more information, see Preview instance
-// types with specified attributes (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-fleet-attribute-based-instance-type-selection.html#spotfleet-get-instance-types-from-instance-requirements)
-// , Attribute-based instance type selection for EC2 Fleet (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-attribute-based-instance-type-selection.html)
-// , Attribute-based instance type selection for Spot Fleet (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-fleet-attribute-based-instance-type-selection.html)
-// , and Spot placement score (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-placement-score.html)
-// in the Amazon EC2 User Guide, and Creating an Auto Scaling group using
-// attribute-based instance type selection (https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-asg-instance-type-requirements.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// Note that the response does not consider capacity.
+//
+// When you specify multiple parameters, you get instance types that satisfy all
+// of the specified parameters. If you specify multiple values for a parameter, you
+// get instance types that satisfy any of the specified values.
+//
+// For more information, see [Preview instance types with specified attributes], [Specify attributes for instance type selection for EC2 Fleet or Spot Fleet], and [Spot placement score] in the Amazon EC2 User Guide, and [Creating mixed instance groups using attribute-based instance type selection] in the
+// Amazon EC2 Auto Scaling User Guide.
+//
+// [Specify attributes for instance type selection for EC2 Fleet or Spot Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-attribute-based-instance-type-selection.html
+// [Preview instance types with specified attributes]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-attribute-based-instance-type-selection.html#ec2fleet-get-instance-types-from-instance-requirements
+// [Creating mixed instance groups using attribute-based instance type selection]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-asg-instance-type-requirements.html
+// [Spot placement score]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-placement-score.html
 func (c *Client) GetInstanceTypesFromInstanceRequirements(ctx context.Context, params *GetInstanceTypesFromInstanceRequirementsInput, optFns ...func(*Options)) (*GetInstanceTypesFromInstanceRequirementsOutput, error) {
 	if params == nil {
 		params = &GetInstanceTypesFromInstanceRequirementsInput{}
@@ -56,6 +58,9 @@ type GetInstanceTypesFromInstanceRequirementsInput struct {
 	// This member is required.
 	VirtualizationTypes []types.VirtualizationType
 
+	// Reserved.
+	Context *string
+
 	// Checks whether you have the required permissions for the action, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
@@ -64,8 +69,9 @@ type GetInstanceTypesFromInstanceRequirementsInput struct {
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -133,6 +139,9 @@ func (c *Client) addOperationGetInstanceTypesFromInstanceRequirementsMiddlewares
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -143,6 +152,15 @@ func (c *Client) addOperationGetInstanceTypesFromInstanceRequirementsMiddlewares
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetInstanceTypesFromInstanceRequirementsValidationMiddleware(stack); err != nil {
@@ -166,24 +184,29 @@ func (c *Client) addOperationGetInstanceTypesFromInstanceRequirementsMiddlewares
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// GetInstanceTypesFromInstanceRequirementsAPIClient is a client that implements
-// the GetInstanceTypesFromInstanceRequirements operation.
-type GetInstanceTypesFromInstanceRequirementsAPIClient interface {
-	GetInstanceTypesFromInstanceRequirements(context.Context, *GetInstanceTypesFromInstanceRequirementsInput, ...func(*Options)) (*GetInstanceTypesFromInstanceRequirementsOutput, error)
-}
-
-var _ GetInstanceTypesFromInstanceRequirementsAPIClient = (*Client)(nil)
 
 // GetInstanceTypesFromInstanceRequirementsPaginatorOptions is the paginator
 // options for GetInstanceTypesFromInstanceRequirements
 type GetInstanceTypesFromInstanceRequirementsPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -246,6 +269,9 @@ func (p *GetInstanceTypesFromInstanceRequirementsPaginator) NextPage(ctx context
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.GetInstanceTypesFromInstanceRequirements(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -264,6 +290,14 @@ func (p *GetInstanceTypesFromInstanceRequirementsPaginator) NextPage(ctx context
 
 	return result, nil
 }
+
+// GetInstanceTypesFromInstanceRequirementsAPIClient is a client that implements
+// the GetInstanceTypesFromInstanceRequirements operation.
+type GetInstanceTypesFromInstanceRequirementsAPIClient interface {
+	GetInstanceTypesFromInstanceRequirements(context.Context, *GetInstanceTypesFromInstanceRequirementsInput, ...func(*Options)) (*GetInstanceTypesFromInstanceRequirementsOutput, error)
+}
+
+var _ GetInstanceTypesFromInstanceRequirementsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opGetInstanceTypesFromInstanceRequirements(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

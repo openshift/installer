@@ -35,9 +35,9 @@ type DescribeIpamPoolsInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
-	// One or more filters for the request. For more information about filtering, see
-	// Filtering CLI output (https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-filter.html)
-	// .
+	// One or more filters for the request. For more information about filtering, see [Filtering CLI output].
+	//
+	// [Filtering CLI output]: https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-filter.html
 	Filters []types.Filter
 
 	// The IDs of the IPAM pools you would like information on.
@@ -110,6 +110,9 @@ func (c *Client) addOperationDescribeIpamPoolsMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -120,6 +123,15 @@ func (c *Client) addOperationDescribeIpamPoolsMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeIpamPools(options.Region), middleware.Before); err != nil {
@@ -140,16 +152,20 @@ func (c *Client) addOperationDescribeIpamPoolsMiddlewares(stack *middleware.Stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeIpamPoolsAPIClient is a client that implements the DescribeIpamPools
-// operation.
-type DescribeIpamPoolsAPIClient interface {
-	DescribeIpamPools(context.Context, *DescribeIpamPoolsInput, ...func(*Options)) (*DescribeIpamPoolsOutput, error)
-}
-
-var _ DescribeIpamPoolsAPIClient = (*Client)(nil)
 
 // DescribeIpamPoolsPaginatorOptions is the paginator options for DescribeIpamPools
 type DescribeIpamPoolsPaginatorOptions struct {
@@ -214,6 +230,9 @@ func (p *DescribeIpamPoolsPaginator) NextPage(ctx context.Context, optFns ...fun
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeIpamPools(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -232,6 +251,14 @@ func (p *DescribeIpamPoolsPaginator) NextPage(ctx context.Context, optFns ...fun
 
 	return result, nil
 }
+
+// DescribeIpamPoolsAPIClient is a client that implements the DescribeIpamPools
+// operation.
+type DescribeIpamPoolsAPIClient interface {
+	DescribeIpamPools(context.Context, *DescribeIpamPoolsInput, ...func(*Options)) (*DescribeIpamPoolsOutput, error)
+}
+
+var _ DescribeIpamPoolsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeIpamPools(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

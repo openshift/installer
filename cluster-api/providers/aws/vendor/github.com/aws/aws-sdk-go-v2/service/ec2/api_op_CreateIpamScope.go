@@ -16,8 +16,11 @@ import (
 // for a single network. The private scope is intended for all private IP address
 // space. The public scope is intended for all public IP address space. Scopes
 // enable you to reuse IP addresses across multiple unconnected networks without
-// causing IP address overlap or conflict. For more information, see Add a scope (https://docs.aws.amazon.com/vpc/latest/ipam/add-scope-ipam.html)
-// in the Amazon VPC IPAM User Guide.
+// causing IP address overlap or conflict.
+//
+// For more information, see [Add a scope] in the Amazon VPC IPAM User Guide.
+//
+// [Add a scope]: https://docs.aws.amazon.com/vpc/latest/ipam/add-scope-ipam.html
 func (c *Client) CreateIpamScope(ctx context.Context, params *CreateIpamScopeInput, optFns ...func(*Options)) (*CreateIpamScopeOutput, error) {
 	if params == nil {
 		params = &CreateIpamScopeInput{}
@@ -41,8 +44,9 @@ type CreateIpamScopeInput struct {
 	IpamId *string
 
 	// A unique, case-sensitive identifier that you provide to ensure the idempotency
-	// of the request. For more information, see Ensuring Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
-	// .
+	// of the request. For more information, see [Ensuring idempotency].
+	//
+	// [Ensuring idempotency]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-api-idempotency.html
 	ClientToken *string
 
 	// A description for the scope you're creating.
@@ -117,6 +121,9 @@ func (c *Client) addOperationCreateIpamScopeMiddlewares(stack *middleware.Stack,
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -127,6 +134,15 @@ func (c *Client) addOperationCreateIpamScopeMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opCreateIpamScopeMiddleware(stack, options); err != nil {
@@ -151,6 +167,18 @@ func (c *Client) addOperationCreateIpamScopeMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

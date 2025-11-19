@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/elb"
-	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/converters"
@@ -80,7 +80,7 @@ func (s *Service) deleteTargetGroups(ctx context.Context, resources []*AWSResour
 }
 
 func (s *Service) isELBResourceToDelete(resource *AWSResource, resourceName string) bool {
-	if !s.isMatchingResource(resource, elb.ServiceName, resourceName) {
+	if !s.isMatchingResource(resource, elbService, resourceName) {
 		return false
 	}
 
@@ -98,7 +98,7 @@ func (s *Service) deleteLoadBalancerV2(ctx context.Context, lbARN string) error 
 	}
 
 	s.scope.Debug("Deleting v2 load balancer", "arn", lbARN)
-	if _, err := s.elbv2Client.DeleteLoadBalancerWithContext(ctx, &input); err != nil {
+	if _, err := s.elbv2Client.DeleteLoadBalancer(ctx, &input); err != nil {
 		return fmt.Errorf("deleting v2 load balancer: %w", err)
 	}
 
@@ -111,7 +111,7 @@ func (s *Service) deleteLoadBalancer(ctx context.Context, name string) error {
 	}
 
 	s.scope.Debug("Deleting classic load balancer", "name", name)
-	if _, err := s.elbClient.DeleteLoadBalancerWithContext(ctx, &input); err != nil {
+	if _, err := s.elbClient.DeleteLoadBalancer(ctx, &input); err != nil {
 		return fmt.Errorf("deleting classic load balancer: %w", err)
 	}
 
@@ -124,7 +124,7 @@ func (s *Service) deleteTargetGroup(ctx context.Context, targetGroupARN string) 
 	}
 
 	s.scope.Debug("Deleting target group", "arn", targetGroupARN)
-	if _, err := s.elbv2Client.DeleteTargetGroupWithContext(ctx, &input); err != nil {
+	if _, err := s.elbv2Client.DeleteTargetGroup(ctx, &input); err != nil {
 		return fmt.Errorf("deleting target group: %w", err)
 	}
 
@@ -134,14 +134,13 @@ func (s *Service) deleteTargetGroup(ctx context.Context, targetGroupARN string) 
 // describeLoadBalancers gets all elastic LBs.
 func (s *Service) describeLoadBalancers(ctx context.Context) ([]string, error) {
 	var names []string
-	err := s.elbClient.DescribeLoadBalancersPagesWithContext(ctx, &elb.DescribeLoadBalancersInput{}, func(r *elb.DescribeLoadBalancersOutput, last bool) bool {
+	err := s.elbClient.DescribeLoadBalancersPages(ctx, &elb.DescribeLoadBalancersInput{}, func(r *elb.DescribeLoadBalancersOutput) {
 		for _, lb := range r.LoadBalancerDescriptions {
 			names = append(names, *lb.LoadBalancerName)
 		}
-		return true
 	})
 	if err != nil {
-		return nil, fmt.Errorf("describe load balancer error: %w", err)
+		return nil, err
 	}
 
 	return names, nil
@@ -150,21 +149,20 @@ func (s *Service) describeLoadBalancers(ctx context.Context) ([]string, error) {
 // describeLoadBalancersV2 gets all network and application LBs.
 func (s *Service) describeLoadBalancersV2(ctx context.Context) ([]string, error) {
 	var arns []string
-	err := s.elbv2Client.DescribeLoadBalancersPagesWithContext(ctx, &elbv2.DescribeLoadBalancersInput{}, func(r *elbv2.DescribeLoadBalancersOutput, last bool) bool {
+	err := s.elbv2Client.DescribeLoadBalancersPages(ctx, &elbv2.DescribeLoadBalancersInput{}, func(r *elbv2.DescribeLoadBalancersOutput) {
 		for _, lb := range r.LoadBalancers {
 			arns = append(arns, *lb.LoadBalancerArn)
 		}
-		return true
 	})
 	if err != nil {
-		return nil, fmt.Errorf("describe load balancer v2 error: %w", err)
+		return nil, err
 	}
 
 	return arns, nil
 }
 
 func (s *Service) describeTargetgroups(ctx context.Context) ([]string, error) {
-	groups, err := s.elbv2Client.DescribeTargetGroupsWithContext(ctx, &elbv2.DescribeTargetGroupsInput{})
+	groups, err := s.elbv2Client.DescribeTargetGroups(ctx, &elbv2.DescribeTargetGroupsInput{})
 	if err != nil {
 		return nil, fmt.Errorf("describe target groups error: %w", err)
 	}
@@ -214,7 +212,7 @@ func (s *Service) filterProviderOwnedLB(ctx context.Context, names []string) ([]
 	var resources []*AWSResource
 	lbChunks := chunkResources(names)
 	for _, chunk := range lbChunks {
-		output, err := s.elbClient.DescribeTagsWithContext(ctx, &elb.DescribeTagsInput{LoadBalancerNames: aws.StringSlice(chunk)})
+		output, err := s.elbClient.DescribeTags(ctx, &elb.DescribeTagsInput{LoadBalancerNames: chunk})
 		if err != nil {
 			return nil, fmt.Errorf("describe tags of loadbalancers: %w", err)
 		}
@@ -243,7 +241,7 @@ func (s *Service) filterProviderOwnedLBV2(ctx context.Context, arns []string) ([
 	var resources []*AWSResource
 	lbChunks := chunkResources(arns)
 	for _, chunk := range lbChunks {
-		output, err := s.elbv2Client.DescribeTagsWithContext(ctx, &elbv2.DescribeTagsInput{ResourceArns: aws.StringSlice(chunk)})
+		output, err := s.elbv2Client.DescribeTags(ctx, &elbv2.DescribeTagsInput{ResourceArns: chunk})
 		if err != nil {
 			return nil, fmt.Errorf("describe tags of v2 loadbalancers: %w", err)
 		}

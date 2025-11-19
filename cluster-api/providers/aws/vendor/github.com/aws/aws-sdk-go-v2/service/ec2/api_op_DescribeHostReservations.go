@@ -30,15 +30,20 @@ func (c *Client) DescribeHostReservations(ctx context.Context, params *DescribeH
 type DescribeHostReservationsInput struct {
 
 	// The filters.
+	//
 	//   - instance-family - The instance family (for example, m4 ).
+	//
 	//   - payment-option - The payment option ( NoUpfront | PartialUpfront |
 	//   AllUpfront ).
+	//
 	//   - state - The state of the reservation ( payment-pending | payment-failed |
 	//   active | retired ).
+	//
 	//   - tag: - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
+	//
 	//   - tag-key - The key of a tag assigned to the resource. Use this filter to find
 	//   all resources assigned a tag with a specific key, regardless of the tag value.
 	Filter []types.Filter
@@ -116,6 +121,9 @@ func (c *Client) addOperationDescribeHostReservationsMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +134,15 @@ func (c *Client) addOperationDescribeHostReservationsMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeHostReservations(options.Region), middleware.Before); err != nil {
@@ -146,16 +163,20 @@ func (c *Client) addOperationDescribeHostReservationsMiddlewares(stack *middlewa
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeHostReservationsAPIClient is a client that implements the
-// DescribeHostReservations operation.
-type DescribeHostReservationsAPIClient interface {
-	DescribeHostReservations(context.Context, *DescribeHostReservationsInput, ...func(*Options)) (*DescribeHostReservationsOutput, error)
-}
-
-var _ DescribeHostReservationsAPIClient = (*Client)(nil)
 
 // DescribeHostReservationsPaginatorOptions is the paginator options for
 // DescribeHostReservations
@@ -225,6 +246,9 @@ func (p *DescribeHostReservationsPaginator) NextPage(ctx context.Context, optFns
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeHostReservations(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -243,6 +267,14 @@ func (p *DescribeHostReservationsPaginator) NextPage(ctx context.Context, optFns
 
 	return result, nil
 }
+
+// DescribeHostReservationsAPIClient is a client that implements the
+// DescribeHostReservations operation.
+type DescribeHostReservationsAPIClient interface {
+	DescribeHostReservations(context.Context, *DescribeHostReservationsInput, ...func(*Options)) (*DescribeHostReservationsOutput, error)
+}
+
+var _ DescribeHostReservationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeHostReservations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
