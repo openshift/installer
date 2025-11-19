@@ -6,6 +6,7 @@ import (
 	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/pelletier/go-toml"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/types"
@@ -73,6 +74,7 @@ func (i *RegistriesConf) generateRegistriesConf(imageDigestSources []types.Image
 		registry := sysregistriesv2.Registry{}
 		registry.Endpoint.Location = group.Source
 		registry.MirrorByDigestOnly = true
+		registry.Blocked = group.SourcePolicy == configv1.NeverContactSource
 		for _, mirror := range group.Mirrors {
 			registry.Mirrors = append(registry.Mirrors, sysregistriesv2.Endpoint{Location: mirror})
 		}

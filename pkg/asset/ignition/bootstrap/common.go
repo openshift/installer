@@ -308,6 +308,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		registry := sysregistriesv2.Registry{}
 		registry.Endpoint.Location = group.Source
 		registry.MirrorByDigestOnly = true
+		registry.Blocked = group.SourcePolicy == configv1.NeverContactSource
 		for _, mirror := range group.Mirrors {
 			registry.Mirrors = append(registry.Mirrors, sysregistriesv2.Endpoint{Location: mirror})
 		}
