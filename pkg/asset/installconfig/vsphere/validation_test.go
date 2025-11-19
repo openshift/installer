@@ -220,10 +220,13 @@ func setupTagAttachmentTest(ctx context.Context, restClient *rest.Client, finder
 // simulatorHelper starts the govmomi simulator
 // returning the simulator.Server so that we can defer closing later and
 // shutdown the simulator to change versions.
-func simulatorHelper(t *testing.T, setVersionToSupported bool) (*validationContext, *simulator.Server, *rest.Client, error) {
+func simulatorHelper(t *testing.T, vs *mock.VSphereSimulator) (*validationContext, *simulator.Server, *rest.Client, error) {
 	t.Helper()
 
-	server, err := mock.StartSimulator(setVersionToSupported)
+	if vs == nil {
+		vs = mock.NewSimulator("8.0.2", "8.0.2", 24321653, 23825572)
+	}
+	server, err := vs.StartSimulator()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -325,7 +328,7 @@ func setupHostGroup(ctx context.Context, finder Finder, failureDomain *vsphere.F
 }
 
 func TestValidateFailureDomains(t *testing.T) {
-	validationCtx, server, restClient, err := simulatorHelper(t, true)
+	validationCtx, server, restClient, err := simulatorHelper(t, nil)
 	if err != nil {
 		t.Error(err)
 		return
@@ -521,28 +524,79 @@ func TestValidateFailureDomains(t *testing.T) {
 
 func Test_validateVCenterVersion(t *testing.T) {
 	tests := []struct {
-		name                  string
-		setVersionToSupported bool
-		fldPath               *field.Path
-		expectErr             string
+		name             string
+		VSphereSimulator *mock.VSphereSimulator
+		fldPath          *field.Path
+		expectErr        string
 	}{
 		{
-			name:                  "valid vcenter version",
-			setVersionToSupported: true,
-			fldPath:               field.NewPath("platform").Child("vsphere").Child("vcenters"),
-			expectErr:             ``,
+			name: "valid vcenter version",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "8.0.0",
+				VCenterBuild:   20519528,
+				EsxiVersion:    "8.0.0",
+				EsxiBuild:      20519528,
+			},
+			fldPath:   field.NewPath("platform").Child("vsphere").Child("vcenters"),
+			expectErr: ``,
 		},
 		{
-			name:                  "unsupported vcenter version",
-			setVersionToSupported: false,
-			fldPath:               field.NewPath("platform").Child("vsphere").Child("vcenters"),
-			expectErr:             `platform.vsphere.vcenters: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. Current vCenter version: 6.5.0, build: 5973321`,
+			name: "vcf 9 is supported",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "9.0.0",
+				VCenterBuild:   24755230,
+				// https://github.com/vmware/govmomi/blob/release-0.52/vim25/types/esxi_version.go
+				// is not up-to-date with versions
+				EsxiVersion: "8.0.2",
+				EsxiBuild:   24859861,
+			},
+			fldPath:   field.NewPath("platform").Child("vsphere").Child("vcenters"),
+			expectErr: ``,
+		},
+		{
+			name: "vsphere 7 eol but csi support",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "7.0.2",
+				// vCenter Server 7.0 Update 2a
+				VCenterBuild: 17920168,
+				EsxiVersion:  "7.0.2",
+				// ESXi 7.0.2 EP2
+				EsxiBuild: 18538813,
+			},
+			fldPath:   field.NewPath("platform").Child("vsphere").Child("vcenters"),
+			expectErr: ``,
+		},
+		{
+			name: "vsphere 7 eol but no csi support",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "7.0.1",
+				// vCenter Server 7.0 Update 1d
+				VCenterBuild: 17491160,
+				EsxiVersion:  "7.0.1",
+				// ESXi 7.0.2 EP2
+				EsxiBuild: 18538813,
+			},
+			fldPath:   field.NewPath("platform").Child("vsphere").Child("vcenters"),
+			expectErr: `platform.vsphere.vcenters: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. Current vCenter version: 7.0.1, build: 17491160`,
+		},
+		{
+			name: "vsphere 6 eol",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "6.7",
+				// vCenter Server 6.7 Update 3w
+				VCenterBuild: 24337536,
+				EsxiVersion:  "6.7",
+				// ESXi 6.7 P08
+				EsxiBuild: 20497097,
+			},
+			fldPath:   field.NewPath("platform").Child("vsphere").Child("vcenters"),
+			expectErr: `platform.vsphere.vcenters: Required value: Unsupported version of vSphere. Current vCenter version: 6.7, build: 24337536`,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			validationCtx, server, _, err := simulatorHelper(t, test.setVersionToSupported)
+			validationCtx, server, _, err := simulatorHelper(t, test.VSphereSimulator)
 
 			if err != nil {
 				t.Error(err)
@@ -566,34 +620,77 @@ func Test_validateESXiVersion(t *testing.T) {
 	platform := validMultiVCenterPlatform()
 
 	tests := []struct {
-		name                  string
-		setVersionToSupported bool
-		computeClusterPath    string
-		expectErr             string
+		name               string
+		VSphereSimulator   *mock.VSphereSimulator
+		computeClusterPath string
+		expectErr          string
 	}{
 		{
-			name:                  "valid esxi version",
-			setVersionToSupported: true,
-			computeClusterPath:    platform.FailureDomains[0].Topology.ComputeCluster,
-			expectErr:             ``,
+			name: "valid esxi version",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "8.0.0",
+				VCenterBuild:   20519528,
+				EsxiVersion:    "8.0.0",
+				EsxiBuild:      20519528,
+			},
+			computeClusterPath: platform.FailureDomains[0].Topology.ComputeCluster,
+			expectErr:          ``,
 		},
 		{
-			name:                  "unsupported esxi version",
-			setVersionToSupported: false,
-			computeClusterPath:    platform.FailureDomains[0].Topology.ComputeCluster,
-			expectErr:             `[platform.vsphere.failureDomains.topology.computeCluster: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H0 is version: 6.5.0 and build: 5969303, platform.vsphere.failureDomains.topology.computeCluster: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H1 is version: 6.5.0 and build: 5969303, platform.vsphere.failureDomains.topology.computeCluster: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H2 is version: 6.5.0 and build: 5969303]`,
+			name: "unsupported esxi version",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "6.7",
+				// vCenter Server 6.7 Update 3w
+				VCenterBuild: 24337536,
+				EsxiVersion:  "6.7",
+				// ESXi 6.7 P08
+				EsxiBuild: 20497097,
+			},
+			computeClusterPath: platform.FailureDomains[0].Topology.ComputeCluster,
+			expectErr:          `[platform.vsphere: Required value: Unsupported or untested version of vSphere.  The ESXi host: DC0_C0_H0 is version: 6.7 and build: 20497097, platform.vsphere: Required value: Unsupported or untested version of vSphere.  The ESXi host: DC0_C0_H1 is version: 6.7 and build: 20497097, platform.vsphere: Required value: Unsupported or untested version of vSphere.  The ESXi host: DC0_C0_H2 is version: 6.7 and build: 20497097, platform.vsphere: Required value: Unsupported or untested version of vSphere.  The ESXi host: DC0_C0_H3 is version: 6.7 and build: 20497097, platform.vsphere: Required value: Unsupported or untested version of vSphere.  The ESXi host: DC0_C0_H4 is version: 6.7 and build: 20497097, platform.vsphere: Required value: Unsupported or untested version of vSphere.  The ESXi host: DC0_C0_H5 is version: 6.7 and build: 20497097]`,
 		},
 		{
-			name:                  "computeCluster not found",
-			setVersionToSupported: true,
-			computeClusterPath:    "/DC0/host/invalid-cluster",
-			expectErr:             `platform.vsphere.failureDomains.topology.computeCluster: Invalid value: "/DC0/host/invalid-cluster": cluster '/DC0/host/invalid-cluster' not found`,
+			name: "vsphere 7 eol but csi support",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "7.0.2",
+				// vCenter Server 7.0 Update 2a
+				VCenterBuild: 17920168,
+				EsxiVersion:  "7.0.2",
+				// ESXi 7.0.2 EP2
+				EsxiBuild: 18538813,
+			},
+			computeClusterPath: platform.FailureDomains[0].Topology.ComputeCluster,
+			expectErr:          ``,
+		},
+		{
+			name: "vsphere 7 eol but no csi support",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "7.0.2",
+				// vCenter Server 7.0 Update 2a
+				VCenterBuild: 17920168,
+				EsxiVersion:  "7.0.1",
+				// ESXi 7.0.2 EP2
+				EsxiBuild: 16850804,
+			},
+			computeClusterPath: platform.FailureDomains[0].Topology.ComputeCluster,
+			expectErr:          `[platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H0 is version: 7.0.1 and build: 16850804, platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H1 is version: 7.0.1 and build: 16850804, platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H2 is version: 7.0.1 and build: 16850804, platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H3 is version: 7.0.1 and build: 16850804, platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H4 is version: 7.0.1 and build: 16850804, platform.vsphere: Required value: The vSphere storage driver requires a minimum of vSphere 7 Update 2. The ESXi host: DC0_C0_H5 is version: 7.0.1 and build: 16850804]`,
+		},
+		{
+			name: "computeCluster not found",
+			VSphereSimulator: &mock.VSphereSimulator{
+				VCenterVersion: "6.5.0",
+				VCenterBuild:   5973321,
+				EsxiVersion:    "6.5.0",
+				EsxiBuild:      5973321,
+			},
+			computeClusterPath: "/DC0/host/invalid-cluster",
+			expectErr:          `platform.vsphere.failureDomains.topology.computeCluster: Invalid value: "/DC0/host/invalid-cluster": cluster '/DC0/host/invalid-cluster' not found`,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			validationCtx, server, _, err := simulatorHelper(t, test.setVersionToSupported)
+			validationCtx, server, _, err := simulatorHelper(t, test.VSphereSimulator)
 
 			if err != nil {
 				t.Error(err)
