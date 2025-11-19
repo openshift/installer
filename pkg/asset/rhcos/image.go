@@ -150,9 +150,11 @@ func osImage(ctx context.Context, ic *installconfig.InstallConfig, machinePool *
 			return "", fmt.Errorf("%s: No azure build found", streamArchPrefix)
 		}
 		azi := ext.AzureDisk.URL
+		azMP := machinePool.Platform.Azure
+		confidentialVM := azMP != nil && azMP.Settings != nil && azMP.Settings.SecurityType != ""
 		if mkt := ext.Marketplace; mkt == nil || mkt.Azure == nil || mkt.Azure.NoPurchasePlan == nil || mkt.Azure.NoPurchasePlan.Gen2 == nil {
 			logrus.Warnf("%s: No default Azure marketplace image was found in stream", streamArchPrefix)
-		} else {
+		} else if !confidentialVM { // Marketplace images don't suppot confidential VMs, so stick with managed image.
 			gen, err := getHyperVGeneration(ic.Azure, machinePool.Name)
 			if err != nil {
 				return "", fmt.Errorf("failed to get hyperVGeneration: %w", err)
