@@ -381,7 +381,7 @@
               ],
               "parameters": {
                 "name": {
-                  "description": "The resource name of the quota limit. An example name would be: `projects/123/services/serviceusage.googleapis.com/quotas/metrics/serviceusage.googleapis.com%2Fmutate_requests`",
+                  "description": "The resource name of the quota. An example name would be: `projects/123/services/serviceusage.googleapis.com/consumerQuotaMetrics/serviceusage.googleapis.com%2Fmutate_requests`",
                   "location": "path",
                   "pattern": "^[^/]+/[^/]+/services/[^/]+/consumerQuotaMetrics/[^/]+$",
                   "required": true,
@@ -964,7 +964,7 @@
       }
     }
   },
-  "revision": "20241205",
+  "revision": "20250919",
   "rootUrl": "https://serviceusage.googleapis.com/",
   "schemas": {
     "AddEnableRulesMetadata": {
@@ -1040,12 +1040,14 @@
           "enum": [
             "ANALYSIS_TYPE_UNSPECIFIED",
             "ANALYSIS_TYPE_DEPENDENCY",
-            "ANALYSIS_TYPE_RESOURCE_USAGE"
+            "ANALYSIS_TYPE_RESOURCE_USAGE",
+            "ANALYSIS_TYPE_RESOURCE_EXISTENCE"
           ],
           "enumDescriptions": [
             "Unspecified analysis type. Do not use.",
             "The analysis of service dependencies.",
-            "The analysis of service resource usage."
+            "The analysis of service resource usage.",
+            "The analysis of service resource existence."
           ],
           "readOnly": true,
           "type": "string"
@@ -1104,9 +1106,13 @@
       "type": "object"
     },
     "Api": {
-      "description": "Api is a light-weight descriptor for an API Interface. Interfaces are also described as \"protocol buffer services\" in some contexts, such as by the \"service\" keyword in a .proto file, but they are different from API Services, which represent a concrete implementation of an interface as opposed to simply a description of methods and bindings. They are also sometimes simply referred to as \"APIs\" in other contexts, such as the name of this message itself. See https://cloud.google.com/apis/design/glossary for detailed terminology.",
+      "description": "Api is a light-weight descriptor for an API Interface. Interfaces are also described as \"protocol buffer services\" in some contexts, such as by the \"service\" keyword in a .proto file, but they are different from API Services, which represent a concrete implementation of an interface as opposed to simply a description of methods and bindings. They are also sometimes simply referred to as \"APIs\" in other contexts, such as the name of this message itself. See https://cloud.google.com/apis/design/glossary for detailed terminology. New usages of this message as an alternative to ServiceDescriptorProto are strongly discouraged. This message does not reliability preserve all information necessary to model the schema and preserve semantics. Instead make use of FileDescriptorSet which preserves the necessary information.",
       "id": "Api",
       "properties": {
+        "edition": {
+          "description": "The source edition string, only valid when syntax is SYNTAX_EDITIONS.",
+          "type": "string"
+        },
         "methods": {
           "description": "The methods of this interface, in unspecified order.",
           "items": {
@@ -1153,6 +1159,25 @@
         "version": {
           "description": "A version string for this interface. If specified, must have the form `major-version.minor-version`, as in `1.10`. If the minor version is omitted, it defaults to zero. If the entire version field is empty, the major version is derived from the package name, as outlined below. If the field is not empty, the version in the package name will be verified to be consistent with what is provided here. The versioning schema uses [semantic versioning](http://semver.org) where the major version number indicates a breaking change and the minor version an additive, non-breaking change. Both version numbers are signals to users what to expect from different versions, and should be carefully chosen based on the product plan. The major version is also reflected in the package name of the interface, which must end in `v`, as in `google.feature.v1`. For major versions 0 and 1, the suffix can be omitted. Zero major versions must only be used for experimental, non-GA interfaces. ",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Aspect": {
+      "description": "Aspect represents Generic aspect. It is used to configure an aspect without making direct changes to service.proto",
+      "id": "Aspect",
+      "properties": {
+        "kind": {
+          "description": "The type of this aspect configuration.",
+          "type": "string"
+        },
+        "spec": {
+          "additionalProperties": {
+            "description": "Properties of the object.",
+            "type": "any"
+          },
+          "description": "Content of the configuration. The underlying schema should be defined by Aspect owners as protobuf message under `google/api/configaspects/proto`.",
+          "type": "object"
         }
       },
       "type": "object"
@@ -1288,6 +1313,10 @@
           "description": "The JWT audience is used when generating a JWT ID token for the backend. This ID token will be added in the HTTP \"authorization\" header, and sent to the backend.",
           "type": "string"
         },
+        "loadBalancingPolicy": {
+          "description": "The load balancing policy used for connection to the application backend. Defined as an arbitrary string to accomondate custom load balancing policies supported by the underlying channel, but suggest most users use one of the standard policies, such as the default, \"RoundRobin\".",
+          "type": "string"
+        },
         "minDeadline": {
           "deprecated": true,
           "description": "Deprecated, do not use.",
@@ -1307,6 +1336,7 @@
           "type": "object"
         },
         "pathTranslation": {
+          "description": "no-lint",
           "enum": [
             "PATH_TRANSLATION_UNSPECIFIED",
             "CONSTANT_ADDRESS",
@@ -1389,6 +1419,101 @@
             "$ref": "GoogleApiServiceusageV1Service"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "BatchingConfigProto": {
+      "description": "`BatchingConfigProto` defines the batching configuration for an API method.",
+      "id": "BatchingConfigProto",
+      "properties": {
+        "batchDescriptor": {
+          "$ref": "BatchingDescriptorProto",
+          "description": "The request and response fields used in batching."
+        },
+        "thresholds": {
+          "$ref": "BatchingSettingsProto",
+          "description": "The thresholds which trigger a batched request to be sent."
+        }
+      },
+      "type": "object"
+    },
+    "BatchingDescriptorProto": {
+      "description": "`BatchingDescriptorProto` specifies the fields of the request message to be used for batching, and, optionally, the fields of the response message to be used for demultiplexing.",
+      "id": "BatchingDescriptorProto",
+      "properties": {
+        "batchedField": {
+          "description": "The repeated field in the request message to be aggregated by batching.",
+          "type": "string"
+        },
+        "discriminatorFields": {
+          "description": "A list of the fields in the request message. Two requests will be batched together only if the values of every field specified in `request_discriminator_fields` is equal between the two requests.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "subresponseField": {
+          "description": "Optional. When present, indicates the field in the response message to be used to demultiplex the response into multiple response messages, in correspondence with the multiple request messages originally batched together.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BatchingSettingsProto": {
+      "description": "`BatchingSettingsProto` specifies a set of batching thresholds, each of which acts as a trigger to send a batch of messages as a request. At least one threshold must be positive nonzero.",
+      "id": "BatchingSettingsProto",
+      "properties": {
+        "delayThreshold": {
+          "description": "The duration after which a batch should be sent, starting from the addition of the first message to that batch.",
+          "format": "google-duration",
+          "type": "string"
+        },
+        "elementCountLimit": {
+          "description": "The maximum number of elements collected in a batch that could be accepted by server.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "elementCountThreshold": {
+          "description": "The number of elements of a field collected into a batch which, if exceeded, causes the batch to be sent.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "flowControlByteLimit": {
+          "description": "The maximum size of data allowed by flow control.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "flowControlElementLimit": {
+          "description": "The maximum number of elements allowed by flow control.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "flowControlLimitExceededBehavior": {
+          "description": "The behavior to take when the flow control limit is exceeded.",
+          "enum": [
+            "UNSET_BEHAVIOR",
+            "THROW_EXCEPTION",
+            "BLOCK",
+            "IGNORE"
+          ],
+          "enumDescriptions": [
+            "Default behavior, system-defined.",
+            "Stop operation, raise error.",
+            "Pause operation until limit clears.",
+            "Continue operation, disregard limit."
+          ],
+          "type": "string"
+        },
+        "requestByteLimit": {
+          "description": "The maximum size of the request that could be accepted by server.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "requestByteThreshold": {
+          "description": "The aggregated size of the batched field which, if exceeded, causes the batch to be sent. This size is computed by aggregating the sizes of the request field to be batched, not of the entire request message.",
+          "format": "int64",
+          "type": "string"
         }
       },
       "type": "object"
@@ -1642,6 +1767,31 @@
       },
       "type": "object"
     },
+    "ContentSecurity": {
+      "description": "ContentSecurity defines the content security related fields of a MCP policy.",
+      "id": "ContentSecurity",
+      "properties": {
+        "contentSecurityProviders": {
+          "description": "List of content security providers that are enabled for content scanning.",
+          "items": {
+            "$ref": "ContentSecurityProvider"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ContentSecurityProvider": {
+      "description": "ContentSecurityProvider contains the name of content security provider.",
+      "id": "ContentSecurityProvider",
+      "properties": {
+        "name": {
+          "description": "Name of security service for content scanning, such as Google Cloud Model Armor or supported third-party ISV solutions. If it is Google 1P service, the name should be prefixed with `services/`. If it is a 3P service, the format needs to be documented. The currently supported values are: - `services/modelarmor.googleapis.com` for Google Cloud Model Armor.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Context": {
       "description": "`Context` defines which contexts an API requests. Example: context: rules: - selector: \"*\" requested: - google.rpc.context.ProjectContext - google.rpc.context.OriginContext The above specifies that all methods in the API request `google.rpc.context.ProjectContext` and `google.rpc.context.OriginContext`. Available context types are defined in package `google.rpc.context`. This also provides mechanism to allowlist any protobuf message extension that can be sent in grpc metadata using “x-goog-ext--bin” and “x-goog-ext--jspb” format. For example, list any service specific protobuf types that can appear in grpc metadata as follows in your yaml file: Example: context: rules: - selector: \"google.example.library.v1.LibraryService.CreateBook\" allowed_request_extensions: - google.foo.v1.NewExtension allowed_response_extensions: - google.foo.v1.NewExtension You can also specify extension ID instead of fully qualified extension name here.",
       "id": "Context",
@@ -1835,7 +1985,7 @@
           "type": "array"
         },
         "sectionOverrides": {
-          "description": "Specifies section and content to override boilerplate content provided by go/api-docgen. Currently overrides following sections: 1. rest.service.client_libraries",
+          "description": "Specifies section and content to override the boilerplate content. Currently overrides following sections: 1. rest.service.client_libraries",
           "items": {
             "$ref": "Page"
           },
@@ -1865,7 +2015,7 @@
           "type": "string"
         },
         "disableReplacementWords": {
-          "description": "String of comma or space separated case-sensitive words for which method/field name replacement will be disabled by go/api-docgen.",
+          "description": "String of comma or space separated case-sensitive words for which method/field name replacement will be disabled.",
           "type": "string"
         },
         "selector": {
@@ -2032,7 +2182,7 @@
       "type": "object"
     },
     "Enum": {
-      "description": "Enum type definition.",
+      "description": "Enum type definition. New usages of this message as an alternative to EnumDescriptorProto are strongly discouraged. This message does not reliability preserve all information necessary to model the schema and preserve semantics. Instead make use of FileDescriptorSet which preserves the necessary information.",
       "id": "Enum",
       "properties": {
         "edition": {
@@ -2079,7 +2229,7 @@
       "type": "object"
     },
     "EnumValue": {
-      "description": "Enum value definition.",
+      "description": "Enum value definition. New usages of this message as an alternative to EnumValueDescriptorProto are strongly discouraged. This message does not reliability preserve all information necessary to model the schema and preserve semantics. Instead make use of FileDescriptorSet which preserves the necessary information.",
       "id": "EnumValue",
       "properties": {
         "name": {
@@ -2112,12 +2262,16 @@
         "restAsyncIoEnabled": {
           "description": "Enables generation of asynchronous REST clients if `rest` transport is enabled. By default, asynchronous REST clients will not be generated. This feature will be enabled by default 1 month after launching the feature in preview packages.",
           "type": "boolean"
+        },
+        "unversionedPackageDisabled": {
+          "description": "Disables generation of an unversioned Python package for this client library. This means that the module names will need to be versioned in import statements. For example `import google.cloud.library_v2` instead of `import google.cloud.library`.",
+          "type": "boolean"
         }
       },
       "type": "object"
     },
     "Field": {
-      "description": "A single field of a message type.",
+      "description": "A single field of a message type. New usages of this message as an alternative to FieldDescriptorProto are strongly discouraged. This message does not reliability preserve all information necessary to model the schema and preserve semantics. Instead make use of FileDescriptorSet which preserves the necessary information.",
       "id": "Field",
       "properties": {
         "cardinality": {
@@ -2282,7 +2436,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Map of service names to renamed services. Keys are the package relative service names and values are the name to be used for the service client and call options. publishing: go_settings: renamed_services: Publisher: TopicAdmin",
+          "description": "Map of service names to renamed services. Keys are the package relative service names and values are the name to be used for the service client and call options. Example: publishing: go_settings: renamed_services: Publisher: TopicAdmin",
           "type": "object"
         }
       },
@@ -2296,6 +2450,13 @@
           "description": "A list of API interfaces exported by this service. Only the `name` field of the google.protobuf.Api needs to be provided by the configuration author, as the remaining fields will be derived from the IDL during the normalization process. It is an error to specify an API interface here which cannot be resolved against the associated IDL files.",
           "items": {
             "$ref": "Api"
+          },
+          "type": "array"
+        },
+        "aspects": {
+          "description": "Configuration aspects. This is a repeated field to allow multiple aspects to be configured. The kind field in each ConfigAspect specifies the type of aspect. The spec field contains the configuration for that aspect. The schema for the spec field is defined by the backend service owners.",
+          "items": {
+            "$ref": "Aspect"
           },
           "type": "array"
         },
@@ -2640,7 +2801,7 @@
       "description": "A message to group the analysis information.",
       "id": "GoogleApiServiceusageV2betaAnalysis",
       "properties": {
-        "analysis": {
+        "analysisResult": {
           "$ref": "GoogleApiServiceusageV2betaAnalysisResult",
           "description": "Output only. Analysis result of updating a policy.",
           "readOnly": true
@@ -2738,8 +2899,7 @@
           "type": "array"
         },
         "etag": {
-          "description": "Output only. An opaque tag indicating the current version of the policy, used for concurrency control.",
-          "readOnly": true,
+          "description": "An opaque tag indicating the current version of the policy, used for concurrency control.",
           "type": "string"
         },
         "name": {
@@ -2789,6 +2949,11 @@
             "Reserved Blocks (Block n contains codes from 100n to 100(n+1) -1 Block 0 - Special/Admin codes Block 1 - Impact Type of ANALYSIS_TYPE_DEPENDENCY Block 2 - Impact Type of ANALYSIS_TYPE_RESOURCE_USAGE ...",
             "Block 1 - Impact Type of ANALYSIS_TYPE_DEPENDENCY"
           ],
+          "readOnly": true,
+          "type": "string"
+        },
+        "missingDependency": {
+          "description": "Output only. This field will be populated only for the `DEPENDENCY_MISSING_DEPENDENCIES` impact type. Example: `services/compute.googleapis.com`. Impact.detail will be in format : `missing service dependency: {missing_dependency}.`",
           "readOnly": true,
           "type": "string"
         }
@@ -2882,13 +3047,19 @@
           "description": "Output only. The type of impact.",
           "enum": [
             "IMPACT_TYPE_UNSPECIFIED",
-            "DEPENDENCY_MISSING_DEPENDENCIES"
+            "DEPENDENCY_MISSING_DEPENDENCIES",
+            "RESOURCE_EXISTENCE_PROJECT"
           ],
           "enumDescriptions": [
-            "Reserved Blocks (Block n contains codes from 100n to 100(n+1) -1 Block 0 - Special/Admin codes Block 1 - Impact Type of ANALYSIS_TYPE_DEPENDENCY Block 2 - Impact Type of ANALYSIS_TYPE_RESOURCE_USAGE ...",
-            "Block 1 - Impact Type of ANALYSIS_TYPE_DEPENDENCY"
+            "Reserved Blocks (Block n contains codes from 100n to 100(n+1) -1 Block 0 - Special/Admin codes Block 1 - Impact Type of ANALYSIS_TYPE_DEPENDENCY Block 2 - Impact Type of ANALYSIS_TYPE_RESOURCE_USAGE Block 3 - Impact Type of ANALYSIS_TYPE_RESOURCE_EXISTENCE ...",
+            "Block 1 - Impact Type of ANALYSIS_TYPE_DEPENDENCY",
+            "Block 3 - Impact Type of ANALYSIS_TYPE_RESOURCE_EXISTENCE"
           ],
           "readOnly": true,
+          "type": "string"
+        },
+        "parent": {
+          "description": "The parent resource that the analysis is based on and the service name that the analysis is for. Example: `projects/100/services/compute.googleapis.com`, folders/101/services/compute.googleapis.com` and `organizations/102/services/compute.googleapis.com`. Usually, the parent resource here is same as the parent resource of the analyzed policy. However, for some analysis types, the parent can be different. For example, for resource existence analysis, if the parent resource of the analyzed policy is a folder or an organization, the parent resource here can still be the project that contains the resources.",
           "type": "string"
         }
       },
@@ -3027,7 +3198,7 @@
           "description": "Some settings."
         },
         "libraryPackage": {
-          "description": "The package name to use in Java. Clobbers the java_package option set in the protobuf. This should be used **only** by APIs who have already set the language_settings.java.package_name\" field in gapic.yaml. API teams should use the protobuf java_package option where possible. Example of a YAML configuration:: publishing: java_settings: library_package: com.google.cloud.pubsub.v1",
+          "description": "The package name to use in Java. Clobbers the java_package option set in the protobuf. This should be used **only** by APIs who have already set the language_settings.java.package_name\" field in gapic.yaml. API teams should use the protobuf java_package option where possible. Example of a YAML configuration:: publishing: library_settings: java_settings: library_package: com.google.cloud.pubsub.v1",
           "type": "string"
         },
         "serviceClassNames": {
@@ -3274,10 +3445,79 @@
       },
       "type": "object"
     },
+    "McpEnableRule": {
+      "description": "McpEnableRule contains MCP enablement related rules.",
+      "id": "McpEnableRule",
+      "properties": {
+        "mcpServices": {
+          "description": "List of enabled MCP services.",
+          "items": {
+            "$ref": "McpService"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "McpPolicy": {
+      "description": "MCP Consumer Policy is a set of rules that define MCP related policy for a cloud resource hierarchy.",
+      "id": "McpPolicy",
+      "properties": {
+        "contentSecurity": {
+          "$ref": "ContentSecurity",
+          "description": "ContentSecurity contains the content security related fields of a MCP policy."
+        },
+        "createTime": {
+          "description": "Output only. The time the policy was created. For singleton policies (such as the `default` policy), this is the first touch of the policy.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "etag": {
+          "description": "An opaque tag indicating the current version of the policy, used for concurrency control.",
+          "type": "string"
+        },
+        "mcpEnableRules": {
+          "description": "McpEnableRules contains MCP enablement related rules.",
+          "items": {
+            "$ref": "McpEnableRule"
+          },
+          "type": "array"
+        },
+        "name": {
+          "description": "Output only. The resource name of the policy. Only the `default` policy is supported. We allow the following formats: `projects/{PROJECT_NUMBER}/mcpPolicies/default`, `projects/{PROJECT_ID}/mcpPolicies/default`, `folders/{FOLDER_ID}/mcpPolicies/default`, `organizations/{ORG_ID}/mcpPolicies/default`.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "updateTime": {
+          "description": "Output only. The time the policy was last updated.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "McpService": {
+      "description": "McpService contains the service names that are enabled for MCP.",
+      "id": "McpService",
+      "properties": {
+        "service": {
+          "description": "The names of the services that are enabled for MCP. Example: `services/library-example.googleapis.com`",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Method": {
-      "description": "Method represents a method of an API interface.",
+      "description": "Method represents a method of an API interface. New usages of this message as an alternative to MethodDescriptorProto are strongly discouraged. This message does not reliability preserve all information necessary to model the schema and preserve semantics. Instead make use of FileDescriptorSet which preserves the necessary information.",
       "id": "Method",
       "properties": {
+        "edition": {
+          "deprecated": true,
+          "description": "The source edition string, only valid when syntax is SYNTAX_EDITIONS. This field should be ignored, instead the edition should be inherited from Api. This is similar to Field and EnumValue.",
+          "type": "string"
+        },
         "name": {
           "description": "The simple name of this method.",
           "type": "string"
@@ -3306,7 +3546,8 @@
           "type": "string"
         },
         "syntax": {
-          "description": "The source syntax of this method.",
+          "deprecated": true,
+          "description": "The source syntax of this method. This field should be ignored, instead the syntax should be inherited from Api. This is similar to Field and EnumValue.",
           "enum": [
             "SYNTAX_PROTO2",
             "SYNTAX_PROTO3",
@@ -3350,6 +3591,10 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "batching": {
+          "$ref": "BatchingConfigProto",
+          "description": "Batching configuration for an API method in client libraries. Example of a YAML configuration: publishing: method_settings: - selector: google.example.v1.ExampleService.BatchCreateExample batching: element_count_threshold: 1000 request_byte_threshold: 100000000 delay_threshold_millis: 10"
         },
         "longRunning": {
           "$ref": "LongRunning",
@@ -3729,7 +3974,7 @@
       "type": "object"
     },
     "Option": {
-      "description": "A protocol buffer option, which can be attached to a message, field, enumeration, etc.",
+      "description": "A protocol buffer option, which can be attached to a message, field, enumeration, etc. New usages of this message as an alternative to FileOptions, MessageOptions, FieldOptions, EnumOptions, EnumValueOptions, ServiceOptions, or MethodOptions are strongly discouraged.",
       "id": "Option",
       "properties": {
         "name": {
@@ -3766,7 +4011,7 @@
       "id": "Page",
       "properties": {
         "content": {
-          "description": "The Markdown content of the page. You can use (== include {path} ==) to include content from a Markdown file. The content can be used to produce the documentation page such as HTML format page.",
+          "description": "The Markdown content of the page. You can use ```(== include {path} ==)``` to include content from a Markdown file. The content can be used to produce the documentation page such as HTML format page.",
           "type": "string"
         },
         "name": {
@@ -3790,6 +4035,10 @@
         "common": {
           "$ref": "CommonLanguageSettings",
           "description": "Some settings."
+        },
+        "libraryPackage": {
+          "description": "The package name to use in Php. Clobbers the php_namespace option set in the protobuf. This should be used **only** by APIs who have already set the language_settings.php.package_name\" field in gapic.yaml. API teams should use the protobuf php_namespace option where possible. Example of a YAML configuration:: publishing: library_settings: php_settings: library_package: Google\\Cloud\\PubSub\\V1",
+          "type": "string"
         }
       },
       "type": "object"
@@ -4129,6 +4378,10 @@
       "description": "This message is used to configure the generation of a subset of the RPCs in a service for client libraries.",
       "id": "SelectiveGapicGeneration",
       "properties": {
+        "generateOmittedAsInternal": {
+          "description": "Setting this to true indicates to the client generators that methods that would be excluded from the generation should instead be generated in a way that indicates these methods should not be consumed by end users. How this is expressed is up to individual language implementations to decide. Some examples may be: added annotations, obfuscated identifiers, or other language idiomatic patterns.",
+          "type": "boolean"
+        },
         "methods": {
           "description": "An allowlist of the fully qualified names of RPCs that should be included on public client surfaces.",
           "items": {
@@ -4351,7 +4604,7 @@
       "type": "object"
     },
     "Type": {
-      "description": "A protocol buffer message type.",
+      "description": "A protocol buffer message type. New usages of this message as an alternative to DescriptorProto are strongly discouraged. This message does not reliability preserve all information necessary to model the schema and preserve semantics. Instead make use of FileDescriptorSet which preserves the necessary information.",
       "id": "Type",
       "properties": {
         "edition": {
@@ -4416,6 +4669,12 @@
       "properties": {},
       "type": "object"
     },
+    "UpdateMcpPolicyMetadata": {
+      "description": "Metadata for the `UpdateMcpPolicy` method.",
+      "id": "UpdateMcpPolicyMetadata",
+      "properties": {},
+      "type": "object"
+    },
     "Usage": {
       "description": "Configuration controlling usage of a service.",
       "id": "Usage",
@@ -4442,11 +4701,11 @@
       "type": "object"
     },
     "UsageRule": {
-      "description": "Usage configuration rules for the service. NOTE: Under development. Use this rule to configure unregistered calls for the service. Unregistered calls are calls that do not contain consumer project identity. (Example: calls that do not contain an API key). By default, API methods do not allow unregistered calls, and each method call must be identified by a consumer project identity. Use this rule to allow/disallow unregistered calls. Example of an API that wants to allow unregistered calls for entire service. usage: rules: - selector: \"*\" allow_unregistered_calls: true Example of a method that wants to allow unregistered calls. usage: rules: - selector: \"google.example.library.v1.LibraryService.CreateBook\" allow_unregistered_calls: true",
+      "description": "Usage configuration rules for the service.",
       "id": "UsageRule",
       "properties": {
         "allowUnregisteredCalls": {
-          "description": "If true, the selected method allows unregistered calls, e.g. calls that don't identify any user or application.",
+          "description": " Use this rule to configure unregistered calls for the service. Unregistered calls are calls that do not contain consumer project identity. (Example: calls that do not contain an API key). WARNING: By default, API methods do not allow unregistered calls, and each method call must be identified by a consumer project identity.",
           "type": "boolean"
         },
         "selector": {

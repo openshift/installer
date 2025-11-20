@@ -1,0 +1,39 @@
+/*
+Copyright (c) 2024 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of an access request post request.
+struct AccessRequestPostRequest {
+	// Justification of the Access Request.
+	Justification String
+
+	// Support case ID linking to JIRA ticket.
+	SupportCaseId String
+
+	// Internal support case id linking to jira ticket.
+	InternalSupportCaseId String
+
+	// Subscription from which the Access Request belongs to.
+	SubscriptionId String
+
+	// Cluster from which the Access Request belongs to.
+	ClusterId String
+
+	// How long the access will last after it's been approved.
+	Duration String
+
+	// How long the Access Request can be in pending state waiting for a customer decision.
+	Deadline String
+}

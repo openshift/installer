@@ -31,6 +31,9 @@ const (
 	// ExternalAuthConfiguredCondition condition reports whether external auth has beed correctly configured.
 	ExternalAuthConfiguredCondition clusterv1.ConditionType = "ExternalAuthConfigured"
 
+	// ROSARoleConfigReadyCondition condition reports whether the referenced RosaRoleConfig is ready.
+	ROSARoleConfigReadyCondition clusterv1.ConditionType = "ROSARoleConfigReady"
+
 	// ReconciliationFailedReason used to report reconciliation failures.
 	ReconciliationFailedReason = "ReconciliationFailed"
 
@@ -39,4 +42,10 @@ const (
 
 	// ROSAControlPlaneInvalidConfigurationReason used to report invalid user input.
 	ROSAControlPlaneInvalidConfigurationReason = "InvalidConfiguration"
+
+	// ROSARoleConfigNotReadyReason used to report when referenced RosaRoleConfig is not ready.
+	ROSARoleConfigNotReadyReason = "ROSARoleConfigNotReady"
+
+	// ROSARoleConfigNotFoundReason used to report when referenced RosaRoleConfig is not found.
+	ROSARoleConfigNotFoundReason = "ROSARoleConfigNotFound"
 )

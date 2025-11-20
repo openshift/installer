@@ -10,17 +10,23 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Enables EBS encryption by default for your account in the current Region. After
-// you enable encryption by default, the EBS volumes that you create are always
-// encrypted, either using the default KMS key or the KMS key that you specified
-// when you created each volume. For more information, see Amazon EBS encryption (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html)
-// in the Amazon EBS User Guide. You can specify the default KMS key for encryption
-// by default using ModifyEbsDefaultKmsKeyId or ResetEbsDefaultKmsKeyId . Enabling
-// encryption by default has no effect on the encryption status of your existing
-// volumes. After you enable encryption by default, you can no longer launch
-// instances using instance types that do not support encryption. For more
-// information, see Supported instance types (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption-requirements.html#ebs-encryption_supported_instances)
-// .
+// Enables EBS encryption by default for your account in the current Region.
+//
+// After you enable encryption by default, the EBS volumes that you create are
+// always encrypted, either using the default KMS key or the KMS key that you
+// specified when you created each volume. For more information, see [Amazon EBS encryption]in the Amazon
+// EBS User Guide.
+//
+// You can specify the default KMS key for encryption by default using ModifyEbsDefaultKmsKeyId or ResetEbsDefaultKmsKeyId.
+//
+// Enabling encryption by default has no effect on the encryption status of your
+// existing volumes.
+//
+// After you enable encryption by default, you can no longer launch instances
+// using instance types that do not support encryption. For more information, see [Supported instance types].
+//
+// [Amazon EBS encryption]: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html
+// [Supported instance types]: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption-requirements.html#ebs-encryption_supported_instances
 func (c *Client) EnableEbsEncryptionByDefault(ctx context.Context, params *EnableEbsEncryptionByDefaultInput, optFns ...func(*Options)) (*EnableEbsEncryptionByDefaultOutput, error) {
 	if params == nil {
 		params = &EnableEbsEncryptionByDefaultInput{}
@@ -101,6 +107,9 @@ func (c *Client) addOperationEnableEbsEncryptionByDefaultMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -111,6 +120,15 @@ func (c *Client) addOperationEnableEbsEncryptionByDefaultMiddlewares(stack *midd
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opEnableEbsEncryptionByDefault(options.Region), middleware.Before); err != nil {
@@ -129,6 +147,18 @@ func (c *Client) addOperationEnableEbsEncryptionByDefaultMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

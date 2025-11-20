@@ -19,7 +19,7 @@ package v1beta1
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/service/eks"
+	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -51,16 +51,16 @@ func (s *ControlPlaneLoggingSpec) IsLogEnabled(logName string) bool {
 		return false
 	}
 
-	switch logName {
-	case eks.LogTypeApi:
+	switch ekstypes.LogType(logName) {
+	case ekstypes.LogTypeApi:
 		return s.APIServer
-	case eks.LogTypeAudit:
+	case ekstypes.LogTypeAudit:
 		return s.Audit
-	case eks.LogTypeAuthenticator:
+	case ekstypes.LogTypeAuthenticator:
 		return s.Authenticator
-	case eks.LogTypeControllerManager:
+	case ekstypes.LogTypeControllerManager:
 		return s.ControllerManager
-	case eks.LogTypeScheduler:
+	case ekstypes.LogTypeScheduler:
 		return s.Scheduler
 	default:
 		return false
@@ -141,6 +141,10 @@ type Addon struct {
 	// ServiceAccountRoleArn is the ARN of an IAM role to bind to the addons service account
 	// +optional
 	ServiceAccountRoleArn *string `json:"serviceAccountRoleARN,omitempty"`
+	// PreserveOnDelete indicates that the addon resources should be
+	// preserved in the cluster on delete.
+	// +optional
+	PreserveOnDelete bool `json:"preserveOnDelete,omitempty"`
 }
 
 // AddonResolution defines the method for resolving parameter conflicts.

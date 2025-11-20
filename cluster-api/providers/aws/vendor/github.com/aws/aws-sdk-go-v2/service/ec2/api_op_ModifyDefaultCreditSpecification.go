@@ -15,14 +15,18 @@ import (
 // instances. The default credit option is set at the account level per Amazon Web
 // Services Region, and is specified per instance family. All new burstable
 // performance instances in the account launch using the default credit option.
-// ModifyDefaultCreditSpecification is an asynchronous operation, which works at an
-// Amazon Web Services Region level and modifies the credit option for each
+//
+// ModifyDefaultCreditSpecification is an asynchronous operation, which works at
+// an Amazon Web Services Region level and modifies the credit option for each
 // Availability Zone. All zones in a Region are updated within five minutes. But if
 // instances are launched during this operation, they might not get the new credit
 // option until the zone is updated. To verify whether the update has occurred, you
 // can call GetDefaultCreditSpecification and check DefaultCreditSpecification for
-// updates. For more information, see Burstable performance instances (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances.html)
-// in the Amazon EC2 User Guide.
+// updates.
+//
+// For more information, see [Burstable performance instances] in the Amazon EC2 User Guide.
+//
+// [Burstable performance instances]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances.html
 func (c *Client) ModifyDefaultCreditSpecification(ctx context.Context, params *ModifyDefaultCreditSpecificationInput, optFns ...func(*Options)) (*ModifyDefaultCreditSpecificationOutput, error) {
 	if params == nil {
 		params = &ModifyDefaultCreditSpecificationInput{}
@@ -40,8 +44,9 @@ func (c *Client) ModifyDefaultCreditSpecification(ctx context.Context, params *M
 
 type ModifyDefaultCreditSpecificationInput struct {
 
-	// The credit option for CPU usage of the instance family. Valid Values: standard
-	// | unlimited
+	// The credit option for CPU usage of the instance family.
+	//
+	// Valid Values: standard | unlimited
 	//
 	// This member is required.
 	CpuCredits *string
@@ -51,7 +56,7 @@ type ModifyDefaultCreditSpecificationInput struct {
 	// This member is required.
 	InstanceFamily types.UnlimitedSupportedInstanceFamily
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
@@ -114,6 +119,9 @@ func (c *Client) addOperationModifyDefaultCreditSpecificationMiddlewares(stack *
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -124,6 +132,15 @@ func (c *Client) addOperationModifyDefaultCreditSpecificationMiddlewares(stack *
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyDefaultCreditSpecificationValidationMiddleware(stack); err != nil {
@@ -145,6 +162,18 @@ func (c *Client) addOperationModifyDefaultCreditSpecificationMiddlewares(stack *
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -18,7 +18,9 @@ limitations under the License.
 package cloud
 
 import (
-	awsclient "github.com/aws/aws-sdk-go/aws/client"
+	"time"
+
+	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -31,7 +33,7 @@ import (
 
 // Session represents an AWS session.
 type Session interface {
-	Session() awsclient.ConfigProvider
+	Session() awsv2.Config
 	ServiceLimiter(service string) *throttle.ServiceLimiter
 }
 
@@ -87,6 +89,9 @@ type ClusterScoper interface {
 	PatchObject() error
 	// Close closes the current scope persisting the cluster configuration and status.
 	Close() error
+
+	// MaxWaitDuration returns time waiting for operation.
+	MaxWaitDuration() time.Duration
 }
 
 // SessionMetadata knows how to extract the information for managing AWS sessions for a resource.
@@ -99,4 +104,6 @@ type SessionMetadata interface {
 	InfraCluster() ClusterObject
 	// IdentityRef returns the AWS infrastructure cluster identityRef.
 	IdentityRef() *infrav1.AWSIdentityReference
+	// ControllerName returns the controller name
+	ControllerName() string
 }

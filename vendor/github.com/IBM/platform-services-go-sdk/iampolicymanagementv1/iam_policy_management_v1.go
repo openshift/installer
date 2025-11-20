@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.100.0-2ad7a784-20250212-162551
+ * IBM OpenAPI SDK Code Generator Version: 3.106.0-09823488-20250707-071701
  */
 
 // Package iampolicymanagementv1 : Operations and models for the IamPolicyManagementV1 service
@@ -204,12 +204,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPoliciesWithContext(ctx co
 		return
 	}
 
-	for headerName, headerValue := range listPoliciesOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListPolicies")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListPolicies")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listPoliciesOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -349,12 +349,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreatePolicyWithContext(ctx co
 		return
 	}
 
-	for headerName, headerValue := range createPolicyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreatePolicy")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreatePolicy")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createPolicyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -481,12 +481,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ReplacePolicyWithContext(ctx c
 		return
 	}
 
-	for headerName, headerValue := range replacePolicyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplacePolicy")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplacePolicy")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range replacePolicyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -576,12 +576,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyWithContext(ctx conte
 		return
 	}
 
-	for headerName, headerValue := range getPolicyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetPolicy")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetPolicy")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getPolicyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -646,12 +646,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeletePolicyWithContext(ctx co
 		return
 	}
 
-	for headerName, headerValue := range deletePolicyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeletePolicy")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeletePolicy")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deletePolicyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -706,12 +706,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) UpdatePolicyStateWithContext(c
 		return
 	}
 
-	for headerName, headerValue := range updatePolicyStateOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdatePolicyState")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdatePolicyState")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updatePolicyStateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -784,12 +784,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListRolesWithContext(ctx conte
 		return
 	}
 
-	for headerName, headerValue := range listRolesOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListRoles")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListRoles")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listRolesOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -871,12 +871,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreateRoleWithContext(ctx cont
 		return
 	}
 
-	for headerName, headerValue := range createRoleOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateRole")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateRole")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createRoleOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -970,12 +970,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ReplaceRoleWithContext(ctx con
 		return
 	}
 
-	for headerName, headerValue := range replaceRoleOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplaceRole")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplaceRole")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range replaceRoleOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1059,12 +1059,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetRoleWithContext(ctx context
 		return
 	}
 
-	for headerName, headerValue := range getRoleOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetRole")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetRole")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getRoleOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1128,12 +1128,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeleteRoleWithContext(ctx cont
 		return
 	}
 
-	for headerName, headerValue := range deleteRoleOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteRole")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteRole")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteRoleOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -1187,12 +1187,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListV2PoliciesWithContext(ctx 
 		return
 	}
 
-	for headerName, headerValue := range listV2PoliciesOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListV2Policies")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListV2Policies")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listV2PoliciesOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1308,8 +1308,10 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListV2PoliciesWithContext(ctx 
 //   'dateLessThan', 'dateLessThanOrEquals', 'dateGreaterThan', 'dateGreaterThanOrEquals',
 //   'dateTimeLessThan', 'dateTimeLessThanOrEquals', 'dateTimeGreaterThan', 'dateTimeGreaterThanOrEquals',
 //   'dayOfWeekEquals', 'dayOfWeekAnyOf'
-// ``` The pattern field that matches the rule is required when rule is provided. For the business hour rule example
-// above, the **`pattern`** is **`"time-based-conditions:weekly"`**. For more information, see [Time-based conditions
+// ```
+//
+// The pattern field that matches the rule is required when rule is provided. For the business hour rule example above,
+// the **`pattern`** is **`"time-based-conditions:weekly"`**. For more information, see [Time-based conditions
 // operators](/docs/account?topic=account-iam-condition-properties&interface=ui#policy-condition-properties) and
 // [Limiting access with time-based conditions](/docs/account?topic=account-iam-time-based&interface=ui). If the subject
 // is a locked service-id, the request will fail.
@@ -1406,12 +1408,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreateV2PolicyWithContext(ctx 
 		return
 	}
 
-	for headerName, headerValue := range createV2PolicyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateV2Policy")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateV2Policy")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createV2PolicyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1621,12 +1623,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ReplaceV2PolicyWithContext(ctx
 		return
 	}
 
-	for headerName, headerValue := range replaceV2PolicyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplaceV2Policy")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplaceV2Policy")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range replaceV2PolicyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1722,12 +1724,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetV2PolicyWithContext(ctx con
 		return
 	}
 
-	for headerName, headerValue := range getV2PolicyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetV2Policy")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetV2Policy")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getV2PolicyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1796,12 +1798,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeleteV2PolicyWithContext(ctx 
 		return
 	}
 
-	for headerName, headerValue := range deleteV2PolicyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteV2Policy")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteV2Policy")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteV2PolicyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -1856,12 +1858,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPolicyTemplatesWithContext
 		return
 	}
 
-	for headerName, headerValue := range listPolicyTemplatesOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListPolicyTemplates")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListPolicyTemplates")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listPolicyTemplatesOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1951,12 +1953,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreatePolicyTemplateWithContex
 		return
 	}
 
-	for headerName, headerValue := range createPolicyTemplateOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreatePolicyTemplate")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreatePolicyTemplate")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createPolicyTemplateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2046,12 +2048,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyTemplateWithContext(c
 		return
 	}
 
-	for headerName, headerValue := range getPolicyTemplateOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetPolicyTemplate")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetPolicyTemplate")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getPolicyTemplateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2121,12 +2123,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeletePolicyTemplateWithContex
 		return
 	}
 
-	for headerName, headerValue := range deletePolicyTemplateOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeletePolicyTemplate")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeletePolicyTemplate")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deletePolicyTemplateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -2181,12 +2183,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreatePolicyTemplateVersionWit
 		return
 	}
 
-	for headerName, headerValue := range createPolicyTemplateVersionOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreatePolicyTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreatePolicyTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createPolicyTemplateVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2270,12 +2272,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPolicyTemplateVersionsWith
 		return
 	}
 
-	for headerName, headerValue := range listPolicyTemplateVersionsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListPolicyTemplateVersions")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListPolicyTemplateVersions")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listPolicyTemplateVersionsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2350,12 +2352,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ReplacePolicyTemplateWithConte
 		return
 	}
 
-	for headerName, headerValue := range replacePolicyTemplateOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplacePolicyTemplate")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplacePolicyTemplate")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range replacePolicyTemplateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2445,12 +2447,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeletePolicyTemplateVersionWit
 		return
 	}
 
-	for headerName, headerValue := range deletePolicyTemplateVersionOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeletePolicyTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeletePolicyTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deletePolicyTemplateVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -2505,12 +2507,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyTemplateVersionWithCo
 		return
 	}
 
-	for headerName, headerValue := range getPolicyTemplateVersionOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetPolicyTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetPolicyTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getPolicyTemplateVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2576,12 +2578,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) CommitPolicyTemplateWithContex
 		return
 	}
 
-	for headerName, headerValue := range commitPolicyTemplateOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CommitPolicyTemplate")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CommitPolicyTemplate")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range commitPolicyTemplateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -2635,12 +2637,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPolicyAssignmentsWithConte
 		return
 	}
 
-	for headerName, headerValue := range listPolicyAssignmentsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListPolicyAssignments")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListPolicyAssignments")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listPolicyAssignmentsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2719,12 +2721,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreatePolicyTemplateAssignment
 		return
 	}
 
-	for headerName, headerValue := range createPolicyTemplateAssignmentOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreatePolicyTemplateAssignment")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreatePolicyTemplateAssignment")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createPolicyTemplateAssignmentOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2807,12 +2809,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyAssignmentWithContext
 		return
 	}
 
-	for headerName, headerValue := range getPolicyAssignmentOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetPolicyAssignment")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetPolicyAssignment")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getPolicyAssignmentOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2878,12 +2880,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) UpdatePolicyAssignmentWithCont
 		return
 	}
 
-	for headerName, headerValue := range updatePolicyAssignmentOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdatePolicyAssignment")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdatePolicyAssignment")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updatePolicyAssignmentOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2964,12 +2966,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeletePolicyAssignmentWithCont
 		return
 	}
 
-	for headerName, headerValue := range deletePolicyAssignmentOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeletePolicyAssignment")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeletePolicyAssignment")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deletePolicyAssignmentOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -3023,12 +3025,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetSettingsWithContext(ctx con
 		return
 	}
 
-	for headerName, headerValue := range getSettingsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetSettings")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetSettings")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getSettingsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -3068,13 +3070,13 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetSettingsWithContext(ctx con
 //
 // Update the way identities within an external account are allowed to interact with the requested account by providing:
 // * the `account_id` as a parameter
-// * the external account ID(s) and state for the specific identity in the request body
+// * one or more external account ID(s) and state for the specific identity in the request body
 //
-// External account identity interaction includes the following `identity_types`: `user` (user identities defined as
-// [IBMid's](https://test.cloud.ibm.com/docs/account?topic=account-identity-overview#users-bestpract)), `service_id`
-// (defined as [IAM
-// ServiceIds](https://test.cloud.ibm.com/docs/account?topic=account-identity-overview#serviceid-bestpract)), `service`
-// (defined by a service’s [CRN](https://test.cloud.ibm.com/docs/account?topic=account-crn)). To update an Identity’s
+// External account identity interaction includes the following `identity_types`: `user` (user identities that are
+// defined as [IBMid's](https://cloud.ibm.com/docs/account?topic=account-identity-overview#users-bestpract)),
+// `service_id` (defined as [IAM
+// ServiceIds](https://cloud.ibm.com/docs/account?topic=account-identity-overview#serviceid-bestpract)), `service`
+// (defined by a service’s [CRN](https://cloud.ibm.com/docs/account?topic=account-crn)). To update an Identity’s
 // setting, the `state` and `external_allowed_accounts` fields are required.
 //
 // Different identity states are:
@@ -3082,9 +3084,9 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetSettingsWithContext(ctx con
 // resources.
 // * "limited": An identity type is allowed to access resources in the account provided it has access policies on those
 // resources AND it is associated with either the account the resources are in or one of the allowed accounts. This
-// setting leverages the "external_allowed_accounts" list.
-// * "monitor": Has no direct impact on an Identity’s access. Instead, it creates AT events for access decisions as if
-// the account were in a limited “state”.
+// setting uses the "external_allowed_accounts" list.
+// * "monitor": It has no direct impact on an Identity’s access. Instead, it creates AT events for access decisions as
+// if the account were in a limited “state”.
 //
 // **Note**: The state "enabled" is a special case. In this case, access is given to all accounts and there is no need
 // to specify a particular list. Therefore, when updating "state" to "enabled" for an identity type
@@ -3121,12 +3123,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) UpdateSettingsWithContext(ctx 
 		return
 	}
 
-	for headerName, headerValue := range updateSettingsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdateSettings")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdateSettings")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updateSettingsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -3172,6 +3174,1148 @@ func (iamPolicyManagement *IamPolicyManagementV1) UpdateSettingsWithContext(ctx 
 
 	return
 }
+
+// ListActionControlTemplates : List action control templates by attributes
+// List action control templates and filter by attributes by using query parameters. The following attributes are
+// supported:
+// `account_id`
+// `account_id` is a required query parameter. Only action control templates that have the specified attributes and that
+// the caller has read access to are returned. If the caller does not have read access to any action control templates
+// an empty array is returned.
+func (iamPolicyManagement *IamPolicyManagementV1) ListActionControlTemplates(listActionControlTemplatesOptions *ListActionControlTemplatesOptions) (result *ActionControlTemplateCollection, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.ListActionControlTemplatesWithContext(context.Background(), listActionControlTemplatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListActionControlTemplatesWithContext is an alternate form of the ListActionControlTemplates method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ListActionControlTemplatesWithContext(ctx context.Context, listActionControlTemplatesOptions *ListActionControlTemplatesOptions) (result *ActionControlTemplateCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listActionControlTemplatesOptions, "listActionControlTemplatesOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listActionControlTemplatesOptions, "listActionControlTemplatesOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_templates`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListActionControlTemplates")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listActionControlTemplatesOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if listActionControlTemplatesOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*listActionControlTemplatesOptions.AcceptLanguage))
+	}
+
+	builder.AddQuery("account_id", fmt.Sprint(*listActionControlTemplatesOptions.AccountID))
+	if listActionControlTemplatesOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listActionControlTemplatesOptions.Limit))
+	}
+	if listActionControlTemplatesOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listActionControlTemplatesOptions.Start))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_action_control_templates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlTemplateCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateActionControlTemplate : Create an action control template
+// Create an action control template. Action control templates define a service action control.
+func (iamPolicyManagement *IamPolicyManagementV1) CreateActionControlTemplate(createActionControlTemplateOptions *CreateActionControlTemplateOptions) (result *ActionControlTemplate, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.CreateActionControlTemplateWithContext(context.Background(), createActionControlTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateActionControlTemplateWithContext is an alternate form of the CreateActionControlTemplate method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) CreateActionControlTemplateWithContext(ctx context.Context, createActionControlTemplateOptions *CreateActionControlTemplateOptions) (result *ActionControlTemplate, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createActionControlTemplateOptions, "createActionControlTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createActionControlTemplateOptions, "createActionControlTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_templates`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateActionControlTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createActionControlTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if createActionControlTemplateOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*createActionControlTemplateOptions.AcceptLanguage))
+	}
+
+	body := make(map[string]interface{})
+	if createActionControlTemplateOptions.Name != nil {
+		body["name"] = createActionControlTemplateOptions.Name
+	}
+	if createActionControlTemplateOptions.AccountID != nil {
+		body["account_id"] = createActionControlTemplateOptions.AccountID
+	}
+	if createActionControlTemplateOptions.Description != nil {
+		body["description"] = createActionControlTemplateOptions.Description
+	}
+	if createActionControlTemplateOptions.Committed != nil {
+		body["committed"] = createActionControlTemplateOptions.Committed
+	}
+	if createActionControlTemplateOptions.ActionControl != nil {
+		body["action_control"] = createActionControlTemplateOptions.ActionControl
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_action_control_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlTemplate)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetActionControlTemplate : Retrieve the latest version of an action control template
+// Retrieve the latest version of an action control template by providing an action control template ID.
+func (iamPolicyManagement *IamPolicyManagementV1) GetActionControlTemplate(getActionControlTemplateOptions *GetActionControlTemplateOptions) (result *ActionControlTemplate, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.GetActionControlTemplateWithContext(context.Background(), getActionControlTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetActionControlTemplateWithContext is an alternate form of the GetActionControlTemplate method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) GetActionControlTemplateWithContext(ctx context.Context, getActionControlTemplateOptions *GetActionControlTemplateOptions) (result *ActionControlTemplate, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getActionControlTemplateOptions, "getActionControlTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getActionControlTemplateOptions, "getActionControlTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"action_control_template_id": *getActionControlTemplateOptions.ActionControlTemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_templates/{action_control_template_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetActionControlTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getActionControlTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getActionControlTemplateOptions.State != nil {
+		builder.AddQuery("state", fmt.Sprint(*getActionControlTemplateOptions.State))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_action_control_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlTemplate)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteActionControlTemplate : Delete an action control template
+// Delete an action control template by providing the action control template ID. This deletes all versions of this
+// template. An action control template can't be deleted if any version of the template is assigned to one or more child
+// accounts. You must remove the action control assignments first.
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteActionControlTemplate(deleteActionControlTemplateOptions *DeleteActionControlTemplateOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamPolicyManagement.DeleteActionControlTemplateWithContext(context.Background(), deleteActionControlTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteActionControlTemplateWithContext is an alternate form of the DeleteActionControlTemplate method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteActionControlTemplateWithContext(ctx context.Context, deleteActionControlTemplateOptions *DeleteActionControlTemplateOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteActionControlTemplateOptions, "deleteActionControlTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteActionControlTemplateOptions, "deleteActionControlTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"action_control_template_id": *deleteActionControlTemplateOptions.ActionControlTemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_templates/{action_control_template_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteActionControlTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteActionControlTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamPolicyManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_action_control_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// CreateActionControlTemplateVersion : Create a new action control template version
+// Create a new version of an action control template. Use this if you need to make updates to an action control
+// template that is committed.
+func (iamPolicyManagement *IamPolicyManagementV1) CreateActionControlTemplateVersion(createActionControlTemplateVersionOptions *CreateActionControlTemplateVersionOptions) (result *ActionControlTemplate, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.CreateActionControlTemplateVersionWithContext(context.Background(), createActionControlTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateActionControlTemplateVersionWithContext is an alternate form of the CreateActionControlTemplateVersion method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) CreateActionControlTemplateVersionWithContext(ctx context.Context, createActionControlTemplateVersionOptions *CreateActionControlTemplateVersionOptions) (result *ActionControlTemplate, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createActionControlTemplateVersionOptions, "createActionControlTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createActionControlTemplateVersionOptions, "createActionControlTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"action_control_template_id": *createActionControlTemplateVersionOptions.ActionControlTemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_templates/{action_control_template_id}/versions`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateActionControlTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createActionControlTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createActionControlTemplateVersionOptions.Name != nil {
+		body["name"] = createActionControlTemplateVersionOptions.Name
+	}
+	if createActionControlTemplateVersionOptions.Description != nil {
+		body["description"] = createActionControlTemplateVersionOptions.Description
+	}
+	if createActionControlTemplateVersionOptions.ActionControl != nil {
+		body["action_control"] = createActionControlTemplateVersionOptions.ActionControl
+	}
+	if createActionControlTemplateVersionOptions.Committed != nil {
+		body["committed"] = createActionControlTemplateVersionOptions.Committed
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_action_control_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlTemplate)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListActionControlTemplateVersions : Retrieve action control template versions
+// Retrieve the versions of an action control template by providing an action control template ID.
+func (iamPolicyManagement *IamPolicyManagementV1) ListActionControlTemplateVersions(listActionControlTemplateVersionsOptions *ListActionControlTemplateVersionsOptions) (result *ActionControlTemplateVersionsCollection, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.ListActionControlTemplateVersionsWithContext(context.Background(), listActionControlTemplateVersionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListActionControlTemplateVersionsWithContext is an alternate form of the ListActionControlTemplateVersions method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ListActionControlTemplateVersionsWithContext(ctx context.Context, listActionControlTemplateVersionsOptions *ListActionControlTemplateVersionsOptions) (result *ActionControlTemplateVersionsCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listActionControlTemplateVersionsOptions, "listActionControlTemplateVersionsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listActionControlTemplateVersionsOptions, "listActionControlTemplateVersionsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"action_control_template_id": *listActionControlTemplateVersionsOptions.ActionControlTemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_templates/{action_control_template_id}/versions`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListActionControlTemplateVersions")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listActionControlTemplateVersionsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listActionControlTemplateVersionsOptions.State != nil {
+		builder.AddQuery("state", fmt.Sprint(*listActionControlTemplateVersionsOptions.State))
+	}
+	if listActionControlTemplateVersionsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listActionControlTemplateVersionsOptions.Limit))
+	}
+	if listActionControlTemplateVersionsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listActionControlTemplateVersionsOptions.Start))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_action_control_template_versions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlTemplateVersionsCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ReplaceActionControlTemplate : Update an action control template version
+// Update a specific version of an action control template. You can use this only if the version isn't committed.
+func (iamPolicyManagement *IamPolicyManagementV1) ReplaceActionControlTemplate(replaceActionControlTemplateOptions *ReplaceActionControlTemplateOptions) (result *ActionControlTemplate, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.ReplaceActionControlTemplateWithContext(context.Background(), replaceActionControlTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ReplaceActionControlTemplateWithContext is an alternate form of the ReplaceActionControlTemplate method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ReplaceActionControlTemplateWithContext(ctx context.Context, replaceActionControlTemplateOptions *ReplaceActionControlTemplateOptions) (result *ActionControlTemplate, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(replaceActionControlTemplateOptions, "replaceActionControlTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(replaceActionControlTemplateOptions, "replaceActionControlTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"action_control_template_id": *replaceActionControlTemplateOptions.ActionControlTemplateID,
+		"version": *replaceActionControlTemplateOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_templates/{action_control_template_id}/versions/{version}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplaceActionControlTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range replaceActionControlTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if replaceActionControlTemplateOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*replaceActionControlTemplateOptions.IfMatch))
+	}
+
+	body := make(map[string]interface{})
+	if replaceActionControlTemplateOptions.Name != nil {
+		body["name"] = replaceActionControlTemplateOptions.Name
+	}
+	if replaceActionControlTemplateOptions.Description != nil {
+		body["description"] = replaceActionControlTemplateOptions.Description
+	}
+	if replaceActionControlTemplateOptions.ActionControl != nil {
+		body["action_control"] = replaceActionControlTemplateOptions.ActionControl
+	}
+	if replaceActionControlTemplateOptions.Committed != nil {
+		body["committed"] = replaceActionControlTemplateOptions.Committed
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_action_control_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlTemplate)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteActionControlTemplateVersion : Delete an action control template version
+// Delete a specific version of an action control template by providing an action control template ID and version
+// number. You can't delete an action control template version that is assigned to one or more child accounts. You must
+// remove the action control assignments first.
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteActionControlTemplateVersion(deleteActionControlTemplateVersionOptions *DeleteActionControlTemplateVersionOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamPolicyManagement.DeleteActionControlTemplateVersionWithContext(context.Background(), deleteActionControlTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteActionControlTemplateVersionWithContext is an alternate form of the DeleteActionControlTemplateVersion method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteActionControlTemplateVersionWithContext(ctx context.Context, deleteActionControlTemplateVersionOptions *DeleteActionControlTemplateVersionOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteActionControlTemplateVersionOptions, "deleteActionControlTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteActionControlTemplateVersionOptions, "deleteActionControlTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"action_control_template_id": *deleteActionControlTemplateVersionOptions.ActionControlTemplateID,
+		"version": *deleteActionControlTemplateVersionOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_templates/{action_control_template_id}/versions/{version}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteActionControlTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteActionControlTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamPolicyManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_action_control_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetActionControlTemplateVersion : Retrieve an action control template version
+// Retrieve an action control template by providing an action control template ID and version number.
+func (iamPolicyManagement *IamPolicyManagementV1) GetActionControlTemplateVersion(getActionControlTemplateVersionOptions *GetActionControlTemplateVersionOptions) (result *ActionControlTemplate, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.GetActionControlTemplateVersionWithContext(context.Background(), getActionControlTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetActionControlTemplateVersionWithContext is an alternate form of the GetActionControlTemplateVersion method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) GetActionControlTemplateVersionWithContext(ctx context.Context, getActionControlTemplateVersionOptions *GetActionControlTemplateVersionOptions) (result *ActionControlTemplate, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getActionControlTemplateVersionOptions, "getActionControlTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getActionControlTemplateVersionOptions, "getActionControlTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"action_control_template_id": *getActionControlTemplateVersionOptions.ActionControlTemplateID,
+		"version": *getActionControlTemplateVersionOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_templates/{action_control_template_id}/versions/{version}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetActionControlTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getActionControlTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_action_control_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlTemplate)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CommitActionControlTemplate : Commit an action control template version
+// Commit an action control template version. You cannot make any further changes to the action control template once
+// it's committed. If you have to make updates after committing a version, create a new version.
+func (iamPolicyManagement *IamPolicyManagementV1) CommitActionControlTemplate(commitActionControlTemplateOptions *CommitActionControlTemplateOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamPolicyManagement.CommitActionControlTemplateWithContext(context.Background(), commitActionControlTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CommitActionControlTemplateWithContext is an alternate form of the CommitActionControlTemplate method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) CommitActionControlTemplateWithContext(ctx context.Context, commitActionControlTemplateOptions *CommitActionControlTemplateOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(commitActionControlTemplateOptions, "commitActionControlTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(commitActionControlTemplateOptions, "commitActionControlTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"action_control_template_id": *commitActionControlTemplateOptions.ActionControlTemplateID,
+		"version": *commitActionControlTemplateOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_templates/{action_control_template_id}/versions/{version}/commit`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CommitActionControlTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range commitActionControlTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamPolicyManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "commit_action_control_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// ListActionControlAssignments : Get action control template assignments
+// Get action control template assignments by attributes. The following attributes are supported:
+// `account_id`, `template_id`, `template_version`, `sort`.
+// `account_id` is a required query parameter. Only action control template assignments with the specified attributes
+// and  accessible by the caller are returned. If the caller does not have read access to any action control template
+// assignments, an empty array is returned.
+func (iamPolicyManagement *IamPolicyManagementV1) ListActionControlAssignments(listActionControlAssignmentsOptions *ListActionControlAssignmentsOptions) (result *ActionControlAssignmentCollection, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.ListActionControlAssignmentsWithContext(context.Background(), listActionControlAssignmentsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListActionControlAssignmentsWithContext is an alternate form of the ListActionControlAssignments method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ListActionControlAssignmentsWithContext(ctx context.Context, listActionControlAssignmentsOptions *ListActionControlAssignmentsOptions) (result *ActionControlAssignmentCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listActionControlAssignmentsOptions, "listActionControlAssignmentsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listActionControlAssignmentsOptions, "listActionControlAssignmentsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_assignments`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListActionControlAssignments")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listActionControlAssignmentsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if listActionControlAssignmentsOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*listActionControlAssignmentsOptions.AcceptLanguage))
+	}
+
+	builder.AddQuery("account_id", fmt.Sprint(*listActionControlAssignmentsOptions.AccountID))
+	if listActionControlAssignmentsOptions.TemplateID != nil {
+		builder.AddQuery("template_id", fmt.Sprint(*listActionControlAssignmentsOptions.TemplateID))
+	}
+	if listActionControlAssignmentsOptions.TemplateVersion != nil {
+		builder.AddQuery("template_version", fmt.Sprint(*listActionControlAssignmentsOptions.TemplateVersion))
+	}
+	if listActionControlAssignmentsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listActionControlAssignmentsOptions.Limit))
+	}
+	if listActionControlAssignmentsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listActionControlAssignmentsOptions.Start))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_action_control_assignments", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlAssignmentCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateActionControlTemplateAssignment : Create an action control template assignment
+// Assign an action control template to child accounts and account groups. This creates the action control in the
+// accounts and account groups that you specify.
+func (iamPolicyManagement *IamPolicyManagementV1) CreateActionControlTemplateAssignment(createActionControlTemplateAssignmentOptions *CreateActionControlTemplateAssignmentOptions) (result *ActionControlAssignmentCollection, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.CreateActionControlTemplateAssignmentWithContext(context.Background(), createActionControlTemplateAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateActionControlTemplateAssignmentWithContext is an alternate form of the CreateActionControlTemplateAssignment method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) CreateActionControlTemplateAssignmentWithContext(ctx context.Context, createActionControlTemplateAssignmentOptions *CreateActionControlTemplateAssignmentOptions) (result *ActionControlAssignmentCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createActionControlTemplateAssignmentOptions, "createActionControlTemplateAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createActionControlTemplateAssignmentOptions, "createActionControlTemplateAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_assignments`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateActionControlTemplateAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createActionControlTemplateAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if createActionControlTemplateAssignmentOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*createActionControlTemplateAssignmentOptions.AcceptLanguage))
+	}
+
+	body := make(map[string]interface{})
+	if createActionControlTemplateAssignmentOptions.Target != nil {
+		body["target"] = createActionControlTemplateAssignmentOptions.Target
+	}
+	if createActionControlTemplateAssignmentOptions.Templates != nil {
+		body["templates"] = createActionControlTemplateAssignmentOptions.Templates
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_action_control_template_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlAssignmentCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetActionControlAssignment : Retrieve an action control assignment
+// Retrieve an action control template assignment by providing an action control assignment ID.
+func (iamPolicyManagement *IamPolicyManagementV1) GetActionControlAssignment(getActionControlAssignmentOptions *GetActionControlAssignmentOptions) (result *ActionControlAssignment, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.GetActionControlAssignmentWithContext(context.Background(), getActionControlAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetActionControlAssignmentWithContext is an alternate form of the GetActionControlAssignment method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) GetActionControlAssignmentWithContext(ctx context.Context, getActionControlAssignmentOptions *GetActionControlAssignmentOptions) (result *ActionControlAssignment, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getActionControlAssignmentOptions, "getActionControlAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getActionControlAssignmentOptions, "getActionControlAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"assignment_id": *getActionControlAssignmentOptions.AssignmentID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_assignments/{assignment_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetActionControlAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getActionControlAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_action_control_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlAssignment)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateActionControlAssignment : Update an action control assignment
+// Update an action control assignment by providing an action control assignment ID.
+func (iamPolicyManagement *IamPolicyManagementV1) UpdateActionControlAssignment(updateActionControlAssignmentOptions *UpdateActionControlAssignmentOptions) (result *ActionControlAssignment, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.UpdateActionControlAssignmentWithContext(context.Background(), updateActionControlAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateActionControlAssignmentWithContext is an alternate form of the UpdateActionControlAssignment method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) UpdateActionControlAssignmentWithContext(ctx context.Context, updateActionControlAssignmentOptions *UpdateActionControlAssignmentOptions) (result *ActionControlAssignment, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateActionControlAssignmentOptions, "updateActionControlAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateActionControlAssignmentOptions, "updateActionControlAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"assignment_id": *updateActionControlAssignmentOptions.AssignmentID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_assignments/{assignment_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdateActionControlAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range updateActionControlAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if updateActionControlAssignmentOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateActionControlAssignmentOptions.IfMatch))
+	}
+
+	body := make(map[string]interface{})
+	if updateActionControlAssignmentOptions.TemplateVersion != nil {
+		body["template_version"] = updateActionControlAssignmentOptions.TemplateVersion
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_action_control_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActionControlAssignment)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteActionControlAssignment : Remove an action control assignment
+// Remove an action control template assignment by providing an action control assignment ID. You can't delete an action
+// control assignment if the status is "in_progress".
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteActionControlAssignment(deleteActionControlAssignmentOptions *DeleteActionControlAssignmentOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamPolicyManagement.DeleteActionControlAssignmentWithContext(context.Background(), deleteActionControlAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteActionControlAssignmentWithContext is an alternate form of the DeleteActionControlAssignment method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteActionControlAssignmentWithContext(ctx context.Context, deleteActionControlAssignmentOptions *DeleteActionControlAssignmentOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteActionControlAssignmentOptions, "deleteActionControlAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteActionControlAssignmentOptions, "deleteActionControlAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"assignment_id": *deleteActionControlAssignmentOptions.AssignmentID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/action_control_assignments/{assignment_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteActionControlAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteActionControlAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamPolicyManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_action_control_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
 func getServiceComponentInfo() *core.ProblemComponent {
 	return core.NewProblemComponent(DefaultServiceName, "1.0.1")
 }
@@ -3194,9 +4338,539 @@ func UnmarshalAccountSettingsAccessManagement(m map[string]json.RawMessage, resu
 	return
 }
 
-// AssignmentResourceCreated : On success, includes the  policy assigned.
+// ActionControlAssignment : The set of properties associated with the assigned action control template.
+type ActionControlAssignment struct {
+	// Action control assignment ID.
+	ID *string `json:"id,omitempty"`
+
+	// The account GUID that the action control assignments belong to.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// The href URL that links to the action control assignments API by action control assignment ID.
+	Href *string `json:"href,omitempty"`
+
+	// The UTC timestamp when the action control assignment was created.
+	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
+
+	// The IAM ID of the entity that created the action control assignment.
+	CreatedByID *string `json:"created_by_id,omitempty"`
+
+	// The UTC timestamp when the action control assignment was last modified.
+	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
+
+	// The IAM ID of the entity that last modified the action control assignment.
+	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
+
+	// The current operation of the action control assignment.
+	Operation *string `json:"operation,omitempty"`
+
+	// Resources created when action control template is assigned.
+	Resources []ActionControlAssignmentResource `json:"resources,omitempty"`
+
+	// The action control template id and version that will be assigned.
+	Template *ActionControlAssignmentTemplate `json:"template" validate:"required"`
+
+	// assignment target account and type.
+	Target *AssignmentTargetDetails `json:"target" validate:"required"`
+
+	// The action control assignment status.
+	Status *string `json:"status,omitempty"`
+}
+
+// Constants associated with the ActionControlAssignment.Operation property.
+// The current operation of the action control assignment.
+const (
+	ActionControlAssignmentOperationApplyConst = "apply"
+	ActionControlAssignmentOperationCreateConst = "create"
+	ActionControlAssignmentOperationRemoveConst = "remove"
+	ActionControlAssignmentOperationUpdateConst = "update"
+)
+
+// Constants associated with the ActionControlAssignment.Status property.
+// The action control assignment status.
+const (
+	ActionControlAssignmentStatusAcceptedConst = "accepted"
+	ActionControlAssignmentStatusFailureConst = "failure"
+	ActionControlAssignmentStatusInProgressConst = "in_progress"
+	ActionControlAssignmentStatusSupersededConst = "superseded"
+)
+
+// UnmarshalActionControlAssignment unmarshals an instance of ActionControlAssignment from the specified map of raw messages.
+func UnmarshalActionControlAssignment(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlAssignment)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operation", &obj.Operation)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "operation-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalActionControlAssignmentResource)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "template", &obj.Template, UnmarshalActionControlAssignmentTemplate)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTargetDetails)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlAssignmentCollection : A collection of action control assignments.
+type ActionControlAssignmentCollection struct {
+	// The number of documents to include per each page of the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with linking href to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to the following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with linking href to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
+	// List of action control assignments.
+	Assignments []ActionControlAssignment `json:"assignments" validate:"required"`
+}
+
+// UnmarshalActionControlAssignmentCollection unmarshals an instance of ActionControlAssignmentCollection from the specified map of raw messages.
+func UnmarshalActionControlAssignmentCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlAssignmentCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "assignments", &obj.Assignments, UnmarshalActionControlAssignment)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "assignments-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ActionControlAssignmentCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
+// ActionControlAssignmentResource : The action control assignment resources and target where the template is assigned.
+type ActionControlAssignmentResource struct {
+	// assignment target account and type.
+	Target *AssignmentTargetDetails `json:"target" validate:"required"`
+
+	// Set of properties of the assigned resource or error message if assignment failed.
+	ActionControl *ActionControlAssignmentResourceActionControl `json:"action_control,omitempty"`
+}
+
+// UnmarshalActionControlAssignmentResource unmarshals an instance of ActionControlAssignmentResource from the specified map of raw messages.
+func UnmarshalActionControlAssignmentResource(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlAssignmentResource)
+	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTargetDetails)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "action_control", &obj.ActionControl, UnmarshalActionControlAssignmentResourceActionControl)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action_control-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlAssignmentResourceActionControl : Set of properties of the assigned resource or error message if assignment failed.
+type ActionControlAssignmentResourceActionControl struct {
+	// On success, it includes the action control assigned.
+	ResourceCreated *ActionControlAssignmentResourceCreated `json:"resource_created,omitempty"`
+
+	// Body parameters for assignment error.
+	ErrorMessage *AssignmentResourceError `json:"error_message,omitempty"`
+}
+
+// UnmarshalActionControlAssignmentResourceActionControl unmarshals an instance of ActionControlAssignmentResourceActionControl from the specified map of raw messages.
+func UnmarshalActionControlAssignmentResourceActionControl(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlAssignmentResourceActionControl)
+	err = core.UnmarshalModel(m, "resource_created", &obj.ResourceCreated, UnmarshalActionControlAssignmentResourceCreated)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_created-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "error_message", &obj.ErrorMessage, UnmarshalAssignmentResourceError)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "error_message-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlAssignmentResourceCreated : On success, it includes the action control assigned.
+type ActionControlAssignmentResourceCreated struct {
+	// action control id.
+	ID *string `json:"id,omitempty"`
+}
+
+// UnmarshalActionControlAssignmentResourceCreated unmarshals an instance of ActionControlAssignmentResourceCreated from the specified map of raw messages.
+func UnmarshalActionControlAssignmentResourceCreated(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlAssignmentResourceCreated)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlAssignmentTemplate : The action control template id and version that will be assigned.
+type ActionControlAssignmentTemplate struct {
+	// Action control template ID.
+	ID *string `json:"id" validate:"required"`
+
+	// Action control template version.
+	Version *string `json:"version" validate:"required"`
+}
+
+// NewActionControlAssignmentTemplate : Instantiate ActionControlAssignmentTemplate (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewActionControlAssignmentTemplate(id string, version string) (_model *ActionControlAssignmentTemplate, err error) {
+	_model = &ActionControlAssignmentTemplate{
+		ID: core.StringPtr(id),
+		Version: core.StringPtr(version),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalActionControlAssignmentTemplate unmarshals an instance of ActionControlAssignmentTemplate from the specified map of raw messages.
+func UnmarshalActionControlAssignmentTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlAssignmentTemplate)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlTemplate : The set of properties associated with the action control template.
+type ActionControlTemplate struct {
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it changes
+	// the name value for all existing versions of the template.
+	Name *string `json:"name" validate:"required"`
+
+	// Description of the action control template. This is shown to users in the enterprise account. Use this to describe
+	// the purpose or context of the action control for enterprise users managing IAM templates.
+	Description *string `json:"description" validate:"required"`
+
+	// Enterprise account ID where this template is created.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Committed status of the template. If committed is set to true, then the template version can no longer be updated.
+	Committed *bool `json:"committed,omitempty"`
+
+	// The action control properties that are created in an action resource when the template is assigned.
+	ActionControl *TemplateActionControl `json:"action_control,omitempty"`
+
+	// The action control template ID.
+	ID *string `json:"id,omitempty"`
+
+	// The href URL that links to the action control templates API by action control template ID.
+	Href *string `json:"href,omitempty"`
+
+	// The UTC timestamp when the action control template was created.
+	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
+
+	// The IAM ID of the entity that created the action control template.
+	CreatedByID *string `json:"created_by_id,omitempty"`
+
+	// The UTC timestamp when the action control template was last modified.
+	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
+
+	// The IAM ID of the entity that last modified the action control template.
+	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
+
+	// The version number of the template used to identify different versions of same template.
+	Version *string `json:"version" validate:"required"`
+
+	// State of action control template.
+	State *string `json:"state" validate:"required"`
+}
+
+// Constants associated with the ActionControlTemplate.State property.
+// State of action control template.
+const (
+	ActionControlTemplateStateActiveConst = "active"
+	ActionControlTemplateStateDeletedConst = "deleted"
+)
+
+// UnmarshalActionControlTemplate unmarshals an instance of ActionControlTemplate from the specified map of raw messages.
+func UnmarshalActionControlTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlTemplate)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "committed", &obj.Committed)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "committed-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "action_control", &obj.ActionControl, UnmarshalTemplateActionControl)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action_control-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "state", &obj.State)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlTemplateCollection : A collection of action control templates.
+type ActionControlTemplateCollection struct {
+	// The number of documents to include per each page of the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with linking href to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to the following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with linking href to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
+	// List of action control templates.
+	ActionControlTemplates []ActionControlTemplate `json:"action_control_templates" validate:"required"`
+}
+
+// UnmarshalActionControlTemplateCollection unmarshals an instance of ActionControlTemplateCollection from the specified map of raw messages.
+func UnmarshalActionControlTemplateCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlTemplateCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "action_control_templates", &obj.ActionControlTemplates, UnmarshalActionControlTemplate)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action_control_templates-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ActionControlTemplateCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
+// ActionControlTemplateVersionsCollection : A collection of versions for a specific action control template.
+type ActionControlTemplateVersionsCollection struct {
+	// The number of documents to include per each page of the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with linking href to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to the following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with linking href to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
+	// List of action control templates versions.
+	Versions []ActionControlTemplate `json:"versions" validate:"required"`
+}
+
+// UnmarshalActionControlTemplateVersionsCollection unmarshals an instance of ActionControlTemplateVersionsCollection from the specified map of raw messages.
+func UnmarshalActionControlTemplateVersionsCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlTemplateVersionsCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "versions", &obj.Versions, UnmarshalActionControlTemplate)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "versions-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ActionControlTemplateVersionsCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
+// AssignmentResourceCreated : On success, includes the  policy that is assigned.
 type AssignmentResourceCreated struct {
-	// policy id.
+	// Policy id.
 	ID *string `json:"id,omitempty"`
 }
 
@@ -3212,13 +4886,63 @@ func UnmarshalAssignmentResourceCreated(m map[string]json.RawMessage, result int
 	return
 }
 
+// AssignmentResourceError : Body parameters for assignment error.
+type AssignmentResourceError struct {
+	// Name of the error.
+	Name *string `json:"name,omitempty"`
+
+	// error code.
+	ErrorCode *string `json:"errorCode,omitempty"`
+
+	// Error message detailing the nature of the error.
+	Message *string `json:"message,omitempty"`
+
+	// Internal status code for the error.
+	Code *string `json:"code,omitempty"`
+
+	// The errors encountered during the response.
+	Errors []ErrorObject `json:"errors,omitempty"`
+}
+
+// UnmarshalAssignmentResourceError unmarshals an instance of AssignmentResourceError from the specified map of raw messages.
+func UnmarshalAssignmentResourceError(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AssignmentResourceError)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errorCode", &obj.ErrorCode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "errorCode-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "errors", &obj.Errors, UnmarshalErrorObject)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // AssignmentTargetDetails : assignment target account and type.
 type AssignmentTargetDetails struct {
 	// Assignment target type.
-	Type *string `json:"type,omitempty"`
+	Type *string `json:"type" validate:"required"`
 
 	// ID of the target account.
-	ID *string `json:"id,omitempty"`
+	ID *string `json:"id" validate:"required"`
 }
 
 // Constants associated with the AssignmentTargetDetails.Type property.
@@ -3226,6 +4950,19 @@ type AssignmentTargetDetails struct {
 const (
 	AssignmentTargetDetailsTypeAccountConst = "Account"
 )
+
+// NewAssignmentTargetDetails : Instantiate AssignmentTargetDetails (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewAssignmentTargetDetails(typeVar string, id string) (_model *AssignmentTargetDetails, err error) {
+	_model = &AssignmentTargetDetails{
+		Type: core.StringPtr(typeVar),
+		ID: core.StringPtr(id),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
 
 // UnmarshalAssignmentTargetDetails unmarshals an instance of AssignmentTargetDetails from the specified map of raw messages.
 func UnmarshalAssignmentTargetDetails(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -3246,10 +4983,10 @@ func UnmarshalAssignmentTargetDetails(m map[string]json.RawMessage, result inter
 
 // AssignmentTemplateDetails : policy template details.
 type AssignmentTemplateDetails struct {
-	// policy template id.
+	// Policy template ID.
 	ID *string `json:"id,omitempty"`
 
-	// policy template version.
+	// Policy template version.
 	Version *string `json:"version,omitempty"`
 }
 
@@ -3268,6 +5005,44 @@ func UnmarshalAssignmentTemplateDetails(m map[string]json.RawMessage, result int
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// CommitActionControlTemplateOptions : The CommitActionControlTemplate options.
+type CommitActionControlTemplateOptions struct {
+	// Action control template ID.
+	ActionControlTemplateID *string `json:"action_control_template_id" validate:"required,ne="`
+
+	// The action control template version.
+	Version *string `json:"version" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCommitActionControlTemplateOptions : Instantiate CommitActionControlTemplateOptions
+func (*IamPolicyManagementV1) NewCommitActionControlTemplateOptions(actionControlTemplateID string, version string) *CommitActionControlTemplateOptions {
+	return &CommitActionControlTemplateOptions{
+		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
+		Version: core.StringPtr(version),
+	}
+}
+
+// SetActionControlTemplateID : Allow user to set ActionControlTemplateID
+func (_options *CommitActionControlTemplateOptions) SetActionControlTemplateID(actionControlTemplateID string) *CommitActionControlTemplateOptions {
+	_options.ActionControlTemplateID = core.StringPtr(actionControlTemplateID)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *CommitActionControlTemplateOptions) SetVersion(version string) *CommitActionControlTemplateOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CommitActionControlTemplateOptions) SetHeaders(param map[string]string) *CommitActionControlTemplateOptions {
+	options.Headers = param
+	return options
 }
 
 // CommitPolicyTemplateOptions : The CommitPolicyTemplate options.
@@ -3313,10 +5088,10 @@ type ConflictsWith struct {
 	// The revision number of the resource.
 	Etag *string `json:"etag,omitempty"`
 
-	// The conflicting role id.
+	// The conflicting role of ID.
 	Role *string `json:"role,omitempty"`
 
-	// The conflicting policy id.
+	// The conflicting policy ID.
 	Policy *string `json:"policy,omitempty"`
 }
 
@@ -3342,9 +5117,9 @@ func UnmarshalConflictsWith(m map[string]json.RawMessage, result interface{}) (e
 	return
 }
 
-// Control : Specifies the type of access granted by the policy.
+// Control : Specifies the type of access that is granted by the policy.
 type Control struct {
-	// Permission granted by the policy.
+	// Permission is granted by the policy.
 	Grant *Grant `json:"grant" validate:"required"`
 }
 
@@ -3377,7 +5152,7 @@ func UnmarshalControl(m map[string]json.RawMessage, result interface{}) (err err
 // - ControlResponseControl
 // - ControlResponseControlWithEnrichedRoles
 type ControlResponse struct {
-	// Permission granted by the policy.
+	// Permission is granted by the policy.
 	Grant *Grant `json:"grant,omitempty"`
 }
 func (*ControlResponse) isaControlResponse() bool {
@@ -3400,6 +5175,218 @@ func UnmarshalControlResponse(m map[string]json.RawMessage, result interface{}) 
 	return
 }
 
+// CreateActionControlTemplateAssignmentOptions : The CreateActionControlTemplateAssignment options.
+type CreateActionControlTemplateAssignmentOptions struct {
+	// assignment target account and type.
+	Target *AssignmentTargetDetails `json:"target" validate:"required"`
+
+	// List of action control template details for action control assignment.
+	Templates []ActionControlAssignmentTemplate `json:"templates" validate:"required"`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateActionControlTemplateAssignmentOptions : Instantiate CreateActionControlTemplateAssignmentOptions
+func (*IamPolicyManagementV1) NewCreateActionControlTemplateAssignmentOptions(target *AssignmentTargetDetails, templates []ActionControlAssignmentTemplate) *CreateActionControlTemplateAssignmentOptions {
+	return &CreateActionControlTemplateAssignmentOptions{
+		Target: target,
+		Templates: templates,
+	}
+}
+
+// SetTarget : Allow user to set Target
+func (_options *CreateActionControlTemplateAssignmentOptions) SetTarget(target *AssignmentTargetDetails) *CreateActionControlTemplateAssignmentOptions {
+	_options.Target = target
+	return _options
+}
+
+// SetTemplates : Allow user to set Templates
+func (_options *CreateActionControlTemplateAssignmentOptions) SetTemplates(templates []ActionControlAssignmentTemplate) *CreateActionControlTemplateAssignmentOptions {
+	_options.Templates = templates
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *CreateActionControlTemplateAssignmentOptions) SetAcceptLanguage(acceptLanguage string) *CreateActionControlTemplateAssignmentOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateActionControlTemplateAssignmentOptions) SetHeaders(param map[string]string) *CreateActionControlTemplateAssignmentOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateActionControlTemplateOptions : The CreateActionControlTemplate options.
+type CreateActionControlTemplateOptions struct {
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it changes
+	// the name value for all existing versions of the template.
+	Name *string `json:"name" validate:"required"`
+
+	// Enterprise account ID where this template is created.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Description of the action control template. This is shown to users in the enterprise account. Use this to describe
+	// the purpose or context of the action control for enterprise users managing IAM templates.
+	Description *string `json:"description,omitempty"`
+
+	// Committed status of the template. If committed is set to true, then the template version can no longer be updated.
+	Committed *bool `json:"committed,omitempty"`
+
+	// The action control properties that are created in an action resource when the template is assigned.
+	ActionControl *TemplateActionControl `json:"action_control,omitempty"`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateActionControlTemplateOptions : Instantiate CreateActionControlTemplateOptions
+func (*IamPolicyManagementV1) NewCreateActionControlTemplateOptions(name string, accountID string) *CreateActionControlTemplateOptions {
+	return &CreateActionControlTemplateOptions{
+		Name: core.StringPtr(name),
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateActionControlTemplateOptions) SetName(name string) *CreateActionControlTemplateOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *CreateActionControlTemplateOptions) SetAccountID(accountID string) *CreateActionControlTemplateOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateActionControlTemplateOptions) SetDescription(description string) *CreateActionControlTemplateOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetCommitted : Allow user to set Committed
+func (_options *CreateActionControlTemplateOptions) SetCommitted(committed bool) *CreateActionControlTemplateOptions {
+	_options.Committed = core.BoolPtr(committed)
+	return _options
+}
+
+// SetActionControl : Allow user to set ActionControl
+func (_options *CreateActionControlTemplateOptions) SetActionControl(actionControl *TemplateActionControl) *CreateActionControlTemplateOptions {
+	_options.ActionControl = actionControl
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *CreateActionControlTemplateOptions) SetAcceptLanguage(acceptLanguage string) *CreateActionControlTemplateOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateActionControlTemplateOptions) SetHeaders(param map[string]string) *CreateActionControlTemplateOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateActionControlTemplateVersionOptions : The CreateActionControlTemplateVersion options.
+type CreateActionControlTemplateVersionOptions struct {
+	// The action control template ID.
+	ActionControlTemplateID *string `json:"action_control_template_id" validate:"required,ne="`
+
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it will
+	// change the name value for all existing versions of the template.
+	Name *string `json:"name,omitempty"`
+
+	// Description of the action control template. This is shown to users in the enterprise account. Use this to describe
+	// the purpose or context of the action control for enterprise users managing IAM templates.
+	Description *string `json:"description,omitempty"`
+
+	// The action control properties that are created in an action resource when the template is assigned.
+	ActionControl *TemplateActionControl `json:"action_control,omitempty"`
+
+	// Committed status of the template version. If committed is set to true, then the template version can no longer be
+	// updated.
+	Committed *bool `json:"committed,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateActionControlTemplateVersionOptions : Instantiate CreateActionControlTemplateVersionOptions
+func (*IamPolicyManagementV1) NewCreateActionControlTemplateVersionOptions(actionControlTemplateID string) *CreateActionControlTemplateVersionOptions {
+	return &CreateActionControlTemplateVersionOptions{
+		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
+	}
+}
+
+// SetActionControlTemplateID : Allow user to set ActionControlTemplateID
+func (_options *CreateActionControlTemplateVersionOptions) SetActionControlTemplateID(actionControlTemplateID string) *CreateActionControlTemplateVersionOptions {
+	_options.ActionControlTemplateID = core.StringPtr(actionControlTemplateID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateActionControlTemplateVersionOptions) SetName(name string) *CreateActionControlTemplateVersionOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateActionControlTemplateVersionOptions) SetDescription(description string) *CreateActionControlTemplateVersionOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetActionControl : Allow user to set ActionControl
+func (_options *CreateActionControlTemplateVersionOptions) SetActionControl(actionControl *TemplateActionControl) *CreateActionControlTemplateVersionOptions {
+	_options.ActionControl = actionControl
+	return _options
+}
+
+// SetCommitted : Allow user to set Committed
+func (_options *CreateActionControlTemplateVersionOptions) SetCommitted(committed bool) *CreateActionControlTemplateVersionOptions {
+	_options.Committed = core.BoolPtr(committed)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateActionControlTemplateVersionOptions) SetHeaders(param map[string]string) *CreateActionControlTemplateVersionOptions {
+	options.Headers = param
+	return options
+}
+
 // CreatePolicyOptions : The CreatePolicy options.
 type CreatePolicyOptions struct {
 	// The policy type; either 'access' or 'authorization'.
@@ -3408,7 +5395,7 @@ type CreatePolicyOptions struct {
 	// The subjects associated with a policy.
 	Subjects []PolicySubject `json:"subjects" validate:"required"`
 
-	// A set of role cloud resource names (CRNs) granted by the policy.
+	// A set of role Cloud Resource Names (CRNs) granted by the policy.
 	Roles []PolicyRole `json:"roles" validate:"required"`
 
 	// The resources associated with a policy.
@@ -3557,14 +5544,14 @@ func (options *CreatePolicyTemplateAssignmentOptions) SetHeaders(param map[strin
 
 // CreatePolicyTemplateOptions : The CreatePolicyTemplate options.
 type CreatePolicyTemplateOptions struct {
-	// Required field when creating a new template. Otherwise this field is optional. If the field is included it will
-	// change the name value for all existing versions of the template.
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it changes
+	// the name value for all existing versions of the template.
 	Name *string `json:"name" validate:"required"`
 
-	// Enterprise account ID where this template will be created.
+	// Enterprise account ID where this template is created.
 	AccountID *string `json:"account_id" validate:"required"`
 
-	// The core set of properties associated with the template's policy objet.
+	// The core set of properties associated with the template's policy object.
 	Policy *TemplatePolicy `json:"policy" validate:"required"`
 
 	// Description of the policy template. This is shown to users in the enterprise account. Use this to describe the
@@ -3648,11 +5635,11 @@ type CreatePolicyTemplateVersionOptions struct {
 	// The policy template ID.
 	PolicyTemplateID *string `json:"policy_template_id" validate:"required,ne="`
 
-	// The core set of properties associated with the template's policy objet.
+	// The core set of properties associated with the template's policy object.
 	Policy *TemplatePolicy `json:"policy" validate:"required"`
 
-	// Required field when creating a new template. Otherwise this field is optional. If the field is included it will
-	// change the name value for all existing versions of the template.
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it changes
+	// the name value for all existing versions of the template.
 	Name *string `json:"name,omitempty"`
 
 	// Description of the policy template. This is shown to users in the enterprise account. Use this to describe the
@@ -3712,14 +5699,14 @@ func (options *CreatePolicyTemplateVersionOptions) SetHeaders(param map[string]s
 
 // CreateRoleOptions : The CreateRole options.
 type CreateRoleOptions struct {
-	// The display name of the role that is shown in the console.
+	// The display the name of the role that is shown in the console.
 	DisplayName *string `json:"display_name" validate:"required"`
 
 	// The actions of the role. For more information, see [IAM roles and
 	// actions](https://cloud.ibm.com/docs/account?topic=account-iam-service-roles-actions).
 	Actions []string `json:"actions" validate:"required"`
 
-	// The name of the role that is used in the CRN. Can only be alphanumeric and has to be capitalized.
+	// The name of the role that is used in the CRN. This must be alphanumeric and capitalized.
 	Name *string `json:"name" validate:"required"`
 
 	// The account GUID.
@@ -3810,7 +5797,7 @@ func (options *CreateRoleOptions) SetHeaders(param map[string]string) *CreateRol
 
 // CreateV2PolicyOptions : The CreateV2Policy options.
 type CreateV2PolicyOptions struct {
-	// Specifies the type of access granted by the policy.
+	// Specifies the type of access that is granted by the policy.
 	Control *Control `json:"control" validate:"required"`
 
 	// The policy type; either 'access' or 'authorization'.
@@ -3924,7 +5911,7 @@ type CustomRole struct {
 	// The role ID. Composed of hexadecimal characters.
 	ID *string `json:"id,omitempty"`
 
-	// The display name of the role that is shown in the console.
+	// The display the name of the role that is shown in the console.
 	DisplayName *string `json:"display_name" validate:"required"`
 
 	// The description of the role.
@@ -3938,7 +5925,7 @@ type CustomRole struct {
 	// 'crn:v1:ibmcloud:public:iam-access-management::a/exampleAccountId::customRole:ExampleRoleName'.
 	CRN *string `json:"crn,omitempty"`
 
-	// The name of the role that is used in the CRN. Can only be alphanumeric and has to be capitalized.
+	// The name of the role that is used in the CRN. This must be alphanumeric and capitalized.
 	Name *string `json:"name" validate:"required"`
 
 	// The account GUID.
@@ -3950,16 +5937,16 @@ type CustomRole struct {
 	// The UTC timestamp when the role was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the role.
+	// The IAM ID of the entity that created the role.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the role was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy.
+	// The IAM ID of the entity that last modified the policy.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 
-	// The href link back to the role.
+	// The href links back to the role.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -4033,6 +6020,100 @@ func UnmarshalCustomRole(m map[string]json.RawMessage, result interface{}) (err 
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// DeleteActionControlAssignmentOptions : The DeleteActionControlAssignment options.
+type DeleteActionControlAssignmentOptions struct {
+	// Action control template assignment ID.
+	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteActionControlAssignmentOptions : Instantiate DeleteActionControlAssignmentOptions
+func (*IamPolicyManagementV1) NewDeleteActionControlAssignmentOptions(assignmentID string) *DeleteActionControlAssignmentOptions {
+	return &DeleteActionControlAssignmentOptions{
+		AssignmentID: core.StringPtr(assignmentID),
+	}
+}
+
+// SetAssignmentID : Allow user to set AssignmentID
+func (_options *DeleteActionControlAssignmentOptions) SetAssignmentID(assignmentID string) *DeleteActionControlAssignmentOptions {
+	_options.AssignmentID = core.StringPtr(assignmentID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteActionControlAssignmentOptions) SetHeaders(param map[string]string) *DeleteActionControlAssignmentOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteActionControlTemplateOptions : The DeleteActionControlTemplate options.
+type DeleteActionControlTemplateOptions struct {
+	// Action control template ID.
+	ActionControlTemplateID *string `json:"action_control_template_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteActionControlTemplateOptions : Instantiate DeleteActionControlTemplateOptions
+func (*IamPolicyManagementV1) NewDeleteActionControlTemplateOptions(actionControlTemplateID string) *DeleteActionControlTemplateOptions {
+	return &DeleteActionControlTemplateOptions{
+		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
+	}
+}
+
+// SetActionControlTemplateID : Allow user to set ActionControlTemplateID
+func (_options *DeleteActionControlTemplateOptions) SetActionControlTemplateID(actionControlTemplateID string) *DeleteActionControlTemplateOptions {
+	_options.ActionControlTemplateID = core.StringPtr(actionControlTemplateID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteActionControlTemplateOptions) SetHeaders(param map[string]string) *DeleteActionControlTemplateOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteActionControlTemplateVersionOptions : The DeleteActionControlTemplateVersion options.
+type DeleteActionControlTemplateVersionOptions struct {
+	// Action control template ID.
+	ActionControlTemplateID *string `json:"action_control_template_id" validate:"required,ne="`
+
+	// Action control template version.
+	Version *string `json:"version" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteActionControlTemplateVersionOptions : Instantiate DeleteActionControlTemplateVersionOptions
+func (*IamPolicyManagementV1) NewDeleteActionControlTemplateVersionOptions(actionControlTemplateID string, version string) *DeleteActionControlTemplateVersionOptions {
+	return &DeleteActionControlTemplateVersionOptions{
+		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
+		Version: core.StringPtr(version),
+	}
+}
+
+// SetActionControlTemplateID : Allow user to set ActionControlTemplateID
+func (_options *DeleteActionControlTemplateVersionOptions) SetActionControlTemplateID(actionControlTemplateID string) *DeleteActionControlTemplateVersionOptions {
+	_options.ActionControlTemplateID = core.StringPtr(actionControlTemplateID)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *DeleteActionControlTemplateVersionOptions) SetVersion(version string) *DeleteActionControlTemplateVersionOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteActionControlTemplateVersionOptions) SetHeaders(param map[string]string) *DeleteActionControlTemplateVersionOptions {
+	options.Headers = param
+	return options
 }
 
 // DeletePolicyAssignmentOptions : The DeletePolicyAssignment options.
@@ -4219,10 +6300,10 @@ type EnrichedRoles struct {
 	// The role Cloud Resource Name (CRN) granted by the policy. Example CRN: 'crn:v1:bluemix:public:iam::::role:Editor'.
 	RoleID *string `json:"role_id" validate:"required"`
 
-	// The service defined (or user defined if a custom role) display name of the role.
+	// The display name of the role, either service-defined or user-defined for custom roles.
 	DisplayName *string `json:"display_name,omitempty"`
 
-	// The service defined (or user defined if a custom role) description of the role.
+	// The role description, either service-defined or user-defined for custom roles.
 	Description *string `json:"description,omitempty"`
 
 	// The actions of the role. For more information, see [IAM roles and
@@ -4293,6 +6374,8 @@ type ErrorObject struct {
 // Constants associated with the ErrorObject.Code property.
 // The API error code for the error.
 const (
+	ErrorObjectCodeActionControlAssignmentNotFoundConst = "action_control_assignment_not_found"
+	ErrorObjectCodeActionControlTemplateNotFoundConst = "action_control_template_not_found"
 	ErrorObjectCodeInsufficentPermissionsConst = "insufficent_permissions"
 	ErrorObjectCodeInvalidBodyConst = "invalid_body"
 	ErrorObjectCodeInvalidTokenConst = "invalid_token"
@@ -4340,40 +6423,6 @@ func UnmarshalErrorObject(m map[string]json.RawMessage, result interface{}) (err
 	return
 }
 
-// ErrorResponse : The error response from API.
-type ErrorResponse struct {
-	// The unique transaction id for the request.
-	Trace *string `json:"trace,omitempty"`
-
-	// The errors encountered during the response.
-	Errors []ErrorObject `json:"errors,omitempty"`
-
-	// The http error code of the response.
-	StatusCode *int64 `json:"status_code,omitempty"`
-}
-
-// UnmarshalErrorResponse unmarshals an instance of ErrorResponse from the specified map of raw messages.
-func UnmarshalErrorResponse(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ErrorResponse)
-	err = core.UnmarshalPrimitive(m, "trace", &obj.Trace)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "trace-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "errors", &obj.Errors, UnmarshalErrorObject)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "status_code", &obj.StatusCode)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "status_code-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // ExternalAccountIdentityInteraction : How external accounts can interact in relation to the requested account.
 type ExternalAccountIdentityInteraction struct {
 	// The settings for each identity type.
@@ -4410,7 +6459,7 @@ func UnmarshalExternalAccountIdentityInteractionPatch(m map[string]json.RawMessa
 	return
 }
 
-// First : Details with href linking to first page of requested collection.
+// First : Details with linking href to first page of requested collection.
 type First struct {
 	// The href linking to the page of requested collection.
 	Href *string `json:"href,omitempty"`
@@ -4426,6 +6475,116 @@ func UnmarshalFirst(m map[string]json.RawMessage, result interface{}) (err error
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// GetActionControlAssignmentOptions : The GetActionControlAssignment options.
+type GetActionControlAssignmentOptions struct {
+	// Action control template assignment ID.
+	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetActionControlAssignmentOptions : Instantiate GetActionControlAssignmentOptions
+func (*IamPolicyManagementV1) NewGetActionControlAssignmentOptions(assignmentID string) *GetActionControlAssignmentOptions {
+	return &GetActionControlAssignmentOptions{
+		AssignmentID: core.StringPtr(assignmentID),
+	}
+}
+
+// SetAssignmentID : Allow user to set AssignmentID
+func (_options *GetActionControlAssignmentOptions) SetAssignmentID(assignmentID string) *GetActionControlAssignmentOptions {
+	_options.AssignmentID = core.StringPtr(assignmentID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetActionControlAssignmentOptions) SetHeaders(param map[string]string) *GetActionControlAssignmentOptions {
+	options.Headers = param
+	return options
+}
+
+// GetActionControlTemplateOptions : The GetActionControlTemplate options.
+type GetActionControlTemplateOptions struct {
+	// Action control template ID.
+	ActionControlTemplateID *string `json:"action_control_template_id" validate:"required,ne="`
+
+	// The action control template state.
+	State *string `json:"state,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the GetActionControlTemplateOptions.State property.
+// The action control template state.
+const (
+	GetActionControlTemplateOptionsStateActiveConst = "active"
+	GetActionControlTemplateOptionsStateDeletedConst = "deleted"
+)
+
+// NewGetActionControlTemplateOptions : Instantiate GetActionControlTemplateOptions
+func (*IamPolicyManagementV1) NewGetActionControlTemplateOptions(actionControlTemplateID string) *GetActionControlTemplateOptions {
+	return &GetActionControlTemplateOptions{
+		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
+	}
+}
+
+// SetActionControlTemplateID : Allow user to set ActionControlTemplateID
+func (_options *GetActionControlTemplateOptions) SetActionControlTemplateID(actionControlTemplateID string) *GetActionControlTemplateOptions {
+	_options.ActionControlTemplateID = core.StringPtr(actionControlTemplateID)
+	return _options
+}
+
+// SetState : Allow user to set State
+func (_options *GetActionControlTemplateOptions) SetState(state string) *GetActionControlTemplateOptions {
+	_options.State = core.StringPtr(state)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetActionControlTemplateOptions) SetHeaders(param map[string]string) *GetActionControlTemplateOptions {
+	options.Headers = param
+	return options
+}
+
+// GetActionControlTemplateVersionOptions : The GetActionControlTemplateVersion options.
+type GetActionControlTemplateVersionOptions struct {
+	// Action control template ID.
+	ActionControlTemplateID *string `json:"action_control_template_id" validate:"required,ne="`
+
+	// Action control template version.
+	Version *string `json:"version" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetActionControlTemplateVersionOptions : Instantiate GetActionControlTemplateVersionOptions
+func (*IamPolicyManagementV1) NewGetActionControlTemplateVersionOptions(actionControlTemplateID string, version string) *GetActionControlTemplateVersionOptions {
+	return &GetActionControlTemplateVersionOptions{
+		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
+		Version: core.StringPtr(version),
+	}
+}
+
+// SetActionControlTemplateID : Allow user to set ActionControlTemplateID
+func (_options *GetActionControlTemplateVersionOptions) SetActionControlTemplateID(actionControlTemplateID string) *GetActionControlTemplateVersionOptions {
+	_options.ActionControlTemplateID = core.StringPtr(actionControlTemplateID)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *GetActionControlTemplateVersionOptions) SetVersion(version string) *GetActionControlTemplateVersionOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetActionControlTemplateVersionOptions) SetHeaders(param map[string]string) *GetActionControlTemplateVersionOptions {
+	options.Headers = param
+	return options
 }
 
 // GetPolicyAssignmentOptions : The GetPolicyAssignment options.
@@ -4704,9 +6863,9 @@ func (options *GetV2PolicyOptions) SetHeaders(param map[string]string) *GetV2Pol
 	return options
 }
 
-// Grant : Permission granted by the policy.
+// Grant : Permission is granted by the policy.
 type Grant struct {
-	// A set of role cloud resource names (CRNs) granted by the policy.
+	// A set of role Cloud Resource Names (CRNs) granted by the policy.
 	Roles []Roles `json:"roles" validate:"required"`
 }
 
@@ -4893,6 +7052,218 @@ func UnmarshalLimitData(m map[string]json.RawMessage, result interface{}) (err e
 	return
 }
 
+// ListActionControlAssignmentsOptions : The ListActionControlAssignments options.
+type ListActionControlAssignmentsOptions struct {
+	// The account GUID in which the action control assignment belongs to.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Optional template ID.
+	TemplateID *string `json:"template_id,omitempty"`
+
+	// Optional action control template version.
+	TemplateVersion *string `json:"template_version,omitempty"`
+
+	// The number of documents to include in the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of the collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewListActionControlAssignmentsOptions : Instantiate ListActionControlAssignmentsOptions
+func (*IamPolicyManagementV1) NewListActionControlAssignmentsOptions(accountID string) *ListActionControlAssignmentsOptions {
+	return &ListActionControlAssignmentsOptions{
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *ListActionControlAssignmentsOptions) SetAccountID(accountID string) *ListActionControlAssignmentsOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *ListActionControlAssignmentsOptions) SetAcceptLanguage(acceptLanguage string) *ListActionControlAssignmentsOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetTemplateID : Allow user to set TemplateID
+func (_options *ListActionControlAssignmentsOptions) SetTemplateID(templateID string) *ListActionControlAssignmentsOptions {
+	_options.TemplateID = core.StringPtr(templateID)
+	return _options
+}
+
+// SetTemplateVersion : Allow user to set TemplateVersion
+func (_options *ListActionControlAssignmentsOptions) SetTemplateVersion(templateVersion string) *ListActionControlAssignmentsOptions {
+	_options.TemplateVersion = core.StringPtr(templateVersion)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListActionControlAssignmentsOptions) SetLimit(limit int64) *ListActionControlAssignmentsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListActionControlAssignmentsOptions) SetStart(start string) *ListActionControlAssignmentsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListActionControlAssignmentsOptions) SetHeaders(param map[string]string) *ListActionControlAssignmentsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListActionControlTemplateVersionsOptions : The ListActionControlTemplateVersions options.
+type ListActionControlTemplateVersionsOptions struct {
+	// The action control template ID.
+	ActionControlTemplateID *string `json:"action_control_template_id" validate:"required,ne="`
+
+	// Action control template state.
+	State *string `json:"state,omitempty"`
+
+	// The number of documents to include in the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of the collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the ListActionControlTemplateVersionsOptions.State property.
+// Action control template state.
+const (
+	ListActionControlTemplateVersionsOptionsStateActiveConst = "active"
+	ListActionControlTemplateVersionsOptionsStateDeletedConst = "deleted"
+)
+
+// NewListActionControlTemplateVersionsOptions : Instantiate ListActionControlTemplateVersionsOptions
+func (*IamPolicyManagementV1) NewListActionControlTemplateVersionsOptions(actionControlTemplateID string) *ListActionControlTemplateVersionsOptions {
+	return &ListActionControlTemplateVersionsOptions{
+		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
+	}
+}
+
+// SetActionControlTemplateID : Allow user to set ActionControlTemplateID
+func (_options *ListActionControlTemplateVersionsOptions) SetActionControlTemplateID(actionControlTemplateID string) *ListActionControlTemplateVersionsOptions {
+	_options.ActionControlTemplateID = core.StringPtr(actionControlTemplateID)
+	return _options
+}
+
+// SetState : Allow user to set State
+func (_options *ListActionControlTemplateVersionsOptions) SetState(state string) *ListActionControlTemplateVersionsOptions {
+	_options.State = core.StringPtr(state)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListActionControlTemplateVersionsOptions) SetLimit(limit int64) *ListActionControlTemplateVersionsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListActionControlTemplateVersionsOptions) SetStart(start string) *ListActionControlTemplateVersionsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListActionControlTemplateVersionsOptions) SetHeaders(param map[string]string) *ListActionControlTemplateVersionsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListActionControlTemplatesOptions : The ListActionControlTemplates options.
+type ListActionControlTemplatesOptions struct {
+	// The account GUID that the action control templates belong to.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// The number of documents to include in the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of the collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewListActionControlTemplatesOptions : Instantiate ListActionControlTemplatesOptions
+func (*IamPolicyManagementV1) NewListActionControlTemplatesOptions(accountID string) *ListActionControlTemplatesOptions {
+	return &ListActionControlTemplatesOptions{
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *ListActionControlTemplatesOptions) SetAccountID(accountID string) *ListActionControlTemplatesOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *ListActionControlTemplatesOptions) SetAcceptLanguage(acceptLanguage string) *ListActionControlTemplatesOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListActionControlTemplatesOptions) SetLimit(limit int64) *ListActionControlTemplatesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListActionControlTemplatesOptions) SetStart(start string) *ListActionControlTemplatesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListActionControlTemplatesOptions) SetHeaders(param map[string]string) *ListActionControlTemplatesOptions {
+	options.Headers = param
+	return options
+}
+
 // ListPoliciesOptions : The ListPolicies options.
 type ListPoliciesOptions struct {
 	// The account GUID that the policies belong to.
@@ -4945,10 +7316,10 @@ type ListPoliciesOptions struct {
 	// * `deleted` - returns non-active policies.
 	State *string `json:"state,omitempty"`
 
-	// The number of documents to include in collection.
+	// The number of documents to include in the collection.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Page token that refers to the page of collection to return.
+	// Page token that refers to the page of the collection to return.
 	Start *string `json:"start,omitempty"`
 
 	// Allows users to set headers on API requests.
@@ -5121,10 +7492,10 @@ type ListPolicyAssignmentsOptions struct {
 	// Optional policy template version.
 	TemplateVersion *string `json:"template_version,omitempty"`
 
-	// The number of documents to include in collection.
+	// The number of documents to include in the collection.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Page token that refers to the page of collection to return.
+	// Page token that refers to the page of the collection to return.
 	Start *string `json:"start,omitempty"`
 
 	// Allows users to set headers on API requests.
@@ -5195,10 +7566,10 @@ type ListPolicyTemplateVersionsOptions struct {
 	// The policy template state.
 	State *string `json:"state,omitempty"`
 
-	// The number of documents to include in collection.
+	// The number of documents to include in the collection.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Page token that refers to the page of collection to return.
+	// Page token that refers to the page of the collection to return.
 	Start *string `json:"start,omitempty"`
 
 	// Allows users to set headers on API requests.
@@ -5286,10 +7657,10 @@ type ListPolicyTemplatesOptions struct {
 	// Policy type, Optional.
 	PolicyType *string `json:"policy_type,omitempty"`
 
-	// The number of documents to include in collection.
+	// The number of documents to include in the collection.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Page token that refers to the page of collection to return.
+	// Page token that refers to the page of the collection to return.
 	Start *string `json:"start,omitempty"`
 
 	// Allows users to set headers on API requests.
@@ -5537,10 +7908,10 @@ type ListV2PoliciesOptions struct {
 	// * `deleted` - returns non-active policies.
 	State *string `json:"state,omitempty"`
 
-	// The number of documents to include in collection.
+	// The number of documents to include in the collection.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Page token that refers to the page of collection to return.
+	// Page token that refers to the page of the collection to return.
 	Start *string `json:"start,omitempty"`
 
 	// Allows users to set headers on API requests.
@@ -5684,11 +8055,11 @@ type NestedCondition struct {
 	Operator *string `json:"operator,omitempty"`
 
 	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
-	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
+	// Can be a string or an array of strings (for example, an array of days to permit access) for rule attribute.
 	Value interface{} `json:"value,omitempty"`
 
-	// List of conditions associated with a policy, e.g., time-based conditions that grant access over a certain time
-	// period.
+	// List of conditions associated with a policy. For example, time-based conditions that grant access over a certain
+	// time period.
 	Conditions []RuleAttribute `json:"conditions,omitempty"`
 }
 
@@ -5750,12 +8121,12 @@ func UnmarshalNestedCondition(m map[string]json.RawMessage, result interface{}) 
 	return
 }
 
-// Next : Details with href linking to following page of requested collection.
+// Next : Details with href linking to the following page of requested collection.
 type Next struct {
 	// The href linking to the page of requested collection.
 	Href *string `json:"href,omitempty"`
 
-	// Page token that refers to the page of collection.
+	// Page token that refers to the page of the collection.
 	Start *string `json:"start,omitempty"`
 }
 
@@ -5790,25 +8161,25 @@ type Policy struct {
 	// The subjects associated with a policy.
 	Subjects []PolicySubject `json:"subjects" validate:"required"`
 
-	// A set of role cloud resource names (CRNs) granted by the policy.
+	// A set of role Cloud Resource Names (CRNs) granted by the policy.
 	Roles []PolicyRole `json:"roles" validate:"required"`
 
 	// The resources associated with a policy.
 	Resources []PolicyResource `json:"resources" validate:"required"`
 
-	// The href link back to the policy.
+	// The href links back to the policy.
 	Href *string `json:"href,omitempty"`
 
 	// The UTC timestamp when the policy was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the policy.
+	// The IAM ID of the entity that created the policy.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the policy was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy.
+	// The IAM ID of the entity that last modified the policy.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 
 	// The policy state.
@@ -5891,14 +8262,14 @@ func UnmarshalPolicy(m map[string]json.RawMessage, result interface{}) (err erro
 
 // PolicyAssignmentResourcePolicy : Set of properties for the assigned resource.
 type PolicyAssignmentResourcePolicy struct {
-	// On success, includes the  policy assigned.
+	// On success, includes the  policy that is assigned.
 	ResourceCreated *AssignmentResourceCreated `json:"resource_created,omitempty"`
 
 	// policy status.
 	Status *string `json:"status,omitempty"`
 
-	// The error response from API.
-	ErrorMessage *ErrorResponse `json:"error_message,omitempty"`
+	// Body parameters for assignment error.
+	ErrorMessage *AssignmentResourceError `json:"error_message,omitempty"`
 }
 
 // UnmarshalPolicyAssignmentResourcePolicy unmarshals an instance of PolicyAssignmentResourcePolicy from the specified map of raw messages.
@@ -5914,7 +8285,7 @@ func UnmarshalPolicyAssignmentResourcePolicy(m map[string]json.RawMessage, resul
 		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "error_message", &obj.ErrorMessage, UnmarshalErrorResponse)
+	err = core.UnmarshalModel(m, "error_message", &obj.ErrorMessage, UnmarshalAssignmentResourceError)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "error_message-error", common.GetComponentInfo())
 		return
@@ -5957,7 +8328,7 @@ type PolicyAssignmentV1 struct {
 	// Policy assignment ID.
 	ID *string `json:"id,omitempty"`
 
-	// The account GUID that the policies assignments belong to..
+	// The account GUID that the policies assignments belong to.
 	AccountID *string `json:"account_id,omitempty"`
 
 	// The href URL that links to the policies assignments API by policy assignment ID.
@@ -5966,19 +8337,19 @@ type PolicyAssignmentV1 struct {
 	// The UTC timestamp when the policy assignment was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the policy assignment.
+	// The IAM ID of the entity that created the policy assignment.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the policy assignment was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy assignment.
+	// The IAM ID of the entity that last modified the policy assignment.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 
 	// Object for each account assigned.
 	Resources []PolicyAssignmentV1Resources `json:"resources" validate:"required"`
 
-	// subject details of access type assignment.
+	// Subject details of access type assignment.
 	Subject *PolicyAssignmentV1Subject `json:"subject,omitempty"`
 
 	// policy template details.
@@ -6066,13 +8437,45 @@ func UnmarshalPolicyAssignmentV1(m map[string]json.RawMessage, result interface{
 
 // PolicyAssignmentV1Collection : Policy assignment response.
 type PolicyAssignmentV1Collection struct {
+	// The number of documents to include per each page of the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with linking href to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to the following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with linking href to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
 	// Response of policy assignments.
-	Assignments []PolicyAssignmentV1 `json:"assignments,omitempty"`
+	Assignments []PolicyAssignmentV1 `json:"assignments" validate:"required"`
 }
 
 // UnmarshalPolicyAssignmentV1Collection unmarshals an instance of PolicyAssignmentV1Collection from the specified map of raw messages.
 func UnmarshalPolicyAssignmentV1Collection(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PolicyAssignmentV1Collection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "assignments", &obj.Assignments, UnmarshalPolicyAssignmentV1)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "assignments-error", common.GetComponentInfo())
@@ -6108,7 +8511,7 @@ func UnmarshalPolicyAssignmentV1Resources(m map[string]json.RawMessage, result i
 	return
 }
 
-// PolicyAssignmentV1Subject : subject details of access type assignment.
+// PolicyAssignmentV1Subject : Subject details of access type assignment.
 type PolicyAssignmentV1Subject struct {
 	// The unique identifier of the subject of the assignment.
 	ID *string `json:"id,omitempty"`
@@ -6143,20 +8546,20 @@ func UnmarshalPolicyAssignmentV1Subject(m map[string]json.RawMessage, result int
 
 // PolicyCollection : A collection of policies.
 type PolicyCollection struct {
-	// The number of documents to include per each page of collection.
+	// The number of documents to include per each page of the collection.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Details with href linking to first page of requested collection.
+	// Details with linking href to first page of requested collection.
 	First *First `json:"first,omitempty"`
 
-	// Details with href linking to following page of requested collection.
+	// Details with href linking to the following page of requested collection.
 	Next *Next `json:"next,omitempty"`
 
-	// Details with href linking to previous page of requested collection.
+	// Details with linking href to previous page of requested collection.
 	Previous *Previous `json:"previous,omitempty"`
 
 	// List of policies.
-	Policies []PolicyTemplateMetaData `json:"policies,omitempty"`
+	Policies []PolicyTemplateMetaData `json:"policies" validate:"required"`
 }
 
 // UnmarshalPolicyCollection unmarshals an instance of PolicyCollection from the specified map of raw messages.
@@ -6202,10 +8605,22 @@ func (resp *PolicyCollection) GetNextStart() (*string, error) {
 // PolicyResource : The attributes of the resource. Note that only one resource is allowed in a policy.
 type PolicyResource struct {
 	// List of resource attributes.
-	Attributes []ResourceAttribute `json:"attributes,omitempty"`
+	Attributes []ResourceAttribute `json:"attributes" validate:"required"`
 
 	// List of access management tags.
 	Tags []ResourceTag `json:"tags,omitempty"`
+}
+
+// NewPolicyResource : Instantiate PolicyResource (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewPolicyResource(attributes []ResourceAttribute) (_model *PolicyResource, err error) {
+	_model = &PolicyResource{
+		Attributes: attributes,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
 }
 
 // UnmarshalPolicyResource unmarshals an instance of PolicyResource from the specified map of raw messages.
@@ -6274,7 +8689,19 @@ func UnmarshalPolicyRole(m map[string]json.RawMessage, result interface{}) (err 
 // PolicySubject : The subject attribute values that must match in order for this policy to apply in a permission decision.
 type PolicySubject struct {
 	// List of subject attributes.
-	Attributes []SubjectAttribute `json:"attributes,omitempty"`
+	Attributes []SubjectAttribute `json:"attributes" validate:"required"`
+}
+
+// NewPolicySubject : Instantiate PolicySubject (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewPolicySubject(attributes []SubjectAttribute) (_model *PolicySubject, err error) {
+	_model = &PolicySubject{
+		Attributes: attributes,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
 }
 
 // UnmarshalPolicySubject unmarshals an instance of PolicySubject from the specified map of raw messages.
@@ -6291,15 +8718,15 @@ func UnmarshalPolicySubject(m map[string]json.RawMessage, result interface{}) (e
 
 // PolicyTemplate : The core set of properties associated with the policy template.
 type PolicyTemplate struct {
-	// Required field when creating a new template. Otherwise this field is optional. If the field is included it will
-	// change the name value for all existing versions of the template.
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it changes
+	// the name value for all existing versions of the template.
 	Name *string `json:"name" validate:"required"`
 
 	// Description of the policy template. This is shown to users in the enterprise account. Use this to describe the
 	// purpose or context of the policy for enterprise users managing IAM templates.
 	Description *string `json:"description,omitempty"`
 
-	// Enterprise account ID where this template will be created.
+	// Enterprise account ID where this template is created.
 	AccountID *string `json:"account_id" validate:"required"`
 
 	// Template version.
@@ -6308,11 +8735,11 @@ type PolicyTemplate struct {
 	// Committed status of the template version.
 	Committed *bool `json:"committed,omitempty"`
 
-	// The core set of properties associated with the template's policy objet.
+	// The core set of properties associated with the template's policy object.
 	Policy *TemplatePolicy `json:"policy" validate:"required"`
 
 	// State of policy template.
-	State *string `json:"state,omitempty"`
+	State *string `json:"state" validate:"required"`
 
 	// The policy template ID.
 	ID *string `json:"id,omitempty"`
@@ -6323,13 +8750,13 @@ type PolicyTemplate struct {
 	// The UTC timestamp when the policy template was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the policy template.
+	// The IAM ID of the entity that created the policy template.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the policy template was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy template.
+	// The IAM ID of the entity that last modified the policy template.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 }
 
@@ -6414,20 +8841,20 @@ func UnmarshalPolicyTemplate(m map[string]json.RawMessage, result interface{}) (
 
 // PolicyTemplateAssignmentCollection : A collection of policies assignments.
 type PolicyTemplateAssignmentCollection struct {
-	// The number of documents to include per each page of collection.
+	// The number of documents to include per each page of the collection.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Details with href linking to first page of requested collection.
+	// Details with linking href to first page of requested collection.
 	First *First `json:"first,omitempty"`
 
-	// Details with href linking to following page of requested collection.
+	// Details with href linking to the following page of requested collection.
 	Next *Next `json:"next,omitempty"`
 
-	// Details with href linking to previous page of requested collection.
+	// Details with linking href to previous page of requested collection.
 	Previous *Previous `json:"previous,omitempty"`
 
 	// List of policy assignments.
-	Assignments []PolicyTemplateAssignmentItemsIntf `json:"assignments,omitempty"`
+	Assignments []PolicyTemplateAssignmentItemsIntf `json:"assignments" validate:"required"`
 }
 
 // UnmarshalPolicyTemplateAssignmentCollection unmarshals an instance of PolicyTemplateAssignmentCollection from the specified map of raw messages.
@@ -6481,7 +8908,7 @@ type PolicyTemplateAssignmentItems struct {
 	// Policy assignment ID.
 	ID *string `json:"id,omitempty"`
 
-	// The account GUID that the policies assignments belong to..
+	// The account GUID that the policies assignments belong to.
 	AccountID *string `json:"account_id,omitempty"`
 
 	// The href URL that links to the policies assignments API by policy assignment ID.
@@ -6490,19 +8917,19 @@ type PolicyTemplateAssignmentItems struct {
 	// The UTC timestamp when the policy assignment was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the policy assignment.
+	// The IAM ID of the entity that created the policy assignment.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the policy assignment was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy assignment.
+	// The IAM ID of the entity that last modified the policy assignment.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 
 	// Object for each account assigned.
 	Resources []PolicyAssignmentV1Resources `json:"resources,omitempty"`
 
-	// subject details of access type assignment.
+	// Subject details of access type assignment.
 	Subject *PolicyAssignmentV1Subject `json:"subject,omitempty"`
 
 	// policy template details.
@@ -6511,7 +8938,7 @@ type PolicyTemplateAssignmentItems struct {
 	// The policy assignment status.
 	Status *string `json:"status,omitempty"`
 
-	// policy template id.
+	// policy template ID.
 	TemplateID *string `json:"template_id,omitempty"`
 
 	// policy template version.
@@ -6537,6 +8964,8 @@ const (
 // Assignment target type.
 const (
 	PolicyTemplateAssignmentItemsTargetTypeAccountConst = "Account"
+	PolicyTemplateAssignmentItemsTargetTypeAccountgroupConst = "AccountGroup"
+	PolicyTemplateAssignmentItemsTargetTypeEnterpriseConst = "Enterprise"
 )
 func (*PolicyTemplateAssignmentItems) isaPolicyTemplateAssignmentItems() bool {
 	return true
@@ -6635,20 +9064,20 @@ func UnmarshalPolicyTemplateAssignmentItems(m map[string]json.RawMessage, result
 
 // PolicyTemplateCollection : A collection of policy Templates.
 type PolicyTemplateCollection struct {
-	// The number of documents to include per each page of collection.
+	// The number of documents to include per each page of the collection.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Details with href linking to first page of requested collection.
+	// Details with linking href to first page of requested collection.
 	First *First `json:"first,omitempty"`
 
-	// Details with href linking to following page of requested collection.
+	// Details with href linking to the following page of requested collection.
 	Next *Next `json:"next,omitempty"`
 
-	// Details with href linking to previous page of requested collection.
+	// Details with linking href to previous page of requested collection.
 	Previous *Previous `json:"previous,omitempty"`
 
 	// List of policy templates.
-	PolicyTemplates []PolicyTemplate `json:"policy_templates,omitempty"`
+	PolicyTemplates []PolicyTemplate `json:"policy_templates" validate:"required"`
 }
 
 // UnmarshalPolicyTemplateCollection unmarshals an instance of PolicyTemplateCollection from the specified map of raw messages.
@@ -6693,15 +9122,15 @@ func (resp *PolicyTemplateCollection) GetNextStart() (*string, error) {
 
 // PolicyTemplateLimitData : The core set of properties associated with the policy template.
 type PolicyTemplateLimitData struct {
-	// Required field when creating a new template. Otherwise this field is optional. If the field is included it will
-	// change the name value for all existing versions of the template.
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it changes
+	// the name value for all existing versions of the template.
 	Name *string `json:"name" validate:"required"`
 
 	// Description of the policy template. This is shown to users in the enterprise account. Use this to describe the
 	// purpose or context of the policy for enterprise users managing IAM templates.
 	Description *string `json:"description,omitempty"`
 
-	// Enterprise account ID where this template will be created.
+	// Enterprise account ID where this template is created.
 	AccountID *string `json:"account_id" validate:"required"`
 
 	// Template version.
@@ -6710,11 +9139,11 @@ type PolicyTemplateLimitData struct {
 	// Committed status of the template version.
 	Committed *bool `json:"committed,omitempty"`
 
-	// The core set of properties associated with the template's policy objet.
+	// The core set of properties associated with the template's policy object.
 	Policy *TemplatePolicy `json:"policy" validate:"required"`
 
 	// State of policy template.
-	State *string `json:"state,omitempty"`
+	State *string `json:"state" validate:"required"`
 
 	// The policy template ID.
 	ID *string `json:"id,omitempty"`
@@ -6725,13 +9154,13 @@ type PolicyTemplateLimitData struct {
 	// The UTC timestamp when the policy template was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the policy template.
+	// The IAM ID of the entity that created the policy template.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the policy template was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy template.
+	// The IAM ID of the entity that last modified the policy template.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 
 	// policy template count details.
@@ -6836,25 +9265,25 @@ type PolicyTemplateMetaData struct {
 	// The subjects associated with a policy.
 	Subjects []PolicySubject `json:"subjects" validate:"required"`
 
-	// A set of role cloud resource names (CRNs) granted by the policy.
+	// A set of role Cloud Resource Names (CRNs) granted by the policy.
 	Roles []PolicyRole `json:"roles" validate:"required"`
 
 	// The resources associated with a policy.
 	Resources []PolicyResource `json:"resources" validate:"required"`
 
-	// The href link back to the policy.
+	// The href links back to the policy.
 	Href *string `json:"href,omitempty"`
 
 	// The UTC timestamp when the policy was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the policy.
+	// The IAM ID of the entity that created the policy.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the policy was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy.
+	// The IAM ID of the entity that last modified the policy.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 
 	// The policy state.
@@ -6946,20 +9375,20 @@ func UnmarshalPolicyTemplateMetaData(m map[string]json.RawMessage, result interf
 
 // PolicyTemplateVersionsCollection : A collection of versions for a specific policy template.
 type PolicyTemplateVersionsCollection struct {
-	// The number of documents to include per each page of collection.
+	// The number of documents to include per each page of the collection.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Details with href linking to first page of requested collection.
+	// Details with linking href to first page of requested collection.
 	First *First `json:"first,omitempty"`
 
-	// Details with href linking to following page of requested collection.
+	// Details with href linking to the following page of requested collection.
 	Next *Next `json:"next,omitempty"`
 
-	// Details with href linking to previous page of requested collection.
+	// Details with linking href to previous page of requested collection.
 	Previous *Previous `json:"previous,omitempty"`
 
 	// List of policy templates versions.
-	Versions []PolicyTemplate `json:"versions,omitempty"`
+	Versions []PolicyTemplate `json:"versions" validate:"required"`
 }
 
 // UnmarshalPolicyTemplateVersionsCollection unmarshals an instance of PolicyTemplateVersionsCollection from the specified map of raw messages.
@@ -7002,12 +9431,12 @@ func (resp *PolicyTemplateVersionsCollection) GetNextStart() (*string, error) {
 	return resp.Next.Start, nil
 }
 
-// Previous : Details with href linking to previous page of requested collection.
+// Previous : Details with linking href to previous page of requested collection.
 type Previous struct {
 	// The href linking to the page of requested collection.
 	Href *string `json:"href,omitempty"`
 
-	// Page token that refers to the page of collection.
+	// Page token that refers to the page of the collection.
 	Start *string `json:"start,omitempty"`
 }
 
@@ -7028,6 +9457,95 @@ func UnmarshalPrevious(m map[string]json.RawMessage, result interface{}) (err er
 	return
 }
 
+// ReplaceActionControlTemplateOptions : The ReplaceActionControlTemplate options.
+type ReplaceActionControlTemplateOptions struct {
+	// Action control template ID.
+	ActionControlTemplateID *string `json:"action_control_template_id" validate:"required,ne="`
+
+	// Action control template version.
+	Version *string `json:"version" validate:"required,ne="`
+
+	// The revision number for updating an action control template version must match the Etag value of the existing action
+	// control template version. The Etag can be retrieved using the GET
+	// /v1/action_control_templates/{template_id}/versions/{version} API and looking at the Etag response header.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it will
+	// change the name value for all existing versions of the template.
+	Name *string `json:"name,omitempty"`
+
+	// Description of the action control template. This is shown to users in the enterprise account. Use this to describe
+	// the purpose or context of the action control for enterprise users managing IAM templates.
+	Description *string `json:"description,omitempty"`
+
+	// The action control properties that are created in an action resource when the template is assigned.
+	ActionControl *TemplateActionControl `json:"action_control,omitempty"`
+
+	// Committed status of the template version. If committed is set to true, then the template version can no longer be
+	// updated.
+	Committed *bool `json:"committed,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewReplaceActionControlTemplateOptions : Instantiate ReplaceActionControlTemplateOptions
+func (*IamPolicyManagementV1) NewReplaceActionControlTemplateOptions(actionControlTemplateID string, version string, ifMatch string) *ReplaceActionControlTemplateOptions {
+	return &ReplaceActionControlTemplateOptions{
+		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
+		Version: core.StringPtr(version),
+		IfMatch: core.StringPtr(ifMatch),
+	}
+}
+
+// SetActionControlTemplateID : Allow user to set ActionControlTemplateID
+func (_options *ReplaceActionControlTemplateOptions) SetActionControlTemplateID(actionControlTemplateID string) *ReplaceActionControlTemplateOptions {
+	_options.ActionControlTemplateID = core.StringPtr(actionControlTemplateID)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *ReplaceActionControlTemplateOptions) SetVersion(version string) *ReplaceActionControlTemplateOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *ReplaceActionControlTemplateOptions) SetIfMatch(ifMatch string) *ReplaceActionControlTemplateOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ReplaceActionControlTemplateOptions) SetName(name string) *ReplaceActionControlTemplateOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *ReplaceActionControlTemplateOptions) SetDescription(description string) *ReplaceActionControlTemplateOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetActionControl : Allow user to set ActionControl
+func (_options *ReplaceActionControlTemplateOptions) SetActionControl(actionControl *TemplateActionControl) *ReplaceActionControlTemplateOptions {
+	_options.ActionControl = actionControl
+	return _options
+}
+
+// SetCommitted : Allow user to set Committed
+func (_options *ReplaceActionControlTemplateOptions) SetCommitted(committed bool) *ReplaceActionControlTemplateOptions {
+	_options.Committed = core.BoolPtr(committed)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ReplaceActionControlTemplateOptions) SetHeaders(param map[string]string) *ReplaceActionControlTemplateOptions {
+	options.Headers = param
+	return options
+}
+
 // ReplacePolicyOptions : The ReplacePolicy options.
 type ReplacePolicyOptions struct {
 	// The policy ID.
@@ -7043,7 +9561,7 @@ type ReplacePolicyOptions struct {
 	// The subjects associated with a policy.
 	Subjects []PolicySubject `json:"subjects" validate:"required"`
 
-	// A set of role cloud resource names (CRNs) granted by the policy.
+	// A set of role Cloud Resource Names (CRNs) granted by the policy.
 	Roles []PolicyRole `json:"roles" validate:"required"`
 
 	// The resources associated with a policy.
@@ -7129,11 +9647,11 @@ type ReplacePolicyTemplateOptions struct {
 	// /v1/policy_templates/{policy_template_id}/versions/{version} API and looking at the ETag response header.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	// The core set of properties associated with the template's policy objet.
+	// The core set of properties associated with the template's policy object.
 	Policy *TemplatePolicy `json:"policy" validate:"required"`
 
-	// Required field when creating a new template. Otherwise this field is optional. If the field is included it will
-	// change the name value for all existing versions of the template.
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it changes
+	// the name value for all existing versions of the template.
 	Name *string `json:"name,omitempty"`
 
 	// Description of the policy template. This is shown to users in the enterprise account. Use this to describe the
@@ -7214,7 +9732,7 @@ type ReplaceRoleOptions struct {
 	// retrieved using the GET /v2/roles/{role_id} API and looking at the ETag response header.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	// The display name of the role that is shown in the console.
+	// The display the name of the role that is shown in the console.
 	DisplayName *string `json:"display_name" validate:"required"`
 
 	// The actions of the role. For more information, see [IAM roles and
@@ -7283,7 +9801,7 @@ type ReplaceV2PolicyOptions struct {
 	// retrieved using the GET /v2/policies/{id} API and looking at the ETag response header.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	// Specifies the type of access granted by the policy.
+	// Specifies the type of access that is granted by the policy.
 	Control *Control `json:"control" validate:"required"`
 
 	// The policy type; either 'access' or 'authorization'.
@@ -7482,7 +10000,7 @@ func UnmarshalResourceTag(m map[string]json.RawMessage, result interface{}) (err
 
 // Role : A role resource.
 type Role struct {
-	// The display name of the role that is shown in the console.
+	// The display the name of the role that is shown in the console.
 	DisplayName *string `json:"display_name" validate:"required"`
 
 	// The description of the role.
@@ -7537,12 +10055,12 @@ func UnmarshalRole(m map[string]json.RawMessage, result interface{}) (err error)
 	return
 }
 
-// RoleAction : An action that can be performed by the policy subject when assigned role.
+// RoleAction : An action that can be performed by the policy subject when assigned a role.
 type RoleAction struct {
-	// Unique identifier for action with structure service.resource.action e.g., cbr.rule.read.
+	// Unique identifier for action with structure service.resource.action. For example, cbr.rule.read.
 	ID *string `json:"id" validate:"required"`
 
-	// Service defined display name for action.
+	// Services defined display name for action.
 	DisplayName *string `json:"display_name" validate:"required"`
 
 	// Service defined description for action.
@@ -7574,13 +10092,13 @@ func UnmarshalRoleAction(m map[string]json.RawMessage, result interface{}) (err 
 // RoleCollection : A collection of roles returned by the 'list roles' operation.
 type RoleCollection struct {
 	// List of custom roles.
-	CustomRoles []CustomRole `json:"custom_roles,omitempty"`
+	CustomRoles []CustomRole `json:"custom_roles" validate:"required"`
 
 	// List of service roles.
-	ServiceRoles []Role `json:"service_roles,omitempty"`
+	ServiceRoles []Role `json:"service_roles" validate:"required"`
 
 	// List of system roles.
-	SystemRoles []Role `json:"system_roles,omitempty"`
+	SystemRoles []Role `json:"system_roles" validate:"required"`
 }
 
 // UnmarshalRoleCollection unmarshals an instance of RoleCollection from the specified map of raw messages.
@@ -7635,7 +10153,7 @@ func UnmarshalRoles(m map[string]json.RawMessage, result interface{}) (err error
 	return
 }
 
-// RuleAttribute : Rule that specifies additional access granted (e.g., time-based condition).
+// RuleAttribute : Rule that specifies additional access that is granted (For example, time-based condition).
 type RuleAttribute struct {
 	// The name of an attribute.
 	Key *string `json:"key" validate:"required"`
@@ -7644,7 +10162,7 @@ type RuleAttribute struct {
 	Operator *string `json:"operator" validate:"required"`
 
 	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
-	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
+	// Can be a string or an array of strings (for example, an array of days to permit access) for rule attribute.
 	Value interface{} `json:"value" validate:"required"`
 }
 
@@ -7747,6 +10265,53 @@ func UnmarshalSubjectAttribute(m map[string]json.RawMessage, result interface{})
 	return
 }
 
+// TemplateActionControl : The action control properties that are created in an action resource when the template is assigned.
+type TemplateActionControl struct {
+	// The service name that the action control refers.
+	ServiceName *string `json:"service_name" validate:"required"`
+
+	// Description of the action control.
+	Description *string `json:"description,omitempty"`
+
+	// List of actions to control access.
+	Actions []string `json:"actions" validate:"required"`
+}
+
+// NewTemplateActionControl : Instantiate TemplateActionControl (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewTemplateActionControl(serviceName string, actions []string) (_model *TemplateActionControl, err error) {
+	_model = &TemplateActionControl{
+		ServiceName: core.StringPtr(serviceName),
+		Actions: actions,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalTemplateActionControl unmarshals an instance of TemplateActionControl from the specified map of raw messages.
+func UnmarshalTemplateActionControl(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateActionControl)
+	err = core.UnmarshalPrimitive(m, "service_name", &obj.ServiceName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "actions", &obj.Actions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "actions-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // TemplateCountData : policy template count details.
 type TemplateCountData struct {
 	// policy template current and limit details with in an account.
@@ -7782,13 +10347,13 @@ type TemplateMetadata struct {
 	// Template version.
 	Version *string `json:"version,omitempty"`
 
-	// policy assignment id.
+	// Policy assignment ID.
 	AssignmentID *string `json:"assignment_id,omitempty"`
 
-	// orchestrator template id.
+	// Orchestrator template ID.
 	RootID *string `json:"root_id,omitempty"`
 
-	// orchestrator template version.
+	// Orchestrator template version.
 	RootVersion *string `json:"root_version,omitempty"`
 }
 
@@ -7824,7 +10389,7 @@ func UnmarshalTemplateMetadata(m map[string]json.RawMessage, result interface{})
 	return
 }
 
-// TemplatePolicy : The core set of properties associated with the template's policy objet.
+// TemplatePolicy : The core set of properties associated with the template's policy object.
 type TemplatePolicy struct {
 	// The policy type; either 'access' or 'authorization'.
 	Type *string `json:"type" validate:"required"`
@@ -7846,7 +10411,7 @@ type TemplatePolicy struct {
 	// Additional access conditions associated with the policy.
 	Rule V2PolicyRuleIntf `json:"rule,omitempty"`
 
-	// Specifies the type of access granted by the policy.
+	// Specifies the type of access that is granted by the policy.
 	Control *Control `json:"control,omitempty"`
 }
 
@@ -7911,6 +10476,56 @@ func UnmarshalTemplatePolicy(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
+// UpdateActionControlAssignmentOptions : The UpdateActionControlAssignment options.
+type UpdateActionControlAssignmentOptions struct {
+	// Action control template assignment ID.
+	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
+
+	// The revision number for updating an action control assignment and must match the Etag value of the existing action
+	// control assignment. The Etag can be retrieved using the GET /v1/action_control_assignments/{assignment_id} API and
+	// looking at the Etag response header.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	// The version number of the template used to identify different versions of same template.
+	TemplateVersion *string `json:"template_version" validate:"required"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdateActionControlAssignmentOptions : Instantiate UpdateActionControlAssignmentOptions
+func (*IamPolicyManagementV1) NewUpdateActionControlAssignmentOptions(assignmentID string, ifMatch string, templateVersion string) *UpdateActionControlAssignmentOptions {
+	return &UpdateActionControlAssignmentOptions{
+		AssignmentID: core.StringPtr(assignmentID),
+		IfMatch: core.StringPtr(ifMatch),
+		TemplateVersion: core.StringPtr(templateVersion),
+	}
+}
+
+// SetAssignmentID : Allow user to set AssignmentID
+func (_options *UpdateActionControlAssignmentOptions) SetAssignmentID(assignmentID string) *UpdateActionControlAssignmentOptions {
+	_options.AssignmentID = core.StringPtr(assignmentID)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *UpdateActionControlAssignmentOptions) SetIfMatch(ifMatch string) *UpdateActionControlAssignmentOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetTemplateVersion : Allow user to set TemplateVersion
+func (_options *UpdateActionControlAssignmentOptions) SetTemplateVersion(templateVersion string) *UpdateActionControlAssignmentOptions {
+	_options.TemplateVersion = core.StringPtr(templateVersion)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateActionControlAssignmentOptions) SetHeaders(param map[string]string) *UpdateActionControlAssignmentOptions {
+	options.Headers = param
+	return options
+}
+
 // UpdatePolicyAssignmentOptions : The UpdatePolicyAssignment options.
 type UpdatePolicyAssignmentOptions struct {
 	// The policy template assignment ID.
@@ -7919,9 +10534,9 @@ type UpdatePolicyAssignmentOptions struct {
 	// specify version of response body format.
 	Version *string `json:"version" validate:"required"`
 
-	// The revision number for updating a policy assignment and must match the ETag value of the existing policy
+	// The revision number for updating a policy assignment and must match the Etag value of the existing policy
 	// assignment. The Etag can be retrieved using the GET /v1/policy_assignments/{assignment_id} API and looking at the
-	// ETag response header.
+	// Etag response header.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
 	// The policy template version to update to.
@@ -8031,9 +10646,9 @@ type UpdateSettingsOptions struct {
 	// The account GUID that the settings belong to.
 	AccountID *string `json:"account_id" validate:"required,ne="`
 
-	// The revision number for updating Access Management Account Settings and must match the ETag value of the existing
+	// The revision number for updating Access Management Account Settings and must match the Etag value of the existing
 	// Access Management Account Settings. The Etag can be retrieved using the GET
-	// /v1/accounts/{account_id}/settings/access_management API and looking at the ETag response header.
+	// /v1/accounts/{account_id}/settings/access_management API and looking at the Etag response header.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
 	// Update to how external accounts can interact in relation to the requested account.
@@ -8127,13 +10742,13 @@ type V2Policy struct {
 	// The UTC timestamp when the policy was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the policy.
+	// The IAM ID of the entity that created the policy.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the policy was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy.
+	// The IAM ID of the entity that last modified the policy.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 
 	// The policy state, either 'deleted' or 'active'.
@@ -8250,20 +10865,20 @@ func UnmarshalV2Policy(m map[string]json.RawMessage, result interface{}) (err er
 
 // V2PolicyCollection : A collection of policies.
 type V2PolicyCollection struct {
-	// The number of documents to include per each page of collection.
+	// The number of documents to include per each page of the collection.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Details with href linking to first page of requested collection.
+	// Details with linking href to first page of requested collection.
 	First *First `json:"first,omitempty"`
 
-	// Details with href linking to following page of requested collection.
+	// Details with href linking to the following page of requested collection.
 	Next *Next `json:"next,omitempty"`
 
-	// Details with href linking to previous page of requested collection.
+	// Details with linking href to previous page of requested collection.
 	Previous *Previous `json:"previous,omitempty"`
 
 	// List of policies.
-	Policies []V2PolicyTemplateMetaData `json:"policies,omitempty"`
+	Policies []V2PolicyTemplateMetaData `json:"policies" validate:"required"`
 }
 
 // UnmarshalV2PolicyCollection unmarshals an instance of V2PolicyCollection from the specified map of raw messages.
@@ -8353,7 +10968,7 @@ type V2PolicyResourceAttribute struct {
 	Operator *string `json:"operator" validate:"required"`
 
 	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
-	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
+	// Can be a string or an array of strings (for example, an array of days to permit access) for rule attribute.
 	Value interface{} `json:"value" validate:"required"`
 }
 
@@ -8470,11 +11085,11 @@ type V2PolicyRule struct {
 	Operator *string `json:"operator,omitempty"`
 
 	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
-	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
+	// Can be a string or an array of strings (for example, an array of days to permit access) for rule attribute.
 	Value interface{} `json:"value,omitempty"`
 
-	// List of conditions associated with a policy, e.g., time-based conditions that grant access over a certain time
-	// period.
+	// List of conditions associated with a policy. For example, time-based conditions that grant access over a certain
+	// time period.
 	Conditions []NestedConditionIntf `json:"conditions,omitempty"`
 }
 
@@ -8538,7 +11153,7 @@ func UnmarshalV2PolicyRule(m map[string]json.RawMessage, result interface{}) (er
 
 // V2PolicySubject : The subject attributes for whom the policy grants access.
 type V2PolicySubject struct {
-	// List of subject attributes associated with policy/.
+	// List of subject attributes associated with policy.
 	Attributes []V2PolicySubjectAttribute `json:"attributes" validate:"required"`
 }
 
@@ -8568,14 +11183,14 @@ func UnmarshalV2PolicySubject(m map[string]json.RawMessage, result interface{}) 
 
 // V2PolicySubjectAttribute : Subject attribute for whom the policy grants access.
 type V2PolicySubjectAttribute struct {
-	// The name of a subject attribute, e.g., iam_id, access_group_id.
+	// The name of a subject attribute. For example, iam_id, access_group_id.
 	Key *string `json:"key" validate:"required"`
 
 	// The operator of an attribute.
 	Operator *string `json:"operator" validate:"required"`
 
 	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
-	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
+	// Can be a string or an array of strings (for example, an array of days to permit access) for rule attribute.
 	Value interface{} `json:"value" validate:"required"`
 }
 
@@ -8654,13 +11269,13 @@ type V2PolicyTemplateMetaData struct {
 	// The UTC timestamp when the policy was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the policy.
+	// The IAM ID of the entity that created the policy.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the policy was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy.
+	// The IAM ID of the entity that last modified the policy.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 
 	// The policy state, either 'deleted' or 'active'.
@@ -8784,10 +11399,10 @@ func UnmarshalV2PolicyTemplateMetaData(m map[string]json.RawMessage, result inte
 	return
 }
 
-// ControlResponseControl : Specifies the type of access granted by the policy.
+// ControlResponseControl : Specifies the type of access that is granted by the policy.
 // This model "extends" ControlResponse
 type ControlResponseControl struct {
-	// Permission granted by the policy.
+	// Permission is granted by the policy.
 	Grant *Grant `json:"grant" validate:"required"`
 }
 
@@ -8807,7 +11422,7 @@ func UnmarshalControlResponseControl(m map[string]json.RawMessage, result interf
 	return
 }
 
-// ControlResponseControlWithEnrichedRoles : Specifies the type of access granted by the policy with additional role information.
+// ControlResponseControlWithEnrichedRoles : Specifies the type of access that is granted by the policy with additional role information.
 // This model "extends" ControlResponse
 type ControlResponseControlWithEnrichedRoles struct {
 	// Permission granted by the policy with translated roles and additional role information.
@@ -8830,7 +11445,7 @@ func UnmarshalControlResponseControlWithEnrichedRoles(m map[string]json.RawMessa
 	return
 }
 
-// NestedConditionRuleAttribute : Rule that specifies additional access granted (e.g., time-based condition).
+// NestedConditionRuleAttribute : Rule that specifies additional access that is granted (For example, time-based condition).
 // This model "extends" NestedCondition
 type NestedConditionRuleAttribute struct {
 	// The name of an attribute.
@@ -8840,7 +11455,7 @@ type NestedConditionRuleAttribute struct {
 	Operator *string `json:"operator" validate:"required"`
 
 	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
-	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
+	// Can be a string or an array of strings (for example, an array of days to permit access) for rule attribute.
 	Value interface{} `json:"value" validate:"required"`
 }
 
@@ -8908,14 +11523,15 @@ func UnmarshalNestedConditionRuleAttribute(m map[string]json.RawMessage, result 
 	return
 }
 
-// NestedConditionRuleWithConditions : Rule that specifies additional access granted (e.g., time-based condition) accross multiple conditions.
+// NestedConditionRuleWithConditions : Rule that specifies additional access that is granted (for example, time-based condition) accross multiple
+// conditions.
 // This model "extends" NestedCondition
 type NestedConditionRuleWithConditions struct {
 	// Operator to evaluate conditions.
 	Operator *string `json:"operator" validate:"required"`
 
-	// List of conditions associated with a policy, e.g., time-based conditions that grant access over a certain time
-	// period.
+	// List of conditions associated with a policy. For example, time-based conditions that grant access over a certain
+	// time period.
 	Conditions []RuleAttribute `json:"conditions" validate:"required"`
 }
 
@@ -8963,25 +11579,25 @@ func UnmarshalNestedConditionRuleWithConditions(m map[string]json.RawMessage, re
 // PolicyTemplateAssignmentItemsPolicyAssignment : The set of properties associated with the policy template assignment.
 // This model "extends" PolicyTemplateAssignmentItems
 type PolicyTemplateAssignmentItemsPolicyAssignment struct {
-	// policy template id.
-	TemplateID *string `json:"template_id,omitempty"`
+	// policy template ID.
+	TemplateID *string `json:"template_id" validate:"required"`
 
 	// policy template version.
-	TemplateVersion *string `json:"template_version,omitempty"`
+	TemplateVersion *string `json:"template_version" validate:"required"`
 
 	// Passed in value to correlate with other assignments.
 	AssignmentID *string `json:"assignment_id,omitempty"`
 
 	// Assignment target type.
-	TargetType *string `json:"target_type,omitempty"`
+	TargetType *string `json:"target_type" validate:"required"`
 
 	// ID of the target account.
-	Target *string `json:"target,omitempty"`
+	Target *string `json:"target" validate:"required"`
 
 	// Policy assignment ID.
 	ID *string `json:"id,omitempty"`
 
-	// The account GUID that the policies assignments belong to..
+	// The account GUID that the policies assignments belong to.
 	AccountID *string `json:"account_id,omitempty"`
 
 	// The href URL that links to the policies assignments API by policy assignment ID.
@@ -8990,26 +11606,28 @@ type PolicyTemplateAssignmentItemsPolicyAssignment struct {
 	// The UTC timestamp when the policy assignment was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the policy assignment.
+	// The IAM ID of the entity that created the policy assignment.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the policy assignment was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy assignment.
+	// The IAM ID of the entity that last modified the policy assignment.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 
 	// Object for each account assigned.
-	Resources []PolicyAssignmentResources `json:"resources,omitempty"`
+	Resources []PolicyAssignmentResources `json:"resources" validate:"required"`
 
 	// The policy assignment status.
-	Status *string `json:"status,omitempty"`
+	Status *string `json:"status" validate:"required"`
 }
 
 // Constants associated with the PolicyTemplateAssignmentItemsPolicyAssignment.TargetType property.
 // Assignment target type.
 const (
 	PolicyTemplateAssignmentItemsPolicyAssignmentTargetTypeAccountConst = "Account"
+	PolicyTemplateAssignmentItemsPolicyAssignmentTargetTypeAccountgroupConst = "AccountGroup"
+	PolicyTemplateAssignmentItemsPolicyAssignmentTargetTypeEnterpriseConst = "Enterprise"
 )
 
 // Constants associated with the PolicyTemplateAssignmentItemsPolicyAssignment.Status property.
@@ -9111,7 +11729,7 @@ type PolicyTemplateAssignmentItemsPolicyAssignmentV1 struct {
 	// Policy assignment ID.
 	ID *string `json:"id,omitempty"`
 
-	// The account GUID that the policies assignments belong to..
+	// The account GUID that the policies assignments belong to.
 	AccountID *string `json:"account_id,omitempty"`
 
 	// The href URL that links to the policies assignments API by policy assignment ID.
@@ -9120,19 +11738,19 @@ type PolicyTemplateAssignmentItemsPolicyAssignmentV1 struct {
 	// The UTC timestamp when the policy assignment was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
-	// The iam ID of the entity that created the policy assignment.
+	// The IAM ID of the entity that created the policy assignment.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
 	// The UTC timestamp when the policy assignment was last modified.
 	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
 
-	// The iam ID of the entity that last modified the policy assignment.
+	// The IAM ID of the entity that last modified the policy assignment.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 
 	// Object for each account assigned.
 	Resources []PolicyAssignmentV1Resources `json:"resources" validate:"required"`
 
-	// subject details of access type assignment.
+	// Subject details of access type assignment.
 	Subject *PolicyAssignmentV1Subject `json:"subject,omitempty"`
 
 	// policy template details.
@@ -9222,7 +11840,7 @@ func UnmarshalPolicyTemplateAssignmentItemsPolicyAssignmentV1(m map[string]json.
 	return
 }
 
-// V2PolicyRuleRuleAttribute : Rule that specifies additional access granted (e.g., time-based condition).
+// V2PolicyRuleRuleAttribute : Rule that specifies additional access that is granted (For example, time-based condition).
 // This model "extends" V2PolicyRule
 type V2PolicyRuleRuleAttribute struct {
 	// The name of an attribute.
@@ -9232,7 +11850,7 @@ type V2PolicyRuleRuleAttribute struct {
 	Operator *string `json:"operator" validate:"required"`
 
 	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
-	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
+	// Can be a string or an array of strings (for example, an array of days to permit access) for rule attribute.
 	Value interface{} `json:"value" validate:"required"`
 }
 
@@ -9300,14 +11918,15 @@ func UnmarshalV2PolicyRuleRuleAttribute(m map[string]json.RawMessage, result int
 	return
 }
 
-// V2PolicyRuleRuleWithNestedConditions : Rule that specifies additional access granted (e.g., time-based condition) accross multiple conditions.
+// V2PolicyRuleRuleWithNestedConditions : Rule that specifies additional access that is granted (for example, time-based condition) accross multiple
+// conditions.
 // This model "extends" V2PolicyRule
 type V2PolicyRuleRuleWithNestedConditions struct {
 	// Operator to evaluate conditions.
 	Operator *string `json:"operator" validate:"required"`
 
-	// List of conditions associated with a policy, e.g., time-based conditions that grant access over a certain time
-	// period.
+	// List of conditions associated with a policy. For example, time-based conditions that grant access over a certain
+	// time period.
 	Conditions []NestedConditionIntf `json:"conditions" validate:"required"`
 }
 
@@ -9782,6 +12401,267 @@ func (pager *PolicyAssignmentsPager) GetNext() (page []PolicyTemplateAssignmentI
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *PolicyAssignmentsPager) GetAll() (allItems []PolicyTemplateAssignmentItemsIntf, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// ActionControlTemplatesPager can be used to simplify the use of the "ListActionControlTemplates" method.
+//
+type ActionControlTemplatesPager struct {
+	hasNext bool
+	options *ListActionControlTemplatesOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewActionControlTemplatesPager returns a new ActionControlTemplatesPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewActionControlTemplatesPager(options *ListActionControlTemplatesOptions) (pager *ActionControlTemplatesPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListActionControlTemplatesOptions = *options
+	pager = &ActionControlTemplatesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ActionControlTemplatesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ActionControlTemplatesPager) GetNextWithContext(ctx context.Context) (page []ActionControlTemplate, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListActionControlTemplatesWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.ActionControlTemplates
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ActionControlTemplatesPager) GetAllWithContext(ctx context.Context) (allItems []ActionControlTemplate, err error) {
+	for pager.HasNext() {
+		var nextPage []ActionControlTemplate
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ActionControlTemplatesPager) GetNext() (page []ActionControlTemplate, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ActionControlTemplatesPager) GetAll() (allItems []ActionControlTemplate, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// ActionControlTemplateVersionsPager can be used to simplify the use of the "ListActionControlTemplateVersions" method.
+//
+type ActionControlTemplateVersionsPager struct {
+	hasNext bool
+	options *ListActionControlTemplateVersionsOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewActionControlTemplateVersionsPager returns a new ActionControlTemplateVersionsPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewActionControlTemplateVersionsPager(options *ListActionControlTemplateVersionsOptions) (pager *ActionControlTemplateVersionsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListActionControlTemplateVersionsOptions = *options
+	pager = &ActionControlTemplateVersionsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ActionControlTemplateVersionsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ActionControlTemplateVersionsPager) GetNextWithContext(ctx context.Context) (page []ActionControlTemplate, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListActionControlTemplateVersionsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Versions
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ActionControlTemplateVersionsPager) GetAllWithContext(ctx context.Context) (allItems []ActionControlTemplate, err error) {
+	for pager.HasNext() {
+		var nextPage []ActionControlTemplate
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ActionControlTemplateVersionsPager) GetNext() (page []ActionControlTemplate, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ActionControlTemplateVersionsPager) GetAll() (allItems []ActionControlTemplate, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// ActionControlAssignmentsPager can be used to simplify the use of the "ListActionControlAssignments" method.
+//
+type ActionControlAssignmentsPager struct {
+	hasNext bool
+	options *ListActionControlAssignmentsOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewActionControlAssignmentsPager returns a new ActionControlAssignmentsPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewActionControlAssignmentsPager(options *ListActionControlAssignmentsOptions) (pager *ActionControlAssignmentsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListActionControlAssignmentsOptions = *options
+	pager = &ActionControlAssignmentsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ActionControlAssignmentsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ActionControlAssignmentsPager) GetNextWithContext(ctx context.Context) (page []ActionControlAssignment, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListActionControlAssignmentsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Assignments
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ActionControlAssignmentsPager) GetAllWithContext(ctx context.Context) (allItems []ActionControlAssignment, err error) {
+	for pager.HasNext() {
+		var nextPage []ActionControlAssignment
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ActionControlAssignmentsPager) GetNext() (page []ActionControlAssignment, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ActionControlAssignmentsPager) GetAll() (allItems []ActionControlAssignment, err error) {
 	allItems, err = pager.GetAllWithContext(context.Background())
 	err = core.RepurposeSDKProblem(err, "")
 	return

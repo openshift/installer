@@ -65,5 +65,5 @@ type IBMPowerVSMachineTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&IBMPowerVSMachineTemplate{}, &IBMPowerVSMachineTemplateList{})
+	objectTypes = append(objectTypes, &IBMPowerVSMachineTemplate{}, &IBMPowerVSMachineTemplateList{})
 }

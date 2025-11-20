@@ -13,7 +13,6 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	gcpcfg "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	externalinfra "github.com/openshift/installer/pkg/asset/manifests/external"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	nutanixinfra "github.com/openshift/installer/pkg/asset/manifests/nutanix"
@@ -30,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -214,10 +214,6 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			config.Status.PlatformStatus.GCP.ResourceTags = resourceTags
 		}
 
-		// The endpoints must not include any path. The path will be added by the users in other packages.
-		modifiedEndpoints := gcpcfg.FormatGCPEndpointList(installConfig.Config.Platform.GCP.ServiceEndpoints, gcpcfg.FormatGCPEndpointInput{SkipPath: true})
-		config.Status.PlatformStatus.GCP.ServiceEndpoints = modifiedEndpoints
-
 		// If the user has requested the use of a DNS provisioned by them, then OpenShift needs to
 		// start an in-cluster DNS for the installation to succeed. The user can then configure their
 		// DNS post-install.
@@ -257,7 +253,7 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		config.Status.PlatformStatus.External = externalinfra.GetInfraPlatformStatus(installConfig)
 	case none.Name:
 		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
-	case openstack.Name:
+	case openstack.Name, powervc.Name:
 		config.Spec.PlatformSpec.Type = configv1.OpenStackPlatformType
 		config.Spec.PlatformSpec.OpenStack = &configv1.OpenStackPlatformSpec{}
 		config.Status.PlatformStatus.OpenStack = &configv1.OpenStackPlatformStatus{

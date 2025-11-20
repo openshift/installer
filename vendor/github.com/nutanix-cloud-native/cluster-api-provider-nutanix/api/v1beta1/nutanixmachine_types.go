@@ -20,7 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	capiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	capiv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck // suppress complaining on Deprecated package
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -98,6 +98,7 @@ type NutanixImageLookup struct {
 
 // NutanixMachineSpec defines the desired state of NutanixMachine
 // +kubebuilder:validation:XValidation:rule="has(self.image) != has(self.imageLookup)",message="Either 'image' or 'imageLookup' must be set, but not both"
+// +kubebuilder:validation:XValidation:rule="has(self.subnet) && size(self.subnet) > 1 ? self.subnet.all(x, self.subnet.exists_one(y, x == y)) : true",message="each subnet must be unique"
 type NutanixMachineSpec struct {
 	// SPEC FIELDS - desired state of NutanixMachine
 	// Important: Run "make" to regenerate code after modifying this file
@@ -136,6 +137,7 @@ type NutanixMachineSpec struct {
 	// subnet is to identify the cluster's network subnet to use for the Machine's VM
 	// The cluster identifier (uuid or name) can be obtained from the Prism Central console
 	// or using the prism_central API.
+	// +kubebuilder:validation:MaxItems=32
 	// +kubebuilder:validation:Optional
 	Subnets []NutanixResourceIdentifier `json:"subnet,omitempty"`
 	// List of categories that need to be added to the machines. Categories must already exist in Prism Central

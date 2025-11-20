@@ -11,14 +11,15 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This action is deprecated. Moves an Elastic IP address from the EC2-Classic
-// platform to the EC2-VPC platform. The Elastic IP address must be allocated to
-// your account for more than 24 hours, and it must not be associated with an
-// instance. After the Elastic IP address is moved, it is no longer available for
-// use in the EC2-Classic platform, unless you move it back using the
-// RestoreAddressToClassic request. You cannot move an Elastic IP address that was
-// originally allocated for use in the EC2-VPC platform to the EC2-Classic
-// platform.
+// This action is deprecated.
+//
+// Moves an Elastic IP address from the EC2-Classic platform to the EC2-VPC
+// platform. The Elastic IP address must be allocated to your account for more than
+// 24 hours, and it must not be associated with an instance. After the Elastic IP
+// address is moved, it is no longer available for use in the EC2-Classic platform,
+// unless you move it back using the RestoreAddressToClassicrequest. You cannot move an Elastic IP
+// address that was originally allocated for use in the EC2-VPC platform to the
+// EC2-Classic platform.
 func (c *Client) MoveAddressToVpc(ctx context.Context, params *MoveAddressToVpcInput, optFns ...func(*Options)) (*MoveAddressToVpcOutput, error) {
 	if params == nil {
 		params = &MoveAddressToVpcInput{}
@@ -107,6 +108,9 @@ func (c *Client) addOperationMoveAddressToVpcMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -117,6 +121,15 @@ func (c *Client) addOperationMoveAddressToVpcMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpMoveAddressToVpcValidationMiddleware(stack); err != nil {
@@ -138,6 +151,18 @@ func (c *Client) addOperationMoveAddressToVpcMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

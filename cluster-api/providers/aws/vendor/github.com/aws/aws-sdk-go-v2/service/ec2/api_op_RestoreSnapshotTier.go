@@ -13,10 +13,12 @@ import (
 
 // Restores an archived Amazon EBS snapshot for use temporarily or permanently, or
 // modifies the restore period or restore type for a snapshot that was previously
-// temporarily restored. For more information see Restore an archived snapshot (https://docs.aws.amazon.com/ebs/latest/userguide/working-with-snapshot-archiving.html#restore-archived-snapshot)
-// and modify the restore period or restore type for a temporarily restored
-// snapshot (https://docs.aws.amazon.com/ebs/latest/userguide/working-with-snapshot-archiving.html#modify-temp-restore-period)
-// in the Amazon EBS User Guide.
+// temporarily restored.
+//
+// For more information see [Restore an archived snapshot] and [modify the restore period or restore type for a temporarily restored snapshot] in the Amazon EBS User Guide.
+//
+// [Restore an archived snapshot]: https://docs.aws.amazon.com/ebs/latest/userguide/working-with-snapshot-archiving.html#restore-archived-snapshot
+// [modify the restore period or restore type for a temporarily restored snapshot]: https://docs.aws.amazon.com/ebs/latest/userguide/working-with-snapshot-archiving.html#modify-temp-restore-period
 func (c *Client) RestoreSnapshotTier(ctx context.Context, params *RestoreSnapshotTierInput, optFns ...func(*Options)) (*RestoreSnapshotTierOutput, error) {
 	if params == nil {
 		params = &RestoreSnapshotTierInput{}
@@ -52,9 +54,10 @@ type RestoreSnapshotTierInput struct {
 
 	// Specifies the number of days for which to temporarily restore an archived
 	// snapshot. Required for temporary restores only. The snapshot will be
-	// automatically re-archived after this period. To temporarily restore an archived
-	// snapshot, specify the number of days and omit the PermanentRestore parameter or
-	// set it to false .
+	// automatically re-archived after this period.
+	//
+	// To temporarily restore an archived snapshot, specify the number of days and
+	// omit the PermanentRestore parameter or set it to false .
 	TemporaryRestoreDays *int32
 
 	noSmithyDocumentSerde
@@ -125,6 +128,9 @@ func (c *Client) addOperationRestoreSnapshotTierMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -135,6 +141,15 @@ func (c *Client) addOperationRestoreSnapshotTierMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRestoreSnapshotTierValidationMiddleware(stack); err != nil {
@@ -156,6 +171,18 @@ func (c *Client) addOperationRestoreSnapshotTierMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

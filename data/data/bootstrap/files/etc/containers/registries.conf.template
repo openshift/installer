@@ -3,6 +3,7 @@
 location = "{{ $r.Endpoint.Location }}"
 insecure = {{ $r.Endpoint.Insecure }}
 mirror-by-digest-only = {{ $r.MirrorByDigestOnly }}
+blocked = {{ $r.Blocked }}
 
 {{ range $m := $r.Mirrors -}}
 [[registry.mirror]]

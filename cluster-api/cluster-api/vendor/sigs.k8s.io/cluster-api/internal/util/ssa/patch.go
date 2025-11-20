@@ -88,7 +88,7 @@ func Patch(ctx context.Context, c client.Client, fieldManager string, modified c
 		if err != nil {
 			return errors.Wrapf(err, "failed to apply object")
 		}
-		if options.Cache.Has(requestIdentifier) {
+		if options.Cache.Has(requestIdentifier, gvk.Kind) {
 			// If the request is cached return the original object.
 			if err := c.Scheme().Convert(options.Original, modified, ctx); err != nil {
 				return errors.Wrapf(err, "failed to write original into modified object")
@@ -128,6 +128,7 @@ func Patch(ctx context.Context, c client.Client, fieldManager string, modified c
 // prepareModified converts obj into an Unstructured and filters out undesired fields.
 func prepareModified(scheme *runtime.Scheme, obj client.Object) (*unstructured.Unstructured, error) {
 	u := &unstructured.Unstructured{}
+	dropEmptyStructAndNil := false
 	switch obj.(type) {
 	case *unstructured.Unstructured:
 		u = obj.DeepCopyObject().(*unstructured.Unstructured)
@@ -135,6 +136,9 @@ func prepareModified(scheme *runtime.Scheme, obj client.Object) (*unstructured.U
 		if err := scheme.Convert(obj, u, nil); err != nil {
 			return nil, errors.Wrap(err, "failed to convert object to Unstructured")
 		}
+		// NOTE: DropEmptyStructAndNil is required for typed objects, because they are converted to unstructured using the DefaultUnstructuredConverter,
+		// and it does not handle omitzero (yet).
+		dropEmptyStructAndNil = true
 	}
 
 	// Only keep the paths that we have opinions on.
@@ -154,6 +158,7 @@ func prepareModified(scheme *runtime.Scheme, obj client.Object) (*unstructured.U
 			{"metadata", "ownerReferences"},
 			{"spec"},
 		},
+		DropEmptyStructAndNil: dropEmptyStructAndNil,
 	})
 	return u, nil
 }

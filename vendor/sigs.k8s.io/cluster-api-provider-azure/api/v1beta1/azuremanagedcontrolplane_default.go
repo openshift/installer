@@ -23,7 +23,7 @@ import (
 
 	"golang.org/x/crypto/ssh"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	utilSSH "sigs.k8s.io/cluster-api-provider-azure/util/ssh"
@@ -43,7 +43,7 @@ const (
 // setDefaultResourceGroupName sets the default ResourceGroupName for an AzureManagedControlPlane.
 func (m *AzureManagedControlPlane) setDefaultResourceGroupName() {
 	if m.Spec.ResourceGroupName == "" {
-		if clusterName, ok := m.Labels[clusterv1.ClusterNameLabel]; ok {
+		if clusterName, ok := m.Labels[clusterv1beta1.ClusterNameLabel]; ok {
 			m.Spec.ResourceGroupName = clusterName
 		}
 	}
@@ -103,7 +103,7 @@ func (m *AzureManagedControlPlane) setDefaultSubnet() {
 func setDefaultFleetsMember(fleetsMember *FleetsMember, labels map[string]string) *FleetsMember {
 	result := fleetsMember.DeepCopy()
 	if fleetsMember != nil {
-		if clusterName, ok := labels[clusterv1.ClusterNameLabel]; ok && fleetsMember.Name == "" {
+		if clusterName, ok := labels[clusterv1beta1.ClusterNameLabel]; ok && fleetsMember.Name == "" {
 			result.Name = clusterName
 		}
 	}

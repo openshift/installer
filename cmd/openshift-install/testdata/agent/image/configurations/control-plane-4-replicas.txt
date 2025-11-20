@@ -60,7 +60,6 @@ DefaultEnvironment=NO_PROXY="172.22.0.0/24,virthost.ostest.test.metalkube.org,19
 apiVersion: extensions.hive.openshift.io/v1beta1
 kind: AgentClusterInstall
 metadata:
-  creationTimestamp: null
   name: ostest
   namespace: cluster0
 spec:

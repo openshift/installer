@@ -11,10 +11,11 @@ import (
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iam/v1"
+	"google.golang.org/api/option"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	configv1 "github.com/openshift/api/config/v1"
 	gcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 const (
@@ -58,11 +59,15 @@ func GetSharedVPCRoles() []string {
 }
 
 // CreateServiceAccount is used to create a service account for a compute instance.
-func CreateServiceAccount(ctx context.Context, infraID, projectID, role string, serviceEndpoints []configv1.GCPServiceEndpoint) (string, error) {
+func CreateServiceAccount(ctx context.Context, infraID, projectID, role string, endpoint *gcptypes.PSCEndpoint) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
 	defer cancel()
 
-	service, err := gcp.GetIAMService(ctx, serviceEndpoints)
+	opts := []option.ClientOption{}
+	if gcptypes.ShouldUseEndpointForInstaller(endpoint) {
+		opts = append(opts, gcp.CreateEndpointOption(endpoint.Name, gcp.ServiceNameGCPIAM))
+	}
+	service, err := gcp.GetIAMService(ctx, opts...)
 	if err != nil {
 		return "", fmt.Errorf("failed to create IAM service: %w", err)
 	}
@@ -97,13 +102,18 @@ func CreateServiceAccount(ctx context.Context, infraID, projectID, role string, 
 }
 
 // AddServiceAccountRoles adds predefined roles for service account.
-func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID string, roles []string, serviceEndpoints []configv1.GCPServiceEndpoint) error {
+func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID string, roles []string, endpoint *gcptypes.PSCEndpoint) error {
 	// Get cloudresourcemanager service
 	// The context timeout must be greater in time than the exponential backoff below
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
 	defer cancel()
 
-	service, err := gcp.GetCloudResourceService(ctx, serviceEndpoints)
+	opts := []option.ClientOption{}
+	if gcptypes.ShouldUseEndpointForInstaller(endpoint) {
+		opts = append(opts, gcp.CreateEndpointOption(endpoint.Name, gcp.ServiceNameGCPCloudResource))
+	}
+
+	service, err := gcp.GetCloudResourceService(ctx, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to create resourcemanager service: %w", err)
 	}

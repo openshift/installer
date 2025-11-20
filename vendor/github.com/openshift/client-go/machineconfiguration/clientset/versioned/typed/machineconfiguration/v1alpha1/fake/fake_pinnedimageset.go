@@ -3,168 +3,35 @@
 package fake
 
 import (
-	"context"
-	json "encoding/json"
-	"fmt"
-
 	v1alpha1 "github.com/openshift/api/machineconfiguration/v1alpha1"
 	machineconfigurationv1alpha1 "github.com/openshift/client-go/machineconfiguration/applyconfigurations/machineconfiguration/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	typedmachineconfigurationv1alpha1 "github.com/openshift/client-go/machineconfiguration/clientset/versioned/typed/machineconfiguration/v1alpha1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakePinnedImageSets implements PinnedImageSetInterface
-type FakePinnedImageSets struct {
+// fakePinnedImageSets implements PinnedImageSetInterface
+type fakePinnedImageSets struct {
+	*gentype.FakeClientWithListAndApply[*v1alpha1.PinnedImageSet, *v1alpha1.PinnedImageSetList, *machineconfigurationv1alpha1.PinnedImageSetApplyConfiguration]
 	Fake *FakeMachineconfigurationV1alpha1
 }
 
-var pinnedimagesetsResource = v1alpha1.SchemeGroupVersion.WithResource("pinnedimagesets")
-
-var pinnedimagesetsKind = v1alpha1.SchemeGroupVersion.WithKind("PinnedImageSet")
-
-// Get takes name of the pinnedImageSet, and returns the corresponding pinnedImageSet object, and an error if there is any.
-func (c *FakePinnedImageSets) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.PinnedImageSet, err error) {
-	emptyResult := &v1alpha1.PinnedImageSet{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootGetActionWithOptions(pinnedimagesetsResource, name, options), emptyResult)
-	if obj == nil {
-		return emptyResult, err
+func newFakePinnedImageSets(fake *FakeMachineconfigurationV1alpha1) typedmachineconfigurationv1alpha1.PinnedImageSetInterface {
+	return &fakePinnedImageSets{
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.PinnedImageSet, *v1alpha1.PinnedImageSetList, *machineconfigurationv1alpha1.PinnedImageSetApplyConfiguration](
+			fake.Fake,
+			"",
+			v1alpha1.SchemeGroupVersion.WithResource("pinnedimagesets"),
+			v1alpha1.SchemeGroupVersion.WithKind("PinnedImageSet"),
+			func() *v1alpha1.PinnedImageSet { return &v1alpha1.PinnedImageSet{} },
+			func() *v1alpha1.PinnedImageSetList { return &v1alpha1.PinnedImageSetList{} },
+			func(dst, src *v1alpha1.PinnedImageSetList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.PinnedImageSetList) []*v1alpha1.PinnedImageSet {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.PinnedImageSetList, items []*v1alpha1.PinnedImageSet) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.PinnedImageSet), err
-}
-
-// List takes label and field selectors, and returns the list of PinnedImageSets that match those selectors.
-func (c *FakePinnedImageSets) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.PinnedImageSetList, err error) {
-	emptyResult := &v1alpha1.PinnedImageSetList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootListActionWithOptions(pinnedimagesetsResource, pinnedimagesetsKind, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.PinnedImageSetList{ListMeta: obj.(*v1alpha1.PinnedImageSetList).ListMeta}
-	for _, item := range obj.(*v1alpha1.PinnedImageSetList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested pinnedImageSets.
-func (c *FakePinnedImageSets) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewRootWatchActionWithOptions(pinnedimagesetsResource, opts))
-}
-
-// Create takes the representation of a pinnedImageSet and creates it.  Returns the server's representation of the pinnedImageSet, and an error, if there is any.
-func (c *FakePinnedImageSets) Create(ctx context.Context, pinnedImageSet *v1alpha1.PinnedImageSet, opts v1.CreateOptions) (result *v1alpha1.PinnedImageSet, err error) {
-	emptyResult := &v1alpha1.PinnedImageSet{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateActionWithOptions(pinnedimagesetsResource, pinnedImageSet, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.PinnedImageSet), err
-}
-
-// Update takes the representation of a pinnedImageSet and updates it. Returns the server's representation of the pinnedImageSet, and an error, if there is any.
-func (c *FakePinnedImageSets) Update(ctx context.Context, pinnedImageSet *v1alpha1.PinnedImageSet, opts v1.UpdateOptions) (result *v1alpha1.PinnedImageSet, err error) {
-	emptyResult := &v1alpha1.PinnedImageSet{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateActionWithOptions(pinnedimagesetsResource, pinnedImageSet, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.PinnedImageSet), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakePinnedImageSets) UpdateStatus(ctx context.Context, pinnedImageSet *v1alpha1.PinnedImageSet, opts v1.UpdateOptions) (result *v1alpha1.PinnedImageSet, err error) {
-	emptyResult := &v1alpha1.PinnedImageSet{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(pinnedimagesetsResource, "status", pinnedImageSet, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.PinnedImageSet), err
-}
-
-// Delete takes name of the pinnedImageSet and deletes it. Returns an error if one occurs.
-func (c *FakePinnedImageSets) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteActionWithOptions(pinnedimagesetsResource, name, opts), &v1alpha1.PinnedImageSet{})
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakePinnedImageSets) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionActionWithOptions(pinnedimagesetsResource, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.PinnedImageSetList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched pinnedImageSet.
-func (c *FakePinnedImageSets) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.PinnedImageSet, err error) {
-	emptyResult := &v1alpha1.PinnedImageSet{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceActionWithOptions(pinnedimagesetsResource, name, pt, data, opts, subresources...), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.PinnedImageSet), err
-}
-
-// Apply takes the given apply declarative configuration, applies it and returns the applied pinnedImageSet.
-func (c *FakePinnedImageSets) Apply(ctx context.Context, pinnedImageSet *machineconfigurationv1alpha1.PinnedImageSetApplyConfiguration, opts v1.ApplyOptions) (result *v1alpha1.PinnedImageSet, err error) {
-	if pinnedImageSet == nil {
-		return nil, fmt.Errorf("pinnedImageSet provided to Apply must not be nil")
-	}
-	data, err := json.Marshal(pinnedImageSet)
-	if err != nil {
-		return nil, err
-	}
-	name := pinnedImageSet.Name
-	if name == nil {
-		return nil, fmt.Errorf("pinnedImageSet.Name must be provided to Apply")
-	}
-	emptyResult := &v1alpha1.PinnedImageSet{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceActionWithOptions(pinnedimagesetsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.PinnedImageSet), err
-}
-
-// ApplyStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-func (c *FakePinnedImageSets) ApplyStatus(ctx context.Context, pinnedImageSet *machineconfigurationv1alpha1.PinnedImageSetApplyConfiguration, opts v1.ApplyOptions) (result *v1alpha1.PinnedImageSet, err error) {
-	if pinnedImageSet == nil {
-		return nil, fmt.Errorf("pinnedImageSet provided to Apply must not be nil")
-	}
-	data, err := json.Marshal(pinnedImageSet)
-	if err != nil {
-		return nil, err
-	}
-	name := pinnedImageSet.Name
-	if name == nil {
-		return nil, fmt.Errorf("pinnedImageSet.Name must be provided to Apply")
-	}
-	emptyResult := &v1alpha1.PinnedImageSet{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceActionWithOptions(pinnedimagesetsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions(), "status"), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.PinnedImageSet), err
 }

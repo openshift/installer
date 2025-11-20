@@ -43,17 +43,23 @@ type GetSecurityGroupsForVpcInput struct {
 
 	// The filters. If using multiple filters, the results include security groups
 	// which match all filters.
+	//
 	//   - group-id : The security group ID.
+	//
 	//   - description : The security group's description.
+	//
 	//   - group-name : The security group name.
+	//
 	//   - owner-id : The security group owner ID.
+	//
 	//   - primary-vpc-id : The VPC ID in which the security group was created.
 	Filters []types.Filter
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -121,6 +127,9 @@ func (c *Client) addOperationGetSecurityGroupsForVpcMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -131,6 +140,15 @@ func (c *Client) addOperationGetSecurityGroupsForVpcMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetSecurityGroupsForVpcValidationMiddleware(stack); err != nil {
@@ -154,24 +172,29 @@ func (c *Client) addOperationGetSecurityGroupsForVpcMiddlewares(stack *middlewar
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// GetSecurityGroupsForVpcAPIClient is a client that implements the
-// GetSecurityGroupsForVpc operation.
-type GetSecurityGroupsForVpcAPIClient interface {
-	GetSecurityGroupsForVpc(context.Context, *GetSecurityGroupsForVpcInput, ...func(*Options)) (*GetSecurityGroupsForVpcOutput, error)
-}
-
-var _ GetSecurityGroupsForVpcAPIClient = (*Client)(nil)
 
 // GetSecurityGroupsForVpcPaginatorOptions is the paginator options for
 // GetSecurityGroupsForVpc
 type GetSecurityGroupsForVpcPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -233,6 +256,9 @@ func (p *GetSecurityGroupsForVpcPaginator) NextPage(ctx context.Context, optFns 
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.GetSecurityGroupsForVpc(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -251,6 +277,14 @@ func (p *GetSecurityGroupsForVpcPaginator) NextPage(ctx context.Context, optFns 
 
 	return result, nil
 }
+
+// GetSecurityGroupsForVpcAPIClient is a client that implements the
+// GetSecurityGroupsForVpc operation.
+type GetSecurityGroupsForVpcAPIClient interface {
+	GetSecurityGroupsForVpc(context.Context, *GetSecurityGroupsForVpcInput, ...func(*Options)) (*GetSecurityGroupsForVpcOutput, error)
+}
+
+var _ GetSecurityGroupsForVpcAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opGetSecurityGroupsForVpc(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

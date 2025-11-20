@@ -25,8 +25,8 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conditions"
 )
@@ -75,23 +75,23 @@ func HasControllerRef(machine *clusterv1.Machine) bool {
 
 // InFailureDomains returns a filter to find all machines
 // in any of the given failure domains.
-func InFailureDomains(failureDomains ...*string) Func {
+func InFailureDomains(failureDomains ...string) Func {
 	return func(machine *clusterv1.Machine) bool {
 		if machine == nil {
 			return false
 		}
 		for i := range failureDomains {
 			fd := failureDomains[i]
-			if fd == nil {
+			if fd == "" {
 				if fd == machine.Spec.FailureDomain {
 					return true
 				}
 				continue
 			}
-			if machine.Spec.FailureDomain == nil {
+			if machine.Spec.FailureDomain == "" {
 				continue
 			}
-			if *fd == *machine.Spec.FailureDomain {
+			if fd == machine.Spec.FailureDomain {
 				return true
 			}
 		}
@@ -170,17 +170,17 @@ func IsUnhealthy(machine *clusterv1.Machine) bool {
 // HasUnhealthyControlPlaneComponents returns a filter to find all unhealthy control plane machines that
 // have any of the following control plane component conditions set to False:
 // APIServerPodHealthy, ControllerManagerPodHealthy, SchedulerPodHealthy, EtcdPodHealthy & EtcdMemberHealthy (if using managed etcd).
-// It is different from the HasUnhealthyCondition func which checks MachineHealthCheck conditions.
+// It is different from the IsUnhealthyAndOwnerRemediated and IsUnhealthy funcs which check MachineHealthCheck conditions.
 func HasUnhealthyControlPlaneComponents(isEtcdManaged bool) Func {
-	controlPlaneMachineHealthConditions := []clusterv1.ConditionType{
-		controlplanev1.MachineAPIServerPodHealthyCondition,
-		controlplanev1.MachineControllerManagerPodHealthyCondition,
-		controlplanev1.MachineSchedulerPodHealthyCondition,
+	controlPlaneMachineHealthConditions := []string{
+		controlplanev1.KubeadmControlPlaneMachineAPIServerPodHealthyCondition,
+		controlplanev1.KubeadmControlPlaneMachineControllerManagerPodHealthyCondition,
+		controlplanev1.KubeadmControlPlaneMachineSchedulerPodHealthyCondition,
 	}
 	if isEtcdManaged {
 		controlPlaneMachineHealthConditions = append(controlPlaneMachineHealthConditions,
-			controlplanev1.MachineEtcdPodHealthyCondition,
-			controlplanev1.MachineEtcdMemberHealthyCondition,
+			controlplanev1.KubeadmControlPlaneMachineEtcdPodHealthyCondition,
+			controlplanev1.KubeadmControlPlaneMachineEtcdMemberHealthyCondition,
 		)
 	}
 	return func(machine *clusterv1.Machine) bool {
@@ -209,36 +209,37 @@ func IsReady() Func {
 		if machine == nil {
 			return false
 		}
-		return conditions.IsTrue(machine, clusterv1.ReadyCondition)
+		return conditions.IsTrue(machine, clusterv1.MachineReadyCondition)
 	}
 }
 
 // ShouldRolloutAfter returns a filter to find all machines where
 // CreationTimestamp < rolloutAfter < reconciliationTIme.
-func ShouldRolloutAfter(reconciliationTime, rolloutAfter *metav1.Time) Func {
+func ShouldRolloutAfter(reconciliationTime *metav1.Time, rolloutAfter metav1.Time) Func {
 	return func(machine *clusterv1.Machine) bool {
 		if machine == nil {
 			return false
 		}
-		if reconciliationTime == nil || rolloutAfter == nil {
+		if reconciliationTime == nil || rolloutAfter.IsZero() {
 			return false
 		}
-		return machine.CreationTimestamp.Before(rolloutAfter) && rolloutAfter.Before(reconciliationTime)
+		return machine.CreationTimestamp.Before(&rolloutAfter) && rolloutAfter.Before(reconciliationTime)
 	}
 }
 
 // ShouldRolloutBefore returns a filter to find all machine whose
 // certificates will expire within the specified days.
-func ShouldRolloutBefore(reconciliationTime *metav1.Time, rolloutBefore *controlplanev1.RolloutBefore) Func {
+func ShouldRolloutBefore(reconciliationTime *metav1.Time, rolloutBefore controlplanev1.KubeadmControlPlaneRolloutBeforeSpec) Func {
 	return func(machine *clusterv1.Machine) bool {
-		if rolloutBefore == nil || rolloutBefore.CertificatesExpiryDays == nil {
+		// If certificatesExpiryDays is unset it will be 0, 0 is otherwise not a valid value (minimum is 7).
+		if rolloutBefore.CertificatesExpiryDays == 0 {
 			return false
 		}
-		if machine == nil || machine.Status.CertificatesExpiryDate == nil {
+		if machine == nil || machine.Status.CertificatesExpiryDate.IsZero() {
 			return false
 		}
 		certsExpiryTime := machine.Status.CertificatesExpiryDate.Time
-		return reconciliationTime.Add(time.Duration(*rolloutBefore.CertificatesExpiryDays) * 24 * time.Hour).After(certsExpiryTime)
+		return reconciliationTime.Add(time.Duration(rolloutBefore.CertificatesExpiryDays) * 24 * time.Hour).After(certsExpiryTime)
 	}
 }
 
@@ -276,10 +277,10 @@ func MatchesKubernetesVersion(kubernetesVersion string) Func {
 		if machine == nil {
 			return false
 		}
-		if machine.Spec.Version == nil {
+		if machine.Spec.Version == "" {
 			return false
 		}
-		return *machine.Spec.Version == kubernetesVersion
+		return machine.Spec.Version == kubernetesVersion
 	}
 }
 
@@ -289,10 +290,10 @@ func WithVersion() Func {
 		if machine == nil {
 			return false
 		}
-		if machine.Spec.Version == nil {
+		if machine.Spec.Version == "" {
 			return false
 		}
-		if _, err := semver.ParseTolerant(*machine.Spec.Version); err != nil {
+		if _, err := semver.ParseTolerant(machine.Spec.Version); err != nil {
 			return false
 		}
 		return true
@@ -305,6 +306,6 @@ func HasNode() Func {
 		if machine == nil {
 			return false
 		}
-		return machine.Status.NodeRef != nil
+		return machine.Status.NodeRef.IsDefined()
 	}
 }

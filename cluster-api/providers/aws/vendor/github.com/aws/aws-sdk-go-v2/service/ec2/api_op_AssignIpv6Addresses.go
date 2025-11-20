@@ -10,18 +10,20 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Assigns one or more IPv6 addresses to the specified network interface. You can
-// specify one or more specific IPv6 addresses, or you can specify the number of
-// IPv6 addresses to be automatically assigned from within the subnet's IPv6 CIDR
-// block range. You can assign as many IPv6 addresses to a network interface as you
-// can assign private IPv4 addresses, and the limit varies per instance type. For
-// information, see IP Addresses Per Network Interface Per Instance Type (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html#AvailableIpPerENI)
-// in the Amazon Elastic Compute Cloud User Guide. You must specify either the IPv6
-// addresses or the IPv6 address count in the request. You can optionally use
-// Prefix Delegation on the network interface. You must specify either the IPV6
-// Prefix Delegation prefixes, or the IPv6 Prefix Delegation count. For
-// information, see Assigning prefixes to Amazon EC2 network interfaces (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-prefix-eni.html)
-// in the Amazon Elastic Compute Cloud User Guide.
+// Assigns the specified IPv6 addresses to the specified network interface. You
+// can specify specific IPv6 addresses, or you can specify the number of IPv6
+// addresses to be automatically assigned from the subnet's IPv6 CIDR block range.
+// You can assign as many IPv6 addresses to a network interface as you can assign
+// private IPv4 addresses, and the limit varies by instance type.
+//
+// You must specify either the IPv6 addresses or the IPv6 address count in the
+// request.
+//
+// You can optionally use Prefix Delegation on the network interface. You must
+// specify either the IPV6 Prefix Delegation prefixes, or the IPv6 Prefix
+// Delegation count. For information, see [Assigning prefixes to network interfaces]in the Amazon EC2 User Guide.
+//
+// [Assigning prefixes to network interfaces]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-prefix-eni.html
 func (c *Client) AssignIpv6Addresses(ctx context.Context, params *AssignIpv6AddressesInput, optFns ...func(*Options)) (*AssignIpv6AddressesOutput, error) {
 	if params == nil {
 		params = &AssignIpv6AddressesInput{}
@@ -60,8 +62,8 @@ type AssignIpv6AddressesInput struct {
 	// option.
 	Ipv6PrefixCount *int32
 
-	// One or more IPv6 prefixes assigned to the network interface. You cannot use
-	// this option if you use the Ipv6PrefixCount option.
+	// One or more IPv6 prefixes assigned to the network interface. You can't use this
+	// option if you use the Ipv6PrefixCount option.
 	Ipv6Prefixes []string
 
 	noSmithyDocumentSerde
@@ -129,6 +131,9 @@ func (c *Client) addOperationAssignIpv6AddressesMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -139,6 +144,15 @@ func (c *Client) addOperationAssignIpv6AddressesMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAssignIpv6AddressesValidationMiddleware(stack); err != nil {
@@ -160,6 +174,18 @@ func (c *Client) addOperationAssignIpv6AddressesMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

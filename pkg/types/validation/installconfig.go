@@ -45,6 +45,8 @@ import (
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	ovirtvalidation "github.com/openshift/installer/pkg/types/ovirt/validation"
+	"github.com/openshift/installer/pkg/types/powervc"
+	powervcvalidation "github.com/openshift/installer/pkg/types/powervc/validation"
 	"github.com/openshift/installer/pkg/types/powervs"
 	powervsvalidation "github.com/openshift/installer/pkg/types/powervs/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -101,7 +103,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	if c.Platform.GCP != nil || c.Platform.Azure != nil {
 		nameErr = validate.ClusterName1035(c.ObjectMeta.Name)
 	}
-	if c.Platform.VSphere != nil || c.Platform.BareMetal != nil || c.Platform.OpenStack != nil || c.Platform.Nutanix != nil {
+	if c.Platform.VSphere != nil || c.Platform.BareMetal != nil || c.Platform.OpenStack != nil || c.Platform.Nutanix != nil || c.Platform.PowerVC != nil {
 		nameErr = validate.OnPremClusterName(c.ObjectMeta.Name)
 	}
 	if nameErr != nil {
@@ -586,10 +588,10 @@ func validateNetworkNotOverlapDefaultOVNSubnets(n *types.Networking, network *ne
 
 	// We only check against OVNKubernetes default subnets.
 	// Any overrides of default subnets is validated in func validateOVNKubernetesConfig.
-	subnetsCheck := func(joinSubnet, transitSubnet, masqueradeSubnet *net.IPNet) {
+	subnetsCheck := func(joinSubnet, transitSubnet, masqueradeSubnet *net.IPNet, ipversion string) {
 		// Join subnet
 		if ovnsubnet, configured := getOVNSubnet(joinSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
-			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default internal subnet %s", ovnsubnet.String())))
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default internal subnet %s: please run 'openshift-install explain installconfig.networking.ovnKubernetesConfig.%s' for further documentation", ovnsubnet.String(), ipversion)))
 		}
 
 		// Transit subnet
@@ -604,9 +606,9 @@ func validateNetworkNotOverlapDefaultOVNSubnets(n *types.Networking, network *ne
 	}
 
 	if network.IP.To4() != nil {
-		subnetsCheck(validate.OVNIPv4JoinSubnet, validate.OVNIPv4TransitSubnet, validate.OVNIPv4MasqueradeSubnet)
+		subnetsCheck(validate.OVNIPv4JoinSubnet, validate.OVNIPv4TransitSubnet, validate.OVNIPv4MasqueradeSubnet, "ipv4")
 	} else {
-		subnetsCheck(validate.OVNIPv6JoinSubnet, validate.OVNIPv6TransitSubnet, validate.OVNIPv6MasqueradeSubnet)
+		subnetsCheck(validate.OVNIPv6JoinSubnet, validate.OVNIPv6TransitSubnet, validate.OVNIPv6MasqueradeSubnet, "ipv6")
 	}
 
 	return allErrs
@@ -1095,7 +1097,8 @@ func validatePlatform(platform *types.Platform, usingAgentMethod bool, fldPath *
 		allErrs = append(allErrs, field.Invalid(fldPath, activePlatform, fmt.Sprintf("must specify one of the platforms (%s)", strings.Join(platforms, ", "))))
 	}
 	validate := func(n string, value interface{}, validation func(*field.Path) field.ErrorList) {
-		if n != activePlatform {
+		// PowerVC is a thin platform which also uses OpenStack
+		if n != activePlatform && n != powervc.Name && activePlatform != powervc.Name {
 			allErrs = append(allErrs, field.Invalid(fldPath, activePlatform, fmt.Sprintf("must only specify a single type of platform; cannot use both %q and %q", activePlatform, n)))
 		}
 		allErrs = append(allErrs, validation(fldPath.Child(n))...)
@@ -1115,6 +1118,11 @@ func validatePlatform(platform *types.Platform, usingAgentMethod bool, fldPath *
 	}
 	if platform.IBMCloud != nil {
 		validate(ibmcloud.Name, platform.IBMCloud, func(f *field.Path) field.ErrorList { return ibmcloudvalidation.ValidatePlatform(platform.IBMCloud, f) })
+	}
+	if platform.PowerVC != nil {
+		validate(powervc.Name, platform.PowerVC, func(f *field.Path) field.ErrorList {
+			return powervcvalidation.ValidatePlatform(platform.PowerVC, f)
+		})
 	}
 	if platform.OpenStack != nil {
 		validate(openstack.Name, platform.OpenStack, func(f *field.Path) field.ErrorList {
@@ -1307,6 +1315,7 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 		gcp.Name:       {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
 		openstack.Name: {types.PassthroughCredentialsMode},
 		ibmcloud.Name:  {types.ManualCredentialsMode},
+		powervc.Name:   {types.PassthroughCredentialsMode},
 		powervs.Name:   {types.ManualCredentialsMode},
 		nutanix.Name:   {types.ManualCredentialsMode},
 	}

@@ -92,7 +92,7 @@ func (f *IBMPIWorkspacesClient) Create(name, location, groupID, plan string) (*r
 	return workspace, response, nil
 }
 
-// Create a workspace wiht parmas
+// Create a workspace with parameters
 func (f *IBMPIWorkspacesClient) CreateV2(name, location, groupID, plan string, parameters map[string]interface{}) (*resourcecontrollerv2.ResourceInstance, *core.DetailedResponse, error) {
 	resourceController, err := ibmpisession.CreateResourceControllerV2(f.session.Options.URL, f.session.Options.Authenticator)
 	if err != nil {

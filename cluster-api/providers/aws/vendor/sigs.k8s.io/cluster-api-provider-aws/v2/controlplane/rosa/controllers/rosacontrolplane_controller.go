@@ -30,8 +30,6 @@ import (
 	"time"
 
 	stsv2 "github.com/aws/aws-sdk-go-v2/service/sts"
-	sts "github.com/aws/aws-sdk-go/service/sts"
-	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	"github.com/google/go-cmp/cmp"
 	idputils "github.com/openshift-online/ocm-common/pkg/idp/utils"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -62,12 +60,13 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/annotations"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
+	stsiface "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/sts"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/rosa"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/utils"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
-	capiannotations "sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -91,9 +90,10 @@ type ROSAControlPlaneReconciler struct {
 	client.Client
 	WatchFilterValue string
 	WaitInfraPeriod  time.Duration
-	Endpoints        []scope.ServiceEndpoint
-	NewStsClient     func(cloud.ScopeUsage, cloud.Session, logger.Wrapper, runtime.Object) stsiface.STSAPI
+	NewStsClient     func(cloud.ScopeUsage, cloud.Session, logger.Wrapper, runtime.Object) stsiface.STSClient
 	NewOCMClient     func(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (rosa.OCMClient, error)
+	// Exposing the restClientConfig for integration test. No need to initialize.
+	restClientConfig *restclient.Config
 }
 
 // SetupWithManager is used to setup the controller.
@@ -106,11 +106,11 @@ func (r *ROSAControlPlaneReconciler) SetupWithManager(ctx context.Context, mgr c
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		For(rosaControlPlane).
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
 		Build(r)
 
 	if err != nil {
-		return fmt.Errorf("failed setting up the AWSManagedControlPlane controller manager: %w", err)
+		return fmt.Errorf("failed setting up the ROSAControlPlane controller manager: %w", err)
 	}
 
 	if err = c.Watch(
@@ -141,6 +141,8 @@ func (r *ROSAControlPlaneReconciler) SetupWithManager(ctx context.Context, mgr c
 // +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=rosacontrolplanes,verbs=get;list;watch;update;patch;delete
 // +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=rosacontrolplanes/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=rosacontrolplanes/finalizers,verbs=update
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=rosaroleconfigs,verbs=get;list;watch;
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=rosaroleconfigs/status,verbs=get;
 
 // Reconcile will reconcile RosaControlPlane Resources.
 func (r *ROSAControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, reterr error) {
@@ -167,10 +169,8 @@ func (r *ROSAControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	log = log.WithValues("cluster", klog.KObj(cluster))
-
-	if capiannotations.IsPaused(cluster, rosaControlPlane) {
-		log.Info("Reconciliation is paused for this object")
-		return ctrl.Result{}, nil
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, rosaControlPlane); err != nil || isPaused || conditionChanged {
+		return ctrl.Result{}, err
 	}
 
 	rosaScope, err := scope.NewROSAControlPlaneScope(scope.ROSAControlPlaneScopeParams{
@@ -178,7 +178,6 @@ func (r *ROSAControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		Cluster:        cluster,
 		ControlPlane:   rosaControlPlane,
 		ControllerName: strings.ToLower(rosaControlPlaneKind),
-		Endpoints:      r.Endpoints,
 		Logger:         log,
 		NewStsClient:   r.NewStsClient,
 	})
@@ -220,12 +219,22 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 		return ctrl.Result{}, fmt.Errorf("failed to create OCM client: %w", err)
 	}
 
-	creator, err := rosaaws.CreatorForCallerIdentity(convertStsV2(rosaScope.Identity))
+	creator, err := rosaaws.CreatorForCallerIdentity(&stsv2.GetCallerIdentityOutput{
+		Account: rosaScope.Identity.Account,
+		Arn:     rosaScope.Identity.Arn,
+		UserId:  rosaScope.Identity.UserId,
+	})
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to transform caller identity to creator: %w", err)
 	}
 
-	validationMessage, err := validateControlPlaneSpec(ocmClient, rosaScope)
+	rosaRoleConfig, err := r.reconcileRosaRoleConfig(ctx, rosaScope)
+	if err != nil {
+		rosaScope.Error(err, "cannot reconcile RosaRoleConfig ")
+		return ctrl.Result{}, err
+	}
+
+	validationMessage, err := validateControlPlaneSpec(ocmClient, rosaScope.ControlPlane)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to validate ROSAControlPlane.spec: %w", err)
 	}
@@ -253,6 +262,7 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 		rosaScope.ControlPlane.Status.ConsoleURL = cluster.Console().URL()
 		rosaScope.ControlPlane.Status.OIDCEndpointURL = cluster.AWS().STS().OIDCEndpointURL()
 		rosaScope.ControlPlane.Status.Ready = false
+		rosaScope.ControlPlane.Status.Version = rosa.RawVersionID(cluster.Version())
 
 		switch cluster.Status().State() {
 		case cmv1.ClusterStateReady:
@@ -311,7 +321,27 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 		return ctrl.Result{RequeueAfter: time.Second * 60}, nil
 	}
 
-	ocmClusterSpec, err := buildOCMClusterSpec(rosaScope.ControlPlane.Spec, creator)
+	rosaNet := &expinfrav1.ROSANetwork{}
+	// Does the control plane reference ROSANetwork?
+	if rosaScope.ControlPlane.Spec.ROSANetworkRef != nil {
+		objKey := client.ObjectKey{
+			Name:      rosaScope.ControlPlane.Spec.ROSANetworkRef.Name,
+			Namespace: rosaScope.ControlPlane.Namespace,
+		}
+
+		err := rosaScope.Client.Get(ctx, objKey, rosaNet)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to fetch ROSANetwork: %w", err)
+		}
+
+		// Is the referenced ROSANetwork ready yet?
+		if !conditions.IsTrue(rosaNet, expinfrav1.ROSANetworkReadyCondition) {
+			rosaScope.Info(fmt.Sprintf("referenced ROSANetwork %s is not ready", rosaNet.Name))
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
+		}
+	}
+
+	ocmClusterSpec, err := buildOCMClusterSpec(rosaScope.ControlPlane.Spec, rosaRoleConfig, rosaNet, creator)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -333,6 +363,48 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 	return ctrl.Result{}, nil
 }
 
+func (r *ROSAControlPlaneReconciler) reconcileRosaRoleConfig(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (*expinfrav1.ROSARoleConfig, error) {
+	rosaRoleConfig := &expinfrav1.ROSARoleConfig{}
+	// Get role configuration from either RosaRoleConfig or direct fields
+	if rosaScope.ControlPlane.Spec.RosaRoleConfigRef != nil {
+		// Get RosaRoleConfig
+		key := client.ObjectKey{
+			Name:      rosaScope.ControlPlane.Spec.RosaRoleConfigRef.Name,
+			Namespace: rosaScope.ControlPlane.Namespace,
+		}
+
+		if err := r.Client.Get(ctx, key, rosaRoleConfig); err != nil {
+			conditions.MarkFalse(rosaScope.ControlPlane,
+				rosacontrolplanev1.ROSARoleConfigReadyCondition,
+				rosacontrolplanev1.ROSARoleConfigNotFoundReason,
+				clusterv1.ConditionSeverityError,
+				"Failed to get RosaRoleConfig %s/%s", rosaScope.ControlPlane.Namespace, rosaScope.ControlPlane.Spec.RosaRoleConfigRef.Name)
+
+			return nil, err
+		}
+
+		// Check if RosaRoleConfig is ready
+		if !conditions.IsTrue(rosaRoleConfig, expinfrav1.RosaRoleConfigReadyCondition) {
+			conditions.MarkFalse(rosaScope.ControlPlane,
+				rosacontrolplanev1.ROSARoleConfigReadyCondition,
+				rosacontrolplanev1.ROSARoleConfigNotReadyReason,
+				clusterv1.ConditionSeverityWarning,
+				"RosaRoleConfig %s/%s is not ready", rosaScope.ControlPlane.Namespace, rosaScope.ControlPlane.Spec.RosaRoleConfigRef.Name)
+
+			return nil, fmt.Errorf("RosaRoleConfig %s/%s is not ready", rosaScope.ControlPlane.Namespace, rosaScope.ControlPlane.Spec.RosaRoleConfigRef.Name)
+		}
+		conditions.MarkTrue(rosaScope.ControlPlane, rosacontrolplanev1.ROSARoleConfigReadyCondition)
+	} else {
+		rosaRoleConfig.Status.OIDCID = rosaScope.ControlPlane.Spec.OIDCID
+		rosaRoleConfig.Status.AccountRolesRef.InstallerRoleARN = rosaScope.ControlPlane.Spec.InstallerRoleARN
+		rosaRoleConfig.Status.AccountRolesRef.SupportRoleARN = rosaScope.ControlPlane.Spec.SupportRoleARN
+		rosaRoleConfig.Status.AccountRolesRef.WorkerRoleARN = rosaScope.ControlPlane.Spec.WorkerRoleARN
+		rosaRoleConfig.Status.OperatorRolesRef = rosaScope.ControlPlane.Spec.RolesRef
+	}
+
+	return rosaRoleConfig, nil
+}
+
 func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (res ctrl.Result, reterr error) {
 	rosaScope.Info("Reconciling ROSAControlPlane delete")
 
@@ -352,7 +424,11 @@ func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaSc
 		return ctrl.Result{}, fmt.Errorf("failed to create OCM client: %w", err)
 	}
 
-	creator, err := rosaaws.CreatorForCallerIdentity(convertStsV2(rosaScope.Identity))
+	creator, err := rosaaws.CreatorForCallerIdentity(&stsv2.GetCallerIdentityOutput{
+		Account: rosaScope.Identity.Account,
+		Arn:     rosaScope.Identity.Arn,
+		UserId:  rosaScope.Identity.UserId,
+	})
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to transform caller identity to creator: %w", err)
 	}
@@ -405,6 +481,7 @@ func (r *ROSAControlPlaneReconciler) deleteMachinePools(ctx context.Context, ros
 	}
 
 	var errs []error
+	allMachinePoolDeleted := true
 	for id, mp := range machinePools {
 		if !mp.DeletionTimestamp.IsZero() {
 			continue
@@ -412,13 +489,22 @@ func (r *ROSAControlPlaneReconciler) deleteMachinePools(ctx context.Context, ros
 		if err = rosaScope.Client.Delete(ctx, &machinePools[id]); err != nil {
 			errs = append(errs, err)
 		}
+		allMachinePoolDeleted = false
 	}
 
 	if len(errs) > 0 {
 		return false, kerrors.NewAggregate(errs)
 	}
 
-	return len(machinePools) == 0, nil
+	// Workaround: Handle the dependency issue between MachinePools and the ROSA control plane.
+	// In Cluster API (CAPI), MachinePools (MPs) are typically deleted before the control plane is deprovisioned.
+	// However, in ROSA-HCP, a cluster cannot exist without MachinePools, which causes an error when attempting
+	// to delete them first — preventing the ROSAControlPlane from being removed.
+	// To resolve this, we initiate the deletion of the MachinePool CRs, wait for one reconcile cycle,
+	// and then proceed to delete the ROSA-HCP control plane.
+	// OCM will automatically cascade the deletion of NodePools before the control plane is deleted.
+
+	return allMachinePoolDeleted, nil
 }
 
 func (r *ROSAControlPlaneReconciler) reconcileClusterVersion(rosaScope *scope.ROSAControlPlaneScope, ocmClient rosa.OCMClient, cluster *cmv1.Cluster) error {
@@ -556,8 +642,23 @@ func (r *ROSAControlPlaneReconciler) updateOCMClusterSpec(rosaControlPlane *rosa
 		updated = true
 	}
 
-	// TODO: check for cluster AutoScale changes
-	// rosaControlPlane.Spec.DefaultMachinePoolSpec.Autoscaling
+	channelGroup := string(rosaControlPlane.Spec.ChannelGroup)
+	if ocmClusterSpec.ChannelGroup != channelGroup {
+		ocmClusterSpec.ChannelGroup = channelGroup
+		updated = true
+	}
+
+	if rosaControlPlane.Spec.AutoNode != nil {
+		if !strings.EqualFold(ocmClusterSpec.AutoNodeMode, string(rosaControlPlane.Spec.AutoNode.Mode)) {
+			ocmClusterSpec.AutoNodeMode = strings.ToLower(string(rosaControlPlane.Spec.AutoNode.Mode))
+			updated = true
+		}
+
+		if ocmClusterSpec.AutoNodeRoleARN != rosaControlPlane.Spec.AutoNode.RoleARN {
+			ocmClusterSpec.AutoNodeRoleARN = rosaControlPlane.Spec.AutoNode.RoleARN
+			updated = true
+		}
+	}
 
 	return ocmClusterSpec, updated
 }
@@ -802,13 +903,16 @@ func (r *ROSAControlPlaneReconciler) reconcileKubeconfig(ctx context.Context, ro
 		return err
 	}
 
-	clientConfig := &restclient.Config{
-		Host:     apiServerURL,
-		Username: userName,
+	if r.restClientConfig == nil {
+		r.restClientConfig = &restclient.Config{
+			Host:     apiServerURL,
+			Username: userName,
+		}
 	}
+
 	// request an acccess token using the credentials of the cluster admin user created earlier.
 	// this token is used in the kubeconfig to authenticate with the API server.
-	token, err := rosa.RequestToken(ctx, apiServerURL, userName, password, clientConfig)
+	token, err := rosa.RequestToken(ctx, apiServerURL, userName, password, r.restClientConfig)
 	if err != nil {
 		return fmt.Errorf("failed to request token: %w", err)
 	}
@@ -887,9 +991,9 @@ func (r *ROSAControlPlaneReconciler) reconcileClusterAdminPassword(ctx context.C
 	return password, nil
 }
 
-func validateControlPlaneSpec(ocmClient rosa.OCMClient, rosaScope *scope.ROSAControlPlaneScope) (string, error) {
-	version := rosaScope.ControlPlane.Spec.Version
-	channelGroup := string(rosaScope.ControlPlane.Spec.ChannelGroup)
+func validateControlPlaneSpec(ocmClient rosa.OCMClient, rosaControlPlane *rosacontrolplanev1.ROSAControlPlane) (string, error) {
+	version := rosaControlPlane.Spec.Version
+	channelGroup := string(rosaControlPlane.Spec.ChannelGroup)
 	valid, err := ocmClient.ValidateHypershiftVersion(version, channelGroup)
 	if err != nil {
 		return "", fmt.Errorf("error validating version in this channelGroup : %w", err)
@@ -898,14 +1002,40 @@ func validateControlPlaneSpec(ocmClient rosa.OCMClient, rosaScope *scope.ROSACon
 		return fmt.Sprintf("this version %s is not supported in this channelGroup", version), nil
 	}
 
+	if rosaControlPlane.Spec.AutoNode != nil {
+		if rosaControlPlane.Spec.AutoNode.Mode == rosacontrolplanev1.AutoNodeModeEnabled && rosaControlPlane.Spec.AutoNode.RoleARN == "" {
+			return "", fmt.Errorf("error ROSAControlPlane autoNode.roleARN, must be set when autoNode mode is enabled")
+		}
+	}
+
 	// TODO: add more input validations
 	return "", nil
 }
 
-func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpec, creator *rosaaws.Creator) (ocm.Spec, error) {
+func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpec, roleConfig *expinfrav1.ROSARoleConfig, rosaNet *expinfrav1.ROSANetwork, creator *rosaaws.Creator) (ocm.Spec, error) {
 	billingAccount := controlPlaneSpec.BillingAccount
 	if billingAccount == "" {
 		billingAccount = creator.AccountID
+	}
+
+	var subnetIDs []string
+	var availabilityZones []string
+
+	if controlPlaneSpec.ROSANetworkRef == nil {
+		if len(controlPlaneSpec.Subnets) == 0 {
+			return ocm.Spec{}, fmt.Errorf("RosaControlPlaneSpec.Subnets is empty")
+		}
+		if len(controlPlaneSpec.AvailabilityZones) == 0 {
+			return ocm.Spec{}, fmt.Errorf("RosaControlPlaneSpec.AvailabilityZones is empty")
+		}
+
+		subnetIDs = controlPlaneSpec.Subnets
+		availabilityZones = controlPlaneSpec.AvailabilityZones
+	} else {
+		for _, v := range rosaNet.Status.Subnets {
+			subnetIDs = append(subnetIDs, v.PublicSubnet, v.PrivateSubnet)
+			availabilityZones = append(availabilityZones, v.AvailabilityZone)
+		}
 	}
 
 	ocmClusterSpec := ocm.Spec{
@@ -919,18 +1049,18 @@ func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpe
 		DisableWorkloadMonitoring: ptr.To(true),
 		DefaultIngress:            ocm.NewDefaultIngressSpec(), // n.b. this is a no-op when it's set to the default value
 		ComputeMachineType:        controlPlaneSpec.DefaultMachinePoolSpec.InstanceType,
-		AvailabilityZones:         controlPlaneSpec.AvailabilityZones,
+		AvailabilityZones:         availabilityZones,
 		Tags:                      controlPlaneSpec.AdditionalTags,
 		EtcdEncryption:            controlPlaneSpec.EtcdEncryptionKMSARN != "",
 		EtcdEncryptionKMSArn:      controlPlaneSpec.EtcdEncryptionKMSARN,
 
-		SubnetIds:        controlPlaneSpec.Subnets,
+		SubnetIds:        subnetIDs,
 		IsSTS:            true,
-		RoleARN:          controlPlaneSpec.InstallerRoleARN,
-		SupportRoleARN:   controlPlaneSpec.SupportRoleARN,
-		WorkerRoleARN:    controlPlaneSpec.WorkerRoleARN,
-		OperatorIAMRoles: operatorIAMRoles(controlPlaneSpec.RolesRef),
-		OidcConfigId:     controlPlaneSpec.OIDCID,
+		RoleARN:          roleConfig.Status.AccountRolesRef.InstallerRoleARN,
+		SupportRoleARN:   roleConfig.Status.AccountRolesRef.SupportRoleARN,
+		WorkerRoleARN:    roleConfig.Status.AccountRolesRef.WorkerRoleARN,
+		OperatorIAMRoles: operatorIAMRoles(roleConfig.Status.OperatorRolesRef),
+		OidcConfigId:     roleConfig.Status.OIDCID,
 		Mode:             "auto",
 		Hypershift: ocm.Hypershift{
 			Enabled: true,
@@ -985,8 +1115,8 @@ func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpe
 		ocmClusterSpec.Autoscaling = true
 		ocmClusterSpec.MaxReplicas = computeAutoscaling.MaxReplicas
 		ocmClusterSpec.MinReplicas = computeAutoscaling.MinReplicas
-	} else if len(controlPlaneSpec.AvailabilityZones) > 1 {
-		ocmClusterSpec.ComputeNodes = len(controlPlaneSpec.AvailabilityZones)
+	} else if len(ocmClusterSpec.AvailabilityZones) > 1 {
+		ocmClusterSpec.ComputeNodes = len(ocmClusterSpec.AvailabilityZones)
 	}
 
 	if controlPlaneSpec.ProvisionShardID != "" {
@@ -1015,6 +1145,12 @@ func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpe
 			ocmClusterSpec.AllowedRegistries = controlPlaneSpec.ClusterRegistryConfig.RegistrySources.AllowedRegistries
 			ocmClusterSpec.InsecureRegistries = controlPlaneSpec.ClusterRegistryConfig.RegistrySources.InsecureRegistries
 		}
+	}
+
+	// Set auto node karpenter config
+	if controlPlaneSpec.AutoNode != nil {
+		ocmClusterSpec.AutoNodeMode = strings.ToLower(string(controlPlaneSpec.AutoNode.Mode))
+		ocmClusterSpec.AutoNodeRoleARN = controlPlaneSpec.AutoNode.RoleARN
 	}
 
 	return ocmClusterSpec, nil
@@ -1124,13 +1260,4 @@ func buildAPIEndpoint(cluster *cmv1.Cluster) (*clusterv1.APIEndpoint, error) {
 		Host: host,
 		Port: int32(port), //#nosec G109 G115
 	}, nil
-}
-
-// TODO: Remove this and update the aws-sdk lib to v2.
-func convertStsV2(identity *sts.GetCallerIdentityOutput) *stsv2.GetCallerIdentityOutput {
-	return &stsv2.GetCallerIdentityOutput{
-		Account: identity.Account,
-		Arn:     identity.Arn,
-		UserId:  identity.UserId,
-	}
 }

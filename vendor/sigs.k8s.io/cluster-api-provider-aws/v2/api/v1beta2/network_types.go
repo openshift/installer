@@ -21,8 +21,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"k8s.io/utils/ptr"
 )
 
@@ -207,6 +207,14 @@ type TargetGroupAttribute string
 var (
 	// TargetGroupAttributeEnablePreserveClientIP defines the attribute key for enabling preserve client IP.
 	TargetGroupAttributeEnablePreserveClientIP = "preserve_client_ip.enabled"
+
+	// TargetGroupAttributeEnableConnectionTermination defines the attribute key for terminating
+	// established connections to unhealthy targets.
+	TargetGroupAttributeEnableConnectionTermination = "target_health_state.unhealthy.connection_termination.enabled"
+
+	// TargetGroupAttributeUnhealthyDrainingIntervalSeconds defines the attribute key for the
+	// unhealthy target connection draining interval.
+	TargetGroupAttributeUnhealthyDrainingIntervalSeconds = "target_health_state.unhealthy.draining_interval_seconds"
 )
 
 // LoadBalancerAttribute defines a set of attributes for a V2 load balancer.
@@ -351,6 +359,10 @@ type NetworkSpec struct {
 	// AdditionalControlPlaneIngressRules is an optional set of ingress rules to add to the control plane
 	// +optional
 	AdditionalControlPlaneIngressRules []IngressRule `json:"additionalControlPlaneIngressRules,omitempty"`
+
+	// AdditionalNodeIngressRules is an optional set of ingress rules to add to every node
+	// +optional
+	AdditionalNodeIngressRules []IngressRule `json:"additionalNodeIngressRules,omitempty"`
 
 	// NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
 	// If none are specified here, all IPs are allowed to connect.
@@ -655,11 +667,11 @@ func (s *SubnetSpec) IsEdgeWavelength() bool {
 }
 
 // SetZoneInfo updates the subnets with zone information.
-func (s *SubnetSpec) SetZoneInfo(zones []*ec2.AvailabilityZone) error {
-	zoneInfo := func(zoneName string) *ec2.AvailabilityZone {
+func (s *SubnetSpec) SetZoneInfo(zones []types.AvailabilityZone) error {
+	zoneInfo := func(zoneName string) *types.AvailabilityZone {
 		for _, zone := range zones {
-			if aws.StringValue(zone.ZoneName) == zoneName {
-				return zone
+			if aws.ToString(zone.ZoneName) == zoneName {
+				return &zone
 			}
 		}
 		return nil
@@ -814,7 +826,7 @@ func (s Subnets) GetUniqueZones() []string {
 }
 
 // SetZoneInfo updates the subnets with zone information.
-func (s Subnets) SetZoneInfo(zones []*ec2.AvailabilityZone) error {
+func (s Subnets) SetZoneInfo(zones []types.AvailabilityZone) error {
 	for i := range s {
 		if err := s[i].SetZoneInfo(zones); err != nil {
 			return err

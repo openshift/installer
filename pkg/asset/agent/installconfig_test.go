@@ -655,7 +655,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: []string{"192.168.122.10", "192.168.122.11"}: If two API VIPs are given, one must be an IPv4 address, the other an IPv6, platform.vsphere.ingressVIPs: Invalid value: []string{"192.168.122.12", "192.168.122.13"}: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: ["192.168.122.10","192.168.122.11"]: If two API VIPs are given, one must be an IPv4 address, the other an IPv6, platform.vsphere.ingressVIPs: Invalid value: ["192.168.122.12","192.168.122.13"]: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6]`,
 		},
 		{
 			name: "api and ingress vips must belong to primary machine network's family for dual stack ipv4/v6",

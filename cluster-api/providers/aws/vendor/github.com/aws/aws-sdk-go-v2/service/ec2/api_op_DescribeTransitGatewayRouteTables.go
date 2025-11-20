@@ -37,13 +37,18 @@ type DescribeTransitGatewayRouteTablesInput struct {
 	DryRun *bool
 
 	// One or more filters. The possible values are:
+	//
 	//   - default-association-route-table - Indicates whether this is the default
 	//   association route table for the transit gateway ( true | false ).
+	//
 	//   - default-propagation-route-table - Indicates whether this is the default
 	//   propagation route table for the transit gateway ( true | false ).
+	//
 	//   - state - The state of the route table ( available | deleting | deleted |
 	//   pending ).
+	//
 	//   - transit-gateway-id - The ID of the transit gateway.
+	//
 	//   - transit-gateway-route-table-id - The ID of the transit gateway route table.
 	Filters []types.Filter
 
@@ -118,6 +123,9 @@ func (c *Client) addOperationDescribeTransitGatewayRouteTablesMiddlewares(stack 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -128,6 +136,15 @@ func (c *Client) addOperationDescribeTransitGatewayRouteTablesMiddlewares(stack 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeTransitGatewayRouteTables(options.Region), middleware.Before); err != nil {
@@ -148,16 +165,20 @@ func (c *Client) addOperationDescribeTransitGatewayRouteTablesMiddlewares(stack 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeTransitGatewayRouteTablesAPIClient is a client that implements the
-// DescribeTransitGatewayRouteTables operation.
-type DescribeTransitGatewayRouteTablesAPIClient interface {
-	DescribeTransitGatewayRouteTables(context.Context, *DescribeTransitGatewayRouteTablesInput, ...func(*Options)) (*DescribeTransitGatewayRouteTablesOutput, error)
-}
-
-var _ DescribeTransitGatewayRouteTablesAPIClient = (*Client)(nil)
 
 // DescribeTransitGatewayRouteTablesPaginatorOptions is the paginator options for
 // DescribeTransitGatewayRouteTables
@@ -226,6 +247,9 @@ func (p *DescribeTransitGatewayRouteTablesPaginator) NextPage(ctx context.Contex
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeTransitGatewayRouteTables(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -244,6 +268,14 @@ func (p *DescribeTransitGatewayRouteTablesPaginator) NextPage(ctx context.Contex
 
 	return result, nil
 }
+
+// DescribeTransitGatewayRouteTablesAPIClient is a client that implements the
+// DescribeTransitGatewayRouteTables operation.
+type DescribeTransitGatewayRouteTablesAPIClient interface {
+	DescribeTransitGatewayRouteTables(context.Context, *DescribeTransitGatewayRouteTablesInput, ...func(*Options)) (*DescribeTransitGatewayRouteTablesOutput, error)
+}
+
+var _ DescribeTransitGatewayRouteTablesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeTransitGatewayRouteTables(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

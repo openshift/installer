@@ -117,7 +117,7 @@ func InitiateAuthCode(clientID string) (string, error) {
 		}
 		if time.Now().After(fiveMinTimer) {
 			shutdown(server)
-			return authToken, fmt.Errorf("Time expired")
+			return authToken, fmt.Errorf("time expired")
 		}
 	}
 }

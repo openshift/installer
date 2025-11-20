@@ -11,11 +11,14 @@ import (
 )
 
 // Enables deregistration protection for an AMI. When deregistration protection is
-// enabled, the AMI can't be deregistered. To allow the AMI to be deregistered, you
-// must first disable deregistration protection using
-// DisableImageDeregistrationProtection . For more information, see Protect an AMI
-// from deregistration (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/deregister-ami.html#ami-deregistration-protection)
-// in the Amazon EC2 User Guide.
+// enabled, the AMI can't be deregistered.
+//
+// To allow the AMI to be deregistered, you must first disable deregistration
+// protection using DisableImageDeregistrationProtection.
+//
+// For more information, see [Protect an Amazon EC2 AMI from deregistration] in the Amazon EC2 User Guide.
+//
+// [Protect an Amazon EC2 AMI from deregistration]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-deregistration-protection.html
 func (c *Client) EnableImageDeregistrationProtection(ctx context.Context, params *EnableImageDeregistrationProtectionInput, optFns ...func(*Options)) (*EnableImageDeregistrationProtectionOutput, error) {
 	if params == nil {
 		params = &EnableImageDeregistrationProtectionInput{}
@@ -105,6 +108,9 @@ func (c *Client) addOperationEnableImageDeregistrationProtectionMiddlewares(stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +121,15 @@ func (c *Client) addOperationEnableImageDeregistrationProtectionMiddlewares(stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpEnableImageDeregistrationProtectionValidationMiddleware(stack); err != nil {
@@ -136,6 +151,18 @@ func (c *Client) addOperationEnableImageDeregistrationProtectionMiddlewares(stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

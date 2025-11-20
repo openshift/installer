@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -40,6 +40,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vsphereplatform "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -119,7 +120,7 @@ func (c *Cluster) Generate(_ context.Context, dependencies asset.Parents) error 
 		if err != nil {
 			return fmt.Errorf("failed to generate vSphere manifests %w", err)
 		}
-	case openstacktypes.Name:
+	case openstacktypes.Name, powervctypes.Name:
 		var err error
 		out, err = openstack.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {

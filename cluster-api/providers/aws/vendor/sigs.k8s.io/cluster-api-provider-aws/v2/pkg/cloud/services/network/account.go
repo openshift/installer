@@ -20,7 +20,8 @@ import (
 	"context"
 	"sort"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/pkg/errors"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/filter"
@@ -28,8 +29,8 @@ import (
 )
 
 func (s *Service) getAvailableZones() ([]string, error) {
-	out, err := s.EC2Client.DescribeAvailabilityZonesWithContext(context.TODO(), &ec2.DescribeAvailabilityZonesInput{
-		Filters: []*ec2.Filter{
+	out, err := s.EC2Client.DescribeAvailabilityZones(context.TODO(), &ec2.DescribeAvailabilityZonesInput{
+		Filters: []types.Filter{
 			filter.EC2.Available(),
 			filter.EC2.IgnoreLocalZones(),
 		},

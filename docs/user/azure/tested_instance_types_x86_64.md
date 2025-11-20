@@ -47,6 +47,7 @@
 * `standardESv3Family`
 * `standardESv4Family`
 * `standardESv5Family`
+* `StandardFXmdsv2Family`
 * `standardFXMDVSFamily`
 * `standardFSFamily`
 * `standardFSv2Family`

@@ -30,28 +30,10 @@ func (c *Client) CreateVerifiedAccessEndpoint(ctx context.Context, params *Creat
 
 type CreateVerifiedAccessEndpointInput struct {
 
-	// The DNS name for users to reach your application.
-	//
-	// This member is required.
-	ApplicationDomain *string
-
 	// The type of attachment.
 	//
 	// This member is required.
 	AttachmentType types.VerifiedAccessEndpointAttachmentType
-
-	// The ARN of the public TLS/SSL certificate in Amazon Web Services Certificate
-	// Manager to associate with the endpoint. The CN in the certificate must match the
-	// DNS name your end users will use to reach your application.
-	//
-	// This member is required.
-	DomainCertificateArn *string
-
-	// A custom identifier that is prepended to the DNS name that is generated for the
-	// endpoint.
-	//
-	// This member is required.
-	EndpointDomainPrefix *string
 
 	// The type of Verified Access endpoint to create.
 	//
@@ -63,19 +45,35 @@ type CreateVerifiedAccessEndpointInput struct {
 	// This member is required.
 	VerifiedAccessGroupId *string
 
+	// The DNS name for users to reach your application.
+	ApplicationDomain *string
+
+	// The CIDR options. This parameter is required if the endpoint type is cidr .
+	CidrOptions *types.CreateVerifiedAccessEndpointCidrOptions
+
 	// A unique, case-sensitive token that you provide to ensure idempotency of your
-	// modification request. For more information, see Ensuring Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
-	// .
+	// modification request. For more information, see [Ensuring idempotency].
+	//
+	// [Ensuring idempotency]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-api-idempotency.html
 	ClientToken *string
 
 	// A description for the Verified Access endpoint.
 	Description *string
+
+	// The ARN of the public TLS/SSL certificate in Amazon Web Services Certificate
+	// Manager to associate with the endpoint. The CN in the certificate must match the
+	// DNS name your end users will use to reach your application.
+	DomainCertificateArn *string
 
 	// Checks whether you have the required permissions for the action, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
 	DryRun *bool
+
+	// A custom identifier that is prepended to the DNS name that is generated for the
+	// endpoint.
+	EndpointDomainPrefix *string
 
 	// The load balancer details. This parameter is required if the endpoint type is
 	// load-balancer .
@@ -87,6 +85,9 @@ type CreateVerifiedAccessEndpointInput struct {
 
 	// The Verified Access policy document.
 	PolicyDocument *string
+
+	// The RDS details. This parameter is required if the endpoint type is rds .
+	RdsOptions *types.CreateVerifiedAccessEndpointRdsOptions
 
 	// The IDs of the security groups to associate with the Verified Access endpoint.
 	// Required if AttachmentType is set to vpc .
@@ -155,6 +156,9 @@ func (c *Client) addOperationCreateVerifiedAccessEndpointMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -165,6 +169,15 @@ func (c *Client) addOperationCreateVerifiedAccessEndpointMiddlewares(stack *midd
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opCreateVerifiedAccessEndpointMiddleware(stack, options); err != nil {
@@ -189,6 +202,18 @@ func (c *Client) addOperationCreateVerifiedAccessEndpointMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

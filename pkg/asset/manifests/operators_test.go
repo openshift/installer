@@ -90,7 +90,6 @@ controlPlane:
   platform: {}
   replicas: 3
 metadata:
-  creationTimestamp: null
   name: test-cluster
 networking:
   clusterNetwork:
@@ -204,7 +203,6 @@ controlPlane:
   platform: {}
   replicas: 3
 metadata:
-  creationTimestamp: null
   name: test-nutanix-cluster
 networking:
   clusterNetwork:

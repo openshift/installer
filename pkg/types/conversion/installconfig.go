@@ -13,9 +13,11 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	powervcconversion "github.com/openshift/installer/pkg/types/conversion/powervc"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vsphereconversion "github.com/openshift/installer/pkg/types/vsphere/conversion"
 )
@@ -42,6 +44,15 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 		}
 	case nutanix.Name:
 		if err := convertNutanix(config); err != nil {
+			return err
+		}
+	case powervc.Name:
+		// The first thing on the agenda is to convert the PowerVC install config
+		// to an underlying OpenStack install config.
+		if err := powervcconversion.ConvertPowerVCInstallConfig(config); err != nil {
+			return err
+		}
+		if err := convertOpenStack(config); err != nil {
 			return err
 		}
 	case openstack.Name:

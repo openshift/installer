@@ -111,8 +111,8 @@ var defaultCAPAFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	MachinePoolMachines:           {Default: false, PreRelease: featuregate.Alpha},
 	AutoControllerIdentityCreator: {Default: true, PreRelease: featuregate.Alpha},
 	BootstrapFormatIgnition:       {Default: false, PreRelease: featuregate.Alpha},
-	ExternalResourceGC:            {Default: false, PreRelease: featuregate.Alpha},
-	AlternativeGCStrategy:         {Default: false, PreRelease: featuregate.Alpha},
+	ExternalResourceGC:            {Default: true, PreRelease: featuregate.Beta},
+	AlternativeGCStrategy:         {Default: false, PreRelease: featuregate.Beta},
 	TagUnmanagedNetworkResources:  {Default: true, PreRelease: featuregate.Alpha},
 	ROSA:                          {Default: false, PreRelease: featuregate.Alpha},
 }

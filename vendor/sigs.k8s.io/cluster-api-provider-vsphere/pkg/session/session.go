@@ -268,13 +268,13 @@ func (s *Session) GetVersion() (infrav1.VCenterVersion, error) {
 	svcVersion := s.ServiceContent.About.Version
 	version, err := semver.New(svcVersion)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "failed to parse version %q", svcVersion)
 	}
 
 	if version.Major >= 6 {
 		return infrav1.NewVCenterVersion(svcVersion), nil
 	}
-	return "", unidentifiedVCenterVersion{version: svcVersion}
+	return "", errors.Errorf("version %q lower than 6", svcVersion)
 }
 
 // Clear is meant to destroy all the cached sessions.

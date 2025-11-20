@@ -23,23 +23,17 @@ import (
 	"github.com/pkg/errors"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
 // newValuesIndex returns a map of ClusterVariable per name.
-// This function validates that:
-// - DefinitionFrom is not set
-// - variables are not defined more than once.
+// This function validates that variables are not defined more than once.
 func newValuesIndex(fldPath *field.Path, values []clusterv1.ClusterVariable) (map[string]*clusterv1.ClusterVariable, field.ErrorList) {
 	valuesMap := map[string]*clusterv1.ClusterVariable{}
 	errs := field.ErrorList{}
 	for _, value := range values {
-		// Check that the variable has DefinitionFrom not set.
-		if value.DefinitionFrom != "" { //nolint:staticcheck // Intentionally using the deprecated field here to check that it is not set.
-			errs = append(errs, field.Invalid(fldPath.Key(value.Name), string(value.Value.Raw), fmt.Sprintf("variable %q has DefinitionFrom set. DefinitionFrom is deprecated, must not be set anymore and is going to be removed in the next apiVersion", value.Name)))
-		}
-
 		// Check that the variable has not been defined more than once.
 		if _, ok := valuesMap[value.Name]; ok {
 			errs = append(errs, field.Invalid(fldPath.Key(value.Name), string(value.Value.Raw), fmt.Sprintf("variable %q is set more than once", value.Name)))
@@ -69,7 +63,7 @@ func newDefinitionsIndex(fldPath *field.Path, definitions []clusterv1.ClusterCla
 		}
 
 		// Check that the definitions have no conflict.
-		if definition.DefinitionsConflict {
+		if ptr.Deref(definition.DefinitionsConflict, false) {
 			errs = append(errs, errors.Errorf("variable %q has conflicting definitions", definition.Name))
 		}
 

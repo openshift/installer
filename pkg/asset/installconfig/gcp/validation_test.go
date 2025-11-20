@@ -22,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -118,26 +117,6 @@ var (
 	invalidateXpnSA          = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = invalidXpnSA }
 	invalidateBaseDomain     = func(ic *types.InstallConfig) { ic.BaseDomain = invalidBaseDomain }
 	enableCustomDNS          = func(ic *types.InstallConfig) { ic.GCP.UserProvisionedDNS = customDNS.UserProvisionedDNSEnabled }
-
-	validServiceEndpoint = func(ic *types.InstallConfig) {
-		ic.Publish = types.InternalPublishingStrategy
-		ic.GCP.ServiceEndpoints = append(ic.GCP.ServiceEndpoints,
-			configv1.GCPServiceEndpoint{
-				Name: configv1.GCPServiceEndpointNameCompute,
-				URL:  validServiceEndpointURL,
-			},
-		)
-	}
-
-	invalidServiceEndpointBadFormat = func(ic *types.InstallConfig) {
-		ic.Publish = types.InternalPublishingStrategy
-		ic.GCP.ServiceEndpoints = append(ic.GCP.ServiceEndpoints,
-			configv1.GCPServiceEndpoint{
-				Name: configv1.GCPServiceEndpointNameStorage,
-				URL:  invalidServiceEndpointURL,
-			},
-		)
-	}
 
 	invalidKeyRing = gcp.KMSKeyReference{
 		Name:      "invalidKeyName",
@@ -466,19 +445,6 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
 			expectedError:  true,
 			expectedErrMsg: "platform.gcp.compute.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data, platform.gcp.defaultMachinePool.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
-		},
-		{
-			name:          "Valid Service Endpoint Override",
-			edits:         editFunctions{validServiceEndpoint},
-			records:       []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
-			expectedError: false,
-		},
-		{
-			name:           "Invalid Service Endpoint Override Bad Format",
-			edits:          editFunctions{invalidServiceEndpointBadFormat},
-			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
-			expectedError:  true,
-			expectedErrMsg: `[platform.gcp.serviceEndpoint\[0\]: Invalid value: \"http://badstorage.googleapis\": Head \"http://badstorage.googleapis\": dial tcp: lookup badstorage.googleapis: no such host]`,
 		},
 		{
 			name:           "Invalid Base Domain",
@@ -994,7 +960,7 @@ func TestValidateZones(t *testing.T) {
 			name:           "Invalid zones for defaultMachine",
 			edits:          editFunctions{invalidZonesDefaultMachine},
 			expectedError:  true,
-			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.zones: Invalid value: \[\]string\{"us\-central1\-x", "us\-central1\-y"\}: zone\(s\) not found in region\]$`,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.zones: Invalid value: \["us\-central1\-x","us\-central1\-y"\]: zone\(s\) not found in region\]$`,
 		},
 		{
 			name:           "Valid zones for controlPlane",
@@ -1006,7 +972,7 @@ func TestValidateZones(t *testing.T) {
 			name:           "Invalid zones for controlPlane",
 			edits:          editFunctions{invalidZonesControlPlane},
 			expectedError:  true,
-			expectedErrMsg: `^\[controlPlane.platform.gcp.zones: Invalid value: \[\]string\{"us\-central1\-x", "us\-central1\-y"\}: zone\(s\) not found in region\]$`,
+			expectedErrMsg: `^\[controlPlane.platform.gcp.zones: Invalid value: \["us\-central1\-x","us\-central1\-y"\]: zone\(s\) not found in region\]$`,
 		},
 		{
 			name:           "Valid zones for compute",
@@ -1018,7 +984,7 @@ func TestValidateZones(t *testing.T) {
 			name:           "Invalid zones for compute",
 			edits:          editFunctions{invalidZonesCompute},
 			expectedError:  true,
-			expectedErrMsg: `^\[compute\[0\].platform.gcp.zones: Invalid value: \[\]string\{"us\-central1\-w", "us\-central1\-y", "us\-central1\-z"\}: zone\(s\) not found in region\]$`,
+			expectedErrMsg: `^\[compute\[0\].platform.gcp.zones: Invalid value: \["us\-central1\-w","us\-central1\-y","us\-central1\-z"\]: zone\(s\) not found in region\]$`,
 		},
 	}
 
@@ -1487,43 +1453,43 @@ func TestValidateMarketplaceImages(t *testing.T) {
 			name:           "Invalid default machine image",
 			edits:          editFunctions{invalidDefaultMachineImage},
 			expectedError:  true,
-			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.osImage: Invalid value: gcp.OSImage{Name:"invalid-image", Project:"project-id"}: could not find the boot image: image not found\]$`,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.osImage: Invalid value: {"name":"invalid-image","project":"project-id"}: could not find the boot image: image not found\]$`,
 		},
 		{
 			name:           "Invalid control plane image",
 			edits:          editFunctions{invalidControlPlaneImage},
 			expectedError:  true,
-			expectedErrMsg: `^\[controlPlane.platform.gcp.osImage: Invalid value: gcp.OSImage{Name:"invalid-image", Project:"project-id"}: could not find the boot image: image not found\]$`,
+			expectedErrMsg: `^\[controlPlane.platform.gcp.osImage: Invalid value: {"name":"invalid-image","project":"project-id"}: could not find the boot image: image not found\]$`,
 		},
 		{
 			name:           "Invalid compute image",
 			edits:          editFunctions{invalidComputeImage},
 			expectedError:  true,
-			expectedErrMsg: `^\[compute\[0\].platform.gcp.osImage: Invalid value: gcp.OSImage{Name:"invalid-image", Project:"project-id"}: could not find the boot image: image not found\]$`,
+			expectedErrMsg: `^\[compute\[0\].platform.gcp.osImage: Invalid value: {"name":"invalid-image","project":"project-id"}: could not find the boot image: image not found\]$`,
 		},
 		{
 			name:           "Invalid images",
 			edits:          editFunctions{invalidDefaultMachineImage, invalidControlPlaneImage, invalidComputeImage},
 			expectedError:  true,
-			expectedErrMsg: `^\[(.*?\.osImage: Invalid value: gcp\.OSImage\{Name:"invalid-image", Project:"project-id"\}: could not find the boot image: image not found){3}\]$`,
+			expectedErrMsg: `^\[(.*?\.osImage: Invalid value: \{"name":"invalid-image","project":"project-id"\}: could not find the boot image: image not found){3}\]$`,
 		},
 		{
 			name:           "Mismatched default machine image architecture",
 			edits:          editFunctions{mismatchedDefaultMachineImageArchitecture},
 			expectedError:  true,
-			expectedErrMsg: `^\[controlPlane.platform.gcp.osImage: Invalid value: gcp.OSImage{Name:"mismatched-arch", Project:"project-id"}: image architecture X86_64 does not match controlPlane node architecture arm64 compute\[0\].platform.gcp.osImage: Invalid value: gcp.OSImage{Name:"mismatched-arch", Project:"project-id"}: image architecture X86_64 does not match compute node architecture arm64]$`,
+			expectedErrMsg: `^\[controlPlane.platform.gcp.osImage: Invalid value: {"name":"mismatched-arch","project":"project-id"}: image architecture X86_64 does not match controlPlane node architecture arm64 compute\[0\].platform.gcp.osImage: Invalid value: {"name":"mismatched-arch","project":"project-id"}: image architecture X86_64 does not match compute node architecture arm64]$`,
 		},
 		{
 			name:           "Mismatched control plane image architecture",
 			edits:          editFunctions{mismatchedControlPlaneImageArchitecture},
 			expectedError:  true,
-			expectedErrMsg: `^\[controlPlane.platform.gcp.osImage: Invalid value: gcp.OSImage{Name:"mismatched-arch", Project:"project-id"}: image architecture X86_64 does not match controlPlane node architecture arm64]$`,
+			expectedErrMsg: `^\[controlPlane.platform.gcp.osImage: Invalid value: {"name":"mismatched-arch","project":"project-id"}: image architecture X86_64 does not match controlPlane node architecture arm64]$`,
 		},
 		{
 			name:           "Mismatched compute image architecture",
 			edits:          editFunctions{mismatchedComputeImageArchitecture},
 			expectedError:  true,
-			expectedErrMsg: `^\[compute\[0\].platform.gcp.osImage: Invalid value: gcp.OSImage{Name:"mismatched-arch", Project:"project-id"}: image architecture X86_64 does not match compute node architecture arm64]$`,
+			expectedErrMsg: `^\[compute\[0\].platform.gcp.osImage: Invalid value: {"name":"mismatched-arch","project":"project-id"}: image architecture X86_64 does not match compute node architecture arm64]$`,
 		},
 		{
 			name:            "Missing image architecture",

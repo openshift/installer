@@ -1,0 +1,48 @@
+/*
+Copyright (c) 2024 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of azure node pool specific parameters.
+struct AzureNodePool {
+    // ResourceName is the Azure Resource Name of the NodePool.
+    // ResourceName must be within the Azure Resource Group Name of the parent
+    // Cluster it belongs to.
+    // ResourceName must be located in the same Azure Location as the parent
+    // Cluster it belongs to.
+    // ResourceName must be located in the same Azure Subscription as the parent
+    // Cluster it belongs to.
+    // ResourceName must belong to the same Microsoft Entra Tenant ID as the parent
+    // Cluster it belongs to.
+    // Required during creation.
+    // Immutable.
+    ResourceName String
+
+    // The Azure Virtual Machine size identifier used for the
+    // Nodes of the Node Pool.
+    // Availability of VM sizes are dependent on the Azure Location
+    // of the parent Cluster.
+    // Required during creation.
+    VMSize String
+
+    // EncryptionAtHost contains Encryption At Host disk encryption configuration.
+    // When enabled, it enhances Azure Disk Storage Server-Side Encryption to ensure that all temporary disks
+    // and disk caches are encrypted at rest and flow encrypted to the Storage clusters.
+    // If not specified, Encryption at Host is not enabled.
+    // Immutable.
+    EncryptionAtHost AzureNodePoolEncryptionAtHost
+
+    // The configuration for the OS disk used by the nodes in the Node Pool.
+    OsDisk AzureNodePoolOsDisk
+}

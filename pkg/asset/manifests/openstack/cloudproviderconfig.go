@@ -2,6 +2,7 @@ package openstack
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/types"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/types/powervc"
 )
 
 // Error represents a failure while generating OpenStack provider
@@ -105,6 +107,11 @@ secret-namespace = kube-system
 		// If set get the ID and configure CCM to use that network for LB FIPs.
 		cloudProviderConfigData += "\n[LoadBalancer]\n"
 		cloudProviderConfigData += "floating-network-id = " + networkID + "\n"
+		if installConfig.Platform.Name() == powervc.Name {
+			return "", "", fmt.Errorf("powervc does not support external network")
+		}
+	} else if installConfig.Platform.Name() == powervc.Name {
+		cloudProviderConfigData += "\n[LoadBalancer]\nenabled = false\n"
 	}
 
 	return cloudProviderConfigData, cloudProviderConfigCABundleData, nil

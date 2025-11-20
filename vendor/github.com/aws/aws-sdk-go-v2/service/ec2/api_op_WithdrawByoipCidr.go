@@ -11,11 +11,13 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Stops advertising an address range that is provisioned as an address pool. You
-// can perform this operation at most once every 10 seconds, even if you specify
-// different address ranges each time. It can take a few minutes before traffic to
-// the specified addresses stops routing to Amazon Web Services because of BGP
-// propagation delays.
+// Stops advertising an address range that is provisioned as an address pool.
+//
+// You can perform this operation at most once every 10 seconds, even if you
+// specify different address ranges each time.
+//
+// It can take a few minutes before traffic to the specified addresses stops
+// routing to Amazon Web Services because of BGP propagation delays.
 func (c *Client) WithdrawByoipCidr(ctx context.Context, params *WithdrawByoipCidrInput, optFns ...func(*Options)) (*WithdrawByoipCidrOutput, error) {
 	if params == nil {
 		params = &WithdrawByoipCidrInput{}
@@ -101,6 +103,9 @@ func (c *Client) addOperationWithdrawByoipCidrMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -111,6 +116,15 @@ func (c *Client) addOperationWithdrawByoipCidrMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpWithdrawByoipCidrValidationMiddleware(stack); err != nil {
@@ -132,6 +146,18 @@ func (c *Client) addOperationWithdrawByoipCidrMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

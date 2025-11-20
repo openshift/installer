@@ -12,9 +12,11 @@ import (
 )
 
 // Registers a set of tag keys to include in scheduled event notifications for
-// your resources. To remove tags, use
-// DeregisterInstanceEventNotificationAttributes (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeregisterInstanceEventNotificationAttributes.html)
-// .
+// your resources.
+//
+// To remove tags, use [DeregisterInstanceEventNotificationAttributes].
+//
+// [DeregisterInstanceEventNotificationAttributes]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeregisterInstanceEventNotificationAttributes.html
 func (c *Client) RegisterInstanceEventNotificationAttributes(ctx context.Context, params *RegisterInstanceEventNotificationAttributesInput, optFns ...func(*Options)) (*RegisterInstanceEventNotificationAttributesOutput, error) {
 	if params == nil {
 		params = &RegisterInstanceEventNotificationAttributesInput{}
@@ -100,6 +102,9 @@ func (c *Client) addOperationRegisterInstanceEventNotificationAttributesMiddlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -110,6 +115,15 @@ func (c *Client) addOperationRegisterInstanceEventNotificationAttributesMiddlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRegisterInstanceEventNotificationAttributesValidationMiddleware(stack); err != nil {
@@ -131,6 +145,18 @@ func (c *Client) addOperationRegisterInstanceEventNotificationAttributesMiddlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

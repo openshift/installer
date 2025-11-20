@@ -1,0 +1,3 @@
+# Generated .dot files (intermediate products)
+*.dot
+__pycache__/

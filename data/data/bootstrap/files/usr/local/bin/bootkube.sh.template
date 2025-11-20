@@ -493,6 +493,7 @@ then
 	copy_static_resources_for nutanix
 	copy_static_resources_for gcp
 	copy_static_resources_for aws
+	copy_static_resources_for azure
 
 	cp mco-bootstrap/manifests/* manifests/
 

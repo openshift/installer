@@ -45,7 +45,6 @@ import (
 type AWSFargateProfileReconciler struct {
 	client.Client
 	Recorder         record.EventRecorder
-	Endpoints        []scope.ServiceEndpoint
 	EnableIAM        bool
 	WatchFilterValue string
 }
@@ -107,7 +106,6 @@ func (r *AWSFargateProfileReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		ControlPlane:   controlPlane,
 		FargateProfile: fargateProfile,
 		EnableIAM:      r.EnableIAM,
-		Endpoints:      r.Endpoints,
 	})
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(err, "failed to create scope")
@@ -140,7 +138,7 @@ func (r *AWSFargateProfileReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 func (r *AWSFargateProfileReconciler) reconcileNormal(
-	_ context.Context,
+	ctx context.Context,
 	fargateProfileScope *scope.FargateProfileScope,
 ) (ctrl.Result, error) {
 	fargateProfileScope.Info("Reconciling AWSFargateProfile")
@@ -153,7 +151,7 @@ func (r *AWSFargateProfileReconciler) reconcileNormal(
 
 	ekssvc := eks.NewFargateService(fargateProfileScope)
 
-	res, err := ekssvc.Reconcile()
+	res, err := ekssvc.Reconcile(ctx)
 	if err != nil {
 		return res, errors.Wrapf(err, "failed to reconcile fargate profile for AWSFargateProfile %s/%s", fargateProfileScope.FargateProfile.Namespace, fargateProfileScope.FargateProfile.Name)
 	}
@@ -162,14 +160,14 @@ func (r *AWSFargateProfileReconciler) reconcileNormal(
 }
 
 func (r *AWSFargateProfileReconciler) reconcileDelete(
-	_ context.Context,
+	ctx context.Context,
 	fargateProfileScope *scope.FargateProfileScope,
 ) (ctrl.Result, error) {
 	fargateProfileScope.Info("Reconciling deletion of AWSFargateProfile")
 
 	ekssvc := eks.NewFargateService(fargateProfileScope)
 
-	res, err := ekssvc.ReconcileDelete()
+	res, err := ekssvc.ReconcileDelete(ctx)
 	if err != nil {
 		return res, errors.Wrapf(err, "failed to reconcile fargate profile deletion for AWSFargateProfile %s/%s", fargateProfileScope.FargateProfile.Namespace, fargateProfileScope.FargateProfile.Name)
 	}

@@ -1,0 +1,20 @@
+
+// Contains the necessary attributes to support role-based authentication on AWS.
+struct STS {
+	// ARN of the AWS role to assume when installing the cluster
+	RoleARN String
+
+	// ARN of the AWS role used by SREs to access the cluster AWS account in order to provide support
+	SupportRoleARN String
+
+	// URL of the location where OIDC configuration and keys are available
+	OIDCEndpointURL String
+
+	// List of roles necessary to access the AWS resources of the various operators used during installation
+	OperatorIAMRoles []OperatorIAMRole
+
+	OperatorRolePrefix String
+
+	// Instance IAM roles to use for the instance profiles of the master and worker instances
+	InstanceIAMRoles InstanceIAMRoles
+}

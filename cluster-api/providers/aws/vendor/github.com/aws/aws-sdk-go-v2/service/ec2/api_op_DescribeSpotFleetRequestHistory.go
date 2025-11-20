@@ -13,11 +13,15 @@ import (
 )
 
 // Describes the events for the specified Spot Fleet request during the specified
-// time. Spot Fleet events are delayed by up to 30 seconds before they can be
-// described. This ensures that you can query by the last evaluated time and not
-// miss a recorded event. Spot Fleet events are available for 48 hours. For more
-// information, see Monitor fleet events using Amazon EventBridge (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/fleet-monitor.html)
-// in the Amazon EC2 User Guide.
+// time.
+//
+// Spot Fleet events are delayed by up to 30 seconds before they can be described.
+// This ensures that you can query by the last evaluated time and not miss a
+// recorded event. Spot Fleet events are available for 48 hours.
+//
+// For more information, see [Monitor fleet events using Amazon EventBridge] in the Amazon EC2 User Guide.
+//
+// [Monitor fleet events using Amazon EventBridge]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/fleet-monitor.html
 func (c *Client) DescribeSpotFleetRequestHistory(ctx context.Context, params *DescribeSpotFleetRequestHistoryInput, optFns ...func(*Options)) (*DescribeSpotFleetRequestHistoryOutput, error) {
 	if params == nil {
 		params = &DescribeSpotFleetRequestHistoryInput{}
@@ -58,8 +62,9 @@ type DescribeSpotFleetRequestHistoryInput struct {
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token to include in another request to get the next page of items. This
@@ -76,8 +81,9 @@ type DescribeSpotFleetRequestHistoryOutput struct {
 	HistoryRecords []types.HistoryRecord
 
 	// The last date and time for the events, in UTC format (for example,
-	// YYYY-MM-DDTHH:MM:SSZ). All records up to this time were retrieved. If nextToken
-	// indicates that there are more items, this value is not present.
+	// YYYY-MM-DDTHH:MM:SSZ). All records up to this time were retrieved.
+	//
+	// If nextToken indicates that there are more items, this value is not present.
 	LastEvaluatedTime *time.Time
 
 	// The token to include in another request to get the next page of items. This
@@ -140,6 +146,9 @@ func (c *Client) addOperationDescribeSpotFleetRequestHistoryMiddlewares(stack *m
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -150,6 +159,15 @@ func (c *Client) addOperationDescribeSpotFleetRequestHistoryMiddlewares(stack *m
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeSpotFleetRequestHistoryValidationMiddleware(stack); err != nil {
@@ -171,6 +189,18 @@ func (c *Client) addOperationDescribeSpotFleetRequestHistoryMiddlewares(stack *m
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -19,7 +19,7 @@ package v1beta1
 import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // AzureClusterClassSpec defines the AzureCluster properties that may be shared across several Azure clusters.
@@ -76,7 +76,7 @@ type AzureClusterClassSpec struct {
 	// which is a separated group of datacenters within a region.
 	// See: https://learn.microsoft.com/azure/reliability/availability-zones-overview
 	// +optional
-	FailureDomains clusterv1.FailureDomains `json:"failureDomains,omitempty"`
+	FailureDomains clusterv1beta1.FailureDomains `json:"failureDomains,omitempty"`
 }
 
 // AzureManagedControlPlaneClassSpec defines the AzureManagedControlPlane properties that may be shared across several azure managed control planes.
