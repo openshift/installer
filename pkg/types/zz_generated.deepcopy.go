@@ -18,6 +18,7 @@ import (
 	nutanix "github.com/openshift/installer/pkg/types/nutanix"
 	openstack "github.com/openshift/installer/pkg/types/openstack"
 	ovirt "github.com/openshift/installer/pkg/types/ovirt"
+	powervc "github.com/openshift/installer/pkg/types/powervc"
 	powervs "github.com/openshift/installer/pkg/types/powervs"
 	vsphere "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -135,6 +136,11 @@ func (in *ClusterPlatformMetadata) DeepCopyInto(out *ClusterPlatformMetadata) {
 		in, out := &in.Ovirt, &out.Ovirt
 		*out = new(ovirt.Metadata)
 		**out = **in
+	}
+	if in.PowerVC != nil {
+		in, out := &in.PowerVC, &out.PowerVC
+		*out = new(powervc.Metadata)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PowerVS != nil {
 		in, out := &in.PowerVS, &out.PowerVS
@@ -549,6 +555,11 @@ func (in *MachinePoolPlatform) DeepCopyInto(out *MachinePoolPlatform) {
 		*out = new(ovirt.MachinePool)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.PowerVC != nil {
+		in, out := &in.PowerVC, &out.PowerVC
+		*out = new(powervc.MachinePool)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.PowerVS != nil {
 		in, out := &in.PowerVS, &out.PowerVS
 		*out = new(powervs.MachinePool)
@@ -707,6 +718,11 @@ func (in *Platform) DeepCopyInto(out *Platform) {
 	if in.OpenStack != nil {
 		in, out := &in.OpenStack, &out.OpenStack
 		*out = new(openstack.Platform)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.PowerVC != nil {
+		in, out := &in.PowerVC, &out.PowerVC
+		*out = new(powervc.Platform)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.PowerVS != nil {
