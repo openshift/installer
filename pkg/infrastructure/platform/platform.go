@@ -25,6 +25,7 @@ import (
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -48,7 +49,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
 	case powervstypes.Name:
 		return clusterapi.InitializeProvider(&powervscapi.Provider{}), nil
-	case openstacktypes.Name:
+	case openstacktypes.Name, powervctypes.Name:
 		return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
 	case vspheretypes.Name:
 		return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil

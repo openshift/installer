@@ -89,6 +89,7 @@ AzureStack: "Manual"
 GCP: "Mint", "Passthrough", "Manual"
 IBMCloud: "Manual"
 OpenStack: "Passthrough"
+PowerVC: "Passthrough"
 PowerVS: "Manual"
 Nutanix: "Manual"
 
@@ -191,6 +192,9 @@ platform.
 
     ovirt <object>
       Ovirt is the configuration used when installing on oVirt.
+
+    powervc <object>
+      PowerVC is the configuration used when installing on Power VC.
 
     powervs <object>
       PowerVS is the configuration used when installing on Power VS.

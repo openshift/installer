@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/powervc"
 )
 
 var proxyCfgFilename = path.Join(manifestDir, "cluster-proxy-01-config.yaml")
@@ -140,7 +141,7 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 	// FIXME: The cluster-network-operator duplicates this code in pkg/util/proxyconfig/no_proxy.go,
 	//  if altering this list of platforms, you must ALSO alter the code in cluster-network-operator.
 	switch platform {
-	case aws.Name, gcp.Name, azure.Name, openstack.Name:
+	case aws.Name, gcp.Name, azure.Name, openstack.Name, powervc.Name:
 		set.Insert("169.254.169.254")
 	}
 
