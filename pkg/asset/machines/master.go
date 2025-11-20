@@ -371,7 +371,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		}
 
 		if len(mpool.Zones) == 0 {
-			azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
+			azs, err := installConfig.Azure.VMAvailabilityZones(ctx, mpool.InstanceType)
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch availability zones")
 			}

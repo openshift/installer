@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"sort"
-	"strconv"
 	"strings"
 
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
@@ -34,6 +33,7 @@ import (
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	manifests := []*asset.RuntimeFile{}
 	mainCIDR := capiutils.CIDRFromInstallConfig(installConfig).String()
+	computeSubnet := installConfig.Config.Platform.Azure.ComputeSubnetName(clusterID.InfraID)
 
 	session, err := installConfig.Azure.Session()
 	if err != nil {
@@ -43,14 +43,16 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	splitLength := 2
 	zones := []string{}
 	if installConfig.Config.Azure.OutboundType == azure.NATGatewayMultiZoneOutboundType {
-		ctx := context.TODO()
-		numZones, err := installConfig.Azure.AvailabilityZones(ctx)
+		numZones, err := installConfig.Azure.GenerateZonesSubnetMap(installConfig.Config.Azure.Subnets, computeSubnet)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get availability zones: %w", err)
 		}
+		for key := range numZones {
+			zones = append(zones, key)
+		}
+		sort.Strings(zones)
 		// Add one for control plane.
-		splitLength = len(numZones) + 1
-		zones = numZones
+		splitLength = len(zones) + 1
 	}
 
 	subnets, err := cidr.SplitIntoSubnetsIPv4(mainCIDR, splitLength)
@@ -69,7 +71,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	resourceGroup := installConfig.Config.Platform.Azure.ClusterResourceGroupName(clusterID.InfraID)
 	controlPlaneSubnet := installConfig.Config.Platform.Azure.ControlPlaneSubnetName(clusterID.InfraID)
-	computeSubnet := installConfig.Config.Platform.Azure.ComputeSubnetName(clusterID.InfraID)
 	networkSecurityGroup := installConfig.Config.Platform.Azure.NetworkSecurityGroupName(clusterID.InfraID)
 
 	source := "*"
@@ -338,7 +339,7 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 	// Add the user specified subnets to the spec.
 	// For single zone, alter the compute subnet to have a NATGateway and add default control plane subnet
 	// configuration.
-	zoneIndex := 1
+	zoneIndex := 0
 	singleZoneNatGateway := false
 	allSubnets := installConfig.Config.Azure.Subnets
 	sort.Slice(allSubnets, func(i, j int) bool {
@@ -370,11 +371,11 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 					Name: fmt.Sprintf("%s-publicip-%d", infraID, index),
 				},
 				NatGatewayClassSpec: capz.NatGatewayClassSpec{Name: fmt.Sprintf("%s-natgw-%d", infraID, index)},
-				Zones:               []string{strconv.Itoa(zoneIndex)},
+				Zones:               []string{zones[zoneIndex]},
 			}
 			zoneIndex++
-			if zoneIndex == len(subnets) {
-				zoneIndex = 1
+			if zoneIndex == len(zones) {
+				zoneIndex = 0
 			}
 		} else if installConfig.Config.Azure.OutboundType == azure.NATGatewaySingleZoneOutboundType && spec.Role == capz.SubnetNode && !singleZoneNatGateway {
 			specGen.NatGateway = capz.NatGateway{
@@ -389,7 +390,7 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 		hasComputePlaneSubnet = hasComputePlaneSubnet || spec.Role == capz.SubnetNode
 		subnetSpec = append(subnetSpec, specGen)
 	}
-	zoneIndex = 1
+	zoneIndex = 0
 	// Make sure there's at least one subnet for compute and control plane.
 	// Ordinary installs will get the default setup.
 	if !hasComputePlaneSubnet {
@@ -414,13 +415,13 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 					},
 					NatGateway: capz.NatGateway{
 						NatGatewayClassSpec: capz.NatGatewayClassSpec{Name: fmt.Sprintf("%s-natgw-%d", infraID, index)},
-						Zones:               []string{strconv.Itoa(zoneIndex)},
+						Zones:               []string{zones[zoneIndex]},
 					},
 					SecurityGroup: securityGroup,
 				}
 				zoneIndex++
-				if zoneIndex == len(subnets) {
-					zoneIndex = 1
+				if zoneIndex == len(zones) {
+					zoneIndex = 0
 				}
 				subnetSpec = append(subnetSpec, specSubnet)
 			}

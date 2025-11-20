@@ -6,6 +6,8 @@ import (
 	"sort"
 	"sync"
 
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 )
 
@@ -17,7 +19,9 @@ type Metadata struct {
 	client            API
 	dnsCfg            *DNSConfig
 	availabilityZones []string
+	vmZones           []string
 	region            string
+	ZonesSubnetMap    map[string][]string
 
 	// CloudName indicates the Azure cloud environment (e.g. public, gov't).
 	CloudName typesazure.CloudEnvironment `json:"cloudName,omitempty"`
@@ -121,4 +125,76 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	}
 
 	return m.availabilityZones, nil
+}
+
+// VMAvailabilityZones retrieves a list of availability zones for the configured region and instance type.
+func (m *Metadata) VMAvailabilityZones(ctx context.Context, instanceType string) ([]string, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.vmZones) == 0 {
+		zones, err := m.client.GetAvailabilityZones(ctx, m.region, instanceType)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Availability Zones: %w", err)
+		}
+		if zones != nil {
+			sort.Strings(zones)
+			m.vmZones = zones
+		}
+	}
+
+	return m.vmZones, nil
+}
+
+// GenerateZonesSubnetMap creates a map of all the zones that are supported for nat gateways and vms and
+// sets it to the subnets provided. If no subnets are provided, it creates subnets for multi zone
+// functionality.
+func (m *Metadata) GenerateZonesSubnetMap(subnetSpec []typesazure.SubnetSpec, defaultComputeSubnet string) (map[string][]string, error) {
+	if m.ZonesSubnetMap == nil {
+		// Get the availability zones.
+		if m.availabilityZones == nil {
+			_, err := m.AvailabilityZones(context.TODO())
+			if err != nil {
+				return nil, err
+			}
+		}
+		subnetZones := m.availabilityZones
+		computeSubnets := []string{}
+
+		// Get all the byo subnets or generate subnet per az.
+		if len(subnetSpec) != 0 {
+			sort.Slice(subnetSpec, func(i, j int) bool {
+				return subnetSpec[i].Name < subnetSpec[j].Name
+			})
+			for _, subnet := range subnetSpec {
+				if subnet.Role == v1beta1.SubnetNode {
+					computeSubnets = append(computeSubnets, subnet.Name)
+				}
+			}
+		} else {
+			for idx := range subnetZones {
+				computeName := fmt.Sprintf("%s-%d", defaultComputeSubnet, idx+1)
+				if idx == 0 {
+					computeName = defaultComputeSubnet
+				}
+				computeSubnets = append(computeSubnets, computeName)
+			}
+		}
+
+		// Assign zone to subnets.
+		subnetMap := map[string][]string{}
+		zoneIndex := 0
+		for _, subnet := range computeSubnets {
+			if _, ok := subnetMap[subnetZones[zoneIndex]]; !ok {
+				subnetMap[subnetZones[zoneIndex]] = []string{}
+			}
+			subnetMap[subnetZones[zoneIndex]] = append(subnetMap[subnetZones[zoneIndex]], subnet)
+			zoneIndex++
+			if zoneIndex >= len(subnetZones) {
+				zoneIndex = 0
+			}
+		}
+		m.ZonesSubnetMap = subnetMap
+	}
+	return m.ZonesSubnetMap, nil
 }
