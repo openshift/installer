@@ -51,7 +51,6 @@ var (
 	invalidXpnSA              = "invalid-example-sa@gcloud.serviceaccount.com"
 	validServiceEndpointURL   = "https://computeexample.googleapis.com/compute/v1/"
 	invalidServiceEndpointURL = "http://badstorage.googleapis"
-	permissionsProject        = "permissions-project"
 
 	// #nosec G101
 	fakeCreds = `{
@@ -118,8 +117,6 @@ var (
 	invalidateXpnSA          = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = invalidXpnSA }
 	invalidateBaseDomain     = func(ic *types.InstallConfig) { ic.BaseDomain = invalidBaseDomain }
 	enableCustomDNS          = func(ic *types.InstallConfig) { ic.GCP.UserProvisionedDNS = customDNS.UserProvisionedDNSEnabled }
-	resetNetwork             = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
-	validPermissionProject   = func(ic *types.InstallConfig) { ic.GCP.ProjectID = permissionsProject }
 
 	invalidKeyRing = gcp.KMSKeyReference{
 		Name:      "invalidKeyName",
@@ -462,12 +459,6 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			records:       []*dns.ResourceRecordSet{},
 			expectedError: false,
 		},
-		{
-			name:          "Invalid missing permissions and network",
-			edits:         editFunctions{resetNetwork, validPermissionProject},
-			records:       []*dns.ResourceRecordSet{},
-			expectedError: true, // platform.gcp.network: Required value: firewall rule creation permission is missing, an existing network is required
-		},
 	}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -477,9 +468,8 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	errNotFound := &googleapi.Error{Code: http.StatusNotFound}
 
 	// Should get the list of projects.
-	gcpClient.EXPECT().GetProjects(gomock.Any()).Return(map[string]string{"valid-project": "valid-project", permissionsProject: permissionsProject}, nil).AnyTimes()
+	gcpClient.EXPECT().GetProjects(gomock.Any()).Return(map[string]string{"valid-project": "valid-project"}, nil).AnyTimes()
 	gcpClient.EXPECT().GetProjectByID(gomock.Any(), "valid-project").Return(&cloudresourcemanager.Project{}, nil).AnyTimes()
-	gcpClient.EXPECT().GetProjectByID(gomock.Any(), permissionsProject).Return(&cloudresourcemanager.Project{}, nil).AnyTimes()
 	gcpClient.EXPECT().GetProjectByID(gomock.Any(), "invalid-project").Return(nil, errNotFound).AnyTimes()
 	gcpClient.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("error")).AnyTimes()
 
@@ -490,7 +480,6 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient.EXPECT().GetRegions(gomock.Any(), invalidProjectName).Return(nil, fmt.Errorf("failed to get regions for project")).AnyTimes()
 	// When passed a project that is valid but the region is not contained, an error should still occur
 	gcpClient.EXPECT().GetRegions(gomock.Any(), validProjectName).Return([]string{validRegion}, nil).AnyTimes()
-	gcpClient.EXPECT().GetRegions(gomock.Any(), permissionsProject).Return([]string{validRegion}, nil).AnyTimes()
 
 	// Should return the machine type as specified.
 	for key, value := range machineTypeAPIResult {
@@ -509,7 +498,6 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	// When passed a correct network, project, & region, returns valid subnets.
 	// We will test incorrect subnets, by changing the install config.
 	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), validNetworkName, validProjectName, validRegion).Return(subnetAPIResult, nil).AnyTimes()
-	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), validNetworkName, permissionsProject, validRegion).Return(subnetAPIResult, nil).AnyTimes()
 
 	// When passed an incorrect network, project or region, return empty list.
 	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), gomock.Not(validNetworkName), gomock.Any(), gomock.Any()).Return([]*compute.Subnetwork{}, nil).AnyTimes()
@@ -544,13 +532,8 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &invalidKeyRing).Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
 
 	gcpClient.EXPECT().GetDNSZone(gomock.Any(), validProjectName, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
-	gcpClient.EXPECT().GetDNSZone(gomock.Any(), permissionsProject, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
 	gcpClient.EXPECT().GetDNSZone(gomock.Any(), invalidProjectName, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
 	gcpClient.EXPECT().GetDNSZone(gomock.Any(), validProjectName, invalidBaseDomain, true).Return(nil, fmt.Errorf("baseDomain: Not found: \"%s\"", invalidBaseDomain)).AnyTimes()
-
-	gcpClient.EXPECT().ValidateServiceAccountHasPermissions(gomock.Any(), permissionsProject, []string{CreateGCPFirewallPermission}).Return(false, nil).AnyTimes()
-	gcpClient.EXPECT().ValidateServiceAccountHasPermissions(gomock.Any(), validProjectName, []string{CreateGCPFirewallPermission}).Return(true, nil).AnyTimes()
-	gcpClient.EXPECT().ValidateServiceAccountHasPermissions(gomock.Any(), invalidProjectName, []string{CreateGCPFirewallPermission}).Return(false, fmt.Errorf("failed to get project permissions")).AnyTimes()
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()

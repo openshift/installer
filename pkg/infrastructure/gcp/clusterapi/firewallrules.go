@@ -206,11 +206,7 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	if in.InstallConfig.Config.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.GCP.NetworkProjectID
 	}
-	createFwRules, err := gcpconfig.HasPermissions(ctx, projectID, []string{gcpconfig.CreateGCPFirewallPermission}, in.InstallConfig.Config.GCP.Endpoint)
-	if err != nil {
-		return fmt.Errorf("failed to create cluster firewall rules: %w", err)
-	}
-	if !createFwRules {
+	if in.InstallConfig.Config.GCP.FirewallRulesManagement == gcptypes.UnmanagedFirewallRules {
 		return nil
 	}
 
@@ -298,11 +294,7 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 	if in.InstallConfig.Config.Platform.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.Platform.GCP.NetworkProjectID
 	}
-	createFwRules, err := gcpconfig.HasPermissions(ctx, projectID, []string{gcpconfig.CreateGCPFirewallPermission}, in.InstallConfig.Config.GCP.Endpoint)
-	if err != nil {
-		return fmt.Errorf("failed to create bootstrap firewall rules: %w", err)
-	}
-	if !createFwRules {
+	if in.InstallConfig.Config.GCP.FirewallRulesManagement == gcptypes.UnmanagedFirewallRules {
 		return nil
 	}
 
