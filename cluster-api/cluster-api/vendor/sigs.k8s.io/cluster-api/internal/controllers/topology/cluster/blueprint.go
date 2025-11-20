@@ -22,7 +22,7 @@ import (
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/exp/topology/scope"
 )
 
@@ -39,21 +39,21 @@ func (r *Reconciler) getBlueprint(ctx context.Context, cluster *clusterv1.Cluste
 
 	var err error
 	// Get ClusterClass.spec.infrastructure.
-	blueprint.InfrastructureClusterTemplate, err = r.getReference(ctx, blueprint.ClusterClass.Spec.Infrastructure.Ref)
+	blueprint.InfrastructureClusterTemplate, err = r.getReference(ctx, blueprint.ClusterClass.Spec.Infrastructure.TemplateRef.ToObjectReference(clusterClass.Namespace))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get infrastructure cluster template for ClusterClass %s", klog.KObj(blueprint.ClusterClass))
 	}
 
 	// Get ClusterClass.spec.controlPlane.
 	blueprint.ControlPlane = &scope.ControlPlaneBlueprint{}
-	blueprint.ControlPlane.Template, err = r.getReference(ctx, blueprint.ClusterClass.Spec.ControlPlane.Ref)
+	blueprint.ControlPlane.Template, err = r.getReference(ctx, blueprint.ClusterClass.Spec.ControlPlane.TemplateRef.ToObjectReference(clusterClass.Namespace))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get control plane template for ClusterClass %s", klog.KObj(blueprint.ClusterClass))
 	}
 
 	// If the clusterClass mandates the controlPlane has infrastructureMachines, read it.
 	if blueprint.HasControlPlaneInfrastructureMachine() {
-		blueprint.ControlPlane.InfrastructureMachineTemplate, err = r.getReference(ctx, blueprint.ClusterClass.Spec.ControlPlane.MachineInfrastructure.Ref)
+		blueprint.ControlPlane.InfrastructureMachineTemplate, err = r.getReference(ctx, blueprint.ClusterClass.Spec.ControlPlane.MachineInfrastructure.TemplateRef.ToObjectReference(clusterClass.Namespace))
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get control plane's machine template for ClusterClass %s", klog.KObj(blueprint.ClusterClass))
 		}
@@ -61,7 +61,7 @@ func (r *Reconciler) getBlueprint(ctx context.Context, cluster *clusterv1.Cluste
 
 	// If the clusterClass defines a valid MachineHealthCheck (including a defined MachineInfrastructure) set the blueprint MachineHealthCheck.
 	if blueprint.HasControlPlaneMachineHealthCheck() {
-		blueprint.ControlPlane.MachineHealthCheck = blueprint.ClusterClass.Spec.ControlPlane.MachineHealthCheck
+		blueprint.ControlPlane.HealthCheck = blueprint.ClusterClass.Spec.ControlPlane.HealthCheck
 	}
 
 	// Loop over the machine deployments classes in ClusterClass
@@ -72,24 +72,21 @@ func (r *Reconciler) getBlueprint(ctx context.Context, cluster *clusterv1.Cluste
 		// Make sure to copy the metadata from the blueprint, which is later layered
 		// with the additional metadata defined in the Cluster's topology section
 		// for the MachineDeployment that is created or updated.
-		machineDeploymentClass.Template.Metadata.DeepCopyInto(&machineDeploymentBlueprint.Metadata)
+		machineDeploymentClass.Metadata.DeepCopyInto(&machineDeploymentBlueprint.Metadata)
 
 		// Get the infrastructure machine template.
-		machineDeploymentBlueprint.InfrastructureMachineTemplate, err = r.getReference(ctx, machineDeploymentClass.Template.Infrastructure.Ref)
+		machineDeploymentBlueprint.InfrastructureMachineTemplate, err = r.getReference(ctx, machineDeploymentClass.Infrastructure.TemplateRef.ToObjectReference(clusterClass.Namespace))
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get infrastructure machine template for ClusterClass %s, MachineDeployment class %q", klog.KObj(blueprint.ClusterClass), machineDeploymentClass.Class)
 		}
 
 		// Get the bootstrap config template.
-		machineDeploymentBlueprint.BootstrapTemplate, err = r.getReference(ctx, machineDeploymentClass.Template.Bootstrap.Ref)
+		machineDeploymentBlueprint.BootstrapTemplate, err = r.getReference(ctx, machineDeploymentClass.Bootstrap.TemplateRef.ToObjectReference(clusterClass.Namespace))
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get bootstrap config template for ClusterClass %s, MachineDeployment class %q", klog.KObj(blueprint.ClusterClass), machineDeploymentClass.Class)
 		}
 
-		// If the machineDeploymentClass defines a MachineHealthCheck add it to the blueprint.
-		if machineDeploymentClass.MachineHealthCheck != nil {
-			machineDeploymentBlueprint.MachineHealthCheck = machineDeploymentClass.MachineHealthCheck
-		}
+		machineDeploymentBlueprint.HealthCheck = machineDeploymentClass.HealthCheck
 		blueprint.MachineDeployments[machineDeploymentClass.Class] = machineDeploymentBlueprint
 	}
 
@@ -101,16 +98,16 @@ func (r *Reconciler) getBlueprint(ctx context.Context, cluster *clusterv1.Cluste
 		// Make sure to copy the metadata from the blueprint, which is later layered
 		// with the additional metadata defined in the Cluster's topology section
 		// for the MachinePool that is created or updated.
-		machinePoolClass.Template.Metadata.DeepCopyInto(&machinePoolBlueprint.Metadata)
+		machinePoolClass.Metadata.DeepCopyInto(&machinePoolBlueprint.Metadata)
 
 		// Get the InfrastructureMachinePoolTemplate.
-		machinePoolBlueprint.InfrastructureMachinePoolTemplate, err = r.getReference(ctx, machinePoolClass.Template.Infrastructure.Ref)
+		machinePoolBlueprint.InfrastructureMachinePoolTemplate, err = r.getReference(ctx, machinePoolClass.Infrastructure.TemplateRef.ToObjectReference(clusterClass.Namespace))
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get InfrastructureMachinePoolTemplate for ClusterClass %s, MachinePool class %q", klog.KObj(blueprint.ClusterClass), machinePoolClass.Class)
 		}
 
 		// Get the bootstrap config template.
-		machinePoolBlueprint.BootstrapTemplate, err = r.getReference(ctx, machinePoolClass.Template.Bootstrap.Ref)
+		machinePoolBlueprint.BootstrapTemplate, err = r.getReference(ctx, machinePoolClass.Bootstrap.TemplateRef.ToObjectReference(clusterClass.Namespace))
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get bootstrap config for ClusterClass %s, MachinePool class %q", klog.KObj(blueprint.ClusterClass), machinePoolClass.Class)
 		}

@@ -19,21 +19,24 @@ package variables
 
 import (
 	"encoding/json"
+	"maps"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
-	runtimehooksv1 "sigs.k8s.io/cluster-api/exp/runtime/hooks/api/v1alpha1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	runtimehooksv1 "sigs.k8s.io/cluster-api/api/runtime/hooks/v1alpha1"
 	"sigs.k8s.io/cluster-api/internal/contract"
+	"sigs.k8s.io/cluster-api/util/conversion"
 )
 
 // Global returns variables that apply to all the templates, including user provided variables
 // and builtin variables for the Cluster object.
-func Global(clusterTopology *clusterv1.Topology, cluster *clusterv1.Cluster, patchVariableDefinitions map[string]bool) ([]runtimehooksv1.Variable, error) {
+func Global(clusterTopology clusterv1.Topology, cluster *clusterv1.Cluster, patchVariableDefinitions map[string]bool) ([]runtimehooksv1.Variable, error) {
 	variables := []runtimehooksv1.Variable{}
 
 	// Add user defined variables from Cluster.spec.topology.variables.
@@ -55,25 +58,39 @@ func Global(clusterTopology *clusterv1.Topology, cluster *clusterv1.Cluster, pat
 			Namespace: cluster.Namespace,
 			UID:       cluster.UID,
 			Topology: &runtimehooksv1.ClusterTopologyBuiltins{
-				Version: cluster.Spec.Topology.Version,
-				Class:   cluster.GetClassKey().Name,
+				Version:        cluster.Spec.Topology.Version,
+				Class:          cluster.GetClassKey().Name,
+				ClassNamespace: cluster.GetClassKey().Namespace,
+				ClassRef: runtimehooksv1.ClusterTopologyClusterClassRefBuiltins{
+					Name:      cluster.GetClassKey().Name,
+					Namespace: cluster.GetClassKey().Namespace,
+				},
 			},
 		},
 	}
-	if cluster.Spec.ClusterNetwork != nil {
-		clusterNetworkIPFamily, _ := cluster.GetIPFamily() //nolint:staticcheck // We tolerate this until removal. See https://github.com/kubernetes-sigs/cluster-api/issues/7521.
-		builtin.Cluster.Network = &runtimehooksv1.ClusterNetworkBuiltins{
-			IPFamily: ipFamilyToString(clusterNetworkIPFamily),
+	if cluster.Labels != nil || cluster.Annotations != nil {
+		builtin.Cluster.Metadata = &clusterv1beta1.ObjectMeta{
+			Labels:      cluster.Labels,
+			Annotations: cleanupAnnotations(cluster.Annotations),
 		}
-		if cluster.Spec.ClusterNetwork.ServiceDomain != "" {
-			builtin.Cluster.Network.ServiceDomain = &cluster.Spec.ClusterNetwork.ServiceDomain
+	}
+	if cluster.Spec.ClusterNetwork.ServiceDomain != "" {
+		if builtin.Cluster.Network == nil {
+			builtin.Cluster.Network = &runtimehooksv1.ClusterNetworkBuiltins{}
 		}
-		if cluster.Spec.ClusterNetwork.Services != nil && cluster.Spec.ClusterNetwork.Services.CIDRBlocks != nil {
-			builtin.Cluster.Network.Services = cluster.Spec.ClusterNetwork.Services.CIDRBlocks
+		builtin.Cluster.Network.ServiceDomain = &cluster.Spec.ClusterNetwork.ServiceDomain
+	}
+	if cluster.Spec.ClusterNetwork.Services.CIDRBlocks != nil {
+		if builtin.Cluster.Network == nil {
+			builtin.Cluster.Network = &runtimehooksv1.ClusterNetworkBuiltins{}
 		}
-		if cluster.Spec.ClusterNetwork.Pods != nil && cluster.Spec.ClusterNetwork.Pods.CIDRBlocks != nil {
-			builtin.Cluster.Network.Pods = cluster.Spec.ClusterNetwork.Pods.CIDRBlocks
+		builtin.Cluster.Network.Services = cluster.Spec.ClusterNetwork.Services.CIDRBlocks
+	}
+	if cluster.Spec.ClusterNetwork.Pods.CIDRBlocks != nil {
+		if builtin.Cluster.Network == nil {
+			builtin.Cluster.Network = &runtimehooksv1.ClusterNetworkBuiltins{}
 		}
+		builtin.Cluster.Network.Pods = cluster.Spec.ClusterNetwork.Pods.CIDRBlocks
 	}
 
 	// Add builtin variables derived from the cluster object.
@@ -91,12 +108,10 @@ func ControlPlane(cpTopology *clusterv1.ControlPlaneTopology, cp, cpInfrastructu
 	variables := []runtimehooksv1.Variable{}
 
 	// Add variables overrides for the ControlPlane.
-	if cpTopology.Variables != nil {
-		for _, variable := range cpTopology.Variables.Overrides {
-			// Add the variable if it has a definition from this patch in the ClusterClass.
-			if _, ok := patchVariableDefinitions[variable.Name]; ok {
-				variables = append(variables, runtimehooksv1.Variable{Name: variable.Name, Value: variable.Value})
-			}
+	for _, variable := range cpTopology.Variables.Overrides {
+		// Add the variable if it has a definition from this patch in the ClusterClass.
+		if _, ok := patchVariableDefinitions[variable.Name]; ok {
+			variables = append(variables, runtimehooksv1.Variable{Name: variable.Name, Value: variable.Value})
 		}
 	}
 
@@ -119,8 +134,8 @@ func ControlPlane(cpTopology *clusterv1.ControlPlaneTopology, cp, cpInfrastructu
 		builtin.ControlPlane.Replicas = replicas
 	}
 	if cp.GetLabels() != nil || cp.GetAnnotations() != nil {
-		builtin.ControlPlane.Metadata = &clusterv1.ObjectMeta{
-			Annotations: cp.GetAnnotations(),
+		builtin.ControlPlane.Metadata = &clusterv1beta1.ObjectMeta{
+			Annotations: cleanupAnnotations(cp.GetAnnotations()),
 			Labels:      cp.GetLabels(),
 		}
 	}
@@ -153,19 +168,17 @@ func MachineDeployment(mdTopology *clusterv1.MachineDeploymentTopology, md *clus
 	variables := []runtimehooksv1.Variable{}
 
 	// Add variables overrides for the MachineDeployment.
-	if mdTopology.Variables != nil {
-		for _, variable := range mdTopology.Variables.Overrides {
-			// Add the variable if it has a definition from this patch in the ClusterClass.
-			if _, ok := patchVariableDefinitions[variable.Name]; ok {
-				variables = append(variables, runtimehooksv1.Variable{Name: variable.Name, Value: variable.Value})
-			}
+	for _, variable := range mdTopology.Variables.Overrides {
+		// Add the variable if it has a definition from this patch in the ClusterClass.
+		if _, ok := patchVariableDefinitions[variable.Name]; ok {
+			variables = append(variables, runtimehooksv1.Variable{Name: variable.Name, Value: variable.Value})
 		}
 	}
 
 	// Construct builtin variable.
 	builtin := runtimehooksv1.Builtins{
 		MachineDeployment: &runtimehooksv1.MachineDeploymentBuiltins{
-			Version:      *md.Spec.Template.Spec.Version,
+			Version:      md.Spec.Template.Spec.Version,
 			Class:        mdTopology.Class,
 			Name:         md.Name,
 			TopologyName: mdTopology.Name,
@@ -175,8 +188,8 @@ func MachineDeployment(mdTopology *clusterv1.MachineDeploymentTopology, md *clus
 		builtin.MachineDeployment.Replicas = ptr.To[int64](int64(*md.Spec.Replicas))
 	}
 	if md.Labels != nil || md.Annotations != nil {
-		builtin.MachineDeployment.Metadata = &clusterv1.ObjectMeta{
-			Annotations: md.Annotations,
+		builtin.MachineDeployment.Metadata = &clusterv1beta1.ObjectMeta{
+			Annotations: cleanupAnnotations(md.Annotations),
 			Labels:      md.Labels,
 		}
 	}
@@ -205,23 +218,21 @@ func MachineDeployment(mdTopology *clusterv1.MachineDeploymentTopology, md *clus
 }
 
 // MachinePool returns variables that apply to templates belonging to a MachinePool.
-func MachinePool(mpTopology *clusterv1.MachinePoolTopology, mp *expv1.MachinePool, mpBootstrapObject, mpInfrastructureMachinePool *unstructured.Unstructured, patchVariableDefinitions map[string]bool) ([]runtimehooksv1.Variable, error) {
+func MachinePool(mpTopology *clusterv1.MachinePoolTopology, mp *clusterv1.MachinePool, mpBootstrapObject, mpInfrastructureMachinePool *unstructured.Unstructured, patchVariableDefinitions map[string]bool) ([]runtimehooksv1.Variable, error) {
 	variables := []runtimehooksv1.Variable{}
 
 	// Add variables overrides for the MachinePool.
-	if mpTopology.Variables != nil {
-		for _, variable := range mpTopology.Variables.Overrides {
-			// Add the variable if it has a definition from this patch in the ClusterClass.
-			if _, ok := patchVariableDefinitions[variable.Name]; ok {
-				variables = append(variables, runtimehooksv1.Variable{Name: variable.Name, Value: variable.Value})
-			}
+	for _, variable := range mpTopology.Variables.Overrides {
+		// Add the variable if it has a definition from this patch in the ClusterClass.
+		if _, ok := patchVariableDefinitions[variable.Name]; ok {
+			variables = append(variables, runtimehooksv1.Variable{Name: variable.Name, Value: variable.Value})
 		}
 	}
 
 	// Construct builtin variable.
 	builtin := runtimehooksv1.Builtins{
 		MachinePool: &runtimehooksv1.MachinePoolBuiltins{
-			Version:      *mp.Spec.Template.Spec.Version,
+			Version:      mp.Spec.Template.Spec.Version,
 			Class:        mpTopology.Class,
 			Name:         mp.Name,
 			TopologyName: mpTopology.Name,
@@ -231,8 +242,8 @@ func MachinePool(mpTopology *clusterv1.MachinePoolTopology, mp *expv1.MachinePoo
 		builtin.MachinePool.Replicas = ptr.To[int64](int64(*mp.Spec.Replicas))
 	}
 	if mp.Labels != nil || mp.Annotations != nil {
-		builtin.MachinePool.Metadata = &clusterv1.ObjectMeta{
-			Annotations: mp.Annotations,
+		builtin.MachinePool.Metadata = &clusterv1beta1.ObjectMeta{
+			Annotations: cleanupAnnotations(mp.Annotations),
 			Labels:      mp.Labels,
 		}
 	}
@@ -273,15 +284,14 @@ func toVariable(name string, value interface{}) (*runtimehooksv1.Variable, error
 	}, nil
 }
 
-func ipFamilyToString(ipFamily clusterv1.ClusterIPFamily) string {
-	switch ipFamily {
-	case clusterv1.DualStackIPFamily:
-		return "DualStack"
-	case clusterv1.IPv4IPFamily:
-		return "IPv4"
-	case clusterv1.IPv6IPFamily:
-		return "IPv6"
-	default:
-		return "Invalid"
+func cleanupAnnotations(annotations map[string]string) map[string]string {
+	if annotations == nil {
+		return nil
 	}
+
+	// Optimize size of GeneratePatchesRequest and ValidateTopologyRequest by not sending the last-applied annotation.
+	annotations = maps.Clone(annotations)
+	delete(annotations, corev1.LastAppliedConfigAnnotation)
+	delete(annotations, conversion.DataAnnotation)
+	return annotations
 }

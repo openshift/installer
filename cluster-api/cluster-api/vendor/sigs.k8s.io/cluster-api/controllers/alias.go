@@ -21,14 +21,19 @@ import (
 	"regexp"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
 	clustercontroller "sigs.k8s.io/cluster-api/internal/controllers/cluster"
 	clusterclasscontroller "sigs.k8s.io/cluster-api/internal/controllers/clusterclass"
+	"sigs.k8s.io/cluster-api/internal/controllers/clusterresourceset"
+	"sigs.k8s.io/cluster-api/internal/controllers/clusterresourcesetbinding"
 	machinecontroller "sigs.k8s.io/cluster-api/internal/controllers/machine"
 	machinedeploymentcontroller "sigs.k8s.io/cluster-api/internal/controllers/machinedeployment"
 	machinehealthcheckcontroller "sigs.k8s.io/cluster-api/internal/controllers/machinehealthcheck"
@@ -74,17 +79,19 @@ type MachineReconciler struct {
 
 	RemoteConditionsGracePeriod time.Duration
 
-	AdditionalSyncMachineLabels []*regexp.Regexp
+	AdditionalSyncMachineLabels      []*regexp.Regexp
+	AdditionalSyncMachineAnnotations []*regexp.Regexp
 }
 
 func (r *MachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	return (&machinecontroller.Reconciler{
-		Client:                      r.Client,
-		APIReader:                   r.APIReader,
-		ClusterCache:                r.ClusterCache,
-		WatchFilterValue:            r.WatchFilterValue,
-		RemoteConditionsGracePeriod: r.RemoteConditionsGracePeriod,
-		AdditionalSyncMachineLabels: r.AdditionalSyncMachineLabels,
+		Client:                           r.Client,
+		APIReader:                        r.APIReader,
+		ClusterCache:                     r.ClusterCache,
+		WatchFilterValue:                 r.WatchFilterValue,
+		RemoteConditionsGracePeriod:      r.RemoteConditionsGracePeriod,
+		AdditionalSyncMachineLabels:      r.AdditionalSyncMachineLabels,
+		AdditionalSyncMachineAnnotations: r.AdditionalSyncMachineAnnotations,
 	}).SetupWithManager(ctx, mgr, options)
 }
 
@@ -94,20 +101,19 @@ type MachineSetReconciler struct {
 	APIReader    client.Reader
 	ClusterCache clustercache.ClusterCache
 
+	PreflightChecks sets.Set[clusterv1.MachineSetPreflightCheck]
+
 	// WatchFilterValue is the label value used to filter events prior to reconciliation.
 	WatchFilterValue string
-
-	// Deprecated: DeprecatedInfraMachineNaming. Name the InfraStructureMachines after the InfraMachineTemplate.
-	DeprecatedInfraMachineNaming bool
 }
 
 func (r *MachineSetReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	return (&machinesetcontroller.Reconciler{
-		Client:                       r.Client,
-		APIReader:                    r.APIReader,
-		ClusterCache:                 r.ClusterCache,
-		WatchFilterValue:             r.WatchFilterValue,
-		DeprecatedInfraMachineNaming: r.DeprecatedInfraMachineNaming,
+		Client:           r.Client,
+		APIReader:        r.APIReader,
+		ClusterCache:     r.ClusterCache,
+		PreflightChecks:  r.PreflightChecks,
+		WatchFilterValue: r.WatchFilterValue,
 	}).SetupWithManager(ctx, mgr, options)
 }
 
@@ -240,4 +246,36 @@ func (r *ClusterClassReconciler) SetupWithManager(ctx context.Context, mgr ctrl.
 // the Cluster topology controller (because that requires a reconciled ClusterClass).
 func (r *ClusterClassReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	return r.internalReconciler.Reconcile(ctx, req)
+}
+
+// ClusterResourceSetReconciler reconciles a ClusterResourceSet object.
+type ClusterResourceSetReconciler struct {
+	Client       client.Client
+	ClusterCache clustercache.ClusterCache
+
+	// WatchFilterValue is the label value used to filter events prior to reconciliation.
+	WatchFilterValue string
+}
+
+func (r *ClusterResourceSetReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options, partialSecretCache cache.Cache) error {
+	return (&clusterresourceset.Reconciler{
+		Client:           r.Client,
+		ClusterCache:     r.ClusterCache,
+		WatchFilterValue: r.WatchFilterValue,
+	}).SetupWithManager(ctx, mgr, options, partialSecretCache)
+}
+
+// ClusterResourceSetBindingReconciler reconciles a ClusterResourceSetBinding object.
+type ClusterResourceSetBindingReconciler struct {
+	Client client.Client
+
+	// WatchFilterValue is the label value used to filter events prior to reconciliation.
+	WatchFilterValue string
+}
+
+func (r *ClusterResourceSetBindingReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+	return (&clusterresourcesetbinding.Reconciler{
+		Client:           r.Client,
+		WatchFilterValue: r.WatchFilterValue,
+	}).SetupWithManager(ctx, mgr, options)
 }

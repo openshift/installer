@@ -36,8 +36,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/feature"
+	topologynames "sigs.k8s.io/cluster-api/internal/topology/names"
 	"sigs.k8s.io/cluster-api/util/version"
 )
 
@@ -53,8 +54,8 @@ func (webhook *MachineDeployment) SetupWebhookWithManager(mgr ctrl.Manager) erro
 		Complete()
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta1-machinedeployment,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinedeployments,versions=v1beta1,name=validation.machinedeployment.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
-// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta1-machinedeployment,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinedeployments,versions=v1beta1,name=default.machinedeployment.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta2-machinedeployment,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinedeployments,versions=v1beta2,name=validation.machinedeployment.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta2-machinedeployment,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinedeployments,versions=v1beta2,name=default.machinedeployment.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
 // MachineDeployment implements a validation and defaulting webhook for MachineDeployment.
 type MachineDeployment struct {
@@ -99,28 +100,12 @@ func (webhook *MachineDeployment) Default(ctx context.Context, obj runtime.Objec
 	}
 	m.Spec.Replicas = ptr.To[int32](replicas)
 
-	if m.Spec.MinReadySeconds == nil {
-		m.Spec.MinReadySeconds = ptr.To[int32](0)
-	}
-
-	if m.Spec.RevisionHistoryLimit == nil {
-		m.Spec.RevisionHistoryLimit = ptr.To[int32](1)
-	}
-
-	if m.Spec.ProgressDeadlineSeconds == nil {
-		m.Spec.ProgressDeadlineSeconds = ptr.To[int32](600)
-	}
-
 	if m.Spec.Selector.MatchLabels == nil {
 		m.Spec.Selector.MatchLabels = make(map[string]string)
 	}
 
-	if m.Spec.Strategy == nil {
-		m.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{}
-	}
-
-	if m.Spec.Strategy.Type == "" {
-		m.Spec.Strategy.Type = clusterv1.RollingUpdateMachineDeploymentStrategyType
+	if m.Spec.Rollout.Strategy.Type == "" {
+		m.Spec.Rollout.Strategy.Type = clusterv1.RollingUpdateMachineDeploymentStrategyType
 	}
 
 	if m.Spec.Template.Labels == nil {
@@ -128,17 +113,12 @@ func (webhook *MachineDeployment) Default(ctx context.Context, obj runtime.Objec
 	}
 
 	// Default RollingUpdate strategy only if strategy type is RollingUpdate.
-	if m.Spec.Strategy.Type == clusterv1.RollingUpdateMachineDeploymentStrategyType {
-		if m.Spec.Strategy.RollingUpdate == nil {
-			m.Spec.Strategy.RollingUpdate = &clusterv1.MachineRollingUpdateDeployment{}
+	if m.Spec.Rollout.Strategy.Type == clusterv1.RollingUpdateMachineDeploymentStrategyType {
+		if m.Spec.Rollout.Strategy.RollingUpdate.MaxSurge == nil {
+			m.Spec.Rollout.Strategy.RollingUpdate.MaxSurge = ptr.To(intstr.FromInt32(1))
 		}
-		if m.Spec.Strategy.RollingUpdate.MaxSurge == nil {
-			ios1 := intstr.FromInt(1)
-			m.Spec.Strategy.RollingUpdate.MaxSurge = &ios1
-		}
-		if m.Spec.Strategy.RollingUpdate.MaxUnavailable == nil {
-			ios0 := intstr.FromInt(0)
-			m.Spec.Strategy.RollingUpdate.MaxUnavailable = &ios0
+		if m.Spec.Rollout.Strategy.RollingUpdate.MaxUnavailable == nil {
+			m.Spec.Rollout.Strategy.RollingUpdate.MaxUnavailable = ptr.To(intstr.FromInt32(0))
 		}
 	}
 
@@ -153,18 +133,9 @@ func (webhook *MachineDeployment) Default(ctx context.Context, obj runtime.Objec
 	m.Spec.Template.Labels[clusterv1.ClusterNameLabel] = m.Spec.ClusterName
 
 	// tolerate version strings without a "v" prefix: prepend it if it's not there
-	if m.Spec.Template.Spec.Version != nil && !strings.HasPrefix(*m.Spec.Template.Spec.Version, "v") {
-		normalizedVersion := "v" + *m.Spec.Template.Spec.Version
-		m.Spec.Template.Spec.Version = &normalizedVersion
-	}
-
-	// Make sure the namespace of the referent is populated
-	if m.Spec.Template.Spec.Bootstrap.ConfigRef != nil && m.Spec.Template.Spec.Bootstrap.ConfigRef.Namespace == "" {
-		m.Spec.Template.Spec.Bootstrap.ConfigRef.Namespace = m.Namespace
-	}
-
-	if m.Spec.Template.Spec.InfrastructureRef.Namespace == "" {
-		m.Spec.Template.Spec.InfrastructureRef.Namespace = m.Namespace
+	if m.Spec.Template.Spec.Version != "" && !strings.HasPrefix(m.Spec.Template.Spec.Version, "v") {
+		normalizedVersion := "v" + m.Spec.Template.Spec.Version
+		m.Spec.Template.Spec.Version = normalizedVersion
 	}
 
 	return nil
@@ -216,6 +187,17 @@ func (webhook *MachineDeployment) validate(oldMD, newMD *clusterv1.MachineDeploy
 		}
 	}
 	specPath := field.NewPath("spec")
+
+	if !newMD.Spec.Template.Spec.Bootstrap.ConfigRef.IsDefined() && newMD.Spec.Template.Spec.Bootstrap.DataSecretName == nil {
+		allErrs = append(
+			allErrs,
+			field.Required(
+				specPath.Child("template", "spec", "bootstrap"),
+				"expected either spec.template.spec.bootstrap.dataSecretName or spec.template.spec.bootstrap.configRef to be populated",
+			),
+		)
+	}
+
 	selector, err := metav1.LabelSelectorAsSelector(&newMD.Spec.Selector)
 	if err != nil {
 		allErrs = append(
@@ -250,64 +232,119 @@ func (webhook *MachineDeployment) validate(oldMD, newMD *clusterv1.MachineDeploy
 		)
 	}
 
-	if newMD.Spec.Strategy != nil && newMD.Spec.Strategy.RollingUpdate != nil {
-		total := 1
-		if newMD.Spec.Replicas != nil {
-			total = int(*newMD.Spec.Replicas)
-		}
+	if newMD.Spec.ClusterName != newMD.Spec.Template.Spec.ClusterName {
+		allErrs = append(
+			allErrs,
+			field.Invalid(
+				specPath.Child("clusterName"),
+				newMD.Spec.ClusterName,
+				"spec.clusterName and spec.template.spec.clusterName must be set to the same value",
+			),
+		)
+	}
 
-		if newMD.Spec.Strategy.RollingUpdate.MaxSurge != nil {
-			if _, err := intstr.GetScaledValueFromIntOrPercent(newMD.Spec.Strategy.RollingUpdate.MaxSurge, total, true); err != nil {
-				allErrs = append(
-					allErrs,
-					field.Invalid(specPath.Child("strategy", "rollingUpdate", "maxSurge"),
-						newMD.Spec.Strategy.RollingUpdate.MaxSurge, fmt.Sprintf("must be either an int or a percentage: %v", err.Error())),
-				)
-			}
-		}
+	allErrs = append(allErrs, validateRolloutStrategy(specPath.Child("rollout", "strategy"), newMD.Spec.Rollout.Strategy.RollingUpdate.MaxUnavailable, newMD.Spec.Rollout.Strategy.RollingUpdate.MaxSurge)...)
+	allErrs = append(allErrs, validateRemediationMaxInFlight(specPath.Child("remediation"), newMD.Spec.Remediation.MaxInFlight)...)
 
-		if newMD.Spec.Strategy.RollingUpdate.MaxUnavailable != nil {
-			if _, err := intstr.GetScaledValueFromIntOrPercent(newMD.Spec.Strategy.RollingUpdate.MaxUnavailable, total, true); err != nil {
-				allErrs = append(
-					allErrs,
-					field.Invalid(specPath.Child("strategy", "rollingUpdate", "maxUnavailable"),
-						newMD.Spec.Strategy.RollingUpdate.MaxUnavailable, fmt.Sprintf("must be either an int or a percentage: %v", err.Error())),
-				)
-			}
+	if newMD.Spec.Template.Spec.Version != "" {
+		if !version.KubeSemver.MatchString(newMD.Spec.Template.Spec.Version) {
+			allErrs = append(allErrs, field.Invalid(specPath.Child("template", "spec", "version"), newMD.Spec.Template.Spec.Version, "must be a valid semantic version"))
 		}
 	}
 
-	if newMD.Spec.Strategy != nil && newMD.Spec.Strategy.Remediation != nil {
-		total := 1
-		if newMD.Spec.Replicas != nil {
-			total = int(*newMD.Spec.Replicas)
-		}
-
-		if newMD.Spec.Strategy.Remediation.MaxInFlight != nil {
-			if _, err := intstr.GetScaledValueFromIntOrPercent(newMD.Spec.Strategy.Remediation.MaxInFlight, total, true); err != nil {
-				allErrs = append(
-					allErrs,
-					field.Invalid(specPath.Child("strategy", "remediation", "maxInFlight"),
-						newMD.Spec.Strategy.Remediation.MaxInFlight.String(), fmt.Sprintf("must be either an int or a percentage: %v", err.Error())),
-				)
-			}
-		}
-	}
-
-	if newMD.Spec.Template.Spec.Version != nil {
-		if !version.KubeSemver.MatchString(*newMD.Spec.Template.Spec.Version) {
-			allErrs = append(allErrs, field.Invalid(specPath.Child("template", "spec", "version"), *newMD.Spec.Template.Spec.Version, "must be a valid semantic version"))
-		}
-	}
+	allErrs = append(allErrs, validateMDMachineNaming(newMD.Spec.MachineNaming, specPath.Child("machineNaming"))...)
 
 	// Validate the metadata of the template.
-	allErrs = append(allErrs, newMD.Spec.Template.ObjectMeta.Validate(specPath.Child("template", "metadata"))...)
+	allErrs = append(allErrs, newMD.Spec.Template.Validate(specPath.Child("template", "metadata"))...)
 
 	if len(allErrs) == 0 {
 		return nil
 	}
 
 	return apierrors.NewInvalid(clusterv1.GroupVersion.WithKind("MachineDeployment").GroupKind(), newMD.Name, allErrs)
+}
+
+func validateRolloutStrategy(fldPath *field.Path, maxUnavailable, maxSurge *intstr.IntOrString) field.ErrorList {
+	var allErrs field.ErrorList
+	if maxUnavailable != nil {
+		// Note: total and roundUp parameters don't matter for validation.
+		if _, err := intstr.GetScaledValueFromIntOrPercent(maxUnavailable, 0, false); err != nil {
+			allErrs = append(
+				allErrs,
+				field.Invalid(fldPath.Child("rollingUpdate", "maxUnavailable"),
+					maxUnavailable.String(), fmt.Sprintf("must be either an int or a percentage: %v", err.Error())),
+			)
+		}
+	}
+	if maxSurge != nil {
+		// Note: total and roundUp parameters don't matter for validation.
+		if _, err := intstr.GetScaledValueFromIntOrPercent(maxSurge, 0, false); err != nil {
+			allErrs = append(
+				allErrs,
+				field.Invalid(fldPath.Child("rollingUpdate", "maxSurge"),
+					maxSurge.String(), fmt.Sprintf("must be either an int or a percentage: %v", err.Error())),
+			)
+		}
+	}
+	if maxUnavailable != nil && maxSurge != nil &&
+		maxUnavailable.Type == intstr.Int && maxSurge.Type == intstr.Int &&
+		maxUnavailable.IntVal == 0 && maxSurge.IntVal == 0 {
+		allErrs = append(
+			allErrs,
+			field.Invalid(fldPath.Child("rollingUpdate"),
+				maxSurge.String(), "maxUnavailable and maxSurge cannot both be 0"),
+		)
+	}
+	return allErrs
+}
+
+func validateRemediationMaxInFlight(fldPath *field.Path, maxInFlight *intstr.IntOrString) field.ErrorList {
+	var allErrs field.ErrorList
+	if maxInFlight != nil {
+		// Note: total and roundUp parameters don't matter for validation.
+		if _, err := intstr.GetScaledValueFromIntOrPercent(maxInFlight, 0, false); err != nil {
+			allErrs = append(
+				allErrs,
+				field.Invalid(fldPath.Child("maxInFlight"), maxInFlight.String(), fmt.Sprintf("must be either an int or a percentage: %v", err.Error())),
+			)
+		}
+	}
+	return allErrs
+}
+
+func validateMDMachineNaming(machineNaming clusterv1.MachineNamingSpec, pathPrefix *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if machineNaming.Template != "" {
+		if !strings.Contains(machineNaming.Template, "{{ .random }}") {
+			allErrs = append(allErrs,
+				field.Invalid(
+					pathPrefix.Child("template"),
+					machineNaming.Template,
+					"invalid template, {{ .random }} is missing",
+				))
+		}
+		name, err := topologynames.MachineSetMachineNameGenerator(machineNaming.Template, "cluster", "machineset").GenerateName()
+		if err != nil {
+			allErrs = append(allErrs,
+				field.Invalid(
+					pathPrefix.Child("template"),
+					machineNaming.Template,
+					fmt.Sprintf("invalid template: %v", err),
+				))
+		} else {
+			for _, err := range validation.IsDNS1123Subdomain(name) {
+				allErrs = append(allErrs,
+					field.Invalid(
+						pathPrefix.Child("template"),
+						machineNaming.Template,
+						fmt.Sprintf("invalid template, generated names would not be valid Kubernetes object names: %v", err),
+					))
+			}
+		}
+	}
+
+	return allErrs
 }
 
 // calculateMachineDeploymentReplicas calculates the default value of the replicas field.

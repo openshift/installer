@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -36,8 +37,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/feature"
+	topologynames "sigs.k8s.io/cluster-api/internal/topology/names"
 	"sigs.k8s.io/cluster-api/util/labels/format"
 	"sigs.k8s.io/cluster-api/util/version"
 )
@@ -54,8 +56,8 @@ func (webhook *MachineSet) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta1-machineset,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinesets,versions=v1beta1,name=validation.machineset.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
-// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta1-machineset,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinesets,versions=v1beta1,name=default.machineset.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta2-machineset,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinesets,versions=v1beta2,name=validation.machineset.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta2-machineset,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinesets,versions=v1beta2,name=default.machineset.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
 // MachineSet implements a validation and defaulting webhook for MachineSet.
 type MachineSet struct {
@@ -101,11 +103,6 @@ func (webhook *MachineSet) Default(ctx context.Context, obj runtime.Object) erro
 	}
 	m.Spec.Replicas = ptr.To[int32](replicas)
 
-	if m.Spec.DeletePolicy == "" {
-		randomPolicy := string(clusterv1.RandomMachineSetDeletePolicy)
-		m.Spec.DeletePolicy = randomPolicy
-	}
-
 	if m.Spec.Selector.MatchLabels == nil {
 		m.Spec.Selector.MatchLabels = make(map[string]string)
 	}
@@ -120,18 +117,9 @@ func (webhook *MachineSet) Default(ctx context.Context, obj runtime.Object) erro
 		m.Spec.Template.Labels[clusterv1.MachineSetNameLabel] = format.MustFormatValue(m.Name)
 	}
 
-	if m.Spec.Template.Spec.Version != nil && !strings.HasPrefix(*m.Spec.Template.Spec.Version, "v") {
-		normalizedVersion := "v" + *m.Spec.Template.Spec.Version
-		m.Spec.Template.Spec.Version = &normalizedVersion
-	}
-
-	// Make sure the namespace of the referent is populated
-	if m.Spec.Template.Spec.Bootstrap.ConfigRef != nil && m.Spec.Template.Spec.Bootstrap.ConfigRef.Namespace == "" {
-		m.Spec.Template.Spec.Bootstrap.ConfigRef.Namespace = m.Namespace
-	}
-
-	if m.Spec.Template.Spec.InfrastructureRef.Namespace == "" {
-		m.Spec.Template.Spec.InfrastructureRef.Namespace = m.Namespace
+	if m.Spec.Template.Spec.Version != "" && !strings.HasPrefix(m.Spec.Template.Spec.Version, "v") {
+		normalizedVersion := "v" + m.Spec.Template.Spec.Version
+		m.Spec.Template.Spec.Version = normalizedVersion
 	}
 
 	return nil
@@ -169,6 +157,17 @@ func (webhook *MachineSet) ValidateDelete(_ context.Context, _ runtime.Object) (
 func (webhook *MachineSet) validate(oldMS, newMS *clusterv1.MachineSet) error {
 	var allErrs field.ErrorList
 	specPath := field.NewPath("spec")
+
+	if !newMS.Spec.Template.Spec.Bootstrap.ConfigRef.IsDefined() && newMS.Spec.Template.Spec.Bootstrap.DataSecretName == nil {
+		allErrs = append(
+			allErrs,
+			field.Required(
+				specPath.Child("template", "spec", "bootstrap"),
+				"expected either spec.template.spec.bootstrap.dataSecretName or spec.template.spec.bootstrap.configRef to be populated",
+			),
+		)
+	}
+
 	selector, err := metav1.LabelSelectorAsSelector(&newMS.Spec.Selector)
 	if err != nil {
 		allErrs = append(
@@ -184,7 +183,7 @@ func (webhook *MachineSet) validate(oldMS, newMS *clusterv1.MachineSet) error {
 			allErrs,
 			field.Invalid(
 				specPath.Child("template", "metadata", "labels"),
-				newMS.Spec.Template.ObjectMeta.Labels,
+				newMS.Spec.Template.Labels,
 				fmt.Sprintf("must match spec.selector %q", selector.String()),
 			),
 		)
@@ -206,27 +205,75 @@ func (webhook *MachineSet) validate(oldMS, newMS *clusterv1.MachineSet) error {
 		)
 	}
 
-	if newMS.Spec.Template.Spec.Version != nil {
-		if !version.KubeSemver.MatchString(*newMS.Spec.Template.Spec.Version) {
+	if newMS.Spec.ClusterName != newMS.Spec.Template.Spec.ClusterName {
+		allErrs = append(
+			allErrs,
+			field.Invalid(
+				specPath.Child("clusterName"),
+				newMS.Spec.ClusterName,
+				"spec.clusterName and spec.template.spec.clusterName must be set to the same value",
+			),
+		)
+	}
+
+	if newMS.Spec.Template.Spec.Version != "" {
+		if !version.KubeSemver.MatchString(newMS.Spec.Template.Spec.Version) {
 			allErrs = append(
 				allErrs,
 				field.Invalid(
 					specPath.Child("template", "spec", "version"),
-					*newMS.Spec.Template.Spec.Version,
+					newMS.Spec.Template.Spec.Version,
 					"must be a valid semantic version",
 				),
 			)
 		}
 	}
 
+	allErrs = append(allErrs, validateMSMachineNaming(newMS.Spec.MachineNaming, specPath.Child("machineNaming"))...)
+
 	// Validate the metadata of the template.
-	allErrs = append(allErrs, newMS.Spec.Template.ObjectMeta.Validate(specPath.Child("template", "metadata"))...)
+	allErrs = append(allErrs, newMS.Spec.Template.Validate(specPath.Child("template", "metadata"))...)
 
 	if len(allErrs) == 0 {
 		return nil
 	}
 
 	return apierrors.NewInvalid(clusterv1.GroupVersion.WithKind("MachineSet").GroupKind(), newMS.Name, allErrs)
+}
+
+func validateMSMachineNaming(machineNaming clusterv1.MachineNamingSpec, pathPrefix *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if machineNaming.Template != "" {
+		if !strings.Contains(machineNaming.Template, "{{ .random }}") {
+			allErrs = append(allErrs,
+				field.Invalid(
+					pathPrefix.Child("template"),
+					machineNaming.Template,
+					"invalid template, {{ .random }} is missing",
+				))
+		}
+		name, err := topologynames.MachineSetMachineNameGenerator(machineNaming.Template, "cluster", "machineset").GenerateName()
+		if err != nil {
+			allErrs = append(allErrs,
+				field.Invalid(
+					pathPrefix.Child("template"),
+					machineNaming.Template,
+					fmt.Sprintf("invalid template: %v", err),
+				))
+		} else {
+			for _, err := range validation.IsDNS1123Subdomain(name) {
+				allErrs = append(allErrs,
+					field.Invalid(
+						pathPrefix.Child("template"),
+						machineNaming.Template,
+						fmt.Sprintf("invalid template, generated names would not be valid Kubernetes object names: %v", err),
+					))
+			}
+		}
+	}
+
+	return allErrs
 }
 
 func validateSkippedMachineSetPreflightChecks(o client.Object) *field.Error {
@@ -243,6 +290,7 @@ func validateSkippedMachineSetPreflightChecks(o client.Object) *field.Error {
 		clusterv1.MachineSetPreflightCheckKubeadmVersionSkew,
 		clusterv1.MachineSetPreflightCheckKubernetesVersionSkew,
 		clusterv1.MachineSetPreflightCheckControlPlaneIsStable,
+		clusterv1.MachineSetPreflightCheckControlPlaneVersionSkew,
 	)
 
 	skippedList := strings.Split(skip, ",")

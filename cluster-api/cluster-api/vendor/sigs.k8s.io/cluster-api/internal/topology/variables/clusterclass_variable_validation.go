@@ -34,11 +34,12 @@ import (
 	metav1validation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apimachinery/pkg/util/version"
 	celconfig "k8s.io/apiserver/pkg/apis/cel"
 	apiservercel "k8s.io/apiserver/pkg/cel"
 	"k8s.io/apiserver/pkg/cel/environment"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
 const (
@@ -108,7 +109,7 @@ func validateClusterClassVariable(ctx context.Context, oldVariable, variable *cl
 	allErrs = append(allErrs, validateClusterClassVariableName(variable.Name, fldPath.Child("name"))...)
 
 	// Validate variable metadata.
-	allErrs = append(allErrs, validateClusterClassVariableMetadata(variable.Metadata, fldPath.Child("metadata"))...)
+	allErrs = append(allErrs, validateClusterClassVariableMetadata(variable.DeprecatedV1Beta1Metadata, fldPath.Child("deprecatedV1Beta1Metadata"))...)
 
 	// Validate variable XMetadata.
 	allErrs = append(allErrs, validateClusterClassXVariableMetadata(&variable.Schema.OpenAPIV3Schema, fldPath.Child("schema", "openAPIV3Schema"))...)
@@ -154,16 +155,14 @@ func validateClusterClassVariableMetadata(metadata clusterv1.ClusterClassVariabl
 // Note: This cannot be done within validateSchema because XMetadata does not exist in apiextensions.JSONSchemaProps.
 func validateClusterClassXVariableMetadata(schema *clusterv1.JSONSchemaProps, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
-	if schema.XMetadata != nil {
-		allErrs = metav1validation.ValidateLabels(
-			schema.XMetadata.Labels,
-			fldPath.Child("x-metadata", "labels"),
-		)
-		allErrs = append(allErrs, apivalidation.ValidateAnnotations(
-			schema.XMetadata.Annotations,
-			fldPath.Child("x-metadata", "annotations"),
-		)...)
-	}
+	allErrs = metav1validation.ValidateLabels(
+		schema.XMetadata.Labels,
+		fldPath.Child("x-metadata", "labels"),
+	)
+	allErrs = append(allErrs, apivalidation.ValidateAnnotations(
+		schema.XMetadata.Annotations,
+		fldPath.Child("x-metadata", "annotations"),
+	)...)
 
 	if schema.AdditionalProperties != nil {
 		allErrs = append(allErrs, validateClusterClassXVariableMetadata(schema.AdditionalProperties, fldPath.Child("additionalProperties"))...)
@@ -182,6 +181,22 @@ func validateClusterClassXVariableMetadata(schema *clusterv1.JSONSchemaProps, fl
 }
 
 var validVariableTypes = sets.Set[string]{}.Insert("object", "array", "string", "number", "integer", "boolean")
+
+// envSetVersion can be overwritten in unit tests to use a different version for the CEL EnvSet, so we don't have to
+// continuously refactor the unit tests that verify that compatibility is handled correctly.
+var envSetVersion = environment.DefaultCompatibilityVersion()
+
+// SetEnvSetVersion sets the CEL EnvSet version. Should be only used for unit tests, so we don't have to
+// continuously refactor the unit tests that verify that compatibility is handled correctly.
+func SetEnvSetVersion(v *version.Version) {
+	envSetVersion = v
+}
+
+// GetEnvSetVersion gets the CEL EnvSet version. Should be only used for unit tests, so we don't have to
+// continuously refactor the unit tests that verify that compatibility is handled correctly.
+func GetEnvSetVersion() *version.Version {
+	return envSetVersion
+}
 
 // validateRootSchema validates the schema.
 func validateRootSchema(ctx context.Context, oldClusterClassVariables, clusterClassVariable *clusterv1.ClusterClassVariable, fldPath *field.Path) field.ErrorList {
@@ -274,7 +289,7 @@ func validateRootSchema(ctx context.Context, oldClusterClassVariables, clusterCl
 	//   * The Kubernetes CEL library assumes this behavior and it's baked into cel.NewValidator (they use n to validate)
 	// * If the DefaultCompatibilityVersion is an earlier version than "n-1", it means we could roll back even more than 1 version.
 	opts := &validationOptions{
-		celEnvironmentSet: environment.MustBaseEnvSet(environment.DefaultCompatibilityVersion(), true),
+		celEnvironmentSet: environment.MustBaseEnvSet(envSetVersion, true),
 	}
 	if oldAPIExtensionsSchema != nil {
 		opts.preexistingExpressions = findPreexistingExpressions(oldAPIExtensionsSchema)
