@@ -24,6 +24,7 @@ import (
 // ANCHOR: ConditionSeverity
 
 // ConditionSeverity expresses the severity of a Condition Type failing.
+// +kubebuilder:validation:MaxLength=32
 type ConditionSeverity string
 
 const (
@@ -45,6 +46,8 @@ const (
 // ANCHOR: ConditionType
 
 // ConditionType is a valid value for Condition.Type.
+// +kubebuilder:validation:MinLength=1
+// +kubebuilder:validation:MaxLength=256
 type ConditionType string
 
 // ANCHOR_END: ConditionType
@@ -56,9 +59,11 @@ type Condition struct {
 	// type of condition in CamelCase or in foo.example.com/CamelCase.
 	// Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
 	// can be useful (see .node.status.conditions), the ability to deconflict is important.
+	// +required
 	Type ConditionType `json:"type"`
 
 	// status of the condition, one of True, False, Unknown.
+	// +required
 	Status corev1.ConditionStatus `json:"status"`
 
 	// severity provides an explicit classification of Reason code, so the users or machines can immediately
@@ -67,20 +72,25 @@ type Condition struct {
 	// +optional
 	Severity ConditionSeverity `json:"severity,omitempty"`
 
-	// Last time the condition transitioned from one status to another.
+	// lastTransitionTime is the last time the condition transitioned from one status to another.
 	// This should be when the underlying condition changed. If that is not known, then using the time when
 	// the API field changed is acceptable.
+	// +required
 	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
 
-	// The reason for the condition's last transition in CamelCase.
+	// reason is the reason for the condition's last transition in CamelCase.
 	// The specific API may choose whether or not this field is considered a guaranteed API.
 	// This field may be empty.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
 	Reason string `json:"reason,omitempty"`
 
-	// A human readable message indicating details about the transition.
+	// message is a human readable message indicating details about the transition.
 	// This field may be empty.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=10240
 	Message string `json:"message,omitempty"`
 }
 

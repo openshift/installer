@@ -20,9 +20,11 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/pkg/errors"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 
@@ -113,10 +115,28 @@ func (s *Service) updateNatGatewayIPs(updateTags bool) ([]string, error) {
 	natGatewaysIPs := []string{}
 	subnetIDs := []string{}
 
+	// Find AZs that have private subnets
+	privateSubnetAZs := make(map[string]bool)
+	for _, sn := range s.scope.Subnets().FilterPrivate().FilterNonCni() {
+		if sn.GetResourceID() != "" {
+			privateSubnetAZs[sn.AvailabilityZone] = true
+		}
+	}
+
+	// For each AZ with private subnets, find a public subnet and check for NAT gateway
+	processedAZs := make(map[string]bool)
 	for _, sn := range s.scope.Subnets().FilterPublic().FilterNonCni() {
 		if sn.GetResourceID() == "" {
 			continue
 		}
+
+		// Only process this AZ if it has private subnets and we haven't processed it yet
+		if !privateSubnetAZs[sn.AvailabilityZone] || processedAZs[sn.AvailabilityZone] {
+			continue
+		}
+
+		// Mark this AZ as processed
+		processedAZs[sn.AvailabilityZone] = true
 
 		if ngw, ok := existing[sn.GetResourceID()]; ok {
 			if len(ngw.NatGatewayAddresses) > 0 && ngw.NatGatewayAddresses[0].PublicIp != nil {
@@ -166,7 +186,7 @@ func (s *Service) deleteNatGateways() error {
 		return err
 	}
 
-	var ngIDs []*ec2.NatGateway
+	var ngIDs []types.NatGateway
 	for _, sn := range s.scope.Subnets().FilterPublic() {
 		if sn.GetResourceID() == "" {
 			continue
@@ -181,7 +201,7 @@ func (s *Service) deleteNatGateways() error {
 	errs := []error{}
 
 	for _, ngID := range ngIDs {
-		go func(c chan error, ngID *ec2.NatGateway) {
+		go func(c chan error, ngID types.NatGateway) {
 			err := s.deleteNatGateway(*ngID.NatGatewayId)
 			c <- err
 		}(c, ngID)
@@ -197,26 +217,26 @@ func (s *Service) deleteNatGateways() error {
 	return kerrors.NewAggregate(errs)
 }
 
-func (s *Service) describeNatGatewaysBySubnet() (map[string]*ec2.NatGateway, error) {
+func (s *Service) describeNatGatewaysBySubnet() (map[string]types.NatGateway, error) {
 	describeNatGatewayInput := &ec2.DescribeNatGatewaysInput{
-		Filter: []*ec2.Filter{
+		Filter: []types.Filter{
 			filter.EC2.VPC(s.scope.VPC().ID),
-			filter.EC2.NATGatewayStates(ec2.NatGatewayStatePending, ec2.NatGatewayStateAvailable),
+			filter.EC2.NATGatewayStates(types.NatGatewayStatePending, types.NatGatewayStateAvailable),
 		},
 	}
 
-	gateways := make(map[string]*ec2.NatGateway)
+	gateways := make(map[string]types.NatGateway)
 
-	err := s.EC2Client.DescribeNatGatewaysPagesWithContext(context.TODO(), describeNatGatewayInput,
-		func(page *ec2.DescribeNatGatewaysOutput, lastPage bool) bool {
-			for _, r := range page.NatGateways {
-				gateways[*r.SubnetId] = r
-			}
-			return !lastPage
-		})
-	if err != nil {
-		record.Eventf(s.scope.InfraCluster(), "FailedDescribeNATGateways", "Failed to describe NAT gateways with VPC ID %q: %v", s.scope.VPC().ID, err)
-		return nil, errors.Wrapf(err, "failed to describe NAT gateways with VPC ID %q", s.scope.VPC().ID)
+	paginator := ec2.NewDescribeNatGatewaysPaginator(s.EC2Client, describeNatGatewayInput)
+	for paginator.HasMorePages() {
+		output, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			record.Eventf(s.scope.InfraCluster(), "FailedDescribeNATGateways", "Failed to describe NAT gateways with VPC ID %q: %v", s.scope.VPC().ID, err)
+			return nil, errors.Wrapf(err, "failed to describe NAT gateways with VPC ID %q", s.scope.VPC().ID)
+		}
+		for _, r := range output.NatGateways {
+			gateways[aws.ToString(r.SubnetId)] = r
+		}
 	}
 
 	return gateways, nil
@@ -235,13 +255,13 @@ func (s *Service) getNatGatewayTagParams(id string) infrav1.BuildParams {
 	}
 }
 
-func (s *Service) createNatGateways(subnetIDs []string) (natgateways []*ec2.NatGateway, err error) {
+func (s *Service) createNatGateways(subnetIDs []string) (natgateways []*types.NatGateway, err error) {
 	eips, err := s.getOrAllocateAddresses(len(subnetIDs), infrav1.CommonRoleTagValue, s.scope.VPC().GetElasticIPPool())
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create one or more IP addresses for NAT gateways")
 	}
 	type ngwCreation struct {
-		natGateway *ec2.NatGateway
+		natGateway *types.NatGateway
 		error      error
 	}
 	c := make(chan ngwCreation, len(subnetIDs))
@@ -263,15 +283,15 @@ func (s *Service) createNatGateways(subnetIDs []string) (natgateways []*ec2.NatG
 	return natgateways, nil
 }
 
-func (s *Service) createNatGateway(subnetID, ip string) (*ec2.NatGateway, error) {
+func (s *Service) createNatGateway(subnetID, ip string) (*types.NatGateway, error) {
 	var out *ec2.CreateNatGatewayOutput
 	var err error
 
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-		if out, err = s.EC2Client.CreateNatGatewayWithContext(context.TODO(), &ec2.CreateNatGatewayInput{
+		if out, err = s.EC2Client.CreateNatGateway(context.TODO(), &ec2.CreateNatGatewayInput{
 			SubnetId:          aws.String(subnetID),
 			AllocationId:      aws.String(ip),
-			TagSpecifications: []*ec2.TagSpecification{tags.BuildParamsToTagSpecification(ec2.ResourceTypeNatgateway, s.getNatGatewayTagParams(services.TemporaryResourceID))},
+			TagSpecifications: []types.TagSpecification{tags.BuildParamsToTagSpecification(types.ResourceTypeNatgateway, s.getNatGatewayTagParams(services.TemporaryResourceID))},
 		}); err != nil {
 			return false, err
 		}
@@ -282,8 +302,9 @@ func (s *Service) createNatGateway(subnetID, ip string) (*ec2.NatGateway, error)
 	}
 	record.Eventf(s.scope.InfraCluster(), "SuccessfulCreateNATGateway", "Created new NAT Gateway %q", *out.NatGateway.NatGatewayId)
 
-	wReq := &ec2.DescribeNatGatewaysInput{NatGatewayIds: []*string{out.NatGateway.NatGatewayId}}
-	if err := s.EC2Client.WaitUntilNatGatewayAvailableWithContext(context.TODO(), wReq); err != nil {
+	if err := ec2.NewNatGatewayAvailableWaiter(s.EC2Client).Wait(context.TODO(), &ec2.DescribeNatGatewaysInput{
+		NatGatewayIds: []string{aws.ToString(out.NatGateway.NatGatewayId)},
+	}, time.Minute*2); err != nil {
 		return nil, errors.Wrapf(err, "failed to wait for nat gateway %q in subnet %q", *out.NatGateway.NatGatewayId, subnetID)
 	}
 
@@ -292,7 +313,7 @@ func (s *Service) createNatGateway(subnetID, ip string) (*ec2.NatGateway, error)
 }
 
 func (s *Service) deleteNatGateway(id string) error {
-	_, err := s.EC2Client.DeleteNatGatewayWithContext(context.TODO(), &ec2.DeleteNatGatewayInput{
+	_, err := s.EC2Client.DeleteNatGateway(context.TODO(), &ec2.DeleteNatGatewayInput{
 		NatGatewayId: aws.String(id),
 	})
 	if err != nil {
@@ -303,11 +324,11 @@ func (s *Service) deleteNatGateway(id string) error {
 	s.scope.Info("Deleted NAT gateway in VPC", "nat-gateway-id", id, "vpc-id", s.scope.VPC().ID)
 
 	describeInput := &ec2.DescribeNatGatewaysInput{
-		NatGatewayIds: []*string{aws.String(id)},
+		NatGatewayIds: []string{id},
 	}
 
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (done bool, err error) {
-		out, err := s.EC2Client.DescribeNatGatewaysWithContext(context.TODO(), describeInput)
+		out, err := s.EC2Client.DescribeNatGateways(context.TODO(), describeInput)
 		if err != nil {
 			return false, err
 		}
@@ -317,14 +338,14 @@ func (s *Service) deleteNatGateway(id string) error {
 		}
 
 		ng := out.NatGateways[0]
-		switch state := ng.State; *state {
-		case ec2.NatGatewayStateAvailable, ec2.NatGatewayStateDeleting:
+		switch state := ng.State; state {
+		case types.NatGatewayStateAvailable, types.NatGatewayStateDeleting:
 			return false, nil
-		case ec2.NatGatewayStateDeleted:
+		case types.NatGatewayStateDeleted:
 			return true, nil
-		case ec2.NatGatewayStatePending:
+		case types.NatGatewayStatePending:
 			return false, errors.Errorf("in pending state")
-		case ec2.NatGatewayStateFailed:
+		case types.NatGatewayStateFailed:
 			return false, errors.Errorf("in failed state: %q - %s", *ng.FailureCode, *ng.FailureMessage)
 		}
 
@@ -371,7 +392,7 @@ func (s *Service) getNatGatewayForSubnet(sn *infrav1.SubnetSpec) (string, error)
 
 	// Check if the parent zone public subnet has nat gateway
 	if sn.ParentZoneName != nil {
-		if gws, ok := azGateways[aws.StringValue(sn.ParentZoneName)]; ok && len(gws) > 0 {
+		if gws, ok := azGateways[aws.ToString(sn.ParentZoneName)]; ok && len(gws) > 0 {
 			return gws, nil
 		}
 	}

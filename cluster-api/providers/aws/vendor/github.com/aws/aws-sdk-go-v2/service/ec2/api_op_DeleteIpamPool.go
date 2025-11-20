@@ -11,12 +11,17 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Delete an IPAM pool. You cannot delete an IPAM pool if there are allocations in
-// it or CIDRs provisioned to it. To release allocations, see
-// ReleaseIpamPoolAllocation (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ReleaseIpamPoolAllocation.html)
-// . To deprovision pool CIDRs, see DeprovisionIpamPoolCidr (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeprovisionIpamPoolCidr.html)
-// . For more information, see Delete a pool (https://docs.aws.amazon.com/vpc/latest/ipam/delete-pool-ipam.html)
-// in the Amazon VPC IPAM User Guide.
+// Delete an IPAM pool.
+//
+// You cannot delete an IPAM pool if there are allocations in it or CIDRs
+// provisioned to it. To release allocations, see [ReleaseIpamPoolAllocation]. To deprovision pool CIDRs, see [DeprovisionIpamPoolCidr]
+// .
+//
+// For more information, see [Delete a pool] in the Amazon VPC IPAM User Guide.
+//
+// [ReleaseIpamPoolAllocation]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ReleaseIpamPoolAllocation.html
+// [Delete a pool]: https://docs.aws.amazon.com/vpc/latest/ipam/delete-pool-ipam.html
+// [DeprovisionIpamPoolCidr]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DeprovisionIpamPoolCidr.html
 func (c *Client) DeleteIpamPool(ctx context.Context, params *DeleteIpamPoolInput, optFns ...func(*Options)) (*DeleteIpamPoolOutput, error) {
 	if params == nil {
 		params = &DeleteIpamPoolInput{}
@@ -40,10 +45,11 @@ type DeleteIpamPoolInput struct {
 	IpamPoolId *string
 
 	// Enables you to quickly delete an IPAM pool and all resources within that pool,
-	// including provisioned CIDRs, allocations, and other pools. You can only use this
-	// option to delete pools in the private scope or pools in the public scope with a
-	// source resource. A source resource is a resource used to provision CIDRs to a
-	// resource planning pool.
+	// including provisioned CIDRs, allocations, and other pools.
+	//
+	// You can only use this option to delete pools in the private scope or pools in
+	// the public scope with a source resource. A source resource is a resource used to
+	// provision CIDRs to a resource planning pool.
 	Cascade *bool
 
 	// A check for whether you have the required permissions for the action without
@@ -109,6 +115,9 @@ func (c *Client) addOperationDeleteIpamPoolMiddlewares(stack *middleware.Stack, 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -119,6 +128,15 @@ func (c *Client) addOperationDeleteIpamPoolMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteIpamPoolValidationMiddleware(stack); err != nil {
@@ -140,6 +158,18 @@ func (c *Client) addOperationDeleteIpamPoolMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

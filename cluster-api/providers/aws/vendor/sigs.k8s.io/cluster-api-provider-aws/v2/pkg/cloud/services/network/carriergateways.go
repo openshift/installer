@@ -20,8 +20,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/pkg/errors"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -98,7 +99,7 @@ func (s *Service) deleteCarrierGateway() error {
 		CarrierGatewayId: cagw.CarrierGatewayId,
 	}
 
-	if _, err = s.EC2Client.DeleteCarrierGatewayWithContext(context.TODO(), deleteReq); err != nil {
+	if _, err = s.EC2Client.DeleteCarrierGateway(context.TODO(), deleteReq); err != nil {
 		record.Warnf(s.scope.InfraCluster(), "FailedDeleteCarrierGateway", "Failed to delete Carrier Gateway %q previously attached to VPC %q: %v", *cagw.CarrierGatewayId, s.scope.VPC().ID, err)
 		return errors.Wrapf(err, "failed to delete carrier gateway %q", *cagw.CarrierGatewayId)
 	}
@@ -109,11 +110,11 @@ func (s *Service) deleteCarrierGateway() error {
 	return nil
 }
 
-func (s *Service) createCarrierGateway() (*ec2.CarrierGateway, error) {
-	ig, err := s.EC2Client.CreateCarrierGatewayWithContext(context.TODO(), &ec2.CreateCarrierGatewayInput{
+func (s *Service) createCarrierGateway() (*types.CarrierGateway, error) {
+	ig, err := s.EC2Client.CreateCarrierGateway(context.TODO(), &ec2.CreateCarrierGatewayInput{
 		VpcId: aws.String(s.scope.VPC().ID),
-		TagSpecifications: []*ec2.TagSpecification{
-			tags.BuildParamsToTagSpecification(ec2.ResourceTypeCarrierGateway, s.getGatewayTagParams(services.TemporaryResourceID)),
+		TagSpecifications: []types.TagSpecification{
+			tags.BuildParamsToTagSpecification(types.ResourceTypeCarrierGateway, s.getGatewayTagParams(services.TemporaryResourceID)),
 		},
 	})
 	if err != nil {
@@ -126,9 +127,9 @@ func (s *Service) createCarrierGateway() (*ec2.CarrierGateway, error) {
 	return ig.CarrierGateway, nil
 }
 
-func (s *Service) describeVpcCarrierGateway() (*ec2.CarrierGateway, error) {
-	out, err := s.EC2Client.DescribeCarrierGatewaysWithContext(context.TODO(), &ec2.DescribeCarrierGatewaysInput{
-		Filters: []*ec2.Filter{
+func (s *Service) describeVpcCarrierGateway() (*types.CarrierGateway, error) {
+	out, err := s.EC2Client.DescribeCarrierGateways(context.TODO(), &ec2.DescribeCarrierGatewaysInput{
+		Filters: []types.Filter{
 			filter.EC2.VPC(s.scope.VPC().ID),
 		},
 	})
@@ -141,5 +142,5 @@ func (s *Service) describeVpcCarrierGateway() (*ec2.CarrierGateway, error) {
 		return nil, awserrors.NewNotFound(fmt.Sprintf("no carrier gateways found in vpc %q", s.scope.VPC().ID))
 	}
 
-	return out.CarrierGateways[0], nil
+	return &out.CarrierGateways[0], nil
 }

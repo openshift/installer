@@ -115,6 +115,9 @@ func (c *Client) addOperationDescribeVerifiedAccessEndpointsMiddlewares(stack *m
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,6 +128,15 @@ func (c *Client) addOperationDescribeVerifiedAccessEndpointsMiddlewares(stack *m
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeVerifiedAccessEndpoints(options.Region), middleware.Before); err != nil {
@@ -145,16 +157,20 @@ func (c *Client) addOperationDescribeVerifiedAccessEndpointsMiddlewares(stack *m
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeVerifiedAccessEndpointsAPIClient is a client that implements the
-// DescribeVerifiedAccessEndpoints operation.
-type DescribeVerifiedAccessEndpointsAPIClient interface {
-	DescribeVerifiedAccessEndpoints(context.Context, *DescribeVerifiedAccessEndpointsInput, ...func(*Options)) (*DescribeVerifiedAccessEndpointsOutput, error)
-}
-
-var _ DescribeVerifiedAccessEndpointsAPIClient = (*Client)(nil)
 
 // DescribeVerifiedAccessEndpointsPaginatorOptions is the paginator options for
 // DescribeVerifiedAccessEndpoints
@@ -223,6 +239,9 @@ func (p *DescribeVerifiedAccessEndpointsPaginator) NextPage(ctx context.Context,
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeVerifiedAccessEndpoints(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -241,6 +260,14 @@ func (p *DescribeVerifiedAccessEndpointsPaginator) NextPage(ctx context.Context,
 
 	return result, nil
 }
+
+// DescribeVerifiedAccessEndpointsAPIClient is a client that implements the
+// DescribeVerifiedAccessEndpoints operation.
+type DescribeVerifiedAccessEndpointsAPIClient interface {
+	DescribeVerifiedAccessEndpoints(context.Context, *DescribeVerifiedAccessEndpointsInput, ...func(*Options)) (*DescribeVerifiedAccessEndpointsOutput, error)
+}
+
+var _ DescribeVerifiedAccessEndpointsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeVerifiedAccessEndpoints(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

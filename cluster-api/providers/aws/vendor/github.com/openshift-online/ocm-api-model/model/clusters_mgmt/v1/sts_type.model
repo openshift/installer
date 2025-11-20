@@ -1,0 +1,55 @@
+/*
+Copyright (c) 2021 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Contains the necessary attributes to support role-based authentication on AWS.
+struct STS {
+
+	// If STS is enabled or disabled
+	Enabled Boolean
+
+	// ARN of the AWS role to assume when installing the cluster
+	RoleARN String
+
+	// Optional unique identifier when assuming role in another account
+	ExternalID String
+
+	// ARN of the AWS role used by SREs to access the cluster AWS account in order to provide support
+	SupportRoleARN String
+
+	// URL of the location where OIDC configuration and keys are available
+	OIDCEndpointURL String
+
+	// List of roles necessary to access the AWS resources of the various operators used during installation
+	OperatorIAMRoles []OperatorIAMRole
+
+	// Instance IAM roles to use for the instance profiles of the master and worker instances
+	InstanceIAMRoles InstanceIAMRoles
+
+	// Auto creation mode for cluster - OCM will create the operator roles and OIDC provider. false by default.
+	AutoMode Boolean
+
+	// Optional user provided prefix for operator roles.
+	OperatorRolePrefix String
+
+	// Optional user provided permission boundary.
+	PermissionBoundary String
+
+	// If true, cluster account and operator roles have managed policies attached.
+	ManagedPolicies Boolean
+
+	// Registered Oidc Config, if available holds information related to the oidc config.
+	OidcConfig OidcConfig
+}

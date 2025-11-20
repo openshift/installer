@@ -19,7 +19,7 @@ package network
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/pkg/errors"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
@@ -35,8 +35,8 @@ func (s *Service) associateSecondaryCidrs() error {
 		return nil
 	}
 
-	vpcs, err := s.EC2Client.DescribeVpcsWithContext(context.TODO(), &ec2.DescribeVpcsInput{
-		VpcIds: []*string{&s.scope.VPC().ID},
+	vpcs, err := s.EC2Client.DescribeVpcs(context.TODO(), &ec2.DescribeVpcsInput{
+		VpcIds: []string{s.scope.VPC().ID},
 	})
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (s *Service) associateSecondaryCidrs() error {
 			continue
 		}
 
-		out, err := s.EC2Client.AssociateVpcCidrBlockWithContext(context.TODO(), &ec2.AssociateVpcCidrBlockInput{
+		out, err := s.EC2Client.AssociateVpcCidrBlock(context.TODO(), &ec2.AssociateVpcCidrBlockInput{
 			VpcId:     &s.scope.VPC().ID,
 			CidrBlock: &desiredCidrBlock.IPv4CidrBlock,
 		})
@@ -89,8 +89,8 @@ func (s *Service) disassociateSecondaryCidrs() error {
 		return nil
 	}
 
-	vpcs, err := s.EC2Client.DescribeVpcsWithContext(context.TODO(), &ec2.DescribeVpcsInput{
-		VpcIds: []*string{&s.scope.VPC().ID},
+	vpcs, err := s.EC2Client.DescribeVpcs(context.TODO(), &ec2.DescribeVpcsInput{
+		VpcIds: []string{s.scope.VPC().ID},
 	})
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func (s *Service) disassociateSecondaryCidrs() error {
 	for _, cidrBlockToDelete := range secondaryCidrBlocks {
 		for _, existing := range existingAssociations {
 			if *existing.CidrBlock == cidrBlockToDelete.IPv4CidrBlock {
-				if _, err := s.EC2Client.DisassociateVpcCidrBlockWithContext(context.TODO(), &ec2.DisassociateVpcCidrBlockInput{
+				if _, err := s.EC2Client.DisassociateVpcCidrBlock(context.TODO(), &ec2.DisassociateVpcCidrBlockInput{
 					AssociationId: existing.AssociationId,
 				}); err != nil {
 					record.Warnf(s.scope.InfraCluster(), "FailedDisassociateSecondaryCidr", "Failed disassociating secondary CIDR %q from VPC %v", cidrBlockToDelete.IPv4CidrBlock, err)

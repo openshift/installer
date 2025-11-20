@@ -1,0 +1,46 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of an access review response, performed against oneself
+struct SelfAccessReviewResponse {
+	// Defines whether the action on the specified resource type is allowed.
+	Allowed Boolean
+
+	// Defines whether an account is ocm internal.
+	IsOCMInternal Boolean
+
+	// Defines further context for the value in allowed (if applicable).
+	Reason String
+
+	// Indicates the action, one of: [get,list,create,delete,update].
+	Action String
+
+	// Indicates which Organization the resource type belongs to.
+	OrganizationID String
+
+	// Indicates which Cluster (internal id) the resource type belongs to.
+	ClusterID String
+
+	// Indicates which Cluster (external id) the resource type belongs to.
+	ClusterUUID String
+
+	// Indicates which Subscription the resource type belongs to.
+	SubscriptionID String
+
+	// Indicates the type of the resource an action would be taken on.
+	// See uhc-account-manager/openapi/openapi.yaml for a list of possible values.
+	ResourceType String
+}

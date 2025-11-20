@@ -20,23 +20,21 @@ package gc
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-	"github.com/aws/aws-sdk-go/service/elb/elbiface"
-	"github.com/aws/aws-sdk-go/service/elbv2/elbv2iface"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/common"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/elb"
 )
 
 // Service is used to perform operations against a tenant/workload/child cluster.
 type Service struct {
 	scope                 cloud.ClusterScoper
-	elbClient             elbiface.ELBAPI
-	elbv2Client           elbv2iface.ELBV2API
-	resourceTaggingClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	ec2Client             ec2iface.EC2API
+	elbClient             elb.ELBAPI
+	elbv2Client           elb.ELBV2API
+	resourceTaggingClient elb.ResourceGroupsTaggingAPIAPI
+	ec2Client             common.EC2API
 	cleanupFuncs          ResourceCleanupFuncs
 	collectFuncs          ResourceCollectFuncs
 }
@@ -44,13 +42,19 @@ type Service struct {
 // NewService creates a new Service.
 func NewService(clusterScope cloud.ClusterScoper, opts ...ServiceOption) *Service {
 	svc := &Service{
-		scope:                 clusterScope,
-		elbClient:             scope.NewELBClient(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
-		elbv2Client:           scope.NewELBv2Client(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
-		resourceTaggingClient: scope.NewResourgeTaggingClient(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
-		ec2Client:             scope.NewEC2Client(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
-		cleanupFuncs:          ResourceCleanupFuncs{},
-		collectFuncs:          ResourceCollectFuncs{},
+		scope: clusterScope,
+		elbClient: &elb.ELBClient{
+			Client: scope.NewELBClient(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
+		},
+		elbv2Client: &elb.ELBV2Client{
+			Client: scope.NewELBv2Client(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
+		},
+		resourceTaggingClient: &elb.ResourceGroupsTaggingAPIClient{
+			Client: scope.NewResourgeTaggingClient(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
+		},
+		cleanupFuncs: ResourceCleanupFuncs{},
+		collectFuncs: ResourceCollectFuncs{},
+		ec2Client:    scope.NewEC2Client(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
 	}
 	addDefaultCleanupFuncs(svc)
 

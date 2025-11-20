@@ -11,10 +11,13 @@ import (
 )
 
 // Initiates the verification process to prove that the service provider owns the
-// private DNS name domain for the endpoint service. The service provider must
-// successfully perform the verification before the consumer can use the name to
-// access the service. Before the service provider runs this command, they must add
-// a record to the DNS server.
+// private DNS name domain for the endpoint service.
+//
+// The service provider must successfully perform the verification before the
+// consumer can use the name to access the service.
+//
+// Before the service provider runs this command, they must add a record to the
+// DNS server.
 func (c *Client) StartVpcEndpointServicePrivateDnsVerification(ctx context.Context, params *StartVpcEndpointServicePrivateDnsVerificationInput, optFns ...func(*Options)) (*StartVpcEndpointServicePrivateDnsVerificationOutput, error) {
 	if params == nil {
 		params = &StartVpcEndpointServicePrivateDnsVerificationInput{}
@@ -100,6 +103,9 @@ func (c *Client) addOperationStartVpcEndpointServicePrivateDnsVerificationMiddle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -110,6 +116,15 @@ func (c *Client) addOperationStartVpcEndpointServicePrivateDnsVerificationMiddle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpStartVpcEndpointServicePrivateDnsVerificationValidationMiddleware(stack); err != nil {
@@ -131,6 +146,18 @@ func (c *Client) addOperationStartVpcEndpointServicePrivateDnsVerificationMiddle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

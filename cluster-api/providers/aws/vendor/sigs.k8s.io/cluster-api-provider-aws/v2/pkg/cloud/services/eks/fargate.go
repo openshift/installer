@@ -17,18 +17,20 @@ limitations under the License.
 package eks
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/eks"
-	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
+	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
+	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -43,10 +45,10 @@ func requeueRoleUpdating() reconcile.Result {
 }
 
 // Reconcile is the entrypoint for FargateProfile reconciliation.
-func (s *FargateService) Reconcile() (reconcile.Result, error) {
+func (s *FargateService) Reconcile(ctx context.Context) (reconcile.Result, error) {
 	s.scope.Debug("Reconciling EKS fargate profile")
 
-	requeue, err := s.reconcileFargateIAMRole()
+	requeue, err := s.reconcileFargateIAMRole(ctx)
 	if err != nil {
 		conditions.MarkFalse(
 			s.scope.FargateProfile,
@@ -66,7 +68,7 @@ func (s *FargateService) Reconcile() (reconcile.Result, error) {
 
 	conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.IAMFargateRolesReadyCondition)
 
-	requeue, err = s.reconcileFargateProfile()
+	requeue, err = s.reconcileFargateProfile(ctx)
 	if err != nil {
 		conditions.MarkFalse(
 			s.scope.FargateProfile,
@@ -85,42 +87,42 @@ func (s *FargateService) Reconcile() (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }
 
-func (s *FargateService) reconcileFargateProfile() (requeue bool, err error) {
+func (s *FargateService) reconcileFargateProfile(ctx context.Context) (requeue bool, err error) {
 	profileName := s.scope.FargateProfile.Spec.ProfileName
 
-	profile, err := s.describeFargateProfile()
+	profile, err := s.describeFargateProfile(ctx)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to describe profile")
 	}
 
 	if eksClusterName := s.scope.KubernetesClusterName(); profile == nil {
-		profile, err = s.createFargateProfile()
+		profile, err = s.createFargateProfile(ctx)
 		if err != nil {
 			return false, errors.Wrap(err, "failed to create profile")
 		}
 		// Force status to creating
-		profile.Status = aws.String(eks.FargateProfileStatusCreating)
+		profile.Status = ekstypes.FargateProfileStatusCreating
 		s.scope.Info("Created EKS fargate profile", "cluster-name", eksClusterName, "profile-name", profileName)
 	} else {
 		tagKey := infrav1.ClusterAWSCloudProviderTagKey(s.scope.ClusterName())
 		ownedTag := profile.Tags[tagKey]
-		if ownedTag == nil {
+		if ownedTag == "" {
 			return false, errors.New("owned tag not found for this cluster")
 		}
 		s.scope.Debug("Found owned EKS fargate profile", "cluster-name", eksClusterName, "profile-name", profileName)
 	}
 
-	if err := s.reconcileTags(profile); err != nil {
+	if err := s.reconcileTags(ctx, profile); err != nil {
 		return false, errors.Wrapf(err, "failed to reconcile profile tags")
 	}
 
 	return s.handleStatus(profile), nil
 }
 
-func (s *FargateService) handleStatus(profile *eks.FargateProfile) (requeue bool) {
-	s.Debug("fargate profile", "status", *profile.Status)
-	switch *profile.Status {
-	case eks.FargateProfileStatusCreating:
+func (s *FargateService) handleStatus(profile *ekstypes.FargateProfile) (requeue bool) {
+	s.Debug("fargate profile", "status", string(profile.Status))
+	switch profile.Status {
+	case ekstypes.FargateProfileStatusCreating:
 		s.scope.FargateProfile.Status.Ready = false
 		if conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition) {
 			conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition, expinfrav1.EKSFargateCreatingReason, clusterv1.ConditionSeverityInfo, "")
@@ -130,20 +132,20 @@ func (s *FargateService) handleStatus(profile *eks.FargateProfile) (requeue bool
 			conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition)
 		}
 		conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateCreatingReason, clusterv1.ConditionSeverityInfo, "")
-	case eks.FargateProfileStatusCreateFailed, eks.FargateProfileStatusDeleteFailed:
+	case ekstypes.FargateProfileStatusCreateFailed, ekstypes.FargateProfileStatusDeleteFailed:
 		s.scope.FargateProfile.Status.Ready = false
-		s.scope.FargateProfile.Status.FailureMessage = aws.String(fmt.Sprintf("unexpected profile status: %s", *profile.Status))
+		s.scope.FargateProfile.Status.FailureMessage = aws.String(fmt.Sprintf("unexpected profile status: %s", string(profile.Status)))
 		reason := expinfrav1.EKSFargateFailedReason
 		s.scope.FargateProfile.Status.FailureReason = &reason
 		conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateFailedReason, clusterv1.ConditionSeverityError, "")
-	case eks.FargateProfileStatusActive:
+	case ekstypes.FargateProfileStatusActive:
 		s.scope.FargateProfile.Status.Ready = true
 		if conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition) {
 			record.Eventf(s.scope.FargateProfile, "SuccessfulCreateEKSFargateProfile", "Created new EKS fargate profile %s", s.scope.FargateProfile.Spec.ProfileName)
 			conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition, expinfrav1.EKSFargateCreatedReason, clusterv1.ConditionSeverityInfo, "")
 		}
 		conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition)
-	case eks.FargateProfileStatusDeleting:
+	case ekstypes.FargateProfileStatusDeleting:
 		s.scope.FargateProfile.Status.Ready = false
 		if !conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition) {
 			record.Eventf(s.scope.FargateProfile, "InitiatedDeleteEKSFargateProfile", "Started deleting EKS fargate profile %s", s.scope.FargateProfile.Spec.ProfileName)
@@ -151,8 +153,8 @@ func (s *FargateService) handleStatus(profile *eks.FargateProfile) (requeue bool
 		}
 		conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateDeletingReason, clusterv1.ConditionSeverityInfo, "")
 	}
-	switch *profile.Status {
-	case eks.FargateProfileStatusCreating, eks.FargateProfileStatusDeleting:
+	switch profile.Status {
+	case ekstypes.FargateProfileStatusCreating, ekstypes.FargateProfileStatusDeleting:
 		return true
 	default:
 		return false
@@ -160,10 +162,10 @@ func (s *FargateService) handleStatus(profile *eks.FargateProfile) (requeue bool
 }
 
 // ReconcileDelete is the entrypoint for FargateProfile reconciliation.
-func (s *FargateService) ReconcileDelete() (reconcile.Result, error) {
+func (s *FargateService) ReconcileDelete(ctx context.Context) (reconcile.Result, error) {
 	s.scope.Debug("Reconciling EKS fargate profile deletion")
 
-	requeue, err := s.deleteFargateProfile()
+	requeue, err := s.deleteFargateProfile(ctx)
 	if err != nil {
 		conditions.MarkFalse(
 			s.scope.FargateProfile,
@@ -180,7 +182,7 @@ func (s *FargateService) ReconcileDelete() (reconcile.Result, error) {
 		return requeueProfileUpdating(), nil
 	}
 
-	err = s.deleteFargateIAMRole()
+	err = s.deleteFargateIAMRole(ctx)
 	if err != nil {
 		conditions.MarkFalse(
 			s.scope.FargateProfile,
@@ -194,7 +196,7 @@ func (s *FargateService) ReconcileDelete() (reconcile.Result, error) {
 	return reconcile.Result{}, err
 }
 
-func (s *FargateService) describeFargateProfile() (*eks.FargateProfile, error) {
+func (s *FargateService) describeFargateProfile(ctx context.Context) (*ekstypes.FargateProfile, error) {
 	eksClusterName := s.scope.KubernetesClusterName()
 	profileName := s.scope.FargateProfile.Spec.ProfileName
 	input := &eks.DescribeFargateProfileInput{
@@ -202,9 +204,11 @@ func (s *FargateService) describeFargateProfile() (*eks.FargateProfile, error) {
 		FargateProfileName: aws.String(profileName),
 	}
 
-	out, err := s.EKSClient.DescribeFargateProfile(input)
+	out, err := s.EKSClient.DescribeFargateProfile(ctx, input)
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == eks.ErrCodeResourceNotFoundException {
+		smithyErr := awserrors.ParseSmithyError(err)
+		notFoundErr := &ekstypes.ResourceNotFoundException{}
+		if smithyErr.ErrorCode() == notFoundErr.ErrorCode() {
 			return nil, nil
 		}
 		return nil, errors.Wrap(err, "failed to describe fargate profile")
@@ -213,13 +217,13 @@ func (s *FargateService) describeFargateProfile() (*eks.FargateProfile, error) {
 	return out.FargateProfile, nil
 }
 
-func (s *FargateService) createFargateProfile() (*eks.FargateProfile, error) {
+func (s *FargateService) createFargateProfile(ctx context.Context) (*ekstypes.FargateProfile, error) {
 	eksClusterName := s.scope.KubernetesClusterName()
 	profileName := s.scope.FargateProfile.Spec.ProfileName
 
 	additionalTags := s.scope.AdditionalTags()
 
-	roleArn, err := s.roleArn()
+	roleArn, err := s.roleArn(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -234,10 +238,10 @@ func (s *FargateService) createFargateProfile() (*eks.FargateProfile, error) {
 		}
 	}
 
-	selectors := []*eks.FargateProfileSelector{}
+	selectors := []ekstypes.FargateProfileSelector{}
 	for _, s := range s.scope.FargateProfile.Spec.Selectors {
-		selectors = append(selectors, &eks.FargateProfileSelector{
-			Labels:    aws.StringMap(s.Labels),
+		selectors = append(selectors, ekstypes.FargateProfileSelector{
+			Labels:    s.Labels,
 			Namespace: aws.String(s.Namespace),
 		})
 	}
@@ -246,15 +250,12 @@ func (s *FargateService) createFargateProfile() (*eks.FargateProfile, error) {
 		ClusterName:         aws.String(eksClusterName),
 		FargateProfileName:  aws.String(profileName),
 		PodExecutionRoleArn: roleArn,
-		Subnets:             aws.StringSlice(subnets),
-		Tags:                aws.StringMap(tags),
+		Subnets:             subnets,
+		Tags:                tags,
 		Selectors:           selectors,
 	}
-	if err := input.Validate(); err != nil {
-		return nil, errors.Wrap(err, "created invalid CreateFargateProfileInput")
-	}
 
-	out, err := s.EKSClient.CreateFargateProfile(input)
+	out, err := s.EKSClient.CreateFargateProfile(ctx, input)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create fargate profile")
 	}
@@ -262,11 +263,11 @@ func (s *FargateService) createFargateProfile() (*eks.FargateProfile, error) {
 	return out.FargateProfile, nil
 }
 
-func (s *FargateService) deleteFargateProfile() (requeue bool, err error) {
+func (s *FargateService) deleteFargateProfile(ctx context.Context) (requeue bool, err error) {
 	eksClusterName := s.scope.KubernetesClusterName()
 	profileName := s.scope.FargateProfile.Spec.ProfileName
 
-	profile, err := s.describeFargateProfile()
+	profile, err := s.describeFargateProfile(ctx)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to describe profile")
 	}
@@ -279,36 +280,33 @@ func (s *FargateService) deleteFargateProfile() (requeue bool, err error) {
 		return false, nil
 	}
 
-	switch aws.StringValue(profile.Status) {
-	case eks.FargateProfileStatusCreating, eks.FargateProfileStatusDeleting, eks.FargateProfileStatusDeleteFailed:
+	switch profile.Status {
+	case ekstypes.FargateProfileStatusCreating, ekstypes.FargateProfileStatusDeleting, ekstypes.FargateProfileStatusDeleteFailed:
 		return s.handleStatus(profile), nil
-	case eks.FargateProfileStatusActive, eks.FargateProfileStatusCreateFailed:
+	case ekstypes.FargateProfileStatusActive, ekstypes.FargateProfileStatusCreateFailed:
 	}
 
 	input := &eks.DeleteFargateProfileInput{
 		ClusterName:        aws.String(eksClusterName),
 		FargateProfileName: aws.String(profileName),
 	}
-	if err := input.Validate(); err != nil {
-		return false, errors.Wrap(err, "created invalid DeleteFargateProfileInput")
-	}
 
-	out, err := s.EKSClient.DeleteFargateProfile(input)
+	out, err := s.EKSClient.DeleteFargateProfile(ctx, input)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to delete fargate profile")
 	}
 
 	profile = out.FargateProfile
-	profile.Status = aws.String(eks.FargateProfileStatusDeleting)
+	profile.Status = ekstypes.FargateProfileStatusDeleting
 
 	return s.handleStatus(profile), nil
 }
 
-func (s *FargateService) roleArn() (*string, error) {
-	var role *iam.Role
+func (s *FargateService) roleArn(ctx context.Context) (*string, error) {
+	var role *iamtypes.Role
 	if s.scope.RoleName() != "" {
 		var err error
-		role, err = s.GetIAMRole(s.scope.RoleName())
+		role, err = s.GetIAMRole(ctx, s.scope.RoleName())
 		if err != nil {
 			return nil, errors.Wrapf(err, "error getting fargate profile IAM role: %s", s.scope.RoleName())
 		}

@@ -17,38 +17,36 @@ limitations under the License.
 package gc
 
 import (
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-	"github.com/aws/aws-sdk-go/service/elb/elbiface"
-	"github.com/aws/aws-sdk-go/service/elbv2/elbv2iface"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/common"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/elb"
 )
 
 // ServiceOption is an option for creating the service.
 type ServiceOption func(*Service)
 
 // withELBClient is an option for specifying a AWS ELB Client.
-func withELBClient(client elbiface.ELBAPI) ServiceOption {
+func withELBClient(client elb.ELBAPI) ServiceOption {
 	return func(s *Service) {
 		s.elbClient = client
 	}
 }
 
 // withELBv2Client is an option for specifying a AWS ELBv2 Client.
-func withELBv2Client(client elbv2iface.ELBV2API) ServiceOption {
+func withELBv2Client(client elb.ELBV2API) ServiceOption {
 	return func(s *Service) {
 		s.elbv2Client = client
 	}
 }
 
 // withResourceTaggingClient is an option for specifying a AWS Resource Tagging Client.
-func withResourceTaggingClient(client resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI) ServiceOption {
+func withResourceTaggingClient(client elb.ResourceGroupsTaggingAPIAPI) ServiceOption {
 	return func(s *Service) {
 		s.resourceTaggingClient = client
 	}
 }
 
 // withEC2Client is an option for specifying a AWS EC2 Client.
-func withEC2Client(client ec2iface.EC2API) ServiceOption {
+func withEC2Client(client common.EC2API) ServiceOption {
 	return func(s *Service) {
 		s.ec2Client = client
 	}

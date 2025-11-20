@@ -11,9 +11,16 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes the specified placement groups or all of your placement groups. For
-// more information, see Placement groups (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html)
-// in the Amazon EC2 User Guide.
+// Describes the specified placement groups or all of your placement groups.
+//
+// To describe a specific placement group that is shared with your account, you
+// must specify the ID of the placement group using the GroupId parameter.
+// Specifying the name of a shared placement group using the GroupNames parameter
+// will result in an error.
+//
+// For more information, see [Placement groups] in the Amazon EC2 User Guide.
+//
+// [Placement groups]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html
 func (c *Client) DescribePlacementGroups(ctx context.Context, params *DescribePlacementGroupsInput, optFns ...func(*Options)) (*DescribePlacementGroupsOutput, error) {
 	if params == nil {
 		params = &DescribePlacementGroupsInput{}
@@ -31,24 +38,31 @@ func (c *Client) DescribePlacementGroups(ctx context.Context, params *DescribePl
 
 type DescribePlacementGroupsInput struct {
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - group-name - The name of the placement group.
+	//
 	//   - group-arn - The Amazon Resource Name (ARN) of the placement group.
+	//
 	//   - spread-level - The spread level for the placement group ( host | rack ).
+	//
 	//   - state - The state of the placement group ( pending | available | deleting |
 	//   deleted ).
+	//
 	//   - strategy - The strategy of the placement group ( cluster | spread |
 	//   partition ).
+	//
 	//   - tag: - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
+	//
 	//   - tag-key - The key of a tag assigned to the resource. Use this filter to find
 	//   all resources that have a tag with a specific key, regardless of the tag value.
 	Filters []types.Filter
@@ -56,8 +70,14 @@ type DescribePlacementGroupsInput struct {
 	// The IDs of the placement groups.
 	GroupIds []string
 
-	// The names of the placement groups. Default: Describes all your placement
-	// groups, or only those otherwise specified.
+	// The names of the placement groups.
+	//
+	// Constraints:
+	//
+	//   - You can specify a name only if the placement group is owned by your account.
+	//
+	//   - If a placement group is shared with your account, specifying the name
+	//   results in an error. You must use the GroupId parameter instead.
 	GroupNames []string
 
 	noSmithyDocumentSerde
@@ -117,6 +137,9 @@ func (c *Client) addOperationDescribePlacementGroupsMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -127,6 +150,15 @@ func (c *Client) addOperationDescribePlacementGroupsMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribePlacementGroups(options.Region), middleware.Before); err != nil {
@@ -145,6 +177,18 @@ func (c *Client) addOperationDescribePlacementGroupsMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
