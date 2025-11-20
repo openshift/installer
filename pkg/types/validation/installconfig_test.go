@@ -3110,7 +3110,7 @@ func c1() *credentialBuilder {
 			HostName: "host1",
 			Username: "root",
 			Password: "password",
-			Address:  "ipmi://192.168.111.1",
+			Address:  "redfish+https://192.168.111.1/redfish/v1/Systems/1",
 		},
 	}
 }
@@ -3121,7 +3121,7 @@ func c2() *credentialBuilder {
 			HostName: "host2",
 			Username: "root",
 			Password: "password",
-			Address:  "ipmi://192.168.111.2",
+			Address:  "redfish+https://192.168.111.2/redfish/v1/Systems/1",
 		},
 	}
 }
@@ -3132,7 +3132,7 @@ func c3() *credentialBuilder {
 			HostName: "host3",
 			Username: "root",
 			Password: "password",
-			Address:  "ipmi://192.168.111.3",
+			Address:  "redfish+https://192.168.111.3/redfish/v1/Systems/1",
 		},
 	}
 }
