@@ -232,19 +232,10 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 func getVPCFromSubnets(ctx context.Context, ic *installconfig.InstallConfig, subnetIDs []string) (string, error) {
 	var vpcID string
 
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.AWS.Region))
+	client, err := ic.AWS.EC2Client(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to load AWS config: %w", err)
+		return "", err
 	}
-
-	client := ec2.NewFromConfig(cfg, func(options *ec2.Options) {
-		options.Region = ic.Config.AWS.Region
-		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "ec2") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
-	})
 
 	paginator := ec2.NewDescribeSubnetsPaginator(client, &ec2.DescribeSubnetsInput{SubnetIds: subnetIDs})
 	for paginator.HasMorePages() {
