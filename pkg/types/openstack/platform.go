@@ -88,7 +88,6 @@ type Platform struct {
 	// CIDR
 	//
 	// +kubebuilder:validation:MaxItems=2
-	// +kubebuilder:validation:UniqueItems=true
 	// +kubebuilder:validation:Format=ip
 	// +optional
 	APIVIPs []string `json:"apiVIPs,omitempty"`
@@ -108,7 +107,6 @@ type Platform struct {
 	// CIDR
 	//
 	// +kubebuilder:validation:MaxItems=2
-	// +kubebuilder:validation:UniqueItems=true
 	// +kubebuilder:validation:Format=ip
 	// +optional
 	IngressVIPs []string `json:"ingressVIPs,omitempty"`

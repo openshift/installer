@@ -95,3 +95,22 @@ func MustParseCIDR(s string) *IPNet {
 	}
 	return cidr
 }
+
+// DeepCopyInto copies the receiver into out.  out must be non-nil.
+func (ipnet *IPNet) DeepCopyInto(out *IPNet) {
+	if ipnet == nil {
+		*out = IPNet{}
+	} else {
+		*out = *ipnet
+	}
+}
+
+// DeepCopy copies the receiver, creating a new IPNet.
+func (ipnet *IPNet) DeepCopy() *IPNet {
+	if ipnet == nil {
+		return nil
+	}
+	out := new(IPNet)
+	ipnet.DeepCopyInto(out)
+	return out
+}
