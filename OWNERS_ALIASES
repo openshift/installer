@@ -26,12 +26,10 @@ aliases:
   openstack-approvers:
     - gryf
     - mandre
-    - pierreprinetti
     - stephenfin
   openstack-reviewers:
     - gryf
     - mandre
-    - pierreprinetti
     - stephenfin
   powervc-approvers:
     - hamzy
