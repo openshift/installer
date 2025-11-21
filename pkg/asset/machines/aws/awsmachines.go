@@ -139,6 +139,16 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 			)
 		}
 
+		if mpool.CPUOptions != nil {
+			cpuOptions := capa.CPUOptions{}
+
+			if mpool.CPUOptions.ConfidentialCompute != nil {
+				cpuOptions.ConfidentialCompute = capa.AWSConfidentialComputePolicy(*mpool.CPUOptions.ConfidentialCompute)
+			}
+
+			awsMachine.Spec.CPUOptions = cpuOptions
+		}
+
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", awsMachine.Name)},
 			Object: awsMachine,

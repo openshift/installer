@@ -27,6 +27,11 @@ var (
 	}()
 
 	validMetadataAuthValues = sets.NewString("Required", "Optional")
+
+	validConfidentialComputePolicy = []aws.ConfidentialComputePolicy{
+		aws.ConfidentialComputePolicyDisabled,
+		aws.ConfidentialComputePolicySEVSNP,
+	}
 )
 
 // AWS has a limit of 16 security groups. See:
@@ -53,6 +58,7 @@ func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *fi
 	}
 
 	allErrs = append(allErrs, validateSecurityGroups(platform, p, fldPath)...)
+	allErrs = append(allErrs, ValidateCPUOptions(p, fldPath)...)
 
 	return allErrs
 }
@@ -131,5 +137,43 @@ func ValidateMachinePoolArchitecture(pool *types.MachinePool, fldPath *field.Pat
 	if !validArchitectures[pool.Architecture] {
 		allErrs = append(allErrs, field.NotSupported(fldPath, pool.Architecture, validArchitectureValues))
 	}
+	return allErrs
+}
+
+// ValidateCPUOptions checks that valid CPU options are set for a machine pool.
+func ValidateCPUOptions(p *aws.MachinePool, fldPath *field.Path) field.ErrorList {
+	if p.CPUOptions == nil {
+		return nil
+	}
+
+	allErrs := field.ErrorList{}
+
+	if *p.CPUOptions == (aws.CPUOptions{}) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(
+				fldPath.Child("cpuOptions"),
+				"{}",
+				"At least one field must be set if cpuOptions is provided",
+			),
+		)
+	}
+
+	if p.CPUOptions.ConfidentialCompute != nil {
+		switch *p.CPUOptions.ConfidentialCompute {
+		case aws.ConfidentialComputePolicyDisabled, aws.ConfidentialComputePolicySEVSNP:
+			// Valid values
+		default:
+			allErrs = append(
+				allErrs,
+				field.NotSupported(
+					fldPath.Child("confidentialCompute"),
+					p.CPUOptions.ConfidentialCompute,
+					validConfidentialComputePolicy,
+				),
+			)
+		}
+	}
+
 	return allErrs
 }
