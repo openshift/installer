@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"encoding/pem"
 	"errors"
-	"io/fs"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/vmware/govmomi/find"
@@ -83,12 +83,12 @@ func (vss *VSphereSimulator) StartSimulator() (*simulator.Server, error) {
 
 // GetClient returns a vim25 client which connects to and trusts the simulator
 func GetClient(server *simulator.Server) (*vim25.Client, *session.Manager, error) {
-	tmpCAdir := "/tmp/vcsimca"
+	tmpCAdir := filepath.Join(os.TempDir(), "vcsimca")
 	err := os.Mkdir(tmpCAdir, os.ModePerm)
 
 	if err != nil {
 		// If the error is not file existing return err
-		if !errors.Is(err, fs.ErrExist) {
+		if !os.IsExist(err) {
 			return nil, nil, err
 		}
 	}
@@ -101,8 +101,16 @@ func GetClient(server *simulator.Server) (*vim25.Client, *session.Manager, error
 	if err != nil {
 		return nil, nil, err
 	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
 	_, err = tempFile.Write(pem.EncodeToMemory(&pemBlock))
 	if err != nil {
+		return nil, nil, err
+	}
+
+	// Close the file so the CA bundle can be read
+	if err := tempFile.Close(); err != nil {
 		return nil, nil, err
 	}
 
