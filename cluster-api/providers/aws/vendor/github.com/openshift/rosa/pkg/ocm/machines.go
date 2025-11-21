@@ -19,7 +19,6 @@ package ocm
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -262,12 +261,7 @@ func (mtl *MachineTypeList) ValidateMachineType(machineType string, multiAZ bool
 	v := mtl.Find(machineType)
 
 	if v == nil {
-		allMachineTypes := strings.Join(mtl.IDs(), " ")
-		allAvailabilityZones := strings.Join(mtl.AvailabilityZones, ",")
-		err := fmt.Errorf("Machine type '%s' not found in availability zones '%s' for region: '%s'\n"+
-			"Available machine type list: %s",
-			machineType, allAvailabilityZones, mtl.Region, allMachineTypes)
-		return err
+		return nil // Replaced not-found error with a preflight in CS (validateZoneSupportInstanceType)
 	}
 
 	if !v.HasQuota(multiAZ) {

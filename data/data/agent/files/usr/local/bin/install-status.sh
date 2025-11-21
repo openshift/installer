@@ -9,7 +9,7 @@ inactive_services() {
 
     if [ -f "/etc/assisted/interactive-ui" ]; then
         # interactive workflow
-        services+=" agent-ui.service"
+        services+=" agent-register-infraenv.service agent-ui.service"
     elif [ -f "/etc/assisted/add-nodes.env" ]; then
         # add nodes workflow
         services+=" agent-import-cluster.service agent-register-infraenv.service apply-host-config.service agent-add-node.service"

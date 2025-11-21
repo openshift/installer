@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta2
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -55,16 +56,21 @@ const (
 
 // SetupWebhookWithManager will setup the webhooks for the AWSManagedControlPlane.
 func (r *AWSManagedControlPlane) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(awsManagedControlPlaneWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(w).
+		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-controlplane-cluster-x-k8s-io-v1beta2-awsmanagedcontrolplane,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=controlplane.cluster.x-k8s.io,resources=awsmanagedcontrolplanes,versions=v1beta2,name=validation.awsmanagedcontrolplanes.controlplane.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-controlplane-cluster-x-k8s-io-v1beta2-awsmanagedcontrolplane,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=controlplane.cluster.x-k8s.io,resources=awsmanagedcontrolplanes,versions=v1beta2,name=default.awsmanagedcontrolplanes.controlplane.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-var _ webhook.Defaulter = &AWSManagedControlPlane{}
-var _ webhook.Validator = &AWSManagedControlPlane{}
+type awsManagedControlPlaneWebhook struct{}
+
+var _ webhook.CustomDefaulter = &awsManagedControlPlaneWebhook{}
+var _ webhook.CustomValidator = &awsManagedControlPlaneWebhook{}
 
 func parseEKSVersion(raw string) (*version.Version, error) {
 	v, err := version.ParseGeneric(raw)
@@ -75,7 +81,12 @@ func parseEKSVersion(raw string) (*version.Version, error) {
 }
 
 // ValidateCreate will do any extra validation when creating a AWSManagedControlPlane.
-func (r *AWSManagedControlPlane) ValidateCreate() (admission.Warnings, error) {
+func (*awsManagedControlPlaneWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	r, ok := obj.(*AWSManagedControlPlane)
+	if !ok {
+		return nil, fmt.Errorf("expected an AWSManagedControlPlane object but got %T", r)
+	}
+
 	mcpLog.Info("AWSManagedControlPlane validate create", "control-plane", klog.KObj(r))
 
 	var allErrs field.ErrorList
@@ -96,6 +107,7 @@ func (r *AWSManagedControlPlane) ValidateCreate() (admission.Warnings, error) {
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validateNetwork()...)
 	allErrs = append(allErrs, r.validatePrivateDNSHostnameTypeOnLaunch()...)
+	allErrs = append(allErrs, r.validateAccessConfigCreate()...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -109,9 +121,15 @@ func (r *AWSManagedControlPlane) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate will do any extra validation when updating a AWSManagedControlPlane.
-func (r *AWSManagedControlPlane) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (*awsManagedControlPlaneWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	r, ok := newObj.(*AWSManagedControlPlane)
+	if !ok {
+		return nil, fmt.Errorf("expected an AWSManagedControlPlane object but got %T", r)
+	}
+
 	mcpLog.Info("AWSManagedControlPlane validate update", "control-plane", klog.KObj(r))
-	oldAWSManagedControlplane, ok := old.(*AWSManagedControlPlane)
+
+	oldAWSManagedControlplane, ok := oldObj.(*AWSManagedControlPlane)
 	if !ok {
 		return nil, apierrors.NewInvalid(GroupVersion.WithKind("AWSManagedControlPlane").GroupKind(), r.Name, field.ErrorList{
 			field.InternalError(nil, errors.New("failed to convert old AWSManagedControlPlane to object")),
@@ -123,6 +141,7 @@ func (r *AWSManagedControlPlane) ValidateUpdate(old runtime.Object) (admission.W
 	allErrs = append(allErrs, r.validateEKSClusterNameSame(oldAWSManagedControlplane)...)
 	allErrs = append(allErrs, r.validateEKSVersion(oldAWSManagedControlplane)...)
 	allErrs = append(allErrs, r.Spec.Bastion.Validate()...)
+	allErrs = append(allErrs, r.validateAccessConfigUpdate(oldAWSManagedControlplane)...)
 	allErrs = append(allErrs, r.validateIAMAuthConfig()...)
 	allErrs = append(allErrs, r.validateSecondaryCIDR()...)
 	allErrs = append(allErrs, r.validateEKSAddons()...)
@@ -181,9 +200,7 @@ func (r *AWSManagedControlPlane) ValidateUpdate(old runtime.Object) (admission.W
 }
 
 // ValidateDelete allows you to add any extra validation when deleting.
-func (r *AWSManagedControlPlane) ValidateDelete() (admission.Warnings, error) {
-	mcpLog.Info("AWSManagedControlPlane validate delete", "control-plane", klog.KObj(r))
-
+func (*awsManagedControlPlaneWebhook) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
@@ -208,69 +225,83 @@ func (r *AWSManagedControlPlane) validateEKSClusterNameSame(old *AWSManagedContr
 
 func (r *AWSManagedControlPlane) validateEKSVersion(old *AWSManagedControlPlane) field.ErrorList {
 	path := field.NewPath("spec.version")
+	var oldVersion *string
+	if old != nil {
+		oldVersion = old.Spec.Version
+	}
+	return validateEKSVersion(r.Spec.Version, oldVersion, r.Spec.NetworkSpec, path)
+}
+
+func validateEKSVersion(eksVersion *string, oldVersion *string, networkSpec infrav1.NetworkSpec, path *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	if r.Spec.Version == nil {
+	if eksVersion == nil {
 		return allErrs
 	}
 
-	v, err := parseEKSVersion(*r.Spec.Version)
+	v, err := parseEKSVersion(*eksVersion)
 	if err != nil {
-		allErrs = append(allErrs, field.Invalid(path, *r.Spec.Version, err.Error()))
+		allErrs = append(allErrs, field.Invalid(path, *eksVersion, err.Error()))
 	}
 
-	if old != nil && old.Spec.Version != nil {
-		oldV, err := parseEKSVersion(*old.Spec.Version)
+	if oldVersion != nil {
+		oldV, err := parseEKSVersion(*oldVersion)
 		if err == nil && (v.Major() < oldV.Major() || v.Minor() < oldV.Minor()) {
-			allErrs = append(allErrs, field.Invalid(path, *r.Spec.Version, "new version less than old version"))
+			allErrs = append(allErrs, field.Invalid(path, *eksVersion, "new version less than old version"))
 		}
 	}
 
-	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() {
+	if networkSpec.VPC.IsIPv6Enabled() {
 		minIPv6, _ := version.ParseSemantic(minKubeVersionForIPv6)
 		if v.LessThan(minIPv6) {
-			allErrs = append(allErrs, field.Invalid(path, *r.Spec.Version, fmt.Sprintf("IPv6 requires Kubernetes %s or greater", minKubeVersionForIPv6)))
+			allErrs = append(allErrs, field.Invalid(path, *eksVersion, fmt.Sprintf("IPv6 requires Kubernetes %s or greater", minKubeVersionForIPv6)))
 		}
 	}
 	return allErrs
 }
 
 func (r *AWSManagedControlPlane) validateEKSAddons() field.ErrorList {
+	return validateEKSAddons(r.Spec.Version, r.Spec.NetworkSpec, r.Spec.Addons, field.NewPath("spec"))
+}
+
+func validateEKSAddons(eksVersion *string, networkSpec infrav1.NetworkSpec, addons *[]Addon, path *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	if !r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && (r.Spec.Addons == nil || len(*r.Spec.Addons) == 0) {
+	// If not using IPv6 and no addons are specified, return no errors
+	if !networkSpec.VPC.IsIPv6Enabled() && (addons == nil || len(*addons) == 0) {
 		return allErrs
 	}
 
-	if r.Spec.Version == nil {
+	// Version is required for addon validation
+	if eksVersion == nil {
 		return allErrs
 	}
 
-	path := field.NewPath("spec.version")
-	v, err := parseEKSVersion(*r.Spec.Version)
+	versionPath := path.Child("version")
+	v, err := parseEKSVersion(*eksVersion)
 	if err != nil {
-		allErrs = append(allErrs, field.Invalid(path, *r.Spec.Version, err.Error()))
+		allErrs = append(allErrs, field.Invalid(versionPath, *eksVersion, err.Error()))
 	}
 
 	minVersion, _ := version.ParseSemantic(minAddonVersion)
 
-	addonsPath := field.NewPath("spec.addons")
+	addonsPath := path.Child("addons")
 
 	if v.LessThan(minVersion) {
-		message := fmt.Sprintf("addons requires Kubernetes %s or greater", minAddonVersion)
-		allErrs = append(allErrs, field.Invalid(addonsPath, *r.Spec.Version, message))
+		message := fmt.Sprintf("addons require Kubernetes %s or greater", minAddonVersion)
+		allErrs = append(allErrs, field.Invalid(addonsPath, *eksVersion, message))
 	}
 
 	// validations for IPv6:
 	// - addons have to be defined in case IPv6 is enabled
 	// - minimum version requirement for VPC-CNI using IPv6 ipFamily is 1.10.2
-	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() {
-		if r.Spec.Addons == nil || len(*r.Spec.Addons) == 0 {
+	if networkSpec.VPC.IsIPv6Enabled() {
+		if addons == nil || len(*addons) == 0 {
 			allErrs = append(allErrs, field.Invalid(addonsPath, "", "addons are required to be set explicitly if IPv6 is enabled"))
 			return allErrs
 		}
 
-		for _, addon := range *r.Spec.Addons {
+		for _, addon := range *addons {
 			if addon.Name == vpcCniAddon {
 				v, err := version.ParseGeneric(addon.Version)
 				if err != nil {
@@ -289,19 +320,66 @@ func (r *AWSManagedControlPlane) validateEKSAddons() field.ErrorList {
 	return allErrs
 }
 
-func (r *AWSManagedControlPlane) validateIAMAuthConfig() field.ErrorList {
+func (r *AWSManagedControlPlane) validateAccessConfigUpdate(old *AWSManagedControlPlane) field.ErrorList {
 	var allErrs field.ErrorList
 
-	parentPath := field.NewPath("spec.iamAuthenticatorConfig")
+	// If accessConfig is already set, do not allow removal of it.
+	if old.Spec.AccessConfig != nil && r.Spec.AccessConfig == nil {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "accessConfig"), r.Spec.AccessConfig, "removing AccessConfig is not allowed after it has been enabled"),
+		)
+	}
 
-	cfg := r.Spec.IAMAuthenticatorConfig
+	// AuthenticationMode is ratcheting - do not allow downgrades
+	if old.Spec.AccessConfig != nil && r.Spec.AccessConfig != nil &&
+		old.Spec.AccessConfig.AuthenticationMode != r.Spec.AccessConfig.AuthenticationMode &&
+		((old.Spec.AccessConfig.AuthenticationMode == EKSAuthenticationModeAPIAndConfigMap && r.Spec.AccessConfig.AuthenticationMode == EKSAuthenticationModeConfigMap) ||
+			old.Spec.AccessConfig.AuthenticationMode == EKSAuthenticationModeAPI) {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "accessConfig", "authenticationMode"), r.Spec.AccessConfig.AuthenticationMode, "downgrading authentication mode is not allowed after it has been enabled"),
+		)
+	}
+
+	// BootstrapClusterCreatorAdminPermissions only applies on create, but changes should not invalidate updates
+	if old.Spec.AccessConfig != nil && r.Spec.AccessConfig != nil &&
+		old.Spec.AccessConfig.BootstrapClusterCreatorAdminPermissions != r.Spec.AccessConfig.BootstrapClusterCreatorAdminPermissions {
+		mcpLog.Info("Ignoring changes to BootstrapClusterCreatorAdminPermissions on cluster update", "old", old.Spec.AccessConfig.BootstrapClusterCreatorAdminPermissions, "new", r.Spec.AccessConfig.BootstrapClusterCreatorAdminPermissions)
+	}
+
+	return allErrs
+}
+
+func (r *AWSManagedControlPlane) validateAccessConfigCreate() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if r.Spec.AccessConfig != nil {
+		if r.Spec.AccessConfig.AuthenticationMode == EKSAuthenticationModeConfigMap &&
+			r.Spec.AccessConfig.BootstrapClusterCreatorAdminPermissions != nil &&
+			!*r.Spec.AccessConfig.BootstrapClusterCreatorAdminPermissions {
+			allErrs = append(allErrs,
+				field.Invalid(field.NewPath("spec", "accessConfig", "bootstrapClusterCreatorAdminPermissions"),
+					*r.Spec.AccessConfig.BootstrapClusterCreatorAdminPermissions,
+					"bootstrapClusterCreatorAdminPermissions must be true if cluster authentication mode is set to config_map"),
+			)
+		}
+	}
+
+	return allErrs
+}
+
+func (r *AWSManagedControlPlane) validateIAMAuthConfig() field.ErrorList {
+	return validateIAMAuthConfig(r.Spec.IAMAuthenticatorConfig, field.NewPath("spec.iamAuthenticatorConfig"))
+}
+
+func validateIAMAuthConfig(cfg *IAMAuthenticatorConfig, parentPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
 	if cfg == nil {
 		return allErrs
 	}
 
 	for i, userMapping := range cfg.UserMappings {
-		usersPathName := fmt.Sprintf("mapUsers[%d]", i)
-		usersPath := parentPath.Child(usersPathName)
+		usersPath := parentPath.Child(fmt.Sprintf("mapUsers[%d]", i))
 		errs := userMapping.Validate()
 		for _, validErr := range errs {
 			allErrs = append(allErrs, field.Invalid(usersPath, userMapping, validErr.Error()))
@@ -309,8 +387,7 @@ func (r *AWSManagedControlPlane) validateIAMAuthConfig() field.ErrorList {
 	}
 
 	for i, roleMapping := range cfg.RoleMappings {
-		rolePathName := fmt.Sprintf("mapRoles[%d]", i)
-		rolePath := parentPath.Child(rolePathName)
+		rolePath := parentPath.Child(fmt.Sprintf("mapRoles[%d]", i))
 		errs := roleMapping.Validate()
 		for _, validErr := range errs {
 			allErrs = append(allErrs, field.Invalid(rolePath, roleMapping, validErr.Error()))
@@ -321,164 +398,204 @@ func (r *AWSManagedControlPlane) validateIAMAuthConfig() field.ErrorList {
 }
 
 func (r *AWSManagedControlPlane) validateSecondaryCIDR() field.ErrorList {
+	return validateSecondaryCIDR(r.Spec.SecondaryCidrBlock, field.NewPath("spec", "secondaryCidrBlock"))
+}
+
+func validateSecondaryCIDR(secondaryCidrBlock *string, path *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
-	if r.Spec.SecondaryCidrBlock != nil {
-		cidrField := field.NewPath("spec", "secondaryCidrBlock")
+	if secondaryCidrBlock != nil {
 		_, validRange1, _ := net.ParseCIDR("100.64.0.0/10")
 		_, validRange2, _ := net.ParseCIDR("198.19.0.0/16")
 
-		_, ipv4Net, err := net.ParseCIDR(*r.Spec.SecondaryCidrBlock)
+		_, ipv4Net, err := net.ParseCIDR(*secondaryCidrBlock)
 		if err != nil {
-			allErrs = append(allErrs, field.Invalid(cidrField, *r.Spec.SecondaryCidrBlock, "must be valid CIDR range"))
+			allErrs = append(allErrs, field.Invalid(path, *secondaryCidrBlock, "must be a valid CIDR range"))
 			return allErrs
 		}
 
 		cidrSize := cidr.AddressCount(ipv4Net)
 		if cidrSize > cidrSizeMax || cidrSize < cidrSizeMin {
-			allErrs = append(allErrs, field.Invalid(cidrField, *r.Spec.SecondaryCidrBlock, "CIDR block sizes must be between a /16 netmask and /28 netmask"))
+			allErrs = append(allErrs, field.Invalid(path, *secondaryCidrBlock, "CIDR block sizes must be between a /16 netmask and /28 netmask"))
 		}
 
 		start, end := cidr.AddressRange(ipv4Net)
 		if (!validRange1.Contains(start) || !validRange1.Contains(end)) && (!validRange2.Contains(start) || !validRange2.Contains(end)) {
-			allErrs = append(allErrs, field.Invalid(cidrField, *r.Spec.SecondaryCidrBlock, "must be within the 100.64.0.0/10 or 198.19.0.0/16 range"))
+			allErrs = append(allErrs, field.Invalid(path, *secondaryCidrBlock, "must be within the 100.64.0.0/10 or 198.19.0.0/16 range"))
 		}
-	}
-
-	if len(allErrs) == 0 {
-		return nil
 	}
 	return allErrs
 }
 
 func (r *AWSManagedControlPlane) validateKubeProxy() field.ErrorList {
+	return validateKubeProxy(r.Spec.KubeProxy, r.Spec.Addons, field.NewPath("spec"))
+}
+
+func validateKubeProxy(kubeProxy KubeProxy, addons *[]Addon, path *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	if r.Spec.KubeProxy.Disable {
-		disableField := field.NewPath("spec", "kubeProxy", "disable")
+	if kubeProxy.Disable {
+		disableField := path.Child("kubeProxy", "disable")
 
-		if r.Spec.Addons != nil {
-			for _, addon := range *r.Spec.Addons {
+		if addons != nil {
+			for _, addon := range *addons {
 				if addon.Name == kubeProxyAddon {
-					allErrs = append(allErrs, field.Invalid(disableField, r.Spec.KubeProxy.Disable, "cannot disable kube-proxy if the kube-proxy addon is specified"))
+					allErrs = append(allErrs, field.Invalid(disableField, kubeProxy.Disable, "cannot disable kube-proxy if the kube-proxy addon is specified"))
 					break
 				}
 			}
 		}
 	}
 
-	if len(allErrs) == 0 {
-		return nil
-	}
 	return allErrs
 }
 
 func (r *AWSManagedControlPlane) validateDisableVPCCNI() field.ErrorList {
+	return validateDisableVPCCNI(r.Spec.VpcCni, r.Spec.Addons, field.NewPath("spec"))
+}
+
+func validateDisableVPCCNI(vpcCni VpcCni, addons *[]Addon, path *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	if r.Spec.VpcCni.Disable {
-		disableField := field.NewPath("spec", "vpcCni", "disable")
+	if vpcCni.Disable {
+		disableField := path.Child("vpcCni", "disable")
 
-		if r.Spec.Addons != nil {
-			for _, addon := range *r.Spec.Addons {
+		if addons != nil {
+			for _, addon := range *addons {
 				if addon.Name == vpcCniAddon {
-					allErrs = append(allErrs, field.Invalid(disableField, r.Spec.VpcCni.Disable, "cannot disable vpc cni if the vpc-cni addon is specified"))
+					allErrs = append(allErrs, field.Invalid(disableField, vpcCni.Disable, "cannot disable vpc cni if the vpc-cni addon is specified"))
 					break
 				}
 			}
 		}
 	}
 
-	if len(allErrs) == 0 {
-		return nil
-	}
 	return allErrs
 }
 
 func (r *AWSManagedControlPlane) validateRestrictPrivateSubnets() field.ErrorList {
+	return validateRestrictPrivateSubnets(r.Spec.RestrictPrivateSubnets, r.Spec.NetworkSpec, r.Spec.EKSClusterName, field.NewPath("spec"))
+}
+
+func validateRestrictPrivateSubnets(restrictPrivateSubnets bool, networkSpec infrav1.NetworkSpec, eksClusterName string, path *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	if r.Spec.RestrictPrivateSubnets && r.Spec.NetworkSpec.VPC.IsUnmanaged(r.Spec.EKSClusterName) {
-		boolField := field.NewPath("spec", "restrictPrivateSubnets")
-		if len(r.Spec.NetworkSpec.Subnets.FilterPrivate()) == 0 {
-			allErrs = append(allErrs, field.Invalid(boolField, r.Spec.RestrictPrivateSubnets, "cannot enable private subnets restriction when no private subnets are specified"))
+	if restrictPrivateSubnets && networkSpec.VPC.IsUnmanaged(eksClusterName) {
+		boolField := path.Child("restrictPrivateSubnets")
+		if len(networkSpec.Subnets.FilterPrivate()) == 0 {
+			allErrs = append(allErrs, field.Invalid(boolField, restrictPrivateSubnets, "cannot enable private subnets restriction when no private subnets are specified"))
 		}
 	}
 
-	if len(allErrs) == 0 {
-		return nil
-	}
 	return allErrs
 }
 
 func (r *AWSManagedControlPlane) validatePrivateDNSHostnameTypeOnLaunch() field.ErrorList {
+	return validatePrivateDNSHostnameTypeOnLaunch(r.Spec.NetworkSpec, field.NewPath("spec"))
+}
+
+func validatePrivateDNSHostnameTypeOnLaunch(networkSpec infrav1.NetworkSpec, path *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch != nil && *r.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch != hostnameTypeResourceName {
-		privateDNSHostnameTypeOnLaunch := field.NewPath("spec", "networkSpec", "vpc", "privateDNSHostnameTypeOnLaunch")
-		allErrs = append(allErrs, field.Invalid(privateDNSHostnameTypeOnLaunch, r.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch, fmt.Sprintf("only %s HostnameType can be used in IPv6 mode", hostnameTypeResourceName)))
+	if networkSpec.VPC.IsIPv6Enabled() && networkSpec.VPC.PrivateDNSHostnameTypeOnLaunch != nil && *networkSpec.VPC.PrivateDNSHostnameTypeOnLaunch != hostnameTypeResourceName {
+		privateDNSHostnameTypeOnLaunchPath := path.Child("networkSpec", "vpc", "privateDNSHostnameTypeOnLaunch")
+		allErrs = append(allErrs, field.Invalid(
+			privateDNSHostnameTypeOnLaunchPath, networkSpec.VPC.PrivateDNSHostnameTypeOnLaunch,
+			fmt.Sprintf("only %s HostnameType can be used in IPv6 mode", hostnameTypeResourceName),
+		))
 	}
 
 	return allErrs
 }
 
 func (r *AWSManagedControlPlane) validateNetwork() field.ErrorList {
+	return validateNetwork("AWSManagedControlPlane", r.Spec.NetworkSpec, r.Spec.SecondaryCidrBlock, field.NewPath("spec"))
+}
+
+func validateNetwork(resourceName string, networkSpec infrav1.NetworkSpec, secondaryCidrBlock *string, path *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
 	// If only `AWSManagedControlPlane.spec.secondaryCidrBlock` is set, no additional checks are done to remain
 	// backward-compatible. The `VPCSpec.SecondaryCidrBlocks` field was added later - if that list is not empty, we
 	// require `AWSManagedControlPlane.spec.secondaryCidrBlock` to be listed in there as well. This may allow merging
 	// the fields later on.
-	podSecondaryCidrBlock := r.Spec.SecondaryCidrBlock
-	secondaryCidrBlocks := r.Spec.NetworkSpec.VPC.SecondaryCidrBlocks
-	secondaryCidrBlocksField := field.NewPath("spec", "network", "vpc", "secondaryCidrBlocks")
-	if podSecondaryCidrBlock != nil && len(secondaryCidrBlocks) > 0 {
+	secondaryCidrBlocks := networkSpec.VPC.SecondaryCidrBlocks
+	secondaryCidrBlocksField := path.Child("network", "vpc", "secondaryCidrBlocks")
+	if secondaryCidrBlock != nil && len(secondaryCidrBlocks) > 0 {
 		found := false
 		for _, cidrBlock := range secondaryCidrBlocks {
-			if cidrBlock.IPv4CidrBlock == *podSecondaryCidrBlock {
+			if cidrBlock.IPv4CidrBlock == *secondaryCidrBlock {
 				found = true
 				break
 			}
 		}
 		if !found {
-			allErrs = append(allErrs, field.Invalid(secondaryCidrBlocksField, secondaryCidrBlocks, fmt.Sprintf("AWSManagedControlPlane.spec.secondaryCidrBlock %v must be listed in AWSManagedControlPlane.spec.network.vpc.secondaryCidrBlocks (required if both fields are filled)", *podSecondaryCidrBlock)))
+			allErrs = append(allErrs, field.Invalid(
+				secondaryCidrBlocksField, secondaryCidrBlocks,
+				fmt.Sprintf("%s.spec.secondaryCidrBlock %v must be listed in %s.spec.network.vpc.secondaryCidrBlocks (required if both fields are filled)", resourceName, *secondaryCidrBlock, resourceName),
+			))
 		}
 	}
 
-	if podSecondaryCidrBlock != nil && r.Spec.NetworkSpec.VPC.CidrBlock != "" && r.Spec.NetworkSpec.VPC.CidrBlock == *podSecondaryCidrBlock {
-		secondaryCidrBlockField := field.NewPath("spec", "vpc", "secondaryCidrBlock")
-		allErrs = append(allErrs, field.Invalid(secondaryCidrBlockField, secondaryCidrBlocks, fmt.Sprintf("AWSManagedControlPlane.spec.secondaryCidrBlock %v must not be equal to the primary AWSManagedControlPlane.spec.network.vpc.cidrBlock", *podSecondaryCidrBlock)))
+	if secondaryCidrBlock != nil && networkSpec.VPC.CidrBlock != "" && networkSpec.VPC.CidrBlock == *secondaryCidrBlock {
+		secondaryCidrBlockField := path.Child("vpc", "secondaryCidrBlock")
+		allErrs = append(allErrs, field.Invalid(
+			secondaryCidrBlockField, secondaryCidrBlocks,
+			fmt.Sprintf("%s.spec.secondaryCidrBlock %v must not be equal to the primary %s.spec.network.vpc.cidrBlock", resourceName, *secondaryCidrBlock, resourceName),
+		))
 	}
+
 	for _, cidrBlock := range secondaryCidrBlocks {
-		if r.Spec.NetworkSpec.VPC.CidrBlock != "" && r.Spec.NetworkSpec.VPC.CidrBlock == cidrBlock.IPv4CidrBlock {
-			allErrs = append(allErrs, field.Invalid(secondaryCidrBlocksField, secondaryCidrBlocks, fmt.Sprintf("AWSManagedControlPlane.spec.network.vpc.secondaryCidrBlocks must not contain the primary AWSManagedControlPlane.spec.network.vpc.cidrBlock %v", r.Spec.NetworkSpec.VPC.CidrBlock)))
+		if networkSpec.VPC.CidrBlock != "" && networkSpec.VPC.CidrBlock == cidrBlock.IPv4CidrBlock {
+			allErrs = append(allErrs, field.Invalid(
+				secondaryCidrBlocksField, secondaryCidrBlocks,
+				fmt.Sprintf("%s.spec.network.vpc.secondaryCidrBlocks must not contain the primary %s.spec.network.vpc.cidrBlock %v", resourceName, resourceName, networkSpec.VPC.CidrBlock),
+			))
 		}
 	}
 
-	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.CidrBlock != "" && r.Spec.NetworkSpec.VPC.IPv6.PoolID == "" {
-		poolField := field.NewPath("spec", "network", "vpc", "ipv6", "poolId")
-		allErrs = append(allErrs, field.Invalid(poolField, r.Spec.NetworkSpec.VPC.IPv6.PoolID, "poolId cannot be empty if cidrBlock is set"))
-	}
+	// IPv6 validations
+	if networkSpec.VPC.IsIPv6Enabled() {
+		ipv6Path := path.Child("network", "vpc", "ipv6")
 
-	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.PoolID != "" && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil {
-		poolField := field.NewPath("spec", "network", "vpc", "ipv6", "poolId")
-		allErrs = append(allErrs, field.Invalid(poolField, r.Spec.NetworkSpec.VPC.IPv6.PoolID, "poolId and ipamPool cannot be used together"))
-	}
+		if networkSpec.VPC.IPv6.CidrBlock != "" && networkSpec.VPC.IPv6.PoolID == "" {
+			allErrs = append(allErrs, field.Invalid(
+				ipv6Path.Child("poolId"), networkSpec.VPC.IPv6.PoolID,
+				"poolId cannot be empty if cidrBlock is set",
+			))
+		}
 
-	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.CidrBlock != "" && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil {
-		cidrBlockField := field.NewPath("spec", "network", "vpc", "ipv6", "cidrBlock")
-		allErrs = append(allErrs, field.Invalid(cidrBlockField, r.Spec.NetworkSpec.VPC.IPv6.CidrBlock, "cidrBlock and ipamPool cannot be used together"))
-	}
+		if networkSpec.VPC.IPv6.PoolID != "" && networkSpec.VPC.IPv6.IPAMPool != nil {
+			allErrs = append(allErrs, field.Invalid(
+				ipv6Path.Child("poolId"), networkSpec.VPC.IPv6.PoolID,
+				"poolId and ipamPool cannot be used together",
+			))
+		}
 
-	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool.ID == "" && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool.Name == "" {
-		ipamPoolField := field.NewPath("spec", "network", "vpc", "ipv6", "ipamPool")
-		allErrs = append(allErrs, field.Invalid(ipamPoolField, r.Spec.NetworkSpec.VPC.IPv6.IPAMPool, "ipamPool must have either id or name"))
+		if networkSpec.VPC.IPv6.CidrBlock != "" && networkSpec.VPC.IPv6.IPAMPool != nil {
+			allErrs = append(allErrs, field.Invalid(
+				ipv6Path.Child("cidrBlock"), networkSpec.VPC.IPv6.CidrBlock,
+				"cidrBlock and ipamPool cannot be used together",
+			))
+		}
+
+		if networkSpec.VPC.IPv6.IPAMPool != nil && networkSpec.VPC.IPv6.IPAMPool.ID == "" && networkSpec.VPC.IPv6.IPAMPool.Name == "" {
+			allErrs = append(allErrs, field.Invalid(
+				ipv6Path.Child("ipamPool"), networkSpec.VPC.IPv6.IPAMPool,
+				"ipamPool must have either id or name",
+			))
+		}
 	}
 
 	return allErrs
 }
 
 // Default will set default values for the AWSManagedControlPlane.
-func (r *AWSManagedControlPlane) Default() {
+func (*awsManagedControlPlaneWebhook) Default(_ context.Context, obj runtime.Object) error {
+	r, ok := obj.(*AWSManagedControlPlane)
+	if !ok {
+		return fmt.Errorf("expected an AWSManagedControlPlane object but got %T", r)
+	}
+
 	mcpLog.Info("AWSManagedControlPlane setting defaults", "control-plane", klog.KObj(r))
 
 	if r.Spec.EKSClusterName == "" {
@@ -486,7 +603,7 @@ func (r *AWSManagedControlPlane) Default() {
 		name, err := eks.GenerateEKSName(r.Name, r.Namespace, maxClusterNameLength)
 		if err != nil {
 			mcpLog.Error(err, "failed to create EKS cluster name")
-			return
+			return nil
 		}
 
 		mcpLog.Info("defaulting EKS cluster name", "cluster", klog.KRef(r.Namespace, name))
@@ -502,4 +619,8 @@ func (r *AWSManagedControlPlane) Default() {
 
 	infrav1.SetDefaults_Bastion(&r.Spec.Bastion)
 	infrav1.SetDefaults_NetworkSpec(&r.Spec.NetworkSpec)
+
+	// Set default value for BootstrapSelfManagedAddons
+	r.Spec.BootstrapSelfManagedAddons = true
+	return nil
 }

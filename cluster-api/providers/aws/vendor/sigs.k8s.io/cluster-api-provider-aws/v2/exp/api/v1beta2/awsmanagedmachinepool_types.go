@@ -27,6 +27,8 @@ import (
 )
 
 // ManagedMachineAMIType specifies which AWS AMI to use for a managed MachinePool.
+// Source of truth can be found using the link below:
+// https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html#AmazonEKS-CreateNodegroup-request-amiType
 type ManagedMachineAMIType string
 
 const (
@@ -36,10 +38,38 @@ const (
 	Al2x86_64GPU ManagedMachineAMIType = "AL2_x86_64_GPU"
 	// Al2Arm64 is the Arm AMI type.
 	Al2Arm64 ManagedMachineAMIType = "AL2_ARM_64"
+	// Custom is the custom AMI type.
+	Custom ManagedMachineAMIType = "CUSTOM"
+	// BottleRocketArm64 is the Arm AMI type.
+	BottleRocketArm64 ManagedMachineAMIType = "BOTTLEROCKET_ARM_64"
+	// BottleRocketx86_64 is the BottleRocket x86-64 AMI type.
+	BottleRocketx86_64 ManagedMachineAMIType = "BOTTLEROCKET_x86_64"
+	// BottleRocketArm64Fips is the BottleRocket Arm Fips AMI type.
+	BottleRocketArm64Fips ManagedMachineAMIType = "BOTTLEROCKET_ARM_64_FIPS"
+	// BottleRocketx86_64Fips is the BottleRocket x86-64 Fips AMI type.
+	BottleRocketx86_64Fips ManagedMachineAMIType = "BOTTLEROCKET_x86_64_FIPS"
+	// BottleRocketArm64Nvidia is the BottleRocket Arm Nvidia AMI type.
+	BottleRocketArm64Nvidia ManagedMachineAMIType = "BOTTLEROCKET_ARM_64_NVIDIA"
+	// BottleRocketx86_64Nvidia is the BottleRocket x86-64 Nvidia AMI type.
+	BottleRocketx86_64Nvidia ManagedMachineAMIType = "BOTTLEROCKET_x86_64_NVIDIA"
+	// WindowsCore2019x86_64 is the Windows Core 2019 x86-64 AMI type.
+	WindowsCore2019x86_64 ManagedMachineAMIType = "WINDOWS_CORE_2019_x86_64"
+	// WindowsFull2019x86_64 is the Windows Full 2019 x86-64 AMI type.
+	WindowsFull2019x86_64 ManagedMachineAMIType = "WINDOWS_FULL_2019_x86_64"
+	// WindowsCore2022x86_64 is the Windows Core 2022 x86-64 AMI type.
+	WindowsCore2022x86_64 ManagedMachineAMIType = "WINDOWS_CORE_2022_x86_64"
+	// WindowsFull2022x86_64 is the Windows Full 2022 x86-64 AMI type.
+	WindowsFull2022x86_64 ManagedMachineAMIType = "WINDOWS_FULL_2022_x86_64"
 	// Al2023x86_64 is the AL2023 x86-64 AMI type.
 	Al2023x86_64 ManagedMachineAMIType = "AL2023_x86_64_STANDARD"
 	// Al2023Arm64 is the AL2023 Arm AMI type.
 	Al2023Arm64 ManagedMachineAMIType = "AL2023_ARM_64_STANDARD"
+	// Al2023x86_64Neuron is the AL2023 x86-64 Neuron AMI type.
+	Al2023x86_64Neuron ManagedMachineAMIType = "AL2023_x86_64_NEURON"
+	// Al2023x86_64Nvidia is the AL2023 x86-64 Nvidia AMI type.
+	Al2023x86_64Nvidia ManagedMachineAMIType = "AL2023_x86_64_NVIDIA"
+	// Al2023Arm64Nvidia is the AL2023 Arm Nvidia AMI type.
+	Al2023Arm64Nvidia ManagedMachineAMIType = "AL2023_ARM_64_NVIDIA"
 )
 
 // ManagedMachinePoolCapacityType specifies the capacity type to be used for the managed MachinePool.
@@ -99,6 +129,28 @@ type AWSManagedMachinePoolSpec struct {
 	// +optional
 	RoleName string `json:"roleName,omitempty"`
 
+	// RolePath sets the path to the role. For more information about paths, see IAM Identifiers
+	// (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html)
+	// in the IAM User Guide.
+	//
+	// This parameter is optional. If it is not included, it defaults to a slash
+	// (/).
+	RolePath string `json:"rolePath,omitempty"`
+
+	// RolePermissionsBoundary sets the ARN of the managed policy that is used
+	// to set the permissions boundary for the role.
+	//
+	// A permissions boundary policy defines the maximum permissions that identity-based
+	// policies can grant to an entity, but does not grant permissions. Permissions
+	// boundaries do not define the maximum permissions that a resource-based policy
+	// can grant to an entity. To learn more, see Permissions boundaries for IAM
+	// entities (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
+	// in the IAM User Guide.
+	//
+	// For more information about policy types, see Policy types (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#access_policy-types)
+	// in the IAM User Guide.
+	RolePermissionsBoundary string `json:"rolePermissionsBoundary,omitempty"`
+
 	// AMIVersion defines the desired AMI release version. If no version number
 	// is supplied then the latest version for the Kubernetes version
 	// will be used
@@ -107,7 +159,7 @@ type AWSManagedMachinePoolSpec struct {
 	AMIVersion *string `json:"amiVersion,omitempty"`
 
 	// AMIType defines the AMI type
-	// +kubebuilder:validation:Enum:=AL2_x86_64;AL2_x86_64_GPU;AL2_ARM_64;AL2023_x86_64_STANDARD;AL2023_ARM_64_STANDARD;CUSTOM
+	// +kubebuilder:validation:Enum:=AL2_x86_64;AL2_x86_64_GPU;AL2_ARM_64;CUSTOM;BOTTLEROCKET_ARM_64;BOTTLEROCKET_x86_64;BOTTLEROCKET_ARM_64_FIPS;BOTTLEROCKET_x86_64_FIPS;BOTTLEROCKET_ARM_64_NVIDIA;BOTTLEROCKET_x86_64_NVIDIA;WINDOWS_CORE_2019_x86_64;WINDOWS_FULL_2019_x86_64;WINDOWS_CORE_2022_x86_64;WINDOWS_FULL_2022_x86_64;AL2023_x86_64_STANDARD;AL2023_ARM_64_STANDARD;AL2023_x86_64_NEURON;AL2023_x86_64_NVIDIA;AL2023_ARM_64_NVIDIA
 	// +kubebuilder:default:=AL2_x86_64
 	// +optional
 	AMIType *ManagedMachineAMIType `json:"amiType,omitempty"`
@@ -158,6 +210,10 @@ type AWSManagedMachinePoolSpec struct {
 	// are prohibited (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html).
 	// +optional
 	AWSLaunchTemplate *AWSLaunchTemplate `json:"awsLaunchTemplate,omitempty"`
+
+	// AWSLifecycleHooks specifies lifecycle hooks for the managed node group.
+	// +optional
+	AWSLifecycleHooks []AWSLifecycleHook `json:"lifecycleHooks,omitempty"`
 }
 
 // ManagedMachinePoolScaling specifies scaling options.

@@ -11,14 +11,16 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes the Dedicated Host reservations that are available to purchase. The
-// results describe all of the Dedicated Host reservation offerings, including
+// Describes the Dedicated Host reservations that are available to purchase.
+//
+// The results describe all of the Dedicated Host reservation offerings, including
 // offerings that might not match the instance family and Region of your Dedicated
 // Hosts. When purchasing an offering, ensure that the instance family and Region
 // of the offering matches that of the Dedicated Hosts with which it is to be
-// associated. For more information about supported instance types, see Dedicated
-// Hosts (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-hosts-overview.html)
-// in the Amazon EC2 User Guide.
+// associated. For more information about supported instance types, see [Dedicated Hosts]in the
+// Amazon EC2 User Guide.
+//
+// [Dedicated Hosts]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-hosts-overview.html
 func (c *Client) DescribeHostReservationOfferings(ctx context.Context, params *DescribeHostReservationOfferingsInput, optFns ...func(*Options)) (*DescribeHostReservationOfferingsOutput, error) {
 	if params == nil {
 		params = &DescribeHostReservationOfferingsInput{}
@@ -37,7 +39,9 @@ func (c *Client) DescribeHostReservationOfferings(ctx context.Context, params *D
 type DescribeHostReservationOfferingsInput struct {
 
 	// The filters.
+	//
 	//   - instance-family - The instance family of the offering (for example, m4 ).
+	//
 	//   - payment-option - The payment option ( NoUpfront | PartialUpfront |
 	//   AllUpfront ).
 	Filter []types.Filter
@@ -129,6 +133,9 @@ func (c *Client) addOperationDescribeHostReservationOfferingsMiddlewares(stack *
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -139,6 +146,15 @@ func (c *Client) addOperationDescribeHostReservationOfferingsMiddlewares(stack *
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeHostReservationOfferings(options.Region), middleware.Before); err != nil {
@@ -159,16 +175,20 @@ func (c *Client) addOperationDescribeHostReservationOfferingsMiddlewares(stack *
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeHostReservationOfferingsAPIClient is a client that implements the
-// DescribeHostReservationOfferings operation.
-type DescribeHostReservationOfferingsAPIClient interface {
-	DescribeHostReservationOfferings(context.Context, *DescribeHostReservationOfferingsInput, ...func(*Options)) (*DescribeHostReservationOfferingsOutput, error)
-}
-
-var _ DescribeHostReservationOfferingsAPIClient = (*Client)(nil)
 
 // DescribeHostReservationOfferingsPaginatorOptions is the paginator options for
 // DescribeHostReservationOfferings
@@ -239,6 +259,9 @@ func (p *DescribeHostReservationOfferingsPaginator) NextPage(ctx context.Context
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeHostReservationOfferings(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -257,6 +280,14 @@ func (p *DescribeHostReservationOfferingsPaginator) NextPage(ctx context.Context
 
 	return result, nil
 }
+
+// DescribeHostReservationOfferingsAPIClient is a client that implements the
+// DescribeHostReservationOfferings operation.
+type DescribeHostReservationOfferingsAPIClient interface {
+	DescribeHostReservationOfferings(context.Context, *DescribeHostReservationOfferingsInput, ...func(*Options)) (*DescribeHostReservationOfferingsOutput, error)
+}
+
+var _ DescribeHostReservationOfferingsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeHostReservationOfferings(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

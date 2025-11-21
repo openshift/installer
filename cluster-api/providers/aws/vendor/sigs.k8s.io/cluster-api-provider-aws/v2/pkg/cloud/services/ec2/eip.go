@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"k8s.io/utils/ptr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -77,7 +77,7 @@ func (s *Service) getAndAssociateAddressesToInstance(pool *infrav1.ElasticIPPool
 		record.Warnf(s.scope.InfraCluster(), "FailedAllocateEIP", "Failed to allocate Elastic IP for %q: %v", role, err)
 		return fmt.Errorf("unexpected number of Elastic IP to instance %q, got %d: %w", instance, len(eips), err)
 	}
-	_, err = s.EC2Client.AssociateAddressWithContext(context.TODO(), &ec2.AssociateAddressInput{
+	_, err = s.EC2Client.AssociateAddress(context.TODO(), &ec2.AssociateAddressInput{
 		InstanceId:   aws.String(instance),
 		AllocationId: aws.String(eips[0]),
 	})

@@ -22,8 +22,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/pkg/errors"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -136,19 +137,19 @@ func (s *Service) DeleteBastion() error {
 
 func (s *Service) describeBastionInstance() (*infrav1.Instance, error) {
 	input := &ec2.DescribeInstancesInput{
-		Filters: []*ec2.Filter{
+		Filters: []types.Filter{
 			filter.EC2.ProviderRole(infrav1.BastionRoleTagValue),
 			filter.EC2.Cluster(s.scope.Name()),
 			filter.EC2.InstanceStates(
-				ec2.InstanceStateNamePending,
-				ec2.InstanceStateNameRunning,
-				ec2.InstanceStateNameStopping,
-				ec2.InstanceStateNameStopped,
+				types.InstanceStateNamePending,
+				types.InstanceStateNameRunning,
+				types.InstanceStateNameStopping,
+				types.InstanceStateNameStopped,
 			),
 		},
 	}
 
-	out, err := s.EC2Client.DescribeInstancesWithContext(context.TODO(), input)
+	out, err := s.EC2Client.DescribeInstances(context.TODO(), input)
 	if err != nil {
 		record.Eventf(s.scope.InfraCluster(), "FailedDescribeBastionHost", "Failed to describe bastion host: %v", err)
 		return nil, errors.Wrap(err, "failed to describe bastion host")
@@ -158,7 +159,7 @@ func (s *Service) describeBastionInstance() (*infrav1.Instance, error) {
 	// the first non-terminated.
 	for _, res := range out.Reservations {
 		for _, instance := range res.Instances {
-			if aws.StringValue(instance.State.Name) != ec2.InstanceStateNameTerminated {
+			if instance.State.Name != types.InstanceStateNameTerminated {
 				return s.SDKToInstance(instance)
 			}
 		}

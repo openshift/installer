@@ -120,6 +120,11 @@ func NewMachinePoolScope(params MachinePoolScopeParams) (*MachinePoolScope, erro
 	}, nil
 }
 
+// Ignition gets the ignition config.
+func (m *MachinePoolScope) Ignition() *infrav1.Ignition {
+	return m.AWSMachinePool.Spec.Ignition
+}
+
 // Name returns the AWSMachinePool name.
 func (m *MachinePoolScope) Name() string {
 	return m.AWSMachinePool.Name
@@ -132,13 +137,7 @@ func (m *MachinePoolScope) Namespace() string {
 
 // GetRawBootstrapData returns the bootstrap data from the secret in the Machine's bootstrap.dataSecretName,
 // including the secret's namespaced name.
-func (m *MachinePoolScope) GetRawBootstrapData() ([]byte, *types.NamespacedName, error) {
-	data, _, bootstrapDataSecretKey, err := m.getBootstrapData()
-
-	return data, bootstrapDataSecretKey, err
-}
-
-func (m *MachinePoolScope) getBootstrapData() ([]byte, string, *types.NamespacedName, error) {
+func (m *MachinePoolScope) GetRawBootstrapData() ([]byte, string, *types.NamespacedName, error) {
 	if m.MachinePool.Spec.Template.Spec.Bootstrap.DataSecretName == nil {
 		return nil, "", nil, errors.New("error retrieving bootstrap data: linked Machine's bootstrap.dataSecretName is nil")
 	}
@@ -393,4 +392,9 @@ func (m *MachinePoolScope) LaunchTemplateName() string {
 // GetRuntimeObject returns the AWSMachinePool object, in runtime.Object form.
 func (m *MachinePoolScope) GetRuntimeObject() runtime.Object {
 	return m.AWSMachinePool
+}
+
+// GetLifecycleHooks returns the desired lifecycle hooks for the ASG.
+func (m *MachinePoolScope) GetLifecycleHooks() []expinfrav1.AWSLifecycleHook {
+	return m.AWSMachinePool.Spec.AWSLifecycleHooks
 }

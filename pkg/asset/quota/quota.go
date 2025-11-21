@@ -32,6 +32,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -123,7 +124,7 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return summarizeFailingReport(reports)
 		}
 		summarizeReport(reports)
-	case typesopenstack.Name:
+	case typesopenstack.Name, powervc.Name:
 		if skip := os.Getenv("OPENSHIFT_INSTALL_SKIP_PREFLIGHT_VALIDATIONS"); skip == "1" {
 			logrus.Warnf("OVERRIDE: pre-flight validation disabled.")
 			return nil

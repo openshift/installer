@@ -187,7 +187,6 @@ type Platform struct {
 	// one VIP
 	//
 	// +kubebuilder:validation:MaxItems=2
-	// +kubebuilder:validation:UniqueItems=true
 	// +kubebuilder:validation:Format=ip
 	// +optional
 	APIVIPs []string `json:"apiVIPs,omitempty"`
@@ -203,7 +202,6 @@ type Platform struct {
 	// clusters it contains an IPv4 and IPv6 address, otherwise only one VIP
 	//
 	// +kubebuilder:validation:MaxItems=2
-	// +kubebuilder:validation:UniqueItems=true
 	// +kubebuilder:validation:Format=ip
 	// +optional
 	IngressVIPs []string `json:"ingressVIPs,omitempty"`
@@ -247,7 +245,6 @@ type Platform struct {
 
 	// AdditionalNTPServers defines a list of additional NTP servers
 	// to use for provisioning
-	// +kubebuilder:validation:UniqueItems=true
 	//  +optional
 	AdditionalNTPServers []string `json:"additionalNTPServers,omitempty"`
 }

@@ -14,9 +14,10 @@ import (
 // to turn off the VPC and not use it anymore. You can confirm a virtual private
 // gateway has been completely detached from a VPC by describing the virtual
 // private gateway (any attachments to the virtual private gateway are also
-// described). You must wait for the attachment's state to switch to detached
-// before you can delete the VPC or attach a different VPC to the virtual private
-// gateway.
+// described).
+//
+// You must wait for the attachment's state to switch to detached before you can
+// delete the VPC or attach a different VPC to the virtual private gateway.
 func (c *Client) DetachVpnGateway(ctx context.Context, params *DetachVpnGatewayInput, optFns ...func(*Options)) (*DetachVpnGatewayOutput, error) {
 	if params == nil {
 		params = &DetachVpnGatewayInput{}
@@ -104,6 +105,9 @@ func (c *Client) addOperationDetachVpnGatewayMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,6 +118,15 @@ func (c *Client) addOperationDetachVpnGatewayMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDetachVpnGatewayValidationMiddleware(stack); err != nil {
@@ -135,6 +148,18 @@ func (c *Client) addOperationDetachVpnGatewayMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

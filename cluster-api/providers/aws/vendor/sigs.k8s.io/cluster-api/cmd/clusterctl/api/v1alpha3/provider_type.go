@@ -31,7 +31,10 @@ import (
 
 // Provider defines an entry in the provider inventory.
 type Provider struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// providerName indicates the name of the provider.
@@ -165,8 +168,12 @@ func (p ProviderType) Order() int {
 // ProviderList contains a list of Provider.
 type ProviderList struct {
 	metav1.TypeMeta `json:",inline"`
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
+	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Provider `json:"items"`
+	// items is the list of Providers.
+	Items []Provider `json:"items"`
 }
 
 // FilterByNamespace returns a new list of providers that reside in the namespace provided.

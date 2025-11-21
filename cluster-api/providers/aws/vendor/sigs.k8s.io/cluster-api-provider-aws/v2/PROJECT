@@ -58,3 +58,9 @@ resources:
 - group: infrastructure
   version: v1beta2
   kind: AWSManagedCluster
+- group: infrastructure
+  kind: ROSARoleConfig
+  version: v1beta2
+- group: infrastructure
+  kind: ROSANetwork
+  version: v1beta2

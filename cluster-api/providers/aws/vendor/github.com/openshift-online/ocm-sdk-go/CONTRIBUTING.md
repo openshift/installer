@@ -1,84 +1,45 @@
 # Contributing to the OCM SDK
 
-## Updating the OCM API Model
+## Releasing a new OCM API Model version
 
-If new api types or endpoints need to be added, the
-[ocm-api-model](https://github.com/openshift-online/ocm-api-model) will need to be updated.
+First, all changes to the [ocm-api-model](https://github.com/openshift-online/ocm-api-model) have been defined and reviewed. Then, the client types for the model need to be generated via `make update` target in the `ocm-api-model` project.
 
-Fork and clone the [ocm-api-model](https://github.com/openshift-online/ocm-api-model) repository to
-get started.
+Once the client types and api description are merged in [ocm-api-model](https://github.com/openshift-online/ocm-api-model), the version of the ocm-api-model
+must be incremented for consumption in ocm-sdk-go generation. The version is defined by the latest git tag.
 
-The [OCM API Model README](https://github.com/openshift-online/ocm-api-model/blob/main/README.md)
-contains all the information needed to create or update models.
-
-Submit an MR with any changes after validation. The MR should be reviewed before merge.
+Once all changes to the OCM API Model have been committed to the main branch and a new tag is pused a new release will be created automatically.Then, you will need to update these changes in the SDK. (See "Updating the OCM SDK" section)
 
 ### Validating model updates
 
-The easiest way to validate changes to the ocm-api-model is to generate the sdk based on the updated model.
+If you would like to test the SDK against a *local version* use the following instructions:
+
 Ensure ocm-sdk-go is cloned locally alongside your cloned ocm-api-model directory where changes are made.
 
-In ocm-sdk-go, run the following to generate the sdk using the local ocm-api-model. Replace
-`/path/to/ocm-api-model` with the path to your cloned ocm-api-model repository where changes have been made.
-Replace `HEAD` with the commit SHA in ocm-api-model to build against if necessary.
-
-```shell
-make clean
-make model_version=HEAD model_url=/path/to/ocm-api-model generate
+Use the following commands to test you're locally generated client types:
 ```
+go mod edit -replace=github.com/openshift-online/ocm-api-model/clientapi=/path/to/your/local/ocm-api-model/clientapi
 
-Review the output for errors. If none, the changes are at least syntactically proper.
+go mod edit -replace=github.com/openshift-online/ocm-api-model/model=/path/to/your/local/ocm-api-model/model
 
-### Style notes
-
-Comments can be added to types with the `//` notation. Comments should be added to each type's attribute where
-possible.
-
-Hard tabs are required rather than spaces.
-
-## Releasing a new OCM API Model version
-
-To use any updates to the [ocm-api-model](https://github.com/openshift-online/ocm-api-model), the version
-must be incremented for consumption in ocm-sdk-go generation. The version is defined by the latest git tag.
-The version is also defined in the ocm-api-model/CHANGES.md file.
-
-Once all changes to the OCM API Model have been committed to the main branch, submit a separate change with
-an update to ocm-api-model/CHANGES.md. This update should indicate the version and describe the changes
-included with the version update. The following is an example update to version 0.0.9:
-
+make update
 ```
-== 0.0.9 Oct 7 2019
-
-- Add `type` attribute to the `ResourceQuota` type.
-- Add `config_managed` attribute to the `RoleBinding` type.
-```
-
-Submit an MR with the CHANGES.md modification and review/merge.
-
-Finally, create and submit a new tag with the new version following the below example:
-
-```shell
-git checkout main
-git pull
-git tag -a -m 'Release 0.0.9' v0.0.9
-git push origin v0.0.9
-```
-
-Note that a repository administrator may need to push the tag to the repository due to access restrictions.
 
 ## Updating the OCM SDK
 
 The OCM SDK can be generated simply by running the following after all changes have been made:
 
 ```shell
-make generate
+./hack/update-model.sh
+make update
 ```
 
-In most cases, the ocm-api-model version will be incremented prior to generation. To increment the ocm-api-model
-version, update the `model_version` constant in [Makefile](Makefile).
+The `./hack/update-model.sh` script will ensure the `ocm-api-model` modules are all up to date with the latest version across the OCM-SDK project.
+To verify that they are all in-sync one can use the `./hack/verify-model-version.sh` script.
+
+One can add an optional commit SHA or version to the `./update-model.sh <vX.Y.Z>` script to update the go modules to a specific version.
 
 Whenever an update is made, ensure that the corresponding example in [examples](examples) is also updated where
-necessary. Any new endpoints should have a new example created.
+necessary. It is *highly recommended* that new endpoints have a new example created.
 
 ## Releasing a new OCM SDK Version
 

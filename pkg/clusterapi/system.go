@@ -39,6 +39,7 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -194,7 +195,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 				"--health-addr={{suggestHealthHostPort}}",
 				"--webhook-port={{.WebhookPort}}",
 				"--webhook-cert-dir={{.WebhookCertDir}}",
-				"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true,TagUnmanagedNetworkResources=false,EKS=false",
+				"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true,TagUnmanagedNetworkResources=false,EKS=false,MachinePool=false",
 			},
 			map[string]string{},
 		)
@@ -369,7 +370,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 				map[string]string{},
 			),
 		)
-	case openstack.Name:
+	case openstack.Name, powervc.Name:
 		controllers = append(controllers,
 			c.getInfrastructureController(
 				&OpenStack,

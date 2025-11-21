@@ -57,6 +57,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
@@ -746,7 +747,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
-	case openstack.Name:
+	case openstack.Name, powervc.Name:
 		data, err = openstacktfvars.TFVars(
 			ctx,
 			installConfig,

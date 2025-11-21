@@ -158,6 +158,20 @@ func Print(resource interface{}) error {
 		if subnetNetworkVerification, ok := resource.(*cmv1.SubnetNetworkVerification); ok {
 			cmv1.MarshalSubnetNetworkVerification(subnetNetworkVerification, &b)
 		}
+	case "*v1.ImageMirror":
+		if imageMirror, ok := resource.(*cmv1.ImageMirror); ok {
+			err := cmv1.MarshalImageMirror(imageMirror, &b)
+			if err != nil {
+				return err
+			}
+		}
+	case "[]*v1.ImageMirror":
+		if imageMirrors, ok := resource.([]*cmv1.ImageMirror); ok {
+			err := cmv1.MarshalImageMirrorList(imageMirrors, &b)
+			if err != nil {
+				return err
+			}
+		}
 	case "[]aws.Role", "[]aws.OidcProviderOutput":
 		{
 			err := defaultEncode(resource, &b)

@@ -1,9 +1,9 @@
 # See https://cloud.google.com/cloud-build/docs/build-config
-timeout: 3000s
+timeout: 7200s
 options:
   substitution_option: ALLOW_LOOSE
 steps:
-  - name: 'gcr.io/k8s-staging-test-infra/gcb-docker-gcloud:v20240210-29014a6e3a'
+  - name: 'gcr.io/k8s-staging-test-infra/gcb-docker-gcloud@sha256:63840f133e0dfeea0af9ef391210da7fab9d2676172e2967fccab0cd6110c4e7' # v20250513-9264efb079 go 1.24.3
     entrypoint: make
     env:
       - DOCKER_CLI_EXPERIMENTAL=enabled

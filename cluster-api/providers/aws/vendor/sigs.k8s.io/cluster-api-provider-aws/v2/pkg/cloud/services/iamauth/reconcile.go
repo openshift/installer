@@ -20,8 +20,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -54,9 +54,9 @@ func (s *Service) ReconcileIAMAuthenticator(ctx context.Context) error {
 		return fmt.Errorf("getting roles for remote workers: %w", err)
 	}
 	for roleName := range nodeRoles {
-		roleARN, err := s.getARNForRole(roleName)
+		roleARN, err := s.getARNForRole(ctx, roleName)
 		if err != nil {
-			return fmt.Errorf("failed to get ARN for role %s: %w", roleARN, err)
+			return fmt.Errorf("failed to get ARN for role %s: %w", roleName, err)
 		}
 		nodesRoleMapping := ekscontrolplanev1.RoleMapping{
 			RoleARN: roleARN,
@@ -92,15 +92,18 @@ func (s *Service) ReconcileIAMAuthenticator(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) getARNForRole(role string) (string, error) {
+func (s *Service) getARNForRole(ctx context.Context, role string) (string, error) {
 	input := &iam.GetRoleInput{
 		RoleName: aws.String(role),
 	}
-	out, err := s.IAMClient.GetRole(input)
+	out, err := s.IAMClient.GetRole(ctx, input)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to get role")
 	}
-	return aws.StringValue(out.Role.Arn), nil
+	if out.Role == nil || out.Role.Arn == nil {
+		return "", fmt.Errorf("role %s not found or ARN is missing", role)
+	}
+	return *out.Role.Arn, nil
 }
 
 func (s *Service) getRolesForWorkers(ctx context.Context) (map[string]struct{}, error) {

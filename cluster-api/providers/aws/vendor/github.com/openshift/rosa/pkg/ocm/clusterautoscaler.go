@@ -62,6 +62,15 @@ type ScaleDownConfig struct {
 	DelayAfterFailure    string
 }
 
+func BuildClusterAutoscalerHostedCp(config *AutoscalerConfig) *cmv1.ClusterAutoscalerBuilder {
+	return cmv1.NewClusterAutoscaler().
+		MaxPodGracePeriod(config.MaxPodGracePeriod).
+		PodPriorityThreshold(config.PodPriorityThreshold).
+		MaxNodeProvisionTime(config.MaxNodeProvisionTime).
+		ResourceLimits(cmv1.NewAutoscalerResourceLimits().
+			MaxNodesTotal(config.ResourceLimits.MaxNodesTotal))
+}
+
 func BuildClusterAutoscaler(config *AutoscalerConfig) *cmv1.ClusterAutoscalerBuilder {
 	if config == nil {
 		return nil
@@ -134,8 +143,17 @@ func (c *Client) CreateClusterAutoscaler(clusterId string, config *AutoscalerCon
 	return response.Body(), nil
 }
 
-func (c *Client) UpdateClusterAutoscaler(clusterId string, config *AutoscalerConfig) (*cmv1.ClusterAutoscaler, error) {
-	object, err := BuildClusterAutoscaler(config).Build()
+func (c *Client) UpdateClusterAutoscaler(clusterId string, isHostedCp bool,
+	config *AutoscalerConfig) (*cmv1.ClusterAutoscaler, error) {
+
+	var object *cmv1.ClusterAutoscaler
+	var err error
+
+	if isHostedCp {
+		object, err = BuildClusterAutoscalerHostedCp(config).Build()
+	} else {
+		object, err = BuildClusterAutoscaler(config).Build()
+	}
 
 	if err != nil {
 		return nil, err

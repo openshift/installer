@@ -11,10 +11,15 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes the stale security group rules for security groups in a specified
-// VPC. Rules are stale when they reference a deleted security group in the same
-// VPC or peered VPC. Rules can also be stale if they reference a security group in
-// a peer VPC for which the VPC peering connection has been deleted.
+// Describes the stale security group rules for security groups referenced across
+// a VPC peering connection, transit gateway connection, or with a security group
+// VPC association. Rules are stale when they reference a deleted security group.
+// Rules can also be stale if they reference a security group in a peer VPC for
+// which the VPC peering connection has been deleted, across a transit gateway
+// where the transit gateway has been deleted (or [the transit gateway security group referencing feature]has been disabled), or if a
+// security group VPC association has been disassociated.
+//
+// [the transit gateway security group referencing feature]: https://docs.aws.amazon.com/vpc/latest/tgw/tgw-vpc-attachments.html#vpc-attachment-security
 func (c *Client) DescribeStaleSecurityGroups(ctx context.Context, params *DescribeStaleSecurityGroupsInput, optFns ...func(*Options)) (*DescribeStaleSecurityGroupsOutput, error) {
 	if params == nil {
 		params = &DescribeStaleSecurityGroupsInput{}
@@ -45,8 +50,9 @@ type DescribeStaleSecurityGroupsInput struct {
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -58,8 +64,8 @@ type DescribeStaleSecurityGroupsInput struct {
 
 type DescribeStaleSecurityGroupsOutput struct {
 
-	// The token to include in another request to get the next page of items. If there
-	// are no additional items to return, the string is empty.
+	// The token to include in another request to get the next page of items. This
+	// value is null when there are no more items to return.
 	NextToken *string
 
 	// Information about the stale security groups.
@@ -114,6 +120,9 @@ func (c *Client) addOperationDescribeStaleSecurityGroupsMiddlewares(stack *middl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -124,6 +133,15 @@ func (c *Client) addOperationDescribeStaleSecurityGroupsMiddlewares(stack *middl
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeStaleSecurityGroupsValidationMiddleware(stack); err != nil {
@@ -147,24 +165,29 @@ func (c *Client) addOperationDescribeStaleSecurityGroupsMiddlewares(stack *middl
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeStaleSecurityGroupsAPIClient is a client that implements the
-// DescribeStaleSecurityGroups operation.
-type DescribeStaleSecurityGroupsAPIClient interface {
-	DescribeStaleSecurityGroups(context.Context, *DescribeStaleSecurityGroupsInput, ...func(*Options)) (*DescribeStaleSecurityGroupsOutput, error)
-}
-
-var _ DescribeStaleSecurityGroupsAPIClient = (*Client)(nil)
 
 // DescribeStaleSecurityGroupsPaginatorOptions is the paginator options for
 // DescribeStaleSecurityGroups
 type DescribeStaleSecurityGroupsPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -227,6 +250,9 @@ func (p *DescribeStaleSecurityGroupsPaginator) NextPage(ctx context.Context, opt
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeStaleSecurityGroups(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -245,6 +271,14 @@ func (p *DescribeStaleSecurityGroupsPaginator) NextPage(ctx context.Context, opt
 
 	return result, nil
 }
+
+// DescribeStaleSecurityGroupsAPIClient is a client that implements the
+// DescribeStaleSecurityGroups operation.
+type DescribeStaleSecurityGroupsAPIClient interface {
+	DescribeStaleSecurityGroups(context.Context, *DescribeStaleSecurityGroupsInput, ...func(*Options)) (*DescribeStaleSecurityGroupsOutput, error)
+}
+
+var _ DescribeStaleSecurityGroupsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeStaleSecurityGroups(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
