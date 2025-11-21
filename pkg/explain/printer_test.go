@@ -317,8 +317,12 @@ If empty, the value is equal to "AzurePublicCloud".
     computeSubnet <string>
       ComputeSubnet specifies an existing subnet for use by compute nodes
 
+Deprecated: use platform.Azure.Subnets section
+
     controlPlaneSubnet <string>
       ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
+
+Deprecated: use platform.Azure.Subnets section
 
     customerManagedKey <object>
       CustomerManagedKey has the keys needed to encrypt the storage account.
@@ -333,7 +337,7 @@ platform configuration.
 
     outboundType <string>
       Default: "Loadbalancer"
-      Valid Values: "","Loadbalancer","NATGatewaySingleZone","UserDefinedRouting"
+      Valid Values: "","Loadbalancer","NATGatewaySingleZone","NATGatewayMultiZone","UserDefinedRouting"
       OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
 
     region <string> -required-
@@ -346,6 +350,10 @@ ownership of all resources in the resource group. Destroying the cluster using i
 resource group.
 This resource group must be empty with no other resources when trying to use it for creating a cluster.
 If empty, a new resource group will created for the cluster.
+
+    subnets <[]object>
+      Subnets is the list of subnets the user can bring into the cluster to be used.
+      SubnetSpec specifies the properties the subnet needs to be used in the cluster.
 
     userProvisionedDNS <string>
       Default: "Disabled"

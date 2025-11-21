@@ -5074,12 +5074,16 @@ spec:
                       is required for Azure Stack and not applicable to Azure.
                     type: string
                   computeSubnet:
-                    description: ComputeSubnet specifies an existing subnet for use
-                      by compute nodes
+                    description: |-
+                      ComputeSubnet specifies an existing subnet for use by compute nodes
+
+                      Deprecated: use platform.Azure.Subnets section
                     type: string
                   controlPlaneSubnet:
-                    description: ControlPlaneSubnet specifies an existing subnet for
-                      use by the control plane nodes
+                    description: |-
+                      ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
+
+                      Deprecated: use platform.Azure.Subnets section
                     type: string
                   customerManagedKey:
                     description: CustomerManagedKey has the keys needed to encrypt
@@ -5533,6 +5537,7 @@ spec:
                     - ""
                     - Loadbalancer
                     - NATGatewaySingleZone
+                    - NATGatewayMultiZone
                     - UserDefinedRouting
                     type: string
                   region:
@@ -5548,6 +5553,28 @@ spec:
                       This resource group must be empty with no other resources when trying to use it for creating a cluster.
                       If empty, a new resource group will created for the cluster.
                     type: string
+                  subnets:
+                    description: Subnets is the list of subnets the user can bring
+                      into the cluster to be used.
+                    items:
+                      description: SubnetSpec specifies the properties the subnet
+                        needs to be used in the cluster.
+                      properties:
+                        name:
+                          description: Name of the subnet.
+                          type: string
+                        role:
+                          description: Role specifies the actual role which the subnet
+                            should be used in.
+                          enum:
+                          - node
+                          - control-plane
+                          type: string
+                      required:
+                      - name
+                      - role
+                      type: object
+                    type: array
                   userProvisionedDNS:
                     default: Disabled
                     description: |-

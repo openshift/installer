@@ -20,6 +20,10 @@ test-e2e-run: generate-e2e-templates install-tools create-bootstrap ## Run e2e t
 		-e2e.skip-resource-cleanup=$(SKIP_CLEANUP) -e2e.use-existing-cluster=$(SKIP_CREATE_MGMT_CLUSTER) $(E2E_ARGS) \
 	$(MAKE) cleanup-workload-identity
 	$(MAKE) clean-release-git
+	if [ "$(MGMT_CLUSTER_TYPE)" == "aks" ] && [ "$(SKIP_CLEANUP)" != "true" ]; then \
+		echo "Cleaning up AKS management cluster..."; \
+		$(MAKE) aks-delete; \
+	fi
 
 .PHONY: test-e2e
 test-e2e: ## Run "docker-build" and "docker-push" rules then run e2e tests.

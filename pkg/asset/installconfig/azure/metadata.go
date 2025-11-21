@@ -1,8 +1,12 @@
 package azure
 
 import (
+	"context"
 	"fmt"
+	"sort"
 	"sync"
+
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 )
@@ -11,9 +15,13 @@ import (
 // does not need to be user-supplied (e.g. because it can be retrieved
 // from external APIs).
 type Metadata struct {
-	session *Session
-	client  API
-	dnsCfg  *DNSConfig
+	session           *Session
+	client            API
+	dnsCfg            *DNSConfig
+	availabilityZones []string
+	vmZones           []string
+	region            string
+	ZonesSubnetMap    map[string][]string
 
 	// CloudName indicates the Azure cloud environment (e.g. public, gov't).
 	CloudName typesazure.CloudEnvironment `json:"cloudName,omitempty"`
@@ -34,17 +42,18 @@ type Metadata struct {
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(cloudName typesazure.CloudEnvironment, armEndpoint string) *Metadata {
-	return NewMetadataWithCredentials(cloudName, armEndpoint, nil)
+func NewMetadata(cloudName typesazure.CloudEnvironment, armEndpoint string, region string) *Metadata {
+	return NewMetadataWithCredentials(cloudName, armEndpoint, nil, region)
 }
 
 // NewMetadataWithCredentials initializes a new Metadata object
 // with prepopulated Azure credentials.
-func NewMetadataWithCredentials(cloudName typesazure.CloudEnvironment, armEndpoint string, credentials *Credentials) *Metadata {
+func NewMetadataWithCredentials(cloudName typesazure.CloudEnvironment, armEndpoint string, credentials *Credentials, region string) *Metadata {
 	return &Metadata{
 		CloudName:   cloudName,
 		ARMEndpoint: armEndpoint,
 		Credentials: credentials,
+		region:      region,
 	}
 }
 
@@ -97,4 +106,95 @@ func (m *Metadata) DNSConfig() (*DNSConfig, error) {
 		m.dnsCfg = NewDNSConfig(ssn)
 	}
 	return m.dnsCfg, nil
+}
+
+// AvailabilityZones retrieves a list of availability zones for the configured region.
+func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.availabilityZones) == 0 {
+		zones, err := m.client.GetRegionAvailabilityZones(ctx, m.region)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Availability Zones: %w", err)
+		}
+		if zones != nil {
+			sort.Strings(zones)
+			m.availabilityZones = zones
+		}
+	}
+
+	return m.availabilityZones, nil
+}
+
+// VMAvailabilityZones retrieves a list of availability zones for the configured region and instance type.
+func (m *Metadata) VMAvailabilityZones(ctx context.Context, instanceType string) ([]string, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.vmZones) == 0 {
+		zones, err := m.client.GetAvailabilityZones(ctx, m.region, instanceType)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Availability Zones: %w", err)
+		}
+		if zones != nil {
+			sort.Strings(zones)
+			m.vmZones = zones
+		}
+	}
+
+	return m.vmZones, nil
+}
+
+// GenerateZonesSubnetMap creates a map of all the zones that are supported for nat gateways and vms and
+// sets it to the subnets provided. If no subnets are provided, it creates subnets for multi zone
+// functionality.
+func (m *Metadata) GenerateZonesSubnetMap(subnetSpec []typesazure.SubnetSpec, defaultComputeSubnet string) (map[string][]string, error) {
+	if m.ZonesSubnetMap == nil {
+		// Get the availability zones.
+		if m.availabilityZones == nil {
+			_, err := m.AvailabilityZones(context.TODO())
+			if err != nil {
+				return nil, err
+			}
+		}
+		subnetZones := m.availabilityZones
+		computeSubnets := []string{}
+
+		// Get all the byo subnets or generate subnet per az.
+		if len(subnetSpec) != 0 {
+			sort.Slice(subnetSpec, func(i, j int) bool {
+				return subnetSpec[i].Name < subnetSpec[j].Name
+			})
+			for _, subnet := range subnetSpec {
+				if subnet.Role == v1beta1.SubnetNode {
+					computeSubnets = append(computeSubnets, subnet.Name)
+				}
+			}
+		} else {
+			for idx := range subnetZones {
+				computeName := fmt.Sprintf("%s-%d", defaultComputeSubnet, idx+1)
+				if idx == 0 {
+					computeName = defaultComputeSubnet
+				}
+				computeSubnets = append(computeSubnets, computeName)
+			}
+		}
+
+		// Assign zone to subnets.
+		subnetMap := map[string][]string{}
+		zoneIndex := 0
+		for _, subnet := range computeSubnets {
+			if _, ok := subnetMap[subnetZones[zoneIndex]]; !ok {
+				subnetMap[subnetZones[zoneIndex]] = []string{}
+			}
+			subnetMap[subnetZones[zoneIndex]] = append(subnetMap[subnetZones[zoneIndex]], subnet)
+			zoneIndex++
+			if zoneIndex >= len(subnetZones) {
+				zoneIndex = 0
+			}
+		}
+		m.ZonesSubnetMap = subnetMap
+	}
+	return m.ZonesSubnetMap, nil
 }

@@ -474,6 +474,22 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		p.publicLBIP = *publicIP.Properties.IPAddress
 	}
 
+	if (in.InstallConfig.Config.Azure.OutboundType == aztypes.NATGatewayMultiZoneOutboundType ||
+		in.InstallConfig.Config.Azure.OutboundType == aztypes.NATGatewaySingleZoneOutboundType) &&
+		len(in.InstallConfig.Config.Azure.Subnets) > 0 {
+		in := natGatewayInput{
+			infraID:        in.InfraID,
+			cl:             in.Client,
+			subscriptionID: session.Credentials.SubscriptionID,
+			creds:          session.TokenCreds,
+			cloudConfig:    session.CloudConfig,
+		}
+		if err := associateNatGatewayToSubnet(ctx, in); err != nil {
+			return fmt.Errorf("error associating NAT gateways to BYO subnets: %w", err)
+		}
+		logrus.Info("done associating NAT gateways to BYO subnets")
+	}
+
 	// Save context for other hooks
 	p.ResourceGroupName = resourceGroupName
 	p.StorageAccountName = storageAccountName
