@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"path"
+	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/pkg/errors"
@@ -33,6 +35,8 @@ func (a *Master) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&tls.RootCA{},
+		&tls.InternalReleaseRegistrySignerCertKey{},
+		&tls.InternalReleaseRegistryCertKey{},
 	}
 }
 
@@ -40,9 +44,25 @@ func (a *Master) Dependencies() []asset.Asset {
 func (a *Master) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	rootCA := &tls.RootCA{}
-	dependencies.Get(installConfig, rootCA)
+	registryCA := &tls.InternalReleaseRegistrySignerCertKey{}
+	registryServerCert := &tls.InternalReleaseRegistryCertKey{}
+	dependencies.Get(installConfig, rootCA, registryCA, registryServerCert)
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
+
+	// Add internal release registry server certificate if the CA was loaded from disk (agent-based installs)
+	if registryCA.LoadedFromDisk {
+		for _, f := range registryServerCert.Files() {
+			var filename string
+			if strings.HasSuffix(f.Filename, ".key") {
+				filename = "tls.key"
+			} else {
+				filename = "tls.crt"
+			}
+			a.Config.Storage.Files = append(a.Config.Storage.Files,
+				ignition.FileFromBytes(path.Join("/opt/registry/tls", filename), "root", 0600, f.Data))
+		}
+	}
 
 	if installConfig.Config.Platform.Name() == azure.Name {
 		logrus.Debugf("Adding /var partition to skip CoreOS growfs step")

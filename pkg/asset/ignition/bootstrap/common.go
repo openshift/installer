@@ -171,6 +171,8 @@ func (a *Common) Dependencies() []asset.Asset {
 		&tls.RootCA{},
 		&tls.ServiceAccountKeyPair{},
 		&tls.IronicTLSCert{},
+		&tls.InternalReleaseRegistrySignerCertKey{},
+		&tls.InternalReleaseRegistryCertKey{},
 		&releaseimage.Image{},
 		new(rhcos.Image),
 	}
@@ -684,6 +686,23 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 	rootCA := &tls.RootCA{}
 	dependencies.Get(rootCA)
 	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ignition.FileFromBytes(path.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
+
+	// Add internal release registry server certificate if the CA was loaded from disk (agent-based installs)
+	registryCA := &tls.InternalReleaseRegistrySignerCertKey{}
+	registryServerCert := &tls.InternalReleaseRegistryCertKey{}
+	dependencies.Get(registryCA, registryServerCert)
+	if registryCA.LoadedFromDisk {
+		for _, f := range registryServerCert.Files() {
+			var filename string
+			if strings.HasSuffix(f.Filename, ".key") {
+				filename = "tls.key"
+			} else {
+				filename = "tls.crt"
+			}
+			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files,
+				ignition.FileFromBytes(path.Join("/opt/registry/tls", filename), "root", 0600, f.Data))
+		}
+	}
 }
 
 func replaceOrAppend(files []igntypes.File, file igntypes.File) []igntypes.File {

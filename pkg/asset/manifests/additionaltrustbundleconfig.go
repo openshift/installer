@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/api/annotations"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 var (
@@ -46,19 +47,36 @@ func (*AdditionalTrustBundleConfig) Name() string {
 func (*AdditionalTrustBundleConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&tls.InternalReleaseRegistrySignerCertKey{},
 	}
 }
 
 // Generate generates the CloudProviderConfig.
 func (atbc *AdditionalTrustBundleConfig) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	registryCA := &tls.InternalReleaseRegistrySignerCertKey{}
+	dependencies.Get(installConfig, registryCA)
 
-	if installConfig.Config.AdditionalTrustBundle == "" {
+	// Combine user-provided trust bundle with registry CA if it was loaded from disk
+	var combinedBundle strings.Builder
+	if installConfig.Config.AdditionalTrustBundle != "" {
+		combinedBundle.WriteString(installConfig.Config.AdditionalTrustBundle)
+	}
+
+	// Add registry CA if it was loaded from disk (for agent-based installs)
+	if registryCA.LoadedFromDisk {
+		if combinedBundle.Len() > 0 {
+			combinedBundle.WriteString("\n")
+		}
+		combinedBundle.Write(registryCA.Cert())
+	}
+
+	// If no trust bundle at all, return early
+	if combinedBundle.Len() == 0 {
 		return nil
 	}
-	data, err := ParseCertificates(installConfig.Config.AdditionalTrustBundle)
 
+	data, err := ParseCertificates(combinedBundle.String())
 	if err != nil {
 		return err
 	}

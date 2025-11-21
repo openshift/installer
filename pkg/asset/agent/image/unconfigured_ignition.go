@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/version"
 )
@@ -58,6 +59,8 @@ func GetConfigImageFiles() []string {
 		"/opt/agent/tls/kube-apiserver-localhost-signer.crt",
 		"/opt/agent/tls/kube-apiserver-service-network-signer.key",
 		"/opt/agent/tls/kube-apiserver-service-network-signer.crt",
+		"/opt/agent/tls/internal-release-registry-signer.key",
+		"/opt/agent/tls/internal-release-registry-signer.crt",
 		rendezvousHostEnvPath, // This file must be last in the list
 	}
 }
@@ -87,6 +90,8 @@ func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 		&common.InfraEnvID{},
+		&tls.InternalReleaseRegistrySignerCertKey{},
+		&tls.InternalReleaseRegistryLocalhostCertKey{},
 	}
 }
 
@@ -204,6 +209,35 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 
 	// Required by assisted-service.
 	a.ignAddFolders(&config, "/opt/agent/tls")
+
+	// Add internal release registry certificates
+	registryCA := &tls.InternalReleaseRegistrySignerCertKey{}
+	registryLocalhostCert := &tls.InternalReleaseRegistryLocalhostCertKey{}
+	dependencies.Get(registryCA, registryLocalhostCert)
+
+	// Add CA cert+key to /opt/agent/tls for assisted-service to load
+	for _, f := range registryCA.Files() {
+		certFile := ignition.FileFromBytes(path.Join("/opt/agent", f.Filename), "root", 0600, f.Data)
+		config.Storage.Files = append(config.Storage.Files, certFile)
+	}
+
+	// Add CA cert to system trust store
+	config.Storage.Files = append(config.Storage.Files,
+		ignition.FileFromBytes("/etc/pki/ca-trust/source/anchors/internal-release-registry-ca.crt",
+			"root", 0644, registryCA.Cert()))
+
+	// Create /opt/registry/tls directory and add localhost server cert+key
+	a.ignAddFolders(&config, "/opt/registry/tls")
+	for _, f := range registryLocalhostCert.Files() {
+		var filename string
+		if strings.HasSuffix(f.Filename, ".key") {
+			filename = "tls.key"
+		} else {
+			filename = "tls.crt"
+		}
+		certFile := ignition.FileFromBytes(path.Join("/opt/registry/tls", filename), "root", 0600, f.Data)
+		config.Storage.Files = append(config.Storage.Files, certFile)
+	}
 
 	// Configure static networking if required.
 	if len(nmStateConfigs.StaticNetworkConfig) > 0 {

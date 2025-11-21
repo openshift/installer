@@ -13,6 +13,14 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
+# Restart the local registry service if it's running to pick up new TLS certificates
+# This is needed for agent-based installs where the registry.service may already be
+# running with localhost-only certs and needs to switch to api-int certs
+if systemctl is-active --quiet registry.service; then
+    echo "Restarting registry.service to pick up new TLS certificates..."
+    systemctl restart registry.service
+fi
+
 {{- if .BootstrapInPlace }}
 BOOTSTRAP_INPLACE=true
 {{ else }}
