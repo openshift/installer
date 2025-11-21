@@ -30,8 +30,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	"k8s.io/utils/ptr"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -168,7 +171,9 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 		return false, errors.New("received unexpected SupervisorMachineContext type")
 	}
 
-	supervisorMachineCtx.VSphereMachine.Spec.FailureDomain = supervisorMachineCtx.Machine.Spec.FailureDomain
+	if supervisorMachineCtx.Machine.Spec.FailureDomain != "" {
+		supervisorMachineCtx.VSphereMachine.Spec.FailureDomain = ptr.To(supervisorMachineCtx.Machine.Spec.FailureDomain)
+	}
 
 	// If debug logging is enabled, report the number of vms in the cluster before and after the reconcile
 	if log.V(5).Enabled() {
@@ -204,8 +209,14 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 
 	// Reconcile the VM Operator VirtualMachine.
 	if err := v.reconcileVMOperatorVM(ctx, supervisorMachineCtx, vmOperatorVM); err != nil {
-		conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.VMCreationFailedReason, clusterv1.ConditionSeverityWarning,
-			fmt.Sprintf("failed to create or update VirtualMachine: %v", err))
+		v1beta1conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.VMCreationFailedReason, clusterv1beta1.ConditionSeverityWarning,
+			"failed to create or update VirtualMachine: %v", err)
+		v1beta2conditions.Set(supervisorMachineCtx.VSphereMachine, metav1.Condition{
+			Type:    infrav1.VSphereMachineVirtualMachineProvisionedV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereMachineVirtualMachineNotProvisionedV1Beta2Reason,
+			Message: fmt.Sprintf("failed to create or update VirtualMachine: %v", err),
+		})
 		// TODO: what to do if AlreadyExists error
 		return false, err
 	}
@@ -239,12 +250,23 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 			if c == nil || c.Status != metav1.ConditionFalse {
 				continue
 			}
-			conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, c.Reason, clusterv1.ConditionSeverityError, c.Message)
+			v1beta1conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, c.Reason, clusterv1beta1.ConditionSeverityError, "%s", c.Message)
+			v1beta2conditions.Set(supervisorMachineCtx.VSphereMachine, metav1.Condition{
+				Type:    infrav1.VSphereMachineVirtualMachineProvisionedV1Beta2Condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  c.Reason,
+				Message: c.Message,
+			})
 			return false, errors.Errorf("vm prerequisites check failed for condition %s: %s", condition, supervisorMachineCtx)
 		}
 
 		// All the pre-requisites are in place but the machines is not yet created, report it.
-		conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.VMProvisionStartedReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.VMProvisionStartedReason, clusterv1beta1.ConditionSeverityInfo, "")
+		v1beta2conditions.Set(supervisorMachineCtx.VSphereMachine, metav1.Condition{
+			Type:   infrav1.VSphereMachineVirtualMachineProvisionedV1Beta2Condition,
+			Status: metav1.ConditionFalse,
+			Reason: infrav1.VSphereMachineVirtualMachineProvisioningV1Beta2Reason,
+		})
 		log.Info(fmt.Sprintf("VM is not yet created: %s", supervisorMachineCtx))
 		return true, nil
 	}
@@ -252,7 +274,12 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 	supervisorMachineCtx.VSphereMachine.Status.VMStatus = vmwarev1.VirtualMachineStateCreated
 
 	if vmOperatorVM.Status.PowerState != vmoprv1.VirtualMachinePowerStateOn {
-		conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.PoweringOnReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.PoweringOnReason, clusterv1beta1.ConditionSeverityInfo, "")
+		v1beta2conditions.Set(supervisorMachineCtx.VSphereMachine, metav1.Condition{
+			Type:   infrav1.VSphereMachineVirtualMachineProvisionedV1Beta2Condition,
+			Status: metav1.ConditionFalse,
+			Reason: infrav1.VSphereMachineVirtualMachinePoweringOnV1Beta2Reason,
+		})
 		log.Info(fmt.Sprintf("VM is not yet powered on: %s", supervisorMachineCtx))
 		return true, nil
 	}
@@ -260,13 +287,23 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 	supervisorMachineCtx.VSphereMachine.Status.VMStatus = vmwarev1.VirtualMachineStatePoweredOn
 
 	if vmOperatorVM.Status.Network == nil || (vmOperatorVM.Status.Network.PrimaryIP4 == "" && vmOperatorVM.Status.Network.PrimaryIP6 == "") {
-		conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.WaitingForNetworkAddressReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.WaitingForNetworkAddressReason, clusterv1beta1.ConditionSeverityInfo, "")
+		v1beta2conditions.Set(supervisorMachineCtx.VSphereMachine, metav1.Condition{
+			Type:   infrav1.VSphereMachineVirtualMachineProvisionedV1Beta2Condition,
+			Status: metav1.ConditionFalse,
+			Reason: infrav1.VSphereMachineVirtualMachineWaitingForNetworkAddressV1Beta2Reason,
+		})
 		log.Info(fmt.Sprintf("VM does not have an IP address: %s", supervisorMachineCtx))
 		return true, nil
 	}
 
 	if vmOperatorVM.Status.BiosUUID == "" {
-		conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.WaitingForBIOSUUIDReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.WaitingForBIOSUUIDReason, clusterv1beta1.ConditionSeverityInfo, "")
+		v1beta2conditions.Set(supervisorMachineCtx.VSphereMachine, metav1.Condition{
+			Type:   infrav1.VSphereMachineVirtualMachineProvisionedV1Beta2Condition,
+			Status: metav1.ConditionFalse,
+			Reason: infrav1.VSphereMachineVirtualMachineWaitingForBIOSUUIDV1Beta2Reason,
+		})
 		log.Info(fmt.Sprintf("VM does not have a BIOS UUID: %s", supervisorMachineCtx))
 		return true, nil
 	}
@@ -283,7 +320,12 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 
 	// Mark the VSphereMachine as Ready
 	supervisorMachineCtx.VSphereMachine.Status.Ready = true
-	conditions.MarkTrue(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition)
+	v1beta1conditions.MarkTrue(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition)
+	v1beta2conditions.Set(supervisorMachineCtx.VSphereMachine, metav1.Condition{
+		Type:   infrav1.VSphereMachineVirtualMachineProvisionedV1Beta2Condition,
+		Status: metav1.ConditionTrue,
+		Reason: infrav1.VSphereMachineVirtualMachineProvisionedV1Beta2Reason,
+	})
 	return false, nil
 }
 
@@ -338,7 +380,7 @@ func (v *VmopMachineService) GetHostInfo(ctx context.Context, machineCtx capvcon
 
 func (v *VmopMachineService) reconcileVMOperatorVM(ctx context.Context, supervisorMachineCtx *vmware.SupervisorMachineContext, vmOperatorVM *vmoprv1.VirtualMachine) error {
 	// All Machine resources should define the version of Kubernetes to use.
-	if supervisorMachineCtx.Machine.Spec.Version == nil || *supervisorMachineCtx.Machine.Spec.Version == "" {
+	if supervisorMachineCtx.Machine.Spec.Version == "" {
 		return errors.Errorf(
 			"missing kubernetes version for %s %s/%s",
 			supervisorMachineCtx.Machine.GroupVersionKind(),
@@ -421,7 +463,7 @@ func (v *VmopMachineService) reconcileVMOperatorVM(ctx context.Context, supervis
 		// Not all network providers (for example, NSX-VPC) provide support for VM
 		// readiness probes. The flag PerformsVMReadinessProbe is used to determine
 		// whether a VM readiness probe should be conducted.
-		if v.ConfigureControlPlaneVMReadinessProbe && infrautilv1.IsControlPlaneMachine(supervisorMachineCtx.Machine) && supervisorMachineCtx.Cluster.Status.ControlPlaneReady {
+		if v.ConfigureControlPlaneVMReadinessProbe && infrautilv1.IsControlPlaneMachine(supervisorMachineCtx.Machine) && ptr.Deref(supervisorMachineCtx.Cluster.Status.Initialization.ControlPlaneInitialized, false) {
 			vmOperatorVM.Spec.ReadinessProbe = &vmoprv1.VirtualMachineReadinessProbeSpec{
 				TCPSocket: &vmoprv1.TCPSocketAction{
 					Port: intstr.FromInt(defaultAPIBindPort),
@@ -468,7 +510,74 @@ func (v *VmopMachineService) reconcileVMOperatorVM(ctx context.Context, supervis
 	return err
 }
 
+func convertKeyValueSlice(pairs []vmoprv1common.KeyValuePair) []vmwarev1.KeyValuePair {
+	converted := make([]vmwarev1.KeyValuePair, 0, len(pairs))
+	for _, pair := range pairs {
+		converted = append(converted, vmwarev1.KeyValuePair{
+			Key:   pair.Key,
+			Value: pair.Value,
+		})
+	}
+	return converted
+}
+
 func (v *VmopMachineService) reconcileNetwork(supervisorMachineCtx *vmware.SupervisorMachineContext, vm *vmoprv1.VirtualMachine) bool {
+	// Propagate VM status.network.interfaces to VSphereMachine.Status.NetworkInterfaces
+	if vm.Status.Network != nil {
+		interfaces := make([]vmwarev1.VSphereMachineNetworkInterfaceStatus, 0, len(vm.Status.Network.Interfaces))
+		for _, vmIface := range vm.Status.Network.Interfaces {
+			iface := vmwarev1.VSphereMachineNetworkInterfaceStatus{
+				Name:      vmIface.Name,
+				DeviceKey: vmIface.DeviceKey,
+			}
+			// set IP
+			if vmIface.IP != nil {
+				var dhcp vmwarev1.VSphereMachineNetworkDHCPStatus
+				if vmIface.IP.DHCP != nil {
+					dhcp = vmwarev1.VSphereMachineNetworkDHCPStatus{
+						IP4: vmwarev1.VSphereMachineNetworkDHCPOptionsStatus{
+							Enabled: ptr.To(vmIface.IP.DHCP.IP4.Enabled),
+							Config:  convertKeyValueSlice(vmIface.IP.DHCP.IP4.Config),
+						},
+						IP6: vmwarev1.VSphereMachineNetworkDHCPOptionsStatus{
+							Enabled: ptr.To(vmIface.IP.DHCP.IP6.Enabled),
+							Config:  convertKeyValueSlice(vmIface.IP.DHCP.IP6.Config),
+						},
+					}
+				}
+				var addresses []vmwarev1.VSphereMachineNetworkInterfaceIPAddrStatus
+				for _, addr := range vmIface.IP.Addresses {
+					addresses = append(addresses, vmwarev1.VSphereMachineNetworkInterfaceIPAddrStatus{
+						Address:  addr.Address,
+						Lifetime: addr.Lifetime,
+						Origin:   addr.Origin,
+						State:    addr.State,
+					})
+				}
+				iface.IP = vmwarev1.VSphereMachineNetworkInterfaceIPStatus{
+					AutoConfigurationEnabled: vmIface.IP.AutoConfigurationEnabled,
+					MACAddr:                  vmIface.IP.MACAddr,
+					DHCP:                     dhcp,
+					Addresses:                addresses,
+				}
+			}
+			// set DNS
+			if vmIface.DNS != nil {
+				iface.DNS = vmwarev1.VSphereMachineNetworkDNSStatus{
+					DHCP:          ptr.To(vmIface.DNS.DHCP),
+					DomainName:    vmIface.DNS.DomainName,
+					HostName:      vmIface.DNS.HostName,
+					Nameservers:   vmIface.DNS.Nameservers,
+					SearchDomains: vmIface.DNS.SearchDomains,
+				}
+			}
+			interfaces = append(interfaces, iface)
+		}
+		supervisorMachineCtx.VSphereMachine.Status.Network = vmwarev1.VSphereMachineNetworkStatus{
+			Interfaces: interfaces,
+		}
+	}
+
 	if vm.Status.Network.PrimaryIP4 == "" && vm.Status.Network.PrimaryIP6 == "" {
 		return false
 	}
@@ -476,6 +585,16 @@ func (v *VmopMachineService) reconcileNetwork(supervisorMachineCtx *vmware.Super
 	supervisorMachineCtx.VSphereMachine.Status.IPAddr = vm.Status.Network.PrimaryIP4
 	if supervisorMachineCtx.VSphereMachine.Status.IPAddr == "" {
 		supervisorMachineCtx.VSphereMachine.Status.IPAddr = vm.Status.Network.PrimaryIP6
+	}
+
+	// Cluster API requires InfrastructureMachineStatus.Addresses to be set
+	if supervisorMachineCtx.VSphereMachine.Status.IPAddr != "" {
+		supervisorMachineCtx.VSphereMachine.Status.Addresses = []corev1.NodeAddress{
+			{
+				Type:    corev1.NodeInternalIP,
+				Address: supervisorMachineCtx.VSphereMachine.Status.IPAddr,
+			},
+		}
 	}
 
 	return true

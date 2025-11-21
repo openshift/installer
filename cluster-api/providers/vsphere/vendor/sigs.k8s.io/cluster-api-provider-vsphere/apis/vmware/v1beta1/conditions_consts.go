@@ -16,12 +16,12 @@ limitations under the License.
 
 package v1beta1
 
-import clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+import clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
 const (
 	// ResourcePolicyReadyCondition reports the successful creation of a
 	// Resource Policy.
-	ResourcePolicyReadyCondition clusterv1.ConditionType = "ResourcePolicyReady"
+	ResourcePolicyReadyCondition clusterv1beta1.ConditionType = "ResourcePolicyReady"
 
 	// ResourcePolicyCreationFailedReason used when any errors occur during
 	// ResourcePolicy creation.
@@ -31,7 +31,7 @@ const (
 const (
 	// ClusterNetworkReadyCondition reports the successful provision of a
 	// Cluster Network.
-	ClusterNetworkReadyCondition clusterv1.ConditionType = "ClusterNetworkReady"
+	ClusterNetworkReadyCondition clusterv1beta1.ConditionType = "ClusterNetworkReady"
 
 	// ClusterNetworkProvisionStartedReason is used when waiting for Cluster
 	// Network to be Ready.
@@ -44,7 +44,7 @@ const (
 const (
 	// LoadBalancerReadyCondition reports the successful reconciliation of
 	// a static control plane endpoint.
-	LoadBalancerReadyCondition clusterv1.ConditionType = "LoadBalancerReady"
+	LoadBalancerReadyCondition clusterv1beta1.ConditionType = "LoadBalancerReady"
 
 	// LoadBalancerCreationFailedReason is used when load balancer related
 	// resources creation fails.
@@ -73,7 +73,7 @@ const (
 const (
 	// ProviderServiceAccountsReadyCondition documents the status of provider service accounts
 	// and related Roles, RoleBindings and Secrets are created.
-	ProviderServiceAccountsReadyCondition clusterv1.ConditionType = "ProviderServiceAccountsReady"
+	ProviderServiceAccountsReadyCondition clusterv1beta1.ConditionType = "ProviderServiceAccountsReady"
 
 	// ProviderServiceAccountsReconciliationFailedReason reports that provider service accounts related resources reconciliation failed.
 	ProviderServiceAccountsReconciliationFailedReason = "ProviderServiceAccountsReconciliationFailed"
@@ -94,7 +94,7 @@ const (
 	SupervisorHeadlessSvcPort = 6443
 
 	// ServiceDiscoveryReadyCondition documents the status of service discoveries.
-	ServiceDiscoveryReadyCondition clusterv1.ConditionType = "ServiceDiscoveryReady"
+	ServiceDiscoveryReadyCondition clusterv1beta1.ConditionType = "ServiceDiscoveryReady"
 
 	// SupervisorHeadlessServiceSetupFailedReason documents the headless service setup for svc api server failed.
 	SupervisorHeadlessServiceSetupFailedReason = "SupervisorHeadlessServiceSetupFailed"

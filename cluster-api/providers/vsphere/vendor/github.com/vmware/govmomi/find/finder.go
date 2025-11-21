@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2014-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package find
 
@@ -813,7 +801,7 @@ func (f *Finder) NetworkList(ctx context.Context, path string) ([]object.Network
 // With standard vSphere networking, Portgroups cannot have the same name within the same network folder.
 // With NSX, Portgroups can have the same name, even within the same Switch. In this case, using an inventory path
 // results in a MultipleFoundError. A MOID, switch UUID or segment ID can be used instead, as both are unique.
-// See also: https://kb.vmware.com/s/article/79872#Duplicate_names
+// See also: https://knowledge.broadcom.com/external/article?articleNumber=320145#Duplicate_names
 // Examples:
 // - Name:                "dvpg-1"
 // - Inventory Path:      "vds-1/dvpg-1"

@@ -31,12 +31,14 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	clusterutilv1 "sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	"sigs.k8s.io/cluster-api/util/patch"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
+	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -52,7 +54,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/util"
 )
 
-// +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=providerserviceaccounts,verbs=get;list;watch;
+// +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=providerserviceaccounts,verbs=get;list;watch;patch;update
 // +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=providerserviceaccounts/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get
@@ -129,6 +131,7 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req reconcile.
 
 	// Pause reconciliation if entire VSphereCluster or Cluster is paused
 	// Note: Pause on the ProviderServiceAccount level is handled in ensureProviderServiceAccounts.
+	// In future we might consider to surface a separate paused condition for this controller.
 	if annotations.IsPaused(cluster, vsphereCluster) {
 		log.Info("Reconciliation is paused for this object")
 		return reconcile.Result{}, nil
@@ -150,7 +153,7 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req reconcile.
 	// Always issue a patch when exiting this function so changes to the
 	// resource are patched back to the API server.
 	defer func() {
-		if err := clusterContext.Patch(ctx); err != nil {
+		if err := r.patch(ctx, clusterContext); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 	}()
@@ -188,14 +191,37 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req reconcile.
 	})
 }
 
+func (r *ServiceAccountReconciler) patch(ctx context.Context, clusterCtx *vmwarecontext.ClusterContext) error {
+	// NOTE: this controller only owns the ProviderServiceAccountsReady condition on the VSphereCluster object.
+	return clusterCtx.PatchHelper.Patch(ctx, clusterCtx.VSphereCluster,
+		patch.WithOwnedConditions{Conditions: []clusterv1beta1.ConditionType{
+			vmwarev1.ProviderServiceAccountsReadyCondition,
+		}},
+		patch.WithOwnedV1Beta2Conditions{Conditions: []string{
+			vmwarev1.VSphereClusterProviderServiceAccountsReadyV1Beta2Condition,
+		}},
+	)
+}
+
 // reconcileNormal handles create and update events for ProviderServiceAccounts.
 func (r *ServiceAccountReconciler) reconcileNormal(ctx context.Context, guestClusterCtx *vmwarecontext.GuestClusterContext) (_ reconcile.Result, reterr error) {
 	defer func() {
 		if reterr != nil {
-			conditions.MarkFalse(guestClusterCtx.VSphereCluster, vmwarev1.ProviderServiceAccountsReadyCondition, vmwarev1.ProviderServiceAccountsReconciliationFailedReason,
-				clusterv1.ConditionSeverityWarning, reterr.Error())
+			v1beta1conditions.MarkFalse(guestClusterCtx.VSphereCluster, vmwarev1.ProviderServiceAccountsReadyCondition, vmwarev1.ProviderServiceAccountsReconciliationFailedReason,
+				clusterv1beta1.ConditionSeverityWarning, "%v", reterr)
+			v1beta2conditions.Set(guestClusterCtx.VSphereCluster, metav1.Condition{
+				Type:    vmwarev1.VSphereClusterProviderServiceAccountsReadyV1Beta2Condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  vmwarev1.VSphereClusterProviderServiceAccountsNotReadyV1Beta2Reason,
+				Message: reterr.Error(),
+			})
 		} else {
-			conditions.MarkTrue(guestClusterCtx.VSphereCluster, vmwarev1.ProviderServiceAccountsReadyCondition)
+			v1beta1conditions.MarkTrue(guestClusterCtx.VSphereCluster, vmwarev1.ProviderServiceAccountsReadyCondition)
+			v1beta2conditions.Set(guestClusterCtx.VSphereCluster, metav1.Condition{
+				Type:   vmwarev1.VSphereClusterProviderServiceAccountsReadyV1Beta2Condition,
+				Status: metav1.ConditionTrue,
+				Reason: vmwarev1.VSphereClusterProviderServiceAccountsReadyV1Beta2Reason,
+			})
 		}
 	}()
 

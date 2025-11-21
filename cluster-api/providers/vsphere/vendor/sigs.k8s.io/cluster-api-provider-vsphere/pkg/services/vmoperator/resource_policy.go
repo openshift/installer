@@ -21,7 +21,6 @@ import (
 
 	"github.com/pkg/errors"
 	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -37,17 +36,10 @@ type RPService struct {
 // ReconcileResourcePolicy ensures that a VirtualMachineSetResourcePolicy exists for the cluster
 // Returns the name of a policy if it exists, otherwise returns an error.
 func (s *RPService) ReconcileResourcePolicy(ctx context.Context, clusterCtx *vmware.ClusterContext) (string, error) {
-	resourcePolicy, err := s.getVirtualMachineSetResourcePolicy(ctx, clusterCtx)
+	resourcePolicy, err := s.createOrPatchVirtualMachineSetResourcePolicy(ctx, clusterCtx)
 	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			return "", errors.Errorf("unexpected error in getting the Resource policy: %+v", err)
-		}
-		resourcePolicy, err = s.createVirtualMachineSetResourcePolicy(ctx, clusterCtx)
-		if err != nil {
-			return "", errors.Errorf("failed to create Resource Policy: %+v", err)
-		}
+		return "", errors.Errorf("failed to create Resource Policy: %+v", err)
 	}
-
 	return resourcePolicy.Name, nil
 }
 
@@ -60,17 +52,7 @@ func (s *RPService) newVirtualMachineSetResourcePolicy(clusterCtx *vmware.Cluste
 	}
 }
 
-func (s *RPService) getVirtualMachineSetResourcePolicy(ctx context.Context, clusterCtx *vmware.ClusterContext) (*vmoprv1.VirtualMachineSetResourcePolicy, error) {
-	vmResourcePolicy := &vmoprv1.VirtualMachineSetResourcePolicy{}
-	vmResourcePolicyName := client.ObjectKey{
-		Namespace: clusterCtx.Cluster.Namespace,
-		Name:      clusterCtx.Cluster.Name,
-	}
-	err := s.Client.Get(ctx, vmResourcePolicyName, vmResourcePolicy)
-	return vmResourcePolicy, err
-}
-
-func (s *RPService) createVirtualMachineSetResourcePolicy(ctx context.Context, clusterCtx *vmware.ClusterContext) (*vmoprv1.VirtualMachineSetResourcePolicy, error) {
+func (s *RPService) createOrPatchVirtualMachineSetResourcePolicy(ctx context.Context, clusterCtx *vmware.ClusterContext) (*vmoprv1.VirtualMachineSetResourcePolicy, error) {
 	vmResourcePolicy := s.newVirtualMachineSetResourcePolicy(clusterCtx)
 
 	_, err := ctrlutil.CreateOrPatch(ctx, s.Client, vmResourcePolicy, func() error {

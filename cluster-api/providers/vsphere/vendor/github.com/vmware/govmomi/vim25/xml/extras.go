@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2014 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package xml
 
@@ -96,4 +84,35 @@ func typeToString(typ reflect.Type) string {
 	}
 
 	panic("don't know what to do for type: " + typ.String())
+}
+
+// Find reflect.Type for an element's type attribute.
+func (p *Decoder) typeForElement(val reflect.Value, start *StartElement) reflect.Type {
+	t := ""
+	for _, a := range start.Attr {
+		if a.Name == xmlSchemaInstance || a.Name == xsiType {
+			t = a.Value
+			break
+		}
+	}
+
+	if t == "" {
+		// No type attribute; fall back to looking up type by interface name.
+		t = val.Type().Name()
+	}
+
+	// Maybe the type is a basic xsd:* type.
+	typ := stringToType(t)
+	if typ != nil {
+		return typ
+	}
+
+	// Maybe the type is a custom type.
+	if p.TypeFunc != nil {
+		if typ, ok := p.TypeFunc(t); ok {
+			return typ
+		}
+	}
+
+	return nil
 }
