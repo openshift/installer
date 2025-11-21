@@ -44,6 +44,9 @@ const (
 	// Service endpoint port. vm-operator propagates annotations in VMService to Service and LB providers like NSX-T
 	// will enable health check on the endpoint target port when this annotation is present on the Service.
 	AnnotationEnableEndpointHealthCheckKey = "lb.iaas.vmware.com/enable-endpoint-health-check"
+
+	// PrimaryInterfaceName is the name of the primary interface.
+	PrimaryInterfaceName = "eth0"
 )
 
 var (
@@ -53,6 +56,9 @@ var (
 	// NetworkGVKNSXT is the GVK used for networks in NSX-T mode.
 	NetworkGVKNSXT = ncpv1.SchemeGroupVersion.WithKind("VirtualNetwork")
 
-	// NetworkGVKNSXTVPC is the GVK used for networks in NSX-T VPC mode.
-	NetworkGVKNSXTVPC = nsxvpcv1.SchemeGroupVersion.WithKind("SubnetSet")
+	// NetworkGVKNSXTVPCSubnetSet is the GVK used for SubnetSet in NSX-T VPC mode.
+	NetworkGVKNSXTVPCSubnetSet = nsxvpcv1.SchemeGroupVersion.WithKind("SubnetSet")
+
+	// NetworkGVKNSXTVPCSubnet is the GVK used for Subnet in NSX-T VPC mode.
+	NetworkGVKNSXTVPCSubnet = nsxvpcv1.SchemeGroupVersion.WithKind("Subnet")
 )

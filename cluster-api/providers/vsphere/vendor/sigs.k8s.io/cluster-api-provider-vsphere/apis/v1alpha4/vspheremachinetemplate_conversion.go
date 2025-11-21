@@ -20,7 +20,7 @@ import (
 	"unsafe"
 
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
@@ -80,27 +80,27 @@ func (dst *VSphereMachineTemplateList) ConvertFrom(srcRaw conversion.Hub) error 
 	return Convert_v1beta1_VSphereMachineTemplateList_To_v1alpha4_VSphereMachineTemplateList(src, dst, nil)
 }
 
-func Convert_v1alpha4_ObjectMeta_To_v1beta1_ObjectMeta(in *ObjectMeta, out *clusterv1.ObjectMeta, s apiconversion.Scope) error {
+func Convert_v1alpha4_ObjectMeta_To_v1beta1_ObjectMeta(in *ObjectMeta, out *clusterv1beta1.ObjectMeta, s apiconversion.Scope) error {
 	// wrapping the conversion func to avoid having compile errors due to compileErrorOnMissingConversion()
 	// more details at https://github.com/kubernetes/kubernetes/issues/98380
 	return autoConvert_v1alpha4_ObjectMeta_To_v1beta1_ObjectMeta(in, out, s)
 }
 
 // autoConvert_v1alpha4_ObjectMeta_To_v1beta1_ObjectMeta was copied over from CAPI because it is now internal there.
-func autoConvert_v1alpha4_ObjectMeta_To_v1beta1_ObjectMeta(in *ObjectMeta, out *clusterv1.ObjectMeta, s apiconversion.Scope) error {
+func autoConvert_v1alpha4_ObjectMeta_To_v1beta1_ObjectMeta(in *ObjectMeta, out *clusterv1beta1.ObjectMeta, s apiconversion.Scope) error {
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
 	out.Annotations = *(*map[string]string)(unsafe.Pointer(&in.Annotations))
 	return nil
 }
 
-func Convert_v1beta1_ObjectMeta_To_v1alpha4_ObjectMeta(in *clusterv1.ObjectMeta, out *ObjectMeta, s apiconversion.Scope) error {
+func Convert_v1beta1_ObjectMeta_To_v1alpha4_ObjectMeta(in *clusterv1beta1.ObjectMeta, out *ObjectMeta, s apiconversion.Scope) error {
 	// wrapping the conversion func to avoid having compile errors due to compileErrorOnMissingConversion()
 	// more details at https://github.com/kubernetes/kubernetes/issues/98380
 	return autoConvert_v1beta1_ObjectMeta_To_v1alpha4_ObjectMeta(in, out, s)
 }
 
 // autoConvert_v1beta1_ObjectMeta_To_v1alpha4_ObjectMeta was copied over from CAPI because it is now internal there.
-func autoConvert_v1beta1_ObjectMeta_To_v1alpha4_ObjectMeta(in *clusterv1.ObjectMeta, out *ObjectMeta, s apiconversion.Scope) error {
+func autoConvert_v1beta1_ObjectMeta_To_v1alpha4_ObjectMeta(in *clusterv1beta1.ObjectMeta, out *ObjectMeta, s apiconversion.Scope) error {
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
 	out.Annotations = *(*map[string]string)(unsafe.Pointer(&in.Annotations))
 	return nil

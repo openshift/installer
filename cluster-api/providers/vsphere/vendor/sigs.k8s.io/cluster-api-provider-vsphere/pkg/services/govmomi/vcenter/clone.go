@@ -27,10 +27,11 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/pbm"
 	pbmTypes "github.com/vmware/govmomi/pbm/types"
+	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 	"k8s.io/utils/ptr"
-	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
@@ -254,12 +255,28 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 			if err != nil {
 				return errors.Wrapf(err, "failed to get owning cluster of resourcepool %q to calculate datastore based on storage policy", pool)
 			}
-			dsGetter := object.NewComputeResource(vmCtx.Session.Client.Client, cluster.Reference())
-			datastores, err := dsGetter.Datastores(ctx)
+
+			dsList, err := object.NewComputeResource(vmCtx.Session.Client.Client, cluster.Reference()).Datastores(ctx)
 			if err != nil {
 				return errors.Wrapf(err, "unable to list datastores from owning cluster of requested resourcepool")
 			}
+
+			var refs []types.ManagedObjectReference
+			for i := range dsList {
+				refs = append(refs, dsList[i].Reference())
+			}
+
+			var datastores []mo.Datastore
+			if err := property.DefaultCollector(vmCtx.Session.Client.Client).Retrieve(ctx, refs, []string{"summary"}, &datastores); err != nil {
+				return errors.Wrapf(err, "unable to collect datastore properties to validate maintenance mode")
+			}
+
 			for _, ds := range datastores {
+				if ds.Summary.MaintenanceMode != string(types.DatastoreSummaryMaintenanceModeStateNormal) {
+					log.V(4).Info("datastore is in maintenance mode, skipping", "datastore", ds.Summary.Name)
+					continue
+				}
+
 				hubs = append(hubs, pbmTypes.PbmPlacementHub{
 					HubType: ds.Reference().Type,
 					HubId:   ds.Reference().Value,
@@ -441,8 +458,6 @@ func createDataDisks(ctx context.Context, dataDiskDefs []infrav1.VSphereDisk, de
 		}
 
 		// Set provisioning type for the new data disk.
-		// Currently, if ThinProvisioned is not set, GOVC will set default to false.  We may want to change this behavior
-		// to match what template image OS disk has configured to make them match if not set.
 		switch dataDisk.ProvisioningMode {
 		case infrav1.ThinProvisioningMode:
 			backing.ThinProvisioned = types.NewBool(true)
@@ -452,7 +467,7 @@ func createDataDisks(ctx context.Context, dataDiskDefs []infrav1.VSphereDisk, de
 			backing.ThinProvisioned = types.NewBool(false)
 			backing.EagerlyScrub = types.NewBool(true)
 		default:
-			log.V(2).Info("No provisioning type detected.  Leaving configuration empty.")
+			log.V(2).Info("No provisioning type detected. Leaving configuration empty.")
 		}
 
 		dev := &types.VirtualDisk{

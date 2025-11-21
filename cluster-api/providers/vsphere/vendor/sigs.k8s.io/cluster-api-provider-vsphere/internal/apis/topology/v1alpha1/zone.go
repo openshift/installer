@@ -1,10 +1,28 @@
-// Copyright (c) 2024 VMware, Inc. All Rights Reserved.
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	// ZoneConditionPersistentVolumeClaimsExist indicates that PVCs exist in the
+	// Zone.
+	ZoneConditionPersistentVolumeClaimsExist = "ZonePersistentVolumeClaimsExist"
+
+	// ZoneConditionPodsExist indicates that Pods exist in the Zone.
+	ZoneConditionPodsExist = "ZonePodsExist"
+
+	// ZoneConditionVirtualMachinesExist indicates that VirtualMachines exist
+	// in the Zone.
+	ZoneConditionVirtualMachinesExist = "ZoneVirtualMachinesExist"
+
+	// ZoneConditionNamespaceResourcePoolReconciled indicates that the
+	// Namespace ResourcePool has been reconciled.
+	ZoneConditionNamespaceResourcePoolReconciled = "ZoneNamespaceResourcePoolReconciled"
 )
 
 // AvailabilityZoneReference describes a reference to the cluster scoped
@@ -22,6 +40,11 @@ type AvailabilityZoneReference struct {
 // a vSphere entity
 type VSphereEntityInfo struct {
 	// +optional
+	// ClusterMoIDs are the managed object IDs of the vSphere Clusters in an
+	// individual vSphere Zone. A zone may be comprised of multiple Clusters.
+	ClusterMoIDs []string `json:"clusterMoIDs,omitempty"`
+
+	// +optional
 	// PoolMoIDs are the managed object ID of the vSphere ResourcePools
 	// in an individual vSphere Zone. A zone may be comprised of
 	// multiple ResourcePools.
@@ -31,6 +54,18 @@ type VSphereEntityInfo struct {
 	// FolderMoID is the managed object ID of the vSphere Folder for a
 	// Namespace.
 	FolderMoID string `json:"folderMoID,omitempty"`
+}
+
+// VirtualMachineClassAllocationInfo describes the definition of allocations
+// for Virtual Machines of a given class.
+type VirtualMachineClassAllocationInfo struct {
+	// +optional
+	// Identifier of the Virtual Machine class used for allocation.
+	ReservedVMClass string `json:"reservedVmClass,omitempty"`
+
+	// +optional
+	// Number of instances of given Virtual Machine class.
+	Count int64 `json:"count,omitempty"`
 }
 
 // ZoneSpec contains identifying information about the
@@ -51,6 +86,43 @@ type ZoneSpec struct {
 	// Zone is a reference to the cluster scoped AvailabilityZone this
 	// Zone is derived from.
 	Zone AvailabilityZoneReference `json:"availabilityZoneReference"`
+
+	// +optional
+	// Guaranteed number of reserved Virtual Machine class instances that are available for the
+	// namespace in this zone.
+	VirtualMachineReservations []VirtualMachineClassAllocationInfo `json:"virtualMachineReservations,omitempty"`
+
+	// +optional
+	// CPU limit (in megahertz) for the namespace in this zone in addition to the limits specified as part of
+	// reserved Virtual Machine classes.
+	CPULimitMHz int64 `json:"cpuLimitMHz,omitempty"`
+
+	// +optional
+	// CPU reservation (in megahertz) for the namespace in this zone, for VMs
+	// that are not using reserved Virtual Machine class instances.
+	CPUReservationMHz int64 `json:"cpuReservationMHz,omitempty"`
+
+	// +optional
+	// Memory limit (in mebibytes) for the namespace in this zone in addition
+	// to the limits specified as part of reserved Virtual Machine classes.
+	MemoryLimitMiB int64 `json:"memoryLimitMiB,omitempty"`
+
+	// +optional
+	// Memory reservation (in mebibytes) for the namespace in this zone, for
+	// VMs that are not using reserved Virtual Machine class instances.
+	MemoryReservationMiB int64 `json:"memoryReservationMiB,omitempty"`
+
+	// +optional
+	// Determines whether workloads that don't use a reserved Virtual Machine class
+	// instance can use a DirectPath device.
+	DisallowUnreservedDirectPathUsage bool `json:"disallowUnreservedDirectPathUsage,omitempty"`
+
+	// +optional
+	// AllowedClusterComputeResourceMoIDs are the managed object IDs of the vSphere
+	// ClusterComputeResources in this vSphere Zone on which workloads in this Supervisor
+	// Namespace can be placed on. If empty, all the vSphere Clusters in the vSphere Zone are
+	// candidates to place the workloads in this vSphere Namespace.
+	AllowedClusterComputeResourceMoIDs []string `json:"allowedClusterComputeResourceMoIDs,omitempty"`
 }
 
 // ZoneStatus defines the observed state of Zone.
@@ -58,6 +130,11 @@ type ZoneStatus struct {
 	// +optional
 	// Conditions describes the observed conditions of the Zone
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// +optional
+	// MarkedForRemoval describes if the Zone is marked for removal from the
+	// Namespace.
+	MarkedForRemoval bool `json:"markedForRemoval,omitempty"`
 }
 
 // Zone is the schema for the Zone resource for the vSphere topology API.
