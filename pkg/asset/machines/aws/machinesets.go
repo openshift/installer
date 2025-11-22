@@ -25,6 +25,7 @@ type MachineSetInput struct {
 	Pool                     *types.MachinePool
 	Role                     string
 	UserDataSecret           string
+	Hosts                    map[string]icaws.Host
 }
 
 // MachineSets returns a list of machinesets for a machinepool.
@@ -87,6 +88,8 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 			instanceProfile = fmt.Sprintf("%s-worker-profile", in.ClusterID)
 		}
 
+		dedicatedHost := DedicatedHost(in.Hosts, mpool.HostPlacement, az)
+
 		provider, err := provider(&machineProviderInput{
 			clusterID:        in.ClusterID,
 			region:           in.InstallConfigPlatformAWS.Region,
@@ -103,12 +106,21 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 			publicSubnet:     publicSubnet,
 			securityGroupIDs: in.Pool.Platform.AWS.AdditionalSecurityGroupIDs,
 			cpuOptions:       mpool.CPUOptions,
+			dedicatedHost:    dedicatedHost,
 		})
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
+
+		// If we are using any feature that is only available via CAPI, we must set the authoritativeAPI = ClusterAPI
+		authoritativeAPI := machineapi.MachineAuthorityMachineAPI
+		if isAuthoritativeClusterAPIRequired(provider) {
+			authoritativeAPI = machineapi.MachineAuthorityClusterAPI
+		}
+
 		name := fmt.Sprintf("%s-%s-%s", in.ClusterID, in.Pool.Name, az)
 		spec := machineapi.MachineSpec{
+			AuthoritativeAPI: authoritativeAPI,
 			ProviderSpec: machineapi.ProviderSpec{
 				Value: &runtime.RawExtension{Object: provider},
 			},
@@ -131,7 +143,8 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 				},
 			},
 			Spec: machineapi.MachineSetSpec{
-				Replicas: &replicas,
+				AuthoritativeAPI: authoritativeAPI,
+				Replicas:         &replicas,
 				Selector: metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"machine.openshift.io/cluster-api-machineset": name,
@@ -152,8 +165,17 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 				},
 			},
 		}
+
 		machinesets = append(machinesets, mset)
 	}
 
 	return machinesets, nil
+}
+
+// isAuthoritativeClusterAPIRequired is called to determine if the machine spec should have the AuthoritativeAPI set to ClusterAPI.
+func isAuthoritativeClusterAPIRequired(provider *machineapi.AWSMachineProviderConfig) bool {
+	if provider.HostPlacement != nil && *provider.HostPlacement.Affinity != machineapi.HostAffinityAnyAvailable {
+		return true
+	}
+	return false
 }

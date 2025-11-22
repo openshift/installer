@@ -129,6 +129,86 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path\.authentication: Invalid value: \"foobarbaz\": must be either Required or Optional$`,
 		},
+		{
+			name: "host placement any available",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityAnyAvailable),
+				},
+			},
+		},
+		{
+			name: "valid dedicated hosts",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{
+							ID: "h-09dcf61cb388b0149",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "invalid dedicated hosts - missing hostID",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{},
+					},
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost\[0].id: Required value: a hostID must be specified when configuring 'dedicatedHost'$`,
+		},
+		{
+			name: "invalid - hostPlacement without affinity",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{},
+			},
+			expected: `^test-path.hostPlacement.affinity: Required value: affinity is required when hostPlacement is configured$`,
+		},
+		{
+			name: "invalid unknown affinity",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinity("Unknown")),
+				},
+			},
+			expected: `^test-path.hostPlacement.affinity: Unsupported value: "Unknown": supported values: "AnyAvailable", "DedicatedHost"$`,
+		},
+		{
+			name: "any available with dedicated host set",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity:      ptr.To(aws.HostAffinityAnyAvailable),
+					DedicatedHost: []aws.DedicatedHost{{ID: "h-09dcf61cb388b0149"}},
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost: Required value: dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise$`,
+		},
+		{
+			name: "invalid - DedicatedHost affinity without dedicatedHost",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost: Required value: dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise$`,
+		},
+		{
+			name: "invalid dedicated host - bad hostID",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{ID: "h-09DCFABC"},
+					},
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost\[0\].id: Invalid value: "h-09DCFABC": id must start with 'h-' followed by 17 lowercase hexadecimal characters \(0-9 and a-f\)$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

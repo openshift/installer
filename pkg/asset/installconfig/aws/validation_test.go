@@ -74,6 +74,7 @@ func TestValidate(t *testing.T) {
 		subnetsInVPC  *SubnetGroups
 		vpcTags       Tags
 		instanceTypes map[string]InstanceType
+		hosts         map[string]Host
 		proxy         string
 		publicOnly    bool
 		expectErr     string
@@ -1200,6 +1201,57 @@ func TestValidate(t *testing.T) {
 			},
 			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: subnet subnet-valid-public-a1 is owned by other clusters [another-cluster] and cannot be used for new installations, another subnet must be created separately\E$`,
 		},
+		{
+			name: "valid dedicated host placement on compute",
+			installConfig: icBuild.build(
+				icBuild.withComputePlatformZones([]string{"a"}, true, 0),
+				icBuild.withComputeHostPlacement([]string{"h-1234567890abcdef0"}, 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "a"},
+			},
+		},
+		{
+			name: "invalid dedicated host not found",
+			installConfig: icBuild.build(
+				icBuild.withComputePlatformZones([]string{"a"}, true, 0),
+				icBuild.withComputeHostPlacement([]string{"h-aaaaaaaaaaaaaaaaa"}, 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "a"},
+			},
+			expectErr: "dedicated host h-aaaaaaaaaaaaaaaaa not found",
+		},
+		{
+			name: "invalid dedicated host zone not in pool zones",
+			installConfig: icBuild.build(
+				icBuild.withComputePlatformZones([]string{"a"}, true, 0),
+				icBuild.withComputeHostPlacement([]string{"h-bbbbbbbbbbbbbbbbb"}, 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			hosts: map[string]Host{
+				"h-bbbbbbbbbbbbbbbbb": {ID: "h-bbbbbbbbbbbbbbbbb", Zone: "b"},
+			},
+			expectErr: "is not available in pool's zone list",
+		},
+		{
+			name: "dedicated host placement on compute but for a zone that pool is not using",
+			installConfig: icBuild.build(
+				icBuild.withComputePlatformZones([]string{"b"}, true, 0),
+				icBuild.withComputeHostPlacementAndZone([]string{"h-1234567890abcdef0"}, "b", 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "a"},
+			},
+			expectErr: "dedicated host was configured with zone b but expected zone a",
+		},
 	}
 
 	// Register mock http(s) responses for tests.
@@ -1232,6 +1284,7 @@ func TestValidate(t *testing.T) {
 					Tags: test.vpcTags,
 				},
 				instanceTypes:   test.instanceTypes,
+				Hosts:           test.hosts,
 				ProvidedSubnets: test.installConfig.Platform.AWS.VPC.Subnets,
 			}
 
@@ -1948,6 +2001,34 @@ func (icBuild icBuildForAWS) withComputePlatformZones(zones []string, overwrite 
 			ic.Compute[index].Platform.AWS.Zones = zones
 		} else {
 			ic.Compute[index].Platform.AWS.Zones = append(ic.Compute[index].Platform.AWS.Zones, zones...)
+		}
+	}
+}
+
+func (icBuild icBuildForAWS) withComputeHostPlacement(hostIDs []string, index int) icOption {
+	return func(ic *types.InstallConfig) {
+		aff := aws.HostAffinityDedicatedHost
+		dhs := make([]aws.DedicatedHost, 0, len(hostIDs))
+		for _, id := range hostIDs {
+			dhs = append(dhs, aws.DedicatedHost{ID: id})
+		}
+		ic.Compute[index].Platform.AWS.HostPlacement = &aws.HostPlacement{
+			Affinity:      &aff,
+			DedicatedHost: dhs,
+		}
+	}
+}
+
+func (icBuild icBuildForAWS) withComputeHostPlacementAndZone(hostIDs []string, zone string, index int) icOption {
+	return func(ic *types.InstallConfig) {
+		aff := aws.HostAffinityDedicatedHost
+		dhs := make([]aws.DedicatedHost, 0, len(hostIDs))
+		for _, id := range hostIDs {
+			dhs = append(dhs, aws.DedicatedHost{ID: id, Zone: zone})
+		}
+		ic.Compute[index].Platform.AWS.HostPlacement = &aws.HostPlacement{
+			Affinity:      &aff,
+			DedicatedHost: dhs,
 		}
 	}
 }
