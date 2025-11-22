@@ -523,7 +523,7 @@ func mapToTags(input map[string]string, resourceID *string) []autoscalingtypes.T
 // SubnetIDs return subnet IDs of a AWSMachinePool based on given subnetIDs and filters.
 func (s *Service) SubnetIDs(scope *scope.MachinePoolScope) ([]string, error) {
 	subnetIDs := make([]string, 0)
-	var inputFilters = make([]ec2types.Filter, 0)
+	inputFilters := make([]ec2types.Filter, 0)
 
 	for _, subnet := range scope.AWSMachinePool.Spec.Subnets {
 		switch {

@@ -29,9 +29,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/feature"
 )
 
@@ -40,9 +39,9 @@ type ConfigOwner struct {
 	*unstructured.Unstructured
 }
 
-// IsInfrastructureReady extracts infrastructure status from the config owner.
-func (co ConfigOwner) IsInfrastructureReady() bool {
-	infrastructureReady, _, err := unstructured.NestedBool(co.Object, "status", "infrastructureReady")
+// IsInfrastructureProvisioned extracts infrastructure status from the config owner.
+func (co ConfigOwner) IsInfrastructureProvisioned() bool {
+	infrastructureReady, _, err := unstructured.NestedBool(co.Object, "status", "initialization", "infrastructureProvisioned")
 	if err != nil {
 		return false
 	}
@@ -148,7 +147,7 @@ func getConfigOwner(ctx context.Context, c client.Client, obj metav1.Object, get
 
 	if feature.Gates.Enabled(feature.MachinePool) {
 		allowedGKs = append(allowedGKs, schema.GroupKind{
-			Group: expv1.GroupVersion.Group,
+			Group: clusterv1.GroupVersion.Group,
 			Kind:  "MachinePool",
 		})
 	}
@@ -163,7 +162,9 @@ func getConfigOwner(ctx context.Context, c client.Client, obj metav1.Object, get
 		for _, gk := range allowedGKs {
 			if refGVK.Group == gk.Group && refGVK.Kind == gk.Kind {
 				return getFn(ctx, c, &corev1.ObjectReference{
-					APIVersion: ref.APIVersion,
+					// Intentionally always using the latest apiVersion to get Machine or MachinePool,
+					// even if the apiVersion in the ownerRef has not been bumped yet.
+					APIVersion: clusterv1.GroupVersion.String(),
 					Kind:       ref.Kind,
 					Name:       ref.Name,
 					Namespace:  obj.GetNamespace(),

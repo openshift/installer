@@ -39,7 +39,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/userdata"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/utils"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // GetRunningInstanceByTags returns the existing instance or nothing if it doesn't exist.
@@ -144,7 +144,7 @@ func (s *Service) CreateInstance(ctx context.Context, scope *scope.MachineScope,
 	if scope.AWSMachine.Spec.AMI.ID != nil { //nolint:nestif
 		input.ImageID = *scope.AWSMachine.Spec.AMI.ID
 	} else {
-		if scope.Machine.Spec.Version == nil {
+		if scope.Machine.Spec.Version == "" {
 			err := errors.New("Either AWSMachine's spec.ami.id or Machine's spec.version must be defined")
 			scope.SetFailureReason("CreateError")
 			scope.SetFailureMessage(err)
@@ -167,12 +167,12 @@ func (s *Service) CreateInstance(ctx context.Context, scope *scope.MachineScope,
 		}
 
 		if scope.IsEKSManaged() && imageLookupFormat == "" && imageLookupOrg == "" && imageLookupBaseOS == "" {
-			input.ImageID, err = s.eksAMILookup(ctx, *scope.Machine.Spec.Version, imageArchitecture, scope.AWSMachine.Spec.AMI.EKSOptimizedLookupType)
+			input.ImageID, err = s.eksAMILookup(ctx, scope.Machine.Spec.Version, imageArchitecture, scope.AWSMachine.Spec.AMI.EKSOptimizedLookupType)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			input.ImageID, err = s.defaultAMIIDLookup(imageLookupFormat, imageLookupOrg, imageLookupBaseOS, imageArchitecture, *scope.Machine.Spec.Version)
+			input.ImageID, err = s.defaultAMIIDLookup(imageLookupFormat, imageLookupOrg, imageLookupBaseOS, imageArchitecture, scope.Machine.Spec.Version)
 			if err != nil {
 				return nil, err
 			}
@@ -371,11 +371,11 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 		var filtered []types.Subnet
 		var errMessage string
 		for _, subnet := range subnets {
-			if failureDomain != nil && *subnet.AvailabilityZone != *failureDomain {
+			if failureDomain != "" && *subnet.AvailabilityZone != failureDomain {
 				// we could have included the failure domain in the query criteria, but then we end up with EC2 error
 				// messages that don't give a good hint about what is really wrong
 				errMessage += fmt.Sprintf(" subnet %q availability zone %q does not match failure domain %q.",
-					*subnet.SubnetId, *subnet.AvailabilityZone, *failureDomain)
+					*subnet.SubnetId, *subnet.AvailabilityZone, failureDomain)
 				continue
 			}
 
@@ -411,22 +411,22 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
 		return *filtered[0].SubnetId, nil
-	case failureDomain != nil:
+	case failureDomain != "":
 		if scope.AWSMachine.Spec.PublicIP != nil && *scope.AWSMachine.Spec.PublicIP {
-			subnets := s.scope.Subnets().FilterPublic().FilterNonCni().FilterByZone(*failureDomain)
+			subnets := s.scope.Subnets().FilterPublic().FilterNonCni().FilterByZone(failureDomain)
 			if len(subnets) == 0 {
 				errMessage := fmt.Sprintf("failed to run machine %q with public IP, no public subnets available in availability zone %q",
-					scope.Name(), *failureDomain)
+					scope.Name(), failureDomain)
 				record.Warnf(scope.AWSMachine, "FailedCreate", errMessage)
 				return "", awserrors.NewFailedDependency(errMessage)
 			}
 			return subnets[0].GetResourceID(), nil
 		}
 
-		subnets := s.scope.Subnets().FilterPrivate().FilterNonCni().FilterByZone(*failureDomain)
+		subnets := s.scope.Subnets().FilterPrivate().FilterNonCni().FilterByZone(failureDomain)
 		if len(subnets) == 0 {
 			errMessage := fmt.Sprintf("failed to run machine %q, no subnets available in availability zone %q",
-				scope.Name(), *failureDomain)
+				scope.Name(), failureDomain)
 			record.Warnf(scope.AWSMachine, "FailedCreate", errMessage)
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
@@ -992,22 +992,22 @@ func (s *Service) SDKToInstance(v types.Instance) (*infrav1.Instance, error) {
 	return i, nil
 }
 
-func (s *Service) getInstanceAddresses(instance types.Instance) []clusterv1.MachineAddress {
-	addresses := []clusterv1.MachineAddress{}
+func (s *Service) getInstanceAddresses(instance types.Instance) []clusterv1beta1.MachineAddress {
+	addresses := []clusterv1beta1.MachineAddress{}
 	// Check if the DHCP Option Set has domain name set
 	domainName := s.GetDHCPOptionSetDomainName(s.EC2Client, instance.VpcId)
 	for _, eni := range instance.NetworkInterfaces {
 		if addr := aws.ToString(eni.PrivateDnsName); addr != "" {
-			privateDNSAddress := clusterv1.MachineAddress{
-				Type:    clusterv1.MachineInternalDNS,
+			privateDNSAddress := clusterv1beta1.MachineAddress{
+				Type:    clusterv1beta1.MachineInternalDNS,
 				Address: addr,
 			}
 			addresses = append(addresses, privateDNSAddress)
 
 			if domainName != nil {
 				// Add secondary private DNS Name with domain name set in DHCP Option Set
-				additionalPrivateDNSAddress := clusterv1.MachineAddress{
-					Type:    clusterv1.MachineInternalDNS,
+				additionalPrivateDNSAddress := clusterv1beta1.MachineAddress{
+					Type:    clusterv1beta1.MachineInternalDNS,
 					Address: fmt.Sprintf("%s.%s", strings.Split(privateDNSAddress.Address, ".")[0], *domainName),
 				}
 				addresses = append(addresses, additionalPrivateDNSAddress)
@@ -1015,8 +1015,8 @@ func (s *Service) getInstanceAddresses(instance types.Instance) []clusterv1.Mach
 		}
 
 		if addr := aws.ToString(eni.PrivateIpAddress); addr != "" {
-			privateIPAddress := clusterv1.MachineAddress{
-				Type:    clusterv1.MachineInternalIP,
+			privateIPAddress := clusterv1beta1.MachineAddress{
+				Type:    clusterv1beta1.MachineInternalIP,
 				Address: addr,
 			}
 			addresses = append(addresses, privateIPAddress)
@@ -1025,16 +1025,16 @@ func (s *Service) getInstanceAddresses(instance types.Instance) []clusterv1.Mach
 		// An elastic IP is attached if association is non nil pointer
 		if eni.Association != nil {
 			if addr := aws.ToString(eni.Association.PublicDnsName); addr != "" {
-				publicDNSAddress := clusterv1.MachineAddress{
-					Type:    clusterv1.MachineExternalDNS,
+				publicDNSAddress := clusterv1beta1.MachineAddress{
+					Type:    clusterv1beta1.MachineExternalDNS,
 					Address: addr,
 				}
 				addresses = append(addresses, publicDNSAddress)
 			}
 
 			if addr := aws.ToString(eni.Association.PublicIp); addr != "" {
-				publicIPAddress := clusterv1.MachineAddress{
-					Type:    clusterv1.MachineExternalIP,
+				publicIPAddress := clusterv1beta1.MachineAddress{
+					Type:    clusterv1beta1.MachineExternalIP,
 					Address: addr,
 				}
 				addresses = append(addresses, publicIPAddress)

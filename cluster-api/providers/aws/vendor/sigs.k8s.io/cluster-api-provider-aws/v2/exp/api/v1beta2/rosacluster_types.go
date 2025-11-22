@@ -19,14 +19,14 @@ package v1beta2
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // ROSAClusterSpec defines the desired state of ROSACluster.
 type ROSAClusterSpec struct {
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
-	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 }
 
 // ROSAClusterStatus defines the observed state of ROSACluster.
@@ -37,11 +37,11 @@ type ROSAClusterStatus struct {
 
 	// FailureDomains specifies a list fo available availability zones that can be used
 	// +optional
-	FailureDomains clusterv1.FailureDomains `json:"failureDomains,omitempty"`
+	FailureDomains clusterv1beta1.FailureDomains `json:"failureDomains,omitempty"`
 
 	// Conditions defines current service state of the ROSACluster.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -72,13 +72,13 @@ type ROSAClusterList struct {
 
 // GetConditions returns the observations of the operational state of the
 // ROSACluster resource.
-func (r *ROSACluster) GetConditions() clusterv1.Conditions {
+func (r *ROSACluster) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
 // SetConditions sets the underlying service state of the ROSACluster to the
-// predescribed clusterv1.Conditions.
-func (r *ROSACluster) SetConditions(conditions clusterv1.Conditions) {
+// predescribed clusterv1beta1.Conditions.
+func (r *ROSACluster) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 

@@ -36,7 +36,7 @@ import (
 	ekscontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -83,7 +83,7 @@ func (r *AWSManagedClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	controlPlane := &ekscontrolplanev1.AWSManagedControlPlane{}
 	controlPlaneRef := types.NamespacedName{
 		Name:      cluster.Spec.ControlPlaneRef.Name,
-		Namespace: cluster.Spec.ControlPlaneRef.Namespace,
+		Namespace: cluster.Namespace,
 	}
 
 	if err := r.Get(ctx, controlPlaneRef, controlPlane); err != nil {
@@ -181,8 +181,8 @@ func (r *AWSManagedClusterReconciler) managedControlPlaneToManagedCluster(_ cont
 		}
 
 		managedClusterRef := cluster.Spec.InfrastructureRef
-		if managedClusterRef == nil || managedClusterRef.Kind != "AWSManagedCluster" {
-			log.Info("InfrastructureRef is nil or not AWSManagedCluster, skipping mapping")
+		if !managedClusterRef.IsDefined() || managedClusterRef.Kind != "AWSManagedCluster" {
+			log.Info("InfrastructureRef is not defined or not AWSManagedCluster, skipping mapping")
 			return nil
 		}
 
@@ -190,7 +190,7 @@ func (r *AWSManagedClusterReconciler) managedControlPlaneToManagedCluster(_ cont
 			{
 				NamespacedName: types.NamespacedName{
 					Name:      managedClusterRef.Name,
-					Namespace: managedClusterRef.Namespace,
+					Namespace: cluster.Namespace,
 				},
 			},
 		}

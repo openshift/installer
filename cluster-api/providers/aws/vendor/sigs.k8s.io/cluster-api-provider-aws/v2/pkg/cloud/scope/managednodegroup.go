@@ -37,9 +37,10 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/endpoints"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/throttle"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expclusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/cluster-api/util/patch"
 )
 
@@ -50,7 +51,7 @@ type ManagedMachinePoolScopeParams struct {
 	Cluster                   *clusterv1.Cluster
 	ControlPlane              *ekscontrolplanev1.AWSManagedControlPlane
 	ManagedMachinePool        *expinfrav1.AWSManagedMachinePool
-	MachinePool               *expclusterv1.MachinePool
+	MachinePool               *clusterv1.MachinePool
 	ControllerName            string
 	Session                   awsv2.Config
 	MaxWaitActiveUpdateDelete time.Duration
@@ -92,7 +93,7 @@ func NewManagedMachinePoolScope(params ManagedMachinePoolScopeParams) (*ManagedM
 		return nil, errors.Errorf("failed to create aws V2 session: %v", err)
 	}
 
-	ammpHelper, err := patch.NewHelper(params.ManagedMachinePool, params.Client)
+	ammpHelper, err := v1beta1patch.NewHelper(params.ManagedMachinePool, params.Client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init AWSManagedMachinePool patch helper")
 	}
@@ -125,13 +126,13 @@ func NewManagedMachinePoolScope(params ManagedMachinePoolScopeParams) (*ManagedM
 type ManagedMachinePoolScope struct {
 	logger.Logger
 	client.Client
-	patchHelper                *patch.Helper
+	patchHelper                *v1beta1patch.Helper
 	capiMachinePoolPatchHelper *patch.Helper
 
 	Cluster                   *clusterv1.Cluster
 	ControlPlane              *ekscontrolplanev1.AWSManagedControlPlane
 	ManagedMachinePool        *expinfrav1.AWSManagedMachinePool
-	MachinePool               *expclusterv1.MachinePool
+	MachinePool               *clusterv1.MachinePool
 	EC2Scope                  EC2Scope
 	MaxWaitActiveUpdateDelete time.Duration
 
@@ -201,7 +202,10 @@ func (s *ManagedMachinePoolScope) RoleName() string {
 
 // Version returns the nodegroup Kubernetes version.
 func (s *ManagedMachinePoolScope) Version() *string {
-	return s.MachinePool.Spec.Template.Spec.Version
+	if s.MachinePool.Spec.Template.Spec.Version == "" {
+		return nil
+	}
+	return &s.MachinePool.Spec.Template.Spec.Version
 }
 
 // ControlPlaneSubnets returns the control plane subnets.
@@ -228,11 +232,11 @@ func (s *ManagedMachinePoolScope) SubnetIDs() ([]string, error) {
 // NodegroupReadyFalse marks the ready condition false using warning if error isn't
 // empty.
 func (s *ManagedMachinePoolScope) NodegroupReadyFalse(reason string, err string) error {
-	severity := clusterv1.ConditionSeverityWarning
+	severity := clusterv1beta1.ConditionSeverityWarning
 	if err == "" {
-		severity = clusterv1.ConditionSeverityInfo
+		severity = clusterv1beta1.ConditionSeverityInfo
 	}
-	conditions.MarkFalse(
+	v1beta1conditions.MarkFalse(
 		s.ManagedMachinePool,
 		expinfrav1.EKSNodegroupReadyCondition,
 		reason,
@@ -249,11 +253,11 @@ func (s *ManagedMachinePoolScope) NodegroupReadyFalse(reason string, err string)
 // IAMReadyFalse marks the ready condition false using warning if error isn't
 // empty.
 func (s *ManagedMachinePoolScope) IAMReadyFalse(reason string, err string) error {
-	severity := clusterv1.ConditionSeverityWarning
+	severity := clusterv1beta1.ConditionSeverityWarning
 	if err == "" {
-		severity = clusterv1.ConditionSeverityInfo
+		severity = clusterv1beta1.ConditionSeverityInfo
 	}
-	conditions.MarkFalse(
+	v1beta1conditions.MarkFalse(
 		s.ManagedMachinePool,
 		expinfrav1.IAMNodegroupRolesReadyCondition,
 		reason,
@@ -272,7 +276,7 @@ func (s *ManagedMachinePoolScope) PatchObject() error {
 	return s.patchHelper.Patch(
 		context.TODO(),
 		s.ManagedMachinePool,
-		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1beta1.ConditionType{
 			expinfrav1.EKSNodegroupReadyCondition,
 			expinfrav1.IAMNodegroupRolesReadyCondition,
 		}})
@@ -297,7 +301,7 @@ func (s *ManagedMachinePoolScope) InfraCluster() cloud.ClusterObject {
 }
 
 // ClusterObj returns the cluster object.
-func (s *ManagedMachinePoolScope) ClusterObj() cloud.ClusterObject {
+func (s *ManagedMachinePoolScope) ClusterObj() *clusterv1.Cluster {
 	return s.Cluster
 }
 
@@ -364,7 +368,7 @@ func (s *ManagedMachinePoolScope) GetObjectMeta() *metav1.ObjectMeta {
 }
 
 // GetSetter returns the condition setter.
-func (s *ManagedMachinePoolScope) GetSetter() conditions.Setter {
+func (s *ManagedMachinePoolScope) GetSetter() v1beta1conditions.Setter {
 	return s.ManagedMachinePool
 }
 
@@ -410,7 +414,7 @@ func (s *ManagedMachinePoolScope) GetLaunchTemplate() *expinfrav1.AWSLaunchTempl
 }
 
 // GetMachinePool returns the machine pool.
-func (s *ManagedMachinePoolScope) GetMachinePool() *expclusterv1.MachinePool {
+func (s *ManagedMachinePoolScope) GetMachinePool() *clusterv1.MachinePool {
 	return s.MachinePool
 }
 

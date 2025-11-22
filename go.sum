@@ -239,8 +239,6 @@ github.com/cjlapao/common-go v0.0.39 h1:bAAUrj2B9v0kMzbAOhzjSmiyDy+rd56r2sy7oEiQ
 github.com/cjlapao/common-go v0.0.39/go.mod h1:M3dzazLjTjEtZJbbxoA5ZDiGCiHmpwqW9l4UWaddwOA=
 github.com/clarketm/json v1.14.1 h1:43bkbTTKKdDx7crs3WHzkrnH6S1EvAF1VZrdFGMmmz4=
 github.com/clarketm/json v1.14.1/go.mod h1:ynr2LRfb0fQU34l07csRNBTcivjySLLiY1YzQqKVfdo=
-github.com/clebs/cluster-api-provider-aws/v2 v2.0.0-20251107144358-6be716cd866c h1:lqDI4MV1hUYiCg39QcV+EyBlBc9NwWjzR4Z+iebepIk=
-github.com/clebs/cluster-api-provider-aws/v2 v2.0.0-20251107144358-6be716cd866c/go.mod h1:+p5dAqZpjuOv4EHI/9wLN6tZ63qO4uIZno4vOQLmkMM=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/xds/go v0.0.0-20250501225837-2ac532fd4443 h1:aQ3y1lwWyqYPiWZThqv1aFbZMiM9vblcSArJRf2Irls=
 github.com/cncf/xds/go v0.0.0-20250501225837-2ac532fd4443/go.mod h1:W+zGtBO5Y1IgJhy4+A9GOqVhqLpfZi+vwmdNXUehLA8=
@@ -1204,6 +1202,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.32.0 h1:XotDXzqvJ8Nx5
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.32.0/go.mod h1:Ve9uj1L+deCXFrPOk1LpFXqTg7LCFzFso6PA48q/XZw=
 sigs.k8s.io/cluster-api v1.11.2 h1:uAczaBavU5Y6aDgyoXWtq28k1kalpSZnVItwXHusw1c=
 sigs.k8s.io/cluster-api v1.11.2/go.mod h1:C1gJVAjMXRG+M+djjGYNkoi5kBMhFnOUI9QqZDAtMms=
+sigs.k8s.io/cluster-api-provider-aws/v2 v2.9.1-0.20251121222432-04a4f62bf90a h1:uuAu/5de6VstJSERL1xS2DbQVFi7UkA7PhvgPiUakks=
+sigs.k8s.io/cluster-api-provider-aws/v2 v2.9.1-0.20251121222432-04a4f62bf90a/go.mod h1:8G7UH96RyBHQhJgSDS62ASIeWaw9qWlE0WO40BhOTMQ=
 sigs.k8s.io/cluster-api-provider-gcp v1.10.1-0.20251030112604-5c2bfd5aadb3 h1:hX2TCLts4fGf33RAkfMViy5qHZfMLZJfeu2BGYxXQkI=
 sigs.k8s.io/cluster-api-provider-gcp v1.10.1-0.20251030112604-5c2bfd5aadb3/go.mod h1:BR9XUljy5o4V6MNTZva4XFh7Gj++4d5G8AnKa6iB6Tc=
 sigs.k8s.io/cluster-api-provider-ibmcloud v0.12.0 h1:0+jfWLg+UmnGOdHZ9SrEpnUJgQPyyXpcjXGdkN5E5M4=

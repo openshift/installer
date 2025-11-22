@@ -217,6 +217,20 @@ func NodegroupUpdateconfigFromSDK(ngUpdateConfig *ekstypes.NodegroupUpdateConfig
 	return converted
 }
 
+// NodeRepairConfigToSDK is used to convert a CAPA NodeRepairConfig to AWS SDK NodeRepairConfig.
+func NodeRepairConfigToSDK(repairConfig *expinfrav1.NodeRepairConfig) *ekstypes.NodeRepairConfig {
+	if repairConfig == nil {
+		// Default to disabled if not specified to avoid behavior changes
+		return &ekstypes.NodeRepairConfig{
+			Enabled: aws.Bool(false),
+		}
+	}
+
+	return &ekstypes.NodeRepairConfig{
+		Enabled: repairConfig.Enabled,
+	}
+}
+
 // AMITypeToSDK converts a CAPA ManagedMachineAMIType to AWS SDK AMIType.
 func AMITypeToSDK(amiType expinfrav1.ManagedMachineAMIType) ekstypes.AMITypes {
 	switch amiType {

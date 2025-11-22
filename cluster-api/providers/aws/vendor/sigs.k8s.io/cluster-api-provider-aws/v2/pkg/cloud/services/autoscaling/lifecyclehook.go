@@ -30,8 +30,8 @@ import (
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	deprecatedv1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 )
 
 // DescribeLifecycleHooks returns the lifecycle hooks for the given AutoScalingGroup after retrieving them from the AWS API.
@@ -160,7 +160,7 @@ func getLifecycleHookSpecificationList(lifecycleHooks []expinfrav1.AWSLifecycleH
 // by creating missing hooks, updating mismatching hooks and
 // deleting extraneous hooks (except those specified in
 // ignoreLifecycleHooks).
-func ReconcileLifecycleHooks(ctx context.Context, asgService services.ASGInterface, asgName string, wantedLifecycleHooks []expinfrav1.AWSLifecycleHook, ignoreLifecycleHooks map[string]bool, storeConditionsOnObject conditions.Setter, log logger.Wrapper) error {
+func ReconcileLifecycleHooks(ctx context.Context, asgService services.ASGInterface, asgName string, wantedLifecycleHooks []expinfrav1.AWSLifecycleHook, ignoreLifecycleHooks map[string]bool, storeConditionsOnObject deprecatedv1beta1conditions.Setter, log logger.Wrapper) error {
 	existingHooks, err := asgService.DescribeLifecycleHooks(asgName)
 	if err != nil {
 		return err
@@ -191,7 +191,7 @@ func ReconcileLifecycleHooks(ctx context.Context, asgService services.ASGInterfa
 		if !found {
 			log.Info("Deleting extraneous lifecycle hook", "hook", existingHook.Name)
 			if err := asgService.DeleteLifecycleHook(ctx, asgName, existingHook); err != nil {
-				conditions.MarkFalse(storeConditionsOnObject, expinfrav1.LifecycleHookReadyCondition, expinfrav1.LifecycleHookDeletionFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+				deprecatedv1beta1conditions.MarkFalse(storeConditionsOnObject, clusterv1.ConditionType(expinfrav1.LifecycleHookReadyCondition), expinfrav1.LifecycleHookDeletionFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 				return err
 			}
 		}
@@ -204,11 +204,12 @@ func lifecycleHookNeedsUpdate(existing *expinfrav1.AWSLifecycleHook, expected *e
 	return ptr.Deref(existing.DefaultResult, expinfrav1.LifecycleHookDefaultResultAbandon) != ptr.Deref(expected.DefaultResult, expinfrav1.LifecycleHookDefaultResultAbandon) ||
 		ptr.Deref(existing.HeartbeatTimeout, metav1.Duration{Duration: 3600 * time.Second}) != ptr.Deref(expected.HeartbeatTimeout, metav1.Duration{Duration: 3600 * time.Second}) ||
 		existing.LifecycleTransition != expected.LifecycleTransition ||
-		existing.NotificationTargetARN != expected.NotificationTargetARN ||
-		existing.NotificationMetadata != expected.NotificationMetadata
+		ptr.Deref(existing.NotificationTargetARN, "") != ptr.Deref(expected.NotificationTargetARN, "") ||
+		ptr.Deref(existing.RoleARN, "") != ptr.Deref(expected.RoleARN, "") ||
+		ptr.Deref(existing.NotificationMetadata, "") != ptr.Deref(expected.NotificationMetadata, "")
 }
 
-func reconcileLifecycleHook(ctx context.Context, asgService services.ASGInterface, asgName string, wantedHook *expinfrav1.AWSLifecycleHook, existingHooks []*expinfrav1.AWSLifecycleHook, storeConditionsOnObject conditions.Setter, log logger.Wrapper) error {
+func reconcileLifecycleHook(ctx context.Context, asgService services.ASGInterface, asgName string, wantedHook *expinfrav1.AWSLifecycleHook, existingHooks []*expinfrav1.AWSLifecycleHook, storeConditionsOnObject deprecatedv1beta1conditions.Setter, log logger.Wrapper) error {
 	log = log.WithValues("hook", wantedHook.Name)
 
 	log.Info("Checking for existing lifecycle hook")
@@ -223,7 +224,7 @@ func reconcileLifecycleHook(ctx context.Context, asgService services.ASGInterfac
 	if existingHook == nil {
 		log.Info("Creating lifecycle hook")
 		if err := asgService.CreateLifecycleHook(ctx, asgName, wantedHook); err != nil {
-			conditions.MarkFalse(storeConditionsOnObject, expinfrav1.LifecycleHookReadyCondition, expinfrav1.LifecycleHookCreationFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+			deprecatedv1beta1conditions.MarkFalse(storeConditionsOnObject, clusterv1.ConditionType(expinfrav1.LifecycleHookReadyCondition), expinfrav1.LifecycleHookCreationFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 			return err
 		}
 		return nil
@@ -232,11 +233,11 @@ func reconcileLifecycleHook(ctx context.Context, asgService services.ASGInterfac
 	if lifecycleHookNeedsUpdate(existingHook, wantedHook) {
 		log.Info("Updating lifecycle hook")
 		if err := asgService.UpdateLifecycleHook(ctx, asgName, wantedHook); err != nil {
-			conditions.MarkFalse(storeConditionsOnObject, expinfrav1.LifecycleHookReadyCondition, expinfrav1.LifecycleHookUpdateFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+			deprecatedv1beta1conditions.MarkFalse(storeConditionsOnObject, clusterv1.ConditionType(expinfrav1.LifecycleHookReadyCondition), expinfrav1.LifecycleHookUpdateFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 			return err
 		}
 	}
 
-	conditions.MarkTrue(storeConditionsOnObject, expinfrav1.LifecycleHookReadyCondition)
+	deprecatedv1beta1conditions.MarkTrue(storeConditionsOnObject, clusterv1.ConditionType(expinfrav1.LifecycleHookReadyCondition))
 	return nil
 }

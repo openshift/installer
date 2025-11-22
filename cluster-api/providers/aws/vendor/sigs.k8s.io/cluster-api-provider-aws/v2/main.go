@@ -65,8 +65,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/version"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expclusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/flags"
 )
 
@@ -80,7 +79,6 @@ func init() {
 	_ = eksbootstrapv1beta1.AddToScheme(scheme)
 	_ = cgscheme.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
-	_ = expclusterv1.AddToScheme(scheme)
 	_ = ekscontrolplanev1.AddToScheme(scheme)
 	_ = ekscontrolplanev1beta1.AddToScheme(scheme)
 	_ = rosacontrolplanev1.AddToScheme(scheme)
@@ -360,9 +358,19 @@ func setupReconcilersAndWebhooks(ctx context.Context, mgr ctrl.Manager,
 			setupLog.Error(err, "unable to create controller", "controller", "AWSCluster")
 			os.Exit(1)
 		}
+
+		setupLog.Info("enabling AWSMachineTemplate controller")
+		if err := (&controllers.AWSMachineTemplateReconciler{
+			Client:           mgr.GetClient(),
+			WatchFilterValue: watchFilterValue,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: awsClusterConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "AWSMachineTemplate")
+			os.Exit(1)
+		}
 	} else {
 		setupLog.Info("controller disabled", "controller", "AWSMachine", "controller-group", controllers.Unmanaged)
 		setupLog.Info("controller disabled", "controller", "AWSCluster", "controller-group", controllers.Unmanaged)
+		setupLog.Info("controller disabled", "controller", "AWSMachineTemplate", "controller-group", controllers.Unmanaged)
 	}
 
 	if feature.Gates.Enabled(feature.MachinePool) {

@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -38,14 +39,13 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/endpoints"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/throttle"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/remote"
-	"sigs.k8s.io/cluster-api/util/patch"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 )
 
-var (
-	scheme = runtime.NewScheme()
-)
+var scheme = runtime.NewScheme()
 
 func init() {
 	_ = amazoncni.AddToScheme(scheme)
@@ -104,7 +104,7 @@ func NewManagedControlPlaneScope(params ManagedControlPlaneScopeParams) (*Manage
 	managedScope.session = *session
 	managedScope.serviceLimiters = serviceLimiters
 
-	helper, err := patch.NewHelper(params.ControlPlane, params.Client)
+	helper, err := v1beta1patch.NewHelper(params.ControlPlane, params.Client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init patch helper")
 	}
@@ -117,7 +117,7 @@ func NewManagedControlPlaneScope(params ManagedControlPlaneScopeParams) (*Manage
 type ManagedControlPlaneScope struct {
 	logger.Logger
 	Client      client.Client
-	patchHelper *patch.Helper
+	patchHelper *v1beta1patch.Helper
 
 	Cluster                   *clusterv1.Cluster
 	ControlPlane              *ekscontrolplanev1.AWSManagedControlPlane
@@ -268,7 +268,7 @@ func (s *ManagedControlPlaneScope) PatchObject() error {
 	return s.patchHelper.Patch(
 		context.TODO(),
 		s.ControlPlane,
-		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1beta1.ConditionType{
 			infrav1.VpcReadyCondition,
 			infrav1.SubnetsReadyCondition,
 			infrav1.ClusterSecurityGroupsReadyCondition,
@@ -305,11 +305,14 @@ func (s *ManagedControlPlaneScope) APIServerPort() int32 {
 }
 
 // SetFailureDomain sets the infrastructure provider failure domain key to the spec given as input.
-func (s *ManagedControlPlaneScope) SetFailureDomain(id string, spec clusterv1.FailureDomainSpec) {
+func (s *ManagedControlPlaneScope) SetFailureDomain(id string, spec clusterv1.FailureDomain) {
 	if s.ControlPlane.Status.FailureDomains == nil {
-		s.ControlPlane.Status.FailureDomains = make(clusterv1.FailureDomains)
+		s.ControlPlane.Status.FailureDomains = make(clusterv1beta1.FailureDomains)
 	}
-	s.ControlPlane.Status.FailureDomains[id] = spec
+	s.ControlPlane.Status.FailureDomains[id] = clusterv1beta1.FailureDomainSpec{
+		ControlPlane: ptr.Deref(spec.ControlPlane, false),
+		Attributes:   spec.Attributes,
+	}
 }
 
 // InfraCluster returns the AWS infrastructure cluster or control plane object.
@@ -318,7 +321,7 @@ func (s *ManagedControlPlaneScope) InfraCluster() cloud.ClusterObject {
 }
 
 // ClusterObj returns the cluster object.
-func (s *ManagedControlPlaneScope) ClusterObj() cloud.ClusterObject {
+func (s *ManagedControlPlaneScope) ClusterObj() *clusterv1.Cluster {
 	return s.Cluster
 }
 
@@ -447,12 +450,8 @@ func (s *ManagedControlPlaneScope) OIDCIdentityProviderConfig() *ekscontrolplane
 
 // ServiceCidrs returns the CIDR blocks used for services.
 func (s *ManagedControlPlaneScope) ServiceCidrs() *clusterv1.NetworkRanges {
-	if s.Cluster.Spec.ClusterNetwork != nil {
-		if s.Cluster.Spec.ClusterNetwork.Services != nil {
-			if len(s.Cluster.Spec.ClusterNetwork.Services.CIDRBlocks) > 0 {
-				return s.Cluster.Spec.ClusterNetwork.Services
-			}
-		}
+	if len(s.Cluster.Spec.ClusterNetwork.Services.CIDRBlocks) > 0 {
+		return &s.Cluster.Spec.ClusterNetwork.Services
 	}
 
 	return nil

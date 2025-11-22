@@ -17,13 +17,12 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/feature"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/ec2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expclusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/labels/format"
 )
 
-func createAWSMachinesIfNotExists(ctx context.Context, awsMachineList *infrav1.AWSMachineList, mp *expclusterv1.MachinePool, infraMachinePoolMeta *metav1.ObjectMeta, infraMachinePoolType *metav1.TypeMeta, existingASG *expinfrav1.AutoScalingGroup, l logr.Logger, client client.Client, ec2Svc services.EC2Interface) error {
+func createAWSMachinesIfNotExists(ctx context.Context, awsMachineList *infrav1.AWSMachineList, mp *clusterv1.MachinePool, infraMachinePoolMeta *metav1.ObjectMeta, infraMachinePoolType *metav1.TypeMeta, existingASG *expinfrav1.AutoScalingGroup, l logr.Logger, client client.Client, ec2Svc services.EC2Interface) error {
 	if !feature.Gates.Enabled(feature.MachinePoolMachines) {
 		return errors.New("createAWSMachinesIfNotExists must not be called unless the MachinePoolMachines feature gate is enabled")
 	}
@@ -161,7 +160,7 @@ func deleteOrphanedAWSMachines(ctx context.Context, awsMachineList *infrav1.AWSM
 	return nil
 }
 
-func getAWSMachines(ctx context.Context, mp *expclusterv1.MachinePool, kubeClient client.Client) (*infrav1.AWSMachineList, error) {
+func getAWSMachines(ctx context.Context, mp *clusterv1.MachinePool, kubeClient client.Client) (*infrav1.AWSMachineList, error) {
 	if !feature.Gates.Enabled(feature.MachinePoolMachines) {
 		return nil, errors.New("getAWSMachines must not be called unless the MachinePoolMachines feature gate is enabled")
 	}
@@ -177,7 +176,7 @@ func getAWSMachines(ctx context.Context, mp *expclusterv1.MachinePool, kubeClien
 	return awsMachineList, nil
 }
 
-func reconcileDeleteAWSMachines(ctx context.Context, mp *expclusterv1.MachinePool, client client.Client, l logr.Logger) error {
+func reconcileDeleteAWSMachines(ctx context.Context, mp *clusterv1.MachinePool, client client.Client, l logr.Logger) error {
 	if !feature.Gates.Enabled(feature.MachinePoolMachines) {
 		return errors.New("reconcileDeleteAWSMachines must not be called unless the MachinePoolMachines feature gate is enabled")
 	}

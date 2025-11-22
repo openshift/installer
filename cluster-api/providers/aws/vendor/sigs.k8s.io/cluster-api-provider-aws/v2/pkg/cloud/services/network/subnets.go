@@ -39,7 +39,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/tags"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/internal/cidr"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 )
 
 const (
@@ -205,7 +205,7 @@ func (s *Service) reconcileSubnets() error {
 	}
 
 	s.scope.Debug("Reconciled subnets", "subnets", subnets)
-	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition)
+	v1beta1conditions.MarkTrue(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition)
 	return nil
 }
 
