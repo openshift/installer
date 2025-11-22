@@ -100,7 +100,7 @@ func (ca *clusterAccessor) createConnection(ctx context.Context) (*createConnect
 	}
 
 	log.V(6).Info("Creating cached client and cache")
-	cachedClient, cache, err := createCachedClient(ctx, ca.config, restConfig, httpClient, mapper)
+	cachedClient, cache, err := createCachedClient(ctx, ca.cacheCtx, ca.config, restConfig, httpClient, mapper)
 	if err != nil {
 		return nil, err
 	}
@@ -212,23 +212,37 @@ func createUncachedClient(scheme *runtime.Scheme, config *rest.Config, httpClien
 }
 
 // createCachedClient creates a cached client for the given cluster, based on the rest.Config.
-func createCachedClient(ctx context.Context, clusterAccessorConfig *clusterAccessorConfig, config *rest.Config, httpClient *http.Client, mapper meta.RESTMapper) (client.Client, *stoppableCache, error) {
+func createCachedClient(ctx, cacheCtx context.Context, clusterAccessorConfig *clusterAccessorConfig, config *rest.Config, httpClient *http.Client, mapper meta.RESTMapper) (client.Client, *stoppableCache, error) {
+	// This config will only be used for List and Watch calls of informers
+	// because we don't want these requests to time out after the regular timeout
+	// of Options.Client.Timeout (default 10s).
+	// Lists of informers have no timeouts set.
+	// Watches of informers are timing out per default after [5m, 2*5m].
+	// https://github.com/kubernetes/client-go/blob/v0.32.0/tools/cache/reflector.go#L53-L55
+	// We are setting 11m to set a timeout for List calls without influencing Watch calls.
+	configWith11mTimeout := rest.CopyConfig(config)
+	configWith11mTimeout.Timeout = 11 * time.Minute
+	httpClientWith11mTimeout, err := rest.HTTPClientFor(configWith11mTimeout)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "error creating cache: error creating HTTP client")
+	}
+
 	// Create the cache for the cluster.
 	cacheOptions := cache.Options{
-		HTTPClient: httpClient,
+		HTTPClient: httpClientWith11mTimeout,
 		Scheme:     clusterAccessorConfig.Scheme,
 		Mapper:     mapper,
 		SyncPeriod: clusterAccessorConfig.Cache.SyncPeriod,
 		ByObject:   clusterAccessorConfig.Cache.ByObject,
 	}
-	remoteCache, err := cache.New(config, cacheOptions)
+	remoteCache, err := cache.New(configWith11mTimeout, cacheOptions)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "error creating cache")
 	}
 
 	// Use a context that is independent of the passed in context, so the cache doesn't get stopped
 	// when the passed in context is canceled.
-	cacheCtx, cacheCtxCancel := context.WithCancel(context.Background())
+	cacheCtx, cacheCtxCancel := context.WithCancelCause(cacheCtx)
 
 	// We need to be able to stop the cache's shared informers, so wrap this in a stoppableCache.
 	cache := &stoppableCache{
@@ -261,7 +275,7 @@ func createCachedClient(ctx context.Context, clusterAccessorConfig *clusterAcces
 	go cache.Start(cacheCtx) //nolint:errcheck
 
 	// Wait until the cache is initially synced.
-	cacheSyncCtx, cacheSyncCtxCancel := context.WithTimeout(ctx, clusterAccessorConfig.Cache.InitialSyncTimeout)
+	cacheSyncCtx, cacheSyncCtxCancel := context.WithTimeoutCause(ctx, clusterAccessorConfig.Cache.InitialSyncTimeout, errors.New("initial sync timeout expired"))
 	defer cacheSyncCtxCancel()
 	if !cache.WaitForCacheSync(cacheSyncCtx) {
 		cache.Stop()
@@ -297,13 +311,13 @@ type clientWithTimeout struct {
 var _ client.Client = &clientWithTimeout{}
 
 func (c clientWithTimeout) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	ctx, cancel := context.WithTimeoutCause(ctx, c.timeout, errors.New("call timeout expired"))
 	defer cancel()
 	return c.Client.Get(ctx, key, obj, opts...)
 }
 
 func (c clientWithTimeout) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
-	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	ctx, cancel := context.WithTimeoutCause(ctx, c.timeout, errors.New("call timeout expired"))
 	defer cancel()
 	return c.Client.List(ctx, list, opts...)
 }
@@ -314,7 +328,7 @@ type stoppableCache struct {
 
 	lock       sync.Mutex
 	stopped    bool
-	cancelFunc context.CancelFunc
+	cancelFunc context.CancelCauseFunc
 }
 
 // Stop cancels the cache.Cache's context, unless it has already been stopped.
@@ -327,5 +341,5 @@ func (cc *stoppableCache) Stop() {
 	}
 
 	cc.stopped = true
-	cc.cancelFunc()
+	cc.cancelFunc(errors.New("cache stopped"))
 }

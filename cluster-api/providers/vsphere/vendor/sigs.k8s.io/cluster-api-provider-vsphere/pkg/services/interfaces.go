@@ -22,11 +22,13 @@ import (
 	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware"
 )
@@ -56,7 +58,7 @@ type VirtualMachineService interface {
 type ControlPlaneEndpointService interface {
 	// ReconcileControlPlaneEndpointService manages the lifecycle of a
 	// control plane endpoint managed by a vmoperator VirtualMachineService
-	ReconcileControlPlaneEndpointService(ctx context.Context, clusterCtx *vmware.ClusterContext, netProvider NetworkProvider) (*clusterv1.APIEndpoint, error)
+	ReconcileControlPlaneEndpointService(ctx context.Context, clusterCtx *vmware.ClusterContext, netProvider NetworkProvider) (*clusterv1beta1.APIEndpoint, error)
 }
 
 // ResourcePolicyService is a service for reconciling a VirtualMachineSetResourcePolicy for a cluster.
@@ -86,7 +88,7 @@ type NetworkProvider interface {
 	GetVMServiceAnnotations(ctx context.Context, clusterCtx *vmware.ClusterContext) (map[string]string, error)
 
 	// ConfigureVirtualMachine configures a VM for the particular network
-	ConfigureVirtualMachine(ctx context.Context, clusterCtx *vmware.ClusterContext, vm *vmoprv1.VirtualMachine) error
+	ConfigureVirtualMachine(ctx context.Context, clusterCtx *vmware.ClusterContext, machine *vmwarev1.VSphereMachine, vm *vmoprv1.VirtualMachine) error
 
 	// VerifyNetworkStatus verifies the status of the network after vnet creation
 	VerifyNetworkStatus(ctx context.Context, clusterCtx *vmware.ClusterContext, obj runtime.Object) error

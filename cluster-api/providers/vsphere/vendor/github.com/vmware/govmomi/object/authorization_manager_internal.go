@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2017 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package object
 
@@ -38,7 +26,7 @@ type disableMethodsRequest struct {
 
 type disableMethodsBody struct {
 	Req *disableMethodsRequest `xml:"urn:internalvim25 DisableMethods,omitempty"`
-	Res interface{}            `xml:"urn:vim25 DisableMethodsResponse,omitempty"`
+	Res any                    `xml:"urn:vim25 DisableMethodsResponse,omitempty"`
 	Err *soap.Fault            `xml:"http://schemas.xmlsoap.org/soap/envelope/ Fault,omitempty"`
 }
 
@@ -66,7 +54,7 @@ type enableMethodsRequest struct {
 
 type enableMethodsBody struct {
 	Req *enableMethodsRequest `xml:"urn:internalvim25 EnableMethods,omitempty"`
-	Res interface{}           `xml:"urn:vim25 EnableMethodsResponse,omitempty"`
+	Res any                   `xml:"urn:vim25 EnableMethodsResponse,omitempty"`
 	Err *soap.Fault           `xml:"http://schemas.xmlsoap.org/soap/envelope/ Fault,omitempty"`
 }
 

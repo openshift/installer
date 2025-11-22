@@ -24,7 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -72,6 +72,11 @@ func (r *vSphereMachineTemplateReconciler) Reconcile(ctx context.Context, req ct
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
+	}
+
+	// If ClassName is not set, there is nothing to do.
+	if vSphereMachineTemplate.Spec.Template.Spec.ClassName == "" {
+		return reconcile.Result{}, nil
 	}
 
 	// Fetch the VirtualMachineClass
