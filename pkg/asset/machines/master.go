@@ -397,7 +397,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		}
 		pool.Platform.Azure = &mpool
 
-		capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+		capabilities, err := installConfig.Azure.ControlPlaneCapabilities()
 		if err != nil {
 			return err
 		}
@@ -405,8 +405,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		if err != nil {
 			return err
 		}
-		useImageGallery := installConfig.Azure.CloudName != azuretypes.StackCloud
-		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName, capabilities, useImageGallery, session)
+		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName, capabilities, session)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}

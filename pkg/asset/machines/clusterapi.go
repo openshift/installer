@@ -261,7 +261,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				mpool.OSImage.Publisher = *img.Plan.Publisher
 			}
 		}
-		capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+		capabilities, err := installConfig.Azure.ControlPlaneCapabilities()
 		if err != nil {
 			return err
 		}
@@ -296,16 +296,17 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			session.Credentials.SubscriptionID,
 			session,
 			&azure.MachineInput{
-				Subnet:          subnet,
-				Role:            "master",
-				UserDataSecret:  "master-user-data",
-				HyperVGen:       hyperVGen,
-				UseImageGallery: installConfig.Azure.CloudName != azuretypes.StackCloud,
-				Private:         installConfig.Config.Publish == types.InternalPublishingStrategy,
-				UserTags:        installConfig.Config.Platform.Azure.UserTags,
-				Platform:        installConfig.Config.Platform.Azure,
-				Pool:            &pool,
-				StorageSuffix:   session.Environment.StorageEndpointSuffix,
+				Subnet:         subnet,
+				Role:           "master",
+				UserDataSecret: "master-user-data",
+				HyperVGen:      hyperVGen,
+				Environment:    installConfig.Azure.CloudName,
+				Private:        installConfig.Config.Publish == types.InternalPublishingStrategy,
+				UserTags:       installConfig.Config.Platform.Azure.UserTags,
+				Platform:       installConfig.Config.Platform.Azure,
+				Pool:           &pool,
+				StorageSuffix:  session.Environment.StorageEndpointSuffix,
+				RHCOS:          rhcosImage.ControlPlane,
 			},
 		)
 		if err != nil {

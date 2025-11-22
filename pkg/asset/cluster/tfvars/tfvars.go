@@ -373,14 +373,6 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
-		client, err := installConfig.Azure.Client()
-		if err != nil {
-			return err
-		}
-		hyperVGeneration, err := client.GetHyperVGenerationVersion(ctx, masterConfigs[0].VMSize, masterConfigs[0].Location, "")
-		if err != nil {
-			return err
-		}
 
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
 
@@ -427,7 +419,6 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 				OutboundType:                    installConfig.Config.Azure.OutboundType,
 				BootstrapIgnStub:                bootstrapIgnStub,
 				BootstrapIgnitionURLPlaceholder: bootstrapIgnURLPlaceholder,
-				HyperVGeneration:                hyperVGeneration,
 				VMArchitecture:                  installConfig.Config.ControlPlane.Architecture,
 				InfrastructureName:              clusterID.InfraID,
 				KeyVault:                        managedKeys.KeyVault,

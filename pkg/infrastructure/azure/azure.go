@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -96,8 +95,6 @@ func (p Provider) ProvisionTimeout() time.Duration {
 func (*Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.APILoadBalancer }
 
 // InfraReady is called once the installer infrastructure is ready.
-//
-//nolint:gocyclo //TODO(padillon): forthcoming marketplace image support should help reduce complexity here.
 func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	session, err := in.InstallConfig.Azure.Session()
 	if err != nil {
@@ -257,9 +254,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		logrus.Debugf("StorageAccount.ID=%s", *storageAccount.ID)
 	}
 
-	// Upload the image to the container
-	_, skipImageUpload := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD")
-	if !(skipImageUpload || platform.CloudName == aztypes.StackCloud) {
+	// Create a managed image, which is used for OKD or confidential VMs on OCP.
+	hasConfidentialVM := getMachinePoolSecurityType(installConfig) != ""
+	if (hasConfidentialVM || installConfig.IsOKD()) && platform.CloudName != aztypes.StackCloud {
 		// Create vhd blob storage container
 		publicAccess := armstorage.PublicAccessNone
 		createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
@@ -331,10 +328,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		// If Control Plane Security Type is provided, then pass that along
 		// during Gen V2 Gallery Image creation. It will be added as a
 		// supported feature of the image.
-		securityType, err := getMachinePoolSecurityType(in)
-		if err != nil {
-			return err
-		}
+		securityType := getMachinePoolSecurityType(installConfig)
 
 		_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
 			ResourceGroupName:    resourceGroupName,
@@ -823,16 +817,16 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	return ignSecrets, nil
 }
 
-func getMachinePoolSecurityType(in clusterapi.InfraReadyInput) (string, error) {
+func getMachinePoolSecurityType(installConfig *types.InstallConfig) string {
 	var securityType aztypes.SecurityTypes
-	if in.InstallConfig.Config.ControlPlane != nil && in.InstallConfig.Config.ControlPlane.Platform.Azure != nil {
-		pool := in.InstallConfig.Config.ControlPlane.Platform.Azure
+	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Platform.Azure != nil {
+		pool := installConfig.ControlPlane.Platform.Azure
 		if pool.Settings != nil {
 			securityType = pool.Settings.SecurityType
 		}
 	}
-	if securityType == "" && in.InstallConfig.Config.Compute != nil {
-		for _, compute := range in.InstallConfig.Config.Compute {
+	if securityType == "" && installConfig.Compute != nil {
+		for _, compute := range installConfig.Compute {
 			if compute.Platform.Azure != nil {
 				pool := compute.Platform.Azure
 				if pool.Settings != nil {
@@ -842,17 +836,17 @@ func getMachinePoolSecurityType(in clusterapi.InfraReadyInput) (string, error) {
 			}
 		}
 	}
-	if securityType == "" && in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform != nil {
-		pool := in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform
+	if securityType == "" && installConfig.Platform.Azure.DefaultMachinePlatform != nil {
+		pool := installConfig.Platform.Azure.DefaultMachinePlatform
 		if pool.Settings != nil {
 			securityType = pool.Settings.SecurityType
 		}
 	}
 	switch securityType {
 	case aztypes.SecurityTypesTrustedLaunch:
-		return trustedLaunchST, nil
+		return trustedLaunchST
 	case aztypes.SecurityTypesConfidentialVM:
-		return confidentialVMST, nil
+		return confidentialVMST
 	}
-	return "", nil
+	return ""
 }

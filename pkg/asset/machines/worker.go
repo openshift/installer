@@ -610,13 +610,12 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 			pool.Platform.Azure = &mpool
 
-			capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+			capabilities, err := installConfig.Azure.ComputeCapabilities()
 			if err != nil {
 				return err
 			}
 
-			useImageGallery := ic.Platform.Azure.CloudName != azuretypes.StackCloud
-			sets, err := azure.MachineSets(clusterID.InfraID, installConfig, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, useImageGallery, subnetZones, session)
+			sets, err := azure.MachineSets(clusterID.InfraID, installConfig, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, subnetZones, session)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

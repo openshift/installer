@@ -27,7 +27,7 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool, session *icazure.Session) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, session *icazure.Session) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, nil, fmt.Errorf("non-Azure configuration: %q", configPlatform)
 	}
@@ -62,7 +62,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			azIndex = int(idx) % len(azs)
 		}
 		subnetIndex := int(idx) % len(subnets)
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities, useImageGallery, session, networkResourceGroup, virtualNetworkName, subnets[subnetIndex])
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities, session, networkResourceGroup, virtualNetworkName, subnets[subnetIndex])
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -159,7 +159,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
-func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, useImageGallery bool, session *icazure.Session, networkResourceGroup, virtualNetwork, subnet string) (*machineapi.AzureMachineProviderSpec, error) {
+func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, session *icazure.Session, networkResourceGroup, virtualNetwork, subnet string) (*machineapi.AzureMachineProviderSpec, error) {
 	var az string
 	if len(mpool.Zones) > 0 && azIdx != nil {
 		az = mpool.Zones[*azIdx]
@@ -179,32 +179,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	}
 	rg := platform.ClusterResourceGroupName(clusterID)
 
-	var image machineapi.Image
-	if mpool.OSImage.Publisher != "" {
-		image.Type = machineapi.AzureImageTypeMarketplaceWithPlan
-		if mpool.OSImage.Plan == azure.ImageNoPurchasePlan {
-			image.Type = machineapi.AzureImageTypeMarketplaceNoPlan
-		}
-		image.Publisher = mpool.OSImage.Publisher
-		image.Offer = mpool.OSImage.Offer
-		image.SKU = mpool.OSImage.SKU
-		image.Version = mpool.OSImage.Version
-	} else if useImageGallery {
-		// image gallery names cannot have dashes
-		galleryName := strings.ReplaceAll(clusterID, "-", "_")
-		id := clusterID
-		if hyperVGen == "V2" {
-			id += "-gen2"
-		}
-		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", rg, galleryName, id)
-		image.ResourceID = imageID
-	} else {
-		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
-		if hyperVGen == "V2" && platform.CloudName != azure.StackCloud {
-			imageID += "-gen2"
-		}
-		image.ResourceID = imageID
-	}
+	image := mapiImage(mpool.OSImage, platform.CloudName, hyperVGen, rg, session.Credentials.SubscriptionID, clusterID, osImage)
 
 	if mpool.OSDisk.DiskType == "" {
 		mpool.OSDisk.DiskType = "Premium_LRS"
@@ -453,4 +428,31 @@ func generateSecurityProfile(mpool *azure.MachinePool) *machineapi.SecurityProfi
 	}
 
 	return securityProfile
+}
+
+func mapiImage(osImage azure.OSImage, azEnv azure.CloudEnvironment, gen, rg, sub, infraID, rhcosImg string) machineapi.Image {
+	cImg := capzImage(osImage, azEnv, gen, rg, sub, infraID, rhcosImg)
+	mImg := machineapi.Image{}
+
+	if cImg.ID != nil {
+		mImg.ResourceID = trimSubscriptionPrefix(*cImg.ID)
+	} else if cImg.Marketplace != nil {
+		mImg.Publisher = cImg.Marketplace.Publisher
+		mImg.Offer = cImg.Marketplace.Offer
+		mImg.SKU = cImg.Marketplace.SKU
+		mImg.Version = cImg.Marketplace.Version
+		mImg.Type = machineapi.AzureImageTypeMarketplaceNoPlan
+		if cImg.Marketplace.ThirdPartyImage {
+			mImg.Type = machineapi.AzureImageTypeMarketplaceWithPlan
+		}
+	}
+	return mImg
+}
+
+// trimSubscriptionPrefix takes an image id string
+// formatted for CAPZ and returns a string formatted
+// for MAPI, by removing the /subspcription/ prefix.
+func trimSubscriptionPrefix(image string) string {
+	rgIndex := strings.Index(image, "/resourceGroups/")
+	return image[rgIndex:]
 }

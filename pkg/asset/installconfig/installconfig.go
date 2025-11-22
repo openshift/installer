@@ -164,7 +164,7 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 		}
 	}
 	if a.Config.Azure != nil {
-		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint, a.Config.Azure.Region)
+		a.Azure = icazure.NewMetadata(a.Config.Azure, a.Config.ControlPlane, &a.Config.Compute[0])
 	}
 	if a.Config.GCP != nil {
 		if err := a.finishGCP(); err != nil {
@@ -207,7 +207,7 @@ func (a *InstallConfig) platformValidation(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		return icazure.Validate(client, a.Config)
+		return icazure.Validate(client, a.Azure, a.Config)
 	}
 	if a.Config.Platform.GCP != nil {
 		client, err := icgcp.NewClient(ctx, a.Config.GCP.Endpoint)

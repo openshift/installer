@@ -427,6 +427,7 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		Compute: []types.MachinePool{{
 			Architecture: types.ArchitectureAMD64,
+			Name:         types.MachinePoolComputeRoleName,
 			Platform: types.MachinePoolPlatform{
 				Azure: &azure.MachinePool{},
 			},
@@ -503,7 +504,7 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		{
 			name:     "Undefined default instance types",
 			edits:    editFunctions{undefinedDefaultInstanceTypes},
-			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, compute\[0\].platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": unable to determine HyperVGeneration version\]`,
+			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, compute\[0\].platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": failed to get control plane capabilities: not found in region centralus, controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": unable to determine HyperVGeneration version, compute\[0\].platform.azure.type: Invalid value: "Dne_D2_v4": failed to get compute capabilities: not found in region centralus\]`,
 		},
 		{
 			name:     "Invalid compute instance types",
@@ -669,12 +670,13 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			editedInstallConfig := validInstallConfig()
+			ic := validInstallConfig()
 			for _, edit := range tc.edits {
-				edit(editedInstallConfig)
+				edit(ic)
 			}
-
-			aggregatedErrors := Validate(azureClient, editedInstallConfig)
+			metadata := NewMetadata(ic.Azure, ic.ControlPlane, ic.WorkerMachinePool())
+			metadata.UseMockClient(azureClient)
+			aggregatedErrors := Validate(azureClient, metadata, ic)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
@@ -1225,12 +1227,13 @@ func TestAzureUltraSSDCapability(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			editedInstallConfig := validInstallConfig()
+			ic := validInstallConfig()
 			for _, edit := range tc.edits {
-				edit(editedInstallConfig)
+				edit(ic)
 			}
-
-			aggregatedErrors := Validate(azureClient, editedInstallConfig)
+			metadata := NewMetadata(ic.Azure, ic.ControlPlane, ic.WorkerMachinePool())
+			metadata.UseMockClient(azureClient)
+			aggregatedErrors := Validate(azureClient, metadata, ic)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
@@ -1534,17 +1537,15 @@ func TestAzureMarketplaceImages(t *testing.T) {
 	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), "Dne_D2_v4", validRegion).Return(nil, fmt.Errorf("not found in region centralus")).AnyTimes()
 	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), gomock.Any()).Return(vmCapabilities["Standard_D8s_v3"], nil).AnyTimes()
 
-	// HyperVGenerations
-	azureClient.EXPECT().GetHyperVGenerationVersion(gomock.Any(), gomock.Any(), gomock.Any(), "V1").Return("", fmt.Errorf("instance type Standard_D8s_v3 supports HyperVGenerations [V2] but the specified image is for HyperVGeneration V1; to correct this issue either specify a compatible instance type or change the HyperVGeneration for the image by using a different SKU")).AnyTimes()
-	azureClient.EXPECT().GetHyperVGenerationVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return("V2", nil).AnyTimes()
-
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			editedInstallConfig := validInstallConfig()
+			ic := validInstallConfig()
 			for _, edit := range tc.edits {
-				edit(editedInstallConfig)
+				edit(ic)
 			}
-			aggregatedErrors := validateMarketplaceImages(azureClient, editedInstallConfig)
+			metadata := NewMetadata(ic.Azure, ic.ControlPlane, ic.WorkerMachinePool())
+			metadata.UseMockClient(azureClient)
+			aggregatedErrors := validateMarketplaceImages(azureClient, metadata, ic)
 			err := aggregatedErrors.ToAggregate()
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, err)

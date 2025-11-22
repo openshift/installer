@@ -18,7 +18,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, ic *installconfig.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool, subnetZones []string, session *icazure.Session) ([]*clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, ic *installconfig.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, subnetZones []string, session *icazure.Session) ([]*clusterapi.MachineSet, error) {
 	config := ic.Config
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, fmt.Errorf("non-azure configuration: %q", configPlatform)
@@ -63,7 +63,6 @@ func MachineSets(clusterID string, ic *installconfig.InstallConfig, pool *types.
 			clusterID:            clusterID,
 			role:                 role,
 			capabilities:         capabilities,
-			useImageGallery:      useImageGallery,
 			session:              session,
 			subnetSpec:           config.Azure.Subnets,
 			replicas:             total,
@@ -78,7 +77,7 @@ func MachineSets(clusterID string, ic *installconfig.InstallConfig, pool *types.
 			replicas++
 		}
 		subnetIndex = (subnetIndex + 1) % len(subnets)
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &idx, capabilities, useImageGallery, session, networkResourceGroup, virtualNetworkName, subnets[subnetIndex])
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &idx, capabilities, session, networkResourceGroup, virtualNetworkName, subnets[subnetIndex])
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -137,7 +136,6 @@ type multiZoneMachineSetInput struct {
 	clusterID            string
 	role                 string
 	capabilities         map[string]string
-	useImageGallery      bool
 	session              *icazure.Session
 	virtualNetworkName   string
 	subnetSpec           []azure.SubnetSpec
@@ -197,7 +195,7 @@ func getMultiZoneMachineSets(in multiZoneMachineSetInput) ([]*clusterapi.Machine
 				currentReplica++
 				remainder--
 			}
-			provider, err := provider(in.platform, in.mpool, in.osImage, in.userDataSecret, in.clusterID, in.role, &idx, in.capabilities, in.useImageGallery, in.session, in.networkResourceGroup, in.virtualNetworkName, subnet)
+			provider, err := provider(in.platform, in.mpool, in.osImage, in.userDataSecret, in.clusterID, in.role, &idx, in.capabilities, in.session, in.networkResourceGroup, in.virtualNetworkName, subnet)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to create provider")
 			}
