@@ -513,6 +513,14 @@ var (
 								enableForClusterProfile(SelfManaged, configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 								mustRegister()
 
+	FeatureGateNewOLMBoxCutterRuntime = newFeatureGate("NewOLMBoxCutterRuntime").
+						reportProblemsToJiraComponent("olm").
+						contactPerson("pegoncal").
+						productScope(ocpSpecific).
+						enhancementPR("https://github.com/openshift/enhancements/pull/1890").
+						enableForClusterProfile(SelfManaged, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						mustRegister()
+
 	FeatureGateInsightsOnDemandDataGather = newFeatureGate("InsightsOnDemandDataGather").
 						reportProblemsToJiraComponent("insights").
 						contactPerson("tremes").
@@ -799,7 +807,7 @@ var (
 				enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade, configv1.Default).
 				mustRegister()
 
-	FeatureGateNoRegistryClusterOperations = newFeatureGate("NoRegistryClusterOperations").
+	FeatureGateNoRegistryClusterInstall = newFeatureGate("NoRegistryClusterInstall").
 						reportProblemsToJiraComponent("Installer / Agent based installation").
 						contactPerson("andfasano").
 						productScope(ocpSpecific).
@@ -923,4 +931,12 @@ var (
 					enhancementPR("https://github.com/openshift/enhancements/pull/1803").
 					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
+
+	FeatureGateProvisioningRequestAvailable = newFeatureGate("ProvisioningRequestAvailable").
+						reportProblemsToJiraComponent("Cluster Autoscaler").
+						contactPerson("elmiko").
+						productScope(ocpSpecific).
+						enhancementPR("https://github.com/openshift/enhancements/pull/1752").
+						enableIn(configv1.DevPreviewNoUpgrade).
+						mustRegister()
 )

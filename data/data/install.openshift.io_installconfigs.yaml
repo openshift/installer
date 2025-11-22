@@ -249,6 +249,13 @@ spec:
                               (GiB).
                             minimum: 0
                             type: integer
+                          throughput:
+                            description: |-
+                              Throughput to provision in MiB/s supported for the volume type. This
+                              is currently only applicable to volumes of type gp3.
+                            format: int64
+                            minimum: 0
+                            type: integer
                           type:
                             description: Type defines the type of the volume.
                             type: string
@@ -1795,6 +1802,13 @@ spec:
                                 gibibytes (GiB).
                               minimum: 0
                               type: integer
+                            throughput:
+                              description: |-
+                                Throughput to provision in MiB/s supported for the volume type. This
+                                is currently only applicable to volumes of type gp3.
+                              format: int64
+                              minimum: 0
+                              type: integer
                             type:
                               description: Type defines the type of the volume.
                               type: string
@@ -3279,6 +3293,13 @@ spec:
                           size:
                             description: Size defines the size of the volume in gibibytes
                               (GiB).
+                            minimum: 0
+                            type: integer
+                          throughput:
+                            description: |-
+                              Throughput to provision in MiB/s supported for the volume type. This
+                              is currently only applicable to volumes of type gp3.
+                            format: int64
                             minimum: 0
                             type: integer
                           type:
@@ -4958,6 +4979,13 @@ spec:
                           size:
                             description: Size defines the size of the volume in gibibytes
                               (GiB).
+                            minimum: 0
+                            type: integer
+                          throughput:
+                            description: |-
+                              Throughput to provision in MiB/s supported for the volume type. This
+                              is currently only applicable to volumes of type gp3.
+                            format: int64
                             minimum: 0
                             type: integer
                           type:
