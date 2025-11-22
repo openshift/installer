@@ -28,6 +28,10 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
+	if c.OpenStack.DNSRecordsType == configv1.DNSRecordsTypeExternal && (c.OpenStack.LoadBalancer == nil || c.OpenStack.LoadBalancer.Type != configv1.LoadBalancerTypeUserManaged) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsRecordsType"), c.OpenStack.DNSRecordsType, "external DNS records can only be configured with user-managed loadbalancers"))
+	}
+
 	if controlPlanePort := c.OpenStack.ControlPlanePort; controlPlanePort != nil {
 		allErrs = append(allErrs, validateControlPlanePort(controlPlanePort, fldPath.Child("controlPlanePort"))...)
 	}

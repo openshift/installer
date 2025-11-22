@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -485,8 +486,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 				},
 				Platform: types.Platform{
 					Nutanix: &nutanix.Platform{
-						APIVIPs:     []string{"192.168.122.10"},
-						IngressVIPs: []string{"192.168.122.11"},
+						APIVIPs:        []string{"192.168.122.10"},
+						IngressVIPs:    []string{"192.168.122.11"},
+						DNSRecordsType: configv1.DNSRecordsTypeInternal,
 						PrismCentral: nutanix.PrismCentral{
 							Endpoint: nutanix.PrismEndpoint{Address: "pc1.test.metalkube.org", Port: 9440},
 							Username: "testUser",
@@ -1518,6 +1520,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 						APIVIPs:                        []string{"192.168.122.10"},
 						DeprecatedIngressVIP:           "192.168.122.11",
 						IngressVIPs:                    []string{"192.168.122.11"},
+						DNSRecordsType:                 configv1.DNSRecordsTypeInternal,
 						BootstrapOSImage:               "https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd",
 						ClusterOSImage:                 "https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8",
 						BootstrapExternalStaticIP:      "192.1168.122.50",
@@ -1620,6 +1623,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 						DeprecatedAPIVIP:           "192.168.122.10",
 						APIVIPs:                    []string{"192.168.122.10"},
 						IngressVIPs:                []string{"192.168.122.11"},
+						DNSRecordsType:             configv1.DNSRecordsTypeInternal,
 						VCenters: []vsphere.VCenter{{
 							Server:      "192.168.122.30",
 							Port:        443,

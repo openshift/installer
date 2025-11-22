@@ -482,6 +482,10 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		}
 	}
 
+	if c.BareMetal.DNSRecordsType == configv1.DNSRecordsTypeExternal && (c.BareMetal.LoadBalancer == nil || c.BareMetal.LoadBalancer.Type != configv1.LoadBalancerTypeUserManaged) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsRecordsType"), c.BareMetal.DNSRecordsType, "external DNS records can only be configured with user-managed loadbalancers"))
+	}
+
 	return allErrs
 }
 

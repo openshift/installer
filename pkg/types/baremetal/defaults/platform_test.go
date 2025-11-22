@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -55,6 +56,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				IngressVIPs:             []string{"192.168.111.3"},
 				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.22.0.0/24"),
 				ProvisioningDHCPRange:   "172.22.0.10,172.22.0.254",
+				DNSRecordsType:          configv1.DNSRecordsTypeInternal,
 			},
 		},
 		{
@@ -73,6 +75,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				IngressVIPs:             []string{"192.168.111.3"},
 				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.23.0.0/24"),
 				ProvisioningDHCPRange:   "172.23.0.10,172.23.0.254",
+				DNSRecordsType:          configv1.DNSRecordsTypeInternal,
 			},
 		},
 		{
@@ -91,6 +94,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				IngressVIPs:             []string{"192.168.111.3"},
 				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("fd2e:6f44:5dd8:b856::/64"),
 				ProvisioningDHCPRange:   "fd2e:6f44:5dd8:b856::a,fd2e:6f44:5dd8:b856:ffff:ffff:ffff:fffe",
+				DNSRecordsType:          configv1.DNSRecordsTypeInternal,
 			},
 		},
 		{
@@ -109,6 +113,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				IngressVIPs:             []string{"192.168.111.3"},
 				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.23.0.0/24"),
 				ProvisioningNetwork:     baremetal.UnmanagedProvisioningNetwork,
+				DNSRecordsType:          configv1.DNSRecordsTypeInternal,
 			},
 		},
 		{
@@ -128,6 +133,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				ProvisioningNetworkCIDR: machineNetwork,
 				APIVIPs:                 []string{"192.168.111.2"},
 				IngressVIPs:             []string{"192.168.111.3"},
+				DNSRecordsType:          configv1.DNSRecordsTypeInternal,
 			},
 		},
 		{
@@ -146,6 +152,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				ProvisioningNetworkCIDR: machineNetwork,
 				APIVIPs:                 []string{"192.168.111.2"},
 				IngressVIPs:             []string{"192.168.111.3"},
+				DNSRecordsType:          configv1.DNSRecordsTypeInternal,
 			},
 		},
 		{
@@ -180,6 +187,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				DeprecatedIngressVIP:    "10.0.0.2",
 				APIVIPs:                 nil,
 				IngressVIPs:             nil,
+				DNSRecordsType:          configv1.DNSRecordsTypeInternal,
 			},
 		},
 	}

@@ -3,6 +3,7 @@ package defaults
 import (
 	"path"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -18,5 +19,9 @@ func SetPlatformDefaults(p *vsphere.Platform, installConfig *types.InstallConfig
 		if p.FailureDomains[i].Topology.ResourcePool == "" && p.FailureDomains[i].Topology.ComputeCluster != "" {
 			p.FailureDomains[i].Topology.ResourcePool = path.Join(p.FailureDomains[i].Topology.ComputeCluster, "Resources")
 		}
+	}
+
+	if p.DNSRecordsType == "" {
+		p.DNSRecordsType = configv1.DNSRecordsTypeInternal
 	}
 }

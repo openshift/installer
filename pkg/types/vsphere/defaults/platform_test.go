@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -13,7 +14,9 @@ import (
 const testClusterName = "test-cluster"
 
 func defaultPlatform() *vsphere.Platform {
-	return &vsphere.Platform{}
+	return &vsphere.Platform{
+		DNSRecordsType: configv1.DNSRecordsTypeInternal,
+	}
 }
 
 func validPlatform() *vsphere.Platform {
@@ -59,6 +62,7 @@ func validPlatform() *vsphere.Platform {
 				},
 			},
 		},
+		DNSRecordsType: configv1.DNSRecordsTypeInternal,
 	}
 }
 
