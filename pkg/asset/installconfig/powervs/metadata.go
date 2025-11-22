@@ -462,7 +462,7 @@ func (m *Metadata) SetVPCServiceURLForRegion(ctx context.Context, vpcRegion stri
 }
 
 // AddSecurityGroupRule adds a security group rule to the specified VPC.
-func (m *Metadata) AddSecurityGroupRule(ctx context.Context, rule *vpcv1.SecurityGroupRulePrototype, vpcID string) error {
+func (m *Metadata) AddSecurityGroupRule(ctx context.Context, rule *vpcv1.SecurityGroupRulePrototype, vpcID string, sgID string) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -479,7 +479,7 @@ func (m *Metadata) AddSecurityGroupRule(ctx context.Context, rule *vpcv1.Securit
 
 	var lastErr error
 	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-		lastErr = client.AddSecurityGroupRule(ctx, vpcID, rule)
+		lastErr = client.AddSecurityGroupRule(ctx, vpcID, sgID, rule)
 		return lastErr == nil, nil
 	})
 

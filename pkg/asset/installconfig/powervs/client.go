@@ -80,8 +80,9 @@ type API interface {
 	ServiceInstanceNameToGUID(ctx context.Context, name string) (string, error)
 
 	// Security Group
+	ListSecurityGroups(ctx context.Context, vpcID string, regions string) ([]vpcv1.SecurityGroup, error)
 	ListSecurityGroupRules(ctx context.Context, securityGroupID string) (*vpcv1.SecurityGroupRuleCollection, error)
-	AddSecurityGroupRule(ctx context.Context, securityGroupID string, rule *vpcv1.SecurityGroupRulePrototype) error
+	AddSecurityGroupRule(ctx context.Context, vpcID string, sgID string, rule *vpcv1.SecurityGroupRulePrototype) error
 
 	// SSH
 	CreateSSHKey(ctx context.Context, serviceInstance string, zone string, sshKeyName string, sshKey string) error
@@ -1280,6 +1281,44 @@ func (c *Client) getTransitConnections(ctx context.Context, tgID string) ([]tran
 	return result, nil
 }
 
+func (c *Client) ListSecurityGroups(ctx context.Context, vpcID string, region string) ([]vpcv1.SecurityGroup, error) {
+	var groupID string
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+	groups, err := c.ListResourceGroups(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list resource groups: %w", err)
+	}
+
+	err = c.SetVPCServiceURLForRegion(ctx, region)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, group := range groups.Resources {
+		if *group.Name == c.BXCli.PowerVSResourceGroup {
+			groupID = *group.ID
+		}
+	}
+	listSecurityGroupOptions := c.vpcAPI.NewListSecurityGroupsOptions()
+	listSecurityGroupOptions.SetVPCID(vpcID)
+	listSecurityGroupOptions.SetResourceGroupID(groupID)
+	securityGroupsPager, err := c.vpcAPI.NewSecurityGroupsPager(listSecurityGroupOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating pager for security group lookup: %w", err)
+	}
+
+	securityGroups, err := securityGroupsPager.GetAllWithContext(localContext)
+	logrus.Debugf("%v security groups found", len(securityGroups))
+	if err != nil {
+		return nil, fmt.Errorf("failed collecting all security groups with pager: %w", err)
+	}
+	for _, sg := range securityGroups {
+		logrus.Debugf("SG Name %v found", *sg.Name)
+	}
+	return securityGroups, nil
+}
+
 // ListSecurityGroupRules returns a list of the security group rules.
 func (c *Client) ListSecurityGroupRules(ctx context.Context, securityGroupID string) (*vpcv1.SecurityGroupRuleCollection, error) {
 	logrus.Debugf("ListSecurityGroupRules: securityGroupID = %s", securityGroupID)
@@ -1312,8 +1351,8 @@ func (c *Client) ListSecurityGroupRules(ctx context.Context, securityGroupID str
 }
 
 // AddSecurityGroupRule adds a security group rule to an existing security group.
-func (c *Client) AddSecurityGroupRule(ctx context.Context, securityGroupID string, rule *vpcv1.SecurityGroupRulePrototype) error {
-	logrus.Debugf("AddSecurityGroupRule: securityGroupID = %s, rule = %+v", securityGroupID, *rule)
+func (c *Client) AddSecurityGroupRule(ctx context.Context, vpcID string, sgID string, rule *vpcv1.SecurityGroupRulePrototype) error {
+	logrus.Debugf("AddSecurityGroupRule: vpcID = %s, rule = %+v", vpcID, *rule)
 
 	var (
 		vpcOptions  *vpcv1.GetVPCOptions
@@ -1324,7 +1363,7 @@ func (c *Client) AddSecurityGroupRule(ctx context.Context, securityGroupID strin
 		err         error
 	)
 
-	vpcOptions = c.vpcAPI.NewGetVPCOptions(securityGroupID)
+	vpcOptions = c.vpcAPI.NewGetVPCOptions(vpcID)
 
 	vpc, response, err = c.vpcAPI.GetVPC(vpcOptions)
 	if err != nil {
@@ -1333,7 +1372,11 @@ func (c *Client) AddSecurityGroupRule(ctx context.Context, securityGroupID strin
 	logrus.Debugf("AddSecurityGroupRule: vpc = %+v", vpc)
 
 	optionsCSGR = &vpcv1.CreateSecurityGroupRuleOptions{}
-	optionsCSGR.SetSecurityGroupID(*vpc.DefaultSecurityGroup.ID)
+	if sgID == "" {
+		optionsCSGR.SetSecurityGroupID(*vpc.DefaultSecurityGroup.ID)
+	} else {
+		optionsCSGR.SetSecurityGroupID(sgID)
+	}
 	optionsCSGR.SetSecurityGroupRulePrototype(rule)
 
 	result, response, err = c.vpcAPI.CreateSecurityGroupRuleWithContext(ctx, optionsCSGR)
