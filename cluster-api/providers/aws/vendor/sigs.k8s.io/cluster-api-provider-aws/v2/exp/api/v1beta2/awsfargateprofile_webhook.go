@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/eks"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -53,8 +53,10 @@ func (r *AWSFargateProfile) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 type awsFargateProfileWebhook struct{}
 
-var _ webhook.CustomDefaulter = &awsFargateProfileWebhook{}
-var _ webhook.CustomValidator = &awsFargateProfileWebhook{}
+var (
+	_ webhook.CustomDefaulter = &awsFargateProfileWebhook{}
+	_ webhook.CustomValidator = &awsFargateProfileWebhook{}
+)
 
 // Default will set default values for the AWSFargateProfile.
 func (*awsFargateProfileWebhook) Default(_ context.Context, obj runtime.Object) error {
@@ -66,7 +68,7 @@ func (*awsFargateProfileWebhook) Default(_ context.Context, obj runtime.Object) 
 	if r.Labels == nil {
 		r.Labels = make(map[string]string)
 	}
-	r.Labels[clusterv1.ClusterNameLabel] = r.Spec.ClusterName
+	r.Labels[clusterv1beta1.ClusterNameLabel] = r.Spec.ClusterName
 
 	if r.Spec.ProfileName == "" {
 		name, err := eks.GenerateEKSName(r.Name, r.Namespace, maxProfileNameLength)

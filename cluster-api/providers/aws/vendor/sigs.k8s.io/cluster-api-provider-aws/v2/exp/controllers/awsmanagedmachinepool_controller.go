@@ -44,10 +44,10 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/eks"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expclusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
@@ -76,7 +76,7 @@ func (r *AWSManagedMachinePoolReconciler) SetupWithManager(ctx context.Context, 
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
 		Watches(
-			&expclusterv1.MachinePool{},
+			&clusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(machinePoolToInfrastructureMapFunc(gvk)),
 		).
 		Watches(
@@ -152,7 +152,7 @@ func (r *AWSManagedMachinePoolReconciler) Reconcile(ctx context.Context, req ctr
 
 	if !controlPlane.Status.Ready {
 		log.Info("Control plane is not ready yet")
-		conditions.MarkFalse(awsPool, expinfrav1.EKSNodegroupReadyCondition, expinfrav1.WaitingForEKSControlPlaneReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(awsPool, expinfrav1.EKSNodegroupReadyCondition, expinfrav1.WaitingForEKSControlPlaneReason, clusterv1beta1.ConditionSeverityInfo, "")
 		return ctrl.Result{}, nil
 	}
 
@@ -174,13 +174,13 @@ func (r *AWSManagedMachinePoolReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	defer func() {
-		applicableConditions := []clusterv1.ConditionType{
+		applicableConditions := []clusterv1beta1.ConditionType{
 			expinfrav1.EKSNodegroupReadyCondition,
 			expinfrav1.IAMNodegroupRolesReadyCondition,
 			expinfrav1.LaunchTemplateReadyCondition,
 		}
 
-		conditions.SetSummary(machinePoolScope.ManagedMachinePool, conditions.WithConditions(applicableConditions...), conditions.WithStepCounter())
+		v1beta1conditions.SetSummary(machinePoolScope.ManagedMachinePool, v1beta1conditions.WithConditions(applicableConditions...), v1beta1conditions.WithStepCounter())
 
 		if err := machinePoolScope.Close(); err != nil && reterr == nil {
 			reterr = err
@@ -227,7 +227,7 @@ func (r *AWSManagedMachinePoolReconciler) reconcileNormal(
 		if err != nil {
 			r.Recorder.Eventf(machinePoolScope.ManagedMachinePool, corev1.EventTypeWarning, "FailedLaunchTemplateReconcile", "Failed to reconcile launch template: %v", err)
 			machinePoolScope.Error(err, "failed to reconcile launch template")
-			conditions.MarkFalse(machinePoolScope.ManagedMachinePool, expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateReconcileFailedReason, clusterv1.ConditionSeverityError, "")
+			v1beta1conditions.MarkFalse(machinePoolScope.ManagedMachinePool, expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateReconcileFailedReason, clusterv1beta1.ConditionSeverityError, "")
 			return ctrl.Result{}, err
 		}
 		if res != nil {
@@ -244,7 +244,7 @@ func (r *AWSManagedMachinePoolReconciler) reconcileNormal(
 		}
 
 		// set the LaunchTemplateReady condition
-		conditions.MarkTrue(machinePoolScope.ManagedMachinePool, expinfrav1.LaunchTemplateReadyCondition)
+		v1beta1conditions.MarkTrue(machinePoolScope.ManagedMachinePool, expinfrav1.LaunchTemplateReadyCondition)
 	}
 
 	if err := ekssvc.ReconcilePool(ctx); err != nil {
@@ -336,7 +336,7 @@ func managedControlPlaneToManagedMachinePoolMapFunc(c client.Client, gvk schema.
 			return nil
 		}
 
-		managedPoolForClusterList := expclusterv1.MachinePoolList{}
+		managedPoolForClusterList := clusterv1.MachinePoolList{}
 		if err := c.List(
 			ctx, &managedPoolForClusterList, client.InNamespace(clusterKey.Namespace), client.MatchingLabels{clusterv1.ClusterNameLabel: clusterKey.Name},
 		); err != nil {

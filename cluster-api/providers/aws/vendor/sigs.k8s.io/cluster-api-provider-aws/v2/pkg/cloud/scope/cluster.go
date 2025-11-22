@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -32,9 +33,10 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/endpoints"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/throttle"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	"sigs.k8s.io/cluster-api/util/patch"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 )
 
 // ClusterScopeParams defines the input parameters used to create a new Scope.
@@ -79,7 +81,7 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 		return nil, errors.Errorf("failed to create aws V2 session: %v", err)
 	}
 
-	helper, err := patch.NewHelper(params.AWSCluster, params.Client)
+	helper, err := v1beta1patch.NewHelper(params.AWSCluster, params.Client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init patch helper")
 	}
@@ -95,7 +97,7 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 type ClusterScope struct {
 	logger.Logger
 	client      client.Client
-	patchHelper *patch.Helper
+	patchHelper *v1beta1patch.Helper
 
 	Cluster    *clusterv1.Cluster
 	AWSCluster *infrav1.AWSCluster
@@ -225,7 +227,10 @@ func (s *ClusterScope) ControlPlaneLoadBalancerName() *string {
 
 // ControlPlaneEndpoint returns the cluster control plane endpoint.
 func (s *ClusterScope) ControlPlaneEndpoint() clusterv1.APIEndpoint {
-	return s.AWSCluster.Spec.ControlPlaneEndpoint
+	return clusterv1.APIEndpoint{
+		Host: s.AWSCluster.Spec.ControlPlaneEndpoint.Host,
+		Port: s.AWSCluster.Spec.ControlPlaneEndpoint.Port,
+	}
 }
 
 // Bucket returns the cluster bucket configuration.
@@ -250,7 +255,7 @@ func (s *ClusterScope) ListOptionsLabelSelector() client.ListOption {
 func (s *ClusterScope) PatchObject() error {
 	// Always update the readyCondition by summarizing the state of other conditions.
 	// A step counter is added to represent progress during the provisioning process (instead we are hiding during the deletion process).
-	applicableConditions := []clusterv1.ConditionType{
+	applicableConditions := []clusterv1beta1.ConditionType{
 		infrav1.VpcReadyCondition,
 		infrav1.SubnetsReadyCondition,
 		infrav1.ClusterSecurityGroupsReadyCondition,
@@ -273,17 +278,17 @@ func (s *ClusterScope) PatchObject() error {
 		}
 	}
 
-	conditions.SetSummary(s.AWSCluster,
-		conditions.WithConditions(applicableConditions...),
-		conditions.WithStepCounterIf(s.AWSCluster.ObjectMeta.DeletionTimestamp.IsZero()),
-		conditions.WithStepCounter(),
+	v1beta1conditions.SetSummary(s.AWSCluster,
+		v1beta1conditions.WithConditions(applicableConditions...),
+		v1beta1conditions.WithStepCounterIf(s.AWSCluster.ObjectMeta.DeletionTimestamp.IsZero()),
+		v1beta1conditions.WithStepCounter(),
 	)
 
 	return s.patchHelper.Patch(
 		context.TODO(),
 		s.AWSCluster,
-		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
-			clusterv1.ReadyCondition,
+		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1beta1.ConditionType{
+			clusterv1beta1.ReadyCondition,
 			infrav1.VpcReadyCondition,
 			infrav1.SubnetsReadyCondition,
 			infrav1.InternetGatewayReadyCondition,
@@ -315,18 +320,21 @@ func (s *ClusterScope) AdditionalTags() infrav1.Tags {
 
 // APIServerPort returns the APIServerPort to use when creating the load balancer.
 func (s *ClusterScope) APIServerPort() int32 {
-	if s.Cluster.Spec.ClusterNetwork != nil && s.Cluster.Spec.ClusterNetwork.APIServerPort != nil {
-		return *s.Cluster.Spec.ClusterNetwork.APIServerPort
+	if s.Cluster.Spec.ClusterNetwork.APIServerPort != 0 {
+		return s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
 	return infrav1.DefaultAPIServerPort
 }
 
 // SetFailureDomain sets the infrastructure provider failure domain key to the spec given as input.
-func (s *ClusterScope) SetFailureDomain(id string, spec clusterv1.FailureDomainSpec) {
+func (s *ClusterScope) SetFailureDomain(id string, spec clusterv1.FailureDomain) {
 	if s.AWSCluster.Status.FailureDomains == nil {
-		s.AWSCluster.Status.FailureDomains = make(clusterv1.FailureDomains)
+		s.AWSCluster.Status.FailureDomains = make(clusterv1beta1.FailureDomains)
 	}
-	s.AWSCluster.Status.FailureDomains[id] = spec
+	s.AWSCluster.Status.FailureDomains[id] = clusterv1beta1.FailureDomainSpec{
+		Attributes:   spec.Attributes,
+		ControlPlane: ptr.Deref(spec.ControlPlane, false),
+	}
 }
 
 // SetNatGatewaysIPs sets the Nat Gateways Public IPs.
@@ -345,7 +353,7 @@ func (s *ClusterScope) InfraCluster() cloud.ClusterObject {
 }
 
 // ClusterObj returns the cluster object.
-func (s *ClusterScope) ClusterObj() cloud.ClusterObject {
+func (s *ClusterScope) ClusterObj() *clusterv1.Cluster {
 	return s.Cluster
 }
 

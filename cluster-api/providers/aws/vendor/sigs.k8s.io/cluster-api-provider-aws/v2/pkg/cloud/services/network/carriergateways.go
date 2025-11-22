@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/wait"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/tags"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 )
 
 func (s *Service) reconcileCarrierGateway() error {
@@ -78,7 +78,7 @@ func (s *Service) reconcileCarrierGateway() error {
 		record.Warnf(s.scope.InfraCluster(), "FailedTagCarrierGateway", "Failed to tag managed Carrier Gateway %q: %v", cagw.CarrierGatewayId, err)
 		return errors.Wrapf(err, "failed to tag carrier gateway %q", *cagw.CarrierGatewayId)
 	}
-	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.CarrierGatewayReadyCondition)
+	v1beta1conditions.MarkTrue(s.scope.InfraCluster(), infrav1.CarrierGatewayReadyCondition)
 	return nil
 }
 

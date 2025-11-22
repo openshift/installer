@@ -32,8 +32,8 @@ import (
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 )
 
 func requeueProfileUpdating() reconcile.Result {
@@ -50,11 +50,11 @@ func (s *FargateService) Reconcile(ctx context.Context) (reconcile.Result, error
 
 	requeue, err := s.reconcileFargateIAMRole(ctx)
 	if err != nil {
-		conditions.MarkFalse(
+		v1beta1conditions.MarkFalse(
 			s.scope.FargateProfile,
 			expinfrav1.IAMFargateRolesReadyCondition,
 			expinfrav1.IAMFargateRolesReconciliationFailedReason,
-			clusterv1.ConditionSeverityError,
+			clusterv1beta1.ConditionSeverityError,
 			"%s",
 			err.Error(),
 		)
@@ -66,15 +66,15 @@ func (s *FargateService) Reconcile(ctx context.Context) (reconcile.Result, error
 		return requeueRoleUpdating(), nil
 	}
 
-	conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.IAMFargateRolesReadyCondition)
+	v1beta1conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.IAMFargateRolesReadyCondition)
 
 	requeue, err = s.reconcileFargateProfile(ctx)
 	if err != nil {
-		conditions.MarkFalse(
+		v1beta1conditions.MarkFalse(
 			s.scope.FargateProfile,
-			clusterv1.ReadyCondition,
+			clusterv1beta1.ReadyCondition,
 			expinfrav1.EKSFargateReconciliationFailedReason,
-			clusterv1.ConditionSeverityError,
+			clusterv1beta1.ConditionSeverityError,
 			"%s",
 			err.Error(),
 		)
@@ -124,34 +124,34 @@ func (s *FargateService) handleStatus(profile *ekstypes.FargateProfile) (requeue
 	switch profile.Status {
 	case ekstypes.FargateProfileStatusCreating:
 		s.scope.FargateProfile.Status.Ready = false
-		if conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition) {
-			conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition, expinfrav1.EKSFargateCreatingReason, clusterv1.ConditionSeverityInfo, "")
+		if v1beta1conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition) {
+			v1beta1conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition, expinfrav1.EKSFargateCreatingReason, clusterv1beta1.ConditionSeverityInfo, "")
 		}
-		if !conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition) {
+		if !v1beta1conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition) {
 			record.Eventf(s.scope.FargateProfile, "InitiatedCreateEKSFargateProfile", "Started creating EKS fargate profile %s", s.scope.FargateProfile.Spec.ProfileName)
-			conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition)
+			v1beta1conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition)
 		}
-		conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateCreatingReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateCreatingReason, clusterv1beta1.ConditionSeverityInfo, "")
 	case ekstypes.FargateProfileStatusCreateFailed, ekstypes.FargateProfileStatusDeleteFailed:
 		s.scope.FargateProfile.Status.Ready = false
 		s.scope.FargateProfile.Status.FailureMessage = aws.String(fmt.Sprintf("unexpected profile status: %s", string(profile.Status)))
 		reason := expinfrav1.EKSFargateFailedReason
 		s.scope.FargateProfile.Status.FailureReason = &reason
-		conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateFailedReason, clusterv1.ConditionSeverityError, "")
+		v1beta1conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateFailedReason, clusterv1beta1.ConditionSeverityError, "")
 	case ekstypes.FargateProfileStatusActive:
 		s.scope.FargateProfile.Status.Ready = true
-		if conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition) {
+		if v1beta1conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition) {
 			record.Eventf(s.scope.FargateProfile, "SuccessfulCreateEKSFargateProfile", "Created new EKS fargate profile %s", s.scope.FargateProfile.Spec.ProfileName)
-			conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition, expinfrav1.EKSFargateCreatedReason, clusterv1.ConditionSeverityInfo, "")
+			v1beta1conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateCreatingCondition, expinfrav1.EKSFargateCreatedReason, clusterv1beta1.ConditionSeverityInfo, "")
 		}
-		conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition)
+		v1beta1conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition)
 	case ekstypes.FargateProfileStatusDeleting:
 		s.scope.FargateProfile.Status.Ready = false
-		if !conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition) {
+		if !v1beta1conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition) {
 			record.Eventf(s.scope.FargateProfile, "InitiatedDeleteEKSFargateProfile", "Started deleting EKS fargate profile %s", s.scope.FargateProfile.Spec.ProfileName)
-			conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition)
+			v1beta1conditions.MarkTrue(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition)
 		}
-		conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateDeletingReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateDeletingReason, clusterv1beta1.ConditionSeverityInfo, "")
 	}
 	switch profile.Status {
 	case ekstypes.FargateProfileStatusCreating, ekstypes.FargateProfileStatusDeleting:
@@ -167,11 +167,11 @@ func (s *FargateService) ReconcileDelete(ctx context.Context) (reconcile.Result,
 
 	requeue, err := s.deleteFargateProfile(ctx)
 	if err != nil {
-		conditions.MarkFalse(
+		v1beta1conditions.MarkFalse(
 			s.scope.FargateProfile,
-			clusterv1.ReadyCondition,
+			clusterv1beta1.ReadyCondition,
 			expinfrav1.EKSFargateReconciliationFailedReason,
-			clusterv1.ConditionSeverityError,
+			clusterv1beta1.ConditionSeverityError,
 			"%s",
 			err.Error(),
 		)
@@ -184,11 +184,11 @@ func (s *FargateService) ReconcileDelete(ctx context.Context) (reconcile.Result,
 
 	err = s.deleteFargateIAMRole(ctx)
 	if err != nil {
-		conditions.MarkFalse(
+		v1beta1conditions.MarkFalse(
 			s.scope.FargateProfile,
 			expinfrav1.IAMFargateRolesReadyCondition,
 			expinfrav1.IAMFargateRolesReconciliationFailedReason,
-			clusterv1.ConditionSeverityError,
+			clusterv1beta1.ConditionSeverityError,
 			"%s",
 			err.Error(),
 		)
@@ -272,11 +272,11 @@ func (s *FargateService) deleteFargateProfile(ctx context.Context) (requeue bool
 		return false, errors.Wrap(err, "failed to describe profile")
 	}
 	if profile == nil {
-		if conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition) {
+		if v1beta1conditions.IsTrue(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition) {
 			record.Eventf(s.scope.FargateProfile, "SuccessfulDeleteEKSFargateProfile", "Deleted EKS fargate profile %s", s.scope.FargateProfile.Spec.ProfileName)
-			conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition, expinfrav1.EKSFargateDeletedReason, clusterv1.ConditionSeverityInfo, "")
+			v1beta1conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateDeletingCondition, expinfrav1.EKSFargateDeletedReason, clusterv1beta1.ConditionSeverityInfo, "")
 		}
-		conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateDeletedReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateDeletedReason, clusterv1beta1.ConditionSeverityInfo, "")
 		return false, nil
 	}
 

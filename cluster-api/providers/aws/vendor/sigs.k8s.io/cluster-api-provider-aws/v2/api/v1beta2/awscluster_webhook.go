@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/cluster-api/util/annotations"
 )
 
@@ -130,7 +130,7 @@ func (*awsClusterWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runti
 		allErrs = append(allErrs, r.validateControlPlaneLoadBalancerUpdate(oldLB, newLB)...)
 	}
 
-	if !cmp.Equal(oldC.Spec.ControlPlaneEndpoint, clusterv1.APIEndpoint{}) &&
+	if !cmp.Equal(oldC.Spec.ControlPlaneEndpoint, clusterv1beta1.APIEndpoint{}) &&
 		!cmp.Equal(r.Spec.ControlPlaneEndpoint, oldC.Spec.ControlPlaneEndpoint) {
 		allErrs = append(allErrs,
 			field.Invalid(field.NewPath("spec", "controlPlaneEndpoint"), r.Spec.ControlPlaneEndpoint, "field is immutable"),

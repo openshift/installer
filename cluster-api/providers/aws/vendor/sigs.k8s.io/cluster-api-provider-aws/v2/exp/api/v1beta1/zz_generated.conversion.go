@@ -28,7 +28,7 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	apiv1beta2 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	v1beta2 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
-	apiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	corev1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 func init() {
@@ -579,7 +579,7 @@ func autoConvert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(in *v1
 func autoConvert_v1beta1_AWSMachinePoolStatus_To_v1beta2_AWSMachinePoolStatus(in *AWSMachinePoolStatus, out *v1beta2.AWSMachinePoolStatus, s conversion.Scope) error {
 	out.Ready = in.Ready
 	out.Replicas = in.Replicas
-	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*corev1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	out.Instances = *(*[]v1beta2.AWSMachinePoolInstanceStatus)(unsafe.Pointer(&in.Instances))
 	out.LaunchTemplateID = in.LaunchTemplateID
 	out.LaunchTemplateVersion = (*string)(unsafe.Pointer(in.LaunchTemplateVersion))
@@ -597,7 +597,7 @@ func Convert_v1beta1_AWSMachinePoolStatus_To_v1beta2_AWSMachinePoolStatus(in *AW
 func autoConvert_v1beta2_AWSMachinePoolStatus_To_v1beta1_AWSMachinePoolStatus(in *v1beta2.AWSMachinePoolStatus, out *AWSMachinePoolStatus, s conversion.Scope) error {
 	out.Ready = in.Ready
 	out.Replicas = in.Replicas
-	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*corev1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	out.Instances = *(*[]AWSMachinePoolInstanceStatus)(unsafe.Pointer(&in.Instances))
 	out.LaunchTemplateID = in.LaunchTemplateID
 	out.LaunchTemplateVersion = (*string)(unsafe.Pointer(in.LaunchTemplateVersion))
@@ -748,6 +748,7 @@ func autoConvert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachineP
 		out.AWSLaunchTemplate = nil
 	}
 	// WARNING: in.AWSLifecycleHooks requires manual conversion: does not exist in peer-type
+	// WARNING: in.NodeRepairConfig requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -758,7 +759,7 @@ func autoConvert_v1beta1_AWSManagedMachinePoolStatus_To_v1beta2_AWSManagedMachin
 	out.LaunchTemplateVersion = (*string)(unsafe.Pointer(in.LaunchTemplateVersion))
 	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
-	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*corev1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	return nil
 }
 
@@ -774,7 +775,7 @@ func autoConvert_v1beta2_AWSManagedMachinePoolStatus_To_v1beta1_AWSManagedMachin
 	out.LaunchTemplateVersion = (*string)(unsafe.Pointer(in.LaunchTemplateVersion))
 	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
-	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*corev1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	return nil
 }
 
@@ -905,7 +906,7 @@ func autoConvert_v1beta1_FargateProfileStatus_To_v1beta2_FargateProfileStatus(in
 	out.Ready = in.Ready
 	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
-	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*corev1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	return nil
 }
 
@@ -918,7 +919,7 @@ func autoConvert_v1beta2_FargateProfileStatus_To_v1beta1_FargateProfileStatus(in
 	out.Ready = in.Ready
 	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
-	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	out.Conditions = *(*corev1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	return nil
 }
 
