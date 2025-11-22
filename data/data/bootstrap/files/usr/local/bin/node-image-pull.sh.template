@@ -34,6 +34,11 @@ if test -f /run/ostree-live; then
     mkdir -p "${ostree_repo}"
     echo "In live environment; creating temporary repo to pull node image"
     ostree init --mode=bare --repo="${ostree_repo}"
+
+    echo "Resizing /run/ephemeral_base tmpfs to 10GiB for ostree operations..."
+    # Use systemd-run to avoid inheriting MountFlags
+    systemd-run --wait --service-type=oneshot mount -o remount,size=10G /run/ephemeral_base
+
     # if there are layers, import all the content in the system repo for
     # layer-level deduping
     if [ -d /ostree/repo/refs/heads/ostree/container ]; then
