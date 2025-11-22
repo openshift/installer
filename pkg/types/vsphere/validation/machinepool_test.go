@@ -151,7 +151,9 @@ func TestValidateMachinePool(t *testing.T) {
 					VSphere: &vsphere.MachinePool{},
 				},
 			},
-			expectedZones:  &[]string{"test-east-1a", "test-east-2a"},
+			// Note: Zones should NOT be populated by validation. Zone population happens
+			// during machine generation after merging with defaultMachinePlatform.
+			expectedZones:  nil,
 			expectedErrMsg: "",
 		},
 		{
@@ -179,7 +181,9 @@ func TestValidateMachinePool(t *testing.T) {
 					VSphere: &vsphere.MachinePool{},
 				},
 			},
-			expectedZones:  &[]string{"test-east-1a", "test-east-2a"},
+			// Note: Zones should NOT be populated by validation. Zone population happens
+			// during machine generation after merging with defaultMachinePlatform.
+			expectedZones:  nil,
 			expectedErrMsg: "",
 		},
 		{
