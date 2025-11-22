@@ -22,6 +22,9 @@ Volume=ironic.volume:/shared:z
 Volume=/opt/openshift/tls/ironic/:/certs/vmedia/:z
 {{ end }}
 Volume=/opt/openshift/tls/ironic/:/certs/ironic/:z
+{{ if .PlatformData.BareMetal.BMCVerifyCA }}
+Volume=/opt/openshift/bmc-ca:/certs/ca/bmc:z
+{{ end }}
 Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
 Environment="PROVISIONING_INTERFACE=${PROVISIONING_INTERFACE}"
 Environment="OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120"

@@ -85,6 +85,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.MachineConfigServerCAConfigMap{},
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
+		&BMCVerifyCAConfigMap{},
 	}
 }
 
@@ -101,8 +102,9 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	clusterCSIDriverConfig := &ClusterCSIDriverConfig{}
 	imageDigestMirrorSet := &ImageDigestMirrorSet{}
 	mcoCfgTemplate := &manifests.MCO{}
+	bmcVerifyCAConfigMap := &BMCVerifyCAConfigMap{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -140,6 +142,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	m.FileList = append(m.FileList, imageContentSourcePolicy.Files()...)
 	m.FileList = append(m.FileList, clusterCSIDriverConfig.Files()...)
 	m.FileList = append(m.FileList, imageDigestMirrorSet.Files()...)
+	m.FileList = append(m.FileList, bmcVerifyCAConfigMap.Files()...)
 
 	asset.SortFiles(m.FileList)
 

@@ -5738,6 +5738,8 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
+                  bmcVerifyCA:
+                    type: string
                   bootstrapExternalStaticDNS:
                     description: |-
                       BootstrapExternalStaticDNS is the static network DNS of the bootstrap node.

@@ -247,4 +247,6 @@ type Platform struct {
 	// to use for provisioning
 	//  +optional
 	AdditionalNTPServers []string `json:"additionalNTPServers,omitempty"`
+
+	BMCVerifyCA string `json:"bmcVerifyCA,omitempty"`
 }
