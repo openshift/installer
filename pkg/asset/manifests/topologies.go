@@ -28,6 +28,11 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 	for _, mp := range installConfig.Compute {
 		numOfWorkers += ptr.Deref(mp.Replicas, 0)
 	}
+	if numOfWorkers < 2 {
+		// Control planes are schedulable when there are < 2 workers.
+		// Adjust the number of schedulable nodes here to reflect.
+		numOfWorkers += controlPlaneReplicas
+	}
 
 	switch numOfWorkers {
 	case 0:
