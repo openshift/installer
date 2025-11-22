@@ -22,6 +22,9 @@ generate_capi_manifest() {
 		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_${version}.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 		echo "---" >>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_customresourcedefinitions_${version}.yaml" >>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+	elif [ "${provider}" = "openstackorc" ]; then
+		# Just copy the CRD from upstream
+		curl -fSsL "https://github.com/k-orc/openstack-resource-controller/releases/download/${version}/install.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 	else
 		# Generate provider manifest from specified revision
 		clone_path="$(mktemp -d)"

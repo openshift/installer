@@ -49,6 +49,9 @@ out
 # Vscode files
 .vscode
 
+# Zed files
+.zed_server
+
 # This is where the result of the go build goes
 /output*/
 /_output*/
@@ -73,6 +76,9 @@ cscope.*
 # Go test binaries
 *.test
 /hack/.test-cmd-auth
+
+# Generated release notes
+_releasenotes
 
 # JUnit test output from ginkgo e2e tests
 /junit*.xml

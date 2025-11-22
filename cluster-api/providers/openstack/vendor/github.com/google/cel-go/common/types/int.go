@@ -19,6 +19,7 @@ import (
 	"math"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/cel-go/common/types/ref"
@@ -86,6 +87,18 @@ func (i Int) ConvertToNative(typeDesc reflect.Type) (any, error) {
 		// the net effect with respect to proto-assignment is handled correctly by the reflection
 		// Convert method.
 		v, err := int64ToInt32Checked(int64(i))
+		if err != nil {
+			return nil, err
+		}
+		return reflect.ValueOf(v).Convert(typeDesc).Interface(), nil
+	case reflect.Int8:
+		v, err := int64ToInt8Checked(int64(i))
+		if err != nil {
+			return nil, err
+		}
+		return reflect.ValueOf(v).Convert(typeDesc).Interface(), nil
+	case reflect.Int16:
+		v, err := int64ToInt16Checked(int64(i))
 		if err != nil {
 			return nil, err
 		}
@@ -276,6 +289,10 @@ func (i Int) Type() ref.Type {
 // Value implements ref.Val.Value.
 func (i Int) Value() any {
 	return int64(i)
+}
+
+func (i Int) format(sb *strings.Builder) {
+	sb.WriteString(strconv.FormatInt(int64(i), 10))
 }
 
 // isJSONSafe indicates whether the int is safely representable as a floating point value in JSON.

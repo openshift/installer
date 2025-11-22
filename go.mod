@@ -112,7 +112,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
 	github.com/thoas/go-funk v0.9.3
-	github.com/ulikunitz/xz v0.5.12
+	github.com/ulikunitz/xz v0.5.15
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.51.0
 	go.uber.org/mock v0.6.0
@@ -155,7 +155,10 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.29.0
 )
 
-require github.com/aws/aws-sdk-go-v2/service/servicequotas v1.31.0
+require (
+	github.com/aws/aws-sdk-go-v2/service/servicequotas v1.31.0
+	github.com/k-orc/openstack-resource-controller/v2 v2.3.0
+)
 
 require (
 	cel.dev/expr v0.24.0 // indirect

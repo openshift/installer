@@ -50,6 +50,8 @@ var (
 	Nutanix = infrastructureProvider("nutanix")
 	// OpenStack is the provider for creating resources in OpenStack.
 	OpenStack = infrastructureProvider("openstack")
+	// OpenStackORC is a companion component to OpenStack that is used to create resources declaratively.
+	OpenStackORC = infrastructureProvider("openstackorc")
 	// VSphere is the provider for creating resources in vSphere.
 	VSphere = infrastructureProvider("vsphere")
 )

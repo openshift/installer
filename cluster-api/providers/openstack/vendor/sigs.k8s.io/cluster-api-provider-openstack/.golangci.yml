@@ -1,190 +1,216 @@
-linters:
-  disable-all: true
-  enable:
-  - asasalint
-  - asciicheck
-  - bidichk
-  - bodyclose
-  - copyloopvar
-  - cyclop
-  - dogsled
-  - dupword
-  - durationcheck
-  - errcheck
-  - forbidigo
-  - gci
-  - goconst
-  - gocritic
-  - gocyclo
-  - godot
-  - gofmt
-  - gofumpt
-  - goheader
-  - goimports
-  - gomodguard
-  - goprintffuncname
-  - gosec
-  - gosimple
-  - govet
-  - importas
-  - ineffassign
-  - makezero
-  - misspell
-  - nakedret
-  - nestif
-  - nilerr
-  - noctx
-  - nolintlint
-  - prealloc
-  - predeclared
-  - revive
-  - rowserrcheck
-  - sqlclosecheck
-  - staticcheck
-  - stylecheck
-  - thelper
-  - typecheck
-  - unconvert
-  - unparam
-  - unused
-  - wastedassign
-  - whitespace
-
-linters-settings:
-  cyclop:
-    # TODO(sbuerin) fix remaining findings and set to 20 afterwards
-    max-complexity: 30
-  gci:
-    sections:
-    - standard
-    - default
-    - prefix(github.com/k-orc/openstack-resource-controller)
-    - prefix(sigs.k8s.io/cluster-api-provider-openstack)
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - performance
-    disabled-checks:
-      - appendAssign
-      - dupImport # https://github.com/go-critic/go-critic/issues/845
-      - evalOrder
-      - ifElseChain
-      - octalLiteral
-      - regexpSimplify
-      - sloppyReassign
-      - truncateCmp
-      - typeDefFirst
-      - unnamedResult
-      - unnecessaryDefer
-      - whyNoLint
-      - wrapperFunc
-      - rangeValCopy
-      - hugeParam
-  importas:
-    no-unaliased: true
-    alias:
-      # Kubernetes
-      - pkg: k8s.io/api/core/v1
-        alias: corev1
-      - pkg: k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
-        alias: apiextensionsv1
-      - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
-        alias: metav1
-      - pkg: k8s.io/apimachinery/pkg/api/errors
-        alias: apierrors
-      - pkg: k8s.io/apimachinery/pkg/util/errors
-        alias: kerrors
-      # Controller Runtime
-      - pkg: sigs.k8s.io/controller-runtime
-        alias: ctrl
-      # CAPO
-      - pkg: sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1
-        alias: infrav1alpha1
-      - pkg: sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha6
-        alias: infrav1alpha6
-      - pkg: sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7
-        alias: infrav1alpha7
-      - pkg: sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1
-        alias: infrav1
-      - pkg: sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors
-        alias: capoerrors
-      # CAPI
-      - pkg: sigs.k8s.io/cluster-api/api/v1alpha3
-        alias: clusterv1alpha3
-      - pkg: sigs.k8s.io/cluster-api/api/v1alpha4
-        alias: clusterv1alpha4
-      - pkg: sigs.k8s.io/cluster-api/api/v1beta1
-        alias: clusterv1
-      # CABPK
-      - pkg: sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1alpha3
-        alias: bootstrapv1alpha3
-      - pkg: sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1alpha4
-        alias: bootstrapv1alpha4
-      - pkg: sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1
-        alias: bootstrapv1
-      # KCP
-      - pkg: sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3
-        alias: controlplanev1alpha3
-      - pkg: sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha4
-        alias: controlplanev1alpha4
-      - pkg: sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1
-        alias: controlplanev1
-      # ORC
-      - pkg: github.com/k-orc/openstack-resource-controller/api/v1alpha1
-        alias: orcv1alpha1
-
-  nolintlint:
-    # https://github.com/golangci/golangci-lint/issues/3228
-    allow-unused: true
-  nestif:
-    # minimal complexity of if statements to report, 5 by default
-    # TODO(sbuerin) fix remaining findings and set to 5 after:
-    # https://github.com/kubernetes-sigs/cluster-api-provider-openstack/pull/778
-    min-complexity: 13
-
-issues:
-  max-same-issues: 0
-  max-issues-per-linter: 0
-  # List of regexps of issue texts to exclude, empty list by default.
-  exclude-rules:
-  - linters:
-    - gosec
-    text: "G108: Profiling endpoint is automatically exposed on /debug/pprof"
-  - linters:
-    - gosec
-    text: "G108: Profiling endpoint is automatically exposed on /debug/pprof"
-  # This directive allows the embed package to be imported with an underscore everywhere.
-  - linters:
-    - revive
-    source: _ "embed"
-  - linters:
-    - revive
-    - stylecheck
-    path: (test)/.*.go
-    text: should not use dot imports
-  - linters:
-    - revive
-    path: test/e2e/shared/defaults.go
-    text: "exported: exported const .* should have comment \\(or a comment on this block\\) or be unexported"
-  - linters:
-    - revive
-    text: "var-naming: don't use underscores in Go names;"
-  - linters:
-    - stylecheck
-    text: "ST1003: should not use underscores in Go names;"
-    path: (api\/.*|pkg/utils/optional)\/.*conversion.*\.go$
-  - linters:
-    - stylecheck
-    text: "ST1003: should not use underscores in Go names;"
-    path: pkg/utils/conversioncommon/.*.go
-  exclude-files:
-  - "zz_generated.*\\.go$"
-
+version: "2"
 run:
-  go: "1.22"
-  timeout: 10m
+  go: "1.24"
   build-tags:
-  - e2e
-
+    - e2e
   allow-parallel-runners: true
+linters:
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - copyloopvar
+    - cyclop
+    - dogsled
+    - dupword
+    - durationcheck
+    - errcheck
+    - forbidigo
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goheader
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - govet
+    - importas
+    - ineffassign
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - thelper
+    - unconvert
+    - unparam
+    - unused
+    - wastedassign
+    - whitespace
+  settings:
+    # TODO(sbuerin) fix remaining findings and set to 20 afterwards
+    cyclop:
+      max-complexity: 30
+    gocritic:
+      disabled-checks:
+        - appendAssign
+        - dupImport # https://github.com/go-critic/go-critic/issues/845
+        - evalOrder
+        - ifElseChain
+        - octalLiteral
+        - regexpSimplify
+        - sloppyReassign
+        - truncateCmp
+        - typeDefFirst
+        - unnamedResult
+        - unnecessaryDefer
+        - whyNoLint
+        - wrapperFunc
+        - rangeValCopy
+        - hugeParam
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - performance
+    importas:
+      alias:
+        # Kubernetes
+        - pkg: k8s.io/api/core/v1
+          alias: corev1
+        - pkg: k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
+          alias: apiextensionsv1
+        - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
+          alias: metav1
+        - pkg: k8s.io/apimachinery/pkg/api/errors
+          alias: apierrors
+        - pkg: k8s.io/apimachinery/pkg/util/errors
+          alias: kerrors
+        # Controller Runtime
+        - pkg: sigs.k8s.io/controller-runtime
+          alias: ctrl
+        # CAPO
+        - pkg: sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1
+          alias: infrav1alpha1
+        - pkg: sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1
+          alias: infrav1
+        - pkg: sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors
+          alias: capoerrors
+        # CAPI
+        - pkg: sigs.k8s.io/cluster-api/api/v1alpha3
+          alias: clusterv1alpha3
+        - pkg: sigs.k8s.io/cluster-api/api/v1alpha4
+          alias: clusterv1alpha4
+        - pkg: sigs.k8s.io/cluster-api/api/core/v1beta2
+          alias: clusterv1
+        - pkg: sigs.k8s.io/cluster-api/api/core/v1beta1
+          alias: clusterv1beta1
+        - pkg: sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions
+          alias: v1beta1conditions
+        - pkg: sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2
+          alias: deprecatedv1beta2conditions
+        - pkg: sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1
+          alias: deprecatedv1beta1conditions
+        - pkg: sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch
+          alias: v1beta1patch
+        - pkg: sigs.k8s.io/cluster-api/api/ipam/v1beta2
+          alias: ipamv1
+        # CABPK
+        - pkg: sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1alpha3
+          alias: bootstrapv1alpha3
+        - pkg: sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1alpha4
+          alias: bootstrapv1alpha4
+        - pkg: sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1
+          alias: bootstrapv1
+        # KCP
+        - pkg: sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3
+          alias: controlplanev1alpha3
+        - pkg: sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha4
+          alias: controlplanev1alpha4
+        - pkg: sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1
+          alias: controlplanev1
+        # ORC
+        - pkg: github.com/k-orc/openstack-resource-controller/api/v1alpha1
+          alias: orcv1alpha1
+      no-unaliased: true
+    nestif:
+      # minimal complexity of if statements to report, 5 by default
+      # TODO(sbuerin) fix remaining findings and set to 5 after:
+      # https://github.com/kubernetes-sigs/cluster-api-provider-openstack/pull/778
+      min-complexity: 13
+    nolintlint:
+      # https://github.com/golangci/golangci-lint/issues/3228
+      allow-unused: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    # List of regexps of issue texts to exclude, empty list by default.
+    rules:
+      - linters:
+          - gosec
+        text: 'G108: Profiling endpoint is automatically exposed on /debug/pprof'
+      - linters:
+          - gosec
+        text: 'G108: Profiling endpoint is automatically exposed on /debug/pprof'
+      # This directive allows the embed package to be imported with an underscore everywhere.
+      - linters:
+          - revive
+        source: _ "embed"
+      - linters:
+          - revive
+          - staticcheck
+        path: (test)/.*.go
+        text: should not use dot imports
+      - linters:
+          - revive
+        path: test/e2e/shared/defaults.go
+        text: 'exported: exported const .* should have comment \(or a comment on this block\) or be unexported'
+      - linters:
+          - revive
+        text: 'var-naming: don''t use underscores in Go names;'
+      - linters:
+          - staticcheck
+        path: (api\/.*|pkg/utils/optional)\/.*conversion.*\.go$
+        text: 'ST1003: should not use underscores in Go names;'
+      - linters:
+          - staticcheck
+        path: pkg/utils/conversioncommon/.*.go
+        text: 'ST1003: should not use underscores in Go names;'
+      - linters:
+          - staticcheck
+        text: 'SA1019: "sigs.k8s.io/cluster-api/api/core/v1beta1" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
+      - linters:
+          - staticcheck
+        text: 'SA1019: "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped. Please see https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more details.'
+    paths:
+      - zz_generated.*\.go$
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/k-orc/openstack-resource-controller)
+        - prefix(sigs.k8s.io/cluster-api-provider-openstack)
+  exclusions:
+    generated: lax
+    paths:
+      - zz_generated.*\.go$
+      - third_party$
+      - builtin$
+      - examples$

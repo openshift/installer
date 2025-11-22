@@ -385,3 +385,18 @@ func (mr *MockLbClientMockRecorder) UpdateListener(id, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateListener", reflect.TypeOf((*MockLbClient)(nil).UpdateListener), id, opts)
 }
+
+// UpdateMonitor mocks base method.
+func (m *MockLbClient) UpdateMonitor(id string, opts monitors.UpdateOptsBuilder) (*monitors.Monitor, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateMonitor", id, opts)
+	ret0, _ := ret[0].(*monitors.Monitor)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateMonitor indicates an expected call of UpdateMonitor.
+func (mr *MockLbClientMockRecorder) UpdateMonitor(id, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMonitor", reflect.TypeOf((*MockLbClient)(nil).UpdateMonitor), id, opts)
+}

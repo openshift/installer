@@ -18,13 +18,14 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/google/cel-go/common/types/ref"
 )
 
 var (
 	// OptionalType indicates the runtime type of an optional value.
-	OptionalType = NewOpaqueType("optional")
+	OptionalType = NewOpaqueType("optional_type")
 
 	// OptionalNone is a sentinel value which is used to indicate an empty optional value.
 	OptionalNone = &Optional{}
@@ -92,6 +93,16 @@ func (o *Optional) String() string {
 		return fmt.Sprintf("optional(%v)", o.GetValue())
 	}
 	return "optional.none()"
+}
+
+func (o *Optional) format(sb *strings.Builder) {
+	if o.HasValue() {
+		sb.WriteString(`optional.of(`)
+		formatTo(sb, o.GetValue())
+		sb.WriteString(`)`)
+	} else {
+		sb.WriteString("optional.none()")
+	}
 }
 
 // Type implements the ref.Val interface method.

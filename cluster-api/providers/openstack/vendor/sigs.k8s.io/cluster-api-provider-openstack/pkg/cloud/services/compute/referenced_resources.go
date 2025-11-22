@@ -23,7 +23,7 @@ import (
 	"slices"
 
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1alpha1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
@@ -52,8 +52,8 @@ func ResolveServerSpec(ctx context.Context, scope *scope.WithLogger, k8sClient c
 
 	// If the server is bound to a cluster, we use the cluster name to generate the port description.
 	var clusterName string
-	if openStackServer.ObjectMeta.Labels[clusterv1.ClusterNameLabel] != "" {
-		clusterName = openStackServer.ObjectMeta.Labels[clusterv1.ClusterNameLabel]
+	if openStackServer.Labels[clusterv1.ClusterNameLabel] != "" {
+		clusterName = openStackServer.Labels[clusterv1.ClusterNameLabel]
 	}
 
 	computeService, err := NewService(scope)

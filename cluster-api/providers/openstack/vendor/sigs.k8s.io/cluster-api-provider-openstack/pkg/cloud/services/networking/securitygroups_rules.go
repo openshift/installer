@@ -258,20 +258,19 @@ func getSGWorkerAllowAll(remoteGroupIDSelf, secControlPlaneGroupID string) []res
 // Permit ports that defined in openStackCluster.Spec.APIServerLoadBalancer.AdditionalPorts.
 func getSGControlPlaneAdditionalPorts(ports []int) []resolvedSecurityGroupRuleSpec {
 	controlPlaneRules := []resolvedSecurityGroupRuleSpec{}
-
-	r := []resolvedSecurityGroupRuleSpec{
-		{
-			Description: "Additional ports",
-			Direction:   "ingress",
-			EtherType:   "IPv4",
-			Protocol:    "tcp",
-		},
-	}
+	// Preallocate r with len(ports)
+	r := make([]resolvedSecurityGroupRuleSpec, len(ports))
 	for i, p := range ports {
-		r[i].PortRangeMin = p
-		r[i].PortRangeMax = p
-		controlPlaneRules = append(controlPlaneRules, r...)
+		r[i] = resolvedSecurityGroupRuleSpec{
+			Description:  "Additional port",
+			Direction:    "ingress",
+			EtherType:    "IPv4",
+			Protocol:     "tcp",
+			PortRangeMin: p,
+			PortRangeMax: p,
+		}
 	}
+	controlPlaneRules = append(controlPlaneRules, r...)
 	return controlPlaneRules
 }
 

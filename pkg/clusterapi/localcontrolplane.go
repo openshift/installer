@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/v2/api/v1alpha1"
 	capnv1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/sirupsen/logrus"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -37,6 +38,8 @@ var (
 
 func init() {
 	utilruntime.Must(clusterv1.AddToScheme(Scheme))
+
+	utilruntime.Must(orcv1alpha1.AddToScheme(Scheme))
 	utilruntime.Must(capav1beta1.AddToScheme(Scheme))
 	utilruntime.Must(capav1.AddToScheme(Scheme))
 	utilruntime.Must(capzv1.AddToScheme(Scheme))
