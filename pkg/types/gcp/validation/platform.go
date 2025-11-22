@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"sort"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -141,6 +142,17 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		}
 		if p.Endpoint.Name == "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("endpoint", "name"), "endpoint name must be specified"))
+		}
+	}
+
+	if p.FirewallRulesManagement != "" {
+		supportedFirewallRulePolicies := sets.New(gcp.ManagedFirewallRules, gcp.UnmanagedFirewallRules)
+		if !supportedFirewallRulePolicies.Has(p.FirewallRulesManagement) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("firewallRulesManagement"), p.FirewallRulesManagement, sets.List(supportedFirewallRulePolicies)))
+		}
+
+		if p.FirewallRulesManagement == gcp.UnmanagedFirewallRules && p.Network == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("network"), "a network must be specified when firewall rules are unmanaged"))
 		}
 	}
 

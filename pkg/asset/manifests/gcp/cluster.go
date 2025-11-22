@@ -133,6 +133,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		capgLoadBalancerType = capg.Internal
 	}
 
+	firewallRulesManagementPolicy := capg.RulesManagementManaged
+	if installConfig.Config.GCP.FirewallRulesManagement == gcp.UnmanagedFirewallRules {
+		firewallRulesManagementPolicy = capg.RulesManagementUnmanaged
+	}
+
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -148,6 +153,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Name:                  ptr.To(networkName),
 				Subnets:               subnets,
 				AutoCreateSubnetworks: ptr.To(autoCreateSubnets),
+				Firewall: capg.FirewallSpec{
+					DefaultRulesManagement: firewallRulesManagementPolicy,
+				},
 			},
 			AdditionalLabels: labels,
 			FailureDomains:   findFailureDomains(installConfig),

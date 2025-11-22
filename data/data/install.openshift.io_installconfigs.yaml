@@ -6238,6 +6238,16 @@ spec:
                     required:
                     - name
                     type: object
+                  firewallRulesManagement:
+                    default: Managed
+                    description: |-
+                      FirewallRulesManagement specifies the management policy for the cluster. Managed indicates that
+                      the firewall rules will be created and destroyed by the cluster. Unmanaged indicates that the
+                      user should create and destroy the firewall rules.
+                    enum:
+                    - Managed
+                    - Unmanaged
+                    type: string
                   network:
                     description: |-
                       Network specifies an existing VPC where the cluster should be created

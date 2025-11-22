@@ -6,6 +6,14 @@ import (
 	"text/template"
 )
 
+const (
+	// FirewallManagementEnabled indicates that firewall rules should be managed by the cluster.
+	FirewallManagementEnabled string = "Enabled"
+
+	// FirewallManagementDisabled indicates that firewall rules are managed by the user.
+	FirewallManagementDisabled string = "Disabled"
+)
+
 // https://github.com/kubernetes/kubernetes/blob/368ee4bb8ee7a0c18431cd87ee49f0c890aa53e5/staging/src/k8s.io/legacy-cloud-providers/gce/gce.go#L188
 type config struct {
 	Global global `gcfg:"global"`
@@ -24,10 +32,12 @@ type global struct {
 	SubnetworkName string `gcfg:"subnetwork-name"`
 
 	NetworkProjectID string `gcfg:"network-project-id"`
+
+	FirewallManagement string `gcfg:"firewall-rules-management"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the GCP platform.
-func CloudProviderConfig(infraID, projectID, subnet, networkProjectID string) (string, error) {
+func CloudProviderConfig(infraID, projectID, subnet, networkProjectID, firewallManagement string) (string, error) {
 	config := &config{
 		Global: global{
 			ProjectID: projectID,
@@ -47,6 +57,8 @@ func CloudProviderConfig(infraID, projectID, subnet, networkProjectID string) (s
 
 			// Used for shared vpc installations,
 			NetworkProjectID: networkProjectID,
+
+			FirewallManagement: firewallManagement,
 		},
 	}
 
@@ -69,5 +81,6 @@ node-instance-prefix = {{.Global.NodeInstancePrefix}}
 external-instance-groups-prefix = {{.Global.ExternalInstanceGroupsPrefix}}
 subnetwork-name = {{.Global.SubnetworkName}}
 {{- if ne .Global.NetworkProjectID "" }}{{"\n"}}network-project-id = {{.Global.NetworkProjectID}}{{ end }}
+{{- if ne .Global.FirewallManagement "" }}{{"\n"}}firewall-rules-management = {{.Global.FirewallManagement}}{{ end }}
 
 `

@@ -283,17 +283,13 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 		return fmt.Errorf("failed to destroy storage: %w", err)
 	}
 
+	if in.Metadata.GCP.FirewallRulesManagement == gcptypes.UnmanagedFirewallRules {
+		return nil
+	}
+
 	projectID := in.Metadata.GCP.ProjectID
 	if in.Metadata.GCP.NetworkProjectID != "" {
 		projectID = in.Metadata.GCP.NetworkProjectID
-
-		createFwRules, err := hasFirewallPermission(ctx, projectID, []string{gcpDeleteFirewallPermission}, in.Metadata.GCP.Endpoint)
-		if err != nil {
-			return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
-		}
-		if !createFwRules {
-			return nil
-		}
 	}
 	if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, projectID, in.Metadata.GCP.Endpoint); err != nil {
 		return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)

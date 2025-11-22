@@ -78,6 +78,8 @@ type ClusterUninstaller struct {
 	// from metadata or by inferring it from existing cluster resources.
 	cloudControllerUID string
 
+	firewallRulesManagement gcptypes.FirewallRulesManagementPolicy
+
 	errorTracker
 	requestIDTracker
 	pendingItemTracker
@@ -92,17 +94,18 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	}
 
 	return &ClusterUninstaller{
-		Logger:               logger,
-		Region:               metadata.ClusterPlatformMetadata.GCP.Region,
-		ProjectID:            metadata.ClusterPlatformMetadata.GCP.ProjectID,
-		NetworkProjectID:     metadata.ClusterPlatformMetadata.GCP.NetworkProjectID,
-		PrivateZoneDomain:    metadata.ClusterPlatformMetadata.GCP.PrivateZoneDomain,
-		PrivateZoneProjectID: privateZoneProjectID,
-		ClusterID:            metadata.InfraID,
-		cloudControllerUID:   gcptypes.CloudControllerUID(metadata.InfraID),
-		requestIDTracker:     newRequestIDTracker(),
-		pendingItemTracker:   newPendingItemTracker(),
-		endpoint:             metadata.ClusterPlatformMetadata.GCP.Endpoint,
+		Logger:                  logger,
+		Region:                  metadata.ClusterPlatformMetadata.GCP.Region,
+		ProjectID:               metadata.ClusterPlatformMetadata.GCP.ProjectID,
+		NetworkProjectID:        metadata.ClusterPlatformMetadata.GCP.NetworkProjectID,
+		PrivateZoneDomain:       metadata.ClusterPlatformMetadata.GCP.PrivateZoneDomain,
+		PrivateZoneProjectID:    privateZoneProjectID,
+		ClusterID:               metadata.InfraID,
+		cloudControllerUID:      gcptypes.CloudControllerUID(metadata.InfraID),
+		requestIDTracker:        newRequestIDTracker(),
+		pendingItemTracker:      newPendingItemTracker(),
+		endpoint:                metadata.ClusterPlatformMetadata.GCP.Endpoint,
+		firewallRulesManagement: metadata.ClusterPlatformMetadata.GCP.FirewallRulesManagement,
 	}, nil
 }
 

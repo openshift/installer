@@ -1,20 +1,21 @@
----
+version: "2"
+run:
+  allow-parallel-runners: true
 linters:
-  disable-all: true
+  default: none
   enable:
     - asasalint
     - asciicheck
     - bidichk
     - bodyclose
     - canonicalheader
-    # - copyloopvar // only on go1.22
+    - copyloopvar
     - decorder
     - dogsled
     - durationcheck
     - errcheck
     - errchkjson
     - errname
-    - copyloopvar
     - fatcontext
     - ginkgolinter
     - gocheckcompilerdirectives
@@ -23,20 +24,15 @@ linters:
     - gocritic
     - gocyclo
     - godox
-    - gofmt
-    - gofumpt
     - goheader
-    - goimports
     - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
     - gosmopolitan
     - govet
     - grouper
     - importas
     - ineffassign
-    # - intrange  // only on go1.22
     - loggercheck
     - makezero
     - mirror
@@ -57,11 +53,8 @@ linters:
     - spancheck
     - sqlclosecheck
     - staticcheck
-    - stylecheck
     - tagalign
-    - tenv
     - testableexamples
-    - typecheck
     - unconvert
     - unparam
     - unused
@@ -69,134 +62,103 @@ linters:
     - wastedassign
     - whitespace
     - zerologlint
-    # - containedctx
-    # - cyclop
-    # - depguard
-    # - dupword
-    # - err113
-    # - errorlint
-    # - exhaustive
-    # - exhaustruct
-    # - forbidigo
-    # - forcetypeassert
-    # - funlen
-    # - gci
-    # - gochecknoglobals
-    # - gochecknoinits
-    # - gocognit
-    # - godot
-    # - inamedparam
-    # - interfacebloat
-    # - ireturn
-    # - lll
-    # - maintidx
-    # - mnd
-    # - nestif
-    # - nilerr
-    # - nilnil
-    # - nlreturn
-    # - noctx
-    # - nonamedreturns
-    # - paralleltest
-    # - tagliatelle
-    # - testifylint
-    # - testpackage
-    # - thelper
-    # - tparallel
-    # - varnamelen
-    # - wrapcheck
-    # - wsl
+  settings:
+    importas:
+      alias:
+        - pkg: k8s.io/api/core/v1
+          alias: corev1
+        - pkg: k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
+          alias: apiextensionsv1
+        - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
+          alias: metav1
+        - pkg: k8s.io/apimachinery/pkg/api/errors
+          alias: apierrors
+        - pkg: k8s.io/apimachinery/pkg/util/errors
+          alias: kerrors
+        - pkg: sigs.k8s.io/controller-runtime
+          alias: ctrl
+      no-unaliased: true
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - gosec
+        text: 'G108: Profiling endpoint is automatically exposed on /debug/pprof'
+      - linters:
+          - gosec
+        text: 'G115: integer overflow conversion int -> int32'
+      - linters:
+          - govet
+        text: 'printf: non-constant format string in call to sigs.k8s.io/cluster-api/util/conditions.MarkFalse'
+      - linters:
+          - revive
+        text: 'exported: exported method .*\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported'
+      - linters:
+          - errcheck
+        text: Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print(f|ln)?|os\.(Un)?Setenv). is not checked
+      - linters:
+          - revive
+        source: _ "embed"
+      - linters:
+          - revive
+        text: exported (method|function|type|const) (.+) should have comment or be unexported
+        source: (func|type).*Fake.*
+      - linters:
+          - revive
+        path: fake_\.go
+        text: exported (method|function|type|const) (.+) should have comment or be unexported
+      - linters:
+          - revive
+        path: (framework|e2e|infrastructure/docker)/.*.go
+        text: exported (method|function|type|const) (.+) should have comment or be unexported
+      - linters:
+          - unparam
+        text: always receives
+      - path: _test\.go
+        text: should not use dot imports
+      - path: (framework|e2e)/.*.go
+        text: should not use dot imports
+      - path: _test\.go
+        text: cyclomatic complexity
+      - linters:
+          - gocritic
+        text: 'appendAssign: append result not assigned to the same slice'
+      - linters:
+          - staticcheck
+        text: 'SA1019: (s.GCPManagedControlPlane.Status.CurrentVersion|s.scope.GCPManagedControlPlane.Status.CurrentVersion|spec.ControlPlaneVersion|s.GCPManagedControlPlane.Spec.ControlPlaneVersion|s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion) is deprecated: This field will soon be removed and you are expected to use Version instead.'
+      - path: (.+)\.go$
+        text: Subprocess launch(ed with variable|ing should be audited)
+      - path: (.+)\.go$
+        text: (Expect directory permissions to be 0750 or less|Expect file permissions to be 0600 or less)
+      - path: (.+)\.go$
+        text: (G104|G307)
 
-linters-settings:
-  importas:
-    no-unaliased: true
-    alias:
-      # Kubernetes
-      - pkg: k8s.io/api/core/v1
-        alias: corev1
-      - pkg: k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
-        alias: apiextensionsv1
-      - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
-        alias: metav1
-      - pkg: k8s.io/apimachinery/pkg/api/errors
-        alias: apierrors
-      - pkg: k8s.io/apimachinery/pkg/util/errors
-        alias: kerrors
-      # Controller Runtime
-      - pkg: sigs.k8s.io/controller-runtime
-        alias: ctrl
+      # Temporary exclusion during upgrade from CAPI 1.10 to CAPI 1.11
+      - linters:
+          - staticcheck
+        text: 'SA1019: .* This package is deprecated and is going to be removed when support for v1beta1 will be dropped'
 
+    paths:
+      - zz_generated.*\.go$
+      - .*conversion.*\.go$
+      - mock*
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  max-same-issues: 0
   max-issues-per-linter: 0
-  # We are disabling default golangci exclusions because we want to help reviewers to focus on reviewing the most relevant
-  # changes in PRs and avoid nitpicking.
-  exclude-use-default: false
-  exclude-files:
-    - "zz_generated.*\\.go$"
-    - ".*conversion.*\\.go$"
-  exclude-dirs:
-    - mock*
-  # List of regexps of issue texts to exclude, empty list by default.
-  exclude:
-    # The following are being worked on to remove their exclusion. This list should be reduced or go away all together over time.
-    # If it is decided they will not be addressed they should be moved above this comment.
-    - Subprocess launch(ed with variable|ing should be audited)
-    - (Expect directory permissions to be 0750 or less|Expect file permissions to be 0600 or less)
-    - (G104|G307)
-  exclude-rules:
-    - linters:
-        - gosec
-      text: "G108: Profiling endpoint is automatically exposed on /debug/pprof"
-    - linters:
-        - gosec
-      text: "G115: integer overflow conversion int -> int32"
-    - linters:
-        - govet
-      text: "printf: non-constant format string in call to sigs.k8s.io/cluster-api/util/conditions.MarkFalse"
-    - linters:
-        - revive
-      text: "exported: exported method .*\\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported"
-    - linters:
-        - errcheck
-      text: Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print(f|ln)?|os\.(Un)?Setenv). is not checked
-    # With Go 1.16, the new embed directive can be used with an un-named import,
-    # revive (previously, golint) only allows these to be imported in a main.go, which wouldn't work for us.
-    # This directive allows the embed package to be imported with an underscore everywhere.
-    - linters:
-        - revive
-      source: _ "embed"
-    # Exclude some packages or code to require comments, for example test code, or fake clients.
-    - linters:
-        - revive
-      text: exported (method|function|type|const) (.+) should have comment or be unexported
-      source: (func|type).*Fake.*
-    - linters:
-        - revive
-      text: exported (method|function|type|const) (.+) should have comment or be unexported
-      path: fake_\.go
-    - linters:
-        - revive
-      text: exported (method|function|type|const) (.+) should have comment or be unexported
-      path: "(framework|e2e|infrastructure/docker)/.*.go"
-    # Disable unparam "always receives" which might not be really
-    # useful when building libraries.
-    - linters:
-        - unparam
-      text: always receives
-    # Dot imports for gomega or ginkgo are allowed
-    # within test files.
-    - path: _test\.go
-      text: should not use dot imports
-    - path: (framework|e2e)/.*.go
-      text: should not use dot imports
-    - path: _test\.go
-      text: cyclomatic complexity
-    # Append should be able to assign to a different var/slice.
-    - linters:
-        - gocritic
-      text: "appendAssign: append result not assigned to the same slice"
-
-run:
-  timeout: 10m
-  allow-parallel-runners: true
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - zz_generated.*\.go$
+      - .*conversion.*\.go$
+      - mock*
+      - third_party$
+      - builtin$
+      - examples$

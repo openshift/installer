@@ -31,8 +31,9 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/compute/loadbalancers"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/compute/networks"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/compute/subnets"
+	"sigs.k8s.io/cluster-api-provider-gcp/pkg/capiutils"
 	"sigs.k8s.io/cluster-api-provider-gcp/util/reconciler"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -119,7 +120,7 @@ func (r *GCPClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Fetch the Cluster.
-	cluster, err := util.GetOwnerCluster(ctx, r.Client, gcpCluster.ObjectMeta)
+	cluster, err := capiutils.GetOwnerCluster(ctx, r.Client, gcpCluster.ObjectMeta)
 	if err != nil {
 		log.Error(err, "Failed to get owner cluster")
 		return ctrl.Result{}, err
@@ -129,7 +130,7 @@ func (r *GCPClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	if annotations.IsPaused(cluster, gcpCluster) {
+	if capiutils.IsPaused(cluster, gcpCluster) {
 		log.Info("GCPCluster of linked Cluster is marked as paused. Won't reconcile")
 		return ctrl.Result{}, nil
 	}

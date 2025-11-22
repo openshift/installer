@@ -183,11 +183,17 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			subnet = installConfig.Config.GCP.ComputeSubnet
 		}
 
+		firewallManagement := gcpmanifests.FirewallManagementEnabled
+		if installConfig.Config.GCP.FirewallRulesManagement == gcptypes.UnmanagedFirewallRules {
+			firewallManagement = gcpmanifests.FirewallManagementDisabled
+		}
+
 		gcpConfig, err := gcpmanifests.CloudProviderConfig(
 			clusterID.InfraID,
 			installConfig.Config.GCP.ProjectID,
 			subnet,
 			installConfig.Config.GCP.NetworkProjectID,
+			firewallManagement,
 		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
