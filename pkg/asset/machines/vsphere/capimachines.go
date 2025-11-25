@@ -105,8 +105,8 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			}
 			deviceSpec := capv.NetworkDeviceSpec{
 				NetworkName:      networkName,
-				DHCP4:            false,
-				DHCP6:            false,
+				DHCP4:            true,
+				DHCP6:            true,
 				SkipIPAllocation: true,
 			}
 
