@@ -20,6 +20,7 @@ type InstanceType struct {
 	MemInMiB     int64
 	Arches       []string
 	Networking   Networking
+	Features     []string
 }
 
 // instanceTypes retrieves a list of instance types for the given region.
@@ -47,6 +48,10 @@ func instanceTypes(ctx context.Context, client *ec2.Client) (map[string]Instance
 				typeInfo.Networking = Networking{
 					IPv6Supported: aws.ToBool(netInfo.Ipv6Supported),
 				}
+			}
+
+			for _, features := range sdkTypeInfo.ProcessorInfo.SupportedFeatures {
+				typeInfo.Features = append(typeInfo.Features, string(features))
 			}
 
 			types[string(sdkTypeInfo.InstanceType)] = typeInfo
