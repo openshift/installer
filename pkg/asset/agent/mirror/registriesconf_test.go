@@ -91,7 +91,7 @@ func TestRegistriesConf_Generate(t *testing.T) {
 					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
 				},
 			},
-			expectedConfig: "credential-helpers = []\nshort-name-mode = \"\"\nunqualified-search-registries = []\n\n[[registry]]\n  location = \"registry.ci.openshift.org/origin/release\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\"\n\n[[registry]]\n  location = \"quay.io/openshift-release-dev/ocp-v4.0-art-dev\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\"\n",
+			expectedConfig: "credential-helpers = []\nshort-name-mode = \"\"\nunqualified-search-registries = []\n\n[[registry]]\n  location = \"registry.ci.openshift.org/origin/release\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    insecure = true\n    location = \"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\"\n\n[[registry]]\n  location = \"quay.io/openshift-release-dev/ocp-v4.0-art-dev\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    insecure = true\n    location = \"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\"\n",
 		},
 		{
 			name: "valid-image-content-sources",
@@ -136,6 +136,7 @@ unqualified-search-registries = []
   prefix = ""
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 
 [[registry]]
@@ -144,6 +145,7 @@ unqualified-search-registries = []
   prefix = ""
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 `,
 		},
@@ -190,6 +192,7 @@ unqualified-search-registries = []
   prefix = ""
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 
 [[registry]]
@@ -198,6 +201,7 @@ unqualified-search-registries = []
   prefix = ""
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 `,
 		},
@@ -246,9 +250,11 @@ unqualified-search-registries = []
   prefix = ""
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
 
 [[registry]]
@@ -257,9 +263,11 @@ unqualified-search-registries = []
   prefix = ""
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
 `,
 		},
@@ -309,9 +317,11 @@ unqualified-search-registries = []
   prefix = ""
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
 
 [[registry]]
@@ -320,9 +330,11 @@ unqualified-search-registries = []
   prefix = ""
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 
   [[registry.mirror]]
+    insecure = true
     location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
 `,
 		},

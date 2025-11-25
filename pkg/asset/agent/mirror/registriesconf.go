@@ -223,7 +223,7 @@ func (i *RegistriesConf) generateRegistriesConf(imageDigestSources []types.Image
 		registry.MirrorByDigestOnly = true
 		registry.Blocked = group.SourcePolicy == configv1.NeverContactSource
 		for _, mirror := range group.Mirrors {
-			registry.Mirrors = append(registry.Mirrors, sysregistriesv2.Endpoint{Location: mirror})
+			registry.Mirrors = append(registry.Mirrors, sysregistriesv2.Endpoint{Location: mirror, Insecure: true})
 		}
 		registries.Registries = append(registries.Registries, registry)
 	}
