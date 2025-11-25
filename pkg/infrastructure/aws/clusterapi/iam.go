@@ -188,11 +188,7 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 			}
 
 			waiter := iam.NewInstanceProfileExistsWaiter(client)
-			if err := waiter.Wait(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: profileName}, 2*time.Minute,
-				func(o *iam.InstanceProfileExistsWaiterOptions) {
-					o.MaxDelay = 5 * time.Second
-					o.MinDelay = 1 * time.Second
-				}); err != nil {
+			if err := waiter.Wait(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: profileName}, 15*time.Minute); err != nil {
 				return fmt.Errorf("failed to wait for %s instance profile to exist: %w", role, err)
 			}
 
@@ -253,11 +249,7 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 			return "", fmt.Errorf("failed to create %s role: %w", nodeRole, err)
 		}
 		waiter := iam.NewRoleExistsWaiter(svc)
-		if err := waiter.Wait(ctx, &iam.GetRoleInput{RoleName: roleName}, 2*time.Minute,
-			func(o *iam.RoleExistsWaiterOptions) {
-				o.MaxDelay = 5 * time.Second
-				o.MinDelay = 1 * time.Second
-			}); err != nil {
+		if err := waiter.Wait(ctx, &iam.GetRoleInput{RoleName: roleName}, 15*time.Minute); err != nil {
 			return "", fmt.Errorf("failed to wait for %s role to exist: %w", nodeRole, err)
 		}
 	}
