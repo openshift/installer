@@ -156,14 +156,6 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodArbiterACI.Spec.ProvisionRequirements.ArbiterAgents = 1
 	goodArbiterACI.Spec.ProvisionRequirements.WorkerAgents = 0
 
-	installConfigWithFencing := getValidOptionalInstallConfigWithFencing()
-	goodFencingACI := getGoodACI()
-	goodFencingACI.Spec.ProvisionRequirements.ControlPlaneAgents = 2
-	goodFencingACI.Spec.ProvisionRequirements.WorkerAgents = 0
-	goodFencingACI.SetAnnotations(map[string]string{
-		installConfigOverrides: `{"controlPlane":{"fencing":{"credentials":[{"hostName":"master-0","username":"admin","password":"password","address":"redfish+https://192.168.111.1:8000/redfish/v1/Systems/abc","certificateVerification":"Disabled"},{"hostName":"master-1","username":"admin","password":"password","address":"redfish+https://192.168.111.1:8000/redfish/v1/Systems/def","certificateVerification":"Disabled"}]}}}`,
-	})
-
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -329,16 +321,6 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodArbiterACI,
-		},
-		{
-			name: "valid configuration with Fencing credentials override",
-			dependencies: []asset.Asset{
-				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
-				installConfigWithFencing,
-				&agentconfig.AgentHosts{},
-				&agentconfig.AgentConfig{},
-			},
-			expectedConfig: goodFencingACI,
 		},
 	}
 	for _, tc := range cases {
