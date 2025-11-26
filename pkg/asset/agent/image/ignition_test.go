@@ -16,12 +16,14 @@ import (
 	"github.com/vincent-petithory/dataurl"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	agentcommon "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
@@ -29,8 +31,10 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/agent"
 )
 
@@ -883,6 +887,188 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 			publicContainerRegistries := getPublicContainerRegistries(&tc.registriesConf)
 
 			assert.Equal(t, tc.expectedRegistries, publicContainerRegistries)
+		})
+	}
+}
+
+func TestIgnition_addFencingCredentials(t *testing.T) {
+	cases := []struct {
+		name          string
+		installConfig *agentcommon.OptionalInstallConfig
+		expectFile    bool
+		expectedPath  string
+		expectedYAML  string
+		expectError   bool
+	}{
+		{
+			name:          "nil install config",
+			installConfig: nil,
+			expectFile:    false,
+		},
+		{
+			name: "nil config in OptionalInstallConfig",
+			installConfig: &agentcommon.OptionalInstallConfig{
+				AssetBase: installconfig.AssetBase{
+					Config: nil,
+				},
+			},
+			expectFile: false,
+		},
+		{
+			name: "no control plane",
+			installConfig: &agentcommon.OptionalInstallConfig{
+				AssetBase: installconfig.AssetBase{
+					Config: &types.InstallConfig{
+						ControlPlane: nil,
+					},
+				},
+			},
+			expectFile: false,
+		},
+		{
+			name: "no fencing configured",
+			installConfig: &agentcommon.OptionalInstallConfig{
+				AssetBase: installconfig.AssetBase{
+					Config: &types.InstallConfig{
+						ControlPlane: &types.MachinePool{
+							Replicas: pointer.Int64(2),
+							Fencing:  nil,
+						},
+					},
+				},
+			},
+			expectFile: false,
+		},
+		{
+			name: "empty fencing credentials",
+			installConfig: &agentcommon.OptionalInstallConfig{
+				AssetBase: installconfig.AssetBase{
+					Config: &types.InstallConfig{
+						ControlPlane: &types.MachinePool{
+							Replicas: pointer.Int64(2),
+							Fencing: &types.Fencing{
+								Credentials: []*types.Credential{},
+							},
+						},
+					},
+				},
+			},
+			expectFile: false,
+		},
+		{
+			name: "valid fencing credentials",
+			installConfig: &agentcommon.OptionalInstallConfig{
+				AssetBase: installconfig.AssetBase{
+					Config: &types.InstallConfig{
+						ControlPlane: &types.MachinePool{
+							Replicas: pointer.Int64(2),
+							Fencing: &types.Fencing{
+								Credentials: []*types.Credential{
+									{
+										HostName:                "master-0",
+										Username:                "admin",
+										Password:                "password1",
+										Address:                 "redfish+https://192.168.111.1:8000/redfish/v1/Systems/1",
+										CertificateVerification: types.CertificateVerificationDisabled,
+									},
+									{
+										HostName:                "master-1",
+										Username:                "admin",
+										Password:                "password2",
+										Address:                 "redfish+https://192.168.111.2:8000/redfish/v1/Systems/2",
+										CertificateVerification: types.CertificateVerificationEnabled,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectFile:   true,
+			expectedPath: "/etc/assisted/hostconfig/fencing-credentials.yaml",
+			expectedYAML: `credentials:
+- hostname: master-0
+  username: admin
+  password: password1
+  address: redfish+https://192.168.111.1:8000/redfish/v1/Systems/1
+  certificateVerification: Disabled
+- hostname: master-1
+  username: admin
+  password: password2
+  address: redfish+https://192.168.111.2:8000/redfish/v1/Systems/2
+  certificateVerification: Enabled
+`,
+		},
+		{
+			name: "fencing credentials without certificate verification",
+			installConfig: &agentcommon.OptionalInstallConfig{
+				AssetBase: installconfig.AssetBase{
+					Config: &types.InstallConfig{
+						ControlPlane: &types.MachinePool{
+							Replicas: pointer.Int64(2),
+							Fencing: &types.Fencing{
+								Credentials: []*types.Credential{
+									{
+										HostName: "node-0",
+										Username: "root",
+										Password: "secret",
+										Address:  "redfish://10.0.0.1:443/redfish/v1/Systems/1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectFile:   true,
+			expectedPath: "/etc/assisted/hostconfig/fencing-credentials.yaml",
+			expectedYAML: `credentials:
+- hostname: node-0
+  username: root
+  password: secret
+  address: redfish://10.0.0.1:443/redfish/v1/Systems/1
+`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := &igntypes.Config{}
+
+			err := addFencingCredentials(config, tc.installConfig)
+
+			if tc.expectError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+
+			if !tc.expectFile {
+				assert.Empty(t, config.Storage.Files, "Expected no files to be added")
+				return
+			}
+
+			// Find the fencing credentials file
+			var foundFile *igntypes.File
+			for i := range config.Storage.Files {
+				if config.Storage.Files[i].Path == tc.expectedPath {
+					foundFile = &config.Storage.Files[i]
+					break
+				}
+			}
+
+			assert.NotNil(t, foundFile, "Expected fencing credentials file at %s", tc.expectedPath)
+
+			// Decode the file contents
+			dataURL, err := dataurl.DecodeString(*foundFile.Contents.Source)
+			assert.NoError(t, err)
+			actualContent := string(dataURL.Data)
+
+			assert.Equal(t, tc.expectedYAML, actualContent)
+
+			// Verify file permissions (0600 = read/write for owner only)
+			assert.Equal(t, 0600, *foundFile.Mode)
 		})
 	}
 }
