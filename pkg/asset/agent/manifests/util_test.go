@@ -233,36 +233,6 @@ func getValidOptionalInstallConfigArbiter() *agent.OptionalInstallConfig {
 	return installConfig
 }
 
-func getValidOptionalInstallConfigWithFencing() *agent.OptionalInstallConfig {
-	installConfig := getValidOptionalInstallConfig()
-	installConfig.Config.ControlPlane.Replicas = ptr.To(int64(2))
-	installConfig.Config.Compute = []types.MachinePool{
-		{
-			Name:     "worker",
-			Replicas: ptr.To(int64(0)),
-		},
-	}
-	installConfig.Config.ControlPlane.Fencing = &types.Fencing{
-		Credentials: []*types.Credential{
-			{
-				HostName:                "master-0",
-				Username:                "admin",
-				Password:                "password",
-				Address:                 "redfish+https://192.168.111.1:8000/redfish/v1/Systems/abc",
-				CertificateVerification: types.CertificateVerificationDisabled,
-			},
-			{
-				HostName:                "master-1",
-				Username:                "admin",
-				Password:                "password",
-				Address:                 "redfish+https://192.168.111.1:8000/redfish/v1/Systems/def",
-				CertificateVerification: types.CertificateVerificationDisabled,
-			},
-		},
-	}
-	return installConfig
-}
-
 // getProxyValidOptionalInstallConfig returns a valid optional install config for proxied installation
 func getProxyValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	validIC := getValidOptionalInstallConfig()
