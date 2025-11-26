@@ -46,7 +46,7 @@ sshKey: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAklOUpkDHrfHY17SbrmTIpNLTGK9Tjom/BWD
   - name: eth0
     macAddress: 00:ef:29:72:b9:771
 sshKey: "not a valid ssh key"`,
-			expectedError: "sshKey: Invalid value: \"not a valid ssh key\": ssh: no key found",
+			expectedError: "sshKey: Invalid value: \"not a valid ssh key\": ssh: no key found; last parsing error for ignored line: illegal base64 data at input byte 4",
 		},
 	}
 	for _, tc := range cases {

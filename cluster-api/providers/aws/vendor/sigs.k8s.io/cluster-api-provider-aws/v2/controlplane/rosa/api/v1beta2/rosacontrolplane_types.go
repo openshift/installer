@@ -21,7 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
@@ -59,11 +58,28 @@ const (
 	// Stable channel group is the default channel group for stable releases.
 	Stable ChannelGroupType = "stable"
 
+	// Eus channel group is for eus channel releases.
+	Eus ChannelGroupType = "eus"
+
+	// Fast channel group is for fast channel releases.
+	Fast ChannelGroupType = "fast"
+
 	// Candidate channel group is for testing candidate builds.
 	Candidate ChannelGroupType = "candidate"
 
 	// Nightly channel group is for testing nigtly builds.
 	Nightly ChannelGroupType = "nightly"
+)
+
+// AutoNodeMode specifies the AutoNode mode for the ROSA Control Plane.
+type AutoNodeMode string
+
+const (
+	// AutoNodeModeEnabled enable AutoNode
+	AutoNodeModeEnabled AutoNodeMode = "Enabled"
+
+	// AutoNodeModeDisabled Disabled AutoNode
+	AutoNodeModeDisabled AutoNodeMode = "Disabled"
 )
 
 // RosaControlPlaneSpec defines the desired state of ROSAControlPlane.
@@ -92,12 +108,14 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 
 	// The Subnet IDs to use when installing the cluster.
 	// SubnetIDs should come in pairs; two per availability zone, one private and one public.
-	Subnets []string `json:"subnets"`
+	// +optional
+	Subnets []string `json:"subnets,omitempty"`
 
 	// AvailabilityZones describe AWS AvailabilityZones of the worker nodes.
 	// should match the AvailabilityZones of the provided Subnets.
 	// a machinepool will be created for each availabilityZone.
-	AvailabilityZones []string `json:"availabilityZones"`
+	// +optional
+	AvailabilityZones []string `json:"availabilityZones,omitempty"`
 
 	// The AWS Region the cluster lives in.
 	Region string `json:"region"`
@@ -107,7 +125,7 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 
 	// OpenShift version channel group, default is stable.
 	//
-	// +kubebuilder:validation:Enum=stable;candidate;nightly
+	// +kubebuilder:validation:Enum=stable;eus;fast;candidate;nightly
 	// +kubebuilder:default=stable
 	ChannelGroup ChannelGroupType `json:"channelGroup"`
 
@@ -121,13 +139,23 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// +kubebuilder:default=WaitForAcknowledge
 	VersionGate VersionGateAckType `json:"versionGate"`
 
+	// RosaRoleConfigRef is a reference to a RosaRoleConfig resource that contains account roles, operator roles and OIDC configuration.
+	// RosaRoleConfigRef and role fields such as installerRoleARN, supportRoleARN, workerRoleARN, rolesRef and oidcID are mutually exclusive.
+	//
+	// +optional
+	RosaRoleConfigRef *corev1.LocalObjectReference `json:"rosaRoleConfigRef,omitempty"`
+
 	// AWS IAM roles used to perform credential requests by the openshift operators.
-	RolesRef AWSRolesRef `json:"rolesRef"`
+	// Required if RosaRoleConfigRef is not specified.
+	// +optional
+	RolesRef AWSRolesRef `json:"rolesRef,omitempty"`
 
 	// The ID of the internal OpenID Connect Provider.
+	// Required if RosaRoleConfigRef is not specified.
 	//
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="oidcID is immutable"
-	OIDCID string `json:"oidcID"`
+	// +optional
+	OIDCID string `json:"oidcID,omitempty"`
 
 	// EnableExternalAuthProviders enables external authentication configuration for the cluster.
 	//
@@ -146,13 +174,19 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// +kubebuilder:validation:MaxItems=1
 	ExternalAuthProviders []ExternalAuthProvider `json:"externalAuthProviders,omitempty"`
 
-	// InstallerRoleARN is an AWS IAM role that OpenShift Cluster Manager will assume to create the cluster..
-	InstallerRoleARN string `json:"installerRoleARN"`
+	// InstallerRoleARN is an AWS IAM role that OpenShift Cluster Manager will assume to create the cluster.
+	// Required if RosaRoleConfigRef is not specified.
+	// +optional
+	InstallerRoleARN string `json:"installerRoleARN,omitempty"`
 	// SupportRoleARN is an AWS IAM role used by Red Hat SREs to enable
 	// access to the cluster account in order to provide support.
-	SupportRoleARN string `json:"supportRoleARN"`
+	// Required if RosaRoleConfigRef is not specified.
+	// +optional
+	SupportRoleARN string `json:"supportRoleARN,omitempty"`
 	// WorkerRoleARN is an AWS IAM role that will be attached to worker instances.
-	WorkerRoleARN string `json:"workerRoleARN"`
+	// Required if RosaRoleConfigRef is not specified.
+	// +optional
+	WorkerRoleARN string `json:"workerRoleARN,omitempty"`
 
 	// BillingAccount is an optional AWS account to use for billing the subscription fees for ROSA HCP clusters.
 	// The cost of running each ROSA HCP cluster will be billed to the infrastructure account in which the cluster
@@ -228,6 +262,30 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// ClusterRegistryConfig represents registry config used with the cluster.
 	// +optional
 	ClusterRegistryConfig *RegistryConfig `json:"clusterRegistryConfig,omitempty"`
+
+	// autoNode set the autoNode mode and roleARN.
+	// +optional
+	AutoNode *AutoNode `json:"autoNode,omitempty"`
+
+	// ROSANetworkRef references ROSANetwork custom resource that contains the networking infrastructure
+	// for the ROSA HCP cluster.
+	// +optional
+	ROSANetworkRef *corev1.LocalObjectReference `json:"rosaNetworkRef,omitempty"`
+}
+
+// AutoNode set the AutoNode mode and AutoNode role ARN.
+type AutoNode struct {
+	// mode specifies the mode for the AutoNode. Setting Enable/Disable mode will allows/disallow karpenter AutoNode scaling.
+	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// +kubebuilder:default=Disabled
+	// +optional
+	Mode AutoNodeMode `json:"mode,omitempty"`
+
+	// roleARN sets the autoNode role ARN, which includes the IAM policy and cluster-specific role that grant the necessary permissions to the Karpenter controller.
+	// The role must be attached with the same OIDC-ID that is used with the ROSA-HCP cluster.
+	// +kubebuilder:validation:MaxLength:=2048
+	// +optional
+	RoleARN string `json:"roleARN,omitempty"`
 }
 
 // RegistryConfig for ROSA-HCP cluster
@@ -327,7 +385,7 @@ type DefaultMachinePoolSpec struct {
 	// Autoscaling specifies auto scaling behaviour for the default MachinePool. Autoscaling min/max value
 	// must be equal or multiple of the availability zones count.
 	// +optional
-	Autoscaling *expinfrav1.RosaMachinePoolAutoScaling `json:"autoscaling,omitempty"`
+	Autoscaling *AutoScaling `json:"autoscaling,omitempty"`
 
 	// VolumeSize set the disk volume size for the default workers machine pool in Gib. The default is 300 GiB.
 	// +kubebuilder:validation:Minimum=75
@@ -335,6 +393,14 @@ type DefaultMachinePoolSpec struct {
 	// +immutable
 	// +optional
 	VolumeSize int `json:"volumeSize,omitempty"`
+}
+
+// AutoScaling specifies scaling options.
+type AutoScaling struct {
+	// +kubebuilder:validation:Minimum=1
+	MinReplicas int `json:"minReplicas,omitempty"`
+	// +kubebuilder:validation:Minimum=1
+	MaxReplicas int `json:"maxReplicas,omitempty"`
 }
 
 // AWSRolesRef contains references to various AWS IAM roles required for operators to make calls against the AWS API.
@@ -748,6 +814,10 @@ type RosaControlPlaneStatus struct {
 	ConsoleURL string `json:"consoleURL,omitempty"`
 	// OIDCEndpointURL is the endpoint url for the managed OIDC provider.
 	OIDCEndpointURL string `json:"oidcEndpointURL,omitempty"`
+
+	// OpenShift semantic version, for example "4.14.5".
+	// +optional
+	Version string `json:"version"`
 
 	// Available upgrades for the ROSA hosted control plane.
 	AvailableUpgrades []string `json:"availableUpgrades,omitempty"`

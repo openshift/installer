@@ -751,7 +751,9 @@ func ValidateSubnetsCount(multiAZ bool, privateLink bool, subnetsInputCount int)
 	return nil
 }
 
-func ValidateHostedClusterSubnets(awsClient aws.Client, isPrivate bool, subnetIDs []string) (int, error) {
+func ValidateHostedClusterSubnets(awsClient aws.Client, isPrivate bool, subnetIDs []string,
+	privateIngress bool) (int, error) {
+
 	if isPrivate && len(subnetIDs) < 1 {
 		return 0, fmt.Errorf("The number of subnets for a private hosted cluster should be at least one")
 	}
@@ -781,7 +783,7 @@ func ValidateHostedClusterSubnets(awsClient aws.Client, isPrivate bool, subnetID
 	privateSubnetCount := len(privateSubnets)
 	publicSubnetsCount := len(subnets) - privateSubnetCount
 
-	if isPrivate {
+	if isPrivate && privateIngress {
 		if publicSubnetsCount > 0 {
 			return 0, fmt.Errorf("The number of public subnets for a private hosted cluster should be zero")
 		}
@@ -893,7 +895,7 @@ func (c *Client) GetVersionsList(channelGroup string, defaultFirst bool) ([]stri
 	return versionList, nil
 }
 
-func ValidateOperatorRolesMatchOidcProvider(reporter *reporter.Object, awsClient aws.Client,
+func ValidateOperatorRolesMatchOidcProvider(reporter reporter.Logger, awsClient aws.Client,
 	operatorIAMRoleList []OperatorIAMRole, oidcEndpointUrl string,
 	clusterVersion string, expectedOperatorRolePath string,
 	accountRolesHasManagedPolicies bool, logOperatorRoles bool) error {
@@ -1119,4 +1121,22 @@ func ValidateClaimValidationRules(input interface{}) error {
 		return fmt.Errorf("can only validate string types, got %v", inputType.String())
 	}
 	return nil
+}
+
+// GetAutoNodeMode returns the AutoNode mode and whether AutoNode configuration exists
+func GetAutoNodeMode(cluster *cmv1.Cluster) (string, bool) {
+	if cluster.AutoNode() != nil {
+		mode := cluster.AutoNode().Mode()
+		return mode, mode != ""
+	}
+	return "", false
+}
+
+// GetAutoNodeRoleArn returns the AutoNode IAM role ARN and whether it exists
+func GetAutoNodeRoleArn(cluster *cmv1.Cluster) (string, bool) {
+	if cluster.AWS() != nil && cluster.AWS().AutoNode() != nil {
+		roleArn := cluster.AWS().AutoNode().RoleArn()
+		return roleArn, roleArn != ""
+	}
+	return "", false
 }

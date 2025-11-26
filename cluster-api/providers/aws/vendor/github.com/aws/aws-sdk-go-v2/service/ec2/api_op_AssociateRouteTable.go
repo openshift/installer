@@ -16,8 +16,11 @@ import (
 // causes traffic from the subnet or gateway to be routed according to the routes
 // in the route table. The action returns an association ID, which you need in
 // order to disassociate the route table later. A route table can be associated
-// with multiple subnets. For more information, see Route tables (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
-// in the Amazon VPC User Guide.
+// with multiple subnets.
+//
+// For more information, see [Route tables] in the Amazon VPC User Guide.
+//
+// [Route tables]: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html
 func (c *Client) AssociateRouteTable(ctx context.Context, params *AssociateRouteTableInput, optFns ...func(*Options)) (*AssociateRouteTableOutput, error) {
 	if params == nil {
 		params = &AssociateRouteTableInput{}
@@ -113,6 +116,9 @@ func (c *Client) addOperationAssociateRouteTableMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,6 +129,15 @@ func (c *Client) addOperationAssociateRouteTableMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAssociateRouteTableValidationMiddleware(stack); err != nil {
@@ -144,6 +159,18 @@ func (c *Client) addOperationAssociateRouteTableMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

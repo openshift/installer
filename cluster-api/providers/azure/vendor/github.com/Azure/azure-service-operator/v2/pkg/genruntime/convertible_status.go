@@ -6,7 +6,7 @@
 package genruntime
 
 import (
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -27,7 +27,7 @@ type ConvertibleStatus interface {
 func GetVersionedStatus(metaObject ARMMetaObject, scheme *runtime.Scheme) (ConvertibleStatus, error) {
 	rsrc, err := NewEmptyVersionedResource(metaObject, scheme)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting versioned status")
+		return nil, eris.Wrap(err, "getting versioned status")
 	}
 
 	if rsrc.GetObjectKind().GroupVersionKind() == metaObject.GetObjectKind().GroupVersionKind() {
@@ -39,7 +39,7 @@ func GetVersionedStatus(metaObject ARMMetaObject, scheme *runtime.Scheme) (Conve
 	status := rsrc.GetStatus()
 	err = status.ConvertStatusFrom(metaObject.GetStatus())
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed conversion of status")
+		return nil, eris.Wrapf(err, "failed conversion of status")
 	}
 
 	return status, nil
@@ -55,7 +55,7 @@ func NewEmptyVersionedStatus(metaObject ARMMetaObject, scheme *runtime.Scheme) (
 func NewEmptyVersionedStatusFromGVK(metaObject ARMMetaObject, scheme *runtime.Scheme, gvk schema.GroupVersionKind) (ConvertibleStatus, error) {
 	rsrc, err := NewEmptyVersionedResourceFromGVK(scheme, gvk)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating new empty versioned status")
+		return nil, eris.Wrap(err, "creating new empty versioned status")
 	}
 
 	if rsrc.GetObjectKind().GroupVersionKind() == metaObject.GetObjectKind().GroupVersionKind() {
@@ -72,12 +72,12 @@ func NewEmptyVersionedStatusFromGVK(metaObject ARMMetaObject, scheme *runtime.Sc
 func NewEmptyARMStatus(metaObject ARMMetaObject, scheme *runtime.Scheme) (ARMResourceStatus, error) {
 	status, err := GetVersionedStatus(metaObject, scheme)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating ARM status")
+		return nil, eris.Wrap(err, "creating ARM status")
 	}
 
 	converter, ok := status.(FromARMConverter)
 	if !ok {
-		return nil, errors.Errorf("expected %T to implement genruntime.FromARMConverter", status)
+		return nil, eris.Errorf("expected %T to implement genruntime.FromARMConverter", status)
 	}
 
 	return converter.NewEmptyARMValue(), nil

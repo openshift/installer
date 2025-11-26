@@ -67,47 +67,66 @@ build: ## Build manager binary.
 	pushd client-gen; CGO_ENABLED=0 go build -o ../bin/client-gen ./cmd/client-gen/ ;popd
 	pushd client-gen; CGO_ENABLED=0 go build -o ../bin/typescaffold ./cmd/typescaffold/;popd
 
+.PHONY: test
+test: ## Run tests.
+	go test -v ./...
+	echo "Mooncake test ***************************************"; AZURE_CLOUD=AZURECHINACLOUD go test -v ./...
+
 .PHONY: generate
-generate: install-dependencies build generatecode generateimpl fmt vet-all
+generate: install-dependencies build generatecode generateimpl generateclientfactory generatemock fmt vet-all test
 
 .PHONY: generatecode
 generatecode: build ## Generate client
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4 --package-alias armcontainerservice --resource ManagedCluster --client-name ManagedClustersClient  --ratelimitkey containerServiceRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v6 --package-alias armcontainerservice --resource ManagedCluster --client-name ManagedClustersClient  --ratelimitkey containerServiceRateLimit
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry --package-alias armcontainerregistry --resource Registry --client-name RegistriesClient --verbs get,delete,listbyrg
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources --package-alias resources --resource Deployment --client-name DeploymentsClient --verbs delete --ratelimitkey deploymentRateLimit
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources --package-alias resources --resource ResourceGroup --client-name ResourceGroupsClient 
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 --package-alias armcompute --resource Disk --client-name DisksClient --ratelimitkey diskRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 --package-alias armcompute --resource AvailabilitySet --client-name AvailabilitySetsClient --verbs get,list --ratelimitkey availabilitySetRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 --package-alias armcompute --resource VirtualMachine --client-name VirtualMachinesClient --verbs createorupdate,delete,list --expand --ratelimitkey virtualMachineRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 --package-alias armcompute --resource VirtualMachineScaleSet --client-name VirtualMachineScaleSetsClient --verbs get,createorupdate,delete,list --ratelimitkey virtualMachineSizesRateLimit --expand
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 --package-alias armcompute --resource VirtualMachineScaleSet --subresource VirtualMachineScaleSetVM --client-name VirtualMachineScaleSetVMsClient --verbs get,delete,list 
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 --package-alias armcompute --resource Snapshot --client-name SnapshotsClient --verbs get,createorupdate,delete --ratelimitkey snapshotRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 --package-alias armcompute --resource SSHPublicKeyResource --client-name SSHPublicKeysClient --verbs get,listbyrg
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource VirtualNetwork --subresource Subnet --client-name SubnetsClient --verbs get,createorupdate,delete,list --expand --ratelimitkey subnetsRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource VirtualNetwork --client-name VirtualNetworksClient --verbs get,createorupdate,delete,list --expand 
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource Interface --client-name InterfacesClient --verbs get,createorupdate,delete,list --expand --ratelimitkey interfaceRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource LoadBalancer --client-name LoadBalancersClient --verbs get,createorupdate,delete,list --expand --ratelimitkey loadBalancerRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource PrivateEndpoint --client-name PrivateEndpointsClient --verbs get,createorupdate --expand --ratelimitkey privateEndpointRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource PublicIPAddress --client-name PublicIPAddressesClient --verbs get,createorupdate,delete,list --expand --ratelimitkey publicIPAddressRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource PublicIPPrefix --client-name PublicIPPrefixesClient --verbs get,createorupdate,delete,list --expand 
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource RouteTable --client-name RouteTablesClient --verbs get,createorupdate,delete,list  --ratelimitkey routeTableRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource SecurityGroup --client-name SecurityGroupsClient --verbs get,createorupdate,delete,list --ratelimitkey securityGroupRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource PrivateLinkService --client-name PrivateLinkServicesClient --verbs get,createorupdate,delete,list --expand --ratelimitkey privateLinkServiceRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4 --package-alias armnetwork --resource IPGroup --client-name IPGroupsClient --verbs get,createorupdate,delete,listbyrg --expand --ratelimitkey ipGroupRateLimit
-	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage --package-alias armstorage --resource Account --client-name AccountsClient --verbs listbyrg --expand
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 --package-alias armcompute --resource Disk --client-name DisksClient --ratelimitkey diskRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 --package-alias armcompute --resource AvailabilitySet --client-name AvailabilitySetsClient --verbs get,list --ratelimitkey availabilitySetRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 --package-alias armcompute --resource VirtualMachine --client-name VirtualMachinesClient --verbs createorupdate,delete,list --expand --ratelimitkey virtualMachineRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 --package-alias armcompute --resource VirtualMachineScaleSet --client-name VirtualMachineScaleSetsClient --verbs get,createorupdate,delete,list --ratelimitkey virtualMachineScaleSetRateLimit --expand
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 --package-alias armcompute --resource VirtualMachineScaleSet --subresource VirtualMachineScaleSetVM --client-name VirtualMachineScaleSetVMsClient --verbs get,delete,list 
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 --package-alias armcompute --resource Snapshot --client-name SnapshotsClient --verbs get,createorupdate,delete --ratelimitkey snapshotRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 --package-alias armcompute --resource SSHPublicKeyResource --client-name SSHPublicKeysClient --verbs get,listbyrg
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource VirtualNetwork --subresource Subnet --client-name SubnetsClient --verbs get,createorupdate,delete,list --expand --ratelimitkey subnetsRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource VirtualNetwork --client-name VirtualNetworksClient --verbs get,createorupdate,delete,list --expand 
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource Interface --client-name InterfacesClient --verbs get,createorupdate,delete,list --expand --ratelimitkey interfaceRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource LoadBalancer --client-name LoadBalancersClient --verbs get,createorupdate,delete,list --expand --ratelimitkey loadBalancerRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource LoadBalancer  --subresource BackendAddressPool --client-name LoadBalancerBackendAddressPoolsClient --verbs get,createorupdate,delete,list --ratelimitkey loadBalancerRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource PrivateEndpoint --client-name PrivateEndpointsClient --verbs get,createorupdate --expand --ratelimitkey privateEndpointRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource PrivateEndpoint --subresource PrivateDNSZoneGroup --client-name PrivateDNSZoneGroupsClient --verbs get,createorupdate,delete
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource PublicIPAddress --client-name PublicIPAddressesClient --verbs get,createorupdate,delete,list --expand --ratelimitkey publicIPAddressRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource PublicIPPrefix --client-name PublicIPPrefixesClient --verbs get,createorupdate,delete,list --expand 
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource RouteTable --client-name RouteTablesClient --verbs get,createorupdate,delete,list  --ratelimitkey routeTableRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource SecurityGroup --client-name SecurityGroupsClient --verbs get,createorupdate,delete,list --ratelimitkey securityGroupRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource PrivateLinkService --client-name PrivateLinkServicesClient --verbs get,createorupdate,delete,list --expand --ratelimitkey privateLinkServiceRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource IPGroup --client-name IPGroupsClient --verbs get,createorupdate,delete,listbyrg --expand --ratelimitkey ipGroupRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage --package-alias armstorage --resource Account --client-name AccountsClient --verbs listbyrg --expand --ratelimitkey storageAccountRateLimit
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns --package-alias armprivatedns --resource PrivateZone --client-name PrivateZonesClient  --verbs get,createorupdate --ratelimitkey privateDNSRateLimit
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns --package-alias armprivatedns --resource PrivateZone --subresource VirtualNetworkLink --client-name VirtualNetworkLinksClient --verbs get,createorupdate --ratelimitkey virtualNetworkRateLimit
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage --package-alias armstorage --resource Account --subresource FileShare --client-name FileSharesClient --verbs get,createorupdate,delete,list
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage --package-alias armstorage --resource FileServiceProperties --client-name FileServicesClient
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage --package-alias armstorage --resource Account --subresource BlobContainer --client-name BlobContainersClient --verbs get,list
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage --package-alias armstorage --resource BlobServiceProperties --client-name BlobServicesClient
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault --package-alias armkeyvault --resource Vault --subresource Secret --client-name SecretsClient --verbs get,createorupdate,delete,list
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault --package-alias armkeyvault --resource Vault --client-name VaultsClient --verbs get,createorupdate,delete,list
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources --package-alias armresources --resource Provider --client-name ProvidersClient 
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2 --package-alias armauthorization --resource RoleAssignment --client-name RoleAssignmentsClient
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2 --package-alias armauthorization --resource RoleDefinition --client-name RoleDefinitionsClient
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi --package-alias armmsi --resource Identity --client-name UserAssignedIdentitiesClient
 
 
 .PHONY: generateimpl
 generateimpl: build ## Generate client
 	PATH=$(LOCALBIN):$$PATH $(CLIENTGEN) clientgen:headerFile=../../hack/boilerplate/boilerplate.gomock.txt paths=./...
+
+.PHONY: generatemock
+generatemock: build ## Generate client
+	PATH=$(LOCALBIN):$$PATH $(CLIENTGEN) mockgen:headerFile=../../hack/boilerplate/boilerplate.generatego.txt paths=./...
+
+.PHONY: generateclientfactory
+generateclientfactory: build ## Generate client
+	PATH=$(LOCALBIN):$$PATH $(CLIENTGEN) clientfactorygen:headerFile=../../hack/boilerplate/boilerplate.gomock.txt paths=./... output:dir=.
 
 .PHONY: vet-all
 vet-all: golangci-lint ## Run go vet against code.

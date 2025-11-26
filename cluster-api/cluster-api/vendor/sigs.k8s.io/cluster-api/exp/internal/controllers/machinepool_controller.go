@@ -40,15 +40,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/api/v1beta1/index"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/api/core/v1beta2/index"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/controllers/external"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/internal/util/ssa"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	"sigs.k8s.io/cluster-api/util/finalizers"
+	"sigs.k8s.io/cluster-api/util/labels/format"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/paused"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -62,10 +63,8 @@ import (
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io;bootstrap.cluster.x-k8s.io,resources=*,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machinepools;machinepools/status;machinepools/finalizers,verbs=get;list;watch;create;update;patch;delete
 
-var (
-	// machinePoolKind contains the schema.GroupVersionKind for the MachinePool type.
-	machinePoolKind = clusterv1.GroupVersion.WithKind("MachinePool")
-)
+// machinePoolKind contains the schema.GroupVersionKind for the MachinePool type.
+var machinePoolKind = clusterv1.GroupVersion.WithKind("MachinePool")
 
 const (
 	// MachinePoolControllerName defines the controller used when creating clients.
@@ -89,34 +88,19 @@ type MachinePoolReconciler struct {
 	predicateLog *logr.Logger
 }
 
-// scope holds the different objects that are read and used during the reconcile.
-type scope struct {
-	// cluster is the Cluster object the Machine belongs to.
-	// It is set at the beginning of the reconcile function.
-	cluster *clusterv1.Cluster
-
-	// machinePool is the MachinePool object. It is set at the beginning
-	// of the reconcile function.
-	machinePool *expv1.MachinePool
-
-	// nodeRefMapResult is a map of providerIDs to Nodes that are associated with the Cluster.
-	// It is set after reconcileInfrastructure is called.
-	nodeRefMap map[string]*corev1.Node
-}
-
 func (r *MachinePoolReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	if r.Client == nil || r.APIReader == nil || r.ClusterCache == nil {
 		return errors.New("Client, APIReader and ClusterCache must not be nil")
 	}
 
 	r.predicateLog = ptr.To(ctrl.LoggerFrom(ctx).WithValues("controller", "machinepool"))
-	clusterToMachinePools, err := util.ClusterToTypedObjectsMapper(mgr.GetClient(), &expv1.MachinePoolList{}, mgr.GetScheme())
+	clusterToMachinePools, err := util.ClusterToTypedObjectsMapper(mgr.GetClient(), &clusterv1.MachinePoolList{}, mgr.GetScheme())
 	if err != nil {
 		return err
 	}
 
 	c, err := ctrl.NewControllerManagedBy(mgr).
-		For(&expv1.MachinePool{}).
+		For(&clusterv1.MachinePool{}).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), *r.predicateLog, r.WatchFilterValue)).
 		Watches(
@@ -145,7 +129,7 @@ func (r *MachinePoolReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 		Scheme:          mgr.GetScheme(),
 		PredicateLogger: r.predicateLog,
 	}
-	r.ssaCache = ssa.NewCache()
+	r.ssaCache = ssa.NewCache("machinepool")
 
 	return nil
 }
@@ -153,7 +137,7 @@ func (r *MachinePoolReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 func (r *MachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	mp := &expv1.MachinePool{}
+	mp := &clusterv1.MachinePool{}
 	if err := r.Client.Get(ctx, req.NamespacedName, mp); err != nil {
 		if apierrors.IsNotFound(err) {
 			// Object not found, return. Created objects are automatically garbage collected.
@@ -168,19 +152,15 @@ func (r *MachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	ctx = ctrl.LoggerInto(ctx, log)
 
 	// Add finalizer first if not set to avoid the race condition between init and delete.
-	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, mp, expv1.MachinePoolFinalizer); err != nil || finalizerAdded {
+	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, mp, clusterv1.MachinePoolFinalizer); err != nil || finalizerAdded {
 		return ctrl.Result{}, err
 	}
 
-	cluster, err := util.GetClusterByName(ctx, r.Client, mp.ObjectMeta.Namespace, mp.Spec.ClusterName)
+	cluster, err := util.GetClusterByName(ctx, r.Client, mp.Namespace, mp.Spec.ClusterName)
 	if err != nil {
-		log.Error(err, "Failed to get Cluster for MachinePool.", "MachinePool", klog.KObj(mp), "Cluster", klog.KRef(mp.ObjectMeta.Namespace, mp.Spec.ClusterName))
+		log.Error(err, "Failed to get Cluster for MachinePool.", "MachinePool", klog.KObj(mp), "Cluster", klog.KRef(mp.Namespace, mp.Spec.ClusterName))
 		return ctrl.Result{}, errors.Wrapf(err, "failed to get cluster %q for machinepool %q in namespace %q",
 			mp.Spec.ClusterName, mp.Name, mp.Namespace)
-	}
-
-	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, mp); err != nil || isPaused || conditionChanged {
-		return ctrl.Result{}, err
 	}
 
 	// Initialize the patch helper.
@@ -189,27 +169,44 @@ func (r *MachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
+	if isPaused, requeue, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, mp); err != nil || isPaused || requeue {
+		return ctrl.Result{}, err
+	}
+
+	// Handle normal reconciliation loop.
+	scope := &scope{
+		cluster:     cluster,
+		machinePool: mp,
+	}
+
 	defer func() {
+		if err := r.updateStatus(ctx, scope); err != nil {
+			reterr = kerrors.NewAggregate([]error{reterr, err})
+		}
+
 		r.reconcilePhase(mp)
 		// TODO(jpang): add support for metrics.
 
 		// Always update the readyCondition with the summary of the machinepool conditions.
-		conditions.SetSummary(mp,
-			conditions.WithConditions(
-				clusterv1.BootstrapReadyCondition,
-				clusterv1.InfrastructureReadyCondition,
-				expv1.ReplicasReadyCondition,
+		v1beta1conditions.SetSummary(mp,
+			v1beta1conditions.WithConditions(
+				clusterv1.BootstrapReadyV1Beta1Condition,
+				clusterv1.InfrastructureReadyV1Beta1Condition,
+				clusterv1.ReplicasReadyV1Beta1Condition,
 			),
 		)
 
 		// Always attempt to patch the object and status after each reconciliation.
 		// Patch ObservedGeneration only if the reconciliation completed successfully
 		patchOpts := []patch.Option{
-			patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
-				clusterv1.ReadyCondition,
-				clusterv1.BootstrapReadyCondition,
-				clusterv1.InfrastructureReadyCondition,
-				expv1.ReplicasReadyCondition,
+			patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+				clusterv1.ReadyV1Beta1Condition,
+				clusterv1.BootstrapReadyV1Beta1Condition,
+				clusterv1.InfrastructureReadyV1Beta1Condition,
+				clusterv1.ReplicasReadyV1Beta1Condition,
+			}},
+			patch.WithOwnedConditions{Conditions: []string{
+				clusterv1.PausedCondition,
 			}},
 		}
 		if reterr == nil {
@@ -220,42 +217,39 @@ func (r *MachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 	}()
 
-	// Reconcile labels.
+	alwaysReconcile := []machinePoolReconcileFunc{
+		wrapErrMachinePoolReconcileFunc(r.reconcileSetOwnerAndLabels, "failed to set MachinePool owner and labels"),
+	}
+
+	// Handle deletion reconciliation loop.
+	if !mp.DeletionTimestamp.IsZero() {
+		reconcileDelete := append(
+			alwaysReconcile,
+			wrapErrMachinePoolReconcileFunc(r.reconcileDelete, "failed to reconcile delete"),
+		)
+		return doReconcile(ctx, scope, reconcileDelete)
+	}
+
+	reconcileNormal := append(alwaysReconcile,
+		wrapErrMachinePoolReconcileFunc(r.reconcileBootstrap, "failed to reconcile bootstrap config"),
+		wrapErrMachinePoolReconcileFunc(r.reconcileInfrastructure, "failed to reconcile infrastructure"),
+		wrapErrMachinePoolReconcileFunc(r.getMachinesForMachinePool, "failed to get Machines for MachinePool"),
+		wrapErrMachinePoolReconcileFunc(r.reconcileNodeRefs, "failed to reconcile nodeRefs"),
+		wrapErrMachinePoolReconcileFunc(r.setMachinesUptoDate, "failed to set machines up to date"),
+	)
+
+	return doReconcile(ctx, scope, reconcileNormal)
+}
+
+func (r *MachinePoolReconciler) reconcileSetOwnerAndLabels(_ context.Context, s *scope) (ctrl.Result, error) {
+	cluster := s.cluster
+	mp := s.machinePool
+
 	if mp.Labels == nil {
 		mp.Labels = make(map[string]string)
 	}
 	mp.Labels[clusterv1.ClusterNameLabel] = mp.Spec.ClusterName
 
-	// Handle deletion reconciliation loop.
-	if !mp.ObjectMeta.DeletionTimestamp.IsZero() {
-		err := r.reconcileDelete(ctx, cluster, mp)
-		// Requeue if the reconcile failed because connection to workload cluster was down.
-		if errors.Is(err, clustercache.ErrClusterNotConnected) {
-			log.V(5).Info("Requeuing because connection to the workload cluster is down")
-			return ctrl.Result{RequeueAfter: time.Minute}, nil
-		}
-
-		return ctrl.Result{}, err
-	}
-
-	// Handle normal reconciliation loop.
-	scope := &scope{
-		cluster:     cluster,
-		machinePool: mp,
-	}
-	res, err := r.reconcile(ctx, scope)
-	// Requeue if the reconcile failed because connection to workload cluster was down.
-	if errors.Is(err, clustercache.ErrClusterNotConnected) {
-		log.V(5).Info("Requeuing because connection to the workload cluster is down")
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
-	}
-	return res, err
-}
-
-func (r *MachinePoolReconciler) reconcile(ctx context.Context, s *scope) (ctrl.Result, error) {
-	// Ensure the MachinePool is owned by the Cluster it belongs to.
-	cluster := s.cluster
-	mp := s.machinePool
 	mp.SetOwnerReferences(util.EnsureOwnerRef(mp.GetOwnerReferences(), metav1.OwnerReference{
 		APIVersion: clusterv1.GroupVersion.String(),
 		Kind:       "Cluster",
@@ -263,53 +257,33 @@ func (r *MachinePoolReconciler) reconcile(ctx context.Context, s *scope) (ctrl.R
 		UID:        cluster.UID,
 	}))
 
-	phases := []func(context.Context, *scope) (ctrl.Result, error){
-		r.reconcileBootstrap,
-		r.reconcileInfrastructure,
-		r.reconcileNodeRefs,
-	}
-
-	res := ctrl.Result{}
-	errs := []error{}
-	for _, phase := range phases {
-		// Call the inner reconciliation methods.
-		phaseResult, err := phase(ctx, s)
-		if err != nil {
-			errs = append(errs, err)
-		}
-		if len(errs) > 0 {
-			continue
-		}
-
-		res = util.LowestNonZeroResult(res, phaseResult)
-	}
-	return res, kerrors.NewAggregate(errs)
+	return ctrl.Result{}, nil
 }
 
 // reconcileDelete delete machinePool related resources.
-func (r *MachinePoolReconciler) reconcileDelete(ctx context.Context, cluster *clusterv1.Cluster, machinePool *expv1.MachinePool) error {
-	if ok, err := r.reconcileDeleteExternal(ctx, machinePool); !ok || err != nil {
+func (r *MachinePoolReconciler) reconcileDelete(ctx context.Context, s *scope) (ctrl.Result, error) {
+	if ok, err := r.reconcileDeleteExternal(ctx, s.machinePool); !ok || err != nil {
 		// Return early and don't remove the finalizer if we got an error or
 		// the external reconciliation deletion isn't ready.
-		return err
+		return ctrl.Result{}, fmt.Errorf("failed deleting external references: %s", err)
 	}
 
 	// check nodes delete timeout passed.
-	if !r.isMachinePoolNodeDeleteTimeoutPassed(machinePool) {
-		if err := r.reconcileDeleteNodes(ctx, cluster, machinePool); err != nil {
+	if !r.isMachinePoolNodeDeleteTimeoutPassed(s.machinePool) {
+		if err := r.reconcileDeleteNodes(ctx, s.cluster, s.machinePool); err != nil {
 			// Return early and don't remove the finalizer if we got an error.
-			return err
+			return ctrl.Result{}, fmt.Errorf("failed deleting nodes: %w", err)
 		}
 	} else {
 		ctrl.LoggerFrom(ctx).Info("NodeDeleteTimeout passed, skipping Nodes deletion")
 	}
 
-	controllerutil.RemoveFinalizer(machinePool, expv1.MachinePoolFinalizer)
-	return nil
+	controllerutil.RemoveFinalizer(s.machinePool, clusterv1.MachinePoolFinalizer)
+	return ctrl.Result{}, nil
 }
 
 // reconcileDeleteNodes delete the cluster nodes.
-func (r *MachinePoolReconciler) reconcileDeleteNodes(ctx context.Context, cluster *clusterv1.Cluster, machinePool *expv1.MachinePool) error {
+func (r *MachinePoolReconciler) reconcileDeleteNodes(ctx context.Context, cluster *clusterv1.Cluster, machinePool *clusterv1.MachinePool) error {
 	if len(machinePool.Status.NodeRefs) == 0 {
 		return nil
 	}
@@ -323,10 +297,10 @@ func (r *MachinePoolReconciler) reconcileDeleteNodes(ctx context.Context, cluste
 }
 
 // isMachinePoolDeleteTimeoutPassed check the machinePool node delete time out.
-func (r *MachinePoolReconciler) isMachinePoolNodeDeleteTimeoutPassed(machinePool *expv1.MachinePool) bool {
-	if !machinePool.DeletionTimestamp.IsZero() && machinePool.Spec.Template.Spec.NodeDeletionTimeout != nil {
-		if machinePool.Spec.Template.Spec.NodeDeletionTimeout.Duration.Nanoseconds() != 0 {
-			deleteTimePlusDuration := machinePool.DeletionTimestamp.Add(machinePool.Spec.Template.Spec.NodeDeletionTimeout.Duration)
+func (r *MachinePoolReconciler) isMachinePoolNodeDeleteTimeoutPassed(machinePool *clusterv1.MachinePool) bool {
+	if !machinePool.DeletionTimestamp.IsZero() && machinePool.Spec.Template.Spec.Deletion.NodeDeletionTimeoutSeconds != nil {
+		if *machinePool.Spec.Template.Spec.Deletion.NodeDeletionTimeoutSeconds != 0 {
+			deleteTimePlusDuration := machinePool.DeletionTimestamp.Add(time.Duration(*machinePool.Spec.Template.Spec.Deletion.NodeDeletionTimeoutSeconds) * time.Second)
 			return deleteTimePlusDuration.Before(time.Now())
 		}
 	}
@@ -334,23 +308,23 @@ func (r *MachinePoolReconciler) isMachinePoolNodeDeleteTimeoutPassed(machinePool
 }
 
 // reconcileDeleteExternal tries to delete external references, returning true if it cannot find any.
-func (r *MachinePoolReconciler) reconcileDeleteExternal(ctx context.Context, machinePool *expv1.MachinePool) (bool, error) {
+func (r *MachinePoolReconciler) reconcileDeleteExternal(ctx context.Context, machinePool *clusterv1.MachinePool) (bool, error) {
 	objects := []*unstructured.Unstructured{}
-	references := []*corev1.ObjectReference{
+	references := []clusterv1.ContractVersionedObjectReference{
 		machinePool.Spec.Template.Spec.Bootstrap.ConfigRef,
-		&machinePool.Spec.Template.Spec.InfrastructureRef,
+		machinePool.Spec.Template.Spec.InfrastructureRef,
 	}
 
 	// Loop over the references and try to retrieve it with the client.
 	for _, ref := range references {
-		if ref == nil {
+		if !ref.IsDefined() {
 			continue
 		}
 
-		obj, err := external.Get(ctx, r.Client, ref)
+		obj, err := external.GetObjectFromContractVersionedRef(ctx, r.Client, ref, machinePool.Namespace)
 		if err != nil && !apierrors.IsNotFound(errors.Cause(err)) {
-			return false, errors.Wrapf(err, "failed to get %s %q for MachinePool %q in namespace %q",
-				ref.GroupVersionKind(), ref.Name, machinePool.Name, ref.Namespace)
+			return false, errors.Wrapf(err, "failed to get %s %s for MachinePool %s",
+				ref.Kind, klog.KRef(machinePool.Namespace, ref.Name), klog.KObj(machinePool))
 		}
 		if obj != nil {
 			objects = append(objects, obj)
@@ -373,7 +347,7 @@ func (r *MachinePoolReconciler) reconcileDeleteExternal(ctx context.Context, mac
 func (r *MachinePoolReconciler) watchClusterNodes(ctx context.Context, cluster *clusterv1.Cluster) error {
 	log := ctrl.LoggerFrom(ctx)
 
-	if !conditions.IsTrue(cluster, clusterv1.ControlPlaneInitializedCondition) {
+	if !conditions.IsTrue(cluster, clusterv1.ClusterControlPlaneInitializedCondition) {
 		log.V(5).Info("Skipping node watching setup because control plane is not initialized")
 		return nil
 	}
@@ -407,7 +381,7 @@ func (r *MachinePoolReconciler) nodeToMachinePool(ctx context.Context, o client.
 	}
 
 	// Match by nodeName and status.nodeRef.name.
-	machinePoolList := &expv1.MachinePoolList{}
+	machinePoolList := &clusterv1.MachinePoolList{}
 	if err := r.Client.List(
 		ctx,
 		machinePoolList,
@@ -425,7 +399,7 @@ func (r *MachinePoolReconciler) nodeToMachinePool(ctx context.Context, o client.
 	if node.Spec.ProviderID == "" {
 		return nil
 	}
-	machinePoolList = &expv1.MachinePoolList{}
+	machinePoolList = &clusterv1.MachinePoolList{}
 	if err := r.Client.List(
 		ctx,
 		machinePoolList,
@@ -439,4 +413,111 @@ func (r *MachinePoolReconciler) nodeToMachinePool(ctx context.Context, o client.
 	}
 
 	return nil
+}
+
+func (r *MachinePoolReconciler) getMachinesForMachinePool(ctx context.Context, s *scope) (ctrl.Result, error) {
+	infraMachineSelector := metav1.LabelSelector{
+		MatchLabels: map[string]string{
+			clusterv1.MachinePoolNameLabel: format.MustFormatValue(s.machinePool.Name),
+			clusterv1.ClusterNameLabel:     s.machinePool.Spec.ClusterName,
+		},
+	}
+
+	allMachines := &clusterv1.MachineList{}
+	if err := r.Client.List(ctx,
+		allMachines,
+		client.InNamespace(s.machinePool.Namespace),
+		client.MatchingLabels(infraMachineSelector.MatchLabels)); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	filteredMachines := make([]*clusterv1.Machine, 0, len(allMachines.Items))
+	for idx := range allMachines.Items {
+		machine := &allMachines.Items[idx]
+		if shouldExcludeMachine(s.machinePool, machine) {
+			continue
+		}
+		filteredMachines = append(filteredMachines, machine)
+	}
+
+	s.machines = filteredMachines
+
+	return ctrl.Result{}, nil
+}
+
+func (r *MachinePoolReconciler) setMachinesUptoDate(ctx context.Context, s *scope) (ctrl.Result, error) {
+	var errs []error
+	for _, machine := range s.machines {
+		patchHelper, err := patch.NewHelper(machine, r.Client)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		upToDateCondition := &metav1.Condition{
+			Type: clusterv1.MachineUpToDateCondition,
+		}
+
+		if machine.DeletionTimestamp.IsZero() {
+			upToDateCondition.Status = metav1.ConditionTrue
+			upToDateCondition.Reason = clusterv1.MachineUpToDateReason
+		} else {
+			upToDateCondition.Status = metav1.ConditionFalse
+			upToDateCondition.Reason = clusterv1.MachineNotUpToDateReason
+			upToDateCondition.Message = "Machine is being deleted"
+		}
+		conditions.Set(machine, *upToDateCondition)
+
+		if err := patchHelper.Patch(ctx, machine, patch.WithOwnedConditions{Conditions: []string{
+			clusterv1.MachineUpToDateCondition,
+		}}); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+	}
+
+	if len(errs) > 0 {
+		return ctrl.Result{}, kerrors.NewAggregate(errs)
+	}
+
+	return ctrl.Result{}, nil
+}
+
+type machinePoolReconcileFunc func(ctx context.Context, s *scope) (ctrl.Result, error)
+
+func wrapErrMachinePoolReconcileFunc(f machinePoolReconcileFunc, msg string) machinePoolReconcileFunc {
+	return func(ctx context.Context, s *scope) (ctrl.Result, error) {
+		res, err := f(ctx, s)
+		return res, errors.Wrap(err, msg)
+	}
+}
+
+func doReconcile(ctx context.Context, s *scope, phases []machinePoolReconcileFunc) (ctrl.Result, kerrors.Aggregate) {
+	res := ctrl.Result{}
+	errs := []error{}
+	for _, phase := range phases {
+		// Call the inner reconciliation methods.
+		phaseResult, err := phase(ctx, s)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		if len(errs) > 0 {
+			continue
+		}
+		res = util.LowestNonZeroResult(res, phaseResult)
+	}
+
+	if len(errs) > 0 {
+		return ctrl.Result{}, kerrors.NewAggregate(errs)
+	}
+
+	return res, nil
+}
+
+func shouldExcludeMachine(machinePool *clusterv1.MachinePool, machine *clusterv1.Machine) bool {
+	if metav1.GetControllerOf(machine) != nil && !metav1.IsControlledBy(machine, machinePool) {
+		return true
+	}
+
+	return false
 }

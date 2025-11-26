@@ -20,8 +20,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/eks"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/pkg/errors"
 
 	ekscontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"
@@ -103,7 +103,7 @@ func (s *Service) reconcileIdentityProvider(ctx context.Context) error {
 }
 
 func (s *Service) getAssociatedIdentityProvider(ctx context.Context, clusterName string) (*identityprovider.OidcIdentityProviderConfig, error) {
-	list, err := s.EKSClient.ListIdentityProviderConfigsWithContext(ctx, &eks.ListIdentityProviderConfigsInput{
+	list, err := s.EKSClient.ListIdentityProviderConfigs(ctx, &eks.ListIdentityProviderConfigsInput{
 		ClusterName: aws.String(clusterName),
 	})
 	if err != nil {
@@ -116,9 +116,9 @@ func (s *Service) getAssociatedIdentityProvider(ctx context.Context, clusterName
 		return nil, nil
 	}
 
-	providerconfig, err := s.EKSClient.DescribeIdentityProviderConfigWithContext(ctx, &eks.DescribeIdentityProviderConfigInput{
+	providerconfig, err := s.EKSClient.DescribeIdentityProviderConfig(ctx, &eks.DescribeIdentityProviderConfigInput{
 		ClusterName:            aws.String(clusterName),
-		IdentityProviderConfig: list.IdentityProviderConfigs[0],
+		IdentityProviderConfig: &list.IdentityProviderConfigs[0],
 	})
 
 	if err != nil {
@@ -128,16 +128,16 @@ func (s *Service) getAssociatedIdentityProvider(ctx context.Context, clusterName
 	config := providerconfig.IdentityProviderConfig.Oidc
 
 	return &identityprovider.OidcIdentityProviderConfig{
-		ClientID:                   aws.StringValue(config.ClientId),
-		GroupsClaim:                aws.StringValue(config.GroupsClaim),
-		GroupsPrefix:               aws.StringValue(config.GroupsPrefix),
-		IdentityProviderConfigArn:  aws.StringValue(config.IdentityProviderConfigArn),
-		IdentityProviderConfigName: aws.StringValue(config.IdentityProviderConfigName),
-		IssuerURL:                  aws.StringValue(config.IssuerUrl),
-		RequiredClaims:             aws.StringValueMap(config.RequiredClaims),
-		Status:                     aws.StringValue(config.Status),
+		ClientID:                   aws.ToString(config.ClientId),
+		GroupsClaim:                aws.ToString(config.GroupsClaim),
+		GroupsPrefix:               aws.ToString(config.GroupsPrefix),
+		IdentityProviderConfigArn:  aws.ToString(config.IdentityProviderConfigArn),
+		IdentityProviderConfigName: aws.ToString(config.IdentityProviderConfigName),
+		IssuerURL:                  aws.ToString(config.IssuerUrl),
+		RequiredClaims:             config.RequiredClaims,
+		Status:                     string(config.Status),
 		Tags:                       converters.MapPtrToMap(config.Tags),
-		UsernameClaim:              aws.StringValue(config.UsernameClaim),
-		UsernamePrefix:             aws.StringValue(config.UsernamePrefix),
+		UsernameClaim:              aws.ToString(config.UsernameClaim),
+		UsernamePrefix:             aws.ToString(config.UsernamePrefix),
 	}, nil
 }

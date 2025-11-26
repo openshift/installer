@@ -36,15 +36,23 @@ type DescribeLocalGatewayVirtualInterfacesInput struct {
 	DryRun *bool
 
 	// One or more filters.
+	//
 	//   - local-address - The local address.
+	//
 	//   - local-bgp-asn - The Border Gateway Protocol (BGP) Autonomous System Number
 	//   (ASN) of the local gateway.
+	//
 	//   - local-gateway-id - The ID of the local gateway.
+	//
 	//   - local-gateway-virtual-interface-id - The ID of the virtual interface.
+	//
 	//   - owner-id - The ID of the Amazon Web Services account that owns the local
 	//   gateway virtual interface.
+	//
 	//   - peer-address - The peer address.
+	//
 	//   - peer-bgp-asn - The peer BGP ASN.
+	//
 	//   - vlan - The ID of the VLAN.
 	Filters []types.Filter
 
@@ -119,6 +127,9 @@ func (c *Client) addOperationDescribeLocalGatewayVirtualInterfacesMiddlewares(st
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -129,6 +140,15 @@ func (c *Client) addOperationDescribeLocalGatewayVirtualInterfacesMiddlewares(st
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeLocalGatewayVirtualInterfaces(options.Region), middleware.Before); err != nil {
@@ -149,16 +169,20 @@ func (c *Client) addOperationDescribeLocalGatewayVirtualInterfacesMiddlewares(st
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeLocalGatewayVirtualInterfacesAPIClient is a client that implements the
-// DescribeLocalGatewayVirtualInterfaces operation.
-type DescribeLocalGatewayVirtualInterfacesAPIClient interface {
-	DescribeLocalGatewayVirtualInterfaces(context.Context, *DescribeLocalGatewayVirtualInterfacesInput, ...func(*Options)) (*DescribeLocalGatewayVirtualInterfacesOutput, error)
-}
-
-var _ DescribeLocalGatewayVirtualInterfacesAPIClient = (*Client)(nil)
 
 // DescribeLocalGatewayVirtualInterfacesPaginatorOptions is the paginator options
 // for DescribeLocalGatewayVirtualInterfaces
@@ -227,6 +251,9 @@ func (p *DescribeLocalGatewayVirtualInterfacesPaginator) NextPage(ctx context.Co
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeLocalGatewayVirtualInterfaces(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -245,6 +272,14 @@ func (p *DescribeLocalGatewayVirtualInterfacesPaginator) NextPage(ctx context.Co
 
 	return result, nil
 }
+
+// DescribeLocalGatewayVirtualInterfacesAPIClient is a client that implements the
+// DescribeLocalGatewayVirtualInterfaces operation.
+type DescribeLocalGatewayVirtualInterfacesAPIClient interface {
+	DescribeLocalGatewayVirtualInterfaces(context.Context, *DescribeLocalGatewayVirtualInterfacesInput, ...func(*Options)) (*DescribeLocalGatewayVirtualInterfacesOutput, error)
+}
+
+var _ DescribeLocalGatewayVirtualInterfacesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeLocalGatewayVirtualInterfaces(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

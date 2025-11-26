@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
+	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1" //nolint:staticcheck //CORS-3563
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -61,6 +61,7 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	powervsdefaults "github.com/openshift/installer/pkg/types/powervs/defaults"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -571,7 +572,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 
 			if len(mpool.Zones) == 0 {
-				azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
+				azs, err := installConfig.Azure.VMAvailabilityZones(ctx, mpool.InstanceType)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
@@ -580,6 +581,18 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 					// if no azs are given we set to []string{""} for convenience over later operations.
 					// It means no-zoned for the machine API
 					mpool.Zones = []string{""}
+				}
+			}
+			subnetZones := []string{}
+			if ic.Azure.OutboundType == azuretypes.NATGatewayMultiZoneOutboundType {
+				subnetZones, err = installConfig.Azure.AvailabilityZones(ctx)
+				if err != nil {
+					return errors.Wrap(err, "failed to fetch availability zones")
+				}
+				computeSubnet := installConfig.Config.Azure.ComputeSubnetName(clusterID.InfraID)
+				_, err := installConfig.Azure.GenerateZonesSubnetMap(installConfig.Config.Azure.Subnets, computeSubnet)
+				if err != nil {
+					return err
 				}
 			}
 
@@ -597,13 +610,12 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 			pool.Platform.Azure = &mpool
 
-			capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+			capabilities, err := installConfig.Azure.ComputeCapabilities()
 			if err != nil {
 				return err
 			}
 
-			useImageGallery := ic.Platform.Azure.CloudName != azuretypes.StackCloud
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, useImageGallery, session)
+			sets, err := azure.MachineSets(clusterID.InfraID, installConfig, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, subnetZones, session)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -634,7 +646,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.GCP)
 			if len(mpool.Zones) == 0 {
-				azs, err := gcp.ZonesForInstanceType(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, mpool.InstanceType, ic.Platform.GCP.ServiceEndpoints)
+				azs, err := gcp.ZonesForInstanceType(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, mpool.InstanceType, ic.Platform.GCP.Endpoint)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
@@ -677,7 +689,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
-		case openstacktypes.Name:
+		case openstacktypes.Name, powervctypes.Name:
 			mpool := defaultOpenStackMachinePoolPlatform()
 			mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.OpenStack)

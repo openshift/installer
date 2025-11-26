@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/st
 -------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-10-01"
+
 ManagedCluster: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (41 properties)
@@ -822,6 +823,7 @@ ManagedCluster: Resource
         └── VerticalPodAutoscaler: *Object (2 properties)
             ├── Enabled: *bool
             └── PropertyBag: genruntime.PropertyBag
+
 ManagedClustersAgentPool: Resource
 ├── Owner: containerservice/v1api20231001.ManagedCluster
 ├── Spec: Object (45 properties)
@@ -1050,6 +1052,7 @@ ManagedClustersAgentPool: Resource
     ├── VmSize: *string
     ├── VnetSubnetID: *string
     └── WorkloadRuntime: *string
+
 TrustedAccessRoleBinding: Resource
 ├── Owner: containerservice/v1api20231001.ManagedCluster
 ├── Spec: Object (7 properties)
@@ -1080,156 +1083,310 @@ TrustedAccessRoleBinding: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 augmentConversionForAgentPoolNetworkProfile: Interface
+
 augmentConversionForAgentPoolNetworkProfile_STATUS: Interface
+
 augmentConversionForAgentPoolUpgradeSettings: Interface
+
 augmentConversionForAgentPoolUpgradeSettings_STATUS: Interface
+
 augmentConversionForAzureKeyVaultKms: Interface
+
 augmentConversionForAzureKeyVaultKms_STATUS: Interface
+
 augmentConversionForClusterUpgradeSettings: Interface
+
 augmentConversionForClusterUpgradeSettings_STATUS: Interface
+
 augmentConversionForContainerServiceLinuxProfile: Interface
+
 augmentConversionForContainerServiceLinuxProfile_STATUS: Interface
+
 augmentConversionForContainerServiceNetworkProfile: Interface
+
 augmentConversionForContainerServiceNetworkProfile_STATUS: Interface
+
 augmentConversionForContainerServiceSshConfiguration: Interface
+
 augmentConversionForContainerServiceSshConfiguration_STATUS: Interface
+
 augmentConversionForContainerServiceSshPublicKey: Interface
+
 augmentConversionForContainerServiceSshPublicKey_STATUS: Interface
+
 augmentConversionForCreationData: Interface
+
 augmentConversionForCreationData_STATUS: Interface
+
 augmentConversionForDelegatedResource: Interface
+
 augmentConversionForDelegatedResource_STATUS: Interface
+
 augmentConversionForExtendedLocation: Interface
+
 augmentConversionForExtendedLocation_STATUS: Interface
+
 augmentConversionForIPTag: Interface
+
 augmentConversionForIPTag_STATUS: Interface
+
 augmentConversionForIstioCertificateAuthority: Interface
+
 augmentConversionForIstioCertificateAuthority_STATUS: Interface
+
 augmentConversionForIstioComponents: Interface
+
 augmentConversionForIstioComponents_STATUS: Interface
+
 augmentConversionForIstioEgressGateway: Interface
+
 augmentConversionForIstioEgressGateway_STATUS: Interface
+
 augmentConversionForIstioIngressGateway: Interface
+
 augmentConversionForIstioIngressGateway_STATUS: Interface
+
 augmentConversionForIstioPluginCertificateAuthority: Interface
+
 augmentConversionForIstioPluginCertificateAuthority_STATUS: Interface
+
 augmentConversionForIstioServiceMesh: Interface
+
 augmentConversionForIstioServiceMesh_STATUS: Interface
+
 augmentConversionForKubeletConfig: Interface
+
 augmentConversionForKubeletConfig_STATUS: Interface
+
 augmentConversionForLinuxOSConfig: Interface
+
 augmentConversionForLinuxOSConfig_STATUS: Interface
+
 augmentConversionForManagedCluster: Interface
+
 augmentConversionForManagedClusterAADProfile: Interface
+
 augmentConversionForManagedClusterAADProfile_STATUS: Interface
+
 augmentConversionForManagedClusterAPIServerAccessProfile: Interface
+
 augmentConversionForManagedClusterAPIServerAccessProfile_STATUS: Interface
+
 augmentConversionForManagedClusterAddonProfile: Interface
+
 augmentConversionForManagedClusterAddonProfile_STATUS: Interface
+
 augmentConversionForManagedClusterAgentPoolProfile: Interface
+
 augmentConversionForManagedClusterAgentPoolProfile_STATUS: Interface
+
 augmentConversionForManagedClusterAutoUpgradeProfile: Interface
+
 augmentConversionForManagedClusterAutoUpgradeProfile_STATUS: Interface
+
 augmentConversionForManagedClusterAzureMonitorProfile: Interface
+
 augmentConversionForManagedClusterAzureMonitorProfileKubeStateMetrics: Interface
+
 augmentConversionForManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS: Interface
+
 augmentConversionForManagedClusterAzureMonitorProfileMetrics: Interface
+
 augmentConversionForManagedClusterAzureMonitorProfileMetrics_STATUS: Interface
+
 augmentConversionForManagedClusterAzureMonitorProfile_STATUS: Interface
+
 augmentConversionForManagedClusterHTTPProxyConfig: Interface
+
 augmentConversionForManagedClusterHTTPProxyConfig_STATUS: Interface
+
 augmentConversionForManagedClusterIdentity: Interface
+
 augmentConversionForManagedClusterIdentity_STATUS: Interface
+
 augmentConversionForManagedClusterIdentity_UserAssignedIdentities_STATUS: Interface
+
 augmentConversionForManagedClusterLoadBalancerProfile: Interface
+
 augmentConversionForManagedClusterLoadBalancerProfile_ManagedOutboundIPs: Interface
+
 augmentConversionForManagedClusterLoadBalancerProfile_ManagedOutboundIPs_STATUS: Interface
+
 augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPPrefixes: Interface
+
 augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS: Interface
+
 augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPs: Interface
+
 augmentConversionForManagedClusterLoadBalancerProfile_OutboundIPs_STATUS: Interface
+
 augmentConversionForManagedClusterLoadBalancerProfile_STATUS: Interface
+
 augmentConversionForManagedClusterManagedOutboundIPProfile: Interface
+
 augmentConversionForManagedClusterManagedOutboundIPProfile_STATUS: Interface
+
 augmentConversionForManagedClusterNATGatewayProfile: Interface
+
 augmentConversionForManagedClusterNATGatewayProfile_STATUS: Interface
+
 augmentConversionForManagedClusterOIDCIssuerProfile: Interface
+
 augmentConversionForManagedClusterOIDCIssuerProfile_STATUS: Interface
+
 augmentConversionForManagedClusterOperatorConfigMaps: Interface
+
 augmentConversionForManagedClusterOperatorSecrets: Interface
+
 augmentConversionForManagedClusterOperatorSpec: Interface
+
 augmentConversionForManagedClusterPodIdentity: Interface
+
 augmentConversionForManagedClusterPodIdentityException: Interface
+
 augmentConversionForManagedClusterPodIdentityException_STATUS: Interface
+
 augmentConversionForManagedClusterPodIdentityProfile: Interface
+
 augmentConversionForManagedClusterPodIdentityProfile_STATUS: Interface
+
 augmentConversionForManagedClusterPodIdentityProvisioningErrorBody_STATUS: Interface
+
 augmentConversionForManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled: Interface
+
 augmentConversionForManagedClusterPodIdentityProvisioningError_STATUS: Interface
+
 augmentConversionForManagedClusterPodIdentity_ProvisioningInfo_STATUS: Interface
+
 augmentConversionForManagedClusterPodIdentity_STATUS: Interface
+
 augmentConversionForManagedClusterProperties_AutoScalerProfile: Interface
+
 augmentConversionForManagedClusterProperties_AutoScalerProfile_STATUS: Interface
+
 augmentConversionForManagedClusterSKU: Interface
+
 augmentConversionForManagedClusterSKU_STATUS: Interface
+
 augmentConversionForManagedClusterSecurityProfile: Interface
+
 augmentConversionForManagedClusterSecurityProfileDefender: Interface
+
 augmentConversionForManagedClusterSecurityProfileDefenderSecurityMonitoring: Interface
+
 augmentConversionForManagedClusterSecurityProfileDefenderSecurityMonitoring_STATUS: Interface
+
 augmentConversionForManagedClusterSecurityProfileDefender_STATUS: Interface
+
 augmentConversionForManagedClusterSecurityProfileImageCleaner: Interface
+
 augmentConversionForManagedClusterSecurityProfileImageCleaner_STATUS: Interface
+
 augmentConversionForManagedClusterSecurityProfileWorkloadIdentity: Interface
+
 augmentConversionForManagedClusterSecurityProfileWorkloadIdentity_STATUS: Interface
+
 augmentConversionForManagedClusterSecurityProfile_STATUS: Interface
+
 augmentConversionForManagedClusterServicePrincipalProfile: Interface
+
 augmentConversionForManagedClusterServicePrincipalProfile_STATUS: Interface
+
 augmentConversionForManagedClusterStorageProfile: Interface
+
 augmentConversionForManagedClusterStorageProfileBlobCSIDriver: Interface
+
 augmentConversionForManagedClusterStorageProfileBlobCSIDriver_STATUS: Interface
+
 augmentConversionForManagedClusterStorageProfileDiskCSIDriver: Interface
+
 augmentConversionForManagedClusterStorageProfileDiskCSIDriver_STATUS: Interface
+
 augmentConversionForManagedClusterStorageProfileFileCSIDriver: Interface
+
 augmentConversionForManagedClusterStorageProfileFileCSIDriver_STATUS: Interface
+
 augmentConversionForManagedClusterStorageProfileSnapshotController: Interface
+
 augmentConversionForManagedClusterStorageProfileSnapshotController_STATUS: Interface
+
 augmentConversionForManagedClusterStorageProfile_STATUS: Interface
+
 augmentConversionForManagedClusterWindowsProfile: Interface
+
 augmentConversionForManagedClusterWindowsProfile_STATUS: Interface
+
 augmentConversionForManagedClusterWorkloadAutoScalerProfile: Interface
+
 augmentConversionForManagedClusterWorkloadAutoScalerProfileKeda: Interface
+
 augmentConversionForManagedClusterWorkloadAutoScalerProfileKeda_STATUS: Interface
+
 augmentConversionForManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler: Interface
+
 augmentConversionForManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS: Interface
+
 augmentConversionForManagedClusterWorkloadAutoScalerProfile_STATUS: Interface
+
 augmentConversionForManagedCluster_STATUS: Interface
+
 augmentConversionForManagedCluster_Spec: Interface
+
 augmentConversionForManagedClustersAgentPool: Interface
+
 augmentConversionForManagedClustersAgentPoolOperatorSpec: Interface
+
 augmentConversionForManagedClustersAgentPool_STATUS: Interface
+
 augmentConversionForManagedClustersAgentPool_Spec: Interface
+
 augmentConversionForPortRange: Interface
+
 augmentConversionForPortRange_STATUS: Interface
+
 augmentConversionForPowerState: Interface
+
 augmentConversionForPowerState_STATUS: Interface
+
 augmentConversionForPrivateLinkResource: Interface
+
 augmentConversionForPrivateLinkResource_STATUS: Interface
+
 augmentConversionForResourceReference: Interface
+
 augmentConversionForResourceReference_STATUS: Interface
+
 augmentConversionForServiceMeshProfile: Interface
+
 augmentConversionForServiceMeshProfile_STATUS: Interface
+
 augmentConversionForSysctlConfig: Interface
+
 augmentConversionForSysctlConfig_STATUS: Interface
+
 augmentConversionForSystemData_STATUS: Interface
+
 augmentConversionForTrustedAccessRoleBinding: Interface
+
 augmentConversionForTrustedAccessRoleBindingOperatorSpec: Interface
+
 augmentConversionForTrustedAccessRoleBinding_STATUS: Interface
+
 augmentConversionForTrustedAccessRoleBinding_Spec: Interface
+
 augmentConversionForUpgradeOverrideSettings: Interface
+
 augmentConversionForUpgradeOverrideSettings_STATUS: Interface
+
 augmentConversionForUserAssignedIdentity: Interface
+
 augmentConversionForUserAssignedIdentityDetails: Interface
+
 augmentConversionForUserAssignedIdentity_STATUS: Interface
+
 augmentConversionForWindowsGmsaProfile: Interface
+
 augmentConversionForWindowsGmsaProfile_STATUS: Interface
+

@@ -24,17 +24,23 @@ aliases:
     - praveenkumar
     - cfergeau
   openstack-approvers:
-    - dkokkino
     - gryf
     - mandre
-    - pierreprinetti
     - stephenfin
   openstack-reviewers:
-    - dkokkino
     - gryf
     - mandre
-    - pierreprinetti
     - stephenfin
+  powervc-approvers:
+    - hamzy
+    - mjturek
+    - prb112
+    - Prashanth684
+  powervc-reviewers:
+    - hamzy
+    - mjturek
+    - prb112
+    - Prashanth684
   powervs-approvers:
     - clnperez
     - mkumatag

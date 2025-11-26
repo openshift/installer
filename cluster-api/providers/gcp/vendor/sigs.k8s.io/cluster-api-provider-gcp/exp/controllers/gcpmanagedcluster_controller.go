@@ -32,10 +32,10 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/compute/networks"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/compute/subnets"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-gcp/pkg/capiutils"
 	"sigs.k8s.io/cluster-api-provider-gcp/util/reconciler"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	"sigs.k8s.io/cluster-api/util/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -81,7 +81,7 @@ func (r *GCPManagedClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	// Fetch the Cluster.
-	cluster, err := util.GetOwnerCluster(ctx, r.Client, gcpCluster.ObjectMeta)
+	cluster, err := capiutils.GetOwnerCluster(ctx, r.Client, gcpCluster.ObjectMeta)
 	if err != nil {
 		log.Error(err, "Failed to get owner cluster")
 		return ctrl.Result{}, err
@@ -91,7 +91,7 @@ func (r *GCPManagedClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
-	if annotations.IsPaused(cluster, gcpCluster) {
+	if capiutils.IsPaused(cluster, gcpCluster) {
 		log.Info("GCPManagedCluster or linked Cluster is marked as paused. Won't reconcile")
 		return ctrl.Result{}, nil
 	}
@@ -228,6 +228,17 @@ func (r *GCPManagedClusterReconciler) reconcileDelete(ctx context.Context, clust
 	log := log.FromContext(ctx).WithValues("controller", "gcpmanagedcluster", "action", "delete")
 	log.Info("Reconciling Delete GCPManagedCluster")
 
+	numDependencies, err := r.dependencyCount(ctx, clusterScope)
+	if err != nil {
+		log.Error(err, "error getting cluster dependencies", "namespace", clusterScope.GCPManagedCluster.Namespace, "name", clusterScope.GCPManagedCluster.Name)
+		return ctrl.Result{}, err
+	}
+	if numDependencies > 0 {
+		log.V(4).Info("GKE cluster still has dependencies - requeue needed", "dependencyCount", numDependencies)
+		return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
+	}
+	log.V(4).Info("GKE cluster has no dependencies")
+
 	if clusterScope.GCPManagedControlPlane != nil {
 		log.Info("GCPManagedControlPlane not deleted yet, retry later")
 		return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
@@ -264,12 +275,12 @@ func (r *GCPManagedClusterReconciler) managedControlPlaneMapper() handler.MapFun
 
 		log = log.WithValues("objectMapper", "cpTomc", "gcpmanagedcontrolplane", klog.KRef(gcpManagedControlPlane.Namespace, gcpManagedControlPlane.Name))
 
-		if !gcpManagedControlPlane.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !gcpManagedControlPlane.DeletionTimestamp.IsZero() {
 			log.Info("GCPManagedControlPlane has a deletion timestamp, skipping mapping")
 			return nil
 		}
 
-		cluster, err := util.GetOwnerCluster(ctx, r.Client, gcpManagedControlPlane.ObjectMeta)
+		cluster, err := capiutils.GetOwnerCluster(ctx, r.Client, gcpManagedControlPlane.ObjectMeta)
 		if err != nil {
 			log.Error(err, "failed to get owning cluster")
 			return nil
@@ -294,4 +305,23 @@ func (r *GCPManagedClusterReconciler) managedControlPlaneMapper() handler.MapFun
 			},
 		}
 	}
+}
+
+func (r *GCPManagedClusterReconciler) dependencyCount(ctx context.Context, clusterScope *scope.ManagedClusterScope) (int, error) {
+	log := log.FromContext(ctx)
+
+	clusterName, clusterNamespace := clusterScope.GCPManagedCluster.Name, clusterScope.GCPManagedCluster.Namespace
+	log.Info("looking for GKE cluster dependencies", "cluster", klog.KRef(clusterNamespace, clusterName))
+
+	listOptions := []client.ListOption{
+		client.InNamespace(clusterNamespace),
+		client.MatchingLabels(map[string]string{clusterv1.ClusterNameLabel: clusterName}),
+	}
+
+	managedMachinePools := &infrav1exp.GCPManagedMachinePoolList{}
+	if err := r.List(ctx, managedMachinePools, listOptions...); err != nil {
+		return 0, fmt.Errorf("failed to list managed machine pools for cluster %s/%s: %w", clusterNamespace, clusterName, err)
+	}
+
+	return len(managedMachinePools.Items), nil
 }

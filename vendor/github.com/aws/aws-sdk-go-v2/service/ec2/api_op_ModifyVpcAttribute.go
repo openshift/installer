@@ -35,8 +35,9 @@ type ModifyVpcAttributeInput struct {
 	VpcId *string
 
 	// Indicates whether the instances launched in the VPC get DNS hostnames. If
-	// enabled, instances in the VPC get DNS hostnames; otherwise, they do not. You
-	// cannot modify the DNS resolution and DNS hostnames attributes in the same
+	// enabled, instances in the VPC get DNS hostnames; otherwise, they do not.
+	//
+	// You cannot modify the DNS resolution and DNS hostnames attributes in the same
 	// request. Use separate requests for each attribute. You can only enable DNS
 	// hostnames if you've enabled DNS support.
 	EnableDnsHostnames *types.AttributeBooleanValue
@@ -45,9 +46,10 @@ type ModifyVpcAttributeInput struct {
 	// queries to the Amazon provided DNS server at the 169.254.169.253 IP address, or
 	// the reserved IP address at the base of the VPC network range "plus two" succeed.
 	// If disabled, the Amazon provided DNS service in the VPC that resolves public DNS
-	// hostnames to IP addresses is not enabled. You cannot modify the DNS resolution
-	// and DNS hostnames attributes in the same request. Use separate requests for each
-	// attribute.
+	// hostnames to IP addresses is not enabled.
+	//
+	// You cannot modify the DNS resolution and DNS hostnames attributes in the same
+	// request. Use separate requests for each attribute.
 	EnableDnsSupport *types.AttributeBooleanValue
 
 	// Indicates whether Network Address Usage metrics are enabled for your VPC.
@@ -106,6 +108,9 @@ func (c *Client) addOperationModifyVpcAttributeMiddlewares(stack *middleware.Sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -116,6 +121,15 @@ func (c *Client) addOperationModifyVpcAttributeMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyVpcAttributeValidationMiddleware(stack); err != nil {
@@ -137,6 +151,18 @@ func (c *Client) addOperationModifyVpcAttributeMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

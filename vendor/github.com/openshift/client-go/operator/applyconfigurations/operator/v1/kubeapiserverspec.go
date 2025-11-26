@@ -11,6 +11,7 @@ import (
 // with apply.
 type KubeAPIServerSpecApplyConfiguration struct {
 	StaticPodOperatorSpecApplyConfiguration `json:",inline"`
+	EventTTLMinutes                         *int32 `json:"eventTTLMinutes,omitempty"`
 }
 
 // KubeAPIServerSpecApplyConfiguration constructs a declarative configuration of the KubeAPIServerSpec type for use with
@@ -23,7 +24,7 @@ func KubeAPIServerSpec() *KubeAPIServerSpecApplyConfiguration {
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ManagementState field is set to the value of the last call.
 func (b *KubeAPIServerSpecApplyConfiguration) WithManagementState(value operatorv1.ManagementState) *KubeAPIServerSpecApplyConfiguration {
-	b.ManagementState = &value
+	b.OperatorSpecApplyConfiguration.ManagementState = &value
 	return b
 }
 
@@ -31,7 +32,7 @@ func (b *KubeAPIServerSpecApplyConfiguration) WithManagementState(value operator
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the LogLevel field is set to the value of the last call.
 func (b *KubeAPIServerSpecApplyConfiguration) WithLogLevel(value operatorv1.LogLevel) *KubeAPIServerSpecApplyConfiguration {
-	b.LogLevel = &value
+	b.OperatorSpecApplyConfiguration.LogLevel = &value
 	return b
 }
 
@@ -39,7 +40,7 @@ func (b *KubeAPIServerSpecApplyConfiguration) WithLogLevel(value operatorv1.LogL
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the OperatorLogLevel field is set to the value of the last call.
 func (b *KubeAPIServerSpecApplyConfiguration) WithOperatorLogLevel(value operatorv1.LogLevel) *KubeAPIServerSpecApplyConfiguration {
-	b.OperatorLogLevel = &value
+	b.OperatorSpecApplyConfiguration.OperatorLogLevel = &value
 	return b
 }
 
@@ -47,7 +48,7 @@ func (b *KubeAPIServerSpecApplyConfiguration) WithOperatorLogLevel(value operato
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the UnsupportedConfigOverrides field is set to the value of the last call.
 func (b *KubeAPIServerSpecApplyConfiguration) WithUnsupportedConfigOverrides(value runtime.RawExtension) *KubeAPIServerSpecApplyConfiguration {
-	b.UnsupportedConfigOverrides = &value
+	b.OperatorSpecApplyConfiguration.UnsupportedConfigOverrides = &value
 	return b
 }
 
@@ -55,7 +56,7 @@ func (b *KubeAPIServerSpecApplyConfiguration) WithUnsupportedConfigOverrides(val
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ObservedConfig field is set to the value of the last call.
 func (b *KubeAPIServerSpecApplyConfiguration) WithObservedConfig(value runtime.RawExtension) *KubeAPIServerSpecApplyConfiguration {
-	b.ObservedConfig = &value
+	b.OperatorSpecApplyConfiguration.ObservedConfig = &value
 	return b
 }
 
@@ -63,7 +64,7 @@ func (b *KubeAPIServerSpecApplyConfiguration) WithObservedConfig(value runtime.R
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ForceRedeploymentReason field is set to the value of the last call.
 func (b *KubeAPIServerSpecApplyConfiguration) WithForceRedeploymentReason(value string) *KubeAPIServerSpecApplyConfiguration {
-	b.ForceRedeploymentReason = &value
+	b.StaticPodOperatorSpecApplyConfiguration.ForceRedeploymentReason = &value
 	return b
 }
 
@@ -71,7 +72,7 @@ func (b *KubeAPIServerSpecApplyConfiguration) WithForceRedeploymentReason(value 
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the FailedRevisionLimit field is set to the value of the last call.
 func (b *KubeAPIServerSpecApplyConfiguration) WithFailedRevisionLimit(value int32) *KubeAPIServerSpecApplyConfiguration {
-	b.FailedRevisionLimit = &value
+	b.StaticPodOperatorSpecApplyConfiguration.FailedRevisionLimit = &value
 	return b
 }
 
@@ -79,6 +80,14 @@ func (b *KubeAPIServerSpecApplyConfiguration) WithFailedRevisionLimit(value int3
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the SucceededRevisionLimit field is set to the value of the last call.
 func (b *KubeAPIServerSpecApplyConfiguration) WithSucceededRevisionLimit(value int32) *KubeAPIServerSpecApplyConfiguration {
-	b.SucceededRevisionLimit = &value
+	b.StaticPodOperatorSpecApplyConfiguration.SucceededRevisionLimit = &value
+	return b
+}
+
+// WithEventTTLMinutes sets the EventTTLMinutes field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the EventTTLMinutes field is set to the value of the last call.
+func (b *KubeAPIServerSpecApplyConfiguration) WithEventTTLMinutes(value int32) *KubeAPIServerSpecApplyConfiguration {
+	b.EventTTLMinutes = &value
 	return b
 }

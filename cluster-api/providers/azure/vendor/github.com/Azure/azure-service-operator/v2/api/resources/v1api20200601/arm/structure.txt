@@ -10,8 +10,10 @@ ResourceGroup_STATUS: Object (7 properties)
 │   └── ProvisioningState: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 ResourceGroup_Spec: Object (4 properties)
 ├── Location: *string
 ├── ManagedBy: *string
 ├── Name: string
 └── Tags: map[string]string
+

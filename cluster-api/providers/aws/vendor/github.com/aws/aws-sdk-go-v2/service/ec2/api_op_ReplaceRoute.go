@@ -10,11 +10,15 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Replaces an existing route within a route table in a VPC. You must specify
-// either a destination CIDR block or a prefix list ID. You must also specify
-// exactly one of the resources from the parameter list, or reset the local route
-// to its default target. For more information, see Route tables (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
-// in the Amazon VPC User Guide.
+// Replaces an existing route within a route table in a VPC.
+//
+// You must specify either a destination CIDR block or a prefix list ID. You must
+// also specify exactly one of the resources from the parameter list, or reset the
+// local route to its default target.
+//
+// For more information, see [Route tables] in the Amazon VPC User Guide.
+//
+// [Route tables]: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html
 func (c *Client) ReplaceRoute(ctx context.Context, params *ReplaceRouteInput, optFns ...func(*Options)) (*ReplaceRouteOutput, error) {
 	if params == nil {
 		params = &ReplaceRouteInput{}
@@ -81,6 +85,9 @@ type ReplaceRouteInput struct {
 	// The ID of a network interface.
 	NetworkInterfaceId *string
 
+	// The Amazon Resource Name (ARN) of the ODB network.
+	OdbNetworkArn *string
+
 	// The ID of a transit gateway.
 	TransitGatewayId *string
 
@@ -143,6 +150,9 @@ func (c *Client) addOperationReplaceRouteMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -153,6 +163,15 @@ func (c *Client) addOperationReplaceRouteMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpReplaceRouteValidationMiddleware(stack); err != nil {
@@ -174,6 +193,18 @@ func (c *Client) addOperationReplaceRouteMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

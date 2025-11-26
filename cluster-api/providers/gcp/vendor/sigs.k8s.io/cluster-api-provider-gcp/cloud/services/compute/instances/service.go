@@ -45,8 +45,6 @@ type instancegroupsInterface interface {
 type Scope interface {
 	cloud.Machine
 	InstanceSpec(log logr.Logger) *compute.Instance
-	InstanceImageSpec() *compute.AttachedDisk
-	InstanceAdditionalDiskSpec() []*compute.AttachedDisk
 }
 
 // Service implements instances reconciler.

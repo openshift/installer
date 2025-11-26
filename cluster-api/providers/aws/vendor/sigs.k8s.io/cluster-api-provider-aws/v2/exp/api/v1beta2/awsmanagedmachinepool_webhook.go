@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta2
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -43,16 +44,21 @@ var mmpLog = ctrl.Log.WithName("awsmanagedmachinepool-resource")
 
 // SetupWebhookWithManager will setup the webhooks for the AWSManagedMachinePool.
 func (r *AWSManagedMachinePool) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(awsManagedMachinePoolWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(w).
+		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-awsmanagedmachinepool,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsmanagedmachinepools,versions=v1beta2,name=validation.awsmanagedmachinepool.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-awsmanagedmachinepool,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsmanagedmachinepools,versions=v1beta2,name=default.awsmanagedmachinepool.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-var _ webhook.Defaulter = &AWSManagedMachinePool{}
-var _ webhook.Validator = &AWSManagedMachinePool{}
+type awsManagedMachinePoolWebhook struct{}
+
+var _ webhook.CustomDefaulter = &awsManagedMachinePoolWebhook{}
+var _ webhook.CustomValidator = &awsManagedMachinePoolWebhook{}
 
 func (r *AWSManagedMachinePool) validateScaling() field.ErrorList {
 	var allErrs field.ErrorList
@@ -138,8 +144,17 @@ func (r *AWSManagedMachinePool) validateLaunchTemplate() field.ErrorList {
 	return allErrs
 }
 
+func (r *AWSManagedMachinePool) validateLifecycleHooks() field.ErrorList {
+	return validateLifecycleHooks(r.Spec.AWSLifecycleHooks)
+}
+
 // ValidateCreate will do any extra validation when creating a AWSManagedMachinePool.
-func (r *AWSManagedMachinePool) ValidateCreate() (admission.Warnings, error) {
+func (*awsManagedMachinePoolWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	r, ok := obj.(*AWSManagedMachinePool)
+	if !ok {
+		return nil, fmt.Errorf("expected an AWSManagedMachinePool object but got %T", r)
+	}
+
 	mmpLog.Info("AWSManagedMachinePool validate create", "managed-machine-pool", klog.KObj(r))
 
 	var allErrs field.ErrorList
@@ -159,6 +174,9 @@ func (r *AWSManagedMachinePool) ValidateCreate() (admission.Warnings, error) {
 	if errs := r.validateLaunchTemplate(); len(errs) > 0 {
 		allErrs = append(allErrs, errs...)
 	}
+	if errs := r.validateLifecycleHooks(); len(errs) > 0 {
+		allErrs = append(allErrs, errs...)
+	}
 
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 
@@ -174,9 +192,14 @@ func (r *AWSManagedMachinePool) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate will do any extra validation when updating a AWSManagedMachinePool.
-func (r *AWSManagedMachinePool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (*awsManagedMachinePoolWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	r, ok := newObj.(*AWSManagedMachinePool)
+	if !ok {
+		return nil, fmt.Errorf("expected an AWSManagedMachinePool object but got %T", r)
+	}
+
 	mmpLog.Info("AWSManagedMachinePool validate update", "managed-machine-pool", klog.KObj(r))
-	oldPool, ok := old.(*AWSManagedMachinePool)
+	oldPool, ok := oldObj.(*AWSManagedMachinePool)
 	if !ok {
 		return nil, apierrors.NewInvalid(GroupVersion.WithKind("AWSManagedMachinePool").GroupKind(), r.Name, field.ErrorList{
 			field.InternalError(nil, errors.New("failed to convert old AWSManagedMachinePool to object")),
@@ -196,6 +219,9 @@ func (r *AWSManagedMachinePool) ValidateUpdate(old runtime.Object) (admission.Wa
 	if errs := r.validateLaunchTemplate(); len(errs) > 0 {
 		allErrs = append(allErrs, errs...)
 	}
+	if errs := r.validateLifecycleHooks(); len(errs) > 0 {
+		allErrs = append(allErrs, errs...)
+	}
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -209,9 +235,7 @@ func (r *AWSManagedMachinePool) ValidateUpdate(old runtime.Object) (admission.Wa
 }
 
 // ValidateDelete allows you to add any extra validation when deleting.
-func (r *AWSManagedMachinePool) ValidateDelete() (admission.Warnings, error) {
-	mmpLog.Info("AWSManagedMachinePool validate delete", "managed-machine-pool", klog.KObj(r))
-
+func (*awsManagedMachinePoolWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
@@ -261,7 +285,12 @@ func (r *AWSManagedMachinePool) validateImmutable(old *AWSManagedMachinePool) fi
 }
 
 // Default will set default values for the AWSManagedMachinePool.
-func (r *AWSManagedMachinePool) Default() {
+func (*awsManagedMachinePoolWebhook) Default(_ context.Context, obj runtime.Object) error {
+	r, ok := obj.(*AWSManagedMachinePool)
+	if !ok {
+		return fmt.Errorf("expected an AWSManagedMachinePool object but got %T", r)
+	}
+
 	mmpLog.Info("AWSManagedMachinePool setting defaults", "managed-machine-pool", klog.KObj(r))
 
 	if r.Spec.EKSNodegroupName == "" {
@@ -269,7 +298,7 @@ func (r *AWSManagedMachinePool) Default() {
 		name, err := eks.GenerateEKSName(r.Name, r.Namespace, maxNodegroupNameLength)
 		if err != nil {
 			mmpLog.Error(err, "failed to create EKS nodegroup name")
-			return
+			return nil
 		}
 
 		mmpLog.Info("Generated EKSNodegroupName", "nodegroup", klog.KRef(r.Namespace, name))
@@ -281,4 +310,5 @@ func (r *AWSManagedMachinePool) Default() {
 			MaxUnavailable: ptr.To[int](1),
 		}
 	}
+	return nil
 }

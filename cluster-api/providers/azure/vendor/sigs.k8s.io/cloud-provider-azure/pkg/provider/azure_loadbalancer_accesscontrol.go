@@ -21,14 +21,14 @@ import (
 	"fmt"
 	"net/netip"
 
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2022-07-01/network"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
 	"sigs.k8s.io/cloud-provider-azure/pkg/log"
 	"sigs.k8s.io/cloud-provider-azure/pkg/provider/loadbalancer"
-	"sigs.k8s.io/cloud-provider-azure/pkg/provider/loadbalancer/fnutil"
+	fnutil "sigs.k8s.io/cloud-provider-azure/pkg/util/collectionutil"
 )
 
 func filterServicesByIngressIPs(services []*v1.Service, ips []netip.Addr) []*v1.Service {
@@ -57,10 +57,10 @@ func (az *Cloud) listSharedIPPortMapping(
 	ctx context.Context,
 	svc *v1.Service,
 	ingressIPs []netip.Addr,
-) (map[network.SecurityRuleProtocol][]int32, error) {
+) (map[armnetwork.SecurityRuleProtocol][]int32, error) {
 	var (
 		logger = log.FromContextOrBackground(ctx).WithName("listSharedIPPortMapping")
-		rv     = make(map[network.SecurityRuleProtocol][]int32)
+		rv     = make(map[armnetwork.SecurityRuleProtocol][]int32)
 	)
 
 	var services []*v1.Service

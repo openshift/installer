@@ -23,8 +23,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/internal/webhooks"
+	runtimewebhooks "sigs.k8s.io/cluster-api/internal/webhooks/runtime"
 )
 
 // Cluster implements a validating and defaulting webhook for Cluster.
@@ -108,4 +109,28 @@ type MachineDrainRule struct{}
 // SetupWebhookWithManager sets up MachineDrainRule webhooks.
 func (webhook *MachineDrainRule) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return (&webhooks.MachineDrainRule{}).SetupWebhookWithManager(mgr)
+}
+
+// ClusterResourceSet implements a validating and defaulting webhook for ClusterResourceSet.
+type ClusterResourceSet struct{}
+
+// SetupWebhookWithManager sets up ClusterResourceSet webhooks.
+func (webhook *ClusterResourceSet) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return (&webhooks.ClusterResourceSet{}).SetupWebhookWithManager(mgr)
+}
+
+// ClusterResourceSetBinding implements a validating webhook for ClusterResourceSetBinding.
+type ClusterResourceSetBinding struct{}
+
+// SetupWebhookWithManager sets up ClusterResourceSet webhooks.
+func (webhook *ClusterResourceSetBinding) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return (&webhooks.ClusterResourceSetBinding{}).SetupWebhookWithManager(mgr)
+}
+
+// ExtensionConfig implements a defaulting and validating webhook for ExtensionConfig.
+type ExtensionConfig struct{}
+
+// SetupWebhookWithManager sets up ClusterResourceSet webhooks.
+func (webhook *ExtensionConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return (&runtimewebhooks.ExtensionConfig{}).SetupWebhookWithManager(mgr)
 }

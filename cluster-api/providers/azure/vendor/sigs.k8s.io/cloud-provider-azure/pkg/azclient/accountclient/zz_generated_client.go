@@ -26,8 +26,12 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/tracing"
 	armstorage "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/metrics"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/utils"
 )
+
+const AzureStackCloudAPIVersion = "2018-02-01"
+const MooncakeApiVersion = "2023-05-01"
 
 type Client struct {
 	*armstorage.AccountsClient
@@ -55,13 +59,11 @@ func New(subscriptionID string, credential azcore.TokenCredential, options *arm.
 const ListOperationName = "AccountsClient.List"
 
 // List gets a list of Account in the resource group.
-func (client *Client) List(ctx context.Context, resourceGroupName string) (result []*armstorage.Account, rerr error) {
-	ctx = utils.ContextWithClientName(ctx, "AccountsClient")
-	ctx = utils.ContextWithRequestMethod(ctx, "List")
-	ctx = utils.ContextWithResourceGroupName(ctx, resourceGroupName)
-	ctx = utils.ContextWithSubscriptionID(ctx, client.subscriptionID)
+func (client *Client) List(ctx context.Context, resourceGroupName string) (result []*armstorage.Account, err error) {
+	metricsCtx := metrics.BeginARMRequest(client.subscriptionID, resourceGroupName, "Account", "list")
+	defer func() { metricsCtx.Observe(ctx, err) }()
 	ctx, endSpan := runtime.StartSpan(ctx, ListOperationName, client.tracer, nil)
-	defer endSpan(rerr)
+	defer endSpan(err)
 	pager := client.AccountsClient.NewListByResourceGroupPager(resourceGroupName, nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

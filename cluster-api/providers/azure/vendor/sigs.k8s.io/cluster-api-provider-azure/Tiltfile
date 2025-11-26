@@ -22,10 +22,10 @@ settings = {
     "deploy_cert_manager": True,
     "preload_images_for_kind": True,
     "kind_cluster_name": "capz",
-    "capi_version": "v1.9.6",
-    "caaph_version": "v0.2.5",
-    "cert_manager_version": "v1.16.4",
-    "kubernetes_version": "v1.30.2",
+    "capi_version": "v1.10.4",
+    "caaph_version": "v0.3.2",
+    "cert_manager_version": "v1.18.1",
+    "kubernetes_version": "v1.32.2",
     "aks_kubernetes_version": "v1.30.2",
     "flatcar_version": "3374.2.1",
     "azure_location": "eastus",
@@ -97,7 +97,7 @@ if "aks_as_mgmt_settings" in settings and os_arch != "amd64":
     YELLOW = "\033[1;33m"
     RESET = "\033[0m"
     print("\n" + YELLOW + "ARCHITECTURE OVERRIDE: Using AKS as management cluster requires CAPZ to be built for amd64 architecture." + RESET)
-    print(YELLOW + "Ignoring local GOARCH output and forcing CAPZ's os_arch to amd64" + RESET + "\n")
+    print(YELLOW + "Ignoring local GOARCH=" + os_arch + " and building CAPZ images for os_arch=amd64" + RESET + "\n")
     os_arch = "amd64"
 
 # deploy CAPI
@@ -173,7 +173,7 @@ def validate_auth():
 
 tilt_helper_dockerfile_header = """
 # Tilt image
-FROM golang:1.22 AS tilt-helper
+FROM golang:1.24 AS tilt-helper
 # Support live reloading with Tilt
 RUN wget --output-document /restart.sh --quiet https://raw.githubusercontent.com/windmilleng/rerun-process-wrapper/master/restart.sh  && \
     wget --output-document /start.sh --quiet https://raw.githubusercontent.com/windmilleng/rerun-process-wrapper/master/start.sh && \
@@ -365,7 +365,7 @@ def flavors():
 
     delete_all_workload_clusters = kubectl_cmd + " delete clusters --all --wait=false;"
 
-    if "aks_as_mgmt_settings" in settings and os.getenv("SUBSCRIPTION_TYPE", "") == "corporate":
+    if "aks_as_mgmt_settings" in settings:
         delete_all_workload_clusters += clear_aks_vnet_peerings()
 
     local_resource(
@@ -445,7 +445,7 @@ def deploy_worker_templates(template, substitutions):
     # Flavor command is built from here
     flavor_cmd = "RANDOM=$(bash -c 'echo $RANDOM'); "
 
-    if "aks_as_mgmt_settings" in settings and os.getenv("SUBSCRIPTION_TYPE", "") == "corporate" and "aks" not in flavor_name:
+    if "aks_as_mgmt_settings" in settings and needs_vnet_peering(flavor_name):
         apiserver_lb_private_ip = os.getenv("AZURE_INTERNAL_LB_PRIVATE_IP", "")
         if "windows-apiserver-ilb" in flavor and apiserver_lb_private_ip == "":
             flavor_cmd += "export AZURE_INTERNAL_LB_PRIVATE_IP=\"40.0.11.100\"; "
@@ -454,7 +454,7 @@ def deploy_worker_templates(template, substitutions):
 
     flavor_cmd += "export CLUSTER_NAME=" + flavor.replace("windows", "win") + "-$RANDOM; echo " + yaml + "> ./.tiltbuild/" + flavor + "; cat ./.tiltbuild/" + flavor + " | " + envsubst_cmd + " | " + kubectl_cmd + " apply -f -; "
 
-    if "aks_as_mgmt_settings" in settings and os.getenv("SUBSCRIPTION_TYPE", "") == "corporate" and "aks" not in flavor_name:
+    if "aks_as_mgmt_settings" in settings and needs_vnet_peering(flavor_name):
         flavor_cmd += peer_vnets()
 
     # wait for kubeconfig to be available
@@ -469,16 +469,7 @@ def deploy_worker_templates(template, substitutions):
     echo "API Server of ${CLUSTER_NAME} is accessible";
     '''
 
-    # copy the kubeadm configmap to the calico-system namespace.
-    # This is a workaround needed for the calico-node-windows daemonset to be able to run in the calico-system namespace.
-    if "windows" in flavor_name:
-        flavor_cmd += """
-        until """ + kubectl_cmd + """ --kubeconfig ./${CLUSTER_NAME}.kubeconfig get configmap kubeadm-config --namespace=kube-system > /dev/null 2>&1; do sleep 5; done;
-        """ + kubectl_cmd + """ --kubeconfig ./${CLUSTER_NAME}.kubeconfig create namespace calico-system --dry-run=client -o yaml |         """ + kubectl_cmd + """ --kubeconfig ./${CLUSTER_NAME}.kubeconfig apply -f -;
-        """ + kubectl_cmd + """ --kubeconfig ./${CLUSTER_NAME}.kubeconfig get configmap kubeadm-config --namespace=kube-system -o yaml |         sed 's/namespace: kube-system/namespace: calico-system/' |         """ + kubectl_cmd + """ --kubeconfig ./${CLUSTER_NAME}.kubeconfig apply -f -;
-        """
-
-    if "aks_as_mgmt_settings" in settings and os.getenv("SUBSCRIPTION_TYPE", "") == "corporate" and "aks" not in flavor_name:
+    if "aks_as_mgmt_settings" in settings and needs_vnet_peering(flavor_name):
         flavor_cmd += create_private_dns_zone()
 
     flavor_cmd += get_addons(flavor_name)
@@ -627,13 +618,32 @@ def check_nodes_ready(flavor_name):
 
 def clear_aks_vnet_peerings():
     delete_peering_cmd = '''
-    echo "--------Clearing AKS MGMT VNETs Peerings--------";
-    az network vnet wait --resource-group ${AKS_RESOURCE_GROUP} --name ${AKS_MGMT_VNET_NAME} --created --timeout 180;
-    echo "VNet ${AKS_MGMT_VNET_NAME} found ";
 
-    PEERING_NAMES=$(az network vnet peering list --resource-group ${AKS_RESOURCE_GROUP} --vnet-name ${AKS_MGMT_VNET_NAME} --query "[].name" --output tsv);
-    for PEERING_NAME in ${PEERING_NAMES}; do echo "Deleting peering: ${PEERING_NAME}"; az network vnet peering delete --name ${PEERING_NAME} --resource-group ${AKS_RESOURCE_GROUP} --vnet-name ${AKS_MGMT_VNET_NAME}; done;
-    echo "All VNETs Peerings deleted in ${AKS_MGMT_VNET_NAME}";
+    # Bail out early if the VNet itself never shows up.
+    if ! az network vnet wait \
+    --resource-group "${AKS_RESOURCE_GROUP}" \
+    --name "${AKS_MGMT_VNET_NAME}" \
+    --created --timeout 180; then
+        echo "VNet ${AKS_MGMT_VNET_NAME} not found in resource group ${AKS_RESOURCE_GROUP} after 180 seconds - bailing out"
+        exit 0
+    fi
+
+    az network vnet peering list \
+    --resource-group "$AKS_RESOURCE_GROUP" \
+    --vnet-name      "$AKS_MGMT_VNET_NAME" \
+    --query '[].name' -o tsv |
+    while IFS= read -r PEERING; do
+        [ -z "$PEERING" ] && continue
+
+        echo "Deleting peering: $PEERING"
+        az network vnet peering delete \
+            --name "$PEERING" \
+            --resource-group "$AKS_RESOURCE_GROUP" \
+            --vnet-name "$AKS_MGMT_VNET_NAME" \
+        || echo "Peering $PEERING already gone – skipping."
+    done
+
+    echo "Done"
     '''
 
     return delete_peering_cmd
@@ -739,6 +749,32 @@ def allow_tcp_udp_ports():
         allow_parallel = True,
     )
 
+def needs_vnet_peering(flavor_name):
+    """
+    Check if the flavor requires VNet peering configuration.
+
+    Args:
+        flavor_name (str): The name of the flavor to check
+
+    Returns:
+        bool: True if the flavor needs VNet peering, False otherwise
+
+    Flavors requiring VNet peering are:
+    - apiserver-ilb
+    - windows-apiserver-ilb
+    - aks
+    """
+    flavors_needing_vnet_peering = [
+        "apiserver-ilb",
+        "windows-apiserver-ilb",
+    ]
+
+    for f in flavors_needing_vnet_peering:
+        if f in flavor_name:
+            return True
+
+    return False
+
 ##############################
 # Actual work happens here
 ##############################
@@ -766,7 +802,7 @@ create_crs()
 
 flavors()
 
-if "aks_as_mgmt_settings" in settings and os.getenv("SUBSCRIPTION_TYPE", "") == "corporate":
+if "aks_as_mgmt_settings" in settings:
     allow_tcp_udp_ports()
 
 print("\n\n=== Active Tilt Configuration Settings ===")

@@ -17,50 +17,56 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// log is for logging in this package.
-var gcpclustertemplatelog = logf.Log.WithName("gcpclustertemplate-resource")
-
 func (r *GCPClusterTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(gcpClusterTemplateWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(w).
+		WithDefaulter(w).
 		Complete()
 }
 
 //+kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-gcpclustertemplate,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=gcpclustertemplates,versions=v1beta1,name=default.gcpclustertemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 //+kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-gcpclustertemplate,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=gcpclustertemplates,versions=v1beta1,name=validation.gcpclustertemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 
-var _ webhook.Defaulter = &GCPClusterTemplate{}
+type gcpClusterTemplateWebhook struct{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *GCPClusterTemplate) Default() {
-	gcpclustertemplatelog.Info("default", "name", r.Name)
+var (
+	_ webhook.CustomDefaulter = &gcpClusterTemplateWebhook{}
+	_ webhook.CustomValidator = &gcpClusterTemplateWebhook{}
+)
+
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type.
+func (*gcpClusterTemplateWebhook) Default(_ context.Context, _ runtime.Object) error {
+	return nil
 }
 
-var _ webhook.Validator = &GCPClusterTemplate{}
-
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *GCPClusterTemplate) ValidateCreate() (admission.Warnings, error) {
-	gcpclustertemplatelog.Info("validate create", "name", r.Name)
-
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (*gcpClusterTemplateWebhook) ValidateCreate(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *GCPClusterTemplate) ValidateUpdate(oldRaw runtime.Object) (admission.Warnings, error) {
-	old, ok := oldRaw.(*GCPClusterTemplate)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (*gcpClusterTemplateWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	r, ok := newObj.(*GCPClusterTemplate)
 	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an GCPClusterTemplate but got a %T", oldRaw))
+		return nil, fmt.Errorf("expected an GCPClusterTemplate object but got %T", r)
+	}
+
+	old, ok := oldObj.(*GCPClusterTemplate)
+	if !ok {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an GCPClusterTemplate but got a %T", oldObj))
 	}
 
 	if !reflect.DeepEqual(r.Spec, old.Spec) {
@@ -69,8 +75,7 @@ func (r *GCPClusterTemplate) ValidateUpdate(oldRaw runtime.Object) (admission.Wa
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *GCPClusterTemplate) ValidateDelete() (admission.Warnings, error) {
-	gcpclustertemplatelog.Info("validate delete", "name", r.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (*gcpClusterTemplateWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }

@@ -171,6 +171,34 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      cpuOptions:
+                        description: |-
+                          CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                          When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                          More info:
+                          https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                          https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                        minProperties: 1
+                        properties:
+                          confidentialCompute:
+                            description: |-
+                              ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                              and, if so, which confidential computing technology to use.
+                              Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                              When set to Disabled, confidential computing will be disabled for the instance.
+                              When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                              In this case, ensure the following conditions are met:
+                              1) The selected instance type supports AMD SEV-SNP.
+                              2) The selected AWS region supports AMD SEV-SNP.
+                              3) The selected AMI supports AMD SEV-SNP.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                            enum:
+                            - Disabled
+                            - AMDEncryptedVirtualizationNestedPaging
+                            type: string
+                        type: object
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -1287,6 +1315,84 @@ spec:
                         - high_performance
                         type: string
                     type: object
+                  powervc:
+                    description: PowerVC is the configuration used when installing
+                      on IBM Power VC.
+                    properties:
+                      additionalNetworkIDs:
+                        description: |-
+                          AdditionalNetworkIDs contains IDs of additional networks for machines,
+                          where each ID is presented in UUID v4 format.
+                          Allowed address pairs won't be created for the additional networks.
+                        items:
+                          type: string
+                        type: array
+                      additionalSecurityGroupIDs:
+                        description: |-
+                          AdditionalSecurityGroupIDs contains IDs of additional security groups for machines,
+                          where each ID is presented in UUID v4 format.
+                        items:
+                          type: string
+                        type: array
+                      rootVolume:
+                        description: |-
+                          RootVolume defines the root volume for instances in the machine pool.
+                          The instances use ephemeral disks if not set.
+                        properties:
+                          size:
+                            description: |-
+                              Size defines the size of the volume in gibibytes (GiB).
+                              Required
+                            type: integer
+                          type:
+                            description: |-
+                              Type defines the type of the volume.
+                              Deprecated: Use Types instead.
+                            type: string
+                          types:
+                            description: |-
+                              Types is the list of the volume types of the root volumes.
+                              This is mutually exclusive with Type.
+                            items:
+                              type: string
+                            type: array
+                          zones:
+                            description: |-
+                              Zones is the list of availability zones where the root volumes should be deployed.
+                              If no zones are provided, all instances will be deployed on OpenStack Cinder default availability zone
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - size
+                        - types
+                        type: object
+                      serverGroupPolicy:
+                        description: |-
+                          ServerGroupPolicy will be used to create the Server Group that will contain all the machines of this MachinePool.
+                          Defaults to "soft-anti-affinity".
+                        enum:
+                        - ""
+                        - affinity
+                        - soft-affinity
+                        - anti-affinity
+                        - soft-anti-affinity
+                        type: string
+                      type:
+                        description: |-
+                          FlavorName defines the OpenStack Nova flavor.
+                          eg. m1.large
+                        type: string
+                      zones:
+                        description: |-
+                          Zones is the list of availability zones where the instances should be deployed.
+                          If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - type
+                    type: object
                   powervs:
                     description: PowerVS is the configuration used when installing
                       on IBM Power VS.
@@ -1611,6 +1717,34 @@ spec:
                             AMIID is the AMI that should be used to boot the ec2 instance.
                             If set, the AMI should belong to the same region as the cluster.
                           type: string
+                        cpuOptions:
+                          description: |-
+                            CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                            When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                            More info:
+                            https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                            https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                          minProperties: 1
+                          properties:
+                            confidentialCompute:
+                              description: |-
+                                ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                                and, if so, which confidential computing technology to use.
+                                Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                                When set to Disabled, confidential computing will be disabled for the instance.
+                                When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                                In this case, ensure the following conditions are met:
+                                1) The selected instance type supports AMD SEV-SNP.
+                                2) The selected AWS region supports AMD SEV-SNP.
+                                3) The selected AMI supports AMD SEV-SNP.
+                                More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                                When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                                which is subject to change without notice. The current default is Disabled.
+                              enum:
+                              - Disabled
+                              - AMDEncryptedVirtualizationNestedPaging
+                              type: string
+                          type: object
                         iamProfile:
                           description: |-
                             IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -2732,6 +2866,84 @@ spec:
                           - high_performance
                           type: string
                       type: object
+                    powervc:
+                      description: PowerVC is the configuration used when installing
+                        on IBM Power VC.
+                      properties:
+                        additionalNetworkIDs:
+                          description: |-
+                            AdditionalNetworkIDs contains IDs of additional networks for machines,
+                            where each ID is presented in UUID v4 format.
+                            Allowed address pairs won't be created for the additional networks.
+                          items:
+                            type: string
+                          type: array
+                        additionalSecurityGroupIDs:
+                          description: |-
+                            AdditionalSecurityGroupIDs contains IDs of additional security groups for machines,
+                            where each ID is presented in UUID v4 format.
+                          items:
+                            type: string
+                          type: array
+                        rootVolume:
+                          description: |-
+                            RootVolume defines the root volume for instances in the machine pool.
+                            The instances use ephemeral disks if not set.
+                          properties:
+                            size:
+                              description: |-
+                                Size defines the size of the volume in gibibytes (GiB).
+                                Required
+                              type: integer
+                            type:
+                              description: |-
+                                Type defines the type of the volume.
+                                Deprecated: Use Types instead.
+                              type: string
+                            types:
+                              description: |-
+                                Types is the list of the volume types of the root volumes.
+                                This is mutually exclusive with Type.
+                              items:
+                                type: string
+                              type: array
+                            zones:
+                              description: |-
+                                Zones is the list of availability zones where the root volumes should be deployed.
+                                If no zones are provided, all instances will be deployed on OpenStack Cinder default availability zone
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - size
+                          - types
+                          type: object
+                        serverGroupPolicy:
+                          description: |-
+                            ServerGroupPolicy will be used to create the Server Group that will contain all the machines of this MachinePool.
+                            Defaults to "soft-anti-affinity".
+                          enum:
+                          - ""
+                          - affinity
+                          - soft-affinity
+                          - anti-affinity
+                          - soft-anti-affinity
+                          type: string
+                        type:
+                          description: |-
+                            FlavorName defines the OpenStack Nova flavor.
+                            eg. m1.large
+                          type: string
+                        zones:
+                          description: |-
+                            Zones is the list of availability zones where the instances should be deployed.
+                            If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - type
+                      type: object
                     powervs:
                       description: PowerVS is the configuration used when installing
                         on IBM Power VS.
@@ -2991,6 +3203,34 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      cpuOptions:
+                        description: |-
+                          CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                          When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                          More info:
+                          https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                          https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                        minProperties: 1
+                        properties:
+                          confidentialCompute:
+                            description: |-
+                              ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                              and, if so, which confidential computing technology to use.
+                              Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                              When set to Disabled, confidential computing will be disabled for the instance.
+                              When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                              In this case, ensure the following conditions are met:
+                              1) The selected instance type supports AMD SEV-SNP.
+                              2) The selected AWS region supports AMD SEV-SNP.
+                              3) The selected AMI supports AMD SEV-SNP.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                            enum:
+                            - Disabled
+                            - AMDEncryptedVirtualizationNestedPaging
+                            type: string
+                        type: object
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -4107,6 +4347,84 @@ spec:
                         - high_performance
                         type: string
                     type: object
+                  powervc:
+                    description: PowerVC is the configuration used when installing
+                      on IBM Power VC.
+                    properties:
+                      additionalNetworkIDs:
+                        description: |-
+                          AdditionalNetworkIDs contains IDs of additional networks for machines,
+                          where each ID is presented in UUID v4 format.
+                          Allowed address pairs won't be created for the additional networks.
+                        items:
+                          type: string
+                        type: array
+                      additionalSecurityGroupIDs:
+                        description: |-
+                          AdditionalSecurityGroupIDs contains IDs of additional security groups for machines,
+                          where each ID is presented in UUID v4 format.
+                        items:
+                          type: string
+                        type: array
+                      rootVolume:
+                        description: |-
+                          RootVolume defines the root volume for instances in the machine pool.
+                          The instances use ephemeral disks if not set.
+                        properties:
+                          size:
+                            description: |-
+                              Size defines the size of the volume in gibibytes (GiB).
+                              Required
+                            type: integer
+                          type:
+                            description: |-
+                              Type defines the type of the volume.
+                              Deprecated: Use Types instead.
+                            type: string
+                          types:
+                            description: |-
+                              Types is the list of the volume types of the root volumes.
+                              This is mutually exclusive with Type.
+                            items:
+                              type: string
+                            type: array
+                          zones:
+                            description: |-
+                              Zones is the list of availability zones where the root volumes should be deployed.
+                              If no zones are provided, all instances will be deployed on OpenStack Cinder default availability zone
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - size
+                        - types
+                        type: object
+                      serverGroupPolicy:
+                        description: |-
+                          ServerGroupPolicy will be used to create the Server Group that will contain all the machines of this MachinePool.
+                          Defaults to "soft-anti-affinity".
+                        enum:
+                        - ""
+                        - affinity
+                        - soft-affinity
+                        - anti-affinity
+                        - soft-anti-affinity
+                        type: string
+                      type:
+                        description: |-
+                          FlavorName defines the OpenStack Nova flavor.
+                          eg. m1.large
+                        type: string
+                      zones:
+                        description: |-
+                          Zones is the list of availability zones where the instances should be deployed.
+                          If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - type
+                    type: object
                   powervs:
                     description: PowerVS is the configuration used when installing
                       on IBM Power VS.
@@ -4260,13 +4578,15 @@ spec:
               "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest
               "Manual": CredentialsRequests must be handled manually by the user
 
-              For each of the following platforms, the field can set to the specified values. For all other platforms, the
+              For each of the following platforms, the field can be set to the specified values. For all other platforms, the
               field must not be set.
               AWS: "Mint", "Passthrough", "Manual"
               Azure: "Passthrough", "Manual"
               AzureStack: "Manual"
               GCP: "Mint", "Passthrough", "Manual"
               IBMCloud: "Manual"
+              OpenStack: "Passthrough"
+              PowerVC: "Passthrough"
               PowerVS: "Manual"
               Nutanix: "Manual"
             enum:
@@ -4333,6 +4653,14 @@ spec:
                 source:
                   description: Source is the repository that users refer to, e.g.
                     in image pull specifications.
+                  type: string
+                sourcePolicy:
+                  description: |-
+                    SourcePolicy defines the fallback policy when there is a failure pulling an
+                    image from the mirrors.
+                  enum:
+                  - NeverContactSource
+                  - AllowContactingSource
                   type: string
               required:
               - source
@@ -4554,6 +4882,34 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      cpuOptions:
+                        description: |-
+                          CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                          When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                          More info:
+                          https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                          https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                        minProperties: 1
+                        properties:
+                          confidentialCompute:
+                            description: |-
+                              ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                              and, if so, which confidential computing technology to use.
+                              Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                              When set to Disabled, confidential computing will be disabled for the instance.
+                              When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                              In this case, ensure the following conditions are met:
+                              1) The selected instance type supports AMD SEV-SNP.
+                              2) The selected AWS region supports AMD SEV-SNP.
+                              3) The selected AMI supports AMD SEV-SNP.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                            enum:
+                            - Disabled
+                            - AMDEncryptedVirtualizationNestedPaging
+                            type: string
+                        type: object
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -4830,12 +5186,16 @@ spec:
                       is required for Azure Stack and not applicable to Azure.
                     type: string
                   computeSubnet:
-                    description: ComputeSubnet specifies an existing subnet for use
-                      by compute nodes
+                    description: |-
+                      ComputeSubnet specifies an existing subnet for use by compute nodes
+
+                      Deprecated: use platform.Azure.Subnets section
                     type: string
                   controlPlaneSubnet:
-                    description: ControlPlaneSubnet specifies an existing subnet for
-                      use by the control plane nodes
+                    description: |-
+                      ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
+
+                      Deprecated: use platform.Azure.Subnets section
                     type: string
                   customerManagedKey:
                     description: CustomerManagedKey has the keys needed to encrypt
@@ -5289,6 +5649,7 @@ spec:
                     - ""
                     - Loadbalancer
                     - NATGatewaySingleZone
+                    - NATGatewayMultiZone
                     - UserDefinedRouting
                     type: string
                   region:
@@ -5304,6 +5665,28 @@ spec:
                       This resource group must be empty with no other resources when trying to use it for creating a cluster.
                       If empty, a new resource group will created for the cluster.
                     type: string
+                  subnets:
+                    description: Subnets is the list of subnets the user can bring
+                      into the cluster to be used.
+                    items:
+                      description: SubnetSpec specifies the properties the subnet
+                        needs to be used in the cluster.
+                      properties:
+                        name:
+                          description: Name of the subnet.
+                          type: string
+                        role:
+                          description: Role specifies the actual role which the subnet
+                            should be used in.
+                          enum:
+                          - node
+                          - control-plane
+                          type: string
+                      required:
+                      - name
+                      - role
+                      type: object
+                    type: array
                   userProvisionedDNS:
                     default: Disabled
                     description: |-
@@ -5339,7 +5722,6 @@ spec:
                     items:
                       type: string
                     type: array
-                    uniqueItems: true
                   apiVIP:
                     description: |-
                       DeprecatedAPIVIP is the VIP to use for internal API communication
@@ -5356,7 +5738,8 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
-                    uniqueItems: true
+                  bmcVerifyCA:
+                    type: string
                   bootstrapExternalStaticDNS:
                     description: |-
                       BootstrapExternalStaticDNS is the static network DNS of the bootstrap node.
@@ -5538,7 +5921,6 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
-                    uniqueItems: true
                   libvirtURI:
                     default: qemu:///system
                     description: |-
@@ -5835,6 +6217,39 @@ spec:
                         - name
                         type: object
                     type: object
+                  endpoint:
+                    description: Endpoint is the private service connect endpoint.
+                    properties:
+                      clusterUseOnly:
+                        description: |-
+                          ClusterUseOnly should be set to true when the installer should use
+                          the public api endpoints and all cluster operators should use the
+                          api endpoint overrides. The value should be false when the installer
+                          and cluster operators should use the api endpoint overrides; that is,
+                          the installer is being run in the same network as the cluster.
+                        type: boolean
+                      name:
+                        description: Name contains the name of the private service
+                          connect endpoint.
+                        type: string
+                      region:
+                        description: |-
+                          Region is the region where the endpoint resides.
+                          When the region is empty, the location is assumed to be global.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  firewallRulesManagement:
+                    default: Managed
+                    description: |-
+                      FirewallRulesManagement specifies the management policy for the cluster. Managed indicates that
+                      the firewall rules will be created and destroyed by the cluster. Unmanaged indicates that the
+                      user should create and destroy the firewall rules.
+                    enum:
+                    - Managed
+                    - Unmanaged
+                    type: string
                   network:
                     description: |-
                       Network specifies an existing VPC where the cluster should be created
@@ -5853,61 +6268,6 @@ spec:
                     description: Region specifies the GCP region where the cluster
                       will be created.
                     type: string
-                  serviceEndpoints:
-                    description: |-
-                      ServiceEndpoints list contains custom endpoints which will override default
-                      service endpoint of GCP Services.
-                      There must be only one ServiceEndpoint for a service.
-                    items:
-                      description: |-
-                        GCPServiceEndpoint store the configuration of a custom url to
-                        override existing defaults of GCP Services.
-                      properties:
-                        name:
-                          description: |-
-                            name is the name of the GCP service whose endpoint is being overridden.
-                            This must be provided and cannot be empty.
-
-                            Allowed values are Compute, Container, CloudResourceManager, DNS, File, IAM, ServiceUsage,
-                            Storage, and TagManager.
-
-                            As an example, when setting the name to Compute all requests made by the caller to the GCP Compute
-                            Service will be directed to the endpoint specified in the url field.
-                          enum:
-                          - Compute
-                          - Container
-                          - CloudResourceManager
-                          - DNS
-                          - File
-                          - IAM
-                          - ServiceUsage
-                          - Storage
-                          type: string
-                        url:
-                          description: |-
-                            url is a fully qualified URI that overrides the default endpoint for a client using the GCP service specified
-                            in the name field.
-                            url is required, must use the scheme https, must not be more than 253 characters in length,
-                            and must be a valid URL according to Go's net/url package (https://pkg.go.dev/net/url#URL)
-
-                            An example of a valid endpoint that overrides the Compute Service: "https://compute-myendpoint1.p.googleapis.com"
-                          maxLength: 253
-                          type: string
-                          x-kubernetes-validations:
-                          - message: must be a valid URL
-                            rule: isURL(self)
-                          - message: scheme must be https
-                            rule: 'isURL(self) ? (url(self).getScheme() == "https")
-                              : true'
-                          - message: url must consist only of a scheme and domain.
-                              The url path must be empty.
-                            rule: url(self).getEscapedPath() == "" || url(self).getEscapedPath()
-                              == "/"
-                      required:
-                      - name
-                      - url
-                      type: object
-                    type: array
                   userLabels:
                     description: |-
                       userLabels has additional keys and values that the installer will add as
@@ -6148,7 +6508,6 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
-                    uniqueItems: true
                   clusterOSImage:
                     description: ClusterOSImage overrides the url provided in rhcos.json
                       to download the RHCOS Image.
@@ -6536,7 +6895,6 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
-                    uniqueItems: true
                   loadBalancer:
                     description: |-
                       LoadBalancer defines how the load balancer used by the cluster is configured.
@@ -6686,7 +7044,6 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
-                    uniqueItems: true
                   cloud:
                     description: Cloud is the name of OpenStack cloud to use from
                       clouds.yaml.
@@ -6862,7 +7219,6 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
-                    uniqueItems: true
                   lbFloatingIP:
                     description: |-
                       LbFloatingIP is the IP address of an available floating IP in your OpenStack cluster
@@ -6965,7 +7321,6 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
-                    uniqueItems: true
                   defaultMachinePlatform:
                     description: |-
                       DefaultMachinePlatform is the default configuration used when
@@ -7089,7 +7444,6 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
-                    uniqueItems: true
                   loadBalancer:
                     description: |-
                       LoadBalancer defines how the load balancer used by the cluster is configured.
@@ -7136,6 +7490,221 @@ spec:
                 required:
                 - ovirt_cluster_id
                 - ovirt_storage_domain_id
+                type: object
+              powervc:
+                description: PowerVC is the configuration used when installing on
+                  Power VC.
+                properties:
+                  apiFloatingIP:
+                    description: |-
+                      APIFloatingIP is the IP address of an available floating IP in your OpenStack cluster
+                      to associate with the OpenShift API load balancer.
+                    type: string
+                  apiVIPs:
+                    description: |-
+                      APIVIPs contains the VIP(s) on the nodes subnet that the api port for
+                      openshift will be assigned. In dual stack clusters it contains an IPv4
+                      and IPv6 address, otherwise only one VIP
+                      Default: will be set to the 5 on the first entry in the machineNetwork
+                      CIDR
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
+                  cloud:
+                    description: Cloud is the name of OpenStack cloud to use from
+                      clouds.yaml.
+                    type: string
+                  clusterOSImage:
+                    description: |-
+                      ClusterOSImage is either a URL with `http(s)` or `file` scheme to override
+                      the default OS image for cluster nodes, or an existing Glance image name.
+                    type: string
+                  clusterOSImageProperties:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      ClusterOSImageProperties is a list of properties to be added to the metadata of the uploaded Glance ClusterOSImage.
+                      Default: the default is to not set any properties.
+                    type: object
+                  controlPlanePort:
+                    description: |-
+                      ControlPlanePort contains details of the network attached to the control plane port, with the network either containing one openstack
+                      subnet for IPv4 or two openstack subnets for dualstack clusters. Providing this configuration will prevent OpenShift from managing
+                      or updating this network and its subnets. The network and its subnets will be used during creation of all nodes.
+                    properties:
+                      fixedIPs:
+                        description: Specify subnets of the network where control
+                          plane port will be discovered.
+                        items:
+                          description: FixedIP identifies a subnet defined by a subnet
+                            filter.
+                          properties:
+                            subnet:
+                              description: SubnetFilter defines a subnet by ID and/or
+                                name.
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                              type: object
+                          required:
+                          - subnet
+                          type: object
+                        type: array
+                      network:
+                        description: |-
+                          Network is a query for an openstack network that the port will be discovered on.
+                          This will fail if the query returns more than one network.
+                        properties:
+                          id:
+                            type: string
+                          name:
+                            type: string
+                        type: object
+                    required:
+                    - fixedIPs
+                    type: object
+                  defaultMachinePlatform:
+                    description: |-
+                      DefaultMachinePlatform is the default configuration used when
+                      installing on OpenStack for machine pools which do not define their own
+                      platform configuration.
+                    properties:
+                      additionalNetworkIDs:
+                        description: |-
+                          AdditionalNetworkIDs contains IDs of additional networks for machines,
+                          where each ID is presented in UUID v4 format.
+                          Allowed address pairs won't be created for the additional networks.
+                        items:
+                          type: string
+                        type: array
+                      additionalSecurityGroupIDs:
+                        description: |-
+                          AdditionalSecurityGroupIDs contains IDs of additional security groups for machines,
+                          where each ID is presented in UUID v4 format.
+                        items:
+                          type: string
+                        type: array
+                      rootVolume:
+                        description: |-
+                          RootVolume defines the root volume for instances in the machine pool.
+                          The instances use ephemeral disks if not set.
+                        properties:
+                          size:
+                            description: |-
+                              Size defines the size of the volume in gibibytes (GiB).
+                              Required
+                            type: integer
+                          type:
+                            description: |-
+                              Type defines the type of the volume.
+                              Deprecated: Use Types instead.
+                            type: string
+                          types:
+                            description: |-
+                              Types is the list of the volume types of the root volumes.
+                              This is mutually exclusive with Type.
+                            items:
+                              type: string
+                            type: array
+                          zones:
+                            description: |-
+                              Zones is the list of availability zones where the root volumes should be deployed.
+                              If no zones are provided, all instances will be deployed on OpenStack Cinder default availability zone
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - size
+                        - types
+                        type: object
+                      serverGroupPolicy:
+                        description: |-
+                          ServerGroupPolicy will be used to create the Server Group that will contain all the machines of this MachinePool.
+                          Defaults to "soft-anti-affinity".
+                        enum:
+                        - ""
+                        - affinity
+                        - soft-affinity
+                        - anti-affinity
+                        - soft-anti-affinity
+                        type: string
+                      type:
+                        description: |-
+                          FlavorName defines the OpenStack Nova flavor.
+                          eg. m1.large
+                        type: string
+                      zones:
+                        description: |-
+                          Zones is the list of availability zones where the instances should be deployed.
+                          If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - type
+                    type: object
+                  externalDNS:
+                    description: |-
+                      ExternalDNS holds the IP addresses of dns servers that will
+                      be added to the dns resolution of all instances in the cluster.
+                    items:
+                      type: string
+                    type: array
+                  externalNetwork:
+                    description: ExternalNetwork is name of the external network in
+                      your OpenStack cluster.
+                    type: string
+                  imageName:
+                    type: string
+                  ingressFloatingIP:
+                    description: |-
+                      IngressFloatingIP is the ID of an available floating IP in your OpenStack cluster
+                      that will be associated with the OpenShift ingress port
+                    type: string
+                  ingressVIPs:
+                    description: |-
+                      IngressVIPs contains the VIP(s) on the nodes subnet that the apps port
+                      for openshift will be assigned. In dual stack clusters it contains an
+                      IPv4 and IPv6 address, otherwise only one VIP
+                      Default: will be set to the 7 on the first entry in the machineNetwork
+                      CIDR
+                    format: ip
+                    items:
+                      type: string
+                    maxItems: 2
+                    type: array
+                    uniqueItems: true
+                  loadBalancer:
+                    description: LoadBalancer defines how the load balancer used by
+                      the cluster is configured.
+                    properties:
+                      type:
+                        default: OpenShiftManagedDefault
+                        description: |-
+                          type defines the type of load balancer used by the cluster on OpenStack platform
+                          which can be a user-managed or openshift-managed load balancer
+                          that is to be used for the OpenShift API and Ingress endpoints.
+                          When set to OpenShiftManagedDefault the static pods in charge of API and Ingress traffic load-balancing
+                          defined in the machine config operator will be deployed.
+                          When set to UserManaged these static pods will not be deployed and it is expected that
+                          the load balancer is configured out of band by the deployer.
+                          When omitted, this means no opinion and the platform is left to choose a reasonable default.
+                          The default value is OpenShiftManagedDefault.
+                        enum:
+                        - OpenShiftManagedDefault
+                        - UserManaged
+                        type: string
+                        x-kubernetes-validations:
+                        - message: type is immutable once set
+                          rule: oldSelf == '' || self == oldSelf
+                    type: object
+                required:
+                - cloud
                 type: object
               powervs:
                 description: PowerVS is the configuration used when installing on
@@ -7300,7 +7869,6 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
-                    uniqueItems: true
                   cluster:
                     description: |-
                       Cluster is the name of the cluster virtual machines will be cloned into.
@@ -7648,7 +8216,6 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
-                    uniqueItems: true
                   loadBalancer:
                     description: |-
                       LoadBalancer defines how the load balancer used by the cluster is configured.

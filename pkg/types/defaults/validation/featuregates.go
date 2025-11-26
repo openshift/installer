@@ -35,32 +35,5 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			}(),
 			Field: field.NewPath("compute", "diskSetup"),
 		},
-		{
-			FeatureGateName: features.FeatureGateNodeSwap,
-			Condition: func() bool {
-				computeMachinePool := c.Compute
-				for _, compute := range computeMachinePool {
-					for _, ds := range compute.DiskSetup {
-						if ds.Type == types.Swap {
-							return true
-						}
-					}
-				}
-				return false
-			}(),
-			Field: field.NewPath("compute", "diskSetup"),
-		},
-		{
-			FeatureGateName: features.FeatureGateNodeSwap,
-			Condition: func() bool {
-				for _, ds := range c.ControlPlane.DiskSetup {
-					if ds.Type == types.Swap {
-						return true
-					}
-				}
-				return false
-			}(),
-			Field: field.NewPath("controlPlane", "diskSetup"),
-		},
 	}
 }

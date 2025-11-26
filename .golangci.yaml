@@ -33,7 +33,6 @@ linters:
   - revive
   - staticcheck
   - stylecheck
-  - tenv
   - thelper
   - typecheck
   - unconvert
@@ -148,6 +147,8 @@ linters-settings:
     - name: redefines-builtin-id
     - name: bool-literal-in-expr
     - name: constant-logical-expr
+  gocyclo:
+    min-complexity: 45
 issues:
   include:
   - EXC0012 # EXC0012 revive: issue about not having a comment on exported.

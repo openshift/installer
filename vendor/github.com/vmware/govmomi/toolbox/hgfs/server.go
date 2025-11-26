@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2017-2023 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package hgfs
 
@@ -43,7 +31,7 @@ var (
 type Server struct {
 	Capabilities []Capability
 
-	handlers map[int32]func(*Packet) (interface{}, error)
+	handlers map[int32]func(*Packet) (any, error)
 	schemes  map[string]FileHandler
 	sessions map[uint64]*session
 	mu       sync.Mutex
@@ -66,7 +54,7 @@ func NewServer() *Server {
 		chown:    os.Chown,
 	}
 
-	s.handlers = map[int32]func(*Packet) (interface{}, error){
+	s.handlers = map[int32]func(*Packet) (any, error){
 		OpCreateSessionV4:  s.CreateSessionV4,
 		OpDestroySessionV4: s.DestroySessionV4,
 		OpGetattrV2:        s.GetattrV2,
@@ -107,7 +95,7 @@ func (s *Server) Dispatch(packet []byte) ([]byte, error) {
 		fmt.Fprintf(os.Stderr, "[hgfs] request  %#v\n", req.Header)
 	}
 
-	var res interface{}
+	var res any
 
 	handler, ok := s.handlers[req.Op]
 	if ok {
@@ -268,7 +256,7 @@ func (s *Server) removeSession(id uint64) bool {
 const maxSessions = 24
 
 // CreateSessionV4 handls OpCreateSessionV4 requests
-func (s *Server) CreateSessionV4(p *Packet) (interface{}, error) {
+func (s *Server) CreateSessionV4(p *Packet) (any, error) {
 	const SessionMaxPacketSizeValid = 0x1
 
 	req := new(RequestCreateSessionV4)
@@ -297,7 +285,7 @@ func (s *Server) CreateSessionV4(p *Packet) (interface{}, error) {
 }
 
 // DestroySessionV4 handls OpDestroySessionV4 requests
-func (s *Server) DestroySessionV4(p *Packet) (interface{}, error) {
+func (s *Server) DestroySessionV4(p *Packet) (any, error) {
 	if s.removeSession(p.SessionID) {
 		return &ReplyDestroySessionV4{}, nil
 	}
@@ -324,7 +312,7 @@ func (a *AttrV2) Stat(info os.FileInfo) {
 }
 
 // GetattrV2 handles OpGetattrV2 requests
-func (s *Server) GetattrV2(p *Packet) (interface{}, error) {
+func (s *Server) GetattrV2(p *Packet) (any, error) {
 	res := &ReplyGetattrV2{}
 
 	req := new(RequestGetattrV2)
@@ -345,7 +333,7 @@ func (s *Server) GetattrV2(p *Packet) (interface{}, error) {
 }
 
 // SetattrV2 handles OpSetattrV2 requests
-func (s *Server) SetattrV2(p *Packet) (interface{}, error) {
+func (s *Server) SetattrV2(p *Packet) (any, error) {
 	res := &ReplySetattrV2{}
 
 	req := new(RequestSetattrV2)
@@ -406,7 +394,7 @@ func (s *Server) newHandle() uint32 {
 }
 
 // Open handles OpOpen requests
-func (s *Server) Open(p *Packet) (interface{}, error) {
+func (s *Server) Open(p *Packet) (any, error) {
 	req := new(RequestOpen)
 	err := UnmarshalBinary(p.Payload, req)
 	if err != nil {
@@ -445,7 +433,7 @@ func (s *Server) Open(p *Packet) (interface{}, error) {
 }
 
 // Close handles OpClose requests
-func (s *Server) Close(p *Packet) (interface{}, error) {
+func (s *Server) Close(p *Packet) (any, error) {
 	req := new(RequestClose)
 	err := UnmarshalBinary(p.Payload, req)
 	if err != nil {
@@ -474,7 +462,7 @@ func (s *Server) Close(p *Packet) (interface{}, error) {
 }
 
 // OpenV3 handles OpOpenV3 requests
-func (s *Server) OpenV3(p *Packet) (interface{}, error) {
+func (s *Server) OpenV3(p *Packet) (any, error) {
 	req := new(RequestOpenV3)
 	err := UnmarshalBinary(p.Payload, req)
 	if err != nil {
@@ -512,7 +500,7 @@ func (s *Server) OpenV3(p *Packet) (interface{}, error) {
 }
 
 // ReadV3 handles OpReadV3 requests
-func (s *Server) ReadV3(p *Packet) (interface{}, error) {
+func (s *Server) ReadV3(p *Packet) (any, error) {
 	req := new(RequestReadV3)
 	err := UnmarshalBinary(p.Payload, req)
 	if err != nil {
@@ -552,7 +540,7 @@ func (s *Server) ReadV3(p *Packet) (interface{}, error) {
 }
 
 // WriteV3 handles OpWriteV3 requests
-func (s *Server) WriteV3(p *Packet) (interface{}, error) {
+func (s *Server) WriteV3(p *Packet) (any, error) {
 	req := new(RequestWriteV3)
 	err := UnmarshalBinary(p.Payload, req)
 	if err != nil {

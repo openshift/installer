@@ -1007,14 +1007,15 @@ func validateAKSExtensions(extensions []AKSExtension, fldPath *field.Path) field
 			allErrs = append(allErrs, field.Forbidden(fldPath.Child("ReleaseTrain"), "ReleaseTrain must not be given if AutoUpgradeMinorVersion is false"))
 		}
 		if extension.Scope != nil {
-			if extension.Scope.ScopeType == ExtensionScopeCluster {
+			switch extension.Scope.ScopeType {
+			case ExtensionScopeCluster:
 				if extension.Scope.ReleaseNamespace == "" {
 					allErrs = append(allErrs, field.Required(fldPath.Child("Scope", "ReleaseNamespace"), "ReleaseNamespace must be provided if Scope is Cluster"))
 				}
 				if extension.Scope.TargetNamespace != "" {
 					allErrs = append(allErrs, field.Forbidden(fldPath.Child("Scope", "TargetNamespace"), "TargetNamespace can only be given if Scope is Namespace"))
 				}
-			} else if extension.Scope.ScopeType == ExtensionScopeNamespace {
+			case ExtensionScopeNamespace:
 				if extension.Scope.TargetNamespace == "" {
 					allErrs = append(allErrs, field.Required(fldPath.Child("Scope", "TargetNamespace"), "TargetNamespace must be provided if Scope is Namespace"))
 				}

@@ -36,9 +36,12 @@ type DescribeTransitGatewayConnectPeersInput struct {
 	DryRun *bool
 
 	// One or more filters. The possible values are:
+	//
 	//   - state - The state of the Connect peer ( pending | available | deleting |
 	//   deleted ).
+	//
 	//   - transit-gateway-attachment-id - The ID of the attachment.
+	//
 	//   - transit-gateway-connect-peer-id - The ID of the Connect peer.
 	Filters []types.Filter
 
@@ -113,6 +116,9 @@ func (c *Client) addOperationDescribeTransitGatewayConnectPeersMiddlewares(stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,6 +129,15 @@ func (c *Client) addOperationDescribeTransitGatewayConnectPeersMiddlewares(stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeTransitGatewayConnectPeers(options.Region), middleware.Before); err != nil {
@@ -143,16 +158,20 @@ func (c *Client) addOperationDescribeTransitGatewayConnectPeersMiddlewares(stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeTransitGatewayConnectPeersAPIClient is a client that implements the
-// DescribeTransitGatewayConnectPeers operation.
-type DescribeTransitGatewayConnectPeersAPIClient interface {
-	DescribeTransitGatewayConnectPeers(context.Context, *DescribeTransitGatewayConnectPeersInput, ...func(*Options)) (*DescribeTransitGatewayConnectPeersOutput, error)
-}
-
-var _ DescribeTransitGatewayConnectPeersAPIClient = (*Client)(nil)
 
 // DescribeTransitGatewayConnectPeersPaginatorOptions is the paginator options for
 // DescribeTransitGatewayConnectPeers
@@ -221,6 +240,9 @@ func (p *DescribeTransitGatewayConnectPeersPaginator) NextPage(ctx context.Conte
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeTransitGatewayConnectPeers(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -239,6 +261,14 @@ func (p *DescribeTransitGatewayConnectPeersPaginator) NextPage(ctx context.Conte
 
 	return result, nil
 }
+
+// DescribeTransitGatewayConnectPeersAPIClient is a client that implements the
+// DescribeTransitGatewayConnectPeers operation.
+type DescribeTransitGatewayConnectPeersAPIClient interface {
+	DescribeTransitGatewayConnectPeers(context.Context, *DescribeTransitGatewayConnectPeersInput, ...func(*Options)) (*DescribeTransitGatewayConnectPeersOutput, error)
+}
+
+var _ DescribeTransitGatewayConnectPeersAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeTransitGatewayConnectPeers(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

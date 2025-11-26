@@ -18,8 +18,10 @@ import (
 // Sysprep steps, rebooting as required. Then it creates a set of reserved
 // snapshots that are used for subsequent launches. The reserved snapshots are
 // automatically replenished as they are used, depending on your settings for
-// launch frequency. You can only change these settings for Windows AMIs that you
-// own or that have been shared with you.
+// launch frequency.
+//
+// You can only change these settings for Windows AMIs that you own or that have
+// been shared with you.
 func (c *Client) EnableFastLaunch(ctx context.Context, params *EnableFastLaunchInput, optFns ...func(*Options)) (*EnableFastLaunchOutput, error) {
 	if params == nil {
 		params = &EnableFastLaunchInput{}
@@ -153,6 +155,9 @@ func (c *Client) addOperationEnableFastLaunchMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -163,6 +168,15 @@ func (c *Client) addOperationEnableFastLaunchMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpEnableFastLaunchValidationMiddleware(stack); err != nil {
@@ -184,6 +198,18 @@ func (c *Client) addOperationEnableFastLaunchMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

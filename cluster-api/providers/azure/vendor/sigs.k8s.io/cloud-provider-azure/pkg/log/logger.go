@@ -20,8 +20,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"log/slog"
+	"os"
 
 	"github.com/go-logr/logr"
+	"k8s.io/component-base/logs"
 	"k8s.io/klog/v2"
 )
 
@@ -64,4 +68,37 @@ func ValueAsMap(value any) map[string]any {
 	}
 
 	return rv
+}
+
+// Setup initializes the logging system.
+func Setup(opts *Options) {
+	log.SetOutput(logs.KlogWriter{})
+	log.SetFlags(0)
+	klog.StartFlushDaemon(opts.FlushFrequency)
+
+	if opts.Format != JSON {
+		return
+	}
+
+	logger := slog.New(NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.Level(-127), // Set to minimum level; actual filtering is handled by klog.V(N)
+		AddSource: true,
+		ReplaceAttr: func(_ []string, attr slog.Attr) slog.Attr {
+			switch attr.Key {
+			case slog.TimeKey:
+				// Avoid non-deterministic time field
+				return slog.Attr{}
+			default:
+				return attr
+			}
+		},
+	}))
+
+	slog.SetDefault(logger)
+	klog.SetSlogLogger(logger)
+}
+
+// Flush flushes logs immediately.
+func Flush() {
+	klog.Flush()
 }

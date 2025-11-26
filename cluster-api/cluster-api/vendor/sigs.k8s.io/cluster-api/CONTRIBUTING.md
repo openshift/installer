@@ -10,8 +10,6 @@
   - [APIs](#apis)
   - [CLIs](#clis)
 - [Branches](#branches)
-  - [Support and guarantees](#support-and-guarantees)
-  - [Removal of v1alpha3 & v1alpha4 apiVersions](#removal-of-v1alpha3--v1alpha4-apiversions)
 - [Contributing a Patch](#contributing-a-patch)
 - [Documentation changes](#documentation-changes)
 - [Releases](#releases)
@@ -26,9 +24,6 @@
 - [Breaking Changes](#breaking-changes)
 - [Dependency Licence Management](#dependency-licence-management)
 - [API conventions](#api-conventions)
-  - [Optional vs. Required](#optional-vs-required)
-    - [Example](#example)
-    - [Exceptions](#exceptions)
   - [CRD additionalPrinterColumns](#crd-additionalprintercolumns)
 - [Google Doc Viewing Permissions](#google-doc-viewing-permissions)
 - [Issue and Pull Request Management](#issue-and-pull-request-management)
@@ -55,7 +50,7 @@ and instructions for signing it [can be found here](https://git.k8s.io/community
 If you're new to the project and want to help, but don't know where to start, we have a semi-curated list of issues that
 should not need deep knowledge of the system. [Have a look and see if anything sounds
 interesting](https://github.com/kubernetes-sigs/cluster-api/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22).
-Before starting to work on the issue, make sure that it doesn't have a [lifecycle/active](https://github.com/kubernetes-sigs/cluster-api/labels/lifecycle%2Factive) label. If the issue has been assigned, reach out to the assignee.
+Before starting to work on the issue, check if the issue has been assigned, if yes, reach out to the assignee.
 Alternatively, read some docs on other controllers and try to write your own, file and fix any/all issues that
 come up, including gaps in documentation!
 
@@ -92,8 +87,9 @@ Any backport MUST NOT be breaking for API or behavioral changes.
 
 We usually backport critical bugs or security fixes, changes to support new Kubernetes minor versions (see [supported Kubernetes versions](https://cluster-api.sigs.k8s.io/reference/versions.html#supported-kubernetes-versions)), documentation and test signal improvements. Everything else is considered case by case.
 
-[Out of support](https://github.com/kubernetes-sigs/cluster-api/blob/main/CONTRIBUTING.md#support-and-guarantees) release branches are usually frozen,
-although maintainers may allow backports in specific situations like CVEs, security, and other critical bug fixes.
+Release branches outside of the [standard support period](https://github.com/kubernetes-sigs/cluster-api/blob/main/CONTRIBUTING.md#cluster-api-release-support) are usually frozen,
+although maintainers may allow backports to releases in [maintenance mode](https://github.com/kubernetes-sigs/cluster-api/blob/main/CONTRIBUTING.md#cluster-api-release-support) in specific situations 
+like CVEs, security, and other critical bug fixes.
 
 ### APIs
 
@@ -121,58 +117,10 @@ branches that minor and patch releases are tagged. In some cases, it may
 be necessary to open PRs for bugfixes directly against stable branches, but
 this should generally not be the case.
 
-### Support and guarantees
-
-Cluster API maintains the most recent release/releases for all supported API and contract versions. Support for this section refers to the ability to backport and release patch versions;
-[backport policy](#backporting-a-patch) is defined above.
-
-- The API version is determined from the GroupVersion defined in the top-level `api/` package.
-- The EOL date of each API Version is determined from the last release available once a new API version is published.
-
-| API Version  | Supported Until                                                                         |
-|--------------|-----------------------------------------------------------------------------------------|
-| **v1beta1**  | TBD (current stable)                                                                    |
-
-- For the current stable API version (v1beta1) we support the two most recent minor releases; older minor releases are immediately unsupported when a new major/minor release is available.
-- For older API versions we only support the most recent minor release until the API version reaches EOL.
-- We will maintain test coverage for all supported minor releases and for one additional release for the current stable API version in case we have to do an emergency patch release.
-  For example, if v1.6 and v1.7 are currently supported, we will also maintain test coverage for v1.5 for one additional release cycle. When v1.8 is released, tests for v1.5 will be removed.
-
-| Minor Release | API Version  | Supported Until                                |
-|---------------|--------------|------------------------------------------------|
-| v1.9.x        | **v1beta1**  | when v1.11.0 will be released                  |
-| v1.8.x        | **v1beta1**  | when v1.10.0 will be released                  |
-| v1.7.x        | **v1beta1**  | EOL since 2024-12-10 - v1.9.0 release date     |
-| v1.6.x        | **v1beta1**  | EOL since 2024-08-12 - v1.8.0 release date     |
-| v1.5.x        | **v1beta1**  | EOL since 2024-04-16 - v1.7.0 release date     |
-| v1.4.x        | **v1beta1**  | EOL since 2023-12-05 - v1.6.0 release date     |
-| v1.3.x        | **v1beta1**  | EOL since 2023-07-25 - v1.5.0 release date     |
-| v1.2.x        | **v1beta1**  | EOL since 2023-03-28 - v1.4.0 release date     |
-| v1.1.x        | **v1beta1**  | EOL since 2022-07-18 - v1.2.0 release date (*) |
-| v1.0.x        | **v1beta1**  | EOL since 2022-02-02 - v1.1.0 release date (*) |
-| v0.4.x        | **v1alpha4** | EOL since 2022-04-06 - API version EOL         |
-| v0.3.x        | **v1alpha3** | EOL since 2022-02-23 - API version EOL         |
-
-(*) Previous support policy applies, older minor releases were immediately unsupported when a new major/minor release was available
-
-- Exceptions can be filed with maintainers and taken into consideration on a case-by-case basis.
-
-### Removal of v1alpha3 & v1alpha4 apiVersions
-
-Cluster API stopped to serve v1alpha3 API types from the v1.5 release and v1alpha4 types starting from the v1.6 release.
-Those types still exist in Cluster API while we work to a fix (or a workaround) for https://github.com/kubernetes-sigs/cluster-api/issues/10051.
-IMPORTANT! v1alpha3 and v1alpha4 types only exist for conversion and cannot be used by clients anymore.
-
-Note: Removal of a deprecated APIVersion in Kubernetes [can cause issues with garbage collection by the kube-controller-manager](https://github.com/kubernetes/kubernetes/issues/102641)
-This means that some objects which rely on garbage collection for cleanup - e.g. MachineSets and their descendent objects, like Machines and InfrastructureMachines, may not be cleaned up properly if those
-objects were created with an APIVersion which is no longer served.
-To avoid these issues it's advised to ensure a restart to the kube-controller-manager is done after upgrading to a version of Cluster API which drops support for an APIVersion - e.g. v1.5 and v1.6.
-This can be accomplished with any Kubernetes control-plane rollout, including a Kubernetes version upgrade, or by manually stopping and restarting the kube-controller-manager.
-
 ## Contributing a Patch
 
 1. If you haven't already done so, sign a Contributor License Agreement (see details above).
-1. If working on an issue, signal other contributors that you are actively working on it using `/lifecycle active`.
+1. If working on an issue, signal other contributors that you are actively working on it by assigning it to yourself.
 1. Fork the desired repo, develop and test your code changes.
 1. Submit a pull request.
     1. All code PR must be labeled with one of
@@ -424,68 +372,30 @@ breaking change might be a fix for a behavioral bug that was released in an init
 
 ## Dependency Licence Management
 
-Cluster API follows the [license policy of the CNCF](https://github.com/cncf/foundation/blob/main/allowed-third-party-license-policy.md). This sets limits on which
+Cluster API follows the [license policy of the CNCF](https://github.com/cncf/foundation/blob/main/policies-guidance/allowed-third-party-license-policy.md). This sets limits on which
 licenses dependencies and other artifacts use. For go dependencies only dependencies listed in the `go.mod` are considered dependencies. This is in line with [how dependencies are reviewed in Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/vendor.md#reviewing-and-approving-dependency-changes).
 
 ## API conventions
 
-This project follows the [Kubernetes API conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md). Minor modifications or additions to the conventions are listed below.
+This project follows the [Kubernetes API conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md).
+We enforce the API conventions via [kube-api-linter](https://github.com/kubernetes-sigs/kube-api-linter).
+The corresponding configuration field can be found [here](https://github.com/kubernetes-sigs/cluster-api/blob/main/.golangci-kal.yml). 
 
-### Optional vs. Required
-
-* Status fields MUST be optional. Our controllers are patching selected fields instead of updating the entire status in every reconciliation.
-
-* If a field is required (for our controllers to work) and has a default value specified via OpenAPI schema, but we don't want to force users to set the field, we have to mark the field as optional. Otherwise, the client-side kubectl OpenAPI schema validation will force the user to set it even though it would be defaulted on the server-side.
-
-Optional fields have the following properties:
-* An optional field MUST be marked with `+optional` and include an `omitempty` JSON tag.
-* Fields SHOULD be pointers if there is a good reason for it, for example:
-  * the nil and the zero values (by Go standards) have semantic differences.
-    * Note: This doesn't apply to map or slice types as they are assignable to `nil`.
-  * the field is of a struct type, contains only fields with `omitempty` and you want
-    to prevent that it shows up as an empty object after marshalling (e.g. `kubectl get`)
-
-#### Example
-
-When using ClusterClass, the semantic difference is important when you have a field in a template which will
-have instance-specific different values in derived objects. Because in this case it's possible to set the field to `nil`
-in the template and then the value can be set in derived objects without being overwritten by the cluster topology controller.
-
-#### Exceptions
-
-* Fields in root objects should be kept as scaffolded by kubebuilder, e.g.:
-  ```golang
-  type Machine struct {
-    metav1.TypeMeta   `json:",inline"`
-    metav1.ObjectMeta `json:"metadata,omitempty"`
-
-    Spec   MachineSpec   `json:"spec,omitempty"`
-    Status MachineStatus `json:"status,omitempty"`
-  }
-  type MachineList struct {
-    metav1.TypeMeta `json:",inline"`
-    metav1.ListMeta `json:"metadata,omitempty"`
-    Items           []Machine `json:"items"`
-  }
-  ```
-
-* Top-level fields in `status` must always have the `+optional` annotation. If we want the field to be always visible even if it
-  has the zero value, it must **not** have the `omitempty` JSON tag, e.g.:
-  * Replica counters like `availableReplicas` in the `MachineDeployment`
-  * Flags expressing progress in the object lifecycle like `infrastructureReady` in `Machine`
+Minor additions to the conventions are listed below.
 
 ### CRD additionalPrinterColumns
 
 All our CRD objects should have the following `additionalPrinterColumns` order (if the respective field exists in the CRD):
 * Namespace (added automatically)
 * Name (added automatically)
-* Cluster
-* Other fields
+* ClusterClass and/or Cluster owning this resource
+* Available or Ready condition
 * Replica-related fields
+* Other fields for -o wide (fields with priority `1` are only shown with `-o wide` and not per default)
+* Paused (only shows with -o wide)
 * Phase
 * Age (mandatory field for all CRDs)
 * Version
-* Other fields for -o wide (fields with priority `1` are only shown with `-o wide` and not per default)
 
 ***NOTE***: The columns can be configured via the `kubebuilder:printcolumn` annotation on root objects. For examples, please see the `./api` package.
 

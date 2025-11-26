@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"net/http"
-	"net/url"
 	"slices"
 	"strings"
 
@@ -64,7 +62,6 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateRegion(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateZones(client, ic)...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
-	allErrs = append(allErrs, validateServiceEndpoints(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 	allErrs = append(allErrs, ValidateCredentialMode(client, ic)...)
 	allErrs = append(allErrs, validatePreexistingServiceAccount(client, ic)...)
@@ -73,6 +70,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validateServiceEndpointOverride(client, ic, field.NewPath("platform").Child("gcp"))...)
 
 	if err := validateUserTags(client, ic.Platform.GCP.ProjectID, ic.Platform.GCP.UserTags); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("platform").Child("gcp").Child("userTags"), ic.Platform.GCP.UserTags, err.Error()))
@@ -558,21 +556,6 @@ func validateNetworks(client API, ic *types.InstallConfig, fieldPath *field.Path
 	return allErrs
 }
 
-func validateServiceEndpoints(_ API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	// attempt to resolve all the custom (overridden) endpoints. If any are not reachable,
-	// then the installation should fail not skip the endpoint use.
-	for id, serviceEndpoint := range ic.GCP.ServiceEndpoints {
-		if _, err := url.Parse(serviceEndpoint.URL); err != nil {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("serviceEndpoints").Index(id), serviceEndpoint.URL, fmt.Sprintf("failed to parse service endpoint url: %v", err)))
-		} else if _, err := http.Head(serviceEndpoint.URL); err != nil {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("serviceEndpoints").Index(id), serviceEndpoint.URL, fmt.Sprintf("error connecting to endpoint: %v", err)))
-		}
-	}
-	return allErrs
-}
-
 func validateSubnet(client API, ic *types.InstallConfig, fieldPath *field.Path, subnets []*compute.Subnetwork, name string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -866,6 +849,29 @@ func validatePlatformKMSKeys(client API, ic *types.InstallConfig, fieldPath *fie
 				))
 			}
 		}
+	}
+
+	return allErrs
+}
+
+// validateServiceEndpointOverride validates the endpoint that is provided by the user.
+func validateServiceEndpointOverride(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if ic.GCP.Endpoint == nil {
+		return nil
+	}
+
+	endpoint, err := client.GetPrivateServiceConnectEndpoint(context.Background(), ic.GCP.ProjectID, ic.GCP.Endpoint)
+	if err != nil || endpoint == nil {
+		return append(allErrs, field.NotFound(fieldPath.Child("endpoint").Child("name"), ic.GCP.Endpoint.Name))
+	}
+	network := ""
+	if parts := strings.Split(endpoint.Network, "/"); len(parts) > 0 {
+		network = parts[len(parts)-1]
+	}
+	if network != ic.GCP.Network {
+		errMsg := fmt.Sprintf("psc endpoint %s is on the %s network, but user supplied %s", endpoint.Name, network, ic.GCP.Network)
+		return append(allErrs, field.Invalid(fieldPath.Child("endpoint").Child("name"), ic.GCP.Endpoint.Name, errMsg))
 	}
 
 	return allErrs

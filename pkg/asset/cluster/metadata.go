@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/nutanix"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/cluster/ovirt"
+	"github.com/openshift/installer/pkg/asset/cluster/powervc"
 	"github.com/openshift/installer/pkg/asset/cluster/powervs"
 	"github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -34,6 +35,7 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -97,6 +99,8 @@ func (m *Metadata) Generate(_ context.Context, parents asset.Parents) (err error
 		metadata.ClusterPlatformMetadata.Ovirt = ovirt.Metadata(installConfig.Config)
 	case vspheretypes.Name:
 		metadata.ClusterPlatformMetadata.VSphere = vsphere.Metadata(installConfig.Config)
+	case powervctypes.Name:
+		metadata.ClusterPlatformMetadata.PowerVC = powervc.Metadata(clusterID.InfraID, installConfig.Config)
 	case powervstypes.Name:
 		metadata.ClusterPlatformMetadata.PowerVS, err = powervs.Metadata(installConfig.Config, installConfig.PowerVS)
 		if err != nil {

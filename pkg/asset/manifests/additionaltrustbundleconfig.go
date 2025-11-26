@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	additionalTrustBundleConfigFileName = filepath.Join(manifestDir, "user-ca-bundle-config.yaml")
+	additionalTrustBundleConfigFileName = path.Join(manifestDir, "user-ca-bundle-config.yaml")
 )
 
 const (

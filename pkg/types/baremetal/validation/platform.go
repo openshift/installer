@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -294,6 +295,63 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 	return nil
 }
 
+func validateMTUIsInteger(nmstateYAML []byte, fldPath *field.Path) field.ErrorList {
+	var config map[string]interface{}
+	if err := yaml.Unmarshal(nmstateYAML, &config); err != nil {
+		return field.ErrorList{
+			field.Invalid(fldPath, string(nmstateYAML), fmt.Sprintf("failed to unmarshal NMState config: %v", err)),
+		}
+	}
+
+	interfaces, ok := config["interfaces"].([]interface{})
+	if !ok {
+		return nil // no interfaces, nothing to check
+	}
+
+	var allErrs field.ErrorList
+	for idx, iface := range interfaces {
+		ifaceMap, ok := iface.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		if mtu, exists := ifaceMap["mtu"]; exists {
+			switch v := mtu.(type) {
+			case int, int64, float64: // yaml unmarshals numbers as float64
+				// ok
+			case string:
+				// check if string is actually numeric
+				if _, err := strconv.Atoi(v); err != nil {
+					allErrs = append(allErrs,
+						field.Invalid(
+							fldPath.Child("interfaces").Index(idx).Child("mtu"),
+							v,
+							"mtu must be an integer",
+						),
+					)
+				} else {
+					allErrs = append(allErrs,
+						field.Invalid(
+							fldPath.Child("interfaces").Index(idx).Child("mtu"),
+							v,
+							"mtu must be an integer (not quoted string)",
+						),
+					)
+				}
+			default:
+				allErrs = append(allErrs,
+					field.Invalid(
+						fldPath.Child("interfaces").Index(idx).Child("mtu"),
+						v,
+						fmt.Sprintf("mtu must be an integer, got %T", v),
+					),
+				)
+			}
+		}
+	}
+	return allErrs
+}
+
 // ensure that the NetworkConfig field contains a valid Yaml string
 func validateNetworkConfig(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
 	for idx, host := range hosts {
@@ -303,6 +361,10 @@ func validateNetworkConfig(hosts []*baremetal.Host, fldPath *field.Path) (errors
 			if err != nil {
 				errors = append(errors, field.Invalid(fldPath.Index(idx).Child("networkConfig"), host.NetworkConfig, fmt.Sprintf("Not a valid yaml: %s", err.Error())))
 			}
+
+			errors = append(errors,
+				validateMTUIsInteger(host.NetworkConfig.Raw, fldPath.Index(idx).Child("networkConfig"))...,
+			)
 		}
 	}
 	return

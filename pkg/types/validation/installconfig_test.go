@@ -446,7 +446,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^\[networking\.serviceNetwork\[0\]: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16, networking\.serviceNetwork\[1\]: Invalid value: "fd98::/112": must not overlap with OVNKubernetes default internal subnet fd98::/64\]$`,
+			expectedError: `^\[networking\.serviceNetwork\[0\]: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16: please run 'openshift-install explain installconfig.networking.ovnKubernetesConfig.ipv4' for further documentation, networking\.serviceNetwork\[1\]: Invalid value: "fd98::/112": must not overlap with OVNKubernetes default internal subnet fd98::/64: please run 'openshift-install explain installconfig.networking.ovnKubernetesConfig.ipv6' for further documentation\]$`,
 		},
 		{
 			name: "overlapping service network and default OVNKubernetes switch networks",
@@ -602,7 +602,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `\[networking\.machineNetwork\[0\]: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16, networking\.machineNetwork\[1\]: Invalid value: "100\.88\.2\.0/24": must not overlap with OVNKubernetes default transit subnet 100\.88\.0\.0/16, networking\.machineNetwork\[2\]: Invalid value: "169\.254\.2\.0/24": must not overlap with OVNKubernetes default masquerade subnet 169\.254\.0\.0/17, networking\.machineNetwork\[3\]: Invalid value: "fd98::/48": must not overlap with OVNKubernetes default internal subnet fd98::/64, networking\.machineNetwork\[4\]: Invalid value: "fd97::/48": must not overlap with OVNKubernetes default transit subnet fd97::/64, networking\.machineNetwork\[5\]: Invalid value: "fd69::/48": must not overlap with OVNKubernetes default masquerade subnet fd69::/112\]`,
+			expectedError: `\[networking\.machineNetwork\[0\]: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16: please run 'openshift-install explain installconfig.networking.ovnKubernetesConfig.ipv4' for further documentation, networking\.machineNetwork\[1\]: Invalid value: "100\.88\.2\.0/24": must not overlap with OVNKubernetes default transit subnet 100\.88\.0\.0/16, networking\.machineNetwork\[2\]: Invalid value: "169\.254\.2\.0/24": must not overlap with OVNKubernetes default masquerade subnet 169\.254\.0\.0/17, networking\.machineNetwork\[3\]: Invalid value: "fd98::/48": must not overlap with OVNKubernetes default internal subnet fd98::/64: please run 'openshift-install explain installconfig.networking.ovnKubernetesConfig.ipv6' for further documentation, networking\.machineNetwork\[4\]: Invalid value: "fd97::/48": must not overlap with OVNKubernetes default transit subnet fd97::/64, networking\.machineNetwork\[5\]: Invalid value: "fd69::/48": must not overlap with OVNKubernetes default masquerade subnet fd69::/112\]`,
 		},
 		{
 			name: "invalid cluster network",
@@ -659,7 +659,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^\[networking\.clusterNetwork\[0\]\.cidr: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16, networking\.clusterNetwork\[1\]\.cidr: Invalid value: "100\.88\.2\.0/24": must not overlap with OVNKubernetes default transit subnet 100\.88\.0\.0/16, networking\.clusterNetwork\[2\]\.cidr: Invalid value: "169\.254\.2\.0/24": must not overlap with OVNKubernetes default masquerade subnet 169\.254\.0\.0/17, networking\.clusterNetwork\[3\]\.cidr: Invalid value: "fd98::/48": must not overlap with OVNKubernetes default internal subnet fd98::/64, networking\.clusterNetwork\[4\]\.cidr: Invalid value: "fd97::/48": must not overlap with OVNKubernetes default transit subnet fd97::/64, networking\.clusterNetwork\[5\]\.cidr: Invalid value: "fd69::/48": must not overlap with OVNKubernetes default masquerade subnet fd69::/112\]$`,
+			expectedError: `^\[networking\.clusterNetwork\[0\]\.cidr: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16: please run 'openshift-install explain installconfig.networking.ovnKubernetesConfig.ipv4' for further documentation, networking\.clusterNetwork\[1\]\.cidr: Invalid value: "100\.88\.2\.0/24": must not overlap with OVNKubernetes default transit subnet 100\.88\.0\.0/16, networking\.clusterNetwork\[2\]\.cidr: Invalid value: "169\.254\.2\.0/24": must not overlap with OVNKubernetes default masquerade subnet 169\.254\.0\.0/17, networking\.clusterNetwork\[3\]\.cidr: Invalid value: "fd98::/48": must not overlap with OVNKubernetes default internal subnet fd98::/64: please run 'openshift-install explain installconfig.networking.ovnKubernetesConfig.ipv6' for further documentation, networking\.clusterNetwork\[4\]\.cidr: Invalid value: "fd97::/48": must not overlap with OVNKubernetes default transit subnet fd97::/64, networking\.clusterNetwork\[5\]\.cidr: Invalid value: "fd69::/48": must not overlap with OVNKubernetes default masquerade subnet fd69::/112\]$`,
 		},
 		{
 			name: "cluster network host prefix too large",
@@ -864,7 +864,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(aws, azure, baremetal, external, gcp, ibmcloud, none, nutanix, openstack, powervs, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(aws, azure, baremetal, external, gcp, ibmcloud, none, nutanix, openstack, powervc, powervs, vsphere\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -1488,6 +1488,43 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
+			name: "valid release image source ImageDigstSource with valid mirror and sourcePolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:       "quay.io/ocp/release-x.y",
+					Mirrors:      []string{"mirror.example.com:5000"},
+					SourcePolicy: "NeverContactSource",
+				}}
+				return c
+			}(),
+		},
+		{
+			name: "valid release image source ImageDigstSource with no mirror and valid sourcePolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:       "quay.io/ocp/release-x.y",
+					SourcePolicy: "NeverContactSource",
+				}}
+				return c
+			}(),
+			expectedError: `^imageDigestSources\[0\]\.sourcePolicy: Invalid value: "NeverContactSource": sourcePolicy cannot be configured without a mirror$`,
+		},
+		{
+			name: "valid release image source ImageDigstSource with invalid sourcePolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:       "quay.io/ocp/release-x.y",
+					Mirrors:      []string{"mirror.example.com:5000"},
+					SourcePolicy: "InvalidPolicy",
+				}}
+				return c
+			}(),
+			expectedError: `^imageDigestSources\[0\]\.sourcePolicy: Invalid value: "InvalidPolicy": supported values are "NeverContactSource" and "AllowContactingSource"$`,
+		},
+		{
 			name: "error out ImageContentSources and ImageDigestSources and are set at the same time",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -1565,7 +1602,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid dual-stack configuration, IPv6-primary",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Platform = types.Platform{GCP: &gcp.Platform{}}
 				c.Networking = validDualStackNetworkingConfig()
 				c.Networking.ServiceNetwork = []ipnet.IPNet{
 					c.Networking.ServiceNetwork[1],
@@ -1794,7 +1831,7 @@ func TestValidateInstallConfig(t *testing.T) {
 					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"marketplace"}}
 				return c
 			}(),
-			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"marketplace"}: the marketplace capability requires the OperatorLifecycleManager capability`,
+			expectedError: `additionalEnabledCapabilities: Invalid value: \["marketplace"\]: the marketplace capability requires the OperatorLifecycleManager capability`,
 		},
 		{
 			name: "valid additional enabled capability specified",
@@ -1835,7 +1872,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "None", AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"marketplace"}}
 				return c
 			}(),
-			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"marketplace"}: platform baremetal requires the baremetal capability`,
+			expectedError: `additionalEnabledCapabilities: Invalid value: \["marketplace"\]: platform baremetal requires the baremetal capability`,
 		},
 		// VIP tests
 		{
@@ -1998,7 +2035,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.apiVIPs: Invalid value: \\[\\]string\\{\"192.168.111.1\", \"192.168.111.2\"\\}: If two API VIPs are given, one must be an IPv4 address, the other an IPv6",
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \\[\"192.168.111.1\",\"192.168.111.2\"\\]: If two API VIPs are given, one must be an IPv4 address, the other an IPv6",
 		},
 		{
 			name: "invalid_apis_both_ipv6",
@@ -2011,7 +2048,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.apiVIPs: Invalid value: \\[\\]string\\{\"fe80::1\", \"fe80::2\"\\}: If two API VIPs are given, one must be an IPv4 address, the other an IPv6",
+			expectedError: "platform.baremetal.apiVIPs: Invalid value: \\[\"fe80::1\",\"fe80::2\"\\]: If two API VIPs are given, one must be an IPv4 address, the other an IPv6",
 		},
 		{
 			name: "ingressvip_v4_not_in_machinenetwork_cidr",
@@ -2127,7 +2164,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \\[\\]string\\{\"192.168.111.4\", \"192.168.111.5\"\\}: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6",
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \\[\"192.168.111.4\",\"192.168.111.5\"\\]: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6",
 		},
 		{
 			name: "invalid_ingressvips_both_ipv6",
@@ -2140,7 +2177,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \\[\\]string\\{\"fe80::1\", \"fe80::2\"\\}: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6",
+			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \\[\"fe80::1\",\"fe80::2\"\\]: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6",
 		},
 		{
 			name: "identical_apivip_ingressvip",
@@ -2997,7 +3034,7 @@ func TestValidateTNF(t *testing.T) {
 				CpReplicas(2).build(),
 			name:         "fencing_only_valid_for_control_plane",
 			checkCompute: true,
-			expected:     `compute\[\d+\]\.fencing: Invalid value: types\.Fencing\{Credentials:\[\]\*types\.Credential\{\(\*types\.Credential\)\(\S+\)\}\}: fencing is only valid for control plane`,
+			expected:     `compute\[\d+\]\.fencing: Invalid value: \{"credentials":\[\{"hostName":"host1","username":"root","password":"password","address":"ipmi://192.168.111.1"\}\]\}: fencing is only valid for control plane`,
 		},
 		{
 			config: installConfig().

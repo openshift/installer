@@ -36,95 +36,90 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	capierrors "sigs.k8s.io/cluster-api/errors"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	utilexp "sigs.k8s.io/cluster-api/exp/util"
+	"sigs.k8s.io/cluster-api/internal/contract"
 	"sigs.k8s.io/cluster-api/internal/util/ssa"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	"sigs.k8s.io/cluster-api/util/labels"
 	"sigs.k8s.io/cluster-api/util/labels/format"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
-func (r *MachinePoolReconciler) reconcilePhase(mp *expv1.MachinePool) {
+func (r *MachinePoolReconciler) reconcilePhase(mp *clusterv1.MachinePool) {
 	// Set the phase to "pending" if nil.
 	if mp.Status.Phase == "" {
-		mp.Status.SetTypedPhase(expv1.MachinePoolPhasePending)
+		mp.Status.SetTypedPhase(clusterv1.MachinePoolPhasePending)
 	}
 
 	// Set the phase to "provisioning" if bootstrap is ready and the infrastructure isn't.
-	if mp.Status.BootstrapReady && !mp.Status.InfrastructureReady {
-		mp.Status.SetTypedPhase(expv1.MachinePoolPhaseProvisioning)
+	if ptr.Deref(mp.Status.Initialization.BootstrapDataSecretCreated, false) && !ptr.Deref(mp.Status.Initialization.InfrastructureProvisioned, false) {
+		mp.Status.SetTypedPhase(clusterv1.MachinePoolPhaseProvisioning)
 	}
 
 	// Set the phase to "provisioned" if the infrastructure is ready.
 	if len(mp.Status.NodeRefs) != 0 {
-		mp.Status.SetTypedPhase(expv1.MachinePoolPhaseProvisioned)
+		mp.Status.SetTypedPhase(clusterv1.MachinePoolPhaseProvisioned)
 	}
 
 	// Set the phase to "running" if the number of ready replicas is equal to desired replicas.
-	if mp.Status.InfrastructureReady && mp.Spec.Replicas != nil && *mp.Spec.Replicas == mp.Status.ReadyReplicas {
-		mp.Status.SetTypedPhase(expv1.MachinePoolPhaseRunning)
+	// TODO (v1beta2) Use new replica counters
+	readyReplicas := int32(0)
+	if mp.Status.Deprecated != nil && mp.Status.Deprecated.V1Beta1 != nil {
+		readyReplicas = mp.Status.Deprecated.V1Beta1.ReadyReplicas
+	}
+	if ptr.Deref(mp.Status.Initialization.InfrastructureProvisioned, false) && mp.Spec.Replicas != nil && *mp.Spec.Replicas == readyReplicas {
+		mp.Status.SetTypedPhase(clusterv1.MachinePoolPhaseRunning)
 	}
 
 	// Set the appropriate phase in response to the MachinePool replica count being greater than the observed infrastructure replicas.
-	if mp.Status.InfrastructureReady && mp.Spec.Replicas != nil && *mp.Spec.Replicas > mp.Status.ReadyReplicas {
+	if ptr.Deref(mp.Status.Initialization.InfrastructureProvisioned, false) && mp.Spec.Replicas != nil && *mp.Spec.Replicas > readyReplicas {
 		// If we are being managed by an external autoscaler and can't predict scaling direction, set to "Scaling".
 		if annotations.ReplicasManagedByExternalAutoscaler(mp) {
-			mp.Status.SetTypedPhase(expv1.MachinePoolPhaseScaling)
+			mp.Status.SetTypedPhase(clusterv1.MachinePoolPhaseScaling)
 		} else {
 			// Set the phase to "ScalingUp" if we are actively scaling the infrastructure out.
-			mp.Status.SetTypedPhase(expv1.MachinePoolPhaseScalingUp)
+			mp.Status.SetTypedPhase(clusterv1.MachinePoolPhaseScalingUp)
 		}
 	}
 
 	// Set the appropriate phase in response to the MachinePool replica count being less than the observed infrastructure replicas.
-	if mp.Status.InfrastructureReady && mp.Spec.Replicas != nil && *mp.Spec.Replicas < mp.Status.ReadyReplicas {
+	if ptr.Deref(mp.Status.Initialization.InfrastructureProvisioned, false) && mp.Spec.Replicas != nil && *mp.Spec.Replicas < readyReplicas {
 		// If we are being managed by an external autoscaler and can't predict scaling direction, set to "Scaling".
 		if annotations.ReplicasManagedByExternalAutoscaler(mp) {
-			mp.Status.SetTypedPhase(expv1.MachinePoolPhaseScaling)
+			mp.Status.SetTypedPhase(clusterv1.MachinePoolPhaseScaling)
 		} else {
 			// Set the phase to "ScalingDown" if we are actively scaling the infrastructure in.
-			mp.Status.SetTypedPhase(expv1.MachinePoolPhaseScalingDown)
+			mp.Status.SetTypedPhase(clusterv1.MachinePoolPhaseScalingDown)
 		}
-	}
-
-	// Set the phase to "failed" if any of Status.FailureReason or Status.FailureMessage is not-nil.
-	if mp.Status.FailureReason != nil || mp.Status.FailureMessage != nil {
-		mp.Status.SetTypedPhase(expv1.MachinePoolPhaseFailed)
 	}
 
 	// Set the phase to "deleting" if the deletion timestamp is set.
 	if !mp.DeletionTimestamp.IsZero() {
-		mp.Status.SetTypedPhase(expv1.MachinePoolPhaseDeleting)
+		mp.Status.SetTypedPhase(clusterv1.MachinePoolPhaseDeleting)
 	}
 }
 
 // reconcileExternal handles generic unstructured objects referenced by a MachinePool.
-func (r *MachinePoolReconciler) reconcileExternal(ctx context.Context, m *expv1.MachinePool, ref *corev1.ObjectReference) (external.ReconcileOutput, error) {
+func (r *MachinePoolReconciler) reconcileExternal(ctx context.Context, m *clusterv1.MachinePool, ref clusterv1.ContractVersionedObjectReference) (external.ReconcileOutput, error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	if err := utilconversion.UpdateReferenceAPIContract(ctx, r.Client, ref); err != nil {
-		return external.ReconcileOutput{}, err
-	}
-
-	obj, err := external.Get(ctx, r.Client, ref)
+	obj, err := external.GetObjectFromContractVersionedRef(ctx, r.Client, ref, m.Namespace)
 	if err != nil {
 		if apierrors.IsNotFound(errors.Cause(err)) {
-			return external.ReconcileOutput{}, errors.Wrapf(err, "could not find %v %q for MachinePool %q in namespace %q, requeuing",
-				ref.GroupVersionKind(), ref.Name, m.Name, ref.Namespace)
+			return external.ReconcileOutput{}, errors.Wrapf(err, "could not find %s %s for MachinePool %s, requeuing",
+				ref.Kind, klog.KRef(m.Namespace, ref.Name), klog.KObj(m))
 		}
 		return external.ReconcileOutput{}, err
 	}
 
 	// Ensure we add a watch to the external object, if there isn't one already.
-	if err := r.externalTracker.Watch(log, obj, handler.EnqueueRequestForOwner(r.Client.Scheme(), r.Client.RESTMapper(), &expv1.MachinePool{}), predicates.ResourceIsChanged(r.Client.Scheme(), *r.externalTracker.PredicateLogger)); err != nil {
+	if err := r.externalTracker.Watch(log, obj, handler.EnqueueRequestForOwner(r.Client.Scheme(), r.Client.RESTMapper(), &clusterv1.MachinePool{}), predicates.ResourceIsChanged(r.Client.Scheme(), *r.externalTracker.PredicateLogger)); err != nil {
 		return external.ReconcileOutput{}, err
 	}
 
@@ -159,10 +154,22 @@ func (r *MachinePoolReconciler) reconcileExternal(ctx context.Context, m *expv1.
 	}
 	if failureReason != "" {
 		machineStatusFailure := capierrors.MachinePoolStatusFailure(failureReason)
-		m.Status.FailureReason = &machineStatusFailure
+		if m.Status.Deprecated != nil {
+			m.Status.Deprecated = &clusterv1.MachinePoolDeprecatedStatus{}
+		}
+		if m.Status.Deprecated.V1Beta1 != nil {
+			m.Status.Deprecated.V1Beta1 = &clusterv1.MachinePoolV1Beta1DeprecatedStatus{}
+		}
+		m.Status.Deprecated.V1Beta1.FailureReason = &machineStatusFailure
 	}
 	if failureMessage != "" {
-		m.Status.FailureMessage = ptr.To(
+		if m.Status.Deprecated != nil {
+			m.Status.Deprecated = &clusterv1.MachinePoolDeprecatedStatus{}
+		}
+		if m.Status.Deprecated.V1Beta1 != nil {
+			m.Status.Deprecated.V1Beta1 = &clusterv1.MachinePoolV1Beta1DeprecatedStatus{}
+		}
+		m.Status.Deprecated.V1Beta1.FailureMessage = ptr.To(
 			fmt.Sprintf("Failure detected from referenced resource %v with name %q: %s",
 				obj.GroupVersionKind(), obj.GetName(), failureMessage),
 		)
@@ -177,7 +184,7 @@ func (r *MachinePoolReconciler) reconcileBootstrap(ctx context.Context, s *scope
 	m := s.machinePool
 	// Call generic external reconciler if we have an external reference.
 	var bootstrapConfig *unstructured.Unstructured
-	if m.Spec.Template.Spec.Bootstrap.ConfigRef != nil {
+	if m.Spec.Template.Spec.Bootstrap.ConfigRef.IsDefined() {
 		bootstrapReconcileResult, err := r.reconcileExternal(ctx, m, m.Spec.Template.Spec.Bootstrap.ConfigRef)
 		if err != nil {
 			return ctrl.Result{}, err
@@ -189,41 +196,51 @@ func (r *MachinePoolReconciler) reconcileBootstrap(ctx context.Context, s *scope
 			return ctrl.Result{}, nil
 		}
 
-		// Determine if the bootstrap provider is ready.
-		ready, err := external.IsReady(bootstrapConfig)
+		// Determine contract version used by the BootstrapConfig.
+		contractVersion, err := contract.GetContractVersion(ctx, r.Client, bootstrapConfig.GroupVersionKind().GroupKind())
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 
+		// Determine if the data secret was created.
+		var dataSecretCreated bool
+		if dataSecretCreatedPtr, err := contract.Bootstrap().DataSecretCreated(contractVersion).Get(bootstrapConfig); err != nil {
+			if !errors.Is(err, contract.ErrFieldNotFound) {
+				return ctrl.Result{}, err
+			}
+		} else {
+			dataSecretCreated = *dataSecretCreatedPtr
+		}
+
 		// Report a summary of current status of the bootstrap object defined for this machine pool.
-		conditions.SetMirror(m, clusterv1.BootstrapReadyCondition,
-			conditions.UnstructuredGetter(bootstrapConfig),
-			conditions.WithFallbackValue(ready, clusterv1.WaitingForDataSecretFallbackReason, clusterv1.ConditionSeverityInfo, ""),
+		v1beta1conditions.SetMirror(m, clusterv1.BootstrapReadyV1Beta1Condition,
+			v1beta1conditions.UnstructuredGetter(bootstrapConfig),
+			v1beta1conditions.WithFallbackValue(dataSecretCreated, clusterv1.WaitingForDataSecretFallbackV1Beta1Reason, clusterv1.ConditionSeverityInfo, ""),
 		)
 
-		if !ready {
+		if !dataSecretCreated {
 			log.Info("Waiting for bootstrap provider to generate data secret and report status.ready", bootstrapConfig.GetKind(), klog.KObj(bootstrapConfig))
-			m.Status.BootstrapReady = ready
+			m.Status.Initialization.BootstrapDataSecretCreated = ptr.To(dataSecretCreated)
 			return ctrl.Result{}, nil
 		}
 
 		// Get and set the name of the secret containing the bootstrap data.
-		secretName, _, err := unstructured.NestedString(bootstrapConfig.Object, "status", "dataSecretName")
+		secretName, err := contract.Bootstrap().DataSecretName().Get(bootstrapConfig)
 		if err != nil {
 			return ctrl.Result{}, errors.Wrapf(err, "failed to retrieve dataSecretName from bootstrap provider for MachinePool %q in namespace %q", m.Name, m.Namespace)
-		} else if secretName == "" {
+		} else if secretName == nil {
 			return ctrl.Result{}, errors.Errorf("retrieved empty dataSecretName from bootstrap provider for MachinePool %q in namespace %q", m.Name, m.Namespace)
 		}
 
-		m.Spec.Template.Spec.Bootstrap.DataSecretName = ptr.To(secretName)
-		m.Status.BootstrapReady = true
+		m.Spec.Template.Spec.Bootstrap.DataSecretName = secretName
+		m.Status.Initialization.BootstrapDataSecretCreated = ptr.To(true)
 		return ctrl.Result{}, nil
 	}
 
 	// If dataSecretName is set without a ConfigRef, this means the user brought their own bootstrap data.
 	if m.Spec.Template.Spec.Bootstrap.DataSecretName != nil {
-		m.Status.BootstrapReady = true
-		conditions.MarkTrue(m, clusterv1.BootstrapReadyCondition)
+		m.Status.Initialization.BootstrapDataSecretCreated = ptr.To(true)
+		v1beta1conditions.MarkTrue(m, clusterv1.BootstrapReadyV1Beta1Condition)
 		return ctrl.Result{}, nil
 	}
 
@@ -237,22 +254,29 @@ func (r *MachinePoolReconciler) reconcileInfrastructure(ctx context.Context, s *
 	cluster := s.cluster
 	mp := s.machinePool
 	// Call generic external reconciler.
-	infraReconcileResult, err := r.reconcileExternal(ctx, mp, &mp.Spec.Template.Spec.InfrastructureRef)
+	infraReconcileResult, err := r.reconcileExternal(ctx, mp, mp.Spec.Template.Spec.InfrastructureRef)
 	if err != nil {
 		if apierrors.IsNotFound(errors.Cause(err)) {
 			log.Error(err, "infrastructure reference could not be found")
-			if mp.Status.InfrastructureReady {
+			if ptr.Deref(mp.Status.Initialization.InfrastructureProvisioned, false) {
 				// Infra object went missing after the machine pool was up and running
 				log.Error(err, "infrastructure reference has been deleted after being ready, setting failure state")
-				mp.Status.FailureReason = ptr.To(capierrors.InvalidConfigurationMachinePoolError)
-				mp.Status.FailureMessage = ptr.To(fmt.Sprintf("MachinePool infrastructure resource %v with name %q has been deleted after being ready",
-					mp.Spec.Template.Spec.InfrastructureRef.GroupVersionKind(), mp.Spec.Template.Spec.InfrastructureRef.Name))
+				if mp.Status.Deprecated == nil {
+					mp.Status.Deprecated = &clusterv1.MachinePoolDeprecatedStatus{}
+				}
+				if mp.Status.Deprecated.V1Beta1 == nil {
+					mp.Status.Deprecated.V1Beta1 = &clusterv1.MachinePoolV1Beta1DeprecatedStatus{}
+				}
+				mp.Status.Deprecated.V1Beta1.FailureReason = ptr.To(capierrors.InvalidConfigurationMachinePoolError)
+				mp.Status.Deprecated.V1Beta1.FailureMessage = ptr.To(fmt.Sprintf("MachinePool infrastructure resource %s %s has been deleted after being ready",
+					mp.Spec.Template.Spec.InfrastructureRef.Kind, klog.KRef(mp.Namespace, mp.Spec.Template.Spec.InfrastructureRef.Name)))
 			}
-			conditions.MarkFalse(mp, clusterv1.InfrastructureReadyCondition, clusterv1.IncorrectExternalRefReason, clusterv1.ConditionSeverityError, fmt.Sprintf("could not find infra reference of kind %s with name %s", mp.Spec.Template.Spec.InfrastructureRef.Kind, mp.Spec.Template.Spec.InfrastructureRef.Name))
+			v1beta1conditions.MarkFalse(mp, clusterv1.InfrastructureReadyV1Beta1Condition, clusterv1.IncorrectExternalRefV1Beta1Reason, clusterv1.ConditionSeverityError, "%s", fmt.Sprintf("could not find infra reference of kind %s with name %s", mp.Spec.Template.Spec.InfrastructureRef.Kind, mp.Spec.Template.Spec.InfrastructureRef.Name))
 		}
 		return ctrl.Result{}, err
 	}
 	infraConfig := infraReconcileResult.Result
+	s.infraMachinePool = infraConfig
 
 	if !infraConfig.GetDeletionTimestamp().IsZero() {
 		return ctrl.Result{}, nil
@@ -263,12 +287,12 @@ func (r *MachinePoolReconciler) reconcileInfrastructure(ctx context.Context, s *
 		return ctrl.Result{}, err
 	}
 
-	mp.Status.InfrastructureReady = ready
+	mp.Status.Initialization.InfrastructureProvisioned = ptr.To(ready)
 
 	// Report a summary of current status of the infrastructure object defined for this machine pool.
-	conditions.SetMirror(mp, clusterv1.InfrastructureReadyCondition,
-		conditions.UnstructuredGetter(infraConfig),
-		conditions.WithFallbackValue(ready, clusterv1.WaitingForInfrastructureFallbackReason, clusterv1.ConditionSeverityInfo, ""),
+	v1beta1conditions.SetMirror(mp, clusterv1.InfrastructureReadyV1Beta1Condition,
+		v1beta1conditions.UnstructuredGetter(infraConfig),
+		v1beta1conditions.WithFallbackValue(ready, clusterv1.WaitingForInfrastructureFallbackV1Beta1Reason, clusterv1.ConditionSeverityInfo, ""),
 	)
 
 	clusterClient, err := r.ClusterCache.GetClient(ctx, util.ObjectKey(cluster))
@@ -286,7 +310,7 @@ func (r *MachinePoolReconciler) reconcileInfrastructure(ctx context.Context, s *
 		return ctrl.Result{}, kerrors.NewAggregate([]error{errors.Wrapf(err, "failed to reconcile Machines for MachinePool %s", klog.KObj(mp)), errors.Wrapf(getNodeRefsErr, "failed to get nodeRefs for MachinePool %s", klog.KObj(mp))})
 	}
 
-	if !mp.Status.InfrastructureReady {
+	if !ptr.Deref(mp.Status.Initialization.InfrastructureProvisioned, false) {
 		log.Info("Infrastructure provider is not yet ready", infraConfig.GetKind(), klog.KObj(infraConfig))
 		return ctrl.Result{}, nil
 	}
@@ -305,16 +329,22 @@ func (r *MachinePoolReconciler) reconcileInfrastructure(ctx context.Context, s *
 		}
 	}
 
-	if len(providerIDList) == 0 && mp.Status.Replicas != 0 {
-		log.Info("Retrieved empty spec.providerIDList from infrastructure provider but status.replicas is not zero.", "replicas", mp.Status.Replicas)
+	if len(providerIDList) == 0 && ptr.Deref(mp.Status.Replicas, 0) != 0 {
+		log.Info("Retrieved empty spec.providerIDList from infrastructure provider but status.replicas is not zero.", "replicas", ptr.Deref(mp.Status.Replicas, 0))
 		return ctrl.Result{}, nil
 	}
 
 	if !reflect.DeepEqual(mp.Spec.ProviderIDList, providerIDList) {
 		mp.Spec.ProviderIDList = providerIDList
-		mp.Status.ReadyReplicas = 0
-		mp.Status.AvailableReplicas = 0
-		mp.Status.UnavailableReplicas = mp.Status.Replicas
+		if mp.Status.Deprecated == nil {
+			mp.Status.Deprecated = &clusterv1.MachinePoolDeprecatedStatus{}
+		}
+		if mp.Status.Deprecated.V1Beta1 == nil {
+			mp.Status.Deprecated.V1Beta1 = &clusterv1.MachinePoolV1Beta1DeprecatedStatus{}
+		}
+		mp.Status.Deprecated.V1Beta1.ReadyReplicas = 0
+		mp.Status.Deprecated.V1Beta1.AvailableReplicas = 0
+		mp.Status.Deprecated.V1Beta1.UnavailableReplicas = ptr.Deref(mp.Status.Replicas, 0)
 	}
 
 	return ctrl.Result{}, nil
@@ -443,17 +473,16 @@ func (r *MachinePoolReconciler) createOrUpdateMachines(ctx context.Context, s *s
 
 // computeDesiredMachine constructs the desired Machine for an infraMachine.
 // If the Machine exists, it ensures the Machine always owned by the MachinePool.
-func (r *MachinePoolReconciler) computeDesiredMachine(mp *expv1.MachinePool, infraMachine *unstructured.Unstructured, existingMachine *clusterv1.Machine, existingNode *corev1.Node) *clusterv1.Machine {
-	infraRef := corev1.ObjectReference{
-		APIVersion: infraMachine.GetAPIVersion(),
-		Kind:       infraMachine.GetKind(),
-		Name:       infraMachine.GetName(),
-		Namespace:  infraMachine.GetNamespace(),
+func (r *MachinePoolReconciler) computeDesiredMachine(mp *clusterv1.MachinePool, infraMachine *unstructured.Unstructured, existingMachine *clusterv1.Machine, existingNode *corev1.Node) *clusterv1.Machine {
+	infraRef := clusterv1.ContractVersionedObjectReference{
+		APIGroup: infraMachine.GroupVersionKind().Group,
+		Kind:     infraMachine.GetKind(),
+		Name:     infraMachine.GetName(),
 	}
 
-	var kubernetesVersion *string
+	var kubernetesVersion string
 	if existingNode != nil && existingNode.Status.NodeInfo.KubeletVersion != "" {
-		kubernetesVersion = &existingNode.Status.NodeInfo.KubeletVersion
+		kubernetesVersion = existingNode.Status.NodeInfo.KubeletVersion
 	}
 
 	machine := &clusterv1.Machine{
@@ -466,7 +495,10 @@ func (r *MachinePoolReconciler) computeDesiredMachine(mp *expv1.MachinePool, inf
 			Annotations:     make(map[string]string),
 		},
 		Spec: clusterv1.MachineSpec{
-			ClusterName:       mp.Spec.ClusterName,
+			ClusterName: mp.Spec.ClusterName,
+			Bootstrap: clusterv1.Bootstrap{
+				DataSecretName: ptr.To(""),
+			},
 			InfrastructureRef: infraRef,
 			Version:           kubernetesVersion,
 		},
@@ -533,7 +565,7 @@ func (r *MachinePoolReconciler) waitForMachineCreation(ctx context.Context, mach
 	// The polling is against a local memory cache.
 	const waitForCacheUpdateInterval = 100 * time.Millisecond
 
-	for i := range len(machineList) {
+	for i := range machineList {
 		machine := machineList[i]
 		pollErr := wait.PollUntilContextTimeout(ctx, waitForCacheUpdateInterval, waitForCacheUpdateTimeout, true, func(ctx context.Context) (bool, error) {
 			key := client.ObjectKey{Namespace: machine.Namespace, Name: machine.Name}
@@ -559,23 +591,18 @@ func (r *MachinePoolReconciler) getNodeRefMap(ctx context.Context, c client.Clie
 	log := ctrl.LoggerFrom(ctx)
 	nodeRefsMap := make(map[string]*corev1.Node)
 	nodeList := corev1.NodeList{}
-	for {
-		if err := c.List(ctx, &nodeList, client.Continue(nodeList.Continue)); err != nil {
-			return nil, err
+	// Note: We don't use pagination as this is a cached client and a cached client doesn't support pagination.
+	if err := c.List(ctx, &nodeList); err != nil {
+		return nil, err
+	}
+
+	for _, node := range nodeList.Items {
+		if node.Spec.ProviderID == "" {
+			log.V(2).Info("No ProviderID detected, skipping", "providerID", node.Spec.ProviderID)
+			continue
 		}
 
-		for _, node := range nodeList.Items {
-			if node.Spec.ProviderID == "" {
-				log.V(2).Info("No ProviderID detected, skipping", "providerID", node.Spec.ProviderID)
-				continue
-			}
-
-			nodeRefsMap[node.Spec.ProviderID] = &node
-		}
-
-		if nodeList.Continue == "" {
-			break
-		}
+		nodeRefsMap[node.Spec.ProviderID] = &node
 	}
 
 	return nodeRefsMap, nil

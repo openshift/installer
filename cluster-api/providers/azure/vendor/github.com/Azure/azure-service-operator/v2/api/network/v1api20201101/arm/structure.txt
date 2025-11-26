@@ -211,6 +211,7 @@ LoadBalancer_STATUS: Object (9 properties)
 │       └── "Regional"
 ├── Tags: map[string]string
 └── Type: *string
+
 LoadBalancer_Spec: Object (6 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -334,6 +335,7 @@ LoadBalancer_Spec: Object (6 properties)
 │       ├── "Global"
 │       └── "Regional"
 └── Tags: map[string]string
+
 LoadBalancersInboundNatRule_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -358,6 +360,7 @@ LoadBalancersInboundNatRule_STATUS: Object (5 properties)
 │       ├── "Succeeded"
 │       └── "Updating"
 └── Type: *string
+
 LoadBalancersInboundNatRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (7 properties)
@@ -372,6 +375,7 @@ LoadBalancersInboundNatRule_Spec: Object (2 properties)
         ├── "All"
         ├── "Tcp"
         └── "Udp"
+
 NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded: Object (8 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -459,6 +463,7 @@ NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded: Object (8 properti
 │       └── Id: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 NetworkInterface_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -505,6 +510,7 @@ NetworkInterface_Spec: Object (5 properties)
 │   └── PrivateLinkService: *Object (1 property)
 │       └── Id: *string
 └── Tags: map[string]string
+
 NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded: Object (7 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -527,6 +533,7 @@ NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded: Object (7 
 │       └── Id: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 NetworkSecurityGroup_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -564,6 +571,7 @@ NetworkSecurityGroup_Spec: Object (4 properties)
 │       │   └── SourcePortRanges: string[]
 │       └── Type: *string
 └── Tags: map[string]string
+
 NetworkSecurityGroupsSecurityRule_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -602,6 +610,7 @@ NetworkSecurityGroupsSecurityRule_STATUS: Object (5 properties)
 │   ├── SourcePortRange: *string
 │   └── SourcePortRanges: string[]
 └── Type: *string
+
 NetworkSecurityGroupsSecurityRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (15 properties)
@@ -632,6 +641,7 @@ NetworkSecurityGroupsSecurityRule_Spec: Object (2 properties)
     │   └── Id: *string
     ├── SourcePortRange: *string
     └── SourcePortRanges: string[]
+
 PublicIPAddress_STATUS: Object (10 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -692,6 +702,7 @@ PublicIPAddress_STATUS: Object (10 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 PublicIPAddress_Spec: Object (7 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -739,6 +750,7 @@ PublicIPAddress_Spec: Object (7 properties)
 │       └── "Regional"
 ├── Tags: map[string]string
 └── Zones: string[]
+
 RouteTable_STATUS: Object (7 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -754,6 +766,7 @@ RouteTable_STATUS: Object (7 properties)
 │   └── ResourceGuid: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 RouteTable_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -773,6 +786,7 @@ RouteTable_Spec: Object (4 properties)
 │       │       └── "VnetLocal"
 │       └── Type: *string
 └── Tags: map[string]string
+
 RouteTablesRoute_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -793,6 +807,7 @@ RouteTablesRoute_STATUS: Object (5 properties)
 │       ├── "Succeeded"
 │       └── "Updating"
 └── Type: *string
+
 RouteTablesRoute_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
@@ -804,6 +819,7 @@ RouteTablesRoute_Spec: Object (2 properties)
         ├── "VirtualAppliance"
         ├── "VirtualNetworkGateway"
         └── "VnetLocal"
+
 VirtualNetworkGateway_STATUS: Object (8 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -1004,6 +1020,7 @@ VirtualNetworkGateway_STATUS: Object (8 properties)
 │       └── "RouteBased"
 ├── Tags: map[string]string
 └── Type: *string
+
 VirtualNetworkGateway_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1169,6 +1186,7 @@ VirtualNetworkGateway_Spec: Object (5 properties)
 │       ├── "PolicyBased"
 │       └── "RouteBased"
 └── Tags: map[string]string
+
 VirtualNetwork_STATUS: Object (8 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -1200,6 +1218,7 @@ VirtualNetwork_STATUS: Object (8 properties)
 │   └── ResourceGuid: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 VirtualNetwork_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1273,6 +1292,7 @@ VirtualNetwork_Spec: Object (5 properties)
 │       │   └── UseRemoteGateways: *bool
 │       └── Type: *string
 └── Tags: map[string]string
+
 VirtualNetworksSubnet_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -1336,6 +1356,7 @@ VirtualNetworksSubnet_STATUS: Object (5 properties)
 │       │   └── "Updating"
 │       └── Service: *string
 └── Type: *string
+
 VirtualNetworksSubnet_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (12 properties)
@@ -1366,6 +1387,7 @@ VirtualNetworksSubnet_Spec: Object (2 properties)
     └── ServiceEndpoints: Object (2 properties)[]
         ├── Locations: string[]
         └── Service: *string
+
 VirtualNetworksVirtualNetworkPeering_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -1394,6 +1416,7 @@ VirtualNetworksVirtualNetworkPeering_STATUS: Object (5 properties)
 │   ├── ResourceGuid: *string
 │   └── UseRemoteGateways: *bool
 └── Type: *string
+
 VirtualNetworksVirtualNetworkPeering_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (9 properties)
@@ -1412,3 +1435,4 @@ VirtualNetworksVirtualNetworkPeering_Spec: Object (2 properties)
     ├── RemoteVirtualNetwork: *Object (1 property)
     │   └── Id: *string
     └── UseRemoteGateways: *bool
+

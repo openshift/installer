@@ -75,6 +75,11 @@ type NetworkTemplateSpec struct {
 	// This is different from APIServerLB, and is used only in private clusters (optionally) for enabling outbound traffic.
 	// +optional
 	ControlPlaneOutboundLB *LoadBalancerClassSpec `json:"controlPlaneOutboundLB,omitempty"`
+
+	// AdditionalAPIServerLBPorts is the configuration for the additional inbound control-plane load balancer ports
+	// Each port specified (e.g., 9345) creates an inbound rule where the frontend port and the backend port are the same.
+	// +optional
+	AdditionalAPIServerLBPorts []LoadBalancerPort `json:"additionalAPIServerLBPorts,omitempty"`
 }
 
 // GetSubnetTemplate returns the subnet template based on the subnet role.

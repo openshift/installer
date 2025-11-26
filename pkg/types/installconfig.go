@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -45,6 +46,7 @@ var (
 		ibmcloud.Name,
 		nutanix.Name,
 		openstack.Name,
+		powervc.Name,
 		powervs.Name,
 		vsphere.Name,
 	}
@@ -56,8 +58,6 @@ var (
 		none.Name,
 	}
 
-	// FCOS is a setting to enable Fedora CoreOS-only modifications
-	FCOS = false
 	// SCOS is a setting to enable CentOS Stream CoreOS-only modifications
 	SCOS = false
 )
@@ -88,6 +88,7 @@ const (
 )
 
 //go:generate go run ../../vendor/sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1 paths=. output:dir=../../data/data/
+//go:generate go run ../../vendor/k8s.io/code-generator/cmd/deepcopy-gen --output-file zz_generated.deepcopy.go ./...
 
 // InstallConfig is the configuration for an OpenShift install.
 type InstallConfig struct {
@@ -193,13 +194,15 @@ type InstallConfig struct {
 	// "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest
 	// "Manual": CredentialsRequests must be handled manually by the user
 	//
-	// For each of the following platforms, the field can set to the specified values. For all other platforms, the
+	// For each of the following platforms, the field can be set to the specified values. For all other platforms, the
 	// field must not be set.
 	// AWS: "Mint", "Passthrough", "Manual"
 	// Azure: "Passthrough", "Manual"
 	// AzureStack: "Manual"
 	// GCP: "Mint", "Passthrough", "Manual"
 	// IBMCloud: "Manual"
+	// OpenStack: "Passthrough"
+	// PowerVC: "Passthrough"
 	// PowerVS: "Manual"
 	// Nutanix: "Manual"
 	// +optional
@@ -232,11 +235,6 @@ func (c *InstallConfig) ClusterDomain() string {
 	return fmt.Sprintf("%s.%s", c.ObjectMeta.Name, strings.TrimSuffix(c.BaseDomain, "."))
 }
 
-// IsFCOS returns true if Fedora CoreOS-only modifications are enabled
-func (c *InstallConfig) IsFCOS() bool {
-	return FCOS
-}
-
 // IsSCOS returns true if CentOs Stream CoreOS-only modifications are enabled
 func (c *InstallConfig) IsSCOS() bool {
 	return SCOS
@@ -244,7 +242,7 @@ func (c *InstallConfig) IsSCOS() bool {
 
 // IsOKD returns true if community-only modifications are enabled
 func (c *InstallConfig) IsOKD() bool {
-	return c.IsFCOS() || c.IsSCOS()
+	return c.IsSCOS()
 }
 
 // IsSingleNodeOpenShift returns true if the install-config has been configured for
@@ -306,6 +304,10 @@ type Platform struct {
 	// +optional
 	OpenStack *openstack.Platform `json:"openstack,omitempty"`
 
+	// PowerVC is the configuration used when installing on Power VC.
+	// +optional
+	PowerVC *powervc.Platform `json:"powervc,omitempty"`
+
 	// PowerVS is the configuration used when installing on Power VS.
 	// +optional
 	PowerVS *powervs.Platform `json:"powervs,omitempty"`
@@ -360,6 +362,9 @@ func (p *Platform) Name() string {
 		return none.Name
 	case p.External != nil:
 		return external.Name
+	// The PowerVC check needs to be performed before the OpenStack check
+	case p.PowerVC != nil:
+		return powervc.Name
 	case p.OpenStack != nil:
 		return openstack.Name
 	case p.VSphere != nil:
@@ -523,6 +528,11 @@ type ImageDigestSource struct {
 	// Mirrors is one or more repositories that may also contain the same images.
 	// +optional
 	Mirrors []string `json:"mirrors,omitempty"`
+
+	// SourcePolicy defines the fallback policy when there is a failure pulling an
+	// image from the mirrors.
+	// +optional
+	SourcePolicy configv1.MirrorSourcePolicy `json:"sourcePolicy"`
 }
 
 // CredentialsMode is the mode by which CredentialsRequests will be satisfied.

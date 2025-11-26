@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/utils"
 )
 
-// +azure:client:verbs=get;createorupdate,resource=PrivateZone,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns,packageAlias=armprivatedns,clientName=PrivateZonesClient,expand=false,rateLimitKey=privateDNSRateLimit
+// +azure:client:verbs=get;createorupdate,resource=PrivateZone,packageName=github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns,packageAlias=armprivatedns,clientName=PrivateZonesClient,expand=false,rateLimitKey=privateDNSRateLimit,azureStackCloudAPIVersion="2019-07-01"
 type Interface interface {
 	utils.GetFunc[armprivatedns.PrivateZone]
 	utils.CreateOrUpdateFunc[armprivatedns.PrivateZone]

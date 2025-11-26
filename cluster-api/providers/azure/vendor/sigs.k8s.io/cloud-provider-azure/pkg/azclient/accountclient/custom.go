@@ -38,6 +38,17 @@ func (client *Client) Create(ctx context.Context, resourceGroupName string, reso
 	return nil, nil
 }
 
+func (client *Client) Update(ctx context.Context, resourceGroupName string, resourceName string, parameters *armstorage.AccountUpdateParameters) (*armstorage.Account, error) {
+	if parameters == nil {
+		parameters = &armstorage.AccountUpdateParameters{}
+	}
+	resp, err := client.AccountsClient.Update(ctx, resourceGroupName, resourceName, *parameters, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.Account, nil
+}
+
 func (client *Client) GetProperties(ctx context.Context, resourceGroupName string, accountName string, options *armstorage.AccountsClientGetPropertiesOptions) (*armstorage.Account, error) {
 	resp, err := client.AccountsClient.GetProperties(ctx, resourceGroupName, accountName, options)
 	if err != nil {

@@ -93,7 +93,6 @@ type Platform struct {
 	// it contains an IPv4 and IPv6 address, otherwise only one VIP
 	//
 	// +kubebuilder:validation:MaxItems=2
-	// +kubebuilder:validation:UniqueItems=true
 	// +kubebuilder:validation:Format=ip
 	// +optional
 	APIVIPs []string `json:"apiVIPs,omitempty"`
@@ -109,7 +108,6 @@ type Platform struct {
 	// contains an IPv4 and IPv6 address, otherwise only one VIP
 	//
 	// +kubebuilder:validation:MaxItems=2
-	// +kubebuilder:validation:UniqueItems=true
 	// +kubebuilder:validation:Format=ip
 	// +optional
 	IngressVIPs []string `json:"ingressVIPs,omitempty"`

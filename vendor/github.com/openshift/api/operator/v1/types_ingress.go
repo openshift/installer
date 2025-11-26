@@ -35,6 +35,7 @@ import (
 //
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
+// +kubebuilder:validation:XValidation:rule="!has(self.spec.domain) || size('router-' + self.metadata.name + '.' + self.spec.domain) <= 253",message="The combined 'router-' + metadata.name + '.' + .spec.domain cannot exceed 253 characters"
 type IngressController struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -68,6 +69,22 @@ type IngressControllerSpec struct {
 	//
 	// If empty, defaults to ingress.config.openshift.io/cluster .spec.domain.
 	//
+	// The domain value must be a valid DNS name. It must consist of lowercase
+	// alphanumeric characters, '-' or '.', and each label must start and end
+	// with an alphanumeric character and not exceed 63 characters. Maximum
+	// length of a valid DNS domain is 253 characters.
+	//
+	// The implementation may add a prefix such as "router-default." to the domain
+	// when constructing the router canonical hostname. To ensure the resulting
+	// hostname does not exceed the DNS maximum length of 253 characters,
+	// the domain length is additionally validated at the IngressController object
+	// level. For the maximum length of the domain value itself, the shortest
+	// possible variant of the prefix and the ingress controller name was considered
+	// for example "router-a."
+	//
+	// +kubebuilder:validation:MaxLength=244
+	// +kubebuilder:validation:XValidation:rule="!format.dns1123Subdomain().validate(self).hasValue()",message="domain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character"
+	// +kubebuilder:validation:XValidation:rule="self.split('.').all(label, size(label) <= 63)",message="each DNS label must not exceed 63 characters"
 	// +optional
 	Domain string `json:"domain,omitempty"`
 
@@ -460,7 +477,7 @@ var (
 type CIDR string
 
 // LoadBalancerStrategy holds parameters for a load balancer.
-// +openshift:validation:FeatureGateAwareXValidation:featureGate=SetEIPForNLBIngressController,rule="!has(self.scope) || self.scope != 'Internal' || !has(self.providerParameters) || !has(self.providerParameters.aws) || !has(self.providerParameters.aws.networkLoadBalancer) || !has(self.providerParameters.aws.networkLoadBalancer.eipAllocations)",message="eipAllocations are forbidden when the scope is Internal."
+// +kubebuilder:validation:XValidation:rule="!has(self.scope) || self.scope != 'Internal' || !has(self.providerParameters) || !has(self.providerParameters.aws) || !has(self.providerParameters.aws.networkLoadBalancer) || !has(self.providerParameters.aws.networkLoadBalancer.eipAllocations)",message="eipAllocations are forbidden when the scope is Internal."
 // +kubebuilder:validation:XValidation:rule=`!has(self.scope) || self.scope != 'Internal' || !has(self.providerParameters) || !has(self.providerParameters.openstack) || !has(self.providerParameters.openstack.floatingIP) || self.providerParameters.openstack.floatingIP == ""`,message="cannot specify a floating ip when scope is internal"
 type LoadBalancerStrategy struct {
 	// scope indicates the scope at which the load balancer is exposed.
@@ -797,15 +814,14 @@ type AWSClassicLoadBalancerParameters struct {
 	// in the status of the IngressController object.
 	//
 	// +optional
-	// +openshift:enable:FeatureGate=IngressControllerLBSubnetsAWS
 	Subnets *AWSSubnets `json:"subnets,omitempty"`
 }
 
 // AWSNetworkLoadBalancerParameters holds configuration parameters for an
 // AWS Network load balancer. For Example: Setting AWS EIPs https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
-// +openshift:validation:FeatureGateAwareXValidation:requiredFeatureGate=SetEIPForNLBIngressController;IngressControllerLBSubnetsAWS,rule=`has(self.subnets) && has(self.subnets.ids) && has(self.subnets.names) && has(self.eipAllocations) ? size(self.subnets.ids + self.subnets.names) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
-// +openshift:validation:FeatureGateAwareXValidation:requiredFeatureGate=SetEIPForNLBIngressController;IngressControllerLBSubnetsAWS,rule=`has(self.subnets) && has(self.subnets.ids) && !has(self.subnets.names) && has(self.eipAllocations) ? size(self.subnets.ids) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
-// +openshift:validation:FeatureGateAwareXValidation:requiredFeatureGate=SetEIPForNLBIngressController;IngressControllerLBSubnetsAWS,rule=`has(self.subnets) && has(self.subnets.names) && !has(self.subnets.ids) && has(self.eipAllocations) ? size(self.subnets.names) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
+// +kubebuilder:validation:XValidation:rule=`has(self.subnets) && has(self.subnets.ids) && has(self.subnets.names) && has(self.eipAllocations) ? size(self.subnets.ids + self.subnets.names) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
+// +kubebuilder:validation:XValidation:rule=`has(self.subnets) && has(self.subnets.ids) && !has(self.subnets.names) && has(self.eipAllocations) ? size(self.subnets.ids) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
+// +kubebuilder:validation:XValidation:rule=`has(self.subnets) && has(self.subnets.names) && !has(self.subnets.ids) && has(self.eipAllocations) ? size(self.subnets.names) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
 type AWSNetworkLoadBalancerParameters struct {
 	// subnets specifies the subnets to which the load balancer will
 	// attach. The subnets may be specified by either their
@@ -821,7 +837,6 @@ type AWSNetworkLoadBalancerParameters struct {
 	// in the status of the IngressController object.
 	//
 	// +optional
-	// +openshift:enable:FeatureGate=IngressControllerLBSubnetsAWS
 	Subnets *AWSSubnets `json:"subnets,omitempty"`
 
 	// eipAllocations is a list of IDs for Elastic IP (EIP) addresses that
@@ -837,7 +852,6 @@ type AWSNetworkLoadBalancerParameters struct {
 	// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html for general
 	// information about configuration, characteristics, and limitations of Elastic IP addresses.
 	//
-	// +openshift:enable:FeatureGate=SetEIPForNLBIngressController
 	// +optional
 	// +listType=atomic
 	// +kubebuilder:validation:XValidation:rule=`self.all(x, self.exists_one(y, x == y))`,message="eipAllocations cannot contain duplicates"

@@ -46,7 +46,7 @@ func TestValidateDiskEncryption(t *testing.T) {
 			name:      "invalid disk encryption set (platform is stack cloud)",
 			pool:      validDiskEncryptionMachinePool(),
 			cloudName: azure.StackCloud,
-			expected:  fmt.Sprintf(`diskEncryptionSet.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:".+", Name:"%s"}: disk encryption sets are not supported on this platform`, subscriptionID, diskEncryptionSetName),
+			expected:  fmt.Sprintf(`diskEncryptionSet.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":".+","name":"%s"}: disk encryption sets are not supported on this platform`, subscriptionID, diskEncryptionSetName),
 		},
 		{
 			name: "invalid disk encryption set (invalid subscription ID)",

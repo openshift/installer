@@ -13,14 +13,15 @@ import (
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"github.com/jmespath/go-jmespath"
 	"strconv"
 	"time"
 )
 
-// Describes the specified key pairs or all of your key pairs. For more
-// information about key pairs, see Amazon EC2 key pairs (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
-// in the Amazon Elastic Compute Cloud User Guide.
+// Describes the specified key pairs or all of your key pairs.
+//
+// For more information about key pairs, see [Amazon EC2 key pairs] in the Amazon EC2 User Guide.
+//
+// [Amazon EC2 key pairs]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
 func (c *Client) DescribeKeyPairs(ctx context.Context, params *DescribeKeyPairsInput, optFns ...func(*Options)) (*DescribeKeyPairsOutput, error) {
 	if params == nil {
 		params = &DescribeKeyPairsInput{}
@@ -45,21 +46,30 @@ type DescribeKeyPairsInput struct {
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - key-pair-id - The ID of the key pair.
+	//
 	//   - fingerprint - The fingerprint of the key pair.
+	//
 	//   - key-name - The name of the key pair.
+	//
 	//   - tag-key - The key of a tag assigned to the resource. Use this filter to find
 	//   all resources assigned a tag with a specific key, regardless of the tag value.
+	//
 	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
 	Filters []types.Filter
 
-	// If true , the public key material is included in the response. Default: false
+	// If true , the public key material is included in the response.
+	//
+	// Default: false
 	IncludePublicKey *bool
 
-	// The key pair names. Default: Describes all of your key pairs.
+	// The key pair names.
+	//
+	// Default: Describes all of your key pairs.
 	KeyNames []string
 
 	// The IDs of the key pairs.
@@ -122,6 +132,9 @@ func (c *Client) addOperationDescribeKeyPairsMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -132,6 +145,15 @@ func (c *Client) addOperationDescribeKeyPairsMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeKeyPairs(options.Region), middleware.Before); err != nil {
@@ -152,16 +174,20 @@ func (c *Client) addOperationDescribeKeyPairsMiddlewares(stack *middleware.Stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeKeyPairsAPIClient is a client that implements the DescribeKeyPairs
-// operation.
-type DescribeKeyPairsAPIClient interface {
-	DescribeKeyPairs(context.Context, *DescribeKeyPairsInput, ...func(*Options)) (*DescribeKeyPairsOutput, error)
-}
-
-var _ DescribeKeyPairsAPIClient = (*Client)(nil)
 
 // KeyPairExistsWaiterOptions are waiter options for KeyPairExistsWaiter
 type KeyPairExistsWaiterOptions struct {
@@ -195,12 +221,13 @@ type KeyPairExistsWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeKeyPairsInput, *DescribeKeyPairsOutput, error) (bool, error)
 }
 
@@ -277,7 +304,13 @@ func (w *KeyPairExistsWaiter) WaitForOutput(ctx context.Context, params *Describ
 		}
 
 		out, err := w.client.DescribeKeyPairs(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -316,22 +349,23 @@ func (w *KeyPairExistsWaiter) WaitForOutput(ctx context.Context, params *Describ
 func keyPairExistsStateRetryable(ctx context.Context, input *DescribeKeyPairsInput, output *DescribeKeyPairsOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("length(KeyPairs[].KeyName) > `0`", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.KeyPairs
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.KeyName
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
+		v4 := len(v2)
+		v5 := 0
+		v6 := int64(v4) > int64(v5)
 		expectedValue := "true"
 		bv, err := strconv.ParseBool(expectedValue)
 		if err != nil {
 			return false, fmt.Errorf("error parsing boolean from string %w", err)
 		}
-		value, ok := pathValue.(bool)
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected bool value got %T", pathValue)
-		}
-
-		if value == bv {
+		if v6 == bv {
 			return false, nil
 		}
 	}
@@ -348,8 +382,19 @@ func keyPairExistsStateRetryable(ctx context.Context, input *DescribeKeyPairsInp
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
+
+// DescribeKeyPairsAPIClient is a client that implements the DescribeKeyPairs
+// operation.
+type DescribeKeyPairsAPIClient interface {
+	DescribeKeyPairs(context.Context, *DescribeKeyPairsInput, ...func(*Options)) (*DescribeKeyPairsOutput, error)
+}
+
+var _ DescribeKeyPairsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeKeyPairs(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

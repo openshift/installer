@@ -353,7 +353,7 @@ func TestValidate(t *testing.T) {
 				validNetworkResourceGroupName,
 				validVPCName,
 			},
-			errorMsg: `\Qplatform.ibmcloud.controlPlaneSubnets: Invalid value: []string(nil): controlPlaneSubnets cannot be empty when providing a vpcName: valid-vpc\E`,
+			errorMsg: `\Qplatform.ibmcloud.controlPlaneSubnets: Invalid value: null: controlPlaneSubnets cannot be empty when providing a vpcName: valid-vpc\E`,
 		},
 		{
 			name: "control plane subnet not found",
@@ -441,7 +441,7 @@ func TestValidate(t *testing.T) {
 					ic.ControlPlane.Platform.IBMCloud.Zones = validZones
 				},
 			},
-			errorMsg: `\Qplatform.ibmcloud.controlPlaneSubnets: Invalid value: []string{"valid-subnet-1"}: number of zones (1) covered by controlPlaneSubnets does not match number of provided or default zones (3) for control plane in us-south\E`,
+			errorMsg: `\Qplatform.ibmcloud.controlPlaneSubnets: Invalid value: ["valid-subnet-1"]: number of zones (1) covered by controlPlaneSubnets does not match number of provided or default zones (3) for control plane in us-south\E`,
 		},
 		{
 			name: "control plane subnet valid zones some",
@@ -477,7 +477,7 @@ func TestValidate(t *testing.T) {
 				validNetworkResourceGroupName,
 				validVPCName,
 			},
-			errorMsg: `\Qplatform.ibmcloud.computeSubnets: Invalid value: []string(nil): computeSubnets cannot be empty when providing a vpcName: valid-vpc\E`,
+			errorMsg: `\Qplatform.ibmcloud.computeSubnets: Invalid value: null: computeSubnets cannot be empty when providing a vpcName: valid-vpc\E`,
 		},
 		{
 			name: "compute subnet not found",
@@ -565,7 +565,7 @@ func TestValidate(t *testing.T) {
 					ic.Compute[0].Platform.IBMCloud.Zones = validZones
 				},
 			},
-			errorMsg: `\Qplatform.ibmcloud.computeSubnets: Invalid value: []string{"valid-subnet-1"}: number of zones (1) covered by computeSubnets does not match number of provided or default zones (3) for compute[0] in us-south\E`,
+			errorMsg: `\Qplatform.ibmcloud.computeSubnets: Invalid value: ["valid-subnet-1"]: number of zones (1) covered by computeSubnets does not match number of provided or default zones (3) for compute[0] in us-south\E`,
 		},
 		{
 			name: "single compute subnet valid zones some",
@@ -601,7 +601,7 @@ func TestValidate(t *testing.T) {
 					ic.Compute[1].Platform.IBMCloud.Zones = []string{validZoneUSSouth3}
 				},
 			},
-			errorMsg: `\Qplatform.ibmcloud.computeSubnets: Invalid value: []string{"valid-subnet-2", "valid-subnet-3"}: number of zones (2) covered by computeSubnets does not match number of provided or default zones (1) for compute[1] in us-south\E`,
+			errorMsg: `\Qplatform.ibmcloud.computeSubnets: Invalid value: ["valid-subnet-2","valid-subnet-3"]: number of zones (2) covered by computeSubnets does not match number of provided or default zones (1) for compute[1] in us-south\E`,
 		},
 		{
 			name: "multiple compute subnet valid zones some",

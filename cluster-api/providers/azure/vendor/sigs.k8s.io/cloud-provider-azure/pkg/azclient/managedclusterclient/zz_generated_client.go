@@ -24,8 +24,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/tracing"
-	armcontainerservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
+	armcontainerservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v6"
 
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/metrics"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/utils"
 )
 
@@ -55,15 +56,13 @@ func New(subscriptionID string, credential azcore.TokenCredential, options *arm.
 const GetOperationName = "ManagedClustersClient.Get"
 
 // Get gets the ManagedCluster
-func (client *Client) Get(ctx context.Context, resourceGroupName string, resourceName string) (result *armcontainerservice.ManagedCluster, rerr error) {
+func (client *Client) Get(ctx context.Context, resourceGroupName string, managedclusterName string) (result *armcontainerservice.ManagedCluster, err error) {
 
-	ctx = utils.ContextWithClientName(ctx, "ManagedClustersClient")
-	ctx = utils.ContextWithRequestMethod(ctx, "Get")
-	ctx = utils.ContextWithResourceGroupName(ctx, resourceGroupName)
-	ctx = utils.ContextWithSubscriptionID(ctx, client.subscriptionID)
+	metricsCtx := metrics.BeginARMRequest(client.subscriptionID, resourceGroupName, "ManagedCluster", "get")
+	defer func() { metricsCtx.Observe(ctx, err) }()
 	ctx, endSpan := runtime.StartSpan(ctx, GetOperationName, client.tracer, nil)
-	defer endSpan(rerr)
-	resp, err := client.ManagedClustersClient.Get(ctx, resourceGroupName, resourceName, nil)
+	defer endSpan(err)
+	resp, err := client.ManagedClustersClient.Get(ctx, resourceGroupName, managedclusterName, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -74,14 +73,12 @@ func (client *Client) Get(ctx context.Context, resourceGroupName string, resourc
 const CreateOrUpdateOperationName = "ManagedClustersClient.Create"
 
 // CreateOrUpdate creates or updates a ManagedCluster.
-func (client *Client) CreateOrUpdate(ctx context.Context, resourceGroupName string, resourceName string, resource armcontainerservice.ManagedCluster) (result *armcontainerservice.ManagedCluster, err error) {
-	ctx = utils.ContextWithClientName(ctx, "ManagedClustersClient")
-	ctx = utils.ContextWithRequestMethod(ctx, "CreateOrUpdate")
-	ctx = utils.ContextWithResourceGroupName(ctx, resourceGroupName)
-	ctx = utils.ContextWithSubscriptionID(ctx, client.subscriptionID)
+func (client *Client) CreateOrUpdate(ctx context.Context, resourceGroupName string, managedclusterName string, resource armcontainerservice.ManagedCluster) (result *armcontainerservice.ManagedCluster, err error) {
+	metricsCtx := metrics.BeginARMRequest(client.subscriptionID, resourceGroupName, "ManagedCluster", "create_or_update")
+	defer func() { metricsCtx.Observe(ctx, err) }()
 	ctx, endSpan := runtime.StartSpan(ctx, CreateOrUpdateOperationName, client.tracer, nil)
 	defer endSpan(err)
-	resp, err := utils.NewPollerWrapper(client.ManagedClustersClient.BeginCreateOrUpdate(ctx, resourceGroupName, resourceName, resource, nil)).WaitforPollerResp(ctx)
+	resp, err := utils.NewPollerWrapper(client.ManagedClustersClient.BeginCreateOrUpdate(ctx, resourceGroupName, managedclusterName, resource, nil)).WaitforPollerResp(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -94,27 +91,23 @@ func (client *Client) CreateOrUpdate(ctx context.Context, resourceGroupName stri
 const DeleteOperationName = "ManagedClustersClient.Delete"
 
 // Delete deletes a ManagedCluster by name.
-func (client *Client) Delete(ctx context.Context, resourceGroupName string, resourceName string) (err error) {
-	ctx = utils.ContextWithClientName(ctx, "ManagedClustersClient")
-	ctx = utils.ContextWithRequestMethod(ctx, "Delete")
-	ctx = utils.ContextWithResourceGroupName(ctx, resourceGroupName)
-	ctx = utils.ContextWithSubscriptionID(ctx, client.subscriptionID)
+func (client *Client) Delete(ctx context.Context, resourceGroupName string, managedclusterName string) (err error) {
+	metricsCtx := metrics.BeginARMRequest(client.subscriptionID, resourceGroupName, "ManagedCluster", "delete")
+	defer func() { metricsCtx.Observe(ctx, err) }()
 	ctx, endSpan := runtime.StartSpan(ctx, DeleteOperationName, client.tracer, nil)
 	defer endSpan(err)
-	_, err = utils.NewPollerWrapper(client.BeginDelete(ctx, resourceGroupName, resourceName, nil)).WaitforPollerResp(ctx)
+	_, err = utils.NewPollerWrapper(client.BeginDelete(ctx, resourceGroupName, managedclusterName, nil)).WaitforPollerResp(ctx)
 	return err
 }
 
 const ListOperationName = "ManagedClustersClient.List"
 
 // List gets a list of ManagedCluster in the resource group.
-func (client *Client) List(ctx context.Context, resourceGroupName string) (result []*armcontainerservice.ManagedCluster, rerr error) {
-	ctx = utils.ContextWithClientName(ctx, "ManagedClustersClient")
-	ctx = utils.ContextWithRequestMethod(ctx, "List")
-	ctx = utils.ContextWithResourceGroupName(ctx, resourceGroupName)
-	ctx = utils.ContextWithSubscriptionID(ctx, client.subscriptionID)
+func (client *Client) List(ctx context.Context, resourceGroupName string) (result []*armcontainerservice.ManagedCluster, err error) {
+	metricsCtx := metrics.BeginARMRequest(client.subscriptionID, resourceGroupName, "ManagedCluster", "list")
+	defer func() { metricsCtx.Observe(ctx, err) }()
 	ctx, endSpan := runtime.StartSpan(ctx, ListOperationName, client.tracer, nil)
-	defer endSpan(rerr)
+	defer endSpan(err)
 	pager := client.ManagedClustersClient.NewListByResourceGroupPager(resourceGroupName, nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

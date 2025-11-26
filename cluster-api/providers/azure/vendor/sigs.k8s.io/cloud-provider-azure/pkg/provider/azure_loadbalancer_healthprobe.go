@@ -21,33 +21,33 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2022-07-01/network"
-
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
 )
 
-func (az *Cloud) buildClusterServiceSharedProbe() *network.Probe {
-	return &network.Probe{
-		Name: pointer.String(consts.SharedProbeName),
-		ProbePropertiesFormat: &network.ProbePropertiesFormat{
-			Protocol:          network.ProbeProtocolHTTP,
-			Port:              pointer.Int32(az.ClusterServiceSharedLoadBalancerHealthProbePort),
-			RequestPath:       pointer.String(az.ClusterServiceSharedLoadBalancerHealthProbePath),
-			IntervalInSeconds: pointer.Int32(consts.HealthProbeDefaultProbeInterval),
-			ProbeThreshold:    pointer.Int32(consts.HealthProbeDefaultNumOfProbe),
+func (az *Cloud) buildClusterServiceSharedProbe() *armnetwork.Probe {
+	return &armnetwork.Probe{
+		Name: ptr.To(consts.SharedProbeName),
+		Properties: &armnetwork.ProbePropertiesFormat{
+			Protocol:          to.Ptr(armnetwork.ProbeProtocolHTTP),
+			Port:              ptr.To(az.ClusterServiceSharedLoadBalancerHealthProbePort),
+			RequestPath:       ptr.To(az.ClusterServiceSharedLoadBalancerHealthProbePath),
+			IntervalInSeconds: ptr.To(consts.HealthProbeDefaultProbeInterval),
+			ProbeThreshold:    ptr.To(consts.HealthProbeDefaultNumOfProbe),
 		},
 	}
 }
 
 // buildHealthProbeRulesForPort
-// for following sku: basic loadbalancer vs standard load balancer
+// for following SKU: basic loadbalancer vs standard load balancer
 // for following protocols: TCP HTTP HTTPS(SLB only)
 // return nil if no new probe is added
-func (az *Cloud) buildHealthProbeRulesForPort(serviceManifest *v1.Service, port v1.ServicePort, lbrule string, healthCheckNodePortProbe *network.Probe, useSharedProbe bool) (*network.Probe, error) {
+func (az *Cloud) buildHealthProbeRulesForPort(serviceManifest *v1.Service, port v1.ServicePort, lbrule string, healthCheckNodePortProbe *armnetwork.Probe, useSharedProbe bool) (*armnetwork.Probe, error) {
 	if useSharedProbe {
 		klog.V(4).Infof("skip creating health probe for port %d because the shared probe is used", port.Port)
 		return nil, nil
@@ -58,7 +58,7 @@ func (az *Cloud) buildHealthProbeRulesForPort(serviceManifest *v1.Service, port 
 	}
 	// protocol should be tcp, because sctp is handled in outer loop
 
-	properties := &network.ProbePropertiesFormat{}
+	properties := &armnetwork.ProbePropertiesFormat{}
 	var err error
 
 	// order - Specific Override
@@ -99,7 +99,7 @@ func (az *Cloud) buildHealthProbeRulesForPort(serviceManifest *v1.Service, port 
 			for _, item := range serviceManifest.Spec.Ports {
 				if strings.EqualFold(item.Name, *probePort) {
 					//found the port
-					properties.Port = pointer.Int32(item.NodePort)
+					properties.Port = ptr.To(item.NodePort)
 				}
 			}
 		} else {
@@ -109,14 +109,14 @@ func (az *Cloud) buildHealthProbeRulesForPort(serviceManifest *v1.Service, port 
 				//nolint:gosec
 				if item.Port == int32(port) {
 					//found the port
-					properties.Port = pointer.Int32(item.NodePort)
+					properties.Port = ptr.To(item.NodePort)
 					found = true
 					break
 				}
 			}
 			if !found {
 				//nolint:gosec
-				properties.Port = pointer.Int32(int32(port))
+				properties.Port = ptr.To(int32(port))
 			}
 		}
 	} else if healthCheckNodePortProbe != nil {
@@ -150,30 +150,30 @@ func (az *Cloud) buildHealthProbeRulesForPort(serviceManifest *v1.Service, port 
 
 	// 4. Finally, if protocol is still nil, default to TCP
 	if protocol == nil {
-		protocol = pointer.String(string(network.ProtocolTCP))
+		protocol = ptr.To(string(armnetwork.ProtocolTCP))
 	}
 
 	*protocol = strings.TrimSpace(*protocol)
 	switch {
-	case strings.EqualFold(*protocol, string(network.ProtocolTCP)):
-		properties.Protocol = network.ProbeProtocolTCP
-	case strings.EqualFold(*protocol, string(network.ProtocolHTTPS)):
+	case strings.EqualFold(*protocol, string(armnetwork.ProtocolTCP)):
+		properties.Protocol = to.Ptr(armnetwork.ProbeProtocolTCP)
+	case strings.EqualFold(*protocol, string(armnetwork.ProtocolHTTPS)):
 		//HTTPS probe is only supported in standard loadbalancer
 		//For backward compatibility,when unsupported protocol is used, fall back to tcp protocol in basic lb mode instead
-		if !az.useStandardLoadBalancer() {
-			properties.Protocol = network.ProbeProtocolTCP
+		if !az.UseStandardLoadBalancer() {
+			properties.Protocol = to.Ptr(armnetwork.ProbeProtocolTCP)
 		} else {
-			properties.Protocol = network.ProbeProtocolHTTPS
+			properties.Protocol = to.Ptr(armnetwork.ProbeProtocolHTTPS)
 		}
-	case strings.EqualFold(*protocol, string(network.ProtocolHTTP)):
-		properties.Protocol = network.ProbeProtocolHTTP
+	case strings.EqualFold(*protocol, string(armnetwork.ProtocolHTTP)):
+		properties.Protocol = to.Ptr(armnetwork.ProbeProtocolHTTP)
 	default:
 		//For backward compatibility,when unsupported protocol is used, fall back to tcp protocol in basic lb mode instead
-		properties.Protocol = network.ProbeProtocolTCP
+		properties.Protocol = to.Ptr(armnetwork.ProbeProtocolTCP)
 	}
 
 	// Select request path
-	if strings.EqualFold(string(properties.Protocol), string(network.ProtocolHTTPS)) || strings.EqualFold(string(properties.Protocol), string(network.ProtocolHTTP)) {
+	if strings.EqualFold(string(*properties.Protocol), string(armnetwork.ProtocolHTTPS)) || strings.EqualFold(string(*properties.Protocol), string(armnetwork.ProtocolHTTP)) {
 		// get request path ,only used with http/https probe
 		path, err := consts.GetHealthProbeConfigOfPortFromK8sSvcAnnotation(serviceManifest.Annotations, port.Port, consts.HealthProbeParamsRequestPath)
 		if err != nil {
@@ -185,7 +185,7 @@ func (az *Cloud) buildHealthProbeRulesForPort(serviceManifest *v1.Service, port 
 			}
 		}
 		if path == nil {
-			path = pointer.String(consts.HealthProbeDefaultRequestPath)
+			path = ptr.To(consts.HealthProbeDefaultRequestPath)
 		}
 		properties.RequestPath = path
 	}
@@ -194,9 +194,9 @@ func (az *Cloud) buildHealthProbeRulesForPort(serviceManifest *v1.Service, port 
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse health probe config for port %d: %w", port.Port, err)
 	}
-	probe := &network.Probe{
-		Name:                  &lbrule,
-		ProbePropertiesFormat: properties,
+	probe := &armnetwork.Probe{
+		Name:       &lbrule,
+		Properties: properties,
 	}
 	return probe, nil
 }
@@ -244,7 +244,7 @@ func (*Cloud) getHealthProbeConfigProbeInterval(serviceManifest *v1.Service, por
 	}
 
 	if probeInterval == nil {
-		probeInterval = pointer.Int32(consts.HealthProbeDefaultProbeInterval)
+		probeInterval = ptr.To(consts.HealthProbeDefaultProbeInterval)
 	}
 	return probeInterval, nil
 }
@@ -273,19 +273,19 @@ func (*Cloud) getHealthProbeConfigNumOfProbe(serviceManifest *v1.Service, port i
 	}
 
 	if numberOfProbes == nil {
-		numberOfProbes = pointer.Int32(consts.HealthProbeDefaultNumOfProbe)
+		numberOfProbes = ptr.To(consts.HealthProbeDefaultNumOfProbe)
 	}
 	return numberOfProbes, nil
 }
 
-func findProbe(probes []network.Probe, probe network.Probe) bool {
+func findProbe(probes []*armnetwork.Probe, probe *armnetwork.Probe) bool {
 	for _, existingProbe := range probes {
-		if strings.EqualFold(pointer.StringDeref(existingProbe.Name, ""), pointer.StringDeref(probe.Name, "")) &&
-			pointer.Int32Deref(existingProbe.Port, 0) == pointer.Int32Deref(probe.Port, 0) &&
-			strings.EqualFold(string(existingProbe.Protocol), string(probe.Protocol)) &&
-			strings.EqualFold(pointer.StringDeref(existingProbe.RequestPath, ""), pointer.StringDeref(probe.RequestPath, "")) &&
-			pointer.Int32Deref(existingProbe.IntervalInSeconds, 0) == pointer.Int32Deref(probe.IntervalInSeconds, 0) &&
-			pointer.Int32Deref(existingProbe.ProbeThreshold, 0) == pointer.Int32Deref(probe.ProbeThreshold, 0) {
+		if strings.EqualFold(ptr.Deref(existingProbe.Name, ""), ptr.Deref(probe.Name, "")) &&
+			ptr.Deref(existingProbe.Properties.Port, 0) == ptr.Deref(probe.Properties.Port, 0) &&
+			strings.EqualFold(string(ptr.Deref(existingProbe.Properties.Protocol, "")), string(ptr.Deref(probe.Properties.Protocol, ""))) &&
+			strings.EqualFold(ptr.Deref(existingProbe.Properties.RequestPath, ""), ptr.Deref(probe.Properties.RequestPath, "")) &&
+			ptr.Deref(existingProbe.Properties.IntervalInSeconds, 0) == ptr.Deref(probe.Properties.IntervalInSeconds, 0) &&
+			ptr.Deref(existingProbe.Properties.ProbeThreshold, 0) == ptr.Deref(probe.Properties.ProbeThreshold, 0) {
 			return true
 		}
 	}
@@ -295,32 +295,32 @@ func findProbe(probes []network.Probe, probe network.Probe) bool {
 // keepSharedProbe ensures the shared probe will not be removed if there are more than 1 service referencing it.
 func (az *Cloud) keepSharedProbe(
 	service *v1.Service,
-	lb network.LoadBalancer,
-	expectedProbes []network.Probe,
+	lb armnetwork.LoadBalancer,
+	expectedProbes []*armnetwork.Probe,
 	wantLB bool,
-) ([]network.Probe, error) {
+) ([]*armnetwork.Probe, error) {
 	var shouldConsiderRemoveSharedProbe bool
 	if !wantLB {
 		shouldConsiderRemoveSharedProbe = true
 	}
 
-	if lb.LoadBalancerPropertiesFormat != nil && lb.Probes != nil {
-		for _, probe := range *lb.Probes {
-			if strings.EqualFold(pointer.StringDeref(probe.Name, ""), consts.SharedProbeName) {
+	if lb.Properties != nil && lb.Properties.Probes != nil {
+		for _, probe := range lb.Properties.Probes {
+			if strings.EqualFold(ptr.Deref(probe.Name, ""), consts.SharedProbeName) {
 				if !az.useSharedLoadBalancerHealthProbeMode() {
 					shouldConsiderRemoveSharedProbe = true
 				}
-				if probe.ProbePropertiesFormat != nil && probe.LoadBalancingRules != nil {
-					for _, rule := range *probe.LoadBalancingRules {
+				if probe.Properties != nil && probe.Properties.LoadBalancingRules != nil {
+					for _, rule := range probe.Properties.LoadBalancingRules {
 						ruleName, err := getLastSegment(*rule.ID, "/")
 						if err != nil {
 							klog.Errorf("failed to parse load balancing rule name %s attached to health probe %s", *rule.ID, *probe.ID)
-							return []network.Probe{}, err
+							return []*armnetwork.Probe{}, err
 						}
 						if !az.serviceOwnsRule(service, ruleName) && shouldConsiderRemoveSharedProbe {
 							klog.V(4).Infof("there are load balancing rule %s of another service referencing the health probe %s, so the health probe should not be removed", *rule.ID, *probe.ID)
 							sharedProbe := az.buildClusterServiceSharedProbe()
-							expectedProbes = append(expectedProbes, *sharedProbe)
+							expectedProbes = append(expectedProbes, sharedProbe)
 							return expectedProbes, nil
 						}
 					}

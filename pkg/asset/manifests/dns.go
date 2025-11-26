@@ -3,7 +3,7 @@ package manifests
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -30,12 +30,13 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var (
-	dnsCfgFilename = filepath.Join(manifestDir, "cluster-dns-02-config.yml")
+	dnsCfgFilename = path.Join(manifestDir, "cluster-dns-02-config.yml")
 
 	combineGCPZoneInfo = func(project, zoneName string) string {
 		return fmt.Sprintf("project/%s/managedZones/%s", project, zoneName)
@@ -156,7 +157,7 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { 
 			config.Spec.PrivateZone = nil
 			break
 		}
-		client, err := icgcp.NewClient(context.Background(), installConfig.Config.GCP.ServiceEndpoints)
+		client, err := icgcp.NewClient(context.Background(), installConfig.Config.GCP.Endpoint)
 		if err != nil {
 			return err
 		}
@@ -228,7 +229,7 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { 
 		config.Spec.PrivateZone = &configv1.DNSZone{
 			ID: zoneID,
 		}
-	case openstacktypes.Name, baremetaltypes.Name, externaltypes.Name, nonetypes.Name, vspheretypes.Name, ovirttypes.Name, nutanixtypes.Name:
+	case openstacktypes.Name, powervctypes.Name, baremetaltypes.Name, externaltypes.Name, nonetypes.Name, vspheretypes.Name, ovirttypes.Name, nutanixtypes.Name:
 	default:
 		return errors.New("invalid Platform")
 	}

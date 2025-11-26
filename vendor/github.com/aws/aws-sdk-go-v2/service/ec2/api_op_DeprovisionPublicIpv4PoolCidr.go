@@ -28,10 +28,7 @@ func (c *Client) DeprovisionPublicIpv4PoolCidr(ctx context.Context, params *Depr
 
 type DeprovisionPublicIpv4PoolCidrInput struct {
 
-	// The CIDR you want to deprovision from the pool. Enter the CIDR you want to
-	// deprovision with a netmask of /32 . You must rerun this command for each IP
-	// address in the CIDR range. If your CIDR is a /24 , you will have to run this
-	// command to deprovision each of the 256 IP addresses in the /24 CIDR.
+	// The CIDR you want to deprovision from the pool.
 	//
 	// This member is required.
 	Cidr *string
@@ -107,6 +104,9 @@ func (c *Client) addOperationDeprovisionPublicIpv4PoolCidrMiddlewares(stack *mid
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -117,6 +117,15 @@ func (c *Client) addOperationDeprovisionPublicIpv4PoolCidrMiddlewares(stack *mid
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeprovisionPublicIpv4PoolCidrValidationMiddleware(stack); err != nil {
@@ -138,6 +147,18 @@ func (c *Client) addOperationDeprovisionPublicIpv4PoolCidrMiddlewares(stack *mid
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

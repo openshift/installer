@@ -51,8 +51,11 @@ type Snapshot struct {
 	// Required: true
 	SnapshotID *string `json:"snapshotID"`
 
-	// Status of the PVM instancesnapshot
+	// Status of the PVM instance snapshot
 	Status string `json:"status,omitempty"`
+
+	// Detailed information for the last PVM instance snapshot action
+	StatusDetail string `json:"statusDetail,omitempty"`
 
 	// A map of volume snapshots included in the PVM instance snapshot
 	// Required: true

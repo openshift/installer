@@ -12,9 +12,10 @@ import (
 	"time"
 )
 
-// Restores a snapshot from the Recycle Bin. For more information, see Restore
-// snapshots from the Recycle Bin (https://docs.aws.amazon.com/ebs/latest/userguide/recycle-bin-working-with-snaps.html#recycle-bin-restore-snaps)
-// in the Amazon EBS User Guide.
+// Restores a snapshot from the Recycle Bin. For more information, see [Restore snapshots from the Recycle Bin] in the
+// Amazon EBS User Guide.
+//
+// [Restore snapshots from the Recycle Bin]: https://docs.aws.amazon.com/ebs/latest/userguide/recycle-bin-working-with-snaps.html#recycle-bin-restore-snaps
 func (c *Client) RestoreSnapshotFromRecycleBin(ctx context.Context, params *RestoreSnapshotFromRecycleBinInput, optFns ...func(*Options)) (*RestoreSnapshotFromRecycleBinOutput, error) {
 	if params == nil {
 		params = &RestoreSnapshotFromRecycleBinInput{}
@@ -55,8 +56,9 @@ type RestoreSnapshotFromRecycleBinOutput struct {
 	Encrypted *bool
 
 	// The ARN of the Outpost on which the snapshot is stored. For more information,
-	// see Amazon EBS local snapshots on Outposts (https://docs.aws.amazon.com/ebs/latest/userguide/snapshots-outposts.html)
-	// in the Amazon EBS User Guide.
+	// see [Amazon EBS local snapshots on Outposts]in the Amazon EBS User Guide.
+	//
+	// [Amazon EBS local snapshots on Outposts]: https://docs.aws.amazon.com/ebs/latest/userguide/snapshots-outposts.html
 	OutpostArn *string
 
 	// The ID of the Amazon Web Services account that owns the EBS snapshot.
@@ -132,6 +134,9 @@ func (c *Client) addOperationRestoreSnapshotFromRecycleBinMiddlewares(stack *mid
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -142,6 +147,15 @@ func (c *Client) addOperationRestoreSnapshotFromRecycleBinMiddlewares(stack *mid
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRestoreSnapshotFromRecycleBinValidationMiddleware(stack); err != nil {
@@ -163,6 +177,18 @@ func (c *Client) addOperationRestoreSnapshotFromRecycleBinMiddlewares(stack *mid
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -122,6 +122,11 @@ func (in *AgentClusterInstallSpec) DeepCopyInto(out *AgentClusterInstallSpec) {
 		*out = make([]AgentMachinePool, len(*in))
 		copy(*out, *in)
 	}
+	if in.Arbiter != nil {
+		in, out := &in.Arbiter, &out.Arbiter
+		*out = new(AgentMachinePool)
+		**out = **in
+	}
 	if in.APIVIPs != nil {
 		in, out := &in.APIVIPs, &out.APIVIPs
 		*out = make([]string, len(*in))

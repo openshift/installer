@@ -161,29 +161,30 @@ func (m *MachineScope) InitMachineCache(ctx context.Context) error {
 // VMSpec returns the VM spec.
 func (m *MachineScope) VMSpec() azure.ResourceSpecGetter {
 	spec := &virtualmachines.VMSpec{
-		Name:                       m.Name(),
-		Location:                   m.Location(),
-		ExtendedLocation:           m.ExtendedLocation(),
-		ResourceGroup:              m.NodeResourceGroup(),
-		ClusterName:                m.ClusterName(),
-		Role:                       m.Role(),
-		NICIDs:                     m.NICIDs(),
-		SSHKeyData:                 m.AzureMachine.Spec.SSHPublicKey,
-		Size:                       m.AzureMachine.Spec.VMSize,
-		OSDisk:                     m.AzureMachine.Spec.OSDisk,
-		DataDisks:                  m.AzureMachine.Spec.DataDisks,
-		AvailabilitySetID:          m.AvailabilitySetID(),
-		Zone:                       m.AvailabilityZone(),
-		Identity:                   m.AzureMachine.Spec.Identity,
-		UserAssignedIdentities:     m.AzureMachine.Spec.UserAssignedIdentities,
-		SpotVMOptions:              m.AzureMachine.Spec.SpotVMOptions,
-		SecurityProfile:            m.AzureMachine.Spec.SecurityProfile,
-		DiagnosticsProfile:         m.AzureMachine.Spec.Diagnostics,
-		DisableExtensionOperations: ptr.Deref(m.AzureMachine.Spec.DisableExtensionOperations, false),
-		AdditionalTags:             m.AdditionalTags(),
-		AdditionalCapabilities:     m.AzureMachine.Spec.AdditionalCapabilities,
-		CapacityReservationGroupID: m.GetCapacityReservationGroupID(),
-		ProviderID:                 m.ProviderID(),
+		Name:                        m.Name(),
+		Location:                    m.Location(),
+		ExtendedLocation:            m.ExtendedLocation(),
+		ResourceGroup:               m.NodeResourceGroup(),
+		ClusterName:                 m.ClusterName(),
+		Role:                        m.Role(),
+		NICIDs:                      m.NICIDs(),
+		SSHKeyData:                  m.AzureMachine.Spec.SSHPublicKey,
+		Size:                        m.AzureMachine.Spec.VMSize,
+		OSDisk:                      m.AzureMachine.Spec.OSDisk,
+		DataDisks:                   m.AzureMachine.Spec.DataDisks,
+		AvailabilitySetID:           m.AvailabilitySetID(),
+		Zone:                        m.AvailabilityZone(),
+		Identity:                    m.AzureMachine.Spec.Identity,
+		UserAssignedIdentities:      m.AzureMachine.Spec.UserAssignedIdentities,
+		SpotVMOptions:               m.AzureMachine.Spec.SpotVMOptions,
+		SecurityProfile:             m.AzureMachine.Spec.SecurityProfile,
+		DiagnosticsProfile:          m.AzureMachine.Spec.Diagnostics,
+		DisableExtensionOperations:  ptr.Deref(m.AzureMachine.Spec.DisableExtensionOperations, false),
+		DisableVMBootstrapExtension: ptr.Deref(m.AzureMachine.Spec.DisableVMBootstrapExtension, false),
+		AdditionalTags:              m.AdditionalTags(),
+		AdditionalCapabilities:      m.AzureMachine.Spec.AdditionalCapabilities,
+		CapacityReservationGroupID:  m.GetCapacityReservationGroupID(),
+		ProviderID:                  m.ProviderID(),
 	}
 	if m.cache != nil {
 		spec.SKU = m.cache.VMSKU
@@ -400,15 +401,17 @@ func (m *MachineScope) VMExtensionSpecs() []azure.ResourceSpecGetter {
 		})
 	}
 
-	cpuArchitectureType, _ := m.cache.VMSKU.GetCapability(resourceskus.CPUArchitectureType)
-	bootstrapExtensionSpec := azure.GetBootstrappingVMExtension(m.AzureMachine.Spec.OSDisk.OSType, m.CloudEnvironment(), m.Name(), cpuArchitectureType)
+	if !ptr.Deref(m.AzureMachine.Spec.DisableVMBootstrapExtension, false) {
+		cpuArchitectureType, _ := m.cache.VMSKU.GetCapability(resourceskus.CPUArchitectureType)
+		bootstrapExtensionSpec := azure.GetBootstrappingVMExtension(m.AzureMachine.Spec.OSDisk.OSType, m.CloudEnvironment(), m.Name(), cpuArchitectureType)
 
-	if bootstrapExtensionSpec != nil {
-		extensionSpecs = append(extensionSpecs, &vmextensions.VMExtensionSpec{
-			ExtensionSpec: *bootstrapExtensionSpec,
-			ResourceGroup: m.NodeResourceGroup(),
-			Location:      m.Location(),
-		})
+		if bootstrapExtensionSpec != nil {
+			extensionSpecs = append(extensionSpecs, &vmextensions.VMExtensionSpec{
+				ExtensionSpec: *bootstrapExtensionSpec,
+				ResourceGroup: m.NodeResourceGroup(),
+				Location:      m.Location(),
+			})
+		}
 	}
 
 	return extensionSpecs
@@ -608,7 +611,7 @@ func (m *MachineScope) SetFailureReason(v string) {
 
 // SetConditionFalse sets the specified AzureMachine condition to false.
 func (m *MachineScope) SetConditionFalse(conditionType clusterv1.ConditionType, reason string, severity clusterv1.ConditionSeverity, message string) {
-	conditions.MarkFalse(m.AzureMachine, conditionType, reason, severity, message)
+	conditions.MarkFalse(m.AzureMachine, conditionType, reason, severity, "%s", message)
 }
 
 // SetAnnotation sets a key value annotation on the AzureMachine.

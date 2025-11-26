@@ -30,7 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -523,12 +523,12 @@ func validateManagedClusterNetwork(cli client.Client, labels map[string]string, 
 	ctx := context.Background()
 
 	// Fetch the Cluster.
-	clusterName, ok := labels[clusterv1.ClusterNameLabel]
+	clusterName, ok := labels[clusterv1beta1.ClusterNameLabel]
 	if !ok {
 		return nil
 	}
 
-	ownerCluster := &clusterv1.Cluster{}
+	ownerCluster := &clusterv1beta1.Cluster{}
 	key := client.ObjectKey{
 		Namespace: namespace,
 		Name:      clusterName,
@@ -1007,14 +1007,15 @@ func validateAKSExtensions(extensions []AKSExtension, fldPath *field.Path) field
 			allErrs = append(allErrs, field.Forbidden(fldPath.Child("ReleaseTrain"), "ReleaseTrain must not be given if AutoUpgradeMinorVersion is false"))
 		}
 		if extension.Scope != nil {
-			if extension.Scope.ScopeType == ExtensionScopeCluster {
+			switch extension.Scope.ScopeType {
+			case ExtensionScopeCluster:
 				if extension.Scope.ReleaseNamespace == "" {
 					allErrs = append(allErrs, field.Required(fldPath.Child("Scope", "ReleaseNamespace"), "ReleaseNamespace must be provided if Scope is Cluster"))
 				}
 				if extension.Scope.TargetNamespace != "" {
 					allErrs = append(allErrs, field.Forbidden(fldPath.Child("Scope", "TargetNamespace"), "TargetNamespace can only be given if Scope is Namespace"))
 				}
-			} else if extension.Scope.ScopeType == ExtensionScopeNamespace {
+			case ExtensionScopeNamespace:
 				if extension.Scope.TargetNamespace == "" {
 					allErrs = append(allErrs, field.Required(fldPath.Child("Scope", "TargetNamespace"), "TargetNamespace must be provided if Scope is Namespace"))
 				}

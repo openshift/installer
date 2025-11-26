@@ -151,6 +151,33 @@ var pathTreeData = `{
         }
       }
     },
+    "aro_hcp": {
+      "v1alpha1": {
+        "clusters": {
+          "-": {
+            "autoscaler": null,
+            "external_auth_config": {
+              "external_auths": {
+                "-": null
+              }
+            },
+            "inflight_checks": {
+              "-": null
+            },
+            "node_pools": {
+              "-": {
+                "status": null
+              }
+            },
+            "status": null
+          }
+        },
+        "managed_identities_requirements": null,
+        "versions": {
+          "-": null
+        }
+      }
+    },
     "authorizations": {
       "v1": {
         "access_review": null,
@@ -267,6 +294,9 @@ var pathTreeData = `{
                 }
               }
             },
+            "image_mirrors": {
+              "-": null
+            },
             "inflight_checks": {
               "-": null
             },
@@ -293,6 +323,9 @@ var pathTreeData = `{
               "cpu_total_by_node_roles_os": null,
               "nodes": null,
               "socket_total_by_node_roles_os": null
+            },
+            "migrations": {
+              "-": null
             },
             "node_pools": {
               "-": {
@@ -332,7 +365,9 @@ var pathTreeData = `{
         },
         "gcp": {
           "wif_configs": {
-            "-": null
+            "-": {
+              "status": null
+            }
           }
         },
         "gcp_inquiries": {
@@ -384,6 +419,7 @@ var pathTreeData = `{
         }
       }
     },
+    "dependencymagnet": {},
     "job_queue": {
       "v1": {
         "queues": {

@@ -14,25 +14,38 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This operation is not supported by directory buckets. Gets the S3
-// Intelligent-Tiering configuration from the specified bucket. The S3
-// Intelligent-Tiering storage class is designed to optimize storage costs by
-// automatically moving data to the most cost-effective storage access tier,
+// This operation is not supported for directory buckets.
+//
+// Gets the S3 Intelligent-Tiering configuration from the specified bucket.
+//
+// The S3 Intelligent-Tiering storage class is designed to optimize storage costs
+// by automatically moving data to the most cost-effective storage access tier,
 // without performance impact or operational overhead. S3 Intelligent-Tiering
 // delivers automatic cost savings in three low latency and high throughput access
 // tiers. To get the lowest storage cost on data that can be accessed in minutes to
-// hours, you can choose to activate additional archiving capabilities. The S3
-// Intelligent-Tiering storage class is the ideal storage class for data with
-// unknown, changing, or unpredictable access patterns, independent of object size
-// or retention period. If the size of an object is less than 128 KB, it is not
-// monitored and not eligible for auto-tiering. Smaller objects can be stored, but
-// they are always charged at the Frequent Access tier rates in the S3
-// Intelligent-Tiering storage class. For more information, see Storage class for
-// automatically optimizing frequently and infrequently accessed objects (https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html#sc-dynamic-data-access)
-// . Operations related to GetBucketIntelligentTieringConfiguration include:
-//   - DeleteBucketIntelligentTieringConfiguration (https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketIntelligentTieringConfiguration.html)
-//   - PutBucketIntelligentTieringConfiguration (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketIntelligentTieringConfiguration.html)
-//   - ListBucketIntelligentTieringConfigurations (https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBucketIntelligentTieringConfigurations.html)
+// hours, you can choose to activate additional archiving capabilities.
+//
+// The S3 Intelligent-Tiering storage class is the ideal storage class for data
+// with unknown, changing, or unpredictable access patterns, independent of object
+// size or retention period. If the size of an object is less than 128 KB, it is
+// not monitored and not eligible for auto-tiering. Smaller objects can be stored,
+// but they are always charged at the Frequent Access tier rates in the S3
+// Intelligent-Tiering storage class.
+//
+// For more information, see [Storage class for automatically optimizing frequently and infrequently accessed objects].
+//
+// Operations related to GetBucketIntelligentTieringConfiguration include:
+//
+// [DeleteBucketIntelligentTieringConfiguration]
+//
+// [PutBucketIntelligentTieringConfiguration]
+//
+// [ListBucketIntelligentTieringConfigurations]
+//
+// [ListBucketIntelligentTieringConfigurations]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBucketIntelligentTieringConfigurations.html
+// [PutBucketIntelligentTieringConfiguration]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketIntelligentTieringConfiguration.html
+// [Storage class for automatically optimizing frequently and infrequently accessed objects]: https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html#sc-dynamic-data-access
+// [DeleteBucketIntelligentTieringConfiguration]: https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketIntelligentTieringConfiguration.html
 func (c *Client) GetBucketIntelligentTieringConfiguration(ctx context.Context, params *GetBucketIntelligentTieringConfigurationInput, optFns ...func(*Options)) (*GetBucketIntelligentTieringConfigurationOutput, error) {
 	if params == nil {
 		params = &GetBucketIntelligentTieringConfigurationInput{}
@@ -61,10 +74,16 @@ type GetBucketIntelligentTieringConfigurationInput struct {
 	// This member is required.
 	Id *string
 
+	// The account ID of the expected bucket owner. If the account ID that you provide
+	// does not match the actual owner of the bucket, the request fails with the HTTP
+	// status code 403 Forbidden (access denied).
+	ExpectedBucketOwner *string
+
 	noSmithyDocumentSerde
 }
 
 func (in *GetBucketIntelligentTieringConfigurationInput) bindEndpointParams(p *EndpointParameters) {
+
 	p.Bucket = in.Bucket
 	p.UseS3ExpressControlEndpoint = ptr.Bool(true)
 }
@@ -123,6 +142,9 @@ func (c *Client) addOperationGetBucketIntelligentTieringConfigurationMiddlewares
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -136,6 +158,18 @@ func (c *Client) addOperationGetBucketIntelligentTieringConfigurationMiddlewares
 		return err
 	}
 	if err = addPutBucketContextMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addIsExpressUserAgent(stack); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetBucketIntelligentTieringConfigurationValidationMiddleware(stack); err != nil {
@@ -169,6 +203,48 @@ func (c *Client) addOperationGetBucketIntelligentTieringConfigurationMiddlewares
 		return err
 	}
 	if err = addSerializeImmutableHostnameBucketMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

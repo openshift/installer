@@ -17,7 +17,6 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -43,21 +42,6 @@ func debugCorruptOva(cachedImage string, err error) error {
 	return fmt.Errorf("ova %s has a sha256 of %x and a size of %d bytes, failed to read the ovf descriptor %w", cachedImage, h.Sum(nil), written, err)
 }
 
-func checkOvaSecureBoot(ovfEnvelope *ovf.Envelope) bool {
-	if ovfEnvelope.VirtualSystem != nil {
-		for _, vh := range ovfEnvelope.VirtualSystem.VirtualHardware {
-			for _, c := range vh.Config {
-				if c.Key == "bootOptions.efiSecureBootEnabled" {
-					if c.Value == "true" {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
-}
-
 func importRhcosOva(ctx context.Context, session *session.Session, folder *object.Folder, cachedImage, clusterID, tagID, diskProvisioningType string, failureDomain vsphere.FailureDomain) error {
 	// Name originally was cluster id + fd.region + fd.zone.  This could cause length of ova to be longer than max allowed.
 	// So for now, we are going to make cluster id  + fd.name
@@ -81,10 +65,6 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	if err != nil {
 		return fmt.Errorf("failed to parse ovf: %w", err)
 	}
-
-	// The fcos ova enables secure boot by default, this causes
-	// scos to fail once
-	secureBoot := checkOvaSecureBoot(ovfEnvelope)
 
 	// The RHCOS OVA only has one network defined by default
 	// The OVF envelope defines this.  We need a 1:1 mapping
@@ -198,18 +178,6 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	vm := object.NewVirtualMachine(session.Client.Client, info.Entity)
 	if vm == nil {
 		return fmt.Errorf("error VirtualMachine not found, managed object id: %s", info.Entity.Value)
-	}
-	if secureBoot {
-		bootOptions, err := vm.BootOptions(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get boot options: %w", err)
-		}
-		bootOptions.EfiSecureBootEnabled = ptr.To(false)
-
-		err = vm.SetBootOptions(ctx, bootOptions)
-		if err != nil {
-			return fmt.Errorf("failed to set boot options: %w", err)
-		}
 	}
 
 	err = vm.MarkAsTemplate(ctx)

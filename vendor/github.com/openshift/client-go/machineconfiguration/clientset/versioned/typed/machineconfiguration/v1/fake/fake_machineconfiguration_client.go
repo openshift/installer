@@ -13,23 +13,39 @@ type FakeMachineconfigurationV1 struct {
 }
 
 func (c *FakeMachineconfigurationV1) ContainerRuntimeConfigs() v1.ContainerRuntimeConfigInterface {
-	return &FakeContainerRuntimeConfigs{c}
+	return newFakeContainerRuntimeConfigs(c)
 }
 
 func (c *FakeMachineconfigurationV1) ControllerConfigs() v1.ControllerConfigInterface {
-	return &FakeControllerConfigs{c}
+	return newFakeControllerConfigs(c)
 }
 
 func (c *FakeMachineconfigurationV1) KubeletConfigs() v1.KubeletConfigInterface {
-	return &FakeKubeletConfigs{c}
+	return newFakeKubeletConfigs(c)
 }
 
 func (c *FakeMachineconfigurationV1) MachineConfigs() v1.MachineConfigInterface {
-	return &FakeMachineConfigs{c}
+	return newFakeMachineConfigs(c)
+}
+
+func (c *FakeMachineconfigurationV1) MachineConfigNodes() v1.MachineConfigNodeInterface {
+	return newFakeMachineConfigNodes(c)
 }
 
 func (c *FakeMachineconfigurationV1) MachineConfigPools() v1.MachineConfigPoolInterface {
-	return &FakeMachineConfigPools{c}
+	return newFakeMachineConfigPools(c)
+}
+
+func (c *FakeMachineconfigurationV1) MachineOSBuilds() v1.MachineOSBuildInterface {
+	return newFakeMachineOSBuilds(c)
+}
+
+func (c *FakeMachineconfigurationV1) MachineOSConfigs() v1.MachineOSConfigInterface {
+	return newFakeMachineOSConfigs(c)
+}
+
+func (c *FakeMachineconfigurationV1) PinnedImageSets() v1.PinnedImageSetInterface {
+	return newFakePinnedImageSets(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

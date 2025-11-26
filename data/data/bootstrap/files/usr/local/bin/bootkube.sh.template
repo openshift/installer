@@ -24,7 +24,7 @@ ETCD_ENDPOINTS=
 bootkube_podman_run() {
     # we run all commands in the host-network to prevent IP conflicts with
     # end-user infrastructure.
-    podman run --quiet --net=host --rm "${@}"
+    podman run --quiet --net=host --rm --log-driver=k8s-file "${@}"
 }
 
 wait_for_etcd_cluster() {
@@ -493,6 +493,7 @@ then
 	copy_static_resources_for nutanix
 	copy_static_resources_for gcp
 	copy_static_resources_for aws
+	copy_static_resources_for azure
 
 	cp mco-bootstrap/manifests/* manifests/
 

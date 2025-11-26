@@ -81,14 +81,19 @@ type ClusterMonitoringSpec struct {
 	// When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.
 	// The current default value is `Disabled`.
 	// +optional
-	UserDefined *UserDefinedMonitoring `json:"userDefined,omitempty"`
+	UserDefined UserDefinedMonitoring `json:"userDefined,omitempty,omitzero"`
 	// alertmanagerConfig allows users to configure how the default Alertmanager instance
 	// should be deployed in the `openshift-monitoring` namespace.
 	// alertmanagerConfig is optional.
 	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
 	// The current default value is `DefaultConfig`.
 	// +optional
-	AlertmanagerConfig *AlertmanagerConfig `json:"alertmanagerConfig,omitempty"`
+	AlertmanagerConfig AlertmanagerConfig `json:"alertmanagerConfig,omitempty,omitzero"`
+	// metricsServerConfig is an optional field that can be used to configure the Kubernetes Metrics Server that runs in the openshift-monitoring namespace.
+	// Specifically, it can configure how the Metrics Server instance is deployed, pod scheduling, its audit policy and log verbosity.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.
+	// +optional
+	MetricsServerConfig MetricsServerConfig `json:"metricsServerConfig,omitempty,omitzero"`
 }
 
 // UserDefinedMonitoring config for user-defined projects.
@@ -128,12 +133,12 @@ type AlertmanagerConfig struct {
 	//
 	// +unionDiscriminator
 	// +required
-	DeploymentMode AlertManagerDeployMode `json:"deploymentMode"`
+	DeploymentMode AlertManagerDeployMode `json:"deploymentMode,omitempty"`
 
 	// customConfig must be set when deploymentMode is CustomConfig, and must be unset otherwise.
 	// When set to CustomConfig, the Alertmanager will be deployed with custom configuration.
 	// +optional
-	CustomConfig *AlertmanagerCustomConfig `json:"customConfig,omitempty"`
+	CustomConfig AlertmanagerCustomConfig `json:"customConfig,omitempty,omitzero"`
 }
 
 // AlertmanagerCustomConfig represents the configuration for a custom Alertmanager deployment.
@@ -153,7 +158,7 @@ type AlertmanagerCustomConfig struct {
 	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
 	// The current default value is `Info`.
 	// +optional
-	LogLevel LogLevel `json:"logLevel"`
+	LogLevel LogLevel `json:"logLevel,omitempty"`
 	// nodeSelector defines the nodes on which the Pods are scheduled
 	// nodeSelector is optional.
 	//
@@ -291,9 +296,10 @@ type ContainerResource struct {
 	// This field is required.
 	// name must consist only of alphanumeric characters, `-`, `_` and `.` and must start and end with an alphanumeric character.
 	// +required
+	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:XValidation:rule="!format.qualifiedName().validate(self).hasValue()",message="name must consist only of alphanumeric characters, `-`, `_` and `.` and must start and end with an alphanumeric character"
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// request is the minimum amount of the resource required (e.g. "2Mi", "1Gi").
 	// This field is optional.
@@ -322,3 +328,135 @@ type ContainerResource struct {
 // +kubebuilder:validation:XValidation:rule="!format.dns1123Subdomain().validate(self).hasValue()",message="a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
 // +kubebuilder:validation:MaxLength=63
 type SecretName string
+
+// MetricsServerConfig provides configuration options for the Metrics Server instance
+// that runs in the `openshift-monitoring` namespace. Use this configuration to control
+// how the Metrics Server instance is deployed, how it logs, and how its pods are scheduled.
+// +kubebuilder:validation:MinProperties=1
+type MetricsServerConfig struct {
+	// audit defines the audit configuration used by the Metrics Server instance.
+	// audit is optional.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
+	//The current default sets audit.profile to Metadata
+	// +optional
+	Audit Audit `json:"audit,omitempty,omitzero"`
+	// nodeSelector defines the nodes on which the Pods are scheduled
+	// nodeSelector is optional.
+	//
+	// When omitted, this means the user has no opinion and the platform is left
+	// to choose reasonable defaults. These defaults are subject to change over time.
+	// The current default value is `kubernetes.io/os: linux`.
+	// +optional
+	// +kubebuilder:validation:MinProperties=1
+	// +kubebuilder:validation:MaxProperties=10
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// tolerations defines tolerations for the pods.
+	// tolerations is optional.
+	//
+	// When omitted, this means the user has no opinion and the platform is left
+	// to choose reasonable defaults. These defaults are subject to change over time.
+	// Defaults are empty/unset.
+	// Maximum length for this list is 10
+	// Minimum length for this list is 1
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:MinItems=1
+	// +listType=atomic
+	// +optional
+	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+	// verbosity defines the verbosity of log messages for Metrics Server.
+	// Valid values are Errors, Info, Trace, TraceAll and omitted.
+	// When set to Errors, only critical messages and errors are logged.
+	// When set to Info, only basic information messages are logged.
+	// When set to Trace, information useful for general debugging is logged.
+	// When set to TraceAll, detailed information about metric scraping is logged.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
+	// The current default value is `Errors`
+	// +optional
+	Verbosity VerbosityLevel `json:"verbosity,omitempty,omitzero"`
+	// resources defines the compute resource requests and limits for the Metrics Server container.
+	// This includes CPU, memory and HugePages constraints to help control scheduling and resource usage.
+	// When not specified, defaults are used by the platform. Requests cannot exceed limits.
+	// This field is optional.
+	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// This is a simplified API that maps to Kubernetes ResourceRequirements.
+	// The current default values are:
+	//   resources:
+	//    - name: cpu
+	//      request: 4m
+	//      limit: null
+	//    - name: memory
+	//      request: 40Mi
+	//      limit: null
+	// Maximum length for this list is 10.
+	// Minimum length for this list is 1.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:MinItems=1
+	Resources []ContainerResource `json:"resources,omitempty"`
+	// topologySpreadConstraints defines rules for how Metrics Server Pods should be distributed
+	// across topology domains such as zones, nodes, or other user-defined labels.
+	// topologySpreadConstraints is optional.
+	// This helps improve high availability and resource efficiency by avoiding placing
+	// too many replicas in the same failure domain.
+	//
+	// When omitted, this means no opinion and the platform is left to choose a default, which is subject to change over time.
+	// This field maps directly to the `topologySpreadConstraints` field in the Pod spec.
+	// Default is empty list.
+	// Maximum length for this list is 10.
+	// Minimum length for this list is 1
+	// Entries must have unique topologyKey and whenUnsatisfiable pairs.
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:MinItems=1
+	// +listType=map
+	// +listMapKey=topologyKey
+	// +listMapKey=whenUnsatisfiable
+	// +optional
+	TopologySpreadConstraints []v1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
+}
+
+// AuditProfile defines the audit log level for the Metrics Server.
+// +kubebuilder:validation:Enum=None;Metadata;Request;RequestResponse
+type AuditProfile string
+
+const (
+	// AuditProfileNone disables audit logging
+	AuditProfileNone AuditProfile = "None"
+	// AuditProfileMetadata logs request metadata (requesting user, timestamp, resource, verb, etc.) but not request or response body
+	AuditProfileMetadata AuditProfile = "Metadata"
+	// AuditProfileRequest logs event metadata and request body but not response body
+	AuditProfileRequest AuditProfile = "Request"
+	// AuditProfileRequestResponse logs event metadata, request and response bodies
+	AuditProfileRequestResponse AuditProfile = "RequestResponse"
+)
+
+// VerbosityLevel defines the verbosity of log messages for Metrics Server.
+// +kubebuilder:validation:Enum=Errors;Info;Trace;TraceAll
+type VerbosityLevel string
+
+const (
+	// VerbosityLevelErrors means only critical messages and errors are logged.
+	VerbosityLevelErrors VerbosityLevel = "Errors"
+	// VerbosityLevelInfo means basic informational messages are logged.
+	VerbosityLevelInfo VerbosityLevel = "Info"
+	// VerbosityLevelTrace means extended information useful for general debugging is logged.
+	VerbosityLevelTrace VerbosityLevel = "Trace"
+	// VerbosityLevelTraceAll means detailed information about metric scraping operations is logged.
+	VerbosityLevelTraceAll VerbosityLevel = "TraceAll"
+)
+
+// Audit profile configurations
+type Audit struct {
+	// profile is a required field for configuring the audit log level of the Kubernetes Metrics Server.
+	// Allowed values are None, Metadata, Request, or RequestResponse.
+	// When set to None, audit logging is disabled and no audit events are recorded.
+	// When set to Metadata, only request metadata (such as requesting user, timestamp, resource, verb, etc.) is logged, but not the request or response body.
+	// When set to Request, event metadata and the request body are logged, but not the response body.
+	// When set to RequestResponse, event metadata, request body, and response body are all logged, providing the most detailed audit information.
+	//
+	// See: https://kubernetes.io/docs/tasks/debug-application-cluster/audit/#audit-policy
+	// for more information about auditing and log levels.
+	// +required
+	Profile AuditProfile `json:"profile,omitempty"`
+}

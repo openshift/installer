@@ -14,12 +14,15 @@ import (
 // Enables block public access for AMIs at the account level in the specified
 // Amazon Web Services Region. This prevents the public sharing of your AMIs.
 // However, if you already have public AMIs, they will remain publicly available.
+//
 // The API can take up to 10 minutes to configure this setting. During this time,
-// if you run GetImageBlockPublicAccessState (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetImageBlockPublicAccessState.html)
-// , the response will be unblocked . When the API has completed the configuration,
-// the response will be block-new-sharing . For more information, see Block public
-// access to your AMIs (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sharingamis-intro.html#block-public-access-to-amis)
-// in the Amazon EC2 User Guide.
+// if you run [GetImageBlockPublicAccessState], the response will be unblocked . When the API has completed the
+// configuration, the response will be block-new-sharing .
+//
+// For more information, see [Block public access to your AMIs] in the Amazon EC2 User Guide.
+//
+// [Block public access to your AMIs]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-public-access-to-amis.html
+// [GetImageBlockPublicAccessState]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetImageBlockPublicAccessState.html
 func (c *Client) EnableImageBlockPublicAccess(ctx context.Context, params *EnableImageBlockPublicAccessInput, optFns ...func(*Options)) (*EnableImageBlockPublicAccessOutput, error) {
 	if params == nil {
 		params = &EnableImageBlockPublicAccessInput{}
@@ -108,6 +111,9 @@ func (c *Client) addOperationEnableImageBlockPublicAccessMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -118,6 +124,15 @@ func (c *Client) addOperationEnableImageBlockPublicAccessMiddlewares(stack *midd
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpEnableImageBlockPublicAccessValidationMiddleware(stack); err != nil {
@@ -139,6 +154,18 @@ func (c *Client) addOperationEnableImageBlockPublicAccessMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

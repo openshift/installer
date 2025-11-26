@@ -120,6 +120,8 @@ type UploadPagesFromURLOptions struct {
 
 	CPKScopeInfo *blob.CPKScopeInfo
 
+	FileRequestIntent *blob.FileRequestIntentType
+
 	SequenceNumberAccessConditions *SequenceNumberAccessConditions
 
 	SourceModifiedAccessConditions *blob.SourceModifiedAccessConditions
@@ -135,6 +137,7 @@ func (o *UploadPagesFromURLOptions) format() (*generated.PageBlobClientUploadPag
 
 	options := &generated.PageBlobClientUploadPagesFromURLOptions{
 		CopySourceAuthorization: o.CopySourceAuthorization,
+		FileRequestIntent:       o.FileRequestIntent,
 	}
 
 	if o.SourceContentValidation != nil {
@@ -198,7 +201,7 @@ type GetPageRangesOptions struct {
 
 func (o *GetPageRangesOptions) format() (*generated.PageBlobClientGetPageRangesOptions, *generated.LeaseAccessConditions, *generated.ModifiedAccessConditions) {
 	if o == nil {
-		return nil, nil, nil
+		return &generated.PageBlobClientGetPageRangesOptions{}, nil, nil
 	}
 
 	leaseAccessConditions, modifiedAccessConditions := exported.FormatBlobAccessConditions(o.AccessConditions)

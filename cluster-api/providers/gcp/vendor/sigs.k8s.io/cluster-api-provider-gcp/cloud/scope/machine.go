@@ -36,8 +36,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/providerid"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/shared"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -138,16 +137,22 @@ func (m *MachineScope) ControlPlaneGroupName() string {
 
 // IsControlPlane returns true if the machine is a control plane.
 func (m *MachineScope) IsControlPlane() bool {
-	return util.IsControlPlaneMachine(m.Machine)
+	return IsControlPlaneMachine(m.Machine)
 }
 
 // Role returns the machine role from the labels.
 func (m *MachineScope) Role() string {
-	if util.IsControlPlaneMachine(m.Machine) {
+	if IsControlPlaneMachine(m.Machine) {
 		return "control-plane"
 	}
 
 	return "node"
+}
+
+// IsControlPlaneMachine checks machine is a control plane node.
+func IsControlPlaneMachine(machine *clusterv1.Machine) bool {
+	_, ok := machine.Labels[clusterv1.MachineControlPlaneLabel]
+	return ok
 }
 
 // GetInstanceID returns the GCPMachine instance id by parsing Spec.ProviderID.
@@ -274,16 +279,16 @@ func (m *MachineScope) InstanceImageSpec() *compute.AttachedDisk {
 	return disk
 }
 
-// InstanceAdditionalDiskSpec returns compute instance additional attched-disk spec.
-func (m *MachineScope) InstanceAdditionalDiskSpec() []*compute.AttachedDisk {
-	additionalDisks := make([]*compute.AttachedDisk, 0, len(m.GCPMachine.Spec.AdditionalDisks))
-	for _, disk := range m.GCPMachine.Spec.AdditionalDisks {
+// instanceAdditionalDiskSpec returns compute instance additional attched-disk spec.
+func instanceAdditionalDiskSpec(ctx context.Context, spec []infrav1.AttachedDiskSpec, rootDiskEncryptionKey *infrav1.CustomerEncryptionKey, zone string, resourceManagerTags infrav1.ResourceManagerTags) []*compute.AttachedDisk {
+	additionalDisks := make([]*compute.AttachedDisk, 0, len(spec))
+	for _, disk := range spec {
 		additionalDisk := &compute.AttachedDisk{
 			AutoDelete: true,
 			InitializeParams: &compute.AttachedDiskInitializeParams{
 				DiskSizeGb:          ptr.Deref(disk.Size, 30),
-				DiskType:            path.Join("zones", m.Zone(), "diskTypes", string(*disk.DeviceType)),
-				ResourceManagerTags: shared.ResourceTagConvert(context.TODO(), m.GCPMachine.Spec.ResourceManagerTags),
+				DiskType:            path.Join("zones", zone, "diskTypes", string(*disk.DeviceType)),
+				ResourceManagerTags: shared.ResourceTagConvert(ctx, resourceManagerTags),
 			},
 		}
 		if strings.HasSuffix(additionalDisk.InitializeParams.DiskType, string(infrav1.LocalSsdDiskType)) {
@@ -297,20 +302,20 @@ func (m *MachineScope) InstanceAdditionalDiskSpec() []*compute.AttachedDisk {
 			additionalDisk.Interface = "NVME"
 		}
 		if disk.EncryptionKey != nil {
-			if m.GCPMachine.Spec.RootDiskEncryptionKey.KeyType == infrav1.CustomerManagedKey && m.GCPMachine.Spec.RootDiskEncryptionKey.ManagedKey != nil {
+			if rootDiskEncryptionKey.KeyType == infrav1.CustomerManagedKey && rootDiskEncryptionKey.ManagedKey != nil {
 				additionalDisk.DiskEncryptionKey = &compute.CustomerEncryptionKey{
-					KmsKeyName: m.GCPMachine.Spec.RootDiskEncryptionKey.ManagedKey.KMSKeyName,
+					KmsKeyName: rootDiskEncryptionKey.ManagedKey.KMSKeyName,
 				}
-				if m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount != nil {
-					additionalDisk.DiskEncryptionKey.KmsKeyServiceAccount = *m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount
+				if rootDiskEncryptionKey.KMSKeyServiceAccount != nil {
+					additionalDisk.DiskEncryptionKey.KmsKeyServiceAccount = *rootDiskEncryptionKey.KMSKeyServiceAccount
 				}
-			} else if m.GCPMachine.Spec.RootDiskEncryptionKey.KeyType == infrav1.CustomerSuppliedKey && m.GCPMachine.Spec.RootDiskEncryptionKey.SuppliedKey != nil {
+			} else if rootDiskEncryptionKey.KeyType == infrav1.CustomerSuppliedKey && rootDiskEncryptionKey.SuppliedKey != nil {
 				additionalDisk.DiskEncryptionKey = &compute.CustomerEncryptionKey{
-					RawKey:          string(m.GCPMachine.Spec.RootDiskEncryptionKey.SuppliedKey.RawKey),
-					RsaEncryptedKey: string(m.GCPMachine.Spec.RootDiskEncryptionKey.SuppliedKey.RSAEncryptedKey),
+					RawKey:          string(rootDiskEncryptionKey.SuppliedKey.RawKey),
+					RsaEncryptedKey: string(rootDiskEncryptionKey.SuppliedKey.RSAEncryptedKey),
 				}
-				if m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount != nil {
-					additionalDisk.DiskEncryptionKey.KmsKeyServiceAccount = *m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount
+				if rootDiskEncryptionKey.KMSKeyServiceAccount != nil {
+					additionalDisk.DiskEncryptionKey.KmsKeyServiceAccount = *rootDiskEncryptionKey.KMSKeyServiceAccount
 				}
 			}
 		}
@@ -340,24 +345,42 @@ func (m *MachineScope) InstanceNetworkInterfaceSpec() *compute.NetworkInterface 
 		networkInterface.Subnetwork = path.Join("projects", m.ClusterGetter.NetworkProject(), "regions", m.ClusterGetter.Region(), "subnetworks", *m.GCPMachine.Spec.Subnet)
 	}
 
+	networkInterface.AliasIpRanges = m.InstanceNetworkInterfaceAliasIPRangesSpec()
+
 	return networkInterface
 }
 
-// InstanceServiceAccountsSpec returns service-account spec.
-func (m *MachineScope) InstanceServiceAccountsSpec() *compute.ServiceAccount {
-	serviceAccount := &compute.ServiceAccount{
+// InstanceNetworkInterfaceAliasIPRangesSpec returns a slice of Alias IP Range specs.
+func (m *MachineScope) InstanceNetworkInterfaceAliasIPRangesSpec() []*compute.AliasIpRange {
+	if len(m.GCPMachine.Spec.AliasIPRanges) == 0 {
+		return nil
+	}
+	aliasIPRanges := make([]*compute.AliasIpRange, 0, len(m.GCPMachine.Spec.AliasIPRanges))
+	for _, alias := range m.GCPMachine.Spec.AliasIPRanges {
+		aliasIPRange := &compute.AliasIpRange{
+			IpCidrRange:         alias.IPCidrRange,
+			SubnetworkRangeName: alias.SubnetworkRangeName,
+		}
+		aliasIPRanges = append(aliasIPRanges, aliasIPRange)
+	}
+	return aliasIPRanges
+}
+
+// instanceServiceAccountsSpec returns service-account spec.
+func instanceServiceAccountsSpec(serviceAccount *infrav1.ServiceAccount) *compute.ServiceAccount {
+	out := &compute.ServiceAccount{
 		Email: "default",
 		Scopes: []string{
 			compute.CloudPlatformScope,
 		},
 	}
 
-	if m.GCPMachine.Spec.ServiceAccount != nil {
-		serviceAccount.Email = m.GCPMachine.Spec.ServiceAccount.Email
-		serviceAccount.Scopes = m.GCPMachine.Spec.ServiceAccount.Scopes
+	if serviceAccount != nil {
+		out.Email = serviceAccount.Email
+		out.Scopes = serviceAccount.Scopes
 	}
 
-	return serviceAccount
+	return out
 }
 
 // InstanceAdditionalMetadataSpec returns additional metadata spec.
@@ -373,8 +396,26 @@ func (m *MachineScope) InstanceAdditionalMetadataSpec() *compute.Metadata {
 	return metadata
 }
 
+// instanceGuestAcceleratorsSpec returns a slice of Guest Accelerator Config specs.
+func instanceGuestAcceleratorsSpec(guestAccelerators []infrav1.Accelerator) []*compute.AcceleratorConfig {
+	if len(guestAccelerators) == 0 {
+		return nil
+	}
+	accelConfigs := make([]*compute.AcceleratorConfig, 0, len(guestAccelerators))
+	for _, accel := range guestAccelerators {
+		accelConfig := &compute.AcceleratorConfig{
+			AcceleratorType:  accel.Type,
+			AcceleratorCount: accel.Count,
+		}
+		accelConfigs = append(accelConfigs, accelConfig)
+	}
+	return accelConfigs
+}
+
 // InstanceSpec returns instance spec.
 func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
+	ctx := context.TODO()
+
 	instance := &compute.Instance{
 		Name:        m.Name(),
 		Zone:        m.Zone(),
@@ -461,10 +502,15 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 	}
 
 	instance.Disks = append(instance.Disks, m.InstanceImageSpec())
-	instance.Disks = append(instance.Disks, m.InstanceAdditionalDiskSpec()...)
+	instance.Disks = append(instance.Disks, instanceAdditionalDiskSpec(ctx, m.GCPMachine.Spec.AdditionalDisks, m.GCPMachine.Spec.RootDiskEncryptionKey, m.Zone(), m.ResourceManagerTags())...)
 	instance.Metadata = m.InstanceAdditionalMetadataSpec()
-	instance.ServiceAccounts = append(instance.ServiceAccounts, m.InstanceServiceAccountsSpec())
+	instance.ServiceAccounts = append(instance.ServiceAccounts, instanceServiceAccountsSpec(m.GCPMachine.Spec.ServiceAccount))
 	instance.NetworkInterfaces = append(instance.NetworkInterfaces, m.InstanceNetworkInterfaceSpec())
+	instance.GuestAccelerators = instanceGuestAcceleratorsSpec(m.GCPMachine.Spec.GuestAccelerators)
+	if len(instance.GuestAccelerators) > 0 {
+		instance.Scheduling.OnHostMaintenance = "TERMINATE"
+	}
+
 	return instance
 }
 

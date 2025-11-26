@@ -46,6 +46,9 @@ const AdminRole = prefix + "admin_role"
 // RedHatManaged tags the role as red_hat_managed
 const RedHatManaged = "red-hat-managed"
 
+// HcpSharedVpc tags are for resources related to HCP shared VPC
+const HcpSharedVpc = "hcp-shared-vpc"
+
 const HypershiftPolicies = prefix + "hcp_policies"
 
 const OperatorNamespace = "operator_namespace"

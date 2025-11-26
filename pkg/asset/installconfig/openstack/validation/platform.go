@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilsslice "k8s.io/utils/strings/slices"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -165,6 +166,11 @@ func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Pa
 // platform VIP validation is done in pkg/types/validation/installconfig.go,
 // validateAPIAndIngressVIPs().
 func validateVIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
+	// If the user specifies using a managed Load Balancer, then the VIP can be in the MachineNetwork allocation pool.
+	if p.LoadBalancer != nil && p.LoadBalancer.Type == configv1.LoadBalancerTypeUserManaged {
+		return allErrs
+	}
+
 	// If the subnet is not found in the CloudInfo object, abandon validation.
 	// For dual-stack and single-stack IPv6 the user needs to pre-create the Port for API and Ingress, so no need for validation.
 

@@ -270,7 +270,7 @@ func (ammpr *AzureManagedMachinePoolReconciler) reconcileNormal(ctx context.Cont
 		// Ensure the ready condition is false, but do not overwrite an existing
 		// error condition which might provide more details.
 		if conditions.IsTrue(scope.InfraMachinePool, infrav1.AgentPoolsReadyCondition) {
-			conditions.MarkFalse(scope.InfraMachinePool, infrav1.AgentPoolsReadyCondition, infrav1.FailedReason, clusterv1.ConditionSeverityError, err.Error())
+			conditions.MarkFalse(scope.InfraMachinePool, infrav1.AgentPoolsReadyCondition, infrav1.FailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 		}
 
 		// Handle transient and terminal errors

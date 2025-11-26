@@ -11,9 +11,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This action is deprecated. Describes your Elastic IP addresses that are being
-// moved from or being restored to the EC2-Classic platform. This request does not
-// return information about any other Elastic IP addresses in your account.
+// This action is deprecated.
+//
+// Describes your Elastic IP addresses that are being moved from or being restored
+// to the EC2-Classic platform. This request does not return information about any
+// other Elastic IP addresses in your account.
 func (c *Client) DescribeMovingAddresses(ctx context.Context, params *DescribeMovingAddressesInput, optFns ...func(*Options)) (*DescribeMovingAddressesOutput, error) {
 	if params == nil {
 		params = &DescribeMovingAddressesInput{}
@@ -38,6 +40,7 @@ type DescribeMovingAddressesInput struct {
 	DryRun *bool
 
 	// One or more filters.
+	//
 	//   - moving-status - The status of the Elastic IP address ( MovingToVpc |
 	//   RestoringToClassic ).
 	Filters []types.Filter
@@ -46,6 +49,7 @@ type DescribeMovingAddressesInput struct {
 	// remaining results of the initial request can be seen by sending another request
 	// with the returned NextToken value. This value can be between 5 and 1000; if
 	// MaxResults is given a value outside of this range, an error is returned.
+	//
 	// Default: If no value is provided, the default is 1000.
 	MaxResults *int32
 
@@ -116,6 +120,9 @@ func (c *Client) addOperationDescribeMovingAddressesMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +133,15 @@ func (c *Client) addOperationDescribeMovingAddressesMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeMovingAddresses(options.Region), middleware.Before); err != nil {
@@ -146,16 +162,20 @@ func (c *Client) addOperationDescribeMovingAddressesMiddlewares(stack *middlewar
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeMovingAddressesAPIClient is a client that implements the
-// DescribeMovingAddresses operation.
-type DescribeMovingAddressesAPIClient interface {
-	DescribeMovingAddresses(context.Context, *DescribeMovingAddressesInput, ...func(*Options)) (*DescribeMovingAddressesOutput, error)
-}
-
-var _ DescribeMovingAddressesAPIClient = (*Client)(nil)
 
 // DescribeMovingAddressesPaginatorOptions is the paginator options for
 // DescribeMovingAddresses
@@ -164,6 +184,7 @@ type DescribeMovingAddressesPaginatorOptions struct {
 	// remaining results of the initial request can be seen by sending another request
 	// with the returned NextToken value. This value can be between 5 and 1000; if
 	// MaxResults is given a value outside of this range, an error is returned.
+	//
 	// Default: If no value is provided, the default is 1000.
 	Limit int32
 
@@ -226,6 +247,9 @@ func (p *DescribeMovingAddressesPaginator) NextPage(ctx context.Context, optFns 
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeMovingAddresses(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -244,6 +268,14 @@ func (p *DescribeMovingAddressesPaginator) NextPage(ctx context.Context, optFns 
 
 	return result, nil
 }
+
+// DescribeMovingAddressesAPIClient is a client that implements the
+// DescribeMovingAddresses operation.
+type DescribeMovingAddressesAPIClient interface {
+	DescribeMovingAddresses(context.Context, *DescribeMovingAddressesInput, ...func(*Options)) (*DescribeMovingAddressesOutput, error)
+}
+
+var _ DescribeMovingAddressesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeMovingAddresses(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

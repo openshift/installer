@@ -32,6 +32,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -101,7 +102,7 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		summarizeReport(reports)
 	case typesgcp.Name:
 		services := []string{"compute.googleapis.com", "iam.googleapis.com"}
-		q, err := quotagcp.Load(ctx, ic.Config.Platform.GCP.ProjectID, ic.Config.Platform.GCP.ServiceEndpoints, services...)
+		q, err := quotagcp.Load(ctx, ic.Config.Platform.GCP.ProjectID, ic.Config.Platform.GCP.Endpoint, services...)
 		if quotagcp.IsUnauthorized(err) {
 			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `roles/servicemanagement.quotaViewer` assigned to the user.", err)
 			return nil
@@ -109,7 +110,12 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		if err != nil {
 			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
 		}
-		client, err := gcp.NewClient(ctx, ic.Config.Platform.GCP.ProjectID, ic.Config.Platform.GCP.ServiceEndpoints)
+		endpointName := ""
+		endpoint := ic.Config.Platform.GCP.Endpoint
+		if typesgcp.ShouldUseEndpointForInstaller(endpoint) {
+			endpointName = ic.Config.GCP.Endpoint.Name
+		}
+		client, err := gcp.NewClient(ctx, ic.Config.Platform.GCP.ProjectID, endpointName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create client for quota constraints")
 		}
@@ -118,7 +124,7 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return summarizeFailingReport(reports)
 		}
 		summarizeReport(reports)
-	case typesopenstack.Name:
+	case typesopenstack.Name, powervc.Name:
 		if skip := os.Getenv("OPENSHIFT_INSTALL_SKIP_PREFLIGHT_VALIDATIONS"); skip == "1" {
 			logrus.Warnf("OVERRIDE: pre-flight validation disabled.")
 			return nil

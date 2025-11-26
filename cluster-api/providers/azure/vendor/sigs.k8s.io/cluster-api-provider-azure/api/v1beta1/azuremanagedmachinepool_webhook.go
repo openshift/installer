@@ -422,7 +422,7 @@ func validateNamePattern(name *string, fieldNameMessage string, fldPath *field.P
 	}
 
 	for _, char := range *name {
-		if !(unicode.IsLower(char) || unicode.IsNumber(char)) {
+		if !unicode.IsLower(char) && !unicode.IsNumber(char) {
 			return field.Invalid(
 				fldPath,
 				name,

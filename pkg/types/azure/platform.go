@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
@@ -11,7 +13,7 @@ import (
 var aro bool
 
 // OutboundType is a strategy for how egress from cluster is achieved.
-// +kubebuilder:validation:Enum="";Loadbalancer;NATGatewaySingleZone;UserDefinedRouting
+// +kubebuilder:validation:Enum="";Loadbalancer;NATGatewaySingleZone;NATGatewayMultiZone;UserDefinedRouting
 type OutboundType string
 
 const (
@@ -22,6 +24,9 @@ const (
 	// NATGatewaySingleZoneOutboundType uses a single (non-zone-resilient) NAT Gateway for compute node outbound access.
 	// see https://learn.microsoft.com/en-us/azure/virtual-network/nat-gateway/nat-gateway-resource
 	NATGatewaySingleZoneOutboundType OutboundType = "NATGatewaySingleZone"
+
+	// NATGatewayMultiZoneOutboundType uses NAT gateways in multiple zones in the compute node subnets for outbound access.
+	NATGatewayMultiZoneOutboundType OutboundType = "NATGatewayMultiZone"
 
 	// UserDefinedRoutingOutboundType uses user defined routing for egress from the cluster.
 	// see https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview
@@ -63,13 +68,15 @@ type Platform struct {
 
 	// ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
 	//
+	// Deprecated: use platform.Azure.Subnets section
 	// +optional
-	ControlPlaneSubnet string `json:"controlPlaneSubnet,omitempty"`
+	DeprecatedControlPlaneSubnet string `json:"controlPlaneSubnet,omitempty"`
 
 	// ComputeSubnet specifies an existing subnet for use by compute nodes
 	//
+	// Deprecated: use platform.Azure.Subnets section
 	// +optional
-	ComputeSubnet string `json:"computeSubnet,omitempty"`
+	DeprecatedComputeSubnet string `json:"computeSubnet,omitempty"`
 
 	// cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK
 	// with the appropriate Azure API endpoints.
@@ -82,6 +89,11 @@ type Platform struct {
 	// +kubebuilder:default=Loadbalancer
 	// +optional
 	OutboundType OutboundType `json:"outboundType"`
+
+	// Subnets is the list of subnets the user can bring into the cluster to be used.
+	//
+	// +optional
+	Subnets []SubnetSpec `json:"subnets,omitempty"`
 
 	// ResourceGroupName is the name of an already existing resource group where the cluster should be installed.
 	// This resource group should only be used for this specific cluster and the cluster components will assume
@@ -108,6 +120,15 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+}
+
+// SubnetSpec specifies the properties the subnet needs to be used in the cluster.
+type SubnetSpec struct {
+	// Name of the subnet.
+	Name string `json:"name"`
+	// Role specifies the actual role which the subnet should be used in.
+	// +kubebuilder:validation:Enum=node;control-plane
+	Role capz.SubnetRole `json:"role"`
 }
 
 // KeyVault defines an Azure Key Vault.
@@ -182,17 +203,11 @@ func (p *Platform) VirtualNetworkName(infraID string) string {
 // ControlPlaneSubnetName returns the name of the control plane subnet for the
 // cluster.
 func (p *Platform) ControlPlaneSubnetName(infraID string) string {
-	if len(p.ControlPlaneSubnet) > 0 {
-		return p.ControlPlaneSubnet
-	}
 	return fmt.Sprintf("%s-master-subnet", infraID)
 }
 
 // ComputeSubnetName returns the name of the compute subnet for the cluster.
 func (p *Platform) ComputeSubnetName(infraID string) string {
-	if len(p.ComputeSubnet) > 0 {
-		return p.ComputeSubnet
-	}
 	return fmt.Sprintf("%s-worker-subnet", infraID)
 }
 

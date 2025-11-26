@@ -1,0 +1,161 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Root of the tree of resources of the clusters management service.
+resource Root {
+	// Reference to the resource that manages the collection of accounts.
+	locator Accounts {
+		target Accounts
+	}
+
+	// Reference to the resource that manages the current authenticated
+	// account.
+	locator CurrentAccount {
+		target CurrentAccount
+	}
+
+	// Reference to the resource that manages the current authenticated
+	// account.
+	locator CurrentAccess {
+		target Roles
+	}
+
+	// Reference to the resource that manages the collection of
+	// organizations.
+	locator Organizations {
+		target Organizations
+	}
+
+	// Reference to the resource that manages generates access tokens.
+	locator AccessToken {
+		target AccessToken
+	}
+
+	// Reference to the resource that manages the collection of permissions.
+	locator Permissions {
+		target Permissions
+	}
+
+	// Reference to the resource that manages the collection of registries.
+	locator Registries {
+		target Registries
+	}
+
+	// Reference to the resource that manages the collection of registry
+	// credentials.
+	locator RegistryCredentials {
+		target RegistryCredentials
+	}
+
+	// Reference to the resource that manages cluster authorizations.
+	locator ClusterAuthorizations {
+		target ClusterAuthorizations
+	}
+
+	// Reference to the resource that manages cluster registrations.
+	locator ClusterRegistrations {
+		target ClusterRegistrations
+	}
+
+	// Reference to the resource that manages feature toggles.
+	locator FeatureToggles {
+		target FeatureToggles
+	}
+
+	// Reference to the resource that manages the collection of roles.
+	locator Roles {
+		target Roles
+	}
+
+	// Reference to the resource that manages the collection of role
+	// bindings.
+	locator RoleBindings {
+		target RoleBindings
+	}
+
+	// Reference to the resource that manages the collection of resource
+	// quota.
+	locator ResourceQuota {
+		target ResourceQuotas
+	}
+
+	// Reference to the resource that manages the collection of
+	// subscriptions.
+	locator Subscriptions {
+		target Subscriptions
+	}
+
+	// Reference to the resource that manages the collection of
+	// Sku Rules
+	locator SkuRules {
+		target SkuRules
+	}
+
+	// Reference to the resource that manages generates access tokens.
+	locator PullSecrets {
+		target PullSecrets
+	}
+
+	// Reference to the resource that manages the collection of labels.
+	locator Labels {
+		target Labels
+	}
+
+	// Reference to the resource that manages the notifications details.
+	locator NotifyDetails {
+		target NotifyDetails
+	}
+
+	// Reference to the resource that manages token authorization.
+	locator TokenAuthorization {
+		target TokenAuthorization
+	}
+
+	// Reference to the resource that manages the support cases.
+	locator SupportCases {
+		target SupportCases
+	}
+
+	// Reference to the resource that manages the collection of cloud resources.
+	locator CloudResources {
+		target CloudResources
+	}
+
+	// Reference to the resource that manages the collection of capabilities.
+	locator Capabilities {
+		target Capabilities
+	}
+
+	// Reference to the resource that manages the collection of default capabilities.
+	locator DefaultCapabilities {
+		target DefaultCapabilities
+	}
+
+	// Reference to the resource that manages the collection of deleted subscriptions.
+	locator DeletedSubscriptions {
+		target DeletedSubscriptions
+	}
+
+	// Reference to the resource that manages quota authorizations.
+	locator QuotaAuthorizations {
+		target QuotaAuthorizations
+	}
+
+	// Reference to the resource that manages billing models.
+	locator BillingModels {
+		target BillingModels
+	}
+}

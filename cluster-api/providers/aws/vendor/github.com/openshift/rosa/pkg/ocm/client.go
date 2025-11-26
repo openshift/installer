@@ -17,11 +17,13 @@ limitations under the License.
 package ocm
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/openshift-online/ocm-common/pkg/deprecation"
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/sirupsen/logrus"
 
@@ -55,7 +57,7 @@ func NewClientWithConnection(connection *sdk.Connection) *Client {
 	}
 }
 
-func CreateNewClientOrExit(logger *logrus.Logger, reporter *reporter.Object) *Client {
+func CreateNewClientOrExit(logger *logrus.Logger, reporter reporter.Logger) *Client {
 	client, err := NewClient().
 		Logger(logger).
 		Build()
@@ -119,6 +121,9 @@ func (b *ClientBuilder) Build() (result *Client, err error) {
 	builder := sdk.NewConnectionBuilder()
 	builder.Logger(logger)
 
+	// Add deprecation transport wrapper to automatically handle deprecation headers
+	builder.TransportWrapper(deprecation.NewTransportWrapper())
+
 	userAgent := info.DefaultUserAgent
 	version := info.DefaultVersion
 	if b.cfg.UserAgent != "" {
@@ -169,7 +174,8 @@ func (b *ClientBuilder) Build() (result *Client, err error) {
 	// Persist tokens in the configuration file, the SDK may have refreshed them
 	err = config.PersistTokens(b.cfg, accessToken, refreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("error creating connection. Can't persist tokens to config: %s", err)
+		b.logger.Warn(context.TODO(),
+			fmt.Sprintf("error creating connection. Can't persist tokens to config: %v", err))
 	}
 
 	return &Client{
@@ -201,7 +207,8 @@ func (c *Client) KeepTokensAlive() error {
 
 	err = config.PersistTokens(nil, accessToken, refreshToken)
 	if err != nil {
-		return fmt.Errorf("Can't persist tokens to config: %v", err)
+		c.ocm.Logger().Warn(context.TODO(),
+			fmt.Sprintf("error creating connection. Can't persist tokens to config: %v", err))
 	}
 
 	return nil

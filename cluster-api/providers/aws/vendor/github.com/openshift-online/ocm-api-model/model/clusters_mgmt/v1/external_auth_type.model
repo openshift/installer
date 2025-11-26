@@ -1,0 +1,170 @@
+/*
+Copyright (c) 2024 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of an external authentication provider.
+class ExternalAuth {
+
+	// The issuer describes the attributes of the OIDC token issuer.
+	Issuer TokenIssuer
+
+	// The list of the platform's clients that need to request tokens from the issuer.
+	Clients []ExternalAuthClientConfig
+
+	// The rules on how to transform information from an ID token into a cluster identity.
+	Claim ExternalAuthClaim
+
+	// The status describes the current state of the external authentication provider.
+	// This is read-only.
+	Status ExternalAuthStatus
+}
+
+// Representation of a token issuer used in an external authentication.
+struct TokenIssuer {
+
+	// URL is the serving URL of the token issuer.
+	// It must be a valid url and use the 'https' scheme.
+	// This is required.
+	URL String
+
+	// Audiences is an array of audiences that the token was issued for.
+	// Valid tokens must include at least one of these values in their
+	// "aud" claim.
+	// Must have at least one audience and a maximum of ten.
+	// Any clients defined for this external authentication must have their id included here.
+  Audiences []String
+
+	// Certificate bundle to use to validate server certificates for the configured URL.
+	CA String
+}
+
+// ExternalAuthClientConfig contains configuration for the platform's clients that
+// need to request tokens from the issuer.
+struct ExternalAuthClientConfig {
+
+	// The component that is supposed to consume this client configuration.
+	Component ClientComponent
+
+	// The identifier of the OIDC client from the OIDC provider.
+	// This is required.
+	// Must be at least one character length.
+	ID String
+
+	// The secret of the OIDC client from the OIDC provider.
+	// The client is considered 'public' if no secret is specified. Otherwise, it is considered
+	// as a 'confidential' client.
+	// This can only be used for an external authentication provider belonging to a ROSA HCP cluster.
+	Secret String
+
+	// ExtraScopes is an optional set of scopes to request tokens with.
+	ExtraScopes []String
+
+	// Determines the OIDC provider client type.
+	// 
+	// This is required to be defined for clients of an external authentication provider belonging to an ARO-HCP cluster.
+	// 
+	// For clients belonging to a ROSA HCP cluster, this is read-only. The value of this property will be determined by the 
+	// 'secret' property in the client configuration. 
+	//    - If the 'secret' property is set, the type of the client is 'confidential.
+	//    - If the 'secret' property is not set, the type of the client is 'public.
+	Type ExternalAuthClientType
+}
+
+// The reference of a component that will consume the client configuration.
+struct ClientComponent {
+
+	// The name of the component.
+	Name String
+
+	// The namespace of the component.
+	Namespace String
+}
+
+// The claims and validation rules used in the configuration of the external authentication.
+struct ExternalAuthClaim {
+
+	// Mapping describes rules on how to transform information from an ID token into a cluster identity.
+	Mappings    TokenClaimMappings
+
+	// ValidationRules are rules that are applied to validate token claims to authenticate users.
+	ValidationRules []TokenClaimValidationRule
+}
+
+// The claim mappings defined for users and groups.
+struct TokenClaimMappings {
+
+	// Username is a name of the claim that should be used to construct usernames for the cluster identity.
+	@json(name = "username")
+	UserName UsernameClaim
+
+	// Groups is a name of the claim that should be used to construct groups for the cluster identity.
+  Groups GroupsClaim
+}
+
+// The username claim mapping.
+struct UsernameClaim {
+
+	// The claim used in the token.
+	Claim String
+
+	// A prefix contatenated in the claim (Optional).
+	Prefix String
+
+	// PrefixPolicy specifies how a prefix should apply.
+	//
+	// By default, claims other than `email` will be prefixed with the issuer URL to
+	// prevent naming clashes with other plugins.
+	//
+	// Set to "NoPrefix" to disable prefixing.
+	//
+	// If a prefix is defined, this will be set to 'Prefix' by default.
+	PrefixPolicy String
+}
+
+struct GroupsClaim {
+	// The claim used in the token.
+	Claim String
+
+	// A prefix contatenated in the claim (Optional).
+	Prefix String
+}
+
+// The rule that is applied to validate token claims to authenticate users.
+struct TokenClaimValidationRule {
+
+	// Claim is a name of a required claim.
+	Claim String
+
+	// RequiredValue is the required value for the claim.
+	RequiredValue String
+}
+
+// Representation of the possible values of an external authentication client's type
+enum ExternalAuthClientType {
+	// Indicates that the client is confidential.
+	// 
+	// Confidential clients must provide a client secret.
+	// For external authentication provider belonging to a ROSA HCP cluster, the secret should be provided
+	// in the 'secret' property of the client configuration.
+	// For those belonging to an ARO-HCP cluster, the secret should be provided within the cluster itself.
+	@json(name="confidential")
+	Confidential
+
+	// Indicates that the client is public
+	//
+	// Public clients must not provide a client secret
+	@json(name="public")
+	Public
+}

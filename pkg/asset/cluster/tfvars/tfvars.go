@@ -12,6 +12,7 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
@@ -56,6 +57,7 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
@@ -371,14 +373,6 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
-		client, err := installConfig.Azure.Client()
-		if err != nil {
-			return err
-		}
-		hyperVGeneration, err := client.GetHyperVGenerationVersion(ctx, masterConfigs[0].VMSize, masterConfigs[0].Location, "")
-		if err != nil {
-			return err
-		}
 
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
 
@@ -425,7 +419,6 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 				OutboundType:                    installConfig.Config.Azure.OutboundType,
 				BootstrapIgnStub:                bootstrapIgnStub,
 				BootstrapIgnitionURLPlaceholder: bootstrapIgnURLPlaceholder,
-				HyperVGeneration:                hyperVGeneration,
 				VMArchitecture:                  installConfig.Config.ControlPlane.Architecture,
 				InfrastructureName:              clusterID.InfraID,
 				KeyVault:                        managedKeys.KeyVault,
@@ -452,7 +445,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			ServiceAccount:   string(sess.Credentials.JSON),
 		}
 
-		client, err := gcpconfig.NewClient(context.Background(), installConfig.Config.GCP.ServiceEndpoints)
+		client, err := gcpconfig.NewClient(context.Background(), installConfig.Config.GCP.Endpoint)
 		if err != nil {
 			return err
 		}
@@ -527,7 +520,13 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 		defer cancel()
 
-		storageClient, err := gcpconfig.GetStorageService(ctx, installConfig.Config.GCP.ServiceEndpoints)
+		opts := []option.ClientOption{}
+		endpoint := installConfig.Config.GCP.Endpoint
+		if gcp.ShouldUseEndpointForInstaller(endpoint) {
+			opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPStorage))
+		}
+
+		storageClient, err := gcpconfig.GetStorageService(ctx, opts...)
 		if err != nil {
 			return fmt.Errorf("failed to create storage client: %w", err)
 		}
@@ -739,7 +738,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
-	case openstack.Name:
+	case openstack.Name, powervc.Name:
 		data, err = openstacktfvars.TFVars(
 			ctx,
 			installConfig,

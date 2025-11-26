@@ -519,15 +519,26 @@ platform:
   vsphere:
     apiVips:
       - 192.168.122.10
-    vCenter: test.vcenter.com
-    username: testuser
-    password: testpassword
-    datacenter: testDatacenter
-    defaultDatastore: testDatastore
+    vcenters:
+    - server: vcenter.test
+      datacenters:
+      - testDatacenter
+    failureDomains:
+    - name: test-failure-domain
+      server: vcenter.test
+      region: test-region
+      zone: test-zone
+      topology:
+        datacenter: testDatacenter
+        computeCluster: "/testDatacenter/host/testCluster"
+        datastore: "/testDatacenter/datastore/testDatastore"
+        folder: "/testDatacenter/vm/testFolder"
+        networks:
+        - testNetwork
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress, platform.vsphere.failureDomains[0].topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress, platform.vsphere.vcenters[0].user: Required value: All credential fields are required if any one is specified, platform.vsphere.vcenters[0].password: Required value: All credential fields are required if any one is specified]`,
 		},
 		{
 			name: "apiVIPs are missing for vsphere platform",
@@ -655,7 +666,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: []string{"192.168.122.10", "192.168.122.11"}: If two API VIPs are given, one must be an IPv4 address, the other an IPv6, platform.vsphere.ingressVIPs: Invalid value: []string{"192.168.122.12", "192.168.122.13"}: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: ["192.168.122.10","192.168.122.11"]: If two API VIPs are given, one must be an IPv4 address, the other an IPv6, platform.vsphere.ingressVIPs: Invalid value: ["192.168.122.12","192.168.122.13"]: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6]`,
 		},
 		{
 			name: "api and ingress vips must belong to primary machine network's family for dual stack ipv4/v6",
@@ -704,14 +715,12 @@ platform:
     apiVips:
       - 192.168.122.10
     vcenters:
-    - server: test.vcenter.com
-      user: testuser
-      password: testpassword
+    - server: vcenter.test
       datacenters:
       - testDatacenter
     failureDomains:
     - name: testFailuredomain
-      server: test.vcenter.com
+      server: vcenter.test
       zone: testZone
       region: testRegion
       topology:
@@ -724,7 +733,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress, platform.vsphere.vcenters[0].user: Required value: All credential fields are required if any one is specified, platform.vsphere.vcenters[0].password: Required value: All credential fields are required if any one is specified]`,
 		},
 		{
 			name: "vcenter vSphere credentials are present but failureDomain server does not match",
@@ -744,14 +753,12 @@ platform:
     ingressVips:
       - 192.168.122.11
     vcenters:
-    - server: test.vcenter.com
-      user: testuser
-      password: testpassword
+    - server: vcenter.test
       datacenters:
       - testDatacenter
     failureDomains:
     - name: testFailuredomain
-      server: diff1.vcenter.com
+      server: diff1.vcenter.test
       zone: testZone
       region: testRegion
       topology:
@@ -762,7 +769,7 @@ platform:
         networks:
         - testNetwork
     - name: testFailuredomain2
-      server: diff2.vcenter.com
+      server: diff2.vcenter.test
       zone: testZone2
       region: testRegion2
       topology:
@@ -775,7 +782,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.failureDomains.server: Invalid value: "diff1.vcenter.com": server does not exist in vcenters, platform.vsphere.failureDomains.server: Invalid value: "diff2.vcenter.com": server does not exist in vcenters]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.failureDomains.server: Invalid value: "diff1.vcenter.test": server does not exist in vcenters, platform.vsphere.failureDomains.server: Invalid value: "diff2.vcenter.test": server does not exist in vcenters, platform.vsphere.vcenters[0].user: Required value: All credential fields are required if any one is specified, platform.vsphere.vcenters[0].password: Required value: All credential fields are required if any one is specified]`,
 		},
 		{
 			name: "All required vSphere fields must be entered if some of them are entered - deprecated fields",
@@ -794,7 +801,7 @@ platform:
       - 192.168.122.10
     ingressVips:
       - 192.168.122.11
-    vCenter: test.vcenter.com
+    vCenter: vcenter.test
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
@@ -818,7 +825,7 @@ platform:
     ingressVips:
       - 192.168.122.11
     vcenters:
-    - server: test.vcenter.com
+    - server: vcenter.test
       user: testuser
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,

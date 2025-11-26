@@ -37,6 +37,7 @@ import (
 type MockNodeLister struct {
 	ctrl     *gomock.Controller
 	recorder *MockNodeListerMockRecorder
+	isgomock struct{}
 }
 
 // MockNodeListerMockRecorder is the mock recorder for MockNodeLister.

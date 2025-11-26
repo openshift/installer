@@ -18,7 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // AzureManagedClusterSpec defines the desired state of AzureManagedCluster.
@@ -28,7 +28,7 @@ type AzureManagedClusterSpec struct {
 	// Because this field is programmatically set by CAPZ after resource creation, we define it as +optional
 	// in the API schema to permit resource admission.
 	// +optional
-	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 }
 
 // AzureManagedClusterStatus defines the observed state of AzureManagedCluster.
@@ -45,6 +45,7 @@ type AzureManagedClusterStatus struct {
 // +kubebuilder:resource:path=azuremanagedclusters,scope=Namespaced,categories=cluster-api,shortName=amc
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
+// +kubebuilder:deprecatedversion:warning="AzureManagedCluster and the AzureManaged API are deprecated. Please migrate to infrastructure.cluster.x-k8s.io/v1beta1 AzureASOManagedCluster and related AzureASOManaged resources instead."
 
 // AzureManagedCluster is the Schema for the azuremanagedclusters API.
 type AzureManagedCluster struct {

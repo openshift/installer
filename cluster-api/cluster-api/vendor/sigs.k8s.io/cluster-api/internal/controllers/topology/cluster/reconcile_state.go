@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -35,9 +36,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
-	runtimehooksv1 "sigs.k8s.io/cluster-api/exp/runtime/hooks/api/v1alpha1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	runtimehooksv1 "sigs.k8s.io/cluster-api/api/runtime/hooks/v1alpha1"
 	"sigs.k8s.io/cluster-api/exp/topology/scope"
 	"sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/internal/contract"
@@ -90,8 +91,8 @@ func (r *Reconciler) reconcileState(ctx context.Context, s *scope.Scope) error {
 
 		// In this case (reconcileInfrastructureCluster reported creation of the infrastructure cluster object, reconcileControlPlane - which is expected to create the control plane object - failed),
 		// if the creation of the control plane actually did not happen, blank out ControlPlaneRef from desired cluster.
-		if s.Current.Cluster.Spec.ControlPlaneRef == nil && !createdControlPlane {
-			s.Desired.Cluster.Spec.ControlPlaneRef = nil
+		if !s.Current.Cluster.Spec.ControlPlaneRef.IsDefined() && !createdControlPlane {
+			s.Desired.Cluster.Spec.ControlPlaneRef = clusterv1.ContractVersionedObjectReference{}
 		}
 	}
 
@@ -185,7 +186,7 @@ func (r *Reconciler) callAfterHooks(ctx context.Context, s *scope.Scope) error {
 
 func (r *Reconciler) callAfterControlPlaneInitialized(ctx context.Context, s *scope.Scope) error {
 	// If the cluster topology is being created then track to intent to call the AfterControlPlaneInitialized hook so that we can call it later.
-	if s.Current.Cluster.Spec.InfrastructureRef == nil && s.Current.Cluster.Spec.ControlPlaneRef == nil {
+	if !s.Current.Cluster.Spec.InfrastructureRef.IsDefined() && !s.Current.Cluster.Spec.ControlPlaneRef.IsDefined() {
 		if err := hooks.MarkAsPending(ctx, r.Client, s.Current.Cluster, runtimehooksv1.AfterControlPlaneInitialized); err != nil {
 			return err
 		}
@@ -195,9 +196,15 @@ func (r *Reconciler) callAfterControlPlaneInitialized(ctx context.Context, s *sc
 	// hook because already called the hook after the control plane is initialized.
 	if hooks.IsPending(runtimehooksv1.AfterControlPlaneInitialized, s.Current.Cluster) {
 		if isControlPlaneInitialized(s.Current.Cluster) {
+			v1beta1Cluster := &clusterv1beta1.Cluster{}
+			// DeepCopy cluster because ConvertFrom has side effects like adding the conversion annotation.
+			if err := v1beta1Cluster.ConvertFrom(s.Current.Cluster.DeepCopy()); err != nil {
+				return errors.Wrap(err, "error converting Cluster to v1beta1 Cluster")
+			}
+
 			// The control plane is initialized for the first time. Call all the registered extensions for the hook.
 			hookRequest := &runtimehooksv1.AfterControlPlaneInitializedRequest{
-				Cluster: *s.Current.Cluster,
+				Cluster: *cleanupCluster(v1beta1Cluster),
 			}
 			hookResponse := &runtimehooksv1.AfterControlPlaneInitializedResponse{}
 			if err := r.RuntimeClient.CallAllExtensions(ctx, runtimehooksv1.AfterControlPlaneInitialized, s.Current.Cluster, hookRequest, hookResponse); err != nil {
@@ -215,8 +222,8 @@ func (r *Reconciler) callAfterControlPlaneInitialized(ctx context.Context, s *sc
 
 func isControlPlaneInitialized(cluster *clusterv1.Cluster) bool {
 	for _, condition := range cluster.GetConditions() {
-		if condition.Type == clusterv1.ControlPlaneInitializedCondition {
-			if condition.Status == corev1.ConditionTrue {
+		if condition.Type == clusterv1.ClusterControlPlaneInitializedCondition {
+			if condition.Status == metav1.ConditionTrue {
 				return true
 			}
 		}
@@ -243,9 +250,15 @@ func (r *Reconciler) callAfterClusterUpgrade(ctx context.Context, s *scope.Scope
 			!s.UpgradeTracker.MachinePools.IsAnyPendingCreate() && // No MachinePools are pending create
 			!s.UpgradeTracker.MachinePools.IsAnyPendingUpgrade() && // No MachinePools are pending an upgrade
 			!s.UpgradeTracker.MachinePools.DeferredUpgrade() { // No MachinePools have deferred an upgrade
+			v1beta1Cluster := &clusterv1beta1.Cluster{}
+			// DeepCopy cluster because ConvertFrom has side effects like adding the conversion annotation.
+			if err := v1beta1Cluster.ConvertFrom(s.Current.Cluster.DeepCopy()); err != nil {
+				return errors.Wrap(err, "error converting Cluster to v1beta1 Cluster")
+			}
+
 			// Everything is stable and the cluster can be considered fully upgraded.
 			hookRequest := &runtimehooksv1.AfterClusterUpgradeRequest{
-				Cluster:           *s.Current.Cluster,
+				Cluster:           *cleanupCluster(v1beta1Cluster),
 				KubernetesVersion: s.Current.Cluster.Spec.Topology.Version,
 			}
 			hookResponse := &runtimehooksv1.AfterClusterUpgradeResponse{}
@@ -306,9 +319,28 @@ func (r *Reconciler) reconcileControlPlane(ctx context.Context, s *scope.Scope) 
 		log := ctrl.LoggerFrom(ctx).WithValues(s.Desired.ControlPlane.InfrastructureMachineTemplate.GetKind(), klog.KObj(s.Desired.ControlPlane.InfrastructureMachineTemplate))
 		ctx := ctrl.LoggerInto(ctx, log)
 
-		cpInfraRef, err := contract.ControlPlane().MachineTemplate().InfrastructureRef().Get(s.Desired.ControlPlane.Object)
+		// Determine contract version used by the ControlPlane.
+		contractVersion, err := contract.GetContractVersionForVersion(ctx, r.Client, s.Desired.ControlPlane.Object.GroupVersionKind().GroupKind(), s.Desired.ControlPlane.Object.GroupVersionKind().Version)
 		if err != nil {
-			return false, errors.Wrapf(err, "failed to reconcile %s %s", s.Desired.ControlPlane.InfrastructureMachineTemplate.GetKind(), klog.KObj(s.Desired.ControlPlane.InfrastructureMachineTemplate))
+			return false, errors.Wrapf(err, "failed to get contract version for the ControlPlane object")
+		}
+		var cpInfraRef *clusterv1.ContractVersionedObjectReference
+		var cpInfraV1Beta1Ref *corev1.ObjectReference
+		if contractVersion == "v1beta1" {
+			cpInfraV1Beta1Ref, err = contract.ControlPlane().MachineTemplate().InfrastructureV1Beta1Ref().Get(s.Desired.ControlPlane.Object)
+			if err != nil {
+				return false, errors.Wrapf(err, "failed to reconcile %s %s", s.Desired.ControlPlane.InfrastructureMachineTemplate.GetKind(), klog.KObj(s.Desired.ControlPlane.InfrastructureMachineTemplate))
+			}
+			cpInfraRef = &clusterv1.ContractVersionedObjectReference{
+				APIGroup: cpInfraV1Beta1Ref.GroupVersionKind().Group,
+				Kind:     cpInfraV1Beta1Ref.Kind,
+				Name:     cpInfraV1Beta1Ref.Name,
+			}
+		} else {
+			cpInfraRef, err = contract.ControlPlane().MachineTemplate().InfrastructureRef().Get(s.Desired.ControlPlane.Object)
+			if err != nil {
+				return false, errors.Wrapf(err, "failed to reconcile %s %s", s.Desired.ControlPlane.InfrastructureMachineTemplate.GetKind(), klog.KObj(s.Desired.ControlPlane.InfrastructureMachineTemplate))
+			}
 		}
 
 		// Create or update the MachineInfrastructureTemplate of the control plane.
@@ -335,7 +367,13 @@ func (r *Reconciler) reconcileControlPlane(ctx context.Context, s *scope.Scope) 
 		}
 
 		// The controlPlaneObject.Spec.machineTemplate.infrastructureRef has to be updated in the desired object
-		err = contract.ControlPlane().MachineTemplate().InfrastructureRef().Set(s.Desired.ControlPlane.Object, refToUnstructured(cpInfraRef))
+		if contractVersion == "v1beta1" {
+			// Update the name in case reconcileReferencedTemplate rotated the template.
+			cpInfraV1Beta1Ref.Name = cpInfraRef.Name
+			err = contract.ControlPlane().MachineTemplate().InfrastructureV1Beta1Ref().Set(s.Desired.ControlPlane.Object, cpInfraV1Beta1Ref)
+		} else {
+			err = contract.ControlPlane().MachineTemplate().InfrastructureRef().Set(s.Desired.ControlPlane.Object, cpInfraRef)
+		}
 		if err != nil {
 			// Best effort cleanup of the InfrastructureMachineTemplate (only on creation).
 			infrastructureMachineCleanupFunc()
@@ -385,7 +423,7 @@ func (r *Reconciler) reconcileMachineHealthCheck(ctx context.Context, current, d
 	// If a current MachineHealthCheck doesn't exist but there is a desired MachineHealthCheck attempt to create.
 	if current == nil && desired != nil {
 		log.Info("Creating MachineHealthCheck", "MachineHealthCheck", klog.KObj(desired))
-		helper, err := r.patchHelperFactory(ctx, nil, desired)
+		helper, err := structuredmerge.NewServerSidePatchHelper(ctx, nil, desired, r.Client, r.ssaCache)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create patch helper for MachineHealthCheck %s", klog.KObj(desired))
 		}
@@ -415,7 +453,7 @@ func (r *Reconciler) reconcileMachineHealthCheck(ctx context.Context, current, d
 	// Check differences between current and desired MachineHealthChecks, and patch if required.
 	// NOTE: we want to be authoritative on the entire spec because the users are
 	// expected to change MHC fields from the ClusterClass only.
-	patchHelper, err := r.patchHelperFactory(ctx, current, desired)
+	patchHelper, err := structuredmerge.NewServerSidePatchHelper(ctx, current, desired, r.Client, r.ssaCache)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create patch helper for MachineHealthCheck %s", klog.KObj(current))
 	}
@@ -440,7 +478,7 @@ func (r *Reconciler) reconcileCluster(ctx context.Context, s *scope.Scope) error
 	log := ctrl.LoggerFrom(ctx)
 
 	// Check differences between current and desired state, and eventually patch the current object.
-	patchHelper, err := r.patchHelperFactory(ctx, s.Current.Cluster, s.Desired.Cluster)
+	patchHelper, err := structuredmerge.NewServerSidePatchHelper(ctx, s.Current.Cluster, s.Desired.Cluster, r.Client, r.ssaCache)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create patch helper for Cluster %s", klog.KObj(s.Current.Cluster))
 	}
@@ -532,9 +570,8 @@ func (r *Reconciler) reconcileMachineDeployments(ctx context.Context, s *scope.S
 
 // getCurrentMachineDeployments gets the current list of MachineDeployments via the APIReader.
 func (r *Reconciler) getCurrentMachineDeployments(ctx context.Context, s *scope.Scope) (sets.Set[string], error) {
-	// TODO: We should consider using PartialObjectMetadataList here. Currently this doesn't work as our
-	// implementation for topology dryrun doesn't support PartialObjectMetadataList.
-	mdList := &clusterv1.MachineDeploymentList{}
+	mdList := &metav1.PartialObjectMetadataList{}
+	mdList.SetGroupVersionKind(clusterv1.GroupVersion.WithKind("MachineDeployment"))
 	err := r.APIReader.List(ctx, mdList,
 		client.MatchingLabels{
 			clusterv1.ClusterNameLabel:          s.Current.Cluster.Name,
@@ -548,7 +585,7 @@ func (r *Reconciler) getCurrentMachineDeployments(ctx context.Context, s *scope.
 
 	currentMDs := sets.Set[string]{}
 	for _, md := range mdList.Items {
-		mdTopologyName, ok := md.ObjectMeta.Labels[clusterv1.ClusterTopologyMachineDeploymentNameLabel]
+		mdTopologyName, ok := md.Labels[clusterv1.ClusterTopologyMachineDeploymentNameLabel]
 		if ok || mdTopologyName != "" {
 			currentMDs.Insert(mdTopologyName)
 		}
@@ -622,7 +659,7 @@ func (r *Reconciler) createMachineDeployment(ctx context.Context, s *scope.Scope
 	}
 
 	log.Info("Creating MachineDeployment")
-	helper, err := r.patchHelperFactory(ctx, nil, md.Object)
+	helper, err := structuredmerge.NewServerSidePatchHelper(ctx, nil, md.Object, r.Client, r.ssaCache)
 	if err != nil {
 		// Best effort cleanup of the InfrastructureMachineTemplate & BootstrapTemplate (only on creation).
 		infrastructureMachineCleanupFunc()
@@ -719,7 +756,7 @@ func (r *Reconciler) updateMachineDeployment(ctx context.Context, s *scope.Scope
 	bootstrapCleanupFunc := func() {}
 	createdBootstrap, err := r.reconcileReferencedTemplate(bootstrapCtx, reconcileReferencedTemplateInput{
 		cluster:              cluster,
-		ref:                  desiredMD.Object.Spec.Template.Spec.Bootstrap.ConfigRef,
+		ref:                  &desiredMD.Object.Spec.Template.Spec.Bootstrap.ConfigRef,
 		current:              currentMD.BootstrapTemplate,
 		desired:              desiredMD.BootstrapTemplate,
 		templateNamePrefix:   topologynames.BootstrapTemplateNamePrefix(cluster.Name, mdTopologyName),
@@ -742,7 +779,7 @@ func (r *Reconciler) updateMachineDeployment(ctx context.Context, s *scope.Scope
 	}
 
 	// Check differences between current and desired MachineDeployment, and eventually patch the current object.
-	patchHelper, err := r.patchHelperFactory(ctx, currentMD.Object, desiredMD.Object)
+	patchHelper, err := structuredmerge.NewServerSidePatchHelper(ctx, currentMD.Object, desiredMD.Object, r.Client, r.ssaCache)
 	if err != nil {
 		// Best effort cleanup of the InfrastructureMachineTemplate & BootstrapTemplate (only on template rotation).
 		infrastructureMachineCleanupFunc()
@@ -791,12 +828,12 @@ func (r *Reconciler) updateMachineDeployment(ctx context.Context, s *scope.Scope
 }
 
 func logMachineDeploymentVersionChange(current, desired *clusterv1.MachineDeployment) string {
-	if current.Spec.Template.Spec.Version == nil || desired.Spec.Template.Spec.Version == nil {
+	if current.Spec.Template.Spec.Version == "" || desired.Spec.Template.Spec.Version == "" {
 		return ""
 	}
 
-	if *current.Spec.Template.Spec.Version != *desired.Spec.Template.Spec.Version {
-		return fmt.Sprintf(" with version change from %s to %s", *current.Spec.Template.Spec.Version, *desired.Spec.Template.Spec.Version)
+	if current.Spec.Template.Spec.Version != desired.Spec.Template.Spec.Version {
+		return fmt.Sprintf(" with version change from %s to %s", current.Spec.Template.Spec.Version, desired.Spec.Template.Spec.Version)
 	}
 	return ""
 }
@@ -876,9 +913,8 @@ func (r *Reconciler) reconcileMachinePools(ctx context.Context, s *scope.Scope) 
 
 // getCurrentMachinePools gets the current list of MachinePools via the APIReader.
 func (r *Reconciler) getCurrentMachinePools(ctx context.Context, s *scope.Scope) (sets.Set[string], error) {
-	// TODO: We should consider using PartialObjectMetadataList here. Currently this doesn't work as our
-	// implementation for topology dryrun doesn't support PartialObjectMetadataList.
-	mpList := &expv1.MachinePoolList{}
+	mpList := &metav1.PartialObjectMetadataList{}
+	mpList.SetGroupVersionKind(clusterv1.GroupVersion.WithKind("MachinePool"))
 	err := r.APIReader.List(ctx, mpList,
 		client.MatchingLabels{
 			clusterv1.ClusterNameLabel:          s.Current.Cluster.Name,
@@ -892,7 +928,7 @@ func (r *Reconciler) getCurrentMachinePools(ctx context.Context, s *scope.Scope)
 
 	currentMPs := sets.Set[string]{}
 	for _, mp := range mpList.Items {
-		mpTopologyName, ok := mp.ObjectMeta.Labels[clusterv1.ClusterTopologyMachinePoolNameLabel]
+		mpTopologyName, ok := mp.Labels[clusterv1.ClusterTopologyMachinePoolNameLabel]
 		if ok || mpTopologyName != "" {
 			currentMPs.Insert(mpTopologyName)
 		}
@@ -964,7 +1000,7 @@ func (r *Reconciler) createMachinePool(ctx context.Context, s *scope.Scope, mp *
 	}
 
 	log.Info("Creating MachinePool")
-	helper, err := r.patchHelperFactory(ctx, nil, mp.Object)
+	helper, err := structuredmerge.NewServerSidePatchHelper(ctx, nil, mp.Object, r.Client, r.ssaCache)
 	if err != nil {
 		// Best effort cleanup of the InfrastructureMachinePool & BootstrapConfig (only on creation).
 		infrastructureMachineMachinePoolCleanupFunc()
@@ -984,7 +1020,7 @@ func (r *Reconciler) createMachinePool(ctx context.Context, s *scope.Scope, mp *
 	// miss a newly created MachinePool (because the cache might be stale).
 	err = wait.PollUntilContextTimeout(ctx, 5*time.Millisecond, 5*time.Second, true, func(ctx context.Context) (bool, error) {
 		key := client.ObjectKey{Namespace: mp.Object.Namespace, Name: mp.Object.Name}
-		if err := r.Client.Get(ctx, key, &expv1.MachinePool{}); err != nil {
+		if err := r.Client.Get(ctx, key, &clusterv1.MachinePool{}); err != nil {
 			if apierrors.IsNotFound(err) {
 				return false, nil
 			}
@@ -1031,7 +1067,7 @@ func (r *Reconciler) updateMachinePool(ctx context.Context, s *scope.Scope, mpTo
 	}
 
 	// Check differences between current and desired MachinePool, and eventually patch the current object.
-	patchHelper, err := r.patchHelperFactory(ctx, currentMP.Object, desiredMP.Object)
+	patchHelper, err := structuredmerge.NewServerSidePatchHelper(ctx, currentMP.Object, desiredMP.Object, r.Client, r.ssaCache)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create patch helper for MachinePool %s", klog.KObj(currentMP.Object))
 	}
@@ -1059,7 +1095,7 @@ func (r *Reconciler) updateMachinePool(ctx context.Context, s *scope.Scope, mpTo
 	// version here guarantees that we see the changes of our own update.
 	err = wait.PollUntilContextTimeout(ctx, 5*time.Millisecond, 5*time.Second, true, func(ctx context.Context) (bool, error) {
 		key := client.ObjectKey{Namespace: currentMP.Object.GetNamespace(), Name: currentMP.Object.GetName()}
-		cachedMP := &expv1.MachinePool{}
+		cachedMP := &clusterv1.MachinePool{}
 		if err := r.Client.Get(ctx, key, cachedMP); err != nil {
 			return false, err
 		}
@@ -1073,13 +1109,13 @@ func (r *Reconciler) updateMachinePool(ctx context.Context, s *scope.Scope, mpTo
 	return nil
 }
 
-func logMachinePoolVersionChange(current, desired *expv1.MachinePool) string {
-	if current.Spec.Template.Spec.Version == nil || desired.Spec.Template.Spec.Version == nil {
+func logMachinePoolVersionChange(current, desired *clusterv1.MachinePool) string {
+	if current.Spec.Template.Spec.Version == "" || desired.Spec.Template.Spec.Version == "" {
 		return ""
 	}
 
-	if *current.Spec.Template.Spec.Version != *desired.Spec.Template.Spec.Version {
-		return fmt.Sprintf(" with version change from %s to %s", *current.Spec.Template.Spec.Version, *desired.Spec.Template.Spec.Version)
+	if current.Spec.Template.Spec.Version != desired.Spec.Template.Spec.Version {
+		return fmt.Sprintf(" with version change from %s to %s", current.Spec.Template.Spec.Version, desired.Spec.Template.Spec.Version)
 	}
 	return ""
 }
@@ -1166,7 +1202,7 @@ func (r *Reconciler) reconcileReferencedObject(ctx context.Context, in reconcile
 	// If there is no current object, create it.
 	if in.current == nil {
 		log.Info(fmt.Sprintf("Creating %s", in.desired.GetKind()), in.desired.GetKind(), klog.KObj(in.desired))
-		helper, err := r.patchHelperFactory(ctx, nil, in.desired, structuredmerge.IgnorePaths(in.ignorePaths))
+		helper, err := structuredmerge.NewServerSidePatchHelper(ctx, nil, in.desired, r.Client, r.ssaCache, structuredmerge.IgnorePaths(in.ignorePaths))
 		if err != nil {
 			return false, errors.Wrap(createErrorWithoutObjectName(ctx, err, in.desired), "failed to create patch helper")
 		}
@@ -1186,7 +1222,7 @@ func (r *Reconciler) reconcileReferencedObject(ctx context.Context, in reconcile
 	ctx = ctrl.LoggerInto(ctx, log)
 
 	// Check differences between current and desired state, and eventually patch the current object.
-	patchHelper, err := r.patchHelperFactory(ctx, in.current, in.desired, structuredmerge.IgnorePaths(in.ignorePaths))
+	patchHelper, err := structuredmerge.NewServerSidePatchHelper(ctx, in.current, in.desired, r.Client, r.ssaCache, structuredmerge.IgnorePaths(in.ignorePaths))
 	if err != nil {
 		return false, errors.Wrapf(err, "failed to create patch helper for %s %s", in.current.GetKind(), klog.KObj(in.current))
 	}
@@ -1230,7 +1266,7 @@ func logUnstructuredVersionChange(current, desired *unstructured.Unstructured, v
 
 type reconcileReferencedTemplateInput struct {
 	cluster              *clusterv1.Cluster
-	ref                  *corev1.ObjectReference
+	ref                  *clusterv1.ContractVersionedObjectReference
 	current              *unstructured.Unstructured
 	desired              *unstructured.Unstructured
 	templateNamePrefix   string
@@ -1252,7 +1288,7 @@ func (r *Reconciler) reconcileReferencedTemplate(ctx context.Context, in reconci
 	// If there is no current object, create the desired object.
 	if in.current == nil {
 		log.Info(fmt.Sprintf("Creating %s", in.desired.GetKind()), in.desired.GetKind(), klog.KObj(in.desired))
-		helper, err := r.patchHelperFactory(ctx, nil, in.desired)
+		helper, err := structuredmerge.NewServerSidePatchHelper(ctx, nil, in.desired, r.Client, r.ssaCache)
 		if err != nil {
 			return false, errors.Wrap(createErrorWithoutObjectName(ctx, err, in.desired), "failed to create patch helper")
 		}
@@ -1263,8 +1299,8 @@ func (r *Reconciler) reconcileReferencedTemplate(ctx context.Context, in reconci
 		return true, nil
 	}
 
-	if in.ref == nil {
-		return false, errors.Errorf("failed to rotate %s: ref should not be nil", in.desired.GetKind())
+	if in.ref == nil || !in.ref.IsDefined() {
+		return false, errors.Errorf("failed to rotate %s: ref should be set", in.desired.GetKind())
 	}
 
 	// Check if the current and desired referenced object are compatible.
@@ -1276,7 +1312,7 @@ func (r *Reconciler) reconcileReferencedTemplate(ctx context.Context, in reconci
 	ctx = ctrl.LoggerInto(ctx, log)
 
 	// Check differences between current and desired objects, and if there are changes eventually start the template rotation.
-	patchHelper, err := r.patchHelperFactory(ctx, in.current, in.desired)
+	patchHelper, err := structuredmerge.NewServerSidePatchHelper(ctx, in.current, in.desired, r.Client, r.ssaCache)
 	if err != nil {
 		return false, errors.Wrapf(err, "failed to create patch helper for %s %s", in.current.GetKind(), klog.KObj(in.current))
 	}
@@ -1317,7 +1353,7 @@ func (r *Reconciler) reconcileReferencedTemplate(ctx context.Context, in reconci
 		log.Info(fmt.Sprintf("Rotating %s, new name %s", in.current.GetKind(), newName), "diff", string(changes))
 	}
 	log.Info(fmt.Sprintf("Creating %s", in.current.GetKind()))
-	helper, err := r.patchHelperFactory(ctx, nil, in.desired)
+	helper, err := structuredmerge.NewServerSidePatchHelper(ctx, nil, in.desired, r.Client, r.ssaCache)
 	if err != nil {
 		return false, errors.Wrap(createErrorWithoutObjectName(ctx, err, in.desired), "failed to create patch helper")
 	}

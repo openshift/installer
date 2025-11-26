@@ -18,19 +18,26 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
 	// ManagedClusterFinalizer allows Reconcile to clean up Azure resources associated with the AzureManagedControlPlane before
 	// removing it from the apiserver.
 	ManagedClusterFinalizer = "azuremanagedcontrolplane.infrastructure.cluster.x-k8s.io"
+)
 
-	// PrivateDNSZoneModeSystem represents mode System for azuremanagedcontrolplane.
-	PrivateDNSZoneModeSystem string = "System"
+// PrivateDNSZoneMode determines the creation of Private DNS Zones in a private cluster.
+// When unset or set to the default value of PrivateDNSZoneModeSystem, Private DNS Zones are created.
+// When set to PrivateDNSZoneModeNone, Private DNS Zones are not created in a private cluster.
+type PrivateDNSZoneMode string
 
-	// PrivateDNSZoneModeNone represents mode None for azuremanagedcontrolplane.
-	PrivateDNSZoneModeNone string = "None"
+const (
+	// PrivateDNSZoneModeSystem represents mode System for Private DNS Zones.
+	PrivateDNSZoneModeSystem PrivateDNSZoneMode = "System"
+
+	// PrivateDNSZoneModeNone represents mode None for Private DNS Zones.
+	PrivateDNSZoneModeNone PrivateDNSZoneMode = "None"
 )
 
 // UpgradeChannel determines the type of upgrade channel for automatically upgrading the cluster.
@@ -149,7 +156,7 @@ type AzureManagedControlPlaneSpec struct {
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// Immutable, populated by the AKS API at create.
 	// +optional
-	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
 
 	// SSHPublicKey is a string literal containing an ssh public key base64 encoded.
 	// Use empty string to autogenerate new key. Use null value to not set key.
@@ -417,7 +424,7 @@ type AzureManagedControlPlaneStatus struct {
 
 	// Conditions defines current service state of the AzureManagedControlPlane.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// LongRunningOperationStates saves the states for Azure long-running operations so they can be continued on the
 	// next reconciliation loop.
@@ -661,6 +668,7 @@ type AKSExtension struct {
 // +kubebuilder:resource:path=azuremanagedcontrolplanes,scope=Namespaced,categories=cluster-api,shortName=amcp
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
+// +kubebuilder:deprecatedversion:warning="AzureManagedControlPlane and the AzureManaged API are deprecated. Please migrate to infrastructure.cluster.x-k8s.io/v1beta1 AzureASOManagedControlPlane and related AzureASOManaged resources instead."
 
 // AzureManagedControlPlane is the Schema for the azuremanagedcontrolplanes API.
 type AzureManagedControlPlane struct {
@@ -681,12 +689,12 @@ type AzureManagedControlPlaneList struct {
 }
 
 // GetConditions returns the list of conditions for an AzureManagedControlPlane API object.
-func (m *AzureManagedControlPlane) GetConditions() clusterv1.Conditions {
+func (m *AzureManagedControlPlane) GetConditions() clusterv1beta1.Conditions {
 	return m.Status.Conditions
 }
 
 // SetConditions will set the given conditions on an AzureManagedControlPlane object.
-func (m *AzureManagedControlPlane) SetConditions(conditions clusterv1.Conditions) {
+func (m *AzureManagedControlPlane) SetConditions(conditions clusterv1beta1.Conditions) {
 	m.Status.Conditions = conditions
 }
 

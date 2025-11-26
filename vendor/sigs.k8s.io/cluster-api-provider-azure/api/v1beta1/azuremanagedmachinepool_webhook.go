@@ -30,7 +30,7 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterctlv1alpha3 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -309,12 +309,12 @@ func validateLastSystemNodePool(cli client.Client, labels map[string]string, nam
 	ctx := context.Background()
 
 	// Fetch the Cluster.
-	clusterName, ok := labels[clusterv1.ClusterNameLabel]
+	clusterName, ok := labels[clusterv1beta1.ClusterNameLabel]
 	if !ok {
 		return nil
 	}
 
-	ownerCluster := &clusterv1.Cluster{}
+	ownerCluster := &clusterv1beta1.Cluster{}
 	key := client.ObjectKey{
 		Namespace: namespace,
 		Name:      clusterName,
@@ -335,8 +335,8 @@ func validateLastSystemNodePool(cli client.Client, labels map[string]string, nam
 
 	opt1 := client.InNamespace(namespace)
 	opt2 := client.MatchingLabels(map[string]string{
-		clusterv1.ClusterNameLabel: clusterName,
-		LabelAgentPoolMode:         string(NodePoolModeSystem),
+		clusterv1beta1.ClusterNameLabel: clusterName,
+		LabelAgentPoolMode:              string(NodePoolModeSystem),
 	})
 
 	ammpList := &AzureManagedMachinePoolList{}
@@ -422,7 +422,7 @@ func validateNamePattern(name *string, fieldNameMessage string, fldPath *field.P
 	}
 
 	for _, char := range *name {
-		if !(unicode.IsLower(char) || unicode.IsNumber(char)) {
+		if !unicode.IsLower(char) && !unicode.IsNumber(char) {
 			return field.Invalid(
 				fldPath,
 				name,

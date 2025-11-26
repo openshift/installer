@@ -35,6 +35,7 @@ const (
 	LowestSTSSupport                = "4.7.11"
 	LowestHttpTokensRequiredSupport = "4.11.0"
 	LowestSTSMinor                  = "4.7"
+	ClassicMaxNodeSize249Support    = "4.14.14"
 
 	LowestHostedCpSupport            = "4.12.0-0.a"
 	MinVersionForManagedIngressV2    = "4.14.0-0.a"

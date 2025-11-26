@@ -23,14 +23,14 @@ aliases:
   - chrischdi
   - enxebre
   - fabriziopandini
+  - JoelSpeed
   - sbueringer
   - vincepri
 
   # folks who can review and LGTM any PRs in the repo
   cluster-api-reviewers:
-  - jackfrancis
-  - JoelSpeed
   - richardcase
+  - sivchari
 
   # -----------------------------------------------------------
   # OWNER_ALIASES for controllers/topology
@@ -110,26 +110,18 @@ aliases:
   - elmiko
 
   # -----------------------------------------------------------
-  # OWNER_ALIASES for v1.9 release-team
+  # OWNER_ALIASES for release-team
   # -----------------------------------------------------------
 
   cluster-api-release-lead:
-  - Sunnatillo
+  - cprivitere
 
   cluster-api-release-team:
-  # members added in commented lines have a pending membership
-  # and will be added back once it is acquired.
   - adilGhaffarDev
-  - cahillsf # release ci lead
-  # - chandankumar4 # release comms lead
-  - jayesh-srivastava
-  - pravarag
-  # - rajankumary2k
-  - SD-13
-  # - serngawy
-  - sivchari
-  - Sunnatillo  # release lead
-  # - tasdikrahman
-  - tormath1
-  # - varshasuryawanshi
-  - vishalanarase
+  - chandankumar4
+  - chiukapoor
+  - cprivitere
+  - hackeramitkumar
+  - mboersma
+  - shecodesmagic
+  - tsuzu

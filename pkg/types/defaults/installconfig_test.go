@@ -63,6 +63,7 @@ func defaultAzureInstallConfig() *types.InstallConfig {
 
 func defaultOpenStackInstallConfig() *types.InstallConfig {
 	c := defaultInstallConfig()
+	c.CredentialsMode = types.PassthroughCredentialsMode
 	c.Platform.OpenStack = &openstack.Platform{}
 	openstackdefaults.SetPlatformDefaults(c.Platform.OpenStack, c.Networking)
 	return c

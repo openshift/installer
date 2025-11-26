@@ -89,7 +89,6 @@ type bootstrapTemplateData struct {
 	BootstrapInPlace      *types.BootstrapInPlace
 	UseIPv6ForNodeIP      bool
 	UseDualForNodeIP      bool
-	IsFCOS                bool
 	IsSCOS                bool
 	IsOKD                 bool
 	BootstrapNodeIP       string
@@ -172,6 +171,7 @@ func (a *Common) Dependencies() []asset.Asset {
 		&tls.RootCA{},
 		&tls.ServiceAccountKeyPair{},
 		&tls.IronicTLSCert{},
+		&tls.BMCVerifyCA{},
 		&releaseimage.Image{},
 		new(rhcos.Image),
 	}
@@ -309,6 +309,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		registry := sysregistriesv2.Registry{}
 		registry.Endpoint.Location = group.Source
 		registry.MirrorByDigestOnly = true
+		registry.Blocked = group.SourcePolicy == configv1.NeverContactSource
 		for _, mirror := range group.Mirrors {
 			registry.Mirrors = append(registry.Mirrors, sysregistriesv2.Endpoint{Location: mirror})
 		}
@@ -391,7 +392,6 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		BootstrapInPlace:      bootstrapInPlaceConfig,
 		UseIPv6ForNodeIP:      ipv6Primary,
 		UseDualForNodeIP:      hasIPv4 && hasIPv6,
-		IsFCOS:                installConfig.Config.IsFCOS(),
 		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
 		BootstrapNodeIP:       bootstrapNodeIP,
@@ -673,6 +673,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 		&tls.ServiceAccountKeyPair{},
 		&tls.JournalCertKey{},
 		&tls.IronicTLSCert{},
+		&tls.BMCVerifyCA{},
 	} {
 		dependencies.Get(asset)
 
@@ -684,7 +685,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 
 	rootCA := &tls.RootCA{}
 	dependencies.Get(rootCA)
-	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
+	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ignition.FileFromBytes(path.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
 }
 
 func replaceOrAppend(files []igntypes.File, file igntypes.File) []igntypes.File {

@@ -7,15 +7,19 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilsslice "k8s.io/utils/strings/slices"
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	powervcconversion "github.com/openshift/installer/pkg/types/conversion/powervc"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervc"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vsphereconversion "github.com/openshift/installer/pkg/types/vsphere/conversion"
 )
@@ -44,12 +48,25 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 		if err := convertNutanix(config); err != nil {
 			return err
 		}
+	case powervc.Name:
+		// The first thing on the agenda is to convert the PowerVC install config
+		// to an underlying OpenStack install config.
+		if err := powervcconversion.ConvertPowerVCInstallConfig(config); err != nil {
+			return err
+		}
+		if err := convertOpenStack(config); err != nil {
+			return err
+		}
 	case openstack.Name:
 		if err := convertOpenStack(config); err != nil {
 			return err
 		}
 	case aws.Name:
 		if err := convertAWS(config); err != nil {
+			return err
+		}
+	case azure.Name:
+		if err := convertAzure(config); err != nil {
 			return err
 		}
 	case vsphere.Name:
@@ -314,5 +331,26 @@ func convertAWS(config *types.InstallConfig) error {
 		logrus.Warnf("%s is deprecated. Converted to %s", fldPath.Child("subnets"), fldPath.Child("vpc", "subnets"))
 	}
 
+	return nil
+}
+
+func convertAzure(config *types.InstallConfig) error {
+	subnets := config.Azure.Subnets
+	if len(subnets) == 0 {
+		subnets = []azure.SubnetSpec{}
+	}
+	if config.Azure.DeprecatedControlPlaneSubnet != "" { // nolint: staticcheck
+		subnets = append(subnets, azure.SubnetSpec{
+			Name: config.Azure.DeprecatedControlPlaneSubnet, // nolint: staticcheck
+			Role: v1beta1.SubnetControlPlane,
+		})
+	}
+	if config.Azure.DeprecatedComputeSubnet != "" { // nolint: staticcheck
+		subnets = append(subnets, azure.SubnetSpec{
+			Name: config.Azure.DeprecatedComputeSubnet, // nolint: staticcheck
+			Role: v1beta1.SubnetNode,
+		})
+	}
+	config.Azure.Subnets = subnets
 	return nil
 }

@@ -24,6 +24,17 @@ func SetPlatformDefaults(p *azure.Platform) {
 	}
 }
 
+// Apply sets values from the default machine platform to the machinepool.
+func Apply(defaultMachinePlatform, machinePool *azure.MachinePool) {
+	// Construct a temporary machine pool so we can set the
+	// defaults first, without overwriting the pool-sepcific values,
+	// which have precedence.
+	tempMP := &azure.MachinePool{}
+	tempMP.Set(defaultMachinePlatform)
+	tempMP.Set(machinePool)
+	machinePool.Set(tempMP)
+}
+
 // getInstanceClass returns the instance "class" we should use for a given region.
 func getInstanceClass(region string) string {
 	if class, ok := defaultMachineClass[region]; ok {

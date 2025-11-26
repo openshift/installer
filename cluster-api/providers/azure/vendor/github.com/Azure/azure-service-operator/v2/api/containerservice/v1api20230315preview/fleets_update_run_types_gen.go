@@ -7,19 +7,16 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -71,29 +68,6 @@ func (updateRun *FleetsUpdateRun) ConvertTo(hub conversion.Hub) error {
 
 	return updateRun.AssignProperties_To_FleetsUpdateRun(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-containerservice-azure-com-v1api20230315preview-fleetsupdaterun,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=containerservice.azure.com,resources=fleetsupdateruns,verbs=create;update,versions=v1api20230315preview,name=default.v1api20230315preview.fleetsupdateruns.containerservice.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &FleetsUpdateRun{}
-
-// Default applies defaults to the FleetsUpdateRun resource
-func (updateRun *FleetsUpdateRun) Default() {
-	updateRun.defaultImpl()
-	var temp any = updateRun
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (updateRun *FleetsUpdateRun) defaultAzureName() {
-	if updateRun.Spec.AzureName == "" {
-		updateRun.Spec.AzureName = updateRun.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the FleetsUpdateRun resource
-func (updateRun *FleetsUpdateRun) defaultImpl() { updateRun.defaultAzureName() }
 
 var _ configmaps.Exporter = &FleetsUpdateRun{}
 
@@ -174,6 +148,10 @@ func (updateRun *FleetsUpdateRun) NewEmptyStatus() genruntime.ConvertibleStatus 
 
 // Owner returns the ResourceReference of the owner
 func (updateRun *FleetsUpdateRun) Owner() *genruntime.ResourceReference {
+	if updateRun.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(updateRun.Spec)
 	return updateRun.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -190,114 +168,11 @@ func (updateRun *FleetsUpdateRun) SetStatus(status genruntime.ConvertibleStatus)
 	var st FleetsUpdateRun_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	updateRun.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-containerservice-azure-com-v1api20230315preview-fleetsupdaterun,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=containerservice.azure.com,resources=fleetsupdateruns,verbs=create;update,versions=v1api20230315preview,name=validate.v1api20230315preview.fleetsupdateruns.containerservice.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &FleetsUpdateRun{}
-
-// ValidateCreate validates the creation of the resource
-func (updateRun *FleetsUpdateRun) ValidateCreate() (admission.Warnings, error) {
-	validations := updateRun.createValidations()
-	var temp any = updateRun
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (updateRun *FleetsUpdateRun) ValidateDelete() (admission.Warnings, error) {
-	validations := updateRun.deleteValidations()
-	var temp any = updateRun
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (updateRun *FleetsUpdateRun) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := updateRun.updateValidations()
-	var temp any = updateRun
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (updateRun *FleetsUpdateRun) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){updateRun.validateResourceReferences, updateRun.validateOwnerReference, updateRun.validateSecretDestinations, updateRun.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (updateRun *FleetsUpdateRun) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (updateRun *FleetsUpdateRun) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return updateRun.validateResourceReferences()
-		},
-		updateRun.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return updateRun.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return updateRun.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return updateRun.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (updateRun *FleetsUpdateRun) validateConfigMapDestinations() (admission.Warnings, error) {
-	if updateRun.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(updateRun, nil, updateRun.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (updateRun *FleetsUpdateRun) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(updateRun)
-}
-
-// validateResourceReferences validates all resource references
-func (updateRun *FleetsUpdateRun) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&updateRun.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (updateRun *FleetsUpdateRun) validateSecretDestinations() (admission.Warnings, error) {
-	if updateRun.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(updateRun, nil, updateRun.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (updateRun *FleetsUpdateRun) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*FleetsUpdateRun)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, updateRun)
 }
 
 // AssignProperties_From_FleetsUpdateRun populates our FleetsUpdateRun from the provided source FleetsUpdateRun
@@ -310,7 +185,7 @@ func (updateRun *FleetsUpdateRun) AssignProperties_From_FleetsUpdateRun(source *
 	var spec FleetsUpdateRun_Spec
 	err := spec.AssignProperties_From_FleetsUpdateRun_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FleetsUpdateRun_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_FleetsUpdateRun_Spec() to populate field Spec")
 	}
 	updateRun.Spec = spec
 
@@ -318,7 +193,7 @@ func (updateRun *FleetsUpdateRun) AssignProperties_From_FleetsUpdateRun(source *
 	var status FleetsUpdateRun_STATUS
 	err = status.AssignProperties_From_FleetsUpdateRun_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FleetsUpdateRun_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_FleetsUpdateRun_STATUS() to populate field Status")
 	}
 	updateRun.Status = status
 
@@ -336,7 +211,7 @@ func (updateRun *FleetsUpdateRun) AssignProperties_To_FleetsUpdateRun(destinatio
 	var spec storage.FleetsUpdateRun_Spec
 	err := updateRun.Spec.AssignProperties_To_FleetsUpdateRun_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FleetsUpdateRun_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_FleetsUpdateRun_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -344,7 +219,7 @@ func (updateRun *FleetsUpdateRun) AssignProperties_To_FleetsUpdateRun(destinatio
 	var status storage.FleetsUpdateRun_STATUS
 	err = updateRun.Status.AssignProperties_To_FleetsUpdateRun_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FleetsUpdateRun_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_FleetsUpdateRun_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -505,13 +380,13 @@ func (updateRun *FleetsUpdateRun_Spec) ConvertSpecFrom(source genruntime.Convert
 	src = &storage.FleetsUpdateRun_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = updateRun.AssignProperties_From_FleetsUpdateRun_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -529,13 +404,13 @@ func (updateRun *FleetsUpdateRun_Spec) ConvertSpecTo(destination genruntime.Conv
 	dst = &storage.FleetsUpdateRun_Spec{}
 	err := updateRun.AssignProperties_To_FleetsUpdateRun_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -552,7 +427,7 @@ func (updateRun *FleetsUpdateRun_Spec) AssignProperties_From_FleetsUpdateRun_Spe
 		var managedClusterUpdate ManagedClusterUpdate
 		err := managedClusterUpdate.AssignProperties_From_ManagedClusterUpdate(source.ManagedClusterUpdate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterUpdate() to populate field ManagedClusterUpdate")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterUpdate() to populate field ManagedClusterUpdate")
 		}
 		updateRun.ManagedClusterUpdate = &managedClusterUpdate
 	} else {
@@ -564,7 +439,7 @@ func (updateRun *FleetsUpdateRun_Spec) AssignProperties_From_FleetsUpdateRun_Spe
 		var operatorSpec FleetsUpdateRunOperatorSpec
 		err := operatorSpec.AssignProperties_From_FleetsUpdateRunOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FleetsUpdateRunOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_FleetsUpdateRunOperatorSpec() to populate field OperatorSpec")
 		}
 		updateRun.OperatorSpec = &operatorSpec
 	} else {
@@ -584,7 +459,7 @@ func (updateRun *FleetsUpdateRun_Spec) AssignProperties_From_FleetsUpdateRun_Spe
 		var strategy UpdateRunStrategy
 		err := strategy.AssignProperties_From_UpdateRunStrategy(source.Strategy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpdateRunStrategy() to populate field Strategy")
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateRunStrategy() to populate field Strategy")
 		}
 		updateRun.Strategy = &strategy
 	} else {
@@ -608,7 +483,7 @@ func (updateRun *FleetsUpdateRun_Spec) AssignProperties_To_FleetsUpdateRun_Spec(
 		var managedClusterUpdate storage.ManagedClusterUpdate
 		err := updateRun.ManagedClusterUpdate.AssignProperties_To_ManagedClusterUpdate(&managedClusterUpdate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterUpdate() to populate field ManagedClusterUpdate")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterUpdate() to populate field ManagedClusterUpdate")
 		}
 		destination.ManagedClusterUpdate = &managedClusterUpdate
 	} else {
@@ -620,7 +495,7 @@ func (updateRun *FleetsUpdateRun_Spec) AssignProperties_To_FleetsUpdateRun_Spec(
 		var operatorSpec storage.FleetsUpdateRunOperatorSpec
 		err := updateRun.OperatorSpec.AssignProperties_To_FleetsUpdateRunOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FleetsUpdateRunOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_FleetsUpdateRunOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -643,7 +518,7 @@ func (updateRun *FleetsUpdateRun_Spec) AssignProperties_To_FleetsUpdateRun_Spec(
 		var strategy storage.UpdateRunStrategy
 		err := updateRun.Strategy.AssignProperties_To_UpdateRunStrategy(&strategy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpdateRunStrategy() to populate field Strategy")
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateRunStrategy() to populate field Strategy")
 		}
 		destination.Strategy = &strategy
 	} else {
@@ -669,7 +544,7 @@ func (updateRun *FleetsUpdateRun_Spec) Initialize_From_FleetsUpdateRun_STATUS(so
 		var managedClusterUpdate ManagedClusterUpdate
 		err := managedClusterUpdate.Initialize_From_ManagedClusterUpdate_STATUS(source.ManagedClusterUpdate)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedClusterUpdate_STATUS() to populate field ManagedClusterUpdate")
+			return eris.Wrap(err, "calling Initialize_From_ManagedClusterUpdate_STATUS() to populate field ManagedClusterUpdate")
 		}
 		updateRun.ManagedClusterUpdate = &managedClusterUpdate
 	} else {
@@ -681,7 +556,7 @@ func (updateRun *FleetsUpdateRun_Spec) Initialize_From_FleetsUpdateRun_STATUS(so
 		var strategy UpdateRunStrategy
 		err := strategy.Initialize_From_UpdateRunStrategy_STATUS(source.Strategy)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_UpdateRunStrategy_STATUS() to populate field Strategy")
+			return eris.Wrap(err, "calling Initialize_From_UpdateRunStrategy_STATUS() to populate field Strategy")
 		}
 		updateRun.Strategy = &strategy
 	} else {
@@ -756,13 +631,13 @@ func (updateRun *FleetsUpdateRun_STATUS) ConvertStatusFrom(source genruntime.Con
 	src = &storage.FleetsUpdateRun_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = updateRun.AssignProperties_From_FleetsUpdateRun_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -780,13 +655,13 @@ func (updateRun *FleetsUpdateRun_STATUS) ConvertStatusTo(destination genruntime.
 	dst = &storage.FleetsUpdateRun_STATUS{}
 	err := updateRun.AssignProperties_To_FleetsUpdateRun_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -917,7 +792,7 @@ func (updateRun *FleetsUpdateRun_STATUS) AssignProperties_From_FleetsUpdateRun_S
 		var managedClusterUpdate ManagedClusterUpdate_STATUS
 		err := managedClusterUpdate.AssignProperties_From_ManagedClusterUpdate_STATUS(source.ManagedClusterUpdate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterUpdate_STATUS() to populate field ManagedClusterUpdate")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterUpdate_STATUS() to populate field ManagedClusterUpdate")
 		}
 		updateRun.ManagedClusterUpdate = &managedClusterUpdate
 	} else {
@@ -941,7 +816,7 @@ func (updateRun *FleetsUpdateRun_STATUS) AssignProperties_From_FleetsUpdateRun_S
 		var status UpdateRunStatus_STATUS
 		err := status.AssignProperties_From_UpdateRunStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpdateRunStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateRunStatus_STATUS() to populate field Status")
 		}
 		updateRun.Status = &status
 	} else {
@@ -953,7 +828,7 @@ func (updateRun *FleetsUpdateRun_STATUS) AssignProperties_From_FleetsUpdateRun_S
 		var strategy UpdateRunStrategy_STATUS
 		err := strategy.AssignProperties_From_UpdateRunStrategy_STATUS(source.Strategy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpdateRunStrategy_STATUS() to populate field Strategy")
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateRunStrategy_STATUS() to populate field Strategy")
 		}
 		updateRun.Strategy = &strategy
 	} else {
@@ -965,7 +840,7 @@ func (updateRun *FleetsUpdateRun_STATUS) AssignProperties_From_FleetsUpdateRun_S
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		updateRun.SystemData = &systemDatum
 	} else {
@@ -998,7 +873,7 @@ func (updateRun *FleetsUpdateRun_STATUS) AssignProperties_To_FleetsUpdateRun_STA
 		var managedClusterUpdate storage.ManagedClusterUpdate_STATUS
 		err := updateRun.ManagedClusterUpdate.AssignProperties_To_ManagedClusterUpdate_STATUS(&managedClusterUpdate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterUpdate_STATUS() to populate field ManagedClusterUpdate")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterUpdate_STATUS() to populate field ManagedClusterUpdate")
 		}
 		destination.ManagedClusterUpdate = &managedClusterUpdate
 	} else {
@@ -1021,7 +896,7 @@ func (updateRun *FleetsUpdateRun_STATUS) AssignProperties_To_FleetsUpdateRun_STA
 		var status storage.UpdateRunStatus_STATUS
 		err := updateRun.Status.AssignProperties_To_UpdateRunStatus_STATUS(&status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpdateRunStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateRunStatus_STATUS() to populate field Status")
 		}
 		destination.Status = &status
 	} else {
@@ -1033,7 +908,7 @@ func (updateRun *FleetsUpdateRun_STATUS) AssignProperties_To_FleetsUpdateRun_STA
 		var strategy storage.UpdateRunStrategy_STATUS
 		err := updateRun.Strategy.AssignProperties_To_UpdateRunStrategy_STATUS(&strategy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpdateRunStrategy_STATUS() to populate field Strategy")
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateRunStrategy_STATUS() to populate field Strategy")
 		}
 		destination.Strategy = &strategy
 	} else {
@@ -1045,7 +920,7 @@ func (updateRun *FleetsUpdateRun_STATUS) AssignProperties_To_FleetsUpdateRun_STA
 		var systemDatum storage.SystemData_STATUS
 		err := updateRun.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1233,7 +1108,7 @@ func (update *ManagedClusterUpdate) AssignProperties_From_ManagedClusterUpdate(s
 		var upgrade ManagedClusterUpgradeSpec
 		err := upgrade.AssignProperties_From_ManagedClusterUpgradeSpec(source.Upgrade)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterUpgradeSpec() to populate field Upgrade")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterUpgradeSpec() to populate field Upgrade")
 		}
 		update.Upgrade = &upgrade
 	} else {
@@ -1254,7 +1129,7 @@ func (update *ManagedClusterUpdate) AssignProperties_To_ManagedClusterUpdate(des
 		var upgrade storage.ManagedClusterUpgradeSpec
 		err := update.Upgrade.AssignProperties_To_ManagedClusterUpgradeSpec(&upgrade)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterUpgradeSpec() to populate field Upgrade")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterUpgradeSpec() to populate field Upgrade")
 		}
 		destination.Upgrade = &upgrade
 	} else {
@@ -1280,7 +1155,7 @@ func (update *ManagedClusterUpdate) Initialize_From_ManagedClusterUpdate_STATUS(
 		var upgrade ManagedClusterUpgradeSpec
 		err := upgrade.Initialize_From_ManagedClusterUpgradeSpec_STATUS(source.Upgrade)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedClusterUpgradeSpec_STATUS() to populate field Upgrade")
+			return eris.Wrap(err, "calling Initialize_From_ManagedClusterUpgradeSpec_STATUS() to populate field Upgrade")
 		}
 		update.Upgrade = &upgrade
 	} else {
@@ -1334,7 +1209,7 @@ func (update *ManagedClusterUpdate_STATUS) AssignProperties_From_ManagedClusterU
 		var upgrade ManagedClusterUpgradeSpec_STATUS
 		err := upgrade.AssignProperties_From_ManagedClusterUpgradeSpec_STATUS(source.Upgrade)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedClusterUpgradeSpec_STATUS() to populate field Upgrade")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterUpgradeSpec_STATUS() to populate field Upgrade")
 		}
 		update.Upgrade = &upgrade
 	} else {
@@ -1355,7 +1230,7 @@ func (update *ManagedClusterUpdate_STATUS) AssignProperties_To_ManagedClusterUpd
 		var upgrade storage.ManagedClusterUpgradeSpec_STATUS
 		err := update.Upgrade.AssignProperties_To_ManagedClusterUpgradeSpec_STATUS(&upgrade)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedClusterUpgradeSpec_STATUS() to populate field Upgrade")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterUpgradeSpec_STATUS() to populate field Upgrade")
 		}
 		destination.Upgrade = &upgrade
 	} else {
@@ -1449,7 +1324,7 @@ func (status *UpdateRunStatus_STATUS) AssignProperties_From_UpdateRunStatus_STAT
 			var stage UpdateStageStatus_STATUS
 			err := stage.AssignProperties_From_UpdateStageStatus_STATUS(&stageItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UpdateStageStatus_STATUS() to populate field Stages")
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateStageStatus_STATUS() to populate field Stages")
 			}
 			stageList[stageIndex] = stage
 		}
@@ -1463,7 +1338,7 @@ func (status *UpdateRunStatus_STATUS) AssignProperties_From_UpdateRunStatus_STAT
 		var statusLocal UpdateStatus_STATUS
 		err := statusLocal.AssignProperties_From_UpdateStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
 		}
 		status.Status = &statusLocal
 	} else {
@@ -1488,7 +1363,7 @@ func (status *UpdateRunStatus_STATUS) AssignProperties_To_UpdateRunStatus_STATUS
 			var stage storage.UpdateStageStatus_STATUS
 			err := stageItem.AssignProperties_To_UpdateStageStatus_STATUS(&stage)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UpdateStageStatus_STATUS() to populate field Stages")
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateStageStatus_STATUS() to populate field Stages")
 			}
 			stageList[stageIndex] = stage
 		}
@@ -1502,7 +1377,7 @@ func (status *UpdateRunStatus_STATUS) AssignProperties_To_UpdateRunStatus_STATUS
 		var statusLocal storage.UpdateStatus_STATUS
 		err := status.Status.AssignProperties_To_UpdateStatus_STATUS(&statusLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
 		}
 		destination.Status = &statusLocal
 	} else {
@@ -1591,7 +1466,7 @@ func (strategy *UpdateRunStrategy) AssignProperties_From_UpdateRunStrategy(sourc
 			var stage UpdateStage
 			err := stage.AssignProperties_From_UpdateStage(&stageItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UpdateStage() to populate field Stages")
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateStage() to populate field Stages")
 			}
 			stageList[stageIndex] = stage
 		}
@@ -1618,7 +1493,7 @@ func (strategy *UpdateRunStrategy) AssignProperties_To_UpdateRunStrategy(destina
 			var stage storage.UpdateStage
 			err := stageItem.AssignProperties_To_UpdateStage(&stage)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UpdateStage() to populate field Stages")
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateStage() to populate field Stages")
 			}
 			stageList[stageIndex] = stage
 		}
@@ -1650,7 +1525,7 @@ func (strategy *UpdateRunStrategy) Initialize_From_UpdateRunStrategy_STATUS(sour
 			var stage UpdateStage
 			err := stage.Initialize_From_UpdateStage_STATUS(&stageItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_UpdateStage_STATUS() to populate field Stages")
+				return eris.Wrap(err, "calling Initialize_From_UpdateStage_STATUS() to populate field Stages")
 			}
 			stageList[stageIndex] = stage
 		}
@@ -1715,7 +1590,7 @@ func (strategy *UpdateRunStrategy_STATUS) AssignProperties_From_UpdateRunStrateg
 			var stage UpdateStage_STATUS
 			err := stage.AssignProperties_From_UpdateStage_STATUS(&stageItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UpdateStage_STATUS() to populate field Stages")
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateStage_STATUS() to populate field Stages")
 			}
 			stageList[stageIndex] = stage
 		}
@@ -1742,7 +1617,7 @@ func (strategy *UpdateRunStrategy_STATUS) AssignProperties_To_UpdateRunStrategy_
 			var stage storage.UpdateStage_STATUS
 			err := stageItem.AssignProperties_To_UpdateStage_STATUS(&stage)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UpdateStage_STATUS() to populate field Stages")
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateStage_STATUS() to populate field Stages")
 			}
 			stageList[stageIndex] = stage
 		}
@@ -2081,7 +1956,7 @@ func (stage *UpdateStage) AssignProperties_From_UpdateStage(source *storage.Upda
 			var group UpdateGroup
 			err := group.AssignProperties_From_UpdateGroup(&groupItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UpdateGroup() to populate field Groups")
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateGroup() to populate field Groups")
 			}
 			groupList[groupIndex] = group
 		}
@@ -2091,12 +1966,7 @@ func (stage *UpdateStage) AssignProperties_From_UpdateStage(source *storage.Upda
 	}
 
 	// Name
-	if source.Name != nil {
-		name := *source.Name
-		stage.Name = &name
-	} else {
-		stage.Name = nil
-	}
+	stage.Name = genruntime.ClonePointerToString(source.Name)
 
 	// No error
 	return nil
@@ -2119,7 +1989,7 @@ func (stage *UpdateStage) AssignProperties_To_UpdateStage(destination *storage.U
 			var group storage.UpdateGroup
 			err := groupItem.AssignProperties_To_UpdateGroup(&group)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UpdateGroup() to populate field Groups")
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateGroup() to populate field Groups")
 			}
 			groupList[groupIndex] = group
 		}
@@ -2129,12 +1999,7 @@ func (stage *UpdateStage) AssignProperties_To_UpdateStage(destination *storage.U
 	}
 
 	// Name
-	if stage.Name != nil {
-		name := *stage.Name
-		destination.Name = &name
-	} else {
-		destination.Name = nil
-	}
+	destination.Name = genruntime.ClonePointerToString(stage.Name)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2162,7 +2027,7 @@ func (stage *UpdateStage) Initialize_From_UpdateStage_STATUS(source *UpdateStage
 			var group UpdateGroup
 			err := group.Initialize_From_UpdateGroup_STATUS(&groupItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_UpdateGroup_STATUS() to populate field Groups")
+				return eris.Wrap(err, "calling Initialize_From_UpdateGroup_STATUS() to populate field Groups")
 			}
 			groupList[groupIndex] = group
 		}
@@ -2172,12 +2037,7 @@ func (stage *UpdateStage) Initialize_From_UpdateStage_STATUS(source *UpdateStage
 	}
 
 	// Name
-	if source.Name != nil {
-		name := *source.Name
-		stage.Name = &name
-	} else {
-		stage.Name = nil
-	}
+	stage.Name = genruntime.ClonePointerToString(source.Name)
 
 	// No error
 	return nil
@@ -2252,7 +2112,7 @@ func (stage *UpdateStage_STATUS) AssignProperties_From_UpdateStage_STATUS(source
 			var group UpdateGroup_STATUS
 			err := group.AssignProperties_From_UpdateGroup_STATUS(&groupItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UpdateGroup_STATUS() to populate field Groups")
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateGroup_STATUS() to populate field Groups")
 			}
 			groupList[groupIndex] = group
 		}
@@ -2285,7 +2145,7 @@ func (stage *UpdateStage_STATUS) AssignProperties_To_UpdateStage_STATUS(destinat
 			var group storage.UpdateGroup_STATUS
 			err := groupItem.AssignProperties_To_UpdateGroup_STATUS(&group)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UpdateGroup_STATUS() to populate field Groups")
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateGroup_STATUS() to populate field Groups")
 			}
 			groupList[groupIndex] = group
 		}
@@ -2387,7 +2247,7 @@ func (status *UpdateStageStatus_STATUS) AssignProperties_From_UpdateStageStatus_
 		var afterStageWaitStatus WaitStatus_STATUS
 		err := afterStageWaitStatus.AssignProperties_From_WaitStatus_STATUS(source.AfterStageWaitStatus)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WaitStatus_STATUS() to populate field AfterStageWaitStatus")
+			return eris.Wrap(err, "calling AssignProperties_From_WaitStatus_STATUS() to populate field AfterStageWaitStatus")
 		}
 		status.AfterStageWaitStatus = &afterStageWaitStatus
 	} else {
@@ -2403,7 +2263,7 @@ func (status *UpdateStageStatus_STATUS) AssignProperties_From_UpdateStageStatus_
 			var group UpdateGroupStatus_STATUS
 			err := group.AssignProperties_From_UpdateGroupStatus_STATUS(&groupItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UpdateGroupStatus_STATUS() to populate field Groups")
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateGroupStatus_STATUS() to populate field Groups")
 			}
 			groupList[groupIndex] = group
 		}
@@ -2420,7 +2280,7 @@ func (status *UpdateStageStatus_STATUS) AssignProperties_From_UpdateStageStatus_
 		var statusLocal UpdateStatus_STATUS
 		err := statusLocal.AssignProperties_From_UpdateStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
 		}
 		status.Status = &statusLocal
 	} else {
@@ -2441,7 +2301,7 @@ func (status *UpdateStageStatus_STATUS) AssignProperties_To_UpdateStageStatus_ST
 		var afterStageWaitStatus storage.WaitStatus_STATUS
 		err := status.AfterStageWaitStatus.AssignProperties_To_WaitStatus_STATUS(&afterStageWaitStatus)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WaitStatus_STATUS() to populate field AfterStageWaitStatus")
+			return eris.Wrap(err, "calling AssignProperties_To_WaitStatus_STATUS() to populate field AfterStageWaitStatus")
 		}
 		destination.AfterStageWaitStatus = &afterStageWaitStatus
 	} else {
@@ -2457,7 +2317,7 @@ func (status *UpdateStageStatus_STATUS) AssignProperties_To_UpdateStageStatus_ST
 			var group storage.UpdateGroupStatus_STATUS
 			err := groupItem.AssignProperties_To_UpdateGroupStatus_STATUS(&group)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UpdateGroupStatus_STATUS() to populate field Groups")
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateGroupStatus_STATUS() to populate field Groups")
 			}
 			groupList[groupIndex] = group
 		}
@@ -2474,7 +2334,7 @@ func (status *UpdateStageStatus_STATUS) AssignProperties_To_UpdateStageStatus_ST
 		var statusLocal storage.UpdateStatus_STATUS
 		err := status.Status.AssignProperties_To_UpdateStatus_STATUS(&statusLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
 		}
 		destination.Status = &statusLocal
 	} else {
@@ -2567,7 +2427,7 @@ func (status *UpdateStatus_STATUS) AssignProperties_From_UpdateStatus_STATUS(sou
 		var error ErrorDetail_STATUS
 		err := error.AssignProperties_From_ErrorDetail_STATUS(source.Error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS() to populate field Error")
 		}
 		status.Error = &error
 	} else {
@@ -2603,7 +2463,7 @@ func (status *UpdateStatus_STATUS) AssignProperties_To_UpdateStatus_STATUS(desti
 		var error storage.ErrorDetail_STATUS
 		err := status.Error.AssignProperties_To_ErrorDetail_STATUS(&error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS() to populate field Error")
 		}
 		destination.Error = &error
 	} else {
@@ -2718,7 +2578,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 			var additionalInfo ErrorAdditionalInfo_STATUS
 			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -2739,7 +2599,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 			var detailLocal ErrorDetail_STATUS_Unrolled
 			err := detailLocal.AssignProperties_From_ErrorDetail_STATUS_Unrolled(&detailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS_Unrolled() to populate field Details")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS_Unrolled() to populate field Details")
 			}
 			detailList[detailIndex] = detailLocal
 		}
@@ -2772,7 +2632,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -2793,7 +2653,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 			var detailLocal storage.ErrorDetail_STATUS_Unrolled
 			err := detailItem.AssignProperties_To_ErrorDetail_STATUS_Unrolled(&detailLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS_Unrolled() to populate field Details")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS_Unrolled() to populate field Details")
 			}
 			detailList[detailIndex] = detailLocal
 		}
@@ -2902,12 +2762,7 @@ func (group *UpdateGroup) PopulateFromARM(owner genruntime.ArbitraryOwnerReferen
 func (group *UpdateGroup) AssignProperties_From_UpdateGroup(source *storage.UpdateGroup) error {
 
 	// Name
-	if source.Name != nil {
-		name := *source.Name
-		group.Name = &name
-	} else {
-		group.Name = nil
-	}
+	group.Name = genruntime.ClonePointerToString(source.Name)
 
 	// No error
 	return nil
@@ -2919,12 +2774,7 @@ func (group *UpdateGroup) AssignProperties_To_UpdateGroup(destination *storage.U
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Name
-	if group.Name != nil {
-		name := *group.Name
-		destination.Name = &name
-	} else {
-		destination.Name = nil
-	}
+	destination.Name = genruntime.ClonePointerToString(group.Name)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2941,12 +2791,7 @@ func (group *UpdateGroup) AssignProperties_To_UpdateGroup(destination *storage.U
 func (group *UpdateGroup) Initialize_From_UpdateGroup_STATUS(source *UpdateGroup_STATUS) error {
 
 	// Name
-	if source.Name != nil {
-		name := *source.Name
-		group.Name = &name
-	} else {
-		group.Name = nil
-	}
+	group.Name = genruntime.ClonePointerToString(source.Name)
 
 	// No error
 	return nil
@@ -3081,7 +2926,7 @@ func (status *UpdateGroupStatus_STATUS) AssignProperties_From_UpdateGroupStatus_
 			var member MemberUpdateStatus_STATUS
 			err := member.AssignProperties_From_MemberUpdateStatus_STATUS(&memberItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MemberUpdateStatus_STATUS() to populate field Members")
+				return eris.Wrap(err, "calling AssignProperties_From_MemberUpdateStatus_STATUS() to populate field Members")
 			}
 			memberList[memberIndex] = member
 		}
@@ -3098,7 +2943,7 @@ func (status *UpdateGroupStatus_STATUS) AssignProperties_From_UpdateGroupStatus_
 		var statusLocal UpdateStatus_STATUS
 		err := statusLocal.AssignProperties_From_UpdateStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
 		}
 		status.Status = &statusLocal
 	} else {
@@ -3123,7 +2968,7 @@ func (status *UpdateGroupStatus_STATUS) AssignProperties_To_UpdateGroupStatus_ST
 			var member storage.MemberUpdateStatus_STATUS
 			err := memberItem.AssignProperties_To_MemberUpdateStatus_STATUS(&member)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MemberUpdateStatus_STATUS() to populate field Members")
+				return eris.Wrap(err, "calling AssignProperties_To_MemberUpdateStatus_STATUS() to populate field Members")
 			}
 			memberList[memberIndex] = member
 		}
@@ -3140,7 +2985,7 @@ func (status *UpdateGroupStatus_STATUS) AssignProperties_To_UpdateGroupStatus_ST
 		var statusLocal storage.UpdateStatus_STATUS
 		err := status.Status.AssignProperties_To_UpdateStatus_STATUS(&statusLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
 		}
 		destination.Status = &statusLocal
 	} else {
@@ -3232,7 +3077,7 @@ func (status *WaitStatus_STATUS) AssignProperties_From_WaitStatus_STATUS(source 
 		var statusLocal UpdateStatus_STATUS
 		err := statusLocal.AssignProperties_From_UpdateStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
 		}
 		status.Status = &statusLocal
 	} else {
@@ -3256,7 +3101,7 @@ func (status *WaitStatus_STATUS) AssignProperties_To_WaitStatus_STATUS(destinati
 		var statusLocal storage.UpdateStatus_STATUS
 		err := status.Status.AssignProperties_To_UpdateStatus_STATUS(&statusLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
 		}
 		destination.Status = &statusLocal
 	} else {
@@ -3445,7 +3290,7 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_From_ErrorDetail_S
 			var additionalInfo ErrorAdditionalInfo_STATUS
 			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -3481,7 +3326,7 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_To_ErrorDetail_STA
 			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -3589,7 +3434,7 @@ func (status *MemberUpdateStatus_STATUS) AssignProperties_From_MemberUpdateStatu
 		var statusLocal UpdateStatus_STATUS
 		err := statusLocal.AssignProperties_From_UpdateStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
 		}
 		status.Status = &statusLocal
 	} else {
@@ -3619,7 +3464,7 @@ func (status *MemberUpdateStatus_STATUS) AssignProperties_To_MemberUpdateStatus_
 		var statusLocal storage.UpdateStatus_STATUS
 		err := status.Status.AssignProperties_To_UpdateStatus_STATUS(&statusLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
 		}
 		destination.Status = &statusLocal
 	} else {

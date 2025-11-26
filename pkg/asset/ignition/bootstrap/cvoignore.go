@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -18,10 +19,8 @@ import (
 
 var (
 	_ asset.WritableAsset = (*CVOIgnore)(nil)
-)
 
-const (
-	cvoOverridesFilename      = "manifests/cvo-overrides.yaml"
+	cvoOverridesFilename      = path.Join("manifests", "cvo-overrides.yaml")
 	originalOverridesFilename = "original_cvo_overrides.patch"
 )
 

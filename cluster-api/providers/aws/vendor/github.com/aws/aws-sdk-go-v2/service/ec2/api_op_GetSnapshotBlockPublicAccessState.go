@@ -12,8 +12,11 @@ import (
 )
 
 // Gets the current state of block public access for snapshots setting for the
-// account and Region. For more information, see Block public access for snapshots (https://docs.aws.amazon.com/ebs/latest/userguide/block-public-access-snapshots.html)
-// in the Amazon EBS User Guide.
+// account and Region.
+//
+// For more information, see [Block public access for snapshots] in the Amazon EBS User Guide.
+//
+// [Block public access for snapshots]: https://docs.aws.amazon.com/ebs/latest/userguide/block-public-access-snapshots.html
 func (c *Client) GetSnapshotBlockPublicAccessState(ctx context.Context, params *GetSnapshotBlockPublicAccessStateInput, optFns ...func(*Options)) (*GetSnapshotBlockPublicAccessStateOutput, error) {
 	if params == nil {
 		params = &GetSnapshotBlockPublicAccessStateInput{}
@@ -42,14 +45,25 @@ type GetSnapshotBlockPublicAccessStateInput struct {
 
 type GetSnapshotBlockPublicAccessStateOutput struct {
 
-	// The current state of block public access for snapshots. Possible values
-	// include:
+	// The entity that manages the state for block public access for snapshots.
+	// Possible values include:
+	//
+	//   - account - The state is managed by the account.
+	//
+	//   - declarative-policy - The state is managed by a declarative policy and can't
+	//   be modified by the account.
+	ManagedBy types.ManagedBy
+
+	// The current state of block public access for snapshots. Possible values include:
+	//
 	//   - block-all-sharing - All public sharing of snapshots is blocked. Users in the
 	//   account can't request new public sharing. Additionally, snapshots that were
 	//   already publicly shared are treated as private and are not publicly available.
+	//
 	//   - block-new-sharing - Only new public sharing of snapshots is blocked. Users
 	//   in the account can't request new public sharing. However, snapshots that were
 	//   already publicly shared, remain publicly available.
+	//
 	//   - unblocked - Public sharing is not blocked. Users can publicly share
 	//   snapshots.
 	State types.SnapshotBlockPublicAccessState
@@ -103,6 +117,9 @@ func (c *Client) addOperationGetSnapshotBlockPublicAccessStateMiddlewares(stack 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -113,6 +130,15 @@ func (c *Client) addOperationGetSnapshotBlockPublicAccessStateMiddlewares(stack 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetSnapshotBlockPublicAccessState(options.Region), middleware.Before); err != nil {
@@ -131,6 +157,18 @@ func (c *Client) addOperationGetSnapshotBlockPublicAccessStateMiddlewares(stack 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
